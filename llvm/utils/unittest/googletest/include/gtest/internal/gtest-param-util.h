@@ -38,16 +38,14 @@
 #include <utility>
 #include <vector>
 
+// scripts/fuse_gtest.py depends on gtest's own header being #included
+// *unconditionally*.  Therefore these #includes cannot be moved
+// inside #if GTEST_HAS_PARAM_TEST.
+#include <gtest/internal/gtest-internal.h>
+#include <gtest/internal/gtest-linked_ptr.h>
 #include <gtest/internal/gtest-port.h>
 
 #if GTEST_HAS_PARAM_TEST
-
-#if GTEST_HAS_RTTI
-#include <typeinfo>
-#endif  // GTEST_HAS_RTTI
-
-#include <gtest/internal/gtest-linked_ptr.h>
-#include <gtest/internal/gtest-internal.h>
 
 namespace testing {
 namespace internal {
@@ -58,26 +56,8 @@ namespace internal {
 // fixture class for the same test case. This may happen when
 // TEST_P macro is used to define two tests with the same name
 // but in different namespaces.
-void ReportInvalidTestCaseType(const char* test_case_name,
-                               const char* file, int line);
-
-// INTERNAL IMPLEMENTATION - DO NOT USE IN USER CODE.
-//
-// Downcasts the pointer of type Base to Derived.
-// Derived must be a subclass of Base. The parameter MUST
-// point to a class of type Derived, not any subclass of it.
-// When RTTI is available, the function performs a runtime
-// check to enforce this.
-template <class Derived, class Base>
-Derived* CheckedDowncastToActualType(Base* base) {
-#if GTEST_HAS_RTTI
-  GTEST_CHECK_(typeid(*base) == typeid(Derived));
-  Derived* derived = dynamic_cast<Derived*>(base);  // NOLINT
-#else
-  Derived* derived = static_cast<Derived*>(base);  // Poor man's downcast.
-#endif  // GTEST_HAS_RTTI
-  return derived;
-}
+GTEST_API_ void ReportInvalidTestCaseType(const char* test_case_name,
+                                          const char* file, int line);
 
 template <typename> class ParamGeneratorInterface;
 template <typename> class ParamGenerator;
@@ -169,7 +149,7 @@ class ParamGeneratorInterface {
   virtual ParamIteratorInterface<T>* End() const = 0;
 };
 
-// Wraps ParamGeneratorInetrface<T> and provides general generator syntax
+// Wraps ParamGeneratorInterface<T> and provides general generator syntax
 // compatible with the STL Container concept.
 // This class implements copy initialization semantics and the contained
 // ParamGeneratorInterface<T> instance is shared among all copies
@@ -245,7 +225,8 @@ class RangeGenerator : public ParamGeneratorInterface<T> {
 
    private:
     Iterator(const Iterator& other)
-        : base_(other.base_), value_(other.value_), index_(other.index_),
+        : ParamIteratorInterface<T>(),
+          base_(other.base_), value_(other.value_), index_(other.index_),
           step_(other.step_) {}
 
     // No implementation - assignment is unsupported.
@@ -542,12 +523,12 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
   // LocalTestInfo structure keeps information about a single test registered
   // with TEST_P macro.
   struct TestInfo {
-    TestInfo(const char* test_case_base_name,
-             const char* test_base_name,
-             TestMetaFactoryBase<ParamType>* test_meta_factory) :
-        test_case_base_name(test_case_base_name),
-        test_base_name(test_base_name),
-        test_meta_factory(test_meta_factory) {}
+    TestInfo(const char* a_test_case_base_name,
+             const char* a_test_base_name,
+             TestMetaFactoryBase<ParamType>* a_test_meta_factory) :
+        test_case_base_name(a_test_case_base_name),
+        test_base_name(a_test_base_name),
+        test_meta_factory(a_test_meta_factory) {}
 
     const String test_case_base_name;
     const String test_base_name;

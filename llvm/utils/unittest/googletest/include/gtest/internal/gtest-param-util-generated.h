@@ -44,13 +44,30 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_GTEST_PARAM_UTIL_GENERATED_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_GTEST_PARAM_UTIL_GENERATED_H_
 
+// scripts/fuse_gtest.py depends on gtest's own header being #included
+// *unconditionally*.  Therefore these #includes cannot be moved
+// inside #if GTEST_HAS_PARAM_TEST.
+#include <gtest/internal/gtest-param-util.h>
 #include <gtest/internal/gtest-port.h>
 
 #if GTEST_HAS_PARAM_TEST
 
-#include <gtest/internal/gtest-param-util.h>
-
 namespace testing {
+
+// Forward declarations of ValuesIn(), which is implemented in
+// include/gtest/gtest-param-test.h.
+template <typename ForwardIterator>
+internal::ParamGenerator<
+    typename ::std::iterator_traits<ForwardIterator>::value_type> ValuesIn(
+        ForwardIterator begin, ForwardIterator end);
+
+template <typename T, size_t N>
+internal::ParamGenerator<T> ValuesIn(const T (&array)[N]);
+
+template <class Container>
+internal::ParamGenerator<typename Container::value_type> ValuesIn(
+    const Container& container);
+
 namespace internal {
 
 // Used in the Values() function to provide polymorphic capabilities.

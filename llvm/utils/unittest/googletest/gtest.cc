@@ -42,7 +42,10 @@
 #include <wchar.h>
 #include <wctype.h>
 
+#include <algorithm>
 #include <ostream>
+#include <sstream>
+#include <vector>
 
 #if GTEST_OS_LINUX
 
@@ -131,6 +134,11 @@
 
 namespace testing {
 
+using internal::CountIf;
+using internal::ForEach;
+using internal::GetElementOr;
+using internal::Shuffle;
+
 // Constants.
 
 // A test whose test case name or test name matches this filter is
@@ -160,6 +168,10 @@ namespace internal {
 // The text used in failure messages to indicate the start of the
 // stack trace.
 const char kStackTraceMarker[] = "\nStack trace:\n";
+
+// g_help_flag is true iff the --help flag or an equivalent form is
+// specified on the command line.
+bool g_help_flag = false;
 
 }  // namespace internal
 
@@ -242,7 +254,7 @@ GTEST_DEFINE_bool_(
 
 GTEST_DEFINE_int32_(
     stack_trace_depth,
-        internal::Int32FromGTestEnv("stack_trace_depth", kMaxStackTraceDepth),
+    internal::Int32FromGTestEnv("stack_trace_depth", kMaxStackTraceDepth),
     "The maximum number of stack frames to print when an "
     "assertion fails.  The valid range is 0 through 100, inclusive.");
 
@@ -274,10 +286,6 @@ UInt32 Random::Generate(UInt32 range) {
   return state_ % range;
 }
 
-// g_help_flag is true iff the --help flag or an equivalent form is
-// specified on the command line.
-static bool g_help_flag = false;
-
 // GTestIsInitialized() returns true iff the user has initialized
 // Google Test.  Useful for catching the user mistake of not initializing
 // Google Test before calling RUN_ALL_TESTS().
@@ -292,11 +300,11 @@ static bool GTestIsInitialized() { return g_init_gtest_count != 0; }
 // Iterates over a vector of TestCases, keeping a running sum of the
 // results of calling a given int-returning method on each.
 // Returns the sum.
-static int SumOverTestCaseList(const internal::Vector<TestCase*>& case_list,
+static int SumOverTestCaseList(const std::vector<TestCase*>& case_list,
                                int (TestCase::*method)() const) {
   int sum = 0;
-  for (int i = 0; i < case_list.size(); i++) {
-    sum += (case_list.GetElement(i)->*method)();
+  for (size_t i = 0; i < case_list.size(); i++) {
+    sum += (case_list[i]->*method)();
   }
   return sum;
 }
@@ -341,7 +349,7 @@ void AssertHelper::operator=(const Message& message) const {
 }
 
 // Mutex for linked pointers.
-Mutex g_linked_ptr_mutex(Mutex::NO_CONSTRUCTOR_NEEDED_FOR_STATIC_MUTEX);
+GTEST_DEFINE_STATIC_MUTEX_(g_linked_ptr_mutex);
 
 // Application pathname gotten in InitGoogleTest.
 String g_executable_path;
@@ -672,23 +680,23 @@ void UnitTestImpl::SetTestPartResultReporterForCurrentThread(
 
 // Gets the number of successful test cases.
 int UnitTestImpl::successful_test_case_count() const {
-  return test_cases_.CountIf(TestCasePassed);
+  return CountIf(test_cases_, TestCasePassed);
 }
 
 // Gets the number of failed test cases.
 int UnitTestImpl::failed_test_case_count() const {
-  return test_cases_.CountIf(TestCaseFailed);
+  return CountIf(test_cases_, TestCaseFailed);
 }
 
 // Gets the number of all test cases.
 int UnitTestImpl::total_test_case_count() const {
-  return test_cases_.size();
+  return static_cast<int>(test_cases_.size());
 }
 
 // Gets the number of all test cases that contain at least one test
 // that should run.
 int UnitTestImpl::test_case_to_run_count() const {
-  return test_cases_.CountIf(ShouldRunTestCase);
+  return CountIf(test_cases_, ShouldRunTestCase);
 }
 
 // Gets the number of successful tests.
@@ -952,21 +960,37 @@ String FormatForFailureMessage(wchar_t wchar) {
 
 }  // namespace internal
 
-// AssertionResult constructor.
-AssertionResult::AssertionResult(const internal::String& failure_message)
-    : failure_message_(failure_message) {
+// AssertionResult constructors.
+// Used in EXPECT_TRUE/FALSE(assertion_result).
+AssertionResult::AssertionResult(const AssertionResult& other)
+    : success_(other.success_),
+      message_(other.message_.get() != NULL ?
+               new internal::String(*other.message_) :
+               static_cast<internal::String*>(NULL)) {
 }
 
+// Returns the assertion's negation. Used with EXPECT/ASSERT_FALSE.
+AssertionResult AssertionResult::operator!() const {
+  AssertionResult negation(!success_);
+  if (message_.get() != NULL)
+    negation << *message_;
+  return negation;
+}
 
 // Makes a successful assertion result.
 AssertionResult AssertionSuccess() {
-  return AssertionResult();
+  return AssertionResult(true);
 }
 
+// Makes a failed assertion result.
+AssertionResult AssertionFailure() {
+  return AssertionResult(false);
+}
 
 // Makes a failed assertion result with the given failure message.
+// Deprecated; use AssertionFailure() << message.
 AssertionResult AssertionFailure(const Message& message) {
-  return AssertionResult(message.GetString());
+  return AssertionFailure() << message;
 }
 
 namespace internal {
@@ -1008,6 +1032,20 @@ AssertionResult EqFailure(const char* expected_expression,
   return AssertionFailure(msg);
 }
 
+// Constructs a failure message for Boolean assertions such as EXPECT_TRUE.
+String GetBoolAssertionFailureMessage(const AssertionResult& assertion_result,
+                                      const char* expression_text,
+                                      const char* actual_predicate_value,
+                                      const char* expected_predicate_value) {
+  const char* actual_message = assertion_result.message();
+  Message msg;
+  msg << "Value of: " << expression_text
+      << "\n  Actual: " << actual_predicate_value;
+  if (actual_message[0] != '\0')
+    msg << " (" << actual_message << ")";
+  msg << "\nExpected: " << expected_predicate_value;
+  return msg.GetString();
+}
 
 // Helper function for implementing ASSERT_NEAR.
 AssertionResult DoubleNearPredFormat(const char* expr1,
@@ -1286,7 +1324,6 @@ AssertionResult IsNotSubstring(
   return IsSubstringImpl(false, needle_expr, haystack_expr, needle, haystack);
 }
 
-#if GTEST_HAS_STD_STRING
 AssertionResult IsSubstring(
     const char* needle_expr, const char* haystack_expr,
     const ::std::string& needle, const ::std::string& haystack) {
@@ -1298,7 +1335,6 @@ AssertionResult IsNotSubstring(
     const ::std::string& needle, const ::std::string& haystack) {
   return IsSubstringImpl(false, needle_expr, haystack_expr, needle, haystack);
 }
-#endif  // GTEST_HAS_STD_STRING
 
 #if GTEST_HAS_STD_WSTRING
 AssertionResult IsSubstring(
@@ -1718,14 +1754,9 @@ String String::Format(const char * format, ...) {
 // Converts the buffer in a StrStream to a String, converting NUL
 // bytes to "\\0" along the way.
 String StrStreamToString(StrStream* ss) {
-#if GTEST_HAS_STD_STRING
   const ::std::string& str = ss->str();
   const char* const start = str.c_str();
   const char* const end = start + str.length();
-#else
-  const char* const start = ss->str();
-  const char* const end = start + ss->pcount();
-#endif  // GTEST_HAS_STD_STRING
 
   // We need to use a helper StrStream to do this transformation
   // because String doesn't support push_back().
@@ -1738,14 +1769,7 @@ String StrStreamToString(StrStream* ss) {
     }
   }
 
-#if GTEST_HAS_STD_STRING
   return String(helper.str().c_str());
-#else
-  const String str(helper.str(), helper.pcount());
-  helper.freeze(false);
-  ss->freeze(false);
-  return str;
-#endif  // GTEST_HAS_STD_STRING
 }
 
 // Appends the user-supplied message to the Google-Test-generated message.
@@ -1769,9 +1793,7 @@ String AppendUserMessage(const String& gtest_msg,
 
 // Creates an empty TestResult.
 TestResult::TestResult()
-    : test_part_results_(new internal::Vector<TestPartResult>),
-      test_properties_(new internal::Vector<TestProperty>),
-      death_test_count_(0),
+    : death_test_count_(0),
       elapsed_time_(0) {
 }
 
@@ -1783,24 +1805,28 @@ TestResult::~TestResult() {
 // range from 0 to total_part_count() - 1. If i is not in that range,
 // aborts the program.
 const TestPartResult& TestResult::GetTestPartResult(int i) const {
-  return test_part_results_->GetElement(i);
+  if (i < 0 || i >= total_part_count())
+    internal::posix::Abort();
+  return test_part_results_.at(i);
 }
 
 // Returns the i-th test property. i can range from 0 to
 // test_property_count() - 1. If i is not in that range, aborts the
 // program.
 const TestProperty& TestResult::GetTestProperty(int i) const {
-  return test_properties_->GetElement(i);
+  if (i < 0 || i >= test_property_count())
+    internal::posix::Abort();
+  return test_properties_.at(i);
 }
 
 // Clears the test part results.
 void TestResult::ClearTestPartResults() {
-  test_part_results_->Clear();
+  test_part_results_.clear();
 }
 
 // Adds a test part result to the list.
 void TestResult::AddTestPartResult(const TestPartResult& test_part_result) {
-  test_part_results_->PushBack(test_part_result);
+  test_part_results_.push_back(test_part_result);
 }
 
 // Adds a test property to the list. If a property with the same key as the
@@ -1811,11 +1837,11 @@ void TestResult::RecordProperty(const TestProperty& test_property) {
     return;
   }
   internal::MutexLock lock(&test_properites_mutex_);
-  TestProperty* const property_with_matching_key =
-      test_properties_->FindIf(
-          internal::TestPropertyKeyIs(test_property.key()));
-  if (property_with_matching_key == NULL) {
-    test_properties_->PushBack(test_property);
+  const std::vector<TestProperty>::iterator property_with_matching_key =
+      std::find_if(test_properties_.begin(), test_properties_.end(),
+                   internal::TestPropertyKeyIs(test_property.key()));
+  if (property_with_matching_key == test_properties_.end()) {
+    test_properties_.push_back(test_property);
     return;
   }
   property_with_matching_key->SetValue(test_property.value());
@@ -1838,8 +1864,8 @@ bool TestResult::ValidateTestProperty(const TestProperty& test_property) {
 
 // Clears the object.
 void TestResult::Clear() {
-  test_part_results_->Clear();
-  test_properties_->Clear();
+  test_part_results_.clear();
+  test_properties_.clear();
   death_test_count_ = 0;
   elapsed_time_ = 0;
 }
@@ -1860,7 +1886,7 @@ static bool TestPartFatallyFailed(const TestPartResult& result) {
 
 // Returns true iff the test fatally failed.
 bool TestResult::HasFatalFailure() const {
-  return test_part_results_->CountIf(TestPartFatallyFailed) > 0;
+  return CountIf(test_part_results_, TestPartFatallyFailed) > 0;
 }
 
 // Returns true iff the test part non-fatally failed.
@@ -1870,18 +1896,18 @@ static bool TestPartNonfatallyFailed(const TestPartResult& result) {
 
 // Returns true iff the test has a non-fatal failure.
 bool TestResult::HasNonfatalFailure() const {
-  return test_part_results_->CountIf(TestPartNonfatallyFailed) > 0;
+  return CountIf(test_part_results_, TestPartNonfatallyFailed) > 0;
 }
 
 // Gets the number of all test parts.  This is the sum of the number
 // of successful test parts and the number of failed test parts.
 int TestResult::total_part_count() const {
-  return test_part_results_->size();
+  return static_cast<int>(test_part_results_.size());
 }
 
 // Returns the number of the test properties.
 int TestResult::test_property_count() const {
-  return test_properties_->size();
+  return static_cast<int>(test_properties_.size());
 }
 
 // class Test
@@ -1965,7 +1991,7 @@ bool Test::HasSameFixtureClass() {
 
   // Info about the first test in the current test case.
   const internal::TestInfoImpl* const first_test_info =
-      test_case->test_info_list().GetElement(0)->impl();
+      test_case->test_info_list()[0]->impl();
   const internal::TypeId first_fixture_id = first_test_info->fixture_class_id();
   const char* const first_test_name = first_test_info->name();
 
@@ -2093,14 +2119,14 @@ bool Test::HasNonfatalFailure() {
 
 // Constructs a TestInfo object. It assumes ownership of the test factory
 // object via impl_.
-TestInfo::TestInfo(const char* test_case_name,
-                   const char* name,
-                   const char* test_case_comment,
-                   const char* comment,
+TestInfo::TestInfo(const char* a_test_case_name,
+                   const char* a_name,
+                   const char* a_test_case_comment,
+                   const char* a_comment,
                    internal::TypeId fixture_class_id,
                    internal::TestFactoryBase* factory) {
-  impl_ = new internal::TestInfoImpl(this, test_case_name, name,
-                                     test_case_comment, comment,
+  impl_ = new internal::TestInfoImpl(this, a_test_case_name, a_name,
+                                     a_test_case_comment, a_comment,
                                      fixture_class_id, factory);
 }
 
@@ -2309,26 +2335,26 @@ void TestInfoImpl::Run() {
 
 // Gets the number of successful tests in this test case.
 int TestCase::successful_test_count() const {
-  return test_info_list_->CountIf(TestPassed);
+  return CountIf(test_info_list_, TestPassed);
 }
 
 // Gets the number of failed tests in this test case.
 int TestCase::failed_test_count() const {
-  return test_info_list_->CountIf(TestFailed);
+  return CountIf(test_info_list_, TestFailed);
 }
 
 int TestCase::disabled_test_count() const {
-  return test_info_list_->CountIf(TestDisabled);
+  return CountIf(test_info_list_, TestDisabled);
 }
 
 // Get the number of tests in this test case that should run.
 int TestCase::test_to_run_count() const {
-  return test_info_list_->CountIf(ShouldRunTest);
+  return CountIf(test_info_list_, ShouldRunTest);
 }
 
 // Gets the number of all tests.
 int TestCase::total_test_count() const {
-  return test_info_list_->size();
+  return static_cast<int>(test_info_list_.size());
 }
 
 // Creates a TestCase with the given name.
@@ -2338,13 +2364,11 @@ int TestCase::total_test_count() const {
 //   name:         name of the test case
 //   set_up_tc:    pointer to the function that sets up the test case
 //   tear_down_tc: pointer to the function that tears down the test case
-TestCase::TestCase(const char* name, const char* comment,
+TestCase::TestCase(const char* a_name, const char* a_comment,
                    Test::SetUpTestCaseFunc set_up_tc,
                    Test::TearDownTestCaseFunc tear_down_tc)
-    : name_(name),
-      comment_(comment),
-      test_info_list_(new internal::Vector<TestInfo*>),
-      test_indices_(new internal::Vector<int>),
+    : name_(a_name),
+      comment_(a_comment),
       set_up_tc_(set_up_tc),
       tear_down_tc_(tear_down_tc),
       should_run_(false),
@@ -2354,28 +2378,28 @@ TestCase::TestCase(const char* name, const char* comment,
 // Destructor of TestCase.
 TestCase::~TestCase() {
   // Deletes every Test in the collection.
-  test_info_list_->ForEach(internal::Delete<TestInfo>);
+  ForEach(test_info_list_, internal::Delete<TestInfo>);
 }
 
 // Returns the i-th test among all the tests. i can range from 0 to
 // total_test_count() - 1. If i is not in that range, returns NULL.
 const TestInfo* TestCase::GetTestInfo(int i) const {
-  const int index = test_indices_->GetElementOr(i, -1);
-  return index < 0 ? NULL : test_info_list_->GetElement(index);
+  const int index = GetElementOr(test_indices_, i, -1);
+  return index < 0 ? NULL : test_info_list_[index];
 }
 
 // Returns the i-th test among all the tests. i can range from 0 to
 // total_test_count() - 1. If i is not in that range, returns NULL.
 TestInfo* TestCase::GetMutableTestInfo(int i) {
-  const int index = test_indices_->GetElementOr(i, -1);
-  return index < 0 ? NULL : test_info_list_->GetElement(index);
+  const int index = GetElementOr(test_indices_, i, -1);
+  return index < 0 ? NULL : test_info_list_[index];
 }
 
 // Adds a test to this test case.  Will delete the test upon
 // destruction of the TestCase object.
 void TestCase::AddTestInfo(TestInfo * test_info) {
-  test_info_list_->PushBack(test_info);
-  test_indices_->PushBack(test_indices_->size());
+  test_info_list_.push_back(test_info);
+  test_indices_.push_back(static_cast<int>(test_indices_.size()));
 }
 
 // Runs every test in this TestCase.
@@ -2405,7 +2429,7 @@ void TestCase::Run() {
 
 // Clears the results of all tests in this test case.
 void TestCase::ClearResult() {
-  test_info_list_->ForEach(internal::TestInfoImpl::ClearTestResult);
+  ForEach(test_info_list_, internal::TestInfoImpl::ClearTestResult);
 }
 
 // Returns true iff test passed.
@@ -2432,13 +2456,13 @@ bool TestCase::ShouldRunTest(const TestInfo *test_info) {
 
 // Shuffles the tests in this test case.
 void TestCase::ShuffleTests(internal::Random* random) {
-  test_indices_->Shuffle(random);
+  Shuffle(random, &test_indices_);
 }
 
 // Restores the test order to before the first shuffle.
 void TestCase::UnshuffleTests() {
-  for (int i = 0; i < test_indices_->size(); i++) {
-    test_indices_->GetMutableElement(i) = i;
+  for (size_t i = 0; i < test_indices_.size(); i++) {
+    test_indices_[i] = static_cast<int>(i);
   }
 }
 
@@ -2614,10 +2638,15 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...) {
   GetConsoleScreenBufferInfo(stdout_handle, &buffer_info);
   const WORD old_color_attrs = buffer_info.wAttributes;
 
+  // We need to flush the stream buffers into the console before each
+  // SetConsoleTextAttribute call lest it affect the text that is already
+  // printed but has not yet reached the console.
+  fflush(stdout);
   SetConsoleTextAttribute(stdout_handle,
                           GetColorAttribute(color) | FOREGROUND_INTENSITY);
   vprintf(fmt, args);
 
+  fflush(stdout);
   // Restores the text color.
   SetConsoleTextAttribute(stdout_handle, old_color_attrs);
 #else
@@ -2880,26 +2909,24 @@ class TestEventRepeater : public TestEventListener {
   // in death test child processes.
   bool forwarding_enabled_;
   // The list of listeners that receive events.
-  Vector<TestEventListener*> listeners_;
+  std::vector<TestEventListener*> listeners_;
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(TestEventRepeater);
 };
 
 TestEventRepeater::~TestEventRepeater() {
-  for (int i = 0; i < listeners_.size(); i++) {
-    delete listeners_.GetElement(i);
-  }
+  ForEach(listeners_, Delete<TestEventListener>);
 }
 
 void TestEventRepeater::Append(TestEventListener *listener) {
-  listeners_.PushBack(listener);
+  listeners_.push_back(listener);
 }
 
 // TODO(vladl@google.com): Factor the search functionality into Vector::Find.
 TestEventListener* TestEventRepeater::Release(TestEventListener *listener) {
-  for (int i = 0; i < listeners_.size(); ++i) {
-    if (listeners_.GetElement(i) == listener) {
-      listeners_.Erase(i);
+  for (size_t i = 0; i < listeners_.size(); ++i) {
+    if (listeners_[i] == listener) {
+      listeners_.erase(listeners_.begin() + i);
       return listener;
     }
   }
@@ -2912,8 +2939,8 @@ TestEventListener* TestEventRepeater::Release(TestEventListener *listener) {
 #define GTEST_REPEATER_METHOD_(Name, Type) \
 void TestEventRepeater::Name(const Type& parameter) { \
   if (forwarding_enabled_) { \
-    for (int i = 0; i < listeners_.size(); i++) { \
-      listeners_.GetElement(i)->Name(parameter); \
+    for (size_t i = 0; i < listeners_.size(); i++) { \
+      listeners_[i]->Name(parameter); \
     } \
   } \
 }
@@ -2923,7 +2950,7 @@ void TestEventRepeater::Name(const Type& parameter) { \
 void TestEventRepeater::Name(const Type& parameter) { \
   if (forwarding_enabled_) { \
     for (int i = static_cast<int>(listeners_.size()) - 1; i >= 0; i--) { \
-      listeners_.GetElement(i)->Name(parameter); \
+      listeners_[i]->Name(parameter); \
     } \
   } \
 }
@@ -2946,8 +2973,8 @@ GTEST_REVERSE_REPEATER_METHOD_(OnTestProgramEnd, UnitTest)
 void TestEventRepeater::OnTestIterationStart(const UnitTest& unit_test,
                                              int iteration) {
   if (forwarding_enabled_) {
-    for (int i = 0; i < listeners_.size(); i++) {
-      listeners_.GetElement(i)->OnTestIterationStart(unit_test, iteration);
+    for (size_t i = 0; i < listeners_.size(); i++) {
+      listeners_[i]->OnTestIterationStart(unit_test, iteration);
     }
   }
 }
@@ -2956,7 +2983,7 @@ void TestEventRepeater::OnTestIterationEnd(const UnitTest& unit_test,
                                            int iteration) {
   if (forwarding_enabled_) {
     for (int i = static_cast<int>(listeners_.size()) - 1; i >= 0; i--) {
-      listeners_.GetElement(i)->OnTestIterationEnd(unit_test, iteration);
+      listeners_[i]->OnTestIterationEnd(unit_test, iteration);
     }
   }
 }
@@ -3152,14 +3179,11 @@ String XmlUnitTestResultPrinter::RemoveInvalidXmlCharacters(const char* str) {
 //   </testsuite>
 // </testsuites>
 
-// Formats the given time in milliseconds as seconds.  The returned
-// C-string is owned by this function and cannot be released by the
-// caller.  Calling the function again invalidates the previous
-// result.
-const char* FormatTimeInMillisAsSeconds(TimeInMillis ms) {
-  static String str;
-  str = (Message() << (ms/1000.0)).GetString();
-  return str.c_str();
+// Formats the given time in milliseconds as seconds.
+std::string FormatTimeInMillisAsSeconds(TimeInMillis ms) {
+  ::std::stringstream ss;
+  ss << ms/1000.0;
+  return ss.str();
 }
 
 // Streams an XML CDATA section, escaping invalid CDATA sequences as needed.
@@ -3170,7 +3194,8 @@ void XmlUnitTestResultPrinter::OutputXmlCDataSection(::std::ostream* stream,
   for (;;) {
     const char* const next_segment = strstr(segment, "]]>");
     if (next_segment != NULL) {
-      stream->write(segment, next_segment - segment);
+      stream->write(
+          segment, static_cast<std::streamsize>(next_segment - segment));
       *stream << "]]>]]&gt;<![CDATA[";
       segment = next_segment + strlen("]]>");
     } else {
@@ -3232,7 +3257,7 @@ void XmlUnitTestResultPrinter::PrintXmlTestCase(FILE* out,
           test_case.disabled_test_count());
   fprintf(out,
           "errors=\"0\" time=\"%s\">\n",
-          FormatTimeInMillisAsSeconds(test_case.elapsed_time()));
+          FormatTimeInMillisAsSeconds(test_case.elapsed_time()).c_str());
   for (int i = 0; i < test_case.total_test_count(); ++i) {
     StrStream stream;
     OutputXmlTestInfo(&stream, test_case.name(), *test_case.GetTestInfo(i));
@@ -3251,7 +3276,7 @@ void XmlUnitTestResultPrinter::PrintXmlUnitTest(FILE* out,
           unit_test.total_test_count(),
           unit_test.failed_test_count(),
           unit_test.disabled_test_count(),
-          FormatTimeInMillisAsSeconds(unit_test.elapsed_time()));
+          FormatTimeInMillisAsSeconds(unit_test.elapsed_time()).c_str());
   if (GTEST_FLAG(shuffle)) {
     fprintf(out, "random_seed=\"%d\" ", unit_test.random_seed());
   }
@@ -3512,8 +3537,7 @@ Environment* UnitTest::AddEnvironment(Environment* env) {
     return NULL;
   }
 
-  impl_->environments()->PushBack(env);
-  impl_->environments_in_reverse_order()->PushFront(env);
+  impl_->environments().push_back(env);
   return env;
 }
 
@@ -3544,12 +3568,12 @@ void UnitTest::AddTestPartResult(TestPartResult::Type result_type,
   msg << message;
 
   internal::MutexLock lock(&mutex_);
-  if (impl_->gtest_trace_stack()->size() > 0) {
+  if (impl_->gtest_trace_stack().size() > 0) {
     msg << "\n" << GTEST_NAME_ << " trace:";
 
-    for (int i = 0; i < impl_->gtest_trace_stack()->size(); i++) {
-      const internal::TraceInfo& trace =
-          impl_->gtest_trace_stack()->GetElement(i);
+    for (int i = static_cast<int>(impl_->gtest_trace_stack().size());
+         i > 0; --i) {
+      const internal::TraceInfo& trace = impl_->gtest_trace_stack()[i - 1];
       msg << "\n" << internal::FormatFileLocation(trace.file, trace.line)
           << " " << trace.message;
     }
@@ -3714,14 +3738,14 @@ UnitTest::~UnitTest() {
 // L < mutex_
 void UnitTest::PushGTestTrace(const internal::TraceInfo& trace) {
   internal::MutexLock lock(&mutex_);
-  impl_->gtest_trace_stack()->PushFront(trace);
+  impl_->gtest_trace_stack().push_back(trace);
 }
 
 // Pops a trace from the per-thread Google Test trace stack.
 // L < mutex_
 void UnitTest::PopGTestTrace() {
   internal::MutexLock lock(&mutex_);
-  impl_->gtest_trace_stack()->PopFront(NULL);
+  impl_->gtest_trace_stack().pop_back();
 }
 
 namespace internal {
@@ -3767,10 +3791,10 @@ UnitTestImpl::UnitTestImpl(UnitTest* parent)
 
 UnitTestImpl::~UnitTestImpl() {
   // Deletes every TestCase.
-  test_cases_.ForEach(internal::Delete<TestCase>);
+  ForEach(test_cases_, internal::Delete<TestCase>);
 
   // Deletes every Environment.
-  environments_.ForEach(internal::Delete<Environment>);
+  ForEach(environments_, internal::Delete<Environment>);
 
   delete os_stack_trace_getter_;
 }
@@ -3862,9 +3886,11 @@ TestCase* UnitTestImpl::GetTestCase(const char* test_case_name,
                                     Test::SetUpTestCaseFunc set_up_tc,
                                     Test::TearDownTestCaseFunc tear_down_tc) {
   // Can we find a TestCase with the given name?
-  TestCase** test_case = test_cases_.FindIf(TestCaseNameIs(test_case_name));
+  const std::vector<TestCase*>::const_iterator test_case =
+      std::find_if(test_cases_.begin(), test_cases_.end(),
+                   TestCaseNameIs(test_case_name));
 
-  if (test_case != NULL)
+  if (test_case != test_cases_.end())
     return *test_case;
 
   // No.  Let's create one.
@@ -3878,18 +3904,20 @@ TestCase* UnitTestImpl::GetTestCase(const char* test_case_name,
     // defined so far.  This only works when the test cases haven't
     // been shuffled.  Otherwise we may end up running a death test
     // after a non-death test.
-    test_cases_.Insert(new_test_case, ++last_death_test_case_);
+    ++last_death_test_case_;
+    test_cases_.insert(test_cases_.begin() + last_death_test_case_,
+                       new_test_case);
   } else {
     // No.  Appends to the end of the list.
-    test_cases_.PushBack(new_test_case);
+    test_cases_.push_back(new_test_case);
   }
 
-  test_case_indices_.PushBack(test_case_indices_.size());
+  test_case_indices_.push_back(static_cast<int>(test_case_indices_.size()));
   return new_test_case;
 }
 
 // Helpers for setting up / tearing down the given environment.  They
-// are for use in the Vector::ForEach() method.
+// are for use in the ForEach() function.
 static void SetUpEnvironment(Environment* env) { env->SetUp(); }
 static void TearDownEnvironment(Environment* env) { env->TearDown(); }
 
@@ -3985,20 +4013,22 @@ int UnitTestImpl::RunAllTests() {
     if (has_tests_to_run) {
       // Sets up all environments beforehand.
       repeater->OnEnvironmentsSetUpStart(*parent_);
-      environments_.ForEach(SetUpEnvironment);
+      ForEach(environments_, SetUpEnvironment);
       repeater->OnEnvironmentsSetUpEnd(*parent_);
 
       // Runs the tests only if there was no fatal failure during global
       // set-up.
       if (!Test::HasFatalFailure()) {
-        for (int i = 0; i < total_test_case_count(); i++) {
-          GetMutableTestCase(i)->Run();
+        for (int test_index = 0; test_index < total_test_case_count();
+             test_index++) {
+          GetMutableTestCase(test_index)->Run();
         }
       }
 
       // Tears down all environments in reverse order afterwards.
       repeater->OnEnvironmentsTearDownStart(*parent_);
-      environments_in_reverse_order_.ForEach(TearDownEnvironment);
+      std::for_each(environments_.rbegin(), environments_.rend(),
+                    TearDownEnvironment);
       repeater->OnEnvironmentsTearDownEnd(*parent_);
     }
 
@@ -4144,13 +4174,13 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
   // this shard.
   int num_runnable_tests = 0;
   int num_selected_tests = 0;
-  for (int i = 0; i < test_cases_.size(); i++) {
-    TestCase* const test_case = test_cases_.GetElement(i);
+  for (size_t i = 0; i < test_cases_.size(); i++) {
+    TestCase* const test_case = test_cases_[i];
     const String &test_case_name = test_case->name();
     test_case->set_should_run(false);
 
-    for (int j = 0; j < test_case->test_info_list().size(); j++) {
-      TestInfo* const test_info = test_case->test_info_list().GetElement(j);
+    for (size_t j = 0; j < test_case->test_info_list().size(); j++) {
+      TestInfo* const test_info = test_case->test_info_list()[j];
       const String test_name(test_info->name());
       // A test is disabled if test case name or test name matches
       // kDisableTestFilter.
@@ -4187,13 +4217,13 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
 
 // Prints the names of the tests matching the user-specified filter flag.
 void UnitTestImpl::ListTestsMatchingFilter() {
-  for (int i = 0; i < test_cases_.size(); i++) {
-    const TestCase* const test_case = test_cases_.GetElement(i);
+  for (size_t i = 0; i < test_cases_.size(); i++) {
+    const TestCase* const test_case = test_cases_[i];
     bool printed_test_case_name = false;
 
-    for (int j = 0; j < test_case->test_info_list().size(); j++) {
+    for (size_t j = 0; j < test_case->test_info_list().size(); j++) {
       const TestInfo* const test_info =
-          test_case->test_info_list().GetElement(j);
+          test_case->test_info_list()[j];
       if (test_info->matches_filter()) {
         if (!printed_test_case_name) {
           printed_test_case_name = true;
@@ -4241,43 +4271,43 @@ TestResult* UnitTestImpl::current_test_result() {
 // making sure that death tests are still run first.
 void UnitTestImpl::ShuffleTests() {
   // Shuffles the death test cases.
-  test_case_indices_.ShuffleRange(random(), 0, last_death_test_case_ + 1);
+  ShuffleRange(random(), 0, last_death_test_case_ + 1, &test_case_indices_);
 
   // Shuffles the non-death test cases.
-  test_case_indices_.ShuffleRange(random(), last_death_test_case_ + 1,
-                                  test_cases_.size());
+  ShuffleRange(random(), last_death_test_case_ + 1,
+               static_cast<int>(test_cases_.size()), &test_case_indices_);
 
   // Shuffles the tests inside each test case.
-  for (int i = 0; i < test_cases_.size(); i++) {
-    test_cases_.GetElement(i)->ShuffleTests(random());
+  for (size_t i = 0; i < test_cases_.size(); i++) {
+    test_cases_[i]->ShuffleTests(random());
   }
 }
 
 // Restores the test cases and tests to their order before the first shuffle.
 void UnitTestImpl::UnshuffleTests() {
-  for (int i = 0; i < test_cases_.size(); i++) {
+  for (size_t i = 0; i < test_cases_.size(); i++) {
     // Unshuffles the tests in each test case.
-    test_cases_.GetElement(i)->UnshuffleTests();
+    test_cases_[i]->UnshuffleTests();
     // Resets the index of each test case.
-    test_case_indices_.GetMutableElement(i) = i;
+    test_case_indices_[i] = static_cast<int>(i);
   }
 }
 
 // TestInfoImpl constructor. The new instance assumes ownership of the test
 // factory object.
 TestInfoImpl::TestInfoImpl(TestInfo* parent,
-                           const char* test_case_name,
-                           const char* name,
-                           const char* test_case_comment,
-                           const char* comment,
-                           TypeId fixture_class_id,
+                           const char* a_test_case_name,
+                           const char* a_name,
+                           const char* a_test_case_comment,
+                           const char* a_comment,
+                           TypeId a_fixture_class_id,
                            internal::TestFactoryBase* factory) :
     parent_(parent),
-    test_case_name_(String(test_case_name)),
-    name_(String(name)),
-    test_case_comment_(String(test_case_comment)),
-    comment_(String(comment)),
-    fixture_class_id_(fixture_class_id),
+    test_case_name_(String(a_test_case_name)),
+    name_(String(a_name)),
+    test_case_comment_(String(a_test_case_comment)),
+    comment_(String(a_comment)),
+    fixture_class_id_(a_fixture_class_id),
     should_run_(false),
     is_disabled_(false),
     matches_filter_(false),
@@ -4322,6 +4352,18 @@ bool AlwaysTrue() {
     throw ClassUniqueToAlwaysTrue();
 #endif  // GTEST_HAS_EXCEPTIONS
   return true;
+}
+
+// If *pstr starts with the given prefix, modifies *pstr to be right
+// past the prefix and returns true; otherwise leaves *pstr unchanged
+// and returns false.  None of pstr, *pstr, and prefix can be NULL.
+bool SkipPrefix(const char* prefix, const char** pstr) {
+  const size_t prefix_len = strlen(prefix);
+  if (strncmp(*pstr, prefix, prefix_len) == 0) {
+    *pstr += prefix_len;
+    return true;
+  }
+  return false;
 }
 
 // Parses a string as a command line flag.  The string should have
@@ -4411,6 +4453,21 @@ bool ParseStringFlag(const char* str, const char* flag, String* value) {
   // Sets *value to the value of the flag.
   *value = value_str;
   return true;
+}
+
+// Determines whether a string has a prefix that Google Test uses for its
+// flags, i.e., starts with GTEST_FLAG_PREFIX_ or GTEST_FLAG_PREFIX_DASH_.
+// If Google Test detects that a command line flag has its prefix but is not
+// recognized, it will print its help message. Flags starting with
+// GTEST_INTERNAL_PREFIX_ followed by "internal_" are considered Google Test
+// internal flags and do not trigger the help message.
+static bool HasGoogleTestFlagPrefix(const char* str) {
+  return (SkipPrefix("--", &str) ||
+          SkipPrefix("-", &str) ||
+          SkipPrefix("/", &str)) &&
+         !SkipPrefix(GTEST_FLAG_PREFIX_ "internal_", &str) &&
+         (SkipPrefix(GTEST_FLAG_PREFIX_, &str) ||
+          SkipPrefix(GTEST_FLAG_PREFIX_DASH_, &str));
 }
 
 // Prints a string containing code-encoded text.  The following escape
@@ -4553,6 +4610,8 @@ void ParseGoogleTestFlagsOnlyImpl(int* argc, CharType** argv) {
         ParseInt32Flag(arg, kRandomSeedFlag, &GTEST_FLAG(random_seed)) ||
         ParseInt32Flag(arg, kRepeatFlag, &GTEST_FLAG(repeat)) ||
         ParseBoolFlag(arg, kShuffleFlag, &GTEST_FLAG(shuffle)) ||
+        ParseInt32Flag(arg, kStackTraceDepthFlag,
+                       &GTEST_FLAG(stack_trace_depth)) ||
         ParseBoolFlag(arg, kThrowOnFailureFlag, &GTEST_FLAG(throw_on_failure))
         ) {
       // Yes.  Shift the remainder of the argv list left by one.  Note
@@ -4570,7 +4629,10 @@ void ParseGoogleTestFlagsOnlyImpl(int* argc, CharType** argv) {
       // an element.
       i--;
     } else if (arg_string == "--help" || arg_string == "-h" ||
-               arg_string == "-?" || arg_string == "/?") {
+               arg_string == "-?" || arg_string == "/?" ||
+               HasGoogleTestFlagPrefix(arg)) {
+      // Both help flag and unrecognized Google Test flags (excluding
+      // internal ones) trigger help display.
       g_help_flag = true;
     }
   }

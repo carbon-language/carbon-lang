@@ -68,8 +68,10 @@ namespace internal {
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 // MSVC and C++Builder do not provide a definition of STDERR_FILENO.
+const int kStdOutFileno = 1;
 const int kStdErrFileno = 2;
 #else
+const int kStdOutFileno = STDOUT_FILENO;
 const int kStdErrFileno = STDERR_FILENO;
 #endif  // _MSC_VER
 
@@ -109,8 +111,14 @@ size_t GetThreadCount() {
 // Implements RE.  Currently only needed for death tests.
 
 RE::~RE() {
-  regfree(&partial_regex_);
-  regfree(&full_regex_);
+  if (is_valid_) {
+    // regfree'ing an invalid regex might crash because the content
+    // of the regex is undefined. Since the regex's are essentially
+    // the same, one cannot be valid (or invalid) without the other
+    // being so too.
+    regfree(&partial_regex_);
+    regfree(&full_regex_);
+  }
   free(const_cast<char*>(pattern_));
 }
 
@@ -150,9 +158,10 @@ void RE::Init(const char* regex) {
   // Some implementation of POSIX regex (e.g. on at least some
   // versions of Cygwin) doesn't accept the empty string as a valid
   // regex.  We change it to an equivalent form "()" to be safe.
-  const char* const partial_regex = (*regex == '\0') ? "()" : regex;
-  is_valid_ = (regcomp(&partial_regex_, partial_regex, REG_EXTENDED) == 0)
-      && is_valid_;
+  if (is_valid_) {
+    const char* const partial_regex = (*regex == '\0') ? "()" : regex;
+    is_valid_ = regcomp(&partial_regex_, partial_regex, REG_EXTENDED) == 0;
+  }
   EXPECT_TRUE(is_valid_)
       << "Regular expression \"" << regex
       << "\" is not a valid POSIX Extended regular expression.";
@@ -439,81 +448,83 @@ GTestLog::~GTestLog() {
 #pragma warning(disable: 4996)
 #endif  // _MSC_VER
 
-// Defines the stderr capturer.
+#if GTEST_HAS_STREAM_REDIRECTION_
 
-class CapturedStderr {
+// Object that captures an output stream (stdout/stderr).
+class CapturedStream {
  public:
-  // The ctor redirects stderr to a temporary file.
-  CapturedStderr() {
-#if GTEST_OS_WINDOWS_MOBILE
-    // Not supported on Windows CE.
-    posix::Abort();
-#else
-    uncaptured_fd_ = dup(kStdErrFileno);
-
+  // The ctor redirects the stream to a temporary file.
+  CapturedStream(int fd) : fd_(fd), uncaptured_fd_(dup(fd)) {
 #if GTEST_OS_WINDOWS
     char temp_dir_path[MAX_PATH + 1] = { '\0' };  // NOLINT
     char temp_file_path[MAX_PATH + 1] = { '\0' };  // NOLINT
 
     ::GetTempPathA(sizeof(temp_dir_path), temp_dir_path);
-    ::GetTempFileNameA(temp_dir_path, "gtest_redir", 0, temp_file_path);
+    const UINT success = ::GetTempFileNameA(temp_dir_path,
+                                            "gtest_redir",
+                                            0,  // Generate unique file name.
+                                            temp_file_path);
+    GTEST_CHECK_(success != 0)
+        << "Unable to create a temporary file in " << temp_dir_path;
     const int captured_fd = creat(temp_file_path, _S_IREAD | _S_IWRITE);
+    GTEST_CHECK_(captured_fd != -1) << "Unable to open temporary file "
+                                    << temp_file_path;
     filename_ = temp_file_path;
 #else
     // There's no guarantee that a test has write access to the
     // current directory, so we create the temporary file in the /tmp
     // directory instead.
-    char name_template[] = "/tmp/captured_stderr.XXXXXX";
+    char name_template[] = "/tmp/captured_stream.XXXXXX";
     const int captured_fd = mkstemp(name_template);
     filename_ = name_template;
 #endif  // GTEST_OS_WINDOWS
     fflush(NULL);
-    dup2(captured_fd, kStdErrFileno);
+    dup2(captured_fd, fd_);
     close(captured_fd);
-#endif  // GTEST_OS_WINDOWS_MOBILE
   }
 
-  ~CapturedStderr() {
-#if !GTEST_OS_WINDOWS_MOBILE
+  ~CapturedStream() {
     remove(filename_.c_str());
-#endif  // !GTEST_OS_WINDOWS_MOBILE
   }
 
-  // Stops redirecting stderr.
-  void StopCapture() {
-#if !GTEST_OS_WINDOWS_MOBILE
-    // Restores the original stream.
-    fflush(NULL);
-    dup2(uncaptured_fd_, kStdErrFileno);
-    close(uncaptured_fd_);
-    uncaptured_fd_ = -1;
-#endif  // !GTEST_OS_WINDOWS_MOBILE
-  }
+  String GetCapturedString() {
+    if (uncaptured_fd_ != -1) {
+      // Restores the original stream.
+      fflush(NULL);
+      dup2(uncaptured_fd_, fd_);
+      close(uncaptured_fd_);
+      uncaptured_fd_ = -1;
+    }
 
-  // Returns the name of the temporary file holding the stderr output.
-  // GTEST_HAS_DEATH_TEST implies that we have ::std::string, so we
-  // can use it here.
-  ::std::string filename() const { return filename_; }
+    FILE* const file = posix::FOpen(filename_.c_str(), "r");
+    const String content = ReadEntireFile(file);
+    posix::FClose(file);
+    return content;
+  }
 
  private:
+  // Reads the entire content of a file as a String.
+  static String ReadEntireFile(FILE* file);
+
+  // Returns the size (in bytes) of a file.
+  static size_t GetFileSize(FILE* file);
+
+  const int fd_;  // A stream to capture.
   int uncaptured_fd_;
+  // Name of the temporary file holding the stderr output.
   ::std::string filename_;
+
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(CapturedStream);
 };
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif  // _MSC_VER
-
-static CapturedStderr* g_captured_stderr = NULL;
-
 // Returns the size (in bytes) of a file.
-static size_t GetFileSize(FILE * file) {
+size_t CapturedStream::GetFileSize(FILE* file) {
   fseek(file, 0, SEEK_END);
   return static_cast<size_t>(ftell(file));
 }
 
 // Reads the entire content of a file as a string.
-static String ReadEntireFile(FILE * file) {
+String CapturedStream::ReadEntireFile(FILE* file) {
   const size_t file_size = GetFileSize(file);
   char* const buffer = new char[file_size];
 
@@ -535,29 +546,49 @@ static String ReadEntireFile(FILE * file) {
   return content;
 }
 
-// Starts capturing stderr.
-void CaptureStderr() {
-  if (g_captured_stderr != NULL) {
-    GTEST_LOG_(FATAL) << "Only one stderr capturer can exist at one time.";
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif  // _MSC_VER
+
+static CapturedStream* g_captured_stderr = NULL;
+static CapturedStream* g_captured_stdout = NULL;
+
+// Starts capturing an output stream (stdout/stderr).
+void CaptureStream(int fd, const char* stream_name, CapturedStream** stream) {
+  if (*stream != NULL) {
+    GTEST_LOG_(FATAL) << "Only one " << stream_name
+                      << " capturer can exist at a time.";
   }
-  g_captured_stderr = new CapturedStderr;
+  *stream = new CapturedStream(fd);
 }
 
-// Stops capturing stderr and returns the captured string.
-// GTEST_HAS_DEATH_TEST implies that we have ::std::string, so we can
-// use it here.
-String GetCapturedStderr() {
-  g_captured_stderr->StopCapture();
+// Stops capturing the output stream and returns the captured string.
+String GetCapturedStream(CapturedStream** captured_stream) {
+  const String content = (*captured_stream)->GetCapturedString();
 
-  FILE* const file = posix::FOpen(g_captured_stderr->filename().c_str(), "r");
-  const String content = ReadEntireFile(file);
-  posix::FClose(file);
-
-  delete g_captured_stderr;
-  g_captured_stderr = NULL;
+  delete *captured_stream;
+  *captured_stream = NULL;
 
   return content;
 }
+
+// Starts capturing stdout.
+void CaptureStdout() {
+  CaptureStream(kStdOutFileno, "stdout", &g_captured_stdout);
+}
+
+// Starts capturing stderr.
+void CaptureStderr() {
+  CaptureStream(kStdErrFileno, "stderr", &g_captured_stderr);
+}
+
+// Stops capturing stdout and returns the captured string.
+String GetCapturedStdout() { return GetCapturedStream(&g_captured_stdout); }
+
+// Stops capturing stderr and returns the captured string.
+String GetCapturedStderr() { return GetCapturedStream(&g_captured_stderr); }
+
+#endif  // GTEST_HAS_STREAM_REDIRECTION_
 
 #if GTEST_HAS_DEATH_TEST
 

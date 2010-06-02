@@ -134,14 +134,13 @@ struct TraceInfo;                      // Information about a trace point.
 class ScopedTrace;                     // Implements scoped trace.
 class TestInfoImpl;                    // Opaque implementation of TestInfo
 class UnitTestImpl;                    // Opaque implementation of UnitTest
-template <typename E> class Vector;    // A generic vector.
 
 // How many times InitGoogleTest() has been called.
 extern int g_init_gtest_count;
 
 // The text used in failure messages to indicate the start of the
 // stack trace.
-extern const char kStackTraceMarker[];
+GTEST_API_ extern const char kStackTraceMarker[];
 
 // A secret type that Google Test users don't know about.  It has no
 // definition on purpose.  Therefore it's impossible to create a
@@ -168,24 +167,21 @@ char (&IsNullLiteralHelper(...))[2];  // NOLINT
 // A compile-time bool constant that is true if and only if x is a
 // null pointer literal (i.e. NULL or any 0-valued compile-time
 // integral constant).
-#ifdef GTEST_ELLIPSIS_NEEDS_COPY_
-// Passing non-POD classes through ellipsis (...) crashes the ARM
-// compiler.  The Nokia Symbian and the IBM XL C/C++ compiler try to
-// instantiate a copy constructor for objects passed through ellipsis
-// (...), failing for uncopyable objects.  Hence we define this to
-// false (and lose support for NULL detection).
+#ifdef GTEST_ELLIPSIS_NEEDS_POD_
+// We lose support for NULL detection where the compiler doesn't like
+// passing non-POD classes through ellipsis (...).
 #define GTEST_IS_NULL_LITERAL_(x) false
 #else
 #define GTEST_IS_NULL_LITERAL_(x) \
     (sizeof(::testing::internal::IsNullLiteralHelper(x)) == 1)
-#endif  // GTEST_ELLIPSIS_NEEDS_COPY_
+#endif  // GTEST_ELLIPSIS_NEEDS_POD_
 
 // Appends the user-supplied message to the Google-Test-generated message.
-String AppendUserMessage(const String& gtest_msg,
-                         const Message& user_msg);
+GTEST_API_ String AppendUserMessage(const String& gtest_msg,
+                                    const Message& user_msg);
 
 // A helper class for creating scoped traces in user programs.
-class ScopedTrace {
+class GTEST_API_ ScopedTrace {
  public:
   // The c'tor pushes the given source file location and message onto
   // a trace stack maintained by Google Test.
@@ -264,8 +260,8 @@ inline String FormatForFailureMessage(T* pointer) {
 #endif  // GTEST_NEEDS_IS_POINTER_
 
 // These overloaded versions handle narrow and wide characters.
-String FormatForFailureMessage(char ch);
-String FormatForFailureMessage(wchar_t wchar);
+GTEST_API_ String FormatForFailureMessage(char ch);
+GTEST_API_ String FormatForFailureMessage(wchar_t wchar);
 
 // When this operand is a const char* or char*, and the other operand
 // is a ::std::string or ::string, we print this operand as a C string
@@ -282,9 +278,7 @@ inline String FormatForComparisonFailureMessage(\
   return operand1_printer(str);\
 }
 
-#if GTEST_HAS_STD_STRING
 GTEST_FORMAT_IMPL_(::std::string, String::ShowCStringQuoted)
-#endif  // GTEST_HAS_STD_STRING
 #if GTEST_HAS_STD_WSTRING
 GTEST_FORMAT_IMPL_(::std::wstring, String::ShowWideCStringQuoted)
 #endif  // GTEST_HAS_STD_WSTRING
@@ -313,12 +307,18 @@ GTEST_FORMAT_IMPL_(::wstring, String::ShowWideCStringQuoted)
 // The ignoring_case parameter is true iff the assertion is a
 // *_STRCASEEQ*.  When it's true, the string " (ignoring case)" will
 // be inserted into the message.
-AssertionResult EqFailure(const char* expected_expression,
-                          const char* actual_expression,
-                          const String& expected_value,
-                          const String& actual_value,
-                          bool ignoring_case);
+GTEST_API_ AssertionResult EqFailure(const char* expected_expression,
+                                     const char* actual_expression,
+                                     const String& expected_value,
+                                     const String& actual_value,
+                                     bool ignoring_case);
 
+// Constructs a failure message for Boolean assertions such as EXPECT_TRUE.
+GTEST_API_ String GetBoolAssertionFailureMessage(
+    const AssertionResult& assertion_result,
+    const char* expression_text,
+    const char* actual_predicate_value,
+    const char* expected_predicate_value);
 
 // This template class represents an IEEE floating-point number
 // (either single-precision or double-precision, depending on the
@@ -538,7 +538,7 @@ TypeId GetTypeId() {
 // ::testing::Test, as the latter may give the wrong result due to a
 // suspected linker bug when compiling Google Test as a Mac OS X
 // framework.
-TypeId GetTestTypeId();
+GTEST_API_ TypeId GetTestTypeId();
 
 // Defines the abstract factory interface that creates instances
 // of a Test object.
@@ -571,8 +571,10 @@ class TestFactoryImpl : public TestFactoryBase {
 // {ASSERT|EXPECT}_HRESULT_{SUCCEEDED|FAILED}
 // We pass a long instead of HRESULT to avoid causing an
 // include dependency for the HRESULT type.
-AssertionResult IsHRESULTSuccess(const char* expr, long hr);  // NOLINT
-AssertionResult IsHRESULTFailure(const char* expr, long hr);  // NOLINT
+GTEST_API_ AssertionResult IsHRESULTSuccess(const char* expr,
+                                            long hr);  // NOLINT
+GTEST_API_ AssertionResult IsHRESULTFailure(const char* expr,
+                                            long hr);  // NOLINT
 
 #endif  // GTEST_OS_WINDOWS
 
@@ -611,7 +613,7 @@ typedef void (*TearDownTestCaseFunc)();
 //   factory:          pointer to the factory that creates a test object.
 //                     The newly created TestInfo instance will assume
 //                     ownership of the factory object.
-TestInfo* MakeAndRegisterTestInfo(
+GTEST_API_ TestInfo* MakeAndRegisterTestInfo(
     const char* test_case_name, const char* name,
     const char* test_case_comment, const char* comment,
     TypeId fixture_class_id,
@@ -619,10 +621,15 @@ TestInfo* MakeAndRegisterTestInfo(
     TearDownTestCaseFunc tear_down_tc,
     TestFactoryBase* factory);
 
+// If *pstr starts with the given prefix, modifies *pstr to be right
+// past the prefix and returns true; otherwise leaves *pstr unchanged
+// and returns false.  None of pstr, *pstr, and prefix can be NULL.
+bool SkipPrefix(const char* prefix, const char** pstr);
+
 #if GTEST_HAS_TYPED_TEST || GTEST_HAS_TYPED_TEST_P
 
 // State of the definition of a type-parameterized test case.
-class TypedTestCasePState {
+class GTEST_API_ TypedTestCasePState {
  public:
   TypedTestCasePState() : registered_(false) {}
 
@@ -763,13 +770,14 @@ class TypeParameterizedTestCase<Fixture, Templates0, Types> {
 // For example, if Foo() calls Bar(), which in turn calls
 // GetCurrentOsStackTraceExceptTop(..., 1), Foo() will be included in
 // the trace but Bar() and GetCurrentOsStackTraceExceptTop() won't.
-String GetCurrentOsStackTraceExceptTop(UnitTest* unit_test, int skip_count);
+GTEST_API_ String GetCurrentOsStackTraceExceptTop(UnitTest* unit_test,
+                                                  int skip_count);
 
 // Helpers for suppressing warnings on unreachable code or constant
 // condition.
 
 // Always returns true.
-bool AlwaysTrue();
+GTEST_API_ bool AlwaysTrue();
 
 // Always returns false.
 inline bool AlwaysFalse() { return !AlwaysTrue(); }
@@ -779,7 +787,7 @@ inline bool AlwaysFalse() { return !AlwaysTrue(); }
 // doesn't use global state (and therefore can't interfere with user
 // code).  Unlike rand_r(), it's portable.  An LCG isn't very random,
 // but it's good enough for our purposes.
-class Random {
+class GTEST_API_ Random {
  public:
   static const UInt32 kMaxRange = 1u << 31;
 
@@ -878,12 +886,17 @@ class Random {
       fail(gtest_msg)
 
 
-#define GTEST_TEST_BOOLEAN_(boolexpr, booltext, actual, expected, fail) \
+// Implements Boolean test assertions such as EXPECT_TRUE. expression can be
+// either a boolean expression or an AssertionResult. text is a textual
+// represenation of expression as it was passed into the EXPECT_TRUE.
+#define GTEST_TEST_BOOLEAN_(expression, text, actual, expected, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \
-  if (::testing::internal::IsTrue(boolexpr)) \
+  if (const ::testing::AssertionResult gtest_ar_ = \
+      ::testing::AssertionResult(expression)) \
     ; \
   else \
-    fail("Value of: " booltext "\n  Actual: " #actual "\nExpected: " #expected)
+    fail(::testing::internal::GetBoolAssertionFailureMessage(\
+        gtest_ar_, text, #actual, #expected).c_str())
 
 #define GTEST_TEST_NO_FATAL_FAILURE_(statement, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \

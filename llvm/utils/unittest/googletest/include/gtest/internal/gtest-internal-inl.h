@@ -52,7 +52,9 @@
 #include <stdlib.h>  // For strtoll/_strtoul64/malloc/free.
 #include <string.h>  // For memmove.
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include <gtest/internal/gtest-port.h>
 
@@ -60,7 +62,7 @@
 #include <windows.h>  // For DWORD.
 #endif  // GTEST_OS_WINDOWS
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h>  // NOLINT
 #include <gtest/gtest-spi.h>
 
 namespace testing {
@@ -76,7 +78,7 @@ namespace internal {
 
 // The value of GetTestTypeId() as seen from within the Google Test
 // library.  This is solely for testing GetTestTypeId().
-extern const TypeId kTestTypeIdInGoogleTest;
+GTEST_API_ extern const TypeId kTestTypeIdInGoogleTest;
 
 // Names of the flags (needed for parsing Google Test flags).
 const char kAlsoRunDisabledTestsFlag[] = "also_run_disabled_tests";
@@ -90,13 +92,31 @@ const char kPrintTimeFlag[] = "print_time";
 const char kRandomSeedFlag[] = "random_seed";
 const char kRepeatFlag[] = "repeat";
 const char kShuffleFlag[] = "shuffle";
+const char kStackTraceDepthFlag[] = "stack_trace_depth";
 const char kThrowOnFailureFlag[] = "throw_on_failure";
 
 // A valid random seed must be in [1, kMaxRandomSeed].
 const int kMaxRandomSeed = 99999;
 
+// g_help_flag is true iff the --help flag or an equivalent form is
+// specified on the command line.
+GTEST_API_ extern bool g_help_flag;
+
 // Returns the current time in milliseconds.
-TimeInMillis GetTimeInMillis();
+GTEST_API_ TimeInMillis GetTimeInMillis();
+
+// Returns true iff Google Test should use colors in the output.
+GTEST_API_ bool ShouldUseColor(bool stdout_is_tty);
+
+// Formats the given time in milliseconds as seconds.
+GTEST_API_ std::string FormatTimeInMillisAsSeconds(TimeInMillis ms);
+
+// Parses a string for an Int32 flag, in the form of "--flag=value".
+//
+// On success, stores the value of the flag in *value, and returns
+// true.  On failure, returns false without changing *value.
+GTEST_API_ bool ParseInt32Flag(
+    const char* str, const char* flag, Int32* value);
 
 // Returns a random seed in range [1, kMaxRandomSeed] based on the
 // given --gtest_random_seed flag value.
@@ -144,6 +164,7 @@ class GTestFlagSaver {
     random_seed_ = GTEST_FLAG(random_seed);
     repeat_ = GTEST_FLAG(repeat);
     shuffle_ = GTEST_FLAG(shuffle);
+    stack_trace_depth_ = GTEST_FLAG(stack_trace_depth);
     throw_on_failure_ = GTEST_FLAG(throw_on_failure);
   }
 
@@ -163,6 +184,7 @@ class GTestFlagSaver {
     GTEST_FLAG(random_seed) = random_seed_;
     GTEST_FLAG(repeat) = repeat_;
     GTEST_FLAG(shuffle) = shuffle_;
+    GTEST_FLAG(stack_trace_depth) = stack_trace_depth_;
     GTEST_FLAG(throw_on_failure) = throw_on_failure_;
   }
  private:
@@ -182,6 +204,7 @@ class GTestFlagSaver {
   internal::Int32 random_seed_;
   internal::Int32 repeat_;
   bool shuffle_;
+  internal::Int32 stack_trace_depth_;
   bool throw_on_failure_;
 } GTEST_ATTRIBUTE_UNUSED_;
 
@@ -193,7 +216,7 @@ class GTestFlagSaver {
 // If the code_point is not a valid Unicode code point
 // (i.e. outside of Unicode range U+0 to U+10FFFF) it will be output
 // as '(Invalid Unicode 0xXXXXXXXX)'.
-char* CodePointToUtf8(UInt32 code_point, char* str);
+GTEST_API_ char* CodePointToUtf8(UInt32 code_point, char* str);
 
 // Converts a wide string to a narrow string in UTF-8 encoding.
 // The wide string is assumed to have the following encoding:
@@ -208,10 +231,7 @@ char* CodePointToUtf8(UInt32 code_point, char* str);
 // as '(Invalid Unicode 0xXXXXXXXX)'. If the string is in UTF16 encoding
 // and contains invalid UTF-16 surrogate pairs, values in those pairs
 // will be encoded as individual Unicode characters from Basic Normal Plane.
-String WideStringToUtf8(const wchar_t* str, int num_chars);
-
-// Returns the number of active threads, or 0 when there is an error.
-size_t GetThreadCount();
+GTEST_API_ String WideStringToUtf8(const wchar_t* str, int num_chars);
 
 // Reads the GTEST_SHARD_STATUS_FILE environment variable, and creates the file
 // if the variable is present. If a file already exists at this location, this
@@ -225,269 +245,78 @@ void WriteToShardStatusFileIfNeeded();
 // an error and exits. If in_subprocess_for_death_test, sharding is
 // disabled because it must only be applied to the original test
 // process. Otherwise, we could filter out death tests we intended to execute.
-bool ShouldShard(const char* total_shards_str, const char* shard_index_str,
-                 bool in_subprocess_for_death_test);
+GTEST_API_ bool ShouldShard(const char* total_shards_str,
+                            const char* shard_index_str,
+                            bool in_subprocess_for_death_test);
 
 // Parses the environment variable var as an Int32. If it is unset,
 // returns default_val. If it is not an Int32, prints an error and
 // and aborts.
-Int32 Int32FromEnvOrDie(const char* env_var, Int32 default_val);
+GTEST_API_ Int32 Int32FromEnvOrDie(const char* env_var, Int32 default_val);
 
 // Given the total number of shards, the shard index, and the test id,
 // returns true iff the test should be run on this shard. The test id is
 // some arbitrary but unique non-negative integer assigned to each test
 // method. Assumes that 0 <= shard_index < total_shards.
-bool ShouldRunTestOnShard(int total_shards, int shard_index, int test_id);
+GTEST_API_ bool ShouldRunTestOnShard(
+    int total_shards, int shard_index, int test_id);
 
-// Vector is an ordered container that supports random access to the
-// elements.
-//
-// We cannot use std::vector, as Visual C++ 7.1's implementation of
-// STL has problems compiling when exceptions are disabled.  There is
-// a hack to work around the problems, but we've seen cases where the
-// hack fails to work.
-//
-// The element type must support copy constructor and operator=.
-template <typename E>  // E is the element type.
-class Vector {
- public:
-  // Creates an empty Vector.
-  Vector() : elements_(NULL), capacity_(0), size_(0) {}
+// STL container utilities.
 
-  // D'tor.
-  virtual ~Vector() { Clear(); }
+// Returns the number of elements in the given container that satisfy
+// the given predicate.
+template <class Container, typename Predicate>
+inline int CountIf(const Container& c, Predicate predicate) {
+  return static_cast<int>(std::count_if(c.begin(), c.end(), predicate));
+}
 
-  // Clears the Vector.
-  void Clear() {
-    if (elements_ != NULL) {
-      for (int i = 0; i < size_; i++) {
-        delete elements_[i];
-      }
+// Applies a function/functor to each element in the container.
+template <class Container, typename Functor>
+void ForEach(const Container& c, Functor functor) {
+  std::for_each(c.begin(), c.end(), functor);
+}
 
-      free(elements_);
-      elements_ = NULL;
-      capacity_ = size_ = 0;
-    }
+// Returns the i-th element of the vector, or default_value if i is not
+// in range [0, v.size()).
+template <typename E>
+inline E GetElementOr(const std::vector<E>& v, int i, E default_value) {
+  return (i < 0 || i >= static_cast<int>(v.size())) ? default_value : v[i];
+}
+
+// Performs an in-place shuffle of a range of the vector's elements.
+// 'begin' and 'end' are element indices as an STL-style range;
+// i.e. [begin, end) are shuffled, where 'end' == size() means to
+// shuffle to the end of the vector.
+template <typename E>
+void ShuffleRange(internal::Random* random, int begin, int end,
+                  std::vector<E>* v) {
+  const int size = static_cast<int>(v->size());
+  GTEST_CHECK_(0 <= begin && begin <= size)
+      << "Invalid shuffle range start " << begin << ": must be in range [0, "
+      << size << "].";
+  GTEST_CHECK_(begin <= end && end <= size)
+      << "Invalid shuffle range finish " << end << ": must be in range ["
+      << begin << ", " << size << "].";
+
+  // Fisher-Yates shuffle, from
+  // http://en.wikipedia.org/wiki/Fisher-Yates_shuffle
+  for (int range_width = end - begin; range_width >= 2; range_width--) {
+    const int last_in_range = begin + range_width - 1;
+    const int selected = begin + random->Generate(range_width);
+    std::swap((*v)[selected], (*v)[last_in_range]);
   }
+}
 
-  // Gets the number of elements.
-  int size() const { return size_; }
-
-  // Adds an element to the end of the Vector.  A copy of the element
-  // is created using the copy constructor, and then stored in the
-  // Vector.  Changes made to the element in the Vector doesn't affect
-  // the source object, and vice versa.
-  void PushBack(const E& element) { Insert(element, size_); }
-
-  // Adds an element to the beginning of this Vector.
-  void PushFront(const E& element) { Insert(element, 0); }
-
-  // Removes an element from the beginning of this Vector.  If the
-  // result argument is not NULL, the removed element is stored in the
-  // memory it points to.  Otherwise the element is thrown away.
-  // Returns true iff the vector wasn't empty before the operation.
-  bool PopFront(E* result) {
-    if (size_ == 0)
-      return false;
-
-    if (result != NULL)
-      *result = GetElement(0);
-
-    Erase(0);
-    return true;
-  }
-
-  // Inserts an element at the given index.  It's the caller's
-  // responsibility to ensure that the given index is in the range [0,
-  // size()].
-  void Insert(const E& element, int index) {
-    GrowIfNeeded();
-    MoveElements(index, size_ - index, index + 1);
-    elements_[index] = new E(element);
-    size_++;
-  }
-
-  // Erases the element at the specified index, or aborts the program if the
-  // index is not in range [0, size()).
-  void Erase(int index) {
-    GTEST_CHECK_(0 <= index && index < size_)
-        << "Invalid Vector index " << index << ": must be in range [0, "
-        << (size_ - 1) << "].";
-
-    delete elements_[index];
-    MoveElements(index + 1, size_ - index - 1, index);
-    size_--;
-  }
-
-  // Returns the number of elements that satisfy a given predicate.
-  // The parameter 'predicate' is a Boolean function or functor that
-  // accepts a 'const E &', where E is the element type.
-  template <typename P>  // P is the type of the predicate function/functor
-  int CountIf(P predicate) const {
-    int count = 0;
-    for (int i = 0; i < size_; i++) {
-      if (predicate(*(elements_[i]))) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
-  // Applies a function/functor to each element in the Vector.  The
-  // parameter 'functor' is a function/functor that accepts a 'const
-  // E &', where E is the element type.  This method does not change
-  // the elements.
-  template <typename F>  // F is the type of the function/functor
-  void ForEach(F functor) const {
-    for (int i = 0; i < size_; i++) {
-      functor(*(elements_[i]));
-    }
-  }
-
-  // Returns the first node whose element satisfies a given predicate,
-  // or NULL if none is found.  The parameter 'predicate' is a
-  // function/functor that accepts a 'const E &', where E is the
-  // element type.  This method does not change the elements.
-  template <typename P>  // P is the type of the predicate function/functor.
-  const E* FindIf(P predicate) const {
-    for (int i = 0; i < size_; i++) {
-      if (predicate(*elements_[i])) {
-        return elements_[i];
-      }
-    }
-    return NULL;
-  }
-
-  template <typename P>
-  E* FindIf(P predicate) {
-    for (int i = 0; i < size_; i++) {
-      if (predicate(*elements_[i])) {
-        return elements_[i];
-      }
-    }
-    return NULL;
-  }
-
-  // Returns the i-th element of the Vector, or aborts the program if i
-  // is not in range [0, size()).
-  const E& GetElement(int i) const {
-    GTEST_CHECK_(0 <= i && i < size_)
-        << "Invalid Vector index " << i << ": must be in range [0, "
-        << (size_ - 1) << "].";
-
-    return *(elements_[i]);
-  }
-
-  // Returns a mutable reference to the i-th element of the Vector, or
-  // aborts the program if i is not in range [0, size()).
-  E& GetMutableElement(int i) {
-    GTEST_CHECK_(0 <= i && i < size_)
-        << "Invalid Vector index " << i << ": must be in range [0, "
-        << (size_ - 1) << "].";
-
-    return *(elements_[i]);
-  }
-
-  // Returns the i-th element of the Vector, or default_value if i is not
-  // in range [0, size()).
-  E GetElementOr(int i, E default_value) const {
-    return (i < 0 || i >= size_) ? default_value : *(elements_[i]);
-  }
-
-  // Swaps the i-th and j-th elements of the Vector.  Crashes if i or
-  // j is invalid.
-  void Swap(int i, int j) {
-    GTEST_CHECK_(0 <= i && i < size_)
-        << "Invalid first swap element " << i << ": must be in range [0, "
-        << (size_ - 1) << "].";
-    GTEST_CHECK_(0 <= j && j < size_)
-        << "Invalid second swap element " << j << ": must be in range [0, "
-        << (size_ - 1) << "].";
-
-    E* const temp = elements_[i];
-    elements_[i] = elements_[j];
-    elements_[j] = temp;
-  }
-
-  // Performs an in-place shuffle of a range of this Vector's nodes.
-  // 'begin' and 'end' are element indices as an STL-style range;
-  // i.e. [begin, end) are shuffled, where 'end' == size() means to
-  // shuffle to the end of the Vector.
-  void ShuffleRange(internal::Random* random, int begin, int end) {
-    GTEST_CHECK_(0 <= begin && begin <= size_)
-        << "Invalid shuffle range start " << begin << ": must be in range [0, "
-        << size_ << "].";
-    GTEST_CHECK_(begin <= end && end <= size_)
-        << "Invalid shuffle range finish " << end << ": must be in range ["
-        << begin << ", " << size_ << "].";
-
-    // Fisher-Yates shuffle, from
-    // http://en.wikipedia.org/wiki/Fisher-Yates_shuffle
-    for (int range_width = end - begin; range_width >= 2; range_width--) {
-      const int last_in_range = begin + range_width - 1;
-      const int selected = begin + random->Generate(range_width);
-      Swap(selected, last_in_range);
-    }
-  }
-
-  // Performs an in-place shuffle of this Vector's nodes.
-  void Shuffle(internal::Random* random) {
-    ShuffleRange(random, 0, size());
-  }
-
-  // Returns a copy of this Vector.
-  Vector* Clone() const {
-    Vector* const clone = new Vector;
-    clone->Reserve(size_);
-    for (int i = 0; i < size_; i++) {
-      clone->PushBack(GetElement(i));
-    }
-    return clone;
-  }
-
- private:
-  // Makes sure this Vector's capacity is at least the given value.
-  void Reserve(int new_capacity) {
-    if (new_capacity <= capacity_)
-      return;
-
-    capacity_ = new_capacity;
-    elements_ = static_cast<E**>(
-        realloc(elements_, capacity_*sizeof(elements_[0])));
-  }
-
-  // Grows the buffer if it is not big enough to hold one more element.
-  void GrowIfNeeded() {
-    if (size_ < capacity_)
-      return;
-
-    // Exponential bump-up is necessary to ensure that inserting N
-    // elements is O(N) instead of O(N^2).  The factor 3/2 means that
-    // no more than 1/3 of the slots are wasted.
-    const int new_capacity = 3*(capacity_/2 + 1);
-    GTEST_CHECK_(new_capacity > capacity_)  // Does the new capacity overflow?
-        << "Cannot grow a Vector with " << capacity_ << " elements already.";
-    Reserve(new_capacity);
-  }
-
-  // Moves the give consecutive elements to a new index in the Vector.
-  void MoveElements(int source, int count, int dest) {
-    memmove(elements_ + dest, elements_ + source, count*sizeof(elements_[0]));
-  }
-
-  E** elements_;
-  int capacity_;  // The number of elements allocated for elements_.
-  int size_;      // The number of elements; in the range [0, capacity_].
-
-  // We disallow copying Vector.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(Vector);
-};  // class Vector
+// Performs an in-place shuffle of the vector's elements.
+template <typename E>
+inline void Shuffle(internal::Random* random, std::vector<E>* v) {
+  ShuffleRange(random, 0, static_cast<int>(v->size()), v);
+}
 
 // A function for deleting an object.  Handy for being used as a
 // functor.
 template <typename T>
-static void Delete(T * x) {
+static void Delete(T* x) {
   delete x;
 }
 
@@ -600,7 +429,7 @@ class TestInfoImpl {
 // test filter using either GTEST_FILTER or --gtest_filter.  If both
 // the variable and the flag are present, the latter overrides the
 // former.
-class UnitTestOptions {
+class GTEST_API_ UnitTestOptions {
  public:
   // Functions for processing the gtest_output flag.
 
@@ -642,7 +471,7 @@ class UnitTestOptions {
 
 // Returns the current application's name, removing directory path if that
 // is present.  Used by UnitTestOptions::GetOutputFile.
-FilePath GetCurrentExecutableName();
+GTEST_API_ FilePath GetCurrentExecutableName();
 
 // The role interface for getting the OS stack trace as a string.
 class OsStackTraceGetterInterface {
@@ -733,7 +562,7 @@ class DefaultPerThreadTestPartResultReporter
 // the methods under a mutex, as this class is not accessible by a
 // user and the UnitTest class that delegates work to this class does
 // proper locking.
-class UnitTestImpl {
+class GTEST_API_ UnitTestImpl {
  public:
   explicit UnitTestImpl(UnitTest* parent);
   virtual ~UnitTestImpl();
@@ -802,15 +631,15 @@ class UnitTestImpl {
   // Gets the i-th test case among all the test cases. i can range from 0 to
   // total_test_case_count() - 1. If i is not in that range, returns NULL.
   const TestCase* GetTestCase(int i) const {
-    const int index = test_case_indices_.GetElementOr(i, -1);
-    return index < 0 ? NULL : test_cases_.GetElement(i);
+    const int index = GetElementOr(test_case_indices_, i, -1);
+    return index < 0 ? NULL : test_cases_[i];
   }
 
   // Gets the i-th test case among all the test cases. i can range from 0 to
   // total_test_case_count() - 1. If i is not in that range, returns NULL.
   TestCase* GetMutableTestCase(int i) {
-    const int index = test_case_indices_.GetElementOr(i, -1);
-    return index < 0 ? NULL : test_cases_.GetElement(index);
+    const int index = GetElementOr(test_case_indices_, i, -1);
+    return index < 0 ? NULL : test_cases_[index];
   }
 
   // Provides access to the event listener list.
@@ -898,15 +727,15 @@ class UnitTestImpl {
 #endif  // GTEST_HAS_PARAM_TEST
 
   // Sets the TestCase object for the test that's currently running.
-  void set_current_test_case(TestCase* current_test_case) {
-    current_test_case_ = current_test_case;
+  void set_current_test_case(TestCase* a_current_test_case) {
+    current_test_case_ = a_current_test_case;
   }
 
   // Sets the TestInfo object for the test that's currently running.  If
   // current_test_info is NULL, the assertion results will be stored in
   // ad_hoc_test_result_.
-  void set_current_test_info(TestInfo* current_test_info) {
-    current_test_info_ = current_test_info;
+  void set_current_test_info(TestInfo* a_current_test_info) {
+    current_test_info_ = a_current_test_info;
   }
 
   // Registers all parameterized tests defined using TEST_P and
@@ -927,7 +756,7 @@ class UnitTestImpl {
 
   // Clears the results of all tests, including the ad hoc test.
   void ClearResult() {
-    test_cases_.ForEach(TestCase::ClearTestCaseResult);
+    ForEach(test_cases_, TestCase::ClearTestCaseResult);
     ad_hoc_test_result_.Clear();
   }
 
@@ -953,17 +782,14 @@ class UnitTestImpl {
 
   // Returns the vector of environments that need to be set-up/torn-down
   // before/after the tests are run.
-  internal::Vector<Environment*>* environments() { return &environments_; }
-  internal::Vector<Environment*>* environments_in_reverse_order() {
-    return &environments_in_reverse_order_;
-  }
+  std::vector<Environment*>& environments() { return environments_; }
 
   // Getters for the per-thread Google Test trace stack.
-  internal::Vector<TraceInfo>* gtest_trace_stack() {
-    return gtest_trace_stack_.pointer();
+  std::vector<TraceInfo>& gtest_trace_stack() {
+    return *(gtest_trace_stack_.pointer());
   }
-  const internal::Vector<TraceInfo>* gtest_trace_stack() const {
-    return gtest_trace_stack_.pointer();
+  const std::vector<TraceInfo>& gtest_trace_stack() const {
+    return gtest_trace_stack_.get();
   }
 
 #if GTEST_HAS_DEATH_TEST
@@ -1038,20 +864,18 @@ class UnitTestImpl {
       per_thread_test_part_result_reporter_;
 
   // The vector of environments that need to be set-up/torn-down
-  // before/after the tests are run.  environments_in_reverse_order_
-  // simply mirrors environments_ in reverse order.
-  internal::Vector<Environment*> environments_;
-  internal::Vector<Environment*> environments_in_reverse_order_;
+  // before/after the tests are run.
+  std::vector<Environment*> environments_;
 
   // The vector of TestCases in their original order.  It owns the
   // elements in the vector.
-  internal::Vector<TestCase*> test_cases_;
+  std::vector<TestCase*> test_cases_;
 
   // Provides a level of indirection for the test case list to allow
   // easy shuffling and restoring the test case order.  The i-th
   // element of this vector is the index of the i-th test case in the
   // shuffled order.
-  internal::Vector<int> test_case_indices_;
+  std::vector<int> test_case_indices_;
 
 #if GTEST_HAS_PARAM_TEST
   // ParameterizedTestRegistry object used to register value-parameterized
@@ -1117,7 +941,7 @@ class UnitTestImpl {
 #endif  // GTEST_HAS_DEATH_TEST
 
   // A per-thread stack of traces created by the SCOPED_TRACE() macro.
-  internal::ThreadLocal<internal::Vector<TraceInfo> > gtest_trace_stack_;
+  internal::ThreadLocal<std::vector<TraceInfo> > gtest_trace_stack_;
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(UnitTestImpl);
 };  // class UnitTestImpl
@@ -1130,24 +954,24 @@ inline UnitTestImpl* GetUnitTestImpl() {
 
 // Internal helper functions for implementing the simple regular
 // expression matcher.
-bool IsInSet(char ch, const char* str);
-bool IsDigit(char ch);
-bool IsPunct(char ch);
-bool IsRepeat(char ch);
-bool IsWhiteSpace(char ch);
-bool IsWordChar(char ch);
-bool IsValidEscape(char ch);
-bool AtomMatchesChar(bool escaped, char pattern, char ch);
-bool ValidateRegex(const char* regex);
-bool MatchRegexAtHead(const char* regex, const char* str);
-bool MatchRepetitionAndRegexAtHead(
+GTEST_API_ bool IsInSet(char ch, const char* str);
+GTEST_API_ bool IsDigit(char ch);
+GTEST_API_ bool IsPunct(char ch);
+GTEST_API_ bool IsRepeat(char ch);
+GTEST_API_ bool IsWhiteSpace(char ch);
+GTEST_API_ bool IsWordChar(char ch);
+GTEST_API_ bool IsValidEscape(char ch);
+GTEST_API_ bool AtomMatchesChar(bool escaped, char pattern, char ch);
+GTEST_API_ bool ValidateRegex(const char* regex);
+GTEST_API_ bool MatchRegexAtHead(const char* regex, const char* str);
+GTEST_API_ bool MatchRepetitionAndRegexAtHead(
     bool escaped, char ch, char repeat, const char* regex, const char* str);
-bool MatchRegexAnywhere(const char* regex, const char* str);
+GTEST_API_ bool MatchRegexAnywhere(const char* regex, const char* str);
 
 // Parses the command line for Google Test flags, without initializing
 // other parts of Google Test.
-void ParseGoogleTestFlagsOnly(int* argc, char** argv);
-void ParseGoogleTestFlagsOnly(int* argc, wchar_t** argv);
+GTEST_API_ void ParseGoogleTestFlagsOnly(int* argc, char** argv);
+GTEST_API_ void ParseGoogleTestFlagsOnly(int* argc, wchar_t** argv);
 
 #if GTEST_HAS_DEATH_TEST
 
@@ -1224,6 +1048,9 @@ bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
 // TestResult contains some private methods that should be hidden from
 // Google Test user but are required for testing. This class allow our tests
 // to access them.
+//
+// This class is supplied only for the purpose of testing Google Test's own
+// constructs. Do not use it in user tests, either directly or indirectly.
 class TestResultAccessor {
  public:
   static void RecordProperty(TestResult* test_result,
@@ -1235,7 +1062,7 @@ class TestResultAccessor {
     test_result->ClearTestPartResults();
   }
 
-  static const Vector<testing::TestPartResult>& test_part_results(
+  static const std::vector<testing::TestPartResult>& test_part_results(
       const TestResult& test_result) {
     return test_result.test_part_results();
   }
