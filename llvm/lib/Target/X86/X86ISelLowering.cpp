@@ -981,16 +981,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::USUBO, MVT::i32, Custom);
   setOperationAction(ISD::SMULO, MVT::i32, Custom);
 
-  // Don't try to custom-lower 64-bit add-with-overflow and friends
-  // on x86-32; the x86 backend currently doesn't know how to handle them.
+  // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
+  // handle type legalization for these operations here.
   //
-  // This doesn't really fix anything because LegalizeTypes doesn't know
-  // how to handle them either.  We do get a better error message, though.
-  //
-  // This may not be hard to implement though.
-  // In fact you could even cheat, and turn the 64 bit add-with-overflow
-  // into a 65 bit add, with the top bit being used to compute the overflow
-  // flag.  That should then all get expanded out automagically.
+  // FIXME: We really should do custom legalization for addition and
+  // subtraction on x86-32 once PR3203 is fixed.  We really can't do much better
+  // than generic legalization for 64-bit multiplication-with-overflow, though.
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::SADDO, MVT::i64, Custom);
     setOperationAction(ISD::UADDO, MVT::i64, Custom);
