@@ -792,63 +792,63 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     SubIdx = 0;
   }
 
-  // Copy the register use-list before traversing it. We may be adding operands
-  // and invalidating pointers.
-  SmallVector<std::pair<MachineInstr*, unsigned>, 32> reglist;
+  // Collect all the instructions using SrcReg.
+  SmallPtrSet<MachineInstr*, 32> Instrs;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
          E = mri_->reg_end(); I != E; ++I)
-    reglist.push_back(std::make_pair(&*I, I.getOperandNo()));
+    Instrs.insert(&*I);
 
-  for (unsigned N=0; N != reglist.size(); ++N) {
-    MachineInstr *UseMI = reglist[N].first;
-    MachineOperand &O = UseMI->getOperand(reglist[N].second);
-    unsigned OldSubIdx = O.getSubReg();
+  for (SmallPtrSet<MachineInstr*, 32>::const_iterator I = Instrs.begin(),
+       E = Instrs.end(); I != E; ++I) {
+    MachineInstr *UseMI = *I;
+
+    // A PhysReg copy that won't be coalesced can perhaps be rematerialized
+    // instead.
     if (DstIsPhys) {
-      unsigned UseDstReg = DstReg;
-      if (OldSubIdx)
-          UseDstReg = tri_->getSubReg(DstReg, OldSubIdx);
-
       unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
       if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
                             CopySrcSubIdx, CopyDstSubIdx) &&
-          CopySrcSubIdx == 0 &&
-          CopyDstSubIdx == 0 &&
-          CopySrcReg != CopyDstReg &&
-          CopySrcReg == SrcReg && CopyDstReg != UseDstReg) {
-        // If the use is a copy and it won't be coalesced away, and its source
-        // is defined by a trivial computation, try to rematerialize it instead.
-        if (!JoinedCopies.count(UseMI) &&
-            ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,
-                                    CopyDstSubIdx, UseMI))
-          continue;
-      }
-
-      O.setReg(UseDstReg);
-      O.setSubReg(0);
-      if (OldSubIdx) {
-        // Def and kill of subregister of a virtual register actually defs and
-        // kills the whole register. Add imp-defs and imp-kills as needed.
-        if (O.isDef()) {
-          if(O.isDead())
-            UseMI->addRegisterDead(DstReg, tri_, true);
-          else
-            UseMI->addRegisterDefined(DstReg, tri_);
-        } else if (!O.isUndef() &&
-                   (O.isKill() ||
-                    UseMI->isRegTiedToDefOperand(&O-&UseMI->getOperand(0))))
-          UseMI->addRegisterKilled(DstReg, tri_, true);
-      }
-
-      DEBUG({
-          dbgs() << "\t\tupdated: ";
-          if (!UseMI->isDebugValue())
-            dbgs() << li_->getInstructionIndex(UseMI) << "\t";
-          dbgs() << *UseMI;
-        });
-      continue;
+          CopySrcSubIdx == 0 && CopyDstSubIdx == 0 &&
+          CopySrcReg != CopyDstReg && CopySrcReg == SrcReg &&
+          CopyDstReg != DstReg && !JoinedCopies.count(UseMI) &&
+          ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg, 0,
+                                  UseMI))
+        continue;
     }
 
-    O.substVirtReg(DstReg, SubIdx, *tri_);
+    SmallVector<unsigned,8> Ops;
+    bool Reads, Writes;
+    tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
+    bool Kills = false, Deads = false;
+
+    // Replace SrcReg with DstReg in all UseMI operands.
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      MachineOperand &MO = UseMI->getOperand(Ops[i]);
+      Kills |= MO.isKill();
+      Deads |= MO.isDead();
+
+      if (DstIsPhys)
+        MO.substPhysReg(DstReg, *tri_);
+      else
+        MO.substVirtReg(DstReg, SubIdx, *tri_);
+    }
+
+    // This instruction is a copy that will be removed.
+    if (JoinedCopies.count(UseMI))
+      continue;
+
+    if (SubIdx) {
+      // If UseMI was a simple SrcReg def, make sure we didn't turn it into a
+      // read-modify-write of DstReg.
+      if (Deads)
+        UseMI->addRegisterDead(DstReg, tri_);
+      else if (!Reads && Writes)
+        UseMI->addRegisterDefined(DstReg, tri_);
+
+      // Kill flags apply to the whole physical register.
+      if (DstIsPhys && Kills)
+        UseMI->addRegisterKilled(DstReg, tri_);
+    }
 
     DEBUG({
         dbgs() << "\t\tupdated: ";
@@ -857,15 +857,15 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
         dbgs() << *UseMI;
       });
 
+
     // After updating the operand, check if the machine instruction has
     // become a copy. If so, update its val# information.
-    if (JoinedCopies.count(UseMI))
+    const TargetInstrDesc &TID = UseMI->getDesc();
+    if (DstIsPhys || TID.getNumDefs() != 1 || TID.getNumOperands() <= 2)
       continue;
 
-    const TargetInstrDesc &TID = UseMI->getDesc();
     unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
-    if (TID.getNumDefs() == 1 && TID.getNumOperands() > 2 &&
-        tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
+    if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
                           CopySrcSubIdx, CopyDstSubIdx) &&
         CopySrcReg != CopyDstReg &&
         (TargetRegisterInfo::isVirtualRegister(CopyDstReg) ||
