@@ -23,6 +23,27 @@
 
 using namespace llvm;
 
+enum OpKind {
+  OpNone,
+  OpAdd,
+  OpSub,
+  OpMul,
+  OpMla,
+  OpMls,
+  OpEq,
+  OpGe,
+  OpLe,
+  OpGt,
+  OpLt,
+  OpNeg,
+  OpNot,
+  OpAnd,
+  OpOr,
+  OpXor,
+  OpAndNot,
+  OpOrNot
+};
+
 static void ParseTypes(Record *r, std::string &s,
                        SmallVectorImpl<StringRef> &TV) {
   const char *data = s.data();
@@ -103,10 +124,9 @@ static std::string TypeString(const char mod, StringRef typestr) {
   // Based on the modifying character, change the type and width if necessary.
   switch (mod) {
     case 'v':
-      type = 'v';
-      scal = true;
-      usgn = false;
-      break;
+      return "void";
+    case 'i':
+      return "int";
     case 't':
       if (poly) {
         poly = false;
@@ -127,11 +147,6 @@ static std::string TypeString(const char mod, StringRef typestr) {
       break;
     case 'n':
       type = Widen(type);
-      break;
-    case 'i':
-      type = 'i';
-      scal = true;
-      usgn = false;
       break;
     case 'l':
       type = 'l';
@@ -195,9 +210,6 @@ static std::string TypeString(const char mod, StringRef typestr) {
       if (scal)
         break;
       s += quad ? "x4" : "x2";
-      break;
-    case 'v':
-      s += "void";
       break;
     default:
       throw "unhandled type!";
@@ -284,6 +296,18 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
+static OpKind ParseOp(Record *R) {
+  return OpNone;
+}
+
+static std::string GenOpstring(OpKind op) {
+  return "";
+}
+
+static std::string GenBuiltin(std::string &name) {
+  return "";
+}
+
 void NeonEmitter::run(raw_ostream &OS) {
   EmitSourceFileHeader("ARM NEON Header", OS);
   
@@ -302,8 +326,6 @@ void NeonEmitter::run(raw_ostream &OS) {
   
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
   
-  // Initialize Type Map
-  
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -314,24 +336,29 @@ void NeonEmitter::run(raw_ostream &OS) {
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
     
+    OpKind k = ParseOp(R);
+    
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       assert(!Proto.empty() && "");
       
-      SmallString<128> Prototype;
-      Prototype += TypeString(Proto[0], TypeVec[ti]);
-      Prototype += " ";
-      Prototype += MangleName(name, TypeVec[ti]);
-      Prototype += GenArgs(Proto, TypeVec[ti]);
+      // Return type
+      OS << TypeString(Proto[0], TypeVec[ti]);
       
-      OS << Prototype << ";\n";
+      // Function name with type suffix
+      OS << " " << MangleName(name, TypeVec[ti]);
       
-      // gen definition
-    
-        // if (opcode)
+      // Function arguments
+      OS << GenArgs(Proto, TypeVec[ti]);
       
-          // gen opstring
+      // Definition.
+      OS << " { ";
       
-        // gen builtin (args)
+      if (k != OpNone)
+        OS << GenOpstring(k);
+      else
+        OS << GenBuiltin(name);
+
+      OS << "}\n";
     }
     OS << "\n";
   }
