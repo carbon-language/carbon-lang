@@ -35,13 +35,6 @@ getCalleeSavedRegs(const MachineFunction *MF) const {
   return CalleeSavedRegs;
 }
 
-// PIC16 Callee Saved Reg Classes
-const TargetRegisterClass* const*
-PIC16RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = { 0 };
-  return CalleeSavedRegClasses;
-}
-
 BitVector PIC16RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   return Reserved;

@@ -251,36 +251,6 @@ SPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const
   return SPU_CalleeSaveRegs;
 }
 
-const TargetRegisterClass* const*
-SPURegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const
-{
-  // Cell ABI Calling Convention
-  static const TargetRegisterClass * const SPU_CalleeSaveRegClasses[] = {
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, &SPU::GPRCRegClass, &SPU::GPRCRegClass,
-    &SPU::GPRCRegClass, /* environment pointer */
-    &SPU::GPRCRegClass, /* stack pointer */
-    &SPU::GPRCRegClass, /* link register */
-    0 /* end */
-  };
-
-  return SPU_CalleeSaveRegClasses;
-}
-
 /*!
  R0 (link register), R1 (stack pointer) and R2 (environment pointer -- this is
  generally unused) are the Cell's reserved registers

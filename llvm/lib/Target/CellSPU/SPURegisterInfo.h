@@ -49,10 +49,6 @@ namespace llvm {
     //! Return the array of callee-saved registers
     virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF) const;
 
-    //! Return the register class array of the callee-saved registers
-    virtual const TargetRegisterClass* const *
-      getCalleeSavedRegClasses(const MachineFunction *MF) const;
-
     //! Allow for scavenging, so we can get scratch registers when needed.
     virtual bool requiresRegisterScavenging(const MachineFunction &MF) const
     { return true; }

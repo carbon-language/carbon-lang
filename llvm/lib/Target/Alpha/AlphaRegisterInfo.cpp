@@ -74,20 +74,6 @@ const unsigned* AlphaRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
   return CalleeSavedRegs;
 }
 
-const TargetRegisterClass* const*
-AlphaRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
-    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
-    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
-    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
-    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
-    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
-    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,  0
-  };
-  return CalleeSavedRegClasses;
-}
-
 BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(Alpha::R15);

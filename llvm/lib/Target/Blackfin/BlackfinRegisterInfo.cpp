@@ -48,17 +48,6 @@ BlackfinRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return  CalleeSavedRegs;
 }
 
-const TargetRegisterClass* const *BlackfinRegisterInfo::
-getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  using namespace BF;
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &PRegClass,
-    &DRegClass, &DRegClass, &DRegClass, &DRegClass,
-    &PRegClass, &PRegClass, &PRegClass,
-    0 };
-  return CalleeSavedRegClasses;
-}
-
 BitVector
 BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   using namespace BF;

@@ -116,34 +116,6 @@ getCalleeSavedRegs(const MachineFunction *MF) const
     return BitMode32CalleeSavedRegs;
 }
 
-/// Mips Callee Saved Register Classes
-const TargetRegisterClass* const* 
-MipsRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const 
-{
-  static const TargetRegisterClass * const SingleFloatOnlyCalleeSavedRC[] = {
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, 
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, 0
-  };
-
-  static const TargetRegisterClass * const BitMode32CalleeSavedRC[] = {
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, 
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
-    &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 0
-  };
-
-  if (Subtarget.isSingleFloat())
-    return SingleFloatOnlyCalleeSavedRC;
-  else
-    return BitMode32CalleeSavedRC;
-}
-
 BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const
 {

@@ -82,18 +82,6 @@ const unsigned* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
   return CalleeSavedRegs;
 }
 
-const TargetRegisterClass* const*
-XCoreRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    XCore::GRRegsRegisterClass, XCore::GRRegsRegisterClass,
-    XCore::GRRegsRegisterClass, XCore::GRRegsRegisterClass,
-    XCore::GRRegsRegisterClass, XCore::GRRegsRegisterClass,
-    XCore::GRRegsRegisterClass, XCore::RRegsRegisterClass,
-    0
-  };
-  return CalleeSavedRegClasses;
-}
-
 BitVector XCoreRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(XCore::CP);

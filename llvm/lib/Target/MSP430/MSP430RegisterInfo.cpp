@@ -71,48 +71,6 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 }
 
-const TargetRegisterClass *const *
-MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  const Function* F = MF->getFunction();
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClassesFP[] = {
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, 0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClassesIntr[] = {
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClassesIntrFP[] = {
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
-    &MSP430::GR16RegClass, 0
-  };
-
-  if (hasFP(*MF))
-    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
-            CalleeSavedRegClassesIntrFP : CalleeSavedRegClassesFP);
-  else
-    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
-            CalleeSavedRegClassesIntr : CalleeSavedRegClasses);
-}
-
 BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 

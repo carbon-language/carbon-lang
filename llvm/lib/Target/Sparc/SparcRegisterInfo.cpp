@@ -52,13 +52,6 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-
-const TargetRegisterClass* const*
-SparcRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClasses[] = { 0 };
-  return CalleeSavedRegClasses;
-}
-
 bool SparcRegisterInfo::hasFP(const MachineFunction &MF) const {
   return false;
 }

@@ -41,10 +41,6 @@ class PIC16RegisterInfo : public PIC16GenRegisterInfo {
   virtual const unsigned* 
   getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
-  // PIC16 callee saved register classes
-  virtual const TargetRegisterClass* const *
-  getCalleeSavedRegClasses(const MachineFunction *MF) const;
-
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
   virtual bool hasFP(const MachineFunction &MF) const;
 

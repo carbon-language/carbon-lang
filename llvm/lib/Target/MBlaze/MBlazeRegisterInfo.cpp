@@ -148,22 +148,6 @@ getCalleeSavedRegs(const MachineFunction *MF) const {
   return CalleeSavedRegs;
 }
 
-/// MBlaze Callee Saved Register Classes
-const TargetRegisterClass* const* MBlazeRegisterInfo::
-getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRC[] = {
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    &MBlaze::CPURegsRegClass, &MBlaze::CPURegsRegClass,
-    0
-  };
-
-  return CalleeSavedRC;
-}
-
 BitVector MBlazeRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
