@@ -58,8 +58,15 @@
 //   GTEST_HAS_STD_WSTRING    - Define it to 1/0 to indicate that
 //                              std::wstring does/doesn't work (Google Test can
 //                              be used where std::wstring is unavailable).
-//   GTEST_HAS_TR1_TUPLE 1    - Define it to 1/0 to indicate tr1::tuple
+//   GTEST_HAS_TR1_TUPLE      - Define it to 1/0 to indicate tr1::tuple
 //                              is/isn't available.
+//   GTEST_HAS_SEH            - Define it to 1/0 to indicate whether the
+//                              compiler supports Microsoft's "Structured
+//                              Exception Handling".
+//   GTEST_USE_OWN_TR1_TUPLE  - Define it to 1/0 to indicate whether Google
+//                              Test's own tr1 tuple implementation should be
+//                              used.  Unused when the user sets
+//                              GTEST_HAS_TR1_TUPLE to 0.
 
 // This header defines the following utilities:
 //
@@ -70,7 +77,10 @@
 //   GTEST_OS_MAC      - Mac OS X
 //   GTEST_OS_SOLARIS  - Sun Solaris
 //   GTEST_OS_SYMBIAN  - Symbian
-//   GTEST_OS_WINDOWS  - Windows
+//   GTEST_OS_WINDOWS  - Windows (Desktop, MinGW, or Mobile)
+//     GTEST_OS_WINDOWS_DESKTOP  - Windows Desktop
+//     GTEST_OS_WINDOWS_MINGW    - MinGW
+//     GTEST_OS_WINODWS_MOBILE   - Windows Mobile
 //   GTEST_OS_ZOS      - z/OS
 //
 // Among the platforms, Cygwin, Linux, Max OS X, and Windows have the
@@ -96,8 +106,8 @@
 //
 // Macros for basic C++ coding:
 //   GTEST_AMBIGUOUS_ELSE_BLOCKER_ - for disabling a gcc warning.
-//   GTEST_ATTRIBUTE_UNUSED_  - declares that a class' instances don't have to
-//                              be used.
+//   GTEST_ATTRIBUTE_UNUSED_  - declares that a class' instances or a
+//                              variable don't have to be used.
 //   GTEST_DISALLOW_COPY_AND_ASSIGN_ - disables copy ctor and operator=.
 //   GTEST_MUST_USE_RESULT_   - declares that a function's result must be used.
 //
@@ -147,9 +157,15 @@
 //   Int32FromGTestEnv()  - parses an Int32 environment variable.
 //   StringFromGTestEnv() - parses a string environment variable.
 
+#include <stddef.h>  // For ptrdiff_t
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>  // Used for GTEST_CHECK_
+#include <string.h>
+#ifndef _WIN32_WCE
+#include <sys/stat.h>
+#endif  // !_WIN32_WCE
+
+#include <iostream>  // NOLINT
 
 #define GTEST_DEV_EMAIL_ "googletestframework@@googlegroups.com"
 #define GTEST_FLAG_PREFIX_ "gtest_"
@@ -167,14 +183,17 @@
 // Determines the platform on which Google Test is compiled.
 #ifdef __CYGWIN__
 #define GTEST_OS_CYGWIN 1
-#elif __SYMBIAN32__
+#elif defined __SYMBIAN32__
 #define GTEST_OS_SYMBIAN 1
-#elif defined _MSC_VER
-// TODO(kenton@google.com): GTEST_OS_WINDOWS is currently used to mean
-//   both "The OS is Windows" and "The compiler is MSVC".  These
-//   meanings really should be separated in order to better support
-//   Windows compilers other than MSVC.
+#elif defined _WIN32
 #define GTEST_OS_WINDOWS 1
+#ifdef _WIN32_WCE
+#define GTEST_OS_WINDOWS_MOBILE 1
+#elif defined(__MINGW__) || defined(__MINGW32__)
+#define GTEST_OS_WINDOWS_MINGW 1
+#else
+#define GTEST_OS_WINDOWS_DESKTOP 1
+#endif  // _WIN32_WCE
 #elif defined __APPLE__
 #define GTEST_OS_MAC 1
 #elif defined __linux__
@@ -185,16 +204,32 @@
 #define GTEST_OS_SOLARIS 1
 #elif defined(__HAIKU__)
 #define GTEST_OS_HAIKU
-#endif  // _MSC_VER
+#endif  // __CYGWIN__
 
-#if GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC
+#if GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC || GTEST_OS_SYMBIAN || \
+    GTEST_OS_SOLARIS
 
 // On some platforms, <regex.h> needs someone to define size_t, and
 // won't compile otherwise.  We can #include it here as we already
 // included <stdlib.h>, which is guaranteed to define size_t through
 // <stddef.h>.
 #include <regex.h>  // NOLINT
+#include <strings.h>  // NOLINT
+#include <sys/types.h>  // NOLINT
+#include <unistd.h>  // NOLINT
+
 #define GTEST_USES_POSIX_RE 1
+
+#elif GTEST_OS_WINDOWS
+
+#if !GTEST_OS_WINDOWS_MOBILE
+#include <direct.h>  // NOLINT
+#include <io.h>  // NOLINT
+#endif
+
+// <regex.h> is not available on Windows.  Use our own simple regex
+// implementation instead.
+#define GTEST_USES_SIMPLE_RE 1
 
 #else
 
@@ -202,18 +237,21 @@
 // simple regex implementation instead.
 #define GTEST_USES_SIMPLE_RE 1
 
-#endif  // GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC
+#endif  // GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC ||
+        // GTEST_OS_SYMBIAN || GTEST_OS_SOLARIS
 
 // Defines GTEST_HAS_EXCEPTIONS to 1 if exceptions are enabled, or 0
 // otherwise.
 
-#ifdef _MSC_VER  // Compiled by MSVC?
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+// MSVC's and C++Builder's implementations of the STL use the _HAS_EXCEPTIONS
+// macro to enable exceptions, so we'll do the same.
 // Assumes that exceptions are enabled by default.
-#ifndef _HAS_EXCEPTIONS  // MSVC uses this macro to enable exceptions.
+#ifndef _HAS_EXCEPTIONS
 #define _HAS_EXCEPTIONS 1
 #endif  // _HAS_EXCEPTIONS
 #define GTEST_HAS_EXCEPTIONS _HAS_EXCEPTIONS
-#else  // The compiler is not MSVC.
+#else  // The compiler is not MSVC or C++Builder.
 // gcc defines __EXCEPTIONS to 1 iff exceptions are enabled.  For
 // other compilers, we assume exceptions are disabled to be
 // conservative.
@@ -222,7 +260,7 @@
 #else
 #define GTEST_HAS_EXCEPTIONS 0
 #endif  // defined(__GNUC__) && __EXCEPTIONS
-#endif  // _MSC_VER
+#endif  // defined(_MSC_VER) || defined(__BORLANDC__)
 
 // Determines whether ::std::string and ::string are available.
 
@@ -325,35 +363,80 @@
 #define GTEST_HAS_PTHREAD (GTEST_OS_LINUX || GTEST_OS_MAC)
 #endif  // GTEST_HAS_PTHREAD
 
-// Determines whether tr1/tuple is available.  If you have tr1/tuple
-// on your platform, define GTEST_HAS_TR1_TUPLE=1 for both the Google
-// Test project and your tests. If you would like Google Test to detect
-// tr1/tuple on your platform automatically, please open an issue
-// ticket at http://code.google.com/p/googletest.
+// Determines whether Google Test can use tr1/tuple.  You can define
+// this macro to 0 to prevent Google Test from using tuple (any
+// feature depending on tuple with be disabled in this mode).
 #ifndef GTEST_HAS_TR1_TUPLE
+// The user didn't tell us not to do it, so we assume it's OK.
+#define GTEST_HAS_TR1_TUPLE 1
+#endif  // GTEST_HAS_TR1_TUPLE
+
+// Determines whether Google Test's own tr1 tuple implementation
+// should be used.
+#ifndef GTEST_USE_OWN_TR1_TUPLE
 // The user didn't tell us, so we need to figure it out.
 
-// GCC provides <tr1/tuple> since 4.0.0.
+// We use our own tr1 tuple if we aren't sure the user has an
+// implementation of it already.  At this time, GCC 4.0.0+ is the only
+// mainstream compiler that comes with a TR1 tuple implementation.
+// MSVC 2008 (9.0) provides TR1 tuple in a 323 MB Feature Pack
+// download, which we cannot assume the user has.  MSVC 2010 isn't
+// released yet.
 #if defined(__GNUC__) && (GTEST_GCC_VER_ >= 40000)
-#define GTEST_HAS_TR1_TUPLE 1
+#define GTEST_USE_OWN_TR1_TUPLE 0
 #else
-#define GTEST_HAS_TR1_TUPLE 0
-#endif  // __GNUC__
-#endif  // GTEST_HAS_TR1_TUPLE
+#define GTEST_USE_OWN_TR1_TUPLE 1
+#endif  // defined(__GNUC__) && (GTEST_GCC_VER_ >= 40000)
+
+#endif  // GTEST_USE_OWN_TR1_TUPLE
 
 // To avoid conditional compilation everywhere, we make it
 // gtest-port.h's responsibility to #include the header implementing
 // tr1/tuple.
 #if GTEST_HAS_TR1_TUPLE
-#if defined(__GNUC__)
-// GCC implements tr1/tuple in the <tr1/tuple> header.  This does not
-// conform to the TR1 spec, which requires the header to be <tuple>.
+
+#if GTEST_USE_OWN_TR1_TUPLE
+#include <gtest/internal/gtest-tuple.h>
+#elif GTEST_OS_SYMBIAN
+
+// On Symbian, BOOST_HAS_TR1_TUPLE causes Boost's TR1 tuple library to
+// use STLport's tuple implementation, which unfortunately doesn't
+// work as the copy of STLport distributed with Symbian is incomplete.
+// By making sure BOOST_HAS_TR1_TUPLE is undefined, we force Boost to
+// use its own tuple implementation.
+#ifdef BOOST_HAS_TR1_TUPLE
+#undef BOOST_HAS_TR1_TUPLE
+#endif  // BOOST_HAS_TR1_TUPLE
+
+// This prevents <boost/tr1/detail/config.hpp>, which defines
+// BOOST_HAS_TR1_TUPLE, from being #included by Boost's <tuple>.
+#define BOOST_TR1_DETAIL_CONFIG_HPP_INCLUDED
+#include <tuple>
+
+#elif defined(__GNUC__) && (GTEST_GCC_VER_ >= 40000)
+// GCC 4.0+ implements tr1/tuple in the <tr1/tuple> header.  This does
+// not conform to the TR1 spec, which requires the header to be <tuple>.
+
+#if !GTEST_HAS_RTTI && GTEST_GCC_VER_ < 40302
+// Until version 4.3.2, gcc has a bug that causes <tr1/functional>,
+// which is #included by <tr1/tuple>, to not compile when RTTI is
+// disabled.  _TR1_FUNCTIONAL is the header guard for
+// <tr1/functional>.  Hence the following #define is a hack to prevent
+// <tr1/functional> from being included.
+#define _TR1_FUNCTIONAL 1
 #include <tr1/tuple>
+#undef _TR1_FUNCTIONAL  // Allows the user to #include
+                        // <tr1/functional> if he chooses to.
 #else
-// If the compiler is not GCC, we assume the user is using a
+#include <tr1/tuple>
+#endif  // !GTEST_HAS_RTTI && GTEST_GCC_VER_ < 40302
+
+#else
+// If the compiler is not GCC 4.0+, we assume the user is using a
 // spec-conforming TR1 implementation.
 #include <tuple>
-#endif  // __GNUC__
+#endif  // GTEST_USE_OWN_TR1_TUPLE
+
 #endif  // GTEST_HAS_TR1_TUPLE
 
 // Determines whether clone(2) is supported.
@@ -379,12 +462,11 @@
 //      (this is covered by GTEST_HAS_STD_STRING guard).
 //   3. abort() in a VC 7.1 application compiled as GUI in debug config
 //      pops up a dialog window that cannot be suppressed programmatically.
-#if GTEST_HAS_STD_STRING && (GTEST_OS_LINUX || \
-                             GTEST_OS_MAC || \
-                             GTEST_OS_CYGWIN || \
-                             (GTEST_OS_WINDOWS && _MSC_VER >= 1400))
+#if GTEST_HAS_STD_STRING && \
+    (GTEST_OS_LINUX || GTEST_OS_MAC || GTEST_OS_CYGWIN || \
+     (GTEST_OS_WINDOWS_DESKTOP && _MSC_VER >= 1400) || GTEST_OS_WINDOWS_MINGW)
 #define GTEST_HAS_DEATH_TEST 1
-#include <vector>
+#include <vector>  // NOLINT
 #endif
 
 // Determines whether to support value-parameterized tests.
@@ -430,7 +512,7 @@
 #define GTEST_AMBIGUOUS_ELSE_BLOCKER_ switch (0) case 0:  // NOLINT
 #endif
 
-// Use this annotation at the end of a struct / class definition to
+// Use this annotation at the end of a struct/class definition to
 // prevent the compiler from optimizing away instances that are never
 // used.  This is useful when all interesting logic happens inside the
 // c'tor and / or d'tor.  Example:
@@ -438,6 +520,9 @@
 //   struct Foo {
 //     Foo() { ... }
 //   } GTEST_ATTRIBUTE_UNUSED_;
+//
+// Also use it after a variable or parameter declaration to tell the
+// compiler the variable/parameter does not have to be used.
 #if defined(__GNUC__) && !defined(COMPILER_ICC)
 #define GTEST_ATTRIBUTE_UNUSED_ __attribute__ ((unused))
 #else
@@ -461,6 +546,22 @@
 #define GTEST_MUST_USE_RESULT_
 #endif  // __GNUC__ && (GTEST_GCC_VER_ >= 30400) && !COMPILER_ICC
 
+// Determine whether the compiler supports Microsoft's Structured Exception
+// Handling.  This is supported by several Windows compilers but generally
+// does not exist on any other system.
+#ifndef GTEST_HAS_SEH
+// The user didn't tell us, so we need to figure it out.
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+// These two compilers are known to support SEH.
+#define GTEST_HAS_SEH 1
+#else
+// Assume no SEH.
+#define GTEST_HAS_SEH 0
+#endif
+
+#endif  // GTEST_HAS_SEH
+
 namespace testing {
 
 class Message;
@@ -478,6 +579,10 @@ typedef ::std::stringstream StrStream;
 #else
 typedef ::std::strstream StrStream;
 #endif  // GTEST_HAS_STD_STRING
+
+// A helper for suppressing warnings on constant condition.  It just
+// returns 'condition'.
+bool IsTrue(bool condition);
 
 // Defines scoped_ptr.
 
@@ -501,7 +606,7 @@ class scoped_ptr {
 
   void reset(T* p = NULL) {
     if (p != ptr_) {
-      if (sizeof(T) > 0) {  // Makes sure T is a complete type.
+      if (IsTrue(sizeof(T) > 0)) {  // Makes sure T is a complete type.
         delete ptr_;
       }
       ptr_ = p;
@@ -582,7 +687,8 @@ class RE {
 };
 
 // Defines logging utilities:
-//   GTEST_LOG_()   - logs messages at the specified severity level.
+//   GTEST_LOG_(severity) - logs messages at the specified severity level. The
+//                          message itself is streamed into the macro.
 //   LogToStderr()  - directs all log messages to stderr.
 //   FlushInfoLog() - flushes informational log messages.
 
@@ -593,13 +699,27 @@ enum GTestLogSeverity {
   GTEST_FATAL
 };
 
-void GTestLog(GTestLogSeverity severity, const char* file,
-              int line, const char* msg);
+// Formats log entry severity, provides a stream object for streaming the
+// log message, and terminates the message with a newline when going out of
+// scope.
+class GTestLog {
+ public:
+  GTestLog(GTestLogSeverity severity, const char* file, int line);
 
-#define GTEST_LOG_(severity, msg)\
-    ::testing::internal::GTestLog(\
-        ::testing::internal::GTEST_##severity, __FILE__, __LINE__, \
-        (::testing::Message() << (msg)).GetString().c_str())
+  // Flushes the buffers and, if severity is GTEST_FATAL, aborts the program.
+  ~GTestLog();
+
+  ::std::ostream& GetStream() { return ::std::cerr; }
+
+ private:
+  const GTestLogSeverity severity_;
+
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(GTestLog);
+};
+
+#define GTEST_LOG_(severity) \
+    ::testing::internal::GTestLog(::testing::internal::GTEST_##severity, \
+                                  __FILE__, __LINE__).GetStream()
 
 inline void LogToStderr() {}
 inline void FlushInfoLog() { fflush(NULL); }
@@ -608,10 +728,8 @@ inline void FlushInfoLog() { fflush(NULL); }
 //   CaptureStderr     - starts capturing stderr.
 //   GetCapturedStderr - stops capturing stderr and returns the captured string.
 
-#if GTEST_HAS_STD_STRING
 void CaptureStderr();
-::std::string GetCapturedStderr();
-#endif  // GTEST_HAS_STD_STRING
+String GetCapturedStderr();
 
 #if GTEST_HAS_DEATH_TEST
 
@@ -661,9 +779,9 @@ class ThreadLocal {
   T value_;
 };
 
-// There's no portable way to detect the number of threads, so we just
-// return 0 to indicate that we cannot detect it.
-inline size_t GetThreadCount() { return 0; }
+// Returns the number of threads running in the process, or 0 to indicate that
+// we cannot detect it.
+size_t GetThreadCount();
 
 // The above synchronization primitives have dummy implementations.
 // Therefore Google Test is not thread-safe.
@@ -704,17 +822,141 @@ struct is_pointer<T*> : public true_type {};
 
 #if GTEST_OS_WINDOWS
 #define GTEST_PATH_SEP_ "\\"
-#else
-#define GTEST_PATH_SEP_ "/"
-#endif  // GTEST_OS_WINDOWS
-
-// Defines BiggestInt as the biggest signed integer type the compiler
-// supports.
-#if GTEST_OS_WINDOWS
+// The biggest signed integer type the compiler supports.
 typedef __int64 BiggestInt;
 #else
+#define GTEST_PATH_SEP_ "/"
 typedef long long BiggestInt;  // NOLINT
 #endif  // GTEST_OS_WINDOWS
+
+// The testing::internal::posix namespace holds wrappers for common
+// POSIX functions.  These wrappers hide the differences between
+// Windows/MSVC and POSIX systems.  Since some compilers define these
+// standard functions as macros, the wrapper cannot have the same name
+// as the wrapped function.
+
+namespace posix {
+
+// Functions with a different name on Windows.
+
+#if GTEST_OS_WINDOWS
+
+typedef struct _stat StatStruct;
+
+#ifdef __BORLANDC__
+inline int IsATTY(int fd) { return isatty(fd); }
+inline int StrCaseCmp(const char* s1, const char* s2) {
+  return stricmp(s1, s2);
+}
+inline char* StrDup(const char* src) { return strdup(src); }
+#else  // !__BORLANDC__
+#if GTEST_OS_WINDOWS_MOBILE
+inline int IsATTY(int /* fd */) { return 0; }
+#else
+inline int IsATTY(int fd) { return _isatty(fd); }
+#endif  // GTEST_OS_WINDOWS_MOBILE
+inline int StrCaseCmp(const char* s1, const char* s2) {
+  return _stricmp(s1, s2);
+}
+inline char* StrDup(const char* src) { return _strdup(src); }
+#endif  // __BORLANDC__
+
+#if GTEST_OS_WINDOWS_MOBILE
+inline int FileNo(FILE* file) { return reinterpret_cast<int>(_fileno(file)); }
+// Stat(), RmDir(), and IsDir() are not needed on Windows CE at this
+// time and thus not defined there.
+#else
+inline int FileNo(FILE* file) { return _fileno(file); }
+inline int Stat(const char* path, StatStruct* buf) { return _stat(path, buf); }
+inline int RmDir(const char* dir) { return _rmdir(dir); }
+inline bool IsDir(const StatStruct& st) {
+  return (_S_IFDIR & st.st_mode) != 0;
+}
+#endif  // GTEST_OS_WINDOWS_MOBILE
+
+#else
+
+typedef struct stat StatStruct;
+
+inline int FileNo(FILE* file) { return fileno(file); }
+inline int IsATTY(int fd) { return isatty(fd); }
+inline int Stat(const char* path, StatStruct* buf) { return stat(path, buf); }
+inline int StrCaseCmp(const char* s1, const char* s2) {
+  return strcasecmp(s1, s2);
+}
+inline char* StrDup(const char* src) { return strdup(src); }
+inline int RmDir(const char* dir) { return rmdir(dir); }
+inline bool IsDir(const StatStruct& st) { return S_ISDIR(st.st_mode); }
+
+#endif  // GTEST_OS_WINDOWS
+
+// Functions deprecated by MSVC 8.0.
+
+#ifdef _MSC_VER
+// Temporarily disable warning 4996 (deprecated function).
+#pragma warning(push)
+#pragma warning(disable:4996)
+#endif
+
+inline const char* StrNCpy(char* dest, const char* src, size_t n) {
+  return strncpy(dest, src, n);
+}
+
+// ChDir(), FReopen(), FDOpen(), Read(), Write(), Close(), and
+// StrError() aren't needed on Windows CE at this time and thus not
+// defined there.
+
+#if !GTEST_OS_WINDOWS_MOBILE
+inline int ChDir(const char* dir) { return chdir(dir); }
+#endif
+inline FILE* FOpen(const char* path, const char* mode) {
+  return fopen(path, mode);
+}
+#if !GTEST_OS_WINDOWS_MOBILE
+inline FILE *FReopen(const char* path, const char* mode, FILE* stream) {
+  return freopen(path, mode, stream);
+}
+inline FILE* FDOpen(int fd, const char* mode) { return fdopen(fd, mode); }
+#endif
+inline int FClose(FILE* fp) { return fclose(fp); }
+#if !GTEST_OS_WINDOWS_MOBILE
+inline int Read(int fd, void* buf, unsigned int count) {
+  return static_cast<int>(read(fd, buf, count));
+}
+inline int Write(int fd, const void* buf, unsigned int count) {
+  return static_cast<int>(write(fd, buf, count));
+}
+inline int Close(int fd) { return close(fd); }
+inline const char* StrError(int errnum) { return strerror(errnum); }
+#endif
+inline const char* GetEnv(const char* name) {
+#if GTEST_OS_WINDOWS_MOBILE
+  // We are on Windows CE, which has no environment variables.
+  return NULL;
+#elif defined(__BORLANDC__)
+  // Environment variables which we programmatically clear will be set to the
+  // empty string rather than unset (NULL).  Handle that case.
+  const char* const env = getenv(name);
+  return (env != NULL && env[0] != '\0') ? env : NULL;
+#else
+  return getenv(name);
+#endif
+}
+
+#ifdef _MSC_VER
+#pragma warning(pop)  // Restores the warning state.
+#endif
+
+#if GTEST_OS_WINDOWS_MOBILE
+// Windows CE has no C library. The abort() function is used in
+// several places in Google Test. This implementation provides a reasonable
+// imitation of standard behaviour.
+void Abort();
+#else
+inline void Abort() { abort(); }
+#endif  // GTEST_OS_WINDOWS_MOBILE
+
+}  // namespace posix
 
 // The maximum number a BiggestInt can represent.  This definition
 // works no matter BiggestInt is represented in one's complement or
@@ -786,32 +1028,6 @@ typedef TypeWithSize<8>::Int TimeInMillis;  // Represents time in milliseconds.
 
 // Utilities for command line flags and environment variables.
 
-// A wrapper for getenv() that works on Linux, Windows, and Mac OS.
-inline const char* GetEnv(const char* name) {
-#ifdef _WIN32_WCE  // We are on Windows CE.
-  // CE has no environment variables.
-  return NULL;
-#elif GTEST_OS_WINDOWS  // We are on Windows proper.
-  // MSVC 8 deprecates getenv(), so we want to suppress warning 4996
-  // (deprecated function) there.
-#pragma warning(push)          // Saves the current warning state.
-#pragma warning(disable:4996)  // Temporarily disables warning 4996.
-  return getenv(name);
-#pragma warning(pop)           // Restores the warning state.
-#else  // We are on Linux or Mac OS.
-  return getenv(name);
-#endif
-}
-
-#ifdef _WIN32_WCE
-// Windows CE has no C library. The abort() function is used in
-// several places in Google Test. This implementation provides a reasonable
-// imitation of standard behaviour.
-void abort();
-#else
-inline void abort() { ::abort(); }
-#endif  // _WIN32_WCE
-
 // INTERNAL IMPLEMENTATION - DO NOT USE.
 //
 // GTEST_CHECK_ is an all-mode assert. It aborts the program if the condition
@@ -826,38 +1042,12 @@ inline void abort() { ::abort(); }
 //    condition itself, plus additional message streamed into it, if any,
 //    and then it aborts the program. It aborts the program irrespective of
 //    whether it is built in the debug mode or not.
-class GTestCheckProvider {
- public:
-  GTestCheckProvider(const char* condition, const char* file, int line) {
-    FormatFileLocation(file, line);
-    ::std::cerr << " ERROR: Condition " << condition << " failed. ";
-  }
-  ~GTestCheckProvider() {
-    ::std::cerr << ::std::endl;
-    abort();
-  }
-  void FormatFileLocation(const char* file, int line) {
-    if (file == NULL)
-      file = "unknown file";
-    if (line < 0) {
-      ::std::cerr << file << ":";
-    } else {
-#if _MSC_VER
-      ::std::cerr << file << "(" << line << "):";
-#else
-      ::std::cerr << file << ":" << line << ":";
-#endif
-    }
-  }
-  ::std::ostream& GetStream() { return ::std::cerr; }
-};
 #define GTEST_CHECK_(condition) \
     GTEST_AMBIGUOUS_ELSE_BLOCKER_ \
-    if (condition) \
+    if (::testing::internal::IsTrue(condition)) \
       ; \
     else \
-      ::testing::internal::GTestCheckProvider(\
-          #condition, __FILE__, __LINE__).GetStream()
+      GTEST_LOG_(FATAL) << "Condition " #condition " failed. "
 
 // Macro for referencing flags.
 #define GTEST_FLAG(name) FLAGS_gtest_##name

@@ -44,6 +44,8 @@
 
 namespace testing {
 
+using internal::GetUnitTestImpl;
+
 // Gets the summary of the failure message by omitting the stack trace
 // in it.
 internal::String TestPartResult::ExtractSummary(const char* message) {
@@ -54,61 +56,55 @@ internal::String TestPartResult::ExtractSummary(const char* message) {
 
 // Prints a TestPartResult object.
 std::ostream& operator<<(std::ostream& os, const TestPartResult& result) {
-  return os << result.file_name() << ":"
-            << result.line_number() << ": "
-            << (result.type() == TPRT_SUCCESS ? "Success" :
-                result.type() == TPRT_FATAL_FAILURE ? "Fatal failure" :
-                "Non-fatal failure") << ":\n"
-            << result.message() << std::endl;
+  return os
+      << result.file_name() << ":" << result.line_number() << ": "
+      << (result.type() == TestPartResult::kSuccess ? "Success" :
+          result.type() == TestPartResult::kFatalFailure ? "Fatal failure" :
+          "Non-fatal failure") << ":\n"
+      << result.message() << std::endl;
 }
 
 // Constructs an empty TestPartResultArray.
 TestPartResultArray::TestPartResultArray()
-    : list_(new internal::List<TestPartResult>) {
+    : array_(new internal::Vector<TestPartResult>) {
 }
 
 // Destructs a TestPartResultArray.
 TestPartResultArray::~TestPartResultArray() {
-  delete list_;
+  delete array_;
 }
 
 // Appends a TestPartResult to the array.
 void TestPartResultArray::Append(const TestPartResult& result) {
-  list_->PushBack(result);
+  array_->PushBack(result);
 }
 
 // Returns the TestPartResult at the given index (0-based).
 const TestPartResult& TestPartResultArray::GetTestPartResult(int index) const {
   if (index < 0 || index >= size()) {
     printf("\nInvalid index (%d) into TestPartResultArray.\n", index);
-    internal::abort();
+    internal::posix::Abort();
   }
 
-  const internal::ListNode<TestPartResult>* p = list_->Head();
-  for (int i = 0; i < index; i++) {
-    p = p->next();
-  }
-
-  return p->element();
+  return array_->GetElement(index);
 }
 
 // Returns the number of TestPartResult objects in the array.
 int TestPartResultArray::size() const {
-  return list_->size();
+  return array_->size();
 }
 
 namespace internal {
 
 HasNewFatalFailureHelper::HasNewFatalFailureHelper()
     : has_new_fatal_failure_(false),
-      original_reporter_(UnitTest::GetInstance()->impl()->
+      original_reporter_(GetUnitTestImpl()->
                          GetTestPartResultReporterForCurrentThread()) {
-  UnitTest::GetInstance()->impl()->SetTestPartResultReporterForCurrentThread(
-      this);
+  GetUnitTestImpl()->SetTestPartResultReporterForCurrentThread(this);
 }
 
 HasNewFatalFailureHelper::~HasNewFatalFailureHelper() {
-  UnitTest::GetInstance()->impl()->SetTestPartResultReporterForCurrentThread(
+  GetUnitTestImpl()->SetTestPartResultReporterForCurrentThread(
       original_reporter_);
 }
 

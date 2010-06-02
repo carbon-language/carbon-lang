@@ -45,9 +45,12 @@
 #error "It must not be included except by Google Test itself."
 #endif  // GTEST_IMPLEMENTATION_
 
+#ifndef _WIN32_WCE
 #include <errno.h>
+#endif  // !_WIN32_WCE
 #include <stddef.h>
-#include <stdlib.h>   // For strtoll/_strtoul64.
+#include <stdlib.h>  // For strtoll/_strtoul64/malloc/free.
+#include <string.h>  // For memmove.
 
 #include <string>
 
@@ -84,8 +87,42 @@ const char kFilterFlag[] = "filter";
 const char kListTestsFlag[] = "list_tests";
 const char kOutputFlag[] = "output";
 const char kPrintTimeFlag[] = "print_time";
+const char kRandomSeedFlag[] = "random_seed";
 const char kRepeatFlag[] = "repeat";
+const char kShuffleFlag[] = "shuffle";
 const char kThrowOnFailureFlag[] = "throw_on_failure";
+
+// A valid random seed must be in [1, kMaxRandomSeed].
+const int kMaxRandomSeed = 99999;
+
+// Returns the current time in milliseconds.
+TimeInMillis GetTimeInMillis();
+
+// Returns a random seed in range [1, kMaxRandomSeed] based on the
+// given --gtest_random_seed flag value.
+inline int GetRandomSeedFromFlag(Int32 random_seed_flag) {
+  const unsigned int raw_seed = (random_seed_flag == 0) ?
+      static_cast<unsigned int>(GetTimeInMillis()) :
+      static_cast<unsigned int>(random_seed_flag);
+
+  // Normalizes the actual seed to range [1, kMaxRandomSeed] such that
+  // it's easy to type.
+  const int normalized_seed =
+      static_cast<int>((raw_seed - 1U) %
+                       static_cast<unsigned int>(kMaxRandomSeed)) + 1;
+  return normalized_seed;
+}
+
+// Returns the first valid random seed after 'seed'.  The behavior is
+// undefined if 'seed' is invalid.  The seed after kMaxRandomSeed is
+// considered to be 1.
+inline int GetNextRandomSeed(int seed) {
+  GTEST_CHECK_(1 <= seed && seed <= kMaxRandomSeed)
+      << "Invalid random seed " << seed << " - must be in [1, "
+      << kMaxRandomSeed << "].";
+  const int next_seed = seed + 1;
+  return (next_seed > kMaxRandomSeed) ? 1 : next_seed;
+}
 
 // This class saves the values of all Google Test flags in its c'tor, and
 // restores them in its d'tor.
@@ -104,7 +141,9 @@ class GTestFlagSaver {
     list_tests_ = GTEST_FLAG(list_tests);
     output_ = GTEST_FLAG(output);
     print_time_ = GTEST_FLAG(print_time);
+    random_seed_ = GTEST_FLAG(random_seed);
     repeat_ = GTEST_FLAG(repeat);
+    shuffle_ = GTEST_FLAG(shuffle);
     throw_on_failure_ = GTEST_FLAG(throw_on_failure);
   }
 
@@ -121,7 +160,9 @@ class GTestFlagSaver {
     GTEST_FLAG(list_tests) = list_tests_;
     GTEST_FLAG(output) = output_;
     GTEST_FLAG(print_time) = print_time_;
+    GTEST_FLAG(random_seed) = random_seed_;
     GTEST_FLAG(repeat) = repeat_;
+    GTEST_FLAG(shuffle) = shuffle_;
     GTEST_FLAG(throw_on_failure) = throw_on_failure_;
   }
  private:
@@ -138,7 +179,9 @@ class GTestFlagSaver {
   String output_;
   bool print_time_;
   bool pretty_;
+  internal::Int32 random_seed_;
   internal::Int32 repeat_;
+  bool shuffle_;
   bool throw_on_failure_;
 } GTEST_ATTRIBUTE_UNUSED_;
 
@@ -196,176 +239,84 @@ Int32 Int32FromEnvOrDie(const char* env_var, Int32 default_val);
 // method. Assumes that 0 <= shard_index < total_shards.
 bool ShouldRunTestOnShard(int total_shards, int shard_index, int test_id);
 
-// List is a simple singly-linked list container.
+// Vector is an ordered container that supports random access to the
+// elements.
 //
-// We cannot use std::list as Microsoft's implementation of STL has
-// problems when exception is disabled.  There is a hack to work
-// around this, but we've seen cases where the hack fails to work.
+// We cannot use std::vector, as Visual C++ 7.1's implementation of
+// STL has problems compiling when exceptions are disabled.  There is
+// a hack to work around the problems, but we've seen cases where the
+// hack fails to work.
 //
-// TODO(wan): switch to std::list when we have a reliable fix for the
-// STL problem, e.g. when we upgrade to the next version of Visual
-// C++, or (more likely) switch to STLport.
-//
-// The element type must support copy constructor.
-
-// Forward declare List
+// The element type must support copy constructor and operator=.
 template <typename E>  // E is the element type.
-class List;
-
-// ListNode is a node in a singly-linked list.  It consists of an
-// element and a pointer to the next node.  The last node in the list
-// has a NULL value for its next pointer.
-template <typename E>  // E is the element type.
-class ListNode {
-  friend class List<E>;
-
- private:
-
-  E element_;
-  ListNode * next_;
-
-  // The c'tor is private s.t. only in the ListNode class and in its
-  // friend class List we can create a ListNode object.
-  //
-  // Creates a node with a given element value.  The next pointer is
-  // set to NULL.
-  //
-  // ListNode does NOT have a default constructor.  Always use this
-  // constructor (with parameter) to create a ListNode object.
-  explicit ListNode(const E & element) : element_(element), next_(NULL) {}
-
-  // We disallow copying ListNode
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(ListNode);
-
+class Vector {
  public:
-
-  // Gets the element in this node.
-  E & element() { return element_; }
-  const E & element() const { return element_; }
-
-  // Gets the next node in the list.
-  ListNode * next() { return next_; }
-  const ListNode * next() const { return next_; }
-};
-
-
-// List is a simple singly-linked list container.
-template <typename E>  // E is the element type.
-class List {
- public:
-
-  // Creates an empty list.
-  List() : head_(NULL), last_(NULL), size_(0) {}
+  // Creates an empty Vector.
+  Vector() : elements_(NULL), capacity_(0), size_(0) {}
 
   // D'tor.
-  virtual ~List();
+  virtual ~Vector() { Clear(); }
 
-  // Clears the list.
+  // Clears the Vector.
   void Clear() {
-    if ( size_ > 0 ) {
-      // 1. Deletes every node.
-      ListNode<E> * node = head_;
-      ListNode<E> * next = node->next();
-      for ( ; ; ) {
-        delete node;
-        node = next;
-        if ( node == NULL ) break;
-        next = node->next();
+    if (elements_ != NULL) {
+      for (int i = 0; i < size_; i++) {
+        delete elements_[i];
       }
 
-      // 2. Resets the member variables.
-      head_ = last_ = NULL;
-      size_ = 0;
+      free(elements_);
+      elements_ = NULL;
+      capacity_ = size_ = 0;
     }
   }
 
   // Gets the number of elements.
   int size() const { return size_; }
 
-  // Returns true if the list is empty.
-  bool IsEmpty() const { return size() == 0; }
+  // Adds an element to the end of the Vector.  A copy of the element
+  // is created using the copy constructor, and then stored in the
+  // Vector.  Changes made to the element in the Vector doesn't affect
+  // the source object, and vice versa.
+  void PushBack(const E& element) { Insert(element, size_); }
 
-  // Gets the first element of the list, or NULL if the list is empty.
-  ListNode<E> * Head() { return head_; }
-  const ListNode<E> * Head() const { return head_; }
+  // Adds an element to the beginning of this Vector.
+  void PushFront(const E& element) { Insert(element, 0); }
 
-  // Gets the last element of the list, or NULL if the list is empty.
-  ListNode<E> * Last() { return last_; }
-  const ListNode<E> * Last() const { return last_; }
-
-  // Adds an element to the end of the list.  A copy of the element is
-  // created using the copy constructor, and then stored in the list.
-  // Changes made to the element in the list doesn't affect the source
-  // object, and vice versa.
-  void PushBack(const E & element) {
-    ListNode<E> * new_node = new ListNode<E>(element);
-
-    if ( size_ == 0 ) {
-      head_ = last_ = new_node;
-      size_ = 1;
-    } else {
-      last_->next_ = new_node;
-      last_ = new_node;
-      size_++;
-    }
-  }
-
-  // Adds an element to the beginning of this list.
-  void PushFront(const E& element) {
-    ListNode<E>* const new_node = new ListNode<E>(element);
-
-    if ( size_ == 0 ) {
-      head_ = last_ = new_node;
-      size_ = 1;
-    } else {
-      new_node->next_ = head_;
-      head_ = new_node;
-      size_++;
-    }
-  }
-
-  // Removes an element from the beginning of this list.  If the
+  // Removes an element from the beginning of this Vector.  If the
   // result argument is not NULL, the removed element is stored in the
   // memory it points to.  Otherwise the element is thrown away.
-  // Returns true iff the list wasn't empty before the operation.
+  // Returns true iff the vector wasn't empty before the operation.
   bool PopFront(E* result) {
-    if (size_ == 0) return false;
+    if (size_ == 0)
+      return false;
 
-    if (result != NULL) {
-      *result = head_->element_;
-    }
+    if (result != NULL)
+      *result = GetElement(0);
 
-    ListNode<E>* const old_head = head_;
-    size_--;
-    if (size_ == 0) {
-      head_ = last_ = NULL;
-    } else {
-      head_ = head_->next_;
-    }
-    delete old_head;
-
+    Erase(0);
     return true;
   }
 
-  // Inserts an element after a given node in the list.  It's the
-  // caller's responsibility to ensure that the given node is in the
-  // list.  If the given node is NULL, inserts the element at the
-  // front of the list.
-  ListNode<E>* InsertAfter(ListNode<E>* node, const E& element) {
-    if (node == NULL) {
-      PushFront(element);
-      return Head();
-    }
-
-    ListNode<E>* const new_node = new ListNode<E>(element);
-    new_node->next_ = node->next_;
-    node->next_ = new_node;
+  // Inserts an element at the given index.  It's the caller's
+  // responsibility to ensure that the given index is in the range [0,
+  // size()].
+  void Insert(const E& element, int index) {
+    GrowIfNeeded();
+    MoveElements(index, size_ - index, index + 1);
+    elements_[index] = new E(element);
     size_++;
-    if (node == last_) {
-      last_ = new_node;
-    }
+  }
 
-    return new_node;
+  // Erases the element at the specified index, or aborts the program if the
+  // index is not in range [0, size()).
+  void Erase(int index) {
+    GTEST_CHECK_(0 <= index && index < size_)
+        << "Invalid Vector index " << index << ": must be in range [0, "
+        << (size_ - 1) << "].";
+
+    delete elements_[index];
+    MoveElements(index + 1, size_ - index - 1, index);
+    size_--;
   }
 
   // Returns the number of elements that satisfy a given predicate.
@@ -374,10 +325,8 @@ class List {
   template <typename P>  // P is the type of the predicate function/functor
   int CountIf(P predicate) const {
     int count = 0;
-    for ( const ListNode<E> * node = Head();
-          node != NULL;
-          node = node->next() ) {
-      if ( predicate(node->element()) ) {
+    for (int i = 0; i < size_; i++) {
+      if (predicate(*(elements_[i]))) {
         count++;
       }
     }
@@ -385,16 +334,14 @@ class List {
     return count;
   }
 
-  // Applies a function/functor to each element in the list.  The
+  // Applies a function/functor to each element in the Vector.  The
   // parameter 'functor' is a function/functor that accepts a 'const
   // E &', where E is the element type.  This method does not change
   // the elements.
   template <typename F>  // F is the type of the function/functor
   void ForEach(F functor) const {
-    for ( const ListNode<E> * node = Head();
-          node != NULL;
-          node = node->next() ) {
-      functor(node->element());
+    for (int i = 0; i < size_; i++) {
+      functor(*(elements_[i]));
     }
   }
 
@@ -403,45 +350,139 @@ class List {
   // function/functor that accepts a 'const E &', where E is the
   // element type.  This method does not change the elements.
   template <typename P>  // P is the type of the predicate function/functor.
-  const ListNode<E> * FindIf(P predicate) const {
-    for ( const ListNode<E> * node = Head();
-          node != NULL;
-          node = node->next() ) {
-      if ( predicate(node->element()) ) {
-        return node;
+  const E* FindIf(P predicate) const {
+    for (int i = 0; i < size_; i++) {
+      if (predicate(*elements_[i])) {
+        return elements_[i];
       }
     }
-
     return NULL;
   }
 
   template <typename P>
-  ListNode<E> * FindIf(P predicate) {
-    for ( ListNode<E> * node = Head();
-          node != NULL;
-          node = node->next() ) {
-      if ( predicate(node->element() ) ) {
-        return node;
+  E* FindIf(P predicate) {
+    for (int i = 0; i < size_; i++) {
+      if (predicate(*elements_[i])) {
+        return elements_[i];
       }
     }
-
     return NULL;
   }
 
+  // Returns the i-th element of the Vector, or aborts the program if i
+  // is not in range [0, size()).
+  const E& GetElement(int i) const {
+    GTEST_CHECK_(0 <= i && i < size_)
+        << "Invalid Vector index " << i << ": must be in range [0, "
+        << (size_ - 1) << "].";
+
+    return *(elements_[i]);
+  }
+
+  // Returns a mutable reference to the i-th element of the Vector, or
+  // aborts the program if i is not in range [0, size()).
+  E& GetMutableElement(int i) {
+    GTEST_CHECK_(0 <= i && i < size_)
+        << "Invalid Vector index " << i << ": must be in range [0, "
+        << (size_ - 1) << "].";
+
+    return *(elements_[i]);
+  }
+
+  // Returns the i-th element of the Vector, or default_value if i is not
+  // in range [0, size()).
+  E GetElementOr(int i, E default_value) const {
+    return (i < 0 || i >= size_) ? default_value : *(elements_[i]);
+  }
+
+  // Swaps the i-th and j-th elements of the Vector.  Crashes if i or
+  // j is invalid.
+  void Swap(int i, int j) {
+    GTEST_CHECK_(0 <= i && i < size_)
+        << "Invalid first swap element " << i << ": must be in range [0, "
+        << (size_ - 1) << "].";
+    GTEST_CHECK_(0 <= j && j < size_)
+        << "Invalid second swap element " << j << ": must be in range [0, "
+        << (size_ - 1) << "].";
+
+    E* const temp = elements_[i];
+    elements_[i] = elements_[j];
+    elements_[j] = temp;
+  }
+
+  // Performs an in-place shuffle of a range of this Vector's nodes.
+  // 'begin' and 'end' are element indices as an STL-style range;
+  // i.e. [begin, end) are shuffled, where 'end' == size() means to
+  // shuffle to the end of the Vector.
+  void ShuffleRange(internal::Random* random, int begin, int end) {
+    GTEST_CHECK_(0 <= begin && begin <= size_)
+        << "Invalid shuffle range start " << begin << ": must be in range [0, "
+        << size_ << "].";
+    GTEST_CHECK_(begin <= end && end <= size_)
+        << "Invalid shuffle range finish " << end << ": must be in range ["
+        << begin << ", " << size_ << "].";
+
+    // Fisher-Yates shuffle, from
+    // http://en.wikipedia.org/wiki/Fisher-Yates_shuffle
+    for (int range_width = end - begin; range_width >= 2; range_width--) {
+      const int last_in_range = begin + range_width - 1;
+      const int selected = begin + random->Generate(range_width);
+      Swap(selected, last_in_range);
+    }
+  }
+
+  // Performs an in-place shuffle of this Vector's nodes.
+  void Shuffle(internal::Random* random) {
+    ShuffleRange(random, 0, size());
+  }
+
+  // Returns a copy of this Vector.
+  Vector* Clone() const {
+    Vector* const clone = new Vector;
+    clone->Reserve(size_);
+    for (int i = 0; i < size_; i++) {
+      clone->PushBack(GetElement(i));
+    }
+    return clone;
+  }
+
  private:
-  ListNode<E>* head_;  // The first node of the list.
-  ListNode<E>* last_;  // The last node of the list.
-  int size_;           // The number of elements in the list.
+  // Makes sure this Vector's capacity is at least the given value.
+  void Reserve(int new_capacity) {
+    if (new_capacity <= capacity_)
+      return;
 
-  // We disallow copying List.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(List);
-};
+    capacity_ = new_capacity;
+    elements_ = static_cast<E**>(
+        realloc(elements_, capacity_*sizeof(elements_[0])));
+  }
 
-// The virtual destructor of List.
-template <typename E>
-List<E>::~List() {
-  Clear();
-}
+  // Grows the buffer if it is not big enough to hold one more element.
+  void GrowIfNeeded() {
+    if (size_ < capacity_)
+      return;
+
+    // Exponential bump-up is necessary to ensure that inserting N
+    // elements is O(N) instead of O(N^2).  The factor 3/2 means that
+    // no more than 1/3 of the slots are wasted.
+    const int new_capacity = 3*(capacity_/2 + 1);
+    GTEST_CHECK_(new_capacity > capacity_)  // Does the new capacity overflow?
+        << "Cannot grow a Vector with " << capacity_ << " elements already.";
+    Reserve(new_capacity);
+  }
+
+  // Moves the give consecutive elements to a new index in the Vector.
+  void MoveElements(int source, int count, int dest) {
+    memmove(elements_ + dest, elements_ + source, count*sizeof(elements_[0]));
+  }
+
+  E** elements_;
+  int capacity_;  // The number of elements allocated for elements_.
+  int size_;      // The number of elements; in the range [0, capacity_].
+
+  // We disallow copying Vector.
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(Vector);
+};  // class Vector
 
 // A function for deleting an object.  Handy for being used as a
 // functor.
@@ -449,41 +490,6 @@ template <typename T>
 static void Delete(T * x) {
   delete x;
 }
-
-// A copyable object representing a user specified test property which can be
-// output as a key/value string pair.
-//
-// Don't inherit from TestProperty as its destructor is not virtual.
-class TestProperty {
- public:
-  // C'tor.  TestProperty does NOT have a default constructor.
-  // Always use this constructor (with parameters) to create a
-  // TestProperty object.
-  TestProperty(const char* key, const char* value) :
-    key_(key), value_(value) {
-  }
-
-  // Gets the user supplied key.
-  const char* key() const {
-    return key_.c_str();
-  }
-
-  // Gets the user supplied value.
-  const char* value() const {
-    return value_.c_str();
-  }
-
-  // Sets a new value, overriding the one supplied in the constructor.
-  void SetValue(const char* new_value) {
-    value_ = new_value;
-  }
-
- private:
-  // The key supplied by the user.
-  String key_;
-  // The value supplied by the user.
-  String value_;
-};
 
 // A predicate that checks the key of a TestProperty against a known key.
 //
@@ -505,96 +511,6 @@ class TestPropertyKeyIs {
   String key_;
 };
 
-// The result of a single Test.  This includes a list of
-// TestPartResults, a list of TestProperties, a count of how many
-// death tests there are in the Test, and how much time it took to run
-// the Test.
-//
-// TestResult is not copyable.
-class TestResult {
- public:
-  // Creates an empty TestResult.
-  TestResult();
-
-  // D'tor.  Do not inherit from TestResult.
-  ~TestResult();
-
-  // Gets the list of TestPartResults.
-  const internal::List<TestPartResult> & test_part_results() const {
-    return test_part_results_;
-  }
-
-  // Gets the list of TestProperties.
-  const internal::List<internal::TestProperty> & test_properties() const {
-    return test_properties_;
-  }
-
-  // Gets the number of successful test parts.
-  int successful_part_count() const;
-
-  // Gets the number of failed test parts.
-  int failed_part_count() const;
-
-  // Gets the number of all test parts.  This is the sum of the number
-  // of successful test parts and the number of failed test parts.
-  int total_part_count() const;
-
-  // Returns true iff the test passed (i.e. no test part failed).
-  bool Passed() const { return !Failed(); }
-
-  // Returns true iff the test failed.
-  bool Failed() const { return failed_part_count() > 0; }
-
-  // Returns true iff the test fatally failed.
-  bool HasFatalFailure() const;
-
-  // Returns the elapsed time, in milliseconds.
-  TimeInMillis elapsed_time() const { return elapsed_time_; }
-
-  // Sets the elapsed time.
-  void set_elapsed_time(TimeInMillis elapsed) { elapsed_time_ = elapsed; }
-
-  // Adds a test part result to the list.
-  void AddTestPartResult(const TestPartResult& test_part_result);
-
-  // Adds a test property to the list. The property is validated and may add
-  // a non-fatal failure if invalid (e.g., if it conflicts with reserved
-  // key names). If a property is already recorded for the same key, the
-  // value will be updated, rather than storing multiple values for the same
-  // key.
-  void RecordProperty(const internal::TestProperty& test_property);
-
-  // Adds a failure if the key is a reserved attribute of Google Test
-  // testcase tags.  Returns true if the property is valid.
-  // TODO(russr): Validate attribute names are legal and human readable.
-  static bool ValidateTestProperty(const internal::TestProperty& test_property);
-
-  // Returns the death test count.
-  int death_test_count() const { return death_test_count_; }
-
-  // Increments the death test count, returning the new count.
-  int increment_death_test_count() { return ++death_test_count_; }
-
-  // Clears the object.
-  void Clear();
- private:
-  // Protects mutable state of the property list and of owned properties, whose
-  // values may be updated.
-  internal::Mutex test_properites_mutex_;
-
-  // The list of TestPartResults
-  internal::List<TestPartResult> test_part_results_;
-  // The list of TestProperties
-  internal::List<internal::TestProperty> test_properties_;
-  // Running count of death tests.
-  int death_test_count_;
-  // The elapsed time, in milliseconds.
-  TimeInMillis elapsed_time_;
-
-  // We disallow copying TestResult.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestResult);
-};  // class TestResult
-
 class TestInfoImpl {
  public:
   TestInfoImpl(TestInfo* parent, const char* test_case_name,
@@ -615,6 +531,12 @@ class TestInfoImpl {
   // Sets the is_disabled member.
   void set_is_disabled(bool is) { is_disabled_ = is; }
 
+  // Returns true if this test matches the filter specified by the user.
+  bool matches_filter() const { return matches_filter_; }
+
+  // Sets the matches_filter member.
+  void set_matches_filter(bool matches) { matches_filter_ = matches; }
+
   // Returns the test case name.
   const char* test_case_name() const { return test_case_name_.c_str(); }
 
@@ -631,17 +553,12 @@ class TestInfoImpl {
   TypeId fixture_class_id() const { return fixture_class_id_; }
 
   // Returns the test result.
-  internal::TestResult* result() { return &result_; }
-  const internal::TestResult* result() const { return &result_; }
+  TestResult* result() { return &result_; }
+  const TestResult* result() const { return &result_; }
 
   // Creates the test object, runs it, records its result, and then
   // deletes it.
   void Run();
-
-  // Calls the given TestInfo object's Run() method.
-  static void RunTest(TestInfo * test_info) {
-    test_info->impl()->Run();
-  }
 
   // Clears the test result.
   void ClearResult() { result_.Clear(); }
@@ -661,149 +578,17 @@ class TestInfoImpl {
   const TypeId fixture_class_id_;   // ID of the test fixture class
   bool should_run_;                 // True iff this test should run
   bool is_disabled_;                // True iff this test is disabled
+  bool matches_filter_;             // True if this test matches the
+                                    // user-specified filter.
   internal::TestFactoryBase* const factory_;  // The factory that creates
                                               // the test object
 
   // This field is mutable and needs to be reset before running the
   // test for the second time.
-  internal::TestResult result_;
+  TestResult result_;
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(TestInfoImpl);
 };
-
-}  // namespace internal
-
-// A test case, which consists of a list of TestInfos.
-//
-// TestCase is not copyable.
-class TestCase {
- public:
-  // Creates a TestCase with the given name.
-  //
-  // TestCase does NOT have a default constructor.  Always use this
-  // constructor to create a TestCase object.
-  //
-  // Arguments:
-  //
-  //   name:         name of the test case
-  //   set_up_tc:    pointer to the function that sets up the test case
-  //   tear_down_tc: pointer to the function that tears down the test case
-  TestCase(const char* name, const char* comment,
-           Test::SetUpTestCaseFunc set_up_tc,
-           Test::TearDownTestCaseFunc tear_down_tc);
-
-  // Destructor of TestCase.
-  virtual ~TestCase();
-
-  // Gets the name of the TestCase.
-  const char* name() const { return name_.c_str(); }
-
-  // Returns the test case comment.
-  const char* comment() const { return comment_.c_str(); }
-
-  // Returns true if any test in this test case should run.
-  bool should_run() const { return should_run_; }
-
-  // Sets the should_run member.
-  void set_should_run(bool should) { should_run_ = should; }
-
-  // Gets the (mutable) list of TestInfos in this TestCase.
-  internal::List<TestInfo*>& test_info_list() { return *test_info_list_; }
-
-  // Gets the (immutable) list of TestInfos in this TestCase.
-  const internal::List<TestInfo *> & test_info_list() const {
-    return *test_info_list_;
-  }
-
-  // Gets the number of successful tests in this test case.
-  int successful_test_count() const;
-
-  // Gets the number of failed tests in this test case.
-  int failed_test_count() const;
-
-  // Gets the number of disabled tests in this test case.
-  int disabled_test_count() const;
-
-  // Get the number of tests in this test case that should run.
-  int test_to_run_count() const;
-
-  // Gets the number of all tests in this test case.
-  int total_test_count() const;
-
-  // Returns true iff the test case passed.
-  bool Passed() const { return !Failed(); }
-
-  // Returns true iff the test case failed.
-  bool Failed() const { return failed_test_count() > 0; }
-
-  // Returns the elapsed time, in milliseconds.
-  internal::TimeInMillis elapsed_time() const { return elapsed_time_; }
-
-  // Adds a TestInfo to this test case.  Will delete the TestInfo upon
-  // destruction of the TestCase object.
-  void AddTestInfo(TestInfo * test_info);
-
-  // Finds and returns a TestInfo with the given name.  If one doesn't
-  // exist, returns NULL.
-  TestInfo* GetTestInfo(const char* test_name);
-
-  // Clears the results of all tests in this test case.
-  void ClearResult();
-
-  // Clears the results of all tests in the given test case.
-  static void ClearTestCaseResult(TestCase* test_case) {
-    test_case->ClearResult();
-  }
-
-  // Runs every test in this TestCase.
-  void Run();
-
-  // Runs every test in the given TestCase.
-  static void RunTestCase(TestCase * test_case) { test_case->Run(); }
-
-  // Returns true iff test passed.
-  static bool TestPassed(const TestInfo * test_info) {
-    const internal::TestInfoImpl* const impl = test_info->impl();
-    return impl->should_run() && impl->result()->Passed();
-  }
-
-  // Returns true iff test failed.
-  static bool TestFailed(const TestInfo * test_info) {
-    const internal::TestInfoImpl* const impl = test_info->impl();
-    return impl->should_run() && impl->result()->Failed();
-  }
-
-  // Returns true iff test is disabled.
-  static bool TestDisabled(const TestInfo * test_info) {
-    return test_info->impl()->is_disabled();
-  }
-
-  // Returns true if the given test should run.
-  static bool ShouldRunTest(const TestInfo *test_info) {
-    return test_info->impl()->should_run();
-  }
-
- private:
-  // Name of the test case.
-  internal::String name_;
-  // Comment on the test case.
-  internal::String comment_;
-  // List of TestInfos.
-  internal::List<TestInfo*>* test_info_list_;
-  // Pointer to the function that sets up the test case.
-  Test::SetUpTestCaseFunc set_up_tc_;
-  // Pointer to the function that tears down the test case.
-  Test::TearDownTestCaseFunc tear_down_tc_;
-  // True iff any test in this test case should run.
-  bool should_run_;
-  // Elapsed time, in milliseconds.
-  internal::TimeInMillis elapsed_time_;
-
-  // We disallow copying TestCases.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestCase);
-};
-
-namespace internal {
 
 // Class UnitTestOptions.
 //
@@ -885,7 +670,7 @@ class OsStackTraceGetterInterface {
 // A working implementation of the OsStackTraceGetterInterface interface.
 class OsStackTraceGetter : public OsStackTraceGetterInterface {
  public:
-  OsStackTraceGetter() {}
+  OsStackTraceGetter() : caller_frame_(NULL) {}
   virtual String CurrentStackTrace(int max_depth, int skip_count);
   virtual void UponLeavingGTest();
 
@@ -1014,26 +799,29 @@ class UnitTestImpl {
     return failed_test_case_count() > 0 || ad_hoc_test_result()->Failed();
   }
 
-  // Returns the TestResult for the test that's currently running, or
-  // the TestResult for the ad hoc test if no test is running.
-  internal::TestResult* current_test_result();
-
-  // Returns the TestResult for the ad hoc test.
-  const internal::TestResult* ad_hoc_test_result() const {
-    return &ad_hoc_test_result_;
+  // Gets the i-th test case among all the test cases. i can range from 0 to
+  // total_test_case_count() - 1. If i is not in that range, returns NULL.
+  const TestCase* GetTestCase(int i) const {
+    const int index = test_case_indices_.GetElementOr(i, -1);
+    return index < 0 ? NULL : test_cases_.GetElement(i);
   }
 
-  // Sets the unit test result printer.
-  //
-  // Does nothing if the input and the current printer object are the
-  // same; otherwise, deletes the old printer object and makes the
-  // input the current printer.
-  void set_result_printer(UnitTestEventListenerInterface * result_printer);
+  // Gets the i-th test case among all the test cases. i can range from 0 to
+  // total_test_case_count() - 1. If i is not in that range, returns NULL.
+  TestCase* GetMutableTestCase(int i) {
+    const int index = test_case_indices_.GetElementOr(i, -1);
+    return index < 0 ? NULL : test_cases_.GetElement(index);
+  }
 
-  // Returns the current unit test result printer if it is not NULL;
-  // otherwise, creates an appropriate result printer, makes it the
-  // current printer, and returns it.
-  UnitTestEventListenerInterface* result_printer();
+  // Provides access to the event listener list.
+  TestEventListeners* listeners() { return &listeners_; }
+
+  // Returns the TestResult for the test that's currently running, or
+  // the TestResult for the ad hoc test if no test is running.
+  TestResult* current_test_result();
+
+  // Returns the TestResult for the ad hoc test.
+  const TestResult* ad_hoc_test_result() const { return &ad_hoc_test_result_; }
 
   // Sets the OS stack trace getter.
   //
@@ -1091,10 +879,8 @@ class UnitTestImpl {
     // before main() is reached.
     if (original_working_dir_.IsEmpty()) {
       original_working_dir_.Set(FilePath::GetCurrentDir());
-      if (original_working_dir_.IsEmpty()) {
-        printf("%s\n", "Failed to get the current working directory.");
-        abort();
-      }
+      GTEST_CHECK_(!original_working_dir_.IsEmpty())
+          << "Failed to get the current working directory.";
     }
 
     GetTestCase(test_info->test_case_name(),
@@ -1158,35 +944,36 @@ class UnitTestImpl {
   // Returns the number of tests that should run.
   int FilterTests(ReactionToSharding shard_tests);
 
-  // Lists all the tests by name.
-  void ListAllTests();
+  // Prints the names of the tests matching the user-specified filter flag.
+  void ListTestsMatchingFilter();
 
   const TestCase* current_test_case() const { return current_test_case_; }
   TestInfo* current_test_info() { return current_test_info_; }
   const TestInfo* current_test_info() const { return current_test_info_; }
 
-  // Returns the list of environments that need to be set-up/torn-down
+  // Returns the vector of environments that need to be set-up/torn-down
   // before/after the tests are run.
-  internal::List<Environment*>* environments() { return &environments_; }
-  internal::List<Environment*>* environments_in_reverse_order() {
+  internal::Vector<Environment*>* environments() { return &environments_; }
+  internal::Vector<Environment*>* environments_in_reverse_order() {
     return &environments_in_reverse_order_;
   }
 
-  internal::List<TestCase*>* test_cases() { return &test_cases_; }
-  const internal::List<TestCase*>* test_cases() const { return &test_cases_; }
-
   // Getters for the per-thread Google Test trace stack.
-  internal::List<TraceInfo>* gtest_trace_stack() {
+  internal::Vector<TraceInfo>* gtest_trace_stack() {
     return gtest_trace_stack_.pointer();
   }
-  const internal::List<TraceInfo>* gtest_trace_stack() const {
+  const internal::Vector<TraceInfo>* gtest_trace_stack() const {
     return gtest_trace_stack_.pointer();
   }
 
 #if GTEST_HAS_DEATH_TEST
+  void InitDeathTestSubprocessControlInfo() {
+    internal_run_death_test_flag_.reset(ParseInternalRunDeathTestFlag());
+  }
   // Returns a pointer to the parsed --gtest_internal_run_death_test
   // flag, or NULL if that flag was not specified.
   // This information is useful only in a death test child process.
+  // Must not be called before a call to InitGoogleTest.
   const InternalRunDeathTestFlag* internal_run_death_test_flag() const {
     return internal_run_death_test_flag_.get();
   }
@@ -1196,8 +983,34 @@ class UnitTestImpl {
     return death_test_factory_.get();
   }
 
+  void SuppressTestEventsIfInSubprocess();
+
   friend class ReplaceDeathTestFactory;
 #endif  // GTEST_HAS_DEATH_TEST
+
+  // Initializes the event listener performing XML output as specified by
+  // UnitTestOptions. Must not be called before InitGoogleTest.
+  void ConfigureXmlOutput();
+
+  // Performs initialization dependent upon flag values obtained in
+  // ParseGoogleTestFlagsOnly.  Is called from InitGoogleTest after the call to
+  // ParseGoogleTestFlagsOnly.  In case a user neglects to call InitGoogleTest
+  // this function is also called from RunAllTests.  Since this function can be
+  // called more than once, it has to be idempotent.
+  void PostFlagParsingInit();
+
+  // Gets the random seed used at the start of the current test iteration.
+  int random_seed() const { return random_seed_; }
+
+  // Gets the random number generator.
+  internal::Random* random() { return &random_; }
+
+  // Shuffles all test cases, and the tests within each test case,
+  // making sure that death tests are still run first.
+  void ShuffleTests();
+
+  // Restores the test cases and tests to their order before the first shuffle.
+  void UnshuffleTests();
 
  private:
   friend class ::testing::UnitTest;
@@ -1224,13 +1037,21 @@ class UnitTestImpl {
   internal::ThreadLocal<TestPartResultReporterInterface*>
       per_thread_test_part_result_reporter_;
 
-  // The list of environments that need to be set-up/torn-down
+  // The vector of environments that need to be set-up/torn-down
   // before/after the tests are run.  environments_in_reverse_order_
   // simply mirrors environments_ in reverse order.
-  internal::List<Environment*> environments_;
-  internal::List<Environment*> environments_in_reverse_order_;
+  internal::Vector<Environment*> environments_;
+  internal::Vector<Environment*> environments_in_reverse_order_;
 
-  internal::List<TestCase*> test_cases_;  // The list of TestCases.
+  // The vector of TestCases in their original order.  It owns the
+  // elements in the vector.
+  internal::Vector<TestCase*> test_cases_;
+
+  // Provides a level of indirection for the test case list to allow
+  // easy shuffling and restoring the test case order.  The i-th
+  // element of this vector is the index of the i-th test case in the
+  // shuffled order.
+  internal::Vector<int> test_case_indices_;
 
 #if GTEST_HAS_PARAM_TEST
   // ParameterizedTestRegistry object used to register value-parameterized
@@ -1241,13 +1062,13 @@ class UnitTestImpl {
   bool parameterized_tests_registered_;
 #endif  // GTEST_HAS_PARAM_TEST
 
-  // Points to the last death test case registered.  Initially NULL.
-  internal::ListNode<TestCase*>* last_death_test_case_;
+  // Index of the last death test case registered.  Initially -1.
+  int last_death_test_case_;
 
   // This points to the TestCase for the currently running test.  It
   // changes as Google Test goes through one test case after another.
   // When no test is running, this is set to NULL and Google Test
-  // stores assertion results in ad_hoc_test_result_.  Initally NULL.
+  // stores assertion results in ad_hoc_test_result_.  Initially NULL.
   TestCase* current_test_case_;
 
   // This points to the TestInfo for the currently running test.  It
@@ -1264,19 +1085,26 @@ class UnitTestImpl {
   // If an assertion is encountered when no TEST or TEST_F is running,
   // Google Test attributes the assertion result to an imaginary "ad hoc"
   // test, and records the result in ad_hoc_test_result_.
-  internal::TestResult ad_hoc_test_result_;
+  TestResult ad_hoc_test_result_;
 
-  // The unit test result printer.  Will be deleted when the UnitTest
-  // object is destructed.  By default, a plain text printer is used,
-  // but the user can set this field to use a custom printer if that
-  // is desired.
-  UnitTestEventListenerInterface* result_printer_;
+  // The list of event listeners that can be used to track events inside
+  // Google Test.
+  TestEventListeners listeners_;
 
   // The OS stack trace getter.  Will be deleted when the UnitTest
   // object is destructed.  By default, an OsStackTraceGetter is used,
   // but the user can set this field to use a custom getter if that is
   // desired.
   OsStackTraceGetterInterface* os_stack_trace_getter_;
+
+  // True iff PostFlagParsingInit() has been called.
+  bool post_flag_parse_init_performed_;
+
+  // The random number seed used at the beginning of the test run.
+  int random_seed_;
+
+  // Our random number generator.
+  internal::Random random_;
 
   // How long the test took to run, in milliseconds.
   TimeInMillis elapsed_time_;
@@ -1289,7 +1117,7 @@ class UnitTestImpl {
 #endif  // GTEST_HAS_DEATH_TEST
 
   // A per-thread stack of traces created by the SCOPED_TRACE() macro.
-  internal::ThreadLocal<internal::List<TraceInfo> > gtest_trace_stack_;
+  internal::ThreadLocal<internal::Vector<TraceInfo> > gtest_trace_stack_;
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(UnitTestImpl);
 };  // class UnitTestImpl
@@ -1325,7 +1153,7 @@ void ParseGoogleTestFlagsOnly(int* argc, wchar_t** argv);
 
 // Returns the message describing the last system error, regardless of the
 // platform.
-String GetLastSystemErrorMessage();
+String GetLastErrnoDescription();
 
 #if GTEST_OS_WINDOWS
 // Provides leak-safe Windows kernel handle ownership.
@@ -1370,13 +1198,14 @@ bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
   char* end;
   // BiggestConvertible is the largest integer type that system-provided
   // string-to-number conversion routines can return.
-#if GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS && !defined(__GNUC__)
+  // MSVC and C++ Builder define __int64 instead of the standard long long.
   typedef unsigned __int64 BiggestConvertible;
   const BiggestConvertible parsed = _strtoui64(str.c_str(), &end, 10);
 #else
   typedef unsigned long long BiggestConvertible;  // NOLINT
   const BiggestConvertible parsed = strtoull(str.c_str(), &end, 10);
-#endif  // GTEST_OS_WINDOWS
+#endif  // GTEST_OS_WINDOWS && !defined(__GNUC__)
   const bool parse_success = *end == '\0' && errno == 0;
 
   // TODO(vladl@google.com): Convert this to compile time assertion when it is
@@ -1391,6 +1220,26 @@ bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
   return false;
 }
 #endif  // GTEST_HAS_DEATH_TEST
+
+// TestResult contains some private methods that should be hidden from
+// Google Test user but are required for testing. This class allow our tests
+// to access them.
+class TestResultAccessor {
+ public:
+  static void RecordProperty(TestResult* test_result,
+                             const TestProperty& property) {
+    test_result->RecordProperty(property);
+  }
+
+  static void ClearTestPartResults(TestResult* test_result) {
+    test_result->ClearTestPartResults();
+  }
+
+  static const Vector<testing::TestPartResult>& test_part_results(
+      const TestResult& test_result) {
+    return test_result.test_part_results();
+  }
+};
 
 }  // namespace internal
 }  // namespace testing

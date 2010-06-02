@@ -248,6 +248,9 @@ class RangeGenerator : public ParamGeneratorInterface<T> {
         : base_(other.base_), value_(other.value_), index_(other.index_),
           step_(other.step_) {}
 
+    // No implementation - assignment is unsupported.
+    void operator=(const Iterator& other);
+
     const ParamGeneratorInterface<T>* const base_;
     T value_;
     int index_;
@@ -262,6 +265,9 @@ class RangeGenerator : public ParamGeneratorInterface<T> {
       end_index++;
     return end_index;
   }
+
+  // No implementation - assignment is unsupported.
+  void operator=(const RangeGenerator& other);
 
   const T begin_;
   const T end_;
@@ -349,7 +355,10 @@ class ValuesInIteratorRangeGenerator : public ParamGeneratorInterface<T> {
     // Use of scoped_ptr helps manage cached value's lifetime,
     // which is bound by the lifespan of the iterator itself.
     mutable scoped_ptr<const T> value_;
-  };
+  };  // class ValuesInIteratorRangeGenerator::Iterator
+
+  // No implementation - assignment is unsupported.
+  void operator=(const ValuesInIteratorRangeGenerator& other);
 
   const ContainerType container_;
 };  // class ValuesInIteratorRangeGenerator
@@ -483,8 +492,8 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
   // about a generator.
   int AddTestCaseInstantiation(const char* instantiation_name,
                                GeneratorCreationFunc* func,
-                               const char* file,
-                               int line) {
+                               const char* /* file */,
+                               int /* line */) {
     instantiations_.push_back(::std::make_pair(instantiation_name, func));
     return 0;  // Return value used only to run this method in namespace scope.
   }
