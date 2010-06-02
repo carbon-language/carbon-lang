@@ -667,8 +667,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
   assert(TID.getNumDefs() == 1 &&
          "Don't know how to remat instructions that define > 1 values!");
 #endif
-  TII->reMaterialize(MBB, MII, DestReg,
-                     ReMatDefMI->getOperand(0).getSubReg(), ReMatDefMI, TRI);
+  TII->reMaterialize(MBB, MII, DestReg, 0, ReMatDefMI, *TRI);
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);

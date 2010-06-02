@@ -1047,7 +1047,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
             DEBUG(dbgs() << "2addr: REMATTING : " << *DefMI << "\n");
             unsigned regASubIdx = mi->getOperand(DstIdx).getSubReg();
-            TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI, TRI);
+            TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI, *TRI);
             ReMatRegs.set(regB);
             ++NumReMats;
           } else {

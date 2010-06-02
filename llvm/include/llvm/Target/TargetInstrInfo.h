@@ -194,11 +194,14 @@ public:
 
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
+  /// The register in Orig->getOperand(0).getReg() will be substituted by
+  /// DestReg:SubIdx. Any existing subreg index is preserved or composed with
+  /// SubIdx.
   virtual void reMaterialize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg, unsigned SubIdx,
                              const MachineInstr *Orig,
-                             const TargetRegisterInfo *TRI) const = 0;
+                             const TargetRegisterInfo &TRI) const = 0;
 
   /// duplicate - Create a duplicate of the Orig instruction in MF. This is like
   /// MachineFunction::CloneMachineInstr(), but the target may update operands
@@ -585,7 +588,7 @@ public:
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg, unsigned SubReg,
                              const MachineInstr *Orig,
-                             const TargetRegisterInfo *TRI) const;
+                             const TargetRegisterInfo &TRI) const;
   virtual MachineInstr *duplicate(MachineInstr *Orig,
                                   MachineFunction &MF) const;
   virtual bool produceSameValue(const MachineInstr *MI0,

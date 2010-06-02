@@ -339,6 +339,11 @@ public:
   /// copyPredicates - Copies predicate operand(s) from MI.
   void copyPredicates(const MachineInstr *MI);
 
+  /// substituteRegister - Replace all occurrences of FromReg with ToReg:SubIdx,
+  /// properly composing subreg indices where necessary.
+  void substituteRegister(unsigned FromReg, unsigned ToReg, unsigned SubIdx,
+                          const TargetRegisterInfo &RegInfo);
+
   /// addRegisterKilled - We have determined MI kills a register. Look for the
   /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
   /// add a implicit operand if it's not found. Returns true if the operand

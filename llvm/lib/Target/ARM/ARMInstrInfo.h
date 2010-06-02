@@ -35,7 +35,7 @@ public:
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, unsigned SubIdx,
                      const MachineInstr *Orig,
-                     const TargetRegisterInfo *TRI) const;
+                     const TargetRegisterInfo &TRI) const;
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

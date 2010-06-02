@@ -63,7 +63,7 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
 void ARMInstrInfo::
 reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
               unsigned DestReg, unsigned SubIdx, const MachineInstr *Orig,
-              const TargetRegisterInfo *TRI) const {
+              const TargetRegisterInfo &TRI) const {
   DebugLoc dl = Orig->getDebugLoc();
   unsigned Opcode = Orig->getOpcode();
   switch (Opcode) {

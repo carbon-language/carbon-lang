@@ -1037,6 +1037,29 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
   }
 }
 
+void MachineInstr::substituteRegister(unsigned FromReg,
+                                      unsigned ToReg,
+                                      unsigned SubIdx,
+                                      const TargetRegisterInfo &RegInfo) {
+  if (TargetRegisterInfo::isPhysicalRegister(ToReg)) {
+    if (SubIdx)
+      ToReg = RegInfo.getSubReg(ToReg, SubIdx);
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = getOperand(i);
+      if (!MO.isReg() || MO.getReg() != FromReg)
+        continue;
+      MO.substPhysReg(ToReg, RegInfo);
+    }
+  } else {
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = getOperand(i);
+      if (!MO.isReg() || MO.getReg() != FromReg)
+        continue;
+      MO.substVirtReg(ToReg, SubIdx, RegInfo);
+    }
+  }
+}
+
 /// isSafeToMove - Return true if it is safe to move this instruction. If
 /// SawStore is set to true, it means that there is a store (or call) between
 /// the instruction's location and its intended destination.

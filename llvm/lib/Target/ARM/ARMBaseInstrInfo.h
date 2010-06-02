@@ -300,7 +300,7 @@ public:
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg, unsigned SubIdx,
                              const MachineInstr *Orig,
-                             const TargetRegisterInfo *TRI) const;
+                             const TargetRegisterInfo &TRI) const;
 
   MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
 

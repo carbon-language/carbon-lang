@@ -1212,17 +1212,12 @@ reMaterialize(MachineBasicBlock &MBB,
               MachineBasicBlock::iterator I,
               unsigned DestReg, unsigned SubIdx,
               const MachineInstr *Orig,
-              const TargetRegisterInfo *TRI) const {
-  if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
-    DestReg = TRI->getSubReg(DestReg, SubIdx);
-    SubIdx = 0;
-  }
-
+              const TargetRegisterInfo &TRI) const {
   unsigned Opcode = Orig->getOpcode();
   switch (Opcode) {
   default: {
     MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
-    MI->getOperand(0).setReg(DestReg);
+    MI->substituteRegister(Orig->getOperand(0).getReg(), DestReg, SubIdx, TRI);
     MBB.insert(I, MI);
     break;
   }
@@ -1238,9 +1233,6 @@ reMaterialize(MachineBasicBlock &MBB,
     break;
   }
   }
-
-  MachineInstr *NewMI = prior(I);
-  NewMI->getOperand(0).setSubReg(SubIdx);
 }
 
 MachineInstr *

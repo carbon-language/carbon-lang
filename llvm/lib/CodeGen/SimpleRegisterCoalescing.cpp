@@ -727,7 +727,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
 
   MachineBasicBlock::iterator MII =
     llvm::next(MachineBasicBlock::iterator(CopyMI));
-  tii_->reMaterialize(*MBB, MII, DstReg, DstSubIdx, DefMI, tri_);
+  tii_->reMaterialize(*MBB, MII, DstReg, DstSubIdx, DefMI, *tri_);
   MachineInstr *NewMI = prior(MII);
 
   if (checkForDeadDef) {

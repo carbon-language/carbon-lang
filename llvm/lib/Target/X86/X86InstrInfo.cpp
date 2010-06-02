@@ -1064,13 +1064,8 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg, unsigned SubIdx,
                                  const MachineInstr *Orig,
-                                 const TargetRegisterInfo *TRI) const {
+                                 const TargetRegisterInfo &TRI) const {
   DebugLoc DL = Orig->getDebugLoc();
-
-  if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
-    DestReg = TRI->getSubReg(DestReg, SubIdx);
-    SubIdx = 0;
-  }
 
   // MOV32r0 etc. are implemented with xor which clobbers condition code.
   // Re-materialize them as movri instructions to avoid side effects.
@@ -1098,14 +1093,13 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 
   if (Clone) {
     MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
-    MI->getOperand(0).setReg(DestReg);
     MBB.insert(I, MI);
   } else {
-    BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0);
+    BuildMI(MBB, I, DL, get(Opc)).addOperand(Orig->getOperand(0)).addImm(0);
   }
 
   MachineInstr *NewMI = prior(I);
-  NewMI->getOperand(0).setSubReg(SubIdx);
+  NewMI->substituteRegister(Orig->getOperand(0).getReg(), DestReg, SubIdx, TRI);
 }
 
 /// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
