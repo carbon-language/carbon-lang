@@ -125,19 +125,24 @@ class CXXNameMangler {
   const CXXMethodDecl *Structor;
   unsigned StructorType;
 
+  /// SeqID - The next subsitution sequence number.
+  unsigned SeqID;
+
   llvm::DenseMap<uintptr_t, unsigned> Substitutions;
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res)
-    : Context(C), Out(Res), Structor(0), StructorType(0) { }
+    : Context(C), Out(Res), Structor(0), StructorType(0), SeqID(0) { }
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
                  const CXXConstructorDecl *D, CXXCtorType Type)
-    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type) { }
+    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type),
+    SeqID(0) { }
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
                  const CXXDestructorDecl *D, CXXDtorType Type)
-    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type) { }
+    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type),
+    SeqID(0) { }
 
 #if MANGLE_CHECKER
   ~CXXNameMangler() {
@@ -1204,6 +1209,22 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
     mangleQualifiers(Qualifiers::fromCVRMask(FPT->getTypeQuals()));
     mangleType(FPT);
+    
+    // Itanium C++ ABI 5.1.8:
+    //
+    //   The type of a non-static member function is considered to be different,
+    //   for the purposes of substitution, from the type of a namespace-scope or
+    //   static member function whose type appears similar. The types of two
+    //   non-static member functions are considered to be different, for the
+    //   purposes of substitution, if the functions are members of different
+    //   classes. In other words, for the purposes of substitution, the class of 
+    //   which the function is a member is considered part of the type of 
+    //   function.
+
+    // We increment the SeqID here to emulate adding an entry to the
+    // substitution table. We can't actually add it because we don't want this
+    // particular function type to be substituted.
+    ++SeqID;
   } else
     mangleType(PointeeType);
 }
@@ -2049,10 +2070,8 @@ void CXXNameMangler::addSubstitution(TemplateName Template) {
 }
 
 void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
-  unsigned SeqID = Substitutions.size();
-
   assert(!Substitutions.count(Ptr) && "Substitution already exists!");
-  Substitutions[Ptr] = SeqID;
+  Substitutions[Ptr] = SeqID++;
 }
 
 //

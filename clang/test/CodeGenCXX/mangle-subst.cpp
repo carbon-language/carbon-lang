@@ -67,3 +67,16 @@ namespace NS {
   // CHECK: @_ZN2NS1fERNS_1CE
   void f(C&) { } 
 }
+
+namespace Test1 {
+
+struct A { };
+struct B { };
+
+// CHECK: @_ZN5Test11fEMNS_1BEFvvENS_1AES3_
+void f(void (B::*)(), A, A) { }
+
+// CHECK: @_ZN5Test11fEMNS_1BEFvvENS_1AES3_MS0_FvS3_EMS3_FvvE
+void f(void (B::*)(), A, A, void (B::*)(A), void (A::*)()) { }
+
+}
