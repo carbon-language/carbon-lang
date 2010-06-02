@@ -35,9 +35,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef GTEST_HAS_DEATH_TEST
-#include <regex.h>
-#endif  // GTEST_HAS_DEATH_TEST
+#if GTEST_OS_WINDOWS
+#include <io.h>
+#include <sys/stat.h>
+#else
+#include <unistd.h>
+#endif  // GTEST_OS_WINDOWS
+
+#if GTEST_USES_SIMPLE_RE
+#include <string.h>
+#endif
 
 #ifdef _WIN32_WCE
 #include <windows.h>  // For TerminateProcess()
@@ -47,11 +54,26 @@
 #include <gtest/gtest-message.h>
 #include <gtest/internal/gtest-string.h>
 
+// Indicates that this translation unit is part of Google Test's
+// implementation.  It must come before gtest-internal-inl.h is
+// included, or there will be a compiler error.  This trick is to
+// prevent a user from accidentally including gtest-internal-inl.h in
+// his code.
+#define GTEST_IMPLEMENTATION_ 1
+#include "gtest/internal/gtest-internal-inl.h"
+#undef GTEST_IMPLEMENTATION_
 
 namespace testing {
 namespace internal {
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_OS_WINDOWS
+// Microsoft does not provide a definition of STDERR_FILENO.
+const int kStdErrFileno = 2;
+#else
+const int kStdErrFileno = STDERR_FILENO;
+#endif  // GTEST_OS_WINDOWS
+
+#if GTEST_USES_POSIX_RE
 
 // Implements RE.  Currently only needed for death tests.
 
@@ -93,7 +115,13 @@ void RE::Init(const char* regex) {
   // previous expression returns false.  Otherwise partial_regex_ may
   // not be properly initialized can may cause trouble when it's
   // freed.
-  is_valid_ = (regcomp(&partial_regex_, regex, REG_EXTENDED) == 0) && is_valid_;
+  //
+  // Some implementation of POSIX regex (e.g. on at least some
+  // versions of Cygwin) doesn't accept the empty string as a valid
+  // regex.  We change it to an equivalent form "()" to be safe.
+  const char* const partial_regex = (*regex == '\0') ? "()" : regex;
+  is_valid_ = (regcomp(&partial_regex_, partial_regex, REG_EXTENDED) == 0)
+      && is_valid_;
   EXPECT_TRUE(is_valid_)
       << "Regular expression \"" << regex
       << "\" is not a valid POSIX Extended regular expression.";
@@ -101,7 +129,262 @@ void RE::Init(const char* regex) {
   delete[] full_pattern;
 }
 
-#endif  // GTEST_HAS_DEATH_TEST
+#elif GTEST_USES_SIMPLE_RE
+
+// Returns true iff ch appears anywhere in str (excluding the
+// terminating '\0' character).
+bool IsInSet(char ch, const char* str) {
+  return ch != '\0' && strchr(str, ch) != NULL;
+}
+
+// Returns true iff ch belongs to the given classification.  Unlike
+// similar functions in <ctype.h>, these aren't affected by the
+// current locale.
+bool IsDigit(char ch) { return '0' <= ch && ch <= '9'; }
+bool IsPunct(char ch) {
+  return IsInSet(ch, "^-!\"#$%&'()*+,./:;<=>?@[\\]_`{|}~");
+}
+bool IsRepeat(char ch) { return IsInSet(ch, "?*+"); }
+bool IsWhiteSpace(char ch) { return IsInSet(ch, " \f\n\r\t\v"); }
+bool IsWordChar(char ch) {
+  return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') ||
+      ('0' <= ch && ch <= '9') || ch == '_';
+}
+
+// Returns true iff "\\c" is a supported escape sequence.
+bool IsValidEscape(char c) {
+  return (IsPunct(c) || IsInSet(c, "dDfnrsStvwW"));
+}
+
+// Returns true iff the given atom (specified by escaped and pattern)
+// matches ch.  The result is undefined if the atom is invalid.
+bool AtomMatchesChar(bool escaped, char pattern_char, char ch) {
+  if (escaped) {  // "\\p" where p is pattern_char.
+    switch (pattern_char) {
+      case 'd': return IsDigit(ch);
+      case 'D': return !IsDigit(ch);
+      case 'f': return ch == '\f';
+      case 'n': return ch == '\n';
+      case 'r': return ch == '\r';
+      case 's': return IsWhiteSpace(ch);
+      case 'S': return !IsWhiteSpace(ch);
+      case 't': return ch == '\t';
+      case 'v': return ch == '\v';
+      case 'w': return IsWordChar(ch);
+      case 'W': return !IsWordChar(ch);
+    }
+    return IsPunct(pattern_char) && pattern_char == ch;
+  }
+
+  return (pattern_char == '.' && ch != '\n') || pattern_char == ch;
+}
+
+// Helper function used by ValidateRegex() to format error messages.
+String FormatRegexSyntaxError(const char* regex, int index) {
+  return (Message() << "Syntax error at index " << index
+          << " in simple regular expression \"" << regex << "\": ").GetString();
+}
+
+// Generates non-fatal failures and returns false if regex is invalid;
+// otherwise returns true.
+bool ValidateRegex(const char* regex) {
+  if (regex == NULL) {
+    // TODO(wan@google.com): fix the source file location in the
+    // assertion failures to match where the regex is used in user
+    // code.
+    ADD_FAILURE() << "NULL is not a valid simple regular expression.";
+    return false;
+  }
+
+  bool is_valid = true;
+
+  // True iff ?, *, or + can follow the previous atom.
+  bool prev_repeatable = false;
+  for (int i = 0; regex[i]; i++) {
+    if (regex[i] == '\\') {  // An escape sequence
+      i++;
+      if (regex[i] == '\0') {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i - 1)
+                      << "'\\' cannot appear at the end.";
+        return false;
+      }
+
+      if (!IsValidEscape(regex[i])) {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i - 1)
+                      << "invalid escape sequence \"\\" << regex[i] << "\".";
+        is_valid = false;
+      }
+      prev_repeatable = true;
+    } else {  // Not an escape sequence.
+      const char ch = regex[i];
+
+      if (ch == '^' && i > 0) {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i)
+                      << "'^' can only appear at the beginning.";
+        is_valid = false;
+      } else if (ch == '$' && regex[i + 1] != '\0') {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i)
+                      << "'$' can only appear at the end.";
+        is_valid = false;
+      } else if (IsInSet(ch, "()[]{}|")) {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i)
+                      << "'" << ch << "' is unsupported.";
+        is_valid = false;
+      } else if (IsRepeat(ch) && !prev_repeatable) {
+        ADD_FAILURE() << FormatRegexSyntaxError(regex, i)
+                      << "'" << ch << "' can only follow a repeatable token.";
+        is_valid = false;
+      }
+
+      prev_repeatable = !IsInSet(ch, "^$?*+");
+    }
+  }
+
+  return is_valid;
+}
+
+// Matches a repeated regex atom followed by a valid simple regular
+// expression.  The regex atom is defined as c if escaped is false,
+// or \c otherwise.  repeat is the repetition meta character (?, *,
+// or +).  The behavior is undefined if str contains too many
+// characters to be indexable by size_t, in which case the test will
+// probably time out anyway.  We are fine with this limitation as
+// std::string has it too.
+bool MatchRepetitionAndRegexAtHead(
+    bool escaped, char c, char repeat, const char* regex,
+    const char* str) {
+  const size_t min_count = (repeat == '+') ? 1 : 0;
+  const size_t max_count = (repeat == '?') ? 1 :
+      static_cast<size_t>(-1) - 1;
+  // We cannot call numeric_limits::max() as it conflicts with the
+  // max() macro on Windows.
+
+  for (size_t i = 0; i <= max_count; ++i) {
+    // We know that the atom matches each of the first i characters in str.
+    if (i >= min_count && MatchRegexAtHead(regex, str + i)) {
+      // We have enough matches at the head, and the tail matches too.
+      // Since we only care about *whether* the pattern matches str
+      // (as opposed to *how* it matches), there is no need to find a
+      // greedy match.
+      return true;
+    }
+    if (str[i] == '\0' || !AtomMatchesChar(escaped, c, str[i]))
+      return false;
+  }
+  return false;
+}
+
+// Returns true iff regex matches a prefix of str.  regex must be a
+// valid simple regular expression and not start with "^", or the
+// result is undefined.
+bool MatchRegexAtHead(const char* regex, const char* str) {
+  if (*regex == '\0')  // An empty regex matches a prefix of anything.
+    return true;
+
+  // "$" only matches the end of a string.  Note that regex being
+  // valid guarantees that there's nothing after "$" in it.
+  if (*regex == '$')
+    return *str == '\0';
+
+  // Is the first thing in regex an escape sequence?
+  const bool escaped = *regex == '\\';
+  if (escaped)
+    ++regex;
+  if (IsRepeat(regex[1])) {
+    // MatchRepetitionAndRegexAtHead() calls MatchRegexAtHead(), so
+    // here's an indirect recursion.  It terminates as the regex gets
+    // shorter in each recursion.
+    return MatchRepetitionAndRegexAtHead(
+        escaped, regex[0], regex[1], regex + 2, str);
+  } else {
+    // regex isn't empty, isn't "$", and doesn't start with a
+    // repetition.  We match the first atom of regex with the first
+    // character of str and recurse.
+    return (*str != '\0') && AtomMatchesChar(escaped, *regex, *str) &&
+        MatchRegexAtHead(regex + 1, str + 1);
+  }
+}
+
+// Returns true iff regex matches any substring of str.  regex must be
+// a valid simple regular expression, or the result is undefined.
+//
+// The algorithm is recursive, but the recursion depth doesn't exceed
+// the regex length, so we won't need to worry about running out of
+// stack space normally.  In rare cases the time complexity can be
+// exponential with respect to the regex length + the string length,
+// but usually it's must faster (often close to linear).
+bool MatchRegexAnywhere(const char* regex, const char* str) {
+  if (regex == NULL || str == NULL)
+    return false;
+
+  if (*regex == '^')
+    return MatchRegexAtHead(regex + 1, str);
+
+  // A successful match can be anywhere in str.
+  do {
+    if (MatchRegexAtHead(regex, str))
+      return true;
+  } while (*str++ != '\0');
+  return false;
+}
+
+// Implements the RE class.
+
+RE::~RE() {
+  free(const_cast<char*>(pattern_));
+  free(const_cast<char*>(full_pattern_));
+}
+
+// Returns true iff regular expression re matches the entire str.
+bool RE::FullMatch(const char* str, const RE& re) {
+  return re.is_valid_ && MatchRegexAnywhere(re.full_pattern_, str);
+}
+
+// Returns true iff regular expression re matches a substring of str
+// (including str itself).
+bool RE::PartialMatch(const char* str, const RE& re) {
+  return re.is_valid_ && MatchRegexAnywhere(re.pattern_, str);
+}
+
+// Initializes an RE from its string representation.
+void RE::Init(const char* regex) {
+  pattern_ = full_pattern_ = NULL;
+  if (regex != NULL) {
+#if GTEST_OS_WINDOWS
+    pattern_ = _strdup(regex);
+#else
+    pattern_ = strdup(regex);
+#endif
+  }
+
+  is_valid_ = ValidateRegex(regex);
+  if (!is_valid_) {
+    // No need to calculate the full pattern when the regex is invalid.
+    return;
+  }
+
+  const size_t len = strlen(regex);
+  // Reserves enough bytes to hold the regular expression used for a
+  // full match: we need space to prepend a '^', append a '$', and
+  // terminate the string with '\0'.
+  char* buffer = static_cast<char*>(malloc(len + 3));
+  full_pattern_ = buffer;
+
+  if (*regex != '^')
+    *buffer++ = '^';  // Makes sure full_pattern_ starts with '^'.
+
+  // We don't use snprintf or strncpy, as they trigger a warning when
+  // compiled with VC++ 8.0.
+  memcpy(buffer, regex, len);
+  buffer += len;
+
+  if (len == 0 || regex[len - 1] != '$')
+    *buffer++ = '$';  // Makes sure full_pattern_ ends with '$'.
+
+  *buffer = '\0';
+}
+
+#endif  // GTEST_USES_POSIX_RE
 
 // Logs a message at the given severity level.
 void GTestLog(GTestLogSeverity severity, const char* file,
@@ -112,11 +395,19 @@ void GTestLog(GTestLogSeverity severity, const char* file,
       severity == GTEST_ERROR ?   "[ ERROR ]" : "[ FATAL ]";
   fprintf(stderr, "\n%s %s:%d: %s\n", marker, file, line, msg);
   if (severity == GTEST_FATAL) {
+    fflush(NULL);  // abort() is not guaranteed to flush open file streams.
     abort();
   }
 }
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_STD_STRING
+
+// Disable Microsoft deprecation warnings for POSIX functions called from
+// this class (creat, dup, dup2, and close)
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif  // _MSC_VER
 
 // Defines the stderr capturer.
 
@@ -124,16 +415,26 @@ class CapturedStderr {
  public:
   // The ctor redirects stderr to a temporary file.
   CapturedStderr() {
-    uncaptured_fd_ = dup(STDERR_FILENO);
+    uncaptured_fd_ = dup(kStdErrFileno);
 
+#if GTEST_OS_WINDOWS
+    char temp_dir_path[MAX_PATH + 1] = { '\0' };  // NOLINT
+    char temp_file_path[MAX_PATH + 1] = { '\0' };  // NOLINT
+
+    ::GetTempPathA(sizeof(temp_dir_path), temp_dir_path);
+    ::GetTempFileNameA(temp_dir_path, "gtest_redir", 0, temp_file_path);
+    const int captured_fd = creat(temp_file_path, _S_IREAD | _S_IWRITE);
+    filename_ = temp_file_path;
+#else
     // There's no guarantee that a test has write access to the
     // current directory, so we create the temporary file in the /tmp
     // directory instead.
     char name_template[] = "/tmp/captured_stderr.XXXXXX";
     const int captured_fd = mkstemp(name_template);
     filename_ = name_template;
+#endif  // GTEST_OS_WINDOWS
     fflush(NULL);
-    dup2(captured_fd, STDERR_FILENO);
+    dup2(captured_fd, kStdErrFileno);
     close(captured_fd);
   }
 
@@ -145,7 +446,7 @@ class CapturedStderr {
   void StopCapture() {
     // Restores the original stream.
     fflush(NULL);
-    dup2(uncaptured_fd_, STDERR_FILENO);
+    dup2(uncaptured_fd_, kStdErrFileno);
     close(uncaptured_fd_);
     uncaptured_fd_ = -1;
   }
@@ -160,6 +461,10 @@ class CapturedStderr {
   ::std::string filename_;
 };
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif  // _MSC_VER
+
 static CapturedStderr* g_captured_stderr = NULL;
 
 // Returns the size (in bytes) of a file.
@@ -169,8 +474,6 @@ static size_t GetFileSize(FILE * file) {
 }
 
 // Reads the entire content of a file as a string.
-// GTEST_HAS_DEATH_TEST implies that we have ::std::string, so we can
-// use it here.
 static ::std::string ReadEntireFile(FILE * file) {
   const size_t file_size = GetFileSize(file);
   char* const buffer = new char[file_size];
@@ -206,15 +509,28 @@ void CaptureStderr() {
 // use it here.
 ::std::string GetCapturedStderr() {
   g_captured_stderr->StopCapture();
+
+// Disables Microsoft deprecation warning for fopen and fclose.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif  // _MSC_VER
   FILE* const file = fopen(g_captured_stderr->filename().c_str(), "r");
   const ::std::string content = ReadEntireFile(file);
   fclose(file);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif  // _MSC_VER
 
   delete g_captured_stderr;
   g_captured_stderr = NULL;
 
   return content;
 }
+
+#endif  // GTEST_HAS_STD_STRING
+
+#if GTEST_HAS_DEATH_TEST
 
 // A copy of all command line arguments.  Set by InitGoogleTest().
 ::std::vector<String> g_argvs;
@@ -235,7 +551,8 @@ void abort() {
 // given flag.  For example, FlagToEnvVar("foo") will return
 // "GTEST_FOO" in the open-source version.
 static String FlagToEnvVar(const char* flag) {
-  const String full_flag = (Message() << GTEST_FLAG_PREFIX << flag).GetString();
+  const String full_flag =
+      (Message() << GTEST_FLAG_PREFIX_ << flag).GetString();
 
   Message env_var;
   for (int i = 0; i != full_flag.GetLength(); i++) {
@@ -243,17 +560,6 @@ static String FlagToEnvVar(const char* flag) {
   }
 
   return env_var.GetString();
-}
-
-// Reads and returns the Boolean environment variable corresponding to
-// the given flag; if it's not set, returns default_value.
-//
-// The value is considered true iff it's not "0".
-bool BoolFromGTestEnv(const char* flag, bool default_value) {
-  const String env_var = FlagToEnvVar(flag);
-  const char* const string_value = GetEnv(env_var.c_str());
-  return string_value == NULL ?
-      default_value : strcmp(string_value, "0") != 0;
 }
 
 // Parses 'str' for a 32-bit signed integer.  If successful, writes
@@ -295,6 +601,17 @@ bool ParseInt32(const Message& src_text, const char* str, Int32* value) {
 
   *value = result;
   return true;
+}
+
+// Reads and returns the Boolean environment variable corresponding to
+// the given flag; if it's not set, returns default_value.
+//
+// The value is considered true iff it's not "0".
+bool BoolFromGTestEnv(const char* flag, bool default_value) {
+  const String env_var = FlagToEnvVar(flag);
+  const char* const string_value = GetEnv(env_var.c_str());
+  return string_value == NULL ?
+      default_value : strcmp(string_value, "0") != 0;
 }
 
 // Reads and returns a 32-bit integer stored in the environment

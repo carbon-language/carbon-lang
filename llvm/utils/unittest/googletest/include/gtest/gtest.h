@@ -93,16 +93,58 @@
 
 namespace testing {
 
-// The upper limit for valid stack trace depths.
-const int kMaxStackTraceDepth = 100;
+// Declares the flags.
+
+// This flag temporary enables the disabled tests.
+GTEST_DECLARE_bool_(also_run_disabled_tests);
+
+// This flag brings the debugger on an assertion failure.
+GTEST_DECLARE_bool_(break_on_failure);
+
+// This flag controls whether Google Test catches all test-thrown exceptions
+// and logs them as failures.
+GTEST_DECLARE_bool_(catch_exceptions);
+
+// This flag enables using colors in terminal output. Available values are
+// "yes" to enable colors, "no" (disable colors), or "auto" (the default)
+// to let Google Test decide.
+GTEST_DECLARE_string_(color);
+
+// This flag sets up the filter to select by name using a glob pattern
+// the tests to run. If the filter is not given all tests are executed.
+GTEST_DECLARE_string_(filter);
+
+// This flag causes the Google Test to list tests. None of the tests listed
+// are actually run if the flag is provided.
+GTEST_DECLARE_bool_(list_tests);
+
+// This flag controls whether Google Test emits a detailed XML report to a file
+// in addition to its normal textual output.
+GTEST_DECLARE_string_(output);
+
+// This flags control whether Google Test prints the elapsed time for each
+// test.
+GTEST_DECLARE_bool_(print_time);
+
+// This flag sets how many times the tests are repeated. The default value
+// is 1. If the value is -1 the tests are repeating forever.
+GTEST_DECLARE_int32_(repeat);
+
+// This flag controls whether Google Test includes Google Test internal
+// stack frames in failure stack traces.
+GTEST_DECLARE_bool_(show_internal_stack_frames);
 
 // This flag specifies the maximum number of stack frames to be
 // printed in a failure message.
 GTEST_DECLARE_int32_(stack_trace_depth);
 
-// This flag controls whether Google Test includes Google Test internal
-// stack frames in failure stack traces.
-GTEST_DECLARE_bool_(show_internal_stack_frames);
+// When this flag is specified, a failed assertion will throw an
+// exception if exceptions are enabled, or exit the program with a
+// non-zero code otherwise.
+GTEST_DECLARE_bool_(throw_on_failure);
+
+// The upper limit for valid stack trace depths.
+const int kMaxStackTraceDepth = 100;
 
 namespace internal {
 
@@ -353,7 +395,7 @@ class TestInfo {
   // Returns the result of the test.
   const internal::TestResult* result() const;
  private:
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   friend class internal::DefaultDeathTestFactory;
 #endif  // GTEST_HAS_DEATH_TEST
   friend class internal::TestInfoImpl;
@@ -484,7 +526,7 @@ class UnitTest {
   // or NULL if no test is running.
   const TestInfo* current_test_info() const;
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
   // Returns the ParameterizedTestCaseRegistry object used to keep track of
   // value-parameterized tests and instantiate and register them.
   internal::ParameterizedTestCaseRegistry& parameterized_test_registry();
@@ -614,9 +656,19 @@ AssertionResult CmpHelperEQ(const char* expected_expression,
                             const char* actual_expression,
                             const T1& expected,
                             const T2& actual) {
+#ifdef _MSC_VER
+#pragma warning(push)          // Saves the current warning state.
+#pragma warning(disable:4389)  // Temporarily disables warning on
+                               // signed/unsigned mismatch.
+#endif
+
   if (expected == actual) {
     return AssertionSuccess();
   }
+
+#ifdef _MSC_VER
+#pragma warning(pop)          // Restores the warning state.
+#endif
 
   return EqFailure(expected_expression,
                    actual_expression,
@@ -688,7 +740,7 @@ class EqHelper<true> {
   template <typename T1, typename T2>
   static AssertionResult Compare(const char* expected_expression,
                                  const char* actual_expression,
-                                 const T1& expected,
+                                 const T1& /* expected */,
                                  T2* actual) {
     // We already know that 'expected' is a null pointer.
     return CmpHelperEQ(expected_expression, actual_expression,
@@ -893,7 +945,7 @@ class AssertHelper {
 
 }  // namespace internal
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
 // The abstract base class that all value-parameterized tests inherit from.
 //
 // This class adds support for accessing the test parameter value via
@@ -1187,7 +1239,7 @@ AssertionResult DoubleLE(const char* expr1, const char* expr2,
                          double val1, double val2);
 
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 
 // Macros that test for HRESULT failure and success, these are only useful
 // on Windows, and rely on Windows SDK macros and APIs to compile.
@@ -1242,6 +1294,52 @@ AssertionResult DoubleLE(const char* expr1, const char* expr2,
   ::testing::internal::ScopedTrace GTEST_CONCAT_TOKEN_(gtest_trace_, __LINE__)(\
     __FILE__, __LINE__, ::testing::Message() << (message))
 
+namespace internal {
+
+// This template is declared, but intentionally undefined.
+template <typename T1, typename T2>
+struct StaticAssertTypeEqHelper;
+
+template <typename T>
+struct StaticAssertTypeEqHelper<T, T> {};
+
+}  // namespace internal
+
+// Compile-time assertion for type equality.
+// StaticAssertTypeEq<type1, type2>() compiles iff type1 and type2 are
+// the same type.  The value it returns is not interesting.
+//
+// Instead of making StaticAssertTypeEq a class template, we make it a
+// function template that invokes a helper class template.  This
+// prevents a user from misusing StaticAssertTypeEq<T1, T2> by
+// defining objects of that type.
+//
+// CAVEAT:
+//
+// When used inside a method of a class template,
+// StaticAssertTypeEq<T1, T2>() is effective ONLY IF the method is
+// instantiated.  For example, given:
+//
+//   template <typename T> class Foo {
+//    public:
+//     void Bar() { testing::StaticAssertTypeEq<int, T>(); }
+//   };
+//
+// the code:
+//
+//   void Test1() { Foo<bool> foo; }
+//
+// will NOT generate a compiler error, as Foo<bool>::Bar() is never
+// actually instantiated.  Instead, you need:
+//
+//   void Test2() { Foo<bool> foo; foo.Bar(); }
+//
+// to cause a compiler error.
+template <typename T1, typename T2>
+bool StaticAssertTypeEq() {
+  internal::StaticAssertTypeEqHelper<T1, T2>();
+  return true;
+}
 
 // Defines a test.
 //
@@ -1269,7 +1367,7 @@ AssertionResult DoubleLE(const char* expr1, const char* expr2,
 // value, as it always calls GetTypeId<>() from the Google Test
 // framework.
 #define TEST(test_case_name, test_name)\
-  GTEST_TEST_(test_case_name, test_name,\
+  GTEST_TEST_(test_case_name, test_name, \
               ::testing::Test, ::testing::internal::GetTestTypeId())
 
 
@@ -1300,7 +1398,7 @@ AssertionResult DoubleLE(const char* expr1, const char* expr2,
 //   }
 
 #define TEST_F(test_fixture, test_name)\
-  GTEST_TEST_(test_fixture, test_name, test_fixture,\
+  GTEST_TEST_(test_fixture, test_name, test_fixture, \
               ::testing::internal::GetTypeId<test_fixture>())
 
 // Use this macro in main() to run all tests.  It returns 0 if all

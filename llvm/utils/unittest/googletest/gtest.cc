@@ -43,11 +43,11 @@
 #include <wchar.h>
 #include <wctype.h>
 
-#ifdef GTEST_OS_LINUX
+#if GTEST_OS_LINUX
 
 // TODO(kenton@google.com): Use autoconf to detect availability of
 // gettimeofday().
-#define GTEST_HAS_GETTIMEOFDAY
+#define GTEST_HAS_GETTIMEOFDAY_ 1
 
 #include <fcntl.h>
 #include <limits.h>
@@ -60,22 +60,22 @@
 #include <string>
 #include <vector>
 
-#elif defined(GTEST_OS_SYMBIAN)
-#define GTEST_HAS_GETTIMEOFDAY
+#elif GTEST_OS_SYMBIAN
+#define GTEST_HAS_GETTIMEOFDAY_ 1
 #include <sys/time.h>  // NOLINT
 
-#elif defined(GTEST_OS_ZOS)
-#define GTEST_HAS_GETTIMEOFDAY
+#elif GTEST_OS_ZOS
+#define GTEST_HAS_GETTIMEOFDAY_ 1
 #include <sys/time.h>  // NOLINT
 
 // On z/OS we additionally need strings.h for strcasecmp.
-#include <strings.h>
+#include <strings.h>  // NOLINT
 
 #elif defined(_WIN32_WCE)  // We are on Windows CE.
 
 #include <windows.h>  // NOLINT
 
-#elif defined(GTEST_OS_WINDOWS)  // We are on Windows proper.
+#elif GTEST_OS_WINDOWS  // We are on Windows proper.
 
 #include <io.h>  // NOLINT
 #include <sys/timeb.h>  // NOLINT
@@ -89,9 +89,9 @@
 // TODO(kenton@google.com): There are other ways to get the time on
 //   Windows, like GetTickCount() or GetSystemTimeAsFileTime().  MinGW
 //   supports these.  consider using them instead.
-#define GTEST_HAS_GETTIMEOFDAY
+#define GTEST_HAS_GETTIMEOFDAY_ 1
 #include <sys/time.h>  // NOLINT
-#endif
+#endif  // defined(__MINGW__) || defined(__MINGW32__)
 
 // cpplint thinks that the header is already included, so we want to
 // silence it.
@@ -102,13 +102,17 @@
 // Assume other platforms have gettimeofday().
 // TODO(kenton@google.com): Use autoconf to detect availability of
 //   gettimeofday().
-#define GTEST_HAS_GETTIMEOFDAY
+#define GTEST_HAS_GETTIMEOFDAY_ 1
 
 // cpplint thinks that the header is already included, so we want to
 // silence it.
 #include <sys/time.h>  // NOLINT
 #include <unistd.h>  // NOLINT
 
+#endif  // GTEST_OS_LINUX
+
+#if GTEST_HAS_EXCEPTIONS
+#include <stdexcept>
 #endif
 
 // Indicates that this translation unit is part of Google Test's
@@ -116,11 +120,11 @@
 // included, or there will be a compiler error.  This trick is to
 // prevent a user from accidentally including gtest-internal-inl.h in
 // his code.
-#define GTEST_IMPLEMENTATION
+#define GTEST_IMPLEMENTATION_ 1
 #include "gtest/internal/gtest-internal-inl.h"
-#undef GTEST_IMPLEMENTATION
+#undef GTEST_IMPLEMENTATION_
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 #define fileno _fileno
 #define isatty _isatty
 #define vsnprintf _vsnprintf
@@ -145,6 +149,13 @@ static const char kUniversalFilter[] = "*";
 // The default output file for XML output.
 static const char kDefaultOutputFile[] = "test_detail.xml";
 
+// The environment variable name for the test shard index.
+static const char kTestShardIndex[] = "GTEST_SHARD_INDEX";
+// The environment variable name for the total number of test shards.
+static const char kTestTotalShards[] = "GTEST_TOTAL_SHARDS";
+// The environment variable name for the test shard status file.
+static const char kTestShardStatusFile[] = "GTEST_SHARD_STATUS_FILE";
+
 namespace internal {
 
 // The text used in failure messages to indicate the start of the
@@ -154,6 +165,11 @@ const char kStackTraceMarker[] = "\nStack trace:\n";
 }  // namespace internal
 
 GTEST_DEFINE_bool_(
+    also_run_disabled_tests,
+    internal::BoolFromGTestEnv("also_run_disabled_tests", false),
+    "Run disabled tests too, in addition to the tests normally being run.");
+
+GTEST_DEFINE_bool_(
     break_on_failure,
     internal::BoolFromGTestEnv("break_on_failure", false),
     "True iff a failed assertion should be a debugger break-point.");
@@ -161,7 +177,7 @@ GTEST_DEFINE_bool_(
 GTEST_DEFINE_bool_(
     catch_exceptions,
     internal::BoolFromGTestEnv("catch_exceptions", false),
-    "True iff " GTEST_NAME
+    "True iff " GTEST_NAME_
     " should catch exceptions and treat them as test failures.");
 
 GTEST_DEFINE_string_(
@@ -199,7 +215,7 @@ GTEST_DEFINE_string_(
 GTEST_DEFINE_bool_(
     print_time,
     internal::BoolFromGTestEnv("print_time", false),
-    "True iff " GTEST_NAME
+    "True iff " GTEST_NAME_
     " should display elapsed time in text output.");
 
 GTEST_DEFINE_int32_(
@@ -216,10 +232,21 @@ GTEST_DEFINE_int32_(
 
 GTEST_DEFINE_bool_(
     show_internal_stack_frames, false,
-    "True iff " GTEST_NAME " should include internal stack frames when "
+    "True iff " GTEST_NAME_ " should include internal stack frames when "
     "printing test failure stack traces.");
 
+GTEST_DEFINE_bool_(
+    throw_on_failure,
+    internal::BoolFromGTestEnv("throw_on_failure", false),
+    "When this flag is specified, a failed assertion will throw an exception "
+    "if exceptions are enabled or exit the program with a non-zero code "
+    "otherwise.");
+
 namespace internal {
+
+// g_help_flag is true iff the --help flag or an equivalent form is
+// specified on the command line.
+static bool g_help_flag = false;
 
 // GTestIsInitialized() returns true iff the user has initialized
 // Google Test.  Useful for catching the user mistake of not initializing
@@ -290,7 +317,7 @@ String g_executable_path;
 FilePath GetCurrentExecutableName() {
   FilePath result;
 
-#if defined(_WIN32_WCE) || defined(GTEST_OS_WINDOWS)
+#if defined(_WIN32_WCE) || GTEST_OS_WINDOWS
   result.Set(FilePath(g_executable_path).RemoveExtension("exe"));
 #else
   result.Set(FilePath(g_executable_path));
@@ -314,16 +341,28 @@ String UnitTestOptions::GetOutputFormat() {
 
 // Returns the name of the requested output file, or the default if none
 // was explicitly specified.
-String UnitTestOptions::GetOutputFile() {
+String UnitTestOptions::GetAbsolutePathToOutputFile() {
   const char* const gtest_output_flag = GTEST_FLAG(output).c_str();
   if (gtest_output_flag == NULL)
     return String("");
 
   const char* const colon = strchr(gtest_output_flag, ':');
   if (colon == NULL)
-    return String(kDefaultOutputFile);
+    return String(internal::FilePath::ConcatPaths(
+               internal::FilePath(
+                   UnitTest::GetInstance()->original_working_dir()),
+               internal::FilePath(kDefaultOutputFile)).ToString() );
 
   internal::FilePath output_name(colon + 1);
+  if (!output_name.IsAbsolutePath())
+    // TODO(wan@google.com): on Windows \some\path is not an absolute
+    // path (as its meaning depends on the current drive), yet the
+    // following logic for turning it into an absolute path is wrong.
+    // Fix it.
+    output_name = internal::FilePath::ConcatPaths(
+        internal::FilePath(UnitTest::GetInstance()->original_working_dir()),
+        internal::FilePath(colon + 1));
+
   if (!output_name.IsDirectory())
     return output_name.ToString();
 
@@ -357,7 +396,7 @@ bool UnitTestOptions::PatternMatchesString(const char *pattern,
 
 bool UnitTestOptions::MatchesFilter(const String& name, const char* filter) {
   const char *cur_pattern = filter;
-  while (true) {
+  for (;;) {
     if (PatternMatchesString(cur_pattern, name.c_str())) {
       return true;
     }
@@ -409,7 +448,7 @@ bool UnitTestOptions::FilterMatchesTest(const String &test_case_name,
           !MatchesFilter(full_name, negative.c_str()));
 }
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 // Returns EXCEPTION_EXECUTE_HANDLER if Google Test should handle the
 // given SEH exception, or EXCEPTION_CONTINUE_SEARCH otherwise.
 // This function is useful as an __except condition.
@@ -719,7 +758,7 @@ static TimeInMillis GetTimeInMillis() {
     return now_int64.QuadPart;
   }
   return 0;
-#elif defined(GTEST_OS_WINDOWS) && !defined(GTEST_HAS_GETTIMEOFDAY)
+#elif GTEST_OS_WINDOWS && !GTEST_HAS_GETTIMEOFDAY_
   __timeb64 now;
 #ifdef _MSC_VER
   // MSVC 8 deprecates _ftime64(), so we want to suppress warning 4996
@@ -734,7 +773,7 @@ static TimeInMillis GetTimeInMillis() {
   _ftime64(&now);
 #endif  // _MSC_VER
   return static_cast<TimeInMillis>(now.time) * 1000 + now.millitm;
-#elif defined(GTEST_HAS_GETTIMEOFDAY)
+#elif GTEST_HAS_GETTIMEOFDAY_
   struct timeval now;
   gettimeofday(&now, NULL);
   return static_cast<TimeInMillis>(now.tv_sec) * 1000 + now.tv_usec / 1000;
@@ -769,7 +808,7 @@ static char* CloneString(const char* str, size_t length) {
     char* const clone = new char[length + 1];
     // MSVC 8 deprecates strncpy(), so we want to suppress warning
     // 4996 (deprecated function) there.
-#ifdef GTEST_OS_WINDOWS  // We are on Windows.
+#if GTEST_OS_WINDOWS  // We are on Windows.
 #pragma warning(push)          // Saves the current warning state.
 #pragma warning(disable:4996)  // Temporarily disables warning 4996.
     strncpy(clone, str, length);
@@ -1290,7 +1329,7 @@ AssertionResult IsNotSubstring(
 
 namespace internal {
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 
 namespace {
 
@@ -1418,14 +1457,14 @@ char* CodePointToUtf8(UInt32 code_point, char* str) {
     // null-terminate the destination string.
     // MSVC 8 deprecates strncpy(), so we want to suppress warning
     // 4996 (deprecated function) there.
-#ifdef GTEST_OS_WINDOWS  // We are on Windows.
+#if GTEST_OS_WINDOWS  // We are on Windows.
 #pragma warning(push)          // Saves the current warning state.
 #pragma warning(disable:4996)  // Temporarily disables warning 4996.
 #endif
     strncpy(str, String::Format("(Invalid Unicode 0x%X)", code_point).c_str(),
             32);
-#ifdef GTEST_OS_WINDOWS  // We are on Windows.
-#pragma warning(pop)           // Restores the warning state.
+#if GTEST_OS_WINDOWS  // We are on Windows.
+#pragma warning(pop)  // Restores the warning state.
 #endif
     str[31] = '\0';  // Makes sure no change in the format to strncpy leaves
                      // the result unterminated.
@@ -1441,23 +1480,19 @@ char* CodePointToUtf8(UInt32 code_point, char* str) {
 // and thus should be combined into a single Unicode code point
 // using CreateCodePointFromUtf16SurrogatePair.
 inline bool IsUtf16SurrogatePair(wchar_t first, wchar_t second) {
-  if (sizeof(wchar_t) == 2)
-    return (first & 0xFC00) == 0xD800 && (second & 0xFC00) == 0xDC00;
-  else
-    return false;
+  return sizeof(wchar_t) == 2 &&
+      (first & 0xFC00) == 0xD800 && (second & 0xFC00) == 0xDC00;
 }
 
 // Creates a Unicode code point from UTF16 surrogate pair.
 inline UInt32 CreateCodePointFromUtf16SurrogatePair(wchar_t first,
                                                     wchar_t second) {
-  if (sizeof(wchar_t) == 2) {
-    const UInt32 mask = (1 << 10) - 1;
-    return (((first & mask) << 10) | (second & mask)) + 0x10000;
-  } else {
-    // This should not be called, but we provide a sensible default
-    // in case it is.
-    return static_cast<UInt32>(first);
-  }
+  const UInt32 mask = (1 << 10) - 1;
+  return (sizeof(wchar_t) == 2) ?
+      (((first & mask) << 10) | (second & mask)) + 0x10000 :
+      // This function should not be called when the condition is
+      // false, but we provide a sensible default in case it is.
+      static_cast<UInt32>(first);
 }
 
 // Converts a wide string to a narrow string in UTF-8 encoding.
@@ -1572,7 +1607,7 @@ bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
 
   if ( rhs == NULL ) return false;
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
   return _stricmp(lhs, rhs) == 0;
 #else  // GTEST_OS_WINDOWS
   return strcasecmp(lhs, rhs) == 0;
@@ -1597,9 +1632,9 @@ bool String::CaseInsensitiveWideCStringEquals(const wchar_t* lhs,
 
   if ( rhs == NULL ) return false;
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
   return _wcsicmp(lhs, rhs) == 0;
-#elif defined(GTEST_OS_LINUX)
+#elif GTEST_OS_LINUX
   return wcscasecmp(lhs, rhs) == 0;
 #else
   // Mac OS X and Cygwin don't define wcscasecmp.  Other unknown OSes
@@ -1610,7 +1645,7 @@ bool String::CaseInsensitiveWideCStringEquals(const wchar_t* lhs,
     right = towlower(*rhs++);
   } while (left && left == right);
   return left == right;
-#endif // OS selector
+#endif  // OS selector
 }
 
 // Constructs a String by copying a given number of chars from a
@@ -1700,7 +1735,7 @@ String String::Format(const char * format, ...) {
   char buffer[4096];
   // MSVC 8 deprecates vsnprintf(), so we want to suppress warning
   // 4996 (deprecated function) there.
-#ifdef GTEST_OS_WINDOWS  // We are on Windows.
+#if GTEST_OS_WINDOWS  // We are on Windows.
 #pragma warning(push)          // Saves the current warning state.
 #pragma warning(disable:4996)  // Temporarily disables warning 4996.
   const int size =
@@ -1807,7 +1842,7 @@ bool TestResult::ValidateTestProperty(const TestProperty& test_property) {
         << "Reserved key used in RecordProperty(): "
         << key
         << " ('name', 'status', 'time', and 'classname' are reserved by "
-        << GTEST_NAME << ")";
+        << GTEST_NAME_ << ")";
     return false;
   }
   return true;
@@ -1897,7 +1932,7 @@ void Test::RecordProperty(const char* key, int value) {
   RecordProperty(key, value_message.GetString().c_str());
 }
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 // We are on Windows.
 
 // Adds an "exception thrown" fatal failure to the current test.
@@ -1993,7 +2028,7 @@ void Test::Run() {
   if (!HasSameFixtureClass()) return;
 
   internal::UnitTestImpl* const impl = internal::GetUnitTestImpl();
-#if defined(GTEST_OS_WINDOWS) && !defined(__MINGW32__)
+#if GTEST_OS_WINDOWS && !defined(__MINGW32__)
   // We are on Windows.
   impl->os_stack_trace_getter()->UponLeavingGTest();
   __try {
@@ -2102,7 +2137,7 @@ TestInfo* MakeAndRegisterTestInfo(
   return test_info;
 }
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
 void ReportInvalidTestCaseType(const char* test_case_name,
                                const char* file, int line) {
   Message errors;
@@ -2201,7 +2236,7 @@ namespace internal {
 // and INSTANTIATE_TEST_CASE_P into regular tests and registers those.
 // This will be done just once during the program runtime.
 void UnitTestImpl::RegisterParameterizedTests() {
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
   if (!parameterized_tests_registered_) {
     parameterized_test_registry_.RegisterTests();
     parameterized_tests_registered_ = true;
@@ -2227,7 +2262,7 @@ void TestInfoImpl::Run() {
   const TimeInMillis start = GetTimeInMillis();
 
   impl->os_stack_trace_getter()->UponLeavingGTest();
-#if defined(GTEST_OS_WINDOWS) && !defined(__MINGW32__)
+#if GTEST_OS_WINDOWS && !defined(__MINGW32__)
   // We are on Windows.
   Test* test = NULL;
 
@@ -2418,14 +2453,20 @@ static const char * TestPartResultTypeToString(TestPartResultType type) {
   return "Unknown result type";
 }
 
+// Prints a TestPartResult to a String.
+static internal::String PrintTestPartResultToString(
+    const TestPartResult& test_part_result) {
+  return (Message()
+          << internal::FormatFileLocation(test_part_result.file_name(),
+                                          test_part_result.line_number())
+          << " " << TestPartResultTypeToString(test_part_result.type())
+          << test_part_result.message()).GetString();
+}
+
 // Prints a TestPartResult.
 static void PrintTestPartResult(
-    const TestPartResult & test_part_result) {
-  printf("%s %s%s\n",
-         internal::FormatFileLocation(test_part_result.file_name(),
-                                      test_part_result.line_number()).c_str(),
-         TestPartResultTypeToString(test_part_result.type()),
-         test_part_result.message());
+    const TestPartResult& test_part_result) {
+  printf("%s\n", PrintTestPartResultToString(test_part_result).c_str());
   fflush(stdout);
 }
 
@@ -2434,12 +2475,13 @@ static void PrintTestPartResult(
 namespace internal {
 
 enum GTestColor {
+  COLOR_DEFAULT,
   COLOR_RED,
   COLOR_GREEN,
   COLOR_YELLOW
 };
 
-#if defined(GTEST_OS_WINDOWS) && !defined(_WIN32_WCE)
+#if GTEST_OS_WINDOWS && !defined(_WIN32_WCE)
 
 // Returns the character attribute for the given color.
 WORD GetColorAttribute(GTestColor color) {
@@ -2447,20 +2489,21 @@ WORD GetColorAttribute(GTestColor color) {
     case COLOR_RED:    return FOREGROUND_RED;
     case COLOR_GREEN:  return FOREGROUND_GREEN;
     case COLOR_YELLOW: return FOREGROUND_RED | FOREGROUND_GREEN;
+    default:           return 0;
   }
-  return 0;
 }
 
 #else
 
-// Returns the ANSI color code for the given color.
+// Returns the ANSI color code for the given color.  COLOR_DEFAULT is
+// an invalid input.
 const char* GetAnsiColorCode(GTestColor color) {
   switch (color) {
     case COLOR_RED:     return "1";
     case COLOR_GREEN:   return "2";
     case COLOR_YELLOW:  return "3";
+    default:            return NULL;
   };
-  return NULL;
 }
 
 #endif  // GTEST_OS_WINDOWS && !_WIN32_WCE
@@ -2470,7 +2513,7 @@ bool ShouldUseColor(bool stdout_is_tty) {
   const char* const gtest_color = GTEST_FLAG(color).c_str();
 
   if (String::CaseInsensitiveCStringEquals(gtest_color, "auto")) {
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
     // On Windows the TERM variable is usually not set, but the
     // console there does support colors.
     return stdout_is_tty;
@@ -2502,11 +2545,13 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
 
-#if defined(_WIN32_WCE) || defined(GTEST_OS_SYMBIAN) || defined(GTEST_OS_ZOS)
-  static const bool use_color = false;
+#if defined(_WIN32_WCE) || GTEST_OS_SYMBIAN || GTEST_OS_ZOS
+  const bool use_color = false;
 #else
-  static const bool use_color = ShouldUseColor(isatty(fileno(stdout)) != 0);
-#endif  // !_WIN32_WCE
+  static const bool in_color_mode =
+      ShouldUseColor(isatty(fileno(stdout)) != 0);
+  const bool use_color = in_color_mode && (color != COLOR_DEFAULT);
+#endif  // defined(_WIN32_WCE) || GTEST_OS_SYMBIAN || GTEST_OS_ZOS
   // The '!= 0' comparison is necessary to satisfy MSVC 7.1.
 
   if (!use_color) {
@@ -2515,7 +2560,7 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...) {
     return;
   }
 
-#if defined(GTEST_OS_WINDOWS) && !defined(_WIN32_WCE)
+#if GTEST_OS_WINDOWS && !defined(_WIN32_WCE)
   const HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
   // Gets the current text color.
@@ -2533,13 +2578,14 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...) {
   printf("\033[0;3%sm", GetAnsiColorCode(color));
   vprintf(fmt, args);
   printf("\033[m");  // Resets the terminal to default.
-#endif  // GTEST_OS_WINDOWS && !_WIN32_WCE
+#endif  // GTEST_OS_WINDOWS && !defined(_WIN32_WCE)
   va_end(args);
 }
 
 }  // namespace internal
 
 using internal::ColoredPrintf;
+using internal::COLOR_DEFAULT;
 using internal::COLOR_RED;
 using internal::COLOR_GREEN;
 using internal::COLOR_YELLOW;
@@ -2579,7 +2625,14 @@ void PrettyUnitTestResultPrinter::OnUnitTestStart(
   // tests may be skipped.
   if (!internal::String::CStringEquals(filter, kUniversalFilter)) {
     ColoredPrintf(COLOR_YELLOW,
-                  "Note: %s filter = %s\n", GTEST_NAME, filter);
+                  "Note: %s filter = %s\n", GTEST_NAME_, filter);
+  }
+
+  if (internal::ShouldShard(kTestTotalShards, kTestShardIndex, false)) {
+    ColoredPrintf(COLOR_YELLOW,
+                  "Note: This is test shard %s of %s.\n",
+                  internal::GetEnv(kTestShardIndex),
+                  internal::GetEnv(kTestTotalShards));
   }
 
   const internal::UnitTestImpl* const impl = unit_test->impl();
@@ -2736,7 +2789,7 @@ void PrettyUnitTestResultPrinter::OnUnitTestEnd(
   }
 
   int num_disabled = impl->disabled_test_count();
-  if (num_disabled) {
+  if (num_disabled && !GTEST_FLAG(also_run_disabled_tests)) {
     if (!num_failures) {
       printf("\n");  // Add a spacer if no FAILURE banner is displayed.
     }
@@ -2899,7 +2952,7 @@ void XmlUnitTestResultPrinter::OnUnitTestEnd(const UnitTest* unit_test) {
   if (output_dir.CreateDirectoriesRecursively()) {
   // MSVC 8 deprecates fopen(), so we want to suppress warning 4996
   // (deprecated function) there.
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
   // We are on Windows.
 #pragma warning(push)          // Saves the current warning state.
 #pragma warning(disable:4996)  // Temporarily disables warning 4996.
@@ -3164,7 +3217,7 @@ void OsStackTraceGetter::UponLeavingGTest() {
 
 const char* const
 OsStackTraceGetter::kElidedFramesMarker =
-    "... " GTEST_NAME " internal frames ...";
+    "... " GTEST_NAME_ " internal frames ...";
 
 }  // namespace internal
 
@@ -3213,6 +3266,19 @@ Environment* UnitTest::AddEnvironment(Environment* env) {
   return env;
 }
 
+#if GTEST_HAS_EXCEPTIONS
+// A failed Google Test assertion will throw an exception of this type
+// when exceptions are enabled.  We derive it from std::runtime_error,
+// which is for errors presumably detectable only at run time.  Since
+// std::runtime_error inherits from std::exception, many testing
+// frameworks know how to extract and print the message inside it.
+class GoogleTestFailureException : public ::std::runtime_error {
+ public:
+  explicit GoogleTestFailureException(const TestPartResult& failure)
+      : runtime_error(PrintTestPartResultToString(failure).c_str()) {}
+};
+#endif
+
 // Adds a TestPartResult to the current TestResult object.  All Google Test
 // assertion macros (e.g. ASSERT_TRUE, EXPECT_EQ, etc) eventually call
 // this to report their results.  The user code should use the
@@ -3228,7 +3294,7 @@ void UnitTest::AddTestPartResult(TestPartResultType result_type,
 
   internal::MutexLock lock(&mutex_);
   if (impl_->gtest_trace_stack()->size() > 0) {
-    msg << "\n" << GTEST_NAME << " trace:";
+    msg << "\n" << GTEST_NAME_ << " trace:";
 
     for (internal::ListNode<internal::TraceInfo>* node =
          impl_->gtest_trace_stack()->Head();
@@ -3249,11 +3315,23 @@ void UnitTest::AddTestPartResult(TestPartResultType result_type,
   impl_->GetTestPartResultReporterForCurrentThread()->
       ReportTestPartResult(result);
 
-  // If this is a failure and the user wants the debugger to break on
-  // failures ...
-  if (result_type != TPRT_SUCCESS && GTEST_FLAG(break_on_failure)) {
-    // ... then we generate a seg fault.
-    *static_cast<int*>(NULL) = 1;
+  if (result_type != TPRT_SUCCESS) {
+    // gunit_break_on_failure takes precedence over
+    // gunit_throw_on_failure.  This allows a user to set the latter
+    // in the code (perhaps in order to use Google Test assertions
+    // with another testing framework) and specify the former on the
+    // command line for debugging.
+    if (GTEST_FLAG(break_on_failure)) {
+      *static_cast<int*>(NULL) = 1;
+    } else if (GTEST_FLAG(throw_on_failure)) {
+#if GTEST_HAS_EXCEPTIONS
+      throw GoogleTestFailureException(result);
+#else
+      // We cannot call abort() as it generates a pop-up in debug mode
+      // that cannot be suppressed in VC 7.1 or below.
+      exit(1);
+#endif
+    }
   }
 }
 
@@ -3271,18 +3349,47 @@ void UnitTest::RecordPropertyForCurrentTest(const char* key,
 // We don't protect this under mutex_, as we only support calling it
 // from the main thread.
 int UnitTest::Run() {
-#if defined(GTEST_OS_WINDOWS) && !defined(__MINGW32__)
+#if GTEST_OS_WINDOWS && !defined(__MINGW32__)
 
+  const bool in_death_test_child_process =
+      internal::GTEST_FLAG(internal_run_death_test).GetLength() > 0;
+
+  // Either the user wants Google Test to catch exceptions thrown by the
+  // tests or this is executing in the context of death test child
+  // process. In either case the user does not want to see pop-up dialogs
+  // about crashes - they are expected..
+  if (GTEST_FLAG(catch_exceptions) || in_death_test_child_process) {
+  // process. In either case the user does not want to see pop-up dialogs
+  // about crashes - they are expected..
+  if (GTEST_FLAG(catch_exceptions) || in_death_test_child_process) {
 #if !defined(_WIN32_WCE)
-  // SetErrorMode doesn't exist on CE.
-  if (GTEST_FLAG(catch_exceptions)) {
-    // The user wants Google Test to catch exceptions thrown by the tests.
-
-    // This lets fatal errors be handled by us, instead of causing pop-ups.
+    // SetErrorMode doesn't exist on CE.
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOALIGNMENTFAULTEXCEPT |
                  SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
-  }
 #endif  // _WIN32_WCE
+
+    // Death test children can be terminated with _abort().  On Windows,
+    // _abort() can show a dialog with a warning message.  This forces the
+    // abort message to go to stderr instead.
+    _set_error_mode(_OUT_TO_STDERR);
+
+    // In the debug version, Visual Studio pops up a separate dialog
+    // offering a choice to debug the aborted program. We need to suppress
+    // this dialog or it will pop up for every EXPECT/ASSERT_DEATH statement
+    // executed. Google Test will notify the user of any unexpected
+    // failure via stderr.
+#if _MSC_VER >= 1400
+    // VC++ doesn't define _set_abort_behavior() prior to the version 8.0.
+    // Users of prior VC versions shall suffer the agony and pain of
+    // clicking through the countless debug dialogs.
+    // TODO(vladl@google.com): find a way to suppress the abort dialog() in the
+    // debug mode when compiled with VC 7.1 or lower.
+    if (!GTEST_FLAG(break_on_failure))
+      _set_abort_behavior(
+          0x0,                                    // Clear the following flags:
+          _WRITE_ABORT_MSG | _CALL_REPORTFAULT);  // pop-up window, core dump.
+#endif  // _MSC_VER >= 1400
+  }
 
   __try {
     return impl_->RunAllTests();
@@ -3322,7 +3429,7 @@ const TestInfo* UnitTest::current_test_info() const {
   return impl_->current_test_info();
 }
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
 // Returns ParameterizedTestCaseRegistry object used to keep track of
 // value-parameterized tests and instantiate and register them.
 // L < mutex_
@@ -3377,7 +3484,7 @@ UnitTestImpl::UnitTestImpl(UnitTest* parent)
       per_thread_test_part_result_reporter_(
           &default_per_thread_test_part_result_reporter_),
       test_cases_(),
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
       parameterized_test_registry_(),
       parameterized_tests_registered_(false),
 #endif  // GTEST_HAS_PARAM_TEST
@@ -3387,7 +3494,7 @@ UnitTestImpl::UnitTestImpl(UnitTest* parent)
       ad_hoc_test_result_(),
       result_printer_(NULL),
       os_stack_trace_getter_(NULL),
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
       elapsed_time_(0),
       internal_run_death_test_flag_(NULL),
       death_test_factory_(new DefaultDeathTestFactory) {
@@ -3495,7 +3602,16 @@ int UnitTestImpl::RunAllTests() {
     return 1;
   }
 
+  // Do not run any test if the --help flag was specified.
+  if (g_help_flag)
+    return 0;
+
   RegisterParameterizedTests();
+
+  // Even if sharding is not on, test runners may want to use the
+  // GTEST_SHARD_STATUS_FILE to query whether the test supports the sharding
+  // protocol.
+  internal::WriteToShardStatusFileIfNeeded();
 
   // Lists all the tests and exits if the --gtest_list_tests
   // flag was specified.
@@ -3508,16 +3624,22 @@ int UnitTestImpl::RunAllTests() {
   // death test.
   bool in_subprocess_for_death_test = false;
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   internal_run_death_test_flag_.reset(ParseInternalRunDeathTestFlag());
   in_subprocess_for_death_test = (internal_run_death_test_flag_.get() != NULL);
 #endif  // GTEST_HAS_DEATH_TEST
 
   UnitTestEventListenerInterface * const printer = result_printer();
 
+  const bool should_shard = ShouldShard(kTestTotalShards, kTestShardIndex,
+                                        in_subprocess_for_death_test);
+
   // Compares the full test names with the filter to decide which
   // tests to run.
-  const bool has_tests_to_run = FilterTests() > 0;
+  const bool has_tests_to_run = FilterTests(should_shard
+                                              ? HONOR_SHARDING_PROTOCOL
+                                              : IGNORE_SHARDING_PROTOCOL) > 0;
+
   // True iff at least one test has failed.
   bool failed = false;
 
@@ -3573,14 +3695,128 @@ int UnitTestImpl::RunAllTests() {
   return failed ? 1 : 0;
 }
 
+// Reads the GTEST_SHARD_STATUS_FILE environment variable, and creates the file
+// if the variable is present. If a file already exists at this location, this
+// function will write over it. If the variable is present, but the file cannot
+// be created, prints an error and exits.
+void WriteToShardStatusFileIfNeeded() {
+  const char* const test_shard_file = GetEnv(kTestShardStatusFile);
+  if (test_shard_file != NULL) {
+#ifdef _MSC_VER  // MSVC 8 deprecates fopen().
+#pragma warning(push)          // Saves the current warning state.
+#pragma warning(disable:4996)  // Temporarily disables warning on
+                               // deprecated functions.
+#endif
+    FILE* const file = fopen(test_shard_file, "w");
+#ifdef _MSC_VER
+#pragma warning(pop)           // Restores the warning state.
+#endif
+    if (file == NULL) {
+      ColoredPrintf(COLOR_RED,
+                    "Could not write to the test shard status file \"%s\" "
+                    "specified by the %s environment variable.\n",
+                    test_shard_file, kTestShardStatusFile);
+      fflush(stdout);
+      exit(EXIT_FAILURE);
+    }
+    fclose(file);
+  }
+}
+
+// Checks whether sharding is enabled by examining the relevant
+// environment variable values. If the variables are present,
+// but inconsistent (i.e., shard_index >= total_shards), prints
+// an error and exits. If in_subprocess_for_death_test, sharding is
+// disabled because it must only be applied to the original test
+// process. Otherwise, we could filter out death tests we intended to execute.
+bool ShouldShard(const char* total_shards_env,
+                 const char* shard_index_env,
+                 bool in_subprocess_for_death_test) {
+  if (in_subprocess_for_death_test) {
+    return false;
+  }
+
+  const Int32 total_shards = Int32FromEnvOrDie(total_shards_env, -1);
+  const Int32 shard_index = Int32FromEnvOrDie(shard_index_env, -1);
+
+  if (total_shards == -1 && shard_index == -1) {
+    return false;
+  } else if (total_shards == -1 && shard_index != -1) {
+    const Message msg = Message()
+      << "Invalid environment variables: you have "
+      << kTestShardIndex << " = " << shard_index
+      << ", but have left " << kTestTotalShards << " unset.\n";
+    ColoredPrintf(COLOR_RED, msg.GetString().c_str());
+    fflush(stdout);
+    exit(EXIT_FAILURE);
+  } else if (total_shards != -1 && shard_index == -1) {
+    const Message msg = Message()
+      << "Invalid environment variables: you have "
+      << kTestTotalShards << " = " << total_shards
+      << ", but have left " << kTestShardIndex << " unset.\n";
+    ColoredPrintf(COLOR_RED, msg.GetString().c_str());
+    fflush(stdout);
+    exit(EXIT_FAILURE);
+  } else if (shard_index < 0 || shard_index >= total_shards) {
+    const Message msg = Message()
+      << "Invalid environment variables: we require 0 <= "
+      << kTestShardIndex << " < " << kTestTotalShards
+      << ", but you have " << kTestShardIndex << "=" << shard_index
+      << ", " << kTestTotalShards << "=" << total_shards << ".\n";
+    ColoredPrintf(COLOR_RED, msg.GetString().c_str());
+    fflush(stdout);
+    exit(EXIT_FAILURE);
+  }
+
+  return total_shards > 1;
+}
+
+// Parses the environment variable var as an Int32. If it is unset,
+// returns default_val. If it is not an Int32, prints an error
+// and aborts.
+Int32 Int32FromEnvOrDie(const char* const var, Int32 default_val) {
+  const char* str_val = GetEnv(var);
+  if (str_val == NULL) {
+    return default_val;
+  }
+
+  Int32 result;
+  if (!ParseInt32(Message() << "The value of environment variable " << var,
+                  str_val, &result)) {
+    exit(EXIT_FAILURE);
+  }
+  return result;
+}
+
+// Given the total number of shards, the shard index, and the test id,
+// returns true iff the test should be run on this shard. The test id is
+// some arbitrary but unique non-negative integer assigned to each test
+// method. Assumes that 0 <= shard_index < total_shards.
+bool ShouldRunTestOnShard(int total_shards, int shard_index, int test_id) {
+  return (test_id % total_shards) == shard_index;
+}
+
 // Compares the name of each test with the user-specified filter to
 // decide whether the test should be run, then records the result in
 // each TestCase and TestInfo object.
+// If shard_tests == true, further filters tests based on sharding
+// variables in the environment - see
+// http://code.google.com/p/googletest/wiki/GoogleTestAdvancedGuide.
 // Returns the number of tests that should run.
-int UnitTestImpl::FilterTests() {
+int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
+  const Int32 total_shards = shard_tests == HONOR_SHARDING_PROTOCOL ?
+      Int32FromEnvOrDie(kTestTotalShards, -1) : -1;
+  const Int32 shard_index = shard_tests == HONOR_SHARDING_PROTOCOL ?
+      Int32FromEnvOrDie(kTestShardIndex, -1) : -1;
+
+  // num_runnable_tests are the number of tests that will
+  // run across all shards (i.e., match filter and are not disabled).
+  // num_selected_tests are the number of tests to be run on
+  // this shard.
   int num_runnable_tests = 0;
+  int num_selected_tests = 0;
   for (const internal::ListNode<TestCase *> *test_case_node =
-       test_cases_.Head();
+           test_cases_.Head();
        test_case_node != NULL;
        test_case_node = test_case_node->next()) {
     TestCase * const test_case = test_case_node->element();
@@ -3588,7 +3824,7 @@ int UnitTestImpl::FilterTests() {
     test_case->set_should_run(false);
 
     for (const internal::ListNode<TestInfo *> *test_info_node =
-           test_case->test_info_list().Head();
+             test_case->test_info_list().Head();
          test_info_node != NULL;
          test_info_node = test_info_node->next()) {
       TestInfo * const test_info = test_info_node->element();
@@ -3596,23 +3832,30 @@ int UnitTestImpl::FilterTests() {
       // A test is disabled if test case name or test name matches
       // kDisableTestFilter.
       const bool is_disabled =
-        internal::UnitTestOptions::MatchesFilter(test_case_name,
-                                                 kDisableTestFilter) ||
-        internal::UnitTestOptions::MatchesFilter(test_name,
-                                                 kDisableTestFilter);
+          internal::UnitTestOptions::MatchesFilter(test_case_name,
+                                                   kDisableTestFilter) ||
+          internal::UnitTestOptions::MatchesFilter(test_name,
+                                                   kDisableTestFilter);
       test_info->impl()->set_is_disabled(is_disabled);
 
-      const bool should_run = !is_disabled &&
+      const bool is_runnable =
+          (GTEST_FLAG(also_run_disabled_tests) || !is_disabled) &&
           internal::UnitTestOptions::FilterMatchesTest(test_case_name,
                                                        test_name);
-      test_info->impl()->set_should_run(should_run);
-      test_case->set_should_run(test_case->should_run() || should_run);
-      if (should_run) {
-        num_runnable_tests++;
-      }
+
+      const bool is_selected = is_runnable &&
+          (shard_tests == IGNORE_SHARDING_PROTOCOL ||
+           ShouldRunTestOnShard(total_shards, shard_index,
+                                num_runnable_tests));
+
+      num_runnable_tests += is_runnable;
+      num_selected_tests += is_selected;
+
+      test_info->impl()->set_should_run(is_selected);
+      test_case->set_should_run(test_case->should_run() || is_selected);
     }
   }
-  return num_runnable_tests;
+  return num_selected_tests;
 }
 
 // Lists all tests by name.
@@ -3658,7 +3901,7 @@ UnitTestEventListenerInterface* UnitTestImpl::result_printer() {
     return result_printer_;
   }
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   if (internal_run_death_test_flag_.get() != NULL) {
     result_printer_ = new NullUnitTestResultPrinter;
     return result_printer_;
@@ -3669,7 +3912,7 @@ UnitTestEventListenerInterface* UnitTestImpl::result_printer() {
   const String& output_format = internal::UnitTestOptions::GetOutputFormat();
   if (output_format == "xml") {
     repeater->AddListener(new XmlUnitTestResultPrinter(
-        internal::UnitTestOptions::GetOutputFile().c_str()));
+        internal::UnitTestOptions::GetAbsolutePathToOutputFile().c_str()));
   } else if (output_format != "") {
       printf("WARNING: unrecognized output format \"%s\" ignored.\n",
              output_format.c_str());
@@ -3757,6 +4000,22 @@ int GetFailedPartCount(const TestResult* result) {
   return result->failed_part_count();
 }
 
+// Used by the GTEST_HIDE_UNREACHABLE_CODE_ macro to suppress unreachable
+// code warnings.
+namespace {
+class ClassUniqueToAlwaysTrue {};
+}
+
+bool AlwaysTrue() {
+#if GTEST_HAS_EXCEPTIONS
+  // This condition is always false so AlwaysTrue() never actually throws,
+  // but it makes the compiler think that it may throw.
+  if (atoi("42") == 36)  // NOLINT
+    throw ClassUniqueToAlwaysTrue();
+#endif  // GTEST_HAS_EXCEPTIONS
+  return true;
+}
+
 // Parses a string as a command line flag.  The string should have
 // the format "--flag=value".  When def_optional is true, the "=value"
 // part can be omitted.
@@ -3768,8 +4027,8 @@ const char* ParseFlagValue(const char* str,
   // str and flag must not be NULL.
   if (str == NULL || flag == NULL) return NULL;
 
-  // The flag must start with "--" followed by GTEST_FLAG_PREFIX.
-  const String flag_str = String::Format("--%s%s", GTEST_FLAG_PREFIX, flag);
+  // The flag must start with "--" followed by GTEST_FLAG_PREFIX_.
+  const String flag_str = String::Format("--%s%s", GTEST_FLAG_PREFIX_, flag);
   const size_t flag_len = flag_str.GetLength();
   if (strncmp(str, flag_str.c_str(), flag_len) != 0) return NULL;
 
@@ -3846,6 +4105,102 @@ bool ParseStringFlag(const char* str, const char* flag, String* value) {
   return true;
 }
 
+// Prints a string containing code-encoded text.  The following escape
+// sequences can be used in the string to control the text color:
+//
+//   @@    prints a single '@' character.
+//   @R    changes the color to red.
+//   @G    changes the color to green.
+//   @Y    changes the color to yellow.
+//   @D    changes to the default terminal text color.
+//
+// TODO(wan@google.com): Write tests for this once we add stdout
+// capturing to Google Test.
+static void PrintColorEncoded(const char* str) {
+  GTestColor color = COLOR_DEFAULT;  // The current color.
+
+  // Conceptually, we split the string into segments divided by escape
+  // sequences.  Then we print one segment at a time.  At the end of
+  // each iteration, the str pointer advances to the beginning of the
+  // next segment.
+  for (;;) {
+    const char* p = strchr(str, '@');
+    if (p == NULL) {
+      ColoredPrintf(color, "%s", str);
+      return;
+    }
+
+    ColoredPrintf(color, "%s", String(str, p - str).c_str());
+
+    const char ch = p[1];
+    str = p + 2;
+    if (ch == '@') {
+      ColoredPrintf(color, "@");
+    } else if (ch == 'D') {
+      color = COLOR_DEFAULT;
+    } else if (ch == 'R') {
+      color = COLOR_RED;
+    } else if (ch == 'G') {
+      color = COLOR_GREEN;
+    } else if (ch == 'Y') {
+      color = COLOR_YELLOW;
+    } else {
+      --str;
+    }
+  }
+}
+
+static const char kColorEncodedHelpMessage[] =
+"This program contains tests written using " GTEST_NAME_ ". You can use the\n"
+"following command line flags to control its behavior:\n"
+"\n"
+"Test Selection:\n"
+"  @G--" GTEST_FLAG_PREFIX_ "list_tests@D\n"
+"      List the names of all tests instead of running them. The name of\n"
+"      TEST(Foo, Bar) is \"Foo.Bar\".\n"
+"  @G--" GTEST_FLAG_PREFIX_ "filter=@YPOSTIVE_PATTERNS"
+    "[@G-@YNEGATIVE_PATTERNS]@D\n"
+"      Run only the tests whose name matches one of the positive patterns but\n"
+"      none of the negative patterns. '?' matches any single character; '*'\n"
+"      matches any substring; ':' separates two patterns.\n"
+"  @G--" GTEST_FLAG_PREFIX_ "also_run_disabled_tests@D\n"
+"      Run all disabled tests too.\n"
+"  @G--" GTEST_FLAG_PREFIX_ "repeat=@Y[COUNT]@D\n"
+"      Run the tests repeatedly; use a negative count to repeat forever.\n"
+"\n"
+"Test Output:\n"
+"  @G--" GTEST_FLAG_PREFIX_ "color=@Y(@Gyes@Y|@Gno@Y|@Gauto@Y)@D\n"
+"      Enable/disable colored output. The default is @Gauto@D.\n"
+"  -@G-" GTEST_FLAG_PREFIX_ "print_time@D\n"
+"      Print the elapsed time of each test.\n"
+"  @G--" GTEST_FLAG_PREFIX_ "output=xml@Y[@G:@YDIRECTORY_PATH@G"
+    GTEST_PATH_SEP_ "@Y|@G:@YFILE_PATH]@D\n"
+"      Generate an XML report in the given directory or with the given file\n"
+"      name. @YFILE_PATH@D defaults to @Gtest_details.xml@D.\n"
+"\n"
+"Failure Behavior:\n"
+"  @G--" GTEST_FLAG_PREFIX_ "break_on_failure@D\n"
+"      Turn assertion failures into debugger break-points.\n"
+"  @G--" GTEST_FLAG_PREFIX_ "throw_on_failure@D\n"
+"      Turn assertion failures into C++ exceptions.\n"
+#if GTEST_OS_WINDOWS
+"  @G--" GTEST_FLAG_PREFIX_ "catch_exceptions@D\n"
+"      Suppress pop-ups caused by exceptions.\n"
+#endif  // GTEST_OS_WINDOWS
+"\n"
+"Except for @G--" GTEST_FLAG_PREFIX_ "list_tests@D, you can alternatively set "
+    "the corresponding\n"
+"environment variable of a flag (all letters in upper-case). For example, to\n"
+"print the elapsed time, you can either specify @G--" GTEST_FLAG_PREFIX_
+    "print_time@D or set the\n"
+"@G" GTEST_FLAG_PREFIX_UPPER_ "PRINT_TIME@D environment variable to a "
+    "non-zero value.\n"
+"\n"
+"For more information, please read the " GTEST_NAME_ " documentation at\n"
+"@G" GTEST_PROJECT_URL_ "@D. If you find a bug in " GTEST_NAME_ "\n"
+"(not one in your own code or tests), please report it to\n"
+"@G<" GTEST_DEV_EMAIL_ ">@D.\n";
+
 // Parses the command line for Google Test flags, without initializing
 // other parts of Google Test.  The type parameter CharType can be
 // instantiated to either char or wchar_t.
@@ -3860,20 +4215,25 @@ void ParseGoogleTestFlagsOnlyImpl(int* argc, CharType** argv) {
     using internal::ParseStringFlag;
 
     // Do we see a Google Test flag?
-    if (ParseBoolFlag(arg, kBreakOnFailureFlag,
+    if (ParseBoolFlag(arg, kAlsoRunDisabledTestsFlag,
+                      &GTEST_FLAG(also_run_disabled_tests)) ||
+        ParseBoolFlag(arg, kBreakOnFailureFlag,
                       &GTEST_FLAG(break_on_failure)) ||
         ParseBoolFlag(arg, kCatchExceptionsFlag,
                       &GTEST_FLAG(catch_exceptions)) ||
         ParseStringFlag(arg, kColorFlag, &GTEST_FLAG(color)) ||
         ParseStringFlag(arg, kDeathTestStyleFlag,
                         &GTEST_FLAG(death_test_style)) ||
+        ParseBoolFlag(arg, kDeathTestUseFork,
+                      &GTEST_FLAG(death_test_use_fork)) ||
         ParseStringFlag(arg, kFilterFlag, &GTEST_FLAG(filter)) ||
         ParseStringFlag(arg, kInternalRunDeathTestFlag,
                         &GTEST_FLAG(internal_run_death_test)) ||
         ParseBoolFlag(arg, kListTestsFlag, &GTEST_FLAG(list_tests)) ||
         ParseStringFlag(arg, kOutputFlag, &GTEST_FLAG(output)) ||
         ParseBoolFlag(arg, kPrintTimeFlag, &GTEST_FLAG(print_time)) ||
-        ParseInt32Flag(arg, kRepeatFlag, &GTEST_FLAG(repeat))
+        ParseInt32Flag(arg, kRepeatFlag, &GTEST_FLAG(repeat)) ||
+        ParseBoolFlag(arg, kThrowOnFailureFlag, &GTEST_FLAG(throw_on_failure))
         ) {
       // Yes.  Shift the remainder of the argv list left by one.  Note
       // that argv has (*argc + 1) elements, the last one always being
@@ -3889,7 +4249,17 @@ void ParseGoogleTestFlagsOnlyImpl(int* argc, CharType** argv) {
       // We also need to decrement the iterator as we just removed
       // an element.
       i--;
+    } else if (arg_string == "--help" || arg_string == "-h" ||
+               arg_string == "-?" || arg_string == "/?") {
+      g_help_flag = true;
     }
+  }
+
+  if (g_help_flag) {
+    // We print the help here instead of in RUN_ALL_TESTS(), as the
+    // latter may not be called at all if the user is using Google
+    // Test with another testing framework.
+    PrintColorEncoded(kColorEncodedHelpMessage);
   }
 }
 
@@ -3917,7 +4287,7 @@ void InitGoogleTestImpl(int* argc, CharType** argv) {
 
   internal::g_executable_path = internal::StreamableToString(argv[0]);
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   g_argvs.clear();
   for (int i = 0; i != *argc; i++) {
     g_argvs.push_back(StreamableToString(argv[i]));

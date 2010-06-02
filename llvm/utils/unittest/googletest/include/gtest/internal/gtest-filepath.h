@@ -34,7 +34,7 @@
 // This header file declares classes and functions used internally by
 // Google Test.  They are subject to change without notice.
 //
-// This file is #included in testing/base/internal/gtest-internal.h
+// This file is #included in <gtest/internal/gtest-internal.h>.
 // Do not include this header file separately!
 
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_GTEST_FILEPATH_H_
@@ -92,6 +92,12 @@ class FilePath {
                                const FilePath& base_name,
                                int number,
                                const char* extension);
+
+  // Given directory = "dir", relative_path = "test.xml",
+  // returns "dir/test.xml".
+  // On Windows, uses \ as the separator rather than /.
+  static FilePath ConcatPaths(const FilePath& directory,
+                              const FilePath& relative_path);
 
   // Returns a pathname for a file that does not currently exist. The pathname
   // will be directory/base_name.extension or
@@ -163,6 +169,9 @@ class FilePath {
   // Returns true if pathname describes a root directory. (Windows has one
   // root directory per disk drive.)
   bool IsRootDirectory() const;
+
+  // Returns true if pathname describes an absolute path.
+  bool IsAbsolutePath() const;
 
  private:
   // Replaces multiple consecutive separators with a single separator.

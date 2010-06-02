@@ -37,20 +37,24 @@
 #ifndef GTEST_SRC_GTEST_INTERNAL_INL_H_
 #define GTEST_SRC_GTEST_INTERNAL_INL_H_
 
-// GTEST_IMPLEMENTATION is defined iff the current translation unit is
-// part of Google Test's implementation.
-#ifndef GTEST_IMPLEMENTATION
+// GTEST_IMPLEMENTATION_ is defined to 1 iff the current translation unit is
+// part of Google Test's implementation; otherwise it's undefined.
+#if !GTEST_IMPLEMENTATION_
 // A user is trying to include this from his code - just say no.
 #error "gtest-internal-inl.h is part of Google Test's internal implementation."
 #error "It must not be included except by Google Test itself."
-#endif  // GTEST_IMPLEMENTATION
+#endif  // GTEST_IMPLEMENTATION_
 
+#include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>   // For strtoll/_strtoul64.
+
+#include <string>
 
 #include <gtest/internal/gtest-port.h>
 
-#ifdef GTEST_OS_WINDOWS
-#include <windows.h>  // NOLINT
+#if GTEST_OS_WINDOWS
+#include <windows.h>  // For DWORD.
 #endif  // GTEST_OS_WINDOWS
 
 #include <gtest/gtest.h>
@@ -60,19 +64,10 @@ namespace testing {
 
 // Declares the flags.
 //
-// We don't want the users to modify these flags in the code, but want
-// Google Test's own unit tests to be able to access them.  Therefore we
-// declare them here as opposed to in gtest.h.
-GTEST_DECLARE_bool_(break_on_failure);
-GTEST_DECLARE_bool_(catch_exceptions);
-GTEST_DECLARE_string_(color);
-GTEST_DECLARE_string_(filter);
-GTEST_DECLARE_bool_(list_tests);
-GTEST_DECLARE_string_(output);
-GTEST_DECLARE_bool_(print_time);
-GTEST_DECLARE_int32_(repeat);
-GTEST_DECLARE_int32_(stack_trace_depth);
-GTEST_DECLARE_bool_(show_internal_stack_frames);
+// We don't want the users to modify this flag in the code, but want
+// Google Test's own unit tests to be able to access it. Therefore we
+// declare it here as opposed to in gtest.h.
+GTEST_DECLARE_bool_(death_test_use_fork);
 
 namespace internal {
 
@@ -81,6 +76,7 @@ namespace internal {
 extern const TypeId kTestTypeIdInGoogleTest;
 
 // Names of the flags (needed for parsing Google Test flags).
+const char kAlsoRunDisabledTestsFlag[] = "also_run_disabled_tests";
 const char kBreakOnFailureFlag[] = "break_on_failure";
 const char kCatchExceptionsFlag[] = "catch_exceptions";
 const char kColorFlag[] = "color";
@@ -89,6 +85,7 @@ const char kListTestsFlag[] = "list_tests";
 const char kOutputFlag[] = "output";
 const char kPrintTimeFlag[] = "print_time";
 const char kRepeatFlag[] = "repeat";
+const char kThrowOnFailureFlag[] = "throw_on_failure";
 
 // This class saves the values of all Google Test flags in its c'tor, and
 // restores them in its d'tor.
@@ -96,37 +93,45 @@ class GTestFlagSaver {
  public:
   // The c'tor.
   GTestFlagSaver() {
+    also_run_disabled_tests_ = GTEST_FLAG(also_run_disabled_tests);
     break_on_failure_ = GTEST_FLAG(break_on_failure);
     catch_exceptions_ = GTEST_FLAG(catch_exceptions);
     color_ = GTEST_FLAG(color);
     death_test_style_ = GTEST_FLAG(death_test_style);
+    death_test_use_fork_ = GTEST_FLAG(death_test_use_fork);
     filter_ = GTEST_FLAG(filter);
     internal_run_death_test_ = GTEST_FLAG(internal_run_death_test);
     list_tests_ = GTEST_FLAG(list_tests);
     output_ = GTEST_FLAG(output);
     print_time_ = GTEST_FLAG(print_time);
     repeat_ = GTEST_FLAG(repeat);
+    throw_on_failure_ = GTEST_FLAG(throw_on_failure);
   }
 
   // The d'tor is not virtual.  DO NOT INHERIT FROM THIS CLASS.
   ~GTestFlagSaver() {
+    GTEST_FLAG(also_run_disabled_tests) = also_run_disabled_tests_;
     GTEST_FLAG(break_on_failure) = break_on_failure_;
     GTEST_FLAG(catch_exceptions) = catch_exceptions_;
     GTEST_FLAG(color) = color_;
     GTEST_FLAG(death_test_style) = death_test_style_;
+    GTEST_FLAG(death_test_use_fork) = death_test_use_fork_;
     GTEST_FLAG(filter) = filter_;
     GTEST_FLAG(internal_run_death_test) = internal_run_death_test_;
     GTEST_FLAG(list_tests) = list_tests_;
     GTEST_FLAG(output) = output_;
     GTEST_FLAG(print_time) = print_time_;
     GTEST_FLAG(repeat) = repeat_;
+    GTEST_FLAG(throw_on_failure) = throw_on_failure_;
   }
  private:
   // Fields for saving the original values of flags.
+  bool also_run_disabled_tests_;
   bool break_on_failure_;
   bool catch_exceptions_;
   String color_;
   String death_test_style_;
+  bool death_test_use_fork_;
   String filter_;
   String internal_run_death_test_;
   bool list_tests_;
@@ -134,6 +139,7 @@ class GTestFlagSaver {
   bool print_time_;
   bool pretty_;
   internal::Int32 repeat_;
+  bool throw_on_failure_;
 } GTEST_ATTRIBUTE_UNUSED_;
 
 // Converts a Unicode code point to a narrow string in UTF-8 encoding.
@@ -163,6 +169,32 @@ String WideStringToUtf8(const wchar_t* str, int num_chars);
 
 // Returns the number of active threads, or 0 when there is an error.
 size_t GetThreadCount();
+
+// Reads the GTEST_SHARD_STATUS_FILE environment variable, and creates the file
+// if the variable is present. If a file already exists at this location, this
+// function will write over it. If the variable is present, but the file cannot
+// be created, prints an error and exits.
+void WriteToShardStatusFileIfNeeded();
+
+// Checks whether sharding is enabled by examining the relevant
+// environment variable values. If the variables are present,
+// but inconsistent (e.g., shard_index >= total_shards), prints
+// an error and exits. If in_subprocess_for_death_test, sharding is
+// disabled because it must only be applied to the original test
+// process. Otherwise, we could filter out death tests we intended to execute.
+bool ShouldShard(const char* total_shards_str, const char* shard_index_str,
+                 bool in_subprocess_for_death_test);
+
+// Parses the environment variable var as an Int32. If it is unset,
+// returns default_val. If it is not an Int32, prints an error and
+// and aborts.
+Int32 Int32FromEnvOrDie(const char* env_var, Int32 default_val);
+
+// Given the total number of shards, the shard index, and the test id,
+// returns true iff the test should be run on this shard. The test id is
+// some arbitrary but unique non-negative integer assigned to each test
+// method. Assumes that 0 <= shard_index < total_shards.
+bool ShouldRunTestOnShard(int total_shards, int shard_index, int test_id);
 
 // List is a simple singly-linked list container.
 //
@@ -790,9 +822,10 @@ class UnitTestOptions {
   // Returns the output format, or "" for normal printed output.
   static String GetOutputFormat();
 
-  // Returns the name of the requested output file, or the default if none
-  // was explicitly specified.
-  static String GetOutputFile();
+  // Returns the absolute path of the requested output file, or the
+  // default (test_detail.xml in the original working directory) if
+  // none was explicitly specified.
+  static String GetAbsolutePathToOutputFile();
 
   // Functions for processing the gtest_filter flag.
 
@@ -808,7 +841,7 @@ class UnitTestOptions {
   static bool FilterMatchesTest(const String &test_case_name,
                                 const String &test_name);
 
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
   // Function for supporting the gtest_catch_exception flag.
 
   // Returns EXCEPTION_EXECUTE_HANDLER if Google Test should handle the
@@ -891,6 +924,8 @@ class DefaultGlobalTestPartResultReporter
 
  private:
   UnitTestImpl* const unit_test_;
+
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(DefaultGlobalTestPartResultReporter);
 };
 
 // This is the default per thread test part result reporter used in
@@ -905,6 +940,8 @@ class DefaultPerThreadTestPartResultReporter
 
  private:
   UnitTestImpl* const unit_test_;
+
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(DefaultPerThreadTestPartResultReporter);
 };
 
 // The private implementation of the UnitTest class.  We don't protect
@@ -1066,7 +1103,7 @@ class UnitTestImpl {
                 tear_down_tc)->AddTestInfo(test_info);
   }
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
   // Returns ParameterizedTestCaseRegistry object used to keep track of
   // value-parameterized tests and instantiate and register them.
   internal::ParameterizedTestCaseRegistry& parameterized_test_registry() {
@@ -1108,11 +1145,18 @@ class UnitTestImpl {
     ad_hoc_test_result_.Clear();
   }
 
+  enum ReactionToSharding {
+    HONOR_SHARDING_PROTOCOL,
+    IGNORE_SHARDING_PROTOCOL
+  };
+
   // Matches the full name of each test against the user-specified
   // filter to decide whether the test should run, then records the
   // result in each TestCase and TestInfo object.
+  // If shard_tests == HONOR_SHARDING_PROTOCOL, further filters tests
+  // based on sharding variables in the environment.
   // Returns the number of tests that should run.
-  int FilterTests();
+  int FilterTests(ReactionToSharding shard_tests);
 
   // Lists all the tests by name.
   void ListAllTests();
@@ -1139,7 +1183,7 @@ class UnitTestImpl {
     return gtest_trace_stack_.pointer();
   }
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   // Returns a pointer to the parsed --gtest_internal_run_death_test
   // flag, or NULL if that flag was not specified.
   // This information is useful only in a death test child process.
@@ -1188,7 +1232,7 @@ class UnitTestImpl {
 
   internal::List<TestCase*> test_cases_;  // The list of TestCases.
 
-#ifdef GTEST_HAS_PARAM_TEST
+#if GTEST_HAS_PARAM_TEST
   // ParameterizedTestRegistry object used to register value-parameterized
   // tests.
   internal::ParameterizedTestCaseRegistry parameterized_test_registry_;
@@ -1237,7 +1281,7 @@ class UnitTestImpl {
   // How long the test took to run, in milliseconds.
   TimeInMillis elapsed_time_;
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_DEATH_TEST
   // The decomposed components of the gtest_internal_run_death_test flag,
   // parsed when RUN_ALL_TESTS is called.
   internal::scoped_ptr<InternalRunDeathTestFlag> internal_run_death_test_flag_;
@@ -1256,10 +1300,97 @@ inline UnitTestImpl* GetUnitTestImpl() {
   return UnitTest::GetInstance()->impl();
 }
 
+// Internal helper functions for implementing the simple regular
+// expression matcher.
+bool IsInSet(char ch, const char* str);
+bool IsDigit(char ch);
+bool IsPunct(char ch);
+bool IsRepeat(char ch);
+bool IsWhiteSpace(char ch);
+bool IsWordChar(char ch);
+bool IsValidEscape(char ch);
+bool AtomMatchesChar(bool escaped, char pattern, char ch);
+bool ValidateRegex(const char* regex);
+bool MatchRegexAtHead(const char* regex, const char* str);
+bool MatchRepetitionAndRegexAtHead(
+    bool escaped, char ch, char repeat, const char* regex, const char* str);
+bool MatchRegexAnywhere(const char* regex, const char* str);
+
 // Parses the command line for Google Test flags, without initializing
 // other parts of Google Test.
 void ParseGoogleTestFlagsOnly(int* argc, char** argv);
 void ParseGoogleTestFlagsOnly(int* argc, wchar_t** argv);
+
+#if GTEST_HAS_DEATH_TEST
+
+// Returns the message describing the last system error, regardless of the
+// platform.
+String GetLastSystemErrorMessage();
+
+#if GTEST_OS_WINDOWS
+// Provides leak-safe Windows kernel handle ownership.
+class AutoHandle {
+ public:
+  AutoHandle() : handle_(INVALID_HANDLE_VALUE) {}
+  explicit AutoHandle(HANDLE handle) : handle_(handle) {}
+
+  ~AutoHandle() { Reset(); }
+
+  HANDLE Get() const { return handle_; }
+  void Reset() { Reset(INVALID_HANDLE_VALUE); }
+  void Reset(HANDLE handle) {
+    if (handle != handle_) {
+      if (handle_ != INVALID_HANDLE_VALUE)
+        ::CloseHandle(handle_);
+      handle_ = handle;
+    }
+  }
+
+ private:
+  HANDLE handle_;
+
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(AutoHandle);
+};
+#endif  // GTEST_OS_WINDOWS
+
+// Attempts to parse a string into a positive integer pointed to by the
+// number parameter.  Returns true if that is possible.
+// GTEST_HAS_DEATH_TEST implies that we have ::std::string, so we can use
+// it here.
+template <typename Integer>
+bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
+  // Fail fast if the given string does not begin with a digit;
+  // this bypasses strtoXXX's "optional leading whitespace and plus
+  // or minus sign" semantics, which are undesirable here.
+  if (str.empty() || !isdigit(str[0])) {
+    return false;
+  }
+  errno = 0;
+
+  char* end;
+  // BiggestConvertible is the largest integer type that system-provided
+  // string-to-number conversion routines can return.
+#if GTEST_OS_WINDOWS
+  typedef unsigned __int64 BiggestConvertible;
+  const BiggestConvertible parsed = _strtoui64(str.c_str(), &end, 10);
+#else
+  typedef unsigned long long BiggestConvertible;  // NOLINT
+  const BiggestConvertible parsed = strtoull(str.c_str(), &end, 10);
+#endif  // GTEST_OS_WINDOWS
+  const bool parse_success = *end == '\0' && errno == 0;
+
+  // TODO(vladl@google.com): Convert this to compile time assertion when it is
+  // available.
+  GTEST_CHECK_(sizeof(Integer) <= sizeof(parsed));
+
+  const Integer result = static_cast<Integer>(parsed);
+  if (parse_success && static_cast<BiggestConvertible>(result) == parsed) {
+    *number = result;
+    return true;
+  }
+  return false;
+}
+#endif  // GTEST_HAS_DEATH_TEST
 
 }  // namespace internal
 }  // namespace testing

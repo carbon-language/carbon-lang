@@ -63,21 +63,15 @@
 
 // This header defines the following utilities:
 //
-// Macros indicating the name of the Google C++ Testing Framework project:
-//   GTEST_NAME              - a string literal of the project name.
-//   GTEST_FLAG_PREFIX       - a string literal of the prefix all Google
-//                             Test flag names share.
-//   GTEST_FLAG_PREFIX_UPPER - a string literal of the prefix all Google
-//                             Test flag names share, in upper case.
-//
-// Macros indicating the current platform:
-//   GTEST_OS_CYGWIN   - defined iff compiled on Cygwin.
-//   GTEST_OS_LINUX    - defined iff compiled on Linux.
-//   GTEST_OS_MAC      - defined iff compiled on Mac OS X.
-//   GTEST_OS_SOLARIS  - defined iff compiled on Sun Solaris.
-//   GTEST_OS_SYMBIAN  - defined iff compiled for Symbian.
-//   GTEST_OS_WINDOWS  - defined iff compiled on Windows.
-//   GTEST_OS_ZOS      - defined iff compiled on IBM z/OS.
+// Macros indicating the current platform (defined to 1 if compiled on
+// the given platform; otherwise undefined):
+//   GTEST_OS_CYGWIN   - Cygwin
+//   GTEST_OS_LINUX    - Linux
+//   GTEST_OS_MAC      - Mac OS X
+//   GTEST_OS_SOLARIS  - Sun Solaris
+//   GTEST_OS_SYMBIAN  - Symbian
+//   GTEST_OS_WINDOWS  - Windows
+//   GTEST_OS_ZOS      - z/OS
 //
 // Among the platforms, Cygwin, Linux, Max OS X, and Windows have the
 // most stable support.  Since core members of the Google Test project
@@ -86,17 +80,19 @@
 // googletestframework@googlegroups.com (patches for fixing them are
 // even more welcome!).
 //
-// Note that it is possible that none of the GTEST_OS_ macros are defined.
+// Note that it is possible that none of the GTEST_OS_* macros are defined.
 //
-// Macros indicating available Google Test features:
-//   GTEST_HAS_COMBINE      - defined iff Combine construct is supported
-//                            in value-parameterized tests.
-//   GTEST_HAS_DEATH_TEST   - defined iff death tests are supported.
-//   GTEST_HAS_PARAM_TEST   - defined iff value-parameterized tests are
-//                            supported.
-//   GTEST_HAS_TYPED_TEST   - defined iff typed tests are supported.
-//   GTEST_HAS_TYPED_TEST_P - defined iff type-parameterized tests are
-//                            supported.
+// Macros indicating available Google Test features (defined to 1 if
+// the corresponding feature is supported; otherwise undefined):
+//   GTEST_HAS_COMBINE      - the Combine() function (for value-parameterized
+//                            tests)
+//   GTEST_HAS_DEATH_TEST   - death tests
+//   GTEST_HAS_PARAM_TEST   - value-parameterized tests
+//   GTEST_HAS_TYPED_TEST   - typed tests
+//   GTEST_HAS_TYPED_TEST_P - type-parameterized tests
+//   GTEST_USES_POSIX_RE    - enhanced POSIX regex is used.
+//   GTEST_USES_SIMPLE_RE   - our own simple regex is used;
+//                            the above two are mutually exclusive.
 //
 // Macros for basic C++ coding:
 //   GTEST_AMBIGUOUS_ELSE_BLOCKER_ - for disabling a gcc warning.
@@ -155,9 +151,11 @@
 #include <stdio.h>
 #include <iostream>  // Used for GTEST_CHECK_
 
-#define GTEST_NAME "Google Test"
-#define GTEST_FLAG_PREFIX "gtest_"
-#define GTEST_FLAG_PREFIX_UPPER "GTEST_"
+#define GTEST_DEV_EMAIL_ "googletestframework@@googlegroups.com"
+#define GTEST_FLAG_PREFIX_ "gtest_"
+#define GTEST_FLAG_PREFIX_UPPER_ "GTEST_"
+#define GTEST_NAME_ "Google Test"
+#define GTEST_PROJECT_URL_ "http://code.google.com/p/googletest/"
 
 // Determines the version of gcc that is used to compile this.
 #ifdef __GNUC__
@@ -168,49 +166,76 @@
 
 // Determines the platform on which Google Test is compiled.
 #ifdef __CYGWIN__
-#define GTEST_OS_CYGWIN
+#define GTEST_OS_CYGWIN 1
 #elif __SYMBIAN32__
-#define GTEST_OS_SYMBIAN
+#define GTEST_OS_SYMBIAN 1
 #elif defined _MSC_VER
 // TODO(kenton@google.com): GTEST_OS_WINDOWS is currently used to mean
 //   both "The OS is Windows" and "The compiler is MSVC".  These
 //   meanings really should be separated in order to better support
 //   Windows compilers other than MSVC.
-#define GTEST_OS_WINDOWS
+#define GTEST_OS_WINDOWS 1
 #elif defined __APPLE__
-#define GTEST_OS_MAC
+#define GTEST_OS_MAC 1
 #elif defined __linux__
-#define GTEST_OS_LINUX
+#define GTEST_OS_LINUX 1
 #elif defined __MVS__
-#define GTEST_OS_ZOS
+#define GTEST_OS_ZOS 1
 #elif defined(__sun) && defined(__SVR4)
-#define GTEST_OS_SOLARIS
+#define GTEST_OS_SOLARIS 1
 #elif defined(__HAIKU__)
 #define GTEST_OS_HAIKU
+#endif  // _MSC_VER
+
+#if GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC
+
+// On some platforms, <regex.h> needs someone to define size_t, and
+// won't compile otherwise.  We can #include it here as we already
+// included <stdlib.h>, which is guaranteed to define size_t through
+// <stddef.h>.
+#include <regex.h>  // NOLINT
+#define GTEST_USES_POSIX_RE 1
+
+#else
+
+// <regex.h> may not be available on this platform.  Use our own
+// simple regex implementation instead.
+#define GTEST_USES_SIMPLE_RE 1
+
+#endif  // GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC
+
+// Defines GTEST_HAS_EXCEPTIONS to 1 if exceptions are enabled, or 0
+// otherwise.
+
+#ifdef _MSC_VER  // Compiled by MSVC?
+// Assumes that exceptions are enabled by default.
+#ifndef _HAS_EXCEPTIONS  // MSVC uses this macro to enable exceptions.
+#define _HAS_EXCEPTIONS 1
+#endif  // _HAS_EXCEPTIONS
+#define GTEST_HAS_EXCEPTIONS _HAS_EXCEPTIONS
+#else  // The compiler is not MSVC.
+// gcc defines __EXCEPTIONS to 1 iff exceptions are enabled.  For
+// other compilers, we assume exceptions are disabled to be
+// conservative.
+#if defined(__GNUC__) && __EXCEPTIONS
+#define GTEST_HAS_EXCEPTIONS 1
+#else
+#define GTEST_HAS_EXCEPTIONS 0
+#endif  // defined(__GNUC__) && __EXCEPTIONS
 #endif  // _MSC_VER
 
 // Determines whether ::std::string and ::string are available.
 
 #ifndef GTEST_HAS_STD_STRING
 // The user didn't tell us whether ::std::string is available, so we
-// need to figure it out.
-
-#ifdef GTEST_OS_WINDOWS
-// Assumes that exceptions are enabled by default.
-#ifndef _HAS_EXCEPTIONS
-#define _HAS_EXCEPTIONS 1
-#endif  // _HAS_EXCEPTIONS
-// GTEST_HAS_EXCEPTIONS is non-zero iff exceptions are enabled.  It is
-// always defined, while _HAS_EXCEPTIONS is defined only on Windows.
-#define GTEST_HAS_EXCEPTIONS _HAS_EXCEPTIONS
-// On Windows, we can use ::std::string if the compiler version is VS
-// 2005 or above, or if exceptions are enabled.
-#define GTEST_HAS_STD_STRING ((_MSC_VER >= 1400) || GTEST_HAS_EXCEPTIONS)
-#else  // We are on Linux or Mac OS.
-#define GTEST_HAS_EXCEPTIONS 0
+// need to figure it out.  The only environment that we know
+// ::std::string is not available is MSVC 7.1 or lower with exceptions
+// disabled.
+#if defined(_MSC_VER) && (_MSC_VER < 1400) && !GTEST_HAS_EXCEPTIONS
+#define GTEST_HAS_STD_STRING 0
+#else
 #define GTEST_HAS_STD_STRING 1
-#endif  // GTEST_OS_WINDOWS
-
+#endif
 #endif  // GTEST_HAS_STD_STRING
 
 #ifndef GTEST_HAS_GLOBAL_STRING
@@ -227,21 +252,23 @@
 // TODO(wan@google.com): uses autoconf to detect whether ::std::wstring
 //   is available.
 
-#if defined(GTEST_OS_CYGWIN) || defined(GTEST_OS_SOLARIS) || defined(GTEST_OS_HAIKU) || defined(_MINIX)
-// At least some versions of cygwin don't support ::std::wstring.
+#if GTEST_OS_CYGWIN || GTEST_OS_SOLARIS || GTEST_OS_HAIKU || defined(_MINIX)
+// Cygwin 1.5 and below doesn't support ::std::wstring.
+// Cygwin 1.7 might add wstring support; this should be updated when clear.
 // Solaris' libc++ doesn't support it either.
 // Minix currently doesn't support it either.
 #define GTEST_HAS_STD_WSTRING 0
 #else
 #define GTEST_HAS_STD_WSTRING GTEST_HAS_STD_STRING
-#endif  // defined(GTEST_OS_CYGWIN) || defined(GTEST_OS_SOLARIS)
+#endif  // GTEST_OS_CYGWIN || GTEST_OS_SOLARIS
 
 #endif  // GTEST_HAS_STD_WSTRING
 
 #ifndef GTEST_HAS_GLOBAL_WSTRING
 // The user didn't tell us whether ::wstring is available, so we need
 // to figure it out.
-#define GTEST_HAS_GLOBAL_WSTRING GTEST_HAS_GLOBAL_STRING
+#define GTEST_HAS_GLOBAL_WSTRING \
+    (GTEST_HAS_STD_WSTRING && GTEST_HAS_GLOBAL_STRING)
 #endif  // GTEST_HAS_GLOBAL_WSTRING
 
 #if GTEST_HAS_STD_STRING || GTEST_HAS_GLOBAL_STRING || \
@@ -295,13 +322,7 @@
 // Determines whether <pthread.h> is available.
 #ifndef GTEST_HAS_PTHREAD
 // The user didn't tell us, so we need to figure it out.
-
-#if defined(GTEST_OS_LINUX) || defined(GTEST_OS_MAC)
-#define GTEST_HAS_PTHREAD 1
-#else
-#define GTEST_HAS_PTHREAD 0
-#endif  // GTEST_OS_LINUX || GTEST_OS_MAC
-
+#define GTEST_HAS_PTHREAD (GTEST_OS_LINUX || GTEST_OS_MAC)
 #endif  // GTEST_HAS_PTHREAD
 
 // Determines whether tr1/tuple is available.  If you have tr1/tuple
@@ -342,33 +363,36 @@
 #ifndef GTEST_HAS_CLONE
 // The user didn't tell us, so we need to figure it out.
 
-#if defined(GTEST_OS_LINUX) && !defined(__ia64__)
+#if GTEST_OS_LINUX && !defined(__ia64__)
 #define GTEST_HAS_CLONE 1
 #else
 #define GTEST_HAS_CLONE 0
-#endif  // defined(GTEST_OS_LINUX) && !defined(__ia64__)
+#endif  // GTEST_OS_LINUX && !defined(__ia64__)
 
 #endif  // GTEST_HAS_CLONE
 
 // Determines whether to support death tests.
-#if GTEST_HAS_STD_STRING && GTEST_HAS_CLONE
-#define GTEST_HAS_DEATH_TEST
-// On some platforms, <regex.h> needs someone to define size_t, and
-// won't compile otherwise.  We can #include it here as we already
-// included <stdlib.h>, which is guaranteed to define size_t through
-// <stddef.h>.
-#include <regex.h>
+// Google Test does not support death tests for VC 7.1 and earlier for
+// these reasons:
+//   1. std::vector does not build in VC 7.1 when exceptions are disabled.
+//   2. std::string does not build in VC 7.1 when exceptions are disabled
+//      (this is covered by GTEST_HAS_STD_STRING guard).
+//   3. abort() in a VC 7.1 application compiled as GUI in debug config
+//      pops up a dialog window that cannot be suppressed programmatically.
+#if GTEST_HAS_STD_STRING && (GTEST_OS_LINUX || \
+                             GTEST_OS_MAC || \
+                             GTEST_OS_CYGWIN || \
+                             (GTEST_OS_WINDOWS && _MSC_VER >= 1400))
+#define GTEST_HAS_DEATH_TEST 1
 #include <vector>
-#include <fcntl.h>
-#include <sys/mman.h>
-#endif  // GTEST_HAS_STD_STRING && GTEST_HAS_CLONE
+#endif
 
 // Determines whether to support value-parameterized tests.
 
 #if defined(__GNUC__) || (_MSC_VER >= 1400)
 // TODO(vladl@google.com): get the implementation rid of vector and list
 // to compile on MSVC 7.1.
-#define GTEST_HAS_PARAM_TEST
+#define GTEST_HAS_PARAM_TEST 1
 #endif  // defined(__GNUC__) || (_MSC_VER >= 1400)
 
 // Determines whether to support type-driven tests.
@@ -376,21 +400,19 @@
 // Typed tests need <typeinfo> and variadic macros, which gcc and VC
 // 8.0+ support.
 #if defined(__GNUC__) || (_MSC_VER >= 1400)
-#define GTEST_HAS_TYPED_TEST
-#define GTEST_HAS_TYPED_TEST_P
+#define GTEST_HAS_TYPED_TEST 1
+#define GTEST_HAS_TYPED_TEST_P 1
 #endif  // defined(__GNUC__) || (_MSC_VER >= 1400)
 
 // Determines whether to support Combine(). This only makes sense when
 // value-parameterized tests are enabled.
-#if defined(GTEST_HAS_PARAM_TEST) && GTEST_HAS_TR1_TUPLE
-#define GTEST_HAS_COMBINE
-#endif  // defined(GTEST_HAS_PARAM_TEST) && GTEST_HAS_TR1_TUPLE
+#if GTEST_HAS_PARAM_TEST && GTEST_HAS_TR1_TUPLE
+#define GTEST_HAS_COMBINE 1
+#endif  // GTEST_HAS_PARAM_TEST && GTEST_HAS_TR1_TUPLE
 
 // Determines whether the system compiler uses UTF-16 for encoding wide strings.
-#if defined(GTEST_OS_WINDOWS) || defined(GTEST_OS_CYGWIN) || \
-        defined(GTEST_OS_SYMBIAN)
-#define GTEST_WIDE_STRING_USES_UTF16_ 1
-#endif
+#define GTEST_WIDE_STRING_USES_UTF16_ \
+    (GTEST_OS_WINDOWS || GTEST_OS_CYGWIN || GTEST_OS_SYMBIAN)
 
 // Defines some utility macros.
 
@@ -491,8 +513,6 @@ class scoped_ptr {
   GTEST_DISALLOW_COPY_AND_ASSIGN_(scoped_ptr);
 };
 
-#ifdef GTEST_HAS_DEATH_TEST
-
 // Defines RE.
 
 // A simple C++ wrapper for <regex.h>.  It uses the POSIX Enxtended
@@ -550,12 +570,16 @@ class RE {
   // String type here, in order to simplify dependencies between the
   // files.
   const char* pattern_;
+  bool is_valid_;
+#if GTEST_USES_POSIX_RE
   regex_t full_regex_;     // For FullMatch().
   regex_t partial_regex_;  // For PartialMatch().
-  bool is_valid_;
-};
+#else  // GTEST_USES_SIMPLE_RE
+  const char* full_pattern_;  // For FullMatch();
+#endif
 
-#endif  // GTEST_HAS_DEATH_TEST
+  GTEST_DISALLOW_COPY_AND_ASSIGN_(RE);
+};
 
 // Defines logging utilities:
 //   GTEST_LOG_()   - logs messages at the specified severity level.
@@ -584,14 +608,17 @@ inline void FlushInfoLog() { fflush(NULL); }
 //   CaptureStderr     - starts capturing stderr.
 //   GetCapturedStderr - stops capturing stderr and returns the captured string.
 
-#ifdef GTEST_HAS_DEATH_TEST
+#if GTEST_HAS_STD_STRING
+void CaptureStderr();
+::std::string GetCapturedStderr();
+#endif  // GTEST_HAS_STD_STRING
+
+#if GTEST_HAS_DEATH_TEST
 
 // A copy of all command line arguments.  Set by InitGoogleTest().
 extern ::std::vector<String> g_argvs;
 
-void CaptureStderr();
 // GTEST_HAS_DEATH_TEST implies we have ::std::string.
-::std::string GetCapturedStderr();
 const ::std::vector<String>& GetArgvs();
 
 #endif  // GTEST_HAS_DEATH_TEST
@@ -675,10 +702,15 @@ struct is_pointer : public false_type {};
 template <typename T>
 struct is_pointer<T*> : public true_type {};
 
+#if GTEST_OS_WINDOWS
+#define GTEST_PATH_SEP_ "\\"
+#else
+#define GTEST_PATH_SEP_ "/"
+#endif  // GTEST_OS_WINDOWS
+
 // Defines BiggestInt as the biggest signed integer type the compiler
 // supports.
-
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
 typedef __int64 BiggestInt;
 #else
 typedef long long BiggestInt;  // NOLINT
@@ -736,7 +768,7 @@ class TypeWithSize<4> {
 template <>
 class TypeWithSize<8> {
  public:
-#ifdef GTEST_OS_WINDOWS
+#if GTEST_OS_WINDOWS
   typedef __int64 Int;
   typedef unsigned __int64 UInt;
 #else
@@ -759,7 +791,7 @@ inline const char* GetEnv(const char* name) {
 #ifdef _WIN32_WCE  // We are on Windows CE.
   // CE has no environment variables.
   return NULL;
-#elif defined(GTEST_OS_WINDOWS)  // We are on Windows proper.
+#elif GTEST_OS_WINDOWS  // We are on Windows proper.
   // MSVC 8 deprecates getenv(), so we want to suppress warning 4996
   // (deprecated function) there.
 #pragma warning(push)          // Saves the current warning state.
