@@ -385,56 +385,6 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   }
 }
 
-const TargetRegisterClass* const*
-X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  bool callsEHReturn = false;
-  if (MF)
-    callsEHReturn = MF->getMMI().callsEHReturn();
-
-  static const TargetRegisterClass * const CalleeSavedRegClasses32Bit[] = {
-    &X86::GR32RegClass, &X86::GR32RegClass,
-    &X86::GR32RegClass, &X86::GR32RegClass,  0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClasses32EHRet[] = {
-    &X86::GR32RegClass, &X86::GR32RegClass,
-    &X86::GR32RegClass, &X86::GR32RegClass,
-    &X86::GR32RegClass, &X86::GR32RegClass,  0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClasses64Bit[] = {
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass, 0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClasses64EHRet[] = {
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass,
-    &X86::GR64RegClass, &X86::GR64RegClass, 0
-  };
-  static const TargetRegisterClass * const CalleeSavedRegClassesWin64[] = {
-    &X86::GR64RegClass,  &X86::GR64RegClass,
-    &X86::GR64RegClass,  &X86::GR64RegClass,
-    &X86::GR64RegClass,  &X86::GR64RegClass,
-    &X86::GR64RegClass,  &X86::GR64RegClass,
-    &X86::VR128RegClass, &X86::VR128RegClass,
-    &X86::VR128RegClass, &X86::VR128RegClass,
-    &X86::VR128RegClass, &X86::VR128RegClass,
-    &X86::VR128RegClass, &X86::VR128RegClass,
-    &X86::VR128RegClass, &X86::VR128RegClass, 0
-  };
-
-  if (Is64Bit) {
-    if (IsWin64)
-      return CalleeSavedRegClassesWin64;
-    else
-      return (callsEHReturn ?
-              CalleeSavedRegClasses64EHRet : CalleeSavedRegClasses64Bit);
-  } else {
-    return (callsEHReturn ?
-            CalleeSavedRegClasses32EHRet : CalleeSavedRegClasses32Bit);
-  }
-}
-
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   // Set the stack-pointer register and its aliases as reserved.
