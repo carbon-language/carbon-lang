@@ -941,7 +941,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
 
   // We didn't find anything, so try to correct for a typo.
   DeclarationName Corrected;
-  if (S && (Corrected = CorrectTypo(R, S, &SS, false, CTC))) {
+  if (S && (Corrected = CorrectTypo(R, S, &SS, 0, false, CTC))) {
     if (!R.empty()) {
       if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
         if (SS.isEmpty())
