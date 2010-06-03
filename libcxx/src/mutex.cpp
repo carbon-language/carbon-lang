@@ -235,7 +235,7 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
             pthread_mutex_lock(&mut);
             flag = 0ul;
             pthread_mutex_unlock(&mut);
-            pthread_cond_signal(&cv);
+            pthread_cond_broadcast(&cv);
             throw;
         }
     }

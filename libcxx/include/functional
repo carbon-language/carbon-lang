@@ -1834,16 +1834,7 @@ struct hash<long double>
     }
 };
 
-template<class _Tp>
-struct hash<_Tp*>
-    : public unary_function<_Tp*, size_t>
-{
-    size_t operator()(_Tp* __v) const
-    {
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        return *__p;
-    }
-};
+// struct hash<T*> in <memory>
 
 _LIBCPP_END_NAMESPACE_STD
 

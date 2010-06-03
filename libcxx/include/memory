@@ -2463,6 +2463,31 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const unique_ptr<_T1, _D1>& __x, const unique_ptr<_T2, _D2>& __y) {return !(__x < __y);}
 
+template <class> struct hash;
+
+template<class _Tp>
+struct hash<_Tp*>
+    : public unary_function<_Tp*, size_t>
+{
+    size_t operator()(_Tp* __v) const
+    {
+        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
+        return *__p;
+    }
+};
+
+template <class _Tp, class _Dp>
+struct hash<unique_ptr<_Tp, _Dp> >
+{
+    typedef unique_ptr<_Tp, _Dp> argument_type;
+    typedef size_t               result_type;
+    result_type operator()(const argument_type& __ptr) const
+    {
+        typedef typename argument_type::pointer pointer;
+        return hash<pointer>()(__ptr.get());
+    }
+};
+
 struct __destruct_n
 {
 private:
@@ -3783,6 +3808,17 @@ public:
     shared_ptr<_Tp const> shared_from_this() const {return shared_ptr<const _Tp>(__weak_this_);}
 
     template <class _Up> friend class shared_ptr;
+};
+
+template <class _Tp>
+struct hash<shared_ptr<_Tp> >
+{
+    typedef shared_ptr<_Tp>      argument_type;
+    typedef size_t               result_type;
+    result_type operator()(const argument_type& __ptr) const
+    {
+        return hash<_Tp*>()(__ptr.get());
+    }
 };
 
 //enum class 
