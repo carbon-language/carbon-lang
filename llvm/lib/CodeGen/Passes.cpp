@@ -61,7 +61,7 @@ FunctionPass *llvm::createRegisterAllocator(CodeGenOpt::Level OptLevel) {
   // When the 'default' allocator is requested, pick one based on OptLevel.
   switch (OptLevel) {
   case CodeGenOpt::None:
-    return createLocalRegisterAllocator();
+    return createFastRegisterAllocator();
   default:
     return createLinearScanRegisterAllocator();
   }
