@@ -353,7 +353,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - spare pointer, used when mapped by the runtime
     //   - pointer to mangled symbol above with initializer
     unsigned PtrSize = TD->getPointerSizeInBits()/8;
-    OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("__tlv_bootstrap"),
+    OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
                           PtrSize, 0);
     OutStreamer.EmitIntValue(0, PtrSize, 0);
     OutStreamer.EmitSymbolValue(MangSym, PtrSize, 0);
