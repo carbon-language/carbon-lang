@@ -467,7 +467,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   } else if (FieldType->isArrayType() && !MemberInit->getInit()) {
     CGF.EmitNullInitialization(LHS.getAddress(), Field->getType());
   } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
-    RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit(), true));
+    RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit()));
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
   } else if (MemberInit->getInit()->getType()->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), LHS.getAddress(),
