@@ -1571,6 +1571,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert(MBBI->getDesc().isReturn() &&
          "Can only insert epilog into returning blocks");
+  unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -1643,6 +1644,35 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
     // Move SP to SP upon entry to the function.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, ARM::t2LDRi12, 1, STI);
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getGPRCalleeSavedArea1Size());
+  }
+
+  if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND ||
+      RetOpcode == ARM::TCRETURNri || RetOpcode == ARM::TCRETURNriND) {
+    // Tail call return: adjust the stack pointer and jump to callee.
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+
+    // Jump to label or value in register.
+    if (RetOpcode == ARM::TCRETURNdi) {
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPd)).
+        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
+                         JumpTarget.getTargetFlags());
+    } else if (RetOpcode == ARM::TCRETURNdiND) {
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPdND)).
+        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
+                         JumpTarget.getTargetFlags());
+    } else if (RetOpcode == ARM::TCRETURNri) {
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPr), JumpTarget.getReg());
+    } else if (RetOpcode == ARM::TCRETURNriND) {
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPrND), JumpTarget.getReg());
+    } 
+
+    MachineInstr *NewMI = prior(MBBI);
+    for (unsigned i = 2, e = MBBI->getNumOperands(); i != e; ++i)
+      NewMI->addOperand(MBBI->getOperand(i));
+
+    // Delete the pseudo instruction TCRETURN.
+    MBB.erase(MBBI);
   }
 
   if (VARegSaveSize)

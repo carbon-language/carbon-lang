@@ -53,6 +53,8 @@ def SDT_ARMSYNCBARRIERV7 : SDTypeProfile<0, 0, []>;
 def SDT_ARMMEMBARRIERV6  : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_ARMSYNCBARRIERV6 : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
+def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
@@ -116,6 +118,9 @@ def ARMSyncBarrierV6 : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERV6,
                               [SDNPHasChain]>;
 
 def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
+
+def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET, 
+                        [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -1023,6 +1028,80 @@ let isCall = 1,
     let Inst{15-12} = 0b1111;
     let Inst{19-16} = 0b0000;
     let Inst{27-20} = 0b00011010;
+  }
+}
+
+// Tail calls.
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  // Darwin versions.
+  let Defs = [R0, R1, R2, R3, R9, R12,
+              D0, D1, D2, D3, D4, D5, D6, D7,
+              D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26,
+              D27, D28, D29, D30, D31, PC],
+      Uses = [SP] in {
+  def TCRETURNdi : AInoP<(outs), (ins i32imm:$dst, variable_ops),
+                     Pseudo, IIC_Br,
+                     "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
+
+  def TCRETURNri : AInoP<(outs), (ins tGPR:$dst, variable_ops),
+                     Pseudo, IIC_Br,
+                     "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
+
+  def TAILJMPd : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
+                 IIC_Br, "b\t$dst  @ TAILCALL",
+                 []>, Requires<[IsDarwin]>;
+
+  def TAILJMPr : AXI<(outs), (ins tGPR:$dst, variable_ops),
+                   BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
+                 []>, Requires<[IsDarwin]> {
+                 let Inst{7-4}   = 0b0001;
+                 let Inst{19-8}  = 0b111111111111;
+                 let Inst{27-20} = 0b00010010;
+                 let Inst{31-28} = 0b1110;
+  }
+
+  // FIXME: This is a hack so that MCInst lowering can preserve the TAILCALL
+  // marker on instructions, while still being able to relax.
+//  let isCodeGenOnly = 1 in {
+//    def TAILJMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
+//                         "jmp\t$dst  @ TAILCALL", []>,
+//                         Requires<[IsARM, IsDarwin]>;
+  }
+
+  // Non-Darwin versions (the difference is R9).
+  let Defs = [R0, R1, R2, R3, R12,
+              D0, D1, D2, D3, D4, D5, D6, D7,
+              D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26,
+              D27, D28, D29, D30, D31, PC],
+      Uses = [SP] in {
+  def TCRETURNdiND : AInoP<(outs), (ins i32imm:$dst, variable_ops),
+                     Pseudo, IIC_Br,
+                     "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
+
+  def TCRETURNriND : AInoP<(outs), (ins tGPR:$dst, variable_ops),
+                     Pseudo, IIC_Br,
+                     "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
+
+  def TAILJMPdND : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
+                 IIC_Br, "b\t$dst  @ TAILCALL",
+                 []>, Requires<[IsNotDarwin]>;
+
+  def TAILJMPrND : AXI<(outs), (ins tGPR:$dst, variable_ops),
+                   BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
+                 []>, Requires<[IsNotDarwin]> {
+                 let Inst{7-4}   = 0b0001;
+                 let Inst{19-8}  = 0b111111111111;
+                 let Inst{27-20} = 0b00010010;
+                 let Inst{31-28} = 0b1110;
+  }
+
+  // FIXME: This is a hack so that MCInst lowering can preserve the TAILCALL
+  // marker on instructions, while still being able to relax.
+//  let isCodeGenOnly = 1 in {
+//    def TAILJMP_1ND : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
+//                         "jmp\t$dst  @ TAILCALL", []>,
+//                         Requires<[IsARM, IsNotDarwin]>;
   }
 }
 
@@ -2620,6 +2699,24 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // TODO: add,sub,and, 3-instr forms?
 
+// Tail calls
+def : ARMPat<(ARMtcret tGPR:$dst),
+          (TCRETURNri tGPR:$dst)>, Requires<[IsDarwin]>;
+
+def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
+          (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
+
+def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
+          (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
+
+def : ARMPat<(ARMtcret tGPR:$dst),
+          (TCRETURNriND tGPR:$dst)>, Requires<[IsNotDarwin]>;
+
+def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
+          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotDarwin]>;
+
+def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
+          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotDarwin]>;
 
 // Direct calls
 def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,

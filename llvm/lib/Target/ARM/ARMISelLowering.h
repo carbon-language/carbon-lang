@@ -70,6 +70,8 @@ namespace llvm {
       EH_SJLJ_SETJMP,    // SjLj exception handling setjmp.
       EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp.
 
+      TC_RETURN,    // Tail call return pseudo.
+
       THREAD_POINTER,
 
       DYN_ALLOC,    // Dynamic allocation on the stack.
@@ -332,6 +334,17 @@ namespace llvm {
                 DebugLoc dl, SelectionDAG &DAG,
                 SmallVectorImpl<SDValue> &InVals) const;
 
+    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// for tail call optimization. Targets which want to do tail call
+    /// optimization should implement this function.
+    bool IsEligibleForTailCallOptimization(SDValue Callee,
+                                           CallingConv::ID CalleeCC,
+                                           bool isVarArg,
+                                           bool isCalleeStructRet,
+                                           bool isCallerStructRet,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
+                                           SelectionDAG& DAG) const;
     virtual SDValue
       LowerReturn(SDValue Chain,
                   CallingConv::ID CallConv, bool isVarArg,

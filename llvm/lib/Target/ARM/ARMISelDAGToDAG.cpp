@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "arm-isel"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
 #include "ARMTargetMachine.h"
