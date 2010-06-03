@@ -2326,6 +2326,10 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   CXXFinalOverriderMap FinalOverriders;
   RD->getFinalOverriders(FinalOverriders);
 
+  // Keep a set of seen pure methods so we won't diagnose the same method
+  // more than once.
+  llvm::SmallPtrSet<const CXXMethodDecl *, 8> SeenPureMethods;
+  
   for (CXXFinalOverriderMap::iterator M = FinalOverriders.begin(), 
                                    MEnd = FinalOverriders.end();
        M != MEnd; 
@@ -2343,6 +2347,9 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
         continue;
 
       if (!SO->second.front().Method->isPure())
+        continue;
+
+      if (!SeenPureMethods.insert(SO->second.front().Method))
         continue;
 
       Diag(SO->second.front().Method->getLocation(), 

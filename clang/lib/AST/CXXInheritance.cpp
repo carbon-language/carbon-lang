@@ -559,22 +559,23 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
       for (; OverMethods.first != OverMethods.second; ++OverMethods.first) {
         const CXXMethodDecl *CanonOM
           = cast<CXXMethodDecl>((*OverMethods.first)->getCanonicalDecl());
+
+        // C++ [class.virtual]p2:
+        //   A virtual member function C::vf of a class object S is
+        //   a final overrider unless the most derived class (1.8)
+        //   of which S is a base class subobject (if any) declares
+        //   or inherits another member function that overrides vf.
+        //
+        // Treating this object like the most derived class, we
+        // replace any overrides from base classes with this
+        // overriding virtual function.
+        Overriders[CanonOM].replaceAll(
+                               UniqueVirtualMethod(CanonM, SubobjectNumber,
+                                                   InVirtualSubobject));
+
         if (CanonOM->begin_overridden_methods()
-                                       == CanonOM->end_overridden_methods()) {
-          // C++ [class.virtual]p2:
-          //   A virtual member function C::vf of a class object S is
-          //   a final overrider unless the most derived class (1.8)
-          //   of which S is a base class subobject (if any) declares
-          //   or inherits another member function that overrides vf.
-          //
-          // Treating this object like the most derived class, we
-          // replace any overrides from base classes with this
-          // overriding virtual function.
-          Overriders[CanonOM].replaceAll(
-                                 UniqueVirtualMethod(CanonM, SubobjectNumber,
-                                                     InVirtualSubobject));
+                                       == CanonOM->end_overridden_methods())
           continue;
-        } 
 
         // Continue recursion to the methods that this virtual method
         // overrides.
@@ -582,6 +583,12 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
                                        CanonOM->end_overridden_methods()));
       }
     }
+
+    // C++ [class.virtual]p2:
+    //   For convenience we say that any virtual function overrides itself.
+    Overriders[CanonM].add(SubobjectNumber,
+                           UniqueVirtualMethod(CanonM, SubobjectNumber,
+                                               InVirtualSubobject));
   }
 }
 
