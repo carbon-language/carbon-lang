@@ -9,3 +9,18 @@ void f1() {
   if (b != 3)
     *p = 1; // no-warning
 }
+
+char* ptr();
+char& ref();
+
+// These next two tests just shouldn't crash.
+char t1 () {
+  ref() = 'c';
+  return '0';
+}
+
+// just a sanity test, the same behavior as t1()
+char t2 () {
+  *ptr() = 'c';
+  return '0';
+}

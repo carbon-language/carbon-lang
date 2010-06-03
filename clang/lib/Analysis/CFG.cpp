@@ -538,6 +538,15 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     addStmt(B->getRHS());
     return addStmt(B->getLHS());
   }
+  else if (B->isAssignmentOp()) {
+    if (asc.alwaysAdd()) {
+      autoCreateBlock();
+      AppendStmt(Block, B, asc);
+    }
+    
+    Visit(B->getRHS());
+    return Visit(B->getLHS(), AddStmtChoice::AsLValueNotAlwaysAdd);
+  }
 
   return VisitStmt(B, asc);
 }
@@ -612,8 +621,12 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   if (!CanThrow(C->getCallee()))
     AddEHEdge = false;
 
-  if (!NoReturn && !AddEHEdge)
-    return VisitStmt(C, AddStmtChoice::AlwaysAdd);
+  if (!NoReturn && !AddEHEdge) {
+    if (asc.asLValue())
+      return VisitStmt(C, AddStmtChoice::AlwaysAddAsLValue);
+    else
+      return VisitStmt(C, AddStmtChoice::AlwaysAdd);
+  }
 
   if (Block) {
     Succ = Block;
