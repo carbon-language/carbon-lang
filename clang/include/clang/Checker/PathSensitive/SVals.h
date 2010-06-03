@@ -109,7 +109,7 @@ public:
   const FunctionDecl* getAsFunctionDecl() const;
 
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
-  ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolData*
+  ///  wraps a symbol, return that SymbolRef.  Otherwise return NULL.
   SymbolRef getAsLocSymbol() const;
 
   /// Get the symbol in the SVal or its base region.
