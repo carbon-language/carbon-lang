@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -fexceptions | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm-only -verify -fexceptions
 // PR7281
 
 class A {
