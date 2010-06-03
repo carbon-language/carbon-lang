@@ -1687,7 +1687,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   // Create the record declaration.
   RecordDecl *D2 = AdoptDecl;
   if (!D2) {
-    if (CXXRecordDecl *D1CXX = dyn_cast<CXXRecordDecl>(D)) {
+    if (isa<CXXRecordDecl>(D)) {
       CXXRecordDecl *D2CXX = CXXRecordDecl::Create(Importer.getToContext(), 
                                                    D->getTagKind(),
                                                    DC, Loc,
@@ -1695,30 +1695,6 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                         Importer.Import(D->getTagKeywordLoc()));
       D2 = D2CXX;
       D2->setAccess(D->getAccess());
-      
-      if (D->isDefinition()) {
-        // Add base classes.
-        llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
-        for (CXXRecordDecl::base_class_iterator 
-                  Base1 = D1CXX->bases_begin(),
-               FromBaseEnd = D1CXX->bases_end();
-             Base1 != FromBaseEnd;
-             ++Base1) {
-          QualType T = Importer.Import(Base1->getType());
-          if (T.isNull())
-            return 0;
-          
-          Bases.push_back(
-            new (Importer.getToContext()) 
-                  CXXBaseSpecifier(Importer.Import(Base1->getSourceRange()),
-                                   Base1->isVirtual(),
-                                   Base1->isBaseOfClass(),
-                                   Base1->getAccessSpecifierAsWritten(),
-                                   T));
-        }
-        if (!Bases.empty())
-          D2CXX->setBases(Bases.data(), Bases.size());
-      }
     } else {
       D2 = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
                                     DC, Loc,
@@ -1739,6 +1715,33 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
 
   if (D->isDefinition()) {
     D2->startDefinition();
+
+    // Add base classes.
+    if (CXXRecordDecl *D2CXX = dyn_cast<CXXRecordDecl>(D2)) {
+      CXXRecordDecl *D1CXX = cast<CXXRecordDecl>(D);
+
+      llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
+      for (CXXRecordDecl::base_class_iterator 
+                Base1 = D1CXX->bases_begin(),
+             FromBaseEnd = D1CXX->bases_end();
+           Base1 != FromBaseEnd;
+           ++Base1) {
+        QualType T = Importer.Import(Base1->getType());
+        if (T.isNull())
+          return 0;
+          
+        Bases.push_back(
+          new (Importer.getToContext()) 
+                CXXBaseSpecifier(Importer.Import(Base1->getSourceRange()),
+                                 Base1->isVirtual(),
+                                 Base1->isBaseOfClass(),
+                                 Base1->getAccessSpecifierAsWritten(),
+                                 T));
+      }
+      if (!Bases.empty())
+        D2CXX->setBases(Bases.data(), Bases.size());
+    }
+
     ImportDeclContext(D);
     D2->completeDefinition();
   }

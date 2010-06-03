@@ -38,6 +38,8 @@ namespace {
                   unsigned &Idx)
       : Reader(Reader), Record(Record), Idx(Idx) { }
 
+    CXXBaseSpecifier *ReadCXXBaseSpecifier();
+
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
     void VisitNamedDecl(NamedDecl *ND);
@@ -550,9 +552,38 @@ void PCHDeclReader::VisitUnresolvedUsingTypename(
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
 
+CXXBaseSpecifier *PCHDeclReader::ReadCXXBaseSpecifier() {
+  bool isVirtual = static_cast<bool>(Record[Idx++]);
+  bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
+  AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
+  QualType T = Reader.GetType(Record[Idx++]);
+  SourceRange Range = Reader.ReadSourceRange(Record, Idx);
+  return new (*Reader.getContext())
+    CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, T);
+}
+
 void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // assert(false && "cannot read CXXRecordDecl");
   VisitRecordDecl(D);
+
+  // FIXME: this is far from complete
+
+  if (D->isDefinition()) {
+    D->setDefinition(false); // make peace with an assertion
+    D->startDefinition();
+
+    unsigned NumBases = Record[Idx++];
+
+    llvm::SmallVector<CXXBaseSpecifier*, 4> Bases;
+    Bases.reserve(NumBases);
+    for (unsigned I = 0; I != NumBases; ++I)
+      Bases.push_back(ReadCXXBaseSpecifier());
+    D->setBases(Bases.begin(), NumBases);
+
+    // FIXME: there's a lot of stuff we do here that's kindof sketchy
+    // if we're leaving the context incomplete.
+    D->completeDefinition();
+  }
 }
 
 void PCHDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {

@@ -105,6 +105,8 @@ namespace {
     void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
+
+    void WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base);
   };
 }
 
@@ -559,9 +561,24 @@ void PCHDeclWriter::VisitUnresolvedUsingTypename(
   Code = pch::DECL_UNRESOLVED_USING_TYPENAME;
 }
 
+void PCHDeclWriter::WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base) {
+  Record.push_back(Base->isVirtual());
+  Record.push_back(Base->isBaseOfClass());
+  Record.push_back(Base->getAccessSpecifierAsWritten());
+  Writer.AddTypeRef(Base->getType(), Record);
+  Writer.AddSourceRange(Base->getSourceRange(), Record);
+}
+
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // assert(false && "cannot write CXXRecordDecl");
   VisitRecordDecl(D);
+  if (D->isDefinition()) {
+    unsigned NumBases = D->getNumBases();
+    Record.push_back(NumBases);
+    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
+           E = D->bases_end(); I != E; ++I)
+      WriteCXXBaseSpecifier(&*I);
+  }
   Code = pch::DECL_CXX_RECORD;
 }
 
