@@ -66,12 +66,6 @@ LBB_X_2:
 
 //===---------------------------------------------------------------------===//
 
-It's not clear whether we should use pxor or xorps / xorpd to clear XMM
-registers. The choice may depend on subtarget information. We should do some
-more experiments on different x86 machines.
-
-//===---------------------------------------------------------------------===//
-
 Lower memcpy / memset to a series of SSE 128 bit move instructions when it's
 feasible.
 
@@ -92,35 +86,6 @@ of a v4sf value.
 
 Better codegen for vector_shuffles like this { x, 0, 0, 0 } or { x, 0, x, 0}.
 Perhaps use pxor / xorp* to clear a XMM register first?
-
-//===---------------------------------------------------------------------===//
-
-How to decide when to use the "floating point version" of logical ops? Here are
-some code fragments:
-
-	movaps LCPI5_5, %xmm2
-	divps %xmm1, %xmm2
-	mulps %xmm2, %xmm3
-	mulps 8656(%ecx), %xmm3
-	addps 8672(%ecx), %xmm3
-	andps LCPI5_6, %xmm2
-	andps LCPI5_1, %xmm3
-	por %xmm2, %xmm3
-	movdqa %xmm3, (%edi)
-
-	movaps LCPI5_5, %xmm1
-	divps %xmm0, %xmm1
-	mulps %xmm1, %xmm3
-	mulps 8656(%ecx), %xmm3
-	addps 8672(%ecx), %xmm3
-	andps LCPI5_6, %xmm1
-	andps LCPI5_1, %xmm3
-	orps %xmm1, %xmm3
-	movaps %xmm3, 112(%esp)
-	movaps %xmm3, (%ebx)
-
-Due to some minor source change, the later case ended up using orps and movaps
-instead of por and movdqa. Does it matter?
 
 //===---------------------------------------------------------------------===//
 
@@ -222,41 +187,6 @@ It also exposes some other problems. See MOV32ri -3 and the spills.
 
 //===---------------------------------------------------------------------===//
 
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25500
-
-LLVM is producing bad code.
-
-LBB_main_4:	# cond_true44
-	addps %xmm1, %xmm2
-	subps %xmm3, %xmm2
-	movaps (%ecx), %xmm4
-	movaps %xmm2, %xmm1
-	addps %xmm4, %xmm1
-	addl $16, %ecx
-	incl %edx
-	cmpl $262144, %edx
-	movaps %xmm3, %xmm2
-	movaps %xmm4, %xmm3
-	jne LBB_main_4	# cond_true44
-
-There are two problems. 1) No need to two loop induction variables. We can
-compare against 262144 * 16. 2) Known register coalescer issue. We should
-be able eliminate one of the movaps:
-
-	addps %xmm2, %xmm1    <=== Commute!
-	subps %xmm3, %xmm1
-	movaps (%ecx), %xmm4
-	movaps %xmm1, %xmm1   <=== Eliminate!
-	addps %xmm4, %xmm1
-	addl $16, %ecx
-	incl %edx
-	cmpl $262144, %edx
-	movaps %xmm3, %xmm2
-	movaps %xmm4, %xmm3
-	jne LBB_main_4	# cond_true44
-
-//===---------------------------------------------------------------------===//
-
 Consider:
 
 __m128 test(float a) {
@@ -323,22 +253,6 @@ The basic idea is that a reload from a spill slot, can, if only one 4-byte
 chunk is used, bring in 3 zeros the one element instead of 4 elements.
 This can be used to simplify a variety of shuffle operations, where the
 elements are fixed zeros.
-
-//===---------------------------------------------------------------------===//
-
-__m128d test1( __m128d A, __m128d B) {
-  return _mm_shuffle_pd(A, B, 0x3);
-}
-
-compiles to
-
-shufpd $3, %xmm1, %xmm0
-
-Perhaps it's better to use unpckhpd instead?
-
-unpckhpd %xmm1, %xmm0
-
-Don't know if unpckhpd is faster. But it is shorter.
 
 //===---------------------------------------------------------------------===//
 
@@ -493,6 +407,7 @@ entry:
  %tmp20 = tail call i64 @ccoshf( float %tmp6, float %z.0 ) nounwind readonly
  ret i64 %tmp20
 }
+declare i64 @ccoshf(float %z.0, float %z.1) nounwind readonly
 
 This currently compiles to:
 
