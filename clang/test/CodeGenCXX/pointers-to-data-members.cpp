@@ -172,3 +172,14 @@ struct D : C { int A::*i; };
 D d;
 
 }
+
+namespace Test1 {
+
+// Don't crash when A contains a bit-field.
+struct A {
+  int A::* a;
+  int b : 10;
+};
+A a;
+
+}

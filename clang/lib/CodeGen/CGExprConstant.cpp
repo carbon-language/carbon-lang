@@ -1117,6 +1117,11 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     for (RecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I) {
       const FieldDecl *FD = *I;
+      
+      // Ignore bit fields.
+      if (FD->isBitField())
+        continue;
+
       unsigned FieldNo = Layout.getLLVMFieldNo(FD);
       Elements[FieldNo] = EmitNullConstant(FD->getType());
     }
