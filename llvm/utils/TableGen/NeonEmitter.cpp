@@ -135,11 +135,13 @@ static std::string TypeString(const char mod, StringRef typestr) {
       break;
     case 'x':
       usgn = true;
+      poly = false;
       if (type == 'f')
         type = 'i';
       break;
     case 'f':
       type = 'f';
+      usgn = false;
       break;
     case 'w':
       type = Widen(type);
@@ -296,16 +298,81 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
-static OpKind ParseOp(Record *R) {
-  return OpNone;
-}
-
 // Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
 // If structTypes is true, the NEON types are structs of vector types rather
 // than vector types, and the call becomes "a.val + b.val"
 static std::string GenOpString(OpKind op, const std::string &proto,
-                               bool structTypes = true) {
-  return "";
+                               StringRef typestr, bool structTypes = true) {
+  std::string s("return ");
+  std::string ts = TypeString(proto[0], typestr);
+  if (structTypes)
+    s += "(" + ts + "){";
+  
+  std::string a = structTypes ? "a.val" : "a";
+  std::string b = structTypes ? "b.val" : "b";
+  std::string c = structTypes ? "c.val" : "c";
+  
+  switch(op) {
+  case OpAdd:
+    s += a + " + " + b;
+    break;
+  case OpSub:
+    s += a + " - " + b;
+    break;
+  case OpMul:
+    s += a + " * " + b;
+    break;
+  case OpMla:
+    s += a + " + ( " + b + " * " + c + " )";
+    break;
+  case OpMls:
+    s += a + " - ( " + b + " * " + c + " )";
+    break;
+  case OpEq:
+    s += "(__neon_" + ts + ")(" + a + " == " + b + ")";
+    break;
+  case OpGe:
+    s += "(__neon_" + ts + ")(" + a + " >= " + b + ")";
+    break;
+  case OpLe:
+    s += "(__neon_" + ts + ")(" + a + " <= " + b + ")";
+    break;
+  case OpGt:
+    s += "(__neon_" + ts + ")(" + a + " > " + b + ")";
+    break;
+  case OpLt:
+    s += "(__neon_" + ts + ")(" + a + " < " + b + ")";
+    break;
+  case OpNeg:
+    s += " -" + a;
+    break;
+  case OpNot:
+    s += " ~" + a;
+    break;
+  case OpAnd:
+    s += a + " & " + b;
+    break;
+  case OpOr:
+    s += a + " | " + b;
+    break;
+  case OpXor:
+    s += a + " ^ " + b;
+    break;
+  case OpAndNot:
+    s += a + " & ~" + b;
+    break;
+  case OpOrNot:
+    s += a + " | ~" + b;
+    break;
+  default:
+    throw "unknown OpKind!";
+    break;
+  }
+  
+  if (structTypes)
+    s += "}";
+  s += ";";
+  return s;
 }
 
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
@@ -314,15 +381,17 @@ static std::string GenOpString(OpKind op, const std::string &proto,
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, bool structTypes = true) {
   char arg = 'a';
-  std::string s("return ");
+  std::string s;
   
-  // FIXME: if return type is 2/3/4, emit unioning code.
-  
-  if (structTypes) {
-    s += "(";
-    s += TypeString(proto[0], typestr);
-    s += "){";
-  }
+  if (proto[0] != 'v') {
+    // FIXME: if return type is 2/3/4, emit unioning code.
+    s += "return ";
+    if (structTypes) {
+      s += "(";
+      s += TypeString(proto[0], typestr);
+      s += "){";
+    }
+  }    
   
   s += "__builtin_neon_";
   s += name;
@@ -330,14 +399,16 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     s.push_back(arg);
-    if (structTypes)
+    if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
+        proto[i] != 'p' && proto[i] != 'c') {
       s += ".val";
+    }
     if ((i + 1) < e)
       s += ", ";
   }
   
   s += ")";
-  if (structTypes)
+  if (proto[0] != 'v' && structTypes)
     s += "}";
   s += ";";
   return s;
@@ -359,9 +430,11 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit NEON-specific scalar typedefs.
   // FIXME: probably need to do something better for polynomial types.
+  // FIXME: is this the correct thing to do for float16?
   OS << "typedef float float32_t;\n";
   OS << "typedef uint8_t poly8_t;\n";
   OS << "typedef uint16_t poly16_t;\n";
+  OS << "typedef uint16_t float16_t;\n";
   
   // Emit Neon vector typedefs.
   std::string TypedefTypes("cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfPcQPcPsQPs");
@@ -376,7 +449,7 @@ void NeonEmitter::run(raw_ostream &OS) {
     OS << (quad ? "16) )) " : "8) ))  ");
     OS << TypeString('s', TDTypeVec[i]);
     OS << " __neon_";
-    OS << TypeString('d', TDTypeVec[i]) << "\n";
+    OS << TypeString('d', TDTypeVec[i]) << ";\n";
   }
   OS << "\n";
 
@@ -397,6 +470,26 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
   
+  StringMap<OpKind> OpMap;
+  OpMap["OP_NONE"] = OpNone;
+  OpMap["OP_ADD"]  = OpAdd;
+  OpMap["OP_SUB"]  = OpSub;
+  OpMap["OP_MUL"]  = OpMul;
+  OpMap["OP_MLA"]  = OpMla;
+  OpMap["OP_MLS"]  = OpMls;
+  OpMap["OP_EQ"]   = OpEq;
+  OpMap["OP_GE"]   = OpGe;
+  OpMap["OP_LE"]   = OpLe;
+  OpMap["OP_GT"]   = OpGt;
+  OpMap["OP_LT"]   = OpLt;
+  OpMap["OP_NEG"]  = OpNeg;
+  OpMap["OP_NOT"]  = OpNot;
+  OpMap["OP_AND"]  = OpAnd;
+  OpMap["OP_OR"]   = OpOr;
+  OpMap["OP_XOR"]  = OpXor;
+  OpMap["OP_ANDN"] = OpAndNot;
+  OpMap["OP_ORN"]  = OpOrNot;
+  
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -407,7 +500,7 @@ void NeonEmitter::run(raw_ostream &OS) {
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
     
-    OpKind k = ParseOp(R);
+    OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
     
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       assert(!Proto.empty() && "");
@@ -425,7 +518,7 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << " { ";
       
       if (k != OpNone)
-        OS << GenOpString(k, Proto);
+        OS << GenOpString(k, Proto, TypeVec[ti]);
       else
         OS << GenBuiltin(name, Proto, TypeVec[ti]);
 
