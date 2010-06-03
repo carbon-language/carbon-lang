@@ -84,7 +84,7 @@ namespace options {
       }
     } else if (llvm::StringRef(opt).startswith("also-emit-llvm=")) {
       const char *path = opt + strlen("also-emit-llvm=");
-      if (bc_path != "") {
+      if (!bc_path.empty()) {
         (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
                    "Discarding %s", opt);
       } else {
@@ -381,7 +381,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
   }
 
-  if (options::bc_path != "") {
+  if (!options::bc_path.empty()) {
     bool err = lto_codegen_write_merged_modules(cg, options::bc_path.c_str());
     if (err)
       (*message)(LDPL_FATAL, "Failed to write the output file.");
