@@ -22,4 +22,9 @@ CPP.Flags += -DGTEST_HAS_RTTI=0
 # supported by Clang, so force googletest to use its own tuple implementation.
 CPP.Flags += -DGTEST_USE_OWN_TR1_TUPLE
 
+# Disable pthreads if LLVM was configured without them.
+ifneq ($(HAVE_PTHREAD), 1)
+  CPP.Flags += -DGTEST_HAS_PTHREAD=0
+endif
+
 include $(LEVEL)/Makefile.common
