@@ -990,6 +990,11 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL: ExpandIntRes_Shift(N, Lo, Hi); break;
+
+  case ISD::SADDO:
+  case ISD::SSUBO: ExpandIntRes_SADDSUBO(N, Lo, Hi); break;
+  case ISD::UADDO:
+  case ISD::USUBO: ExpandIntRes_UADDSUBO(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -1716,6 +1721,48 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
   SplitInteger(MakeLibCall(LC, VT, Ops, 2, true/*irrelevant*/, dl), Lo, Hi);
 }
 
+void DAGTypeLegalizer::ExpandIntRes_SADDSUBO(SDNode *Node,
+                                             SDValue &Lo, SDValue &Hi) {
+  SDValue LHS = Node->getOperand(0);
+  SDValue RHS = Node->getOperand(1);
+  DebugLoc dl = Node->getDebugLoc();
+
+  // Expand the result by simply replacing it with the equivalent
+  // non-overflow-checking operation.
+  SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::SADDO ?
+                            ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
+                            LHS, RHS);
+  SplitInteger(Sum, Lo, Hi);
+
+  // Compute the overflow.
+  //
+  //   LHSSign -> LHS >= 0
+  //   RHSSign -> RHS >= 0
+  //   SumSign -> Sum >= 0
+  //
+  //   Add:
+  //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
+  //   Sub:
+  //   Overflow -> (LHSSign != RHSSign) && (LHSSign != SumSign)
+  //
+  EVT OType = Node->getValueType(1);
+  SDValue Zero = DAG.getConstant(0, LHS.getValueType());
+
+  SDValue LHSSign = DAG.getSetCC(dl, OType, LHS, Zero, ISD::SETGE);
+  SDValue RHSSign = DAG.getSetCC(dl, OType, RHS, Zero, ISD::SETGE);
+  SDValue SignsMatch = DAG.getSetCC(dl, OType, LHSSign, RHSSign,
+                                    Node->getOpcode() == ISD::SADDO ?
+                                    ISD::SETEQ : ISD::SETNE);
+
+  SDValue SumSign = DAG.getSetCC(dl, OType, Sum, Zero, ISD::SETGE);
+  SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
+
+  SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
+
+  // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(Node, 1), Cmp);
+}
+
 void DAGTypeLegalizer::ExpandIntRes_SDIV(SDNode *N,
                                          SDValue &Lo, SDValue &Hi) {
   EVT VT = N->getValueType(0);
@@ -1910,6 +1957,29 @@ void DAGTypeLegalizer::ExpandIntRes_TRUNCATE(SDNode *N,
                    N->getOperand(0).getValueType(), N->getOperand(0),
                    DAG.getConstant(NVT.getSizeInBits(), TLI.getPointerTy()));
   Hi = DAG.getNode(ISD::TRUNCATE, dl, NVT, Hi);
+}
+
+void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
+                                             SDValue &Lo, SDValue &Hi) {
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  DebugLoc dl = N->getDebugLoc();
+
+  // Expand the result by simply replacing it with the equivalent
+  // non-overflow-checking operation.
+  SDValue Sum = DAG.getNode(N->getOpcode() == ISD::UADDO ?
+                            ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
+                            LHS, RHS);
+  SplitInteger(Sum, Lo, Hi);
+
+  // Calculate the overflow: addition overflows iff a + b < a, and subtraction
+  // overflows iff a - b > a.
+  SDValue Ofl = DAG.getSetCC(dl, N->getValueType(1), Sum, LHS,
+                             N->getOpcode () == ISD::UADDO ?
+                             ISD::SETULT : ISD::SETUGT);
+
+  // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Ofl);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_UDIV(SDNode *N,
