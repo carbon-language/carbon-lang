@@ -62,9 +62,9 @@ namespace options {
   static std::string bc_path;
   static const char *as_path = NULL;
   // Additional options to pass into the code generator.
-  // Note: This array will contain all plugin options which are not claimed 
+  // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
-  // For example, "generate-api-file" and "as"options are for the plugin 
+  // For example, "generate-api-file" and "as"options are for the plugin
   // use only and will not be passed.
   static std::vector<std::string> extra;
 
@@ -82,7 +82,7 @@ namespace options {
       } else {
         as_path = strdup(opt + 3);
       }
-    } else if(llvm::StringRef(opt).startswith("also-emit-llvm=")) {
+    } else if (llvm::StringRef(opt).startswith("also-emit-llvm=")) {
       const char *path = opt + strlen("also-emit-llvm=");
       if (bc_path != "") {
         (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
@@ -209,7 +209,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     // an .a archive.
     if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
       (*message)(LDPL_ERROR,
-                 "Failed to seek to archive member of %s at offset %d: %s\n", 
+                 "Failed to seek to archive member of %s at offset %d: %s\n",
                  file->name,
                  file->offset, sys::StrError(errno).c_str());
       return LDPS_ERR;
@@ -217,7 +217,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     buf = malloc(file->filesize);
     if (!buf) {
       (*message)(LDPL_ERROR,
-                 "Failed to allocate buffer for archive member of size: %d\n", 
+                 "Failed to allocate buffer for archive member of size: %d\n",
                  file->filesize);
       return LDPS_ERR;
     }
