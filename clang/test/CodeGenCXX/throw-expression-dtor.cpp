@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -emit-llvm -o - -fexceptions | FileCheck %s
 // PR7281
 
 class A {
@@ -11,4 +11,3 @@ class B : public A {
 void B::ice_throw() {
     throw *this;
 }
-
