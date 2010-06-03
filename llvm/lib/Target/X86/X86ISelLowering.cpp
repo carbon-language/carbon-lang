@@ -5381,33 +5381,80 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 
 SDValue
 X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
-  // TODO: implement the "local dynamic" model
-  // TODO: implement the "initial exec"model for pic executables
-  assert(Subtarget->isTargetELF() &&
-         "TLS not implemented for non-ELF targets");
+  
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = GA->getGlobal();
 
-  // If GV is an alias then use the aliasee for determining
-  // thread-localness.
-  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    GV = GA->resolveAliasedGlobal(false);
+  if (Subtarget->isTargetELF()) {
+    // TODO: implement the "local dynamic" model
+    // TODO: implement the "initial exec"model for pic executables
+    
+    // If GV is an alias then use the aliasee for determining
+    // thread-localness.
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      GV = GA->resolveAliasedGlobal(false);
+    
+    TLSModel::Model model 
+      = getTLSModel(GV, getTargetMachine().getRelocationModel());
+    
+    switch (model) {
+      case TLSModel::GeneralDynamic:
+      case TLSModel::LocalDynamic: // not implemented
+        if (Subtarget->is64Bit())
+          return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
+        return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
+        
+      case TLSModel::InitialExec:
+      case TLSModel::LocalExec:
+        return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
+                                   Subtarget->is64Bit());
+    }
+  } else if (Subtarget->isTargetDarwin()) {
+    // Darwin only has one model of TLS.  Lower to that.
+    unsigned char OpFlag = 0;
+    unsigned WrapperKind = Subtarget->isPICStyleRIPRel() ?
+                           X86ISD::WrapperRIP : X86ISD::Wrapper;
+    
+    // In PIC mode (unless we're in RIPRel PIC mode) we add an offset to the
+    // global base reg.
+    bool PIC32 = (getTargetMachine().getRelocationModel() == Reloc::PIC_) &&
+                  !Subtarget->is64Bit();
+    if (PIC32)
+      OpFlag = X86II::MO_TLVP_PIC_BASE;
+    else
+      OpFlag = X86II::MO_TLVP;
+    
+    SDValue Result = DAG.getTargetGlobalAddress(GA->getGlobal(), 
+                                                getPointerTy(),
+                                                GA->getOffset(), OpFlag);
+    
+    DebugLoc DL = Op.getDebugLoc();
+    SDValue Offset = DAG.getNode(WrapperKind, DL, getPointerTy(), Result);
+  
+    // With PIC32, the address is actually $g + Offset.
+    if (PIC32)
+      Offset = DAG.getNode(ISD::ADD, DL, getPointerTy(),
+                           DAG.getNode(X86ISD::GlobalBaseReg,
+                                       DebugLoc(), getPointerTy()),
+                           Offset);
+    
+    // Lowering the machine isd will make sure everything is in the right
+    // location.
+    SDValue Args[] = { Offset };
+    SDValue Chain = DAG.getNode(X86ISD::TLSCALL, DL, MVT::Other, Args, 1);
+    
+    // TLSCALL will be codegen'ed as call. Inform MFI that function has calls.
+    MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+    MFI->setAdjustsStack(true);
 
-  TLSModel::Model model = getTLSModel(GV,
-                                      getTargetMachine().getRelocationModel());
-
-  switch (model) {
-  case TLSModel::GeneralDynamic:
-  case TLSModel::LocalDynamic: // not implemented
-    if (Subtarget->is64Bit())
-      return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
-    return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
-
-  case TLSModel::InitialExec:
-  case TLSModel::LocalExec:
-    return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
-                               Subtarget->is64Bit());
+    // And our return value (tls address) is in the standard call return value
+    // location.
+    unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
+    return DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy());
   }
+  
+  assert(false &&
+         "TLS not implemented for this target.");
 
   llvm_unreachable("Unreachable");
   return SDValue();
@@ -7748,6 +7795,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
+  case X86ISD::TLSCALL:            return "X86ISD::TLSCALL";
   case X86ISD::SegmentBaseAddress: return "X86ISD::SegmentBaseAddress";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
@@ -8478,12 +8526,42 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
 }
 
 MachineBasicBlock *
+X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
+                                      MachineBasicBlock *BB) const {
+  // This is pretty easy.  We're taking the value that we received from
+  // our load from the relocation, sticking it in either RDI (x86-64)
+  // or EAX and doing an indirect call.  The return value will then
+  // be in the normal return register.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  MachineFunction *F = BB->getParent();
+  
+  if (Subtarget->is64Bit()) {
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV64rr), X86::RDI)
+    .addReg(MI->getOperand(0).getReg());
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL64m));
+    addDirectMem(MIB, X86::RDI).addReg(0);
+  } else {
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rr), X86::EAX)
+    .addReg(MI->getOperand(0).getReg());
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL32m));
+    addDirectMem(MIB, X86::EAX).addReg(0);
+  }
+  
+  F->DeleteMachineInstr(MI); // The pseudo instruction is gone now.
+  return BB;
+}
+
+MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case X86::MINGW_ALLOCA:
     return EmitLoweredMingwAlloca(MI, BB);
+  case X86::TLSCall_32:
+  case X86::TLSCall_64:
+    return EmitLoweredTLSCall(MI, BB);
   case X86::CMOV_GR8:
   case X86::CMOV_V1I64:
   case X86::CMOV_FR32:

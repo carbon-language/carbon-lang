@@ -196,6 +196,10 @@ namespace llvm {
 
       // TLSADDR - Thread Local Storage.
       TLSADDR,
+      
+      // TLSCALL - Thread Local Storage.  When calling to an OS provided
+      // thunk at the address from an earlier relocation.
+      TLSCALL,
 
       // SegmentBaseAddress - The address segment:0
       SegmentBaseAddress,
@@ -794,6 +798,9 @@ namespace llvm {
 
     MachineBasicBlock *EmitLoweredMingwAlloca(MachineInstr *MI,
                                               MachineBasicBlock *BB) const;
+    
+    MachineBasicBlock *EmitLoweredTLSCall(MachineInstr *MI,
+                                          MachineBasicBlock *BB) const;
 
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.

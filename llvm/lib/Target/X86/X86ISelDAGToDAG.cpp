@@ -1295,7 +1295,7 @@ bool X86DAGToDAGISel::SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
                                         SDValue &Disp) {
   assert(N.getOpcode() == ISD::TargetGlobalTLSAddress);
   const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
-  
+    
   X86ISelAddressMode AM;
   AM.GV = GA->getGlobal();
   AM.Disp += GA->getOffset();

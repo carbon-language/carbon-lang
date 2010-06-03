@@ -173,7 +173,19 @@ namespace X86II {
     /// indicates that the reference is actually to "FOO$non_lazy_ptr -PICBASE",
     /// which is a PIC-base-relative reference to a hidden dyld lazy pointer
     /// stub.
-    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE
+    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE,
+    
+    /// MO_TLVP - On a symbol operand this indicates that the immediate is
+    /// some TLS offset.
+    ///
+    /// This is the TLS offset for the Darwin TLS mechanism.
+    MO_TLVP,
+    
+    /// MO_TLVP_PIC_BASE - On a symbol operand this indicates that the immediate
+    /// is some TLS offset from the picbase.
+    ///
+    /// This is the 32-bit TLS offset for Darwin TLS in PIC mode.
+    MO_TLVP_PIC_BASE
   };
 }
 
@@ -203,6 +215,7 @@ inline static bool isGlobalRelativeToPICBase(unsigned char TargetFlag) {
   case X86II::MO_PIC_BASE_OFFSET:                // Darwin local global.
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:        // Darwin/32 external global.
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: // Darwin/32 hidden global.
+  case X86II::MO_TLVP:                           // ??? Pretty sure..
     return true;
   default:
     return false;

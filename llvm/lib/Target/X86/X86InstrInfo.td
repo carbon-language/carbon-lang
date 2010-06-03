@@ -72,6 +72,8 @@ def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 def SDT_X86TLSADDR : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
+def SDT_X86TLSCALL : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+
 def SDT_X86SegmentBaseAddress : SDTypeProfile<1, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
@@ -182,6 +184,9 @@ def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
 def X86MingwAlloca : SDNode<"X86ISD::MINGW_ALLOCA", SDTX86Void,
                             [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                            
+def X86TLSCall : SDNode<"X86ISD::TLSCALL", SDT_X86TLSCALL,
+                        []>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -3825,6 +3830,18 @@ def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
                   [(X86tlsaddr tls32addr:$sym)]>,
                   Requires<[In32BitMode]>;
 
+// FIXME: Not true for darwin
+let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
+            MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
+            XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+            XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
+    Uses = [ESP],
+    usesCustomInserter = 1 in
+def TLSCall_32 : I<0, Pseudo, (outs), (ins GR32:$sym),
+                "# Fixme into a call",
+                [(X86TLSCall GR32:$sym)]>,
+                Requires<[In32BitMode]>;
+                
 let AddedComplexity = 5, isCodeGenOnly = 1 in
 def GS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                    "movl\t%gs:$src, $dst",

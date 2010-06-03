@@ -152,6 +152,17 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_STUB:
     break;
       
+  case X86II::MO_TLVP:      RefKind = MCSymbolRefExpr::VK_TLVP; break;
+  case X86II::MO_TLVP_PIC_BASE:
+      Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
+      // Subtract the pic base.
+      Expr 
+        = MCBinaryExpr::CreateSub(Expr,
+                                  MCSymbolRefExpr::Create(GetPICBaseSymbol(),
+                                                          Ctx),
+                                  Ctx);
+  
+      break;
   case X86II::MO_TLSGD:     RefKind = MCSymbolRefExpr::VK_TLSGD; break;
   case X86II::MO_GOTTPOFF:  RefKind = MCSymbolRefExpr::VK_GOTTPOFF; break;
   case X86II::MO_INDNTPOFF: RefKind = MCSymbolRefExpr::VK_INDNTPOFF; break;
