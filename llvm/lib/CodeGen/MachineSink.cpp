@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -61,6 +62,7 @@ namespace {
     bool ProcessBlock(MachineBasicBlock &MBB);
     bool SinkInstruction(MachineInstr *MI, bool &SawStore);
     bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB) const;
+    bool LiveOutOfBasicBlock(const MachineInstr *MI, unsigned Reg) const;
   };
 } // end anonymous namespace
   
@@ -166,6 +168,44 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
   return MadeChange;
 }
 
+/// LiveOutOfBasicBlock - Determine if the physical register, defined and dead
+/// in MI, is live on exit from the basic block.
+bool MachineSinking::LiveOutOfBasicBlock(const MachineInstr *MI,
+                                         unsigned Reg) const {
+  assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         "Only want to determine if a physical register is live out of a BB!");
+
+  const MachineBasicBlock *MBB = MI->getParent();
+  SmallSet<unsigned, 8> KilledRegs;
+  MachineBasicBlock::const_iterator I = MBB->end();
+  MachineBasicBlock::const_iterator E = MBB->begin();
+  assert(I != E && "How can there be an empty block at this point?!");
+
+  // Loop through the instructions bottom-up. If we see a kill of the preg
+  // first, then it's not live out of the BB. If we see a use or def first, then
+  // we assume that it is live out of the BB.
+  do {
+    const MachineInstr &CurMI = *--I;
+
+    for (unsigned i = 0, e = CurMI.getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = CurMI.getOperand(i);
+      if (!MO.isReg()) continue;  // Ignore non-register operands.
+    
+      unsigned MOReg = MO.getReg();
+      if (MOReg == 0) continue;
+    
+      if (MOReg == Reg) {
+        if (MO.isKill())
+          return false;
+        if (MO.isUse() || MO.isDef())
+          return true;
+      }
+    }
+  } while (I != E);
+
+  return false;
+}
+
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
@@ -188,6 +228,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // SuccToSinkTo - This is the successor to sink this instruction to, once we
   // decide.
   MachineBasicBlock *SuccToSinkTo = 0;
+  SmallVector<unsigned, 4> PhysRegs;
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -216,9 +257,12 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
           if (AllocatableSet.test(AliasReg))
             return false;
         }
-      } else if (!MO.isDead()) {
-        // A def that isn't dead. We can't move it.
-        return false;
+      } else {
+        if (!MO.isDead())
+          // A def that isn't dead. We can't move it.
+          return false;
+        else
+          PhysRegs.push_back(Reg);
       }
     } else {
       // Virtual register uses are always safe to sink.
@@ -281,7 +325,15 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // happen with loops.
   if (MI->getParent() == SuccToSinkTo)
     return false;
-  
+
+  // If the instruction to move defines a dead physical register which is live
+  // when leaving the basic block, don't move it because it could turn into a
+  // "zombie" define of that preg. E.g., EFLAGS. (<rdar://problem/8030636>)
+  for (SmallVectorImpl<unsigned>::const_iterator
+         I = PhysRegs.begin(), E = PhysRegs.end(); I != E; ++I)
+    if (LiveOutOfBasicBlock(MI, *I))
+      return false;
+
   DEBUG(dbgs() << "Sink instr " << *MI << "\tinto block " << *SuccToSinkTo);
 
   // If the block has multiple predecessors, this would introduce computation on

@@ -44,26 +44,33 @@ return:
 
 ; Sink instructions with dead EFLAGS defs.
 
-; CHECK: zzz:
-; CHECK:      je
-; CHECK-NEXT: orb
+; FIXME: Unfail the zzz test if we can correctly mark pregs with the kill flag.
+; 
+; See <rdar://problem/8030636>. This test isn't valid after we made machine
+; sinking more conservative about sinking instructions that define a preg into a
+; block when we don't know if the preg is killed within the current block.
 
-define zeroext i8 @zzz(i8 zeroext %a, i8 zeroext %b) nounwind readnone {
-entry:
-  %tmp = zext i8 %a to i32                        ; <i32> [#uses=1]
-  %tmp2 = icmp eq i8 %a, 0                    ; <i1> [#uses=1]
-  %tmp3 = or i8 %b, -128                          ; <i8> [#uses=1]
-  %tmp4 = and i8 %b, 127                          ; <i8> [#uses=1]
-  %b_addr.0 = select i1 %tmp2, i8 %tmp4, i8 %tmp3 ; <i8> [#uses=1]
-  ret i8 %b_addr.0
-}
+
+; FIXMEHECK: zzz:
+; FIXMEHECK:      je
+; FIXMEHECK-NEXT: orb
+
+; define zeroext i8 @zzz(i8 zeroext %a, i8 zeroext %b) nounwind readnone {
+; entry:
+;   %tmp = zext i8 %a to i32                        ; <i32> [#uses=1]
+;   %tmp2 = icmp eq i8 %a, 0                    ; <i1> [#uses=1]
+;   %tmp3 = or i8 %b, -128                          ; <i8> [#uses=1]
+;   %tmp4 = and i8 %b, 127                          ; <i8> [#uses=1]
+;   %b_addr.0 = select i1 %tmp2, i8 %tmp4, i8 %tmp3 ; <i8> [#uses=1]
+;   ret i8 %b_addr.0
+; }
 
 ; Codegen should hoist and CSE these constants.
 
 ; CHECK: vv:
-; CHECK: LCPI3_0(%rip), %xmm0
-; CHECK: LCPI3_1(%rip), %xmm1
-; CHECK: LCPI3_2(%rip), %xmm2
+; CHECK: LCPI2_0(%rip), %xmm0
+; CHECK: LCPI2_1(%rip), %xmm1
+; CHECK: LCPI2_2(%rip), %xmm2
 ; CHECK: align
 ; CHECK-NOT: LCPI
 ; CHECK: ret
