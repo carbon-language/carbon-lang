@@ -517,8 +517,11 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   }
 
   // Try merging with the previous instruction.
-  if (MBBI != MBB.begin()) {
+  MachineBasicBlock::iterator BeginMBBI = MBB.begin();
+  if (MBBI != BeginMBBI) {
     MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
+    while (PrevMBBI != BeginMBBI && PrevMBBI->isDebugValue())
+      --PrevMBBI;
     if (isAM4) {
       if (Mode == ARM_AM::ia &&
           isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
@@ -541,8 +544,11 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   }
 
   // Try merging with the next instruction.
-  if (!DoMerge && MBBI != MBB.end()) {
+  MachineBasicBlock::iterator EndMBBI = MBB.end();
+  if (!DoMerge && MBBI != EndMBBI) {
     MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
+    while (NextMBBI != EndMBBI && NextMBBI->isDebugValue())
+      ++NextMBBI;
     if (isAM4) {
       if ((Mode == ARM_AM::ia || Mode == ARM_AM::ib) &&
           isMatchingIncrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
@@ -669,8 +675,11 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Limit = isAM5 ? 0 : (isAM2 ? 0x1000 : 0x100);
 
   // Try merging with the previous instruction.
-  if (MBBI != MBB.begin()) {
+  MachineBasicBlock::iterator BeginMBBI = MBB.begin();
+  if (MBBI != BeginMBBI) {
     MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
+    while (PrevMBBI != BeginMBBI && PrevMBBI->isDebugValue())
+      --PrevMBBI;
     if (isMatchingDecrement(PrevMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
       AddSub = ARM_AM::sub;
@@ -685,8 +694,11 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   }
 
   // Try merging with the next instruction.
-  if (!DoMerge && MBBI != MBB.end()) {
+  MachineBasicBlock::iterator EndMBBI = MBB.begin();
+  if (!DoMerge && MBBI != EndMBBI) {
     MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
+    while (NextMBBI != EndMBBI && NextMBBI->isDebugValue())
+      ++NextMBBI;
     if (!isAM5 &&
         isMatchingDecrement(NextMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
