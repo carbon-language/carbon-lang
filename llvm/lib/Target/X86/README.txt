@@ -1103,57 +1103,6 @@ be folded into: shl [mem], 1
 
 //===---------------------------------------------------------------------===//
 
-This testcase misses a read/modify/write opportunity (from PR1425):
-
-void vertical_decompose97iH1(int *b0, int *b1, int *b2, int width){
-    int i;
-    for(i=0; i<width; i++)
-        b1[i] += (1*(b0[i] + b2[i])+0)>>0;
-}
-
-We compile it down to:
-
-LBB1_2:	# bb
-	movl	(%esi,%edi,4), %ebx
-	addl	(%ecx,%edi,4), %ebx
-	addl	(%edx,%edi,4), %ebx
-	movl	%ebx, (%ecx,%edi,4)
-	incl	%edi
-	cmpl	%eax, %edi
-	jne	LBB1_2	# bb
-
-the inner loop should add to the memory location (%ecx,%edi,4), saving
-a mov.  Something like:
-
-        movl    (%esi,%edi,4), %ebx
-        addl    (%edx,%edi,4), %ebx
-        addl    %ebx, (%ecx,%edi,4)
-
-Here is another interesting example:
-
-void vertical_compose97iH1(int *b0, int *b1, int *b2, int width){
-    int i;
-    for(i=0; i<width; i++)
-        b1[i] -= (1*(b0[i] + b2[i])+0)>>0;
-}
-
-We miss the r/m/w opportunity here by using 2 subs instead of an add+sub[mem]:
-
-LBB9_2:	# bb
-	movl	(%ecx,%edi,4), %ebx
-	subl	(%esi,%edi,4), %ebx
-	subl	(%edx,%edi,4), %ebx
-	movl	%ebx, (%ecx,%edi,4)
-	incl	%edi
-	cmpl	%eax, %edi
-	jne	LBB9_2	# bb
-
-Additionally, LSR should rewrite the exit condition of these loops to use
-a stride-4 IV, would would allow all the scales in the loop to go away.
-This would result in smaller code and more efficient microops.
-
-//===---------------------------------------------------------------------===//
-
 In SSE mode, we turn abs and neg into a load from the constant pool plus a xor
 or and instruction, for example:
 
@@ -1301,15 +1250,8 @@ FirstOnet:
         xorl    %eax, %eax
         ret
 
-There are a few possible improvements here:
-1. We should be able to eliminate the dead load into %ecx
-2. We could change the "movl 8(%esp), %eax" into
-   "movzwl 10(%esp), %eax"; this lets us change the cmpl
-   into a testl, which is shorter, and eliminate the shift.
-
-We could also in theory eliminate the branch by using a conditional
-for the address of the load, but that seems unlikely to be worthwhile
-in general.
+We could change the "movl 8(%esp), %eax" into "movzwl 10(%esp), %eax"; this
+lets us change the cmpl into a testl, which is shorter, and eliminate the shift.
 
 //===---------------------------------------------------------------------===//
 
@@ -1331,22 +1273,23 @@ bb7:		; preds = %entry
 
 to:
 
-_foo:
+foo:                                    # @foo
+# BB#0:                                 # %entry
+	movl	4(%esp), %ecx
 	cmpb	$0, 16(%esp)
-	movl	12(%esp), %ecx
+	je	.LBB0_2
+# BB#1:                                 # %bb
 	movl	8(%esp), %eax
-	movl	4(%esp), %edx
-	je	LBB1_2	# bb7
-LBB1_1:	# bb
-	addl	%edx, %eax
+	addl	%ecx, %eax
 	ret
-LBB1_2:	# bb7
-	movl	%edx, %eax
-	subl	%ecx, %eax
+.LBB0_2:                                # %bb7
+	movl	12(%esp), %edx
+	movl	%ecx, %eax
+	subl	%edx, %eax
 	ret
 
-The coalescer could coalesce "edx" with "eax" to avoid the movl in LBB1_2
-if it commuted the addl in LBB1_1.
+There's an obviously unnecessary movl in .LBB0_2, and we could eliminate a
+couple more movls by putting 4(%esp) into %eax instead of %ecx.
 
 //===---------------------------------------------------------------------===//
 
@@ -1396,8 +1339,7 @@ Also check why xmm7 is not used at all in the function.
 
 //===---------------------------------------------------------------------===//
 
-Legalize loses track of the fact that bools are always zero extended when in
-memory.  This causes us to compile abort_gzip (from 164.gzip) from:
+Take the following:
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin8"
@@ -1416,16 +1358,15 @@ bb4.i:		; preds = %entry
 }
 declare void @exit(i32) noreturn nounwind 
 
-into:
-
-_abort_gzip:
+This compiles into:
+_abort_gzip:                            ## @abort_gzip
+## BB#0:                                ## %entry
 	subl	$12, %esp
 	movb	_in_exit.4870.b, %al
-	notb	%al
-	testb	$1, %al
-	jne	LBB1_2	## bb4.i
-LBB1_1:	## bb.i
-  ...
+	cmpb	$1, %al
+	jne	LBB0_2
+
+We somehow miss folding the movb into the cmpb.
 
 //===---------------------------------------------------------------------===//
 
