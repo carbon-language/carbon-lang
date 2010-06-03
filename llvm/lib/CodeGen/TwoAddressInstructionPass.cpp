@@ -1164,6 +1164,12 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     if (!Seen.insert(SrcReg))
       continue;
 
+    // Check that the instructions are all in the same basic block.
+    MachineInstr *SrcDefMI = MRI->getVRegDef(SrcReg);
+    MachineInstr *DstDefMI = MRI->getVRegDef(DstReg);
+    if (SrcDefMI->getParent() != DstDefMI->getParent())
+      continue;
+
     // If there are no other uses than extract_subreg which feed into
     // the reg_sequence, then we might be able to coalesce them.
     bool CanCoalesce = true;
@@ -1172,15 +1178,25 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
       MachineInstr *UseMI = &*UI;
+      unsigned SubRegIdx = UseMI->getOperand(2).getImm();
+      // FIXME: For now require that the destination subregs match the subregs
+      // being extracted.
       if (!UseMI->isExtractSubreg() ||
-          UseMI->getOperand(0).getReg() != DstReg) {
+          UseMI->getOperand(0).getReg() != DstReg ||
+          UseMI->getOperand(0).getSubReg() != SubRegIdx ||
+          UseMI->getOperand(1).getSubReg() != 0) {
         CanCoalesce = false;
         break;
       }
-      SubIndices.push_back(UseMI->getOperand(2).getImm());
+      SubIndices.push_back(SubRegIdx);
     }
 
     if (!CanCoalesce || SubIndices.size() < 2)
+      continue;
+
+    // FIXME: For now require that the src and dst registers are in the
+    // same regclass.
+    if (MRI->getRegClass(SrcReg) != MRI->getRegClass(DstReg))
       continue;
 
     std::sort(SubIndices.begin(), SubIndices.end());
@@ -1189,8 +1205,9 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
                                      NewSubIdx)) {
       bool Proceed = true;
       if (NewSubIdx)
-        for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-               RE = MRI->reg_end(); RI != RE; ) {
+        for (MachineRegisterInfo::reg_nodbg_iterator
+               RI = MRI->reg_nodbg_begin(SrcReg), RE = MRI->reg_nodbg_end();
+             RI != RE; ) {
           MachineOperand &MO = RI.getOperand();
           ++RI;
           // FIXME: If the sub-registers do not combine to the whole
