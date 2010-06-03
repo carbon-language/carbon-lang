@@ -343,19 +343,17 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
   // If we don't preserve any symbols, libLTO will assume that all symbols are
   // needed. Keep all symbols unless we're producing a final executable.
-  if (output_type == LTO_CODEGEN_PIC_MODEL_STATIC) {
-    bool anySymbolsPreserved = false;
-    for (std::list<claimed_file>::iterator I = Modules.begin(),
+  bool anySymbolsPreserved = false;
+  for (std::list<claimed_file>::iterator I = Modules.begin(),
          E = Modules.end(); I != E; ++I) {
-      (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
-      for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-        if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
-          lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
-          anySymbolsPreserved = true;
+    (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
+    for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
+      if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
+        lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
+        anySymbolsPreserved = true;
 
-          if (options::generate_api_file)
-            api_file << I->syms[i].name << "\n";
-        }
+        if (options::generate_api_file)
+          api_file << I->syms[i].name << "\n";
       }
     }
 
