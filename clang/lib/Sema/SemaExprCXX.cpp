@@ -458,11 +458,28 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
     return true;
   E = Res.takeAs<Expr>();
 
+  // If the exception has class type, we need additional handling.
+  const RecordType *RecordTy = Ty->getAs<RecordType>();
+  if (!RecordTy)
+    return false;
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+
   // If we are throwing a polymorphic class type or pointer thereof,
   // exception handling will make use of the vtable.
-  if (const RecordType *RecordTy = Ty->getAs<RecordType>())
-    MarkVTableUsed(ThrowLoc, cast<CXXRecordDecl>(RecordTy->getDecl()));
-    
+  MarkVTableUsed(ThrowLoc, RD);
+
+  // If the class has a non-trivial destructor, we must be able to call it.
+  if (RD->hasTrivialDestructor())
+    return false;
+
+  CXXDestructorDecl *Destructor =
+    const_cast<CXXDestructorDecl*>(RD->getDestructor(Context));
+  if (!Destructor)
+    return false;
+
+  MarkDeclarationReferenced(E->getExprLoc(), Destructor);
+  CheckDestructorAccess(E->getExprLoc(), Destructor,
+                        PDiag(diag::err_access_dtor_temp) << Ty);
   return false;
 }
 

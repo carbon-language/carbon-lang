@@ -420,3 +420,9 @@ namespace test15 {
   template class B<int>;  // expected-note {{in instantiation}}
   template class B<long>; // expected-note 4 {{in instantiation}}
 }
+
+// PR7281
+namespace test16 {
+  class A { ~A(); }; // expected-note {{declared private here}}
+  void b() { throw A(); } // expected-error{{temporary of type 'test16::A' has private destructor}}
+}
