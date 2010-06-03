@@ -1940,7 +1940,8 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
 
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
-
+  // If the callee returns a reference and we want an rvalue, skip this check
+  // and do the load.
   if (!(!asLValue && CalleeReturnsReference(CE))) {
     CheckerVisit(CE, Dst, DstTmp3, false);
     return;
