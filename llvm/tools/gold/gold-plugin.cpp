@@ -53,12 +53,15 @@ namespace {
   };
 
   lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
+  std::string output_name = "";
   std::list<claimed_file> Modules;
   std::vector<sys::Path> Cleanup;
 }
 
 namespace options {
+  enum generate_bc { BC_NO, BC_ALSO, BC_ONLY };
   static bool generate_api_file = false;
+  static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
   static const char *as_path = NULL;
   // Additional options to pass into the code generator.
@@ -82,8 +85,13 @@ namespace options {
       } else {
         as_path = strdup(opt + 3);
       }
+    } else if (strcmp("emit-llvm", opt) == 0) {
+      generate_bc_file = BC_ONLY;
+    } else if (strcmp("also-emit-llvm", opt) == 0) {
+      generate_bc_file = BC_ALSO;
     } else if (llvm::StringRef(opt).startswith("also-emit-llvm=")) {
       const char *path = opt + strlen("also-emit-llvm=");
+      generate_bc_file = BC_ALSO;
       if (!bc_path.empty()) {
         (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
                    "Discarding %s", opt);
@@ -121,6 +129,9 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         break;
       case LDPT_GOLD_VERSION:  // major * 100 + minor
         gold_version = tv->tv_u.tv_val;
+        break;
+      case LDPT_OUTPUT_NAME:
+        output_name = tv->tv_u.tv_string;
         break;
       case LDPT_LINKER_OUTPUT:
         switch (tv->tv_u.tv_val) {
@@ -381,10 +392,20 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
   }
 
-  if (!options::bc_path.empty()) {
-    bool err = lto_codegen_write_merged_modules(cg, options::bc_path.c_str());
+
+  if (options::generate_bc_file != options::BC_NO) {
+    std::string path;
+    if (options::generate_bc_file == options::BC_ONLY)
+      path = output_name;
+    else if (!options::bc_path.empty())
+      path = options::bc_path;
+    else
+      path = output_name + ".bc";
+    bool err = lto_codegen_write_merged_modules(cg, path.c_str());
     if (err)
       (*message)(LDPL_FATAL, "Failed to write the output file.");
+    if (options::generate_bc_file == options::BC_ONLY)
+      exit(0);
   }
   size_t bufsize = 0;
   const char *buffer = static_cast<const char *>(lto_codegen_compile(cg,
