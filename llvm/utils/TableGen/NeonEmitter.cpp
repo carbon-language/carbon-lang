@@ -41,7 +41,8 @@ enum OpKind {
   OpOr,
   OpXor,
   OpAndNot,
-  OpOrNot
+  OpOrNot,
+  OpCast
 };
 
 static void ParseTypes(Record *r, std::string &s,
@@ -80,6 +81,19 @@ static char Widen(const char t) {
       return 'i';
     case 'i':
       return 'l';
+    default: throw "unhandled type in widen!";
+  }
+  return '\0';
+}
+
+static char Narrow(const char t) {
+  switch (t) {
+    case 's':
+      return 'c';
+    case 'i':
+      return 's';
+    case 'l':
+      return 'i';
     default: throw "unhandled type in widen!";
   }
   return '\0';
@@ -166,6 +180,13 @@ static std::string TypeString(const char mod, StringRef typestr) {
     case 'p':
       pntr = true;
       scal = true;
+      break;
+    case 'h':
+      type = Narrow(type);
+      break;
+    case 'e':
+      type = Narrow(type);
+      usgn = true;
       break;
     default:
       break;
@@ -308,9 +329,11 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   if (structTypes)
     s += "(" + ts + "){";
   
-  std::string a = structTypes ? "a.val" : "a";
-  std::string b = structTypes ? "b.val" : "b";
-  std::string c = structTypes ? "c.val" : "c";
+  std::string a, b, c;
+  if (proto.size() > 1)
+    a = (structTypes && proto[1] != 'l') ? "a.val" : "a";
+  b = structTypes ? "b.val" : "b";
+  c = structTypes ? "c.val" : "c";
   
   switch(op) {
   case OpAdd:
@@ -363,6 +386,9 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpOrNot:
     s += a + " | ~" + b;
+    break;
+  case OpCast:
+    s += "(__neon_" + ts + ")" + a;
     break;
   default:
     throw "unknown OpKind!";
@@ -489,6 +515,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   OpMap["OP_XOR"]  = OpXor;
   OpMap["OP_ANDN"] = OpAndNot;
   OpMap["OP_ORN"]  = OpOrNot;
+  OpMap["OP_CAST"] = OpCast;
   
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
