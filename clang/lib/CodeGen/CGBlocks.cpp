@@ -364,11 +364,28 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
                                             VD->getType().getNonReferenceType(),
                                             SourceLocation());
-          if (VD->getType()->isReferenceType())
-            E = new (getContext())
-              UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
-                          getContext().getPointerType(E->getType()),
-                          SourceLocation());
+          if (getContext().getLangOptions().CPlusPlus) {
+            if (VD->getType()->isReferenceType()) {
+              E = new (getContext())
+                UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+                              getContext().getPointerType(E->getType()),
+                              SourceLocation());
+            } 
+            else {
+              QualType T = E->getType();
+              if (const RecordType *RT = T->getAs<RecordType>()) {
+                CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
+                if (!Record->hasTrivialCopyConstructor()) {
+                  CXXConstructorDecl *D = Record->getCopyConstructor(getContext(),
+                                                                     0);
+                  Expr *Arg = const_cast<Expr*>(E);
+                  E = CXXConstructExpr::Create(getContext(), T, D->getLocation(), 
+                                               D, false, &Arg, 1, false,
+                                               CXXConstructExpr::CK_Complete);
+                }
+              }
+            }
+          }
         }
       }
 
@@ -607,6 +624,10 @@ void CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
                                                  bool IsByRef) {
+  llvm::Value *&VE = BlockDeclsValue[VD];
+  if (VE)
+    return VE;
+  
   CharUnits offset = BlockDecls[VD];
   assert(!offset.isZero() && "getting address of unallocated decl");
 
@@ -634,12 +655,12 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
       V = Builder.CreateLoad(V);
   } else {
     const llvm::Type *Ty = CGM.getTypes().ConvertType(VD->getType());
-
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
     if (VD->getType()->isReferenceType())
-      V = Builder.CreateLoad(V, "tmp");
+      V = Builder.CreateLoad(V, "ref.tmp");
   }
+  VE = V;
   return V;
 }
 
