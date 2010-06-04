@@ -105,21 +105,24 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       case NormalizeAutodetect:
         if (Instruction *OI = dyn_cast<Instruction>(OperandValToReplace))
           if (IVUseShouldUsePostIncValue(User, OI, L, &DT)) {
-            Result = SE.getMinusSCEV(Result, AR->getStepRecurrence(SE));
+            const SCEV *TransformedStep =
+              TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
+                                     User, OperandValToReplace, Loops, SE, DT);
+            Result = SE.getMinusSCEV(Result, TransformedStep);
             Loops.insert(L);
           }
         break;
       case Normalize:
-        if (Loops.count(L))
-          Result = SE.getMinusSCEV(Result, AR->getStepRecurrence(SE));
-        break;
-      case Denormalize:
         if (Loops.count(L)) {
           const SCEV *TransformedStep =
             TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
                                    User, OperandValToReplace, Loops, SE, DT);
-          Result = SE.getAddExpr(Result, TransformedStep);
+          Result = SE.getMinusSCEV(Result, TransformedStep);
         }
+        break;
+      case Denormalize:
+        if (Loops.count(L))
+          Result = SE.getAddExpr(Result, AR->getStepRecurrence(SE));
         break;
       }
       return Result;
