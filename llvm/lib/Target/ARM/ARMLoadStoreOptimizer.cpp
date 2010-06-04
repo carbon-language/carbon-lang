@@ -1291,7 +1291,7 @@ static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
   // some day.
   SmallSet<unsigned, 4> AddedRegPressure;
   while (++I != E) {
-    if (MemOps.count(&*I))
+    if (I->isDebugValue() || MemOps.count(&*I))
       continue;
     const TargetInstrDesc &TID = I->getDesc();
     if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects())
@@ -1574,7 +1574,9 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
         break;
       }
 
-      MI2LocMap[MI] = Loc++;
+      if (!MI->isDebugValue())
+        MI2LocMap[MI] = ++Loc;
+
       if (!isMemoryOp(MI))
         continue;
       unsigned PredReg = 0;
