@@ -373,7 +373,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   SemaRef.CheckVariableDeclaration(Var, Previous, Redeclaration);
 
   if (D->isOutOfLine()) {
-    D->getLexicalDeclContext()->addDecl(Var);
+    if (!D->isStaticDataMember())
+      D->getLexicalDeclContext()->addDecl(Var);
     Owner->makeDeclVisibleInContext(Var);
   } else {
     Owner->addDecl(Var);
