@@ -611,6 +611,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                 "x86_64-linux-gnu", "32", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
                                 "i486-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+                                "arm-linux-gnueabi", "", "", triple);
     // Ubuntu 8.04.4 LTS "Hardy Heron"     -- gcc-4.2.4
     // Ubuntu 8.04.[0-3] LTS "Hardy Heron" -- gcc-4.2.3
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2",
