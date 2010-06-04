@@ -234,6 +234,106 @@ static std::string TypeString(const char mod, StringRef typestr) {
   return s.str();
 }
 
+static std::string BuiltinTypeString(const char mod, StringRef typestr) {
+  bool quad = false;
+  bool poly = false;
+  bool usgn = false;
+  bool scal = false;
+  bool cnst = false;
+  bool pntr = false;
+  
+  if (mod == 'v')
+    return "v";
+  if (mod == 'i')
+    return "i";
+  
+  // base type to get the type string for.
+  char type = ClassifyType(typestr, quad, poly, usgn);
+  
+  // Based on the modifying character, change the type and width if necessary.
+  switch (mod) {
+    case 't':
+      if (poly) {
+        poly = false;
+        usgn = true;
+      }
+      break;
+    case 'x':
+      usgn = true;
+      poly = false;
+      if (type == 'f')
+        type = 'i';
+      break;
+    case 'f':
+      type = 'f';
+      usgn = false;
+      break;
+    case 'w':
+      type = Widen(type);
+      quad = true;
+      break;
+    case 'n':
+      type = Widen(type);
+      break;
+    case 'l':
+      type = 'l';
+      scal = true;
+      usgn = true;
+      break;
+    case 's':
+      scal = true;
+      break;
+    case 'k':
+      quad = true;
+      break;
+    case 'c':
+      cnst = true;
+    case 'p':
+      type = 'v';
+      usgn = false;
+      poly = false;
+      pntr = true;
+      scal = true;
+      break;
+    case 'h':
+      type = Narrow(type);
+      break;
+    case 'e':
+      type = Narrow(type);
+      usgn = true;
+      break;
+    default:
+      break;
+  }
+  if (type == 'h') {
+    type = 's';
+    usgn = true;
+  }
+  usgn = usgn | poly;
+
+  if (scal) {
+    SmallString<128> s;
+
+    if (usgn)
+      s.push_back('U');
+    s.push_back(type);
+    if (cnst)
+      s.push_back('C');
+    if (pntr)
+      s.push_back('*');
+    return s.str();
+  }
+  
+  if (mod == '2')
+    return quad ? "V16cV16c" : "V8cV8c";
+  if (mod == '3')
+    return quad ? "V16cV16cV16c" : "V8cV8cV8c";
+  if (mod == '4')
+    return quad ? "V16cV16cV16cV16c" : "V8cV8cV8cV8c";
+
+  return quad ? "V16c" : "V8c";
+}
+
 // Turn "vst2_lane" into "vst2q_lane_f32", etc.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
@@ -298,7 +398,7 @@ static std::string MangleName(const std::string &name, StringRef typestr,
     break;
   }
   if (ck == ClassB)
-    return s += "_v";
+    s += "_v";
     
   // Insert a 'q' before the first '_' character so that it ends up before 
   // _lane or _n on vector-scalar operations.
@@ -454,11 +554,18 @@ static std::string GenBuiltinDef(const std::string &name,
                                  const std::string &proto,
                                  StringRef typestr, ClassKind ck) {
   std::string s("BUILTIN(__builtin_neon_");
+
+  // If all types are the same size, bitcasting the args will take care 
+  // of arg checking.  The actual signedness etc. will be taken care of with
+  // special enums.
+  if (proto.find('s') == std::string::npos)
+    ck = ClassB;
+  
   s += MangleName(name, typestr, ck);
   s += ", \"";
   
-  for (unsigned i = 0, e = proto.size(); i != e; ++i) {
-  }
+  for (unsigned i = 0, e = proto.size(); i != e; ++i)
+    s += BuiltinTypeString(proto[i], typestr);
   
   s += "\", \"n\")";
   return s;
