@@ -14,4 +14,9 @@ template<typename T, typename X<T>::type Value> struct Y1;
 // A storage class shall not be specified in a template-parameter declaration.
 template<static int Value> struct Z; // FIXME: expect an error
 
+// Make sure that we properly disambiguate non-type template parameters that
+// start with 'class'.
+class X1 { };
+template<class X1 *xptr> struct Y2 { };
+
 // FIXME: add the example from p2

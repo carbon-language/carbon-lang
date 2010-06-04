@@ -341,8 +341,37 @@ Parser::ParseTemplateParameterList(unsigned Depth,
 /// \brief Determine whether the parser is at the start of a template
 /// type parameter.
 bool Parser::isStartOfTemplateTypeParameter() {
-  if (Tok.is(tok::kw_class))
-    return true;
+  if (Tok.is(tok::kw_class)) {
+    // "class" may be the start of an elaborated-type-specifier or a
+    // type-parameter. Per C++ [temp.param]p3, we prefer the type-parameter.
+    switch (NextToken().getKind()) {
+    case tok::equal:
+    case tok::comma:
+    case tok::greater:
+    case tok::greatergreater:
+    case tok::ellipsis:
+      return true;
+        
+    case tok::identifier:
+      // This may be either a type-parameter or an elaborated-type-specifier. 
+      // We have to look further.
+      break;
+        
+    default:
+      return false;
+    }
+    
+    switch (GetLookAheadToken(2).getKind()) {
+    case tok::equal:
+    case tok::comma:
+    case tok::greater:
+    case tok::greatergreater:
+      return true;
+      
+    default:
+      return false;
+    }
+  }
 
   if (Tok.isNot(tok::kw_typename))
     return false;
