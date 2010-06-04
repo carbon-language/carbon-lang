@@ -1423,7 +1423,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
   std::sort(Ops.begin(), Ops.end(), OffsetCompare());
 
   // The loads / stores of the same base are in order. Scan them from first to
-  // last and check for the followins:
+  // last and check for the following:
   // 1. Any def of base.
   // 2. Any gaps.
   while (Ops.size() > 1) {
