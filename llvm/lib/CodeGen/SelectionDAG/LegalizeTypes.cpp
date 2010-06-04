@@ -684,40 +684,45 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   // can potentially cause recursive merging.
   SmallSetVector<SDNode*, 16> NodesToAnalyze;
   NodeUpdateListener NUL(*this, NodesToAnalyze);
-  DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
+  do {
+    DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
 
-  // The old node may still be present in a map like ExpandedIntegers or
-  // PromotedIntegers.  Inform maps about the replacement.
-  ReplacedValues[From] = To;
+    // The old node may still be present in a map like ExpandedIntegers or
+    // PromotedIntegers.  Inform maps about the replacement.
+    ReplacedValues[From] = To;
 
-  // Process the list of nodes that need to be reanalyzed.
-  while (!NodesToAnalyze.empty()) {
-    SDNode *N = NodesToAnalyze.back();
-    NodesToAnalyze.pop_back();
-    if (N->getNodeId() != DAGTypeLegalizer::NewNode)
-      // The node was analyzed while reanalyzing an earlier node - it is safe to
-      // skip.  Note that this is not a morphing node - otherwise it would still
-      // be marked NewNode.
-      continue;
+    // Process the list of nodes that need to be reanalyzed.
+    while (!NodesToAnalyze.empty()) {
+      SDNode *N = NodesToAnalyze.back();
+      NodesToAnalyze.pop_back();
+      if (N->getNodeId() != DAGTypeLegalizer::NewNode)
+        // The node was analyzed while reanalyzing an earlier node - it is safe
+        // to skip.  Note that this is not a morphing node - otherwise it would
+        // still be marked NewNode.
+        continue;
 
-    // Analyze the node's operands and recalculate the node ID.
-    SDNode *M = AnalyzeNewNode(N);
-    if (M != N) {
-      // The node morphed into a different node.  Make everyone use the new node
-      // instead.
-      assert(M->getNodeId() != NewNode && "Analysis resulted in NewNode!");
-      assert(N->getNumValues() == M->getNumValues() &&
-             "Node morphing changed the number of results!");
-      for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
-        SDValue OldVal(N, i);
-        SDValue NewVal(M, i);
-        if (M->getNodeId() == Processed)
-          RemapValue(NewVal);
-        DAG.ReplaceAllUsesOfValueWith(OldVal, NewVal, &NUL);
+      // Analyze the node's operands and recalculate the node ID.
+      SDNode *M = AnalyzeNewNode(N);
+      if (M != N) {
+        // The node morphed into a different node.  Make everyone use the new
+        // node instead.
+        assert(M->getNodeId() != NewNode && "Analysis resulted in NewNode!");
+        assert(N->getNumValues() == M->getNumValues() &&
+               "Node morphing changed the number of results!");
+        for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+          SDValue OldVal(N, i);
+          SDValue NewVal(M, i);
+          if (M->getNodeId() == Processed)
+            RemapValue(NewVal);
+          DAG.ReplaceAllUsesOfValueWith(OldVal, NewVal, &NUL);
+        }
+        // The original node continues to exist in the DAG, marked NewNode.
       }
-      // The original node continues to exist in the DAG, marked NewNode.
     }
-  }
+    // When recursively update nodes with new nodes, it is possible to have
+    // new uses of From due to CSE. If this happens, replace the new uses of
+    // From with To.
+  } while (!From.use_empty());
 }
 
 void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
