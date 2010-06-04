@@ -999,14 +999,14 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   MachineFunction &MF = DAG.getMachineFunction();
   bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   bool IsSibCall = false;
+  // Temporarily disable tail calls so things don't break.
+  if (!EnableARMTailCalls)
+    isTailCall = false;
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
                     isVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
                                                    Outs, Ins, DAG);
-    // Temporarily disable tail calls so things don't break.
-    if (!EnableARMTailCalls)
-      isTailCall = false;
     // We don't support GuaranteedTailCallOpt for ARM, only automatically
     // detected sibcalls.
     if (isTailCall) {
