@@ -25,8 +25,11 @@ namespace llvm {
   public:
     NeonEmitter(RecordKeeper &R) : Records(R) {}
     
-    // runHeader - Emit a header file that allows use of the instruction table.
+    // run - Emit arm_neon.h.inc
     void run(raw_ostream &o);
+
+    // runHeader - Emit all the __builtin prototypes used in arm_neon.h
+    void runHeader(raw_ostream &o);
   };
   
 } // End llvm namespace

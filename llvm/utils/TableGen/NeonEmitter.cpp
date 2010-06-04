@@ -15,6 +15,7 @@
 
 #include "NeonEmitter.h"
 #include "Record.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -43,6 +44,14 @@ enum OpKind {
   OpAndNot,
   OpOrNot,
   OpCast
+};
+
+enum ClassKind {
+  ClassNone,
+  ClassI,
+  ClassS,
+  ClassW,
+  ClassB
 };
 
 static void ParseTypes(Record *r, std::string &s,
@@ -259,7 +268,8 @@ static std::string TypeString(const char mod, StringRef typestr) {
 }
 
 // Turn "vst2_lane" into "vst2q_lane_f32", etc.
-static std::string MangleName(const std::string &name, StringRef typestr) {
+static std::string MangleName(const std::string &name, StringRef typestr,
+                              ClassKind ck) {
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -268,29 +278,61 @@ static std::string MangleName(const std::string &name, StringRef typestr) {
   std::string s = name;
   
   switch (type) {
-    case 'c':
-      s += poly ? "_p8" : usgn ? "_u8" : "_s8";
-      break;
-    case 's':
-      s += poly ? "_p16" : usgn ? "_u16" : "_s16";
-      break;
-    case 'i':
-      s += usgn ? "_u32" : "_s32";
-      break;
-    case 'l':
-      s += usgn ? "_u64" : "_s64";
-      break;
-    case 'h':
-      s += "_f16";
-      break;
-    case 'f':
-      s += "_f32";
-      break;
-    default:
-      throw "unhandled type!";
-      break;
+  case 'c':
+    switch (ck) {
+    case ClassS: s += poly ? "_p8" : usgn ? "_u8" : "_s8"; break;
+    case ClassI: s += "_i8"; break;
+    case ClassW: s += "_8"; break;
+    default: break;
+    }
+    break;
+  case 's':
+    switch (ck) {
+    case ClassS: s += poly ? "_p16" : usgn ? "_u16" : "_s16"; break;
+    case ClassI: s += "_i16"; break;
+    case ClassW: s += "_16"; break;
+    default: break;
+    }
+    break;
+  case 'i':
+    switch (ck) {
+    case ClassS: s += usgn ? "_u32" : "_s32"; break;
+    case ClassI: s += "_i32"; break;
+    case ClassW: s += "_32"; break;
+    default: break;
+    }
+    break;
+  case 'l':
+    switch (ck) {
+    case ClassS: s += usgn ? "_u64" : "_s64"; break;
+    case ClassI: s += "_i64"; break;
+    case ClassW: s += "_64"; break;
+    default: break;
+    }
+    break;
+  case 'h':
+    switch (ck) {
+    case ClassS:
+    case ClassI: s += "_f16"; break;
+    case ClassW: s += "_16"; break;
+    default: break;
+    }
+    break;
+  case 'f':
+    switch (ck) {
+    case ClassS:
+    case ClassI: s += "_f32"; break;
+    case ClassW: s += "_32"; break;
+    default: break;
+    }
+    break;
+  default:
+    throw "unhandled type!";
+    break;
   }
-
+  if (ck == ClassB)
+    return s += "_v";
+    
   // Insert a 'q' before the first '_' character so that it ends up before 
   // _lane or _n on vector-scalar operations.
   if (quad) {
@@ -405,7 +447,8 @@ static std::string GenOpString(OpKind op, const std::string &proto,
 // If structTypes is true, the NEON types are structs of vector types rather
 // than vector types, and the call becomes __builtin_neon_cls(a.val)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
-                              StringRef typestr, bool structTypes = true) {
+                              StringRef typestr, ClassKind ck,
+                              bool structTypes = true) {
   char arg = 'a';
   std::string s;
   
@@ -420,7 +463,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   }    
   
   s += "__builtin_neon_";
-  s += name;
+  s += MangleName(name, typestr, ck);
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
@@ -517,6 +560,16 @@ void NeonEmitter::run(raw_ostream &OS) {
   OpMap["OP_ORN"]  = OpOrNot;
   OpMap["OP_CAST"] = OpCast;
   
+  DenseMap<Record*, ClassKind> ClassMap;
+  Record *SI = Records.getClass("SInst");
+  Record *II = Records.getClass("IInst");
+  Record *WI = Records.getClass("WInst");
+  Record *BI = Records.getClass("BInst");
+  ClassMap[SI] = ClassS;
+  ClassMap[II] = ClassI;
+  ClassMap[WI] = ClassW;
+  ClassMap[BI] = ClassB;
+  
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -536,7 +589,7 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << "__ai " << TypeString(Proto[0], TypeVec[ti]);
       
       // Function name with type suffix
-      OS << " " << MangleName(name, TypeVec[ti]);
+      OS << " " << MangleName(name, TypeVec[ti], ClassS);
       
       // Function arguments
       OS << GenArgs(Proto, TypeVec[ti]);
@@ -544,10 +597,18 @@ void NeonEmitter::run(raw_ostream &OS) {
       // Definition.
       OS << " { ";
       
-      if (k != OpNone)
+      if (k != OpNone) {
         OS << GenOpString(k, Proto, TypeVec[ti]);
-      else
-        OS << GenBuiltin(name, Proto, TypeVec[ti]);
+      } else {
+        if (R->getSuperClasses().size() < 2)
+          throw TGError(R->getLoc(), "Builtin has no class kind");
+        
+        ClassKind ck = ClassMap[R->getSuperClasses()[1]];
+
+        if (ck == ClassNone)
+          throw TGError(R->getLoc(), "Builtin has no class kind");
+        OS << GenBuiltin(name, Proto, TypeVec[ti], ck);
+      }
 
       OS << " }\n";
     }
@@ -560,4 +621,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   // Emit a #define for each intrinsic mapping it to a particular type.
   
   OS << "#endif /* __ARM_NEON_H */\n";
+}
+
+void NeonEmitter::runHeader(raw_ostream &OS) {
 }
