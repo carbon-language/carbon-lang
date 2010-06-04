@@ -517,10 +517,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 }
 
 bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
-  for (BlockDecl::param_iterator I=B->param_begin(), E=B->param_end(); I!=E;++I)
-    if (Decl *D = *I)
-      if (Visit(D))
-        return true;
+  if (Visit(B->getSignatureAsWritten()->getTypeLoc()))
+    return true;
 
   return Visit(MakeCXCursor(B->getBody(), StmtParent, TU));
 }
@@ -672,6 +670,9 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
 }
 
 bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
+  if (Visit(PD->getTypeSourceInfo()->getTypeLoc()))
+    return true;
+
   // FIXME: This implements a workaround with @property declarations also being
   // installed in the DeclContext for the @interface.  Eventually this code
   // should be removed.
