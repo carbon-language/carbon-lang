@@ -1775,9 +1775,9 @@ Sema::DeclPtrTy Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
   
-  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedDecl = 0;
-  QualType ExceptionType = GetTypeForDeclarator(D, S, &TInfo, &OwnedDecl);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedDecl);
+  QualType ExceptionType = TInfo->getType();
   
   if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
     // Objective-C++: Types shall not be defined in exception types.

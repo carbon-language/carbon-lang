@@ -162,6 +162,8 @@ class ASTContext {
   /// \brief Type for the Block descriptor for Blocks CodeGen.
   RecordDecl *BlockDescriptorExtendedType;
 
+  TypeSourceInfo NullTypeSourceInfo;
+
   /// \brief Keeps track of all declaration attributes.
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
@@ -1271,6 +1273,8 @@ public:
   /// location.
   TypeSourceInfo *
   getTrivialTypeSourceInfo(QualType T, SourceLocation Loc = SourceLocation());
+
+  TypeSourceInfo *getNullTypeSourceInfo() { return &NullTypeSourceInfo; }
 
   /// \brief Add a deallocation callback that will be invoked when the 
   /// ASTContext is destroyed.

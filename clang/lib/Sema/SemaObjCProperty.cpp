@@ -41,8 +41,8 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                     !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
 
-  TypeSourceInfo *TSI = 0;
-  QualType T = GetTypeForDeclarator(FD.D, S, &TSI);
+  TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
+  QualType T = TSI->getType();
   if (T->isReferenceType()) {
     Diag(AtLoc, diag::error_reference_property);
     return DeclPtrTy();

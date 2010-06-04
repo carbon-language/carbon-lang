@@ -586,8 +586,8 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
 Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                     unsigned Depth,
                                                     unsigned Position) {
-  TypeSourceInfo *TInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType T = TInfo->getType();
 
   assert(S->isTemplateParamScope() &&
          "Non-type template parameter not in template parameter scope!");
@@ -4970,7 +4970,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     S = S->getParent();
 
   // Determine the type of the declaration.
-  QualType R = GetTypeForDeclarator(D, S, 0);
+  TypeSourceInfo *T = GetTypeForDeclarator(D, S);
+  QualType R = T->getType();
   if (R.isNull())
     return true;
   

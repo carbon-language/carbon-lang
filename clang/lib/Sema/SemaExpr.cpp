@@ -6996,9 +6996,9 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
   BlockScopeInfo *CurBlock = getCurBlock();
 
-  TypeSourceInfo *Sig = 0;
-  QualType T = GetTypeForDeclarator(ParamInfo, CurScope, &Sig);
+  TypeSourceInfo *Sig = GetTypeForDeclarator(ParamInfo, CurScope);
   CurBlock->TheDecl->setSignatureAsWritten(Sig);
+  QualType T = Sig->getType();
 
   bool isVariadic;
   QualType RetTy;

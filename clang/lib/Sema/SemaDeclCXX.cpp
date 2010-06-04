@@ -5467,8 +5467,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
 /// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
 /// handler.
 Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-  TypeSourceInfo *TInfo = 0;
-  QualType ExDeclType = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType ExDeclType = TInfo->getType();
 
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
@@ -5622,14 +5622,11 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   // friend templates because ActOnTag never produces a ClassTemplateDecl
   // for a TUK_Friend.
   Declarator TheDeclarator(DS, Declarator::MemberContext);
-  TypeSourceInfo *TSI;
-  QualType T = GetTypeForDeclarator(TheDeclarator, S, &TSI);
+  TypeSourceInfo *TSI = GetTypeForDeclarator(TheDeclarator, S);
+  QualType T = TSI->getType();
   if (TheDeclarator.isInvalidType())
     return DeclPtrTy();
 
-  if (!TSI)
-    TSI = Context.getTrivialTypeSourceInfo(T, DS.getSourceRange().getBegin());
-  
   // This is definitely an error in C++98.  It's probably meant to
   // be forbidden in C++0x, too, but the specification is just
   // poorly written.
@@ -5691,8 +5688,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
   SourceLocation Loc = D.getIdentifierLoc();
-  TypeSourceInfo *TInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType T = TInfo->getType();
 
   // C++ [class.friend]p1
   //   A friend of a class is a function or class....
@@ -6056,9 +6053,9 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
          "Parser allowed 'typedef' as storage class of condition decl.");
   
-  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType Ty = GetTypeForDeclarator(D, S, &TInfo, &OwnedTag);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedTag);
+  QualType Ty = TInfo->getType();
   
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
                               // We exit without creating a CXXConditionDeclExpr because a FunctionDecl

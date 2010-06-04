@@ -947,9 +947,11 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, TypeSourceInfo **TInfo) {
 /// If OwnedDecl is non-NULL, and this declarator's decl-specifier-seq
 /// owns the declaration of a type (e.g., the definition of a struct
 /// type), then *OwnedDecl will receive the owned declaration.
-QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                    TypeSourceInfo **TInfo,
-                                    TagDecl **OwnedDecl) {
+///
+/// The result of this call will never be null, but the associated
+/// type may be a null type if there's an unrecoverable error.
+TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
+                                           TagDecl **OwnedDecl) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
@@ -980,22 +982,18 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     // Constructors and destructors don't have return types. Use
     // "void" instead. 
     T = Context.VoidTy;
-      
-    if (TInfo)
-      ReturnTypeInfo = Context.getTrivialTypeSourceInfo(T, 
-                                                    D.getName().StartLocation);
     break;
 
   case UnqualifiedId::IK_ConversionFunctionId:
     // The result type of a conversion function is the type that it
     // converts to.
     T = GetTypeFromParser(D.getName().ConversionFunctionId, 
-                          TInfo? &ReturnTypeInfo : 0);
+                          &ReturnTypeInfo);
     break;
   }
   
   if (T.isNull())
-    return T;
+    return Context.getNullTypeSourceInfo();
 
   if (T == Context.UndeducedAutoTy) {
     int Error = -1;
@@ -1386,14 +1384,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
   DiagnoseDelayedFnAttrs(*this, FnAttrsFromPreviousChunk);
 
-  if (TInfo) {
-    if (D.isInvalidType())
-      *TInfo = 0;
-    else
-      *TInfo = GetTypeSourceInfoForDeclarator(D, T, ReturnTypeInfo);
-  }
-
-  return T;
+  if (T.isNull())
+    return Context.getNullTypeSourceInfo();
+  else if (D.isInvalidType())
+    return Context.getTrivialTypeSourceInfo(T);
+  return GetTypeSourceInfoForDeclarator(D, T, ReturnTypeInfo);
 }
 
 namespace {
@@ -1695,9 +1690,9 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
 
-  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType T = GetTypeForDeclarator(D, S, &TInfo, &OwnedTag);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedTag);
+  QualType T = TInfo->getType();
   if (D.isInvalidType())
     return true;
 
@@ -1714,9 +1709,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
         << Context.getTypeDeclType(OwnedTag);
   }
 
-  if (TInfo)
-    T = CreateLocInfoType(T, TInfo);
-
+  T = CreateLocInfoType(T, TInfo);
   return T.getAsOpaquePtr();
 }
 

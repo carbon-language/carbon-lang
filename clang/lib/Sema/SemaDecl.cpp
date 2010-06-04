@@ -1795,8 +1795,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
   // Mock up a declarator.
   Declarator Dc(DS, Declarator::TypeNameContext);
-  TypeSourceInfo *TInfo = 0;
-  GetTypeForDeclarator(Dc, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(Dc, S);
   assert(TInfo && "couldn't build declarator info for anonymous struct/union");
 
   // Create a declaration for this anonymous struct/union.
@@ -2091,8 +2090,8 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   NamedDecl *New;
 
-  TypeSourceInfo *TInfo = 0;
-  QualType R = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType R = TInfo->getType();
 
   LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
                         ForRedeclaration);
@@ -4258,9 +4257,9 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
-  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedDecl = 0;
-  QualType parmDeclType = GetTypeForDeclarator(D, S, &TInfo, &OwnedDecl);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedDecl);
+  QualType parmDeclType = TInfo->getType();
 
   if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
     // C++ [dcl.fct]p6:
@@ -5635,8 +5634,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
 
-  TypeSourceInfo *TInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType T = TInfo->getType();
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
@@ -6009,8 +6008,8 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // FIXME: Unnamed fields can be handled in various different ways, for
   // example, unnamed unions inject all members into the struct namespace!
 
-  TypeSourceInfo *TInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  QualType T = TInfo->getType();
 
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4

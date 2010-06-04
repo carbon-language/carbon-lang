@@ -666,8 +666,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   }
 
   //FIXME: Store TypeSourceInfo in CXXNew expression.
-  TypeSourceInfo *TInfo = 0;
-  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &TInfo);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0);
+  QualType AllocType = TInfo->getType();
   if (D.isInvalidType())
     return ExprError();
     
