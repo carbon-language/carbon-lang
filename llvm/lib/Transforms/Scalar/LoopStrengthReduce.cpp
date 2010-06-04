@@ -2095,8 +2095,12 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
     } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
       if (!Inserted.insert(U)) continue;
       const Value *V = U->getValue();
-      if (const Instruction *Inst = dyn_cast<Instruction>(V))
+      if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
+        // Look for instructions defined outside the loop.
         if (L->contains(Inst)) continue;
+      } else if (isa<UndefValue>(V))
+        // Undef doesn't have a live range, so it doesn't matter.
+        continue;
       for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
            UI != UE; ++UI) {
         const Instruction *UserInst = dyn_cast<Instruction>(*UI);
