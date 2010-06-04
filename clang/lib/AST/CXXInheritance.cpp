@@ -90,6 +90,9 @@ bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) cons
 }
 
 bool CXXRecordDecl::isVirtuallyDerivedFrom(CXXRecordDecl *Base) const {
+  if (!getNumVBases())
+    return false;
+
   CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
                      /*DetectVirtual=*/false);
 
