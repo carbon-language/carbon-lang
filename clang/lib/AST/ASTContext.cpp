@@ -3380,13 +3380,73 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
                              true /* outermost type */);
 }
 
+static char ObjCEncodingForPrimitiveKind(const ASTContext *C, QualType T) {
+    switch (T->getAs<BuiltinType>()->getKind()) {
+    default: assert(0 && "Unhandled builtin type kind");
+    case BuiltinType::Void:       return 'v';
+    case BuiltinType::Bool:       return 'B';
+    case BuiltinType::Char_U:
+    case BuiltinType::UChar:      return 'C';
+    case BuiltinType::UShort:     return 'S';
+    case BuiltinType::UInt:       return 'I';
+    case BuiltinType::ULong:
+        return
+          (const_cast<ASTContext *>(C))->getIntWidth(T) == 32 ? 'L' : 'Q';
+    case BuiltinType::UInt128:    return 'T';
+    case BuiltinType::ULongLong:  return 'Q';
+    case BuiltinType::Char_S:
+    case BuiltinType::SChar:      return 'c';
+    case BuiltinType::Short:      return 's';
+    case BuiltinType::Int:        return 'i';
+    case BuiltinType::Long:
+      return
+        (const_cast<ASTContext *>(C))->getIntWidth(T) == 32 ? 'l' : 'q';
+    case BuiltinType::LongLong:   return 'q';
+    case BuiltinType::Int128:     return 't';
+    case BuiltinType::Float:      return 'f';
+    case BuiltinType::Double:     return 'd';
+    case BuiltinType::LongDouble: return 'd';
+    }
+}
+
 static void EncodeBitField(const ASTContext *Context, std::string& S,
-                           const FieldDecl *FD) {
+                           QualType T, const FieldDecl *FD) {
   const Expr *E = FD->getBitWidth();
   assert(E && "bitfield width not there - getObjCEncodingForTypeImpl");
   ASTContext *Ctx = const_cast<ASTContext*>(Context);
-  unsigned N = E->EvaluateAsInt(*Ctx).getZExtValue();
   S += 'b';
+  // The NeXT runtime encodes bit fields as b followed by the number of bits.
+  // The GNU runtime requires more information; bitfields are encoded as b,
+  // then the offset (in bits) of the first element, then the type of the
+  // bitfield, then the size in bits.  For example, in this structure:
+  //
+  // struct
+  // {
+  //    int integer;
+  //    int flags:2;
+  // };
+  // On a 32-bit system, the encoding for flags would be b2 for the NeXT
+  // runtime, but b32i2 for the GNU runtime.  The reason for this extra
+  // information is not especially sensible, but we're stuck with it for
+  // compatibility with GCC, although providing it breaks anything that
+  // actually uses runtime introspection and wants to work on both runtimes...
+  if (!Ctx->getLangOptions().NeXTRuntime) {
+    const RecordDecl *RD = FD->getParent();
+    const ASTRecordLayout &RL = Ctx->getASTRecordLayout(RD);
+    // FIXME: This same linear search is also used in ExprConstant - it might
+    // be better if the FieldDecl stored its offset.  We'd be increasing the
+    // size of the object slightly, but saving some time every time it is used.
+    unsigned i = 0;
+    for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                 FieldEnd = RD->field_end();
+         Field != FieldEnd; (void)++Field, ++i) {
+      if (*Field == FD)
+        break;
+    }
+    S += llvm::utostr(RL.getFieldOffset(i));
+    S += ObjCEncodingForPrimitiveKind(Context, T);
+  }
+  unsigned N = E->EvaluateAsInt(*Ctx).getZExtValue();
   S += llvm::utostr(N);
 }
 
@@ -3397,40 +3457,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             const FieldDecl *FD,
                                             bool OutermostType,
                                             bool EncodingProperty) {
-  if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
+  if (T->getAs<BuiltinType>()) {
     if (FD && FD->isBitField())
-      return EncodeBitField(this, S, FD);
-    char encoding;
-    switch (BT->getKind()) {
-    default: assert(0 && "Unhandled builtin type kind");
-    case BuiltinType::Void:       encoding = 'v'; break;
-    case BuiltinType::Bool:       encoding = 'B'; break;
-    case BuiltinType::Char_U:
-    case BuiltinType::UChar:      encoding = 'C'; break;
-    case BuiltinType::UShort:     encoding = 'S'; break;
-    case BuiltinType::UInt:       encoding = 'I'; break;
-    case BuiltinType::ULong:
-        encoding =
-          (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'L' : 'Q';
-        break;
-    case BuiltinType::UInt128:    encoding = 'T'; break;
-    case BuiltinType::ULongLong:  encoding = 'Q'; break;
-    case BuiltinType::Char_S:
-    case BuiltinType::SChar:      encoding = 'c'; break;
-    case BuiltinType::Short:      encoding = 's'; break;
-    case BuiltinType::Int:        encoding = 'i'; break;
-    case BuiltinType::Long:
-      encoding =
-        (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'l' : 'q';
-      break;
-    case BuiltinType::LongLong:   encoding = 'q'; break;
-    case BuiltinType::Int128:     encoding = 't'; break;
-    case BuiltinType::Float:      encoding = 'f'; break;
-    case BuiltinType::Double:     encoding = 'd'; break;
-    case BuiltinType::LongDouble: encoding = 'd'; break;
-    }
-
-    S += encoding;
+      return EncodeBitField(this, S, T, FD);
+    S += ObjCEncodingForPrimitiveKind(this, T);
     return;
   }
 
@@ -3589,7 +3619,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
 
   if (T->isEnumeralType()) {
     if (FD && FD->isBitField())
-      EncodeBitField(this, S, FD);
+      EncodeBitField(this, S, T, FD);
     else
       S += 'i';
     return;
