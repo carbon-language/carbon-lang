@@ -504,7 +504,8 @@ void Driver::BuildUniversalActions(const ArgList &Args,
   ActionList SingleActions;
   BuildActions(Args, SingleActions);
 
-  // Add in arch binding and lipo (if necessary) for every top level action.
+  // Add in arch bindings for every top level action, as well as lipo and
+  // dsymutil steps if needed.
   for (unsigned i = 0, e = SingleActions.size(); i != e; ++i) {
     Action *Act = SingleActions[i];
 
@@ -531,6 +532,19 @@ void Driver::BuildUniversalActions(const ArgList &Args,
       Actions.append(Inputs.begin(), Inputs.end());
     else
       Actions.push_back(new LipoJobAction(Inputs, Act->getType()));
+
+    // Add a 'dsymutil' step if necessary.
+    if (Act->getType() == types::TY_Image) {
+      Arg *A = Args.getLastArg(options::OPT_g_Group);
+      if (A && !A->getOption().matches(options::OPT_g0) &&
+          !A->getOption().matches(options::OPT_gstabs)) {
+        ActionList Inputs;
+        Inputs.push_back(Actions.back());
+        Actions.pop_back();
+
+        Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
+      }
+    }
   }
 }
 
@@ -992,9 +1006,17 @@ void Driver::BuildJobsForAction(Compilation &C,
   InputInfoList InputInfos;
   for (ActionList::const_iterator it = Inputs->begin(), ie = Inputs->end();
        it != ie; ++it) {
+    // Treat dsymutil sub-jobs as being at the top-level too, they shouldn't get
+    // temporary output names.
+    //
+    // FIXME: Clean this up.
+    bool SubJobAtTopLevel = false;
+    if (AtTopLevel && isa<DsymutilJobAction>(A))
+      SubJobAtTopLevel = true;
+
     InputInfo II;
     BuildJobsForAction(C, *it, TC, BoundArch, TryToUsePipeInput,
-                       /*AtTopLevel*/false, LinkingOutput, II);
+                       SubJobAtTopLevel, LinkingOutput, II);
     InputInfos.push_back(II);
   }
 
@@ -1022,6 +1044,11 @@ void Driver::BuildJobsForAction(Compilation &C,
 
   // Always use the first input as the base input.
   const char *BaseInput = InputInfos[0].getBaseInput();
+
+  // ... except dsymutil actions, which use their actual input as the base
+  // input.
+  if (JA->getType() == types::TY_dSYM)
+    BaseInput = InputInfos[0].getFilename();
 
   // Determine the place to write output to (nothing, pipe, or filename) and
   // where to put the new job.
@@ -1065,7 +1092,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
                                        bool AtTopLevel) const {
   llvm::PrettyStackTraceString CrashInfo("Computing output path");
   // Output to a user requested destination?
-  if (AtTopLevel) {
+  if (AtTopLevel && !isa<DsymutilJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
       return C.addResultFile(FinalOutput->getValue(C.getArgs()));
   }

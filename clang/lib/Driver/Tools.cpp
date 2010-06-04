@@ -2215,26 +2215,6 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
-/// Helper routine for seeing if we should use dsymutil; this is a
-/// gcc compatible hack, we should remove it and use the input
-/// type information.
-static bool isSourceSuffix(const char *Str) {
-  // match: 'C', 'CPP', 'c', 'cc', 'cp', 'c++', 'cpp', 'cxx', 'm',
-  // 'mm'.
-  return llvm::StringSwitch<bool>(Str)
-           .Case("C", true)
-           .Case("c", true)
-           .Case("m", true)
-           .Case("cc", true)
-           .Case("cp", true)
-           .Case("mm", true)
-           .Case("CPP", true)
-           .Case("c++", true)
-           .Case("cpp", true)
-           .Case("cxx", true)
-           .Default(false);
-}
-
 void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
                                        ArgStringList &CmdArgs) const {
   llvm::StringRef ArchName = getDarwinToolChain().getDarwinArchName(Args);
@@ -2553,28 +2533,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (Inputs[i].getBaseInput()[0] != '\0') {
       BaseInput = Inputs[i].getBaseInput();
       break;
-    }
-  }
-
-  // Run dsymutil if we are making an executable in a single step.
-  //
-  // FIXME: Currently we don't want to do this when we are part of a
-  // universal build step, as this would end up creating stray temp
-  // files.
-  if (!LinkingOutput &&
-      Args.getLastArg(options::OPT_g_Group) &&
-      !Args.getLastArg(options::OPT_gstabs) &&
-      !Args.getLastArg(options::OPT_g0)) {
-    // FIXME: This is gross, but matches gcc. The test only considers
-    // the suffix (not the -x type), and then only of the first
-    // source input. Awesome.
-    const char *Suffix = strrchr(BaseInput, '.');
-    if (Suffix && isSourceSuffix(Suffix + 1)) {
-      const char *Exec =
-        Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil"));
-      ArgStringList CmdArgs;
-      CmdArgs.push_back(Output.getFilename());
-      C.getJobs().addCommand(new Command(JA, *this, Exec, CmdArgs));
     }
   }
 }
