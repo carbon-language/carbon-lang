@@ -764,7 +764,8 @@ unsigned PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setByRef(Record[Idx++]);
   E->setConstQualAdded(Record[Idx++]);
-  return 0;
+  E->setCopyConstructorExpr(cast_or_null<Expr>(StmtStack.back()));
+  return 1;
 }
 
 //===----------------------------------------------------------------------===//

@@ -3305,12 +3305,14 @@ class BlockDeclRefExpr : public Expr {
   SourceLocation Loc;
   bool IsByRef : 1;
   bool ConstQualAdded : 1;
+  Stmt *CopyConstructorVal;
 public:
   // FIXME: Fix type/value dependence!
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef,
-                   bool constAdded = false)
+                   bool constAdded = false,
+                   Stmt *copyConstructorVal = 0)
   : Expr(BlockDeclRefExprClass, t, false, false), D(d), Loc(l), IsByRef(ByRef),
-    ConstQualAdded(constAdded) {}
+    ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
 
   // \brief Build an empty reference to a declared variable in a
   // block.
@@ -3331,6 +3333,12 @@ public:
 
   bool isConstQualAdded() const { return ConstQualAdded; }
   void setConstQualAdded(bool C) { ConstQualAdded = C; }
+  
+  const Expr *getCopyConstructorExpr() const 
+    { return cast_or_null<Expr>(CopyConstructorVal); }
+  Expr *getCopyConstructorExpr() 
+    { return cast_or_null<Expr>(CopyConstructorVal); }
+  void setCopyConstructorExpr(Expr *E) { CopyConstructorVal = E; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BlockDeclRefExprClass;
