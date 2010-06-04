@@ -1234,6 +1234,7 @@ def err_template_param_different_kind : Error<
   "%select{|template parameter }0redeclaration">;
 def note_template_param_different_kind : Note<
   "template parameter has a different kind in template argument">;
+  
 def err_template_nontype_parm_different_type : Error<
   "template non-type parameter has a different type %0 in template "
   "%select{|template parameter }1redeclaration">;
@@ -1606,6 +1607,18 @@ def err_template_param_pack_default_arg : Error<
 def err_template_param_pack_must_be_last_template_parameter : Error<
   "template parameter pack must be the last template parameter">;
 
+def err_template_parameter_pack_non_pack : Error<
+  "template %select{type|non-type|template}0 parameter%select{| pack}1 "
+  "conflicts with previous template %select{type|non-type|template}0 "
+  "parameter%select{ pack|}1">;
+def note_template_parameter_pack_non_pack : Note<
+  "template %select{type|non-type|template}0 parameter%select{| pack}1 "
+  "does not match template %select{type|non-type|template}0 "
+  "parameter%select{ pack|}1 in template argument">;
+def note_template_parameter_pack_here : Note<
+  "previous template %select{type|non-type|template}0 "
+  "parameter%select{| pack}1 declared here">;
+  
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<

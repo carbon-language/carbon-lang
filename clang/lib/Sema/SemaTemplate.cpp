@@ -3237,9 +3237,32 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       return false;
     }
 
-    if (isa<TemplateTypeParmDecl>(*OldParm)) {
-      // Okay; all template type parameters are equivalent (since we
-      // know we're at the same index).
+    if (TemplateTypeParmDecl *OldTTP
+                                  = dyn_cast<TemplateTypeParmDecl>(*OldParm)) {
+      // Template type parameters are equivalent if either both are template
+      // type parameter packs or neither are (since we know we're at the same 
+      // index).
+      TemplateTypeParmDecl *NewTTP = cast<TemplateTypeParmDecl>(*NewParm);
+      if (OldTTP->isParameterPack() != NewTTP->isParameterPack()) {
+        // FIXME: Implement the rules in C++0x [temp.arg.template]p5 that
+        // allow one to match a template parameter pack in the template
+        // parameter list of a template template parameter to one or more
+        // template parameters in the template parameter list of the 
+        // corresponding template template argument.        
+        if (Complain) {
+          unsigned NextDiag = diag::err_template_parameter_pack_non_pack;
+          if (TemplateArgLoc.isValid()) {
+            Diag(TemplateArgLoc,
+                 diag::err_template_arg_template_params_mismatch);
+            NextDiag = diag::note_template_parameter_pack_non_pack;
+          }
+          Diag(NewTTP->getLocation(), NextDiag)
+            << 0 << NewTTP->isParameterPack();
+          Diag(OldTTP->getLocation(), diag::note_template_parameter_pack_here)
+            << 0 << OldTTP->isParameterPack();
+        }
+        return false;
+      }
     } else if (NonTypeTemplateParmDecl *OldNTTP
                  = dyn_cast<NonTypeTemplateParmDecl>(*OldParm)) {
       // The types of non-type template parameters must agree.
