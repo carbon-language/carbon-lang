@@ -100,7 +100,8 @@ static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   return ty[off];
 }
 
-static std::string TypeString(const char mod, StringRef typestr) {
+static std::string TypeString(const char mod, StringRef typestr,
+                              bool ret = false) {
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -234,7 +235,8 @@ static std::string TypeString(const char mod, StringRef typestr) {
   return s.str();
 }
 
-static std::string BuiltinTypeString(const char mod, StringRef typestr) {
+static std::string BuiltinTypeString(const char mod, StringRef typestr,
+                                     ClassKind ck, bool ret) {
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -309,21 +311,40 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr) {
     type = 's';
     usgn = true;
   }
-  usgn = usgn | poly;
+  usgn = usgn | poly | ((ck == ClassI || ck == ClassW) && scal && type != 'f');
 
   if (scal) {
     SmallString<128> s;
 
     if (usgn)
       s.push_back('U');
-    s.push_back(type);
+    
+    if (type == 'l')
+      s += "LLi";
+    else
+      s.push_back(type);
+ 
     if (cnst)
       s.push_back('C');
     if (pntr)
       s.push_back('*');
     return s.str();
   }
-  
+
+  // Since the return value must be one type, return a vector type of the
+  // appropriate width which we will bitcast.
+  if (ret) {
+    if (mod == '2')
+      return quad ? "V32c" : "V16c";
+    if (mod == '3')
+      return quad ? "V48c" : "V24c";
+    if (mod == '4')
+      return quad ? "V64c" : "V32c";
+
+    return quad ? "V16c" : "V8c";
+  }    
+
+  // Non-return array types are passed as individual vectors.
   if (mod == '2')
     return quad ? "V16cV16c" : "V8cV8c";
   if (mod == '3')
@@ -434,7 +455,7 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
 static std::string GenOpString(OpKind op, const std::string &proto,
                                StringRef typestr, bool structTypes = true) {
   std::string s("return ");
-  std::string ts = TypeString(proto[0], typestr);
+  std::string ts = TypeString(proto[0], typestr, true);
   if (structTypes)
     s += "(" + ts + "){";
   
@@ -518,13 +539,17 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               bool structTypes = true) {
   char arg = 'a';
   std::string s;
-  
+  //bool unioning = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+
   if (proto[0] != 'v') {
     // FIXME: if return type is 2/3/4, emit unioning code.
+    //if (unioning)
+    //  ;
+      
     s += "return ";
     if (structTypes) {
       s += "(";
-      s += TypeString(proto[0], typestr);
+      s += TypeString(proto[0], typestr, true);
       s += "){";
     }
   }    
@@ -565,7 +590,11 @@ static std::string GenBuiltinDef(const std::string &name,
   s += ", \"";
   
   for (unsigned i = 0, e = proto.size(); i != e; ++i)
-    s += BuiltinTypeString(proto[i], typestr);
+    s += BuiltinTypeString(proto[i], typestr, ck, i == 0);
+
+  // Extra constant integer to hold type class enum for this function, e.g. s8
+  if (ck == ClassB)
+    s += "i";
   
   s += "\", \"n\")";
   return s;
