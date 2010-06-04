@@ -7,7 +7,7 @@
 @Te1 = external global [256 x i32]		; <[256 x i32]*> [#uses=4]
 @Te3 = external global [256 x i32]		; <[256 x i32]*> [#uses=2]
 
-define void @t(i8* nocapture %in, i8* nocapture %out, i32* nocapture %rk, i32 %r) nounwind ssp {
+define void @t(i8* nocapture %in, i8* nocapture %out, i32* nocapture %rk, i32 %r) nounwind {
 entry:
 	%0 = load i32* %rk, align 4		; <i32> [#uses=1]
 	%1 = getelementptr i32* %rk, i64 1		; <i32*> [#uses=1]
