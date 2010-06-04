@@ -1462,11 +1462,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Optionally embed the -cc1 level arguments into the debug info, for build
   // analysis.
   if (getToolChain().UseDwarfDebugFlags()) {
+    ArgStringList OriginalArgs;
+    for (ArgList::const_iterator it = Args.begin(),
+           ie = Args.end(); it != ie; ++it)
+      (*it)->render(Args, OriginalArgs);
+    
     llvm::SmallString<256> Flags;
     Flags += Exec;
-    for (unsigned i = 0, e = CmdArgs.size(); i != e; ++i) {
+    for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
       Flags += " ";
-      Flags += CmdArgs[i];
+      Flags += OriginalArgs[i];
     }
     CmdArgs.push_back("-dwarf-debug-flags");
     CmdArgs.push_back(Args.MakeArgString(Flags.str()));

@@ -2,10 +2,8 @@
 // <rdar://problem/7256886>
 
 // CHECK: !1 = metadata !{
-// CHECK: -cc1
-// CHECK: -triple i386-apple-darwin9
-// CHECK: -g
-// CHECK: -Os
+// CHECK: -mmacosx-version-min=10.5.0
+// CHECK: -g -Os
 // CHECK: [ DW_TAG_compile_unit ]
 
 int x;
