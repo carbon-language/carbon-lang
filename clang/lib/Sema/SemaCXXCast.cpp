@@ -257,8 +257,13 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
 
   // Find the qualifications.
   while (UnwrapDissimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
-    cv1.push_back(UnwrappedSrcType.getQualifiers());
-    cv2.push_back(UnwrappedDestType.getQualifiers());
+    Qualifiers SrcQuals;
+    Self.Context.getUnqualifiedArrayType(UnwrappedSrcType, SrcQuals);
+    cv1.push_back(SrcQuals);
+    
+    Qualifiers DestQuals;
+    Self.Context.getUnqualifiedArrayType(UnwrappedDestType, DestQuals);
+    cv2.push_back(DestQuals);
   }
   assert(cv1.size() > 0 && "Must have at least one pointer level.");
 

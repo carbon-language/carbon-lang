@@ -91,8 +91,20 @@ void memptrs()
   (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int structure::*' is not allowed}}
 }
 
+namespace PR5545 {
 // PR5545
 class A;
 class B;
 void (A::*a)();
 void (B::*b)() = reinterpret_cast<void (B::*)()>(a);
+}
+
+// <rdar://problem/8018292>
+void const_arrays() {
+  typedef char STRING[10];
+  const STRING *s;
+  const char *c;
+
+  (void)reinterpret_cast<char *>(s); // expected-error {{reinterpret_cast from 'STRING const *' (aka 'char const (*)[10]') to 'char *' casts away constness}}
+  (void)reinterpret_cast<const STRING *>(c);
+}
