@@ -51,6 +51,7 @@ protected:
   unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
   unsigned char LongDoubleWidth, LongDoubleAlign;
+  unsigned char LargeArrayMinWidth, LargeArrayAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
   const char *DescriptionString;
@@ -193,6 +194,11 @@ public:
   const llvm::fltSemantics &getLongDoubleFormat() const {
     return *LongDoubleFormat;
   }
+
+  // getLargeArrayMinWidth/Align - Return the minimum array size that is
+  // 'large' and its alignment.
+  unsigned getLargeArrayMinWidth() const { return LargeArrayMinWidth; }
+  unsigned getLargeArrayAlign() const { return LargeArrayAlign; }
 
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.

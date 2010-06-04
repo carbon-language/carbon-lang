@@ -414,6 +414,15 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
         T = getPointerType(RT->getPointeeType());
     }
     if (!T->isIncompleteType() && !T->isFunctionType()) {
+      unsigned MinWidth = Target.getLargeArrayMinWidth();
+      unsigned ArrayAlign = Target.getLargeArrayAlign();
+      if (isa<VariableArrayType>(T) && MinWidth != 0)
+        Align = std::max(Align, ArrayAlign);
+      if (ConstantArrayType *CT = dyn_cast<ConstantArrayType>(T)) {
+        unsigned Size = getTypeSize(CT);
+        if (MinWidth != 0 && MinWidth <= Size)
+          Align = std::max(Align, ArrayAlign);
+      }
       // Incomplete or function types default to 1.
       while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
         T = cast<ArrayType>(T)->getElementType();

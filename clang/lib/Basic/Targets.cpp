@@ -1278,6 +1278,8 @@ public:
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
+    LargeArrayMinWidth = 128;
+    LargeArrayAlign = 128;
     IntMaxType = SignedLong;
     UIntMaxType = UnsignedLong;
     Int64Type = SignedLong;
