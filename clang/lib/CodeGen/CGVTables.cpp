@@ -150,6 +150,22 @@ private:
   static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
                                     SubobjectOffsetsMapTy &Offsets);
 
+  /// SubobjectsToOffsetsMapTy - A mapping from a base subobject (represented
+  /// as a record decl and a subobject number) and its offsets in the most
+  /// derived class as well as the layout class.
+  typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, unsigned>, 
+                         uint64_t> SubobjectOffsetMapTy;
+
+  typedef llvm::DenseMap<const CXXRecordDecl *, unsigned> SubobjectCountMapTy;
+  
+  /// ComputeBaseOffsets - Compute the offsets for all base subobjects of the
+  /// given base.
+  void ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
+                          uint64_t OffsetInLayoutClass,
+                          SubobjectOffsetMapTy &SubobjectOffsets,
+                          SubobjectOffsetMapTy &SubobjectLayoutClassOffsets,
+                          SubobjectCountMapTy &SubobjectCounts);
+
 public:
   FinalOverriders(const CXXRecordDecl *MostDerivedClass,
                   uint64_t MostDerivedClassOffset,
@@ -187,13 +203,59 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
   MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass),
   Context(MostDerivedClass->getASTContext()),
   MostDerivedClassLayout(Context.getASTRecordLayout(MostDerivedClass)) {
-    
+#if 0
   // Compute the final overriders.
   SubobjectOffsetsMapTy Offsets;
   ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0), 
                          /*BaseSubobjectIsVisitedVBase=*/false, 
                          MostDerivedClassOffset, Offsets);
   VisitedVirtualBases.clear();
+#endif
+  // Compute base offsets.
+  SubobjectOffsetMapTy SubobjectOffsets;
+  SubobjectOffsetMapTy SubobjectLayoutClassOffsets;
+  SubobjectCountMapTy SubobjectCounts;
+  ComputeBaseOffsets(BaseSubobject(MostDerivedClass, 0), /*IsVirtual=*/false,
+                     MostDerivedClassOffset, SubobjectOffsets, 
+                     SubobjectLayoutClassOffsets, SubobjectCounts);
+
+  // Get the the final overriders.
+  CXXFinalOverriderMap FinalOverriders;
+  MostDerivedClass->getFinalOverriders(FinalOverriders);
+
+  for (CXXFinalOverriderMap::const_iterator I = FinalOverriders.begin(),
+       E = FinalOverriders.end(); I != E; ++I) {
+    const CXXMethodDecl *MD = I->first;
+    const OverridingMethods& Methods = I->second;
+
+    for (OverridingMethods::const_iterator I = Methods.begin(),
+         E = Methods.end(); I != E; ++I) {
+      unsigned SubobjectNumber = I->first;
+      assert(SubobjectOffsets.count(std::make_pair(MD->getParent(), 
+                                                   SubobjectNumber)) &&
+             "Did not find subobject offset!");
+      
+      uint64_t BaseOffset = SubobjectOffsets[std::make_pair(MD->getParent(),
+                                                            SubobjectNumber)];
+
+      assert(I->second.size() == 1 && "Final overrider is not unique!");
+      const UniqueVirtualMethod &Method = I->second.front();
+
+      const CXXRecordDecl *OverriderRD = Method.Method->getParent();
+      assert(SubobjectLayoutClassOffsets.count(
+             std::make_pair(OverriderRD, Method.Subobject))
+             && "Did not find subobject offset!");
+      uint64_t OverriderOffset =
+        SubobjectLayoutClassOffsets[std::make_pair(OverriderRD, 
+                                                   Method.Subobject)];
+
+      OverriderInfo& Overrider = OverridersMap[std::make_pair(MD, BaseOffset)];
+      assert(!Overrider.Method && "Overrider should not exist yet!");
+      
+      Overrider.Offset = OverriderOffset;
+      Overrider.Method = Method.Method;
+    }
+  }
 
 #if DUMP_OVERRIDERS
   // And dump them (for now).
@@ -476,6 +538,62 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
 
   /// Finally, add the offset for our own subobject.
   Offsets[RD].insert(Base.getBaseOffset());
+}
+
+void 
+FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
+                              uint64_t OffsetInLayoutClass,
+                              SubobjectOffsetMapTy &SubobjectOffsets,
+                              SubobjectOffsetMapTy &SubobjectLayoutClassOffsets,
+                              SubobjectCountMapTy &SubobjectCounts) {
+  const CXXRecordDecl *RD = Base.getBase();
+  
+  unsigned SubobjectNumber = 0;
+  if (!IsVirtual)
+    SubobjectNumber = ++SubobjectCounts[RD];
+
+  // Set up the subobject to offset mapping.
+  assert(!SubobjectOffsets.count(std::make_pair(RD, SubobjectNumber))
+         && "Subobject offset already exists!");
+  assert(!SubobjectLayoutClassOffsets.count(std::make_pair(RD, SubobjectNumber)) 
+         && "Subobject offset already exists!");
+
+  SubobjectOffsets[std::make_pair(RD, SubobjectNumber)] =
+    Base.getBaseOffset();
+  SubobjectLayoutClassOffsets[std::make_pair(RD, SubobjectNumber)] =
+    OffsetInLayoutClass;
+  
+  // Traverse our bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t BaseOffset;
+    uint64_t BaseOffsetInLayoutClass;
+    if (I->isVirtual()) {
+      // Check if we've visited this virtual base before.
+      if (SubobjectOffsets.count(std::make_pair(BaseDecl, 0)))
+        continue;
+
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
+
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+      BaseOffsetInLayoutClass = 
+        LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+    } else {
+      const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+      uint64_t Offset = Layout.getBaseClassOffset(BaseDecl);
+    
+      BaseOffset = Base.getBaseOffset() + Offset;
+      BaseOffsetInLayoutClass = OffsetInLayoutClass + Offset;
+    }
+
+    ComputeBaseOffsets(BaseSubobject(BaseDecl, BaseOffset), I->isVirtual(),
+                       BaseOffsetInLayoutClass, SubobjectOffsets,
+                       SubobjectLayoutClassOffsets, SubobjectCounts);
+  }
 }
 
 void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
