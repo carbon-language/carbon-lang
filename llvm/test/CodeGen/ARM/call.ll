@@ -8,16 +8,16 @@
 declare void @g(i32, i32, i32, i32)
 
 define void @f() {
-; CHECKV4: mov lr, pc
-; CHECKV5: blx
 ; CHECKELF: PLT
         call void @g( i32 1, i32 2, i32 3, i32 4 )
         ret void
 }
 
 define void @g.upgrd.1() {
+; CHECKV4: mov lr, pc
+; CHECKV5: blx
         %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
-        %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
+        %tmp.upgrd.2 = call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
 }
 
