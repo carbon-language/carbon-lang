@@ -1103,6 +1103,13 @@ public:
                              NamedDecl *&OldDecl);
   bool IsOverload(FunctionDecl *New, FunctionDecl *Old);
 
+  bool TryImplicitConversion(InitializationSequence &Sequence,
+                             const InitializedEntity &Entity,
+                             Expr *From,
+                             bool SuppressUserConversions,
+                             bool AllowExplicit,
+                             bool InOverloadResolution);
+
   ImplicitConversionSequence
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions,

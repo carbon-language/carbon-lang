@@ -2576,15 +2576,17 @@ static void TryReferenceInitialization(Sema &S,
   //        from the initializer expression using the rules for a non-reference
   //        copy initialization (8.5). The reference is then bound to the 
   //        temporary. [...]
+
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
   bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct);
-  ImplicitConversionSequence ICS
-    = S.TryImplicitConversion(Initializer, cv1T1,
-                              /*SuppressUserConversions=*/false, AllowExplicit, 
-                              /*FIXME:InOverloadResolution=*/false);
-            
-  if (ICS.isBad()) {
+
+  InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(cv1T1);
+
+  if (S.TryImplicitConversion(Sequence, TempEntity, Initializer,
+                              /*SuppressUserConversions*/ false,
+                              AllowExplicit,
+                              /*FIXME:InOverloadResolution=*/false)) {
     // FIXME: Use the conversion function set stored in ICS to turn
     // this into an overloading ambiguity diagnostic. However, we need
     // to keep that set as an OverloadCandidateSet rather than as some
@@ -2609,8 +2611,6 @@ static void TryReferenceInitialization(Sema &S,
     return;
   }
 
-  // Perform the actual conversion.
-  Sequence.AddConversionSequenceStep(ICS, cv1T1);
   Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/true);
   return;
 }
@@ -2973,25 +2973,22 @@ static void TryUserDefinedConversion(Sema &S,
   }
 }
 
-/// \brief Attempt an implicit conversion (C++ [conv]) converting from one
-/// non-class type to another.
-static void TryImplicitConversion(Sema &S, 
-                                  const InitializedEntity &Entity,
-                                  const InitializationKind &Kind,
-                                  Expr *Initializer,
-                                  InitializationSequence &Sequence) {
+bool Sema::TryImplicitConversion(InitializationSequence &Sequence,
+                                 const InitializedEntity &Entity,
+                                 Expr *Initializer,
+                                 bool SuppressUserConversions,
+                                 bool AllowExplicitConversions,
+                                 bool InOverloadResolution) {
   ImplicitConversionSequence ICS
-    = S.TryImplicitConversion(Initializer, Entity.getType(),
-                              /*SuppressUserConversions=*/true, 
-                              /*AllowExplicit=*/false,
-                              /*InOverloadResolution=*/false);
-  
-  if (ICS.isBad()) {
-    Sequence.SetFailed(InitializationSequence::FK_ConversionFailed);
-    return;
-  }
-  
+    = TryImplicitConversion(Initializer, Entity.getType(),
+                            SuppressUserConversions,
+                            AllowExplicitConversions, 
+                            InOverloadResolution);
+  if (ICS.isBad()) return true;
+
+  // Perform the actual conversion.
   Sequence.AddConversionSequenceStep(ICS, Entity.getType());
+  return false;
 }
 
 InitializationSequence::InitializationSequence(Sema &S,
@@ -3125,8 +3122,13 @@ InitializationSequence::InitializationSequence(Sema &S,
   //      conversions (Clause 4) will be used, if necessary, to convert the
   //      initializer expression to the cv-unqualified version of the 
   //      destination type; no user-defined conversions are considered.
-  setSequenceKind(StandardConversion);
-  TryImplicitConversion(S, Entity, Kind, Initializer, *this);
+  if (S.TryImplicitConversion(*this, Entity, Initializer,
+                              /*SuppressUserConversions*/ true,
+                              /*AllowExplicitConversions*/ false,
+                              /*InOverloadResolution*/ false))
+    SetFailed(InitializationSequence::FK_ConversionFailed);
+  else
+    setSequenceKind(StandardConversion);
 }
 
 InitializationSequence::~InitializationSequence() {
