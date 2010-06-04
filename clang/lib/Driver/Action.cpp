@@ -30,6 +30,7 @@ const char *Action::getClassName(ActionClass AC) {
   case AssembleJobClass: return "assembler";
   case LinkJobClass: return "linker";
   case LipoJobClass: return "lipo";
+  case DsymutilJobClass: return "dsymutil";
   }
 
   assert(0 && "invalid class");
@@ -78,4 +79,8 @@ LinkJobAction::LinkJobAction(ActionList &Inputs, types::ID Type)
 
 LipoJobAction::LipoJobAction(ActionList &Inputs, types::ID Type)
   : JobAction(LipoJobClass, Inputs, Type) {
+}
+
+DsymutilJobAction::DsymutilJobAction(ActionList &Inputs, types::ID Type)
+  : JobAction(DsymutilJobClass, Inputs, Type) {
 }

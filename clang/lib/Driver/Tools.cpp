@@ -2603,6 +2603,26 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+void darwin::Dsymutil::ConstructJob(Compilation &C, const JobAction &JA,
+                                    Job &Dest, const InputInfo &Output,
+                                    const InputInfoList &Inputs,
+                                    const ArgList &Args,
+                                    const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
+  const InputInfo &Input = Inputs[0];
+  assert(Input.isFilename() && "Unexpected dsymutil input.");
+  CmdArgs.push_back(Input.getFilename());
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil"));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
 void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                       Job &Dest, const InputInfo &Output,
                                       const InputInfoList &Inputs,

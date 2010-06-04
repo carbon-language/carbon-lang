@@ -288,6 +288,23 @@ namespace darwin {
                               const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
+
+  class LLVM_LIBRARY_VISIBILITY Dsymutil : public DarwinTool  {
+  public:
+    Dsymutil(const ToolChain &TC) : DarwinTool("darwin::Dsymutil",
+                                               "dsymutil", TC) {}
+
+    virtual bool acceptsPipedInput() const { return false; }
+    virtual bool canPipeOutput() const { return false; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
 }
 
   /// openbsd -- Directly call GNU Binutils assembler and linker

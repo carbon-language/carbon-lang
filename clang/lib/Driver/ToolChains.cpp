@@ -225,6 +225,8 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
       T = new tools::darwin::Link(*this); break;
     case Action::LipoJobClass:
       T = new tools::darwin::Lipo(*this); break;
+    case Action::DsymutilJobClass:
+      T = new tools::darwin::Dsymutil(*this); break;
     }
   }
 
@@ -740,6 +742,8 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
       // driver is Darwin.
     case Action::LipoJobClass:
       T = new tools::darwin::Lipo(*this); break;
+    case Action::DsymutilJobClass:
+      T = new tools::darwin::Dsymutil(*this); break;
     }
   }
 

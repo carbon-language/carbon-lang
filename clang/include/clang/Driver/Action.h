@@ -51,9 +51,10 @@ public:
     AssembleJobClass,
     LinkJobClass,
     LipoJobClass,
+    DsymutilJobClass,
 
     JobClassFirst=PreprocessJobClass,
-    JobClassLast=LipoJobClass
+    JobClassLast=DsymutilJobClass
   };
 
   static const char *getClassName(ActionClass AC);
@@ -209,6 +210,16 @@ public:
     return A->getKind() == LipoJobClass;
   }
   static bool classof(const LipoJobAction *) { return true; }
+};
+
+class DsymutilJobAction : public JobAction {
+public:
+  DsymutilJobAction(ActionList &Inputs, types::ID Type);
+
+  static bool classof(const Action *A) {
+    return A->getKind() == DsymutilJobClass;
+  }
+  static bool classof(const DsymutilJobAction *) { return true; }
 };
 
 } // end namespace driver
