@@ -110,6 +110,11 @@ namespace {
     // Allocatable - vector of allocatable physical registers.
     BitVector Allocatable;
 
+    // SkippedInstrs - Descriptors of instructions whose clobber list was ignored
+    // because all registers were spilled. It is still necessary to mark all the
+    // clobbered registers as used by the function.
+    SmallPtrSet<const TargetInstrDesc*, 4> SkippedInstrs;
+
     // isBulkSpilling - This flag is set when LiveRegMap will be cleared
     // completely after spilling all live registers. LiveRegMap entries should
     // not be erased.
@@ -752,6 +757,10 @@ void RAFast::AllocateBasicBlock() {
       DefOpEnd = VirtOpEnd;
       DEBUG(dbgs() << "  Spilling remaining registers before call.\n");
       spillAll(MI);
+
+      // The imp-defs are skipped below, but we still need to mark those
+      // registers as used by the function.
+      SkippedInstrs.insert(&TID);
     }
 
     // Third scan.
@@ -837,6 +846,14 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   // Make sure the set of used physregs is closed under subreg operations.
   MRI->closePhysRegsUsed(*TRI);
 
+  // Add the clobber lists for all the instructions we skipped earlier.
+  for (SmallPtrSet<const TargetInstrDesc*, 4>::const_iterator
+       I = SkippedInstrs.begin(), E = SkippedInstrs.end(); I != E; ++I)
+    if (const unsigned *Defs = (*I)->getImplicitDefs())
+      while (*Defs)
+        MRI->setPhysRegUsed(*Defs++);
+
+  SkippedInstrs.clear();
   StackSlotForVirtReg.clear();
   return true;
 }
