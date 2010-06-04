@@ -256,17 +256,21 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 
   // Assigning to a variable?
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS->IgnoreParens())) {
-
-    // Update liveness inforamtion.
-    unsigned bit = AD.getIdx(DR->getDecl());
-    LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
-
-    if (AD.Observer) { AD.Observer->ObserverKill(DR); }
-
-    // Handle things like +=, etc., which also generate "uses"
-    // of a variable.  Do this just by visiting the subexpression.
-    if (B->getOpcode() != BinaryOperator::Assign)
+    // Assignments to references don't kill the ref's address
+    if (DR->getDecl()->getType()->isReferenceType()) {
       VisitDeclRefExpr(DR);
+    } else {
+      // Update liveness inforamtion.
+      unsigned bit = AD.getIdx(DR->getDecl());
+      LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
+
+      if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+
+      // Handle things like +=, etc., which also generate "uses"
+      // of a variable.  Do this just by visiting the subexpression.
+      if (B->getOpcode() != BinaryOperator::Assign)
+        VisitDeclRefExpr(DR);
+    }
   }
   else // Not assigning to a variable.  Process LHS as usual.
     Visit(LHS);
