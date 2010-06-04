@@ -5663,25 +5663,14 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     return Context.IntTy;
   }
 
+  // The following is safe because we only use this method for
+  // non-overloadable operands.
+
   // C++ [expr.log.and]p1
   // C++ [expr.log.or]p1
-  // The operands are both implicitly converted to type bool (clause 4).
-  StandardConversionSequence LHS;
-  if (!IsStandardConversion(lex, Context.BoolTy,
-                            /*InOverloadResolution=*/false, LHS))
-    return InvalidOperands(Loc, lex, rex);
-
-  if (PerformImplicitConversion(lex, Context.BoolTy, LHS,
-                                AA_Passing, /*IgnoreBaseAccess=*/false))
-    return InvalidOperands(Loc, lex, rex);
-
-  StandardConversionSequence RHS;
-  if (!IsStandardConversion(rex, Context.BoolTy,
-                            /*InOverloadResolution=*/false, RHS))
-    return InvalidOperands(Loc, lex, rex);
-
-  if (PerformImplicitConversion(rex, Context.BoolTy, RHS,
-                                AA_Passing, /*IgnoreBaseAccess=*/false))
+  // The operands are both contextually converted to type bool.
+  if (PerformContextuallyConvertToBool(lex) ||
+      PerformContextuallyConvertToBool(rex))
     return InvalidOperands(Loc, lex, rex);
 
   // C++ [expr.log.and]p2
