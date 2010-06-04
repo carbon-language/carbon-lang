@@ -3272,14 +3272,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Synthesize a parameter for each argument type.
     for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
          AE = FT->arg_type_end(); AI != AE; ++AI) {
-      ParmVarDecl *Param = ParmVarDecl::Create(Context, NewFD,
-                                               D.getIdentifierLoc(), 0,
-                                               *AI, 
-                                         Context.getTrivialTypeSourceInfo(*AI, 
-                                                          D.getIdentifierLoc()),
-                                               VarDecl::None,
-                                               VarDecl::None, 0);
-      Param->setImplicit();
+      ParmVarDecl *Param =
+        BuildParmVarDeclForTypedef(NewFD, D.getIdentifierLoc(), *AI);
       Params.push_back(Param);
     }
   } else {
@@ -4329,6 +4323,18 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
   }
   return DeclPtrTy::make(New);
+}
+
+/// \brief Synthesizes a variable for a parameter arising from a
+/// typedef.
+ParmVarDecl *Sema::BuildParmVarDeclForTypedef(DeclContext *DC,
+                                              SourceLocation Loc,
+                                              QualType T) {
+  ParmVarDecl *Param = ParmVarDecl::Create(Context, DC, Loc, 0,
+                                T, Context.getTrivialTypeSourceInfo(T, Loc),
+                                           VarDecl::None, VarDecl::None, 0);
+  Param->setImplicit();
+  return Param;
 }
 
 ParmVarDecl *Sema::CheckParameter(DeclContext *DC, 

@@ -841,6 +841,9 @@ public:
                                 bool &OverloadableAttrRequired);
   void CheckMain(FunctionDecl *FD);
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D);
+  ParmVarDecl *BuildParmVarDeclForTypedef(DeclContext *DC,
+                                          SourceLocation Loc,
+                                          QualType T);
   ParmVarDecl *CheckParameter(DeclContext *DC,
                               TypeSourceInfo *TSInfo, QualType T,
                               IdentifierInfo *Name,

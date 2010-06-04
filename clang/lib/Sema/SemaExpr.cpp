@@ -6976,62 +6976,47 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
   BlockScopeInfo *CurBlock = getCurBlock();
 
-  if (ParamInfo.getNumTypeObjects() == 0
-      || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
-    ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
-    QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
+  TypeSourceInfo *Sig = 0;
+  QualType T = GetTypeForDeclarator(ParamInfo, CurScope, &Sig);
+  CurBlock->TheDecl->setSignatureAsWritten(Sig);
 
-    if (T->isArrayType()) {
-      Diag(ParamInfo.getSourceRange().getBegin(),
-           diag::err_block_returns_array);
-      return;
-    }
-
-    // The parameter list is optional, if there was none, assume ().
-    if (!T->isFunctionType())
-      T = Context.getFunctionType(T, 0, 0, false, 0, false, false, 0, 0,
-                                  FunctionType::ExtInfo());
-
+  QualType RetTy;
+  if (const FunctionType *Fn = T->getAs<FunctionType>()) {
+    RetTy = Fn->getResultType();
+    CurBlock->hasPrototype = isa<FunctionProtoType>(Fn);
+    CurBlock->isVariadic =
+      !isa<FunctionProtoType>(Fn) || cast<FunctionProtoType>(Fn)->isVariadic();
+  } else {
+    RetTy = T;
     CurBlock->hasPrototype = true;
     CurBlock->isVariadic = false;
-    // Check for a valid sentinel attribute on this block.
-    if (CurBlock->TheDecl->getAttr<SentinelAttr>()) {
-      Diag(ParamInfo.getAttributes()->getLoc(),
-           diag::warn_attribute_sentinel_not_variadic) << 1;
-      // FIXME: remove the attribute.
-    }
-    QualType RetTy = T.getTypePtr()->getAs<FunctionType>()->getResultType();
+  }
 
-    // Do not allow returning a objc interface by-value.
-    if (RetTy->isObjCObjectType()) {
-      Diag(ParamInfo.getSourceRange().getBegin(),
-           diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
-      return;
-    }
+  CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
 
-    CurBlock->ReturnType = RetTy;
+  // Don't allow returning an array by value.
+  if (RetTy->isArrayType()) {
+    Diag(ParamInfo.getSourceRange().getBegin(), diag::err_block_returns_array);
     return;
   }
 
-  // Analyze arguments to block.
-  assert(ParamInfo.getTypeObject(0).Kind == DeclaratorChunk::Function &&
-         "Not a function declarator!");
-  DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getTypeObject(0).Fun;
+  // Don't allow returning a objc interface by value.
+  if (RetTy->isObjCObjectType()) {
+    Diag(ParamInfo.getSourceRange().getBegin(),
+         diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
+    return;
+  }
 
-  CurBlock->hasPrototype = FTI.hasPrototype;
-  CurBlock->isVariadic = true;
+  // Context.DependentTy is used as a placeholder for a missing block
+  // return type.
+  if (RetTy != Context.DependentTy)
+    CurBlock->ReturnType = RetTy;
 
-  // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
-  // no arguments, not a function that takes a single void argument.
-  if (FTI.hasPrototype &&
-      FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-     (!FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType().getCVRQualifiers()&&
-        FTI.ArgInfo[0].Param.getAs<ParmVarDecl>()->getType()->isVoidType())) {
-    // empty arg list, don't push any params.
-    CurBlock->isVariadic = false;
-  } else if (FTI.hasPrototype) {
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-      ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+  // Push block parameters from the declarator if we had them.
+  if (isa<FunctionProtoType>(T)) {
+    FunctionProtoTypeLoc TL = cast<FunctionProtoTypeLoc>(Sig->getTypeLoc());
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      ParmVarDecl *Param = TL.getArg(I);
       if (Param->getIdentifier() == 0 &&
           !Param->isImplicit() &&
           !Param->isInvalidDecl() &&
@@ -7039,12 +7024,38 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
         Diag(Param->getLocation(), diag::err_parameter_name_omitted);
       CurBlock->Params.push_back(Param);
     }
-    CurBlock->isVariadic = FTI.isVariadic;
+
+  // Fake up parameter variables if we have a typedef, like
+  //   ^ fntype { ... }
+  } else if (const FunctionProtoType *Fn = T->getAs<FunctionProtoType>()) {
+    for (FunctionProtoType::arg_type_iterator
+           I = Fn->arg_type_begin(), E = Fn->arg_type_end(); I != E; ++I) {
+      ParmVarDecl *Param =
+        BuildParmVarDeclForTypedef(CurBlock->TheDecl,
+                                   ParamInfo.getSourceRange().getBegin(),
+                                   *I);
+      CurBlock->Params.push_back(Param);
+    }
   }
-  CurBlock->TheDecl->setParams(CurBlock->Params.data(),
-                               CurBlock->Params.size());
-  CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
+
+  // Set the parmaeters on the block decl.
+  if (!CurBlock->Params.empty())
+    CurBlock->TheDecl->setParams(CurBlock->Params.data(),
+                                 CurBlock->Params.size());
+
+  // Finally we can process decl attributes.
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
+
+  if (!CurBlock->isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
+    Diag(ParamInfo.getAttributes()->getLoc(),
+         diag::warn_attribute_sentinel_not_variadic) << 1;
+    // FIXME: remove the attribute.
+  }
+
+  // Put the parameter variables in scope.  We can bail out immediately
+  // if we don't have any.
+  if (CurBlock->Params.empty())
+    return;
 
   bool ShouldCheckShadow =
     Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
@@ -7061,25 +7072,6 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
       PushOnScopeChains(*AI, CurBlock->TheScope);
     }
   }
-
-  // Check for a valid sentinel attribute on this block.
-  if (!CurBlock->isVariadic &&
-      CurBlock->TheDecl->getAttr<SentinelAttr>()) {
-    Diag(ParamInfo.getAttributes()->getLoc(),
-         diag::warn_attribute_sentinel_not_variadic) << 1;
-    // FIXME: remove the attribute.
-  }
-
-  // Analyze the return type.
-  QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
-  QualType RetTy = T->getAs<FunctionType>()->getResultType();
-
-  // Do not allow returning a objc interface by-value.
-  if (RetTy->isObjCObjectType()) {
-    Diag(ParamInfo.getSourceRange().getBegin(),
-         diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
-  } else if (!RetTy->isDependentType())
-    CurBlock->ReturnType = RetTy;
 }
 
 /// ActOnBlockError - If there is an error parsing a block, this callback

@@ -471,6 +471,7 @@ void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
 void PCHDeclWriter::VisitBlockDecl(BlockDecl *D) {
   VisitDecl(D);
   Writer.AddStmt(D->getBody());
+  Writer.AddTypeSourceInfo(D->getSignatureAsWritten(), Record);
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)

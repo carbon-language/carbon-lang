@@ -2127,11 +2127,13 @@ class BlockDecl : public Decl, public DeclContext {
   unsigned NumParams;
 
   Stmt *Body;
+  TypeSourceInfo *SignatureAsWritten;
 
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
-      IsVariadic(false), ParamInfo(0), NumParams(0), Body(0) {}
+      IsVariadic(false), ParamInfo(0), NumParams(0), Body(0),
+      SignatureAsWritten(0) {}
 
   virtual ~BlockDecl();
   virtual void Destroy(ASTContext& C);
@@ -2147,6 +2149,9 @@ public:
   CompoundStmt *getCompoundBody() const { return (CompoundStmt*) Body; }
   Stmt *getBody() const { return (Stmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
+
+  void setSignatureAsWritten(TypeSourceInfo *Sig) { SignatureAsWritten = Sig; }
+  TypeSourceInfo *getSignatureAsWritten() const { return SignatureAsWritten; }
 
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }

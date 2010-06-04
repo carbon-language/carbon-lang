@@ -462,6 +462,7 @@ void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   VisitDecl(BD);
   BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadDeclStmt()));
+  BD->setSignatureAsWritten(Reader.GetTypeSourceInfo(Record, Idx));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
