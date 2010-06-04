@@ -171,6 +171,9 @@ static std::string TypeString(const char mod, StringRef typestr,
   
   SmallString<128> s;
   
+  if (ret)
+    s += "__neon_";
+  
   if (usgn)
     s.push_back('u');
   
@@ -455,7 +458,7 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
 static std::string GenOpString(OpKind op, const std::string &proto,
                                StringRef typestr, bool structTypes = true) {
   std::string s("return ");
-  std::string ts = TypeString(proto[0], typestr, true);
+  std::string ts = TypeString(proto[0], typestr);
   if (structTypes)
     s += "(" + ts + "){";
   
@@ -539,19 +542,30 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               bool structTypes = true) {
   char arg = 'a';
   std::string s;
-  //bool unioning = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+
+  bool unioning = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+
+  // If all types are the same size, bitcasting the args will take care 
+  // of arg checking.  The actual signedness etc. will be taken care of with
+  // special enums.
+  if (proto.find('s') == std::string::npos)
+    ck = ClassB;
 
   if (proto[0] != 'v') {
-    // FIXME: if return type is 2/3/4, emit unioning code.
-    //if (unioning)
-    //  ;
-      
-    s += "return ";
-    if (structTypes) {
-      s += "(";
-      s += TypeString(proto[0], typestr, true);
-      s += "){";
+    if (unioning) {
+      s += "union { ";
+      s += TypeString(proto[0], typestr, true) + " val; ";
+      s += TypeString(proto[0], typestr, false) + " s; ";
+      s += "} r;";
+    } else {
+      s += TypeString(proto[0], typestr);
     }
+    
+    s += " r; r";
+    if (structTypes && proto[0] != 's' && proto[0] != 'i' && proto[0] != 'l')
+      s += ".val";
+    
+    s += " = ";
   }    
   
   s += "__builtin_neon_";
@@ -559,7 +573,23 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
+    // Handle multiple-vector values specially, emitting each subvector as an
+    // argument to the __builtin.
+    if (structTypes && (proto[i] == '2' || proto[i] == '3' || proto[i] == '4')){
+      for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
+        s.push_back(arg);
+        s += ".val[" + utostr(vi) + "]";
+        if ((vi + 1) < ve)
+          s += ", ";
+      }
+      if ((i + 1) < e)
+        s += ", ";
+
+      continue;
+    }
+    
     s.push_back(arg);
+    
     if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
         proto[i] != 'p' && proto[i] != 'c') {
       s += ".val";
@@ -568,10 +598,19 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       s += ", ";
   }
   
-  s += ")";
-  if (proto[0] != 'v' && structTypes)
-    s += "}";
-  s += ";";
+  // Extra constant integer to hold type class enum for this function, e.g. s8
+  // FIXME: emit actual type num.
+  if (ck == ClassB)
+    s += ", 0";
+  
+  s += ");";
+
+  if (proto[0] != 'v') {
+    if (unioning)
+      s += " return r.s;";
+    else
+      s += " return r;";
+  }
   return s;
 }
 
@@ -621,21 +660,29 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "typedef uint8_t poly8_t;\n";
   OS << "typedef uint16_t poly16_t;\n";
   OS << "typedef uint16_t float16_t;\n";
-  
+
   // Emit Neon vector typedefs.
   std::string TypedefTypes("cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfPcQPcPsQPs");
   SmallVector<StringRef, 24> TDTypeVec;
   ParseTypes(0, TypedefTypes, TDTypeVec);
 
   // Emit vector typedefs.
-  for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
-    bool dummy, quad = false;
-    (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
-    OS << "typedef __attribute__(( __vector_size__(";
-    OS << (quad ? "16) )) " : "8) ))  ");
-    OS << TypeString('s', TDTypeVec[i]);
-    OS << " __neon_";
-    OS << TypeString('d', TDTypeVec[i]) << ";\n";
+  for (unsigned v = 1; v != 5; ++v) {
+    for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
+      bool dummy, quad = false;
+      (void) ClassifyType(TDTypeVec[i], quad, dummy, dummy);
+      OS << "typedef __attribute__(( __vector_size__(";
+      
+      OS << utostr(8*v*(quad ? 2 : 1)) << ") )) ";
+      if (!quad)
+        OS << " ";
+      
+      OS << TypeString('s', TDTypeVec[i]);
+      OS << " __neon_";
+      
+      char t = (v == 1) ? 'd' : '0' + v;
+      OS << TypeString(t, TDTypeVec[i]) << ";\n";
+    }
   }
   OS << "\n";
 
