@@ -210,12 +210,11 @@ def VST4_LANE : WInst<"vp4i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.16 Extract lanes from a vector
-// FIXME: need to test sign/zero-extractness
-def VGET_LANE : WInst<"sdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VGET_LANE : IInst<"sdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.17 Set lanes within a vector
-def VSET_LANE : WInst<"dsdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VSET_LANE : IInst<"dsdi", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.18 Initialize a vector from bit pattern
@@ -223,8 +222,8 @@ def VCREATE: Inst<"dl", "csihfUcUsUiUlPcPsl", OP_CAST>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.19 Set all lanes to same value
-def VDUP_N : WInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
-def VMOV_N : WInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VDUP_N : IInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VMOV_N : IInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors
