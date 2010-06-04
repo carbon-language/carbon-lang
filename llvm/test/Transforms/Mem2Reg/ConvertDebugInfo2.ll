@@ -1,4 +1,4 @@
-; RUN: opt -mem2reg < %s | llvm-dis | grep ".dbg " | count 6
+; RUN: opt -mem2reg < %s | llvm-dis | grep ".dbg " | count 7
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 

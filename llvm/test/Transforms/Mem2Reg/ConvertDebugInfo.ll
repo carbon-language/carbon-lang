@@ -9,7 +9,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.declare(metadata !{i32* %i_addr}, metadata !0), !dbg !8
 ; CHECK: call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !0)
-; CHECK: call void @llvm.dbg.value(metadata !{double %j}, i64 0, metadata !8)
+; CHECK: call void @llvm.dbg.value(metadata !{double %j}, i64 0, metadata !9)
   store i32 %i, i32* %i_addr
   call void @llvm.dbg.declare(metadata !{double* %j_addr}, metadata !9), !dbg !8
   store double %j, double* %j_addr
