@@ -1746,8 +1746,28 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     // Variable will be bound by-copy, make it const within the closure.
 
     ExprTy.addConst();
-    return Owned(new (Context) BlockDeclRefExpr(VD, ExprTy, Loc, false,
-                                                constAdded));
+    BlockDeclRefExpr *BDRE = new (Context) BlockDeclRefExpr(VD, 
+                                                            ExprTy, Loc, false,
+                                                            constAdded);
+    QualType T = VD->getType();
+    if (getLangOptions().CPlusPlus && !T->isDependentType() &&
+        !T->isReferenceType()) {
+      Expr *E = new (Context) 
+                  DeclRefExpr(const_cast<ValueDecl*>(BDRE->getDecl()), T,
+                                         SourceLocation());
+      
+      OwningExprResult Res = PerformCopyInitialization(
+                      InitializedEntity::InitializeResult(SourceLocation(), 
+                                                          T, false),
+                      SourceLocation(),
+                      Owned(E));
+      if (!Res.isInvalid()) {
+        Expr *Init = Res.takeAs<Expr>();
+        if (isa<CXXConstructExpr>(Init))
+          BDRE->setCopyConstructorExpr(Init);
+      }
+    }
+    return Owned(BDRE);
   }
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.

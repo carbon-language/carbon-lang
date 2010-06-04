@@ -361,33 +361,21 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           Builder.CreateStore(Loc, Addr);
           continue;
         } else {
-          E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
+            if (BDRE->getCopyConstructorExpr())
+              E = BDRE->getCopyConstructorExpr();
+            else {
+              E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
                                             VD->getType().getNonReferenceType(),
                                             SourceLocation());
-          if (getContext().getLangOptions().CPlusPlus) {
-            if (VD->getType()->isReferenceType()) {
-              E = new (getContext())
-                UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
-                              getContext().getPointerType(E->getType()),
-                              SourceLocation());
-            } 
-            else {
-              QualType T = E->getType();
-              if (const RecordType *RT = T->getAs<RecordType>()) {
-                CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
-                if (!Record->hasTrivialCopyConstructor()) {
-                  CXXConstructorDecl *D = Record->getCopyConstructor(getContext(),
-                                                                     0);
-                  Expr *Arg = const_cast<Expr*>(E);
-                  E = CXXConstructExpr::Create(getContext(), T, D->getLocation(), 
-                                               D, false, &Arg, 1, false,
-                                               CXXConstructExpr::CK_Complete);
-                }
-              }
+              if (VD->getType()->isReferenceType()) {
+                E = new (getContext())
+                    UnaryOperator(const_cast<Expr*>(E), UnaryOperator::AddrOf,
+                                getContext().getPointerType(E->getType()),
+                                SourceLocation());
+              } 
             }
           }
         }
-      }
 
       if (BDRE->isByRef()) {
         E = new (getContext())

@@ -2,7 +2,7 @@
 
 struct TestObject
 {
-	TestObject(const TestObject& inObj);
+	TestObject(const TestObject& inObj, int def = 100);
 	TestObject();
 	TestObject& operator=(const TestObject& inObj);
 	int version() const;
@@ -14,5 +14,5 @@ void testRoutine() {
     int (^V)() = ^{ return one.version(); };
 }
 
-// CHECK: call void @_ZN10TestObjectC1ERKS_
+// CHECK: call void @_ZN10TestObjectC1ERKS_i
 
