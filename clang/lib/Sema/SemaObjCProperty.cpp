@@ -41,7 +41,8 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                     !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
 
-  QualType T = GetTypeForDeclarator(FD.D, S);
+  TypeSourceInfo *TSI = 0;
+  QualType T = GetTypeForDeclarator(FD.D, S, &TSI);
   if (T->isReferenceType()) {
     Diag(AtLoc, diag::error_reference_property);
     return DeclPtrTy();
@@ -56,13 +57,13 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                             FD, GetterSel, SetterSel,
                                             isAssign, isReadWrite,
                                             Attributes,
-                                            isOverridingProperty, T,
+                                            isOverridingProperty, TSI,
                                             MethodImplKind);
 
   DeclPtrTy Res =  DeclPtrTy::make(CreatePropertyDecl(S, ClassDecl, AtLoc, FD,
                                             GetterSel, SetterSel,
                                             isAssign, isReadWrite,
-                                            Attributes, T, MethodImplKind));
+                                            Attributes, TSI, MethodImplKind));
   // Validate the attributes on the @property.
   CheckObjCPropertyAttributes(Res, AtLoc, Attributes);
   return Res;
@@ -76,7 +77,7 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
                                      const bool isReadWrite,
                                      const unsigned Attributes,
                                      bool *isOverridingProperty,
-                                     QualType T,
+                                     TypeSourceInfo *T,
                                      tok::ObjCKeywordKind MethodImplKind) {
 
   // Diagnose if this property is already in continuation class.
@@ -190,11 +191,11 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
                                            const bool isAssign,
                                            const bool isReadWrite,
                                            const unsigned Attributes,
-                                           QualType T,
+                                           TypeSourceInfo *TInfo,
                                            tok::ObjCKeywordKind MethodImplKind,
                                            DeclContext *lexicalDC){
-
   IdentifierInfo *PropertyId = FD.D.getIdentifier();
+  QualType T = TInfo->getType();
 
   // Issue a warning if property is 'assign' as default and its object, which is
   // gc'able conforms to NSCopying protocol
@@ -215,7 +216,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   DeclContext *DC = cast<DeclContext>(CDecl);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
                                                      FD.D.getIdentifierLoc(),
-                                                     PropertyId, AtLoc, T);
+                                                     PropertyId, AtLoc, TInfo);
 
   if (ObjCPropertyDecl *prevDecl =
         ObjCPropertyDecl::findPropertyDecl(DC, PropertyId)) {

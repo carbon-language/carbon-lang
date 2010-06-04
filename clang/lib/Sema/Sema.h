@@ -1598,7 +1598,7 @@ public:
                                            const bool isReadWrite,
                                            const unsigned Attributes,
                                            bool *isOverridingProperty,
-                                           QualType T,
+                                           TypeSourceInfo *T,
                                            tok::ObjCKeywordKind MethodImplKind);
 
   /// Called by ActOnProperty and HandlePropertyInClassExtension to
@@ -1611,7 +1611,8 @@ public:
                                        Selector SetterSel,
                                        const bool isAssign,
                                        const bool isReadWrite,
-                                       const unsigned Attributes, QualType T,
+                                       const unsigned Attributes,
+                                       TypeSourceInfo *T,
                                        tok::ObjCKeywordKind MethodImplKind,
                                        DeclContext *lexicalDC = 0);
 

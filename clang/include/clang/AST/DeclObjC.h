@@ -1306,7 +1306,7 @@ public:
   enum PropertyControl { None, Required, Optional };
 private:
   SourceLocation AtLoc;   // location of @property
-  QualType DeclType;
+  TypeSourceInfo *DeclType;
   unsigned PropertyAttributes : 8;
 
   // @required/@optional
@@ -1320,7 +1320,7 @@ private:
   ObjCIvarDecl *PropertyIvarDecl;   // Synthesize ivar for this property
 
   ObjCPropertyDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-                   SourceLocation AtLocation, QualType T)
+                   SourceLocation AtLocation, TypeSourceInfo *T)
     : NamedDecl(ObjCProperty, DC, L, Id), AtLoc(AtLocation), DeclType(T),
       PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
       GetterName(Selector()),
@@ -1330,13 +1330,14 @@ public:
   static ObjCPropertyDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation L,
                                   IdentifierInfo *Id, SourceLocation AtLocation,
-                                  QualType T,
+                                  TypeSourceInfo *T,
                                   PropertyControl propControl = None);
   SourceLocation getAtLoc() const { return AtLoc; }
   void setAtLoc(SourceLocation L) { AtLoc = L; }
   
-  QualType getType() const { return DeclType; }
-  void setType(QualType T) { DeclType = T; }
+  TypeSourceInfo *getTypeSourceInfo() const { return DeclType; }
+  QualType getType() const { return DeclType->getType(); }
+  void setType(TypeSourceInfo *T) { DeclType = T; }
 
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);

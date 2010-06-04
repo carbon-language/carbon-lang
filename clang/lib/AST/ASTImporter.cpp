@@ -2601,8 +2601,8 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   }
 
   // Import the type.
-  QualType T = Importer.Import(D->getType());
-  if (T.isNull())
+  TypeSourceInfo *T = Importer.Import(D->getTypeSourceInfo());
+  if (!T)
     return 0;
 
   // Create the new property.
