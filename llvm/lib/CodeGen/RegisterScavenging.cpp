@@ -258,6 +258,10 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator StartMI,
 
   bool inVirtLiveRange = false;
   for (++MI; InstrLimit > 0 && MI != ME; ++MI, --InstrLimit) {
+    if (MI->isDebugValue()) {
+      ++InstrLimit; // Don't count debug instructions
+      continue;
+    }
     bool isVirtKillInsn = false;
     bool isVirtDefInsn = false;
     // Remove any candidates touched by instruction.
