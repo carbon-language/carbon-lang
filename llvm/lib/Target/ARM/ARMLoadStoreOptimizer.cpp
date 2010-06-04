@@ -1024,6 +1024,10 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   RS->enterBasicBlock(&MBB);
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
+    if (MBBI->isDebugValue()) {
+      ++MBBI;
+      continue;
+    }
     if (FixInvalidRegPairOp(MBB, MBBI))
       continue;
 
