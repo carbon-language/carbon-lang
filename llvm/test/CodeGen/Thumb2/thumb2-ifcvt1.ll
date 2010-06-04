@@ -76,7 +76,7 @@ entry:
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:		; preds = %entry
-	tail call void @foo( i32 %b )
+	call void @foo( i32 %b )
 	ret void
 
 UnifiedReturnBlock:		; preds = %entry
