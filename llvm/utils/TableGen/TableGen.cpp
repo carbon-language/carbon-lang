@@ -66,6 +66,7 @@ enum ActionType {
   GenLLVMCConf,
   GenEDHeader, GenEDInfo,
   GenNeonHeader,
+  GenNeonBuiltinsDef,
   PrintEnums
 };
 
@@ -126,6 +127,8 @@ namespace {
                                "Generate enhanced disassembly info"),
                     clEnumValN(GenNeonHeader, "gen-arm-neon-header",
                                "Generate arm_neon.h for clang"),
+                    clEnumValN(GenNeonBuiltinsDef, "gen-arm-neon-builtins-def",
+                               "Generate NEON BuiltinsARM.def for clang"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValEnd));
@@ -293,6 +296,9 @@ int main(int argc, char **argv) {
       break;
     case GenNeonHeader:
       NeonEmitter(Records).run(Out);
+      break;
+    case GenNeonBuiltinsDef:
+      NeonEmitter(Records).runHeader(Out);
       break;
     case PrintEnums:
     {

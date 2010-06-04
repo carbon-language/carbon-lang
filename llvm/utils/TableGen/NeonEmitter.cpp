@@ -14,45 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "NeonEmitter.h"
-#include "Record.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringMap.h"
 #include <string>
 
 using namespace llvm;
-
-enum OpKind {
-  OpNone,
-  OpAdd,
-  OpSub,
-  OpMul,
-  OpMla,
-  OpMls,
-  OpEq,
-  OpGe,
-  OpLe,
-  OpGt,
-  OpLt,
-  OpNeg,
-  OpNot,
-  OpAnd,
-  OpOr,
-  OpXor,
-  OpAndNot,
-  OpOrNot,
-  OpCast
-};
-
-enum ClassKind {
-  ClassNone,
-  ClassI,
-  ClassS,
-  ClassW,
-  ClassB
-};
 
 static void ParseTypes(Record *r, std::string &s,
                        SmallVectorImpl<StringRef> &TV) {
@@ -483,6 +450,20 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   return s;
 }
 
+static std::string GenBuiltinDef(const std::string &name, 
+                                 const std::string &proto,
+                                 StringRef typestr, ClassKind ck) {
+  std::string s("BUILTIN(__builtin_neon_");
+  s += MangleName(name, typestr, ck);
+  s += ", \"";
+  
+  for (unsigned i = 0, e = proto.size(); i != e; ++i) {
+  }
+  
+  s += "\", \"n\")";
+  return s;
+}
+
 void NeonEmitter::run(raw_ostream &OS) {
   EmitSourceFileHeader("ARM NEON Header", OS);
   
@@ -539,37 +520,6 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
   
-  StringMap<OpKind> OpMap;
-  OpMap["OP_NONE"] = OpNone;
-  OpMap["OP_ADD"]  = OpAdd;
-  OpMap["OP_SUB"]  = OpSub;
-  OpMap["OP_MUL"]  = OpMul;
-  OpMap["OP_MLA"]  = OpMla;
-  OpMap["OP_MLS"]  = OpMls;
-  OpMap["OP_EQ"]   = OpEq;
-  OpMap["OP_GE"]   = OpGe;
-  OpMap["OP_LE"]   = OpLe;
-  OpMap["OP_GT"]   = OpGt;
-  OpMap["OP_LT"]   = OpLt;
-  OpMap["OP_NEG"]  = OpNeg;
-  OpMap["OP_NOT"]  = OpNot;
-  OpMap["OP_AND"]  = OpAnd;
-  OpMap["OP_OR"]   = OpOr;
-  OpMap["OP_XOR"]  = OpXor;
-  OpMap["OP_ANDN"] = OpAndNot;
-  OpMap["OP_ORN"]  = OpOrNot;
-  OpMap["OP_CAST"] = OpCast;
-  
-  DenseMap<Record*, ClassKind> ClassMap;
-  Record *SI = Records.getClass("SInst");
-  Record *II = Records.getClass("IInst");
-  Record *WI = Records.getClass("WInst");
-  Record *BI = Records.getClass("BInst");
-  ClassMap[SI] = ClassS;
-  ClassMap[II] = ClassI;
-  ClassMap[WI] = ClassW;
-  ClassMap[BI] = ClassB;
-  
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
@@ -614,14 +564,41 @@ void NeonEmitter::run(raw_ostream &OS) {
     }
     OS << "\n";
   }
-
-  // TODO: 
-  // Unique the return+pattern types, and assign them to each record
-  // Emit a #define for each unique "type" of intrinsic declaring all variants.
-  // Emit a #define for each intrinsic mapping it to a particular type.
-  
+  OS << "#undef __ai\n\n";
   OS << "#endif /* __ARM_NEON_H */\n";
 }
 
 void NeonEmitter::runHeader(raw_ostream &OS) {
+  std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
+
+  StringMap<OpKind> EmittedMap;
+  
+  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
+    Record *R = RV[i];
+
+    OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
+    if (k != OpNone)
+      continue;
+    
+    std::string name = LowercaseString(R->getName());
+    std::string Proto = R->getValueAsString("Prototype");
+    std::string Types = R->getValueAsString("Types");
+
+    SmallVector<StringRef, 16> TypeVec;
+    ParseTypes(R, Types, TypeVec);
+
+    if (R->getSuperClasses().size() < 2)
+      throw TGError(R->getLoc(), "Builtin has no class kind");
+    
+    ClassKind ck = ClassMap[R->getSuperClasses()[1]];
+    
+    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+      std::string bd = GenBuiltinDef(name, Proto, TypeVec[ti], ck);
+      if (EmittedMap.count(bd))
+        continue;
+      
+      EmittedMap[bd] = OpNone;
+      OS << bd << "\n";
+    }
+  }
 }
