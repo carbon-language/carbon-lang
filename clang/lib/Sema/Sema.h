@@ -155,9 +155,6 @@ struct FunctionScopeInfo {
 
 /// \brief Retains information about a block that is currently being parsed.
 struct BlockScopeInfo : FunctionScopeInfo {
-  llvm::SmallVector<ParmVarDecl*, 8> Params;
-  bool hasPrototype;
-  bool isVariadic;
   bool hasBlockDeclRefExprs;
 
   BlockDecl *TheDecl;
@@ -166,13 +163,17 @@ struct BlockScopeInfo : FunctionScopeInfo {
   /// arguments etc.
   Scope *TheScope;
 
-  /// ReturnType - This will get set to block result type, by looking at
-  /// return types, if any, in the block body.
+  /// ReturnType - The return type of the block, or null if the block
+  /// signature didn't provide an explicit return type.
   QualType ReturnType;
 
+  /// BlockType - The function type of the block, if one was given.
+  /// Its return type may be BuiltinType::Dependent.
+  QualType FunctionType;
+
   BlockScopeInfo(unsigned NumErrors, Scope *BlockScope, BlockDecl *Block)
-    : FunctionScopeInfo(NumErrors), hasPrototype(false), isVariadic(false),
-      hasBlockDeclRefExprs(false), TheDecl(Block), TheScope(BlockScope)
+    : FunctionScopeInfo(NumErrors), hasBlockDeclRefExprs(false),
+      TheDecl(Block), TheScope(BlockScope)
   {
     IsBlockInfo = true;
   }

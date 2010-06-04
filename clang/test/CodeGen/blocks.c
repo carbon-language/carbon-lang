@@ -27,3 +27,9 @@ void (^test1)(void) = ^(void) {
   ^ { i = 1; }();
 };
 
+typedef double ftype(double);
+// It's not clear that we *should* support this syntax, but until that decision
+// is made, we should support it properly and not crash.
+ftype ^test2 = ^ftype {
+  return 0;
+};

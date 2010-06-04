@@ -511,7 +511,7 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   BlockScopeInfo *CurBlock = getCurBlock();
   bool isVariadic;
   if (CurBlock)
-    isVariadic = CurBlock->isVariadic;
+    isVariadic = CurBlock->TheDecl->isVariadic();
   else if (FunctionDecl *FD = getCurFunctionDecl())
     isVariadic = FD->isVariadic();
   else

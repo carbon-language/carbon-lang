@@ -3147,7 +3147,7 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
   QualType BlockTy =
       Expr->getType()->getAs<BlockPointerType>()->getPointeeType();
   // Encode result type.
-  getObjCEncodingForType(cast<FunctionType>(BlockTy)->getResultType(), S);
+  getObjCEncodingForType(BlockTy->getAs<FunctionType>()->getResultType(), S);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!

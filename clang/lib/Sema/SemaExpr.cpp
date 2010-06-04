@@ -6980,19 +6980,19 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   QualType T = GetTypeForDeclarator(ParamInfo, CurScope, &Sig);
   CurBlock->TheDecl->setSignatureAsWritten(Sig);
 
+  bool isVariadic;
   QualType RetTy;
   if (const FunctionType *Fn = T->getAs<FunctionType>()) {
+    CurBlock->FunctionType = T;
     RetTy = Fn->getResultType();
-    CurBlock->hasPrototype = isa<FunctionProtoType>(Fn);
-    CurBlock->isVariadic =
+    isVariadic =
       !isa<FunctionProtoType>(Fn) || cast<FunctionProtoType>(Fn)->isVariadic();
   } else {
     RetTy = T;
-    CurBlock->hasPrototype = true;
-    CurBlock->isVariadic = false;
+    isVariadic = false;
   }
 
-  CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
+  CurBlock->TheDecl->setIsVariadic(isVariadic);
 
   // Don't allow returning an array by value.
   if (RetTy->isArrayType()) {
@@ -7008,11 +7008,14 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   }
 
   // Context.DependentTy is used as a placeholder for a missing block
-  // return type.
+  // return type.  TODO:  what should we do with declarators like:
+  //   ^ * { ... }
+  // If the answer is "apply template argument deduction"....
   if (RetTy != Context.DependentTy)
     CurBlock->ReturnType = RetTy;
 
   // Push block parameters from the declarator if we had them.
+  llvm::SmallVector<ParmVarDecl*, 8> Params;
   if (isa<FunctionProtoType>(T)) {
     FunctionProtoTypeLoc TL = cast<FunctionProtoTypeLoc>(Sig->getTypeLoc());
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
@@ -7022,7 +7025,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
           !Param->isInvalidDecl() &&
           !getLangOptions().CPlusPlus)
         Diag(Param->getLocation(), diag::err_parameter_name_omitted);
-      CurBlock->Params.push_back(Param);
+      Params.push_back(Param);
     }
 
   // Fake up parameter variables if we have a typedef, like
@@ -7034,19 +7037,18 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
         BuildParmVarDeclForTypedef(CurBlock->TheDecl,
                                    ParamInfo.getSourceRange().getBegin(),
                                    *I);
-      CurBlock->Params.push_back(Param);
+      Params.push_back(Param);
     }
   }
 
-  // Set the parmaeters on the block decl.
-  if (!CurBlock->Params.empty())
-    CurBlock->TheDecl->setParams(CurBlock->Params.data(),
-                                 CurBlock->Params.size());
+  // Set the parameters on the block decl.
+  if (!Params.empty())
+    CurBlock->TheDecl->setParams(Params.data(), Params.size());
 
   // Finally we can process decl attributes.
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
 
-  if (!CurBlock->isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
+  if (!isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
     Diag(ParamInfo.getAttributes()->getLoc(),
          diag::warn_attribute_sentinel_not_variadic) << 1;
     // FIXME: remove the attribute.
@@ -7054,7 +7056,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Put the parameter variables in scope.  We can bail out immediately
   // if we don't have any.
-  if (CurBlock->Params.empty())
+  if (Params.empty())
     return;
 
   bool ShouldCheckShadow =
@@ -7099,22 +7101,52 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (!BSI->ReturnType.isNull())
     RetTy = BSI->ReturnType;
 
-  llvm::SmallVector<QualType, 8> ArgTypes;
-  for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
-    ArgTypes.push_back(BSI->Params[i]->getType());
-
   bool NoReturn = BSI->TheDecl->getAttr<NoReturnAttr>();
   QualType BlockTy;
-  if (!BSI->hasPrototype)
-    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0, false, false, 0, 0,
-                                FunctionType::ExtInfo(NoReturn, 0, CC_Default));
-  else
-    BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
-                                      BSI->isVariadic, 0, false, false, 0, 0,
-                                FunctionType::ExtInfo(NoReturn, 0, CC_Default));
+
+  // If the user wrote a function type in some form, try to use that.
+  if (!BSI->FunctionType.isNull()) {
+    const FunctionType *FTy = BSI->FunctionType->getAs<FunctionType>();
+
+    FunctionType::ExtInfo Ext = FTy->getExtInfo();
+    if (NoReturn && !Ext.getNoReturn()) Ext = Ext.withNoReturn(true);
+    
+    // Turn protoless block types into nullary block types.
+    if (isa<FunctionNoProtoType>(FTy)) {
+      BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0,
+                                        false, false, 0, 0, Ext);
+
+    // Otherwise, if we don't need to change anything about the function type,
+    // preserve its sugar structure.
+    } else if (FTy->getResultType() == RetTy &&
+               (!NoReturn || FTy->getNoReturnAttr())) {
+      BlockTy = BSI->FunctionType;
+
+    // Otherwise, make the minimal modifications to the function type.
+    } else {
+      const FunctionProtoType *FPT = cast<FunctionProtoType>(FTy);
+      BlockTy = Context.getFunctionType(RetTy,
+                                        FPT->arg_type_begin(),
+                                        FPT->getNumArgs(),
+                                        FPT->isVariadic(),
+                                        /*quals*/ 0,
+                                        FPT->hasExceptionSpec(),
+                                        FPT->hasAnyExceptionSpec(),
+                                        FPT->getNumExceptions(),
+                                        FPT->exception_begin(),
+                                        Ext);
+    }
+
+  // If we don't have a function type, just build one from nothing.
+  } else {
+    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0,
+                                      false, false, 0, 0,
+                             FunctionType::ExtInfo(NoReturn, 0, CC_Default));
+  }
 
   // FIXME: Check that return/parameter types are complete/non-abstract
-  DiagnoseUnusedParameters(BSI->Params.begin(), BSI->Params.end());
+  DiagnoseUnusedParameters(BSI->TheDecl->param_begin(),
+                           BSI->TheDecl->param_end());
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   // If needed, diagnose invalid gotos and switches in the block.
