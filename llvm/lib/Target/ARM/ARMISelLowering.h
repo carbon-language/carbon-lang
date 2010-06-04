@@ -135,6 +135,13 @@ namespace llvm {
       VUZP,         // unzip (deinterleave)
       VTRN,         // transpose
 
+      // Operands of the standard BUILD_VECTOR node are not legalized, which
+      // is fine if BUILD_VECTORs are always lowered to shuffles or other
+      // operations, but for ARM some BUILD_VECTORs are legal as-is and their
+      // operands need to be legalized.  Define an ARM-specific version of
+      // BUILD_VECTOR for this purpose.
+      BUILD_VECTOR,
+
       // Floating-point max and min:
       FMAX,
       FMIN

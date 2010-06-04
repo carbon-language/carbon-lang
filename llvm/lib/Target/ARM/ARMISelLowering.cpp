@@ -591,6 +591,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VZIP:          return "ARMISD::VZIP";
   case ARMISD::VUZP:          return "ARMISD::VUZP";
   case ARMISD::VTRN:          return "ARMISD::VTRN";
+  case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
   case ARMISD::FMAX:          return "ARMISD::FMAX";
   case ARMISD::FMIN:          return "ARMISD::FMIN";
   }
@@ -3121,21 +3122,17 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ARMISD::VDUP, dl, VT, Value);
 
   // Vectors with 32- or 64-bit elements can be built by directly assigning
-  // the subregisters.
+  // the subregisters.  Lower it to an ARMISD::BUILD_VECTOR so the operands
+  // will be legalized.
   if (EltSize >= 32) {
     // Do the expansion with floating-point types, since that is what the VFP
     // registers are defined to use, and since i64 is not legal.
     EVT EltVT = EVT::getFloatingPointVT(EltSize);
     EVT VecVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts);
-    SDValue Val = DAG.getUNDEF(VecVT);
-    for (unsigned i = 0; i < NumElts; ++i) {
-      SDValue Elt = Op.getOperand(i);
-      if (Elt.getOpcode() == ISD::UNDEF)
-        continue;
-      Elt = DAG.getNode(ISD::BIT_CONVERT, dl, EltVT, Elt);
-      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VecVT, Val, Elt,
-                        DAG.getConstant(i, MVT::i32));
-    }
+    SmallVector<SDValue, 8> Ops;
+    for (unsigned i = 0; i < NumElts; ++i)
+      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, EltVT, Op.getOperand(i)));
+    SDValue Val = DAG.getNode(ARMISD::BUILD_VECTOR, dl, VecVT, &Ops[0],NumElts);
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
   }
 
@@ -3346,7 +3343,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       return GeneratePerfectShuffle(PFEntry, V1, V2, DAG, dl);
   }
 
-  // Implement shuffles with 32- or 64-bit elements as subreg copies.
+  // Implement shuffles with 32- or 64-bit elements as ARMISD::BUILD_VECTORs.
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize >= 32) {
     // Do the expansion with floating-point types, since that is what the VFP
@@ -3355,17 +3352,17 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     EVT VecVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts);
     V1 = DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, V1);
     V2 = DAG.getNode(ISD::BIT_CONVERT, dl, VecVT, V2);
-    SDValue Val = DAG.getUNDEF(VecVT);
+    SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0; i < NumElts; ++i) {
       if (ShuffleMask[i] < 0)
-        continue;
-      SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                ShuffleMask[i] < (int)NumElts ? V1 : V2,
-                                DAG.getConstant(ShuffleMask[i] & (NumElts-1),
-                                                MVT::i32));
-      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VecVT, Val,
-                        Elt, DAG.getConstant(i, MVT::i32));
+        Ops.push_back(DAG.getUNDEF(EltVT));
+      else
+        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                  ShuffleMask[i] < (int)NumElts ? V1 : V2,
+                                  DAG.getConstant(ShuffleMask[i] & (NumElts-1),
+                                                  MVT::i32)));
     }
+    SDValue Val = DAG.getNode(ARMISD::BUILD_VECTOR, dl, VecVT, &Ops[0],NumElts);
     return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Val);
   }
 
