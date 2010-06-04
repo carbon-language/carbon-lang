@@ -5740,6 +5740,24 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     ZeroWidth = false;
   }
 
+  // Check that 'mutable' is consistent with the type of the declaration.
+  if (!InvalidDecl && Mutable) {
+    unsigned DiagID = 0;
+    if (T->isReferenceType())
+      DiagID = diag::err_mutable_reference;
+    else if (T.isConstQualified())
+      DiagID = diag::err_mutable_const;
+
+    if (DiagID) {
+      SourceLocation ErrLoc = Loc;
+      if (D && D->getDeclSpec().getStorageClassSpecLoc().isValid())
+        ErrLoc = D->getDeclSpec().getStorageClassSpecLoc();
+      Diag(ErrLoc, DiagID);
+      Mutable = false;
+      InvalidDecl = true;
+    }
+  }
+
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, TInfo,
                                        BitWidth, Mutable);
   if (InvalidDecl)

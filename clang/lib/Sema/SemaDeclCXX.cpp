@@ -886,9 +886,17 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Expr *Init = static_cast<Expr*>(InitExpr);
   SourceLocation Loc = D.getIdentifierLoc();
 
-  bool isFunc = D.isFunctionDeclarator();
-
+  assert(isa<CXXRecordDecl>(CurContext));
   assert(!DS.isFriendSpecified());
+
+  bool isFunc = false;
+  if (D.isFunctionDeclarator())
+    isFunc = true;
+  else if (D.getNumTypeObjects() == 0 &&
+           D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typename) {
+    QualType TDType = GetTypeFromParser(DS.getTypeRep());
+    isFunc = TDType->isFunctionType();
+  }
 
   // C++ 9.2p6: A member shall not be declared to have automatic storage
   // duration (auto, register) or with the extern storage-class-specifier.
@@ -911,22 +919,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
         // FIXME: It would be nicer if the keyword was ignored only for this
         // declarator. Otherwise we could get follow-up errors.
         D.getMutableDeclSpec().ClearStorageClassSpecs();
-      } else {
-        QualType T = GetTypeForDeclarator(D, S);
-        diag::kind err = static_cast<diag::kind>(0);
-        if (T->isReferenceType())
-          err = diag::err_mutable_reference;
-        else if (T.isConstQualified())
-          err = diag::err_mutable_const;
-        if (err != 0) {
-          if (DS.getStorageClassSpecLoc().isValid())
-            Diag(DS.getStorageClassSpecLoc(), err);
-          else
-            Diag(DS.getThreadSpecLoc(), err);
-          // FIXME: It would be nicer if the keyword was ignored only for this
-          // declarator. Otherwise we could get follow-up errors.
-          D.getMutableDeclSpec().ClearStorageClassSpecs();
-        }
       }
       break;
     default:
@@ -936,18 +928,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       else
         Diag(DS.getThreadSpecLoc(), diag::err_storageclass_invalid_for_member);
       D.getMutableDeclSpec().ClearStorageClassSpecs();
-  }
-
-  if (!isFunc &&
-      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typename &&
-      D.getNumTypeObjects() == 0) {
-    // Check also for this case:
-    //
-    // typedef int f();
-    // f a;
-    //
-    QualType TDType = GetTypeFromParser(DS.getTypeRep());
-    isFunc = TDType->isFunctionType();
   }
 
   bool isInstField = ((DS.getStorageClassSpec() == DeclSpec::SCS_unspecified ||
