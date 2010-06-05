@@ -866,10 +866,6 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   } else if (Context.isNameSpace()) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
     ContextDIE->addChild(Die);
-  } else if (Context.isSubprogram()) {
-    DIE *ContextDIE = createSubprogramDIE(DISubprogram(Context),
-                                          /*MakeDecl=*/false);
-    ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = getCompileUnit(Context)->getDIE(Context))
     ContextDIE->addChild(Die);
   else 
@@ -1059,10 +1055,6 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (DIDescriptor(ContainingType).isCompositeType())
       addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, 
                   getOrCreateTypeDIE(DIType(ContainingType)));
-    else {
-      DIDescriptor Context = CTy.getContext();
-      addToContextOwner(&Buffer, Context);
-    }
     break;
   }
   default:
@@ -1336,9 +1328,6 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPCU->insertDIE(SP, SPDie);
-
-  // Add to context owner.
-  addToContextOwner(SPDie, SP.getContext());
 
   return SPDie;
 }
@@ -2352,14 +2341,8 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope, const MDNode *Inl
     }
 
     if (!WScope->getParent()) {
-      // The SPName check is the "old way," kept here for backwards
-      // compatibility with the existing .ll test cases in the LLVM
-      // test suite.  The debug info for some functions omits any
-      // linkage name because it confuses GDB.  Updated front-ends
-      // should include a Function * that we can check instead.
       StringRef SPName = DISubprogram(Scope).getLinkageName();
-      if ((SPName == Asm->MF->getFunction()->getName()) ||
-          (DISubprogram(Scope).getFunction() == Asm->MF->getFunction()))
+      if (SPName == Asm->MF->getFunction()->getName())
         CurrentFnDbgScope = WScope;
     }
     

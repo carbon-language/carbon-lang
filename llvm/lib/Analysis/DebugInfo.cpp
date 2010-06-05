@@ -73,15 +73,6 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
   return 0;
 }
 
-Function *DIDescriptor::getFunctionField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return 0;
-
-  if (Elt < DbgNode->getNumOperands())
-      return dyn_cast_or_null<Function>(DbgNode->getOperand(Elt));
-  return 0;
-}
-
 unsigned DIVariable::getNumAddrElements() const {
   return DbgNode->getNumOperands()-6;
 }
@@ -947,8 +938,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          unsigned VK, unsigned VIndex,
                                          DIType ContainingType,
                                          bool isArtificial,
-                                         bool isOptimized,
-                                         Function *Fn) {
+                                         bool isOptimized) {
 
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
@@ -966,10 +956,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
     ContainingType,
     ConstantInt::get(Type::getInt1Ty(VMContext), isArtificial),
-    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
-    Fn
+    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized)
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 17));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
@@ -990,15 +979,14 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
     DeclNode->getOperand(7), // LineNo
     DeclNode->getOperand(8), // Type
     DeclNode->getOperand(9), // isLocalToUnit
-    ConstantInt::get(Type::getInt1Ty(VMContext), true), // isDefinition
+    ConstantInt::get(Type::getInt1Ty(VMContext), true),
     DeclNode->getOperand(11), // Virtuality
     DeclNode->getOperand(12), // VIndex
     DeclNode->getOperand(13), // Containting Type
     DeclNode->getOperand(14), // isArtificial
-    DeclNode->getOperand(15), // isOptimized
-    DeclNode->getOperand(16)  // Function*
+    DeclNode->getOperand(15)  // isOptimized
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 17));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
 }
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
@@ -1118,6 +1106,18 @@ DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo),
     S,
     OrigLoc,
+  };
+  return DILocation(MDNode::get(VMContext, &Elts[0], 4));
+}
+
+/// CreateLocation - Creates a debug info location.
+DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
+                                     DIScope S, MDNode *OrigLoc) {
+ Value *Elts[] = {
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo),
+    S,
+    OrigLoc
   };
   return DILocation(MDNode::get(VMContext, &Elts[0], 4));
 }
