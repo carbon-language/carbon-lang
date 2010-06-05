@@ -871,6 +871,17 @@ std::string Sema::getAmbiguousPathsDisplayString(CXXBasePaths &Paths) {
 // C++ class member Handling
 //===----------------------------------------------------------------------===//
 
+/// ActOnAccessSpecifier - Parsed an access specifier followed by a colon.
+Sema::DeclPtrTy
+Sema::ActOnAccessSpecifier(AccessSpecifier Access,
+                           SourceLocation ASLoc, SourceLocation ColonLoc) {
+  assert(Access != AS_none && "Invalid kind for syntactic access specifier!");
+  AccessSpecDecl* ASDecl = AccessSpecDecl::Create(Context, Access, CurContext,
+                                                  ASLoc, ColonLoc);
+  CurContext->addHiddenDecl(ASDecl);
+  return DeclPtrTy::make(ASDecl);
+}
+
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if

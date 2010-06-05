@@ -2544,6 +2544,10 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS);
 
+  virtual DeclPtrTy ActOnAccessSpecifier(AccessSpecifier Access,
+                                         SourceLocation ASLoc,
+                                         SourceLocation ColonLoc);
+
   virtual DeclPtrTy ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                              Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,

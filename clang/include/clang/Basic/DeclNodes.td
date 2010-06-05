@@ -61,6 +61,7 @@ def ObjCPropertyImpl : Decl;
 def ObjCForwardProtocol : Decl;
 def ObjCClass : Decl;
 def FileScopeAsm : Decl;
+def AccessSpec : Decl;
 def Friend : Decl;
 def FriendTemplate : Decl;
 def StaticAssert : Decl;

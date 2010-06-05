@@ -183,7 +183,7 @@ void DeclPrinter::Print(AccessSpecifier AS) {
   case AS_none:      assert(0 && "No access specifier!"); break;
   case AS_public:    Out << "public"; break;
   case AS_protected: Out << "protected"; break;
-  case AS_private:   Out << " private"; break;
+  case AS_private:   Out << "private"; break;
   }
 }
 
@@ -194,9 +194,6 @@ void DeclPrinter::Print(AccessSpecifier AS) {
 void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   if (Indent)
     Indentation += Policy.Indentation;
-
-  bool PrintAccess = isa<CXXRecordDecl>(DC);
-  AccessSpecifier CurAS = AS_none;
 
   llvm::SmallVector<Decl*, 2> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
@@ -209,18 +206,6 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
       if (isa<NamedDecl>(*D) && cast<NamedDecl>(*D)->getNameAsString() ==
           "__builtin_va_list")
         continue;
-    }
-
-    if (PrintAccess) {
-      AccessSpecifier AS = D->getAccess();
-
-      if (AS != CurAS) {
-        if (Indent)
-          this->Indent(Indentation - Policy.Indentation);
-        Print(AS);
-        Out << ":\n";
-        CurAS = AS;
-      }
     }
 
     // The next bits of code handles stuff like "struct {int x;} a,b"; we're
@@ -251,6 +236,16 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
       Decls.push_back(*D);
       continue;
     }
+
+    if (isa<AccessSpecDecl>(*D)) {
+      Indentation -= Policy.Indentation;
+      this->Indent();
+      Print(D->getAccess());
+      Out << ":\n";
+      Indentation += Policy.Indentation;
+      continue;
+    }
+
     this->Indent();
     Visit(*D);
 

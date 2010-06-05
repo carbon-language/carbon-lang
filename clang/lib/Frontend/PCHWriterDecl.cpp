@@ -81,6 +81,7 @@ namespace {
     void VisitUsingShadow(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
+    void VisitAccessSpecDecl(AccessSpecDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *D);
@@ -605,6 +606,12 @@ void PCHDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
   // assert(false && "cannot write CXXConversionDecl");
   VisitCXXMethodDecl(D);
   Code = pch::DECL_CXX_CONVERSION;
+}
+
+void PCHDeclWriter::VisitAccessSpecDecl(AccessSpecDecl *D) {
+  VisitDecl(D);
+  Writer.AddSourceLocation(D->getColonLoc(), Record);
+  Code = pch::DECL_ACCESS_SPEC;
 }
 
 void PCHDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {

@@ -562,6 +562,8 @@ namespace clang {
       DECL_CXX_DESTRUCTOR,
       /// \brief A CXXConversionDecl record.
       DECL_CXX_CONVERSION,
+      /// \brief An AccessSpecDecl record.
+      DECL_ACCESS_SPEC,
 
       // FIXME: Implement serialization for these decl types. This just
       // allocates the order in which

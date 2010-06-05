@@ -2041,6 +2041,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::TemplateTemplateParm:
   case Decl::ObjCCategoryImpl:
   case Decl::ObjCImplementation:
+  case Decl::AccessSpec:
   case Decl::LinkageSpec:
   case Decl::ObjCPropertyImpl:
   case Decl::FileScopeAsm:

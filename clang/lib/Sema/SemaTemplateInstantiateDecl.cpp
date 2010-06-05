@@ -48,6 +48,7 @@ namespace {
     Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
+    Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
@@ -435,6 +436,14 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     SemaRef.DiagnoseUnusedDecl(Var);
   
   return Var;
+}
+
+Decl *TemplateDeclInstantiator::VisitAccessSpecDecl(AccessSpecDecl *D) {
+  AccessSpecDecl* AD
+    = AccessSpecDecl::Create(SemaRef.Context, D->getAccess(), Owner,
+                             D->getAccessSpecifierLoc(), D->getColonLoc());
+  Owner->addHiddenDecl(AD);
+  return AD;
 }
 
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {

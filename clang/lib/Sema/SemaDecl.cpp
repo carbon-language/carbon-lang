@@ -1770,6 +1770,8 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
             << (int)Record->isUnion();
           Invalid = true;
         }
+      } else if (isa<AccessSpecDecl>(*Mem)) {
+        // Any access specifier is fine.
       } else {
         // We have something that isn't a non-static data
         // member. Complain about it.

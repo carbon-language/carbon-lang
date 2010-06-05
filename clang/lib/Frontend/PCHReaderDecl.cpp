@@ -80,6 +80,7 @@ namespace {
     void VisitUsingShadow(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
+    void VisitAccessSpecDecl(AccessSpecDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *BD);
@@ -607,6 +608,11 @@ void PCHDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
   VisitCXXMethodDecl(D);
 }
 
+void PCHDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
+  VisitDecl(D);
+  D->setColonLoc(Reader.ReadSourceLocation(Record, Idx));
+}
+
 void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
   assert(false && "cannot read FriendTemplateDecl");
 }
@@ -970,6 +976,10 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_CXX_CONVERSION:
     D = CXXConversionDecl::Create(*Context, Decl::EmptyShell());
+    break;
+  case pch::DECL_ACCESS_SPEC:
+    D = AccessSpecDecl::Create(*Context, AS_none, 0, SourceLocation(),
+                               SourceLocation());
     break;
   case pch::DECL_FRIEND:
     assert(false && "cannot read FriendDecl");

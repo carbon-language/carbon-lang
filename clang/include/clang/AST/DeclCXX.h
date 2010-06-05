@@ -92,6 +92,53 @@ namespace llvm {
 
 namespace clang {
 
+/// AccessSpecDecl - An access specifier followed by colon ':'.
+///
+/// An objects of this class represents sugar for the syntactic occurrence
+/// of an access specifier followed by a colon in the list of member
+/// specifiers of a C++ class definition.
+///
+/// Note that they do not represent other uses of access specifiers,
+/// such as those occurring in a list of base specifiers.
+/// Also note that this class has nothing to do with so-called
+/// "access declarations" (C++98 11.3 [class.access.dcl]).
+class AccessSpecDecl : public Decl {
+  /// ColonLoc - The location of the ':'.
+  SourceLocation ColonLoc;
+
+  AccessSpecDecl(AccessSpecifier AS, DeclContext *DC,
+                 SourceLocation ASLoc, SourceLocation ColonLoc)
+    : Decl(AccessSpec, DC, ASLoc), ColonLoc(ColonLoc) {
+    setAccess(AS);
+  }
+public:
+  /// getAccessSpecifierLoc - The location of the access specifier.
+  SourceLocation getAccessSpecifierLoc() const { return getLocation(); }
+  /// setAccessSpecifierLoc - Sets the location of the access specifier.
+  void setAccessSpecifierLoc(SourceLocation ASLoc) { setLocation(ASLoc); }
+
+  /// getColonLoc - The location of the colon following the access specifier.
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  /// setColonLoc - Sets the location of the colon.
+  void setColonLoc(SourceLocation CLoc) { ColonLoc = CLoc; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getAccessSpecifierLoc(), getColonLoc());
+  }
+
+  static AccessSpecDecl *Create(ASTContext &C, AccessSpecifier AS,
+                                DeclContext *DC, SourceLocation ASLoc,
+                                SourceLocation ColonLoc) {
+    return new (C) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const AccessSpecDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == AccessSpec; }
+};
+
+
 /// CXXBaseSpecifier - A base class of a C++ class.
 ///
 /// Each CXXBaseSpecifier represents a single, direct base class (or

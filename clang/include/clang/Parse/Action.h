@@ -1769,6 +1769,15 @@ public:
                                    unsigned NumBases) {
   }
 
+  /// ActOnAccessSpecifier - This is invoked when an access specifier
+  /// (and the colon following it) is found during the parsing of a
+  /// C++ class member declarator.
+  virtual DeclPtrTy ActOnAccessSpecifier(AccessSpecifier AS,
+                                         SourceLocation ASLoc,
+                                         SourceLocation ColonLoc) {
+    return DeclPtrTy();
+  }
+
   /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
   /// declarator is parsed. 'AS' is the access specifier, 'BitfieldWidth'
   /// specifies the bitfield width if there is one and 'Init' specifies the
