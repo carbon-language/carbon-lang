@@ -718,9 +718,13 @@ public:
   //
 
   QualType adjustParameterType(QualType T);
-  QualType BuildPointerType(QualType T, unsigned Quals,
+  QualType BuildQualifiedType(QualType T, SourceLocation Loc, Qualifiers Qs);
+  QualType BuildQualifiedType(QualType T, SourceLocation Loc, unsigned CVR) {
+    return BuildQualifiedType(T, Loc, Qualifiers::fromCVRMask(CVR));
+  }
+  QualType BuildPointerType(QualType T,
                             SourceLocation Loc, DeclarationName Entity);
-  QualType BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
+  QualType BuildReferenceType(QualType T, bool LValueRef,
                               SourceLocation Loc, DeclarationName Entity);
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,
@@ -732,9 +736,9 @@ public:
                              bool Variadic, unsigned Quals,
                              SourceLocation Loc, DeclarationName Entity);
   QualType BuildMemberPointerType(QualType T, QualType Class,
-                                  unsigned Quals, SourceLocation Loc,
+                                  SourceLocation Loc,
                                   DeclarationName Entity);
-  QualType BuildBlockPointerType(QualType T, unsigned Quals,
+  QualType BuildBlockPointerType(QualType T,
                                  SourceLocation Loc, DeclarationName Entity);
   TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S,
                                        TagDecl **OwnedDecl = 0);

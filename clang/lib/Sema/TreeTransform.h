@@ -2405,11 +2405,11 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
   if (Result->isFunctionType() || Result->isReferenceType())
     return Result;
 
-  Result = SemaRef.Context.getQualifiedType(Result, Quals);
-
-  TLB.push<QualifiedTypeLoc>(Result);
-
-  // No location information to preserve.
+  if (!Quals.empty()) {
+    Result = SemaRef.BuildQualifiedType(Result, T.getBeginLoc(), Quals);
+    TLB.push<QualifiedTypeLoc>(Result);
+    // No location information to preserve.
+  }
 
   return Result;
 }
@@ -6185,14 +6185,14 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType,
                                                     SourceLocation Star) {
-  return SemaRef.BuildPointerType(PointeeType, Qualifiers(), Star,
+  return SemaRef.BuildPointerType(PointeeType, Star,
                                   getDerived().getBaseEntity());
 }
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildBlockPointerType(QualType PointeeType,
                                                          SourceLocation Star) {
-  return SemaRef.BuildBlockPointerType(PointeeType, Qualifiers(), Star,
+  return SemaRef.BuildBlockPointerType(PointeeType, Star,
                                        getDerived().getBaseEntity());
 }
 
@@ -6201,7 +6201,7 @@ QualType
 TreeTransform<Derived>::RebuildReferenceType(QualType ReferentType,
                                              bool WrittenAsLValue,
                                              SourceLocation Sigil) {
-  return SemaRef.BuildReferenceType(ReferentType, WrittenAsLValue, Qualifiers(),
+  return SemaRef.BuildReferenceType(ReferentType, WrittenAsLValue,
                                     Sigil, getDerived().getBaseEntity());
 }
 
@@ -6210,7 +6210,7 @@ QualType
 TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
                                                  QualType ClassType,
                                                  SourceLocation Sigil) {
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Qualifiers(),
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType,
                                         Sigil, getDerived().getBaseEntity());
 }
 
