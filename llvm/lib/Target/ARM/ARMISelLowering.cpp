@@ -1259,22 +1259,8 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Ops.push_back(InFlag);
 
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  if (isTailCall) {
-    // If this is the first return lowered for this function, add the regs
-    // to the liveout set for the function.
-    if (MF.getRegInfo().liveout_empty()) {
-      SmallVector<CCValAssign, 16> RVLocs;
-      CCState CCInfo(CallConv, isVarArg, getTargetMachine(), RVLocs,
-                     *DAG.getContext());
-      CCInfo.AnalyzeCallResult(Ins, 
-                           CCAssignFnForNode(CallConv, /* Return*/ true,
-                                             isVarArg));
-      for (unsigned i = 0; i != RVLocs.size(); ++i)
-        if (RVLocs[i].isRegLoc())
-          MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-    }
+  if (isTailCall)
     return DAG.getNode(ARMISD::TC_RETURN, dl, NodeTys, &Ops[0], Ops.size());
-  }
 
   // Returns a chain and a flag for retval copy to use.
   Chain = DAG.getNode(CallOpc, dl, NodeTys, &Ops[0], Ops.size());
@@ -1354,7 +1340,6 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
 
-//  const MachineFunction &MF = DAG.getMachineFunction();
   const Function *CallerF = DAG.getMachineFunction().getFunction();
   CallingConv::ID CallerCC = CallerF->getCallingConv();
   bool CCMatch = CallerCC == CalleeCC;
@@ -1427,14 +1412,31 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       const MachineRegisterInfo *MRI = &MF.getRegInfo();
       const ARMInstrInfo *TII =
         ((ARMTargetMachine&)getTargetMachine()).getInstrInfo();
-      for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+      for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
+           i != e;
+           ++i, ++realArgIdx) {
         CCValAssign &VA = ArgLocs[i];
         EVT RegVT = VA.getLocVT();
-        SDValue Arg = Outs[i].Val;
-        ISD::ArgFlagsTy Flags = Outs[i].Flags;
+        SDValue Arg = Outs[realArgIdx].Val;
+        ISD::ArgFlagsTy Flags = Outs[realArgIdx].Flags;
         if (VA.getLocInfo() == CCValAssign::Indirect)
           return false;
-        if (!VA.isRegLoc()) {
+        if (VA.needsCustom()) {
+          // f64 and vector types are split into multiple registers or
+          // register/stack-slot combinations.  The types will not match
+          // the registers; give up on memory f64 refs until we figure
+          // out what to do about this.
+          if (!VA.isRegLoc())
+            return false;
+          if (!ArgLocs[++i].isRegLoc())
+            return false; 
+          if (RegVT == MVT::v2f64) {
+            if (!ArgLocs[++i].isRegLoc())
+              return false;
+            if (!ArgLocs[++i].isRegLoc())
+              return false;
+          }
+        } else if (!VA.isRegLoc()) {
           if (!MatchingStackOffset(Arg, VA.getLocMemOffset(), Flags,
                                    MFI, MRI, TII))
             return false;
