@@ -132,3 +132,47 @@ for.inc131:                                       ; preds = %for.body123, %for.b
 for.end134:                                       ; preds = %for.inc131
   ret void
 }
+
+; LSR needs to remember inserted instructions even in postinc mode, because
+; there could be multiple subexpressions within a single expansion which
+; require insert point adjustment.
+; PR7306
+
+define fastcc i32 @GetOptimum() nounwind {
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb1, %bb
+  %t = phi i32 [ 0, %bb ], [ %t2, %bb1 ]      ; <i32> [#uses=1]
+  %t2 = add i32 %t, undef                     ; <i32> [#uses=3]
+  br i1 undef, label %bb1, label %bb3
+
+bb3:                                              ; preds = %bb1
+  %t4 = add i32 undef, -1                       ; <i32> [#uses=1]
+  br label %bb5
+
+bb5:                                              ; preds = %bb16, %bb3
+  %t6 = phi i32 [ %t17, %bb16 ], [ 0, %bb3 ]  ; <i32> [#uses=3]
+  %t7 = add i32 undef, %t6                    ; <i32> [#uses=2]
+  %t8 = add i32 %t4, %t6                    ; <i32> [#uses=1]
+  br i1 undef, label %bb9, label %bb10
+
+bb9:                                              ; preds = %bb5
+  br label %bb10
+
+bb10:                                             ; preds = %bb9, %bb5
+  br i1 undef, label %bb11, label %bb16
+
+bb11:                                             ; preds = %bb10
+  %t12 = icmp ugt i32 %t7, %t2              ; <i1> [#uses=1]
+  %t13 = select i1 %t12, i32 %t2, i32 %t7 ; <i32> [#uses=1]
+  br label %bb14
+
+bb14:                                             ; preds = %bb11
+  store i32 %t13, i32* null
+  ret i32 %t8
+
+bb16:                                             ; preds = %bb10
+  %t17 = add i32 %t6, 1                       ; <i32> [#uses=1]
+  br label %bb5
+}

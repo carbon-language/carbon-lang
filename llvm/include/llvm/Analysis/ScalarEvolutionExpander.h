@@ -32,6 +32,7 @@ namespace llvm {
     std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
       InsertedExpressions;
     std::set<Value*> InsertedValues;
+    std::set<Value*> InsertedPostIncValues;
 
     /// PostIncLoops - Addrecs referring to any of the given loops are expanded
     /// in post-inc mode. For example, expanding {1,+,1}<L> in post-inc mode
@@ -102,6 +103,10 @@ namespace llvm {
     /// clearPostInc - Disable all post-inc expansion.
     void clearPostInc() {
       PostIncLoops.clear();
+
+      // When we change the post-inc loop set, cached expansions may no
+      // longer be valid.
+      InsertedPostIncValues.clear();
     }
 
     /// disableCanonicalMode - Disable the behavior of expanding expressions in
@@ -146,7 +151,7 @@ namespace llvm {
     /// inserted by the code rewriter.  If so, the client should not modify the
     /// instruction.
     bool isInsertedInstruction(Instruction *I) const {
-      return InsertedValues.count(I);
+      return InsertedValues.count(I) || InsertedPostIncValues.count(I);
     }
 
     Value *visitConstant(const SCEVConstant *S) {

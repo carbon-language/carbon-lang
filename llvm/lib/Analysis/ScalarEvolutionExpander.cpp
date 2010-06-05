@@ -1312,7 +1312,9 @@ Value *SCEVExpander::expand(const SCEV *S) {
 }
 
 void SCEVExpander::rememberInstruction(Value *I) {
-  if (PostIncLoops.empty())
+  if (!PostIncLoops.empty())
+    InsertedPostIncValues.insert(I);
+  else
     InsertedValues.insert(I);
 
   // If we just claimed an existing instruction and that instruction had
