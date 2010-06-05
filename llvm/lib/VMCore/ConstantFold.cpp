@@ -658,7 +658,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
               }
             }
           // Handle an offsetof-like expression.
-          if (Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()){
+          if (Ty->isStructTy() || Ty->isArrayTy()) {
             if (Constant *C = getFoldedOffsetOf(Ty, CE->getOperand(2),
                                                 DestTy, false))
               return C;
