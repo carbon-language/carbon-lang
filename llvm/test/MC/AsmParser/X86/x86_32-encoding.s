@@ -10052,35 +10052,3 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: ficomps 32493
 // CHECK:  encoding: [0xde,0x1d,0xed,0x7e,0x00,0x00]
           ficomps 32493
-
-// CHECK: vaddss  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xca,0x58,0xd4]
-          vaddss  %xmm4, %xmm6, %xmm2
-
-// CHECK: vmulss  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xca,0x59,0xd4]
-          vmulss  %xmm4, %xmm6, %xmm2
-
-// CHECK: vsubss  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xca,0x5c,0xd4]
-          vsubss  %xmm4, %xmm6, %xmm2
-
-// CHECK: vdivss  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xca,0x5e,0xd4]
-          vdivss  %xmm4, %xmm6, %xmm2
-
-// CHECK: vaddsd  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xcb,0x58,0xd4]
-          vaddsd  %xmm4, %xmm6, %xmm2
-
-// CHECK: vmulsd  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xcb,0x59,0xd4]
-          vmulsd  %xmm4, %xmm6, %xmm2
-
-// CHECK: vsubsd  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xcb,0x5c,0xd4]
-          vsubsd  %xmm4, %xmm6, %xmm2
-
-// CHECK: vdivsd  %xmm4, %xmm6, %xmm2
-// CHECK:  encoding: [0xc5,0xcb,0x5e,0xd4]
-          vdivsd  %xmm4, %xmm6, %xmm2

@@ -15,8 +15,6 @@
 #ifndef LLVM_TARGET_TARGETINSTRDESC_H
 #define LLVM_TARGET_TARGETINSTRDESC_H
 
-#include "llvm/System/DataTypes.h"
-
 namespace llvm {
 
 class TargetRegisterClass;
@@ -133,7 +131,7 @@ public:
   unsigned short  SchedClass;    // enum identifying instr sched class
   const char *    Name;          // Name of the instruction record in td file
   unsigned        Flags;         // Flags identifying machine instr class
-  uint64_t        TSFlags;       // Target Specific Flag values
+  unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
   const TargetRegisterClass **RCBarriers; // Reg classes completely "clobbered"

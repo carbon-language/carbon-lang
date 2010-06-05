@@ -673,26 +673,6 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
     let isCommutable = Commutable;
   }
 
-  def V#NAME#SSrr : VSSI<opc, MRMSrcReg, (outs FR32:$dst),
-                 (ins FR32:$src1, FR32:$src2),
-                 !strconcat(OpcodeStr,
-                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let isCommutable = Commutable;
-    let Constraints = "";
-    let isAsmParserOnly = 1;
-  }
-
-  def V#NAME#SDrr : VSDI<opc, MRMSrcReg, (outs FR64:$dst),
-                 (ins FR64:$src1, FR64:$src2),
-                 !strconcat(OpcodeStr,
-                            "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let isCommutable = Commutable;
-    let Constraints = "";
-    let isAsmParserOnly = 1;
-  }
-
   // Scalar operation, reg+mem.
   def SSrm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
                                  (ins FR32:$src1, f32mem:$src2),

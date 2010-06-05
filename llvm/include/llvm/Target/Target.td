@@ -244,7 +244,7 @@ class Instruction {
   string DisableEncoding = "";
 
   /// Target-specific flags. This becomes the TSFlags field in TargetInstrDesc.
-  bits<64> TSFlags = 0;
+  bits<32> TSFlags = 0;
 }
 
 /// Predicates - These are extra conditionals which are turned into instruction

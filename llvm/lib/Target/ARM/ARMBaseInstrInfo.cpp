@@ -56,7 +56,7 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
   MachineInstr *MI = MBBI;
   MachineFunction &MF = *MI->getParent()->getParent();
-  uint64_t TSFlags = MI->getDesc().TSFlags;
+  unsigned TSFlags = MI->getDesc().TSFlags;
   bool isPre = false;
   switch ((TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift) {
   default: return NULL;
@@ -488,7 +488,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
 
   // Basic size info comes from the TSFlags field.
   const TargetInstrDesc &TID = MI->getDesc();
-  uint64_t TSFlags = TID.TSFlags;
+  unsigned TSFlags = TID.TSFlags;
 
   unsigned Opc = MI->getOpcode();
   switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {

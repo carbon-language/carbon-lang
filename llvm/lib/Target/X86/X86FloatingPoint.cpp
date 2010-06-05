@@ -232,7 +232,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     MachineInstr *MI = I;
-    uint64_t Flags = MI->getDesc().TSFlags;
+    unsigned Flags = MI->getDesc().TSFlags;
     
     unsigned FPInstClass = Flags & X86II::FPTypeMask;
     if (MI->isInlineAsm())

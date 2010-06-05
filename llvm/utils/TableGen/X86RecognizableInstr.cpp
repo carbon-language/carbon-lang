@@ -212,7 +212,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
-  HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   
@@ -533,12 +532,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
            "Unexpected number of operands for MRMSrcRegFrm");
     HANDLE_OPERAND(roRegister)
     HANDLE_OPERAND(rmRegister)
-
-    if (HasVEX_4VPrefix)
-      // FIXME: encoding of registers in AVX is in 1's complement form.
-      HANDLE_OPTIONAL(rmRegister)
-    else
-      HANDLE_OPTIONAL(immediate)
+    HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMSrcMem:
     // Operand 1 is a register operand in the Reg/Opcode field.
