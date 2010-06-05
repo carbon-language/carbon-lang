@@ -1635,7 +1635,6 @@ bool TGParser::ParseObjectBody(Record *CurRec) {
   return ParseBody(CurRec);
 }
 
-
 /// ParseDef - Parse and return a top level or multiclass def, return the record
 /// corresponding to it.  This returns null on error.
 ///
@@ -1807,8 +1806,6 @@ bool TGParser::ParseTopLevelLet() {
 ///  MultiClassDef ::= DefInst
 ///
 bool TGParser::ParseMultiClassDef(MultiClass *CurMC) {
-  if (Lex.getCode() != tgtok::Def)
-    return TokError("expected 'def' in multiclass body");
 
   Record *D = ParseDef(CurMC);
   if (D == 0) return true;
@@ -1885,9 +1882,18 @@ bool TGParser::ParseMultiClass() {
     if (Lex.Lex() == tgtok::r_brace)  // eat the '{'.
       return TokError("multiclass must contain at least one def");
 
-    while (Lex.getCode() != tgtok::r_brace)
-      if (ParseMultiClassDef(CurMultiClass))
-        return true;
+    while (Lex.getCode() != tgtok::r_brace) {
+      if (Lex.getCode() != tgtok::Defm && Lex.getCode() != tgtok::Def)
+        return TokError("expected 'def' or 'defm' in multiclass body");
+
+      if (Lex.getCode() == tgtok::Def)
+        if (ParseMultiClassDef(CurMultiClass))
+          return true;
+
+      if (Lex.getCode() == tgtok::Defm)
+        if (ParseDefm(CurMultiClass))
+          return true;
+    }
 
     Lex.Lex();  // eat the '}'.
   }
@@ -1900,7 +1906,7 @@ bool TGParser::ParseMultiClass() {
 ///
 ///   DefMInst ::= DEFM ID ':' DefmSubClassRef ';'
 ///
-bool TGParser::ParseDefm() {
+bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Defm && "Unexpected token!");
   if (Lex.Lex() != tgtok::Id)  // eat the defm.
     return TokError("expected identifier after defm");
@@ -1991,8 +1997,34 @@ bool TGParser::ParseDefm() {
         return Error(DefmPrefixLoc, "def '" + CurRec->getName() +
                      "' already defined, instantiating defm with subdef '" +
                      DefProto->getName() + "'");
-      Records.addDef(CurRec);
-      CurRec->resolveReferences();
+
+      // Don't create a top level definition for defm inside multiclasses,
+      // instead, only update the prototypes and bind the template args
+      // with the new created definition.
+      if (CurMultiClass) {
+        for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
+             i != e; ++i) {
+          if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName()) {
+            Error(DefmPrefixLoc, "defm '" + CurRec->getName() +
+                  "' already defined in this multiclass!");
+            return 0;
+          }
+        }
+        CurMultiClass->DefPrototypes.push_back(CurRec);
+
+        // Copy the template arguments for the multiclass into the new def.
+        const std::vector<std::string> &TA =
+          CurMultiClass->Rec.getTemplateArgs();
+
+        for (unsigned i = 0, e = TA.size(); i != e; ++i) {
+          const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
+          assert(RV && "Template arg doesn't exist?");
+          CurRec->addValue(*RV);
+        }
+      } else {
+        Records.addDef(CurRec);
+        CurRec->resolveReferences();
+      }
     }
 
     if (Lex.getCode() != tgtok::comma) break;

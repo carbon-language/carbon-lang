@@ -74,7 +74,7 @@ private:  // Parser methods.
   bool ParseClass();
   bool ParseMultiClass();
   bool ParseMultiClassDef(MultiClass *CurMC);
-  bool ParseDefm();
+  bool ParseDefm(MultiClass *CurMultiClass = 0);
   bool ParseTopLevelLet();
   std::vector<LetRecord> ParseLetList();
 

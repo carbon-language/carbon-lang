@@ -687,6 +687,50 @@ Here is an example TableGen fragment that shows this idea:
 </pre>
 </div>
 
+<p>
+A defm can also be used inside a multiclass providing several levels of
+multiclass instanciations.
+</p>
+
+<div class="doc_code">
+<pre>
+<b>class</b> Instruction&lt;bits&lt;4&gt; opc, string Name&gt; {
+  bits&lt;4&gt; opcode = opc;
+  string name = Name;
+}
+
+<b>multiclass</b> basic_r&lt;bits&lt;4&gt; opc&gt; {
+  <b>def</b> rr : Instruction&lt;opc, "rr"&gt;;
+  <b>def</b> rm : Instruction&lt;opc, "rm"&gt;;
+}
+
+<b>multiclass</b> basic_s&lt;bits&lt;4&gt; opc&gt; {
+  <b>defm</b> SS : basic_r&lt;opc&gt;;
+  <b>defm</b> SD : basic_r&lt;opc&gt;;
+  <b>def</b> X : Instruction&lt;opc, "x"&gt;;
+}
+
+<b>multiclass</b> basic_p&lt;bits&lt;4&gt; opc&gt; {
+  <b>defm</b> PS : basic_r&lt;opc&gt;;
+  <b>defm</b> PD : basic_r&lt;opc&gt;;
+  <b>def</b> Y : Instruction&lt;opc, "y"&gt;;
+}
+
+<b>defm</b> ADD : basic_s&lt;0xf&gt;, basic_p&lt;0xf&gt;;
+...
+
+<i>// Results</i>
+<b>def</b> ADDPDrm { ...
+<b>def</b> ADDPDrr { ...
+<b>def</b> ADDPSrm { ...
+<b>def</b> ADDPSrr { ...
+<b>def</b> ADDSDrm { ...
+<b>def</b> ADDSDrr { ...
+<b>def</b> ADDY { ...
+<b>def</b> ADDX { ...
+</pre>
+</div>
+
 </div>
 
 <!-- ======================================================================= -->
