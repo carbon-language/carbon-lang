@@ -2150,17 +2150,12 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Ops.push_back(InFlag);
 
   if (isTailCall) {
-    // If this is the first return lowered for this function, add the regs
-    // to the liveout set for the function.
-    if (MF.getRegInfo().liveout_empty()) {
-      SmallVector<CCValAssign, 16> RVLocs;
-      CCState CCInfo(CallConv, isVarArg, getTargetMachine(), RVLocs,
-                     *DAG.getContext());
-      CCInfo.AnalyzeCallResult(Ins, RetCC_X86);
-      for (unsigned i = 0; i != RVLocs.size(); ++i)
-        if (RVLocs[i].isRegLoc())
-          MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-    }
+    // We used to do:
+    //// If this is the first return lowered for this function, add the regs
+    //// to the liveout set for the function.
+    // This isn't right, although it's probably harmless on x86; liveouts
+    // should be computed from returns not tail calls.  Consider a void
+    // function making a tail call to a function returning int.
     return DAG.getNode(X86ISD::TC_RETURN, dl,
                        NodeTys, &Ops[0], Ops.size());
   }

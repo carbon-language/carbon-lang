@@ -609,7 +609,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
     // Finally, if the last instruction in the block is a return, make sure to
     // mark it as using all of the live-out values in the function.
-    if (!MBB->empty() && MBB->back().getDesc().isReturn()) {
+    // Things marked both call and return are tail calls; do not do this for
+    // them.  The tail callee need not take the same registers as input
+    // that it produces as output, and there are dependencies for its input
+    // registers elsewhere.
+    if (!MBB->empty() && MBB->back().getDesc().isReturn()
+        && !MBB->back().getDesc().isCall()) {
       MachineInstr *Ret = &MBB->back();
 
       for (MachineRegisterInfo::liveout_iterator
