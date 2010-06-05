@@ -1477,7 +1477,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   llvm::DIVariable D =
     DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
                                 VD->getName(),
-                                Unit, Line, Ty);
+                                Unit, Line, Ty, CGM.getLangOptions().Optimize);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
