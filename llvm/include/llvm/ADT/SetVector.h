@@ -143,6 +143,14 @@ public:
     vector_.pop_back();
   }
 
+  bool operator==(const SetVector &that) const {
+    return vector_ == that.vector_;
+  }
+
+  bool operator!=(const SetVector &that) const {
+    return vector_ != that.vector_;
+  }
+
 private:
   set_type set_;         ///< The set.
   vector_type vector_;   ///< The vector.
