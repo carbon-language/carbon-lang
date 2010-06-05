@@ -137,25 +137,25 @@ static inline void setSlice(uint32_t &Bits, unsigned From, unsigned To,
 /// Various utilities for checking the target specific flags.
 
 /// A unary data processing instruction doesn't have an Rn operand.
-static inline bool isUnaryDP(unsigned TSFlags) {
+static inline bool isUnaryDP(uint64_t TSFlags) {
   return (TSFlags & ARMII::UnaryDP);
 }
 
 /// This four-bit field describes the addressing mode used.
 /// See also ARMBaseInstrInfo.h.
-static inline unsigned getAddrMode(unsigned TSFlags) {
+static inline unsigned getAddrMode(uint64_t TSFlags) {
   return (TSFlags & ARMII::AddrModeMask);
 }
 
 /// {IndexModePre, IndexModePost}
 /// Only valid for load and store ops.
 /// See also ARMBaseInstrInfo.h.
-static inline unsigned getIndexMode(unsigned TSFlags) {
+static inline unsigned getIndexMode(uint64_t TSFlags) {
   return (TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
 }
 
 /// Pre-/post-indexed operations define an extra $base_wb in the OutOperandList.
-static inline bool isPrePostLdSt(unsigned TSFlags) {
+static inline bool isPrePostLdSt(uint64_t TSFlags) {
   return (TSFlags & ARMII::IndexModeMask) != 0;
 }
 

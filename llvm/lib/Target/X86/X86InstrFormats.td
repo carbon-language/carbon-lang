@@ -83,6 +83,7 @@ def SSEPackedInt    : Domain<3>;
 class OpSize { bit hasOpSizePrefix = 1; }
 class AdSize { bit hasAdSizePrefix = 1; }
 class REX_W  { bit hasREX_WPrefix = 1; }
+class VEX_4V { bit hasVEX_4VPrefix = 1; }
 class LOCK   { bit hasLockPrefix = 1; }
 class SegFS  { bits<2> SegOvrBits = 1; }
 class SegGS  { bits<2> SegOvrBits = 2; }
@@ -124,6 +125,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
+  bit hasVEX_4VPrefix  = 0;  // Does this inst requires the VEX.VVVV prefix?
   FPFormat FPForm = NotFP;  // What flavor of FP instruction is this?
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
   bits<2> SegOvrBits = 0;   // Segment override prefix.
@@ -141,6 +143,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{21-20} = SegOvrBits;
   let TSFlags{23-22} = ExeDomain.Value;
   let TSFlags{31-24} = Opcode;
+  let TSFlags{32}    = hasVEX_4VPrefix;
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,
@@ -216,6 +219,7 @@ class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
 //   SSI   - SSE1 instructions with XS prefix.
 //   PSI   - SSE1 instructions with TB prefix.
 //   PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
+//   VSSI  - SSE1 instructions with XS prefix in AVX form.
 
 class SSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE1]>;
@@ -229,6 +233,10 @@ class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedSingle>, TB,
         Requires<[HasSSE1]>;
+class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XS, VEX_4V,
+        Requires<[HasAVX, HasSSE1]>;
 
 // SSE2 Instruction Templates:
 // 
@@ -237,6 +245,7 @@ class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   SSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix.
 //   PDI    - SSE2 instructions with TB and OpSize prefixes.
 //   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
+//   VSDI   - SSE2 instructions with XD prefix in AVX form.
 
 class SDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE2]>;
@@ -253,6 +262,10 @@ class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedDouble>, TB, OpSize,
         Requires<[HasSSE2]>;
+class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XD, VEX_4V,
+        Requires<[HasAVX, HasSSE2]>;
 
 // SSE3 Instruction Templates:
 // 

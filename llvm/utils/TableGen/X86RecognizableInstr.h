@@ -52,6 +52,8 @@ private:
   bool HasOpSizePrefix;
   /// The hasREX_WPrefix field from the record
   bool HasREX_WPrefix;
+  /// The hasVEX_4VPrefix field from the record
+  bool HasVEX_4VPrefix;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
   /// The isCodeGenOnly filed from the record

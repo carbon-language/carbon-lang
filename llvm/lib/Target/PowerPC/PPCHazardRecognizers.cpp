@@ -78,7 +78,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
   isLoad  = TID.mayLoad();
   isStore = TID.mayStore();
   
-  unsigned TSFlags = TID.TSFlags;
+  uint64_t TSFlags = TID.TSFlags;
   
   isFirst   = TSFlags & PPCII::PPC970_First;
   isSingle  = TSFlags & PPCII::PPC970_Single;
