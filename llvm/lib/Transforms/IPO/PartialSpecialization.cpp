@@ -32,6 +32,10 @@
 using namespace llvm;
 
 STATISTIC(numSpecialized, "Number of specialized functions created");
+STATISTIC(numReplaced, "Number of callers replaced by specialization");
+
+// Maximum number of arguments markable interested
+static const int MaxInterests = 6;
 
 // Call must be used at least occasionally
 static const int CallsMin = 5;
@@ -40,8 +44,9 @@ static const int CallsMin = 5;
 static const double ConstValPercent = .1;
 
 namespace {
+  typedef SmallVector<int, MaxInterests> InterestingArgVector;
   class PartSpec : public ModulePass {
-    void scanForInterest(Function&, SmallVector<int, 6>&);
+    void scanForInterest(Function&, InterestingArgVector&);
     int scanDistribution(Function&, int, std::map<Constant*, int>&);
   public :
     static char ID; // Pass identification, replacement for typeid
@@ -61,11 +66,13 @@ static Function*
 SpecializeFunction(Function* F, 
                    DenseMap<const Value*, Value*>& replacements) {
   // arg numbers of deleted arguments
-  DenseSet<unsigned> deleted;
+  DenseMap<unsigned, const Argument*> deleted;
   for (DenseMap<const Value*, Value*>::iterator 
          repb = replacements.begin(), repe = replacements.end();
-       repb != repe; ++repb)
-    deleted.insert(cast<Argument>(repb->first)->getArgNo());
+       repb != repe; ++repb) {
+    Argument const *arg = cast<const Argument>(repb->first);
+    deleted[arg->getArgNo()] = arg;
+  }
 
   Function* NF = CloneFunction(F, replacements);
   NF->setLinkage(GlobalValue::InternalLinkage);
@@ -80,9 +87,23 @@ SpecializeFunction(Function* F,
       if (CS.getCalledFunction() == F) {
         
         SmallVector<Value*, 6> args;
-        for (unsigned x = 0; x < CS.arg_size(); ++x)
-          if (!deleted.count(x))
-            args.push_back(CS.getArgument(x));
+        // Assemble the non-specialized arguments for the updated callsite.
+        // In the process, make sure that the specialized arguments are
+        // constant and match the specialization.  If that's not the case,
+        // this callsite needs to call the original or some other
+        // specialization; don't change it here.
+        CallSite::arg_iterator as = CS.arg_begin(), ae = CS.arg_end();
+        for (CallSite::arg_iterator ai = as; ai != ae; ++ai) {
+          DenseMap<unsigned, const Argument*>::iterator delit = deleted.find(
+            std::distance(as, ai));
+          if (delit == deleted.end())
+            args.push_back(cast<Value>(ai));
+          else {
+            Constant *ci = dyn_cast<Constant>(ai);
+            if (!(ci && ci == replacements[delit->second]))
+              goto next_use;
+          }
+        }
         Value* NCall;
         if (CallInst *CI = dyn_cast<CallInst>(i)) {
           NCall = CallInst::Create(NF, args.begin(), args.end(), 
@@ -99,8 +120,11 @@ SpecializeFunction(Function* F,
         }
         CS.getInstruction()->replaceAllUsesWith(NCall);
         CS.getInstruction()->eraseFromParent();
+        ++numReplaced;
       }
     }
+  next_use:
+    ;
   }
   return NF;
 }
@@ -111,7 +135,7 @@ bool PartSpec::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(); I != M.end(); ++I) {
     Function &F = *I;
     if (F.isDeclaration() || F.mayBeOverridden()) continue;
-    SmallVector<int, 6> interestingArgs;
+    InterestingArgVector interestingArgs;
     scanForInterest(F, interestingArgs);
 
     // Find the first interesting Argument that we can specialize on
@@ -143,7 +167,7 @@ bool PartSpec::runOnModule(Module &M) {
 
 /// scanForInterest - This function decides which arguments would be worth
 /// specializing on.
-void PartSpec::scanForInterest(Function& F, SmallVector<int, 6>& args) {
+void PartSpec::scanForInterest(Function& F, InterestingArgVector& args) {
   for(Function::arg_iterator ii = F.arg_begin(), ee = F.arg_end();
       ii != ee; ++ii) {
     for(Value::use_iterator ui = ii->use_begin(), ue = ii->use_end();
