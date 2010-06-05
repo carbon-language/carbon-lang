@@ -311,8 +311,9 @@ void Sema::LookupTemplateName(LookupResult &Found,
           Found.getFoundDecl()->getCanonicalDecl()
             != FoundOuter.getFoundDecl()->getCanonicalDecl()) {
         Diag(Found.getNameLoc(), 
-             diag::err_nested_name_member_ref_lookup_ambiguous)
-          << Found.getLookupName();
+             diag::ext_nested_name_member_ref_lookup_ambiguous)
+          << Found.getLookupName()
+          << ObjectType;
         Diag(Found.getRepresentativeDecl()->getLocation(),
              diag::note_ambig_member_ref_object_type)
           << ObjectType;

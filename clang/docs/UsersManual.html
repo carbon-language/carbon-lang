@@ -386,6 +386,30 @@ by commenting them out.</p>
  and <a href="">-Wbaz</a>.</p>
 </dd>
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_Wambiguous-member-template"><b>-Wambiguous-member-template</b>:
+Warn about unqualified uses of a member template whose name resolves
+to another template at the location of the use.</dt>
+<dd>This option, which defaults to on, enables a warning in the
+following code:</p>
+
+<pre>
+template&lt;typename T> struct set{};
+template&lt;typename T> struct trait { typedef const T& type; };
+struct Value {
+  template&lt;typename T> void set(typename trait&lt;T>::type value) {}
+};
+void foo() {
+  Value v;
+  v.set&lt;double>(3.2);
+}
+</pre>
+
+<p>C++ [basic.lookup.classref] requires this to be an error, but,
+because it's hard to work around, Clang downgrades it to a warning as
+an extension.</p>
+</dd>
+
 </dl>
 
 <!-- ======================================================================= -->

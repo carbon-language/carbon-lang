@@ -549,6 +549,9 @@ def err_dependent_nested_name_spec : Error<
   "parameter">;
 def err_nested_name_member_ref_lookup_ambiguous : Error<
   "lookup of %0 in member access expression is ambiguous">;
+def ext_nested_name_member_ref_lookup_ambiguous : ExtWarn<
+  "lookup of %0 in member access expression is ambiguous; using member of %1">,
+  InGroup<AmbigMemberTemplate>;
 def note_ambig_member_ref_object_type : Note<
   "lookup in the object type %0 refers here">;
 def note_ambig_member_ref_scope : Note<
