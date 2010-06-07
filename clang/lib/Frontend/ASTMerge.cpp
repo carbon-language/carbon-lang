@@ -95,8 +95,8 @@ bool ASTMergeAction::hasPCHSupport() const {
   return AdaptedAction->hasPCHSupport();
 }
 
-bool ASTMergeAction::hasASTSupport() const {
-  return AdaptedAction->hasASTSupport();
+bool ASTMergeAction::hasASTFileSupport() const {
+  return AdaptedAction->hasASTFileSupport();
 }
 
 bool ASTMergeAction::hasCodeCompletionSupport() const {

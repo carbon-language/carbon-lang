@@ -144,8 +144,8 @@ public:
   /// hasPCHSupport - Does this action support use with PCH?
   virtual bool hasPCHSupport() const { return !usesPreprocessorOnly(); }
 
-  /// hasASTSupport - Does this action support use with AST files?
-  virtual bool hasASTSupport() const { return !usesPreprocessorOnly(); }
+  /// hasASTFileSupport - Does this action support use with AST files?
+  virtual bool hasASTFileSupport() const { return !usesPreprocessorOnly(); }
 
   /// hasCodeCompletionSupport - Does this action support use with code
   /// completion?

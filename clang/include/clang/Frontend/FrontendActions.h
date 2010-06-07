@@ -87,7 +87,7 @@ protected:
 
   virtual void EndSourceFileAction();
 
-  virtual bool hasASTSupport() const { return false; }
+  virtual bool hasASTFileSupport() const { return false; }
 
 public:
   FixItAction();
@@ -101,7 +101,7 @@ protected:
 
   virtual bool usesCompleteTranslationUnit() { return false; }
 
-  virtual bool hasASTSupport() const { return false; }
+  virtual bool hasASTFileSupport() const { return false; }
 };
 
 class HTMLPrintAction : public ASTFrontendAction {
@@ -170,7 +170,7 @@ public:
   virtual bool usesPreprocessorOnly() const;
   virtual bool usesCompleteTranslationUnit();
   virtual bool hasPCHSupport() const;
-  virtual bool hasASTSupport() const;
+  virtual bool hasASTFileSupport() const;
   virtual bool hasCodeCompletionSupport() const;
 };
 

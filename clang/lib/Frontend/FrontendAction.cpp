@@ -43,7 +43,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (InputKind == IK_AST) {
     assert(!usesPreprocessorOnly() &&
            "Attempt to pass AST file to preprocessor only action!");
-    assert(hasASTSupport() && "This action does not have AST support!");
+    assert(hasASTFileSupport() &&
+           "This action does not have AST file support!");
 
     llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
     std::string Error;
