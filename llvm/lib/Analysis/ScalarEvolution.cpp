@@ -505,8 +505,10 @@ namespace {
         return false;
 
       // Primarily, sort the SCEVs by their getSCEVType().
-      if (LHS->getSCEVType() != RHS->getSCEVType())
-        return LHS->getSCEVType() < RHS->getSCEVType();
+      unsigned LST = LHS->getSCEVType();
+      unsigned RST = RHS->getSCEVType();
+      if (LST != RST)
+        return LST < RST;
 
       // Then, pick an arbitrary sort. Use the profiling data for speed.
       const FoldingSetNodeIDRef &L = LHS->getProfile();
