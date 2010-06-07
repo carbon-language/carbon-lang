@@ -25,8 +25,10 @@ FrontendAction::FrontendAction() : Instance(0) {}
 
 FrontendAction::~FrontendAction() {}
 
-void FrontendAction::setCurrentFile(llvm::StringRef Value, ASTUnit *AST) {
+void FrontendAction::setCurrentFile(llvm::StringRef Value, InputKind Kind,
+                                    ASTUnit *AST) {
   CurrentFile = Value;
+  CurrentFileKind = Kind;
   CurrentASTUnit.reset(AST);
 }
 
@@ -35,7 +37,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      InputKind InputKind) {
   assert(!Instance && "Already processing a source file!");
   assert(!Filename.empty() && "Unexpected empty filename!");
-  setCurrentFile(Filename);
+  setCurrentFile(Filename, InputKind);
   setCompilerInstance(&CI);
 
   // AST files follow a very different path, since they share objects via the
@@ -52,7 +54,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     if (!AST)
       goto failure;
 
-    setCurrentFile(Filename, AST);
+    setCurrentFile(Filename, InputKind, AST);
 
     // Set the shared objects, these are reset when we finish processing the
     // file, otherwise the CompilerInstance will happily destroy them.
@@ -127,7 +129,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   }
 
   CI.getDiagnosticClient().EndSourceFile();
-  setCurrentFile("");
+  setCurrentFile("", IK_None);
   setCompilerInstance(0);
   return false;
 }
@@ -206,7 +208,7 @@ void FrontendAction::EndSourceFile() {
   }
 
   setCompilerInstance(0);
-  setCurrentFile("");
+  setCurrentFile("", IK_None);
 }
 
 //===----------------------------------------------------------------------===//

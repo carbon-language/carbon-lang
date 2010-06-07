@@ -15,10 +15,10 @@
 #include <string>
 
 namespace clang {
-class ASTUnit;
 class ASTConsumer;
-class CompilerInstance;
 class ASTMergeAction;
+class ASTUnit;
+class CompilerInstance;
 
 enum InputKind {
   IK_None,
@@ -40,6 +40,7 @@ enum InputKind {
 /// the frontend.
 class FrontendAction {
   std::string CurrentFile;
+  InputKind CurrentFileKind;
   llvm::OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
   friend class ASTMergeAction;
@@ -117,6 +118,11 @@ public:
     return CurrentFile;
   }
 
+  InputKind getCurrentFileKind() const {
+    assert(!CurrentFile.empty() && "No current file!");
+    return CurrentFileKind;
+  }
+
   ASTUnit &getCurrentASTUnit() const {
     assert(!CurrentASTUnit && "No current AST unit!");
     return *CurrentASTUnit;
@@ -126,7 +132,7 @@ public:
     return CurrentASTUnit.take();
   }
 
-  void setCurrentFile(llvm::StringRef Value, ASTUnit *AST = 0);
+  void setCurrentFile(llvm::StringRef Value, InputKind Kind, ASTUnit *AST = 0);
 
   /// @}
   /// @name Supported Modes
