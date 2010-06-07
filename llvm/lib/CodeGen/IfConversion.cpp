@@ -514,15 +514,14 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
 
   MachineBasicBlock::iterator TI = TrueBBI.BB->begin();
   MachineBasicBlock::iterator FI = FalseBBI.BB->begin();
-  while (1) {
-    if (TI == TrueBBI.BB->end() || FI == FalseBBI.BB->end())
-      break;
-    // Skip dbg_value instructions
-    if (TI->isDebugValue())
-      ++TI;
-    if (FI->isDebugValue())
-      ++FI;
-
+  MachineBasicBlock::iterator TIE = TrueBBI.BB->end();
+  MachineBasicBlock::iterator FIE = FalseBBI.BB->end();
+  // Skip dbg_value instructions
+  while (TI != TIE && TI->isDebugValue())
+    ++TI;
+  while (FI != FIE && FI->isDebugValue())
+    ++FI;
+  while (TI != TIE && FI != FIE) {
     if (!TI->isIdenticalTo(FI))
       break;
     ++Dups1;
@@ -532,15 +531,14 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
 
   TI = firstNonBranchInst(TrueBBI.BB, TII);
   FI = firstNonBranchInst(FalseBBI.BB, TII);
-  while (1) {
-    if (TI == TrueBBI.BB->begin() || FI == FalseBBI.BB->begin())
-      break;
-    // Skip dbg_value instructions
-    if (TI->isDebugValue())
-      --TI;
-    if (FI->isDebugValue())
-      --FI;
-
+  MachineBasicBlock::iterator TIB = TrueBBI.BB->begin();
+  MachineBasicBlock::iterator FIB = FalseBBI.BB->begin();
+  // Skip dbg_value instructions
+  while (TI != TIB && TI->isDebugValue())
+    --TI;
+  while (FI != FIB && FI->isDebugValue())
+    --FI;
+  while (TI != TIB && FI != FIB) {
     if (!TI->isIdenticalTo(FI))
       break;
     ++Dups2;
