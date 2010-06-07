@@ -120,9 +120,14 @@ namespace {
 
     typedef SmallVector<RetOrArg, 5> UseVector;
 
+  protected:
+    // DAH uses this to specify a different ID.
+    explicit DAE(void *ID) : ModulePass(ID) {}
+
   public:
     static char ID; // Pass identification, replacement for typeid
     DAE() : ModulePass(&ID) {}
+
     bool runOnModule(Module &M);
 
     virtual bool ShouldHackArguments() const { return false; }
@@ -155,6 +160,8 @@ namespace {
   /// by bugpoint.
   struct DAH : public DAE {
     static char ID;
+    DAH() : DAE(&ID) {}
+
     virtual bool ShouldHackArguments() const { return true; }
   };
 }
