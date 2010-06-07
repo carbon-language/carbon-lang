@@ -1,5 +1,4 @@
-// RUN: %llvmgcc -g -S -O2 %s -o %t
-// RUN: grep "i1 false, i1 true. . . DW_TAG_subprogram" %t | count 2
+// RUN: %llvmgcc -g -S -O2 %s -o - | FileCheck %s
 
 class foo {
 public:
@@ -8,10 +7,12 @@ public:
 };
 
 int foo::bar(int x) {
+  // CHECK: {{i1 false, i1 true(, i[0-9]+ [^\}]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
     return x*4 + 1;
 }
 
 int foo::baz(int x) {
+  // CHECK: {{i1 false, i1 true(, i[0-9]+ [^\},]+[}]|[}]) ; \[ DW_TAG_subprogram \]}}
     return x*4 + 1;
 }
 
