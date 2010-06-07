@@ -879,8 +879,48 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   }
 }
 
+const llvm::Type *GetNeonType(LLVMContext &Ctx, unsigned type, bool q) {
+  switch (type) {
+    default: break;
+    case 0: 
+    case 5: return llvm::VectorType::get(llvm::Type::getInt8Ty(Ctx), 8 << q);
+    case 6:
+    case 7:
+    case 1: return llvm::VectorType::get(llvm::Type::getInt16Ty(Ctx), 4 << q);
+    case 2: return llvm::VectorType::get(llvm::Type::getInt32Ty(Ctx), 2 << q);
+    case 3: return llvm::VectorType::get(llvm::Type::getInt64Ty(Ctx), 1 << q);
+    case 4: return llvm::VectorType::get(llvm::Type::getFloatTy(Ctx), 2 << q);
+  };
+  return 0;
+}
+
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
+  llvm::SmallVector<Value*, 4> Ops;
+  bool usgn, poly, half;
+  const llvm::Type *Ty;
+  unsigned Int;
+  
+  // Determine the type of this overloaded NEON intrinsic.
+  if (BuiltinID != ARM::BI__builtin_thread_pointer) {
+    for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
+      Ops.push_back(EmitScalarExpr(E->getArg(i)));
+    
+    llvm::APSInt Result;
+    const Expr *Arg = E->getArg(E->getNumArgs()-1);
+    if (!Arg->isIntegerConstantExpr(Result, getContext()))
+      return 0;
+    
+    unsigned type = Result.getZExtValue();
+    Ty = GetNeonType(VMContext, type & 0x7, type & 0x10);
+    if (!Ty)
+      return 0;
+    
+    usgn = type & 0x08;
+    poly = type == 5 || type == 6;
+    half = type == 7;
+  }
+  
   switch (BuiltinID) {
   default: return 0;
 
@@ -888,6 +928,55 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Value *AtomF = CGM.getIntrinsic(Intrinsic::arm_thread_pointer, 0, 0);
     return Builder.CreateCall(AtomF);
   }
+  // FIXME: bitcast args, return.
+  case ARM::BI__builtin_neon_vaba_v:
+  case ARM::BI__builtin_neon_vabaq_v: {
+    Int = usgn ? Intrinsic::arm_neon_vabau : Intrinsic::arm_neon_vabas;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 3, "vaba");
+  }
+  case ARM::BI__builtin_neon_vabal_v: {
+    Int = usgn ? Intrinsic::arm_neon_vabalu : Intrinsic::arm_neon_vabals;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 3, "vabal");
+  }
+  case ARM::BI__builtin_neon_vabd_v:
+  case ARM::BI__builtin_neon_vabdq_v: {
+    Int = usgn ? Intrinsic::arm_neon_vabdu : Intrinsic::arm_neon_vabds;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "vabd");
+  }
+  case ARM::BI__builtin_neon_vabdl_v: {
+    Int = usgn ? Intrinsic::arm_neon_vabdlu : Intrinsic::arm_neon_vabdls;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "vabdl");
+  }
+  case ARM::BI__builtin_neon_vabs_v:
+  case ARM::BI__builtin_neon_vabsq_v: {
+    Value *F = CGM.getIntrinsic(Intrinsic::arm_neon_vabs, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 1, "vabs");
+  }
+  case ARM::BI__builtin_neon_vaddhn_v: {
+    Value *F = CGM.getIntrinsic(Intrinsic::arm_neon_vaddhn, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "vaddhn");
+  }
+  case ARM::BI__builtin_neon_vaddl_v: {
+    Int = usgn ? Intrinsic::arm_neon_vaddlu : Intrinsic::arm_neon_vaddls;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "vaddl");
+  }
+  case ARM::BI__builtin_neon_vaddw_v: {
+    Int = usgn ? Intrinsic::arm_neon_vaddws : Intrinsic::arm_neon_vaddwu;
+    Value *F = CGM.getIntrinsic(Int, &Ty, 1);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "vaddw");
+  }
+  // FIXME: vbsl -> or ((0 & 1), (0 & 2)), impl. with generic ops?
+  case ARM::BI__builtin_neon_vcage_v:
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_neon_vacged),
+                              &Ops[0], &Ops[0] + 2, "vcage");
+  case ARM::BI__builtin_neon_vcageq_v:
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_neon_vacgeq),
+                              &Ops[0], &Ops[0] + 2, "vcage");
   }
 }
 
