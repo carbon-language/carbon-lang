@@ -59,11 +59,12 @@ class MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   BuiltinBug *BT_Leak;
   BuiltinBug *BT_UseFree;
+  BuiltinBug *BT_BadFree;
   IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc;
 
 public:
   MallocChecker() 
-    : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), 
+    : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), BT_BadFree(0),
       II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
@@ -90,6 +91,10 @@ private:
 
   void ReallocMem(CheckerContext &C, const CallExpr *CE);
   void CallocMem(CheckerContext &C, const CallExpr *CE);
+  
+  bool SummarizeValue(llvm::raw_ostream& os, SVal V);
+  bool SummarizeRegion(llvm::raw_ostream& os, const MemRegion *MR);
+  void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range);
 };
 } // end anonymous namespace
 
@@ -191,18 +196,59 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 
 const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
                                          const GRState *state) {
-  SVal ArgVal = state->getSVal(CE->getArg(0));
+  const Expr *ArgExpr = CE->getArg(0);
+  SVal ArgVal = state->getSVal(ArgExpr);
 
   // If ptr is NULL, no operation is preformed.
   if (ArgVal.isZeroConstant())
     return state;
-
-  SymbolRef Sym = ArgVal.getAsLocSymbol();
-
-  // Various cases could lead to non-symbol values here.
-  if (!Sym)
+  
+  // Unknown values could easily be okay
+  // Undefined values are handled elsewhere
+  if (ArgVal.isUnknownOrUndef())
     return state;
 
+  const MemRegion *R = ArgVal.getAsRegion();
+  
+  // Nonlocs can't be freed, of course.
+  // Non-region locations (labels and fixed addresses) also shouldn't be freed.
+  if (!R) {
+    ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
+    return NULL;
+  }
+  
+  R = R->StripCasts();
+  
+  // Blocks might show up as heap data, but should not be free()d
+  if (isa<BlockDataRegion>(R)) {
+    ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
+    return NULL;
+  }
+  
+  const MemSpaceRegion *MS = R->getMemorySpace();
+  
+  // Parameters, locals, statics, and globals shouldn't be freed.
+  if (!(isa<UnknownSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS))) {
+    // FIXME: at the time this code was written, malloc() regions were
+    // represented by conjured symbols, which are all in UnknownSpaceRegion.
+    // This means that there isn't actually anything from HeapSpaceRegion
+    // that should be freed, even though we allow it here.
+    // Of course, free() can work on memory allocated outside the current
+    // function, so UnknownSpaceRegion is always a possibility.
+    // False negatives are better than false positives.
+    
+    ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
+    return NULL;
+  }
+  
+  const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R);
+  // Various cases could lead to non-symbol values here.
+  // For now, ignore them.
+  if (!SR)
+    return state;
+
+  SymbolRef Sym = SR->getSymbol();
+  
   const RefState *RS = state->get<RegionState>(Sym);
 
   // If the symbol has not been tracked, return. This is possible when free() is
@@ -228,6 +274,135 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
 
   // Normal free.
   return state->set<RegionState>(Sym, RefState::getReleased(CE));
+}
+
+bool MallocChecker::SummarizeValue(llvm::raw_ostream& os, SVal V) {
+  if (nonloc::ConcreteInt *IntVal = dyn_cast<nonloc::ConcreteInt>(&V))
+    os << "an integer (" << IntVal->getValue() << ")";
+  else if (loc::ConcreteInt *ConstAddr = dyn_cast<loc::ConcreteInt>(&V))
+    os << "a constant address (" << ConstAddr->getValue() << ")";
+  else if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&V))
+    os << "the address of the label '"
+       << Label->getLabel()->getID()->getName()
+       << "'";
+  else
+    return false;
+  
+  return true;
+}
+
+bool MallocChecker::SummarizeRegion(llvm::raw_ostream& os,
+                                    const MemRegion *MR) {
+  switch (MR->getKind()) {
+  case MemRegion::FunctionTextRegionKind: {
+    const FunctionDecl *FD = cast<FunctionTextRegion>(MR)->getDecl();
+    if (FD)
+      os << "the address of the function '" << FD << "'";
+    else
+      os << "the address of a function";
+    return true;
+  }
+  case MemRegion::BlockTextRegionKind:
+    os << "block text";
+    return true;
+  case MemRegion::BlockDataRegionKind:
+    // FIXME: where the block came from?
+    os << "a block";
+    return true;
+  default: {
+    const MemSpaceRegion *MS = MR->getMemorySpace();
+    
+    switch (MS->getKind()) {
+    case MemRegion::StackLocalsSpaceRegionKind: {
+      const VarRegion *VR = dyn_cast<VarRegion>(MR);
+      const VarDecl *VD;
+      if (VR)
+        VD = VR->getDecl();
+      else
+        VD = NULL;
+      
+      if (VD)
+        os << "the address of the local variable '" << VD->getName() << "'";
+      else
+        os << "the address of a local stack variable";
+      return true;
+    }
+    case MemRegion::StackArgumentsSpaceRegionKind: {
+      const VarRegion *VR = dyn_cast<VarRegion>(MR);
+      const VarDecl *VD;
+      if (VR)
+        VD = VR->getDecl();
+      else
+        VD = NULL;
+      
+      if (VD)
+        os << "the address of the parameter '" << VD->getName() << "'";
+      else
+        os << "the address of a parameter";
+      return true;
+    }
+    case MemRegion::GlobalsSpaceRegionKind: {
+      const VarRegion *VR = dyn_cast<VarRegion>(MR);
+      const VarDecl *VD;
+      if (VR)
+        VD = VR->getDecl();
+      else
+        VD = NULL;
+      
+      if (VD) {
+        if (VD->isStaticLocal())
+          os << "the address of the static variable '" << VD->getName() << "'";
+        else
+          os << "the address of the global variable '" << VD->getName() << "'";
+      } else
+        os << "the address of a global variable";
+      return true;
+    }
+    default:
+      return false;
+    }
+  }
+  }
+}
+
+void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
+                                  SourceRange range) {
+  ExplodedNode *N = C.GenerateSink();
+  if (N) {
+    if (!BT_BadFree)
+      BT_BadFree = new BuiltinBug("Bad free");
+    
+    llvm::SmallString<100> buf;
+    llvm::raw_svector_ostream os(buf);
+    
+    const MemRegion *MR = ArgVal.getAsRegion();
+    if (MR) {
+      while (const ElementRegion *ER = dyn_cast<ElementRegion>(MR))
+        MR = ER->getSuperRegion();
+      
+      // Special case for alloca()
+      if (isa<AllocaRegion>(MR))
+        os << "Argument to free() was allocated by alloca(), not malloc()";
+      else {
+        os << "Argument to free() is ";
+        if (SummarizeRegion(os, MR))
+          os << ", which is not memory allocated by malloc()";
+        else
+          os << "not memory allocated by malloc()";
+      }
+    } else {
+      os << "Argument to free() is ";
+      if (SummarizeValue(os, ArgVal))
+        os << ", which is not memory allocated by malloc()";
+      else
+        os << "not memory allocated by malloc()";
+    }
+    
+    os.flush();
+    EnhancedBugReport *R = new EnhancedBugReport(*BT_BadFree, buf.str(), N);
+    R->addRange(range);
+    C.EmitReport(R);
+  }
 }
 
 void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
