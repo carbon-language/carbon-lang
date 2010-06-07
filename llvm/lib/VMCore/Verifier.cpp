@@ -1628,8 +1628,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
   // If the intrinsic takes MDNode arguments, verify that they are either global
   // or are local to *this* function.
-  for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
-    if (MDNode *MD = dyn_cast<MDNode>(CI.getOperand(i)))
+  for (unsigned i = 0, e = CI.getNumArgOperands(); i != e; ++i)
+    if (MDNode *MD = dyn_cast<MDNode>(CI.getArgOperand(i)))
       visitMDNode(*MD, CI.getParent()->getParent());
 
   switch (ID) {
