@@ -178,6 +178,8 @@ bool CodePlacementOpt::EliminateUnconditionalJumpsToTop(MachineFunction &MF,
         continue;
 
       // Move the block.
+      DEBUG(dbgs() << "CGP: Moving blocks starting at BB#" << Pred->getNumber()
+                   << " to top of loop.\n");
       Changed = true;
 
       // Move it and all the blocks that can reach it via fallthrough edges
@@ -297,6 +299,8 @@ bool CodePlacementOpt::MoveDiscontiguousLoopBlocks(MachineFunction &MF,
         continue;
 
       // Move the block.
+      DEBUG(dbgs() << "CGP: Moving blocks starting at BB#" << BB->getNumber()
+                   << " to be contiguous with loop.\n");
       Changed = true;
 
       // Process this block and all loop blocks contiguous with it, to keep
