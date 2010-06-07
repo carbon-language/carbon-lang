@@ -71,8 +71,10 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
     unsigned Mask = 0, Pos = 3;
     // Branches, including tricky ones like LDM_RET, need to end an IT
     // block so check the instruction we just put in the block.
-    while (MBBI != E && Pos &&
-           (!MI->getDesc().isBranch() && !MI->getDesc().isReturn())) {
+    for (; MBBI != E && Pos &&
+           (!MI->getDesc().isBranch() && !MI->getDesc().isReturn()) ; ++MBBI) {
+      if (MBBI->isDebugValue())
+        continue;
       MachineInstr *NMI = &*MBBI;
       MI = NMI;
       DebugLoc ndl = NMI->getDebugLoc();
@@ -83,7 +85,6 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
       else
         break;
       --Pos;
-      ++MBBI;
     }
     Mask |= (1 << Pos);
     // Tag along (firstcond[0] << 4) with the mask.
