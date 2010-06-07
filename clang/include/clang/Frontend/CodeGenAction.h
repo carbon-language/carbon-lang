@@ -24,8 +24,12 @@ private:
 protected:
   CodeGenAction(unsigned _Act);
 
+  virtual bool hasIRSupport() const;
+
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);
+
+  virtual void ExecuteAction();
 
   virtual void EndSourceFileAction();
 

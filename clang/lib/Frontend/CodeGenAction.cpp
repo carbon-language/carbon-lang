@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Timer.h"
@@ -220,6 +221,8 @@ CodeGenAction::CodeGenAction(unsigned _Act) : Act(_Act) {}
 
 CodeGenAction::~CodeGenAction() {}
 
+bool CodeGenAction::hasIRSupport() const { return true; }
+
 void CodeGenAction::EndSourceFileAction() {
   // If the consumer creation failed, do nothing.
   if (!getCompilerInstance().hasASTConsumer())
@@ -236,27 +239,31 @@ llvm::Module *CodeGenAction::takeModule() {
   return TheModule.take();
 }
 
+static raw_ostream *GetOutputStream(CompilerInstance &CI,
+                                    llvm::StringRef InFile,
+                                    BackendAction Action) {
+  switch (Action) {
+  case Backend_EmitAssembly:
+    return CI.createDefaultOutputFile(false, InFile, "s");
+  case Backend_EmitLL:
+    return CI.createDefaultOutputFile(false, InFile, "ll");
+  case Backend_EmitBC:
+    return CI.createDefaultOutputFile(true, InFile, "bc");
+  case Backend_EmitNothing:
+    return 0;
+  case Backend_EmitMCNull:
+  case Backend_EmitObj:
+    return CI.createDefaultOutputFile(true, InFile, "o");
+  }
+
+  assert(0 && "Invalid action!");
+  return 0;
+}
+
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
-  llvm::OwningPtr<llvm::raw_ostream> OS;
-  switch (BA) {
-  case Backend_EmitAssembly:
-    OS.reset(CI.createDefaultOutputFile(false, InFile, "s"));
-    break;
-  case Backend_EmitLL:
-    OS.reset(CI.createDefaultOutputFile(false, InFile, "ll"));
-    break;
-  case Backend_EmitBC:
-    OS.reset(CI.createDefaultOutputFile(true, InFile, "bc"));
-    break;
-  case Backend_EmitNothing:
-    break;
-  case Backend_EmitMCNull:
-  case Backend_EmitObj:
-    OS.reset(CI.createDefaultOutputFile(true, InFile, "o"));
-    break;
-  }
+  llvm::OwningPtr<llvm::raw_ostream> OS(GetOutputStream(CI, InFile, BA));
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
@@ -265,6 +272,59 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                              CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
                              CI.getLLVMContext());
 }
+
+void CodeGenAction::ExecuteAction() {
+  // If this is an IR file, we have to treat it specially.
+  if (getCurrentFileKind() == IK_LLVM_IR) {
+    BackendAction BA = static_cast<BackendAction>(Act);
+    CompilerInstance &CI = getCompilerInstance();
+    raw_ostream *OS = GetOutputStream(CI, getCurrentFile(), BA);
+    if (BA != Backend_EmitNothing && !OS)
+      return;
+
+    bool Invalid;
+    SourceManager &SM = CI.getSourceManager();
+    const llvm::MemoryBuffer *MainFile = SM.getBuffer(SM.getMainFileID(),
+                                                      &Invalid);
+    if (Invalid)
+      return;
+
+    // FIXME: This is stupid, IRReader shouldn't take ownership.
+    llvm::MemoryBuffer *MainFileCopy =
+      llvm::MemoryBuffer::getMemBufferCopy(MainFile->getBuffer(),
+                                           getCurrentFile().c_str());
+
+    llvm::SMDiagnostic Err;
+    TheModule.reset(ParseIR(MainFileCopy, Err, CI.getLLVMContext()));
+    if (!TheModule) {
+      // Translate from the diagnostic info to the SourceManager location.
+      SourceLocation Loc = SM.getLocation(
+        SM.getFileEntryForID(SM.getMainFileID()), Err.getLineNo(),
+        Err.getColumnNo() + 1);
+
+      // Get a custom diagnostic for the error. We strip off a leading
+      // diagnostic code if there is one.
+      llvm::StringRef Msg = Err.getMessage();
+      if (Msg.startswith("error: "))
+        Msg = Msg.substr(7);
+      unsigned DiagID = CI.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+                                                            Msg);
+
+      CI.getDiagnostics().Report(FullSourceLoc(Loc, SM), DiagID);
+      return;
+    }
+
+    EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(),
+                      CI.getTargetOpts(), TheModule.get(),
+                      BA, OS);
+    return;
+  }
+
+  // Otherwise follow the normal AST path.
+  this->ASTFrontendAction::ExecuteAction();
+}
+
+//
 
 EmitAssemblyAction::EmitAssemblyAction()
   : CodeGenAction(Backend_EmitAssembly) {}

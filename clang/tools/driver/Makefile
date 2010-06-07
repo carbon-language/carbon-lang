@@ -26,7 +26,8 @@ TOOL_NO_EXPORTS = 1
 # LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
+                   ipo selectiondag
 USEDLIBS = clangFrontend.a clangDriver.a clangCodeGen.a clangSema.a \
            clangChecker.a clangAnalysis.a clangRewrite.a  clangAST.a \
            clangParse.a clangLex.a clangBasic.a
