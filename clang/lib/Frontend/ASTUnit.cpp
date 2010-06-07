@@ -359,7 +359,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
 
   Act.reset(new TopLevelDeclTrackerAction(*AST));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
-                           /*IsAST=*/false))
+                            Clang.getFrontendOpts().Inputs[0].first))
     goto error;
 
   Act->Execute();

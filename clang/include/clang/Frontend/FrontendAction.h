@@ -166,17 +166,18 @@ public:
   /// \param Filename - The input filename, which will be made available to
   /// clients via \see getCurrentFile().
   ///
-  /// \param IsAST - Indicates whether this is an AST input. AST inputs require
-  /// special handling, since the AST file itself contains several objects which
-  /// would normally be owned by the CompilerInstance. When processing AST input
-  /// files, these objects should generally not be initialized in the
-  /// CompilerInstance -- they will automatically be shared with the AST file in
-  /// between \see BeginSourceFile() and \see EndSourceFile().
+  /// \param InputKind - The type of input. Some input kinds are handled
+  /// specially, for example AST inputs, since the AST file itself contains
+  /// several objects which would normally be owned by the
+  /// CompilerInstance. When processing AST input files, these objects should
+  /// generally not be initialized in the CompilerInstance -- they will
+  /// automatically be shared with the AST file in between \see
+  /// BeginSourceFile() and \see EndSourceFile().
   ///
   /// \return True on success; the compilation of this file should be aborted
   /// and neither Execute nor EndSourceFile should be called.
   bool BeginSourceFile(CompilerInstance &CI, llvm::StringRef Filename,
-                       bool IsAST = false);
+                       InputKind Kind);
 
   /// Execute - Set the source managers main input file, and run the action.
   void Execute();

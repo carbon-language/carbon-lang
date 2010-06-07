@@ -509,7 +509,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
       createPreprocessor();
     }
 
-    if (Act.BeginSourceFile(*this, InFile, IsAST)) {
+    if (Act.BeginSourceFile(*this, InFile, getFrontendOpts().Inputs[i].first)) {
       Act.Execute();
       Act.EndSourceFile();
     }

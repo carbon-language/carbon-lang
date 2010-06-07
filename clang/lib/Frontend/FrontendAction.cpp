@@ -32,7 +32,7 @@ void FrontendAction::setCurrentFile(llvm::StringRef Value, ASTUnit *AST) {
 
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      llvm::StringRef Filename,
-                                     bool IsAST) {
+                                     InputKind InputKind) {
   assert(!Instance && "Already processing a source file!");
   assert(!Filename.empty() && "Unexpected empty filename!");
   setCurrentFile(Filename);
@@ -40,6 +40,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   // AST files follow a very different path, since they share objects via the
   // AST unit.
+  bool IsAST = InputKind == IK_AST;
   if (IsAST) {
     assert(!usesPreprocessorOnly() &&
            "Attempt to pass AST file to preprocessor only action!");
