@@ -1956,6 +1956,7 @@ DeclarationName InitializedEntity::getName() const {
   case EK_Base:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_BlockElement:
     return DeclarationName();
   }
   
@@ -1977,6 +1978,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_Base:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_BlockElement:
     return 0;
   }
   
@@ -1998,6 +2000,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_Base:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_BlockElement:
     break;
   }
 
@@ -3170,6 +3173,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Member:
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_BlockElement:
     return Sema::AA_Initializing;
   }
 
@@ -3188,6 +3192,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_Exception:
+  case InitializedEntity::EK_BlockElement:
     return false;
     
   case InitializedEntity::EK_Parameter:
@@ -3207,6 +3212,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_New:
     case InitializedEntity::EK_Base:
     case InitializedEntity::EK_VectorElement:
+    case InitializedEntity::EK_BlockElement:
       return false;
       
     case InitializedEntity::EK_Variable:
@@ -3291,6 +3297,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_BlockElement:
     Loc = CurInitExpr->getLocStart();
     break;
   }

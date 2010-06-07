@@ -66,7 +66,10 @@ public:
     EK_Base,
     /// \brief The entity being initialized is an element of a vector.
     /// or vector.
-    EK_VectorElement
+    EK_VectorElement,
+    /// \brief The entity being initialized is a field of block descriptor for
+    /// the copied-in c++ object.
+    EK_BlockElement
   };
   
 private:
@@ -166,6 +169,11 @@ public:
     return InitializedEntity(EK_Result, ReturnLoc, Type, NRVO);
   }
 
+  static InitializedEntity InitializeBlock(SourceLocation BlockVarLoc,
+                                           QualType Type, bool NRVO) {
+    return InitializedEntity(EK_BlockElement, BlockVarLoc, Type, NRVO);
+  }
+  
   /// \brief Create the initialization entity for an exception object.
   static InitializedEntity InitializeException(SourceLocation ThrowLoc,
                                                QualType Type, bool NRVO) {

@@ -1757,11 +1757,12 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                          SourceLocation());
       
       OwningExprResult Res = PerformCopyInitialization(
-                      InitializedEntity::InitializeResult(SourceLocation(), 
-                                                          T, false),
+                      InitializedEntity::InitializeBlock(VD->getLocation(), 
+                                                         T, false),
                       SourceLocation(),
                       Owned(E));
       if (!Res.isInvalid()) {
+        Res = MaybeCreateCXXExprWithTemporaries(move(Res));
         Expr *Init = Res.takeAs<Expr>();
         if (isa<CXXConstructExpr>(Init))
           BDRE->setCopyConstructorExpr(Init);
