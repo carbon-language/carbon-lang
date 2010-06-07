@@ -3171,7 +3171,9 @@ ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   bool ReverseVEXT;
   unsigned Imm, WhichResult;
 
-  return (ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  return (EltSize >= 32 ||
+          ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
           isVREVMask(M, VT, 64) ||
           isVREVMask(M, VT, 32) ||
           isVREVMask(M, VT, 16) ||
@@ -3269,59 +3271,62 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // of the same time so that they get CSEd properly.
   SVN->getMask(ShuffleMask);
 
-  if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
-    int Lane = SVN->getSplatIndex();
-    // If this is undef splat, generate it via "just" vdup, if possible.
-    if (Lane == -1) Lane = 0;
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize <= 32) {
+    if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
+      int Lane = SVN->getSplatIndex();
+      // If this is undef splat, generate it via "just" vdup, if possible.
+      if (Lane == -1) Lane = 0;
 
-    if (Lane == 0 && V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-      return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
+      if (Lane == 0 && V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+        return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
+      }
+      return DAG.getNode(ARMISD::VDUPLANE, dl, VT, V1,
+                         DAG.getConstant(Lane, MVT::i32));
     }
-    return DAG.getNode(ARMISD::VDUPLANE, dl, VT, V1,
-                       DAG.getConstant(Lane, MVT::i32));
+
+    bool ReverseVEXT;
+    unsigned Imm;
+    if (isVEXTMask(ShuffleMask, VT, ReverseVEXT, Imm)) {
+      if (ReverseVEXT)
+        std::swap(V1, V2);
+      return DAG.getNode(ARMISD::VEXT, dl, VT, V1, V2,
+                         DAG.getConstant(Imm, MVT::i32));
+    }
+
+    if (isVREVMask(ShuffleMask, VT, 64))
+      return DAG.getNode(ARMISD::VREV64, dl, VT, V1);
+    if (isVREVMask(ShuffleMask, VT, 32))
+      return DAG.getNode(ARMISD::VREV32, dl, VT, V1);
+    if (isVREVMask(ShuffleMask, VT, 16))
+      return DAG.getNode(ARMISD::VREV16, dl, VT, V1);
+
+    // Check for Neon shuffles that modify both input vectors in place.
+    // If both results are used, i.e., if there are two shuffles with the same
+    // source operands and with masks corresponding to both results of one of
+    // these operations, DAG memoization will ensure that a single node is
+    // used for both shuffles.
+    unsigned WhichResult;
+    if (isVTRNMask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
+                         V1, V2).getValue(WhichResult);
+    if (isVUZPMask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
+                         V1, V2).getValue(WhichResult);
+    if (isVZIPMask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
+                         V1, V2).getValue(WhichResult);
+
+    if (isVTRN_v_undef_Mask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
+                         V1, V1).getValue(WhichResult);
+    if (isVUZP_v_undef_Mask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
+                         V1, V1).getValue(WhichResult);
+    if (isVZIP_v_undef_Mask(ShuffleMask, VT, WhichResult))
+      return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
+                         V1, V1).getValue(WhichResult);
   }
-
-  bool ReverseVEXT;
-  unsigned Imm;
-  if (isVEXTMask(ShuffleMask, VT, ReverseVEXT, Imm)) {
-    if (ReverseVEXT)
-      std::swap(V1, V2);
-    return DAG.getNode(ARMISD::VEXT, dl, VT, V1, V2,
-                       DAG.getConstant(Imm, MVT::i32));
-  }
-
-  if (isVREVMask(ShuffleMask, VT, 64))
-    return DAG.getNode(ARMISD::VREV64, dl, VT, V1);
-  if (isVREVMask(ShuffleMask, VT, 32))
-    return DAG.getNode(ARMISD::VREV32, dl, VT, V1);
-  if (isVREVMask(ShuffleMask, VT, 16))
-    return DAG.getNode(ARMISD::VREV16, dl, VT, V1);
-
-  // Check for Neon shuffles that modify both input vectors in place.
-  // If both results are used, i.e., if there are two shuffles with the same
-  // source operands and with masks corresponding to both results of one of
-  // these operations, DAG memoization will ensure that a single node is
-  // used for both shuffles.
-  unsigned WhichResult;
-  if (isVTRNMask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
-                       V1, V2).getValue(WhichResult);
-  if (isVUZPMask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
-                       V1, V2).getValue(WhichResult);
-  if (isVZIPMask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
-                       V1, V2).getValue(WhichResult);
-
-  if (isVTRN_v_undef_Mask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
-                       V1, V1).getValue(WhichResult);
-  if (isVUZP_v_undef_Mask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
-                       V1, V1).getValue(WhichResult);
-  if (isVZIP_v_undef_Mask(ShuffleMask, VT, WhichResult))
-    return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
-                       V1, V1).getValue(WhichResult);
 
   // If the shuffle is not directly supported and it has 4 elements, use
   // the PerfectShuffle-generated table to synthesize it from other shuffles.
@@ -3346,7 +3351,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   }
 
   // Implement shuffles with 32- or 64-bit elements as ARMISD::BUILD_VECTORs.
-  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize >= 32) {
     // Do the expansion with floating-point types, since that is what the VFP
     // registers are defined to use, and since i64 is not legal.

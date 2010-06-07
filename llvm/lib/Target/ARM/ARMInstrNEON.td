@@ -812,11 +812,6 @@ def DSubReg_f64_reg : SDNodeXForm<imm, [{
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
   return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue(), MVT::i32);
 }]>;
-def DSubReg_f64_other_reg : SDNodeXForm<imm, [{
-  assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::dsub_0 + (1 - N->getZExtValue()),
-                                   MVT::i32);
-}]>;
 
 // Extract S sub-registers of Q/D registers.
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
@@ -3121,17 +3116,6 @@ def  VDUPfqf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 1, 0,
                     (outs QPR:$dst), (ins SPR:$src),
                     IIC_VMOVD, "vdup", "32", "$dst, ${src:lane}", "",
                     [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]>;
-
-def : Pat<(v2i64 (NEONvduplane (v2i64 QPR:$src), imm:$lane)),
-          (INSERT_SUBREG QPR:$src, 
-                         (i64 (EXTRACT_SUBREG QPR:$src,
-                               (DSubReg_f64_reg imm:$lane))),
-                         (DSubReg_f64_other_reg imm:$lane))>;
-def : Pat<(v2f64 (NEONvduplane (v2f64 QPR:$src), imm:$lane)),
-          (INSERT_SUBREG QPR:$src, 
-                         (f64 (EXTRACT_SUBREG QPR:$src,
-                               (DSubReg_f64_reg imm:$lane))),
-                         (DSubReg_f64_other_reg imm:$lane))>;
 
 //   VMOVN    : Vector Narrowing Move
 defm VMOVN    : N2VNInt_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVD,
