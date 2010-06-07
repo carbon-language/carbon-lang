@@ -20,11 +20,11 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Pass.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace llvm;
 
@@ -42,7 +42,6 @@ namespace {
     llvm::OwningPtr<CodeGenerator> Gen;
 
     llvm::OwningPtr<llvm::Module> TheModule;
-    llvm::TargetData *TheTargetData;
 
   public:
     BackendConsumer(BackendAction action, Diagnostic &_Diags,
@@ -56,13 +55,8 @@ namespace {
       TargetOpts(targetopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
-      TheTargetData(0) {
+      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)) {
       llvm::TimePassesIsEnabled = TimePasses;
-    }
-
-    ~BackendConsumer() {
-      delete TheTargetData;
     }
 
     llvm::Module *takeModule() { return TheModule.take(); }
@@ -76,7 +70,6 @@ namespace {
       Gen->Initialize(Ctx);
 
       TheModule.reset(Gen->GetModule());
-      TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
 
       if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.stopTimer();
@@ -109,7 +102,7 @@ namespace {
       }
 
       // Silently ignore if we weren't initialized for some reason.
-      if (!TheModule || !TheTargetData)
+      if (!TheModule)
         return;
 
       // Make sure IR generation is happy with the module. This is released by
@@ -134,7 +127,7 @@ namespace {
                                         this);
 
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts,
-                        TheModule.get(), TheTargetData, Action, AsmOutStream);
+                        TheModule.get(), Action, AsmOutStream);
       
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
     }

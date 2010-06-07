@@ -9,7 +9,6 @@
 
 namespace llvm {
   class Module;
-  class TargetData;
   class raw_ostream;
 }
 
@@ -28,7 +27,6 @@ namespace clang {
   };
   
   void EmitBackendOutput(Diagnostic &Diags, const CodeGenOptions &CGOpts,
-                         const TargetOptions &TOpts,
-                         llvm::Module *M, llvm::TargetData *TD,
+                         const TargetOptions &TOpts, llvm::Module *M,
                          BackendAction Action, llvm::raw_ostream *OS);
 }

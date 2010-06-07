@@ -39,7 +39,6 @@ class EmitAssemblyHelper {
   const CodeGenOptions &CodeGenOpts;
   const TargetOptions &TargetOpts;
   Module *TheModule;
-  TargetData *TheTargetData;
 
   Timer CodeGenerationTime;
 
@@ -51,7 +50,7 @@ private:
   FunctionPassManager *getCodeGenPasses() const {
     if (!CodeGenPasses) {
       CodeGenPasses = new FunctionPassManager(TheModule);
-      CodeGenPasses->add(new TargetData(*TheTargetData));
+      CodeGenPasses->add(new TargetData(TheModule));
     }
     return CodeGenPasses;
   }
@@ -59,7 +58,7 @@ private:
   PassManager *getPerModulePasses() const {
     if (!PerModulePasses) {
       PerModulePasses = new PassManager();
-      PerModulePasses->add(new TargetData(*TheTargetData));
+      PerModulePasses->add(new TargetData(TheModule));
     }
     return PerModulePasses;
   }
@@ -67,7 +66,7 @@ private:
   FunctionPassManager *getPerFunctionPasses() const {
     if (!PerFunctionPasses) {
       PerFunctionPasses = new FunctionPassManager(TheModule);
-      PerFunctionPasses->add(new TargetData(*TheTargetData));
+      PerFunctionPasses->add(new TargetData(TheModule));
     }
     return PerFunctionPasses;
   }
@@ -82,10 +81,9 @@ private:
 public:
   EmitAssemblyHelper(Diagnostic &_Diags,
                      const CodeGenOptions &CGOpts, const TargetOptions &TOpts,
-                     Module *M, TargetData *TD)
+                     Module *M)
     : Diags(_Diags), CodeGenOpts(CGOpts), TargetOpts(TOpts),
-      TheModule(M), TheTargetData(TD),
-      CodeGenerationTime("Code Generation Time"),
+      TheModule(M), CodeGenerationTime("Code Generation Time"),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {}
 
   ~EmitAssemblyHelper() {
@@ -320,9 +318,8 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
 
 void clang::EmitBackendOutput(Diagnostic &Diags, const CodeGenOptions &CGOpts,
                               const TargetOptions &TOpts, Module *M,
-                              TargetData *TD, BackendAction Action,
-                              raw_ostream *OS) {
-  EmitAssemblyHelper AsmHelper(Diags, CGOpts, TOpts, M, TD);
+                              BackendAction Action, raw_ostream *OS) {
+  EmitAssemblyHelper AsmHelper(Diags, CGOpts, TOpts, M);
 
   AsmHelper.EmitAssembly(Action, OS);
 }
