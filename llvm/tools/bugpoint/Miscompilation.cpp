@@ -848,7 +848,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
             Args.push_back(i);
 
           // Pass on the arguments to the real function, return its result
-          if (F->getReturnType() == Type::getVoidTy(F->getContext())) {
+          if (F->getReturnType()->isVoidTy()) {
             CallInst::Create(FuncPtr, Args.begin(), Args.end(), "", DoCallBB);
             ReturnInst::Create(F->getContext(), DoCallBB);
           } else {

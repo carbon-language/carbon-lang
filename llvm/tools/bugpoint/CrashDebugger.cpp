@@ -298,8 +298,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 
         TerminatorInst *BBTerm = BB->getTerminator();
         
-        if (BB->getTerminator()->getType() != 
-                    Type::getVoidTy(BB->getContext()))
+        if (!BB->getTerminator()->getType()->isVoidTy())
           BBTerm->replaceAllUsesWith(Constant::getNullValue(BBTerm->getType()));
 
         // Replace the old terminator instruction.
@@ -393,7 +392,7 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
       for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E;) {
         Instruction *Inst = I++;
         if (!Instructions.count(Inst) && !isa<TerminatorInst>(Inst)) {
-          if (Inst->getType() != Type::getVoidTy(Inst->getContext()))
+          if (!Inst->getType()->isVoidTy())
             Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
           Inst->eraseFromParent();
         }
