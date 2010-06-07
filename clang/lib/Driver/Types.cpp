@@ -86,6 +86,20 @@ bool types::isAcceptedByClang(ID Id) {
   case TY_CXXHeader: case TY_PP_CXXHeader:
   case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
   case TY_AST:
+  case TY_LLVM_IR: case TY_LLVM_BC:
+    return true;
+  }
+}
+
+bool types::isOnlyAcceptedByClang(ID Id) {
+  switch (Id) {
+  default:
+    return false;
+
+  case TY_AST:
+  case TY_LLVM_IR:
+  case TY_LLVM_BC:
+  case TY_RewrittenObjC:
     return true;
   }
 }
@@ -132,11 +146,13 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
            .Case("ii", TY_PP_CXX)
            .Case("mi", TY_PP_ObjC)
            .Case("mm", TY_ObjCXX)
+           .Case("bc", TY_LLVM_BC)
            .Case("cc", TY_CXX)
            .Case("CC", TY_CXX)
            .Case("cl", TY_CL)
            .Case("cp", TY_CXX)
            .Case("hh", TY_CXXHeader)
+           .Case("ll", TY_LLVM_IR)
            .Case("hpp", TY_CXXHeader)
            .Case("ads", TY_Ada)
            .Case("adb", TY_Ada)

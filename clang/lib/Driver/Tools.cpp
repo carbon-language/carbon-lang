@@ -792,9 +792,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (JA.getType() == types::TY_Nothing) {
       CmdArgs.push_back("-fsyntax-only");
-    } else if (JA.getType() == types::TY_LLVMAsm) {
+    } else if (JA.getType() == types::TY_LLVM_IR ||
+               JA.getType() == types::TY_LTO_IR) {
       CmdArgs.push_back("-emit-llvm");
-    } else if (JA.getType() == types::TY_LLVMBC) {
+    } else if (JA.getType() == types::TY_LLVM_BC ||
+               JA.getType() == types::TY_LTO_BC) {
       CmdArgs.push_back("-emit-llvm-bc");
     } else if (JA.getType() == types::TY_PP_Asm) {
       CmdArgs.push_back("-S");
@@ -1634,7 +1636,8 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
 
     // Don't try to pass LLVM or AST inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVMBC)
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
     else if (II.getType() == types::TY_AST)
@@ -1676,7 +1679,8 @@ void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
   const Driver &D = getToolChain().getDriver();
 
   // If -flto, etc. are present then make sure not to force assembly output.
-  if (JA.getType() == types::TY_LLVMBC)
+  if (JA.getType() == types::TY_LLVM_IR || JA.getType() == types::TY_LTO_IR ||
+      JA.getType() == types::TY_LLVM_BC || JA.getType() == types::TY_LTO_BC)
     CmdArgs.push_back("-c");
   else {
     if (JA.getType() != types::TY_PP_Asm)
@@ -2083,9 +2087,11 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
       << A->getAsString(Args) << "-E";
 
-  if (Output.getType() == types::TY_LLVMAsm)
+  if (JA.getType() == types::TY_LLVM_IR ||
+      JA.getType() == types::TY_LTO_IR)
     CmdArgs.push_back("-emit-llvm");
-  else if (Output.getType() == types::TY_LLVMBC)
+  else if (JA.getType() == types::TY_LLVM_BC ||
+           JA.getType() == types::TY_LTO_BC)
     CmdArgs.push_back("-emit-llvm-bc");
   else if (Output.getType() == types::TY_AST)
     D.Diag(clang::diag::err_drv_no_ast_support)
@@ -2679,7 +2685,8 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
 
     // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVMBC)
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
@@ -2809,7 +2816,8 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
 
     // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVMBC)
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
@@ -2947,7 +2955,8 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
 
     // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVMBC)
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 
@@ -3100,7 +3109,8 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
     const InputInfo &II = *it;
 
     // Don't try to pass LLVM inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVMBC)
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
       D.Diag(clang::diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
 

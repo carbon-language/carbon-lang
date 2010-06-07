@@ -797,7 +797,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     } else if (Args.hasArg(options::OPT_emit_llvm) ||
                Args.hasArg(options::OPT_flto) || HasO4) {
       types::ID Output =
-        Args.hasArg(options::OPT_S) ? types::TY_LLVMAsm : types::TY_LLVMBC;
+        Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
       return new CompileJobAction(Input, Output);
     } else {
       return new CompileJobAction(Input, types::TY_PP_Asm);
@@ -1263,8 +1263,8 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
 
   // Always use clang for precompiling, AST generation, and rewriting,
   // regardless of archs.
-  if (isa<PrecompileJobAction>(JA) || JA.getType() == types::TY_AST ||
-      JA.getType() == types::TY_RewrittenObjC)
+  if (isa<PrecompileJobAction>(JA) ||
+      types::isOnlyAcceptedByClang(JA.getType()))
     return true;
 
   // Finally, don't use clang if this isn't one of the user specified archs to
