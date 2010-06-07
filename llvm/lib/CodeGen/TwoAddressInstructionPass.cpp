@@ -1178,17 +1178,16 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
       MachineInstr *UseMI = &*UI;
-      unsigned SubRegIdx = UseMI->getOperand(2).getImm();
       // FIXME: For now require that the destination subregs match the subregs
       // being extracted.
       if (!UseMI->isExtractSubreg() ||
           UseMI->getOperand(0).getReg() != DstReg ||
-          UseMI->getOperand(0).getSubReg() != SubRegIdx ||
+          UseMI->getOperand(0).getSubReg() != UseMI->getOperand(2).getImm() ||
           UseMI->getOperand(1).getSubReg() != 0) {
         CanCoalesce = false;
         break;
       }
-      SubIndices.push_back(SubRegIdx);
+      SubIndices.push_back(UseMI->getOperand(2).getImm());
     }
 
     if (!CanCoalesce || SubIndices.size() < 2)
