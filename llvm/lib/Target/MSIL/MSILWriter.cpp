@@ -845,10 +845,11 @@ void MSILWriter::printCallInstruction(const Instruction* Inst) {
     // Handle intrinsic function.
     printIntrinsicCall(cast<IntrinsicInst>(Inst));
   } else {
+    const CallInst *CI = cast<CallInst>(Inst);
     // Load arguments to stack and call function.
-    for (int I = 1, E = Inst->getNumOperands(); I!=E; ++I)
-      printValueLoad(Inst->getOperand(I));
-    printFunctionCall(Inst->getOperand(0),Inst);
+    for (int I = 0, E = CI->getNumArgOperands(); I!=E; ++I)
+      printValueLoad(CI->getArgOperand(I));
+    printFunctionCall(CI->getCalledFunction(), Inst);
   }
 }
 
@@ -1002,8 +1003,8 @@ void MSILWriter::printInvokeInstruction(const InvokeInst* Inst) {
   std::string Label = "leave$normal_"+utostr(getUniqID());
   Out << ".try {\n";
   // Load arguments
-  for (int I = 3, E = Inst->getNumOperands(); I!=E; ++I)
-    printValueLoad(Inst->getOperand(I));
+  for (int I = 0, E = Inst->getNumArgOperands(); I!=E; ++I)
+    printValueLoad(Inst->getArgOperand(I));
   // Print call instruction
   printFunctionCall(Inst->getOperand(0),Inst);
   // Save function result and leave "try" block

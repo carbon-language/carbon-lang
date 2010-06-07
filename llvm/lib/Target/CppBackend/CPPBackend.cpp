@@ -1150,16 +1150,18 @@ namespace {
       const InvokeInst* inv = cast<InvokeInst>(I);
       Out << "std::vector<Value*> " << iName << "_params;";
       nl(Out);
-      for (unsigned i = 0; i < inv->getNumOperands() - 3; ++i) {
+      for (unsigned i = 0; i < inv->getNumArgOperands(); ++i) {
         Out << iName << "_params.push_back("
-            << opNames[i] << ");";
+            << getOpName(inv->getArgOperand(i)) << ");";
         nl(Out);
       }
+      // FIXME: This shouldn't use magic numbers -3, -2, and -1.
       Out << "InvokeInst *" << iName << " = InvokeInst::Create("
-          << opNames[Ops - 3] << ", "
-          << opNames[Ops - 2] << ", "
-          << opNames[Ops - 1] << ", "
-          << iName << "_params.begin(), " << iName << "_params.end(), \"";
+          << getOpName(inv->getCalledFunction()) << ", "
+          << getOpName(inv->getNormalDest()) << ", "
+          << getOpName(inv->getUnwindDest()) << ", "
+          << iName << "_params.begin(), "
+          << iName << "_params.end(), \"";
       printEscapedString(inv->getName());
       Out << "\", " << bbname << ");";
       nl(Out) << iName << "->setCallingConv(";

@@ -940,6 +940,9 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
+  unsigned getNumArgOperands() const { return getNumOperands() - 1; }
+  Value *getArgOperand(unsigned i) const { return getOperand(i + 1); }
+
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
@@ -2431,6 +2434,9 @@ public:
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  unsigned getNumArgOperands() const { return getNumOperands() - 3; }
+  Value *getArgOperand(unsigned i) const { return getOperand(i); }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
