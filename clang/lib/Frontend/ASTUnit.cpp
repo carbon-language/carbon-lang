@@ -332,7 +332,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
 
   assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
          "Invocation must have exactly one source file!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != FrontendOptions::IK_AST &&
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
          "FIXME: AST inputs not yet supported here!");
 
   // Create the AST unit.

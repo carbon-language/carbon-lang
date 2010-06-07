@@ -491,7 +491,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
 
     // If we aren't using an AST file, setup the file and source managers and
     // the preprocessor.
-    bool IsAST = getFrontendOpts().Inputs[i].first == FrontendOptions::IK_AST;
+    bool IsAST = getFrontendOpts().Inputs[i].first == IK_AST;
     if (!IsAST) {
       if (!i) {
         // Create a file manager object to provide access to and cache the

@@ -280,20 +280,20 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-W" + Opts.Warnings[i]);
 }
 
-static const char *getInputKindName(FrontendOptions::InputKind Kind) {
+static const char *getInputKindName(InputKind Kind) {
   switch (Kind) {
-  case FrontendOptions::IK_None:              break;
-  case FrontendOptions::IK_AST:               return "ast";
-  case FrontendOptions::IK_Asm:               return "assembler-with-cpp";
-  case FrontendOptions::IK_C:                 return "c";
-  case FrontendOptions::IK_CXX:               return "c++";
-  case FrontendOptions::IK_ObjC:              return "objective-c";
-  case FrontendOptions::IK_ObjCXX:            return "objective-c++";
-  case FrontendOptions::IK_OpenCL:            return "cl";
-  case FrontendOptions::IK_PreprocessedC:     return "cpp-output";
-  case FrontendOptions::IK_PreprocessedCXX:   return "c++-cpp-output";
-  case FrontendOptions::IK_PreprocessedObjC:  return "objective-c-cpp-output";
-  case FrontendOptions::IK_PreprocessedObjCXX:return "objective-c++-cpp-output";
+  case IK_None:              break;
+  case IK_AST:               return "ast";
+  case IK_Asm:               return "assembler-with-cpp";
+  case IK_C:                 return "c";
+  case IK_CXX:               return "c++";
+  case IK_ObjC:              return "objective-c";
+  case IK_ObjCXX:            return "objective-c++";
+  case IK_OpenCL:            return "cl";
+  case IK_PreprocessedC:     return "cpp-output";
+  case IK_PreprocessedCXX:   return "c++-cpp-output";
+  case IK_PreprocessedObjC:  return "objective-c-cpp-output";
+  case IK_PreprocessedObjCXX:return "objective-c++-cpp-output";
   }
 
   llvm_unreachable("Unexpected language kind!");
@@ -903,8 +903,8 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.Warnings = Args.getAllArgValues(OPT_W);
 }
 
-static FrontendOptions::InputKind
-ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
+static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
+                                   Diagnostic &Diags) {
   using namespace cc1options;
   Opts.ProgramAction = frontend::ParseSyntaxOnly;
   if (const Arg *A = Args.getLastArg(OPT_Action_Group)) {
@@ -1002,28 +1002,28 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.ASTMergeFiles = Args.getAllArgValues(OPT_ast_merge);
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
 
-  FrontendOptions::InputKind DashX = FrontendOptions::IK_None;
+  InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {
-    DashX = llvm::StringSwitch<FrontendOptions::InputKind>(A->getValue(Args))
-      .Case("c", FrontendOptions::IK_C)
-      .Case("cl", FrontendOptions::IK_OpenCL)
-      .Case("c", FrontendOptions::IK_C)
-      .Case("cl", FrontendOptions::IK_OpenCL)
-      .Case("c++", FrontendOptions::IK_CXX)
-      .Case("objective-c", FrontendOptions::IK_ObjC)
-      .Case("objective-c++", FrontendOptions::IK_ObjCXX)
-      .Case("cpp-output", FrontendOptions::IK_PreprocessedC)
-      .Case("assembler-with-cpp", FrontendOptions::IK_Asm)
-      .Case("c++-cpp-output", FrontendOptions::IK_PreprocessedCXX)
-      .Case("objective-c-cpp-output", FrontendOptions::IK_PreprocessedObjC)
-      .Case("objective-c++-cpp-output", FrontendOptions::IK_PreprocessedObjCXX)
-      .Case("c-header", FrontendOptions::IK_C)
-      .Case("objective-c-header", FrontendOptions::IK_ObjC)
-      .Case("c++-header", FrontendOptions::IK_CXX)
-      .Case("objective-c++-header", FrontendOptions::IK_ObjCXX)
-      .Case("ast", FrontendOptions::IK_AST)
-      .Default(FrontendOptions::IK_None);
-    if (DashX == FrontendOptions::IK_None)
+    DashX = llvm::StringSwitch<InputKind>(A->getValue(Args))
+      .Case("c", IK_C)
+      .Case("cl", IK_OpenCL)
+      .Case("c", IK_C)
+      .Case("cl", IK_OpenCL)
+      .Case("c++", IK_CXX)
+      .Case("objective-c", IK_ObjC)
+      .Case("objective-c++", IK_ObjCXX)
+      .Case("cpp-output", IK_PreprocessedC)
+      .Case("assembler-with-cpp", IK_Asm)
+      .Case("c++-cpp-output", IK_PreprocessedCXX)
+      .Case("objective-c-cpp-output", IK_PreprocessedObjC)
+      .Case("objective-c++-cpp-output", IK_PreprocessedObjCXX)
+      .Case("c-header", IK_C)
+      .Case("objective-c-header", IK_ObjC)
+      .Case("c++-header", IK_CXX)
+      .Case("objective-c++-header", IK_ObjCXX)
+      .Case("ast", IK_AST)
+      .Default(IK_None);
+    if (DashX == IK_None)
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << A->getValue(Args);
   }
@@ -1034,8 +1034,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   if (Inputs.empty())
     Inputs.push_back("-");
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
-    FrontendOptions::InputKind IK = DashX;
-    if (IK == FrontendOptions::IK_None) {
+    InputKind IK = DashX;
+    if (IK == IK_None) {
       IK = FrontendOptions::getInputKindForExtension(
         llvm::StringRef(Inputs[i]).rsplit('.').second);
       // FIXME: Remove this hack.
@@ -1108,20 +1108,19 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   // FIXME: Need options for the various environment variables!
 }
 
-static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
-                          FrontendOptions::InputKind IK,
+static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                           Diagnostic &Diags) {
   // FIXME: Cleanup per-file based stuff.
 
   // Set some properties which depend soley on the input kind; it would be nice
   // to move these to the language standard, and have the driver resolve the
   // input kind + language standard.
-  if (IK == FrontendOptions::IK_Asm) {
+  if (IK == IK_Asm) {
     Opts.AsmPreprocessor = 1;
-  } else if (IK == FrontendOptions::IK_ObjC ||
-             IK == FrontendOptions::IK_ObjCXX ||
-             IK == FrontendOptions::IK_PreprocessedObjC ||
-             IK == FrontendOptions::IK_PreprocessedObjCXX) {
+  } else if (IK == IK_ObjC ||
+             IK == IK_ObjCXX ||
+             IK == IK_PreprocessedObjC ||
+             IK == IK_PreprocessedObjCXX) {
     Opts.ObjC1 = Opts.ObjC2 = 1;
   }
 
@@ -1140,23 +1139,23 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   if (LangStd == LangStandard::lang_unspecified) {
     // Based on the base language, pick one.
     switch (IK) {
-    case FrontendOptions::IK_None:
-    case FrontendOptions::IK_AST:
+    case IK_None:
+    case IK_AST:
       assert(0 && "Invalid input kind!");
-    case FrontendOptions::IK_OpenCL:
+    case IK_OpenCL:
       LangStd = LangStandard::lang_opencl;
       break;
-    case FrontendOptions::IK_Asm:
-    case FrontendOptions::IK_C:
-    case FrontendOptions::IK_PreprocessedC:
-    case FrontendOptions::IK_ObjC:
-    case FrontendOptions::IK_PreprocessedObjC:
+    case IK_Asm:
+    case IK_C:
+    case IK_PreprocessedC:
+    case IK_ObjC:
+    case IK_PreprocessedObjC:
       LangStd = LangStandard::lang_gnu99;
       break;
-    case FrontendOptions::IK_CXX:
-    case FrontendOptions::IK_PreprocessedCXX:
-    case FrontendOptions::IK_ObjCXX:
-    case FrontendOptions::IK_PreprocessedObjCXX:
+    case IK_CXX:
+    case IK_PreprocessedCXX:
+    case IK_ObjCXX:
+    case IK_PreprocessedObjCXX:
       LangStd = LangStandard::lang_gnucxx98;
       break;
     }
@@ -1400,10 +1399,9 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, Diags);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
-  FrontendOptions::InputKind DashX =
-    ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
+  InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
-  if (DashX != FrontendOptions::IK_AST)
+  if (DashX != IK_AST)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);

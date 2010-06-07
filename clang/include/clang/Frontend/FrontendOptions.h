@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_FRONTENDOPTIONS_H
 
 #include "clang/Frontend/CommandLineSourceLoc.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 #include <vector>
@@ -55,21 +56,6 @@ namespace frontend {
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
-  enum InputKind {
-    IK_None,
-    IK_Asm,
-    IK_C,
-    IK_CXX,
-    IK_ObjC,
-    IK_ObjCXX,
-    IK_PreprocessedC,
-    IK_PreprocessedCXX,
-    IK_PreprocessedObjC,
-    IK_PreprocessedObjCXX,
-    IK_OpenCL,
-    IK_AST
-  };
-
   unsigned DebugCodeCompletionPrinter : 1; ///< Use the debug printer for code
                                            /// completion results.
   unsigned DisableFree : 1;                ///< Disable memory freeing on exit.

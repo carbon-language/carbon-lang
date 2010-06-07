@@ -11,8 +11,7 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
-FrontendOptions::InputKind
-FrontendOptions::getInputKindForExtension(llvm::StringRef Extension) {
+InputKind FrontendOptions::getInputKindForExtension(llvm::StringRef Extension) {
   return llvm::StringSwitch<InputKind>(Extension)
     .Case("ast", IK_AST)
     .Case("c", IK_C)

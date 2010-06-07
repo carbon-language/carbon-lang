@@ -20,6 +20,22 @@ class ASTConsumer;
 class CompilerInstance;
 class ASTMergeAction;
 
+enum InputKind {
+  IK_None,
+  IK_Asm,
+  IK_C,
+  IK_CXX,
+  IK_ObjC,
+  IK_ObjCXX,
+  IK_PreprocessedC,
+  IK_PreprocessedCXX,
+  IK_PreprocessedObjC,
+  IK_PreprocessedObjCXX,
+  IK_OpenCL,
+  IK_AST
+};
+
+
 /// FrontendAction - Abstract base class for actions which can be performed by
 /// the frontend.
 class FrontendAction {
