@@ -1101,8 +1101,19 @@ CollectAddOperandsWithScales(DenseMap<const SCEV *, APInt> &M,
                              ScalarEvolution &SE) {
   bool Interesting = false;
 
-  // Iterate over the add operands.
-  for (unsigned i = 0, e = NumOperands; i != e; ++i) {
+  // Iterate over the add operands. They are sorted, with constants first.
+  unsigned i = 0;
+  while (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
+    ++i;
+    // Pull a buried constant out to the outside.
+    if (Scale != 1 || AccumulatedConstant != 0 || C->getValue()->isZero())
+      Interesting = true;
+    AccumulatedConstant += Scale * C->getValue()->getValue();
+  }
+
+  // Next comes everything else. We're especially interested in multiplies
+  // here, but they're in the middle, so just visit the rest with one loop.
+  for (; i != NumOperands; ++i) {
     const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Ops[i]);
     if (Mul && isa<SCEVConstant>(Mul->getOperand(0))) {
       APInt NewScale =
@@ -1130,11 +1141,6 @@ CollectAddOperandsWithScales(DenseMap<const SCEV *, APInt> &M,
           Interesting = true;
         }
       }
-    } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[i])) {
-      // Pull a buried constant out to the outside.
-      if (Scale != 1 || AccumulatedConstant != 0 || C->getValue()->isZero())
-        Interesting = true;
-      AccumulatedConstant += Scale * C->getValue()->getValue();
     } else {
       // An ordinary operand. Update the map.
       std::pair<DenseMap<const SCEV *, APInt>::iterator, bool> Pair =
