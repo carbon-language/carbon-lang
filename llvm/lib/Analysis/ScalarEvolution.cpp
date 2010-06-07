@@ -508,106 +508,15 @@ namespace {
       if (LHS->getSCEVType() != RHS->getSCEVType())
         return LHS->getSCEVType() < RHS->getSCEVType();
 
-      // Aside from the getSCEVType() ordering, the particular ordering
-      // isn't very important except that it's beneficial to be consistent,
-      // so that (a + b) and (b + a) don't end up as different expressions.
-
-      // Sort SCEVUnknown values with some loose heuristics. TODO: This is
-      // not as complete as it could be.
-      if (const SCEVUnknown *LU = dyn_cast<SCEVUnknown>(LHS)) {
-        const SCEVUnknown *RU = cast<SCEVUnknown>(RHS);
-
-        // Order pointer values after integer values. This helps SCEVExpander
-        // form GEPs.
-        if (LU->getType()->isPointerTy() && !RU->getType()->isPointerTy())
-          return false;
-        if (RU->getType()->isPointerTy() && !LU->getType()->isPointerTy())
-          return true;
-
-        // Compare getValueID values.
-        if (LU->getValue()->getValueID() != RU->getValue()->getValueID())
-          return LU->getValue()->getValueID() < RU->getValue()->getValueID();
-
-        // Sort arguments by their position.
-        if (const Argument *LA = dyn_cast<Argument>(LU->getValue())) {
-          const Argument *RA = cast<Argument>(RU->getValue());
-          return LA->getArgNo() < RA->getArgNo();
-        }
-
-        // For instructions, compare their loop depth, and their opcode.
-        // This is pretty loose.
-        if (Instruction *LV = dyn_cast<Instruction>(LU->getValue())) {
-          Instruction *RV = cast<Instruction>(RU->getValue());
-
-          // Compare loop depths.
-          if (LI->getLoopDepth(LV->getParent()) !=
-              LI->getLoopDepth(RV->getParent()))
-            return LI->getLoopDepth(LV->getParent()) <
-                   LI->getLoopDepth(RV->getParent());
-
-          // Compare opcodes.
-          if (LV->getOpcode() != RV->getOpcode())
-            return LV->getOpcode() < RV->getOpcode();
-
-          // Compare the number of operands.
-          if (LV->getNumOperands() != RV->getNumOperands())
-            return LV->getNumOperands() < RV->getNumOperands();
-        }
-
-        return false;
-      }
-
-      // Compare constant values.
-      if (const SCEVConstant *LC = dyn_cast<SCEVConstant>(LHS)) {
-        const SCEVConstant *RC = cast<SCEVConstant>(RHS);
-        if (LC->getValue()->getBitWidth() != RC->getValue()->getBitWidth())
-          return LC->getValue()->getBitWidth() < RC->getValue()->getBitWidth();
-        return LC->getValue()->getValue().ult(RC->getValue()->getValue());
-      }
-
-      // Compare addrec loop depths.
-      if (const SCEVAddRecExpr *LA = dyn_cast<SCEVAddRecExpr>(LHS)) {
-        const SCEVAddRecExpr *RA = cast<SCEVAddRecExpr>(RHS);
-        if (LA->getLoop()->getLoopDepth() != RA->getLoop()->getLoopDepth())
-          return LA->getLoop()->getLoopDepth() < RA->getLoop()->getLoopDepth();
-      }
-
-      // Lexicographically compare n-ary expressions.
-      if (const SCEVNAryExpr *LC = dyn_cast<SCEVNAryExpr>(LHS)) {
-        const SCEVNAryExpr *RC = cast<SCEVNAryExpr>(RHS);
-        for (unsigned i = 0, e = LC->getNumOperands(); i != e; ++i) {
-          if (i >= RC->getNumOperands())
-            return false;
-          if (operator()(LC->getOperand(i), RC->getOperand(i)))
-            return true;
-          if (operator()(RC->getOperand(i), LC->getOperand(i)))
-            return false;
-        }
-        return LC->getNumOperands() < RC->getNumOperands();
-      }
-
-      // Lexicographically compare udiv expressions.
-      if (const SCEVUDivExpr *LC = dyn_cast<SCEVUDivExpr>(LHS)) {
-        const SCEVUDivExpr *RC = cast<SCEVUDivExpr>(RHS);
-        if (operator()(LC->getLHS(), RC->getLHS()))
-          return true;
-        if (operator()(RC->getLHS(), LC->getLHS()))
-          return false;
-        if (operator()(LC->getRHS(), RC->getRHS()))
-          return true;
-        if (operator()(RC->getRHS(), LC->getRHS()))
-          return false;
-        return false;
-      }
-
-      // Compare cast expressions by operand.
-      if (const SCEVCastExpr *LC = dyn_cast<SCEVCastExpr>(LHS)) {
-        const SCEVCastExpr *RC = cast<SCEVCastExpr>(RHS);
-        return operator()(LC->getOperand(), RC->getOperand());
-      }
-
-      llvm_unreachable("Unknown SCEV kind!");
-      return false;
+      // Then, pick an arbitrary sort. Use the profiling data for speed.
+      const FoldingSetNodeIDRef &L = LHS->getProfile();
+      const FoldingSetNodeIDRef &R = RHS->getProfile();
+      size_t LSize = L.getSize();
+      size_t RSize = R.getSize();
+      if (LSize != RSize)
+        return LSize < RSize;
+      return memcmp(L.getData(), R.getData(),
+                    LSize * sizeof(*L.getData())) < 0;
     }
   };
 }
@@ -625,36 +534,18 @@ namespace {
 static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
                               LoopInfo *LI) {
   if (Ops.size() < 2) return;  // Noop
+
+  SCEVComplexityCompare Comp(LI);
+
   if (Ops.size() == 2) {
     // This is the common case, which also happens to be trivially simple.
     // Special case it.
-    if (SCEVComplexityCompare(LI)(Ops[1], Ops[0]))
+    if (Comp(Ops[1], Ops[0]))
       std::swap(Ops[0], Ops[1]);
     return;
   }
 
-  // Do the rough sort by complexity.
-  std::stable_sort(Ops.begin(), Ops.end(), SCEVComplexityCompare(LI));
-
-  // Now that we are sorted by complexity, group elements of the same
-  // complexity.  Note that this is, at worst, N^2, but the vector is likely to
-  // be extremely short in practice.  Note that we take this approach because we
-  // do not want to depend on the addresses of the objects we are grouping.
-  for (unsigned i = 0, e = Ops.size(); i != e-2; ++i) {
-    const SCEV *S = Ops[i];
-    unsigned Complexity = S->getSCEVType();
-
-    // If there are any objects of the same complexity and same value as this
-    // one, group them.
-    for (unsigned j = i+1; j != e && Ops[j]->getSCEVType() == Complexity; ++j) {
-      if (Ops[j] == S) { // Found a duplicate.
-        // Move it to immediately after i'th element.
-        std::swap(Ops[i+1], Ops[j]);
-        ++i;   // no need to rescan it.
-        if (i == e-2) return;  // Done!
-      }
-    }
-  }
+  std::stable_sort(Ops.begin(), Ops.end(), Comp);
 }
 
 

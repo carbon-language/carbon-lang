@@ -76,6 +76,9 @@ namespace llvm {
     /// Profile - FoldingSet support.
     void Profile(FoldingSetNodeID& ID) { ID = FastID; }
 
+    /// getProfile - Like Profile, but a different interface which doesn't copy.
+    const FoldingSetNodeIDRef &getProfile() const { return FastID; }
+
     /// isLoopInvariant - Return true if the value of this SCEV is unchanging in
     /// the specified loop.
     virtual bool isLoopInvariant(const Loop *L) const = 0;
