@@ -595,7 +595,8 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
                                              Args);
   } else if (const ObjCImplicitSetterGetterRefExpr *E =
                dyn_cast<ObjCImplicitSetterGetterRefExpr>(Exp)) {
-    Selector S = E->getSetterMethod()->getSelector();
+    const ObjCMethodDecl *SetterMD = E->getSetterMethod();
+    Selector S = SetterMD->getSelector();
     CallArgList Args;
     llvm::Value *Receiver;
     if (E->getInterfaceDecl()) {
@@ -606,7 +607,8 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
       return;
     } else
       Receiver = EmitScalarExpr(E->getBase());
-    Args.push_back(std::make_pair(Src, E->getType()));
+    ObjCMethodDecl::param_iterator P = SetterMD->param_begin(); 
+    Args.push_back(std::make_pair(Src, (*P)->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
                                              getContext().VoidTy, S,
                                              Receiver,

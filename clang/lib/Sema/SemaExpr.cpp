@@ -5796,11 +5796,22 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 
   QualType LHSType = LHS->getType();
   QualType RHSType = CompoundType.isNull() ? RHS->getType() : CompoundType;
-
   AssignConvertType ConvTy;
   if (CompoundType.isNull()) {
+    QualType LHSTy(LHSType);
     // Simple assignment "x = y".
-    ConvTy = CheckSingleAssignmentConstraints(LHSType, RHS);
+    if (const ObjCImplicitSetterGetterRefExpr *OISGE = 
+        dyn_cast<ObjCImplicitSetterGetterRefExpr>(LHS)) {
+      // If using property-dot syntax notation for assignment, and there is a
+      // setter, RHS expression is being passed to the setter argument. So,
+      // type conversion (and comparison) is RHS to setter's argument type.
+      if (const ObjCMethodDecl *SetterMD = OISGE->getSetterMethod()) {
+        ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
+        LHSTy = (*P)->getType();
+      }
+    }
+    
+    ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
     // Special case of NSObject attributes on c-style pointer types.
     if (ConvTy == IncompatiblePointer &&
         ((Context.isObjCNSObjectType(LHSType) &&
