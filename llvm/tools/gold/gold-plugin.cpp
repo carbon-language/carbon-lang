@@ -63,7 +63,7 @@ namespace options {
   static bool generate_api_file = false;
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
-  static const char *as_path = NULL;
+  static std::string as_path;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -71,36 +71,37 @@ namespace options {
   // use only and will not be passed.
   static std::vector<std::string> extra;
 
-  static void process_plugin_option(const char* opt)
+  static void process_plugin_option(const char* opt_)
   {
-    if (opt == NULL)
+    if (opt_ == NULL)
       return;
+    llvm::StringRef opt = opt_;
 
-    if (strcmp("generate-api-file", opt) == 0) {
+    if (opt == "generate-api-file") {
       generate_api_file = true;
-    } else if (strncmp("as=", opt, 3) == 0) {
-      if (as_path) {
+    } else if (opt.startswith("as=")) {
+      if (!as_path.empty()) {
         (*message)(LDPL_WARNING, "Path to as specified twice. "
-                   "Discarding %s", opt);
+                   "Discarding %s", opt_);
       } else {
-        as_path = strdup(opt + 3);
+        as_path = opt.substr(strlen("as="));
       }
-    } else if (strcmp("emit-llvm", opt) == 0) {
+    } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
-    } else if (strcmp("also-emit-llvm", opt) == 0) {
+    } else if (opt == "also-emit-llvm") {
       generate_bc_file = BC_ALSO;
-    } else if (llvm::StringRef(opt).startswith("also-emit-llvm=")) {
-      const char *path = opt + strlen("also-emit-llvm=");
+    } else if (opt.startswith("also-emit-llvm=")) {
+      llvm::StringRef path = opt.substr(strlen("also-emit-llvm="));
       generate_bc_file = BC_ALSO;
       if (!bc_path.empty()) {
         (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
-                   "Discarding %s", opt);
+                   "Discarding %s", opt_);
       } else {
         bc_path = path;
       }
     } else {
       // Save this option to pass to the code generator.
-      extra.push_back(std::string(opt));
+      extra.push_back(opt);
     }
   }
 }
@@ -380,7 +381,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
   lto_codegen_set_pic_model(cg, output_type);
   lto_codegen_set_debug_model(cg, LTO_DEBUG_MODEL_DWARF);
-  if (options::as_path) {
+  if (!options::as_path.empty()) {
     sys::Path p = sys::Program::FindProgramByName(options::as_path);
     lto_codegen_set_assembler_path(cg, p.c_str());
   }
