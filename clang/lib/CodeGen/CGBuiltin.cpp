@@ -923,10 +923,15 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   
   switch (BuiltinID) {
   default: return 0;
-
-  case ARM::BI__builtin_thread_pointer: {
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::arm_thread_pointer, 0, 0);
-    return Builder.CreateCall(AtomF);
+  case ARM::BI__clear_cache: {
+    const FunctionDecl *FD = E->getDirectCallee();
+    Value *a = EmitScalarExpr(E->getArg(0));
+    Value *b = EmitScalarExpr(E->getArg(1));
+    const llvm::Type *Ty = CGM.getTypes().ConvertType(FD->getType());
+    const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
+    llvm::StringRef Name = FD->getName();
+    return Builder.CreateCall2(CGM.CreateRuntimeFunction(FTy, Name),
+                               a, b);
   }
   // FIXME: bitcast args, return.
   case ARM::BI__builtin_neon_vaba_v:

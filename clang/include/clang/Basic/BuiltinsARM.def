@@ -14,6 +14,9 @@
 
 // The format of this database matches clang/Basic/Builtins.def.
 
+// In libgcc
+BUILTIN(__clear_cache, "vc*c*", "")
+
 // FIXME: This is just a placeholder. NEON intrinsics should be listed here.
 BUILTIN(__builtin_thread_pointer, "v*", "")
 
