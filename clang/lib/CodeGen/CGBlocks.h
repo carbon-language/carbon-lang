@@ -181,9 +181,6 @@ public:
   /// BlockDecls - Offsets for all Decls in BlockDeclRefExprs.
   llvm::DenseMap<const Decl*, CharUnits> BlockDecls;
   
-  /// BlockDeclsValue - llvm::Value for all Decls in BlockDeclRefExprs.
-  llvm::DenseMap<const Decl*, llvm::Value *> BlockDeclsValue;
-
   /// BlockCXXThisOffset - The offset of the C++ 'this' value within
   /// the block structure.
   CharUnits BlockCXXThisOffset;

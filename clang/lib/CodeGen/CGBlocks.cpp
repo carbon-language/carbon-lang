@@ -612,9 +612,6 @@ void CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
                                                  bool IsByRef) {
-  llvm::Value *&VE = BlockDeclsValue[VD];
-  if (VE)
-    return VE;
   
   CharUnits offset = BlockDecls[VD];
   assert(!offset.isZero() && "getting address of unallocated decl");
@@ -648,7 +645,6 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const ValueDecl *VD,
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "ref.tmp");
   }
-  VE = V;
   return V;
 }
 
