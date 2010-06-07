@@ -287,6 +287,7 @@ static const char *getInputKindName(InputKind Kind) {
   case IK_Asm:               return "assembler-with-cpp";
   case IK_C:                 return "c";
   case IK_CXX:               return "c++";
+  case IK_LLVM_IR:           return "ir";
   case IK_ObjC:              return "objective-c";
   case IK_ObjCXX:            return "objective-c++";
   case IK_OpenCL:            return "cl";
@@ -1022,6 +1023,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       .Case("c++-header", IK_CXX)
       .Case("objective-c++-header", IK_ObjCXX)
       .Case("ast", IK_AST)
+      .Case("ir", IK_LLVM_IR)
       .Default(IK_None);
     if (DashX == IK_None)
       Diags.Report(diag::err_drv_invalid_value)
@@ -1141,6 +1143,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     switch (IK) {
     case IK_None:
     case IK_AST:
+    case IK_LLVM_IR:
       assert(0 && "Invalid input kind!");
     case IK_OpenCL:
       LangStd = LangStandard::lang_opencl;
@@ -1401,7 +1404,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
-  if (DashX != IK_AST)
+  if (DashX != IK_AST && DashX != IK_LLVM_IR)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);

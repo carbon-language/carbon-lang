@@ -75,11 +75,28 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     return true;
   }
 
-  // Setup the file and source managers, if needed, and the preprocessor.
+  // Set up the file and source managers, if needed.
   if (!CI.hasFileManager())
     CI.createFileManager();
   if (!CI.hasSourceManager())
     CI.createSourceManager();
+
+  // IR files bypass the rest of initialization.
+  if (InputKind == IK_LLVM_IR) {
+    assert(hasIRSupport() &&
+           "This action does not have IR file support!");
+
+    // Inform the diagnostic client we are processing a source file.
+    CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(), 0);
+
+    // Initialize the action.
+    if (!BeginSourceFileAction(CI, Filename))
+      goto failure;
+
+    return true;
+  }
+
+  // Set up the preprocessor.
   CI.createPreprocessor();
 
   // Inform the diagnostic client we are processing a source file.

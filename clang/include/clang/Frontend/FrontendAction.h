@@ -32,7 +32,8 @@ enum InputKind {
   IK_PreprocessedObjC,
   IK_PreprocessedObjCXX,
   IK_OpenCL,
-  IK_AST
+  IK_AST,
+  IK_LLVM_IR
 };
 
 
@@ -152,6 +153,9 @@ public:
 
   /// hasASTFileSupport - Does this action support use with AST files?
   virtual bool hasASTFileSupport() const { return !usesPreprocessorOnly(); }
+
+  /// hasIRSupport - Does this action support use with IR files?
+  virtual bool hasIRSupport() const { return false; }
 
   /// hasCodeCompletionSupport - Does this action support use with code
   /// completion?

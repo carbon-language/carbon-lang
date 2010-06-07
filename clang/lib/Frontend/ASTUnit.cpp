@@ -334,6 +334,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
          "Invocation must have exactly one source file!");
   assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
          "FIXME: AST inputs not yet supported here!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+         "IR inputs not support here!");
 
   // Create the AST unit.
   AST.reset(new ASTUnit(false));
