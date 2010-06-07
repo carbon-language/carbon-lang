@@ -3326,12 +3326,16 @@ static Sema::OwningExprResult CopyObject(Sema &S,
     break;
       
   case OR_No_Viable_Function:
-    S.Diag(Loc, diag::err_temp_copy_no_viable)
+    S.Diag(Loc, IsExtraneousCopy && !S.isSFINAEContext()
+           ? diag::ext_rvalue_to_reference_temp_copy_no_viable
+           : diag::err_temp_copy_no_viable)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
     S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates,
                               &CurInitExpr, 1);
-    return S.ExprError();
+    if (!IsExtraneousCopy || S.isSFINAEContext())
+      return S.ExprError();
+    return move(CurInit);
       
   case OR_Ambiguous:
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
@@ -3355,7 +3359,7 @@ static Sema::OwningExprResult CopyObject(Sema &S,
   CurInit.release(); // Ownership transferred into MultiExprArg, below.
 
   S.CheckConstructorAccess(Loc, Constructor, Entity,
-                           Best->FoundDecl.getAccess());
+                           Best->FoundDecl.getAccess(), IsExtraneousCopy);
 
   if (IsExtraneousCopy) {
     // If this is a totally extraneous copy for C++03 reference

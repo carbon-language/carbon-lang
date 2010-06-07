@@ -48,3 +48,17 @@ void test() {
   g3(X3());
   g4(X4<int>());
 }
+
+// Check that unavailable copy constructors do not cause SFINAE failures.
+template<int> struct int_c { };
+
+template<typename T> T f(const T&);
+
+template<typename T>
+int &g(int_c<sizeof(f(T()))> * = 0);  // expected-note{{candidate function [with T = X3]}}
+
+template<typename T> float &g();  // expected-note{{candidate function [with T = X3]}}
+
+void h() {
+  float &fp = g<X3>();  // expected-error{{call to 'g' is ambiguous}}
+}

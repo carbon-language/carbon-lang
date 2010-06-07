@@ -1157,9 +1157,10 @@ Sema::AccessResult Sema::CheckDestructorAccess(SourceLocation Loc,
 
 /// Checks access to a constructor.
 Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
-                                  CXXConstructorDecl *Constructor,
-                                  const InitializedEntity &Entity,
-                                  AccessSpecifier Access) {
+                                                CXXConstructorDecl *Constructor,
+                                                const InitializedEntity &Entity,
+                                                AccessSpecifier Access,
+                                                bool IsCopyBindingRefToTemp) {
   if (!getLangOptions().AccessControl ||
       Access == AS_public)
     return AR_accessible;
@@ -1170,7 +1171,9 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
                             QualType());
   switch (Entity.getKind()) {
   default:
-    AccessEntity.setDiag(diag::err_access_ctor);
+    AccessEntity.setDiag(IsCopyBindingRefToTemp
+                         ? diag::ext_rvalue_to_reference_access_ctor
+                         : diag::err_access_ctor);
     break;
 
   case InitializedEntity::EK_Base:

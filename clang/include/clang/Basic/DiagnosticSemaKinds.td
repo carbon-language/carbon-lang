@@ -486,6 +486,10 @@ def err_access : Error<
   "%1 is a %select{private|protected}0 member of %3">, NoSFINAE;
 def err_access_ctor : Error<
   "calling a %select{private|protected}0 constructor of class %2">, NoSFINAE;
+def ext_rvalue_to_reference_access_ctor : ExtWarn<
+  "C++98 requires an accessible copy constructor for class %2 when binding "
+  "a reference to a temporary; was %select{private|protected}0">,
+  NoSFINAE, InGroup<BindToTemporaryCopy>;
 def err_access_base : Error<
   "%select{base class|inherited virtual base class}0 %1 has %select{private|"
   "protected}3 %select{constructor|copy constructor|copy assignment operator|"
@@ -747,6 +751,13 @@ def err_temp_copy_no_viable : Error<
   "returning object|throwing object|copying member subobject|copying array "
   "element|allocating object|copying temporary|initializing base subobject|"
   "initializing vector element}0 of type %1">;
+def ext_rvalue_to_reference_temp_copy_no_viable : ExtWarn<
+  "no viable constructor %select{copying variable|copying parameter|"
+  "returning object|throwing object|copying member subobject|copying array "
+  "element|allocating object|copying temporary|initializing base subobject|"
+  "initializing vector element}0 of type %1; C++98 requires a copy "
+  "constructor when binding a reference to a temporary">,
+  InGroup<BindToTemporaryCopy>;
 def err_temp_copy_ambiguous : Error<
   "ambiguous constructor call when %select{copying variable|copying "
   "parameter|returning object|throwing object|copying member subobject|copying "

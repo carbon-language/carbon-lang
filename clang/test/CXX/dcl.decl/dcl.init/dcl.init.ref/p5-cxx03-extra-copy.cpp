@@ -1,9 +1,10 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-option -verify %s
 
 // C++03 requires that we check for a copy constructor when binding a
 // reference to a temporary, since we are allowed to make a copy, Even
 // though we don't actually make that copy, make sure that we diagnose
-// cases where that copy constructor is somehow unavailable.
+// cases where that copy constructor is somehow unavailable.  As an
+// extension, this is only a warning.
 
 struct X1 {
   X1();
@@ -28,6 +29,7 @@ private:
 template<typename T>
 T get_value_badly() {
   double *dp = 0;
+  // The extension doesn't extend far enough to turn this error into a warning.
   T *tp = dp; // expected-error{{ cannot initialize a variable of type 'int *' with an lvalue of type 'double *'}}
   return T();
 }
@@ -41,7 +43,7 @@ struct X4 {
 // Check for "dangerous" default arguments that could cause recursion.
 struct X5 {
   X5();
-  X5(const X5&, const X5& = X5()); // expected-error{{no viable constructor copying parameter of type 'X5'}}
+  X5(const X5&, const X5& = X5()); // expected-warning{{no viable constructor copying parameter of type 'X5'}}
 };
 
 void g1(const X1&);
@@ -51,11 +53,25 @@ void g4(const X4<int>&);
 void g5(const X5&);
 
 void test() {
-  g1(X1()); // expected-error{{no viable constructor copying parameter of type 'X1'}}
-  g2(X2()); // expected-error{{calling a private constructor of class 'X2'}}
-  g3(X3()); // expected-error{{no viable constructor copying parameter of type 'X3'}}
+  g1(X1()); // expected-warning{{no viable constructor copying parameter of type 'X1'; C++98 requires a copy constructor when binding a reference to a temporary [-Wbind-to-temporary-copy]}}
+  g2(X2()); // expected-warning{{C++98 requires an accessible copy constructor for class 'X2' when binding a reference to a temporary; was private [-Wbind-to-temporary-copy]}}
+  g3(X3()); // expected-warning{{no viable constructor copying parameter of type 'X3'}}
   g4(X4<int>());
-  g5(X5()); // expected-error{{no viable constructor copying parameter of type 'X5'}}
+  g5(X5());  // Generates a warning in the default argument.
 }
 
-// Check for dangerous recursion in default arguments.
+// Check that unavailable copy constructors still cause SFINAE failures.
+template<int> struct int_c { };
+
+template<typename T> T f(const T&);
+
+// Would be ambiguous with the next g(), except the instantiation failure in
+// sizeof() prevents that.
+template<typename T>
+int &g(int_c<sizeof(f(T()))> * = 0);
+
+template<typename T> float &g();
+
+void h() {
+  float &fp2 = g<X3>();  // Not ambiguous.
+}

@@ -2767,7 +2767,8 @@ public:
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
                                       const InitializedEntity &Entity,
-                                      AccessSpecifier Access);
+                                      AccessSpecifier Access,
+                                      bool IsCopyBindingRefToTemp = false);
   AccessResult CheckDestructorAccess(SourceLocation Loc,
                                      CXXDestructorDecl *Dtor,
                                      const PartialDiagnostic &PDiag);

@@ -76,6 +76,7 @@ def PoundWarning : DiagGroup<"#warnings">,
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def ReturnType : DiagGroup<"return-type">;
+def BindToTemporaryCopy : DiagGroup<"bind-to-temporary-copy">;
 def SemiBeforeMethodBody : DiagGroup<"semicolon-before-method-body">;
 def : DiagGroup<"sequence-point">;
 def Shadow : DiagGroup<"shadow">;

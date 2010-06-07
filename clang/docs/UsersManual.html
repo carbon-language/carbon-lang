@@ -410,6 +410,42 @@ because it's hard to work around, Clang downgrades it to a warning as
 an extension.</p>
 </dd>
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_Wbind-to-temporary-copy"><b>-Wbind-to-temporary-copy</b>: Warn about
+an unusable copy constructor when binding a reference to a temporary.</dt>
+<dd>This option, which defaults to on, enables warnings about binding a
+reference to a temporary when the temporary doesn't have a usable copy
+constructor.  For example:</p>
+
+<pre>
+  struct NonCopyable {
+    NonCopyable();
+  private:
+    NonCopyable(const NonCopyable&);
+  };
+  void foo(const NonCopyable&);
+  void bar() {
+    foo(NonCopyable());  // Disallowed in C++98; allowed in C++0x.
+  }
+</pre>
+<pre>
+  struct NonCopyable2 {
+    NonCopyable2();
+    NonCopyable2(NonCopyable2&);
+  };
+  void foo(const NonCopyable2&);
+  void bar() {
+    foo(NonCopyable2());  // Disallowed in C++98; allowed in C++0x.
+  }
+</pre>
+
+<p>Note that if <tt>NonCopyable2::NonCopyable2()</tt> has a default
+argument whose instantiation produces a compile error, that error will
+still be a hard error in C++98 mode even if this warning is turned
+off.</p>
+
+</dd>
+
 </dl>
 
 <!-- ======================================================================= -->
