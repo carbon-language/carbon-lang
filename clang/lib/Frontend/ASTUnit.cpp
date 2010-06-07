@@ -354,9 +354,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Create the source manager.
   Clang.setSourceManager(&AST->getSourceManager());
 
-  // Create the preprocessor.
-  Clang.createPreprocessor();
-
   Act.reset(new TopLevelDeclTrackerAction(*AST));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                             Clang.getFrontendOpts().Inputs[0].first))

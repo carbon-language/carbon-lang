@@ -40,8 +40,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   // AST files follow a very different path, since they share objects via the
   // AST unit.
-  bool IsAST = InputKind == IK_AST;
-  if (IsAST) {
+  if (InputKind == IK_AST) {
     assert(!usesPreprocessorOnly() &&
            "Attempt to pass AST file to preprocessor only action!");
     assert(hasASTSupport() && "This action does not have AST support!");
@@ -72,6 +71,13 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     return true;
   }
+
+  // Setup the file and source managers, if needed, and the preprocessor.
+  if (!CI.hasFileManager())
+    CI.createFileManager();
+  if (!CI.hasSourceManager())
+    CI.createSourceManager();
+  CI.createPreprocessor();
 
   // Inform the diagnostic client we are processing a source file.
   CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(),

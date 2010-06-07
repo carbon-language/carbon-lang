@@ -489,25 +489,9 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   for (unsigned i = 0, e = getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = getFrontendOpts().Inputs[i].second;
 
-    // If we aren't using an AST file, setup the file and source managers and
-    // the preprocessor.
-    bool IsAST = getFrontendOpts().Inputs[i].first == IK_AST;
-    if (!IsAST) {
-      if (!i) {
-        // Create a file manager object to provide access to and cache the
-        // filesystem.
-        createFileManager();
-
-        // Create the source manager.
-        createSourceManager();
-      } else {
-        // Reset the ID tables if we are reusing the SourceManager.
-        getSourceManager().clearIDTables();
-      }
-
-      // Create the preprocessor.
-      createPreprocessor();
-    }
+    // Reset the ID tables if we are reusing the SourceManager.
+    if (hasSourceManager())
+      getSourceManager().clearIDTables();
 
     if (Act.BeginSourceFile(*this, InFile, getFrontendOpts().Inputs[i].first)) {
       Act.Execute();
@@ -530,7 +514,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
       OS << " generated.\n";
   }
 
-  if (getFrontendOpts().ShowStats) {
+  if (getFrontendOpts().ShowStats && hasFileManager()) {
     getFileManager().PrintStats();
     OS << "\n";
   }
