@@ -116,12 +116,13 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
 
   std::vector<const PassInfo*> CleanupPasses;
   CleanupPasses.push_back(getPI(createGlobalDCEPass()));
-  CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
 
   if (MayModifySemantics)
     CleanupPasses.push_back(getPI(createDeadArgHackingPass()));
   else
     CleanupPasses.push_back(getPI(createDeadArgEliminationPass()));
+
+  CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
 
   Module *New = runPassesOn(M, CleanupPasses);
   if (New == 0) {

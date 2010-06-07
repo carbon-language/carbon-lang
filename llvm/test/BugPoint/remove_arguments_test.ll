@@ -2,12 +2,16 @@
 ; RUN: llvm-dis remove_arguments_test.ll.tmp-reduced-simplified.bc -o - | FileCheck %s
 
 ; Test to make sure that arguments are removed from the function if they are 
-; unnecessary.
+; unnecessary. And clean up any types that that frees up too.
+
+; CHECK: target triple
+; CHECK-NOT: struct.anon
+%struct.anon = type { i32 }
 
 declare i32 @test2()
 
 ; CHECK: define void @test() {
-define i32 @test(i32 %A, i32 %B, float %C) {
+define i32 @test(i32 %A, %struct.anon* %B, float %C) {
 	call i32 @test2()
 	ret i32 %1
 }
