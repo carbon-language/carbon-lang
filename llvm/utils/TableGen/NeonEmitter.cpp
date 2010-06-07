@@ -100,24 +100,9 @@ static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   return ty[off];
 }
 
-static std::string TypeString(const char mod, StringRef typestr,
-                              bool ret = false) {
-  bool quad = false;
-  bool poly = false;
-  bool usgn = false;
-  bool scal = false;
-  bool cnst = false;
-  bool pntr = false;
-  
-  // base type to get the type string for.
-  char type = ClassifyType(typestr, quad, poly, usgn);
-  
-  // Based on the modifying character, change the type and width if necessary.
+static char ModType(const char mod, char type, bool &quad, bool &poly,
+                    bool &usgn, bool &scal, bool &cnst, bool &pntr) {
   switch (mod) {
-    case 'v':
-      return "void";
-    case 'i':
-      return "int";
     case 't':
       if (poly) {
         poly = false;
@@ -155,6 +140,8 @@ static std::string TypeString(const char mod, StringRef typestr,
     case 'c':
       cnst = true;
     case 'p':
+      usgn = false;
+      poly = false;
       pntr = true;
       scal = true;
       break;
@@ -168,6 +155,28 @@ static std::string TypeString(const char mod, StringRef typestr,
     default:
       break;
   }
+  return type;
+}
+
+static std::string TypeString(const char mod, StringRef typestr,
+                              bool ret = false) {
+  bool quad = false;
+  bool poly = false;
+  bool usgn = false;
+  bool scal = false;
+  bool cnst = false;
+  bool pntr = false;
+  
+  if (mod == 'v')
+    return "void";
+  if (mod == 'i')
+    return "int";
+  
+  // base type to get the type string for.
+  char type = ClassifyType(typestr, quad, poly, usgn);
+  
+  // Based on the modifying character, change the type and width if necessary.
+  type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
   
   SmallString<128> s;
   
@@ -256,60 +265,11 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   char type = ClassifyType(typestr, quad, poly, usgn);
   
   // Based on the modifying character, change the type and width if necessary.
-  switch (mod) {
-    case 't':
-      if (poly) {
-        poly = false;
-        usgn = true;
-      }
-      break;
-    case 'x':
-      usgn = true;
-      poly = false;
-      if (type == 'f')
-        type = 'i';
-      break;
-    case 'f':
-      type = 'f';
-      usgn = false;
-      break;
-    case 'w':
-      type = Widen(type);
-      quad = true;
-      break;
-    case 'n':
-      type = Widen(type);
-      break;
-    case 'l':
-      type = 'l';
-      scal = true;
-      usgn = true;
-      break;
-    case 's':
-      scal = true;
-      break;
-    case 'k':
-      quad = true;
-      break;
-    case 'c':
-      cnst = true;
-    case 'p':
-      type = 'v';
-      usgn = false;
-      poly = false;
-      pntr = true;
-      scal = true;
-      break;
-    case 'h':
-      type = Narrow(type);
-      break;
-    case 'e':
-      type = Narrow(type);
-      usgn = true;
-      break;
-    default:
-      break;
-  }
+  type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
+
+  if (pntr)
+    type = 'v';
+  
   if (type == 'h') {
     type = 's';
     usgn = true;
@@ -534,6 +494,57 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   return s;
 }
 
+static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
+  unsigned mod = proto[0];
+  unsigned ret = 0;
+
+  if (mod == 'v')
+    mod = proto[1];
+
+  bool quad = false;
+  bool poly = false;
+  bool usgn = false;
+  bool scal = false;
+  bool cnst = false;
+  bool pntr = false;
+  
+  // base type to get the type string for.
+  char type = ClassifyType(typestr, quad, poly, usgn);
+  
+  // Based on the modifying character, change the type and width if necessary.
+  type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
+  
+  if (usgn)
+    ret |= 0x08;
+  if (quad)
+    ret |= 0x10;
+  
+  switch (type) {
+    case 'c': 
+      ret |= poly ? 5 : 0;
+      break;
+    case 's':
+      ret |= poly ? 6 : 1;
+      break;
+    case 'i':
+      ret |= 2;
+      break;
+    case 'l':
+      ret |= 3;
+      break;
+    case 'h':
+      ret |= 7;
+      break;
+    case 'f':
+      ret |= 4;
+      break;
+    default:
+      throw "unhandled type!";
+      break;
+  }
+  return ret;
+}
+
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
 // If structTypes is true, the NEON types are structs of vector types rather
 // than vector types, and the call becomes __builtin_neon_cls(a.val)
@@ -599,9 +610,8 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   }
   
   // Extra constant integer to hold type class enum for this function, e.g. s8
-  // FIXME: emit actual type num.
   if (ck == ClassB)
-    s += ", 0";
+    s += ", " + utostr(GetNeonEnum(proto, typestr));
   
   s += ");";
 
