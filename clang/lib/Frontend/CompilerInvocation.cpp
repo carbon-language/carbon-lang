@@ -806,6 +806,8 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.NoCommon = Args.hasArg(OPT_fno_common);
   Opts.NoImplicitFloat = Args.hasArg(OPT_no_implicit_float);
   Opts.OptimizeSize = Args.hasArg(OPT_Os);
+  Opts.SimplifyLibCalls = !(Args.hasArg(OPT_fno_builtin) ||
+                            Args.hasArg(OPT_ffreestanding));
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);

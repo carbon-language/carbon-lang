@@ -56,7 +56,6 @@ namespace {
     Diagnostic &Diags;
     BackendAction Action;
     const CodeGenOptions &CodeGenOpts;
-    const LangOptions &LangOpts;
     const TargetOptions &TargetOpts;
     llvm::raw_ostream *AsmOutStream;
     llvm::formatted_raw_ostream FormattedOutStream;
@@ -89,14 +88,13 @@ namespace {
 
   public:
     BackendConsumer(BackendAction action, Diagnostic &_Diags,
-                    const LangOptions &langopts, const CodeGenOptions &compopts,
+                    const CodeGenOptions &compopts,
                     const TargetOptions &targetopts, bool TimePasses,
                     const std::string &infile, llvm::raw_ostream *OS,
                     LLVMContext &C) :
       Diags(_Diags),
       Action(action),
       CodeGenOpts(compopts),
-      LangOpts(langopts),
       TargetOpts(targetopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
@@ -394,7 +392,7 @@ void BackendConsumer::CreatePasses() {
   llvm::createStandardModulePasses(PM, OptLevel, CodeGenOpts.OptimizeSize,
                                    CodeGenOpts.UnitAtATime,
                                    CodeGenOpts.UnrollLoops,
-                                   /*SimplifyLibCalls=*/!LangOpts.NoBuiltin,
+                                   CodeGenOpts.SimplifyLibCalls,
                                    /*HaveExceptions=*/true,
                                    InliningPass);
 }
@@ -566,7 +564,7 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
-  return new BackendConsumer(BA, CI.getDiagnostics(), CI.getLangOpts(),
+  return new BackendConsumer(BA, CI.getDiagnostics(),
                              CI.getCodeGenOpts(), CI.getTargetOpts(),
                              CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
                              CI.getLLVMContext());
