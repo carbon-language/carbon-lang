@@ -49,6 +49,13 @@ struct B {
   }
 };
 
+// we shouldn't see warnings about self-comparison,
+// this is a member function, we dunno what it'll do
+bool i(B b)
+{
+  return b == b;
+}
+
 enum Enum1 { };
 enum Enum2 { };
 

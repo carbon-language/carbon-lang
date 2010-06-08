@@ -2917,8 +2917,10 @@ def err_ret_local_block : Error<
 
 // For non-floating point, expressions of the form x == x or x != x
 // should result in a warning, since these always evaluate to a constant.
-def warn_selfcomparison : Warning<
-  "self-comparison always results in a constant value">;
+// Array comparisons have similar warnings
+def warn_comparison_always : Warning<
+  "%select{self-|array }0comparison always evaluates to %select{false|true|a constant}1">;
+
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
   "unspecified (use strncmp instead)">;

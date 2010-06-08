@@ -3,7 +3,7 @@
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);
   return C != (void*)0;
-  return C != 0;  
+  return C != 0;
   return C != 1;  // expected-warning {{comparison between pointer and integer ('char *' and 'int')}}
 }
 
@@ -218,7 +218,7 @@ int pointers(int *a) {
 
 int function_pointers(int (*a)(int), int (*b)(int), void (*c)(int)) {
   return a > b; // expected-warning {{ordered comparison of function pointers}}
-  return function_pointers > function_pointers; // expected-warning {{ordered comparison of function pointers}}
+  return function_pointers > function_pointers; // expected-warning {{self-comparison always evaluates to false}} expected-warning{{ordered comparison of function pointers}}
   return a > c; // expected-warning {{comparison of distinct pointer types}}
   return a == (void *) 0;
   return a == (void *) 1; // expected-warning {{equality comparison between function pointer and void pointer}}
@@ -228,6 +228,7 @@ int void_pointers(void* foo) {
   return foo == (void*) 0;
   return foo == (void*) 1;
 }
+
 
 int test1(int i) {
   enum en { zero };

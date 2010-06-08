@@ -5292,13 +5292,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
 
-  // C99 6.5.8p3 / C99 6.5.9p4
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    UsualArithmeticConversions(lex, rex);
-  else {
-    UsualUnaryConversions(lex);
-    UsualUnaryConversions(rex);
-  }
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
@@ -5312,10 +5305,36 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     Expr *LHSStripped = lex->IgnoreParens();
     Expr *RHSStripped = rex->IgnoreParens();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped))
-      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped))
+      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
-            !isa<EnumConstantDecl>(DRL->getDecl()))
-          DiagRuntimeBehavior(Loc, PDiag(diag::warn_selfcomparison));
+            !isa<EnumConstantDecl>(DRL->getDecl())) {
+          DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
+                              << 0 // self-
+                              << (Opc == BinaryOperator::EQ
+                                  || Opc == BinaryOperator::LE
+                                  || Opc == BinaryOperator::GE));
+        } else if (lType->isArrayType() && rType->isArrayType() &&
+                   !DRL->getDecl()->getType()->isReferenceType() &&
+                   !DRR->getDecl()->getType()->isReferenceType()) {
+            // what is it always going to eval to?
+            char always_evals_to;
+            switch(Opc) {
+            case BinaryOperator::EQ: // e.g. array1 == array2
+              always_evals_to = 0; // false
+              break;
+            case BinaryOperator::NE: // e.g. array1 != array2
+              always_evals_to = 1; // true
+              break;
+            default:
+              // best we can say is 'a constant'
+              always_evals_to = 2; // e.g. array1 <= array2
+              break;
+            }
+            DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
+                                << 1 // array
+                                << always_evals_to);
+        }
+      }
 
     if (isa<CastExpr>(LHSStripped))
       LHSStripped = LHSStripped->IgnoreParenCasts();
@@ -5357,6 +5376,17 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           << literalString->getSourceRange());
     }
   }
+
+  // C99 6.5.8p3 / C99 6.5.9p4
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    UsualArithmeticConversions(lex, rex);
+  else {
+    UsualUnaryConversions(lex);
+    UsualUnaryConversions(rex);
+  }
+
+  lType = lex->getType();
+  rType = rex->getType();
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
   QualType ResultTy = getLangOptions().CPlusPlus ? Context.BoolTy:Context.IntTy;
@@ -5632,7 +5662,11 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          DiagRuntimeBehavior(Loc, PDiag(diag::warn_selfcomparison));
+          DiagRuntimeBehavior(Loc,
+                              PDiag(diag::warn_comparison_always)
+                                << 0 // self-
+                                << 2 // "a constant"
+                              );
   }
 
   // Check for comparisons of floating point operands using != and ==.
