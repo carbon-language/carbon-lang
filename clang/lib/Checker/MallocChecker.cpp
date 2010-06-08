@@ -398,8 +398,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
         os << "not memory allocated by malloc()";
     }
     
-    os.flush();
-    EnhancedBugReport *R = new EnhancedBugReport(*BT_BadFree, buf.str(), N);
+    EnhancedBugReport *R = new EnhancedBugReport(*BT_BadFree, os.str(), N);
     R->addRange(range);
     C.EmitReport(R);
   }
