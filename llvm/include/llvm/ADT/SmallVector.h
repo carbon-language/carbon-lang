@@ -17,6 +17,7 @@
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 
@@ -207,7 +208,7 @@ void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   size_t NewCapacity = 2*CurCapacity;
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
-  T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
+  T *NewElts = static_cast<T*>(malloc(NewCapacity*sizeof(T)));
 
   // Copy the elements over.
   this->uninitialized_copy(this->begin(), this->end(), NewElts);
@@ -217,7 +218,7 @@ void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
 
   // If this wasn't grown from the inline copy, deallocate the old space.
   if (!this->isSmall())
-    operator delete(this->begin());
+    free(this->begin());
 
   this->setEnd(NewElts+CurSize);
   this->BeginX = NewElts;
@@ -282,7 +283,7 @@ public:
 
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!this->isSmall())
-      operator delete(this->begin());
+      free(this->begin());
   }
 
 

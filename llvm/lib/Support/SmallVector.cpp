@@ -21,15 +21,18 @@ void SmallVectorBase::grow_pod(size_t MinSizeInBytes, size_t TSize) {
   size_t NewCapacityInBytes = 2 * capacity_in_bytes();
   if (NewCapacityInBytes < MinSizeInBytes)
     NewCapacityInBytes = MinSizeInBytes;
-  void *NewElts = operator new(NewCapacityInBytes);
-  
-  // Copy the elements over.  No need to run dtors on PODs.
-  memcpy(NewElts, this->BeginX, CurSizeBytes);
-  
-  // If this wasn't grown from the inline copy, deallocate the old space.
-  if (!this->isSmall())
-    operator delete(this->BeginX);
-  
+
+  void *NewElts;
+  if (this->isSmall()) {
+    NewElts = malloc(NewCapacityInBytes);
+
+    // Copy the elements over.  No need to run dtors on PODs.
+    memcpy(NewElts, this->BeginX, CurSizeBytes);
+  } else {
+    // If this wasn't grown from the inline copy, grow the allocated space.
+    NewElts = realloc(this->BeginX, NewCapacityInBytes);
+  }
+
   this->EndX = (char*)NewElts+CurSizeBytes;
   this->BeginX = NewElts;
   this->CapacityX = (char*)this->BeginX + NewCapacityInBytes;
