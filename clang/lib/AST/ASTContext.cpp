@@ -89,13 +89,6 @@ ASTContext::~ASTContext() {
       Deallocate(&*I++);
     }
 
-    for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
-         I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
-      // Increment in loop to prevent using deallocated memory.
-      if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
-        R->Destroy(*this);
-    }
-
     for (llvm::DenseMap<const ObjCContainerDecl*,
          const ASTRecordLayout*>::iterator
          I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; ) {
@@ -103,6 +96,16 @@ ASTContext::~ASTContext() {
       if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
         R->Destroy(*this);
     }
+  }
+
+  // ASTRecordLayout objects in ASTRecordLayouts must always be destroyed
+  // even when using the BumpPtrAllocator because they can contain
+  // DenseMaps.
+  for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
+       I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
+    // Increment in loop to prevent using deallocated memory.
+    if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
+      R->Destroy(*this);
   }
 
   // Destroy nested-name-specifiers.
