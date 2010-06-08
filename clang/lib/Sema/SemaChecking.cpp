@@ -27,6 +27,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "clang/Basic/TargetBuiltins.h"
+#include "clang/Basic/TargetInfo.h"
 #include <limits>
 using namespace clang;
 
@@ -202,18 +203,46 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinAtomicOverloaded(TheCall))
       return ExprError();
     break;
-    
-  // Target specific builtins start here.
+  }
+  
+  // Since the target specific builtins for each arch overlap, only check those
+  // of the arch we are compiling for.
+  if (BuiltinID >= Builtin::FirstTSBuiltin) {
+    switch (Context.Target.getTriple().getArch()) {
+      case llvm::Triple::arm:
+      case llvm::Triple::thumb:
+        if (CheckARMBuiltinFunctionCall(BuiltinID, TheCall))
+          return ExprError();
+        break;
+      case llvm::Triple::x86:
+      case llvm::Triple::x86_64:
+        if (CheckX86BuiltinFunctionCall(BuiltinID, TheCall))
+          return ExprError();
+        break;
+      default:
+        break;
+    }
+  }
+
+  return move(TheCallResult);
+}
+
+bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  switch (BuiltinID) {
   case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr: {
     llvm::APSInt Result;
     if (SemaBuiltinConstantArg(TheCall, 2, Result))
-      return ExprError();
+      return true;
     break;
   }
   }
+  return false;
+}
 
-  return move(TheCallResult);
+bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  // TODO: verify NEON intrinsic constant args.
+  return false;
 }
 
 /// CheckFunctionCall - Check a direct function call for various correctness

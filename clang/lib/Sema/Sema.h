@@ -4520,6 +4520,9 @@ private:
 
   Action::OwningExprResult CheckBuiltinFunctionCall(unsigned BuiltinID,
                                                     CallExpr *TheCall);
+  bool CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
+  bool CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
+
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs);
