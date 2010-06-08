@@ -689,7 +689,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
         goto ProcessNext;
       }
 
-      // Try to transform ro a 16-bit non-two-address instruction.
+      // Try to transform to a 16-bit non-two-address instruction.
       if (Entry.NarrowOpc1 && ReduceToNarrow(MBB, MI, Entry, LiveCPSR)) {
         Modified = true;
         MachineBasicBlock::iterator I = prior(NextMII);
