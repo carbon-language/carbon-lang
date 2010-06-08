@@ -12,14 +12,8 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-include $(CLANG_LEVEL)/../../Makefile.config
-
 LIBRARYNAME := clangIndex
 BUILD_ARCHIVE = 1
-
-ifeq ($(ARCH),PowerPC)
-CXX.Flags += -maltivec
-endif
 
 include $(CLANG_LEVEL)/Makefile
 
