@@ -436,7 +436,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   std::string ts = TypeString(proto[0], typestr);
   std::string s = ts + " r; r";
 
-  bool quad, dummy;
+  bool dummy, quad = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
   unsigned nElts = 0;
   switch (type) {
