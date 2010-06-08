@@ -456,7 +456,12 @@ public:
     return -1; 
   }
   
-
+  /// getStaticInitSectionSpecifier - Return the section to use for C++ static 
+  /// initialization functions.
+  virtual const char *getStaticInitSectionSpecifier() const {
+    return 0;
+  }
+  
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;

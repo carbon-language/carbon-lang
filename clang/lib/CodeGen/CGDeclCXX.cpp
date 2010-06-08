@@ -151,6 +151,11 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &CGM.getModule());
 
+  // Set the section if needed.
+  if (const char *Section = 
+        CGM.getContext().Target.getStaticInitSectionSpecifier())
+    Fn->setSection(Section);
+
   return Fn;
 }
 

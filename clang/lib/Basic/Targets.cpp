@@ -160,6 +160,12 @@ public:
     return llvm::MCSectionMachO::ParseSectionSpecifier(SR, Segment, Section,
                                                        TAA, StubSize);
   }
+  
+  virtual const char *getStaticInitSectionSpecifier() const {
+    // FIXME: We should return 0 when building kexts.
+    return "__TEXT,__StaticInit,regular,pure_instructions";
+  }
+  
 };
 
 
