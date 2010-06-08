@@ -1179,7 +1179,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);
   Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_sender_dependent_dispatch);
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
@@ -1347,6 +1346,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_funsigned_bitfields))
     D.Diag(clang::diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
+
+  // -fcaret-diagnostics is default.
+  if (!Args.hasFlag(options::OPT_fcaret_diagnostics,
+                    options::OPT_fno_caret_diagnostics, true))
+    CmdArgs.push_back("-fno-caret-diagnostics");
 
   // -fdiagnostics-fixit-info is default, only pass non-default.
   if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info,
