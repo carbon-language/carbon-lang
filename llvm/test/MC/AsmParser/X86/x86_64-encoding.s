@@ -103,3 +103,35 @@ movd %mm1, %rdx
 // CHECK: movd %mm1, %edx
 // CHECK:  encoding: [0x0f,0x7e,0xca]
 movd %mm1, %edx
+
+// CHECK: vaddss  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x32,0x58,0xd0]
+vaddss  %xmm8, %xmm9, %xmm10
+
+// CHECK: vmulss  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x32,0x59,0xd0]
+vmulss  %xmm8, %xmm9, %xmm10
+
+// CHECK: vsubss  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x32,0x5c,0xd0]
+vsubss  %xmm8, %xmm9, %xmm10
+
+// CHECK: vdivss  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x32,0x5e,0xd0]
+vdivss  %xmm8, %xmm9, %xmm10
+
+// CHECK: vaddsd  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x33,0x58,0xd0]
+vaddsd  %xmm8, %xmm9, %xmm10
+
+// CHECK: vmulsd  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x33,0x59,0xd0]
+vmulsd  %xmm8, %xmm9, %xmm10
+
+// CHECK: vsubsd  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x33,0x5c,0xd0]
+vsubsd  %xmm8, %xmm9, %xmm10
+
+// CHECK: vdivsd  %xmm8, %xmm9, %xmm10
+// CHECK:  encoding: [0xc4,0x41,0x33,0x5e,0xd0]
+vdivsd  %xmm8, %xmm9, %xmm10
