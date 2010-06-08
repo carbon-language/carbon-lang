@@ -5238,7 +5238,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           // for the consumer of this Decl to know it doesn't own it.
           // For our current ASTs this shouldn't be a problem, but will
           // need to be changed with DeclGroups.
-          if (TUK == TUK_Reference || TUK == TUK_Friend)
+          if ((TUK == TUK_Reference && !PrevTagDecl->getFriendObjectKind()) ||
+              TUK == TUK_Friend)
             return DeclPtrTy::make(PrevTagDecl);
 
           // Diagnose attempts to redefine a tag.
