@@ -33,6 +33,8 @@ def OP_XOR  : Op;
 def OP_ANDN : Op;
 def OP_ORN  : Op;
 def OP_CAST : Op;
+def OP_CONC : Op;
+def OP_DUP  : Op;
 
 class Inst <string p, string t, Op o> {
   string Prototype = p;
@@ -49,7 +51,8 @@ class BInst<string p, string t> : Inst<p, t, OP_NONE> {}
 // prototype: return (arg, arg, ...)
 // v: void
 // t: best-fit integer (int/poly args)
-// x: unsigned integer (int/float args)
+// x: signed integer   (int/float args)
+// u: unsigned integer (int/float args)
 // f: float (int args)
 // d: default
 // w: double width elements, same num elts
@@ -114,16 +117,16 @@ def VRSUBHN : IInst<"dww", "csiUcUsUi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.4 Comparison
-def VCEQ  : Inst<"xdd", "csifUcUsUiPcQcQsQiQfQUcQUsQUiQPc", OP_EQ>;
-def VCGE  : Inst<"xdd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_GE>;
-def VCLE  : Inst<"xdd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_LE>;
-def VCGT  : Inst<"xdd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_GT>;
-def VCLT  : Inst<"xdd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_LT>;
-def VCAGE : IInst<"xdd", "fQf">;
-def VCALE : IInst<"xdd", "fQf">;
-def VCAGT : IInst<"xdd", "fQf">;
-def VCALT : IInst<"xdd", "fQf">;
-def VTST  : WInst<"xdd", "csiUcUsUiPcQcQsQiQUcQUsQUiQPc">;
+def VCEQ  : Inst<"udd", "csifUcUsUiPcQcQsQiQfQUcQUsQUiQPc", OP_EQ>;
+def VCGE  : Inst<"udd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_GE>;
+def VCLE  : Inst<"udd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_LE>;
+def VCGT  : Inst<"udd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_GT>;
+def VCLT  : Inst<"udd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_LT>;
+def VCAGE : IInst<"udd", "fQf">;
+def VCALE : IInst<"udd", "fQf">;
+def VCAGT : IInst<"udd", "fQf">;
+def VCALT : IInst<"udd", "fQf">;
+def VTST  : WInst<"udd", "csiUcUsUiPcQcQsQiQUcQUsQUiQPc">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.5 Absolute Difference
@@ -168,10 +171,10 @@ def VRSHR_N    : SInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VSRA_N     : SInst<"dddi", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VRSRA_N    : SInst<"dddi", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VQSHL_N    : SInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
-def VQSHLU_N   : SInst<"xdi",  "csilQcQsQiQl">;
+def VQSHLU_N   : SInst<"udi",  "csilQcQsQiQl">;
 def VSHRN_N    : IInst<"dwi",  "csiUcUsUi">;
-def VQSHRUN_N  : SInst<"xwi",  "csi">;
-def VQRSHRUN_N : SInst<"xwi",  "csi">;
+def VQSHRUN_N  : SInst<"uwi",  "csi">;
+def VQRSHRUN_N : SInst<"uwi",  "csi">;
 def VQSHRN_N   : SInst<"dwi",  "csiUcUsUi">;
 def VRSHRN_N   : IInst<"dwi",  "csiUcUsUi">;
 def VQRSHRN_N  : SInst<"dwi",  "csiUcUsUi">;
@@ -222,12 +225,12 @@ def VCREATE: Inst<"dl", "csihfUcUsUiUlPcPsl", OP_CAST>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.19 Set all lanes to same value
-def VDUP_N : IInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VDUP_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
 def VMOV_N : IInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors
-def VCOMBINE : WInst<"kdd", "csilhfUcUsUiUlPcPs">;
+def VCOMBINE : Inst<"kdd", "csilhfUcUsUiUlPcPs", OP_CONC>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.21 Splitting vectors
@@ -236,18 +239,18 @@ def VGET_LOW  : WInst<"dk", "csilhfUcUsUiUlPcPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.22 Converting vectors
-// FIXME: vmovn, vqmovn, vqmovun have wrong suffixes.
-def VCVT_S32   : SInst<"df",  "iQi">;
-def VCVT_U32   : SInst<"df",  "UiQUi">;
-def VCVT_F16   : SInst<"df",  "h">;
-def VCVT_N_S32 : SInst<"dfi", "iQi">;
-def VCVT_N_U32 : SInst<"dfi", "UiQUi">;
-def VCVT_F32   : SInst<"fd",  "iUiQiQUih">;
-def VCVT_N_F32 : SInst<"fdi", "iUiQiQUi">;
-def VMOVN      : IInst<"hk",  "silUsUiUl">;
-def VMOVL      : SInst<"wd",  "csiUcUsUi">;
-def VQMOVN     : SInst<"hk",  "silUsUiUl">;
-def VQMOVUN    : SInst<"ek",  "sil">;
+def VCVT_S32     : SInst<"xd",  "fQf">;
+def VCVT_U32     : SInst<"ud",  "fQf">;
+def VCVT_F16     : SInst<"hk",  "f">;
+def VCVT_N_S32   : SInst<"xdi", "fQf">;
+def VCVT_N_U32   : SInst<"udi", "fQf">;
+def VCVT_F32     : SInst<"fd",  "iUiQiQUi">;
+def VCVT_F32_F16 : SInst<"kh",  "f">;
+def VCVT_N_F32   : SInst<"fdi", "iUiQiQUi">;
+def VMOVN        : IInst<"hk",  "silUsUiUl">;
+def VMOVL        : SInst<"wd",  "csiUcUsUi">;
+def VQMOVN       : SInst<"hk",  "silUsUiUl">;
+def VQMOVUN      : SInst<"ek",  "sil">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.23-24 Table lookup, Extended table lookup
@@ -314,7 +317,7 @@ def VORR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_OR>;
 def VEOR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_XOR>;
 def VBIC : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ANDN>;
 def VORN : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ORN>;
-def VBSL : BInst<"dxdd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
+def VBSL : BInst<"dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations
