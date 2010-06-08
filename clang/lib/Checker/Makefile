@@ -15,7 +15,5 @@ CLANG_LEVEL := ../..
 LIBRARYNAME := clangChecker
 BUILD_ARCHIVE = 1
 
-CPP.Flags += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
-
 include $(CLANG_LEVEL)/Makefile
 

@@ -9,7 +9,6 @@
 CLANG_LEVEL := ../..
 
 TOOLNAME = c-index-test
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

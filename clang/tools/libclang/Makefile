@@ -12,8 +12,6 @@ LIBRARYNAME = clang
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libclang.exports
 
-CPP.Flags += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
-
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
 # early so we can set up LINK_COMPONENTS before including Makefile.rules

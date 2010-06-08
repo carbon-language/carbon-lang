@@ -16,10 +16,5 @@ CLANG_LEVEL := ../..
 LIBRARYNAME := clangCodeGen
 BUILD_ARCHIVE = 1
 
-CPP.Flags += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
-ifdef CLANG_VENDOR
-CPP.Flags += -DCLANG_VENDOR='"$(CLANG_VENDOR) "'
-endif
-
 include $(CLANG_LEVEL)/Makefile
 

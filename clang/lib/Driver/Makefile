@@ -11,6 +11,4 @@ CLANG_LEVEL := ../..
 LIBRARYNAME := clangDriver
 BUILD_ARCHIVE = 1
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
-
 include $(CLANG_LEVEL)/Makefile
