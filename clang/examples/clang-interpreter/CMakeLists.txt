@@ -18,8 +18,10 @@ set(LLVM_LINK_COMPONENTS
     jit
     interpreter
     nativecodegen
+    asmparser
     bitreader
     bitwriter
+    codegen
     ipo
     selectiondag
   )
