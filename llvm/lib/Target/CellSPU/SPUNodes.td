@@ -21,7 +21,7 @@ def SPUshufmask    : SDNode<"SPUISD::SHUFFLE_MASK", SPU_GenControl, []>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPUCallSeq,
                            [SDNPHasChain, SDNPOutFlag]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPUCallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 //===----------------------------------------------------------------------===//
 // Operand constraints:
 //===----------------------------------------------------------------------===//
