@@ -1764,8 +1764,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       if (!Res.isInvalid()) {
         Res = MaybeCreateCXXExprWithTemporaries(move(Res));
         Expr *Init = Res.takeAs<Expr>();
-        if (isa<CXXConstructExpr>(Init))
-          BDRE->setCopyConstructorExpr(Init);
+        BDRE->setCopyConstructorExpr(Init);
       }
     }
     return Owned(BDRE);
