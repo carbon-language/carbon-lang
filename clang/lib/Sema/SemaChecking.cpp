@@ -633,45 +633,53 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
 /// SemaBuiltinShuffleVector - Handle __builtin_shufflevector.
 // This is declared to take (...), so we have to check everything.
 Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
-  if (TheCall->getNumArgs() < 3)
+  if (TheCall->getNumArgs() < 2)
     return ExprError(Diag(TheCall->getLocEnd(),
                           diag::err_typecheck_call_too_few_args_at_least)
-      << 0 /*function call*/ << 3 << TheCall->getNumArgs()
+      << 0 /*function call*/ << 2 << TheCall->getNumArgs()
       << TheCall->getSourceRange());
 
-  unsigned numElements = std::numeric_limits<unsigned>::max();
+  // Determine which of the following types of shufflevector we're checking:
+  // 1) unary, vector mask: (lhs, mask)
+  // 2) binary, vector mask: (lhs, rhs, mask)
+  // 3) binary, scalar mask: (lhs, rhs, index, ..., index)
+  QualType resType = TheCall->getArg(0)->getType();
+  unsigned numElements = 0;
+  
   if (!TheCall->getArg(0)->isTypeDependent() &&
       !TheCall->getArg(1)->isTypeDependent()) {
-    QualType FAType = TheCall->getArg(0)->getType();
-    QualType SAType = TheCall->getArg(1)->getType();
-
-    if (!FAType->isVectorType() || !SAType->isVectorType()) {
+    QualType LHSType = TheCall->getArg(0)->getType();
+    QualType RHSType = TheCall->getArg(1)->getType();
+    
+    if (!LHSType->isVectorType() || !RHSType->isVectorType()) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
         << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
       return ExprError();
     }
+    
+    numElements = LHSType->getAs<VectorType>()->getNumElements();
+    unsigned numResElements = TheCall->getNumArgs() - 2;
 
-    if (!Context.hasSameUnqualifiedType(FAType, SAType)) {
+    // Check to see if we have a call with 2 vector arguments, the unary shuffle
+    // with mask.  If so, verify that RHS is an integer vector type with the
+    // same number of elts as lhs.
+    if (TheCall->getNumArgs() == 2) {
+      if (!RHSType->isIntegerType() || 
+          RHSType->getAs<VectorType>()->getNumElements() != numElements)
+        Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
+          << SourceRange(TheCall->getArg(1)->getLocStart(),
+                         TheCall->getArg(1)->getLocEnd());
+      numResElements = numElements;
+    }
+    else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
         << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
       return ExprError();
-    }
-
-    numElements = FAType->getAs<VectorType>()->getNumElements();
-    if (TheCall->getNumArgs() != numElements+2) {
-      if (TheCall->getNumArgs() < numElements+2)
-        return ExprError(Diag(TheCall->getLocEnd(),
-                              diag::err_typecheck_call_too_few_args)
-                 << 0 /*function call*/ 
-                 << numElements+2 << TheCall->getNumArgs()
-                 << TheCall->getSourceRange());
-      return ExprError(Diag(TheCall->getLocEnd(),
-                            diag::err_typecheck_call_too_many_args)
-                 << 0 /*function call*/ 
-                 << numElements+2 << TheCall->getNumArgs()
-                 << TheCall->getSourceRange());
+    } else if (numElements != numResElements) {
+      QualType eltType = LHSType->getAs<VectorType>()->getElementType();
+      resType = Context.getVectorType(eltType, numResElements, false, false);
     }
   }
 
@@ -680,9 +688,11 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
         TheCall->getArg(i)->isValueDependent())
       continue;
 
-    llvm::APSInt Result;
-    if (SemaBuiltinConstantArg(TheCall, i, Result))
-      return ExprError();
+    llvm::APSInt Result(32);
+    if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
+      return ExprError(Diag(TheCall->getLocStart(),
+                  diag::err_shufflevector_nonconstant_argument)
+                << TheCall->getArg(i)->getSourceRange());
 
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
       return ExprError(Diag(TheCall->getLocStart(),
@@ -698,7 +708,7 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   }
 
   return Owned(new (Context) ShuffleVectorExpr(Context, exprs.begin(),
-                                            exprs.size(), exprs[0]->getType(),
+                                            exprs.size(), resType,
                                             TheCall->getCallee()->getLocStart(),
                                             TheCall->getRParenLoc()));
 }

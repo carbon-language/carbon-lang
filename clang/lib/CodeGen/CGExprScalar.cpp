@@ -578,12 +578,104 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
 }
 
 Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
-  llvm::SmallVector<llvm::Constant*, 32> indices;
-  for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
-    indices.push_back(cast<llvm::Constant>(CGF.EmitScalarExpr(E->getExpr(i))));
+  // Vector Mask Case
+  if (E->getNumSubExprs() == 2 || 
+      E->getNumSubExprs() == 3 && E->getExpr(2)->getType()->isVectorType()) {
+    Value* LHS = CGF.EmitScalarExpr(E->getExpr(0));
+    Value* RHS = CGF.EmitScalarExpr(E->getExpr(1));
+    Value* Mask;
+    
+    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(CGF.getLLVMContext());
+    const llvm::VectorType *LTy = cast<llvm::VectorType>(LHS->getType());
+    unsigned LHSElts = LTy->getNumElements();
+
+    if (E->getNumSubExprs() == 3) {
+      Mask = CGF.EmitScalarExpr(E->getExpr(2));
+      
+      // Shuffle LHS & RHS into one input vector.
+      llvm::SmallVector<llvm::Constant*, 32> concat;
+      for (unsigned i = 0; i != LHSElts; ++i) {
+        concat.push_back(llvm::ConstantInt::get(I32Ty, 2*i));
+        concat.push_back(llvm::ConstantInt::get(I32Ty, 2*i+1));
+      }
+      
+      Value* CV = llvm::ConstantVector::get(concat.begin(), concat.size());
+      LHS = Builder.CreateShuffleVector(LHS, RHS, CV, "concat");
+      LHSElts *= 2;
+    } else {
+      Mask = RHS;
+    }
+    
+    const llvm::VectorType *MTy = cast<llvm::VectorType>(Mask->getType());
+    llvm::Constant* EltMask;
+    
+    // Treat vec3 like vec4.
+    if ((LHSElts == 6) && (E->getNumSubExprs() == 3))
+      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
+                                       (1 << llvm::Log2_32(LHSElts+2))-1);
+    else if ((LHSElts == 3) && (E->getNumSubExprs() == 2))
+      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
+                                       (1 << llvm::Log2_32(LHSElts+1))-1);
+    else
+      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
+                                       (1 << llvm::Log2_32(LHSElts))-1);
+             
+    // Mask off the high bits of each shuffle index.
+    llvm::SmallVector<llvm::Constant *, 32> MaskV;
+    for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i)
+      MaskV.push_back(EltMask);
+    
+    Value* MaskBits = llvm::ConstantVector::get(MaskV.begin(), MaskV.size());
+    Mask = Builder.CreateAnd(Mask, MaskBits, "mask");
+    
+    // newv = undef
+    // mask = mask & maskbits
+    // for each elt
+    //   n = extract mask i
+    //   x = extract val n
+    //   newv = insert newv, x, i
+    const llvm::VectorType *RTy = llvm::VectorType::get(LTy->getElementType(),
+                                                        MTy->getNumElements());
+    Value* NewV = llvm::UndefValue::get(RTy);
+    for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i) {
+      Value *Indx = llvm::ConstantInt::get(I32Ty, i);
+      Indx = Builder.CreateExtractElement(Mask, Indx, "shuf_idx");
+      Indx = Builder.CreateZExt(Indx, I32Ty, "idx_zext");
+      
+      // Handle vec3 special since the index will be off by one for the RHS.
+      if ((LHSElts == 6) && (E->getNumSubExprs() == 3)) {
+        Value *cmpIndx, *newIndx;
+        cmpIndx = Builder.CreateICmpUGT(Indx, llvm::ConstantInt::get(I32Ty, 3),
+                                        "cmp_shuf_idx");
+        newIndx = Builder.CreateSub(Indx, llvm::ConstantInt::get(I32Ty, 1),
+                                    "shuf_idx_adj");
+        Indx = Builder.CreateSelect(cmpIndx, newIndx, Indx, "sel_shuf_idx");
+      }
+      Value *VExt = Builder.CreateExtractElement(LHS, Indx, "shuf_elt");
+      NewV = Builder.CreateInsertElement(NewV, VExt, Indx, "shuf_ins");
+    }
+    return NewV;
   }
+  
   Value* V1 = CGF.EmitScalarExpr(E->getExpr(0));
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
+  
+  // Handle vec3 special since the index will be off by one for the RHS.
+  llvm::SmallVector<llvm::Constant*, 32> indices;
+  for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
+    llvm::Constant *C = cast<llvm::Constant>(CGF.EmitScalarExpr(E->getExpr(i)));
+    const llvm::VectorType *VTy = cast<llvm::VectorType>(V1->getType());
+    if (VTy->getNumElements() == 3) {
+      if (llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C)) {
+        uint64_t cVal = CI->getZExtValue();
+        if (cVal > 3) {
+          C = llvm::ConstantInt::get(C->getType(), cVal-1);
+        }
+      }
+    }
+    indices.push_back(C);
+  }
+
   Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
 }
