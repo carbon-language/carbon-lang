@@ -13,8 +13,6 @@ TOOLNAME = c-index-test
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-include $(CLANG_LEVEL)/../../Makefile.config
-
 LINK_COMPONENTS := bitreader mc core
 USEDLIBS = clang.a clangIndex.a clangFrontend.a clangDriver.a clangSema.a \
 	   clangAnalysis.a clangAST.a clangParse.a clangLex.a clangBasic.a

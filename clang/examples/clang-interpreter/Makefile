@@ -15,11 +15,6 @@ NO_INSTALL = 1
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-# Include this here so we can get the configuration of the targets that have
-# been configured for construction. We have to do this early so we can set up
-# LINK_COMPONENTS before including Makefile.rules
-include $(CLANG_LEVEL)/../../Makefile.config
-
 LINK_COMPONENTS := jit interpreter nativecodegen bitreader bitwriter ipo \
 	selectiondag asmparser
 USEDLIBS = clangFrontend.a clangDriver.a clangCodeGen.a clangSema.a \
