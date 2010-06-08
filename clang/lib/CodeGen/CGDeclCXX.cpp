@@ -421,3 +421,40 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   
   EmitBlock(EndBlock);
 }
+
+/// GenerateCXXAggrDestructorHelper - Generates a helper function which when
+/// invoked, calls the default destructor on array elements in reverse order of
+/// construction.
+llvm::Function * 
+CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
+                                                 const ArrayType *Array,
+                                                 llvm::Value *This) {
+  FunctionArgList Args;
+  ImplicitParamDecl *Dst =
+    ImplicitParamDecl::Create(getContext(), 0,
+                              SourceLocation(), 0,
+                              getContext().getPointerType(getContext().VoidTy));
+  Args.push_back(std::make_pair(Dst, Dst->getType()));
+  
+  llvm::SmallString<16> Name;
+  llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
+  const CGFunctionInfo &FI = 
+    CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args, 
+                                   FunctionType::ExtInfo());
+  const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
+  llvm::Function *Fn =
+    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage, Name.str(),
+                           &CGM.getModule());
+
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
+
+  QualType BaseElementTy = getContext().getBaseElementType(Array);
+  const llvm::Type *BasePtr = ConvertType(BaseElementTy)->getPointerTo();
+  llvm::Value *BaseAddrPtr = Builder.CreateBitCast(This, BasePtr);
+  
+  EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+  
+  FinishFunction();
+  
+  return Fn;
+}
