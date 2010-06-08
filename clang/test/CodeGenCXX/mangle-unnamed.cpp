@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin10 | FileCheck %s
 
 struct S {
   virtual ~S() { }
@@ -37,3 +37,35 @@ struct A {
 };
 
 int f4() { return A().a(); }
+
+int f5() {
+  static union {
+    int a;
+  };
+  
+  // CHECK: _ZZ2f5vE1a
+  return a;
+}
+
+int f6() {
+  static union {
+    union {
+      int : 1;
+    };
+    int b;
+  };
+  
+  // CHECK: _ZZ2f6vE1b
+  return b;
+}
+
+int f7() {
+  static union {
+    union {
+      int b;
+    } a;
+  };
+  
+  // CHECK: _ZZ2f7vE1a
+  return a.b;
+}

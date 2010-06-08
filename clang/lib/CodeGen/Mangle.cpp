@@ -598,6 +598,28 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *Qualifier,
   mangleUnqualifiedName(0, Name, KnownArity);
 }
 
+static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
+  assert(RD->isAnonymousStructOrUnion() &&
+         "Expected anonymous struct or union!");
+  
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I) {
+    const FieldDecl *FD = *I;
+    
+    if (FD->getIdentifier())
+      return FD;
+    
+    if (const RecordType *RT = FD->getType()->getAs<RecordType>()) {
+      if (const FieldDecl *NamedDataMember = 
+          FindFirstNamedDataMember(RT->getDecl()))
+        return NamedDataMember;
+    }
+  }
+
+  // We didn't find a named data member.
+  return 0;
+}
+
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
                                            DeclarationName Name,
                                            unsigned KnownArity) {
@@ -630,6 +652,28 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       }
     }
 
+    if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
+      // We must have an anonymous union or struct declaration.
+      const RecordDecl *RD = 
+        cast<RecordDecl>(VD->getType()->getAs<RecordType>()->getDecl());
+      
+      // Itanium C++ ABI 5.1.2:
+      //
+      //   For the purposes of mangling, the name of an anonymous union is
+      //   considered to be the name of the first named data member found by a
+      //   pre-order, depth-first, declaration-order walk of the data members of
+      //   the anonymous union. If there is no such data member (i.e., if all of
+      //   the data members in the union are unnamed), then there is no way for
+      //   a program to refer to the anonymous union, and there is therefore no
+      //   need to mangle its name.
+      const FieldDecl *FD = FindFirstNamedDataMember(RD);
+      assert(FD && "Didn't find a named data member!");
+      assert(FD->getIdentifier() && "Data member name isn't an identifier!");
+      
+      mangleSourceName(FD->getIdentifier());
+      break;
+    }
+    
     // We must have an anonymous struct.
     const TagDecl *TD = cast<TagDecl>(ND);
     if (const TypedefDecl *D = TD->getTypedefForAnonDecl()) {
