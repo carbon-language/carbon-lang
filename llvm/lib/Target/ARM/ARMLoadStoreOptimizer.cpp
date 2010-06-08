@@ -694,7 +694,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   }
 
   // Try merging with the next instruction.
-  MachineBasicBlock::iterator EndMBBI = MBB.begin();
+  MachineBasicBlock::iterator EndMBBI = MBB.end();
   if (!DoMerge && MBBI != EndMBBI) {
     MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
     while (NextMBBI != EndMBBI && NextMBBI->isDebugValue())
