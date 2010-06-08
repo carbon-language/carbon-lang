@@ -143,6 +143,17 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   Builder.CreateCall(AtExitFn, &Args[0], llvm::array_endof(Args));
 }
 
+static llvm::Function *
+CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
+                                   const llvm::FunctionType *FTy,
+                                   llvm::StringRef Name) {
+  llvm::Function *Fn =
+    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
+                           Name, &CGM.getModule());
+
+  return Fn;
+}
+
 void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
   const llvm::FunctionType *FTy
@@ -151,8 +162,7 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
 
   // Create a variable initialization function.
   llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                           "__cxx_global_var_init", &TheModule);
+    CreateGlobalInitOrDestructFunction(*this, FTy, "__cxx_global_var_init");
 
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
 
@@ -169,9 +179,8 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
                               false);
 
   // Create our global initialization function.
-  llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                           "_GLOBAL__I_a", &TheModule);
+  llvm::Function *Fn = 
+    CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
   CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
                                                    &CXXGlobalInits[0],
@@ -194,8 +203,7 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
 
   // Create our global destructor function.
   llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                           "_GLOBAL__D_a", &TheModule);
+    CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__D_a");
 
   CodeGenFunction(*this).GenerateCXXGlobalDtorFunc(Fn, CXXGlobalDtors);
   AddGlobalDtor(Fn);
@@ -440,10 +448,8 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
     CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args, 
                                    FunctionType::ExtInfo());
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
-  llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage, 
-                           "__cxx_global_array_dtor",
-                           &CGM.getModule());
+  llvm::Function *Fn = 
+    CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
 
