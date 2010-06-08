@@ -310,8 +310,10 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
       return quad ? "V48c" : "V24c";
     if (mod == '4')
       return quad ? "V64c" : "V32c";
-  if (mod == 'f')
-    return quad ? "V4f" : "V2f";
+    if (mod == 'f')
+      return quad ? "V4f" : "V2f";
+    if (mod == 'x' || mod == 'u')
+      return quad ? "V4i" : "V2i";
     
     return quad ? "V16c" : "V8c";
   }    
