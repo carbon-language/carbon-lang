@@ -36,6 +36,7 @@ void RegisterPointerSubChecker(GRExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
 void RegisterReturnStackAddressChecker(GRExprEngine &Eng);
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
+void RegisterStackAddrLeakChecker(GRExprEngine &Eng);
 void RegisterUndefBranchChecker(GRExprEngine &Eng);
 void RegisterUndefCapturedBlockVarChecker(GRExprEngine &Eng);
 void RegisterUndefResultChecker(GRExprEngine &Eng);

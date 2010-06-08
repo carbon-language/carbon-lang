@@ -57,6 +57,7 @@ add_clang_library(clangChecker
   ReturnUndefChecker.cpp
   SimpleConstraintManager.cpp
   SimpleSValuator.cpp
+  StackAddrLeakChecker.cpp
   Store.cpp
   SVals.cpp
   SValuator.cpp
