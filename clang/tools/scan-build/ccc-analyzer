@@ -320,6 +320,7 @@ my %CompileOptionMap = (
   '-ffreestanding' => 0,
   '-include' => 1,
   '-idirafter' => 1,
+  '-imacros' => 1,
   '-iprefix' => 1,
   '-iquote' => 1,
   '-isystem' => 1,
