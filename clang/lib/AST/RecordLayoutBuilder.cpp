@@ -107,7 +107,8 @@ public:
   uint64_t SizeOfLargestEmptySubobject;
 
   EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
-    : Context(Context), Class(Class), SizeOfLargestEmptySubobject(0) {
+    : Context(Context), Class(Class), MaxEmptyClassOffset(0),
+    SizeOfLargestEmptySubobject(0) {
       ComputeEmptySubobjectSizes();
   }
 
@@ -210,6 +211,11 @@ void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD,
 bool
 EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info, 
                                                  uint64_t Offset) {
+  // We don't have to keep looking past the maximum offset that's known to
+  // contain an empty class.
+  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+    return true;
+
   if (!CanPlaceSubobjectAtOffset(Info->Class, Offset))
     return false;
 
@@ -302,6 +308,11 @@ bool
 EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
                                                   const CXXRecordDecl *Class,
                                                   uint64_t Offset) const {
+  // We don't have to keep looking past the maximum offset that's known to
+  // contain an empty class.
+  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+    return true;
+
   if (!CanPlaceSubobjectAtOffset(RD, Offset))
     return false;
   
@@ -338,6 +349,11 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
 
 bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
                                                        uint64_t Offset) const {
+  // We don't have to keep looking past the maximum offset that's known to
+  // contain an empty class.
+  if (!AnyEmptySubobjectsBeyondOffset(Offset))
+    return true;
+  
   QualType T = FD->getType();
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
@@ -357,6 +373,11 @@ bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
     uint64_t NumElements = Context.getConstantArrayElementCount(AT);
     uint64_t ElementOffset = Offset;
     for (uint64_t I = 0; I != NumElements; ++I) {
+      // We don't have to keep looking past the maximum offset that's known to
+      // contain an empty class.
+      if (!AnyEmptySubobjectsBeyondOffset(ElementOffset))
+        return true;
+      
       if (!CanPlaceFieldSubobjectAtOffset(RD, RD, ElementOffset))
         return false;
 
