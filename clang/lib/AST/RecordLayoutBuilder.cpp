@@ -201,7 +201,7 @@ void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD,
   ClassVectorTy& Classes = EmptyClassOffsets[Offset];
   assert(std::find(Classes.begin(), Classes.end(), RD) == Classes.end() &&
          "Duplicate empty class detected!");
-    
+
   Classes.push_back(RD);
   
   // Update the empty class offset.
@@ -332,6 +332,19 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
       return false;
   }
 
+  if (RD == Class) {
+    // This is the most derived class, traverse virtual bases as well.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+         E = RD->vbases_end(); I != E; ++I) {
+      const CXXRecordDecl *VBaseDecl =
+        cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      
+      uint64_t VBaseOffset = Offset + Layout.getVBaseClassOffset(VBaseDecl);
+      if (!CanPlaceFieldSubobjectAtOffset(VBaseDecl, Class, VBaseOffset))
+        return false;
+    }
+  }
+    
   // Traverse all member variables.
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
@@ -402,6 +415,7 @@ EmptySubobjectMap::CanPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset) {
 void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
                                                    const CXXRecordDecl *Class,
                                                    uint64_t Offset) {
+  
   AddSubobjectAtOffset(RD, Offset);
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -419,6 +433,18 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
     UpdateEmptyFieldSubobjects(BaseDecl, Class, BaseOffset);
   }
 
+  if (RD == Class) {
+    // This is the most derived class, traverse virtual bases as well.
+    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+         E = RD->vbases_end(); I != E; ++I) {
+      const CXXRecordDecl *VBaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      
+      uint64_t VBaseOffset = Offset + Layout.getVBaseClassOffset(VBaseDecl);
+      UpdateEmptyFieldSubobjects(VBaseDecl, Class, VBaseOffset);
+    }
+  }
+  
   // Traverse all member variables.
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
