@@ -4955,7 +4955,7 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
 
   //     - F1 is a non-template function and F2 is a function template
   //       specialization, or, if not that,
-  if (Cand1.Function && !Cand1.Function->getPrimaryTemplate() &&
+  if ((!Cand1.Function || !Cand1.Function->getPrimaryTemplate()) &&
       Cand2.Function && Cand2.Function->getPrimaryTemplate())
     return true;
 

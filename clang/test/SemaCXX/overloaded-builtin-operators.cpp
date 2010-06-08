@@ -188,3 +188,14 @@ int test_pr5432() {
 void f() {
   (void)__extension__(A());
 }
+
+namespace PR7319 {
+  typedef enum { Enum1, Enum2, Enum3 } MyEnum;
+
+  template<typename X> bool operator>(const X &inX1, const X &inX2);
+
+  void f() {
+    MyEnum e1, e2;
+    if (e1 > e2) {}
+  }
+}
