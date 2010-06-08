@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RunContext
+   breakPointsEnabled = "YES">
+   <RunPhases>
+      <BuildRunPhase
+         isEnabled = "Yes"
+         name = "Build"
+         buildConfiguration = "Debug">
+         <BuildableOutputReferences>
+            <BuildableOutputReference
+               BuildableOutputIdentifier = "lldb">
+            </BuildableOutputReference>
+         </BuildableOutputReferences>
+      </BuildRunPhase>
+      <ActionRunPhase
+         isEnabled = "Yes"
+         name = "Pre-Launch">
+         <Actions>
+         </Actions>
+      </ActionRunPhase>
+      <LaunchRunPhase
+         isEnabled = "Yes"
+         name = "Launch">
+         <CommandLineArguments>
+            <CommandLineArgument>
+            </CommandLineArgument>
+         </CommandLineArguments>
+         <EnvironmentVariables>
+         </EnvironmentVariables>
+         <AdditionalOptions>
+         </AdditionalOptions>
+         <AdditionalSourceCodeFilesAndDirs>
+         </AdditionalSourceCodeFilesAndDirs>
+         <AdditionalDSYMFilesAndDirs>
+         </AdditionalDSYMFilesAndDirs>
+      </LaunchRunPhase>
+      <ActionRunPhase
+         isEnabled = "Yes"
+         name = "Quit">
+         <Actions>
+         </Actions>
+      </ActionRunPhase>
+   </RunPhases>
+   <BuildableOutputRunnable>
+      <BuildableOutputReference
+         BuildableOutputIdentifier = "lldb">
+      </BuildableOutputReference>
+   </BuildableOutputRunnable>
+</RunContext>

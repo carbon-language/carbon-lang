@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace>
+   <FileRef
+      path = "lldb.xcodeproj"
+      referenceStyle = "3">
+   </FileRef>
+   <Group
+      name = "Supporting Files">
+      <FileRef
+         path = "lldb.runcontext"
+         referenceStyle = "3">
+      </FileRef>
+   </Group>
+   <SmartGroup
+      name = "Run Contexts"
+      typeIdentifier = "com.apple.dt.document.run-context">
+   </SmartGroup>
+</Workspace>

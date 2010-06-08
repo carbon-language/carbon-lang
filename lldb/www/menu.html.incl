@@ -1,0 +1,20 @@
+<div id="menu">
+  <div>
+    <a href="http://llvm.org/">LLVM Home</a>
+  </div>
+  
+  <div class="submenu">
+    <label>LLDB Info</label>
+    <a href="/index.html">About</a>
+  </div>
+
+  <div class="submenu">
+    <label>Quick Links</label>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-dev">lldb-dev</a>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-commits">lldb-commits</a>
+    <a href="http://llvm.org/bugs/">Bug Reports</a>
+    <a href="http://llvm.org/svn/llvm-project/lldb/trunk/">Browse SVN</a>
+    <a href="http://llvm.org/viewvc/llvm-project/lldb/trunk/">Browse ViewVC</a>
+  </div>
+</div>
+

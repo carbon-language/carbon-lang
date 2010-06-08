@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+          "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>The LLDB Debugger</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+</head>
+
+<body>
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+  <!--*********************************************************************-->
+  <h1>The LLDB Debugger</h1>
+  <!--*********************************************************************-->
+  
+  <p>LLDB is a next generation, high-performance debugger. It is built as a set
+     of reusable components which highly leverage existing libraries in the
+     larger LLVM Project, such as the Clang expression parser and LLVM
+     disassembler.</p>
+   <p>LLDB is in early development, but is mature enough to support basic
+      debugging scenarios on Mac OS X in C, Objective-C and C++.</p>
+
+  <p>All of the code in the LLDB project is available under the standard
+     <a href="http://llvm.org/docs/DeveloperPolicy.html#license">LLVM
+     License</a>, an open source "BSD-style" license.</p>
+  
+  <!--=====================================================================-->
+  <h2 id="goals">Goals</h2>
+  <!--=====================================================================-->
+
+  <p>The current state of the art in open source debuggers are that
+     they work in the common cases for C applications, but don't
+     handle many "hard cases" properly.  For example, C++ expression
+     parsing, handling overloading, templates, multi-threading, and
+     other non-trivial scenarios all work in some base cases, but
+     don't work reliably.</p>
+
+  <p>The goal of LLDB is to provide an amazing debugging experience that "just
+      works".  We aim to solve these long-standing problems where debuggers get
+      confused, so that you can think about debugging your problem, not
+      about deficiencies in the debugger.</p>
+
+  <p>With a long view, there is no good reason for a debugger to
+      reinvent its own C/C++ parser, type system, know all the
+      target calling convention details, implement its own disassembler,
+      etc.  By using the existing libraries vended by the LLVM
+      project, we believe that many of these problems will be defined
+      away, and the debugger can focus on important issues like
+      process control, efficient symbol reading and indexing, thread
+      management, and other debugger-specific problems.</p>
+
+  <p>Some more specific goals include:</p>
+  
+  <ul>
+  <li>Build libraries for inclusion in IDEs, command line tools, and
+      other analysis tools</li>
+  <li>High performance and efficient memory use</li>
+  <li>Extensible: Python scriptable and use a plug-in architecture</li>
+  <li>Reuse existing compiler technology where it makes sense</li>
+  <li>Excellent multi-threaded debugging support</li>
+  <li>Great support for C, Objective-C and C++</li>
+  <li>Retargetable to support multiple platforms</li>
+  <li>Provide a base for debugger research and other innovation</li> 
+  </ul>
+
+  <!--=====================================================================-->
+  <h2 id="why">Why a new debugger?</h2>
+  <!--=====================================================================-->
+
+  <p>In order to achieve our goals we decided to start with a fresh architecture
+     that would support modern multi-threaded programs, handle debugging symbols
+     in an efficient manner, use compiler based code knowledge and have plug-in
+     support for functionality and extensions. Additionally we want the debugger
+     capabilities to be available to other analysis tools, be they scripts or
+     compiled programs, without requiring them to be GPL.</p>
+
+  <!--=====================================================================-->
+  <h2 id="features">Features</h2>
+  <!--=====================================================================-->
+
+   <p>LLDB supports a broad variety of basic debugging features such as
+      reading DWARF, supporting step, next, finish, backtraces, etc.  Some
+      more interested bits are:</p>
+
+   <ul>
+   <li>Plug-in architecture for portability and extensibility:
+   <ul>
+   <li>Object file parsers for executable file formats. Support currently
+       includes Mach-O (32 and 64-bit) &amp; ELF (32-bit).</li>
+   <li>Object container parsers to extract object files contained within a file.
+       Support currently includes universal Mach-O files &amp; BSD Archives.
+       </li>
+   <li>Debug symbol file parsers to incrementally extract debug information from
+       object files. Support currently includes DWARF &amp; Mach-O symbol
+       tables.</li>
+   <li>Symbol vendor plug-ins collect data from a variety of different sources
+       for an executable object.</li>
+   <li>Disassembly plug-ins for each architecture. Support currently includes
+       an LLVM disassembler for <a
+       href="http://blog.llvm.org/2010/01/x86-disassembler.html">i386,
+       x86_64</a>, &amp; ARM/Thumb.</li>
+    <li>Debugger plug-ins implement the host and target specific functions
+        required to debug.</li>
+    </ul>
+    <li>SWIG-generated script bridging allows Python to access and control the
+        public API of the debugger library.</li>
+    <li>A remote protocol server, debugserver, implements Mac OS X debugging on
+        i386 and x86_64.</li>
+    <li>A command line debugger - the lldb executable itself.</li>
+    <li>A framework API to the library.</li>
+   </ul>
+
+  <!--=====================================================================-->
+  <h2 id="requirements">Platform Support</h2>
+  <!--=====================================================================-->
+
+   <p>LLDB is known to work on the following platforms, but ports to new
+      platforms are welcome:</p>
+
+   <li>Machine Architectures:
+    <ul>
+     <li>Mac OS X i386 and X86-64</li>
+    </ul></li>
+
+  <!--=====================================================================-->
+  <h2 id="status">Current Status</h2>
+  <!--=====================================================================-->
+
+   <p>LLDB is in early development and supports basic debugging scenarios on
+      Mac OS X. The public API has not been finalized, and different parts are
+      at different levels of maturity.  We welcome any help fleshing out missing
+      pieces and improving the code.</p>
+
+   <p>What works well:</p>
+   <ul>   
+   <li>Process control, including external process control via debugserver
+       (which is included as part of the lldb project)</li>
+   <li>Breakpoints: Source-line, symbolic, C++ mangled names, module
+       scoping</li>
+   <li>Symbol reading and object file introspection</li>
+   <li>Script bridging</li>
+   <li>Thread inspection and stepping</li>
+   <li>Disassembly of i386, x86_64, &amp; ARM/Thumb machine code, and
+       backtracing on i386 &amp; x86_64</li>
+   <li>The basic command line prompt system, shared library tracking,
+       source listings.</li>
+   </ul>
+    
+   <p>What is still pretty new:</p>
+   <ul>   
+   <li>The public API to the library</li>
+   <li>Expression evaluation</li>
+   <li>Objective-C support: stepping into/over, printing the description of
+       an object ("po")</li>
+   <li>Breakpoint actions &amp; scripts</li>
+   <li>Attaching to existing processes</li>
+   </ul>
+
+   <p>What isn't there yet:</p>
+   <ul>   
+   <li>Regression test suite</li>
+   <li>Operating system support hasn't been fully modularized yet</li>
+   <li><a href="http://clang.llvm.org/docs/LanguageExtensions.html#blocks">Blocks</a> support</li>
+   <li>Calling functions in expressions</li>
+   <li>Objective-C 2.0 Support: Printing properties, synthetic properties,
+       Objective-C expressions, KVO, dynamic types, dot syntax, runtime data</li>
+   <li>C++ support: Method access, handling demangled names, dynamic types</li>
+   <li>Exception support: Breaking by name, thrown object, thrower</li>
+</li>
+   </ul>
+
+  <!--=====================================================================-->
+  <h2>Get it and get involved!</h2>
+  <!--=====================================================================-->
+  
+  <p>To check out the code, use:</p>
+  
+  <ul>
+  <li>svn co http://llvm.org/svn/llvm-project/lldb/trunk lldb</li>
+  </ul>
+  
+  <p>Note that LLDB currently only builds out of the box on Darwin with
+     Xcode, but patches to improve portability are definitely welcome.</p>
+  
+  <p>Discussions about LLDB should go to the <a
+    href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-dev">lldb-dev</a> mailing
+    list.  Commit messages for the lldb SVN module are automatically sent to the
+    <a 
+  href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-commits">lldb-commits</a>
+    mailing list, and this is also the preferred mailing list for patch
+    submissions.</p>
+</div>
+</body>
+</html>
