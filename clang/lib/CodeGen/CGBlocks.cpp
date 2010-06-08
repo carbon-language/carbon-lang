@@ -361,8 +361,36 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
           Builder.CreateStore(Loc, Addr);
           continue;
         } else {
-            if (BDRE->getCopyConstructorExpr())
-              E = BDRE->getCopyConstructorExpr();
+          if (BDRE->getCopyConstructorExpr()) {
+            E = BDRE->getCopyConstructorExpr();
+            // Code to destruct copy-constructed descriptor element for
+            // copied-in class object.
+            // TODO: Refactor this into common code with mostly similar
+            // CodeGenFunction::EmitLocalBlockVarDecl
+            QualType DtorTy = E->getType();
+            if (const RecordType *RT = DtorTy->getAs<RecordType>())
+              if (CXXRecordDecl *ClassDecl = 
+                    dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+                if (!ClassDecl->hasTrivialDestructor()) {
+                  const CXXDestructorDecl *D = 
+                    ClassDecl->getDestructor(getContext());
+                  assert(D && "BuildBlockLiteralTmp - destructor is nul");
+                  {
+                    // Normal destruction. 
+                    DelayedCleanupBlock Scope(*this);
+                    EmitCXXDestructorCall(D, Dtor_Complete, 
+                                          /*ForVirtualBase=*/false, Addr);
+                    // Make sure to jump to the exit block.
+                    EmitBranch(Scope.getCleanupExitBlock());
+                  }
+                  if (Exceptions) {
+                    EHCleanupBlock Cleanup(*this);
+                    EmitCXXDestructorCall(D, Dtor_Complete, 
+                                          /*ForVirtualBase=*/false, Addr);
+                  }
+                }
+              }
+          }
             else {
               E = new (getContext()) DeclRefExpr(const_cast<ValueDecl*>(VD),
                                             VD->getType().getNonReferenceType(),
