@@ -1,4 +1,4 @@
-LEVEL = ../../../../..
+CLANG_LEVEL := ../../..
 BUILT_SOURCES = DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
@@ -7,7 +7,7 @@ BUILT_SOURCES = DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
 
 TABLEGEN_INC_FILES_COMMON = 1
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 INPUT_TDS = $(wildcard $(PROJ_SRC_DIR)/Diagnostic*.td)
 

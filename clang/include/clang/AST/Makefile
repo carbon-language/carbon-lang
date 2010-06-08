@@ -1,10 +1,10 @@
-LEVEL = ../../../../..
+CLANG_LEVEL := ../../..
 BUILT_SOURCES = StmtNodes.inc DeclNodes.inc
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
 
 TABLEGEN_INC_FILES_COMMON = 1
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 INPUT_TDS = $(TD_SRC_DIR)/StmtNodes.td $(TD_SRC_DIR)/DeclNodes.td
 

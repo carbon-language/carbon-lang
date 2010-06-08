@@ -12,7 +12,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../../..
+CLANG_LEVEL := ../..
 LIBRARYNAME := clangCodeGen
 BUILD_ARCHIVE = 1
 
@@ -21,5 +21,5 @@ ifdef CLANG_VENDOR
 CPP.Flags += -DCLANG_VENDOR='"$(CLANG_VENDOR) "'
 endif
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 

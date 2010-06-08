@@ -37,8 +37,8 @@ clean:
 else
 
 # Otherwise, if not in BUILD_FOR_WEBSITE mode, use the project info.
-LEVEL := ../../../..
-include $(LEVEL)/Makefile.common
+CLANG_LEVEL := ../..
+include $(CLANG_LEVEL)/Makefile
 
 CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
 

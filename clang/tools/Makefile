@@ -7,13 +7,13 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../../..
+CLANG_LEVEL := ..
 DIRS := driver libclang c-index-test
 
-include $(LEVEL)/Makefile.config
+include $(CLANG_LEVEL)/../../Makefile.config
 
 ifeq ($(OS), $(filter $(OS), Cygwin MingW))
 DIRS := $(filter-out libclang c-index-test, $(DIRS))
 endif
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile

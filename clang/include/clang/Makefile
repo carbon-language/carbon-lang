@@ -1,7 +1,7 @@
-LEVEL = ../../../..
+CLANG_LEVEL := ../..
 DIRS := AST Basic Driver
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 install-local::
 	$(Echo) Installing Clang include files

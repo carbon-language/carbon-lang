@@ -1,4 +1,19 @@
-LEVEL = ../..
+##===- Makefile --------------------------------------------*- Makefile -*-===##
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+#
+##===----------------------------------------------------------------------===##
+
+# If CLANG_LEVEL is not set, then we are the top-level Makefile. Otherwise, we
+# are being included from a subdirectory makefile.
+
+ifndef CLANG_LEVEL
+
+IS_TOP_LEVEL := 1
+CLANG_LEVEL := .
 DIRS := include lib tools docs
 
 PARALLEL_DIRS :=
@@ -6,8 +21,21 @@ PARALLEL_DIRS :=
 ifeq ($(BUILD_EXAMPLES),1)
   PARALLEL_DIRS += examples
 endif
+endif
 
+###
+# Common Makefile code, shared by all Clang Makefiles.
+
+# Set LLVM source root level.
+LEVEL := $(CLANG_LEVEL)/../..
+
+# Include LLVM common makefile.
 include $(LEVEL)/Makefile.common
+
+###
+# Clang Top Level specific stuff.
+
+ifeq ($(IS_TOP_LEVEL),1)
 
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 $(RecursiveTargets)::
@@ -37,3 +65,5 @@ cscope.files:
 	                    -or -name '*.h' > cscope.files
 
 .PHONY: test report clean cscope.files
+
+endif

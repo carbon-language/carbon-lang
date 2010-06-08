@@ -7,12 +7,12 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../../..
+CLANG_LEVEL := ../..
 
 BUILT_SOURCES = arm_neon.h.inc
 TABLEGEN_INC_FILES_COMMON = 1
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
 
@@ -30,7 +30,7 @@ $(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir $(HeaderD
 $(HeaderDir)/arm_neon.h: $(BUILT_SOURCES)
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
-	
+
 # Hook into the standard Makefile rules.
 all-local:: $(OBJHEADERS)
 

@@ -7,7 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../../..
+CLANG_LEVEL := ../..
 
 TOOLNAME = clang-wpa
 CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
@@ -19,10 +19,10 @@ TOOL_NO_EXPORTS = 1
 # Include this here so we can get the configuration of the targets that have
 # been configured for construction. We have to do this early so we can set up
 # LINK_COMPONENTS before including Makefile.rules
-include $(LEVEL)/Makefile.config
+include $(CLANG_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := asmparser bitreader mc core
 USEDLIBS = clangIndex.a clangFrontend.a clangDriver.a clangSema.a \
 	   clangAnalysis.a clangAST.a clangParse.a clangLex.a clangBasic.a
 
-include $(LLVM_SRC_ROOT)/Makefile.rules
+include $(CLANG_LEVEL)/Makefile

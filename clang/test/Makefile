@@ -1,5 +1,5 @@
-LEVEL = ../../..
-include $(LEVEL)/Makefile.common
+CLANG_LEVEL := ..
+include $(CLANG_LEVEL)/Makefile
 
 # Test in all immediate subdirectories if unset.
 ifdef TESTSUITE

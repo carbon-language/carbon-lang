@@ -1,7 +1,7 @@
-LEVEL = ../../../..
+CLANG_LEVEL := ../..
 DIRS :=
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 install-local::
 	$(Echo) Installing Clang C API include files

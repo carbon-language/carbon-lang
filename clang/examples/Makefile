@@ -7,8 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
+CLANG_LEVEL := ..
 
 PARALLEL_DIRS := clang-interpreter PrintFunctionNames wpa
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile

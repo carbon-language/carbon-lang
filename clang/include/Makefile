@@ -1,4 +1,4 @@
-LEVEL = ../../..
+CLANG_LEVEL := ..
 DIRS := clang clang-c
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile

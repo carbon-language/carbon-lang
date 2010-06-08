@@ -1,9 +1,9 @@
-LEVEL = ../../../../..
+CLANG_LEVEL := ../../..
 BUILT_SOURCES = Options.inc CC1Options.inc CC1AsOptions.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
-include $(LEVEL)/Makefile.common
+include $(CLANG_LEVEL)/Makefile
 
 $(ObjDir)/Options.inc.tmp : Options.td OptParser.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang Driver Option tables with tblgen"
