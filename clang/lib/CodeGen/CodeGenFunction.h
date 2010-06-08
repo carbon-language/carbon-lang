@@ -1146,6 +1146,10 @@ public:
   llvm::Value *EmitTargetBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitARMBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  llvm::Value *EmitNeonCall(llvm::Function *F, 
+                            llvm::SmallVectorImpl<llvm::Value*> &O,
+                            const char *name);
+  
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitPPCBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
