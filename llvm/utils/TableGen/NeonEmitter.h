@@ -40,7 +40,9 @@ enum OpKind {
   OpXor,
   OpAndNot,
   OpOrNot,
-  OpCast
+  OpCast,
+  OpConcat,
+  OpDup
 };
 
 enum ClassKind {
@@ -79,6 +81,8 @@ namespace llvm {
       OpMap["OP_ANDN"] = OpAndNot;
       OpMap["OP_ORN"]  = OpOrNot;
       OpMap["OP_CAST"] = OpCast;
+      OpMap["OP_CONC"] = OpConcat;
+      OpMap["OP_DUP"]  = OpDup;
 
       Record *SI = R.getClass("SInst");
       Record *II = R.getClass("IInst");

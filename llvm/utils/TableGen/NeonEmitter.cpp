@@ -70,6 +70,8 @@ static char Narrow(const char t) {
       return 's';
     case 'l':
       return 'i';
+    case 'f':
+      return 'h';
     default: throw "unhandled type in widen!";
   }
   return '\0';
@@ -109,13 +111,16 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
         usgn = true;
       }
       break;
-    case 'x':
+    case 'u':
       usgn = true;
+    case 'x':
       poly = false;
       if (type == 'f')
         type = 'i';
       break;
     case 'f':
+      if (type == 'h')
+        quad = true;
       type = 'f';
       usgn = false;
       break;
@@ -147,6 +152,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       break;
     case 'h':
       type = Narrow(type);
+      if (type == 'h')
+        quad = false;
       break;
     case 'e':
       type = Narrow(type);
@@ -303,7 +310,9 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
       return quad ? "V48c" : "V24c";
     if (mod == '4')
       return quad ? "V64c" : "V32c";
-
+  if (mod == 'f')
+    return quad ? "V4f" : "V2f";
+    
     return quad ? "V16c" : "V8c";
   }    
 
@@ -314,6 +323,8 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     return quad ? "V16cV16cV16c" : "V8cV8cV8c";
   if (mod == '4')
     return quad ? "V16cV16cV16cV16c" : "V8cV8cV8cV8c";
+  if (mod == 'f')
+    return quad ? "V4f" : "V2f";
 
   return quad ? "V16c" : "V8c";
 }
@@ -321,6 +332,9 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
 // Turn "vst2_lane" into "vst2q_lane_f32", etc.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
+  if (name == "vcvt_f32_f16")
+    return name;
+  
   bool quad = false;
   bool poly = false;
   bool usgn = false;
@@ -417,14 +431,30 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
 // than vector types, and the call becomes "a.val + b.val"
 static std::string GenOpString(OpKind op, const std::string &proto,
                                StringRef typestr, bool structTypes = true) {
-  std::string s("return ");
   std::string ts = TypeString(proto[0], typestr);
-  if (structTypes)
-    s += "(" + ts + "){";
+  std::string s = ts + " r; r";
+
+  bool quad, dummy;
+  char type = ClassifyType(typestr, quad, dummy, dummy);
+  unsigned nElts = 0;
+  switch (type) {
+    case 'c': nElts = 8; break;
+    case 's': nElts = 4; break;
+    case 'i': nElts = 2; break;
+    case 'l': nElts = 1; break;
+    case 'h': nElts = 4; break;
+    case 'f': nElts = 2; break;
+  }
+  nElts <<= quad;
   
+  if (structTypes)
+    s += ".val";
+  
+  s += " = ";
+
   std::string a, b, c;
   if (proto.size() > 1)
-    a = (structTypes && proto[1] != 'l') ? "a.val" : "a";
+    a = (structTypes && proto[1] != 'l' && proto[1] != 's') ? "a.val" : "a";
   b = structTypes ? "b.val" : "b";
   c = structTypes ? "c.val" : "c";
   
@@ -483,14 +513,24 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpCast:
     s += "(__neon_" + ts + ")" + a;
     break;
+  case OpConcat:
+    s += "__builtin_shufflevector((__neon_int64x1_t)" + a;
+    s += ", (__neon_int64x1_t)" + b + ", 0, 1)";
+    break;
+  case OpDup:
+    s += "(__neon_" + ts + "){ ";
+    for (unsigned i = 0; i != nElts; ++i) {
+      s += a;
+      if ((i + 1) < nElts)
+        s += ", ";
+    }
+    s += " }";
+    break;
   default:
     throw "unknown OpKind!";
     break;
   }
-  
-  if (structTypes)
-    s += "}";
-  s += ";";
+  s += "; return r;";
   return s;
 }
 
@@ -498,7 +538,7 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   unsigned mod = proto[0];
   unsigned ret = 0;
 
-  if (mod == 'v')
+  if (mod == 'v' || mod == 'f')
     mod = proto[1];
 
   bool quad = false;
