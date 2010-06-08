@@ -65,11 +65,17 @@ class EmptySubobjectMap {
   typedef llvm::DenseMap<uint64_t, ClassVectorTy> EmptyClassOffsetsMapTy;
   EmptyClassOffsetsMapTy EmptyClassOffsets;
   
+  /// MaxEmptyClassOffset - The highest offset known to contain an empty
+  /// base subobject.
+  uint64_t MaxEmptyClassOffset;
+  
   /// ComputeEmptySubobjectSizes - Compute the size of the largest base or
   /// member subobject that is empty.
   void ComputeEmptySubobjectSizes();
   
-  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
+  bool CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
+                                 uint64_t Offset) const;
+
   void AddSubobjectAtOffset(const CXXRecordDecl *RD, uint64_t Offset);
   
   bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
@@ -79,15 +85,21 @@ class EmptySubobjectMap {
   
   bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
                                       const CXXRecordDecl *Class,
-                                      uint64_t Offset);
+                                      uint64_t Offset) const;
   bool CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
-                                      uint64_t Offset);
+                                      uint64_t Offset) const;
   
   void UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
                                   const CXXRecordDecl *Class,
                                   uint64_t Offset);
   void UpdateEmptyFieldSubobjects(const FieldDecl *FD, uint64_t Offset);
   
+  /// AnyEmptySubobjectsBeyondOffset - Returns whether there are any empty
+  /// subobjects beyond the given offset.
+  bool AnyEmptySubobjectsBeyondOffset(uint64_t Offset) const {
+    return Offset <= MaxEmptyClassOffset;
+  }
+
 public:
   /// This holds the size of the largest empty subobject (either a base
   /// or a member). Will be zero if the record being built doesn't contain
@@ -103,7 +115,8 @@ public:
   /// at the given offset.
   /// Returns false if placing the record will result in two components
   /// (direct or indirect) of the same type having the same offset.
-  bool CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info, uint64_t Offset);
+  bool CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info,
+                            uint64_t Offset);
 
   /// CanPlaceFieldAtOffset - Return whether a field can be placed at the given
   /// offset.
@@ -161,7 +174,7 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
 
 bool
 EmptySubobjectMap::CanPlaceSubobjectAtOffset(const CXXRecordDecl *RD, 
-                                             uint64_t Offset) {
+                                             uint64_t Offset) const {
   // We only need to check empty bases.
   if (!RD->isEmpty())
     return true;
@@ -189,6 +202,9 @@ void EmptySubobjectMap::AddSubobjectAtOffset(const CXXRecordDecl *RD,
          "Duplicate empty class detected!");
     
   Classes.push_back(RD);
+  
+  // Update the empty class offset.
+  MaxEmptyClassOffset = std::max(MaxEmptyClassOffset, Offset);
 }
 
 bool
@@ -273,7 +289,6 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info,
   if (!SizeOfLargestEmptySubobject)
     return true;
 
-  // FIXME: Re-enable this.
   if (!CanPlaceBaseSubobjectAtOffset(Info, Offset))
     return false;
 
@@ -286,7 +301,7 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info,
 bool
 EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
                                                   const CXXRecordDecl *Class,
-                                                  uint64_t Offset) {
+                                                  uint64_t Offset) const {
   if (!CanPlaceSubobjectAtOffset(RD, Offset))
     return false;
   
@@ -322,7 +337,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
 }
 
 bool EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
-                                                       uint64_t Offset) {
+                                                       uint64_t Offset) const {
   QualType T = FD->getType();
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
