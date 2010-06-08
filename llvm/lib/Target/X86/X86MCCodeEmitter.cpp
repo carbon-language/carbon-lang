@@ -202,8 +202,8 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   
   // Handle %rip relative addressing.
   if (BaseReg == X86::RIP) {    // [disp32+RIP] in X86-64 mode
-    assert(IndexReg.getReg() == 0 && Is64BitMode &&
-           "Invalid rip-relative address");
+    assert(Is64BitMode && "Rip-relative addressing requires 64-bit mode");
+    assert(IndexReg.getReg() == 0 && "Invalid rip-relative address");
     EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
     
     unsigned FixupKind = X86::reloc_riprel_4byte;
