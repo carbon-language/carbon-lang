@@ -434,11 +434,11 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
 
   // FIXME: Update the uses of EXTRACT_SUBREG from REG_SEQUENCE is
   // currently required for correctness. e.g.
-  //  %reg1041;<def> = REG_SEQUENCE %reg1040<kill>, 5, %reg1035<kill>, 6
+  //  %reg1041<def> = REG_SEQUENCE %reg1040<kill>, 5, %reg1035<kill>, 6
   //  %reg1042<def> = EXTRACT_SUBREG %reg1041, 6
   //  %reg1043<def> = EXTRACT_SUBREG %reg1041, 5
   //  VST1q16 %reg1025<kill>, 0, %reg1043<kill>, %reg1042<kill>,
-  // reg1025 and reg1043 should be replaced with reg1041:6 and reg1041:5
+  // reg1042 and reg1043 should be replaced with reg1041:6 and reg1041:5
   // respectively.
   // We need to change how we model uses of REG_SEQUENCE.
   for (unsigned R = 0; R < NumRegs; ++R) {
