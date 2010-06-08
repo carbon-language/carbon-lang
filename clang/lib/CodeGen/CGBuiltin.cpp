@@ -902,7 +902,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned Int;
   
   // Determine the type of this overloaded NEON intrinsic.
-  if (BuiltinID != ARM::BI__builtin_thread_pointer) {
+  if (BuiltinID != ARM::BI__clear_cache) {
     for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
       Ops.push_back(EmitScalarExpr(E->getArg(i)));
     
