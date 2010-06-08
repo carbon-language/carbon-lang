@@ -438,6 +438,10 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1A97825A1108BA18002B98FC /* CGVTT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGVTT.cpp; path = lib/CodeGen/CGVTT.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A986AB610D0746D00A8EA9E /* CGDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDeclCXX.cpp; path = lib/CodeGen/CGDeclCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1AA1D35611BECFF70089CC3F /* CC1AsOptions.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CC1AsOptions.td; path = clang/Driver/CC1AsOptions.td; sourceTree = "<group>"; };
+		1AA1D35711BECFF70089CC3F /* CC1Options.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CC1Options.td; path = clang/Driver/CC1Options.td; sourceTree = "<group>"; };
+		1AA1D35811BECFF70089CC3F /* Options.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Options.td; path = clang/Driver/Options.td; sourceTree = "<group>"; };
+		1AA1D35911BECFF70089CC3F /* OptParser.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = OptParser.td; path = clang/Driver/OptParser.td; sourceTree = "<group>"; };
 		1AA963AB10D8576800786C86 /* FullExpr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = FullExpr.h; path = clang/AST/FullExpr.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AB290021045858B00FE33D8 /* PartialDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = PartialDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -807,24 +811,24 @@
 		DEDFE5270F63A9230035BD10 /* DeclNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = DeclNodes.def; path = clang/AST/DeclNodes.def; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = NestedNameSpecifier.h; path = clang/AST/NestedNameSpecifier.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFE6450F7B3B4E0035BD10 /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = driver.cpp; path = tools/driver/driver.cpp; sourceTree = "<group>"; };
-		DEDFE6480F7B3B830035BD10 /* Types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Types.cpp; path = lib/Driver/Types.cpp; sourceTree = "<group>"; };
-		DEDFE6490F7B3B830035BD10 /* Tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tools.h; path = lib/Driver/Tools.h; sourceTree = "<group>"; };
-		DEDFE64A0F7B3B830035BD10 /* Tools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tools.cpp; path = lib/Driver/Tools.cpp; sourceTree = "<group>"; };
-		DEDFE64B0F7B3B830035BD10 /* ToolChains.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ToolChains.h; path = lib/Driver/ToolChains.h; sourceTree = "<group>"; };
-		DEDFE64C0F7B3B830035BD10 /* Compilation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Compilation.cpp; path = lib/Driver/Compilation.cpp; sourceTree = "<group>"; };
-		DEDFE64D0F7B3B830035BD10 /* ArgList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArgList.cpp; path = lib/Driver/ArgList.cpp; sourceTree = "<group>"; };
-		DEDFE64E0F7B3B830035BD10 /* Arg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Arg.cpp; path = lib/Driver/Arg.cpp; sourceTree = "<group>"; };
-		DEDFE64F0F7B3B830035BD10 /* Action.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Action.cpp; path = lib/Driver/Action.cpp; sourceTree = "<group>"; };
-		DEDFE6500F7B3B830035BD10 /* Phases.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Phases.cpp; path = lib/Driver/Phases.cpp; sourceTree = "<group>"; };
-		DEDFE6510F7B3B830035BD10 /* OptTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptTable.cpp; path = lib/Driver/OptTable.cpp; sourceTree = "<group>"; };
-		DEDFE6520F7B3B830035BD10 /* Option.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Option.cpp; path = lib/Driver/Option.cpp; sourceTree = "<group>"; };
-		DEDFE6530F7B3B830035BD10 /* Job.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Job.cpp; path = lib/Driver/Job.cpp; sourceTree = "<group>"; };
-		DEDFE6540F7B3B830035BD10 /* InputInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InputInfo.h; path = lib/Driver/InputInfo.h; sourceTree = "<group>"; };
-		DEDFE6550F7B3B830035BD10 /* ToolChains.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ToolChains.cpp; path = lib/Driver/ToolChains.cpp; sourceTree = "<group>"; };
-		DEDFE6560F7B3B830035BD10 /* ToolChain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ToolChain.cpp; path = lib/Driver/ToolChain.cpp; sourceTree = "<group>"; };
-		DEDFE6570F7B3B830035BD10 /* Tool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tool.cpp; path = lib/Driver/Tool.cpp; sourceTree = "<group>"; };
-		DEDFE6580F7B3B830035BD10 /* HostInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfo.cpp; path = lib/Driver/HostInfo.cpp; sourceTree = "<group>"; };
-		DEDFE6590F7B3B830035BD10 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = lib/Driver/Driver.cpp; sourceTree = "<group>"; };
+		DEDFE6480F7B3B830035BD10 /* Types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Types.cpp; path = lib/Driver/Types.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6490F7B3B830035BD10 /* Tools.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Tools.h; path = lib/Driver/Tools.h; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64A0F7B3B830035BD10 /* Tools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Tools.cpp; path = lib/Driver/Tools.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64B0F7B3B830035BD10 /* ToolChains.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ToolChains.h; path = lib/Driver/ToolChains.h; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64C0F7B3B830035BD10 /* Compilation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Compilation.cpp; path = lib/Driver/Compilation.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64D0F7B3B830035BD10 /* ArgList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ArgList.cpp; path = lib/Driver/ArgList.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64E0F7B3B830035BD10 /* Arg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Arg.cpp; path = lib/Driver/Arg.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE64F0F7B3B830035BD10 /* Action.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Action.cpp; path = lib/Driver/Action.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6500F7B3B830035BD10 /* Phases.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Phases.cpp; path = lib/Driver/Phases.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6510F7B3B830035BD10 /* OptTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = OptTable.cpp; path = lib/Driver/OptTable.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6520F7B3B830035BD10 /* Option.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Option.cpp; path = lib/Driver/Option.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6530F7B3B830035BD10 /* Job.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Job.cpp; path = lib/Driver/Job.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6540F7B3B830035BD10 /* InputInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = InputInfo.h; path = lib/Driver/InputInfo.h; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6550F7B3B830035BD10 /* ToolChains.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ToolChains.cpp; path = lib/Driver/ToolChains.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6560F7B3B830035BD10 /* ToolChain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ToolChain.cpp; path = lib/Driver/ToolChain.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6570F7B3B830035BD10 /* Tool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Tool.cpp; path = lib/Driver/Tool.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6580F7B3B830035BD10 /* HostInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfo.cpp; path = lib/Driver/HostInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		DEDFE6590F7B3B830035BD10 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = lib/Driver/Driver.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFF87F0F848CE30035BD10 /* TemplateName.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TemplateName.h; path = clang/AST/TemplateName.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEDFFF070F959EE60035BD10 /* Diagnostic.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Diagnostic.td; sourceTree = "<group>"; };
 		DEDFFF530F9704580035BD10 /* DiagnosticGroups.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticGroups.td; sourceTree = "<group>"; };
@@ -841,7 +845,6 @@
 		DEF165150F8D46980098507F /* Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Types.h; path = clang/Driver/Types.h; sourceTree = "<group>"; };
 		DEF165160F8D46980098507F /* Action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Action.h; path = clang/Driver/Action.h; sourceTree = "<group>"; };
 		DEF165170F8D46980098507F /* Compilation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Compilation.h; path = clang/Driver/Compilation.h; sourceTree = "<group>"; };
-		DEF165180F8D46980098507F /* Options.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Options.def; path = clang/Driver/Options.def; sourceTree = "<group>"; };
 		DEF165190F8D46980098507F /* Option.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Option.h; path = clang/Driver/Option.h; sourceTree = "<group>"; };
 		DEF1651A0F8D46980098507F /* Types.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Types.def; path = clang/Driver/Types.def; sourceTree = "<group>"; };
 		DEF1651B0F8D46980098507F /* ToolChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ToolChain.h; path = clang/Driver/ToolChain.h; sourceTree = "<group>"; };
@@ -1722,14 +1725,17 @@
 				DEF165160F8D46980098507F /* Action.h */,
 				DEF1651D0F8D46980098507F /* ArgList.h */,
 				DEF1651E0F8D46980098507F /* Arg.h */,
+				1AA1D35611BECFF70089CC3F /* CC1AsOptions.td */,
+				1AA1D35711BECFF70089CC3F /* CC1Options.td */,
 				DEF165170F8D46980098507F /* Compilation.h */,
 				DEF165240F8D46980098507F /* DriverDiagnostic.h */,
 				DEF165200F8D46980098507F /* Driver.h */,
 				DEF1651F0F8D46980098507F /* HostInfo.h */,
 				DEF165210F8D46980098507F /* Job.h */,
-				DEF165180F8D46980098507F /* Options.def */,
 				DEF165190F8D46980098507F /* Option.h */,
+				1AA1D35811BECFF70089CC3F /* Options.td */,
 				DEF1651C0F8D46980098507F /* Options.h */,
+				1AA1D35911BECFF70089CC3F /* OptParser.td */,
 				DEF165230F8D46980098507F /* Phases.h */,
 				DEF165140F8D46980098507F /* Tool.h */,
 				DEF165150F8D46980098507F /* Types.h */,
