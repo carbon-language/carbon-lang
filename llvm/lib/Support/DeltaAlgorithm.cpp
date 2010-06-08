@@ -30,10 +30,10 @@ void DeltaAlgorithm::Split(const changeset_ty &S, changesetlist_ty &Res) {
 
   // FIXME: This is really slow.
   changeset_ty LHS, RHS;
-  unsigned idx = 0;
+  unsigned idx = 0, N = S.size() / 2;
   for (changeset_ty::const_iterator it = S.begin(),
          ie = S.end(); it != ie; ++it, ++idx)
-    ((idx & 1) ? LHS : RHS).insert(*it);
+    ((idx < N) ? LHS : RHS).insert(*it);
   if (!LHS.empty())
     Res.push_back(LHS);
   if (!RHS.empty())
