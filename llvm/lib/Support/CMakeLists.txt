@@ -8,6 +8,7 @@ add_llvm_library(LLVMSupport
   ConstantRange.cpp
   Debug.cpp
   DeltaAlgorithm.cpp
+  DAGDeltaAlgorithm.cpp
   Dwarf.cpp
   ErrorHandling.cpp
   FileUtilities.cpp
