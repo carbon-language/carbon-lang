@@ -835,9 +835,9 @@ public:
                                  llvm::Value *NumElements,
                                  llvm::Value *This);
 
-  llvm::Constant *GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
-                                                const ArrayType *Array,
-                                                llvm::Value *This);
+  llvm::Function *GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
+                                                  const ArrayType *Array,
+                                                  llvm::Value *This);
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              bool ForVirtualBase, llvm::Value *This);

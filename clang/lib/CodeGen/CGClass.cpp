@@ -1036,7 +1036,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
 /// GenerateCXXAggrDestructorHelper - Generates a helper function which when
 /// invoked, calls the default destructor on array elements in reverse order of
 /// construction.
-llvm::Constant * 
+llvm::Function * 
 CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                                  const ArrayType *Array,
                                                  llvm::Value *This) {
@@ -1049,32 +1049,25 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   
   llvm::SmallString<16> Name;
   llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
-  QualType R = getContext().VoidTy;
-  const CGFunctionInfo &FI
-      = CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
+  const CGFunctionInfo &FI = 
+    CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args, 
+                                   FunctionType::ExtInfo());
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                           Name.str(),
+    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage, Name.str(),
                            &CGM.getModule());
-  IdentifierInfo *II = &CGM.getContext().Idents.get(Name.str());
-  FunctionDecl *FD = FunctionDecl::Create(getContext(),
-                                          getContext().getTranslationUnitDecl(),
-                                          SourceLocation(), II, R, 0,
-                                          FunctionDecl::Static,
-                                          FunctionDecl::None,
-                                          false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation());
+
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
+
   QualType BaseElementTy = getContext().getBaseElementType(Array);
-  const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-  BasePtr = llvm::PointerType::getUnqual(BasePtr);
+  const llvm::Type *BasePtr = ConvertType(BaseElementTy)->getPointerTo();
   llvm::Value *BaseAddrPtr = Builder.CreateBitCast(This, BasePtr);
+  
   EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+  
   FinishFunction();
-  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),
-                                              0);
-  llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
-  return m;
+  
+  return Fn;
 }
 
 

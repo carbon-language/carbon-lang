@@ -71,11 +71,10 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   llvm::Constant *DtorFn;
   if (Array) {
     DtorFn = 
-    CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(Dtor, 
-                                                         Array, 
-                                                         DeclPtr);
+      CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(Dtor, Array, 
+                                                           DeclPtr);
     const llvm::Type *Int8PtrTy =
-    llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+      llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
     DeclPtr = llvm::Constant::getNullValue(Int8PtrTy);
   } else
     DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);
