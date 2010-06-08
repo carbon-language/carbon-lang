@@ -31,8 +31,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
-    ConditionalBranchLevel(0), TerminateHandler(0), TrapBB(0),
-    UniqueAggrDestructorCount(0) {
+    ConditionalBranchLevel(0), TerminateHandler(0), TrapBB(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
   Exceptions = getContext().getLangOptions().Exceptions;

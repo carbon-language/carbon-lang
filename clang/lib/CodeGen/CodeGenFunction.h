@@ -456,7 +456,6 @@ private:
   llvm::BasicBlock *TerminateHandler;
   llvm::BasicBlock *TrapBB;
 
-  int UniqueAggrDestructorCount;
 public:
   CodeGenFunction(CodeGenModule &cgm);
 

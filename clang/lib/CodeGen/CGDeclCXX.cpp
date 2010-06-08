@@ -436,14 +436,13 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                               getContext().getPointerType(getContext().VoidTy));
   Args.push_back(std::make_pair(Dst, Dst->getType()));
   
-  llvm::SmallString<16> Name;
-  llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
   const CGFunctionInfo &FI = 
     CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args, 
                                    FunctionType::ExtInfo());
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn =
-    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage, Name.str(),
+    llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage, 
+                           "__cxx_global_array_dtor",
                            &CGM.getModule());
 
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
