@@ -23,6 +23,7 @@ def : DiagGroup<"aggregate-return">;
 def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
+def BoolConversions : DiagGroup<"bool-conversions">;
 def : DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
@@ -141,7 +142,7 @@ def Parentheses : DiagGroup<"parentheses", [DiagGroup<"idiomatic-parentheses">]>
 // -Wconversion has its own warnings, but we split this one out for
 // legacy reasons.
 def Conversion : DiagGroup<"conversion",
-                           [DiagGroup<"shorten-64-to-32">]>,
+                           [DiagGroup<"shorten-64-to-32">, BoolConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
 def Unused : DiagGroup<"unused",

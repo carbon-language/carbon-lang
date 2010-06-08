@@ -1622,6 +1622,12 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
                                   bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
 
+  if (CXXBoolLiteralExpr* LitBool
+                          = dyn_cast<CXXBoolLiteralExpr>(From->IgnoreParens()))
+    if (LitBool->getValue() == false)
+      Diag(LitBool->getExprLoc(), diag::warn_init_pointer_from_false)
+        << ToType;
+
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
     if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
       QualType FromPointeeType = FromPtrType->getPointeeType(),
@@ -6159,7 +6165,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                          Sema::MultiExprArg(SemaRef, (void**) Args, NumArgs),
                                CommaLocs, RParenLoc);
 }
-  
+
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
 /// (which eventually refers to the declaration Func) and the call
 /// arguments Args/NumArgs, attempt to resolve the function call down

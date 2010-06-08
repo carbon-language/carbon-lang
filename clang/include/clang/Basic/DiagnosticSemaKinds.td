@@ -1098,6 +1098,10 @@ def note_ovl_candidate : Note<"candidate "
     "is the implicit copy constructor|"
     "is the implicit copy assignment operator}0%1">;
 
+def warn_init_pointer_from_false : Warning<
+    "initialization of pointer of type %0 from literal 'false'">,
+    InGroup<BoolConversions>;
+
 def note_ovl_candidate_bad_deduction : Note<
     "candidate template ignored: failed template argument deduction">;
 def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
