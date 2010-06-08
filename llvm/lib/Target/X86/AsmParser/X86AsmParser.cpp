@@ -597,6 +597,16 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
       return Error(NameLoc, "pushfq cannot be encoded in 32-bit mode");
   }
 
+  // The "Jump if rCX Zero" form jcxz is not allowed in 64-bit mode and
+  // the form jrcxz is not allowed in 32-bit mode.
+  if (Is64Bit) {
+    if (Name == "jcxz")
+      return Error(NameLoc, "jcxz cannot be encoded in 64-bit mode");
+  } else {
+    if (Name == "jrcxz")
+      return Error(NameLoc, "jrcxz cannot be encoded in 32-bit mode");
+  }
+
   // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
   // represent alternative syntaxes in the .td file, without requiring
   // instruction duplication.
@@ -618,7 +628,11 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     .Case("jz", "je")
     .Case("jnz", "jne")
     .Case("jc", "jb")
+    // FIXME: in 32-bit mode jcxz requires an AdSize prefix. In 64-bit mode
+    // jecxz requires an AdSize prefix but jecxz does not have a prefix in
+    // 32-bit mode.
     .Case("jecxz", "jcxz")
+    .Case("jrcxz", "jcxz")
     .Case("jna", "jbe")
     .Case("jnae", "jb")
     .Case("jnb", "jae")
