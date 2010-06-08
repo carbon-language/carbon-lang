@@ -1808,6 +1808,11 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   if (isEmptyRecord(Context, Ty, true))
     return ABIArgInfo::getIgnore();
 
+  // Structures with either a non-trivial destructor or a non-trivial
+  // copy constructor are always indirect.
+  if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
   // FIXME: This is kind of nasty... but there isn't much choice because the ARM
   // backend doesn't support byval.
   // FIXME: This doesn't handle alignment > 64 bits.
@@ -1926,6 +1931,11 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     return (RetTy->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
+
+  // Structures with either a non-trivial destructor or a non-trivial
+  // copy constructor are always indirect.
+  if (isRecordWithNonTrivialDestructorOrCopyConstructor(RetTy))
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
   // Are we following APCS?
   if (getABIKind() == APCS) {
