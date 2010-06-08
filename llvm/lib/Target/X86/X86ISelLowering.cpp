@@ -8527,18 +8527,29 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
   // our load from the relocation, sticking it in either RDI (x86-64)
   // or EAX and doing an indirect call.  The return value will then
   // be in the normal return register.
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const X86InstrInfo *TII 
+    = static_cast<const X86InstrInfo*>(getTargetMachine().getInstrInfo());
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *F = BB->getParent();
   
+  assert(MI->getOperand(3).isGlobal() && "This should be a global");
+  
   if (Subtarget->is64Bit()) {
-    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV64rr), X86::RDI)
-    .addReg(MI->getOperand(0).getReg());
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV64rm), X86::RDI)
+    .addReg(X86::RIP)
+    .addImm(0).addReg(0)
+    .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
+                      MI->getOperand(3).getTargetFlags())
+    .addReg(0);
     MIB = BuildMI(BB, DL, TII->get(X86::CALL64m));
     addDirectMem(MIB, X86::RDI).addReg(0);
   } else {
-    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rr), X86::EAX)
-    .addReg(MI->getOperand(0).getReg());
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rm), X86::EAX)
+    .addReg(TII->getGlobalBaseReg(F))
+    .addImm(0).addReg(0)
+    .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
+                      MI->getOperand(3).getTargetFlags())
+    .addReg(0);
     MIB = BuildMI(BB, DL, TII->get(X86::CALL32m));
     addDirectMem(MIB, X86::EAX).addReg(0);
   }

@@ -66,7 +66,7 @@ def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
 
 def tls64addr : ComplexPattern<i64, 4, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
-
+                               
 //===----------------------------------------------------------------------===//
 // Pattern fragments.
 //
@@ -1717,9 +1717,9 @@ let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [RSP],
     usesCustomInserter = 1 in
-def TLSCall_64 : I<0, Pseudo, (outs), (ins GR64:$sym),
+def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                   "# Fixme into a call",
-                  [(X86TLSCall GR64:$sym)]>,
+                  [(X86TLSCall addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
 let AddedComplexity = 5, isCodeGenOnly = 1 in

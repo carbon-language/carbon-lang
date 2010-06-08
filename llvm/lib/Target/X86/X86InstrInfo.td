@@ -3837,9 +3837,9 @@ let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [ESP],
     usesCustomInserter = 1 in
-def TLSCall_32 : I<0, Pseudo, (outs), (ins GR32:$sym),
+def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
                 "# Fixme into a call",
-                [(X86TLSCall GR32:$sym)]>,
+                [(X86TLSCall addr:$sym)]>,
                 Requires<[In32BitMode]>;
                 
 let AddedComplexity = 5, isCodeGenOnly = 1 in
