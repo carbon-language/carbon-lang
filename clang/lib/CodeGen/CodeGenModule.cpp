@@ -184,23 +184,12 @@ void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
   if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
     return getMangledCXXDtorName(Buffer, D, GD.getDtorType());
 
-  return getMangledName(Buffer, ND);
-}
-
-/// \brief Retrieves the mangled name for the given declaration.
-///
-/// If the given declaration requires a mangled name, returns an
-/// const char* containing the mangled name.  Otherwise, returns
-/// the unmangled name.
-///
-void CodeGenModule::getMangledName(MangleBuffer &Buffer,
-                                   const NamedDecl *ND) {
   if (!getMangleContext().shouldMangleDeclName(ND)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
     Buffer.setString(ND->getNameAsCString());
     return;
   }
-
+  
   getMangleContext().mangleName(ND, Buffer.getBuffer());
 }
 
