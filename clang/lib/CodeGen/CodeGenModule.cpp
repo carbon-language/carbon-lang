@@ -180,9 +180,11 @@ void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
-    return getMangledCXXCtorName(Buffer, D, GD.getCtorType());
+    return getMangleContext().mangleCXXCtor(D, GD.getCtorType(), 
+                                            Buffer.getBuffer());
   if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
-    return getMangledCXXDtorName(Buffer, D, GD.getDtorType());
+    return getMangleContext().mangleCXXDtor(D, GD.getDtorType(), 
+                                            Buffer.getBuffer());
 
   if (!getMangleContext().shouldMangleDeclName(ND)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
@@ -191,6 +193,10 @@ void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
   }
   
   getMangleContext().mangleName(ND, Buffer.getBuffer());
+}
+
+void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
+  getMangleContext().mangleBlock(BD, Buffer.getBuffer());
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {

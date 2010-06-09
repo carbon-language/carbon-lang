@@ -232,16 +232,6 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
   return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
-void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
-  getMangleContext().mangleBlock(BD, Buffer.getBuffer());
-}
-
-void CodeGenModule::getMangledCXXCtorName(MangleBuffer &Name,
-                                          const CXXConstructorDecl *D,
-                                          CXXCtorType Type) {
-  getMangleContext().mangleCXXCtor(D, Type, Name.getBuffer());
-}
-
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
   // The destructor in a virtual table is always a 'deleting'
   // destructor, which calls the complete destructor and then uses the
@@ -298,12 +288,6 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), false);
 
   return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
-}
-
-void CodeGenModule::getMangledCXXDtorName(MangleBuffer &Name,
-                                          const CXXDestructorDecl *D,
-                                          CXXDtorType Type) {
-  getMangleContext().mangleCXXDtor(D, Type, Name.getBuffer());
 }
 
 llvm::Constant *

@@ -433,12 +433,6 @@ public:
 
   void getMangledName(MangleBuffer &Buffer, GlobalDecl D);
   void getMangledName(MangleBuffer &Buffer, const BlockDecl *BD);
-  void getMangledCXXCtorName(MangleBuffer &Buffer,
-                             const CXXConstructorDecl *D,
-                             CXXCtorType Type);
-  void getMangledCXXDtorName(MangleBuffer &Buffer,
-                             const CXXDestructorDecl *D,
-                             CXXDtorType Type);
 
   void EmitTentativeDefinition(const VarDecl *D);
 
