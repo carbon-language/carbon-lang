@@ -39,7 +39,7 @@ public:
   unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
                                   /// aliases to base ctors when possible.
   unsigned DataSections      : 1; /// Set when -fdata-sections is enabled
-  unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
+  unsigned DebugInfo         : 1; /// Should generate debug info (-g).
   unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
                                   /// getting .bc files that correspond to the

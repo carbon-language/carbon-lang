@@ -959,7 +959,7 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   return Sema::CXXCopyAssignment;
 }
 
-/// canREdefineFunction - checks if a function can be redefined. Currently,
+/// canRedefineFunction - checks if a function can be redefined. Currently,
 /// only extern inline functions can be redefined, and even then only in
 /// GNU89 mode.
 static bool canRedefineFunction(const FunctionDecl *FD,
