@@ -606,7 +606,9 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
     Base = CurDAG->getTargetConstant(0, N.getValueType());
     Index = N;
     return true;
-  } else if (Opc == ISD::Register || Opc == ISD::CopyFromReg) {
+  } else if (Opc == ISD::Register 
+           ||Opc == ISD::CopyFromReg 
+           ||Opc == ISD::UNDEF) {
     unsigned OpOpc = Op->getOpcode();
 
     if (OpOpc == ISD::STORE || OpOpc == ISD::LOAD) {
