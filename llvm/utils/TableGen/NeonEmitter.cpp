@@ -310,10 +310,14 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
       return quad ? "V48c" : "V24c";
     if (mod == '4')
       return quad ? "V64c" : "V32c";
-    if (mod == 'f')
+    if (mod == 'f' || (ck == ClassI && type == 'f'))
       return quad ? "V4f" : "V2f";
-    if (mod == 'x' || mod == 'u')
+    if (ck == ClassI && type == 's')
+      return quad ? "V8s" : "V4s";
+    if (ck == ClassI && type == 'i')
       return quad ? "V4i" : "V2i";
+    if (ck == ClassI && type == 'l')
+      return quad ? "V2LLi" : "V1LLi";
     
     return quad ? "V16c" : "V8c";
   }    
@@ -325,9 +329,16 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     return quad ? "V16cV16cV16c" : "V8cV8cV8c";
   if (mod == '4')
     return quad ? "V16cV16cV16cV16c" : "V8cV8cV8cV8c";
-  if (mod == 'f')
-    return quad ? "V4f" : "V2f";
 
+  if (mod == 'f' || (ck == ClassI && type == 'f'))
+    return quad ? "V4f" : "V2f";
+  if (ck == ClassI && type == 's')
+    return quad ? "V8s" : "V4s";
+  if (ck == ClassI && type == 'i')
+    return quad ? "V4i" : "V2i";
+  if (ck == ClassI && type == 'l')
+    return quad ? "V2LLi" : "V1LLi";
+  
   return quad ? "V16c" : "V8c";
 }
 
@@ -658,7 +669,12 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       continue;
     }
     
+    // Parenthesize the args from the macro.
+    if (define)
+      s.push_back('(');
     s.push_back(arg);
+    if (define)
+      s.push_back(')');
     
     if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
         proto[i] != 'p' && proto[i] != 'c') {
