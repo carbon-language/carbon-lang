@@ -124,45 +124,85 @@ public:
   bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
   bool isDoubleArg() const { return kind >= fArg && kind <= AArg; }
   Kind getKind() const { return kind; }
+  void setKind(Kind k) { kind = k; }
   unsigned getLength() const {
     // Conversion specifiers currently only are represented by
     // single characters, but we be flexible.
     return 1;
   }
+  const char *toString() const;
 
 private:
   const char *Position;
   Kind kind;
 };
 
-enum LengthModifier {
- None,
- AsChar,      // 'hh'
- AsShort,     // 'h'
- AsLong,      // 'l'
- AsLongLong,  // 'll', 'q' (BSD, deprecated)
- AsIntMax,    // 'j'
- AsSizeT,     // 'z'
- AsPtrDiff,   // 't'
- AsLongDouble, // 'L'
- AsWideChar = AsLong // for '%ls'
+class LengthModifier {
+public:
+  enum Kind {
+   None,
+   AsChar,       // 'hh'
+   AsShort,      // 'h'
+   AsLong,       // 'l'
+   AsLongLong,   // 'll', 'q' (BSD, deprecated)
+   AsIntMax,     // 'j'
+   AsSizeT,      // 'z'
+   AsPtrDiff,    // 't'
+   AsLongDouble, // 'L'
+   AsWideChar = AsLong // for '%ls'
+  };
+
+  LengthModifier()
+    : Position(0), kind(None) {}
+  LengthModifier(const char *pos, Kind k)
+    : Position(pos), kind(k) {}
+
+  const char *getStart() const {
+    return Position;
+  }
+
+  unsigned getLength() const {
+    switch (kind) {
+    default:
+      return 1;
+    case AsLongLong:
+      return 2;
+    case None:
+      return 0;
+    }
+  }
+
+  Kind getKind() const { return kind; }
+  void setKind(Kind k) { kind = k; }
+
+  const char *toString() const;
+
+private:
+  const char *Position;
+  Kind kind;
 };
 
 class OptionalAmount {
 public:
   enum HowSpecified { NotSpecified, Constant, Arg, Invalid };
 
-  OptionalAmount(HowSpecified h, unsigned i, const char *st)
-    : start(st), hs(h), amt(i) {}
+  OptionalAmount(HowSpecified howSpecified,
+                 unsigned amount,
+                 const char *amountStart,
+                 bool usesPositionalArg)
+    : start(amountStart), hs(howSpecified), amt(amount),
+      UsesPositionalArg(usesPositionalArg) {}
 
-  OptionalAmount(bool b = true)
-    : start(0), hs(b ? NotSpecified : Invalid), amt(0) {}
+  OptionalAmount(bool valid = true)
+    : start(0), hs(valid ? NotSpecified : Invalid), amt(0),
+      UsesPositionalArg(0) {}
 
   bool isInvalid() const {
     return hs == Invalid;
   }
 
   HowSpecified getHowSpecified() const { return hs; }
+  void setHowSpecified(HowSpecified h) { hs = h; }
 
   bool hasDataArgument() const { return hs == Arg; }
 
@@ -182,10 +222,19 @@ public:
 
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
+  void toString(llvm::raw_ostream &os) const;
+
+  bool usesPositionalArg() const { return (bool) UsesPositionalArg; }
+  unsigned getPositionalArgIndex() const {
+    assert(hasDataArgument());
+    return amt + 1;
+  }
+
 private:
   const char *start;
   HowSpecified hs;
   unsigned amt;
+  bool UsesPositionalArg : 1;
 };
 
 class FormatSpecifier {
@@ -204,7 +253,7 @@ class FormatSpecifier {
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
-  FormatSpecifier() : LM(None),
+  FormatSpecifier() :
     IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
     HasAlternativeForm(0), HasLeadingZeroes(0), UsesPositionalArg(0),
     argIndex(0) {}
@@ -233,6 +282,11 @@ public:
   unsigned getArgIndex() const {
     assert(CS.consumesDataArgument());
     return argIndex;
+  }
+
+  unsigned getPositionalArgIndex() const {
+    assert(CS.consumesDataArgument());
+    return argIndex + 1;
   }
 
   // Methods for querying the format specifier.
@@ -274,6 +328,13 @@ public:
   bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }
   bool hasSpacePrefix() const { return (bool) HasSpacePrefix; }
   bool usesPositionalArg() const { return (bool) UsesPositionalArg; }
+
+  /// Changes the specifier and length according to a QualType, retaining any
+  /// flags or options. Returns true on success, or false when a conversion
+  /// was not successful.
+  bool fixType(QualType QT);
+
+  void toString(llvm::raw_ostream &os) const;
 };
 
 enum PositionContext { FieldWidthPos = 0, PrecisionPos = 1 };

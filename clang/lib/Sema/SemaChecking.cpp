@@ -26,6 +26,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
 #include <limits>
@@ -1404,11 +1405,32 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
         if (ATR.matchesType(S.Context, ICE->getSubExpr()->getType()))
           return true;
 
-    S.Diag(getLocationOfByte(CS.getStart()),
-           diag::warn_printf_conversion_argument_type_mismatch)
-      << ATR.getRepresentativeType(S.Context) << Ex->getType()
-      << getFormatSpecifierRange(startSpecifier, specifierLen)
-      << Ex->getSourceRange();
+    // We may be able to offer a FixItHint if it is a supported type.
+    FormatSpecifier fixedFS = FS;
+    bool success = fixedFS.fixType(Ex->getType());
+
+    if (success) {
+      // Get the fix string from the fixed format specifier
+      llvm::SmallString<128> buf;
+      llvm::raw_svector_ostream os(buf);
+      fixedFS.toString(os);
+
+      S.Diag(getLocationOfByte(CS.getStart()),
+          diag::warn_printf_conversion_argument_type_mismatch)
+        << ATR.getRepresentativeType(S.Context) << Ex->getType()
+        << getFormatSpecifierRange(startSpecifier, specifierLen)
+        << Ex->getSourceRange()
+        << FixItHint::CreateReplacement(
+            getFormatSpecifierRange(startSpecifier, specifierLen),
+            os.str());
+    }
+    else {
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_printf_conversion_argument_type_mismatch)
+        << ATR.getRepresentativeType(S.Context) << Ex->getType()
+        << getFormatSpecifierRange(startSpecifier, specifierLen)
+        << Ex->getSourceRange();
+    }
   }
 
   return true;
