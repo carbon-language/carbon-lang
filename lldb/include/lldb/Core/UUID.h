@@ -17,8 +17,6 @@
 
 #include "lldb/lldb-private.h"
 
-struct uuid_t;
-
 namespace lldb_private {
 
 class UUID
