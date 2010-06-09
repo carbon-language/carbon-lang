@@ -12,6 +12,7 @@
 #if defined(__cplusplus)
 
 #include <regex.h>
+#include <stdint.h>
 
 #include <string>
 #include <vector>

@@ -17,6 +17,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/VMRange.h"
+#include <limits.h>
 
 namespace lldb_private {
 

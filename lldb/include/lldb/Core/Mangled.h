@@ -49,7 +49,7 @@ public:
         eParamsBeg,     ///< The start of a method's parameters (the open parenthesis)
         eParamsEnd,     ///< The end of a method's parameters (the open parenthesis)
         eQualifier,     ///< A language qualifier
-        eError,         ///< The token failed to parse
+        eError          ///< The token failed to parse
     };
 
     //------------------------------------------------------------------

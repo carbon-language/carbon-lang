@@ -163,7 +163,7 @@ namespace lldb_private {
 //  by hand as part of expression evaluation.  To suppress the running event return eVoteNo from ShouldReportStop,
 //  to force a running event to be reported return eVoteYes, in general though you should return eVoteNoOpinion
 //  which will allow the ThreadList to figure out the right thing to do.
-//  The run_vote argument to the constructor works like stop_vote, and is a way for a plan to instruct a sub-plan\
+//  The run_vote argument to the constructor works like stop_vote, and is a way for a plan to instruct a sub-plan
 //  on how to respond to ShouldReportStop.
 //
 //------------------------------------------------------------------

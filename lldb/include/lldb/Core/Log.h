@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include <signal.h>
 #include <stdio.h>
-#include <sys/syslimits.h>
 #include <unistd.h>
 
 // C++ Includes
@@ -67,7 +66,7 @@ public:
                                     Stream *feedback_strm);
     typedef void (*ListCategoriesCallback) (Stream *strm);
 
-    typedef struct Callbacks
+    struct Callbacks
     {
         DisableCallback disable;
         EnableCallback enable;
