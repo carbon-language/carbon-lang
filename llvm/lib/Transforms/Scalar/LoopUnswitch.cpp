@@ -445,7 +445,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   // This is a very ad-hoc heuristic.
   if (Metrics.NumInsts > Threshold ||
       Metrics.NumBlocks * 5 > Threshold ||
-      Metrics.NeverInline) {
+      Metrics.containsIndirectBr || Metrics.isRecursive) {
     DEBUG(dbgs() << "NOT unswitching loop %"
           << currentLoop->getHeader()->getName() << ", cost too high: "
           << currentLoop->getBlocks().size() << "\n");

@@ -162,14 +162,14 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       if (Function *F = CS.getCalledFunction()) {
         if (F->isDeclaration() && 
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
-          NeverInline = true;
+          callsSetJmp = true;
        
         // If this call is to function itself, then the function is recursive.
         // Inlining it into other functions is a bad idea, because this is
         // basically just a form of loop peeling, and our metrics aren't useful
         // for that case.
         if (F == BB->getParent())
-          NeverInline = true;
+          isRecursive = true;
       }
 
       if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
@@ -220,7 +220,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   // jump would jump from the inlined copy of the function into the original
   // function which is extremely undefined behavior.
   if (isa<IndirectBrInst>(BB->getTerminator()))
-    NeverInline = true;
+    containsIndirectBr = true;
 
   // Remember NumInsts for this BB.
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
@@ -247,7 +247,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
 
   // Don't bother calculating argument weights if we are never going to inline
   // the function anyway.
-  if (Metrics.NeverInline)
+  if (NeverInline())
     return;
 
   // Check out all of the arguments to the function, figuring out how much
@@ -258,6 +258,14 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
                                       CountCodeReductionForAlloca(I)));
 }
 
+/// NeverInline - returns true if the function should never be inlined into
+/// any caller
+bool InlineCostAnalyzer::FunctionInfo::NeverInline()
+{
+  return (Metrics.callsSetJmp || Metrics.isRecursive || 
+          Metrics.containsIndirectBr);
+
+}
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
@@ -315,7 +323,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     CalleeFI->analyzeFunction(Callee);
 
   // If we should never inline this, return a huge cost.
-  if (CalleeFI->Metrics.NeverInline)
+  if (CalleeFI->NeverInline())
     return InlineCost::getNever();
 
   // FIXME: It would be nice to kill off CalleeFI->NeverInline. Then we
@@ -443,9 +451,14 @@ InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
   }
   
   // Since CalleeMetrics were already calculated, we know that the CallerMetrics
-  // reference isn't invalidated: both were in the DenseMap.  
-  CallerMetrics.NeverInline |= CalleeMetrics.NeverInline;
+  // reference isn't invalidated: both were in the DenseMap.
   CallerMetrics.usesDynamicAlloca |= CalleeMetrics.usesDynamicAlloca;
+
+  // FIXME: If any of these three are true for the callee, the callee was
+  // not inlined into the caller, so I think they're redundant here.
+  CallerMetrics.callsSetJmp |= CalleeMetrics.callsSetJmp;
+  CallerMetrics.isRecursive |= CalleeMetrics.isRecursive;
+  CallerMetrics.containsIndirectBr |= CalleeMetrics.containsIndirectBr;
 
   CallerMetrics.NumInsts += CalleeMetrics.NumInsts;
   CallerMetrics.NumBlocks += CalleeMetrics.NumBlocks;
