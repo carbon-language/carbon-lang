@@ -9,7 +9,7 @@
 
 #include "lldb/API/SBError.h"
 #include "lldb/Core/Error.h"
-#include <cstdarg>
+#include <stdarg.h>
 
 using namespace lldb;
 using namespace lldb_private;

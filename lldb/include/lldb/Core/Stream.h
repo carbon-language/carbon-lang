@@ -13,7 +13,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Flags.h"
-#include <cstdarg>
+#include <stdarg.h>
 
 namespace lldb_private {
 

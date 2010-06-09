@@ -11,7 +11,7 @@
 #define LLDB_SBDebugger_h_
 
 #include "lldb/API/SBDefines.h"
-#include <cstdio>
+#include <stdio.h>
 
 namespace lldb {
 
