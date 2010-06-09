@@ -10,9 +10,9 @@
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/lldb-forward-rtti.h"
 
-#include "SBBroadcaster.h"
-#include "SBListener.h"
-#include "SBEvent.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBEvent.h"
 
 using namespace lldb;
 using namespace lldb_private;

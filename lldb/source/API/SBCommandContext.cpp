@@ -10,7 +10,7 @@
 #include "lldb/Interpreter/CommandContext.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
-#include "SBCommandContext.h"
+#include "lldb/API/SBCommandContext.h"
 
 
 using namespace lldb;

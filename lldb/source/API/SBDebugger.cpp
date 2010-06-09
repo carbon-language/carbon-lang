@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBDebugger.h"
+#include "lldb/API/SBDebugger.h"
 
 #include "lldb/lldb-include.h"
 #include "lldb/Core/Args.h"
@@ -16,17 +16,17 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 
-#include "SBListener.h"
-#include "SBBroadcaster.h"
-#include "SBCommandInterpreter.h"
-#include "SBCommandReturnObject.h"
-#include "SBEvent.h"
-#include "SBFrame.h"
-#include "SBTarget.h"
-#include "SBProcess.h"
-#include "SBThread.h"
-#include "SBSourceManager.h"
-#include "SBInputReader.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBFrame.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBProcess.h"
+#include "lldb/API/SBThread.h"
+#include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBInputReader.h"
 
 using namespace lldb;
 using namespace lldb_private;

@@ -9,7 +9,7 @@
 
 #include "lldb/Interpreter/CommandReturnObject.h"
 
-#include "SBCommandReturnObject.h"
+#include "lldb/API/SBCommandReturnObject.h"
 
 using namespace lldb;
 
