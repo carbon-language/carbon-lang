@@ -74,6 +74,15 @@ gcc:
 	movq	%rax, (%rdx)
 	ret
 
+And the codegen is even worse for the following
+(from http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33103):
+  void fill1(char *s, int a)
+  {
+    __builtin_memset(s, a, 15);
+  }
+
+For this version, we duplicate the computation of the constant to store.
+
 //===---------------------------------------------------------------------===//
 
 It's not possible to reference AH, BH, CH, and DH registers in an instruction
@@ -156,5 +165,78 @@ bb2: 0x203afb0, LLVM BB @0x1e02340, ID#3:
 so we'd have to know that IMUL32rri8 leaves the high word zero extended and to
 be able to recognize the zero extend.  This could also presumably be implemented
 if we have whole-function selectiondags.
+
+//===---------------------------------------------------------------------===//
+
+Take the following C code
+(from http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43640):
+
+struct u1
+{
+        float x;
+        float y;
+};
+
+float foo(struct u1 u)
+{
+        return u.x + u.y;
+}
+
+Optimizes to the following IR:
+define float @foo(double %u.0) nounwind readnone {
+entry:
+  %tmp8 = bitcast double %u.0 to i64              ; <i64> [#uses=2]
+  %tmp6 = trunc i64 %tmp8 to i32                  ; <i32> [#uses=1]
+  %tmp7 = bitcast i32 %tmp6 to float              ; <float> [#uses=1]
+  %tmp2 = lshr i64 %tmp8, 32                      ; <i64> [#uses=1]
+  %tmp3 = trunc i64 %tmp2 to i32                  ; <i32> [#uses=1]
+  %tmp4 = bitcast i32 %tmp3 to float              ; <float> [#uses=1]
+  %0 = fadd float %tmp7, %tmp4                    ; <float> [#uses=1]
+  ret float %0
+}
+
+And current llvm-gcc/clang output:
+	movd	%xmm0, %rax
+	movd	%eax, %xmm1
+	shrq	$32, %rax
+	movd	%eax, %xmm0
+	addss	%xmm1, %xmm0
+	ret
+
+We really shouldn't move the floats to RAX, only to immediately move them
+straight back to the XMM registers.
+
+There really isn't any good way to handle this purely in IR optimizers; it
+could possibly be handled by changing the output of the fronted, though.  It
+would also be feasible to add a x86-specific DAGCombine to optimize the
+bitcast+trunc+(lshr+)bitcast combination.
+
+//===---------------------------------------------------------------------===//
+
+Take the following code
+(from http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34653):
+extern unsigned long table[];
+unsigned long foo(unsigned char *p) {
+  unsigned long tag = *p;
+  return table[tag >> 4] + table[tag & 0xf];
+}
+
+Current code generated:
+	movzbl	(%rdi), %eax
+	movq	%rax, %rcx
+	andq	$240, %rcx
+	shrq	%rcx
+	andq	$15, %rax
+	movq	table(,%rax,8), %rax
+	addq	table(%rcx), %rax
+	ret
+
+Issues:
+1. First movq should be movl; saves a byte.
+2. Both andq's should be andl; saves another two bytes.  I think this was
+   implemented at one point, but subsequently regressed.
+3. shrq should be shrl; saves another byte.
+4. The first andq can be completely eliminated by using a slightly more
+   expensive addressing mode.
 
 //===---------------------------------------------------------------------===//
