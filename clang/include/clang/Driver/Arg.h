@@ -149,8 +149,12 @@ namespace driver {
   /// JoinedArg - A single value argument where the value is joined
   /// (suffixed) to the option.
   class JoinedArg : public Arg {
+    /// The offset of the joined argument value.
+    unsigned Offset;
+
   public:
-    JoinedArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
+    JoinedArg(const Option *Opt, unsigned Index, unsigned Offset,
+              const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
@@ -210,9 +214,12 @@ namespace driver {
   /// JoinedAndSeparateArg - An argument with both joined and separate
   /// values.
   class JoinedAndSeparateArg : public Arg {
+    /// The offset of the joined argument value.
+    unsigned Offset;
+
   public:
     JoinedAndSeparateArg(const Option *Opt, unsigned Index,
-                         const Arg *BaseArg = 0);
+                         unsigned Offset, const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 

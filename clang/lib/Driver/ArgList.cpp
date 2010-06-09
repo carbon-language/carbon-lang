@@ -191,6 +191,17 @@ const char *ArgList::MakeArgString(const llvm::Twine &T) const {
   return MakeArgString(Str.str());
 }
 
+const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
+                                              llvm::StringRef LHS,
+                                              llvm::StringRef RHS) const {
+  llvm::StringRef Cur = getArgString(Index);
+  if (Cur.size() == LHS.size() + RHS.size() &&
+      Cur.startswith(LHS) && Cur.endswith(RHS))
+    return Cur.data();
+
+  return MakeArgString(LHS + RHS);
+}
+
 //
 
 InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd)
@@ -269,7 +280,7 @@ Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
 Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                                    llvm::StringRef Value) const {
   Arg *A = new JoinedArg(Opt, BaseArgs.MakeIndex(Opt->getName() + Value.str()),
-                         BaseArg);
+                         strlen(Opt->getName()), BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }

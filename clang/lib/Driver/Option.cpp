@@ -133,7 +133,7 @@ JoinedOption::JoinedOption(OptSpecifier ID, const char *Name,
 
 Arg *JoinedOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Always matches.
-  return new JoinedArg(this, Index++);
+  return new JoinedArg(this, Index++, strlen(getName()));
 }
 
 CommaJoinedOption::CommaJoinedOption(OptSpecifier ID, const char *Name,
@@ -191,7 +191,8 @@ Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new SeparateArg(this, Index - 1 - NumArgs, NumArgs);
 }
 
-JoinedOrSeparateOption::JoinedOrSeparateOption(OptSpecifier ID, const char *Name,
+JoinedOrSeparateOption::JoinedOrSeparateOption(OptSpecifier ID,
+                                               const char *Name,
                                                const OptionGroup *Group,
                                                const Option *Alias)
   : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
@@ -202,7 +203,7 @@ Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
   // If this is not an exact match, it is a joined arg.
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
-    return new JoinedArg(this, Index++);
+    return new JoinedArg(this, Index++, strlen(getName()));
 
   // Otherwise it must be separate.
   Index += 2;
@@ -227,6 +228,6 @@ Arg *JoinedAndSeparateOption::accept(const InputArgList &Args,
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  return new JoinedAndSeparateArg(this, Index - 2);
+  return new JoinedAndSeparateArg(this, Index - 2, strlen(getName()));
 }
 

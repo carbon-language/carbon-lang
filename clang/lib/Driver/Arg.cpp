@@ -101,8 +101,9 @@ const char *PositionalArg::getValue(const ArgList &Args, unsigned N) const {
   return Args.getArgString(getIndex());
 }
 
-JoinedArg::JoinedArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
-  : Arg(JoinedClass, Opt, Index, BaseArg) {
+JoinedArg::JoinedArg(const Option *Opt, unsigned Index, unsigned _Offset,
+                     const Arg *BaseArg)
+  : Arg(JoinedClass, Opt, Index, BaseArg), Offset(_Offset) {
 }
 
 void JoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
@@ -110,14 +111,14 @@ void JoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(getOption().getName());
     Output.push_back(getValue(Args, 0));
   } else {
-    Output.push_back(Args.getArgString(getIndex()));
+    Output.push_back(Args.GetOrMakeJoinedArgString(
+                       getIndex(), getOption().getName(), getValue(Args, 0)));
   }
 }
 
 const char *JoinedArg::getValue(const ArgList &Args, unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
-  // FIXME: Avoid strlen.
-  return Args.getArgString(getIndex()) + strlen(getOption().getName());
+  return Args.getArgString(getIndex()) + Offset;
 }
 
 CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index,
@@ -171,13 +172,14 @@ const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const {
 }
 
 JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index,
-                                           const Arg *BaseArg)
-  : Arg(JoinedAndSeparateClass, Opt, Index, BaseArg) {
+                                           unsigned _Offset, const Arg *BaseArg)
+  : Arg(JoinedAndSeparateClass, Opt, Index, BaseArg), Offset(_Offset) {
 }
 
 void JoinedAndSeparateArg::render(const ArgList &Args,
                                   ArgStringList &Output) const {
-  Output.push_back(Args.getArgString(getIndex()));
+  Output.push_back(Args.GetOrMakeJoinedArgString(
+                     getIndex(), getOption().getName(), getValue(Args, 0)));
   Output.push_back(Args.getArgString(getIndex() + 1));
 }
 
@@ -185,6 +187,6 @@ const char *JoinedAndSeparateArg::getValue(const ArgList &Args,
                                            unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
   if (N == 0)
-    return Args.getArgString(getIndex()) + strlen(getOption().getName());
+    return Args.getArgString(getIndex()) + Offset;
   return Args.getArgString(getIndex() + 1);
 }

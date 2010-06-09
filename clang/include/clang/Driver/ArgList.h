@@ -249,6 +249,11 @@ namespace driver {
     }
     const char *MakeArgString(const llvm::Twine &Str) const;
 
+    /// \brief Create an arg string for (\arg LHS + \arg RHS), reusing the
+    /// string at \arg Index if possible.
+    const char *GetOrMakeJoinedArgString(unsigned Index, llvm::StringRef LHS,
+                                         llvm::StringRef RHS) const;
+
     /// @}
   };
 
