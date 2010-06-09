@@ -128,7 +128,7 @@ def F : JoinedOrSeparate<"-F">;
 def H : Flag<"-H">;
 def I_ : Flag<"-I-">, Group<I_Group>;
 def I : JoinedOrSeparate<"-I">, Group<I_Group>;
-def L : JoinedOrSeparate<"-L">;
+def L : JoinedOrSeparate<"-L">, Flags<[RenderJoined]>;
 def MD : Flag<"-MD">, Group<M_Group>;
 def MF : JoinedOrSeparate<"-MF">, Group<M_Group>;
 def MG : Flag<"-MG">, Group<M_Group>;
