@@ -821,14 +821,18 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
         case InlineAsm::Kind_RegDef:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-          MI->addOperand(MachineOperand::CreateReg(Reg, true));
+          // FIXME: Add dead flags for physical and virtual registers defined.
+          // For now, mark physical register defs as implicit to help fast
+          // regalloc. This makes inline asm look a lot like calls.
+          MI->addOperand(MachineOperand::CreateReg(Reg, true,
+                       /*isImp=*/ TargetRegisterInfo::isPhysicalRegister(Reg)));
         }
         break;
       case InlineAsm::Kind_RegDefEarlyClobber:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, /*isDef=*/ true,
-                                                   /*isImp=*/ false,
+                         /*isImp=*/ TargetRegisterInfo::isPhysicalRegister(Reg),
                                                    /*isKill=*/ false,
                                                    /*isDead=*/ false,
                                                    /*isUndef=*/false,
