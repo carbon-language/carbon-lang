@@ -1374,16 +1374,14 @@ void CXXNameMangler::mangleType(const DependentNameType *T) {
     mangleSourceName(T->getIdentifier());
   } else {
     const TemplateSpecializationType *TST = T->getTemplateId();
-    if (!mangleSubstitution(QualType(TST, 0))) {
-      mangleTemplatePrefix(TST->getTemplateName());
+
+    mangleTemplatePrefix(TST->getTemplateName());
       
-      // FIXME: GCC does not appear to mangle the template arguments when
-      // the template in question is a dependent template name. Should we
-      // emulate that badness?
-      mangleTemplateArgs(TST->getTemplateName(), TST->getArgs(),
-                         TST->getNumArgs());    
-      addSubstitution(QualType(TST, 0));
-    }
+    // FIXME: GCC does not appear to mangle the template arguments when
+    // the template in question is a dependent template name. Should we
+    // emulate that badness?
+    mangleTemplateArgs(TST->getTemplateName(), TST->getArgs(),
+                       TST->getNumArgs());    
   }
     
   Out << 'E';
@@ -1950,7 +1948,7 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
     while (SeqID) {
       assert(BufferPtr > Buffer && "Buffer overflow!");
 
-      unsigned char c = static_cast<unsigned char>(SeqID) % 36;
+      char c = static_cast<char>(SeqID % 36);
 
       *--BufferPtr =  (c < 10 ? '0' + c : 'A' + c - 10);
       SeqID /= 36;
