@@ -10,6 +10,8 @@
 #ifndef LLDB_enumerations_h_
 #define LLDB_enumerations_h_
 
+#include "llvm/System/Host.h"
+
 namespace lldb {
 
 //----------------------------------------------------------------------
@@ -71,17 +73,17 @@ typedef enum ByteOrder
     eByteOrderInvalid   = 0,
     eByteOrderLittle    = 1234,
     eByteOrderBig       = 4321,
-    eByteOrderPDP       = 3412,
-#if   defined (__LITTLE_ENDIAN__)
-    eByteOrderHost      = eByteOrderLittle
-#elif defined (__BIG_ENDIAN__)
-    eByteOrderHost      = eByteOrderBig
-#elif defined (__PDP_ENDIAN__)
-    eByteOrderHost      = eByteOrderPDP
-#else
-#error unable to detect endianness
-#endif
+    eByteOrderPDP       = 3412
 } ByteOrder;
+
+inline ByteOrder getHostByteOrder() {
+  if (llvm::sys::isLittleEndianHost())
+    return eByteOrderLittle;
+  return eByteOrderBig;
+}
+
+// FIXME: Replace uses of eByteOrderHost with getHostByteOrder()!
+const ByteOrder eByteOrderHost = getHostByteOrder();
 
 //----------------------------------------------------------------------
 // Register encoding definitions
