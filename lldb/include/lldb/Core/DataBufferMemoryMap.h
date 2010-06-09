@@ -87,7 +87,7 @@ public:
     /// Memory map all or part of a file.
     ///
     /// Memory map \a length bytes from \a file starting \a offset
-    /// bytes into the file. If \a length is set to \c SIZE_T_MAX,
+    /// bytes into the file. If \a length is set to \c SIZE_MAX,
     /// then map as many bytes as possible.
     ///
     /// @param[in] file
@@ -99,7 +99,7 @@ public:
     ///
     /// @param[in] length
     ///     The size in bytes that should be mapped starting \a offset
-    ///     bytes into the file. If \a length is \c SIZE_T_MAX, map
+    ///     bytes into the file. If \a length is \c SIZE_MAX, map
     ///     as many bytes as possible.
     ///
     /// @return
@@ -108,14 +108,14 @@ public:
     size_t
     MemoryMapFromFileSpec (const FileSpec* file,
                            off_t offset = 0,
-                           size_t length = SIZE_T_MAX);
+                           size_t length = SIZE_MAX);
 
     //------------------------------------------------------------------
     /// Memory map all or part of a file.
     ///
     /// Memory map \a length bytes from an opened file descriptor \a fd
     /// starting \a offset bytes into the file. If \a length is set to
-    /// \c SIZE_T_MAX, then map as many bytes as possible.
+    /// \c SIZE_MAX, then map as many bytes as possible.
     ///
     /// @param[in] fd
     ///     The posix file descriptor for an already opened file
@@ -127,14 +127,14 @@ public:
     ///
     /// @param[in] length
     ///     The size in bytes that should be mapped starting \a offset
-    ///     bytes into the file. If \a length is \c SIZE_T_MAX, map
+    ///     bytes into the file. If \a length is \c SIZE_MAX, map
     ///     as many bytes as possible.
     ///
     /// @return
     ///     The number of bytes mapped starting from the \a offset.
     //------------------------------------------------------------------
     size_t
-    MemoryMapFromFileDescriptor (int fd, off_t offset = 0, size_t length = SIZE_T_MAX);
+    MemoryMapFromFileDescriptor (int fd, off_t offset = 0, size_t length = SIZE_MAX);
 
 protected:
     //------------------------------------------------------------------

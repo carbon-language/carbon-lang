@@ -12,8 +12,6 @@
 
 #include "lldb/API/SBDefines.h"
 
-class lldb_private::ValueObjectList;
-
 namespace lldb {
 
 class SBValueList

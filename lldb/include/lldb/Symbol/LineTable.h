@@ -264,7 +264,7 @@ protected:
             // rhs and lhs reversed on purpose below.
             SCALAR_COMPARE (rhs.is_terminal_entry, lhs.is_terminal_entry);
             SCALAR_COMPARE (lhs.file_idx, rhs.file_idx);
-            #undef SCALAR_COMPARE;
+            #undef SCALAR_COMPARE
             return 0;
         }
 
@@ -273,7 +273,7 @@ protected:
         {
         public:
             LessThanBinaryPredicate(LineTable *line_table);
-            bool operator() (const LineTable::Entry& a, const LineTable::Entry& a) const;
+            bool operator() (const LineTable::Entry&, const LineTable::Entry&) const;
         protected:
             LineTable *m_line_table;
         };

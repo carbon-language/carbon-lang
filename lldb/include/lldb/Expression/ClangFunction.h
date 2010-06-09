@@ -16,7 +16,6 @@
 #include <list>
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Value.h"
@@ -39,7 +38,7 @@ class ClangFunction : private ClangExpression
 {
 public:
 
-    typedef enum ExecutionResults
+    enum ExecutionResults
     {
         eExecutionSetupError,
         eExecutionCompleted,
@@ -237,5 +236,5 @@ private:
    bool m_JITted;
 };
 
-}; // Namespace lldb_private
+} // Namespace lldb_private
 #endif  // lldb_ClangFunction_h_

@@ -236,5 +236,5 @@ private:
 
 };
 
-}; // namespace lldb_private
+} // namespace lldb_private
 #endif  // lldb_CommandCompletions_h_

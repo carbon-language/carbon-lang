@@ -12,10 +12,6 @@
 
 #include "lldb/API/SBDefines.h"
 
-class lldb_private::Variable;
-class lldb_private::ValueObject;
-class lldb_private::ExecutionContext;
-
 namespace lldb {
 
 class SBValue
