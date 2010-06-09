@@ -53,7 +53,6 @@ add_clang_library(clangChecker
   RangeConstraintManager.cpp
   RegionStore.cpp
   ReturnPointerRangeChecker.cpp
-  ReturnStackAddressChecker.cpp
   ReturnUndefChecker.cpp
   SimpleConstraintManager.cpp
   SimpleSValuator.cpp
