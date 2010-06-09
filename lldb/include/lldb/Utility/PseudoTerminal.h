@@ -32,7 +32,7 @@ class PseudoTerminal
 public:
     enum
     {
-        invalid_fd = -1,    ///< Invalid file descriptor value
+        invalid_fd = -1     ///< Invalid file descriptor value
     };
 
     //------------------------------------------------------------------
