@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBThread.h"
+#include "lldb/API/SBThread.h"
 
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBFileSpec.h"
@@ -26,11 +26,11 @@
 #include "lldb/Target/ThreadPlanStepInRange.h"
 
 
-#include "SBAddress.h"
-#include "SBFrame.h"
-#include "SBSourceManager.h"
-#include "SBDebugger.h"
-#include "SBProcess.h"
+#include "lldb/API/SBAddress.h"
+#include "lldb/API/SBFrame.h"
+#include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBProcess.h"
 
 using namespace lldb;
 using namespace lldb_private;

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "SBSourceManager.h"
+#include "lldb/API/SBSourceManager.h"
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/Core/Stream.h"

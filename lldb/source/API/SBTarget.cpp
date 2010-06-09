@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBTarget.h"
+#include "lldb/API/SBTarget.h"
 
 #include "lldb/lldb-include.h"
 
@@ -35,10 +35,10 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "../source/Commands/CommandObjectBreakpoint.h"
 
-#include "SBDebugger.h"
-#include "SBProcess.h"
-#include "SBListener.h"
-#include "SBBreakpoint.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBProcess.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;

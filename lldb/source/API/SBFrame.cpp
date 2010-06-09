@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBFrame.h"
+#include "lldb/API/SBFrame.h"
 
 #include <string>
 #include <algorithm>
@@ -31,11 +31,11 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
 
-#include "SBDebugger.h"
-#include "SBValue.h"
-#include "SBAddress.h"
-#include "SBSymbolContext.h"
-#include "SBThread.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBValue.h"
+#include "lldb/API/SBAddress.h"
+#include "lldb/API/SBSymbolContext.h"
+#include "lldb/API/SBThread.h"
 
 using namespace lldb;
 using namespace lldb_private;

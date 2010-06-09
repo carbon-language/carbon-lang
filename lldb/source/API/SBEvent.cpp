@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBEvent.h"
-#include "SBBroadcaster.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBBroadcaster.h"
 
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Stream.h"

@@ -11,9 +11,9 @@
 #include "lldb/lldb-forward-rtti.h"
 #include "lldb/Host/TimeValue.h"
 
-#include "SBListener.h"
-#include "SBEvent.h"
-#include "SBBroadcaster.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBBroadcaster.h"
 
 using namespace lldb;
 using namespace lldb_private;

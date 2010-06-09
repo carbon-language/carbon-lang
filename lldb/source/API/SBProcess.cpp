@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBProcess.h"
+#include "lldb/API/SBProcess.h"
 
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
@@ -24,12 +24,12 @@
 
 // Project includes
 
-#include "SBBroadcaster.h"
-#include "SBDebugger.h"
-#include "SBCommandReturnObject.h"
-#include "SBEvent.h"
-#include "SBThread.h"
-#include "SBStringList.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBThread.h"
+#include "lldb/API/SBStringList.h"
 
 using namespace lldb;
 using namespace lldb_private;
