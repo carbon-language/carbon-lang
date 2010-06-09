@@ -24,7 +24,7 @@ using namespace llvm;
 
 static cl::opt<bool>
 EarlyITBlockFormation("thumb2-early-it-blocks", cl::Hidden,
-  cl::desc("Form IT blocks earlt, before register allocation"),
+  cl::desc("Form IT blocks early before register allocation"),
   cl::init(false));
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
