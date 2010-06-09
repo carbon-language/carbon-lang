@@ -301,7 +301,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   }
   OS << ", 0x";
   OS.write_hex(Value);
-  OS << "LLU, ";
+  OS << "ULL, ";
 
   // Emit the implicit uses and defs lists...
   std::vector<Record*> UseList = Inst.TheDef->getValueAsListOfDefs("Uses");
