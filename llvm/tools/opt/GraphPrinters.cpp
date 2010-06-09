@@ -56,7 +56,7 @@ namespace llvm {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
       else
-        return "Indirect call node";
+        return "external node";
     }
   };
 }
