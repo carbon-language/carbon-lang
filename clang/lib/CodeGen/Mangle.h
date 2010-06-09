@@ -84,6 +84,8 @@ public:
                          Diagnostic &Diags)
     : Context(Context), Diags(Diags) { }
 
+  virtual ~MangleContext() { }
+
   ASTContext &getASTContext() const { return Context; }
 
   Diagnostic &getDiags() const { return Diags; }
@@ -109,28 +111,28 @@ public:
   /// @{
 
   bool shouldMangleDeclName(const NamedDecl *D);
-  void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
-  void mangleThunk(const CXXMethodDecl *MD,
-                   const ThunkInfo &Thunk,
-                   llvm::SmallVectorImpl<char> &);
-  void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
-                          const ThisAdjustment &ThisAdjustment,
+  virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
+  virtual void mangleThunk(const CXXMethodDecl *MD,
+                          const ThunkInfo &Thunk,
                           llvm::SmallVectorImpl<char> &);
-  void mangleGuardVariable(const VarDecl *D,
-                           llvm::SmallVectorImpl<char> &);
-  void mangleCXXVTable(const CXXRecordDecl *RD,
-                       llvm::SmallVectorImpl<char> &);
-  void mangleCXXVTT(const CXXRecordDecl *RD,
-                    llvm::SmallVectorImpl<char> &);
-  void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
-                           const CXXRecordDecl *Type,
-                           llvm::SmallVectorImpl<char> &);
-  void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
-  void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
-  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                     llvm::SmallVectorImpl<char> &);
-  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                     llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
+                                  const ThisAdjustment &ThisAdjustment,
+                                  llvm::SmallVectorImpl<char> &);
+  virtual void mangleGuardVariable(const VarDecl *D,
+                                   llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXVTable(const CXXRecordDecl *RD,
+                               llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXVTT(const CXXRecordDecl *RD,
+                            llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
+                                   const CXXRecordDecl *Type,
+                                   llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                             llvm::SmallVectorImpl<char> &);
+  virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
+                             llvm::SmallVectorImpl<char> &);
   void mangleBlock(const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
 
   void mangleInitDiscriminator() {

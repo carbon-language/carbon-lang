@@ -31,6 +31,7 @@ public:
 
 /// Creates an instance of a C++ ABI class.
 CXXABI *CreateItaniumCXXABI(CodeGenModule &CGM);
+CXXABI *CreateMicrosoftCXXABI(CodeGenModule &CGM);
 }
 }
 
