@@ -860,7 +860,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     T = Context.getCanonicalType(T);
   }
 
-  // C++ 8.3.3p3: A pointer to member shall not pointer to ... a member
+  // C++ 8.3.3p3: A pointer to member shall not point to ... a member
   //   with reference type, or "cv void."
   if (T->isReferenceType()) {
     Diag(Loc, diag::err_illegal_decl_mempointer_to_reference)
@@ -1333,6 +1333,11 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                   FnTy->getNumArgs(), FnTy->isVariadic(), 0, 
                                   false, false, 0, 0, FunctionType::ExtInfo());
     }
+  }
+
+  // If there's a constexpr specifier, treat it as a top-level const.
+  if (D.getDeclSpec().isConstexprSpecified()) {
+    T.addConst();
   }
 
   // Process any function attributes we might have delayed from the
