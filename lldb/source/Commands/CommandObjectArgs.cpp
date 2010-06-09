@@ -173,7 +173,7 @@ CommandObjectArgs::Execute(Args &command,
         void *type;
         
         char *int_pos;
-        if ((int_pos = strstr (arg_type_cstr, "int")))
+        if ((int_pos = strstr (const_cast<char*>(arg_type_cstr), "int")))
         {
             Encoding encoding = eEncodingSint;
             

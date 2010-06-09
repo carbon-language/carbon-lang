@@ -57,7 +57,7 @@ public:
         eSetTypeFileAndLine,
         eSetTypeAddress,
         eSetTypeFunctionName,
-        eSetTypeFunctionRegexp,
+        eSetTypeFunctionRegexp
     } BreakpointSetType;
 
     CommandObjectBreakpointSet ();

@@ -59,7 +59,7 @@ CommandObjectTranslate::Execute
         }
         else
         {
-            result.AppendErrroWithFormat
+            result.AppendErrorWithFormat
             ("'%s' is not a known command.\nTry 'help' to see a current list of commands.\n",
              command.GetArgumentAtIndex(0));
             result.SetStatus (eReturnStatusFailed);
