@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Stream.h"
+#include <algorithm>
 
 using namespace lldb_private;
 using namespace std;

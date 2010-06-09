@@ -18,6 +18,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
+#include <algorithm>
 
 using namespace lldb;
 using namespace lldb_private;

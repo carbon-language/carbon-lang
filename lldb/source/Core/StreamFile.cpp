@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/StreamFile.h"
+#include <stdio.h>
 
 // C Includes
 // C++ Includes

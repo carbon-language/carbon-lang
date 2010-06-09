@@ -10,9 +10,12 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Mutex.h"
+
+#include <stdio.h>
 
 using namespace lldb_private;
 

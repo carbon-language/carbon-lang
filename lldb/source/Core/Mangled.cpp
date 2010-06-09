@@ -13,6 +13,8 @@
 #include "lldb/Core/Mangled.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+#include <ctype.h>
+#include <string.h>
 
 using namespace lldb_private;
 

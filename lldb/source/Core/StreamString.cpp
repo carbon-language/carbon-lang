@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/StreamString.h"
-//#include <libkern/OSByteOrder.h>
+#include <stdio.h>
 
 using namespace lldb;
 using namespace lldb_private;

@@ -19,6 +19,7 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/lldb-private-log.h"
+#include <algorithm>
 
 using namespace lldb;
 using namespace lldb_private;

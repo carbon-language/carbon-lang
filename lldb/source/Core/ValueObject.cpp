@@ -12,7 +12,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
 
 // Project includes
@@ -27,6 +26,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
+#include <stdlib.h>
 
 using namespace lldb;
 using namespace lldb_private;

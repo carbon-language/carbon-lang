@@ -29,8 +29,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
-#include "clang/AST/Type.h"
-
 
 using namespace lldb_private;
 

@@ -13,6 +13,9 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Stream.h"
+#include <string.h>
+#include <stdio.h>
+#include <ctype.h>
 
 using namespace lldb_private;
 

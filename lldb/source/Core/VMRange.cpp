@@ -11,6 +11,7 @@
 
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/VMRange.h"
+#include <algorithm>
 
 using namespace lldb;
 using namespace lldb_private;

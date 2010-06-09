@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/RegularExpression.h"
+#include <string.h>
 
 using namespace lldb_private;
 
