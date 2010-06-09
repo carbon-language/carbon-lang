@@ -12,3 +12,7 @@ void f1() {
   p = str; 
   p = 0; // no-warning
 }
+
+void f2() {
+  p = (const char *) __builtin_alloca(12); // expected-warning {{Stack address was saved into a global variable.}}
+}

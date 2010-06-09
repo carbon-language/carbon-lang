@@ -54,41 +54,34 @@ void StackAddrLeakChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
       SVal V = state->getSVal(cast<Loc>(L));
       if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {
         const MemRegion *R = RV->getRegion();
-        // Strip fields or elements to get the variable region.
-        R = R->getBaseRegion();
-        if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-          const VarDecl *VD = VR->getDecl();
-          const DeclContext *DC = VD->getDeclContext();
-          // Get the function where the variable is declared.
-          if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(DC)) {
-            // Check if the function is the function we are leaving.
-            if (FD == LCtx->getDecl()) {
-              // The variable is declared in the function scope which we are 
-              // leaving. Keeping this variable's address in a global variable
-              // is dangerous.
-              // FIXME: Currently VarRegion does not carry context information.
-              // So we cannot tell if the local variable instance is in the
-              // current stack frame. This may produce false positive in 
-              // recursive function call context. But that's a rare case.
 
-              // FIXME: better warning location.
+        if (const StackSpaceRegion *SSR = 
+                              dyn_cast<StackSpaceRegion>(R->getMemorySpace())) {
+          const StackFrameContext *ValSFC = SSR->getStackFrame();
+          const StackFrameContext *CurSFC = LCtx->getCurrentStackFrame();
+          // If the global variable holds a location in the current stack frame,
+          // emit a warning.
+          if (ValSFC == CurSFC) {
+            // The variable is declared in the function scope which we are 
+            // leaving. Keeping this variable's address in a global variable
+            // is dangerous.
 
-              ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
-              if (N) {
-                if (!BT_stackleak)
-                  BT_stackleak = new BuiltinBug("Stack address leak",
-                    "Stack address was saved into a global variable. "
-                    "This is dangerous because the address will become invalid "
-                    "after returning from the function.");
-                BugReport *R = new BugReport(*BT_stackleak, 
-                                             BT_stackleak->getDescription(), N);
-                Eng.getBugReporter().EmitReport(R);
-              }
+            // FIXME: better warning location.
+            
+            ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+            if (N) {
+              if (!BT_stackleak)
+                BT_stackleak = new BuiltinBug("Stack address leak",
+                        "Stack address was saved into a global variable. "
+                        "is dangerous because the address will become invalid "
+                        "after returning from the function.");
+              BugReport *R = new BugReport(*BT_stackleak, 
+                                           BT_stackleak->getDescription(), N);
+              Eng.getBugReporter().EmitReport(R);
             }
-          }            
+          }
         }
       }
     }
   }
 }
-
