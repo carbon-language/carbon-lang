@@ -176,7 +176,6 @@
 		26D5B0D811B07550009A862E /* Symbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1B10F1B8EC00F91463 /* Symbol.cpp */; };
 		26D5B0D911B07550009A862E /* SymbolContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1C10F1B8EC00F91463 /* SymbolContext.cpp */; };
 		26D5B0DA11B07550009A862E /* SymbolFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1D10F1B8EC00F91463 /* SymbolFile.cpp */; };
-		26D5B0DB11B07550009A862E /* SymbolVendor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1E10F1B8EC00F91463 /* SymbolVendor.mm */; };
 		26D5B0DC11B07550009A862E /* Symtab.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1F10F1B8EC00F91463 /* Symtab.cpp */; };
 		26D5B0DD11B07550009A862E /* Type.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F2010F1B8EC00F91463 /* Type.cpp */; };
 		26D5B0DE11B07550009A862E /* TypeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F2110F1B8EC00F91463 /* TypeList.cpp */; };
@@ -351,6 +350,7 @@
 		9AC70390117675270086C050 /* SBInstructionList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC7038F117675270086C050 /* SBInstructionList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703AE117675410086C050 /* SBInstruction.cpp */; };
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
+		AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF94005711C03F6500085DB9 /* SymbolVendor.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -824,7 +824,6 @@
 		26BC7F1B10F1B8EC00F91463 /* Symbol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symbol.cpp; path = source/Symbol/Symbol.cpp; sourceTree = "<group>"; };
 		26BC7F1C10F1B8EC00F91463 /* SymbolContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolContext.cpp; path = source/Symbol/SymbolContext.cpp; sourceTree = "<group>"; };
 		26BC7F1D10F1B8EC00F91463 /* SymbolFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolFile.cpp; path = source/Symbol/SymbolFile.cpp; sourceTree = "<group>"; };
-		26BC7F1E10F1B8EC00F91463 /* SymbolVendor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SymbolVendor.mm; path = source/Symbol/SymbolVendor.mm; sourceTree = "<group>"; };
 		26BC7F1F10F1B8EC00F91463 /* Symtab.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symtab.cpp; path = source/Symbol/Symtab.cpp; sourceTree = "<group>"; };
 		26BC7F2010F1B8EC00F91463 /* Type.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Type.cpp; path = source/Symbol/Type.cpp; sourceTree = "<group>"; };
 		26BC7F2110F1B8EC00F91463 /* TypeList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeList.cpp; path = source/Symbol/TypeList.cpp; sourceTree = "<group>"; };
@@ -1032,6 +1031,7 @@
 		9AF16A9E11402D69007A7B3F /* SBBreakpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBBreakpoint.h; path = include/lldb/API/SBBreakpoint.h; sourceTree = "<group>"; };
 		9AF16CC611408686007A7B3F /* SBBreakpointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBBreakpointLocation.h; path = include/lldb/API/SBBreakpointLocation.h; sourceTree = "<group>"; };
 		9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBBreakpointLocation.cpp; path = source/API/SBBreakpointLocation.cpp; sourceTree = "<group>"; };
+		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1664,6 +1664,7 @@
 		26BC7C4B10F1B6C100F91463 /* Symbol */ = {
 			isa = PBXGroup;
 			children = (
+				AF94005711C03F6500085DB9 /* SymbolVendor.cpp */,
 				26BC7C5510F1B6E900F91463 /* Block.h */,
 				26BC7F1310F1B8EC00F91463 /* Block.cpp */,
 				26BC7C5610F1B6E900F91463 /* ClangASTContext.h */,
@@ -1691,7 +1692,6 @@
 				26BC7C6210F1B6E900F91463 /* SymbolFile.h */,
 				26BC7F1D10F1B8EC00F91463 /* SymbolFile.cpp */,
 				26BC7C6310F1B6E900F91463 /* SymbolVendor.h */,
-				26BC7F1E10F1B8EC00F91463 /* SymbolVendor.mm */,
 				26BC7C6410F1B6E900F91463 /* Symtab.h */,
 				26BC7F1F10F1B8EC00F91463 /* Symtab.cpp */,
 				26BC7C6510F1B6E900F91463 /* Type.h */,
@@ -2457,7 +2457,6 @@
 				26D5B0D811B07550009A862E /* Symbol.cpp in Sources */,
 				26D5B0D911B07550009A862E /* SymbolContext.cpp in Sources */,
 				26D5B0DA11B07550009A862E /* SymbolFile.cpp in Sources */,
-				26D5B0DB11B07550009A862E /* SymbolVendor.mm in Sources */,
 				26D5B0DC11B07550009A862E /* Symtab.cpp in Sources */,
 				26D5B0DD11B07550009A862E /* Type.cpp in Sources */,
 				26D5B0DE11B07550009A862E /* TypeList.cpp in Sources */,
@@ -2622,6 +2621,7 @@
 				49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */,
 				49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */,
 				4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */,
+				AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
