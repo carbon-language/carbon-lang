@@ -17,10 +17,10 @@
 #include <string>
 #include <vector>
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBBroadcaster.h>
-#include <LLDB/SBError.h>
-#include <LLDB/SBInputReader.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBError.h"
+#include "lldb/API/SBInputReader.h"
 
 
 class IOChannel;
