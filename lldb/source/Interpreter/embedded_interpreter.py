@@ -45,7 +45,7 @@ class SimpleREPL(code.InteractiveConsole):
       # Check the input string to see if it was the quit
       # command.  If so, intercept it, so that it doesn't
       # close stdin on us!
-      if (temp_str.lower() == "quit()"):
+      if (temp_str.lower() == "quit()" or temp_str.lower() == "exit()"):
          self.loop_exit = True
          in_str = "raise SystemExit "
       return in_str
