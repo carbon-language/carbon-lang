@@ -2925,7 +2925,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_VERSION = 4.2;
-				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/include/**";
+				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/include/lldb/API/**";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
