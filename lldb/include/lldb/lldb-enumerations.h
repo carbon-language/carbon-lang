@@ -130,7 +130,7 @@ typedef enum Format
     eFormatVectorOfUInt64,
     eFormatVectorOfFloat32,
     eFormatVectorOfFloat64,
-    eFormatVectorOfUInt128,
+    eFormatVectorOfUInt128
 
 } Format;
 
@@ -189,7 +189,7 @@ typedef enum Vote
 {
     eVoteNo         = -1,
     eVoteNoOpinion  =  0,
-    eVoteYes        =  1,
+    eVoteYes        =  1
 } Vote;
 
 //----------------------------------------------------------------------
@@ -289,7 +289,7 @@ typedef enum InputReaderGranularity
     eInputReaderGranularityByte,
     eInputReaderGranularityWord,
     eInputReaderGranularityLine,
-    eInputReaderGranularityAll,
+    eInputReaderGranularityAll
 } InputReaderGranularity;
 
 //------------------------------------------------------------------
@@ -319,7 +319,7 @@ typedef enum Permissions
     ePermissionsWritable = (1 << 0),
     ePermissionsReadable = (1 << 1),
     ePermissionsExecutable = (1 << 2)
-};
+} Permissions;
 
 typedef enum SectionType
 {
@@ -349,7 +349,7 @@ typedef enum InputReaderAction
     eInputReaderReactivate, // reader is on top of the stack again after another reader was popped off 
     eInputReaderDeactivate, // another reader was pushed on the stack 
     eInputReaderGotToken,   // reader got one of its tokens (granularity)
-    eInputReaderDone,       // reader was just popped off the stack and is done
+    eInputReaderDone        // reader was just popped off the stack and is done
 } InputReaderAction;
 
 } // namespace lldb
