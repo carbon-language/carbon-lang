@@ -20,7 +20,6 @@ Option::Option(OptionClass _Kind, OptSpecifier _ID, const char *_Name,
                const OptionGroup *_Group, const Option *_Alias)
   : Kind(_Kind), ID(_ID.getID()), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
-    ForceSeparateRender(false), ForceJoinedRender(false),
     DriverOption(false), NoArgumentUnused(false) {
 
   // Multi-level aliases are not supported, and alias options cannot
@@ -28,6 +27,31 @@ Option::Option(OptionClass _Kind, OptSpecifier _ID, const char *_Name,
   // inherent limitation.
   assert((!Alias || (!Alias->Alias && !Group)) &&
          "Multi-level aliases and aliases with groups are unsupported.");
+
+  // Initialize rendering options based on the class.
+  switch (Kind) {
+  case GroupClass:
+  case InputClass:
+  case UnknownClass:
+    RenderStyle = RenderValuesStyle;
+    break;
+
+  case JoinedClass:
+  case JoinedAndSeparateClass:
+    RenderStyle = RenderJoinedStyle;
+    break;
+
+  case CommaJoinedClass:
+    RenderStyle = RenderCommaJoinedStyle;
+    break;
+
+  case FlagClass:
+  case SeparateClass:
+  case MultiArgClass:
+  case JoinedOrSeparateClass:
+    RenderStyle = RenderSeparateStyle;
+    break;
+  }
 }
 
 Option::~Option() {

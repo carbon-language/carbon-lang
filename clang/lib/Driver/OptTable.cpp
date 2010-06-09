@@ -169,12 +169,12 @@ Option *OptTable::CreateOption(unsigned id) const {
   if (info.Flags & RenderJoined) {
     assert((info.Kind == Option::JoinedOrSeparateClass ||
             info.Kind == Option::SeparateClass) && "Invalid option.");
-    Opt->setForceJoinedRender(true);
+    Opt->setRenderStyle(Option::RenderJoinedStyle);
   }
   if (info.Flags & RenderSeparate) {
     assert((info.Kind == Option::JoinedOrSeparateClass ||
             info.Kind == Option::JoinedClass) && "Invalid option.");
-    Opt->setForceSeparateRender(true);
+    Opt->setRenderStyle(Option::RenderSeparateStyle);
   }
   if (info.Flags & Unsupported)
     Opt->setUnsupported(true);

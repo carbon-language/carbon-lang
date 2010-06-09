@@ -109,7 +109,7 @@ namespace driver {
     }
 
     /// render - Append the argument onto the given array as strings.
-    virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
+    void render(const ArgList &Args, ArgStringList &Output) const;
 
     /// renderAsInput - Append the argument, render as an input, onto
     /// the given array as strings. The distinction is that some
@@ -131,8 +131,6 @@ namespace driver {
   public:
     FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
 
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::FlagClass;
     }
@@ -144,8 +142,6 @@ namespace driver {
   public:
     PositionalArg(const Option *Opt, unsigned Index, const char *Value,
                   const Arg *BaseArg = 0);
-
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::PositionalClass;
@@ -160,8 +156,6 @@ namespace driver {
     JoinedArg(const Option *Opt, unsigned Index, const char *Value,
               const Arg *BaseArg = 0);
 
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::JoinedClass;
     }
@@ -174,8 +168,6 @@ namespace driver {
   public:
     SeparateArg(const Option *Opt, unsigned Index, const char *Value,
                 const Arg *BaseArg = 0);
-
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::SeparateClass;
@@ -194,8 +186,6 @@ namespace driver {
     CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str,
                    const Arg *BaseArg = 0);
 
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::CommaJoinedClass;
     }
@@ -209,8 +199,6 @@ namespace driver {
     JoinedAndSeparateArg(const Option *Opt, unsigned Index,
                          const char *Value0, const char *Value1, 
                          const Arg *BaseArg = 0);
-
-    virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::JoinedAndSeparateClass;

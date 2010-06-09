@@ -50,6 +50,13 @@ namespace driver {
       JoinedAndSeparateClass
     };
 
+    enum RenderStyleKind {
+      RenderCommaJoinedStyle,
+      RenderJoinedStyle,
+      RenderSeparateStyle,
+      RenderValuesStyle
+    };
+
   private:
     OptionClass Kind;
 
@@ -65,7 +72,7 @@ namespace driver {
     /// Option that this is an alias for, if any.
     const Option *Alias;
 
-    /// Unsupported options will not be rejected.
+    /// Unsupported options will be rejected.
     bool Unsupported : 1;
 
     /// Treat this option like a linker input?
@@ -76,11 +83,8 @@ namespace driver {
     // FIXME: We should ditch the render/renderAsInput distinction.
     bool NoOptAsInput : 1;
 
-    /// Always render this option as separate form its value.
-    bool ForceSeparateRender : 1;
-
-    /// Always render this option joined with its value.
-    bool ForceJoinedRender : 1;
+    /// The style to using when rendering arguments parsed by this option.
+    unsigned RenderStyle : 2;
 
     /// This option is only consumed by the driver.
     bool DriverOption : 1;
@@ -109,11 +113,10 @@ namespace driver {
     bool hasNoOptAsInput() const { return NoOptAsInput; }
     void setNoOptAsInput(bool Value) { NoOptAsInput = Value; }
 
-    bool hasForceSeparateRender() const { return ForceSeparateRender; }
-    void setForceSeparateRender(bool Value) { ForceSeparateRender = Value; }
-
-    bool hasForceJoinedRender() const { return ForceJoinedRender; }
-    void setForceJoinedRender(bool Value) { ForceJoinedRender = Value; }
+    RenderStyleKind getRenderStyle() const {
+      return RenderStyleKind(RenderStyle);
+    }
+    void setRenderStyle(RenderStyleKind Value) { RenderStyle = Value; }
 
     bool isDriverOption() const { return DriverOption; }
     void setDriverOption(bool Value) { DriverOption = Value; }

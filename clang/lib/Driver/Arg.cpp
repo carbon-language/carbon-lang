@@ -10,6 +10,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -55,8 +56,8 @@ void Arg::dump() const {
 }
 
 std::string Arg::getAsString(const ArgList &Args) const {
-  std::string Res;
-  llvm::raw_string_ostream OS(Res);
+  llvm::SmallString<256> Res;
+  llvm::raw_svector_ostream OS(Res);
 
   ArgStringList ASL;
   render(Args, ASL);
@@ -80,12 +81,42 @@ void Arg::renderAsInput(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(getValue(Args, i));
 }
 
-FlagArg::FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
-  : Arg(FlagClass, Opt, Index, BaseArg) {
+void Arg::render(const ArgList &Args, ArgStringList &Output) const {
+  switch (getOption().getRenderStyle()) {
+  case Option::RenderValuesStyle:
+    for (unsigned i = 0, e = getNumValues(); i != e; ++i)
+      Output.push_back(getValue(Args, i));
+    break;
+
+  case Option::RenderCommaJoinedStyle: {
+    llvm::SmallString<256> Res;
+    llvm::raw_svector_ostream OS(Res);
+    OS << getOption().getName();
+    for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
+      if (i) OS << ',';
+      OS << getValue(Args, i);
+    }
+    Output.push_back(Args.MakeArgString(OS.str()));
+    break;
+  }
+ 
+ case Option::RenderJoinedStyle:
+    Output.push_back(Args.GetOrMakeJoinedArgString(
+                       getIndex(), getOption().getName(), getValue(Args, 0)));
+    for (unsigned i = 1, e = getNumValues(); i != e; ++i)
+      Output.push_back(getValue(Args, i));
+    break;
+
+  case Option::RenderSeparateStyle:
+    Output.push_back(getOption().getName());
+    for (unsigned i = 0, e = getNumValues(); i != e; ++i)
+      Output.push_back(getValue(Args, i));
+    break;
+  }
 }
 
-void FlagArg::render(const ArgList &Args, ArgStringList &Output) const {
-  Output.push_back(getOption().getName());
+FlagArg::FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
+  : Arg(FlagClass, Opt, Index, BaseArg) {
 }
 
 PositionalArg::PositionalArg(const Option *Opt, unsigned Index,
@@ -94,24 +125,10 @@ PositionalArg::PositionalArg(const Option *Opt, unsigned Index,
   getValues().push_back(Value0);
 }
 
-void PositionalArg::render(const ArgList &Args, ArgStringList &Output) const {
-  Output.push_back(Args.getArgString(getIndex()));
-}
-
 JoinedArg::JoinedArg(const Option *Opt, unsigned Index, const char *Value0,
                      const Arg *BaseArg)
   : Arg(JoinedClass, Opt, Index, BaseArg) {
   getValues().push_back(Value0);
-}
-
-void JoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
-  if (getOption().hasForceSeparateRender()) {
-    Output.push_back(getOption().getName());
-    Output.push_back(getValue(Args, 0));
-  } else {
-    Output.push_back(Args.GetOrMakeJoinedArgString(
-                       getIndex(), getOption().getName(), getValue(Args, 0)));
-  }
 }
 
 CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index,
@@ -139,26 +156,10 @@ CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index,
   setOwnsValues(true);
 }
 
-void CommaJoinedArg::render(const ArgList &Args, ArgStringList &Output) const {
-  Output.push_back(Args.getArgString(getIndex()));
-}
-
 SeparateArg::SeparateArg(const Option *Opt, unsigned Index, const char *Value0,
                          const Arg *BaseArg)
   : Arg(SeparateClass, Opt, Index, BaseArg) {
   getValues().push_back(Value0);
-}
-
-void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
-  if (getOption().hasForceJoinedRender()) {
-    assert(getNumValues() == 1 && "Cannot force joined render with > 1 args.");
-    Output.push_back(Args.MakeArgString(llvm::StringRef(getOption().getName()) +
-                                        getValue(Args, 0)));
-  } else {
-    Output.push_back(getOption().getName());
-    for (unsigned i = 0; i != getNumValues(); ++i)
-      Output.push_back(getValue(Args, i));
-  }
 }
 
 JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index,
@@ -168,11 +169,4 @@ JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index,
   : Arg(JoinedAndSeparateClass, Opt, Index, BaseArg) {
   getValues().push_back(Value0);
   getValues().push_back(Value1);
-}
-
-void JoinedAndSeparateArg::render(const ArgList &Args,
-                                  ArgStringList &Output) const {
-  Output.push_back(Args.GetOrMakeJoinedArgString(
-                     getIndex(), getOption().getName(), getValue(Args, 0)));
-  Output.push_back(getValue(Args, 1));
 }
