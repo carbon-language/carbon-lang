@@ -18,6 +18,7 @@ using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 
 #include "Util.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <string>
 
@@ -58,10 +59,15 @@ namespace driver {
     /// ArgList.
     unsigned Index;
 
-    /// Flag indicating whether this argument was used to effect
-    /// compilation; used for generating "argument unused"
-    /// diagnostics.
-    mutable bool Claimed;
+    /// Was this argument used to effect compilation; used for generating
+    /// "argument unused" diagnostics.
+    mutable unsigned Claimed : 1;
+
+    /// Does this argument own its values.
+    mutable unsigned OwnsValues : 1;
+
+    /// The argument values, as C strings.
+    llvm::SmallVector<const char *, 2> Values;
 
   protected:
     Arg(ArgClass Kind, const Option *Opt, unsigned Index,
@@ -85,16 +91,22 @@ namespace driver {
       BaseArg = _BaseArg;
     }
 
+    bool getOwnsValues() const { return OwnsValues; }
+    void setOwnsValues(bool Value) const { OwnsValues = Value; }
+
     bool isClaimed() const { return getBaseArg().Claimed; }
 
     /// claim - Set the Arg claimed bit.
-
-    // FIXME: We need to deal with derived arguments and set the bit
-    // in the original argument; not the derived one.
     void claim() const { getBaseArg().Claimed = true; }
 
-    virtual unsigned getNumValues() const = 0;
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
+    unsigned getNumValues() const { return Values.size(); }
+    const char *getValue(const ArgList &Args, unsigned N=0) const {
+      return Values[N];
+    }
+
+    llvm::SmallVectorImpl<const char*> &getValues() {
+      return Values;
+    }
 
     /// render - Append the argument onto the given array as strings.
     virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
@@ -121,9 +133,6 @@ namespace driver {
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
 
-    virtual unsigned getNumValues() const { return 0; }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
-
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::FlagClass;
     }
@@ -133,12 +142,10 @@ namespace driver {
   /// PositionalArg - A simple positional argument.
   class PositionalArg : public Arg {
   public:
-    PositionalArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
+    PositionalArg(const Option *Opt, unsigned Index, const char *Value,
+                  const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
-    virtual unsigned getNumValues() const { return 1; }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::PositionalClass;
@@ -149,17 +156,11 @@ namespace driver {
   /// JoinedArg - A single value argument where the value is joined
   /// (suffixed) to the option.
   class JoinedArg : public Arg {
-    /// The offset of the joined argument value.
-    unsigned Offset;
-
   public:
-    JoinedArg(const Option *Opt, unsigned Index, unsigned Offset,
+    JoinedArg(const Option *Opt, unsigned Index, const char *Value,
               const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
-    virtual unsigned getNumValues() const { return 1; }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::JoinedClass;
@@ -170,16 +171,11 @@ namespace driver {
   /// SeparateArg - An argument where one or more values follow the
   /// option specifier immediately in the argument vector.
   class SeparateArg : public Arg {
-    unsigned NumValues;
-
   public:
-    SeparateArg(const Option *Opt, unsigned Index, unsigned NumValues,
+    SeparateArg(const Option *Opt, unsigned Index, const char *Value,
                 const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
-    virtual unsigned getNumValues() const { return NumValues; }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::SeparateClass;
@@ -194,16 +190,11 @@ namespace driver {
   /// separate arguments, which allows it to be used as a generic
   /// mechanism for passing arguments through to tools.
   class CommaJoinedArg : public Arg {
-    std::vector<std::string> Values;
-
   public:
     CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str,
                    const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
-    virtual unsigned getNumValues() const { return Values.size(); }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::CommaJoinedClass;
@@ -214,17 +205,12 @@ namespace driver {
   /// JoinedAndSeparateArg - An argument with both joined and separate
   /// values.
   class JoinedAndSeparateArg : public Arg {
-    /// The offset of the joined argument value.
-    unsigned Offset;
-
   public:
     JoinedAndSeparateArg(const Option *Opt, unsigned Index,
-                         unsigned Offset, const Arg *BaseArg = 0);
+                         const char *Value0, const char *Value1, 
+                         const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
-
-    virtual unsigned getNumValues() const { return 2; }
-    virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
     static bool classof(const Arg *A) {
       return A->getKind() == Arg::JoinedAndSeparateClass;
