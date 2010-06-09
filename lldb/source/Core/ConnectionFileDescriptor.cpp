@@ -18,6 +18,8 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -419,7 +421,6 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
 
     struct sockaddr_in sa;
     ::memset (&sa, 0, sizeof sa);
-    sa.sin_len = sizeof sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons (listen_port_num);
     sa.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -512,7 +513,6 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
 
     struct sockaddr_in sa;
     ::bzero (&sa, sizeof (sa));
-    sa.sin_len = sizeof sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons (port);
 
