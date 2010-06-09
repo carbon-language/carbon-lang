@@ -31,7 +31,7 @@
 #include "CommandObjectMemory.h"
 #include "CommandObjectProcess.h"
 #include "CommandObjectQuit.h"
-#include "CommandObjectRegexCommand.h"
+#include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "CommandObjectRegister.h"
 #include "CommandObjectRemove.h"
 #include "CommandObjectScript.h"
