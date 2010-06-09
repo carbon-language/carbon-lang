@@ -49,7 +49,7 @@ public:
     /// Enumeration values for special and invalid Block User ID
     /// values.
     //------------------------------------------------------------------
-    typedef enum
+    enum
     {
         RootID = LLDB_INVALID_UID - 1,  ///< The Block UID for the root block
         InvalidID = LLDB_INVALID_UID        ///< Invalid Block UID.

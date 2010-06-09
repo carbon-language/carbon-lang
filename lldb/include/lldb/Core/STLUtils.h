@@ -11,7 +11,7 @@
 #define liblldb_STLUtils_h_
 #if defined(__cplusplus)
 
-#include <ext/hash_fun.h>
+#include "llvm/ADT/StringExtras.h"
 #include <string.h>
 
 #include <map>
@@ -66,7 +66,7 @@ struct StdStringHash
 {
     size_t operator()( const std::string& x ) const
     {
-        return __gnu_cxx::hash<const char*>()( x.c_str() );
+        return llvm::HashString(x);
     }
 };
 

@@ -37,8 +37,8 @@ public:
         eFileTypePipe,
         eFileTypeRegular,
         eFileTypeSocket,
-        eFileTypeSymbolicLink,
-    };
+        eFileTypeSymbolicLink
+    } FileType;
 
     FileSpec();
 
@@ -351,7 +351,7 @@ public:
     ///
     /// @param[in] length
     ///     The size in bytes that should be mapped starting \a offset
-    ///     bytes into the file. If \a length is \c SIZE_T_MAX, map
+    ///     bytes into the file. If \a length is \c SIZE_MAX, map
     ///     as many bytes as possible.
     ///
     /// @return
@@ -360,7 +360,7 @@ public:
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
-    MemoryMapFileContents (off_t offset = 0, size_t length = SIZE_T_MAX) const;
+    MemoryMapFileContents (off_t offset = 0, size_t length = SIZE_MAX) const;
 
     //------------------------------------------------------------------
     /// Read part of, or the entire contents of, a file into a heap based data buffer.
@@ -381,7 +381,7 @@ public:
     ///
     /// @param[in] length
     ///     The size in bytes that should be mapped starting \a offset
-    ///     bytes into the file. If \a length is \c SIZE_T_MAX, map
+    ///     bytes into the file. If \a length is \c SIZE_MAX, map
     ///     as many bytes as possible.
     ///
     /// @return
@@ -390,7 +390,7 @@ public:
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
-    ReadFileContents (off_t offset = 0, size_t length = SIZE_T_MAX) const;
+    ReadFileContents (off_t offset = 0, size_t length = SIZE_MAX) const;
 
     //------------------------------------------------------------------
     /// Change the file specificed with a new path.
