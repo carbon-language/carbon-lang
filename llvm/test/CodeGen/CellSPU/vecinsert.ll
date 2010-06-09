@@ -1,17 +1,19 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep cbd     %t1.s | count 5
 ; RUN: grep chd     %t1.s | count 5
-; RUN: grep cwd     %t1.s | count 10
+; RUN: grep cwd     %t1.s | count 11
 ; RUN: grep -w il   %t1.s | count 5
 ; RUN: grep -w ilh  %t1.s | count 6
 ; RUN: grep iohl    %t1.s | count 1
 ; RUN: grep ilhu    %t1.s | count 4
-; RUN: grep shufb   %t1.s | count 26
+; RUN: grep shufb   %t1.s | count 27
 ; RUN: grep 17219   %t1.s | count 1 
 ; RUN: grep 22598   %t1.s | count 1
 ; RUN: grep -- -39  %t1.s | count 1
 ; RUN: grep    24   %t1.s | count 1
 ; RUN: grep  1159   %t1.s | count 1
+; RUN: FileCheck %s < %t1.s
+
 ; ModuleID = 'vecinsert.bc'
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128"
 target triple = "spu-unknown-elf"
@@ -118,3 +120,12 @@ entry:
 	store <2 x double> %tmp3, <2 x double>* %arrayidx
 	ret void
 }
+
+define <4 x i32> @undef_v4i32( i32 %param ) {
+	;CHECK: cwd
+	;CHECK: lqa
+	;CHECK: shufb
+	%val = insertelement <4 x i32> <i32 1, i32 2, i32 3, i32 4>, i32 %param, i32 undef 
+	ret <4 x i32> %val
+}
+
