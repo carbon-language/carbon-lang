@@ -38,5 +38,5 @@ void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
   RegisterCastToStructChecker(Eng);
   RegisterCastSizeChecker(Eng);
   RegisterArrayBoundChecker(Eng);
-  RegisterStackAddrLeakChecker(Eng);
+
 }

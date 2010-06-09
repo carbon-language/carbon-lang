@@ -317,13 +317,13 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterDereferenceChecker(Eng);
   RegisterVLASizeChecker(Eng);
   RegisterDivZeroChecker(Eng);
-  RegisterReturnStackAddressChecker(Eng);
   RegisterReturnUndefChecker(Eng);
   RegisterUndefinedArraySubscriptChecker(Eng);
   RegisterUndefinedAssignmentChecker(Eng);
   RegisterUndefBranchChecker(Eng);
   RegisterUndefCapturedBlockVarChecker(Eng);
   RegisterUndefResultChecker(Eng);
+  RegisterStackAddrLeakChecker(Eng);
 
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);

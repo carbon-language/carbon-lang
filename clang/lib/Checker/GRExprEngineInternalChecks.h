@@ -34,7 +34,6 @@ void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
 void RegisterPointerArithChecker(GRExprEngine &Eng);
 void RegisterPointerSubChecker(GRExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
-void RegisterReturnStackAddressChecker(GRExprEngine &Eng);
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
 void RegisterStackAddrLeakChecker(GRExprEngine &Eng);
 void RegisterUndefBranchChecker(GRExprEngine &Eng);
