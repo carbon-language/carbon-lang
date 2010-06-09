@@ -10,7 +10,7 @@
 #ifndef LLDB_SBThread_h_
 #define LLDB_SBThread_h_
 
-#include "lldb/API/SBDefines.h>
+#include "lldb/API/SBDefines.h"
 
 namespace lldb {
 
