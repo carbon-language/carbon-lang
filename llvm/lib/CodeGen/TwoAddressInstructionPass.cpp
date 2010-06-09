@@ -1104,7 +1104,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             }
           }
         }
-          
+
+        // Schedule the source copy / remat inserted to form two-address
+        // instruction. FIXME: Does it matter the distance map may not be
+        // accurate after it's scheduled?
+        TII->scheduleTwoAddrSource(prior(mi), mi, *TRI);
+
         MadeChange = true;
 
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);

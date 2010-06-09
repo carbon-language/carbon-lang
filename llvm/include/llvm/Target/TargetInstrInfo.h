@@ -203,6 +203,14 @@ public:
                              const MachineInstr *Orig,
                              const TargetRegisterInfo &TRI) const = 0;
 
+  /// scheduleTwoAddrSource - Schedule the copy / re-mat of the source of the
+  /// two-addrss instruction inserted by two-address pass.
+  virtual void scheduleTwoAddrSource(MachineInstr *SrcMI,
+                                     MachineInstr *UseMI,
+                                     const TargetRegisterInfo &TRI) const {
+    // Do nothing.
+  }
+
   /// duplicate - Create a duplicate of the Orig instruction in MF. This is like
   /// MachineFunction::CloneMachineInstr(), but the target may update operands
   /// that are required to be unique.
