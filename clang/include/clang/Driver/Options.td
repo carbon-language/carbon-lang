@@ -713,4 +713,4 @@ def _warn__EQ : Joined<"--warn-=">, Alias<W_Joined>, Flags<[Unsupported]>;
 def _warn_ : Joined<"--warn-">, Alias<W_Joined>, Flags<[Unsupported]>;
 def _write_dependencies : Flag<"--write-dependencies">, Alias<MD>;
 def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
-def _ : Joined<"--">, Flags<[Unsupported]>;
+def _ : Joined<"--">, Alias<f>, Flags<[Unsupported]>;
