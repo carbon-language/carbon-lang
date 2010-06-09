@@ -294,8 +294,9 @@ NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {
-  return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
-                        : SourceLocation();
+  return hasDefaultArgument()
+    ? getDefaultArgument()->getSourceRange().getBegin()
+    : SourceLocation();
 }
 
 //===----------------------------------------------------------------------===//

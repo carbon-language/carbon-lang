@@ -646,7 +646,7 @@ void Sema::ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParamD,
     return;
   }
 
-  TemplateParm->setDefaultArgument(DefaultE.takeAs<Expr>());
+  TemplateParm->setDefaultArgument(DefaultE.takeAs<Expr>(), false);
 }
 
 
@@ -715,7 +715,7 @@ void Sema::ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParamD,
     return;
   }
   
-  TemplateParm->setDefaultArgument(DefaultArg);
+  TemplateParm->setDefaultArgument(DefaultArg, false);
 }
 
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that
@@ -1145,7 +1145,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
                                           NewNonTypeParm->getLocation(), 
                     NewNonTypeParm->getDefaultArgument()->getSourceRange())) {
         NewNonTypeParm->getDefaultArgument()->Destroy(Context);
-        NewNonTypeParm->setDefaultArgument(0);
+        NewNonTypeParm->removeDefaultArgument();
       }
 
       // Merge default arguments for non-type template parameters
@@ -1166,7 +1166,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         // expression that points to a previous template template
         // parameter.
         NewNonTypeParm->setDefaultArgument(
-                                        OldNonTypeParm->getDefaultArgument());
+                                         OldNonTypeParm->getDefaultArgument(),
+                                         /*Inherited=*/ true);
         PreviousDefaultArgLoc = OldNonTypeParm->getDefaultArgumentLoc();
       } else if (NewNonTypeParm->hasDefaultArgument()) {
         SawDefaultArgument = true;
@@ -1181,7 +1182,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
           DiagnoseDefaultTemplateArgument(*this, TPC, 
                                           NewTemplateParm->getLocation(), 
                      NewTemplateParm->getDefaultArgument().getSourceRange()))
-        NewTemplateParm->setDefaultArgument(TemplateArgumentLoc());
+        NewTemplateParm->removeDefaultArgument();
 
       // Merge default arguments for template template parameters
       TemplateTemplateParmDecl *OldTemplateParm
@@ -1200,7 +1201,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         // FIXME: We need to create a new kind of "default argument" expression
         // that points to a previous template template parameter.
         NewTemplateParm->setDefaultArgument(
-                                        OldTemplateParm->getDefaultArgument());
+                                          OldTemplateParm->getDefaultArgument(),
+                                          /*Inherited=*/ true);
         PreviousDefaultArgLoc
           = OldTemplateParm->getDefaultArgument().getLocation();
       } else if (NewTemplateParm->hasDefaultArgument()) {
@@ -3684,7 +3686,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
           Diag(NTTP->getDefaultArgumentLoc(),
                diag::err_default_arg_in_partial_spec)
             << DefArg->getSourceRange();
-          NTTP->setDefaultArgument(0);
+          NTTP->removeDefaultArgument();
           DefArg->Destroy(Context);
         }
       } else {
@@ -3693,7 +3695,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
           Diag(TTP->getDefaultArgument().getLocation(),
                diag::err_default_arg_in_partial_spec)
             << TTP->getDefaultArgument().getSourceRange();
-          TTP->setDefaultArgument(TemplateArgumentLoc());
+          TTP->removeDefaultArgument();
         }
       }
     }

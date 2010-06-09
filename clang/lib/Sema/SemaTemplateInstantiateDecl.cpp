@@ -1495,7 +1495,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   if (Invalid)
     Param->setInvalidDecl();
   
-  Param->setDefaultArgument(D->getDefaultArgument());
+  Param->setDefaultArgument(D->getDefaultArgument(), false);
   
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.
@@ -1523,7 +1523,7 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
     = TemplateTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                        D->getDepth() - 1, D->getPosition(),
                                        D->getIdentifier(), InstParams);
-  Param->setDefaultArgument(D->getDefaultArgument());
+  Param->setDefaultArgument(D->getDefaultArgument(), false);
   
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.

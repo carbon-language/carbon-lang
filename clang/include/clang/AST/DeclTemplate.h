@@ -734,15 +734,16 @@ public:
 /// @endcode
 class NonTypeTemplateParmDecl
   : public VarDecl, protected TemplateParmPosition {
-  /// \brief The default template argument, if any.
-  Expr *DefaultArgument;
+  /// \brief The default template argument, if any, and whether or not
+  /// it was inherited.
+  llvm::PointerIntPair<Expr*, 1, bool> DefaultArgumentAndInherited;
 
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
                           TypeSourceInfo *TInfo)
     : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, VarDecl::None,
               VarDecl::None),
-      TemplateParmPosition(D, P), DefaultArgument(0)
+      TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false)
   { }
 
 public:
@@ -756,17 +757,36 @@ public:
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { return DefaultArgument; }
+  bool hasDefaultArgument() const {
+    return DefaultArgumentAndInherited.getPointer() != 0;
+  }
 
   /// \brief Retrieve the default argument, if any.
-  Expr *getDefaultArgument() const { return DefaultArgument; }
+  Expr *getDefaultArgument() const {
+    return DefaultArgumentAndInherited.getPointer();
+  }
 
   /// \brief Retrieve the location of the default argument, if any.
   SourceLocation getDefaultArgumentLoc() const;
 
-  /// \brief Set the default argument for this template parameter.
-  void setDefaultArgument(Expr *DefArg) {
-    DefaultArgument = DefArg;
+  /// \brief Determines whether the default argument was inherited
+  /// from a previous declaration of this template.
+  bool defaultArgumentWasInherited() const {
+    return DefaultArgumentAndInherited.getInt();
+  }
+
+  /// \brief Set the default argument for this template parameter, and
+  /// whether that default argument was inherited from another
+  /// declaration.
+  void setDefaultArgument(Expr *DefArg, bool Inherited) {
+    DefaultArgumentAndInherited.setPointer(DefArg);
+    DefaultArgumentAndInherited.setInt(Inherited);
+  }
+
+  /// \brief Removes the default argument of this template parameter.
+  void removeDefaultArgument() {
+    DefaultArgumentAndInherited.setPointer(0);
+    DefaultArgumentAndInherited.setInt(false);
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -785,14 +805,17 @@ public:
 class TemplateTemplateParmDecl
   : public TemplateDecl, protected TemplateParmPosition {
 
-  /// \brief The default template argument, if any.
+  /// DefaultArgument - The default template argument, if any.
   TemplateArgumentLoc DefaultArgument;
+  /// Whether or not the default argument was inherited.
+  bool DefaultArgumentWasInherited;
 
   TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
                            unsigned D, unsigned P,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
-      TemplateParmPosition(D, P), DefaultArgument()
+      TemplateParmPosition(D, P), DefaultArgument(),
+      DefaultArgumentWasInherited(false)
     { }
 
 public:
@@ -807,18 +830,36 @@ public:
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { 
-    return !DefaultArgument.getArgument().isNull(); 
+  bool hasDefaultArgument() const {
+    return !DefaultArgument.getArgument().isNull();
   }
 
   /// \brief Retrieve the default argument, if any.
-  const TemplateArgumentLoc &getDefaultArgument() const { 
-    return DefaultArgument; 
+  const TemplateArgumentLoc &getDefaultArgument() const {
+    return DefaultArgument;
   }
 
-  /// \brief Set the default argument for this template parameter.
-  void setDefaultArgument(const TemplateArgumentLoc &DefArg) {
+  /// \brief Retrieve the location of the default argument, if any.
+  SourceLocation getDefaultArgumentLoc() const;
+
+  /// \brief Determines whether the default argument was inherited
+  /// from a previous declaration of this template.
+  bool defaultArgumentWasInherited() const {
+    return DefaultArgumentWasInherited;
+  }
+
+  /// \brief Set the default argument for this template parameter, and
+  /// whether that default argument was inherited from another
+  /// declaration.
+  void setDefaultArgument(const TemplateArgumentLoc &DefArg, bool Inherited) {
     DefaultArgument = DefArg;
+    DefaultArgumentWasInherited = Inherited;
+  }
+
+  /// \brief Removes the default argument of this template parameter.
+  void removeDefaultArgument() {
+    DefaultArgument = TemplateArgumentLoc();
+    DefaultArgumentWasInherited = false;
   }
 
   // Implement isa/cast/dyncast/etc.
