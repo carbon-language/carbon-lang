@@ -105,7 +105,7 @@ FunctionPass *createARMExpandPseudoPass();
 FunctionPass *createARMConstantIslandPass();
 FunctionPass *createNEONPreAllocPass();
 FunctionPass *createNEONMoveFixPass();
-FunctionPass *createThumb2ITBlockPass();
+FunctionPass *createThumb2ITBlockPass(bool PreAlloc = false);
 FunctionPass *createThumb2SizeReductionPass();
 
 extern Target TheARMTarget, TheThumbTarget;
