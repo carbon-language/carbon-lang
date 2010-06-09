@@ -14,6 +14,7 @@
 // C++ Includes
 #include <string>
 #include <map>
+#include <memory>
 
 // Other libraries and framework includes
 // Project includes

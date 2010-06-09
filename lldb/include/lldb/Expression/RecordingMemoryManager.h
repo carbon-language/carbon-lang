@@ -150,5 +150,5 @@ private:
 
 };
 
-}; // namespace lldb_private
+} // namespace lldb_private
 #endif  // lldb_RecordingMemoryManager_h_
