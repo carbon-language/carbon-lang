@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <string>
+#include <stdint.h>
 
 // Other libraries and framework includes
 // Project includes
