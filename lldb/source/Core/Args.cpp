@@ -9,8 +9,7 @@
 
 // C Includes
 #include <getopt.h>
-#include <histedit.h>
-
+#include <cstdlib>
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -20,93 +19,6 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Options.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-
-namespace lldb_private {
-
-class Tokenizer
-{
-public:
-    Tokenizer (const char *separator_chars = NULL) :
-        m_tokenizer(NULL)
-    {
-        m_tokenizer = ::tok_init (separator_chars);
-    }
-
-    ~Tokenizer ()
-    {
-        if (m_tokenizer)
-        {
-            ::tok_end (m_tokenizer);
-            m_tokenizer = NULL;
-        }
-    }
-
-    void
-    Reset ()
-    {
-        assert (m_tokenizer);
-        ::tok_reset (m_tokenizer);
-    }
-
-    int
-    TokenizeLineInfo (const ::LineInfo *line_info)
-    {
-        assert (m_tokenizer);
-        return ::tok_line (m_tokenizer,
-                           line_info,
-                           &m_argc,
-                           &m_argv,
-                           &m_cursor_arg_index,
-                           &m_cursor_arg_offset);
-    }
-
-    int
-    TokenizeCString (const char *cstr)
-    {
-        assert (m_tokenizer);
-        m_cursor_arg_index = -1;
-        m_cursor_arg_offset = -1;
-        return ::tok_str (m_tokenizer,
-                          cstr,
-                          &m_argc,
-                          &m_argv);
-    }
-
-
-    int
-    GetArgCount () const
-    {
-        return m_argc;
-    }
-
-    const char **
-    GetArgVector () const
-    {
-        return m_argv;
-    }
-
-    int
-    GetCursoreArgIndex () const
-    {
-        return m_cursor_arg_index;
-    }
-
-    int
-    GetCursoreArgOffset () const
-    {
-        return m_cursor_arg_offset;
-    }
-
-
-protected:
-    struct tokenizer* m_tokenizer;
-    const char **m_argv;
-    int m_argc;
-    int m_cursor_arg_index;
-    int m_cursor_arg_offset;
-};
-
-} // namespace lldb_private
 
 using namespace lldb;
 using namespace lldb_private;
