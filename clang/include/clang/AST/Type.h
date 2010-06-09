@@ -835,6 +835,9 @@ public:
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
 
+  /// isBuiltinType - returns true if the type is a builtin type.
+  bool isBuiltinType() const;
+
   /// isSpecificBuiltinType - Test for a particular builtin type.
   bool isSpecificBuiltinType(unsigned K) const;
 
@@ -3452,6 +3455,10 @@ inline bool Type::isObjCBuiltinType() const {
 }
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType);
+}
+
+inline bool Type::isBuiltinType() const {
+  return getAs<BuiltinType>();
 }
 
 inline bool Type::isSpecificBuiltinType(unsigned K) const {
