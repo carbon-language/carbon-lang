@@ -19,8 +19,8 @@
 // lldb-include.h file.
 //----------------------------------------------------------------------
 
-#include <LLDB/lldb-types.h>
-#include <LLDB/lldb-forward.h>
+#include "lldb/lldb-types.h"
+#include "lldb/lldb-forward.h"
 
 //----------------------------------------------------------------------
 // lldb forward declarations

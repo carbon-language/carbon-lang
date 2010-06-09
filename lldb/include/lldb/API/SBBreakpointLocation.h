@@ -10,8 +10,8 @@
 #ifndef LLDB_SBBreakpointLocation_h_
 #define LLDB_SBBreakpointLocation_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBBreakpoint.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBBreakpoint.h"
 
 namespace lldb {
 

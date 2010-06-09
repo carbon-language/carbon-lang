@@ -10,8 +10,8 @@
 #ifndef LLDB_SBHostOS_h_
 #define LLDB_SBHostOS_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBFileSpec.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBFileSpec.h"
 
 namespace lldb {
 

@@ -10,8 +10,8 @@
 #ifndef LLDB_types_h_
 #define LLDB_types_h_
 
-#include <LLDB/lldb-enumerations.h>
-#include <LLDB/lldb-forward.h>
+#include "lldb/lldb-enumerations.h"
+#include "lldb/lldb-forward.h"
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------

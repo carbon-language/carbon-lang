@@ -10,8 +10,8 @@
 #ifndef LLDB_SBCommunication_h_
 #define LLDB_SBCommunication_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBError.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBError.h"
 
 namespace lldb {
 

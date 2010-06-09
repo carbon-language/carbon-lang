@@ -14,36 +14,36 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBAddress.h>
-#include <LLDB/SBBlock.h>
-#include <LLDB/SBBreakpoint.h>
-#include <LLDB/SBBreakpointLocation.h>
-#include <LLDB/SBBroadcaster.h>
-#include <LLDB/SBCommandContext.h>
-#include <LLDB/SBCommandInterpreter.h>
-#include <LLDB/SBCommandReturnObject.h>
-#include <LLDB/SBCommunication.h>
-#include <LLDB/SBCompileUnit.h>
-#include <LLDB/SBDebugger.h>
-#include <LLDB/SBError.h>
-#include <LLDB/SBEvent.h>
-#include <LLDB/SBFileSpec.h>
-#include <LLDB/SBFrame.h>
-#include <LLDB/SBFunction.h>
-#include <LLDB/SBHostOS.h>
-#include <LLDB/SBInputReader.h>
-#include <LLDB/SBLineEntry.h>
-#include <LLDB/SBListener.h>
-#include <LLDB/SBModule.h>
-#include <LLDB/SBProcess.h>
-#include <LLDB/SBSourceManager.h>
-#include <LLDB/SBSymbol.h>
-#include <LLDB/SBSymbolContext.h>
-#include <LLDB/SBTarget.h>
-#include <LLDB/SBThread.h>
-#include <LLDB/SBType.h>
-#include <LLDB/SBValue.h>
-#include <LLDB/SBValueList.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBAddress.h"
+#include "lldb/API/SBBlock.h"
+#include "lldb/API/SBBreakpoint.h"
+#include "lldb/API/SBBreakpointLocation.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBCommandContext.h"
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBCommunication.h"
+#include "lldb/API/SBCompileUnit.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBError.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBFrame.h"
+#include "lldb/API/SBFunction.h"
+#include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBInputReader.h"
+#include "lldb/API/SBLineEntry.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBModule.h"
+#include "lldb/API/SBProcess.h"
+#include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBSymbol.h"
+#include "lldb/API/SBSymbolContext.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBThread.h"
+#include "lldb/API/SBType.h"
+#include "lldb/API/SBValue.h"
+#include "lldb/API/SBValueList.h"
 
 #endif  // LLDB_LLDB_h_

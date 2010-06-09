@@ -10,8 +10,8 @@
 #ifndef LLDB_SBFrame_h_
 #define LLDB_SBFrame_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBValueList.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBValueList.h"
 
 namespace lldb {
 

@@ -10,9 +10,9 @@
 #ifndef LLDB_SBTarget_h_
 #define LLDB_SBTarget_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBBroadcaster.h>
-#include <LLDB/SBFileSpec.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBFileSpec.h"
 
 namespace lldb {
 

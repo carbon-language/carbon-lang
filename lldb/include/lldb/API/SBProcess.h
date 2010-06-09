@@ -10,9 +10,9 @@
 #ifndef LLDB_SBProcess_h_
 #define LLDB_SBProcess_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBError.h>
-#include <LLDB/SBTarget.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBError.h"
+#include "lldb/API/SBTarget.h"
 
 namespace lldb {
 

@@ -10,7 +10,7 @@
 #ifndef LLDB_SBInputReader_h_
 #define LLDB_SBInputReader_h_
 
-#include <LLDB/SBDefines.h>
+#include "lldb/API/SBDefines.h"
 
 #include <termios.h>
 

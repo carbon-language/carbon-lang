@@ -10,7 +10,7 @@
 #ifndef LLDB_SBValueList_h_
 #define LLDB_SBValueList_h_
 
-#include <LLDB/SBDefines.h>
+#include "lldb/API/SBDefines.h"
 
 class lldb_private::ValueObjectList;
 

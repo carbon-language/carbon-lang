@@ -10,7 +10,7 @@
 #ifndef LLDB_SBListener_h_
 #define LLDB_SBListener_h_
 
-#include <LLDB/SBDefines.h>
+#include "lldb/API/SBDefines.h"
 
 namespace lldb {
 

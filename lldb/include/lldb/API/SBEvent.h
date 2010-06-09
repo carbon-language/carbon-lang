@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include <LLDB/SBDefines.h>
+#include "lldb/API/SBDefines.h"
 
 namespace lldb {
 

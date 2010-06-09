@@ -10,13 +10,13 @@
 #ifndef LLDB_SBSymbolContext_h_
 #define LLDB_SBSymbolContext_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBBlock.h>
-#include <LLDB/SBCompileUnit.h>
-#include <LLDB/SBFunction.h>
-#include <LLDB/SBLineEntry.h>
-#include <LLDB/SBModule.h>
-#include <LLDB/SBSymbol.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBBlock.h"
+#include "lldb/API/SBCompileUnit.h"
+#include "lldb/API/SBFunction.h"
+#include "lldb/API/SBLineEntry.h"
+#include "lldb/API/SBModule.h"
+#include "lldb/API/SBSymbol.h"
 
 namespace lldb {
 

@@ -10,7 +10,7 @@
 #ifndef LLDB_defines_h_
 #define LLDB_defines_h_
 
-#include <LLDB/lldb-types.h>
+#include "lldb/lldb-types.h"
 
 #if !defined(UINT32_MAX)
     #define UINT32_MAX 4294967295U

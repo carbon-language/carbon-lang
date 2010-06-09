@@ -10,9 +10,9 @@
 #ifndef LLDB_SBLineEntry_h_
 #define LLDB_SBLineEntry_h_
 
-#include <LLDB/SBDefines.h>
-#include <LLDB/SBAddress.h>
-#include <LLDB/SBFileSpec.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBAddress.h"
+#include "lldb/API/SBFileSpec.h"
 
 namespace lldb {
 

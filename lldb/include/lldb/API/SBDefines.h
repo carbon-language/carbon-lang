@@ -15,11 +15,11 @@
 // Other libraries and framework includes
 // Project includes
 
-#include <LLDB/lldb-defines.h>
-#include <LLDB/lldb-enumerations.h>
-#include <LLDB/lldb-forward.h>
-#include <LLDB/lldb-forward-rtti.h>
-#include <LLDB/lldb-types.h>
+#include "lldb/lldb-defines.h"
+#include "lldb/lldb-enumerations.h"
+#include "lldb/lldb-forward.h"
+#include "lldb/lldb-forward-rtti.h"
+#include "lldb/lldb-types.h"
 
 // Forward Declarations
 
