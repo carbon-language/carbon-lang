@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PseudoTerminal.h"
+#include "lldb/Utility/PseudoTerminal.h"
 
 #include <errno.h>
 #include <stdlib.h>

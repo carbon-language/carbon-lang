@@ -12,7 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
-#include "PseudoTerminal.h"
+#include "lldb/Utility/PseudoTerminal.h"
 
 namespace lldb_private {
 

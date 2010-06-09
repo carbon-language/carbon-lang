@@ -17,8 +17,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-
-#include "PseudoTerminal.h"
+#include "lldb/Utility/PseudoTerminal.h"
 
 using namespace lldb;
 using namespace lldb_private;

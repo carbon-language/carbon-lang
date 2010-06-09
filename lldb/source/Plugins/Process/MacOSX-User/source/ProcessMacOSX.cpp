@@ -37,7 +37,7 @@
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
-#include "PseudoTerminal.h"
+#include "lldb/Utility/PseudoTerminal.h"
 
 #if defined (__arm__)
 
