@@ -28,4 +28,5 @@ C c;
 // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1DD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @d, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
 D d;
 
-// CHECK: define internal void @_GLOBAL__I_a() {
+// CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
+
