@@ -827,8 +827,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       case InlineAsm::Kind_RegDefEarlyClobber:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-          MI->addOperand(MachineOperand::CreateReg(Reg, true, false, false, 
-                                                   false, false, true));
+          MI->addOperand(MachineOperand::CreateReg(Reg, /*isDef=*/ true,
+                                                   /*isImp=*/ false,
+                                                   /*isKill=*/ false,
+                                                   /*isDead=*/ false,
+                                                   /*isUndef=*/false,
+                                                   /*isEarlyClobber=*/ true));
         }
         break;
       case InlineAsm::Kind_RegUse:  // Use of register.
