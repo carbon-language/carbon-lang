@@ -310,13 +310,13 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
       return quad ? "V48c" : "V24c";
     if (mod == '4')
       return quad ? "V64c" : "V32c";
-    if (mod == 'f' || (ck == ClassI && type == 'f'))
+    if (mod == 'f' || (ck != ClassB && type == 'f'))
       return quad ? "V4f" : "V2f";
-    if (ck == ClassI && type == 's')
+    if (ck != ClassB && type == 's')
       return quad ? "V8s" : "V4s";
-    if (ck == ClassI && type == 'i')
+    if (ck != ClassB && type == 'i')
       return quad ? "V4i" : "V2i";
-    if (ck == ClassI && type == 'l')
+    if (ck != ClassB && type == 'l')
       return quad ? "V2LLi" : "V1LLi";
     
     return quad ? "V16c" : "V8c";
@@ -330,13 +330,13 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   if (mod == '4')
     return quad ? "V16cV16cV16cV16c" : "V8cV8cV8cV8c";
 
-  if (mod == 'f' || (ck == ClassI && type == 'f'))
+  if (mod == 'f' || (ck != ClassB && type == 'f'))
     return quad ? "V4f" : "V2f";
-  if (ck == ClassI && type == 's')
+  if (ck != ClassB && type == 's')
     return quad ? "V8s" : "V4s";
-  if (ck == ClassI && type == 'i')
+  if (ck != ClassB && type == 'i')
     return quad ? "V4i" : "V2i";
-  if (ck == ClassI && type == 'l')
+  if (ck != ClassB && type == 'l')
     return quad ? "V2LLi" : "V1LLi";
   
   return quad ? "V16c" : "V8c";
