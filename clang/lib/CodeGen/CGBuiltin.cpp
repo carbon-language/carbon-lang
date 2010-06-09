@@ -906,35 +906,7 @@ Value *CodeGenFunction::EmitNeonCall(Function *F, SmallVectorImpl<Value*> &Ops,
 
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  llvm::SmallVector<Value*, 4> Ops;
-  bool usgn, quad, poly, half;
-  const llvm::Type *Ty;
-  unsigned Int;
-  
-  // Determine the type of this overloaded NEON intrinsic.
-  if (BuiltinID > ARM::BI__builtin_thread_pointer) {
-    for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
-      Ops.push_back(EmitScalarExpr(E->getArg(i)));
-    
-    llvm::APSInt Result;
-    const Expr *Arg = E->getArg(E->getNumArgs()-1);
-    if (!Arg->isIntegerConstantExpr(Result, getContext()))
-      return 0;
-    
-    unsigned type = Result.getZExtValue();
-    usgn = type & 0x08;
-    quad = type & 0x10;
-    poly = type == 5 || type == 6;
-    half = type == 7;
-
-    Ty = GetNeonType(VMContext, type & 0x7, quad);
-    if (!Ty)
-      return 0;
-  }
-  
-  switch (BuiltinID) {
-  default: return 0;
-  case ARM::BI__clear_cache: {
+  if (BuiltinID == ARM::BI__clear_cache) {
     const FunctionDecl *FD = E->getDirectCallee();
     Value *a = EmitScalarExpr(E->getArg(0));
     Value *b = EmitScalarExpr(E->getArg(1));
@@ -944,6 +916,29 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall2(CGM.CreateRuntimeFunction(FTy, Name),
                                a, b);
   }
+
+  llvm::SmallVector<Value*, 4> Ops;
+  // Determine the type of this overloaded NEON intrinsic.
+  assert(BuiltinID > ARM::BI__builtin_thread_pointer);
+  for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
+    Ops.push_back(EmitScalarExpr(E->getArg(i)));
+
+  llvm::APSInt Result;
+  const Expr *Arg = E->getArg(E->getNumArgs()-1);
+  if (!Arg->isIntegerConstantExpr(Result, getContext()))
+    return 0;
+
+  unsigned type = Result.getZExtValue();
+  bool usgn = type & 0x08;
+  bool quad = type & 0x10;
+
+  const llvm::Type *Ty = GetNeonType(VMContext, type & 0x7, quad);
+  if (!Ty)
+    return 0;
+
+  unsigned Int;
+  switch (BuiltinID) {
+  default: return 0;
   case ARM::BI__builtin_neon_vaba_v:
   case ARM::BI__builtin_neon_vabaq_v:
     Int = usgn ? Intrinsic::arm_neon_vabau : Intrinsic::arm_neon_vabas;
