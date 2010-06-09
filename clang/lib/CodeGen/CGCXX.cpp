@@ -218,8 +218,10 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
 llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
+  GlobalDecl GD(D, Type);
+  
   MangleBuffer Name;
-  getMangledCXXCtorName(Name, D, Type);
+  getMangledName(Name, GD);
   if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 
@@ -227,8 +229,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), 
                                FPT->isVariadic());
-  return cast<llvm::Function>(
-                      GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
 void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
@@ -286,16 +287,17 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
 llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
+  GlobalDecl GD(D, Type);
+
   MangleBuffer Name;
-  getMangledCXXDtorName(Name, D, Type);
+  getMangledName(Name, GD);
   if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), false);
 
-  return cast<llvm::Function>(
-                      GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
 void CodeGenModule::getMangledCXXDtorName(MangleBuffer &Name,
