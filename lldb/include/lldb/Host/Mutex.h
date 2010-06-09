@@ -26,7 +26,7 @@ public:
     enum Type
     {
         eMutexTypeNormal,       ///< Mutex that can't recursively entered by the same thread
-        eMutexTypeRecursive,    ///< Mutex can be recursively entered by the same thread
+        eMutexTypeRecursive     ///< Mutex can be recursively entered by the same thread
     };
 
     //------------------------------------------------------------------

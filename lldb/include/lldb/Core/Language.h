@@ -55,7 +55,7 @@ public:
         ObjC_plus_plus  = 0x0011,   ///< Objective-C++.
         UPC             = 0x0012,   ///< Unified Parallel C.
         D               = 0x0013,   ///< D.
-        Python          = 0x0014,   ///< Python.
+        Python          = 0x0014    ///< Python.
     } Type;
 
     //------------------------------------------------------------------

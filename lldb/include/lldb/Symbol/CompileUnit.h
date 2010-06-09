@@ -384,7 +384,7 @@ private:
         flagsParsedAllFunctions = (1 << 0), ///< Have we already parsed all our functions
         flagsParsedVariables    = (1 << 1), ///< Have we already parsed globals and statics?
         flagsParsedSupportFiles = (1 << 2), ///< Have we already parsed the support files for this compile unit?
-        flagsParsedLineTable    = (1 << 3), ///< Have we parsed the line table already?
+        flagsParsedLineTable    = (1 << 3)  ///< Have we parsed the line table already?
     };
 
     DISALLOW_COPY_AND_ASSIGN (CompileUnit);

@@ -29,7 +29,7 @@ public:
         eBroadcastBitStateChanged   = (1 << 0),
         eBroadcastBitInterrupt      = (1 << 1),
         eBroadcastBitSTDOUT         = (1 << 2),
-        eBroadcastBitSTDERR         = (1 << 3),
+        eBroadcastBitSTDERR         = (1 << 3)
     };
 
     SBProcess ();

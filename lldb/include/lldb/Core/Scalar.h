@@ -230,7 +230,7 @@ public:
     }
 
 protected:
-    typedef union ValueData
+    union ValueData
     {
         int                 sint;
         unsigned int        uint;

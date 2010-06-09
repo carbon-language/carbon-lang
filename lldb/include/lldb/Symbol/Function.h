@@ -562,7 +562,7 @@ protected:
 
     enum
     {
-        flagsCalculatedPrologueSize = (1 << 0), ///< Have we already tried to calculate the prologue size?
+        flagsCalculatedPrologueSize = (1 << 0)  ///< Have we already tried to calculate the prologue size?
     };
 
 
