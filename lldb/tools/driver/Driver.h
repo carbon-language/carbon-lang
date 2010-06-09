@@ -153,4 +153,4 @@ private:
     ReadyForCommand ();
 };
 
-#endif lldb_Driver_h_
+#endif // lldb_Driver_h_

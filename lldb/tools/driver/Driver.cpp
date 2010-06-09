@@ -14,21 +14,24 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #include <string>
 
 #include "IOChannel.h"
-#include <LLDB/SBCommandInterpreter.h>
-#include <LLDB/SBCommandReturnObject.h>
-#include <LLDB/SBCommunication.h>
-#include <LLDB/SBDebugger.h>
-#include <LLDB/SBEvent.h>
-#include <LLDB/SBHostOS.h>
-#include <LLDB/SBListener.h>
-#include <LLDB/SBSourceManager.h>
-#include <LLDB/SBTarget.h>
-#include <LLDB/SBThread.h>
-#include <LLDB/SBProcess.h>
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBCommunication.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBThread.h"
+#include "lldb/API/SBProcess.h"
 
 using namespace lldb;
 

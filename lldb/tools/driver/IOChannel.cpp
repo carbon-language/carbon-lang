@@ -11,14 +11,14 @@
 
 #include <map>
 
-#include <LLDB/SBCommandInterpreter.h>
-#include <LLDB/SBDebugger.h>
-#include <LLDB/SBError.h>
-#include <LLDB/SBEvent.h>
-#include <LLDB/SBFileSpec.h>
-#include <LLDB/SBHostOS.h>
-#include <LLDB/SBListener.h>
-#include <LLDB/SBStringList.h>
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBError.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBStringList.h"
 
 using namespace lldb;
 
