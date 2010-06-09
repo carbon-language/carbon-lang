@@ -1019,7 +1019,7 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // in multi-level pointers may change, but the level count must be the same,
   // as must be the final pointee type.
   while (SrcType != DestType &&
-         Self.UnwrapSimilarPointerTypes(SrcType, DestType)) {
+         Self.Context.UnwrapSimilarPointerTypes(SrcType, DestType)) {
     Qualifiers Quals;
     SrcType = Self.Context.getUnqualifiedArrayType(SrcType, Quals);
     DestType = Self.Context.getUnqualifiedArrayType(DestType, Quals);

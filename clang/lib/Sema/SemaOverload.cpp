@@ -1785,7 +1785,7 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
   //   in multi-level pointers, subject to the following rules: [...]
   bool PreviousToQualsIncludeConst = true;
   bool UnwrappedAnyPointer = false;
-  while (UnwrapSimilarPointerTypes(FromType, ToType)) {
+  while (Context.UnwrapSimilarPointerTypes(FromType, ToType)) {
     // Within each iteration of the loop, we check the qualifiers to
     // determine if this still looks like a qualification
     // conversion. Then, if all is well, we unwrap one more level of
@@ -2073,6 +2073,16 @@ Sema::CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
   return ImplicitConversionSequence::Indistinguishable;
 }
 
+static bool hasSimilarType(ASTContext &Context, QualType T1, QualType T2) {
+  while (Context.UnwrapSimilarPointerTypes(T1, T2)) {
+    Qualifiers Quals;
+    T1 = Context.getUnqualifiedArrayType(T1, Quals);
+    T2 = Context.getUnqualifiedArrayType(T2, Quals);    
+  }
+  
+  return Context.hasSameUnqualifiedType(T1, T2);
+}
+  
 // Per 13.3.3.2p3, compare the given standard conversion sequences to
 // determine if one is a proper subset of the other.
 static ImplicitConversionSequence::CompareKind
@@ -2098,7 +2108,7 @@ compareStandardConversionSubsets(ASTContext &Context,
       Result = ImplicitConversionSequence::Worse;
     else
       return ImplicitConversionSequence::Indistinguishable;
-  } else if (!Context.hasSameType(SCS1.getToType(1), SCS2.getToType(1)))
+  } else if (!hasSimilarType(Context, SCS1.getToType(1), SCS2.getToType(1)))
     return ImplicitConversionSequence::Indistinguishable;
 
   if (SCS1.Third == SCS2.Third) {
@@ -2305,7 +2315,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
 
   ImplicitConversionSequence::CompareKind Result
     = ImplicitConversionSequence::Indistinguishable;
-  while (UnwrapSimilarPointerTypes(T1, T2)) {
+  while (Context.UnwrapSimilarPointerTypes(T1, T2)) {
     // Within each iteration of the loop, we check the qualifiers to
     // determine if this still looks like a qualification
     // conversion. Then, if all is well, we unwrap one more level of

@@ -460,3 +460,20 @@ namespace PR7224 {
     float &fr = foo(d2);
   }
 }
+
+namespace NontrivialSubsequence {
+  struct X0;
+
+  class A {
+    operator X0 *();
+  public:
+    operator const X0 *();
+  };
+ 
+  A a;
+  void foo( void const * );
+
+  void g() {
+    foo(a);
+  }
+}

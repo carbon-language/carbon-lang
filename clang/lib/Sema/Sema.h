@@ -769,8 +769,6 @@ public:
       const FunctionProtoType *Target, SourceLocation TargetLoc,
       const FunctionProtoType *Source, SourceLocation SourceLoc);
 
-  bool UnwrapSimilarPointerTypes(QualType& T1, QualType& T2);
-
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
   bool RequireCompleteType(SourceLocation Loc, QualType T,

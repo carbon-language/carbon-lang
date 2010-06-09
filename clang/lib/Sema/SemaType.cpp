@@ -1611,45 +1611,6 @@ void LocInfoType::getAsStringInternal(std::string &Str,
          " GetTypeFromParser");
 }
 
-/// UnwrapSimilarPointerTypes - If T1 and T2 are pointer types  that
-/// may be similar (C++ 4.4), replaces T1 and T2 with the type that
-/// they point to and return true. If T1 and T2 aren't pointer types
-/// or pointer-to-member types, or if they are not similar at this
-/// level, returns false and leaves T1 and T2 unchanged. Top-level
-/// qualifiers on T1 and T2 are ignored. This function will typically
-/// be called in a loop that successively "unwraps" pointer and
-/// pointer-to-member types to compare them at each level.
-bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
-  const PointerType *T1PtrType = T1->getAs<PointerType>(),
-                    *T2PtrType = T2->getAs<PointerType>();
-  if (T1PtrType && T2PtrType) {
-    T1 = T1PtrType->getPointeeType();
-    T2 = T2PtrType->getPointeeType();
-    return true;
-  }
-
-  const MemberPointerType *T1MPType = T1->getAs<MemberPointerType>(),
-                          *T2MPType = T2->getAs<MemberPointerType>();
-  if (T1MPType && T2MPType &&
-      Context.getCanonicalType(T1MPType->getClass()) ==
-      Context.getCanonicalType(T2MPType->getClass())) {
-    T1 = T1MPType->getPointeeType();
-    T2 = T2MPType->getPointeeType();
-    return true;
-  }
-
-  if (getLangOptions().ObjC1) {
-    const ObjCObjectPointerType *T1OPType = T1->getAs<ObjCObjectPointerType>(),
-                                *T2OPType = T2->getAs<ObjCObjectPointerType>();
-    if (T1OPType && T2OPType) {
-      T1 = T1OPType->getPointeeType();
-      T2 = T2OPType->getPointeeType();
-      return true;
-    }
-  }
-  return false;
-}
-
 Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // C99 6.7.6: Type names have no identifier.  This is already validated by
   // the parser.
