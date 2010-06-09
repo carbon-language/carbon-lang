@@ -580,7 +580,7 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
 Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   // Vector Mask Case
   if (E->getNumSubExprs() == 2 || 
-      E->getNumSubExprs() == 3 && E->getExpr(2)->getType()->isVectorType()) {
+      (E->getNumSubExprs() == 3 && E->getExpr(2)->getType()->isVectorType())) {
     Value* LHS = CGF.EmitScalarExpr(E->getExpr(0));
     Value* RHS = CGF.EmitScalarExpr(E->getExpr(1));
     Value* Mask;
