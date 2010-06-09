@@ -20,6 +20,9 @@
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBStringList.h"
 
+#include <string.h>
+#include <limits.h>
+
 using namespace lldb;
 
 typedef std::map<EditLine *, std::string> PromptMap;
