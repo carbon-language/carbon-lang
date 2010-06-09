@@ -727,7 +727,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     // FIXME: Error handling.
     if (Value == NumStores)
       Diags.Report(diag::err_drv_invalid_value)
-        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
+        << A->getAsString(Args) << Name;
     else
       Opts.AnalysisStoreOpt = Value;
   }
@@ -742,7 +742,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     // FIXME: Error handling.
     if (Value == NumConstraints)
       Diags.Report(diag::err_drv_invalid_value)
-        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
+        << A->getAsString(Args) << Name;
     else
       Opts.AnalysisConstraintsOpt = Value;
   }
@@ -757,7 +757,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     // FIXME: Error handling.
     if (Value == NUM_ANALYSIS_DIAG_CLIENTS)
       Diags.Report(diag::err_drv_invalid_value)
-        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
+        << A->getAsString(Args) << Name;
     else
       Opts.AnalysisDiagOpt = Value;
   }
