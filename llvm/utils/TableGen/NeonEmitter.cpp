@@ -411,14 +411,17 @@ static std::string MangleName(const std::string &name, StringRef typestr,
 
 // Generate the string "(argtype a, argtype b, ...)"
 static std::string GenArgs(const std::string &proto, StringRef typestr) {
+  bool define = proto.find('i') != std::string::npos;
   char arg = 'a';
   
   std::string s;
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
-    s += TypeString(proto[i], typestr);
-    s.push_back(' ');
+    if (!define) {
+      s += TypeString(proto[i], typestr);
+      s.push_back(' ');
+    }
     s.push_back(arg);
     if ((i + 1) < e)
       s += ", ";
@@ -519,6 +522,12 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__builtin_shufflevector((__neon_int64x1_t)" + a;
     s += ", (__neon_int64x1_t)" + b + ", 0, 1)";
     break;
+  case OpHi:
+    s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[1])";
+    break;
+  case OpLo:
+    s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[0])";
+    break;
   case OpDup:
     s += "(__neon_" + ts + "){ ";
     for (unsigned i = 0; i != nElts; ++i) {
@@ -597,6 +606,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   std::string s;
 
   bool unioning = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+  bool define = proto.find('i') != std::string::npos;
 
   // If all types are the same size, bitcasting the args will take care 
   // of arg checking.  The actual signedness etc. will be taken care of with
@@ -605,20 +615,27 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     ck = ClassB;
 
   if (proto[0] != 'v') {
-    if (unioning) {
-      s += "union { ";
-      s += TypeString(proto[0], typestr, true) + " val; ";
-      s += TypeString(proto[0], typestr, false) + " s; ";
-      s += "} r;";
+    std::string ts = TypeString(proto[0], typestr);
+    
+    if (define) {
+      if (proto[0] != 's')
+        s += "(" + ts + "){(__neon_" + ts + ")";
     } else {
-      s += TypeString(proto[0], typestr);
+      if (unioning) {
+        s += "union { ";
+        s += TypeString(proto[0], typestr, true) + " val; ";
+        s += TypeString(proto[0], typestr, false) + " s; ";
+        s += "} r;";
+      } else {
+        s += ts;
+      }
+      
+      s += " r; r";
+      if (structTypes && proto[0] != 's' && proto[0] != 'i' && proto[0] != 'l')
+        s += ".val";
+      
+      s += " = ";
     }
-    
-    s += " r; r";
-    if (structTypes && proto[0] != 's' && proto[0] != 'i' && proto[0] != 'l')
-      s += ".val";
-    
-    s += " = ";
   }    
   
   s += "__builtin_neon_";
@@ -655,13 +672,21 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   if (ck == ClassB)
     s += ", " + utostr(GetNeonEnum(proto, typestr));
   
-  s += ");";
+  if (define)
+    s += ")";
+  else
+    s += ");";
 
   if (proto[0] != 'v') {
-    if (unioning)
-      s += " return r.s;";
-    else
-      s += " return r;";
+    if (define) {
+      if (proto[0] != 's')
+        s += "}";
+    } else {
+      if (unioning)
+        s += " return r.s;";
+      else
+        s += " return r;";
+    }
   }
   return s;
 }
@@ -767,11 +792,16 @@ void NeonEmitter::run(raw_ostream &OS) {
     
     OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
     
+    bool define = Proto.find('i') != std::string::npos;
+    
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       assert(!Proto.empty() && "");
       
       // static always inline + return type
-      OS << "__ai " << TypeString(Proto[0], TypeVec[ti]);
+      if (define)
+        OS << "#define";
+      else
+        OS << "__ai " << TypeString(Proto[0], TypeVec[ti]);
       
       // Function name with type suffix
       OS << " " << MangleName(name, TypeVec[ti], ClassS);
@@ -780,7 +810,10 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << GenArgs(Proto, TypeVec[ti]);
       
       // Definition.
-      OS << " { ";
+      if (define)
+        OS << " ";
+      else
+        OS << " { ";
       
       if (k != OpNone) {
         OS << GenOpString(k, Proto, TypeVec[ti]);
@@ -794,8 +827,9 @@ void NeonEmitter::run(raw_ostream &OS) {
           throw TGError(R->getLoc(), "Builtin has no class kind");
         OS << GenBuiltin(name, Proto, TypeVec[ti], ck);
       }
-
-      OS << " }\n";
+      if (!define)
+        OS << " }";
+      OS << "\n";
     }
     OS << "\n";
   }
