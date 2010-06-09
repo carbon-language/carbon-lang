@@ -45,6 +45,8 @@ public:
   typedef std::vector<changeset_ty> changesetlist_ty;
 
 public:
+  virtual ~DAGDeltaAlgorithm() {}
+
   /// Run - Minimize the DAG formed by the \arg Changes vertices and the \arg
   /// Dependencies edges by executing \see ExecuteOneTest() on subsets of
   /// changes and returning the smallest set which still satisfies the test
