@@ -179,7 +179,7 @@ ScriptInterpreterPython::ScriptInterpreterPython () :
     PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, "embedded_interpreter.py",
                                                   Py_file_input);
 
-    m_compiled_module = compiled_module;
+    m_compiled_module = static_cast<void*>(compiled_module);
 
     init_lldb ();
 
@@ -196,7 +196,9 @@ ScriptInterpreterPython::ScriptInterpreterPython () :
     const char *pty_slave_name = GetScriptInterpreterPtyName ();
     FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
     
-    PyObject *pmod = PyImport_ExecCodeModule((char *)"embedded_interpreter", m_compiled_module);
+    PyObject *pmod = PyImport_ExecCodeModule(
+                         const_cast<char*>("embedded_interpreter"),
+                         static_cast<PyObject*>(m_compiled_module));
     if (pmod != NULL)
     {
         PyRun_SimpleString ("ConsoleDict = locals()");

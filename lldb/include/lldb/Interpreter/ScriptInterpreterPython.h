@@ -14,8 +14,6 @@
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
 
-#include <Python.h>
-
 namespace lldb_private {
 
 class ScriptInterpreterPython : public ScriptInterpreter
@@ -75,7 +73,7 @@ private:
                          const char *bytes, 
                          size_t bytes_len);
                          
-    PyObject *m_compiled_module;
+    void *m_compiled_module;
     struct termios m_termios;
     bool m_termios_valid;
 };
