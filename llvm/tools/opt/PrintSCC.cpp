@@ -102,7 +102,7 @@ bool CallGraphSCC::runOnModule(Module &M) {
     for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
       outs() << ((*I)->getFunction() ? (*I)->getFunction()->getNameStr()
-                 : std::string("Indirect CallGraph node")) << ", ";
+                 : std::string("external node")) << ", ";
     if (nextSCC.size() == 1 && SCCI.hasLoop())
       outs() << " (Has self-loop).";
   }
