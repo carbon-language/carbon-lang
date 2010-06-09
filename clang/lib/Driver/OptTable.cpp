@@ -188,7 +188,7 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
 
   // Anything that doesn't start with '-' is an input, as is '-' itself.
   if (Str[0] != '-' || Str[1] == '\0')
-    return new PositionalArg(TheInputOption, Index++, Str);
+    return new Arg(TheInputOption, Index++, Str);
 
   const Info *Start = OptionInfos + FirstSearchableIndex;
   const Info *End = OptionInfos + getNumOptions();
@@ -221,7 +221,7 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
       return 0;
   }
 
-  return new PositionalArg(TheUnknownOption, Index++, Str);
+  return new Arg(TheUnknownOption, Index++, Str);
 }
 
 InputArgList *OptTable::ParseArgs(const char **ArgBegin, const char **ArgEnd,

@@ -147,7 +147,7 @@ Arg *FlagOption::accept(const InputArgList &Args, unsigned &Index) const {
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
 
-  return new FlagArg(this, Index++);
+  return new Arg(this, Index++);
 }
 
 JoinedOption::JoinedOption(OptSpecifier ID, const char *Name,
@@ -158,7 +158,7 @@ JoinedOption::JoinedOption(OptSpecifier ID, const char *Name,
 Arg *JoinedOption::accept(const InputArgList &Args, unsigned &Index) const {
   // Always matches.
   const char *Value = Args.getArgString(Index) + strlen(getName());
-  return new JoinedArg(this, Index++, Value);
+  return new Arg(this, Index++, Value);
 }
 
 CommaJoinedOption::CommaJoinedOption(OptSpecifier ID, const char *Name,
@@ -169,13 +169,32 @@ CommaJoinedOption::CommaJoinedOption(OptSpecifier ID, const char *Name,
 
 Arg *CommaJoinedOption::accept(const InputArgList &Args,
                                unsigned &Index) const {
-  // Always matches. We count the commas now so we can answer
-  // getNumValues easily.
+  // Always matches.
+  const char *Str = Args.getArgString(Index) + strlen(getName());
+  Arg *A = new Arg(this, Index++);
 
-  // Get the suffix string.
-  // FIXME: Avoid strlen, and move to helper method?
-  const char *Suffix = Args.getArgString(Index) + strlen(getName());
-  return new CommaJoinedArg(this, Index++, Suffix);
+  // Parse out the comma separated values.
+  const char *Prev = Str;
+  for (;; ++Str) {
+    char c = *Str;
+
+    if (!c || c == ',') {
+      if (Prev != Str) {
+        char *Value = new char[Str - Prev + 1];
+        memcpy(Value, Prev, Str - Prev);
+        Value[Str - Prev] = '\0';
+        A->getValues().push_back(Value);
+      }
+
+      if (!c)
+        break;
+
+      Prev = Str + 1;
+    }
+  }
+  A->setOwnsValues(true);
+
+  return A;
 }
 
 SeparateOption::SeparateOption(OptSpecifier ID, const char *Name,
@@ -193,7 +212,7 @@ Arg *SeparateOption::accept(const InputArgList &Args, unsigned &Index) const {
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  return new SeparateArg(this, Index - 2, Args.getArgString(Index - 1));
+  return new Arg(this, Index - 2, Args.getArgString(Index - 1));
 }
 
 MultiArgOption::MultiArgOption(OptSpecifier ID, const char *Name,
@@ -213,8 +232,8 @@ Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  Arg *A = new SeparateArg(this, Index - 1 - NumArgs,
-                           Args.getArgString(Index - NumArgs));
+  Arg *A = new Arg(this, Index - 1 - NumArgs,
+                    Args.getArgString(Index - NumArgs));
   for (unsigned i = 1; i != NumArgs; ++i)
     A->getValues().push_back(Args.getArgString(Index - NumArgs + i));
   return A;
@@ -233,7 +252,7 @@ Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index))) {
     const char *Value = Args.getArgString(Index) + strlen(getName());
-    return new JoinedArg(this, Index++, Value);
+    return new Arg(this, Index++, Value);
   }
 
   // Otherwise it must be separate.
@@ -241,8 +260,7 @@ Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  return new SeparateArg(this, Index - 2,
-                         Args.getArgString(Index - 1));
+  return new Arg(this, Index - 2, Args.getArgString(Index - 1));
 }
 
 JoinedAndSeparateOption::JoinedAndSeparateOption(OptSpecifier ID,
@@ -260,7 +278,6 @@ Arg *JoinedAndSeparateOption::accept(const InputArgList &Args,
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  return new JoinedAndSeparateArg(this, Index - 2,
-                                  Args.getArgString(Index-2)+strlen(getName()),
-                                  Args.getArgString(Index-1));
+  return new Arg(this, Index - 2, Args.getArgString(Index-2)+strlen(getName())
+                 , Args.getArgString(Index-1));
 }

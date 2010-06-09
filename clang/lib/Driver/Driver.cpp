@@ -976,7 +976,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     // just using Args was better?
     const Arg &Input = IA->getInputArg();
     Input.claim();
-    if (isa<PositionalArg>(Input)) {
+    if (Input.getOption().matches(options::OPT_INPUT)) {
       const char *Name = Input.getValue(C.getArgs());
       Result = InputInfo(Name, A->getType(), Name);
     } else

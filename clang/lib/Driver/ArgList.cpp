@@ -257,7 +257,7 @@ const char *DerivedArgList::MakeArgString(llvm::StringRef Str) const {
 }
 
 Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option *Opt) const {
-  Arg *A = new FlagArg(Opt, BaseArgs.MakeIndex(Opt->getName()), BaseArg);
+  Arg *A = new Arg(Opt, BaseArgs.MakeIndex(Opt->getName()), BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }
@@ -265,7 +265,7 @@ Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option *Opt) const {
 Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt,
                                        llvm::StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Value);
-  Arg *A = new PositionalArg(Opt, Index, BaseArgs.getArgString(Index), BaseArg);
+  Arg *A = new Arg(Opt, Index, BaseArgs.getArgString(Index), BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }
@@ -273,7 +273,7 @@ Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt,
 Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
                                      llvm::StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt->getName(), Value);
-  Arg *A = new SeparateArg(Opt, Index, BaseArgs.getArgString(Index), BaseArg);
+  Arg *A = new Arg(Opt, Index, BaseArgs.getArgString(Index), BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }
@@ -281,9 +281,9 @@ Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
 Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                                    llvm::StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt->getName() + Value.str());
-  Arg *A = new JoinedArg(Opt, Index,
-                         BaseArgs.getArgString(Index) + strlen(Opt->getName()),
-                         BaseArg);
+  Arg *A = new Arg(Opt, Index,
+                   BaseArgs.getArgString(Index) + strlen(Opt->getName()),
+                   BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }

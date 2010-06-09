@@ -10,13 +10,6 @@
 #ifndef CLANG_DRIVER_ARG_H_
 #define CLANG_DRIVER_ARG_H_
 
-#include "llvm/Support/Casting.h"
-using llvm::isa;
-using llvm::cast;
-using llvm::cast_or_null;
-using llvm::dyn_cast;
-using llvm::dyn_cast_or_null;
-
 #include "Util.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
@@ -35,19 +28,10 @@ namespace driver {
   /// ArgList to provide efficient iteration over all instances of a
   /// particular option.
   class Arg {
-  public:
-    enum ArgClass {
-      FlagClass = 0,
-      PositionalClass,
-      JoinedClass,
-      SeparateClass,
-      CommaJoinedClass,
-      JoinedAndSeparateClass
-    };
+    Arg(const Arg &); // DO NOT IMPLEMENT
+    void operator=(const Arg &); // DO NOT IMPLEMENT
 
   private:
-    ArgClass Kind;
-
     /// The option this argument is an instance of.
     const Option *Opt;
 
@@ -69,15 +53,14 @@ namespace driver {
     /// The argument values, as C strings.
     llvm::SmallVector<const char *, 2> Values;
 
-  protected:
-    Arg(ArgClass Kind, const Option *Opt, unsigned Index,
-        const Arg *BaseArg = 0);
-
   public:
-    Arg(const Arg &);
-    virtual ~Arg();
+    Arg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
+    Arg(const Option *Opt, unsigned Index,
+        const char *Value0, const Arg *BaseArg = 0);
+    Arg(const Option *Opt, unsigned Index,
+        const char *Value0, const char *Value1, const Arg *BaseArg = 0);
+    ~Arg();
 
-    ArgClass getKind() const { return Kind; }
     const Option &getOption() const { return *Opt; }
     unsigned getIndex() const { return Index; }
 
@@ -126,85 +109,6 @@ namespace driver {
     std::string getAsString(const ArgList &Args) const;
   };
 
-  /// FlagArg - An argument with no value.
-  class FlagArg : public Arg {
-  public:
-    FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::FlagClass;
-    }
-    static bool classof(const FlagArg *) { return true; }
-  };
-
-  /// PositionalArg - A simple positional argument.
-  class PositionalArg : public Arg {
-  public:
-    PositionalArg(const Option *Opt, unsigned Index, const char *Value,
-                  const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::PositionalClass;
-    }
-    static bool classof(const PositionalArg *) { return true; }
-  };
-
-  /// JoinedArg - A single value argument where the value is joined
-  /// (suffixed) to the option.
-  class JoinedArg : public Arg {
-  public:
-    JoinedArg(const Option *Opt, unsigned Index, const char *Value,
-              const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::JoinedClass;
-    }
-    static bool classof(const JoinedArg *) { return true; }
-  };
-
-  /// SeparateArg - An argument where one or more values follow the
-  /// option specifier immediately in the argument vector.
-  class SeparateArg : public Arg {
-  public:
-    SeparateArg(const Option *Opt, unsigned Index, const char *Value,
-                const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::SeparateClass;
-    }
-    static bool classof(const SeparateArg *) { return true; }
-  };
-
-  /// CommaJoinedArg - An argument with multiple values joined by
-  /// commas and joined (suffixed) to the option specifier.
-  ///
-  /// The key point of this arg is that it renders its values into
-  /// separate arguments, which allows it to be used as a generic
-  /// mechanism for passing arguments through to tools.
-  class CommaJoinedArg : public Arg {
-  public:
-    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str,
-                   const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::CommaJoinedClass;
-    }
-    static bool classof(const CommaJoinedArg *) { return true; }
-  };
-
-  /// JoinedAndSeparateArg - An argument with both joined and separate
-  /// values.
-  class JoinedAndSeparateArg : public Arg {
-  public:
-    JoinedAndSeparateArg(const Option *Opt, unsigned Index,
-                         const char *Value0, const char *Value1, 
-                         const Arg *BaseArg = 0);
-
-    static bool classof(const Arg *A) {
-      return A->getKind() == Arg::JoinedAndSeparateClass;
-    }
-    static bool classof(const JoinedAndSeparateArg *) { return true; }
-  };
 } // end namespace driver
 } // end namespace clang
 
