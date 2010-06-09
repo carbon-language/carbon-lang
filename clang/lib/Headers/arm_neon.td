@@ -33,6 +33,8 @@ def OP_XOR  : Op;
 def OP_ANDN : Op;
 def OP_ORN  : Op;
 def OP_CAST : Op;
+def OP_HI   : Op;
+def OP_LO   : Op;
 def OP_CONC : Op;
 def OP_DUP  : Op;
 
@@ -234,8 +236,8 @@ def VCOMBINE : Inst<"kdd", "csilhfUcUsUiUlPcPs", OP_CONC>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.21 Splitting vectors
-def VGET_HIGH : WInst<"dk", "csilhfUcUsUiUlPcPs">;
-def VGET_LOW  : WInst<"dk", "csilhfUcUsUiUlPcPs">;
+def VGET_HIGH : Inst<"dk", "csilhfUcUsUiUlPcPs", OP_HI>;
+def VGET_LOW  : Inst<"dk", "csilhfUcUsUiUlPcPs", OP_LO>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.22 Converting vectors

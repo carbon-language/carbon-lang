@@ -241,7 +241,28 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 }
 
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
-  // TODO: verify NEON intrinsic constant args.
+  llvm::APSInt Result;
+
+  switch (BuiltinID) {
+    case ARM::BI__builtin_neon_vget_lane_i8:
+    case ARM::BI__builtin_neon_vget_lane_i16:
+    case ARM::BI__builtin_neon_vget_lane_i32:
+    case ARM::BI__builtin_neon_vget_lane_f32:
+    case ARM::BI__builtin_neon_vget_lane_i64:
+    case ARM::BI__builtin_neon_vgetq_lane_i8:
+    case ARM::BI__builtin_neon_vgetq_lane_i16:
+    case ARM::BI__builtin_neon_vgetq_lane_i32:
+    case ARM::BI__builtin_neon_vgetq_lane_f32:
+    case ARM::BI__builtin_neon_vgetq_lane_i64:
+      // Check constant-ness first.
+      if (SemaBuiltinConstantArg(TheCall, 1, Result))
+        return true;
+      break;
+  }
+  
+  // Now, range check values.
+  //unsigned lower = 0, upper = 0;
+  
   return false;
 }
 

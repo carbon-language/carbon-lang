@@ -1051,10 +1051,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vextq_v: {
     ConstantInt *C = dyn_cast<ConstantInt>(Ops[2]);
     int CV = C->getSExtValue();
-    
-    SmallVector<Constant*, 8> Indices;
-
     const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
+    
+    SmallVector<Constant*, 16> Indices;
     for (unsigned i = 0, e = cast<llvm::VectorType>(Ty)->getNumElements();
          i != e; ++i)
       Indices.push_back(ConstantInt::get(I32Ty, i+CV));
@@ -1062,7 +1061,85 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
-    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV);
+    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vext");
+  }
+  case ARM::BI__builtin_neon_vtbl1_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl1),
+                        Ops, "vtbl1");
+  case ARM::BI__builtin_neon_vtbl2_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl2),
+                        Ops, "vtbl2");
+  case ARM::BI__builtin_neon_vtbl3_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl3),
+                        Ops, "vtbl3");
+  case ARM::BI__builtin_neon_vtbl4_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl4),
+                        Ops, "vtbl4");
+  case ARM::BI__builtin_neon_vtbx1_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbx1),
+                        Ops, "vtbx1");
+  case ARM::BI__builtin_neon_vtbx2_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbx2),
+                        Ops, "vtbx2");
+  case ARM::BI__builtin_neon_vtbx3_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbx3),
+                        Ops, "vtbx3");
+  case ARM::BI__builtin_neon_vtbx4_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbx4),
+                        Ops, "vtbx4");
+  case ARM::BI__builtin_neon_vtst_v:
+  case ARM::BI__builtin_neon_vtstq_v: {
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Ops[0] = Builder.CreateAnd(Ops[0], Ops[1]);
+    Ops[0] = Builder.CreateICmp(ICmpInst::ICMP_NE, Ops[0], 
+                                ConstantAggregateZero::get(Ty));
+    return Builder.CreateSExt(Ops[0], Ty, "vtst");
+  }
+  // FIXME: transpose/zip/unzip don't currently match patterns for 
+  //        the non-q variants, but emitting 2 shufflevectors seems like a hack.
+  case ARM::BI__builtin_neon_vtrn_v:
+  case ARM::BI__builtin_neon_vtrnq_v: {
+    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
+    SmallVector<Constant*, 32> Indices;
+    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      for (unsigned i = 0; i != nElts; i += 2) {
+        Indices.push_back(ConstantInt::get(I32Ty, i+vi));
+        Indices.push_back(ConstantInt::get(I32Ty, i+nElts+vi));
+      }
+    }
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vtrn");
+  }
+  case ARM::BI__builtin_neon_vuzp_v:
+  case ARM::BI__builtin_neon_vuzpq_v: {
+    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
+    SmallVector<Constant*, 32> Indices;
+    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
+    for (unsigned vi = 0; vi != 2; ++vi)
+      for (unsigned i = 0; i != nElts; ++i)
+        Indices.push_back(ConstantInt::get(I32Ty, 2*i+vi));
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vuzp");
+  }
+  case ARM::BI__builtin_neon_vzip_v: 
+  case ARM::BI__builtin_neon_vzipq_v: {
+    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
+    SmallVector<Constant*, 32> Indices;
+    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
+    for (unsigned i = 0; i != nElts; ++i) {
+      Indices.push_back(ConstantInt::get(I32Ty, i));
+      Indices.push_back(ConstantInt::get(I32Ty, i+nElts));
+    }
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vzip");
   }
   }
 }
