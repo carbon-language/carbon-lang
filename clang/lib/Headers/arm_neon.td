@@ -228,7 +228,7 @@ def VCREATE: Inst<"dl", "csihfUcUsUiUlPcPsl", OP_CAST>;
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.19 Set all lanes to same value
 def VDUP_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
-def VMOV_N : IInst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VMOV_N : Inst<"ds", "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors

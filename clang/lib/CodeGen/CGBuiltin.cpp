@@ -1068,7 +1068,41 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vgetq_lane_i32:
   case ARM::BI__builtin_neon_vgetq_lane_i64:
   case ARM::BI__builtin_neon_vgetq_lane_f32:
-    return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)));
+    return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
+                                        "vget_lane");
+  case ARM::BI__builtin_neon_vhadd_v:
+  case ARM::BI__builtin_neon_vhaddq_v:
+    Int = usgn ? Intrinsic::arm_neon_vhaddu : Intrinsic::arm_neon_vhadds;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vhadd");
+  case ARM::BI__builtin_neon_vhsub_v:
+  case ARM::BI__builtin_neon_vhsubq_v:
+    Int = usgn ? Intrinsic::arm_neon_vhsubu : Intrinsic::arm_neon_vhsubs;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vhsub");
+  // FIXME: vld*
+  case ARM::BI__builtin_neon_vmax_v:
+  case ARM::BI__builtin_neon_vmaxq_v:
+    Int = usgn ? Intrinsic::arm_neon_vmaxu : Intrinsic::arm_neon_vmaxs;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmax");
+  case ARM::BI__builtin_neon_vmin_v:
+  case ARM::BI__builtin_neon_vminq_v:
+    Int = usgn ? Intrinsic::arm_neon_vminu : Intrinsic::arm_neon_vmins;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmin");
+  // FIXME: vmlal_lane -> splat, drop imm
+  case ARM::BI__builtin_neon_vmlal_v:
+    Int = usgn ? Intrinsic::arm_neon_vmlalu : Intrinsic::arm_neon_vmlals;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal");
+  // FIXME: vmlal_n, vmla_n, vmlsl_n, vmls_n, vmull_n, vmul_n,
+  //        vqdmlal_n, vqdmlsl_n, vqdmulh_n, vqdmull_n, vqrdmulh_n -> splat,-_n
+  case ARM::BI__builtin_neon_vmovl_v:
+    Int = usgn ? Intrinsic::arm_neon_vmovlu : Intrinsic::arm_neon_vmovls;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmovl");
+  case ARM::BI__builtin_neon_vmovn_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmovn, &Ty, 1),
+                        Ops, "vmovn");
+  case ARM::BI__builtin_neon_vpadal_v:
+  case ARM::BI__builtin_neon_vpadalq_v:
+    Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpadal");
   case ARM::BI__builtin_neon_vtbl1_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl1),
                         Ops, "vtbl1");
