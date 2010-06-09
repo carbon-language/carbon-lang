@@ -13,7 +13,8 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 // Project includes
-#include "PathMappingList.h"
+#include "lldb/Target/PathMappingList.h"
+#include <string.h>
 
 using namespace lldb;
 using namespace lldb_private;

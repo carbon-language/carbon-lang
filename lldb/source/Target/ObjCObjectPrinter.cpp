@@ -17,7 +17,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
-#include "ObjCObjectPrinter.h"
+#include "lldb/Target/ObjCObjectPrinter.h"
 
 using namespace lldb;
 using namespace lldb_private;

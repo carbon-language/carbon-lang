@@ -12,6 +12,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
+#include <algorithm>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -133,13 +134,13 @@ LineTable::Entry::LessThanBinaryPredicate::operator() (const LineTable::Entry& a
         LT_COMPARE (b.is_terminal_entry, a.is_terminal_entry);
         LT_COMPARE (a.file_idx, b.file_idx);
         return false;
-        #undef LT_COMPARE;
+        #undef LT_COMPARE
     }
 
     const Section *a_section = m_line_table->GetSectionForEntryIndex (a.sect_idx);
     const Section *b_section = m_line_table->GetSectionForEntryIndex (b.sect_idx);
     return Section::Compare(*a_section, *b_section) < 0;
-};
+}
 
 
 Section *
