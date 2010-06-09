@@ -79,7 +79,7 @@ FlagArg::FlagArg(const Option *Opt, unsigned Index, const Arg *BaseArg)
 }
 
 void FlagArg::render(const ArgList &Args, ArgStringList &Output) const {
-  Output.push_back(Args.getArgString(getIndex()));
+  Output.push_back(getOption().getName());
 }
 
 const char *FlagArg::getValue(const ArgList &Args, unsigned N) const {
@@ -159,7 +159,7 @@ void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
     Output.push_back(Args.MakeArgString(llvm::StringRef(getOption().getName()) +
                                         getValue(Args, 0)));
   } else {
-    Output.push_back(Args.getArgString(getIndex()));
+    Output.push_back(getOption().getName());
     for (unsigned i = 0; i < NumValues; ++i)
       Output.push_back(getValue(Args, i));
   }
