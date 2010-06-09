@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "clang/AST/Type.h"
 // Project includes
 #include "lldb/Core/ValueObject.h"
 

@@ -97,7 +97,7 @@ DataBufferMemoryMap::GetError() const
 
 //----------------------------------------------------------------------
 // Memory map "length" bytes from "file" starting "offset"
-// bytes into the file. If "length" is set to SIZE_T_MAX, then
+// bytes into the file. If "length" is set to SIZE_MAX, then
 // map as many bytes as possible.
 //
 // Returns the number of bytes mapped starting from the requested
@@ -137,7 +137,7 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file, off_t offset, 
 // containing valid data from a call to stat().
 //
 // Memory map FILE_LENGTH bytes in FILE starting FILE_OFFSET bytes into
-// the file. If FILE_LENGTH is set to SIZE_T_MAX, then map as many bytes
+// the file. If FILE_LENGTH is set to SIZE_MAX, then map as many bytes
 // as possible.
 //
 // RETURNS
@@ -154,7 +154,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, off_t offset, size_t l
         {
             if ((stat.st_mode & S_IFREG) && (stat.st_size > offset))
             {
-                if (length == SIZE_T_MAX)
+                if (length == SIZE_MAX)
                     length = stat.st_size - offset;
 
                 // Cap the length if too much data was requested
