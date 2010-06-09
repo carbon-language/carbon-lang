@@ -740,7 +740,7 @@ bool FormatSpecifier::fixType(QualType QT) {
     CS.setKind(ConversionSpecifier::dArg);
     HasAlternativeForm = 0;
   }
-  else if (QT->isUnsignedIntegerType) {
+  else if (QT->isUnsignedIntegerType()) {
     CS.setKind(ConversionSpecifier::uArg);
     HasAlternativeForm = 0;
   }
