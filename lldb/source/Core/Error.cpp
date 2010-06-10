@@ -15,6 +15,9 @@
 // Project includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include <cstdarg>
+#include <cstdlib>
+#include <cstring>
 
 #if defined (__arm__)
 #include <SpringBoardServices/SpringBoardServer.h>
@@ -52,7 +55,7 @@ Error::operator = (const Error& rhs)
 // Assignment operator
 //----------------------------------------------------------------------
 const Error&
-Error::operator = (kern_return_t err)
+Error::operator = (uint32_t err)
 {
     m_code = err;
     m_type = eErrorTypeMachKernel;
@@ -81,7 +84,9 @@ Error::AsCString(const char *default_error_str) const
         switch (m_type)
         {
         case eErrorTypeMachKernel:
+#ifdef __APPLE__
             s = ::mach_error_string (m_code);
+#endif
             break;
 
         case eErrorTypePOSIX:
@@ -223,7 +228,7 @@ Error::LogIfError (Log *log, const char *format, ...)
 // "eErrorTypeMachKernel"
 //----------------------------------------------------------------------
 void
-Error::SetError (kern_return_t err)
+Error::SetError (uint32_t err)
 {
     m_code = err;
     m_type = eErrorTypeMachKernel;

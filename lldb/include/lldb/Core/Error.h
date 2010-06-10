@@ -11,7 +11,9 @@
 #define __DCError_h__
 #if defined(__cplusplus)
 
+#ifdef __APPLE__
 #include <mach/mach.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
@@ -90,7 +92,7 @@ public:
     ///     A const reference to this object.
     //------------------------------------------------------------------
     const Error&
-    operator = (kern_return_t err);
+    operator = (uint32_t err);
 
     ~Error();
 
@@ -200,7 +202,7 @@ public:
     ///     A mach error code.
     //------------------------------------------------------------------
     void
-    SetError (kern_return_t err);
+    SetError (uint32_t err);
 
     //------------------------------------------------------------------
     /// Set accesssor with an error value and type.
