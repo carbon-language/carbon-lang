@@ -98,7 +98,7 @@
    				        methods added to these classes will just be a dynamic loader
    				        lookup and they won't affect the class layout (since they
    				        aren't virtual methods, and no members can be added to the
-   				        class).
+   				        class).</p>
 				</div>
 				<div class="postfooter"></div>
 			</div>
@@ -119,7 +119,7 @@
 				       to attempt to be resolved with each shared library load.</p>
                    <p>Breakpoint options can be set on the breakpoint,
                        or on the individual locations. This allows flexibility when dealing
-                       with breakpoints and allows us to do what the user wants.
+                       with breakpoints and allows us to do what the user wants.</p>
 				</div>
 				<div class="postfooter"></div>
 			</div>
@@ -135,7 +135,7 @@
                        or <b>lldb_private::CommandObjectMultiword</b> object.</p>
                    <p><b>lldb_private::CommandObjectMultiword</b> are commands that
                       have subcommands and allow command line commands to be
-                      logically grouped into a hiearchy.
+                      logically grouped into a hiearchy.</p>
                   <p><b>lldb_private::CommandObject</b> command line commands
                       are the objects that implement the functionality of the
                       command. They can optionally define
@@ -154,7 +154,7 @@
 
 				   <p>The Core source files contain basic functionality that
 				       is required in the debugger. A wide variety of classes
-				       are implemented:
+				       are implemented:</p>
 				       
                        <ul>
          					<li>Address (section offset addressing)</li>
@@ -201,7 +201,7 @@
 				        traverse this AST and either generate a DWARF expression
 				        that contains simple opcodes that can be quickly re-evaluated
 				        each time an expression needs to be evaluated, or JIT'ed
-				        up into code that can be run on the process being debugged.
+				        up into code that can be run on the process being debugged.</p>
 				</div>
 				<div class="postfooter"></div>
 			</div>
@@ -215,7 +215,7 @@
 				       layer This layer involves everything from spawning, detaching,
 				       joing and killing native in process threads, to getting
 				       current information about the current host.</p>
-    				   <p>Host functionality includes abstraction layers for:
+    				   <p>Host functionality includes abstraction layers for:</p>
                            <ul>
              					<li>Mutexes</li>
               					<li>Conditions</li>
@@ -236,7 +236,7 @@
 				   <p>The interpreter classes are the classes responsible for
 				       being the base classes needed for each command object,
 				       and is responsible for tracking and running command line
-				       commands.
+				       commands.</p>
 				</div>
 				<div class="postfooter"></div>
 			</div>
