@@ -83,7 +83,7 @@ inline ByteOrder getHostByteOrder() {
 }
 
 // FIXME: Replace uses of eByteOrderHost with getHostByteOrder()!
-const ByteOrder eByteOrderHost = getHostByteOrder();
+#define eByteOrderHost getHostByteOrder()
 
 //----------------------------------------------------------------------
 // Register encoding definitions
