@@ -251,6 +251,10 @@ Symtab::CompareSymbolValueByIndex (void *thunk, const void *a, const void *b)
     return 1;
 }
 
+int Symtab::CompareSymbolValueByIndexLinux(const void* a, const void* b, void* thunk) {
+  CompareSymbolValueByIndex(thunk, a, b);
+}
+
 void
 Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_duplicates) const
 {
@@ -259,7 +263,12 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
         return;
 
     // Sort the indexes in place using qsort
+    // FIXME: (WRONGDEFINE) Need a better define for this! 
+#ifdef __APPLE__
     ::qsort_r (&indexes[0], indexes.size(), sizeof(uint32_t), (void *)&m_symbols[0], Symtab::CompareSymbolValueByIndex);
+#else
+    ::qsort_r (&indexes[0], indexes.size(), sizeof(uint32_t), CompareSymbolValueByIndexLinux, (void *)&m_symbols[0]);
+#endif
 
     // Remove any duplicates if requested
     if (remove_duplicates)
