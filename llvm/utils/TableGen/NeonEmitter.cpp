@@ -595,6 +595,8 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
     ret |= 0x08;
   if (quad)
     ret |= 0x10;
+  if (poly)
+    ret |= 0x20;
   
   switch (type) {
     case 'c': 
