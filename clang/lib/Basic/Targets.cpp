@@ -2323,6 +2323,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     switch (os) {
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<ARMTargetInfo>(T);
     case llvm::Triple::Darwin:
       return new DarwinARMTargetInfo(T);
     case llvm::Triple::FreeBSD:
