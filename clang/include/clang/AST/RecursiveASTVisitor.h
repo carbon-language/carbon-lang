@@ -30,6 +30,39 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 
+// The following three macros are used for meta programming.  The code
+// using them is responsible for defining macro OPERATOR().
+
+// All unary operators.
+#define UNARYOP_LIST()                          \
+  OPERATOR(PostInc)   OPERATOR(PostDec)         \
+  OPERATOR(PreInc)    OPERATOR(PreDec)          \
+  OPERATOR(AddrOf)    OPERATOR(Deref)           \
+  OPERATOR(Plus)      OPERATOR(Minus)           \
+  OPERATOR(Not)       OPERATOR(LNot)            \
+  OPERATOR(Real)      OPERATOR(Imag)            \
+  OPERATOR(Extension) OPERATOR(OffsetOf)
+
+// All binary operators (excluding compound assign operators).
+#define BINOP_LIST() \
+  OPERATOR(PtrMemD)              OPERATOR(PtrMemI)    \
+  OPERATOR(Mul)   OPERATOR(Div)  OPERATOR(Rem)        \
+  OPERATOR(Add)   OPERATOR(Sub)  OPERATOR(Shl)        \
+  OPERATOR(Shr)                                       \
+                                                      \
+  OPERATOR(LT)    OPERATOR(GT)   OPERATOR(LE)         \
+  OPERATOR(GE)    OPERATOR(EQ)   OPERATOR(NE)         \
+  OPERATOR(And)   OPERATOR(Xor)  OPERATOR(Or)         \
+  OPERATOR(LAnd)  OPERATOR(LOr)                       \
+                                                      \
+  OPERATOR(Assign)                                    \
+  OPERATOR(Comma)
+
+// All compound assign operators.
+#define CAO_LIST()                                                      \
+  OPERATOR(Mul) OPERATOR(Div) OPERATOR(Rem) OPERATOR(Add) OPERATOR(Sub) \
+  OPERATOR(Shl) OPERATOR(Shr) OPERATOR(And) OPERATOR(Or)  OPERATOR(Xor)
+
 namespace clang {
 
 // A helper macro to implement short-circuiting when recursing.  It
@@ -170,7 +203,7 @@ public:
   // Define Traverse*(), WalkUpFrom*(), and Visit*() for unary
   // operator methods.  Unary operators are not classes in themselves
   // (they're all opcodes in UnaryOperator) but do have visitors.
-#define UNARYOP_FALLBACK(NAME)                                  \
+#define OPERATOR(NAME)                                           \
   bool TraverseUnary##NAME(UnaryOperator *S) {                  \
     TRY_TO(WalkUpFromUnary##NAME(S));                           \
     TRY_TO(TraverseStmt(S->getSubExpr()));                      \
@@ -183,15 +216,8 @@ public:
   }                                                             \
   bool VisitUnary##NAME(UnaryOperator *S) { return true; }
 
-  UNARYOP_FALLBACK(PostInc)   UNARYOP_FALLBACK(PostDec)
-  UNARYOP_FALLBACK(PreInc)    UNARYOP_FALLBACK(PreDec)
-  UNARYOP_FALLBACK(AddrOf)    UNARYOP_FALLBACK(Deref)
-
-  UNARYOP_FALLBACK(Plus)      UNARYOP_FALLBACK(Minus)
-  UNARYOP_FALLBACK(Not)       UNARYOP_FALLBACK(LNot)
-  UNARYOP_FALLBACK(Real)      UNARYOP_FALLBACK(Imag)
-  UNARYOP_FALLBACK(Extension) UNARYOP_FALLBACK(OffsetOf)
-#undef UNARYOP_FALLBACK
+  UNARYOP_LIST()
+#undef OPERATOR
 
   // Define Traverse*(), WalkUpFrom*(), and Visit*() for binary
   // operator methods.  Binary operators are not classes in themselves
@@ -210,35 +236,19 @@ public:
   }                                                             \
   bool VisitBin##NAME(BINOP_TYPE *S) { return true; }
 
-#define BINOP_FALLBACK(NAME) GENERAL_BINOP_FALLBACK(NAME, BinaryOperator)
-
-  BINOP_FALLBACK(PtrMemD)                    BINOP_FALLBACK(PtrMemI)
-  BINOP_FALLBACK(Mul)   BINOP_FALLBACK(Div)  BINOP_FALLBACK(Rem)
-  BINOP_FALLBACK(Add)   BINOP_FALLBACK(Sub)  BINOP_FALLBACK(Shl)
-  BINOP_FALLBACK(Shr)
-
-  BINOP_FALLBACK(LT)    BINOP_FALLBACK(GT)   BINOP_FALLBACK(LE)
-  BINOP_FALLBACK(GE)    BINOP_FALLBACK(EQ)   BINOP_FALLBACK(NE)
-  BINOP_FALLBACK(And)   BINOP_FALLBACK(Xor)  BINOP_FALLBACK(Or)
-  BINOP_FALLBACK(LAnd)  BINOP_FALLBACK(LOr)
-
-  BINOP_FALLBACK(Assign)
-  BINOP_FALLBACK(Comma)
-
-#undef BINOP_FALLBACK
+#define OPERATOR(NAME) GENERAL_BINOP_FALLBACK(NAME, BinaryOperator)
+  BINOP_LIST()
+#undef OPERATOR
 
   // Define Traverse*(), WalkUpFrom*(), and Visit*() for compound
   // assignment methods.  Compound assignment operators are not
   // classes in themselves (they're all opcodes in
   // CompoundAssignOperator) but do have visitors.
-#define CAO_FALLBACK(NAME) GENERAL_BINOP_FALLBACK(NAME, CompoundAssignOperator)
+#define OPERATOR(NAME) \
+  GENERAL_BINOP_FALLBACK(NAME##Assign, CompoundAssignOperator)
 
-  CAO_FALLBACK(MulAssign) CAO_FALLBACK(DivAssign) CAO_FALLBACK(RemAssign)
-  CAO_FALLBACK(AddAssign) CAO_FALLBACK(SubAssign) CAO_FALLBACK(ShlAssign)
-  CAO_FALLBACK(ShrAssign) CAO_FALLBACK(AndAssign) CAO_FALLBACK(OrAssign)
-  CAO_FALLBACK(XorAssign)
-
-#undef CAO_FALLBACK
+  CAO_LIST()
+#undef OPERATOR
 #undef GENERAL_BINOP_FALLBACK
 
   // ---- Methods on Types ----
@@ -309,68 +319,30 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   // below.
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     switch (BinOp->getOpcode()) {
-    case BinaryOperator::PtrMemD:   DISPATCH(BinPtrMemD, BinaryOperator, S);
-    case BinaryOperator::PtrMemI:   DISPATCH(BinPtrMemI, BinaryOperator, S);
-    case BinaryOperator::Mul:       DISPATCH(BinMul,     BinaryOperator, S);
-    case BinaryOperator::Div:       DISPATCH(BinDiv,     BinaryOperator, S);
-    case BinaryOperator::Rem:       DISPATCH(BinRem,     BinaryOperator, S);
-    case BinaryOperator::Add:       DISPATCH(BinAdd,     BinaryOperator, S);
-    case BinaryOperator::Sub:       DISPATCH(BinSub,     BinaryOperator, S);
-    case BinaryOperator::Shl:       DISPATCH(BinShl,     BinaryOperator, S);
-    case BinaryOperator::Shr:       DISPATCH(BinShr,     BinaryOperator, S);
+#define OPERATOR(NAME) \
+    case BinaryOperator::NAME: DISPATCH(Bin##PtrMemD, BinaryOperator, S);
 
-    case BinaryOperator::LT:        DISPATCH(BinLT,      BinaryOperator, S);
-    case BinaryOperator::GT:        DISPATCH(BinGT,      BinaryOperator, S);
-    case BinaryOperator::LE:        DISPATCH(BinLE,      BinaryOperator, S);
-    case BinaryOperator::GE:        DISPATCH(BinGE,      BinaryOperator, S);
-    case BinaryOperator::EQ:        DISPATCH(BinEQ,      BinaryOperator, S);
-    case BinaryOperator::NE:        DISPATCH(BinNE,      BinaryOperator, S);
+    BINOP_LIST()
+#undef OPERATOR
+#undef BINOP_LIST
 
-    case BinaryOperator::And:       DISPATCH(BinAnd,     BinaryOperator, S);
-    case BinaryOperator::Xor:       DISPATCH(BinXor,     BinaryOperator, S);
-    case BinaryOperator::Or :       DISPATCH(BinOr,      BinaryOperator, S);
-    case BinaryOperator::LAnd:      DISPATCH(BinLAnd,    BinaryOperator, S);
-    case BinaryOperator::LOr :      DISPATCH(BinLOr,     BinaryOperator, S);
-    case BinaryOperator::Assign:    DISPATCH(BinAssign,  BinaryOperator, S);
-    case BinaryOperator::MulAssign:
-      DISPATCH(BinMulAssign, CompoundAssignOperator, S);
-    case BinaryOperator::DivAssign:
-      DISPATCH(BinDivAssign, CompoundAssignOperator, S);
-    case BinaryOperator::RemAssign:
-      DISPATCH(BinRemAssign, CompoundAssignOperator, S);
-    case BinaryOperator::AddAssign:
-      DISPATCH(BinAddAssign, CompoundAssignOperator, S);
-    case BinaryOperator::SubAssign:
-      DISPATCH(BinSubAssign, CompoundAssignOperator, S);
-    case BinaryOperator::ShlAssign:
-      DISPATCH(BinShlAssign, CompoundAssignOperator, S);
-    case BinaryOperator::ShrAssign:
-      DISPATCH(BinShrAssign, CompoundAssignOperator, S);
-    case BinaryOperator::AndAssign:
-      DISPATCH(BinAndAssign, CompoundAssignOperator, S);
-    case BinaryOperator::OrAssign:
-      DISPATCH(BinOrAssign,  CompoundAssignOperator, S);
-    case BinaryOperator::XorAssign:
-      DISPATCH(BinXorAssign, CompoundAssignOperator, S);
-    case BinaryOperator::Comma:     DISPATCH(BinComma,     BinaryOperator, S);
+#define OPERATOR(NAME)                                          \
+    case BinaryOperator::NAME##Assign:                          \
+      DISPATCH(Bin##NAME##Assign, CompoundAssignOperator, S);
+
+    CAO_LIST()
+#undef OPERATOR
+#undef CAO_LIST
     }
   } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
     switch (UnOp->getOpcode()) {
-    case UnaryOperator::PostInc:   DISPATCH(UnaryPostInc,   UnaryOperator, S);
-    case UnaryOperator::PostDec:   DISPATCH(UnaryPostDec,   UnaryOperator, S);
-    case UnaryOperator::PreInc:    DISPATCH(UnaryPreInc,    UnaryOperator, S);
-    case UnaryOperator::PreDec:    DISPATCH(UnaryPreDec,    UnaryOperator, S);
-    case UnaryOperator::AddrOf:    DISPATCH(UnaryAddrOf,    UnaryOperator, S);
-    case UnaryOperator::Deref:     DISPATCH(UnaryDeref,     UnaryOperator, S);
-    case UnaryOperator::Plus:      DISPATCH(UnaryPlus,      UnaryOperator, S);
-    case UnaryOperator::Minus:     DISPATCH(UnaryMinus,     UnaryOperator, S);
-    case UnaryOperator::Not:       DISPATCH(UnaryNot,       UnaryOperator, S);
-    case UnaryOperator::LNot:      DISPATCH(UnaryLNot,      UnaryOperator, S);
-    case UnaryOperator::Real:      DISPATCH(UnaryReal,      UnaryOperator, S);
-    case UnaryOperator::Imag:      DISPATCH(UnaryImag,      UnaryOperator, S);
-    case UnaryOperator::Extension: DISPATCH(UnaryExtension, UnaryOperator, S);
-    case UnaryOperator::OffsetOf:  DISPATCH(UnaryOffsetOf,  UnaryOperator, S);
-   }
+#define OPERATOR(NAME)                                                  \
+    case UnaryOperator::NAME: DISPATCH(Unary##NAME, UnaryOperator, S);
+
+    UNARYOP_LIST()
+#undef OPERATOR
+#undef UNARYOP_LIST
+    }
   }
 
   // Top switch stmt: dispatch to TraverseFooStmt for each concrete FooStmt.
