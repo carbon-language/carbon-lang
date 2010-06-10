@@ -14,29 +14,32 @@
 
 class Op;
 
-def OP_NONE : Op;
-def OP_ADD  : Op;
-def OP_SUB  : Op;
-def OP_MUL  : Op;
-def OP_MLA  : Op;
-def OP_MLS  : Op;
-def OP_EQ   : Op;
-def OP_GE   : Op;
-def OP_LE   : Op;
-def OP_GT   : Op;
-def OP_LT   : Op;
-def OP_NEG  : Op;
-def OP_NOT  : Op;
-def OP_AND  : Op;
-def OP_OR   : Op;
-def OP_XOR  : Op;
-def OP_ANDN : Op;
-def OP_ORN  : Op;
-def OP_CAST : Op;
-def OP_HI   : Op;
-def OP_LO   : Op;
-def OP_CONC : Op;
-def OP_DUP  : Op;
+def OP_NONE  : Op;
+def OP_ADD   : Op;
+def OP_SUB   : Op;
+def OP_MUL   : Op;
+def OP_MLA   : Op;
+def OP_MLS   : Op;
+def OP_MUL_N : Op;
+def OP_MLA_N : Op;
+def OP_MLS_N : Op;
+def OP_EQ    : Op;
+def OP_GE    : Op;
+def OP_LE    : Op;
+def OP_GT    : Op;
+def OP_LT    : Op;
+def OP_NEG   : Op;
+def OP_NOT   : Op;
+def OP_AND   : Op;
+def OP_OR    : Op;
+def OP_XOR   : Op;
+def OP_ANDN  : Op;
+def OP_ORN   : Op;
+def OP_CAST  : Op;
+def OP_HI    : Op;
+def OP_LO    : Op;
+def OP_CONC  : Op;
+def OP_DUP   : Op;
 
 class Inst <string p, string t, Op o> {
   string Prototype = p;
@@ -48,7 +51,6 @@ class Inst <string p, string t, Op o> {
 class SInst<string p, string t> : Inst<p, t, OP_NONE> {}
 class IInst<string p, string t> : Inst<p, t, OP_NONE> {}
 class WInst<string p, string t> : Inst<p, t, OP_NONE> {}
-class BInst<string p, string t> : Inst<p, t, OP_NONE> {}
 
 // prototype: return (arg, arg, ...)
 // v: void
@@ -64,6 +66,7 @@ class BInst<string p, string t> : Inst<p, t, OP_NONE> {}
 // i: constant int
 // l: constant uint64
 // s: scalar of element type
+// a: scalar of element type (splat to vector type)
 // k: default elt width, double num elts
 // #: array of default vectors
 // p: pointer type
@@ -273,21 +276,21 @@ def VQDMLAL_LANE  : SInst<"wwddi", "si">;
 def VMLS_LANE     : IInst<"ddddi", "siUsUifQsQiQUsQUiQf">;
 def VMLSL_LANE    : SInst<"wwddi", "siUsUi">;
 def VQDMLSL_LANE  : SInst<"wwddi", "si">;
-def VMUL_N        : IInst<"dds",   "sifUsUiQsQiQfQUsQUi">;
-def VMULL_N       : SInst<"wds",   "siUsUi">;
+def VMUL_N        : Inst<"dds",    "sifUsUiQsQiQfQUsQUi", OP_MUL_N>;
+def VMULL_N       : SInst<"wda",   "siUsUi">;
 def VMULL_LANE    : SInst<"wddi",  "siUsUi">;
-def VQDMULL_N     : SInst<"wds",   "si">;
+def VQDMULL_N     : SInst<"wda",   "si">;
 def VQDMULL_LANE  : SInst<"wddi",  "si">;
-def VQDMULH_N     : SInst<"dds",   "siQsQi">;
+def VQDMULH_N     : SInst<"dda",   "siQsQi">;
 def VQDMULH_LANE  : SInst<"dddi",  "siQsQi">;
-def VQRDMULH_N    : SInst<"dds",   "siQsQi">;
+def VQRDMULH_N    : SInst<"dda",   "siQsQi">;
 def VQRDMULH_LANE : SInst<"dddi",  "siQsQi">;
-def VMLA_N        : IInst<"ddds",  "siUsUifQsQiQUsQUiQf">;
-def VMLAL_N       : SInst<"wwds",  "siUsUi">;
-def VQDMLAL_N     : SInst<"wwds",  "si">;
-def VMLS_N        : IInst<"ddds",  "siUsUifQsQiQUsQUiQf">;
-def VMLSL_N       : SInst<"wwds",  "siUsUi">;
-def VQDMLSL_N     : SInst<"wwds",  "si">;
+def VMLA_N        : Inst<"ddda",   "siUsUifQsQiQUsQUiQf", OP_MLA_N>;
+def VMLAL_N       : SInst<"wwda",  "siUsUi">;
+def VQDMLAL_N     : SInst<"wwda",  "si">;
+def VMLS_N        : Inst<"ddds",   "siUsUifQsQiQUsQUiQf", OP_MLS_N>;
+def VMLSL_N       : SInst<"wwda",  "siUsUi">;
+def VQDMLSL_N     : SInst<"wwda",  "si">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.26 Vector Extract
@@ -319,7 +322,7 @@ def VORR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_OR>;
 def VEOR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_XOR>;
 def VBIC : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ANDN>;
 def VORN : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ORN>;
-def VBSL : BInst<"dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
+def VBSL : SInst<"dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations

@@ -894,13 +894,24 @@ const llvm::Type *GetNeonType(LLVMContext &Ctx, unsigned type, bool q) {
   return 0;
 }
 
+Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
+  unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
+  SmallVector<Constant*, 16> Indices(nElts, C);
+  Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+  return Builder.CreateShuffleVector(V, V, SV, "lane");
+}
+
 Value *CodeGenFunction::EmitNeonCall(Function *F, SmallVectorImpl<Value*> &Ops,
-                                     const char *name) {
+                                     const char *name, bool splat) {
   unsigned j = 0;
   for (Function::const_arg_iterator ai = F->arg_begin(), ae = F->arg_end();
        ai != ae; ++ai, ++j)
     Ops[j] = Builder.CreateBitCast(Ops[j], ai->getType(), name);
 
+  if (splat) {
+    Ops[j-1] = EmitNeonSplat(Ops[j-1], cast<Constant>(Ops[j]));
+    Ops.resize(j);
+  }
   return Builder.CreateCall(F, Ops.begin(), Ops.end(), name);
 }
 
@@ -917,9 +928,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                a, b);
   }
 
-  llvm::SmallVector<Value*, 4> Ops;
   // Determine the type of this overloaded NEON intrinsic.
   assert(BuiltinID > ARM::BI__builtin_thread_pointer);
+
+  llvm::SmallVector<Value*, 4> Ops;
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
     Ops.push_back(EmitScalarExpr(E->getArg(i)));
 
@@ -931,10 +943,15 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned type = Result.getZExtValue();
   bool usgn = type & 0x08;
   bool quad = type & 0x10;
+  bool splat = false;
 
   const llvm::Type *Ty = GetNeonType(VMContext, type & 0x7, quad);
   if (!Ty)
     return 0;
+
+  // FIXME: multiplies by scalar do not currently match their patterns because
+  //   they are implemented via mul(splat(scalar_to_vector)) rather than
+  //   mul(dup(scalar))
 
   unsigned Int;
   switch (BuiltinID) {
@@ -1087,12 +1104,11 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vminq_v:
     Int = usgn ? Intrinsic::arm_neon_vminu : Intrinsic::arm_neon_vmins;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmin");
-  // FIXME: vmlal_lane -> splat, drop imm
+  case ARM::BI__builtin_neon_vmlal_lane_v:
+    splat = true;
   case ARM::BI__builtin_neon_vmlal_v:
     Int = usgn ? Intrinsic::arm_neon_vmlalu : Intrinsic::arm_neon_vmlals;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal");
-  // FIXME: vmlal_n, vmla_n, vmlsl_n, vmls_n, vmull_n, vmul_n,
-  //        vqdmlal_n, vqdmlsl_n, vqdmulh_n, vqdmull_n, vqrdmulh_n -> splat,-_n
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal", splat);
   case ARM::BI__builtin_neon_vmovl_v:
     Int = usgn ? Intrinsic::arm_neon_vmovlu : Intrinsic::arm_neon_vmovls;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmovl");
