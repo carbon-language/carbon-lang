@@ -23,7 +23,7 @@ namespace {
 
     bool VisitCXXRecordDecl(CXXRecordDecl *D) {
       std::cout << D->getNameAsString() << std::endl;
-      return false;
+      return true;
     }
   };
 }

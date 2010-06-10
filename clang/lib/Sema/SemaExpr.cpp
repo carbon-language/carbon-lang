@@ -7681,7 +7681,7 @@ bool MarkReferencedDecls::TraverseRecordType(RecordType *T) {
                                      Args.flat_size());
   }
 
-  return false;
+  return true;
 }
 
 void Sema::MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T) {
