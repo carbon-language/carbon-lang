@@ -124,7 +124,7 @@ def C : Flag<"-C">;
 def D : JoinedOrSeparate<"-D">, Group<CompileOnly_Group>;
 def E : Flag<"-E">, Flags<[DriverOption]>,
   HelpText<"Only run the preprocessor">;
-def F : JoinedOrSeparate<"-F">;
+def F : JoinedOrSeparate<"-F">, Flags<[RenderJoined]>;
 def H : Flag<"-H">;
 def I_ : Flag<"-I-">, Group<I_Group>;
 def I : JoinedOrSeparate<"-I">, Group<I_Group>;
