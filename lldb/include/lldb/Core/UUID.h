@@ -30,7 +30,6 @@ public:
     UUID ();
     UUID (const UUID& rhs);
     UUID (const void *uuid_bytes, uint32_t num_uuid_bytes);
-    UUID (const uuid_t *uuid);
 
     ~UUID ();
 

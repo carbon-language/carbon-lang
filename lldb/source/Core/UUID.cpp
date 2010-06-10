@@ -38,14 +38,6 @@ UUID::UUID (const void *uuid_bytes, uint32_t num_uuid_bytes)
         ::bzero (m_uuid, sizeof(m_uuid));
 }
 
-UUID::UUID (const uuid_t *uuid)
-{
-    if (uuid)
-        ::memcpy (m_uuid, uuid, sizeof (m_uuid));
-    else
-        ::bzero (m_uuid, sizeof(m_uuid));
-}
-
 const UUID&
 UUID::operator=(const UUID& rhs)
 {
