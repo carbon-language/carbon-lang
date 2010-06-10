@@ -408,11 +408,47 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
         const ByteOrder endian = m_process->GetByteOrder();
         const uint32_t addr_size = m_process->GetAddressByteSize();
         uint8_t buf[256];
-        const size_t count = 2 * sizeof(uint32_t) + // version + dylib_info_count
-                             addr_size * 2 +        // dylib_info_addr + notification
-                             2 + addr_size - 2 +    // processDetachedFromSharedRegion + libSystemInitialized + pad
-                             addr_size;             // dyldImageLoadAddress
+        const size_t count_v2 =  sizeof (uint32_t) + // version
+                                 sizeof (uint32_t) + // infoArrayCount
+                                 addr_size +         // infoArray
+                                 addr_size +         // notification
+                                 addr_size +         // processDetachedFromSharedRegion + libSystemInitialized + pad
+                                 addr_size;          // dyldImageLoadAddress
+        const size_t count_v11 = count_v2 +
+                                 addr_size +         // jitInfo
+                                 addr_size +         // dyldVersion
+                                 addr_size +         // errorMessage
+                                 addr_size +         // terminationFlags
+                                 addr_size +         // coreSymbolicationShmPage
+                                 addr_size +         // systemOrderFlag
+                                 addr_size +         // uuidArrayCount
+                                 addr_size +         // uuidArray
+                                 addr_size +         // dyldAllImageInfosAddress
+                                 addr_size +         // initialImageCount
+                                 addr_size +         // errorKind
+                                 addr_size +         // errorClientOfDylibPath
+                                 addr_size +         // errorTargetDylibPath
+                                 addr_size;          // errorSymbol
+        assert (sizeof (buf) > count_v11);
+
+        int count;
         Error error;
+        if (m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, 4, error) == 4)
+        {
+            DataExtractor data(buf, 4, endian, addr_size);
+            uint32_t offset = 0;
+            m_dyld_all_image_infos.version = data.GetU32(&offset);
+        }
+        else
+        {
+            return false;
+        }
+
+        if (m_dyld_all_image_infos.version >= 11)
+            count = count_v11;
+        else
+            count = count_v2;
+
         const size_t bytes_read = m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, count, error);
         if (bytes_read == count)
         {
@@ -423,12 +459,33 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
             m_dyld_all_image_infos.dylib_info_addr = data.GetPointer(&offset);
             m_dyld_all_image_infos.notification = data.GetPointer(&offset);
             m_dyld_all_image_infos.processDetachedFromSharedRegion = data.GetU8(&offset);
-            if (m_dyld_all_image_infos.version >= 2)
+            m_dyld_all_image_infos.libSystemInitialized = data.GetU8(&offset);
+            // Adjust for padding.
+            offset += addr_size - 2;
+            m_dyld_all_image_infos.dyldImageLoadAddress = data.GetPointer(&offset);
+            if (m_dyld_all_image_infos.version >= 11)
             {
-                m_dyld_all_image_infos.libSystemInitialized = data.GetU8(&offset);
-                // Adjust for padding.
-                offset += addr_size - 2;
-                m_dyld_all_image_infos.dyldImageLoadAddress = data.GetPointer(&offset);
+                offset += addr_size * 8;
+                uint64_t dyld_all_image_infos_addr = data.GetPointer(&offset);
+
+                // When we started, we were given the actual address of the all_image_infos
+                // struct (probably via TASK_DYLD_INFO) in memory - this address is stored in
+                // m_dyld_all_image_infos_addr and is the most accurate address we have.
+
+                // We read the dyld_all_image_infos struct from memory; it contains its own address.
+                // If the address in the struct does not match the actual address,
+                // the dyld we're looking at has been loaded at a different location (slid) from
+                // where it intended to load.  The addresses in the dyld_all_image_infos struct
+                // are the original, non-slid addresses, and need to be adjusted.  Most importantly
+                // the address of dyld and the notification address need to be adjusted.
+
+                if (dyld_all_image_infos_addr != m_dyld_all_image_infos_addr)
+                {
+                    uint64_t image_infos_offset = dyld_all_image_infos_addr - m_dyld_all_image_infos.dyldImageLoadAddress;
+                    uint64_t notification_offset = m_dyld_all_image_infos.notification - m_dyld_all_image_infos.dyldImageLoadAddress;
+                    m_dyld_all_image_infos.dyldImageLoadAddress = m_dyld_all_image_infos_addr - image_infos_offset;
+                    m_dyld_all_image_infos.notification = m_dyld_all_image_infos.dyldImageLoadAddress + notification_offset;
+                }
             }
             return true;
         }
