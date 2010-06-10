@@ -230,19 +230,6 @@ bool Thumb2ITBlockPass::InsertITBlock(MachineInstr *First, MachineInstr *Last) {
         MBBI = E;
     }
   } while (MBBI != E);
-
-  // Insert a new block for consecutive predicated instructions.
-  MachineFunction *MF = MBB->getParent();
-  MachineBasicBlock *NewMBB = MF->CreateMachineBasicBlock(MBB->getBasicBlock());
-  MachineFunction::iterator InsertPos = MBB;
-  MF->insert(++InsertPos, NewMBB);
-
-  // Move all the successors of this block to the specified block.
-  NewMBB->transferSuccessors(MBB);
-
-  // Add an edge from CurMBB to NewMBB for the fall-through.
-  MBB->addSuccessor(NewMBB);
-  NewMBB->splice(NewMBB->end(), MBB, ++MBBI, MBB->end());
   return true;
 }
 
