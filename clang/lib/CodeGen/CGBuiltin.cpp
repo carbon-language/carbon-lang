@@ -943,6 +943,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned type = Result.getZExtValue();
   bool usgn = type & 0x08;
   bool quad = type & 0x10;
+  bool poly = type & 0x20;
   bool splat = false;
 
   const llvm::Type *Ty = GetNeonType(VMContext, type & 0x7, quad);
@@ -971,14 +972,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Int = usgn ? Intrinsic::arm_neon_vabdlu : Intrinsic::arm_neon_vabdls;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vabdl");
   case ARM::BI__builtin_neon_vabs_v:
-  case ARM::BI__builtin_neon_vabsq_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vabs, &Ty, 1);
-    return EmitNeonCall(F, Ops, "vabs");
-  }
-  case ARM::BI__builtin_neon_vaddhn_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vaddhn, &Ty, 1);
-    return EmitNeonCall(F, Ops, "vaddhn");
-  }
+  case ARM::BI__builtin_neon_vabsq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vabs, &Ty, 1),
+                        Ops, "vabs");
+  case ARM::BI__builtin_neon_vaddhn_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vaddhn, &Ty, 1),
+                        Ops, "vaddhn");
   case ARM::BI__builtin_neon_vaddl_v:
     Int = usgn ? Intrinsic::arm_neon_vaddlu : Intrinsic::arm_neon_vaddls;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vaddl");
@@ -1109,16 +1108,118 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vmlal_v:
     Int = usgn ? Intrinsic::arm_neon_vmlalu : Intrinsic::arm_neon_vmlals;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal", splat);
+  case ARM::BI__builtin_neon_vmlsl_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vmlsl_v:
+    Int = usgn ? Intrinsic::arm_neon_vmlslu : Intrinsic::arm_neon_vmlsls;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlsl", splat);
   case ARM::BI__builtin_neon_vmovl_v:
     Int = usgn ? Intrinsic::arm_neon_vmovlu : Intrinsic::arm_neon_vmovls;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmovl");
   case ARM::BI__builtin_neon_vmovn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmovn, &Ty, 1),
                         Ops, "vmovn");
+  case ARM::BI__builtin_neon_vmull_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vmull_v:
+    Int = usgn ? Intrinsic::arm_neon_vmullu : Intrinsic::arm_neon_vmulls;
+    Int = poly ? (unsigned)Intrinsic::arm_neon_vmullp : Int;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmlal", splat);
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v:
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpadal");
+  case ARM::BI__builtin_neon_vpadd_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vpadd, &Ty, 1),
+                        Ops, "vpadd");
+  case ARM::BI__builtin_neon_vpaddl_v:
+  case ARM::BI__builtin_neon_vpaddlq_v:
+    Int = usgn ? Intrinsic::arm_neon_vpaddlu : Intrinsic::arm_neon_vpaddls;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpaddl");
+  case ARM::BI__builtin_neon_vpmax_v:
+    Int = usgn ? Intrinsic::arm_neon_vpmaxu : Intrinsic::arm_neon_vpmaxs;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpmax");
+  case ARM::BI__builtin_neon_vpmin_v:
+    Int = usgn ? Intrinsic::arm_neon_vpminu : Intrinsic::arm_neon_vpmins;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpmin");
+  case ARM::BI__builtin_neon_vqabs_v:
+  case ARM::BI__builtin_neon_vqabsq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqabs, &Ty, 1),
+                        Ops, "vqabs");
+  case ARM::BI__builtin_neon_vqadd_v:
+  case ARM::BI__builtin_neon_vqaddq_v:
+    Int = usgn ? Intrinsic::arm_neon_vqaddu : Intrinsic::arm_neon_vqadds;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vqadd");
+  case ARM::BI__builtin_neon_vqdmlal_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vqdmlal_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqdmlal, &Ty, 1),
+                        Ops, "vqdmlal");
+  case ARM::BI__builtin_neon_vqdmlsl_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vqdmlsl_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqdmlsl, &Ty, 1),
+                        Ops, "vqdmlsl");
+  case ARM::BI__builtin_neon_vqdmulh_lane_v:
+  case ARM::BI__builtin_neon_vqdmulhq_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vqdmulh_v:
+  case ARM::BI__builtin_neon_vqdmulhq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqdmulh, &Ty, 1),
+                        Ops, "vqdmulh");
+  case ARM::BI__builtin_neon_vqdmull_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vqdmull_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqdmull, &Ty, 1),
+                        Ops, "vqdmull");
+  case ARM::BI__builtin_neon_vqmovn_v:
+    Int = usgn ? Intrinsic::arm_neon_vqmovnu : Intrinsic::arm_neon_vqmovns;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vqmovn");
+  case ARM::BI__builtin_neon_vqmovun_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqmovnsu, &Ty, 1),
+                        Ops, "vqdmull");
+  case ARM::BI__builtin_neon_vqneg_v:
+  case ARM::BI__builtin_neon_vqnegq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqneg, &Ty, 1),
+                        Ops, "vqneg");
+  case ARM::BI__builtin_neon_vqrdmulh_lane_v:
+  case ARM::BI__builtin_neon_vqrdmulhq_lane_v:
+    splat = true;
+  case ARM::BI__builtin_neon_vqrdmulh_v:
+  case ARM::BI__builtin_neon_vqrdmulhq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqrdmulh, &Ty, 1),
+                        Ops, "vqrdmulh");
+  case ARM::BI__builtin_neon_vqrshl_v:
+  case ARM::BI__builtin_neon_vqrshlq_v:
+    Int = usgn ? Intrinsic::arm_neon_vqrshiftu : Intrinsic::arm_neon_vqrshifts;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vqrshl");
+  case ARM::BI__builtin_neon_vqrshrn_n_v:
+    Int = usgn ? Intrinsic::arm_neon_vqrshiftnu : Intrinsic::arm_neon_vqrshiftns;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vqrshrn_n");
+  case ARM::BI__builtin_neon_vqrshrun_n_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqrshiftnsu, &Ty, 1),
+                        Ops, "vqrshrun_n");
+  case ARM::BI__builtin_neon_vset_lane_i8:
+  case ARM::BI__builtin_neon_vset_lane_i16:
+  case ARM::BI__builtin_neon_vset_lane_i32:
+  case ARM::BI__builtin_neon_vset_lane_i64:
+  case ARM::BI__builtin_neon_vset_lane_f32:
+  case ARM::BI__builtin_neon_vsetq_lane_i8:
+  case ARM::BI__builtin_neon_vsetq_lane_i16:
+  case ARM::BI__builtin_neon_vsetq_lane_i32:
+  case ARM::BI__builtin_neon_vsetq_lane_i64:
+  case ARM::BI__builtin_neon_vsetq_lane_f32:
+    Ops.push_back(EmitScalarExpr(E->getArg(2)));
+    return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vset_lane");
+  case ARM::BI__builtin_neon_vsubhn_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vsubhn, &Ty, 1),
+                        Ops, "vsubhn");
+  case ARM::BI__builtin_neon_vsubl_v:
+    Int = usgn ? Intrinsic::arm_neon_vsublu : Intrinsic::arm_neon_vsubls;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vsubl");
+  case ARM::BI__builtin_neon_vsubw_v:
+    Int = usgn ? Intrinsic::arm_neon_vsubws : Intrinsic::arm_neon_vsubwu;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vsubw");
   case ARM::BI__builtin_neon_vtbl1_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vtbl1),
                         Ops, "vtbl1");
