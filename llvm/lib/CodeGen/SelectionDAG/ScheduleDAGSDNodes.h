@@ -108,7 +108,10 @@ namespace llvm {
   private:
     /// ClusterNeighboringLoads - Cluster loads from "near" addresses into
     /// combined SUnits.
-    void ClusterNeighboringLoads();
+    void ClusterNeighboringLoads(SDNode *Node);
+    /// ClusterNodes - Cluster certain nodes which should be scheduled together.
+    ///
+    void ClusterNodes();
 
     /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.
     void BuildSchedUnits();
