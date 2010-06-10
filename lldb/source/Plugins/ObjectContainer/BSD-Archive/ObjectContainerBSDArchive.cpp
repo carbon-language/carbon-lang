@@ -56,7 +56,7 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, uint32_t 
     std::string str;
     char *err;
     str.assign ((const char *)data.GetData(&offset, 16),    16);
-    if (str.find(AR_EFMT1) == 0)
+    if (str.find("#1/") == 0)
     {
         // If the name is longer than 16 bytes, or contains an embedded space
         // then it will use this format where the length of the name is
