@@ -70,6 +70,12 @@ namespace clang {
 /// tier (e.g. other Traverse*) or one tier lower (e.g. WalkUpFrom*).
 /// It may not call methods from a higher tier.
 ///
+/// Note that since WalkUpFromFoo() calls WalkUpFromBar() (where Bar
+/// is Foo's super class) before calling VisitFoo(), the result is
+/// that the Visit*() methods for a given node are called in the
+/// top-down order (e.g. for a node of type NamedDecl, the order will
+/// be VisitDecl(), VisitNamedDecl(), and then VisitNamespaceDecl()).
+///
 /// This scheme guarantees that all Visit*() calls for the same AST
 /// node are grouped together.  In other words, Visit*() methods for
 /// different nodes are never interleaved.
