@@ -137,6 +137,7 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       usgn = true;
       break;
     case 's':
+    case 'a':
       scal = true;
       break;
     case 'k':
@@ -442,14 +443,7 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
-// Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
-// If structTypes is true, the NEON types are structs of vector types rather
-// than vector types, and the call becomes "a.val + b.val"
-static std::string GenOpString(OpKind op, const std::string &proto,
-                               StringRef typestr, bool structTypes = true) {
-  std::string ts = TypeString(proto[0], typestr);
-  std::string s = ts + " r; r";
-
+static std::string Duplicate(StringRef typestr, const std::string &a) {
   bool dummy, quad = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
   unsigned nElts = 0;
@@ -462,6 +456,27 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     case 'f': nElts = 2; break;
   }
   nElts <<= quad;
+
+  std::string s;
+  
+  s = "(__neon_" + TypeString('d', typestr) + "){ ";
+  for (unsigned i = 0; i != nElts; ++i) {
+    s += a;
+    if ((i + 1) < nElts)
+      s += ", ";
+  }
+  s += " }";
+  
+  return s;
+}
+
+// Generate the definition for this intrinsic, e.g. "a + b" for OpAdd.
+// If structTypes is true, the NEON types are structs of vector types rather
+// than vector types, and the call becomes "a.val + b.val"
+static std::string GenOpString(OpKind op, const std::string &proto,
+                               StringRef typestr, bool structTypes = true) {
+  std::string ts = TypeString(proto[0], typestr);
+  std::string s = ts + " r; r";
   
   if (structTypes)
     s += ".val";
@@ -481,12 +496,18 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpSub:
     s += a + " - " + b;
     break;
+  case OpMulN:
+    b = Duplicate(typestr, "b");
   case OpMul:
     s += a + " * " + b;
     break;
+  case OpMlaN:
+    c = Duplicate(typestr, "c");
   case OpMla:
     s += a + " + ( " + b + " * " + c + " )";
     break;
+  case OpMlsN:
+    c = Duplicate(typestr, "c");
   case OpMls:
     s += a + " - ( " + b + " * " + c + " )";
     break;
@@ -540,13 +561,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[0])";
     break;
   case OpDup:
-    s += "(__neon_" + ts + "){ ";
-    for (unsigned i = 0; i != nElts; ++i) {
-      s += a;
-      if ((i + 1) < nElts)
-        s += ", ";
-    }
-    s += " }";
+    s += Duplicate(typestr, a);
     break;
   default:
     throw "unknown OpKind!";
@@ -647,10 +662,17 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       
       s += " = ";
     }
-  }    
+  }
+  
+  bool splat = proto.find('a') != std::string::npos;
   
   s += "__builtin_neon_";
-  s += MangleName(name, typestr, ck);
+  if (splat) {
+    std::string vname(name, 0, name.size()-2);
+    s += MangleName(vname, typestr, ck);
+  } else {
+    s += MangleName(name, typestr, ck);
+  }
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
@@ -672,12 +694,18 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     // Parenthesize the args from the macro.
     if (define)
       s.push_back('(');
-    s.push_back(arg);
+    
+    if (splat && (i + 1) == e) 
+      s += Duplicate(typestr, std::string(&arg, 1));
+    else
+      s.push_back(arg);
+
+    // Parenthesize the args from the macro.
     if (define)
       s.push_back(')');
     
     if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
-        proto[i] != 'p' && proto[i] != 'c') {
+        proto[i] != 'p' && proto[i] != 'c' && proto[i] != 'a') {
       s += ".val";
     }
     if ((i + 1) < e)
@@ -748,7 +776,6 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit NEON-specific scalar typedefs.
   // FIXME: probably need to do something better for polynomial types.
-  // FIXME: is this the correct thing to do for float16?
   OS << "typedef float float32_t;\n";
   OS << "typedef uint8_t poly8_t;\n";
   OS << "typedef uint16_t poly16_t;\n";
@@ -869,6 +896,9 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
 
+    if (Proto.find('a') != std::string::npos)
+      continue;
+      
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
 

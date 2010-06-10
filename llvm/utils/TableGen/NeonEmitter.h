@@ -28,6 +28,9 @@ enum OpKind {
   OpMul,
   OpMla,
   OpMls,
+  OpMulN,
+  OpMlaN,
+  OpMlsN,
   OpEq,
   OpGe,
   OpLe,
@@ -64,38 +67,39 @@ namespace llvm {
     
   public:
     NeonEmitter(RecordKeeper &R) : Records(R) {
-      OpMap["OP_NONE"] = OpNone;
-      OpMap["OP_ADD"]  = OpAdd;
-      OpMap["OP_SUB"]  = OpSub;
-      OpMap["OP_MUL"]  = OpMul;
-      OpMap["OP_MLA"]  = OpMla;
-      OpMap["OP_MLS"]  = OpMls;
-      OpMap["OP_EQ"]   = OpEq;
-      OpMap["OP_GE"]   = OpGe;
-      OpMap["OP_LE"]   = OpLe;
-      OpMap["OP_GT"]   = OpGt;
-      OpMap["OP_LT"]   = OpLt;
-      OpMap["OP_NEG"]  = OpNeg;
-      OpMap["OP_NOT"]  = OpNot;
-      OpMap["OP_AND"]  = OpAnd;
-      OpMap["OP_OR"]   = OpOr;
-      OpMap["OP_XOR"]  = OpXor;
-      OpMap["OP_ANDN"] = OpAndNot;
-      OpMap["OP_ORN"]  = OpOrNot;
-      OpMap["OP_CAST"] = OpCast;
-      OpMap["OP_CONC"] = OpConcat;
-      OpMap["OP_HI"]   = OpHi;
-      OpMap["OP_LO"]   = OpLo;
-      OpMap["OP_DUP"]  = OpDup;
+      OpMap["OP_NONE"]  = OpNone;
+      OpMap["OP_ADD"]   = OpAdd;
+      OpMap["OP_SUB"]   = OpSub;
+      OpMap["OP_MUL"]   = OpMul;
+      OpMap["OP_MLA"]   = OpMla;
+      OpMap["OP_MLS"]   = OpMls;
+      OpMap["OP_MUL_N"] = OpMulN;
+      OpMap["OP_MLA_N"] = OpMlaN;
+      OpMap["OP_MLS_N"] = OpMlsN;
+      OpMap["OP_EQ"]    = OpEq;
+      OpMap["OP_GE"]    = OpGe;
+      OpMap["OP_LE"]    = OpLe;
+      OpMap["OP_GT"]    = OpGt;
+      OpMap["OP_LT"]    = OpLt;
+      OpMap["OP_NEG"]   = OpNeg;
+      OpMap["OP_NOT"]   = OpNot;
+      OpMap["OP_AND"]   = OpAnd;
+      OpMap["OP_OR"]    = OpOr;
+      OpMap["OP_XOR"]   = OpXor;
+      OpMap["OP_ANDN"]  = OpAndNot;
+      OpMap["OP_ORN"]   = OpOrNot;
+      OpMap["OP_CAST"]  = OpCast;
+      OpMap["OP_CONC"]  = OpConcat;
+      OpMap["OP_HI"]    = OpHi;
+      OpMap["OP_LO"]    = OpLo;
+      OpMap["OP_DUP"]   = OpDup;
 
       Record *SI = R.getClass("SInst");
       Record *II = R.getClass("IInst");
       Record *WI = R.getClass("WInst");
-      Record *BI = R.getClass("BInst");
       ClassMap[SI] = ClassS;
       ClassMap[II] = ClassI;
       ClassMap[WI] = ClassW;
-      ClassMap[BI] = ClassB;
     }
     
     // run - Emit arm_neon.h.inc
