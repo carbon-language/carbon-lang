@@ -150,7 +150,7 @@ protected:
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
     
-    typedef std::tr1::shared_ptr<Debugger> DebuggerSP;
+    typedef lldb::SharedPtr<Debugger>::Type DebuggerSP;
 
     static DebuggerSP &
     GetDebuggerSP();
