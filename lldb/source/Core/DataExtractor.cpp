@@ -8,11 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <assert.h>
-#include <libkern/OSByteOrder.h>
 #include <stddef.h>
 
 #include <bitset>
 #include <string>
+
+#include "llvm/Support/MathExtras.h"
 
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBuffer.h"
@@ -24,6 +25,37 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+static uint16_t LLDB_ReadInt16(const unsigned char* ptr, unsigned offset) {
+  uint16_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return val;
+}
+static uint32_t LLDB_ReadInt32(const unsigned char* ptr, unsigned offset) {
+  uint32_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return val;
+}
+static uint64_t LLDB_ReadInt64(const unsigned char* ptr, unsigned offset) {
+  uint64_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return val;
+}
+static uint16_t LLDB_ReadSwapInt16(const unsigned char* ptr, unsigned offset) {
+  uint16_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return llvm::ByteSwap_16(val);
+}
+static uint32_t LLDB_ReadSwapInt32(const unsigned char* ptr, unsigned offset) {
+  uint32_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return llvm::ByteSwap_32(val);
+}
+static uint64_t LLDB_ReadSwapInt64(const unsigned char* ptr, unsigned offset) {
+  uint64_t val;
+  memcpy(&val, ptr + offset, sizeof(val));
+  return llvm::ByteSwap_64(val);
+}
 
 #define NON_PRINTABLE_CHAR '.'
 //----------------------------------------------------------------------
@@ -426,9 +458,9 @@ DataExtractor::GetU16 (uint32_t *offset_ptr) const
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
         if (m_byte_order != eByteOrderHost)
-            val = OSReadSwapInt16(m_start, offset);
+            val = LLDB_ReadSwapInt16(m_start, offset);
         else
-            val = _OSReadInt16 (m_start, offset);
+            val = LLDB_ReadInt16 (m_start, offset);
 
         // Advance the offset
         *offset_ptr += sizeof(val);
@@ -459,12 +491,12 @@ DataExtractor::GetU16 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
         if (m_byte_order != eByteOrderHost)
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = OSReadSwapInt16 (m_start, offset);
+                *value_ptr = LLDB_ReadSwapInt16 (m_start, offset);
         }
         else
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = _OSReadInt16 (m_start, offset);
+                *value_ptr = LLDB_ReadInt16 (m_start, offset);
         }
 
         // Advance the offset
@@ -490,9 +522,9 @@ DataExtractor::GetU32 (uint32_t *offset_ptr) const
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
         if (m_byte_order != eByteOrderHost)
-            val = OSReadSwapInt32 (m_start, offset);
+            val = LLDB_ReadSwapInt32 (m_start, offset);
         else
-            val = _OSReadInt32 (m_start, offset);
+            val = LLDB_ReadInt32 (m_start, offset);
 
         // Advance the offset
         *offset_ptr += sizeof(val);
@@ -523,13 +555,13 @@ DataExtractor::GetU32 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
         if (m_byte_order != eByteOrderHost)
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = OSReadSwapInt32 (m_start, offset);
+                *value_ptr = LLDB_ReadSwapInt32 (m_start, offset);
 
         }
         else
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = _OSReadInt32 (m_start, offset);
+                *value_ptr = LLDB_ReadInt32 (m_start, offset);
         }
 
         // Advance the offset
@@ -554,9 +586,9 @@ DataExtractor::GetU64 (uint32_t *offset_ptr) const
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
         if (m_byte_order != eByteOrderHost)
-            val = OSReadSwapInt64 (m_start, offset);
+            val = LLDB_ReadSwapInt64 (m_start, offset);
         else
-            val = _OSReadInt64 (m_start, offset);
+            val = LLDB_ReadInt64 (m_start, offset);
 
         // Advance the offset
         *offset_ptr += sizeof(val);
@@ -585,13 +617,13 @@ DataExtractor::GetU64 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
         if (m_byte_order != eByteOrderHost)
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = OSReadSwapInt64 (m_start, offset);
+                *value_ptr = LLDB_ReadSwapInt64 (m_start, offset);
 
         }
         else
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
-                *value_ptr = _OSReadInt64 (m_start, offset);
+                *value_ptr = LLDB_ReadInt64 (m_start, offset);
         }
 
         // Advance the offset
@@ -710,9 +742,9 @@ DataExtractor::GetFloat (uint32_t *offset_ptr) const
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
         if (m_byte_order != eByteOrderHost)
-            val = OSReadSwapInt32 (m_start, offset);
+            val = LLDB_ReadSwapInt32 (m_start, offset);
         else
-            val = _OSReadInt32 (m_start, offset);
+            val = LLDB_ReadInt32 (m_start, offset);
 
         // Advance the offset
         *offset_ptr += sizeof(val);
@@ -728,9 +760,9 @@ DataExtractor::GetDouble (uint32_t *offset_ptr) const
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
         if (m_byte_order != eByteOrderHost)
-            val = OSReadSwapInt64 (m_start, offset);
+            val = LLDB_ReadSwapInt64 (m_start, offset);
         else
-            val = _OSReadInt64 (m_start, offset);
+            val = LLDB_ReadInt64 (m_start, offset);
 
         // Advance the offset
         *offset_ptr += sizeof(val);
@@ -750,9 +782,9 @@ DataExtractor::GetLongDouble (uint32_t *offset_ptr) const
         if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
         {
             if (m_byte_order != eByteOrderHost)
-                val = OSReadSwapInt64 (m_start, offset);
+                val = LLDB_ReadSwapInt64 (m_start, offset);
             else
-                val = _OSReadInt64 (m_start, offset);
+                val = LLDB_ReadInt64 (m_start, offset);
 
             // Advance the offset
             *offset_ptr += sizeof(val);
