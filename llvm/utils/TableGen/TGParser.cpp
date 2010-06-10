@@ -1640,7 +1640,7 @@ bool TGParser::ParseObjectBody(Record *CurRec) {
 ///
 ///   DefInst ::= DEF ObjectName ObjectBody
 ///
-llvm::Record *TGParser::ParseDef(MultiClass *CurMultiClass) {
+bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   SMLoc DefLoc = Lex.getLoc();
   assert(Lex.getCode() == tgtok::Def && "Unknown tok");
   Lex.Lex();  // Eat the 'def' token.
@@ -1654,7 +1654,7 @@ llvm::Record *TGParser::ParseDef(MultiClass *CurMultiClass) {
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getName())) {
       Error(DefLoc, "def '" + CurRec->getName() + "' already defined");
-      return 0;
+      return true;
     }
     Records.addDef(CurRec);
   } else {
@@ -1663,20 +1663,33 @@ llvm::Record *TGParser::ParseDef(MultiClass *CurMultiClass) {
       if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName()) {
         Error(DefLoc, "def '" + CurRec->getName() +
               "' already defined in this multiclass!");
-        return 0;
+        return true;
       }
     CurMultiClass->DefPrototypes.push_back(CurRec);
   }
 
   if (ParseObjectBody(CurRec))
-    return 0;
+    return true;
 
   if (CurMultiClass == 0)  // Def's in multiclasses aren't really defs.
     CurRec->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
   assert(CurRec->getTemplateArgs().empty() && "How'd this get template args?");
-  return CurRec;
+
+  if (CurMultiClass) {
+    // Copy the template arguments for the multiclass into the def.
+    const std::vector<std::string> &TArgs =
+                                CurMultiClass->Rec.getTemplateArgs();
+
+    for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+      const RecordVal *RV = CurMultiClass->Rec.getValue(TArgs[i]);
+      assert(RV && "Template arg doesn't exist?");
+      CurRec->addValue(*RV);
+    }
+  }
+
+  return false;
 }
 
 
@@ -1757,12 +1770,12 @@ std::vector<LetRecord> TGParser::ParseLetList() {
 }
 
 /// ParseTopLevelLet - Parse a 'let' at top level.  This can be a couple of
-/// different related productions.
+/// different related productions. This works inside multiclasses too.
 ///
 ///   Object ::= LET LetList IN '{' ObjectList '}'
 ///   Object ::= LET LetList IN Object
 ///
-bool TGParser::ParseTopLevelLet() {
+bool TGParser::ParseTopLevelLet(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Let && "Unexpected token");
   Lex.Lex();
 
@@ -1778,7 +1791,7 @@ bool TGParser::ParseTopLevelLet() {
   // If this is a scalar let, just handle it now
   if (Lex.getCode() != tgtok::l_brace) {
     // LET LetList IN Object
-    if (ParseObject())
+    if (ParseObject(CurMultiClass))
       return true;
   } else {   // Object ::= LETCommand '{' ObjectList '}'
     SMLoc BraceLoc = Lex.getLoc();
@@ -1786,7 +1799,7 @@ bool TGParser::ParseTopLevelLet() {
     Lex.Lex();  // eat the '{'.
 
     // Parse the object list.
-    if (ParseObjectList())
+    if (ParseObjectList(CurMultiClass))
       return true;
 
     if (Lex.getCode() != tgtok::r_brace) {
@@ -1798,27 +1811,6 @@ bool TGParser::ParseTopLevelLet() {
 
   // Outside this let scope, this let block is not active.
   LetStack.pop_back();
-  return false;
-}
-
-/// ParseMultiClassDef - Parse a def in a multiclass context.
-///
-///  MultiClassDef ::= DefInst
-///
-bool TGParser::ParseMultiClassDef(MultiClass *CurMC) {
-
-  Record *D = ParseDef(CurMC);
-  if (D == 0) return true;
-
-  // Copy the template arguments for the multiclass into the def.
-  const std::vector<std::string> &TArgs = CurMC->Rec.getTemplateArgs();
-
-  for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
-    const RecordVal *RV = CurMC->Rec.getValue(TArgs[i]);
-    assert(RV && "Template arg doesn't exist?");
-    D->addValue(*RV);
-  }
-
   return false;
 }
 
@@ -1883,18 +1875,17 @@ bool TGParser::ParseMultiClass() {
       return TokError("multiclass must contain at least one def");
 
     while (Lex.getCode() != tgtok::r_brace) {
-      if (Lex.getCode() != tgtok::Defm && Lex.getCode() != tgtok::Def)
-        return TokError("expected 'def' or 'defm' in multiclass body");
-
-      if (Lex.getCode() == tgtok::Def)
-        if (ParseMultiClassDef(CurMultiClass))
-          return true;
-
-      if (Lex.getCode() == tgtok::Defm)
-        if (ParseDefm(CurMultiClass))
-          return true;
+      switch (Lex.getCode()) {
+        default:
+          return TokError("expected 'let', 'def' or 'defm' in multiclass body");
+        case tgtok::Let:
+        case tgtok::Def:
+        case tgtok::Defm:
+          if (ParseObject(CurMultiClass))
+            return true;
+         break;
+      }
     }
-
     Lex.Lex();  // eat the '}'.
   }
 
@@ -2048,12 +2039,12 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 ///   Object ::= DefMInst
 ///   Object ::= LETCommand '{' ObjectList '}'
 ///   Object ::= LETCommand Object
-bool TGParser::ParseObject() {
+bool TGParser::ParseObject(MultiClass *MC) {
   switch (Lex.getCode()) {
   default: assert(0 && "This is not an object");
-  case tgtok::Let:   return ParseTopLevelLet();
-  case tgtok::Def:   return ParseDef(0) == 0;
-  case tgtok::Defm:  return ParseDefm();
+  case tgtok::Let:   return ParseTopLevelLet(MC);
+  case tgtok::Def:   return ParseDef(MC);
+  case tgtok::Defm:  return ParseDefm(MC);
   case tgtok::Class: return ParseClass();
   case tgtok::MultiClass: return ParseMultiClass();
   }
@@ -2061,9 +2052,9 @@ bool TGParser::ParseObject() {
 
 /// ParseObjectList
 ///   ObjectList :== Object*
-bool TGParser::ParseObjectList() {
+bool TGParser::ParseObjectList(MultiClass *MC) {
   while (isObjectStart(Lex.getCode())) {
-    if (ParseObject())
+    if (ParseObject(MC))
       return true;
   }
   return false;

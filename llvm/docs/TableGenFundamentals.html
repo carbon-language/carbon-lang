@@ -798,6 +798,32 @@ examples:</p>
 need to be added to several records, and the records do not otherwise need to be
 opened, as in the case with the <tt>CALL*</tt> instructions above.</p>
 
+<p>It's also possible to use "let" expressions inside multiclasses, providing
+more ways to factor out commonality from the records, specially if using
+several levels of multiclass instanciations. This also avoids the need of using
+"let" expressions within subsequent records inside a multiclass.</p> 
+
+<div class="doc_code">
+<pre>
+<b>multiclass </b>basic_r&lt;bits&lt;4&gt; opc&gt; {
+  <b>let </b>Predicates = [HasSSE2] in {
+    <b>def </b>rr : Instruction&lt;opc, "rr"&gt;;
+    <b>def </b>rm : Instruction&lt;opc, "rm"&gt;;
+  }
+  <b>let </b>Predicates = [HasSSE3] in
+    <b>def </b>rx : Instruction&lt;opc, "rx"&gt;;
+}
+
+<b>multiclass </b>basic_ss&lt;bits&lt;4&gt; opc&gt; {
+  <b>let </b>IsDouble = 0 in
+    <b>defm </b>SS : basic_r&lt;opc&gt;;
+
+  <b>let </b>IsDouble = 1 in
+    <b>defm </b>SD : basic_r&lt;opc&gt;;
+}
+
+<b>defm </b>ADD : basic_ss&lt;0xf&gt;;
+</pre>
 </div>
 
 <!-- *********************************************************************** -->

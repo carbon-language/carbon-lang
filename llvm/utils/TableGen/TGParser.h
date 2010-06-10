@@ -69,16 +69,15 @@ private:  // Semantic analysis methods.
                         SubMultiClassReference &SubMultiClass);
 
 private:  // Parser methods.
-  bool ParseObjectList();
-  bool ParseObject();
+  bool ParseObjectList(MultiClass *MC = 0);
+  bool ParseObject(MultiClass *MC);
   bool ParseClass();
   bool ParseMultiClass();
-  bool ParseMultiClassDef(MultiClass *CurMC);
-  bool ParseDefm(MultiClass *CurMultiClass = 0);
-  bool ParseTopLevelLet();
+  bool ParseDefm(MultiClass *CurMultiClass);
+  bool ParseDef(MultiClass *CurMultiClass);
+  bool ParseTopLevelLet(MultiClass *CurMultiClass);
   std::vector<LetRecord> ParseLetList();
 
-  Record *ParseDef(MultiClass *CurMultiClass);
   bool ParseObjectBody(Record *CurRec);
   bool ParseBody(Record *CurRec);
   bool ParseBodyItem(Record *CurRec);
