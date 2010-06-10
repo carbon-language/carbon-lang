@@ -17,6 +17,7 @@
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
