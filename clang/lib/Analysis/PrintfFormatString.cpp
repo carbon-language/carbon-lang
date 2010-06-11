@@ -686,6 +686,10 @@ bool FormatSpecifier::fixType(QualType QT) {
   if (QT->isPointerType() && (QT->getPointeeType()->isAnyCharacterType())) {
     CS.setKind(ConversionSpecifier::CStrArg);
 
+    // Disable irrelevant flags
+    HasAlternativeForm = 0;
+    HasLeadingZeroes = 0;
+
     // Set the long length modifier for wide characters
     if (QT->getPointeeType()->isWideCharType())
       LM.setKind(LengthModifier::AsWideChar);
@@ -699,10 +703,14 @@ bool FormatSpecifier::fixType(QualType QT) {
 
   // Everything else should be a base type
   const BuiltinType *BT = QT->getAs<BuiltinType>();
+
   // Set length modifier
   switch (BT->getKind()) {
   default:
+    // The rest of the conversions are either optional or for non-builtin types
+    LM.setKind(LengthModifier::None);
     break;
+
   case BuiltinType::WChar:
   case BuiltinType::Long:
   case BuiltinType::ULong:

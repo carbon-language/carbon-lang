@@ -10,11 +10,19 @@
 int printf(char const *, ...);
 
 void test() {
-  printf("%0s", (int) 123);
-  printf("abc%f", "testing testing 123");
+  // Basic types
+  printf("%s", (int) 123);
+  printf("abc%0f", "testing testing 123");
   printf("%u", (long) -12);
+
+  // Larger types
   printf("%+.2d", (unsigned long long) 123456);
   printf("%1d", (long double) 1.23);
-  printf("%Ld", (long double) -4.56);
+
+  // Flag handling
+  printf("%0+s", (unsigned) 31337); // flags should stay
+  printf("%0f", "test"); // flag should be removed
+
+  // Positional arguments
   printf("%1$f:%2$.*3$f:%4$.*3$f\n", 1, 2, 3, 4);
 }
