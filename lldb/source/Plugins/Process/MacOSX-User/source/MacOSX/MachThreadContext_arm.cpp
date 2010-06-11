@@ -94,13 +94,6 @@ MachThreadContext_arm::InitializeInstance()
 }
 
 
-
-uint32_t
-MachThreadContext_arm::GetCPUType()
-{
-    return CPU_TYPE_ARM;
-}
-
 void
 MachThreadContext_arm::ThreadWillResume()
 {
@@ -1879,6 +1872,6 @@ MachThreadContext_arm::Create (const ArchSpec &arch_spec, ThreadMacOSX &thread)
 void
 MachThreadContext_arm::Initialize()
 {
-    ArchSpec arch_spec(CPU_TYPE_ARM, CPU_TYPE_ANY);
+    ArchSpec arch_spec(eArchTypeMachO, 12, UINT32_MAX);
     ProcessMacOSX::AddArchCreateCallback(arch_spec, MachThreadContext_arm::Create);
 }

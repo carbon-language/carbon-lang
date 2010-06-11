@@ -313,54 +313,50 @@ DisassemblerLLVM::Instruction::Extract(const DataExtractor &data, uint32_t data_
 }
 
 static inline const char *
-TripleForCPU(cpu_type_t cpuType)
+TripleForArchSpec (const ArchSpec &arch, char *triple, size_t triple_len)
 {
-    switch (cpuType)
+    const char *arch_name = arch.AsCString();
+
+    if (arch_name)
     {
-    default:
-        return NULL;
-    case CPU_TYPE_X86:
-        return "i386-unknown-unknown";
-    case CPU_TYPE_X86_64:
-        return "x86_64-unknown-unknown";
+        snprintf(triple, triple_len, "%s-unknown-unknown", arch_name);
+        return triple;
     }
+    return NULL;
 }
 
 static inline EDAssemblySyntax_t
-SyntaxForCPU(cpu_type_t cpuType)
+SyntaxForArchSpec (const ArchSpec &arch)
 {
-    switch (cpuType)
-    {
-    default:
-        return (EDAssemblySyntax_t)0;   // default
-    case CPU_TYPE_X86:
-    case CPU_TYPE_X86_64:
+    const char *arch_name = arch.AsCString();
+
+    if (arch_name != NULL && 
+       ((strcasestr (arch_name, "i386") == arch_name) || 
+        (strcasestr (arch_name, "x86_64") == arch_name)))
         return kEDAssemblySyntaxX86ATT;
-    }
+    
+    return (EDAssemblySyntax_t)0;   // default
 }
 
 Disassembler *
 DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
 {
-    cpu_type_t cpuType = arch.GetCPUType();
+    char triple[256];
 
-    if (TripleForCPU(cpuType))
-        return new DisassemblerLLVM(arch);
-    else
-        return NULL;
+    if (TripleForArchSpec (arch, triple, sizeof(triple)))
+        return new DisassemblerLLVM(triple);
+    return NULL;
 }
 
 DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     Disassembler(arch)
 {
-    cpu_type_t cpuType = arch.GetCPUType();
-
-    const char *triple = TripleForCPU(cpuType);
-    assert(triple && "Unhandled CPU type!");
-
-    EDAssemblySyntax_t syntax = SyntaxForCPU(cpuType);
-
-    assert(!EDGetDisassembler(&m_disassembler, triple, syntax) && "No disassembler created!");
+    char triple[256];
+    if (TripleForArchSpec (arch, triple, sizeof(triple)))
+    {
+        EDAssemblySyntax_t syntax = SyntaxForArchSpec (arch);
+        assert(!EDGetDisassembler(&m_disassembler, triple, syntax) && "No disassembler created!");
+    }
 }
 
 DisassemblerLLVM::~DisassemblerLLVM()

@@ -199,7 +199,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             {
                 if (m_dyld.file_spec)
                 {
-                    ArchSpec dyld_arch(m_dyld.header.cputype, m_dyld.header.cpusubtype);
+                    ArchSpec dyld_arch(eArchTypeMachO, m_dyld.header.cputype, m_dyld.header.cpusubtype);
                     dyld_module_sp = m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (m_dyld.file_spec);
 
                     if (dyld_module_sp.get() == NULL || dyld_module_sp->GetArchitecture() != dyld_arch)
@@ -591,7 +591,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
         ModuleList loaded_module_list;
         for (uint32_t idx = 0; idx<num_dylibs; ++idx)
         {
-            ArchSpec arch_spec(m_dyld_image_infos[idx].header.cputype, m_dyld_image_infos[idx].header.cpusubtype);
+            ArchSpec arch_spec(eArchTypeMachO, m_dyld_image_infos[idx].header.cputype, m_dyld_image_infos[idx].header.cpusubtype);
             ModuleSP image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (m_dyld_image_infos[idx].file_spec));
             if (image_module_sp.get() == NULL || image_module_sp->GetArchitecture() != arch_spec)
             {
@@ -829,7 +829,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfosHeaderAndLoadCommands()
     if (exe_idx < m_dyld_image_infos.size())
     {
         bool set_executable = false;
-        ArchSpec dyld_exe_arch_spec(m_dyld_image_infos[exe_idx].header.cputype, m_dyld_image_infos[exe_idx].header.cpusubtype);
+        ArchSpec dyld_exe_arch_spec(eArchTypeMachO, m_dyld_image_infos[exe_idx].header.cputype, m_dyld_image_infos[exe_idx].header.cpusubtype);
         ModuleSP exe_module_sp(m_process->GetTarget().GetExecutableModule());
         if (exe_module_sp.get())
         {

@@ -875,31 +875,32 @@ ProcessGDBRemote::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
     static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
     static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
 
-    switch (m_arch_spec.GetCPUType())
+    ArchSpec::CPU arch_cpu = m_arch_spec.GetGenericCPUType();
+    switch (arch_cpu)
     {
-        case CPU_TYPE_ARM:
-            // TODO: fill this in for ARM. We need to dig up the symbol for
-            // the address in the breakpoint locaiton and figure out if it is
-            // an ARM or Thumb breakpoint.
-            trap_opcode = g_arm_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
-            break;
+    case ArchSpec::eCPU_i386:
+    case ArchSpec::eCPU_x86_64:
+        trap_opcode = g_i386_breakpoint_opcode;
+        trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
+        break;
+    
+    case ArchSpec::eCPU_arm:
+        // TODO: fill this in for ARM. We need to dig up the symbol for
+        // the address in the breakpoint locaiton and figure out if it is
+        // an ARM or Thumb breakpoint.
+        trap_opcode = g_arm_breakpoint_opcode;
+        trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
+        break;
+    
+    case ArchSpec::eCPU_ppc:
+    case ArchSpec::eCPU_ppc64:
+        trap_opcode = g_ppc_breakpoint_opcode;
+        trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
+        break;
 
-        case CPU_TYPE_POWERPC:
-        case CPU_TYPE_POWERPC64:
-            trap_opcode = g_ppc_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
-            break;
-
-        case CPU_TYPE_I386:
-        case CPU_TYPE_X86_64:
-            trap_opcode = g_i386_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
-            break;
-
-        default:
-            assert(!"Unhandled architecture in ProcessGDBRemote::GetSoftwareBreakpointTrapOpcode()");
-            return 0;
+    default:
+        assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
+        break;
     }
 
     if (trap_opcode && trap_opcode_size)
@@ -1719,16 +1720,19 @@ ProcessGDBRemote::StartDebugserverProcess
             // We don't need to do this for ARM, and we really shouldn't now that we
             // have multiple CPU subtypes and no posix_spawnattr call that allows us
             // to set which CPU subtype to launch...
-            cpu_type_t cpu = inferior_arch.GetCPUType();
-            if (cpu != 0 && cpu != CPU_TYPE_ANY && cpu != LLDB_INVALID_CPUTYPE)
+            if (inferior_arch.GetType() == eArchTypeMachO)
             {
-                size_t ocount = 0;
-                error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
-                if (error.Fail() || log)
-                    error.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+                cpu_type_t cpu = inferior_arch.GetCPUType();
+                if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
+                {
+                    size_t ocount = 0;
+                    error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
+                    if (error.Fail() || log)
+                        error.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
 
-                if (error.Fail() != 0 || ocount != 1)
-                    return error;
+                    if (error.Fail() != 0 || ocount != 1)
+                        return error;
+                }
             }
 
 #endif
@@ -2175,9 +2179,11 @@ lldb_private::unw_addr_space_t
 ProcessGDBRemote::GetLibUnwindAddressSpace ()
 {
     unw_targettype_t target_type = UNW_TARGET_UNSPECIFIED;
-    if (m_target.GetArchitecture().GetCPUType() == CPU_TYPE_I386)
+
+    ArchSpec::CPU arch_cpu = m_target.GetArchitecture().GetGenericCPUType();
+    if (arch_cpu == ArchSpec::eCPU_i386)
         target_type = UNW_TARGET_I386;
-    if (m_target.GetArchitecture().GetCPUType() == CPU_TYPE_X86_64)
+    else if (arch_cpu == ArchSpec::eCPU_x86_64)
         target_type = UNW_TARGET_X86_64;
 
     if (m_libunwind_addr_space)

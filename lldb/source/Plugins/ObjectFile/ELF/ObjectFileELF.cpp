@@ -25,8 +25,6 @@
 
 #define CASE_AND_STREAM(s, def, width)  case def: s->Printf("%-*s", width, #def); break;
 
-static uint32_t ELFMachineToMachCPU(Elf32_Half machine);
-
 using namespace lldb;
 using namespace lldb_private;
 using namespace std;
@@ -824,24 +822,6 @@ ObjectFileELF::DumpELFSectionHeaders(Stream *s)
     }
 }
 
-static uint32_t
-ELFMachineToMachCPU(Elf32_Half machine)
-{
-    switch (machine)
-    {
-    case EM_SPARC:  return CPU_TYPE_SPARC;
-    case EM_386:    return CPU_TYPE_I386;
-    case EM_68K:    return CPU_TYPE_MC680x0;
-    case EM_88K:    return CPU_TYPE_MC88000;
-    case EM_860:    return CPU_TYPE_I860;
-    case EM_MIPS:   return 8;   // commented out in mach/machine.h
-    case EM_PPC:    return CPU_TYPE_POWERPC;
-    case EM_PPC64:  return CPU_TYPE_POWERPC64;
-    case EM_ARM:    return 12;  // commented out in mach/machine.h
-    }
-    return 0;
-}
-
 bool
 ObjectFileELF::GetTargetTriple (ConstString &target_triple)
 {
@@ -866,24 +846,16 @@ ObjectFileELF::GetTargetTriple (ConstString &target_triple)
         case EM_PPC64:  triple.assign("powerpc64-"); break;
         case EM_ARM:    triple.assign("arm-"); break;
         }
-        // TODO: determine if there is a vendor in the ELF? Default to "apple" for now
-        triple += "apple-";
-        // TODO: determine if there is an OS in the ELF? Default to "darwin" for now
-        triple += "darwin10";
+        // TODO: determine if there is a vendor in the ELF? Default to "linux" for now
+        triple += "linux-";
+        // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
+        triple += "gnu";
         g_target_triple.SetCString(triple.c_str());
         target_triple = g_target_triple;
     }
     return !target_triple.IsEmpty();
 }
 
-
-//bool
-//ELF32RuntimeFileParser::GetArch(ArchSpec &arch) const
-//{
-//  arch.SetCPUType(ELFMachineToMachCPU(m_header.e_machine));
-//  arch.SetCPUSubtype(ArchSpec::eAny);
-//  return true;
-//}
 
 //------------------------------------------------------------------
 // PluginInterface protocol

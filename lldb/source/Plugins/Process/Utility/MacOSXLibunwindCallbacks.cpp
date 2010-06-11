@@ -250,15 +250,16 @@ instruction_length (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t 
     
     if (arg == 0)
         return -1;
-    Thread *th = (Thread *) arg;
-    const ArchSpec target_arch (th->GetProcess().GetTarget().GetArchitecture ());
+    Thread *thread = (Thread *) arg;
     
-    if (target_arch.GetCPUType() == CPU_TYPE_I386)
+    const ArchSpec::CPU arch_cpu = thread->GetProcess().GetTarget().GetArchitecture ().GetGenericCPUType();
+
+    if (arch_cpu == ArchSpec::eCPU_i386)
     {
         if (EDGetDisassembler (&disasm, "i386-apple-darwin", kEDAssemblySyntaxX86ATT) != 0)
             return -1;
     }
-    else if (target_arch.GetCPUType() == CPU_TYPE_X86_64)
+    else if (arch_cpu == ArchSpec::eCPU_x86_64)
     {
         if (EDGetDisassembler (&disasm, "x86_64-apple-darwin", kEDAssemblySyntaxX86ATT) != 0)
             return -1;

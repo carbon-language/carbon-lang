@@ -532,31 +532,32 @@ ProcessMacOSX::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
     static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
     static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
 
-    switch (m_arch_spec.GetCPUType())
+    ArchSpec::CPU arch_cpu = m_arch_spec.GetGenericCPUType();
+    switch (arch_cpu)
     {
-    case CPU_TYPE_ARM:
+    case ArchSpec::eCPU_i386:
+    case ArchSpec::eCPU_x86_64:
+        trap_opcode = g_i386_breakpoint_opcode;
+        trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
+        break;
+    
+    case ArchSpec::eCPU_arm:
         // TODO: fill this in for ARM. We need to dig up the symbol for
         // the address in the breakpoint locaiton and figure out if it is
         // an ARM or Thumb breakpoint.
         trap_opcode = g_arm_breakpoint_opcode;
         trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
         break;
-
-    case CPU_TYPE_POWERPC:
-    case CPU_TYPE_POWERPC64:
+    
+    case ArchSpec::eCPU_ppc:
+    case ArchSpec::eCPU_ppc64:
         trap_opcode = g_ppc_breakpoint_opcode;
         trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
         break;
 
-    case CPU_TYPE_I386:
-    case CPU_TYPE_X86_64:
-        trap_opcode = g_i386_breakpoint_opcode;
-        trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
-        break;
-
     default:
         assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
-        return 0;
+        break;
     }
 
     if (trap_opcode && trap_opcode_size)
@@ -1721,16 +1722,19 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     // We don't need to do this for ARM, and we really shouldn't now that we
     // have multiple CPU subtypes and no posix_spawnattr call that allows us
     // to set which CPU subtype to launch...
-    cpu_type_t cpu = arch_spec.GetCPUType();
-    if (cpu != 0 && cpu != CPU_TYPE_ANY && cpu != LLDB_INVALID_CPUTYPE)
+    if (arch_spec.GetType() == eArchTypeMachO)
     {
-        size_t ocount = 0;
-        err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
-        if (err.Fail() || log)
-            err.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+        cpu_type_t cpu = arch_spec.GetCPUType();
+        if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
+        {
+            size_t ocount = 0;
+            err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
+            if (err.Fail() || log)
+                err.PutToLog(log, "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
 
-        if (err.Fail() != 0 || ocount != 1)
-            return LLDB_INVALID_PROCESS_ID;
+            if (err.Fail() != 0 || ocount != 1)
+                return LLDB_INVALID_PROCESS_ID;
+        }
     }
 
 #endif

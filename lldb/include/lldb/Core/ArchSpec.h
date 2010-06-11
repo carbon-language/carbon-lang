@@ -28,6 +28,19 @@ namespace lldb_private {
 class ArchSpec
 {
 public:
+    // Generic CPU types that each m_type needs to know how to convert 
+    // their m_cpu and m_sub to.
+    typedef enum CPU
+    {
+        eCPU_Unknown,
+        eCPU_arm,
+        eCPU_i386,
+        eCPU_x86_64,
+        eCPU_ppc,
+        eCPU_ppc64,
+        eCPU_sparc
+    };
+
     //------------------------------------------------------------------
     /// Default constructor.
     ///
@@ -42,7 +55,7 @@ public:
     /// Constructor that initializes the object with supplied cpu and
     /// subtypes.
     //------------------------------------------------------------------
-    ArchSpec (uint32_t cpu, uint32_t sub);
+    ArchSpec (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub);
 
     //------------------------------------------------------------------
     /// Construct with architecture name.
@@ -108,7 +121,7 @@ public:
     ///         freed.
     //------------------------------------------------------------------
     static const char *
-    AsCString (uint32_t cpu, uint32_t subtype);
+    AsCString (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t subtype);
 
     //------------------------------------------------------------------
     /// Clears the object state.
@@ -126,6 +139,10 @@ public:
     //------------------------------------------------------------------
     uint32_t
     GetAddressByteSize () const;
+
+
+    CPU
+    GetGenericCPUType () const;
 
     //------------------------------------------------------------------
     /// CPU subtype get accessor.
@@ -194,7 +211,7 @@ public:
     ///         String values that are returned do not need to be freed.
     //------------------------------------------------------------------
     static const char *
-    GetRegisterName (uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint32_t flavor);
+    GetRegisterName (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint32_t flavor);
 
     //------------------------------------------------------------------
     /// Test if the contained architecture is valid.
@@ -271,12 +288,22 @@ public:
     //------------------------------------------------------------------
     lldb::ByteOrder
     GetDefaultEndian () const;
+
+
+    lldb::ArchitectureType
+    GetType() const
+    {
+        return m_type;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    uint32_t m_cpu; ///< The cpu type of the architecture
-    uint32_t m_sub; ///< The cpu subtype of the architecture
+    lldb::ArchitectureType m_type;
+    //       m_type =>  eArchTypeMachO      eArchTypeELF
+    uint32_t m_cpu; //  cpu type            ELF header e_machine
+    uint32_t m_sub; //  cpu subtype         nothing
 };
 
 

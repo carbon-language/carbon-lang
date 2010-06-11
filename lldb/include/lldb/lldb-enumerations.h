@@ -354,6 +354,15 @@ typedef enum InputReaderAction
     eInputReaderDone        // reader was just popped off the stack and is done
 } InputReaderAction;
 
+
+typedef enum ArchitectureType 
+{
+    eArchTypeInvalid,
+    eArchTypeMachO,
+    eArchTypeELF,
+    kNumArchTypes
+} ArchitectureType;
+
 } // namespace lldb
 
 

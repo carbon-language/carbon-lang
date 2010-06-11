@@ -171,7 +171,7 @@ ObjectFileMachO::ParseHeader ()
     {
         m_data.GetU32(&offset, &m_header.cputype, 6);
 
-        ArchSpec mach_arch(m_header.cputype, m_header.cpusubtype);
+        ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
         if (mach_arch == m_module->GetArchitecture())
         {
             // Read in all only the load command data
@@ -1168,7 +1168,7 @@ ObjectFileMachO::Dump (Stream *s)
     else
         s->PutCString("ObjectFileMachO32");
 
-    ArchSpec header_arch(m_header.cputype, m_header.cpusubtype);
+    ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
 
     *s << ", file = '" << m_file << "', arch = " << header_arch.AsCString() << "\n";
 

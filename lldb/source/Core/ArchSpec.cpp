@@ -9,43 +9,19 @@
 
 #include "lldb/Core/ArchSpec.h"
 
-#include <mach/mach.h>
-#include <mach-o/nlist.h>
+//#include <mach/mach.h>
+//#include <mach-o/nlist.h>
 
 #include <string>
+
+#include "llvm/Support/ELF.h"
+#include "llvm/Support/MachO.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 #define ARCH_SPEC_SEPARATOR_CHAR    '-'
 
-#ifndef CPU_TYPE_ARM
-#define CPU_TYPE_ARM            ((cpu_type_t) 12)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_ALL
-#define CPU_SUBTYPE_ARM_ALL     ((cpu_subtype_t) 0)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_V4T
-#define CPU_SUBTYPE_ARM_V4T     ((cpu_subtype_t) 5)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_V6
-#define CPU_SUBTYPE_ARM_V6      ((cpu_subtype_t) 6)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_V5TEJ
-#define CPU_SUBTYPE_ARM_V5TEJ   ((cpu_subtype_t) 7)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_XSCALE
-#define CPU_SUBTYPE_ARM_XSCALE  ((cpu_subtype_t) 8)
-#endif
-
-#ifndef CPU_SUBTYPE_ARM_V7
-#define CPU_SUBTYPE_ARM_V7      ((cpu_subtype_t) 9)
-#endif
 
 //----------------------------------------------------------------------
 // A structure that describes all of the information we want to know
@@ -58,6 +34,16 @@ struct ArchDefinition
     const char *name;
 };
 
+
+static const char *g_arch_type_strings[] = 
+{
+    "invalid",
+    "mach-o",
+    "elf"
+};
+
+#define CPU_ANY		(UINT32_MAX)
+
 //----------------------------------------------------------------------
 // A table that gets searched linearly for matches. This table is used
 // to convert cpu type and subtypes to architecture names, and to
@@ -65,38 +51,38 @@ struct ArchDefinition
 // is important and allows the precedence to be set when the table is
 // built.
 //----------------------------------------------------------------------
-static ArchDefinition g_arch_defs[] =
+static ArchDefinition g_mach_arch_defs[] =
 {
-    { CPU_TYPE_ANY,         CPU_TYPE_ANY                , "all"         },
-    { CPU_TYPE_ARM,         CPU_TYPE_ANY                , "arm"         },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_ALL         , "arm"         },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V4T         , "armv4"       },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V5TEJ       , "armv5"       },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V6          , "armv6"       },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V7          , "armv7"       },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_XSCALE      , "xscale"      },
-    { CPU_TYPE_POWERPC,     CPU_TYPE_ANY                , "ppc"         },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_ALL     , "ppc"         },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_601     , "ppc601"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_602     , "ppc602"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_603     , "ppc603"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_603e    , "ppc603e"     },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_603ev   , "ppc603ev"    },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_604     , "ppc604"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_604e    , "ppc604e"     },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_620     , "ppc620"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_750     , "ppc750"      },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_7400    , "ppc7400"     },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_7450    , "ppc7450"     },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_970     , "ppc970"      },
-    { CPU_TYPE_POWERPC64,   CPU_SUBTYPE_POWERPC_ALL     , "ppc64"       },
-    { CPU_TYPE_POWERPC64,   CPU_SUBTYPE_POWERPC_970     , "ppc970-64"   },
-    { CPU_TYPE_I386,        CPU_SUBTYPE_I386_ALL        , "i386"        },
-    { CPU_TYPE_I386,        CPU_SUBTYPE_486             , "i486"        },
-    { CPU_TYPE_I386,        CPU_SUBTYPE_486SX           , "i486sx"      },
-    { CPU_TYPE_I386,        CPU_TYPE_ANY                , "i386"        },
-    { CPU_TYPE_X86_64,      CPU_SUBTYPE_X86_64_ALL      , "x86_64"      },
-    { CPU_TYPE_X86_64,      CPU_TYPE_ANY                , "x86_64"      },
+    { CPU_ANY,                          CPU_ANY , "all"         },
+    { llvm::MachO::CPUTypeARM,          CPU_ANY , "arm"         },
+    { llvm::MachO::CPUTypeARM,          0       , "arm"         },
+    { llvm::MachO::CPUTypeARM,          5       , "armv4"       },
+    { llvm::MachO::CPUTypeARM,          6       , "armv6"       },
+    { llvm::MachO::CPUTypeARM,          7       , "armv5"       },
+    { llvm::MachO::CPUTypeARM,          8       , "xscale"      },
+    { llvm::MachO::CPUTypeARM,          9       , "armv7"       },
+    { llvm::MachO::CPUTypePowerPC,      CPU_ANY , "ppc"         },
+    { llvm::MachO::CPUTypePowerPC,      0       , "ppc"         },
+    { llvm::MachO::CPUTypePowerPC,      1       , "ppc601"      },
+    { llvm::MachO::CPUTypePowerPC,      2       , "ppc602"      },
+    { llvm::MachO::CPUTypePowerPC,      3       , "ppc603"      },
+    { llvm::MachO::CPUTypePowerPC,      4       , "ppc603e"     },
+    { llvm::MachO::CPUTypePowerPC,      5       , "ppc603ev"    },
+    { llvm::MachO::CPUTypePowerPC,      6       , "ppc604"      },
+    { llvm::MachO::CPUTypePowerPC,      7       , "ppc604e"     },
+    { llvm::MachO::CPUTypePowerPC,      8       , "ppc620"      },
+    { llvm::MachO::CPUTypePowerPC,      9       , "ppc750"      },
+    { llvm::MachO::CPUTypePowerPC,      10      , "ppc7400"     },
+    { llvm::MachO::CPUTypePowerPC,      11      , "ppc7450"     },
+    { llvm::MachO::CPUTypePowerPC,      100     , "ppc970"      },
+    { llvm::MachO::CPUTypePowerPC64,    0       , "ppc64"       },
+    { llvm::MachO::CPUTypePowerPC64,    100     , "ppc970-64"   },
+    { llvm::MachO::CPUTypeI386,         3       , "i386"        },
+    { llvm::MachO::CPUTypeI386,         4       , "i486"        },
+    { llvm::MachO::CPUTypeI386,         0x84    , "i486sx"      },
+    { llvm::MachO::CPUTypeI386,         CPU_ANY , "i386"        },
+    { llvm::MachO::CPUTypeX86_64,       3       , "x86_64"      },
+    { llvm::MachO::CPUTypeX86_64,       CPU_ANY , "x86_64"      },
 
     // TODO: when we get a platform that knows more about the host OS we should
     // let it call some accessor funcitons to set the default system arch for
@@ -104,29 +90,74 @@ static ArchDefinition g_arch_defs[] =
     // table.
 
 #if defined (__i386__) || defined(__x86_64__)
-    { CPU_TYPE_X86_64,      CPU_SUBTYPE_X86_64_ALL      , LLDB_ARCH_DEFAULT         },
-    { CPU_TYPE_I386,        CPU_SUBTYPE_I386_ALL        , LLDB_ARCH_DEFAULT_32BIT   },
-    { CPU_TYPE_X86_64,      CPU_SUBTYPE_X86_64_ALL      , LLDB_ARCH_DEFAULT_64BIT   },
+    { llvm::MachO::CPUTypeX86_64,      3    , LLDB_ARCH_DEFAULT         },
+    { llvm::MachO::CPUTypeI386,        3    , LLDB_ARCH_DEFAULT_32BIT   },
+    { llvm::MachO::CPUTypeX86_64,      3    , LLDB_ARCH_DEFAULT_64BIT   },
 #elif defined (__arm__)
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V6          , LLDB_ARCH_DEFAULT         },
-    { CPU_TYPE_ARM,         CPU_SUBTYPE_ARM_V6          , LLDB_ARCH_DEFAULT_32BIT   },
+    { llvm::MachO::CPUTypeARM,         6    , LLDB_ARCH_DEFAULT         },
+    { llvm::MachO::CPUTypeARM,         6    , LLDB_ARCH_DEFAULT_32BIT   },
 #elif defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_7400    , LLDB_ARCH_DEFAULT         },
-    { CPU_TYPE_POWERPC,     CPU_SUBTYPE_POWERPC_7400    , LLDB_ARCH_DEFAULT_32BIT   },
-    { CPU_TYPE_POWERPC64,   CPU_SUBTYPE_POWERPC_970     , LLDB_ARCH_DEFAULT_64BIT   },
+    { llvm::MachO::CPUTypePowerPC,     10   , LLDB_ARCH_DEFAULT         },
+    { llvm::MachO::CPUTypePowerPC,     10   , LLDB_ARCH_DEFAULT_32BIT   },
+    { llvm::MachO::CPUTypePowerPC64,   100  , LLDB_ARCH_DEFAULT_64BIT   },
 #endif
 };
 
 //----------------------------------------------------------------------
 // Figure out how many architecture definitions we have
 //----------------------------------------------------------------------
-const size_t k_num_arch_defs = sizeof(g_arch_defs)/sizeof(ArchDefinition);
+const size_t k_num_mach_arch_defs = sizeof(g_mach_arch_defs)/sizeof(ArchDefinition);
 
+
+
+//----------------------------------------------------------------------
+// A table that gets searched linearly for matches. This table is used
+// to convert cpu type and subtypes to architecture names, and to
+// convert architecture names to cpu types and subtypes. The ordering
+// is important and allows the precedence to be set when the table is
+// built.
+//----------------------------------------------------------------------
+static ArchDefinition g_elf_arch_defs[] =
+{
+    { llvm::ELF::EM_M32    , 0, "m32"      }, // AT&T WE 32100
+    { llvm::ELF::EM_SPARC  , 0, "sparc"    }, // AT&T WE 32100
+    { llvm::ELF::EM_386    , 0, "i386"     }, // Intel 80386
+    { llvm::ELF::EM_68K    , 0, "68k"      }, // Motorola 68000
+    { llvm::ELF::EM_88K    , 0, "88k"      }, // Motorola 88000
+    { llvm::ELF::EM_486    , 0, "i486"     }, // Intel 486 (deprecated)
+    { llvm::ELF::EM_860    , 0, "860"      }, // Intel 80860
+    { llvm::ELF::EM_MIPS   , 0, "rs3000"   }, // MIPS RS3000
+    { llvm::ELF::EM_PPC    , 0, "ppc"      }, // PowerPC
+    { 21                   , 0, "ppc64"    }, // PowerPC64
+    { llvm::ELF::EM_ARM    , 0, "arm"      }, // ARM
+    { llvm::ELF::EM_ALPHA  , 0, "alpha"    }, // DEC Alpha
+    { llvm::ELF::EM_SPARCV9, 0, "sparc9"   }, // SPARC V9
+    { llvm::ELF::EM_X86_64 , 0, "x86_64"   }, // AMD64
+
+#if defined (__i386__) || defined(__x86_64__)
+    { llvm::ELF::EM_X86_64 , 0, LLDB_ARCH_DEFAULT         },
+    { llvm::ELF::EM_386    , 0, LLDB_ARCH_DEFAULT_32BIT   },
+    { llvm::ELF::EM_X86_64 , 0, LLDB_ARCH_DEFAULT_64BIT   },
+#elif defined (__arm__)
+    { llvm::ELF::EM_ARM    , 0, LLDB_ARCH_DEFAULT         },
+    { llvm::ELF::EM_ARM    , 0, LLDB_ARCH_DEFAULT_32BIT   },
+#elif defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
+    { llvm::ELF::EM_PPC    , 0, LLDB_ARCH_DEFAULT         },
+    { llvm::ELF::EM_PPC    , 0, LLDB_ARCH_DEFAULT_32BIT   },
+    { llvm::ELF::EM_PPC64  , 0, LLDB_ARCH_DEFAULT_64BIT   },
+#endif
+};
+
+//----------------------------------------------------------------------
+// Figure out how many architecture definitions we have
+//----------------------------------------------------------------------
+const size_t k_num_elf_arch_defs = sizeof(g_elf_arch_defs)/sizeof(ArchDefinition);
 
 //----------------------------------------------------------------------
 // Default constructor
 //----------------------------------------------------------------------
 ArchSpec::ArchSpec() :
+    m_type (eArchTypeMachO),        // Use the most complete arch definition which will always be translatable to any other ArchitectureType values
     m_cpu (LLDB_INVALID_CPUTYPE),
     m_sub (0)
 {
@@ -136,7 +167,8 @@ ArchSpec::ArchSpec() :
 // Constructor that initializes the object with supplied cpu and
 // subtypes.
 //----------------------------------------------------------------------
-ArchSpec::ArchSpec(uint32_t cpu, uint32_t sub) :
+ArchSpec::ArchSpec (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub) :
+    m_type (arch_type),
     m_cpu (cpu),
     m_sub (sub)
 {
@@ -156,12 +188,13 @@ ArchSpec::ArchSpec(uint32_t cpu, uint32_t sub) :
 //  liblldb_ARCH_DEFAULT_32BIT
 //      The 64 bit arch the current system defaults to (if any)
 //----------------------------------------------------------------------
-ArchSpec::ArchSpec(const char *arch_name) :
+ArchSpec::ArchSpec (const char *arch_name) :
+    m_type (eArchTypeMachO),        // Use the most complete arch definition which will always be translatable to any other ArchitectureType values
     m_cpu (LLDB_INVALID_CPUTYPE),
     m_sub (0)
 {
     if (arch_name)
-        SetArch(arch_name);
+        SetArch (arch_name);
 }
 
 //----------------------------------------------------------------------
@@ -179,6 +212,7 @@ ArchSpec::operator= (const ArchSpec& rhs)
 {
     if (this != &rhs)
     {
+        m_type = rhs.m_type;
         m_cpu = rhs.m_cpu;
         m_sub = rhs.m_sub;
     }
@@ -191,7 +225,7 @@ ArchSpec::operator= (const ArchSpec& rhs)
 const char *
 ArchSpec::AsCString() const
 {
-    return ArchSpec::AsCString(m_cpu, m_sub);
+    return ArchSpec::AsCString(m_type, m_cpu, m_sub);
 }
 
 //----------------------------------------------------------------------
@@ -199,23 +233,55 @@ ArchSpec::AsCString() const
 // and subtype.
 //----------------------------------------------------------------------
 const char *
-ArchSpec::AsCString(uint32_t cpu, uint32_t sub)
+ArchSpec::AsCString (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
 {
-    for (uint32_t i=0; i<k_num_arch_defs; i++)
+    if (arch_type >= kNumArchTypes)
+        return NULL;
+
+    switch (arch_type)
     {
-        if (cpu == g_arch_defs[i].cpu)
+    case eArchTypeInvalid:
+        break;
+
+    case eArchTypeMachO:
+        for (uint32_t i=0; i<k_num_mach_arch_defs; i++)
         {
-            if (sub == g_arch_defs[i].sub)
-                return g_arch_defs[i].name;
-            else if (sub != CPU_TYPE_ANY && sub != LLDB_INVALID_CPUTYPE)
+            if (cpu == g_mach_arch_defs[i].cpu)
             {
-                if ((sub & ~CPU_SUBTYPE_MASK) == g_arch_defs[i].sub)
-                    return g_arch_defs[i].name;
+                if (sub == g_mach_arch_defs[i].sub)
+                    return g_mach_arch_defs[i].name;
+                else if (sub != CPU_ANY && sub != LLDB_INVALID_CPUTYPE)
+                {
+                    if ((sub & 0x00ffffff) == g_mach_arch_defs[i].sub)
+                        return g_mach_arch_defs[i].name;
+                }
             }
         }
+        break;
+    
+    case eArchTypeELF:
+        for (uint32_t i=0; i<k_num_elf_arch_defs; i++)
+        {
+            if (cpu == g_elf_arch_defs[i].cpu)
+            {
+                if (sub == g_elf_arch_defs[i].sub)
+                    return g_elf_arch_defs[i].name;
+            }
+        }
+        break;
     }
-    static char s_cpu_hex_str[64];
-    ::snprintf(s_cpu_hex_str, sizeof(s_cpu_hex_str), "%u%c%u", cpu, ARCH_SPEC_SEPARATOR_CHAR, sub);
+
+    const char *arch_type_cstr = g_arch_type_strings[arch_type];
+
+    static char s_cpu_hex_str[128];
+    ::snprintf(s_cpu_hex_str, 
+               sizeof(s_cpu_hex_str), 
+               "%s%c%u%c%u", 
+               arch_type_cstr,
+               ARCH_SPEC_SEPARATOR_CHAR, 
+               cpu, 
+               ARCH_SPEC_SEPARATOR_CHAR, 
+               sub);
     return s_cpu_hex_str;
 }
 
@@ -225,9 +291,12 @@ ArchSpec::AsCString(uint32_t cpu, uint32_t sub)
 void
 ArchSpec::Clear()
 {
+    m_type = eArchTypeInvalid;
     m_cpu = LLDB_INVALID_CPUTYPE;
     m_sub = 0;
 }
+
+
 
 
 //----------------------------------------------------------------------
@@ -236,9 +305,13 @@ ArchSpec::Clear()
 uint32_t
 ArchSpec::GetCPUSubtype() const
 {
-    if (m_sub == CPU_TYPE_ANY || m_sub == LLDB_INVALID_CPUTYPE)
-        return m_sub;
-    return m_sub & ~CPU_SUBTYPE_MASK;
+    if (m_type == eArchTypeMachO)
+    {
+        if (m_sub == CPU_ANY || m_sub == LLDB_INVALID_CPUTYPE)
+            return m_sub;
+        return m_sub & 0xffffff;
+    }
+    return 0;
 }
 
 
@@ -251,6 +324,50 @@ ArchSpec::GetCPUType() const
     return m_cpu;
 }
 
+//----------------------------------------------------------------------
+// This function is designed to abstract us from having to know any
+// details about the current m_type, m_cpu, and m_sub values and 
+// translate the result into a generic CPU type so LLDB core code can
+// detect any CPUs that it supports.
+//----------------------------------------------------------------------
+ArchSpec::CPU
+ArchSpec::GetGenericCPUType () const
+{
+    switch (m_type)
+    {
+    case eArchTypeInvalid:
+        break;
+
+    case eArchTypeMachO:
+        switch (m_cpu)
+        {
+        case llvm::MachO::CPUTypeARM:       return eCPU_arm;
+        case llvm::MachO::CPUTypeI386:      return eCPU_i386;
+        case llvm::MachO::CPUTypeX86_64:    return eCPU_x86_64;
+        case llvm::MachO::CPUTypePowerPC:   return eCPU_ppc;
+        case llvm::MachO::CPUTypePowerPC64: return eCPU_ppc64;
+        case llvm::MachO::CPUTypeSPARC:     return eCPU_sparc;
+        }
+        break;
+    
+    case eArchTypeELF:
+        switch (m_cpu)
+        {
+        case llvm::ELF::EM_ARM:     return eCPU_arm;
+        case llvm::ELF::EM_386:     return eCPU_i386;
+        case llvm::ELF::EM_X86_64:  return eCPU_x86_64;
+        case llvm::ELF::EM_PPC:     return eCPU_ppc;
+        case 21:                    return eCPU_ppc64;
+        case llvm::ELF::EM_SPARC: 	return eCPU_sparc;
+        }
+        break;
+    }
+
+    return eCPU_Unknown;
+}
+
+
+
 
 //----------------------------------------------------------------------
 // Feature flags get accessor.
@@ -258,9 +375,13 @@ ArchSpec::GetCPUType() const
 uint32_t
 ArchSpec::GetFeatureFlags() const
 {
-    if (m_sub == CPU_TYPE_ANY || m_sub == LLDB_INVALID_CPUTYPE)
-        return 0;
-    return m_sub & CPU_SUBTYPE_MASK;
+    if (m_type == eArchTypeMachO)
+    {
+        if (m_sub == CPU_ANY || m_sub == LLDB_INVALID_CPUTYPE)
+            return 0;
+        return m_sub & 0xff000000;
+    }
+    return 0;
 }
 
 
@@ -897,7 +1018,7 @@ static const char * g_arm_gcc_reg_names[] = {
 const char *
 ArchSpec::GetRegisterName(uint32_t reg_num, uint32_t reg_kind) const
 {
-    return ArchSpec::GetRegisterName(m_cpu, m_sub, reg_num, reg_kind);
+    return ArchSpec::GetRegisterName(m_type, m_cpu, m_sub, reg_num, reg_kind);
 }
 
 
@@ -906,9 +1027,10 @@ ArchSpec::GetRegisterName(uint32_t reg_num, uint32_t reg_kind) const
 // a register number, and a reg_kind for that register number.
 //----------------------------------------------------------------------
 const char *
-ArchSpec::GetRegisterName(uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint32_t reg_kind)
+ArchSpec::GetRegisterName (ArchitectureType arch_type, uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint32_t reg_kind)
 {
-    if (cpu == CPU_TYPE_I386)
+    if ((arch_type == eArchTypeMachO && cpu == llvm::MachO::CPUTypeI386) ||
+        (arch_type == eArchTypeELF   && cpu == llvm::ELF::EM_386))
     {
         switch (reg_kind)
         {
@@ -924,7 +1046,8 @@ ArchSpec::GetRegisterName(uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint
             break;
         }
     }
-    else if (cpu == CPU_TYPE_X86_64)
+    else if ((arch_type == eArchTypeMachO && cpu == llvm::MachO::CPUTypeX86_64) ||
+             (arch_type == eArchTypeELF   && cpu == llvm::ELF::EM_X86_64))
     {
         switch (reg_kind)
         {
@@ -937,7 +1060,8 @@ ArchSpec::GetRegisterName(uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint
             break;
         }
     }
-    else if (cpu == CPU_TYPE_ARM)
+    else if ((arch_type == eArchTypeMachO && cpu == llvm::MachO::CPUTypeARM) ||
+             (arch_type == eArchTypeELF   && cpu == llvm::ELF::EM_ARM))
     {
         switch (reg_kind)
         {
@@ -1103,7 +1227,8 @@ ArchSpec::GetRegisterName(uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint
             break;
         }
     }
-    else if (cpu == CPU_TYPE_POWERPC || cpu == CPU_TYPE_POWERPC64)
+    else if ((arch_type == eArchTypeMachO && (cpu == llvm::MachO::CPUTypePowerPC || cpu == llvm::MachO::CPUTypePowerPC64)) ||
+             (arch_type == eArchTypeELF   && cpu == llvm::ELF::EM_PPC))
     {
         switch (reg_kind)
         {
@@ -1479,9 +1604,41 @@ ArchSpec::IsValid() const
 uint32_t
 ArchSpec::GetAddressByteSize() const
 {
-    if (GetCPUType() & CPU_ARCH_ABI64)
-        return 8;
-    return 4;
+    switch (m_type)
+    {
+    case eArchTypeInvalid:
+        break;
+
+    case eArchTypeMachO:
+        if (GetCPUType() & CPU_ARCH_ABI64)
+            return 8;
+        else
+            return 4;
+        break;
+    
+    case eArchTypeELF:
+        switch (m_cpu)
+        {
+        case llvm::ELF::EM_M32:
+        case llvm::ELF::EM_SPARC:
+        case llvm::ELF::EM_386:
+        case llvm::ELF::EM_68K:
+        case llvm::ELF::EM_88K:
+        case llvm::ELF::EM_486:
+        case llvm::ELF::EM_860:
+        case llvm::ELF::EM_MIPS:
+        case llvm::ELF::EM_PPC:
+        case llvm::ELF::EM_ARM:
+        case llvm::ELF::EM_ALPHA:
+        case llvm::ELF::EM_SPARCV9:
+            return 4;
+        case llvm::ELF::EM_X86_64:
+            return 8;
+        }
+        break;
+    }
+
+    return 0;
 }
 
 //----------------------------------------------------------------------
@@ -1513,73 +1670,104 @@ ArchSpec::SetArchFromTargetTriple (const char *target_triple)
 // Change the CPU type and subtype given an architecture name.
 //----------------------------------------------------------------------
 bool
-ArchSpec::SetArch(const char *arch_name)
+ArchSpec::SetArch (const char *arch_name)
 {
     if (arch_name && arch_name[0] != '\0')
     {
         size_t i;
-        // Search for ARCH_NAME in our architecture definitions structure
-        for (i=0; i<k_num_arch_defs; ++i)
+
+        switch (m_type)
         {
-            if (strcasecmp(arch_name, g_arch_defs[i].name) == 0)
+        case eArchTypeInvalid:
+        case eArchTypeMachO:
+            for (i=0; i<k_num_mach_arch_defs; i++)
             {
-                // we found a match
-                m_cpu = g_arch_defs[i].cpu;
-                m_sub = g_arch_defs[i].sub;
-                return true;
+                if (strcasecmp(arch_name, g_mach_arch_defs[i].name) == 0)
+                {
+                    m_type = eArchTypeMachO;
+                    m_cpu = g_mach_arch_defs[i].cpu;
+                    m_sub = g_mach_arch_defs[i].sub;
+                    return true;
+                }
             }
+            break;
+        
+        case eArchTypeELF:
+            for (i=0; i<k_num_elf_arch_defs; i++)
+            {
+                if (strcasecmp(arch_name, g_elf_arch_defs[i].name) == 0)
+                {
+                    m_cpu = g_elf_arch_defs[i].cpu;
+                    m_sub = g_elf_arch_defs[i].sub;
+                    return true;
+                }
+            }
+            break;
         }
 
-
         const char *str = arch_name;
-        char *end = NULL;
-        // Check for a numeric cpu followed by an optional '.' and numeric subtype.
+        // Check for a numeric cpu followed by an optional separator char and numeric subtype.
         // This allows for support of new cpu type/subtypes without having to have
         // a recompiled debug core.
         // Examples:
         //  "12.6" is armv6
-        //  "0x0000000c.0x00000006" is also armv6
-        m_cpu = strtoul(str, &end, 0);
-        if (str != end)
+        //  "0x0000000c-0x00000006" is also armv6
+        
+        m_type = eArchTypeInvalid;
+        for (i=1; i<kNumArchTypes; ++i)
         {
-            if (*end == '.')
+            const char *arch_type_cstr = g_arch_type_strings[i];
+            if (strstr(str, arch_type_cstr))
             {
-                // We have a cputype.cpusubtype format
-                str = end + 1;
-                if (*str != '\0')
+                m_type = (ArchitectureType)i;
+                str += strlen(arch_type_cstr) + 1; // Also skip separator char
+            }
+        }
+        
+        if (m_type != eArchTypeInvalid)
+        {
+            char *end = NULL;
+            m_cpu = ::strtoul (str, &end, 0);
+            if (str != end)
+            {
+                if (*end == ARCH_SPEC_SEPARATOR_CHAR)
                 {
-                    m_sub = strtoul(str, &end, 0);
-                    if (*end == '\0')
+                    // We have a cputype.cpusubtype format
+                    str = end + 1;
+                    if (*str != '\0')
                     {
-                        // We consumed the entire string and got a cpu type and subtype
+                        m_sub = strtoul(str, &end, 0);
+                        if (*end == '\0')
+                        {
+                            // We consumed the entire string and got a cpu type and subtype
+                            return true;
+                        }
+                    }
+                }
+
+                // If we reach this point we have a valid cpu type, but no cpu subtype.
+                // Search for the first matching cpu type and use the corresponding cpu
+                // subtype. This setting should typically be the _ALL variant and should
+                // appear first in the list for each cpu type in the g_mach_arch_defs
+                // structure.
+                for (i=0; i<k_num_mach_arch_defs; ++i)
+                {
+                    if (m_cpu == g_mach_arch_defs[i].cpu)
+                    {
+                        m_sub = g_mach_arch_defs[i].sub;
                         return true;
                     }
                 }
+
+                // Default the cpu subtype to zero when we don't have a matching
+                // cpu type in our architecture defs structure (g_mach_arch_defs).
+                m_sub = 0;
+                return true;
+
             }
-
-            // If we reach this point we have a valid cpu type, but no cpu subtype.
-            // Search for the first matching cpu type and use the corresponding cpu
-            // subtype. This setting should typically be the _ALL variant and should
-            // appear first in the list for each cpu type in the g_arch_defs
-            // structure.
-            for (i=0; i<k_num_arch_defs; ++i)
-            {
-                if (m_cpu == g_arch_defs[i].cpu)
-                {
-                    m_sub = g_arch_defs[i].sub;
-                    return true;
-                }
-            }
-
-            // Default the cpu subtype to zero when we don't have a matching
-            // cpu type in our architecture defs structure (g_arch_defs).
-            m_sub = 0;
-            return true;
-
         }
     }
-    m_cpu = LLDB_INVALID_CPUTYPE;
-    m_sub = 0;
+    Clear();
     return false;
 }
 
@@ -1616,13 +1804,13 @@ ArchSpec::GetDefaultEndian () const
 {
     switch (m_cpu)
     {
-    case CPU_TYPE_POWERPC:
-    case CPU_TYPE_POWERPC64:
+    case llvm::MachO::CPUTypePowerPC:
+    case llvm::MachO::CPUTypePowerPC64:
         return eByteOrderBig;
 
-    case CPU_TYPE_ARM:
-    case CPU_TYPE_I386:
-    case CPU_TYPE_X86_64:
+    case llvm::MachO::CPUTypeARM:
+    case llvm::MachO::CPUTypeI386:
+    case llvm::MachO::CPUTypeX86_64:
         return eByteOrderLittle;
 
     default:
@@ -1640,14 +1828,14 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
     uint32_t lhs_cpu = lhs.GetCPUType();
     uint32_t rhs_cpu = rhs.GetCPUType();
 
-    if (lhs_cpu == CPU_TYPE_ANY || rhs_cpu == CPU_TYPE_ANY)
+    if (lhs_cpu == CPU_ANY || rhs_cpu == CPU_ANY)
         return true;
 
     else if (lhs_cpu == rhs_cpu)
     {
         uint32_t lhs_subtype = lhs.GetCPUSubtype();
         uint32_t rhs_subtype = rhs.GetCPUSubtype();
-        if (lhs_subtype == CPU_TYPE_ANY || rhs_subtype == CPU_TYPE_ANY)
+        if (lhs_subtype == CPU_ANY || rhs_subtype == CPU_ANY)
             return true;
         return lhs_subtype == rhs_subtype;
     }

@@ -55,13 +55,6 @@ MachThreadContext_i386::InitializeInstance()
     m_flags_reg = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
 }
 
-
-uint32_t
-MachThreadContext_i386::GetCPUType()
-{
-    return CPU_TYPE_I386;
-}
-
 void
 MachThreadContext_i386::ThreadWillResume()
 {

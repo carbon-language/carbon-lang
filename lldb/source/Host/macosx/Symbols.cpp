@@ -65,7 +65,7 @@ SkinnyMachOFileContainsArchAndUUID
     // Check the architecture if we have a valid arch pointer
     if (arch)
     {
-        ArchSpec file_arch(cputype, cpusubtype);
+        ArchSpec file_arch(eArchTypeMachO, cputype, cpusubtype);
 
         if (file_arch != *arch)
             return false;
@@ -150,7 +150,7 @@ UniversalMachOFileContainsArchAndUUID
         // Only process this slice if the cpu type/subtype matches
         if (arch)
         {
-            ArchSpec fat_arch(arch_cputype, arch_cpusubtype);
+            ArchSpec fat_arch(eArchTypeMachO, arch_cputype, arch_cpusubtype);
             if (fat_arch != *arch)
                 continue;
         }

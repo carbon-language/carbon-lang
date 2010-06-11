@@ -33,15 +33,6 @@ namespace lldb_private {
 /// the same file, or archive files that contain multiple objects
 /// (ranlib archives) (possibly for multiple architectures as well).
 ///
-/// It is possible to determine how many architectures an object file
-/// contains by using the ObjectFile::GetNumArchitectures() const
-/// accessor function. The individual architectures can be extracted
-/// using the
-/// ObjectFile::GetArchitectureAtIndex (uint32_t, ArchSpec&) const
-/// function. The object file can also be asked to select one of these
-/// architectures using the
-/// ObjectFile::SetArchitecture (const ArchSpec&) function.
-///
 /// Object archive files (e.g. ranlib archives) can contain 
 /// multiple .o (object) files that must be selected by index or by name. 
 /// The number of objects that an ObjectFile contains can be determined 

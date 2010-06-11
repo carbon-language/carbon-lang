@@ -40,7 +40,6 @@ public:
 
     virtual bool            NotifyException(MachException::Data& exc);
     virtual size_t          GetStackFrameData(lldb_private::StackFrame *first_frame, std::vector<std::pair<lldb::addr_t, lldb::addr_t> >& fp_pc_pairs);
-    static uint32_t         GetCPUType();
 
 protected:
 //    kern_return_t EnableHardwareSingleStep (bool enable);

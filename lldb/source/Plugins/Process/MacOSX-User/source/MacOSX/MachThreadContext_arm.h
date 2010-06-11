@@ -46,9 +46,6 @@ public:
     virtual void
     RefreshStateAfterStop ();
 
-    static uint32_t
-    GetCPUType ();
-
 protected:
     kern_return_t
     EnableHardwareSingleStep (bool enable);
