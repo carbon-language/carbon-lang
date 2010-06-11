@@ -40,6 +40,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins,
                        bool FreeMem, unsigned size_reserve) :
+  TemplateSpecializationTypes(this_()),
+  DependentTemplateSpecializationTypes(this_()),
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0),
   NSConstantStringTypeDecl(0),
   ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
@@ -1824,7 +1826,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
       void *Mem = Allocate((sizeof(TemplateSpecializationType) +
                             sizeof(TemplateArgument) * NumArgs),
                            TypeAlignment);
-      Spec = new (Mem) TemplateSpecializationType(*this, CanonTemplate, false,
+      Spec = new (Mem) TemplateSpecializationType(CanonTemplate, false,
                                                   CanonArgs.data(), NumArgs,
                                                   Canon);
       Types.push_back(Spec);
@@ -1844,7 +1846,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                         sizeof(TemplateArgument) * NumArgs),
                        TypeAlignment);
   TemplateSpecializationType *Spec
-    = new (Mem) TemplateSpecializationType(*this, Template,
+    = new (Mem) TemplateSpecializationType(Template,
                                            IsCurrentInstantiation,
                                            Args, NumArgs,
                                            Canon);
@@ -1970,7 +1972,7 @@ ASTContext::getDependentTemplateSpecializationType(
   void *Mem = Allocate((sizeof(DependentTemplateSpecializationType) +
                         sizeof(TemplateArgument) * NumArgs),
                        TypeAlignment);
-  T = new (Mem) DependentTemplateSpecializationType(*this, Keyword, NNS,
+  T = new (Mem) DependentTemplateSpecializationType(Keyword, NNS,
                                                     Name, NumArgs, Args, Canon);
   Types.push_back(T);
   DependentTemplateSpecializationTypes.InsertNode(T, InsertPos);

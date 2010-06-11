@@ -75,6 +75,8 @@ namespace clang {
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
+  ASTContext &this_() { return *this; }
+
   std::vector<Type*> Types;
   llvm::FoldingSet<ExtQuals> ExtQualNodes;
   llvm::FoldingSet<ComplexType> ComplexTypes;
@@ -95,10 +97,11 @@ class ASTContext {
   llvm::FoldingSet<DependentDecltypeType> DependentDecltypeTypes;
   llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   llvm::FoldingSet<SubstTemplateTypeParmType> SubstTemplateTypeParmTypes;
-  llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
+  llvm::ContextualFoldingSet<TemplateSpecializationType, ASTContext&>
+    TemplateSpecializationTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
-  llvm::FoldingSet<DependentTemplateSpecializationType>
+  llvm::ContextualFoldingSet<DependentTemplateSpecializationType, ASTContext&>
     DependentTemplateSpecializationTypes;
   llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;

@@ -871,12 +871,12 @@ void DependentTemplateSpecializationType::Destroy(ASTContext &C) {
 }
 
 DependentTemplateSpecializationType::DependentTemplateSpecializationType(
-                         ASTContext &Context, ElaboratedTypeKeyword Keyword,
+                         ElaboratedTypeKeyword Keyword,
                          NestedNameSpecifier *NNS, const IdentifierInfo *Name,
                          unsigned NumArgs, const TemplateArgument *Args,
                          QualType Canon)
   : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true),
-    Context(Context), NNS(NNS), Name(Name), NumArgs(NumArgs) {
+    NNS(NNS), Name(Name), NumArgs(NumArgs) {
   assert(NNS && NNS->isDependent() &&
          "DependentTemplateSpecializatonType requires dependent qualifier");
   for (unsigned I = 0; I != NumArgs; ++I)
@@ -1130,14 +1130,14 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N) {
 }
 
 TemplateSpecializationType::
-TemplateSpecializationType(ASTContext &Context, TemplateName T,
+TemplateSpecializationType(TemplateName T,
                            bool IsCurrentInstantiation,
                            const TemplateArgument *Args,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
          T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)),
-    ContextAndCurrentInstantiation(&Context, IsCurrentInstantiation),
+    IsCurrentInstantiation(IsCurrentInstantiation),
     Template(T), NumArgs(NumArgs) {
   assert((!Canon.isNull() ||
           T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&

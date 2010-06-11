@@ -2420,11 +2420,8 @@ public:
 class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
 
-  // The ASTContext is currently needed in order to profile expressions.
-  // FIXME: avoid this.
-  //
   // The bool is whether this is a current instantiation.
-  llvm::PointerIntPair<ASTContext*, 1, bool> ContextAndCurrentInstantiation;
+  bool IsCurrentInstantiation;
 
   /// \brief The name of the template being specialized.
   TemplateName Template;
@@ -2433,8 +2430,7 @@ class TemplateSpecializationType
   /// template specialization.
   unsigned NumArgs;
 
-  TemplateSpecializationType(ASTContext &Context,
-                             TemplateName T,
+  TemplateSpecializationType(TemplateName T,
                              bool IsCurrentInstantiation,
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon);
@@ -2470,7 +2466,7 @@ public:
   /// True if this template specialization type matches a current
   /// instantiation in the context in which it is found.
   bool isCurrentInstantiation() const {
-    return ContextAndCurrentInstantiation.getInt();
+    return IsCurrentInstantiation;
   }
 
   typedef const TemplateArgument * iterator;
@@ -2498,9 +2494,8 @@ public:
   }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Template, isCurrentInstantiation(), getArgs(), NumArgs,
-            *ContextAndCurrentInstantiation.getPointer());
+  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Ctx) {
+    Profile(ID, Template, isCurrentInstantiation(), getArgs(), NumArgs, Ctx);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
@@ -2782,10 +2777,6 @@ public:
 class DependentTemplateSpecializationType :
   public TypeWithKeyword, public llvm::FoldingSetNode {
 
-  /// The AST context.  Unfortunately required in order to profile
-  /// template arguments.
-  ASTContext &Context;
-
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
@@ -2803,8 +2794,7 @@ class DependentTemplateSpecializationType :
     return reinterpret_cast<TemplateArgument*>(this+1);
   }
 
-  DependentTemplateSpecializationType(ASTContext &Context,
-                                      ElaboratedTypeKeyword Keyword,
+  DependentTemplateSpecializationType(ElaboratedTypeKeyword Keyword,
                                       NestedNameSpecifier *NNS,
                                       const IdentifierInfo *Name,
                                       unsigned NumArgs,
@@ -2838,7 +2828,7 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  void Profile(llvm::FoldingSetNodeID &ID) {
+  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) {
     Profile(ID, Context, getKeyword(), NNS, Name, NumArgs, getArgs());
   }
 
