@@ -57,13 +57,13 @@ public:
     IsValid () const;
 
     void
-    OffsetWithSeconds (uint32_t sec);
+    OffsetWithSeconds (uint64_t sec);
 
     void
-    OffsetWithMicroSeconds (uint32_t usec);
+    OffsetWithMicroSeconds (uint64_t usec);
 
     void
-    OffsetWithNanoSeconds (uint32_t nsec);
+    OffsetWithNanoSeconds (uint64_t nsec);
 
     static TimeValue
     Now();

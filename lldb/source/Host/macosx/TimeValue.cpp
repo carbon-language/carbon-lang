@@ -97,19 +97,19 @@ TimeValue::IsValid () const
 }
 
 void
-TimeValue::OffsetWithSeconds (uint32_t sec)
+TimeValue::OffsetWithSeconds (uint64_t sec)
 {
     m_nano_seconds += sec * NSEC_PER_SEC;
 }
 
 void
-TimeValue::OffsetWithMicroSeconds (uint32_t usec)
+TimeValue::OffsetWithMicroSeconds (uint64_t usec)
 {
     m_nano_seconds += usec * NSEC_PER_USEC;
 }
 
 void
-TimeValue::OffsetWithNanoSeconds (uint32_t nsec)
+TimeValue::OffsetWithNanoSeconds (uint64_t nsec)
 {
     m_nano_seconds += nsec;
 }
