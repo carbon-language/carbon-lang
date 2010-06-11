@@ -251,8 +251,9 @@ Symtab::CompareSymbolValueByIndex (void *thunk, const void *a, const void *b)
     return 1;
 }
 
-int Symtab::CompareSymbolValueByIndexLinux(const void* a, const void* b, void* thunk) {
-  CompareSymbolValueByIndex(thunk, a, b);
+int Symtab::CompareSymbolValueByIndexLinux(const void* a, const void* b, void* thunk) 
+{
+    return CompareSymbolValueByIndex(thunk, a, b);
 }
 
 void
