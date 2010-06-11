@@ -30,7 +30,7 @@ class ArchSpec
 public:
     // Generic CPU types that each m_type needs to know how to convert 
     // their m_cpu and m_sub to.
-    typedef enum CPU
+    enum CPU
     {
         eCPU_Unknown,
         eCPU_arm,
