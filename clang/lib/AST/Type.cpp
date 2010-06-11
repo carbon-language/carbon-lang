@@ -768,6 +768,7 @@ bool Type::isSpecifierType() const {
   case TemplateSpecialization:
   case Elaborated:
   case DependentName:
+  case DependentTemplateSpecialization:
   case ObjCInterface:
   case ObjCObject:
   case ObjCObjectPointer: // FIXME: object pointers aren't really specifiers
@@ -856,12 +857,56 @@ TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   }
 }
 
+ElaboratedType::~ElaboratedType() {}
+DependentNameType::~DependentNameType() {}
+DependentTemplateSpecializationType::~DependentTemplateSpecializationType() {}
+
+void DependentTemplateSpecializationType::Destroy(ASTContext &C) {
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    // FIXME: Not all expressions get cloned, so we can't yet perform
+    // this destruction.
+    //    if (Expr *E = getArg(Arg).getAsExpr())
+    //      E->Destroy(C);
+  }
+}
+
+DependentTemplateSpecializationType::DependentTemplateSpecializationType(
+                         ASTContext &Context, ElaboratedTypeKeyword Keyword,
+                         NestedNameSpecifier *NNS, const IdentifierInfo *Name,
+                         unsigned NumArgs, const TemplateArgument *Args,
+                         QualType Canon)
+  : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true),
+    Context(Context), NNS(NNS), Name(Name), NumArgs(NumArgs) {
+  assert(NNS && NNS->isDependent() &&
+         "DependentTemplateSpecializatonType requires dependent qualifier");
+  for (unsigned I = 0; I != NumArgs; ++I)
+    new (&getArgBuffer()[I]) TemplateArgument(Args[I]);
+}
+
+void
+DependentTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
+                                             ASTContext &Context,
+                                             ElaboratedTypeKeyword Keyword,
+                                             NestedNameSpecifier *Qualifier,
+                                             const IdentifierInfo *Name,
+                                             unsigned NumArgs,
+                                             const TemplateArgument *Args) {
+  ID.AddInteger(Keyword);
+  ID.AddPointer(Qualifier);
+  ID.AddPointer(Name);
+  for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
+    Args[Idx].Profile(ID, Context);
+}
+
 bool Type::isElaboratedTypeSpecifier() const {
   ElaboratedTypeKeyword Keyword;
   if (const ElaboratedType *Elab = dyn_cast<ElaboratedType>(this))
     Keyword = Elab->getKeyword();
   else if (const DependentNameType *DepName = dyn_cast<DependentNameType>(this))
     Keyword = DepName->getKeyword();
+  else if (const DependentTemplateSpecializationType *DepTST =
+             dyn_cast<DependentTemplateSpecializationType>(this))
+    Keyword = DepTST->getKeyword();
   else
     return false;
 
@@ -1111,17 +1156,6 @@ void TemplateSpecializationType::Destroy(ASTContext& C) {
     //    if (Expr *E = getArg(Arg).getAsExpr())
     //      E->Destroy(C);
   }
-}
-
-TemplateSpecializationType::iterator
-TemplateSpecializationType::end() const {
-  return begin() + getNumArgs();
-}
-
-const TemplateArgument &
-TemplateSpecializationType::getArg(unsigned Idx) const {
-  assert(Idx < getNumArgs() && "Template argument out of range");
-  return getArgs()[Idx];
 }
 
 void

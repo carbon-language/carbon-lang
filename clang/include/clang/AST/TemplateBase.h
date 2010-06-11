@@ -256,6 +256,10 @@ public:
     return Args.NumArgs;
   }
 
+  /// Determines whether two template arguments are superficially the
+  /// same.
+  bool structurallyEquals(const TemplateArgument &Other) const;
+
   /// \brief Construct a template argument pack.
   void setArgumentPack(TemplateArgument *Args, unsigned NumArgs, bool CopyArgs);
 
@@ -476,6 +480,28 @@ public:
 
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     const TemplateArgument &Arg);
+
+inline TemplateSpecializationType::iterator
+    TemplateSpecializationType::end() const {
+  return getArgs() + getNumArgs();
+}
+
+inline DependentTemplateSpecializationType::iterator
+    DependentTemplateSpecializationType::end() const {
+  return getArgs() + getNumArgs();
+}
+
+inline const TemplateArgument &
+    TemplateSpecializationType::getArg(unsigned Idx) const {
+  assert(Idx < getNumArgs() && "Template argument out of range");
+  return getArgs()[Idx];
+}
+
+inline const TemplateArgument &
+    DependentTemplateSpecializationType::getArg(unsigned Idx) const {
+  assert(Idx < getNumArgs() && "Template argument out of range");
+  return getArgs()[Idx];
+}
   
 } // end namespace clang
 

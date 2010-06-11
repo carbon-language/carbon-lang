@@ -253,6 +253,11 @@ NODE_XML(DependentNameType, "DependentNameType")
   ID_ATTRIBUTE_XML
 END_NODE_XML
 
+NODE_XML(DependentTemplateSpecializationType,
+         "DependentTemplateSpecializationType")
+  ID_ATTRIBUTE_XML
+END_NODE_XML
+
 NODE_XML(ObjCInterfaceType, "ObjCInterfaceType")
   ID_ATTRIBUTE_XML
 END_NODE_XML

@@ -73,6 +73,7 @@ namespace {
     // FIXME: TemplateSpecializationType
     QualType VisitElaboratedType(ElaboratedType *T);
     // FIXME: DependentNameType
+    // FIXME: DependentTemplateSpecializationType
     QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
     QualType VisitObjCObjectType(ObjCObjectType *T);
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
@@ -619,11 +620,29 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     if (!IsStructurallyEquivalent(Typename1->getIdentifier(),
                                   Typename2->getIdentifier()))
       return false;
-    if (!IsStructurallyEquivalent(Context,
-                                  QualType(Typename1->getTemplateId(), 0),
-                                  QualType(Typename2->getTemplateId(), 0)))
-      return false;
     
+    break;
+  }
+  
+  case Type::DependentTemplateSpecialization: {
+    const DependentTemplateSpecializationType *Spec1 =
+      cast<DependentTemplateSpecializationType>(T1);
+    const DependentTemplateSpecializationType *Spec2 =
+      cast<DependentTemplateSpecializationType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Spec1->getQualifier(),
+                                  Spec2->getQualifier()))
+      return false;
+    if (!IsStructurallyEquivalent(Spec1->getIdentifier(),
+                                  Spec2->getIdentifier()))
+      return false;
+    if (Spec1->getNumArgs() != Spec2->getNumArgs())
+      return false;
+    for (unsigned I = 0, N = Spec1->getNumArgs(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context,
+                                    Spec1->getArg(I), Spec2->getArg(I)))
+        return false;
+    }
     break;
   }
   

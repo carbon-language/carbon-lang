@@ -1033,13 +1033,20 @@ public:
     setLAngleLoc(Loc);
     setRAngleLoc(Loc);
     setTemplateNameLoc(Loc);
+    initializeArgLocs(getNumArgs(), getTypePtr()->getArgs(),
+                      getArgInfos(), Loc);
+  }
 
-    for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
+  static void initializeArgLocs(unsigned NumArgs,
+                                const TemplateArgument *Args,
+                                TemplateArgumentLocInfo *ArgInfos,
+                                SourceLocation Loc) {
+    for (unsigned i = 0, e = NumArgs; i != e; ++i) {
       TemplateArgumentLocInfo Info;
 #ifndef NDEBUG
       // If asserts are enabled, be sure to initialize the argument
       // loc with the right kind of pointer.
-      switch (getTypePtr()->getArg(i).getKind()) {
+      switch (Args[i].getKind()) {
       case TemplateArgument::Expression:
       case TemplateArgument::Declaration:
         Info = TemplateArgumentLocInfo((Expr*) 0);
@@ -1050,7 +1057,7 @@ public:
         break;
 
       case TemplateArgument::Template:
-        Info = TemplateArgumentLocInfo(SourceRange(), SourceLocation());
+        Info = TemplateArgumentLocInfo(SourceRange(Loc), Loc);
         break;
           
       case TemplateArgument::Integral:
@@ -1060,7 +1067,7 @@ public:
         break;
       }
 #endif
-      getArgInfos()[i] = Info;
+      ArgInfos[i] = Info;
     }
   }
 
@@ -1251,9 +1258,9 @@ public:
   }
 };
 
-struct DependentNameLocInfo {
-  SourceLocation KeywordLoc;
-  SourceRange QualifierRange;
+// This is exactly the structure of an ElaboratedTypeLoc whose inner
+// type is some sort of TypeDeclTypeLoc.
+struct DependentNameLocInfo : ElaboratedLocInfo {
   SourceLocation NameLoc;
 };
 
@@ -1300,6 +1307,107 @@ public:
     setKeywordLoc(Loc);
     setQualifierRange(SourceRange(Loc));
     setNameLoc(Loc);
+  }
+};
+
+// This is exactly the structure of an ElaboratedTypeLoc whose inner
+// type is some sort of TemplateSpecializationTypeLoc.
+struct DependentTemplateSpecializationLocInfo : DependentNameLocInfo {
+  SourceLocation LAngleLoc;
+  SourceLocation RAngleLoc;
+  // followed by a TemplateArgumentLocInfo[]
+};
+
+class DependentTemplateSpecializationTypeLoc :
+    public ConcreteTypeLoc<UnqualTypeLoc,
+                           DependentTemplateSpecializationTypeLoc,
+                           DependentTemplateSpecializationType,
+                           DependentTemplateSpecializationLocInfo> {
+public:
+  SourceLocation getKeywordLoc() const {
+    return this->getLocalData()->KeywordLoc;
+  }
+  void setKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->KeywordLoc = Loc;
+  }
+
+  SourceRange getQualifierRange() const {
+    return this->getLocalData()->QualifierRange;
+  }
+  void setQualifierRange(SourceRange Range) {
+    this->getLocalData()->QualifierRange = Range;
+  }
+
+  SourceLocation getNameLoc() const {
+    return this->getLocalData()->NameLoc;
+  }
+  void setNameLoc(SourceLocation Loc) {
+    this->getLocalData()->NameLoc = Loc;
+  }
+
+  SourceLocation getLAngleLoc() const {
+    return this->getLocalData()->LAngleLoc;
+  }
+  void setLAngleLoc(SourceLocation Loc) {
+    this->getLocalData()->LAngleLoc = Loc;
+  }
+
+  SourceLocation getRAngleLoc() const {
+    return this->getLocalData()->RAngleLoc;
+  }
+  void setRAngleLoc(SourceLocation Loc) {
+    this->getLocalData()->RAngleLoc = Loc;
+  }
+
+  unsigned getNumArgs() const {
+    return getTypePtr()->getNumArgs();
+  }
+
+  void setArgLocInfo(unsigned i, TemplateArgumentLocInfo AI) {
+#ifndef NDEBUG
+    AI.validateForArgument(getTypePtr()->getArg(i));
+#endif
+    getArgInfos()[i] = AI;
+  }
+  TemplateArgumentLocInfo getArgLocInfo(unsigned i) const {
+    return getArgInfos()[i];
+  }
+
+  TemplateArgumentLoc getArgLoc(unsigned i) const {
+    return TemplateArgumentLoc(getTypePtr()->getArg(i), getArgLocInfo(i));
+  }
+
+  SourceRange getLocalSourceRange() const {
+    if (getKeywordLoc().isValid())
+      return SourceRange(getKeywordLoc(), getRAngleLoc());
+    else
+      return SourceRange(getQualifierRange().getBegin(), getRAngleLoc());
+  }
+
+  void copy(DependentTemplateSpecializationTypeLoc Loc) {
+    unsigned size = getFullDataSize();
+    assert(size == Loc.getFullDataSize());
+    memcpy(Data, Loc.Data, size);
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setKeywordLoc(Loc);
+    setQualifierRange(SourceRange(Loc));
+    setNameLoc(Loc);
+    setLAngleLoc(Loc);
+    setRAngleLoc(Loc);
+    TemplateSpecializationTypeLoc::initializeArgLocs(getNumArgs(),
+                                                     getTypePtr()->getArgs(),
+                                                     getArgInfos(), Loc);
+  }
+
+  unsigned getExtraLocalDataSize() const {
+    return getNumArgs() * sizeof(TemplateArgumentLocInfo);
+  }
+
+private:
+  TemplateArgumentLocInfo *getArgInfos() const {
+    return static_cast<TemplateArgumentLocInfo*>(getExtraLocalData());
   }
 };
 

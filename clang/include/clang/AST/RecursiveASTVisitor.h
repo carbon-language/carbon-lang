@@ -586,14 +586,12 @@ DEF_TRAVERSE_TYPE(ElaboratedType, {
   })
 
 DEF_TRAVERSE_TYPE(DependentNameType, {
-    if (T->getQualifier()) {
-      TRY_TO(TraverseNestedNameSpecifier(T->getQualifier()));
-    }
+    TRY_TO(TraverseNestedNameSpecifier(T->getQualifier()));
+  })
 
-    if (T->getTemplateId()) {
-      TRY_TO(VisitTemplateSpecializationType(
-          const_cast<TemplateSpecializationType *>(T->getTemplateId())));
-    }
+DEF_TRAVERSE_TYPE(DependentTemplateSpecializationType, {
+    TRY_TO(TraverseNestedNameSpecifier(T->getQualifier()));
+    TRY_TO(TraverseTemplateArguments(T->getArgs(), T->getNumArgs()));
   })
 
 DEF_TRAVERSE_TYPE(ObjCInterfaceType, { })

@@ -2624,6 +2624,18 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                                  OnlyDeduced, Depth, Used);
     break;
 
+  case Type::DependentTemplateSpecialization: {
+    const DependentTemplateSpecializationType *Spec
+      = cast<DependentTemplateSpecializationType>(T);
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef, Spec->getQualifier(),
+                                 OnlyDeduced, Depth, Used);
+    for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
+      MarkUsedTemplateParameters(SemaRef, Spec->getArg(I), OnlyDeduced, Depth,
+                                 Used);
+    break;
+  }
+
   case Type::TypeOf:
     if (!OnlyDeduced)
       MarkUsedTemplateParameters(SemaRef,

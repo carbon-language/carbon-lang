@@ -1492,6 +1492,28 @@ namespace {
       // FIXME: load appropriate source location.
       TL.setNameLoc(DS.getTypeSpecTypeLoc());
     }
+    void VisitDependentTemplateSpecializationTypeLoc(
+                                 DependentTemplateSpecializationTypeLoc TL) {
+      ElaboratedTypeKeyword Keyword
+        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
+      if (Keyword == ETK_Typename) {
+        TypeSourceInfo *TInfo = 0;
+        Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+        if (TInfo) {
+          TL.copy(cast<DependentTemplateSpecializationTypeLoc>(
+                    TInfo->getTypeLoc()));
+          return;
+        }
+      }
+      TL.initializeLocal(SourceLocation());
+      TL.setKeywordLoc(Keyword != ETK_None
+                       ? DS.getTypeSpecTypeLoc()
+                       : SourceLocation());
+      const CXXScopeSpec& SS = DS.getTypeSpecScope();
+      TL.setQualifierRange(SS.isEmpty() ? SourceRange() : SS.getRange());
+      // FIXME: load appropriate source location.
+      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+    }
 
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.

@@ -580,15 +580,31 @@ void TypePrinter::PrintDependentName(const DependentNameType *T, std::string &S)
     
     T->getQualifier()->print(OS, Policy);
     
-    if (const IdentifierInfo *Ident = T->getIdentifier())
-      OS << Ident->getName();
-    else if (const TemplateSpecializationType *Spec = T->getTemplateId()) {
-      Spec->getTemplateName().print(OS, Policy, true);
-      OS << TemplateSpecializationType::PrintTemplateArgumentList(
-                                                            Spec->getArgs(),
-                                                            Spec->getNumArgs(),
+    OS << T->getIdentifier()->getName();
+  }
+  
+  if (S.empty())
+    S.swap(MyString);
+  else
+    S = MyString + ' ' + S;
+}
+
+void TypePrinter::PrintDependentTemplateSpecialization(
+        const DependentTemplateSpecializationType *T, std::string &S) { 
+  std::string MyString;
+  {
+    llvm::raw_string_ostream OS(MyString);
+  
+    OS << TypeWithKeyword::getKeywordName(T->getKeyword());
+    if (T->getKeyword() != ETK_None)
+      OS << " ";
+    
+    T->getQualifier()->print(OS, Policy);    
+    OS << T->getIdentifier()->getName();
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                            T->getArgs(),
+                                                            T->getNumArgs(),
                                                             Policy);
-    }
   }
   
   if (S.empty())

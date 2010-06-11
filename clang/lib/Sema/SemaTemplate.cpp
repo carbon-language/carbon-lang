@@ -5288,15 +5288,31 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
     return CreateLocInfoType(T, TSI).getAsOpaquePtr();
   }
 
-  T = Context.getDependentNameType(ETK_Typename, NNS,
-                                   cast<TemplateSpecializationType>(T));
+  // TODO: it's really silly that we make a template specialization
+  // type earlier only to drop it again here.
+  TemplateSpecializationType *TST = cast<TemplateSpecializationType>(T);
+  DependentTemplateName *DTN =
+    TST->getTemplateName().getAsDependentTemplateName();
+  assert(DTN && "dependent template has non-dependent name?");
+  T = Context.getDependentTemplateSpecializationType(ETK_Typename, NNS,
+                                                     DTN->getIdentifier(),
+                                                     TST->getNumArgs(),
+                                                     TST->getArgs());
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
-  DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+  DependentTemplateSpecializationTypeLoc TL =
+    cast<DependentTemplateSpecializationTypeLoc>(TSI->getTypeLoc());
+  if (InnerTSI) {
+    TemplateSpecializationTypeLoc TSTL =
+      cast<TemplateSpecializationTypeLoc>(InnerTSI->getTypeLoc());
+    TL.setLAngleLoc(TSTL.getLAngleLoc());
+    TL.setRAngleLoc(TSTL.getRAngleLoc());
+    for (unsigned I = 0, E = TST->getNumArgs(); I != E; ++I)
+      TL.setArgLocInfo(I, TSTL.getArgLocInfo(I));
+  } else {
+    TL.initializeLocal(SourceLocation());
+  }
   TL.setKeywordLoc(TypenameLoc);
   TL.setQualifierRange(SS.getRange());
-
-  // FIXME: the inner type is a template here; remember its full source info
-  TL.setNameLoc(InnerTSI ? InnerTSI->getTypeLoc().getBeginLoc() : TemplateLoc);
   return CreateLocInfoType(T, TSI).getAsOpaquePtr();
 }
 
@@ -5425,85 +5441,7 @@ namespace {
     Sema::OwningExprResult TransformExpr(Expr *E) {
       return getSema().Owned(E->Retain());
     }
-
-    /// \brief Transforms a typename type by determining whether the type now
-    /// refers to a member of the current instantiation, and then
-    /// type-checking and building an ElaboratedType (when possible).
-    QualType TransformDependentNameType(TypeLocBuilder &TLB,
-                                        DependentNameTypeLoc TL,
-                                        QualType ObjectType);
   };
-}
-
-QualType
-CurrentInstantiationRebuilder::TransformDependentNameType(TypeLocBuilder &TLB,
-                                                     DependentNameTypeLoc TL, 
-                                                     QualType ObjectType) {
-  DependentNameType *T = TL.getTypePtr();
-
-  NestedNameSpecifier *NNS
-    = TransformNestedNameSpecifier(T->getQualifier(),
-                                   TL.getQualifierRange(),
-                                   ObjectType);
-  if (!NNS)
-    return QualType();
-
-  // If the nested-name-specifier did not change, and we cannot compute the
-  // context corresponding to the nested-name-specifier, then this
-  // typename type will not change; exit early.
-  CXXScopeSpec SS;
-  SS.setRange(TL.getQualifierRange());
-  SS.setScopeRep(NNS);
-
-  QualType Result;
-  if (NNS == T->getQualifier() && getSema().computeDeclContext(SS) == 0)
-    Result = QualType(T, 0);
-
-  // Rebuild the typename type, which will probably turn into a
-  // ElaboratedType.
-  else if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
-    QualType NewTemplateId
-      = TransformType(QualType(TemplateId, 0));
-    if (NewTemplateId.isNull())
-      return QualType();
-
-    if (NNS == T->getQualifier() &&
-        NewTemplateId == QualType(TemplateId, 0))
-      Result = QualType(T, 0);
-    else
-      Result = getDerived().RebuildDependentNameType(T->getKeyword(),
-                                                     NNS, NewTemplateId);
-  } else
-    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
-                                                   T->getIdentifier(),
-                                                   TL.getKeywordLoc(),
-                                                   TL.getQualifierRange(),
-                                                   TL.getNameLoc());
-
-  if (Result.isNull())
-    return QualType();
-
-  if (const ElaboratedType* ElabT = Result->getAs<ElaboratedType>()) {
-    QualType NamedT = ElabT->getNamedType();
-    if (isa<TemplateSpecializationType>(NamedT)) {
-      TemplateSpecializationTypeLoc NamedTLoc
-        = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
-      // FIXME: fill locations
-      NamedTLoc.initializeLocal(TL.getNameLoc());
-    } else {
-      TLB.pushTypeSpec(NamedT).setNameLoc(TL.getNameLoc());
-    }
-    ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(TL.getQualifierRange());
-  }
-  else {
-    DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(TL.getQualifierRange());
-    NewTL.setNameLoc(TL.getNameLoc());
-  }
-  return Result;
 }
 
 /// \brief Rebuilds a type within the context of the current instantiation.

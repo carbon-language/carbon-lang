@@ -90,6 +90,33 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
   }
 }
 
+bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
+  if (getKind() != Other.getKind()) return false;
+
+  switch (getKind()) {
+  case Null:
+  case Type:
+  case Declaration:
+  case Template:
+  case Expression:
+    return TypeOrValue == Other.TypeOrValue;
+
+  case Integral:
+    return getIntegralType() == Other.getIntegralType() &&
+           *getAsIntegral() == *Other.getAsIntegral();
+
+  case Pack:
+    if (Args.NumArgs != Other.Args.NumArgs) return false;
+    for (unsigned I = 0, E = Args.NumArgs; I != E; ++I)
+      if (!Args.Args[I].structurallyEquals(Other.Args.Args[I]))
+        return false;
+    return true;
+  }
+
+  // Suppress warnings.
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateArgumentLoc Implementation
 //===----------------------------------------------------------------------===//

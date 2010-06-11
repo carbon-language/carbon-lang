@@ -87,8 +87,8 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         if (!isClassName)
           return 0;
         
-        // We know from the grammar that this name refers to a type, so build a
-        // DependentNameType node to describe the type.
+        // We know from the grammar that this name refers to a type,
+        // so build a dependent node to describe the type.
         return CheckTypenameType(ETK_None,
                                  (NestedNameSpecifier *)SS->getScopeRep(), II,
                                  SourceLocation(), SS->getRange(), NameLoc
@@ -196,12 +196,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
     T = Context.getObjCInterfaceType(IDecl);
-  } else if (UnresolvedUsingTypenameDecl *UUDecl =
-               dyn_cast<UnresolvedUsingTypenameDecl>(IIDecl)) {
-    // FIXME: preserve source structure information.
-    T = Context.getDependentNameType(ETK_None, 
-                                     UUDecl->getTargetNestedNameSpecifier(), 
-                                     &II);
   } else {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();

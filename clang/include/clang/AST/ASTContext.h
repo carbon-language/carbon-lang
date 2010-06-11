@@ -98,6 +98,8 @@ class ASTContext {
   llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
+  llvm::FoldingSet<DependentTemplateSpecializationType>
+    DependentTemplateSpecializationTypes;
   llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
 
@@ -621,10 +623,16 @@ public:
                                 NestedNameSpecifier *NNS,
                                 const IdentifierInfo *Name,
                                 QualType Canon = QualType());
-  QualType getDependentNameType(ElaboratedTypeKeyword Keyword,
-                                NestedNameSpecifier *NNS,
-                                const TemplateSpecializationType *TemplateId,
-                                QualType Canon = QualType());
+
+  QualType getDependentTemplateSpecializationType(ElaboratedTypeKeyword Keyword,
+                                                  NestedNameSpecifier *NNS,
+                                                  const IdentifierInfo *Name,
+                                          const TemplateArgumentListInfo &Args);
+  QualType getDependentTemplateSpecializationType(ElaboratedTypeKeyword Keyword,
+                                                  NestedNameSpecifier *NNS,
+                                                  const IdentifierInfo *Name,
+                                                  unsigned NumArgs,
+                                                  const TemplateArgument *Args);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 

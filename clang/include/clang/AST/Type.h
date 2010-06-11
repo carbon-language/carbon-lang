@@ -2426,7 +2426,7 @@ class TemplateSpecializationType
   // The bool is whether this is a current instantiation.
   llvm::PointerIntPair<ASTContext*, 1, bool> ContextAndCurrentInstantiation;
 
-    /// \brief The name of the template being specialized.
+  /// \brief The name of the template being specialized.
   TemplateName Template;
 
   /// \brief - The number of template arguments named in this class
@@ -2476,7 +2476,7 @@ public:
   typedef const TemplateArgument * iterator;
 
   iterator begin() const { return getArgs(); }
-  iterator end() const;
+  iterator end() const; // defined inline in TemplateBase.h
 
   /// \brief Retrieve the name of the template that we are specializing.
   TemplateName getTemplateName() const { return Template; }
@@ -2491,7 +2491,7 @@ public:
 
   /// \brief Retrieve a specific template argument as a type.
   /// \precondition @c isArgType(Arg)
-  const TemplateArgument &getArg(unsigned Idx) const;
+  const TemplateArgument &getArg(unsigned Idx) const; // in TemplateBase.h
 
   bool isSugared() const {
     return !isDependentType() || isCurrentInstantiation();
@@ -2682,6 +2682,7 @@ class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these
 
 public:
+  ~ElaboratedType();
 
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
@@ -2726,11 +2727,8 @@ class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
-  typedef llvm::PointerUnion<const IdentifierInfo *,
-                             const TemplateSpecializationType *> NameType;
-
   /// \brief The type that this typename specifier refers to.
-  NameType Name;
+  const IdentifierInfo *Name;
 
   DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS, 
                     const IdentifierInfo *Name, QualType CanonType)
@@ -2740,17 +2738,10 @@ class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
            "DependentNameType requires a dependent nested-name-specifier");
   }
 
-  DependentNameType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
-                    const TemplateSpecializationType *Ty, QualType CanonType)
-    : TypeWithKeyword(Keyword, DependentName, CanonType, true),
-      NNS(NNS), Name(Ty) {
-    assert(NNS->isDependent() &&
-           "DependentNameType requires a dependent nested-name-specifier");
-  }
-
   friend class ASTContext;  // ASTContext creates these
 
 public:
+  virtual ~DependentNameType();
 
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
@@ -2762,13 +2753,7 @@ public:
   /// form of the original typename was terminated by an identifier,
   /// e.g., "typename T::type".
   const IdentifierInfo *getIdentifier() const {
-    return Name.dyn_cast<const IdentifierInfo *>();
-  }
-
-  /// \brief Retrieve the type named by the typename specifier as a
-  /// type specialization.
-  const TemplateSpecializationType *getTemplateId() const {
-    return Name.dyn_cast<const TemplateSpecializationType *>();
+    return Name;
   }
 
   bool isSugared() const { return false; }
@@ -2779,16 +2764,98 @@ public:
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, ElaboratedTypeKeyword Keyword,
-                      NestedNameSpecifier *NNS, NameType Name) {
+                      NestedNameSpecifier *NNS, const IdentifierInfo *Name) {
     ID.AddInteger(Keyword);
     ID.AddPointer(NNS);
-    ID.AddPointer(Name.getOpaqueValue());
+    ID.AddPointer(Name);
   }
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == DependentName;
   }
   static bool classof(const DependentNameType *T) { return true; }
+};
+
+/// DependentTemplateSpecializationType - Represents a template
+/// specialization type whose template cannot be resolved, e.g.
+///   A<T>::template B<T>
+class DependentTemplateSpecializationType :
+  public TypeWithKeyword, public llvm::FoldingSetNode {
+
+  /// The AST context.  Unfortunately required in order to profile
+  /// template arguments.
+  ASTContext &Context;
+
+  /// \brief The nested name specifier containing the qualifier.
+  NestedNameSpecifier *NNS;
+
+  /// \brief The identifier of the template.
+  const IdentifierInfo *Name;
+
+  /// \brief - The number of template arguments named in this class
+  /// template specialization.
+  unsigned NumArgs;
+
+  const TemplateArgument *getArgBuffer() const {
+    return reinterpret_cast<const TemplateArgument*>(this+1);
+  }
+  TemplateArgument *getArgBuffer() {
+    return reinterpret_cast<TemplateArgument*>(this+1);
+  }
+
+  DependentTemplateSpecializationType(ASTContext &Context,
+                                      ElaboratedTypeKeyword Keyword,
+                                      NestedNameSpecifier *NNS,
+                                      const IdentifierInfo *Name,
+                                      unsigned NumArgs,
+                                      const TemplateArgument *Args,
+                                      QualType Canon);
+
+  virtual void Destroy(ASTContext& C);
+
+  friend class ASTContext;  // ASTContext creates these
+
+public:
+  virtual ~DependentTemplateSpecializationType();
+
+  NestedNameSpecifier *getQualifier() const { return NNS; }
+  const IdentifierInfo *getIdentifier() const { return Name; }
+
+  /// \brief Retrieve the template arguments.
+  const TemplateArgument *getArgs() const {
+    return getArgBuffer();
+  }
+
+  /// \brief Retrieve the number of template arguments.
+  unsigned getNumArgs() const { return NumArgs; }
+
+  const TemplateArgument &getArg(unsigned Idx) const; // in TemplateBase.h
+
+  typedef const TemplateArgument * iterator;
+  iterator begin() const { return getArgs(); }
+  iterator end() const; // inline in TemplateBase.h
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Context, getKeyword(), NNS, Name, NumArgs, getArgs());
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      ASTContext &Context,
+                      ElaboratedTypeKeyword Keyword,
+                      NestedNameSpecifier *Qualifier,
+                      const IdentifierInfo *Name,
+                      unsigned NumArgs,
+                      const TemplateArgument *Args);
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == DependentTemplateSpecialization;
+  }
+  static bool classof(const DependentTemplateSpecializationType *T) {
+    return true;
+  }  
 };
 
 /// ObjCObjectType - Represents a class type in Objective C.

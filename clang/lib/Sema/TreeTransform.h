@@ -533,16 +533,27 @@ public:
   /// By default, builds a new DependentNameType type from the
   /// nested-name-specifier and the given type. Subclasses may override
   /// this routine to provide different behavior.
-  QualType RebuildDependentNameType(ElaboratedTypeKeyword Keyword,
-                                    NestedNameSpecifier *NNS, QualType T) {
-    if (NNS->isDependent()) {
-      // If the name is still dependent, just build a new dependent name type.
-      CXXScopeSpec SS;
-      SS.setScopeRep(NNS);
-      if (!SemaRef.computeDeclContext(SS))
-        return SemaRef.Context.getDependentNameType(Keyword, NNS,
-                                          cast<TemplateSpecializationType>(T));
-    }
+  QualType RebuildDependentTemplateSpecializationType(
+                                    ElaboratedTypeKeyword Keyword,
+                                    NestedNameSpecifier *NNS,
+                                    const IdentifierInfo *Name,
+                                    SourceLocation NameLoc,
+                                    const TemplateArgumentListInfo &Args) {
+    // Rebuild the template name.
+    // TODO: avoid TemplateName abstraction
+    TemplateName InstName =
+      getDerived().RebuildTemplateName(NNS, *Name, QualType());
+    
+    // If it's still dependent, make a dependent specialization.
+    if (InstName.getAsDependentTemplateName())
+      return SemaRef.Context.getDependentTemplateSpecializationType(
+                                          Keyword, NNS, Name, Args);
+
+    // Otherwise, make an elaborated type wrapping a non-dependent
+    // specialization.
+    QualType T =
+      getDerived().RebuildTemplateSpecializationType(InstName, NameLoc, Args);
+    if (T.isNull()) return QualType();
 
     return SemaRef.Context.getElaboratedType(Keyword, NNS, T);
   }
@@ -3298,50 +3309,82 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
   if (!NNS)
     return QualType();
 
-  QualType Result;
-
-  if (const TemplateSpecializationType *TemplateId = T->getTemplateId()) {
-    QualType NewTemplateId
-      = getDerived().TransformType(QualType(TemplateId, 0));
-    if (NewTemplateId.isNull())
-      return QualType();
-
-    if (!getDerived().AlwaysRebuild() &&
-        NNS == T->getQualifier() &&
-        NewTemplateId == QualType(TemplateId, 0))
-      return QualType(T, 0);
-
-    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
-                                                   NewTemplateId);
-  } else {
-    Result = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
-                                                   T->getIdentifier(),
-                                                   TL.getKeywordLoc(),
-                                                   TL.getQualifierRange(),
-                                                   TL.getNameLoc());
-  }
+  QualType Result
+    = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
+                                            T->getIdentifier(),
+                                            TL.getKeywordLoc(),
+                                            TL.getQualifierRange(),
+                                            TL.getNameLoc());
   if (Result.isNull())
     return QualType();
 
   if (const ElaboratedType* ElabT = Result->getAs<ElaboratedType>()) {
     QualType NamedT = ElabT->getNamedType();
-    if (isa<TemplateSpecializationType>(NamedT)) {
-      TemplateSpecializationTypeLoc NamedTLoc
-        = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
-      // FIXME: fill locations
-      NamedTLoc.initializeLocal(TL.getNameLoc());
-    } else {
-      TLB.pushTypeSpec(NamedT).setNameLoc(TL.getNameLoc());
-    }
+    TLB.pushTypeSpec(NamedT).setNameLoc(TL.getNameLoc());
+
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     NewTL.setQualifierRange(TL.getQualifierRange());
-  }
-  else {
+  } else {
     DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     NewTL.setQualifierRange(TL.getQualifierRange());
     NewTL.setNameLoc(TL.getNameLoc());
+  }
+  return Result;
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::
+          TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
+                                 DependentTemplateSpecializationTypeLoc TL,
+                                                       QualType ObjectType) {
+  DependentTemplateSpecializationType *T = TL.getTypePtr();
+
+  NestedNameSpecifier *NNS
+    = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
+                                                TL.getQualifierRange(),
+                                                ObjectType);
+  if (!NNS)
+    return QualType();
+
+  TemplateArgumentListInfo NewTemplateArgs;
+  NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
+  NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
+
+  for (unsigned I = 0, E = T->getNumArgs(); I != E; ++I) {
+    TemplateArgumentLoc Loc;
+    if (getDerived().TransformTemplateArgument(TL.getArgLoc(I), Loc))
+      return QualType();
+    NewTemplateArgs.addArgument(Loc);
+  }
+
+  QualType Result = getDerived().RebuildDependentTemplateSpecializationType(
+                                                     T->getKeyword(),
+                                                     NNS,
+                                                     T->getIdentifier(),
+                                                     TL.getNameLoc(),
+                                                     NewTemplateArgs);
+  if (Result.isNull())
+    return QualType();
+
+  if (const ElaboratedType *ElabT = dyn_cast<ElaboratedType>(Result)) {
+    QualType NamedT = ElabT->getNamedType();
+
+    // Copy information relevant to the template specialization.
+    TemplateSpecializationTypeLoc NamedTL
+      = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
+    NamedTL.setLAngleLoc(TL.getLAngleLoc());
+    NamedTL.setRAngleLoc(TL.getRAngleLoc());
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
+      NamedTL.setArgLocInfo(I, TL.getArgLocInfo(I));
+
+    // Copy information relevant to the elaborated type.
+    ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
+    NewTL.setKeywordLoc(TL.getKeywordLoc());
+    NewTL.setQualifierRange(TL.getQualifierRange());
+  } else {
+    TLB.pushFullCopy(TL);
   }
   return Result;
 }

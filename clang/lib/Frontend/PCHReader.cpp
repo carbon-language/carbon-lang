@@ -2367,6 +2367,18 @@ void TypeLocReader::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
   TL.setQualifierRange(Reader.ReadSourceRange(Record, Idx));
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
+void TypeLocReader::VisitDependentTemplateSpecializationTypeLoc(
+       DependentTemplateSpecializationTypeLoc TL) {
+  TL.setKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
+    TL.setArgLocInfo(I,
+        Reader.GetTemplateArgumentLocInfo(TL.getTypePtr()->getArg(I).getKind(),
+                                          Record, Idx));
+}
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

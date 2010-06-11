@@ -1911,44 +1911,69 @@ QualType ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
 }
 
 QualType
-ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
+ASTContext::getDependentTemplateSpecializationType(
+                                 ElaboratedTypeKeyword Keyword,
                                  NestedNameSpecifier *NNS,
-                                 const TemplateSpecializationType *TemplateId,
-                                 QualType Canon) {
+                                 const IdentifierInfo *Name,
+                                 const TemplateArgumentListInfo &Args) {
+  // TODO: avoid this copy
+  llvm::SmallVector<TemplateArgument, 16> ArgCopy;
+  for (unsigned I = 0, E = Args.size(); I != E; ++I)
+    ArgCopy.push_back(Args[I].getArgument());
+  return getDependentTemplateSpecializationType(Keyword, NNS, Name,
+                                                ArgCopy.size(),
+                                                ArgCopy.data());
+}
+
+QualType
+ASTContext::getDependentTemplateSpecializationType(
+                                 ElaboratedTypeKeyword Keyword,
+                                 NestedNameSpecifier *NNS,
+                                 const IdentifierInfo *Name,
+                                 unsigned NumArgs,
+                                 const TemplateArgument *Args) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
 
   llvm::FoldingSetNodeID ID;
-  DependentNameType::Profile(ID, Keyword, NNS, TemplateId);
+  DependentTemplateSpecializationType::Profile(ID, *this, Keyword, NNS,
+                                               Name, NumArgs, Args);
 
   void *InsertPos = 0;
-  DependentNameType *T
-    = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentTemplateSpecializationType *T
+    = DependentTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
 
-  if (Canon.isNull()) {
-    NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
-    QualType CanonType = getCanonicalType(QualType(TemplateId, 0));
-    ElaboratedTypeKeyword CanonKeyword = Keyword;
-    if (Keyword == ETK_None)
-      CanonKeyword = ETK_Typename;
-    if (CanonNNS != NNS || CanonKeyword != Keyword ||
-        CanonType != QualType(TemplateId, 0)) {
-      const TemplateSpecializationType *CanonTemplateId
-        = CanonType->getAs<TemplateSpecializationType>();
-      assert(CanonTemplateId &&
-             "Canonical type must also be a template specialization type");
-      Canon = getDependentNameType(CanonKeyword, CanonNNS, CanonTemplateId);
-    }
+  NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
 
-    DependentNameType *CheckT
-      = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(!CheckT && "Typename canonical type is broken"); (void)CheckT;
+  ElaboratedTypeKeyword CanonKeyword = Keyword;
+  if (Keyword == ETK_None) CanonKeyword = ETK_Typename;
+
+  bool AnyNonCanonArgs = false;
+  llvm::SmallVector<TemplateArgument, 16> CanonArgs(NumArgs);
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    CanonArgs[I] = getCanonicalTemplateArgument(Args[I]);
+    if (!CanonArgs[I].structurallyEquals(Args[I]))
+      AnyNonCanonArgs = true;
   }
 
-  T = new (*this) DependentNameType(Keyword, NNS, TemplateId, Canon);
+  QualType Canon;
+  if (AnyNonCanonArgs || CanonNNS != NNS || CanonKeyword != Keyword) {
+    Canon = getDependentTemplateSpecializationType(CanonKeyword, CanonNNS,
+                                                   Name, NumArgs,
+                                                   CanonArgs.data());
+
+    // Find the insert position again.
+    DependentTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
+  void *Mem = Allocate((sizeof(DependentTemplateSpecializationType) +
+                        sizeof(TemplateArgument) * NumArgs),
+                       TypeAlignment);
+  T = new (Mem) DependentTemplateSpecializationType(*this, Keyword, NNS,
+                                                    Name, NumArgs, Args, Canon);
   Types.push_back(T);
-  DependentNameTypes.InsertNode(T, InsertPos);
+  DependentTemplateSpecializationTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 

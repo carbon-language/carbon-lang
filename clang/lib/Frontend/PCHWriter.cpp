@@ -408,6 +408,16 @@ void TypeLocWriter::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
   Writer.AddSourceRange(TL.getQualifierRange(), Record);
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
+void TypeLocWriter::VisitDependentTemplateSpecializationTypeLoc(
+       DependentTemplateSpecializationTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
+  Writer.AddSourceRange(TL.getQualifierRange(), Record);
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+  Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
+  Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
+  for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
+    Writer.AddTemplateArgumentLoc(TL.getArgLoc(I), Record);
+}
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
