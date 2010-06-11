@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TimeValue.h"
+#include "lldb/Host/TimeValue.h"
+#include <stddef.h>
 
 // C Includes
 // C++ Includes
