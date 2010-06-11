@@ -124,7 +124,7 @@ void MicrosoftMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
   assert(false && "Can't yet mangle destructors!");
 }
 
-CXXABI *CreateMicrosoftCXXABI(CodeGenModule &CGM) {
+CXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {
   return new MicrosoftCXXABI(CGM);
 }
 

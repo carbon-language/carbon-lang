@@ -680,6 +680,8 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
     Res.push_back("-target-abi");
     Res.push_back(Opts.ABI);
   }
+  Res.push_back("-cxx-abi");
+  Res.push_back(Opts.CXXABI);
   for (unsigned i = 0, e = Opts.Features.size(); i != e; ++i) {
     Res.push_back("-target-feature");
     Res.push_back(Opts.Features[i]);
@@ -1367,6 +1369,7 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.ABI = Args.getLastArgValue(OPT_target_abi);
+  Opts.CXXABI = Args.getLastArgValue(OPT_cxx_abi);
   Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
   Opts.Triple = Args.getLastArgValue(OPT_triple);
   Opts.Features = Args.getAllArgValues(OPT_target_feature);
@@ -1374,6 +1377,10 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   // Use the host triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getHostTriple();
+
+  // Use the Itanium C++ ABI if unspecified.
+  if (Opts.CXXABI.empty())
+    Opts.CXXABI = "itanium";
 }
 
 //

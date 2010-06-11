@@ -18,6 +18,8 @@ include "OptParser.td"
 // Target Options
 //===----------------------------------------------------------------------===//
 
+def cxx_abi : Separate<"-cxx-abi">,
+  HelpText<"Target a particular C++ ABI type">;
 def target_abi : Separate<"-target-abi">,
   HelpText<"Target a particular ABI type">;
 def target_cpu : Separate<"-target-cpu">,

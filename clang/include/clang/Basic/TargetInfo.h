@@ -58,6 +58,7 @@ protected:
   const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
+  std::string CXXABI;
 
   unsigned HasAlignMac68kSupport : 1;
 
@@ -396,6 +397,11 @@ public:
     return "";
   }
 
+  /// getCXXABI - Get the C++ ABI in use.
+  virtual llvm::StringRef getCXXABI() const {
+    return CXXABI;
+  }
+
   /// setCPU - Target the specific CPU.
   ///
   /// \return - False on error (invalid CPU name).
@@ -410,6 +416,16 @@ public:
   /// \return - False on error (invalid ABI name).
   virtual bool setABI(const std::string &Name) {
     return false;
+  }
+
+  /// setCXXABI - Use this specific C++ ABI.
+  ///
+  /// \return - False on error (invalid ABI name).
+  virtual bool setCXXABI(const std::string &Name) {
+    if (Name != "itanium" && Name != "microsoft")
+      return false;
+    CXXABI = Name;
+    return true;
   }
 
   /// setFeatureEnabled - Enable or disable a specific target feature,

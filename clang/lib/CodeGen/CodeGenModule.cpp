@@ -86,8 +86,10 @@ void CodeGenModule::createObjCRuntime() {
 }
 
 void CodeGenModule::createCXXABI() {
-  // For now, just create an Itanium ABI.
-  ABI = CreateItaniumCXXABI(*this);
+  if (Context.Target.getCXXABI() == "microsoft")
+    ABI = CreateMicrosoftCXXABI(*this);
+  else
+    ABI = CreateItaniumCXXABI(*this);
 }
 
 void CodeGenModule::Release() {

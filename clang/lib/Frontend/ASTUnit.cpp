@@ -219,6 +219,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   // FIXME: This is broken, we should store the TargetOptions in the PCH.
   TargetOptions TargetOpts;
   TargetOpts.ABI = "";
+  TargetOpts.CXXABI = "itanium";
   TargetOpts.CPU = "";
   TargetOpts.Features.clear();
   TargetOpts.Triple = TargetTriple;

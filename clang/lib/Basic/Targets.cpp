@@ -2475,6 +2475,12 @@ TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
     return 0;
   }
 
+  // Set the target C++ ABI.
+  if (!Target->setCXXABI(Opts.CXXABI)) {
+    Diags.Report(diag::err_target_unknown_cxxabi) << Opts.CXXABI;
+    return 0;
+  }
+
   // Compute the default target features, we need the target to handle this
   // because features may have dependencies on one another.
   llvm::StringMap<bool> Features;

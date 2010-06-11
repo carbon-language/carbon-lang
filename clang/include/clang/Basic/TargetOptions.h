@@ -29,6 +29,10 @@ public:
   /// If given, the name of the target ABI to use.
   std::string ABI;
 
+  /// If given, the name of the target C++ ABI to use. If not given, defaults
+  /// to "itanium".
+  std::string CXXABI;
+
   /// The list of target specific features to enable or disable -- this should
   /// be a list of strings starting with by '+' or '-'.
   std::vector<std::string> Features;
