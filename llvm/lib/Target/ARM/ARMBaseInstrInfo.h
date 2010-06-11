@@ -116,11 +116,23 @@ namespace ARMII {
     // Thumb format
     ThumbFrm      = 24 << FormShift,
 
-    // NEON format
+    // NEON formats
     NEONFrm       = 25 << FormShift,
     NEONGetLnFrm  = 26 << FormShift,
     NEONSetLnFrm  = 27 << FormShift,
     NEONDupFrm    = 28 << FormShift,
+    NLdStFrm      = 31 << FormShift,
+    N1RegModImmFrm= 32 << FormShift,
+    N2RegFrm      = 33 << FormShift,
+    NVCVTFrm      = 34 << FormShift,
+    NVDupLnFrm    = 35 << FormShift,
+    N2RegVShLFrm  = 36 << FormShift,
+    N2RegVShRFrm  = 37 << FormShift,
+    N3RegFrm      = 38 << FormShift,
+    N3RegVShFrm   = 39 << FormShift,
+    NVExtFrm      = 40 << FormShift,
+    NVMulSLFrm    = 41 << FormShift,
+    NVTBLFrm      = 42 << FormShift,
 
     //===------------------------------------------------------------------===//
     // Misc flags.

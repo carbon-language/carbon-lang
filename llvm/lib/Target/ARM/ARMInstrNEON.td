@@ -98,17 +98,8 @@ def NEONfmin      : SDNode<"ARMISD::FMIN", SDTARMFMAX>;
 // NEON operand definitions
 //===----------------------------------------------------------------------===//
 
-def h8imm  : Operand<i8> {
-  let PrintMethod = "printHex8ImmOperand";
-}
-def h16imm : Operand<i16> {
-  let PrintMethod = "printHex16ImmOperand";
-}
-def h32imm : Operand<i32> {
-  let PrintMethod = "printHex32ImmOperand";
-}
-def h64imm : Operand<i64> {
-  let PrintMethod = "printHex64ImmOperand";
+def nModImm : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
 }
 
 //===----------------------------------------------------------------------===//
@@ -2864,38 +2855,38 @@ def vmovImm64 : PatLeaf<(build_vector), [{
 
 let isReMaterializable = 1 in {
 def VMOVv8i8  : N1ModImm<1, 0b000, 0b1110, 0, 0, 0, 1, (outs DPR:$dst),
-                         (ins h8imm:$SIMM), IIC_VMOVImm,
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i8", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v8i8 vmovImm8:$SIMM))]>;
 def VMOVv16i8 : N1ModImm<1, 0b000, 0b1110, 0, 1, 0, 1, (outs QPR:$dst),
-                         (ins h8imm:$SIMM), IIC_VMOVImm,
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i8", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v16i8 vmovImm8:$SIMM))]>;
 
-def VMOVv4i16 : N1ModImm<1, 0b000, {1,0,?,?}, 0, 0, {?}, 1, (outs DPR:$dst),
-                         (ins h16imm:$SIMM), IIC_VMOVImm,
+def VMOVv4i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 0, 0, 1, (outs DPR:$dst),
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i16", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v4i16 vmovImm16:$SIMM))]>;
-def VMOVv8i16 : N1ModImm<1, 0b000, {1,0,?,?}, 0, 1, {?}, 1, (outs QPR:$dst),
-                         (ins h16imm:$SIMM), IIC_VMOVImm,
+def VMOVv8i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 1, 0, 1, (outs QPR:$dst),
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i16", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v8i16 vmovImm16:$SIMM))]>;
 
-def VMOVv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, {?}, 1, (outs DPR:$dst),
-                         (ins h32imm:$SIMM), IIC_VMOVImm,
+def VMOVv2i32 : N1ModImm<1, 0b000, {0,?,?,0}, 0, 0, 0, 1, (outs DPR:$dst),
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v2i32 vmovImm32:$SIMM))]>;
-def VMOVv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, {?}, 1, (outs QPR:$dst),
-                         (ins h32imm:$SIMM), IIC_VMOVImm,
+def VMOVv4i32 : N1ModImm<1, 0b000, {0,?,?,0}, 0, 1, 0, 1, (outs QPR:$dst),
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v4i32 vmovImm32:$SIMM))]>;
 
 def VMOVv1i64 : N1ModImm<1, 0b000, 0b1110, 0, 0, 1, 1, (outs DPR:$dst),
-                         (ins h64imm:$SIMM), IIC_VMOVImm,
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v1i64 vmovImm64:$SIMM))]>;
 def VMOVv2i64 : N1ModImm<1, 0b000, 0b1110, 0, 1, 1, 1, (outs QPR:$dst),
-                         (ins h64imm:$SIMM), IIC_VMOVImm,
+                         (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i64", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v2i64 vmovImm64:$SIMM))]>;
 } // isReMaterializable

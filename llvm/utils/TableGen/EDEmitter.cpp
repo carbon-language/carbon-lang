@@ -592,10 +592,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("msr_mask");
   IMM("neg_zero");
   IMM("imm0_31");
-  IMM("h8imm");
-  IMM("h16imm");
-  IMM("h32imm");
-  IMM("h64imm");
+  IMM("nModImm");
   IMM("imm0_4095");
   IMM("jt2block_operand");
   IMM("t_imm_s4");

@@ -2077,42 +2077,12 @@ static unsigned decodeLaneIndex(uint32_t insn) {
 // imm3 = Inst{18-16}, imm4 = Inst{3-0}
 // Ref: Table A7-15 Modified immediate values for Advanced SIMD instructions.
 static uint64_t decodeN1VImm(uint32_t insn, ElemSize esize) {
+  unsigned char op = (insn >> 5) & 1;
   unsigned char cmode = (insn >> 8) & 0xF;
   unsigned char Imm8 = ((insn >> 24) & 1) << 7 |
                        ((insn >> 16) & 7) << 4 |
                        (insn & 0xF);
-  uint64_t Imm64 = 0;
-
-  switch (esize) {
-  case ESize8:
-    Imm64 = Imm8;
-    break;
-  case ESize16:
-    Imm64 = Imm8 << 8*(cmode >> 1 & 1);
-    break;
-  case ESize32: {
-    if (cmode == 12)
-      Imm64 = (Imm8 << 8) | 0xFF;
-    else if (cmode == 13)
-      Imm64 = (Imm8 << 16) | 0xFFFF;
-    else {
-      // Imm8 to be shifted left by how many bytes...
-      Imm64 = Imm8 << 8*(cmode >> 1 & 3);
-    }
-    break;
-  }
-  case ESize64: {
-    for (unsigned i = 0; i < 8; ++i)
-      if ((Imm8 >> i) & 1)
-        Imm64 |= (uint64_t)0xFF << 8*i;
-    break;
-  }
-  default:
-    assert(0 && "Unreachable code!");
-    return 0;
-  }
-
-  return Imm64;
+  return (op << 12) | (cmode << 8) | Imm8;
 }
 
 // A8.6.339 VMUL, VMULL (by scalar)

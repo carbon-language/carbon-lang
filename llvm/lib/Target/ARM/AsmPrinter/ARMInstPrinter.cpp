@@ -779,22 +779,36 @@ void ARMInstPrinter::printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum,
   O << '#' << MI->getOperand(OpNum).getImm();
 }
 
-void ARMInstPrinter::printHex8ImmOperand(const MCInst *MI, unsigned OpNum,
-                                         raw_ostream &O) {
-  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xff);
-}
+void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
+                                            raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  unsigned OpCmode = (Imm >> 8) & 0x1f;
+  unsigned Imm8 = Imm & 0xff;
+  uint64_t Val = 0;
 
-void ARMInstPrinter::printHex16ImmOperand(const MCInst *MI, unsigned OpNum,
-                                          raw_ostream &O) {
-  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffff);
-}
-
-void ARMInstPrinter::printHex32ImmOperand(const MCInst *MI, unsigned OpNum,
-                                          raw_ostream &O) {
-  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffffffff);
-}
-
-void ARMInstPrinter::printHex64ImmOperand(const MCInst *MI, unsigned OpNum,
-                                          raw_ostream &O) {
-  O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm());
+  if (OpCmode == 0xe) {
+    // 8-bit vector elements
+    Val = Imm8;
+  } else if ((OpCmode & 0xc) == 0x8) {
+    // 16-bit vector elements
+    unsigned ByteNum = (OpCmode & 0x6) >> 1;
+    Val = Imm8 << (8 * ByteNum);
+  } else if ((OpCmode & 0x8) == 0) {
+    // 32-bit vector elements, zero with one byte set
+    unsigned ByteNum = (OpCmode & 0x6) >> 1;
+    Val = Imm8 << (8 * ByteNum);
+  } else if ((OpCmode & 0xe) == 0xc) {
+    // 32-bit vector elements, one byte with low bits set
+    unsigned ByteNum = (OpCmode & 0x1);
+    Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (1 - ByteNum)));
+  } else if (OpCmode == 0x1e) {
+    // 64-bit vector elements
+    for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
+      if ((Imm >> ByteNum) & 1)
+        Val |= (uint64_t)0xff << (8 * ByteNum);
+    }
+  } else {
+    assert(false && "Unsupported NEON immediate");
+  }
+  O << "#0x" << utohexstr(Val);
 }

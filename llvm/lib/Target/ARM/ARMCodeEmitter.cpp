@@ -139,6 +139,8 @@ namespace {
 
     void emitMiscInstruction(const MachineInstr &MI);
 
+    void emitNEON1RegModImm(const MachineInstr &MI);
+
     /// getMachineOpValue - Return binary encoding of operand. If the machine
     /// operand requires relocation, record the relocation and return zero.
     unsigned getMachineOpValue(const MachineInstr &MI,const MachineOperand &MO);
@@ -407,6 +409,10 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   case ARMII::VFPMiscFrm:
     emitMiscInstruction(MI);
+    break;
+  // NEON instructions.
+  case ARMII::N1RegModImmFrm:
+    emitNEON1RegModImm(MI);
     break;
   }
   MCE.processDebugLoc(MI.getDebugLoc(), false);
@@ -1537,6 +1543,34 @@ void ARMCodeEmitter::emitMiscInstruction(const MachineInstr &MI) {
   }
   }
 
+  emitWordLE(Binary);
+}
+
+static unsigned encodeNEONRd(const MachineInstr &MI, unsigned OpIdx) {
+  unsigned RegD = MI.getOperand(OpIdx).getReg();
+  unsigned Binary = 0;
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD);
+  Binary |= (RegD & 0xf) << ARMII::RegRdShift;
+  Binary |= ((RegD >> 4) & 1) << ARMII::D_BitShift;
+  return Binary;
+}
+
+void ARMCodeEmitter::emitNEON1RegModImm(const MachineInstr &MI) {
+  unsigned Binary = getBinaryCodeForInstr(MI);
+  // Destination register is encoded in Dd.
+  Binary |= encodeNEONRd(MI, 0);
+  // Immediate fields: Op, Cmode, I, Imm3, Imm4
+  unsigned Imm = MI.getOperand(1).getImm();
+  unsigned Op = (Imm >> 12) & 1;
+  Binary |= (Op << 5);
+  unsigned Cmode = (Imm >> 8) & 0xf;
+  Binary |= (Cmode << 8);
+  unsigned I = (Imm >> 7) & 1;
+  Binary |= (I << 24);
+  unsigned Imm3 = (Imm >> 4) & 0x7;
+  Binary |= (Imm3 << 16);
+  unsigned Imm4 = Imm & 0xf;
+  Binary |= Imm4;
   emitWordLE(Binary);
 }
 

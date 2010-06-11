@@ -175,23 +175,8 @@ namespace {
                                raw_ostream &O);
     void printVFPf64ImmOperand(const MachineInstr *MI, int OpNum,
                                raw_ostream &O);
-
-    void printHex8ImmOperand(const MachineInstr *MI, int OpNum,
-                             raw_ostream &O) {
-      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xff);
-    }
-    void printHex16ImmOperand(const MachineInstr *MI, int OpNum,
-                              raw_ostream &O) {
-      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffff);
-    }
-    void printHex32ImmOperand(const MachineInstr *MI, int OpNum,
-                              raw_ostream &O) {
-      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffffffff);
-    }
-    void printHex64ImmOperand(const MachineInstr *MI, int OpNum,
-                              raw_ostream &O) {
-      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm());
-    }
+    void printNEONModImmOperand(const MachineInstr *MI, int OpNum,
+                                raw_ostream &O);
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode,
@@ -1037,6 +1022,40 @@ void ARMAsmPrinter::printVFPf64ImmOperand(const MachineInstr *MI, int OpNum,
     O << "\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, FP, /*PrintType=*/false);
   }
+}
+
+void ARMAsmPrinter::printNEONModImmOperand(const MachineInstr *MI, int OpNum,
+                                           raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  unsigned OpCmode = (Imm >> 8) & 0x1f;
+  unsigned Imm8 = Imm & 0xff;
+  uint64_t Val = 0;
+
+  if (OpCmode == 0xe) {
+    // 8-bit vector elements
+    Val = Imm8;
+  } else if ((OpCmode & 0xc) == 0x8) {
+    // 16-bit vector elements
+    unsigned ByteNum = (OpCmode & 0x6) >> 1;
+    Val = Imm8 << (8 * ByteNum);
+  } else if ((OpCmode & 0x8) == 0) {
+    // 32-bit vector elements, zero with one byte set
+    unsigned ByteNum = (OpCmode & 0x6) >> 1;
+    Val = Imm8 << (8 * ByteNum);
+  } else if ((OpCmode & 0xe) == 0xc) {
+    // 32-bit vector elements, one byte with low bits set
+    unsigned ByteNum = (OpCmode & 0x1);
+    Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (1 - ByteNum)));
+  } else if (OpCmode == 0x1e) {
+    // 64-bit vector elements
+    for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
+      if ((Imm >> ByteNum) & 1)
+        Val |= (uint64_t)0xff << (8 * ByteNum);
+    }
+  } else {
+    assert(false && "Unsupported NEON immediate");
+  }
+  O << "#0x" << utohexstr(Val);
 }
 
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
