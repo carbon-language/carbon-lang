@@ -746,25 +746,46 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   QualType EltTy = VT->getElementType();
   llvm::SmallVector<APValue, 4> Elements;
 
-  for (unsigned i = 0; i < NumElements; i++) {
+  // If a vector is initialized with a single element, that value
+  // becomes every element of the vector, not just the first.
+  // This is the behavior described in the IBM AltiVec documentation.
+  if (NumInits == 1) {
+    APValue InitValue;
     if (EltTy->isIntegerType()) {
       llvm::APSInt sInt(32);
-      if (i < NumInits) {
-        if (!EvaluateInteger(E->getInit(i), sInt, Info))
-          return APValue();
-      } else {
-        sInt = Info.Ctx.MakeIntValue(0, EltTy);
-      }
-      Elements.push_back(APValue(sInt));
+      if (!EvaluateInteger(E->getInit(0), sInt, Info))
+        return APValue();
+      InitValue = APValue(sInt);
     } else {
       llvm::APFloat f(0.0);
-      if (i < NumInits) {
-        if (!EvaluateFloat(E->getInit(i), f, Info))
-          return APValue();
+      if (!EvaluateFloat(E->getInit(0), f, Info))
+        return APValue();
+      InitValue = APValue(f);
+    }
+    for (unsigned i = 0; i < NumElements; i++) {
+      Elements.push_back(InitValue);
+    }
+  } else {
+    for (unsigned i = 0; i < NumElements; i++) {
+      if (EltTy->isIntegerType()) {
+        llvm::APSInt sInt(32);
+        if (i < NumInits) {
+          if (!EvaluateInteger(E->getInit(i), sInt, Info))
+            return APValue();
+        } else {
+          sInt = Info.Ctx.MakeIntValue(0, EltTy);
+        }
+        Elements.push_back(APValue(sInt));
       } else {
-        f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
+        llvm::APFloat f(0.0);
+        if (i < NumInits) {
+          if (!EvaluateFloat(E->getInit(i), f, Info))
+            return APValue();
+        } else {
+          f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
+        }
+        Elements.push_back(APValue(f));
       }
-      Elements.push_back(APValue(f));
     }
   }
   return APValue(&Elements[0], Elements.size());
