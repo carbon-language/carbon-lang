@@ -155,7 +155,9 @@ bool StandardConversionSequence::isPointerConversionToBool() const {
   // check for their presence as well as checking whether FromType is
   // a pointer.
   if (getToType(1)->isBooleanType() &&
-      (getFromType()->isPointerType() || getFromType()->isBlockPointerType() ||
+      (getFromType()->isPointerType() ||
+       getFromType()->isObjCObjectPointerType() ||
+       getFromType()->isBlockPointerType() ||
        First == ICK_Array_To_Pointer || First == ICK_Function_To_Pointer))
     return true;
 

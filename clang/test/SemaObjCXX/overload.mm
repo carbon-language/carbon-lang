@@ -93,3 +93,12 @@ void (*_NSExceptionRaiser(void))(NSException *) {
     objc_exception_functions_t exc_funcs;
     return exc_funcs.throw_exc; // expected-warning{{incompatible pointer types returning 'void (*)(NSException *)', expected 'void (*)(id)'}}
 }
+
+namespace test5 {
+  void foo(bool);
+  void foo(void *);
+
+  void test(id p) {
+    foo(p);
+  }
+}
