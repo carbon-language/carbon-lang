@@ -454,6 +454,9 @@ static int MacroIDCompare(const void* a, const void* b) {
 }
 
 static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
+  // Ignore unknown pragmas.
+  PP.AddPragmaHandler(0, new EmptyPragmaHandler());
+
   // -dM mode just scans and ignores all tokens in the files, then dumps out
   // the macro table at the end.
   PP.EnterMainSourceFile();

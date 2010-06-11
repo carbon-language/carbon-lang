@@ -9,6 +9,7 @@
 
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Pragma.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/FileManager.h"
@@ -222,6 +223,9 @@ void ParseOnlyAction::ExecuteAction() {
 
 void PreprocessOnlyAction::ExecuteAction() {
   Preprocessor &PP = getCompilerInstance().getPreprocessor();
+
+  // Ignore unknown pragmas.
+  PP.AddPragmaHandler(0, new EmptyPragmaHandler());
 
   Token Tok;
   // Start parsing the specified input file.

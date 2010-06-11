@@ -27,6 +27,14 @@ PragmaHandler::~PragmaHandler() {
 }
 
 //===----------------------------------------------------------------------===//
+// EmptyPragmaHandler Implementation.
+//===----------------------------------------------------------------------===//
+
+EmptyPragmaHandler::EmptyPragmaHandler() : PragmaHandler(0) {}
+
+void EmptyPragmaHandler::HandlePragma(Preprocessor &PP, Token &FirstToken) {}
+
+//===----------------------------------------------------------------------===//
 // PragmaNamespace Implementation.
 //===----------------------------------------------------------------------===//
 

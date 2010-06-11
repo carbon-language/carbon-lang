@@ -46,6 +46,15 @@ public:
   virtual PragmaNamespace *getIfNamespace() { return 0; }
 };
 
+/// EmptyPragmaHandler - A pragma handler which takes no action, which can be
+/// used to ignore particular pragmas.
+class EmptyPragmaHandler : public PragmaHandler {
+public:
+  EmptyPragmaHandler();
+
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
+};
+
 /// PragmaNamespace - This PragmaHandler subdivides the namespace of pragmas,
 /// allowing hierarchical pragmas to be defined.  Common examples of namespaces
 /// are "#pragma GCC", "#pragma STDC", and "#pragma omp", but any namespaces may
