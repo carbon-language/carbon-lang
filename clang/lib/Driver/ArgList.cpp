@@ -147,8 +147,8 @@ void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
                          OptSpecifier Id1, OptSpecifier Id2) const {
   for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
          ie = filtered_end(); it != ie; ++it) {
-    it->claim();
-    it->render(*this, Output);
+    (*it)->claim();
+    (*it)->render(*this, Output);
   }
 }
 
@@ -156,9 +156,9 @@ void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
                               OptSpecifier Id1, OptSpecifier Id2) const {
   for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
          ie = filtered_end(); it != ie; ++it) {
-    it->claim();
-    for (unsigned i = 0, e = it->getNumValues(); i != e; ++i)
-      Output.push_back(it->getValue(*this, i));
+    (*it)->claim();
+    for (unsigned i = 0, e = (*it)->getNumValues(); i != e; ++i)
+      Output.push_back((*it)->getValue(*this, i));
   }
 }
 
@@ -167,14 +167,14 @@ void ArgList::AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
                                    bool Joined) const {
   for (arg_iterator it = filtered_begin(Id0),
          ie = filtered_end(); it != ie; ++it) {
-    it->claim();
+    (*it)->claim();
 
     if (Joined) {
       Output.push_back(MakeArgString(llvm::StringRef(Translation) +
-                                     it->getValue(*this, 0)));
+                                     (*it)->getValue(*this, 0)));
     } else {
       Output.push_back(Translation);
-      Output.push_back(it->getValue(*this, 0));
+      Output.push_back((*it)->getValue(*this, 0));
     }
   }
 }
@@ -182,7 +182,7 @@ void ArgList::AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
 void ArgList::ClaimAllArgs(OptSpecifier Id0) const {
   for (arg_iterator it = filtered_begin(Id0),
          ie = filtered_end(); it != ie; ++it)
-      it->claim();
+    (*it)->claim();
 }
 
 const char *ArgList::MakeArgString(const llvm::Twine &T) const {

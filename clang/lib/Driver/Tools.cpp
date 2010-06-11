@@ -157,18 +157,18 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   for (arg_iterator it = Args.filtered_begin(options::OPT_MT,
                                              options::OPT_MQ),
          ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    A->claim();
 
-    it->claim();
-
-    if (it->getOption().matches(options::OPT_MQ)) {
+    if (A->getOption().matches(options::OPT_MQ)) {
       CmdArgs.push_back("-MT");
       llvm::SmallString<128> Quoted;
-      QuoteTarget(it->getValue(Args), Quoted);
+      QuoteTarget(A->getValue(Args), Quoted);
       CmdArgs.push_back(Args.MakeArgString(Quoted));
 
     // -MT flag - no change
     } else {
-      it->render(Args, CmdArgs);
+      A->render(Args, CmdArgs);
     }
   }
 
@@ -639,8 +639,8 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
 
   for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
          ie = Args.filtered_end(); it != ie; ++it) {
-    llvm::StringRef Name = it->getOption().getName();
-    it->claim();
+    llvm::StringRef Name = (*it)->getOption().getName();
+    (*it)->claim();
 
     // Skip over "-m".
     assert(Name.startswith("-m") && "Invalid feature name.");
@@ -1428,14 +1428,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgValues(CmdArgs, options::OPT_Xclang);
   for (arg_iterator it = Args.filtered_begin(options::OPT_mllvm),
          ie = Args.filtered_end(); it != ie; ++it) {
-    it->claim();
+    (*it)->claim();
 
     // We translate this by hand to the -cc1 argument, since nightly test uses
     // it and developers have been trained to spell it with -mllvm.
-    if (llvm::StringRef(it->getValue(Args, 0)) == "-disable-llvm-optzns")
+    if (llvm::StringRef((*it)->getValue(Args, 0)) == "-disable-llvm-optzns")
       CmdArgs.push_back("-disable-llvm-optzns");
     else
-      it->render(Args, CmdArgs);
+      (*it)->render(Args, CmdArgs);
   }
 
   if (Output.getType() == types::TY_Dependencies) {
@@ -1492,8 +1492,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // we are allowing compilation to continue.
   for (arg_iterator it = Args.filtered_begin(options::OPT_pg),
          ie = Args.filtered_end(); it != ie; ++it) {
-    it->claim();
-    D.Diag(clang::diag::warn_drv_clang_unsupported) << it->getAsString(Args);
+    (*it)->claim();
+    D.Diag(clang::diag::warn_drv_clang_unsupported) << (*it)->getAsString(Args);
   }
 
   // Claim some arguments which clang supports automatically.
@@ -1860,10 +1860,10 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     for (arg_iterator it = Args.filtered_begin(options::OPT_f_Group,
                                                options::OPT_fsyntax_only),
            ie = Args.filtered_end(); it != ie; ++it) {
-      if (!it->getOption().matches(options::OPT_fbuiltin_strcat) &&
-          !it->getOption().matches(options::OPT_fbuiltin_strcpy)) {
-        it->claim();
-        it->render(Args, CmdArgs);
+      if (!(*it)->getOption().matches(options::OPT_fbuiltin_strcat) &&
+          !(*it)->getOption().matches(options::OPT_fbuiltin_strcpy)) {
+        (*it)->claim();
+        (*it)->render(Args, CmdArgs);
       }
     }
   } else

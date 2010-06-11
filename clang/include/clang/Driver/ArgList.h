@@ -52,9 +52,9 @@ namespace driver {
     void SkipToNextArg();
 
   public:
-    typedef const Arg*                  value_type;
-    typedef const Arg*                  reference;
-    typedef const Arg*                  pointer;
+    typedef Arg * const *                 value_type;
+    typedef Arg * const &                 reference;
+    typedef Arg * const *                 pointer;
     typedef std::forward_iterator_tag   iterator_category;
     typedef std::ptrdiff_t              difference_type;
 
@@ -67,7 +67,7 @@ namespace driver {
 
     operator const Arg*() { return *Current; }
     reference operator*() const { return *Current; }
-    pointer operator->() const { return *Current; }
+    pointer operator->() const { return Current; }
 
     arg_iterator &operator++() {
       ++Current;

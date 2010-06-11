@@ -1092,33 +1092,34 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   // Add -I... and -F... options in order.
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath(it->getValue(Args), frontend::Angled, true,
-                 /*IsFramework=*/ it->getOption().matches(OPT_F));
+    Opts.AddPath((*it)->getValue(Args), frontend::Angled, true,
+                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F));
 
   // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
   llvm::StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
   for (arg_iterator it = Args.filtered_begin(OPT_iprefix, OPT_iwithprefix,
                                              OPT_iwithprefixbefore),
          ie = Args.filtered_end(); it != ie; ++it) {
-    if (it->getOption().matches(OPT_iprefix))
-      Prefix = it->getValue(Args);
-    else if (it->getOption().matches(OPT_iwithprefix))
-      Opts.AddPath(Prefix.str() + it->getValue(Args),
+    const Arg *A = *it;
+    if (A->getOption().matches(OPT_iprefix))
+      Prefix = A->getValue(Args);
+    else if (A->getOption().matches(OPT_iwithprefix))
+      Opts.AddPath(Prefix.str() + A->getValue(Args),
                    frontend::System, false, false);
     else
-      Opts.AddPath(Prefix.str() + it->getValue(Args),
+      Opts.AddPath(Prefix.str() + A->getValue(Args),
                    frontend::Angled, false, false);
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath(it->getValue(Args), frontend::After, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::After, true, false);
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath(it->getValue(Args), frontend::Quoted, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::Quoted, true, false);
   for (arg_iterator it = Args.filtered_begin(OPT_isystem),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath(it->getValue(Args), frontend::System, true, false);
+    Opts.AddPath((*it)->getValue(Args), frontend::System, true, false);
 
   // FIXME: Need options for the various environment variables!
 }
@@ -1325,10 +1326,10 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   // Add macros from the command line.
   for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
          ie = Args.filtered_end(); it != ie; ++it) {
-    if (it->getOption().matches(OPT_D))
-      Opts.addMacroDef(it->getValue(Args));
+    if ((*it)->getOption().matches(OPT_D))
+      Opts.addMacroDef((*it)->getValue(Args));
     else
-      Opts.addMacroUndef(it->getValue(Args));
+      Opts.addMacroUndef((*it)->getValue(Args));
   }
 
   Opts.MacroIncludes = Args.getAllArgValues(OPT_imacros);
@@ -1337,16 +1338,17 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   for (arg_iterator it = Args.filtered_begin(OPT_include, OPT_include_pch,
                                              OPT_include_pth),
          ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
     // PCH is handled specially, we need to extra the original include path.
-    if (it->getOption().matches(OPT_include_pch)) {
+    if (A->getOption().matches(OPT_include_pch)) {
       std::string OriginalFile =
-        PCHReader::getOriginalSourceFile(it->getValue(Args), Diags);
+        PCHReader::getOriginalSourceFile(A->getValue(Args), Diags);
       if (OriginalFile.empty())
         continue;
 
       Opts.Includes.push_back(OriginalFile);
     } else
-      Opts.Includes.push_back(it->getValue(Args));
+      Opts.Includes.push_back(A->getValue(Args));
   }
 
   // Include 'altivec.h' if -faltivec option present
@@ -1355,11 +1357,12 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
 
   for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
          ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
     std::pair<llvm::StringRef,llvm::StringRef> Split =
-      llvm::StringRef(it->getValue(Args)).split(';');
+      llvm::StringRef(A->getValue(Args)).split(';');
 
     if (Split.second.empty()) {
-      Diags.Report(diag::err_drv_invalid_remap_file) << it->getAsString(Args);
+      Diags.Report(diag::err_drv_invalid_remap_file) << A->getAsString(Args);
       continue;
     }
 
@@ -1414,7 +1417,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // Issue errors on unknown arguments.
   for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
          ie = Args->filtered_end(); it != ie; ++it)
-    Diags.Report(diag::err_drv_unknown_argument) << it->getAsString(*Args);
+    Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
 
   ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags);
   ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, Diags);

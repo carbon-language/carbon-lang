@@ -136,7 +136,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   // Issue errors on unknown arguments.
   for (arg_iterator it = Args->filtered_begin(cc1asoptions::OPT_UNKNOWN),
          ie = Args->filtered_end(); it != ie; ++it)
-    Diags.Report(diag::err_drv_unknown_argument) << it->getAsString(*Args);
+    Diags.Report(diag::err_drv_unknown_argument) << (*it) ->getAsString(*Args);
 
   // Construct the invocation.
 
@@ -154,10 +154,11 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
     bool First = true;
     for (arg_iterator it = Args->filtered_begin(OPT_INPUT),
            ie = Args->filtered_end(); it != ie; ++it, First=false) {
+      const Arg *A = it;
       if (First)
-        Opts.InputFile = it->getValue(*Args);
+        Opts.InputFile = A->getValue(*Args);
       else
-        Diags.Report(diag::err_drv_unknown_argument) << it->getAsString(*Args);
+        Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
     }
   }
   Opts.LLVMArgs = Args->getAllArgValues(OPT_mllvm);
