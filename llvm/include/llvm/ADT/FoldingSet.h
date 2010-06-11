@@ -196,6 +196,10 @@ protected:
 template<typename T> struct FoldingSetTrait {
   static inline void Profile(const T& X, FoldingSetNodeID& ID) { X.Profile(ID);}
   static inline void Profile(T& X, FoldingSetNodeID& ID) { X.Profile(ID); }
+  template <typename Ctx>
+  static inline void Profile(T &X, FoldingSetNodeID &ID, Ctx Context) {
+    X.Profile(ID, Context);
+  }
 };
 
 //===--------------------------------------------------------------------===//
@@ -316,6 +320,77 @@ public:
   /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
   /// return it.  If not, return the insertion token that will make insertion
   /// faster.
+  T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
+    return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID, InsertPos));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// ContextualFoldingSet - This template class is a further refinement
+/// of FoldingSet which provides a context argument when calling
+/// Profile on its nodes.  Currently, that argument is fixed at
+/// initialization time.
+///
+/// T must be a subclass of FoldingSetNode and implement a Profile
+/// function with signature
+///   void Profile(llvm::FoldingSetNodeID &, Ctx);
+template <class T, class Ctx>
+class ContextualFoldingSet : public FoldingSetImpl {
+  // Unfortunately, this can't derive from FoldingSet<T> because the
+  // construction vtable for FoldingSet<T> requires
+  // FoldingSet<T>::GetNodeProfile to be instantiated, which in turn
+  // requires a single-argument T::Profile().
+
+private:
+  Ctx Context;
+
+  /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
+  /// way to convert nodes into a unique specifier.
+  virtual void GetNodeProfile(FoldingSetNodeID &ID,
+                              FoldingSetImpl::Node *N) const {
+    T *TN = static_cast<T *>(N);
+
+    // We must use explicit template arguments in case Ctx is a
+    // reference type.
+    FoldingSetTrait<T>::template Profile<Ctx>(*TN, ID, Context);
+  }
+
+public:
+  explicit ContextualFoldingSet(Ctx Context, unsigned Log2InitSize = 6)
+  : FoldingSetImpl(Log2InitSize), Context(Context)
+  {}
+
+  Ctx getContext() const { return Context; }
+
+
+  typedef FoldingSetIterator<T> iterator;
+  iterator begin() { return iterator(Buckets); }
+  iterator end() { return iterator(Buckets+NumBuckets); }
+
+  typedef FoldingSetIterator<const T> const_iterator;
+  const_iterator begin() const { return const_iterator(Buckets); }
+  const_iterator end() const { return const_iterator(Buckets+NumBuckets); }
+
+  typedef FoldingSetBucketIterator<T> bucket_iterator;
+
+  bucket_iterator bucket_begin(unsigned hash) {
+    return bucket_iterator(Buckets + (hash & (NumBuckets-1)));
+  }
+
+  bucket_iterator bucket_end(unsigned hash) {
+    return bucket_iterator(Buckets + (hash & (NumBuckets-1)), true);
+  }
+
+  /// GetOrInsertNode - If there is an existing simple Node exactly
+  /// equal to the specified node, return it.  Otherwise, insert 'N'
+  /// and return it instead.
+  T *GetOrInsertNode(Node *N) {
+    return static_cast<T *>(FoldingSetImpl::GetOrInsertNode(N));
+  }
+
+  /// FindNodeOrInsertPos - Look up the node specified by ID.  If it
+  /// exists, return it.  If not, return the insertion token that will
+  /// make insertion faster.
   T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
     return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID, InsertPos));
   }
