@@ -45,3 +45,4 @@ template <typename T> struct EncodeTest {
 
 template struct EncodeTest<int>;
 template struct EncodeTest<double>;
+template struct EncodeTest<wchar_t>;
