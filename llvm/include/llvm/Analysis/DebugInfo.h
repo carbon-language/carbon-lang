@@ -56,6 +56,7 @@ namespace llvm {
     }
 
     GlobalVariable *getGlobalVariableField(unsigned Elt) const;
+    Function *getFunctionField(unsigned Elt) const;
 
   public:
     explicit DIDescriptor() : DbgNode(0) {}
@@ -409,6 +410,8 @@ namespace llvm {
     /// describes - Return true if this subprogram provides debugging
     /// information for the function F.
     bool describes(const Function *F);
+
+    Function *getFunction() const { return getFunctionField(16); }
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -658,7 +661,8 @@ namespace llvm {
                                   unsigned VIndex = 0,
                                   DIType = DIType(),
                                   bool isArtificial = 0,
-                                  bool isOptimized = false);
+                                  bool isOptimized = false,
+                                  Function *Fn = 0);
 
     /// CreateSubprogramDefinition - Create new subprogram descriptor for the
     /// given declaration. 

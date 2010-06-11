@@ -73,6 +73,15 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
   return 0;
 }
 
+Function *DIDescriptor::getFunctionField(unsigned Elt) const {
+  if (DbgNode == 0)
+    return 0;
+
+  if (Elt < DbgNode->getNumOperands())
+      return dyn_cast_or_null<Function>(DbgNode->getOperand(Elt));
+  return 0;
+}
+
 unsigned DIVariable::getNumAddrElements() const {
   return DbgNode->getNumOperands()-6;
 }
@@ -938,7 +947,8 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          unsigned VK, unsigned VIndex,
                                          DIType ContainingType,
                                          bool isArtificial,
-                                         bool isOptimized) {
+                                         bool isOptimized,
+                                         Function *Fn) {
 
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
@@ -956,9 +966,10 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
     ContainingType,
     ConstantInt::get(Type::getInt1Ty(VMContext), isArtificial),
-    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized)
+    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
+    Fn
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 17));
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
