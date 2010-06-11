@@ -14,7 +14,7 @@
 
 using namespace lldb_private;
 
-typedef enum PluginAction
+enum PluginAction
 {
     ePluginRegisterInstance,
     ePluginUnregisterInstance,
@@ -25,7 +25,7 @@ typedef enum PluginAction
 #pragma mark ABI
 
 
-typedef struct ABIInstance
+struct ABIInstance
 {
     ABIInstance() :
         name(),
@@ -125,7 +125,7 @@ PluginManager::GetABICreateCallbackAtIndex (uint32_t idx)
     ABIInstance instance;
     if (AccessABIInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 ABICreateInstance
@@ -148,7 +148,7 @@ PluginManager::GetABICreateCallbackForPluginName (const char *name)
 #pragma mark Disassembler
 
 
-typedef struct DisassemblerInstance
+struct DisassemblerInstance
 {
     DisassemblerInstance() :
         name(),
@@ -248,7 +248,7 @@ PluginManager::GetDisassemblerCreateCallbackAtIndex (uint32_t idx)
     DisassemblerInstance instance;
     if (AccessDisassemblerInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 DisassemblerCreateInstance
@@ -272,7 +272,7 @@ PluginManager::GetDisassemblerCreateCallbackForPluginName (const char *name)
 #pragma mark DynamicLoader
 
 
-typedef struct DynamicLoaderInstance
+struct DynamicLoaderInstance
 {
     DynamicLoaderInstance() :
         name(),
@@ -372,7 +372,7 @@ PluginManager::GetDynamicLoaderCreateCallbackAtIndex (uint32_t idx)
     DynamicLoaderInstance instance;
     if (AccessDynamicLoaderInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 DynamicLoaderCreateInstance
@@ -396,7 +396,7 @@ PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const char *name)
 
 #pragma mark ObjectFile
 
-typedef struct ObjectFileInstance
+struct ObjectFileInstance
 {
     ObjectFileInstance() :
         name(),
@@ -496,7 +496,7 @@ PluginManager::GetObjectFileCreateCallbackAtIndex (uint32_t idx)
     ObjectFileInstance instance;
     if (AccessObjectFileInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 ObjectFileCreateInstance
 PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
@@ -518,7 +518,7 @@ PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
 
 #pragma mark ObjectContainer
 
-typedef struct ObjectContainerInstance
+struct ObjectContainerInstance
 {
     ObjectContainerInstance() :
         name(),
@@ -618,7 +618,7 @@ PluginManager::GetObjectContainerCreateCallbackAtIndex (uint32_t idx)
     ObjectContainerInstance instance;
     if (AccessObjectContainerInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 ObjectContainerCreateInstance
 PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
@@ -638,7 +638,7 @@ PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
 
 #pragma mark LogChannel
 
-typedef struct LogChannelInstance
+struct LogChannelInstance
 {
     LogChannelInstance() :
         name(),
@@ -748,7 +748,7 @@ PluginManager::GetLogChannelCreateCallbackAtIndex (uint32_t idx)
     LogChannelInstance instance;
     if (AccessLogChannelInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 LogChannelCreateInstance
@@ -769,7 +769,7 @@ PluginManager::GetLogChannelCreateCallbackForPluginName (const char *name)
 
 #pragma mark Process
 
-typedef struct ProcessInstance
+struct ProcessInstance
 {
     ProcessInstance() :
         name(),
@@ -869,7 +869,7 @@ PluginManager::GetProcessCreateCallbackAtIndex (uint32_t idx)
     ProcessInstance instance;
     if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 ProcessCreateInstance
@@ -890,7 +890,7 @@ PluginManager::GetProcessCreateCallbackForPluginName (const char *name)
 
 #pragma mark SymbolFile
 
-typedef struct SymbolFileInstance
+struct SymbolFileInstance
 {
     SymbolFileInstance() :
         name(),
@@ -990,7 +990,7 @@ PluginManager::GetSymbolFileCreateCallbackAtIndex (uint32_t idx)
     SymbolFileInstance instance;
     if (AccessSymbolFileInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 SymbolFileCreateInstance
 PluginManager::GetSymbolFileCreateCallbackForPluginName (const char *name)
@@ -1012,7 +1012,7 @@ PluginManager::GetSymbolFileCreateCallbackForPluginName (const char *name)
 
 #pragma mark SymbolVendor
 
-typedef struct SymbolVendorInstance
+struct SymbolVendorInstance
 {
     SymbolVendorInstance() :
         name(),
@@ -1111,7 +1111,7 @@ PluginManager::GetSymbolVendorCreateCallbackAtIndex (uint32_t idx)
     SymbolVendorInstance instance;
     if (AccessSymbolVendorInstances (ePluginGetInstanceAtIndex, instance, idx))
         return instance.create_callback;
-    return false;
+    return NULL;
 }
 
 SymbolVendorCreateInstance

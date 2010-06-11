@@ -245,10 +245,9 @@ ProcessGDBRemote::BuildDynamicRegisterInfo ()
                     else if (name.compare("offset") == 0)
                     {
                         uint32_t offset = Args::StringToUInt32(value.c_str(), UINT32_MAX, 0);
-                        if (offset != offset)
+                        if (reg_offset != offset)
                         {
                             reg_offset = offset;
-                            reg_info.byte_offset = offset;
                         }
                     }
                     else if (name.compare("encoding") == 0)
@@ -316,6 +315,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo ()
                     }
                 }
 
+                reg_info.byte_offset = reg_offset;
                 assert (reg_info.byte_size != 0);
                 reg_offset += reg_info.byte_size;
                 m_register_info.AddRegister(reg_info, reg_name, alt_name, set_name);
