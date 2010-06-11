@@ -196,7 +196,7 @@
 				    <p>The expression parser uses a full instance of the Clang
 				        compiler in order to accurately evaluate expressions.
 				        Hooks have been put into Clang so that the compiler knows
-				        to ask about indentifiers it doesn't know about. Once
+				        to ask about identifiers it doesn't know about. Once
 				        expressions have be compiled into an AST, we can then
 				        traverse this AST and either generate a DWARF expression
 				        that contains simple opcodes that can be quickly re-evaluated
@@ -212,8 +212,8 @@
 
 				   <p>LLDB tries to abstract itself from the host upon which
 				       it is currently running by providing a host abstraction
-				       layer This layer involves everything from spawning, detaching,
-				       joing and killing native in process threads, to getting
+				       layer.  This layer involves everything from spawning, detaching,
+				       joining and killing native in-process threads, to getting
 				       current information about the current host.</p>
     				   <p>Host functionality includes abstraction layers for:</p>
                            <ul>
