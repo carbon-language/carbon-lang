@@ -36,7 +36,7 @@ void arg_iterator::SkipToNextArg() {
 
 //
 
-ArgList::ArgList(arglist_type &_Args) : Args(_Args) {
+ArgList::ArgList() {
 }
 
 ArgList::~ArgList() {
@@ -205,7 +205,7 @@ const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
 //
 
 InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd)
-  : ArgList(ActualArgs), NumInputArgStrings(ArgEnd - ArgBegin) {
+  : NumInputArgStrings(ArgEnd - ArgBegin) {
   ArgStrings.append(ArgBegin, ArgEnd);
 }
 
@@ -240,9 +240,10 @@ const char *InputArgList::MakeArgString(llvm::StringRef Str) const {
 
 //
 
-DerivedArgList::DerivedArgList(InputArgList &_BaseArgs, bool _OnlyProxy)
-  : ArgList(_OnlyProxy ? _BaseArgs.getArgs() : ActualArgs),
-    BaseArgs(_BaseArgs), OnlyProxy(_OnlyProxy) {
+DerivedArgList::DerivedArgList(InputArgList &_BaseArgs, bool OnlyProxy)
+  : BaseArgs(_BaseArgs) {
+  if (OnlyProxy)
+    getArgs() = _BaseArgs.getArgs();
 }
 
 DerivedArgList::~DerivedArgList() {

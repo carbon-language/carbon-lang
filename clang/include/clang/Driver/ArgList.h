@@ -104,11 +104,11 @@ namespace driver {
     typedef arglist_type::const_reverse_iterator const_reverse_iterator;
 
   private:
-    /// The full list of arguments.
-    arglist_type &Args;
+    /// The internal list of arguments.
+    arglist_type Args;
 
   protected:
-    ArgList(arglist_type &Args);
+    ArgList();
 
   public:
     virtual ~ArgList();
@@ -267,9 +267,6 @@ namespace driver {
     void operator=(const ArgList &); // DO NOT IMPLEMENT
 
   private:
-    /// The internal list of arguments.
-    arglist_type ActualArgs;
-
     /// List of argument strings used by the contained Args.
     ///
     /// This is mutable since we treat the ArgList as being the list
@@ -317,14 +314,8 @@ namespace driver {
   class DerivedArgList : public ArgList {
     InputArgList &BaseArgs;
 
-    /// The internal list of arguments.
-    arglist_type ActualArgs;
-
     /// The list of arguments we synthesized.
     mutable arglist_type SynthesizedArgs;
-
-    /// Is this only a proxy for the base ArgList?
-    bool OnlyProxy;
 
   public:
     /// Construct a new derived arg list from \arg BaseArgs.
