@@ -366,7 +366,7 @@ def isExpectedFail(xfails, xtargets, target_triple):
 
     return True
 
-def parseIntegratedTestScript(test, normalize_slashes):
+def parseIntegratedTestScript(test, normalize_slashes=False):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'XTARGET'
     information. The RUN lines also will have variable substitution performed.
