@@ -14,6 +14,11 @@ namespace N {
   typedef int OtherInteger;
 }
 
+template <typename T>
+void cv_test(const volatile T* cvt) {
+  cvt->T::~T(); // no-warning
+}
+
 void f(A* a, Foo *f, int *i, double *d) {
   a->~A();
   a->A::~A();
@@ -41,7 +46,13 @@ void f(A* a, Foo *f, int *i, double *d) {
   i->N::OtherInteger::~Integer(); // expected-error{{'Integer' does not refer to a type name in pseudo-destructor expression; expected the name of type 'int'}}
   i->N::~Integer(); // expected-error{{'Integer' does not refer to a type name in pseudo-destructor expression; expected the name of type 'int'}}
   i->Integer::~Double(); // expected-error{{the type of object expression ('int') does not match the type being destroyed ('Double' (aka 'double')) in pseudo-destructor expression}}
+
+  cv_test(a);
+  cv_test(f);
+  cv_test(i);
+  cv_test(d);
 }
+
 
 typedef int Integer;
 
@@ -57,3 +68,4 @@ namespace N1 {
 void test_X0(N1::X0 &x0) {
   x0.~X0();
 }
+

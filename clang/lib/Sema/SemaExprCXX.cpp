@@ -2841,7 +2841,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
   if (ScopeTypeInfo) {
     QualType ScopeType = ScopeTypeInfo->getType();
     if (!ScopeType->isDependentType() && !ObjectType->isDependentType() &&
-        !Context.hasSameType(ScopeType, ObjectType)) {
+        !Context.hasSameUnqualifiedType(ScopeType, ObjectType)) {
       
       Diag(ScopeTypeInfo->getTypeLoc().getLocalSourceRange().getBegin(),
            diag::err_pseudo_dtor_type_mismatch)
