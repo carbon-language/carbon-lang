@@ -250,6 +250,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ErrorsAsFatal = false;
   SuppressSystemWarnings = false;
   SuppressAllDiagnostics = false;
+  ShowOverloads = Ovl_All;
   ExtBehavior = Ext_Ignore;
 
   ErrorOccurred = false;

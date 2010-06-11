@@ -1091,6 +1091,9 @@ def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1">;
+def note_ovl_too_many_candidates : Note<
+    "remaining %0 candidate%s0 omitted; "
+    "pass -fshow-overloads=all to show them">;
 def note_ovl_candidate : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"

@@ -5689,7 +5689,10 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
       Cands.push_back(Cand);
     else if (OCD == OCD_AllCandidates) {
       CompleteNonViableCandidate(*this, Cand, Args, NumArgs);
-      Cands.push_back(Cand);
+      if (Cand->Function || Cand->IsSurrogate)
+        Cands.push_back(Cand);
+      // Otherwise, this a non-viable builtin candidate.  We do not, in general,
+      // want to list every possible builtin candidate.
     }
   }
 
@@ -5699,17 +5702,26 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   bool ReportedAmbiguousConversions = false;
 
   llvm::SmallVectorImpl<OverloadCandidate*>::iterator I, E;
+  const Diagnostic::OverloadsShown ShowOverloads = Diags.getShowOverloads();
+  unsigned CandsShown = 0;
   for (I = Cands.begin(), E = Cands.end(); I != E; ++I) {
     OverloadCandidate *Cand = *I;
+
+    // Set an arbitrary limit on the number of candidate functions we'll spam
+    // the user with.  FIXME: This limit should depend on details of the
+    // candidate list.
+    if (CandsShown >= 4 && ShowOverloads == Diagnostic::Ovl_Best) {
+      break;
+    }
+    ++CandsShown;
 
     if (Cand->Function)
       NoteFunctionCandidate(*this, Cand, Args, NumArgs);
     else if (Cand->IsSurrogate)
       NoteSurrogateCandidate(*this, Cand);
-
-    // This a builtin candidate.  We do not, in general, want to list
-    // every possible builtin candidate.
-    else if (Cand->Viable) {
+    else {
+      assert(Cand->Viable &&
+             "Non-viable built-in candidates are not added to Cands.");
       // Generally we only see ambiguities including viable builtin
       // operators if overload resolution got screwed up by an
       // ambiguous user-defined conversion.
@@ -5725,6 +5737,9 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
       NoteBuiltinOperatorCandidate(*this, Opc, OpLoc, Cand);
     }
   }
+
+  if (I != E)
+    Diag(OpLoc, diag::note_ovl_too_many_candidates) << E - I;
 }
 
 static bool CheckUnresolvedAccess(Sema &S, OverloadExpr *E, DeclAccessPair D) {

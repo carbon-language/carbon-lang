@@ -10,6 +10,8 @@
 #ifndef LLVM_CLANG_FRONTEND_DIAGNOSTICOPTIONS_H
 #define LLVM_CLANG_FRONTEND_DIAGNOSTICOPTIONS_H
 
+#include "clang/Basic/Diagnostic.h"
+
 #include <string>
 #include <vector>
 
@@ -33,6 +35,8 @@ public:
   unsigned ShowCategories : 2;   /// Show categories: 0 -> none, 1 -> Number,
                                  /// 2 -> Full Name.
   unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.
+  unsigned ShowOverloads : 1;    /// Overload candidates to show.  Values from
+                                 /// Diagnostic::OverloadsShown
   unsigned VerifyDiagnostics: 1; /// Check that diagnostics match the expected
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
@@ -72,6 +76,7 @@ public:
     PedanticErrors = 0;
     ShowCarets = 1;
     ShowColors = 0;
+    ShowOverloads = Diagnostic::Ovl_All;
     ShowColumn = 1;
     ShowFixits = 1;
     ShowLocation = 1;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -fshow-overloads=best -verify %s 
 struct yes;
 struct no;
 
@@ -173,7 +173,8 @@ struct A {
 void test_dr425(A a) {
   // FIXME: lots of candidates here!
   (void)(1.0f * a); // expected-error{{ambiguous}} \
-                    // expected-note 81{{candidate}}
+                    // expected-note 4{{candidate}} \
+                    // expected-note {{remaining 77 candidates omitted; pass -fshow-overloads=all to show them}}
 }
 
 // pr5432

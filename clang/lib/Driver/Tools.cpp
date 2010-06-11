@@ -1381,6 +1381,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_show_source_location))
     CmdArgs.push_back("-fno-show-source-location");
 
+  if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
+    A->render(Args, CmdArgs);
+
   // -fdollars-in-identifiers default varies depending on platform and
   // language; only pass if specified.
   if (Arg *A = Args.getLastArg(options::OPT_fdollars_in_identifiers,

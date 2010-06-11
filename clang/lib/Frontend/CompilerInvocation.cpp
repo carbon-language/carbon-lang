@@ -869,7 +869,18 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowFixits = !Args.hasArg(OPT_fno_diagnostics_fixit_info);
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
-  
+
+  llvm::StringRef ShowOverloads =
+    Args.getLastArgValue(OPT_fshow_overloads_EQ, "all");
+  if (ShowOverloads == "best")
+    Opts.ShowOverloads = Diagnostic::Ovl_Best;
+  else if (ShowOverloads == "all")
+    Opts.ShowOverloads = Diagnostic::Ovl_All;
+  else
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_fshow_overloads_EQ)->getAsString(Args)
+      << ShowOverloads;
+
   llvm::StringRef ShowCategory =
     Args.getLastArgValue(OPT_fdiagnostics_show_category, "none");
   if (ShowCategory == "none")

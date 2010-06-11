@@ -176,7 +176,14 @@ public:
     ak_nestednamespec,  // NestedNameSpecifier *
     ak_declcontext      // DeclContext *
   };
-  
+
+  /// Specifies which overload candidates to display when overload resolution
+  /// fails.
+  enum OverloadsShown {
+    Ovl_All,  ///< Show all overloads.
+    Ovl_Best  ///< Show just the "best" overload candidates.
+  };
+
   /// ArgumentValue - This typedef represents on argument value, which is a
   /// union discriminated by ArgumentKind, with a value.
   typedef std::pair<ArgumentKind, intptr_t> ArgumentValue;
@@ -188,6 +195,7 @@ private:
   bool ErrorsAsFatal;            // Treat errors like fatal errors.
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
+  OverloadsShown ShowOverloads;  // Which overload candidates to show.
   unsigned ErrorLimit;           // Cap of # errors emitted, 0 -> no limit.
   unsigned TemplateBacktraceLimit; // Cap on depth of template backtrace stack,
                                    // 0 -> no limit.
@@ -317,6 +325,13 @@ public:
     SuppressAllDiagnostics = Val; 
   }
   bool getSuppressAllDiagnostics() const { return SuppressAllDiagnostics; }
+  
+  /// \brief Specify which overload candidates to show when overload resolution
+  /// fails.  By default, we show all candidates.
+  void setShowOverloads(OverloadsShown Val) {
+    ShowOverloads = Val;
+  }
+  OverloadsShown getShowOverloads() const { return ShowOverloads; }
   
   /// \brief Pretend that the last diagnostic issued was ignored. This can
   /// be used by clients who suppress diagnostics themselves.

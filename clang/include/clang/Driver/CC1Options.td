@@ -184,6 +184,9 @@ def fno_show_column : Flag<"-fno-show-column">,
   HelpText<"Do not include column number on diagnostics">;
 def fno_show_source_location : Flag<"-fno-show-source-location">,
   HelpText<"Do not include source location information with diagnostics">;
+def fshow_overloads_EQ : Joined<"-fshow-overloads=">,
+  HelpText<"Which overload candidates to show when overload resolution fails: "
+           "best|all; defaults to all">;
 def fno_caret_diagnostics : Flag<"-fno-caret-diagnostics">,
   HelpText<"Do not include source line and caret with diagnostics">;
 def fno_diagnostics_fixit_info : Flag<"-fno-diagnostics-fixit-info">,

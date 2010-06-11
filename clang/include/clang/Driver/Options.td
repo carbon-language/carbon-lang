@@ -359,6 +359,7 @@ def fsched_interblock : Flag<"-fsched-interblock">, Group<clang_ignored_f_Group>
 def fshort_enums : Flag<"-fshort-enums">, Group<clang_ignored_f_Group>;
 def freorder_blocks : Flag<"-freorder-blocks">, Group<clang_ignored_f_Group>;
 def fshort_wchar : Flag<"-fshort-wchar">, Group<f_Group>;
+def fshow_overloads_EQ : Joined<"-fshow-overloads=">, Group<f_Group>;
 def fshow_source_location : Flag<"-fshow-source-location">, Group<f_Group>;
 def fsigned_bitfields : Flag<"-fsigned-bitfields">, Group<f_Group>;
 def fsigned_char : Flag<"-fsigned-char">, Group<f_Group>;
