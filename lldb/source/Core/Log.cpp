@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
-#include <mach/mach.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -206,12 +205,12 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
 
         // Add the process and thread if requested
         if (log_options & LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD)
-            header.Printf ("[%4.4x/%4.4x]: ", getpid(), mach_thread_self());
+            header.Printf ("[%4.4x/%4.4x]: ", getpid(), Host::GetCurrentThreadID());
 
         // Add the process and thread if requested
         if (log_options & LLDB_LOG_OPTION_PREPEND_THREAD_NAME)
         {
-            const char *thread_name_str = Host::GetThreadName (getpid(), mach_thread_self());
+            const char *thread_name_str = Host::GetThreadName (getpid(), Host::GetCurrentThreadID());
             if (thread_name_str)
                 header.Printf ("%s ", thread_name_str);
         }
