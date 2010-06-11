@@ -274,8 +274,6 @@ void Driver::PrintOptions(const ArgList &Args) const {
   }
 }
 
-// FIXME: Move -ccc options to real options in the .td file (or eliminate), and
-// then move to using OptTable::PrintHelp.
 void Driver::PrintHelp(bool ShowHidden) const {
   getOpts().PrintHelp(llvm::outs(), Name.c_str(), DriverTitle.c_str(),
                       ShowHidden);
@@ -303,7 +301,7 @@ static void PrintDiagnosticCategories(llvm::raw_ostream &OS) {
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
-  // The order these options are handled in in gcc is all over the place, but we
+  // The order these options are handled in gcc is all over the place, but we
   // don't expect inconsistencies w.r.t. that to matter in practice.
 
   if (C.getArgs().hasArg(options::OPT_dumpversion)) {
