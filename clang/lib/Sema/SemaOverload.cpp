@@ -5739,7 +5739,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   }
 
   if (I != E)
-    Diag(OpLoc, diag::note_ovl_too_many_candidates) << E - I;
+    Diag(OpLoc, diag::note_ovl_too_many_candidates) << int(E - I);
 }
 
 static bool CheckUnresolvedAccess(Sema &S, OverloadExpr *E, DeclAccessPair D) {
