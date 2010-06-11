@@ -2447,7 +2447,8 @@ static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
                              DAG.getConstant(0, MVT::i32));
     SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(1, MVT::i32));
-    return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, DstVT,
+                       DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi));
   }
 
   // Turn f64->i64 into VMOVRRD.
