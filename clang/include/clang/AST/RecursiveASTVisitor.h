@@ -395,9 +395,8 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
   if (!NNS)
     return true;
 
-  if (NNS->getPrefix() &&
-      !getDerived().TraverseNestedNameSpecifier(NNS->getPrefix()))
-    return false;
+  if (NNS->getPrefix())
+    TRY_TO(TraverseNestedNameSpecifier(NNS->getPrefix()));
 
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
@@ -407,7 +406,7 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate:
-    return getDerived().TraverseType(QualType(NNS->getAsType(), 0));
+    TRY_TO(TraverseType(QualType(NNS->getAsType(), 0)));
   }
 
   return true;
@@ -416,11 +415,9 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseTemplateName(TemplateName Template) {
   if (DependentTemplateName *DTN = Template.getAsDependentTemplateName())
-    return (!DTN->getQualifier() ||
-            getDerived().TraverseNestedNameSpecifier(DTN->getQualifier()));
-
-  if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
-    return getDerived().TraverseNestedNameSpecifier(QTN->getQualifier());
+    TRY_TO(TraverseNestedNameSpecifier(DTN->getQualifier()));
+  else if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+    TRY_TO(TraverseNestedNameSpecifier(QTN->getQualifier()));
 
   return true;
 }
@@ -982,6 +979,7 @@ DEF_TRAVERSE_DECL(CXXDestructorDecl, {
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseVarHelper(VarDecl *D) {
+  TRY_TO(TraverseDeclaratorHelper(D));
   // FIXME: This often double-counts -- for instance, for all local
   // vars, though not for global vars -- because the initializer is
   // also captured when the var-decl is in a DeclStmt.
@@ -990,9 +988,6 @@ bool RecursiveASTVisitor<Derived>::TraverseVarHelper(VarDecl *D) {
 }
 
 DEF_TRAVERSE_DECL(VarDecl, {
-    // FIXME: This often double-counts -- for instance, for all local
-    // vars, though not for global vars -- because the initializer is
-    // also captured when the var-decl is in a DeclStmt.
     TRY_TO(TraverseVarHelper(D));
   })
 
