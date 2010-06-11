@@ -214,36 +214,46 @@ struct SymbolSortInfo
     const Symbol *symbols;
 };
 
-namespace {
-    struct SymbolIndexComparator {
-        const std::vector<Symbol>& symbols;
-        SymbolIndexComparator(const std::vector<Symbol>& s) : symbols(s) { }
-        bool operator()(uint32_t index_a, uint32_t index_b) {
-            addr_t value_a;
-            addr_t value_b;
-            if (symbols[index_a].GetValue().GetSection() == symbols[index_b].GetValue().GetSection()) {
-                value_a = symbols[index_a].GetValue ().GetOffset();
-                value_b = symbols[index_b].GetValue ().GetOffset();
-            } else {
-                value_a = symbols[index_a].GetValue ().GetFileAddress();
-                value_b = symbols[index_b].GetValue ().GetFileAddress();
-            }
+int
+Symtab::CompareSymbolValueByIndex (void *thunk, const void *a, const void *b)
+{
+    const Symbol *symbols = (const Symbol *)thunk;
+    uint32_t index_a = *((uint32_t *) a);
+    uint32_t index_b = *((uint32_t *) b);
 
-            if (value_a == value_b) {
-                // The if the values are equal, use the original symbol user ID
-                lldb::user_id_t uid_a = symbols[index_a].GetID();
-                lldb::user_id_t uid_b = symbols[index_b].GetID();
-                if (uid_a < uid_b)
-                    return true;
-                if (uid_a > uid_b)
-                    return false;
-                return false;
-            } else if (value_a < value_b)
-                return true;
-        
-            return false;
-        }
-    };
+    addr_t value_a;
+    addr_t value_b;
+    if (symbols[index_a].GetValue().GetSection() == symbols[index_b].GetValue().GetSection())
+    {
+        value_a = symbols[index_a].GetValue ().GetOffset();
+        value_b = symbols[index_b].GetValue ().GetOffset();
+    }
+    else
+    {
+        value_a = symbols[index_a].GetValue ().GetFileAddress();
+        value_b = symbols[index_b].GetValue ().GetFileAddress();
+    }
+
+    if (value_a == value_b)
+    {
+        // The if the values are equal, use the original symbol user ID
+        lldb::user_id_t uid_a = symbols[index_a].GetID();
+        lldb::user_id_t uid_b = symbols[index_b].GetID();
+        if (uid_a < uid_b)
+            return -1;
+        if (uid_a > uid_b)
+            return 1;
+        return 0;
+    }
+    else if (value_a < value_b)
+        return -1;
+
+    return 1;
+}
+
+int Symtab::CompareSymbolValueByIndexLinux(const void* a, const void* b, void* thunk) 
+{
+    return CompareSymbolValueByIndex(thunk, a, b);
 }
 
 void
@@ -253,8 +263,13 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
     if (indexes.size() <= 1)
         return;
 
-    // Sort the indexes in place using std::sort
-    std::sort(indexes.begin(), indexes.end(), SymbolIndexComparator(m_symbols));
+    // Sort the indexes in place using qsort
+    // FIXME: (WRONGDEFINE) Need a better define for this! 
+#ifdef __APPLE__
+    ::qsort_r (&indexes[0], indexes.size(), sizeof(uint32_t), (void *)&m_symbols[0], Symtab::CompareSymbolValueByIndex);
+#else
+    ::qsort_r (&indexes[0], indexes.size(), sizeof(uint32_t), CompareSymbolValueByIndexLinux, (void *)&m_symbols[0]);
+#endif
 
     // Remove any duplicates if requested
     if (remove_duplicates)
