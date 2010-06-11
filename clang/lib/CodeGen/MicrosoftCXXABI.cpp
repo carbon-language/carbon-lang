@@ -64,6 +64,7 @@ class MicrosoftMangleContext : public MangleContext {
 public:
   MicrosoftMangleContext(ASTContext &Context,
                          Diagnostic &Diags) : MangleContext(Context, Diags) { }
+  virtual bool shouldMangleDeclName(const NamedDecl *D);
   virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                            const ThunkInfo &Thunk,
@@ -99,6 +100,46 @@ public:
   }
 };
 
+}
+
+static bool isInCLinkageSpecification(const Decl *D) {
+  D = D->getCanonicalDecl();
+  for (const DeclContext *DC = D->getDeclContext();
+       !DC->isTranslationUnit(); DC = DC->getParent()) {
+    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
+      return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
+  }
+  
+  return false;
+}
+
+bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
+  // In C, functions with no attributes never need to be mangled. Fastpath them.
+  if (!getASTContext().getLangOptions().CPlusPlus && !D->hasAttrs())
+    return false;
+
+  // Any decl can be declared with __asm("foo") on it, and this takes precedence
+  // over all other naming in the .o file.
+  if (D->hasAttr<AsmLabelAttr>())
+    return true;
+
+  // Clang's "overloadable" attribute extension to C/C++ implies name mangling
+  // (always) as does passing a C++ member function and a function
+  // whose name is not a simple identifier.
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (FD && (FD->hasAttr<OverloadableAttr>() || isa<CXXMethodDecl>(FD) ||
+             !FD->getDeclName().isIdentifier()))
+    return true;
+
+  // Otherwise, no mangling is done outside C++ mode.
+  if (!getASTContext().getLangOptions().CPlusPlus)
+    return false;
+
+  // C functions and "main" are not mangled.
+  if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
+    return false;
+
+  return true;
 }
 
 void MicrosoftCXXNameMangler::mangle(const NamedDecl *D,

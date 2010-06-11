@@ -110,7 +110,7 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  bool shouldMangleDeclName(const NamedDecl *D);
+  virtual bool shouldMangleDeclName(const NamedDecl *D);
   virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
