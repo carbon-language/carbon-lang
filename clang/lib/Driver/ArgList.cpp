@@ -240,10 +240,8 @@ const char *InputArgList::MakeArgString(llvm::StringRef Str) const {
 
 //
 
-DerivedArgList::DerivedArgList(InputArgList &_BaseArgs, bool OnlyProxy)
+DerivedArgList::DerivedArgList(const InputArgList &_BaseArgs)
   : BaseArgs(_BaseArgs) {
-  if (OnlyProxy)
-    getArgs() = _BaseArgs.getArgs();
 }
 
 DerivedArgList::~DerivedArgList() {

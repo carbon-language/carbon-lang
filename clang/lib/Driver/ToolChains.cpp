@@ -388,9 +388,9 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
+DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
                                       const char *BoundArch) const {
-  DerivedArgList *DAL = new DerivedArgList(Args, false);
+  DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
   const OptTable &Opts = getDriver().getOpts();
 
   // FIXME: We really want to get out of the tool chain level argument
@@ -478,7 +478,8 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
   }
   setTarget(iPhoneVersion, Major, Minor, Micro);
 
-  for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+  for (ArgList::const_iterator it = Args.begin(),
+         ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
 
     if (A->getOption().matches(options::OPT_Xarch__)) {
@@ -764,12 +765,6 @@ const char *Generic_GCC::GetForcedPicModel() const {
   return 0;
 }
 
-DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args,
-                                           const char *BoundArch) const {
-  return new DerivedArgList(Args, true);
-}
-
-
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
 /// Currently does not support anything else but compilation.
@@ -822,11 +817,6 @@ Tool &TCEToolChain::SelectTool(const Compilation &C,
     }
   }
   return *T;
-}
-
-DerivedArgList *TCEToolChain::TranslateArgs(InputArgList &Args,
-                                            const char *BoundArch) const {
-  return new DerivedArgList(Args, true);
 }
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.

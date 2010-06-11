@@ -110,6 +110,16 @@ InputArgList *Driver::ParseArgStrings(const char **ArgBegin,
   return Args;
 }
 
+DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
+  DerivedArgList *DAL = new DerivedArgList(Args);
+
+  for (ArgList::const_iterator it = Args.begin(),
+         ie = Args.end(); it != ie; ++it)
+    DAL->append(*it);
+
+  return DAL;
+}
+
 Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
@@ -179,8 +189,12 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   Host = GetHostInfo(HostTriple);
 
+  // Perform the default argument translations.
+  DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
+
   // The compilation takes ownership of Args.
-  Compilation *C = new Compilation(*this, *Host->CreateToolChain(*Args), Args);
+  Compilation *C = new Compilation(*this, *Host->CreateToolChain(*Args), Args,
+                                   TranslatedArgs);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {

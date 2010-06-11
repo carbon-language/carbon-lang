@@ -96,6 +96,10 @@ namespace driver {
   /// check for the presence of Arg instances for a particular Option
   /// and to iterate over groups of arguments.
   class ArgList {
+  private:
+    ArgList(const ArgList &); // DO NOT IMPLEMENT
+    void operator=(const ArgList &); // DO NOT IMPLEMENT
+
   public:
     typedef llvm::SmallVector<Arg*, 16> arglist_type;
     typedef arglist_type::iterator iterator;
@@ -263,9 +267,6 @@ namespace driver {
   };
 
   class InputArgList : public ArgList  {
-    InputArgList(const ArgList &); // DO NOT IMPLEMENT
-    void operator=(const ArgList &); // DO NOT IMPLEMENT
-
   private:
     /// List of argument strings used by the contained Args.
     ///
@@ -312,17 +313,14 @@ namespace driver {
   /// DerivedArgList - An ordered collection of driver arguments,
   /// whose storage may be in another argument list.
   class DerivedArgList : public ArgList {
-    InputArgList &BaseArgs;
+    const InputArgList &BaseArgs;
 
     /// The list of arguments we synthesized.
     mutable arglist_type SynthesizedArgs;
 
   public:
     /// Construct a new derived arg list from \arg BaseArgs.
-    ///
-    /// \param OnlyProxy - If true, this is only a proxy for the base
-    /// list (to adapt the type), and it's Args list is unused.
-    DerivedArgList(InputArgList &BaseArgs, bool OnlyProxy);
+    DerivedArgList(const InputArgList &BaseArgs);
     ~DerivedArgList();
 
     virtual const char *getArgString(unsigned Index) const {
@@ -331,6 +329,10 @@ namespace driver {
 
     virtual unsigned getNumInputArgStrings() const {
       return BaseArgs.getNumInputArgStrings();
+    }
+
+    const InputArgList &getBaseArgs() const {
+      return BaseArgs;
     }
 
     /// @name Arg Synthesis

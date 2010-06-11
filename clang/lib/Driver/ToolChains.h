@@ -33,9 +33,6 @@ public:
   Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple);
   ~Generic_GCC();
 
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
-                                        const char *BoundArch) const;
-
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
   virtual bool IsUnwindTablesDefault() const;
@@ -147,7 +144,7 @@ public:
   /// @name ToolChain Implementation
   /// {
 
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
+  virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
@@ -290,8 +287,6 @@ public:
   TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple);
   ~TCEToolChain();
 
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
-                                        const char *BoundArch) const;
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
   bool IsMathErrnoDefault() const;
   bool IsUnwindTablesDefault() const;

@@ -70,11 +70,14 @@ public:
   // Tool access.
 
   /// TranslateArgs - Create a new derived argument list for any argument
-  /// translations this ToolChain may wish to perform.
+  /// translations this ToolChain may wish to perform, or 0 if no tool chain
+  /// specific translations are needed.
   ///
   /// \param BoundArch - The bound architecture name, or 0.
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
-                                        const char *BoundArch) const = 0;
+  virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
+                                        const char *BoundArch) const {
+    return 0;
+  }
 
   /// SelectTool - Choose a tool to use to handle the action \arg JA.
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const = 0;

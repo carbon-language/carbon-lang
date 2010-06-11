@@ -22,20 +22,22 @@
 #include <errno.h>
 using namespace clang::driver;
 
-Compilation::Compilation(const Driver &D,
-                         const ToolChain &_DefaultToolChain,
-                         InputArgList *_Args)
-  : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args) {
+Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
+                         InputArgList *_Args, DerivedArgList *_TranslatedArgs)
+  : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
+    TranslatedArgs(_TranslatedArgs) {
 }
 
 Compilation::~Compilation() {
+  delete TranslatedArgs;
   delete Args;
 
   // Free any derived arg lists.
   for (llvm::DenseMap<std::pair<const ToolChain*, const char*>,
                       DerivedArgList*>::iterator it = TCArgs.begin(),
          ie = TCArgs.end(); it != ie; ++it)
-    delete it->second;
+    if (it->second != TranslatedArgs)
+      delete it->second;
 
   // Free the actions, if built.
   for (ActionList::iterator it = Actions.begin(), ie = Actions.end();
@@ -49,8 +51,11 @@ const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
     TC = &DefaultToolChain;
 
   DerivedArgList *&Entry = TCArgs[std::make_pair(TC, BoundArch)];
-  if (!Entry)
-    Entry = TC->TranslateArgs(*Args, BoundArch);
+  if (!Entry) {
+    Entry = TC->TranslateArgs(*TranslatedArgs, BoundArch);
+    if (!Entry)
+      Entry = TranslatedArgs;
+  }
 
   return *Entry;
 }

@@ -31,6 +31,7 @@ namespace driver {
   class Action;
   class ArgList;
   class Compilation;
+  class DerivedArgList;
   class HostInfo;
   class InputArgList;
   class InputInfo;
@@ -134,6 +135,11 @@ private:
 
   std::list<std::string> TempFiles;
   std::list<std::string> ResultFiles;
+
+private:
+  /// TranslateInputArgs - Create a new derived argument list from the input
+  /// arguments, after applying the standard argument translations.
+  DerivedArgList *TranslateInputArgs(const InputArgList &Args) const;
 
 public:
   Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
