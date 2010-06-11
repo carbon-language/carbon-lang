@@ -535,7 +535,8 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     HANDLE_OPERAND(rmRegister)
 
     if (HasVEX_4VPrefix)
-      // FIXME: encoding of registers in AVX is in 1's complement form.
+      // FIXME: In AVX, the register below becomes the one encoded
+      // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPTIONAL(rmRegister)
     else
       HANDLE_OPTIONAL(immediate)
@@ -547,6 +548,12 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
            "Unexpected number of operands for MRMSrcMemFrm");
     HANDLE_OPERAND(roRegister)
+
+    if (HasVEX_4VPrefix)
+      // FIXME: In AVX, the register below becomes the one encoded
+      // in ModRMVEX and the one above the one in the VEX.VVVV field
+      HANDLE_OPTIONAL(rmRegister)
+
     HANDLE_OPERAND(memory)
     HANDLE_OPTIONAL(immediate)
     break;
