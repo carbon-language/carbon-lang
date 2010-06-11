@@ -59,8 +59,6 @@ protected:
     typedef collection::iterator        iterator;
     typedef collection::const_iterator  const_iterator;
 
-    static  int         CompareSymbolValueByIndex (void *thunk, const void *a, const void *b);
-    static  int         CompareSymbolValueByIndexLinux (const void *a, const void *b, void *thunk);
             void        InitNameIndexes ();
             void        InitAddressIndexes ();
 
