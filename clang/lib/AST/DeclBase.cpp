@@ -314,9 +314,20 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   return 0;
 }
 
+void Decl::initAttrs(Attr *attrs) {
+  assert(!HasAttrs && "Decl already contains attrs.");
+
+  Attr *&AttrBlank = getASTContext().getDeclAttrs(this);
+  assert(AttrBlank == 0 && "HasAttrs was wrong?");
+
+  AttrBlank = attrs;
+  HasAttrs = true;
+}
+
 void Decl::addAttr(Attr *NewAttr) {
   Attr *&ExistingAttr = getASTContext().getDeclAttrs(this);
 
+  assert(NewAttr->getNext() == 0 && "Chain of attributes will be truncated!");
   NewAttr->setNext(ExistingAttr);
   ExistingAttr = NewAttr;
 

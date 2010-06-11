@@ -4,4 +4,4 @@
 
 
 
-int f(int) __attribute__((overloadable));
+int f(int) __attribute__((visibility("default"), overloadable));

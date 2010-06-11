@@ -297,6 +297,7 @@ public:
   }
 
   bool hasAttrs() const { return HasAttrs; }
+  void initAttrs(Attr *attrs);
   void addAttr(Attr *attr);
   const Attr *getAttrs() const {
     if (!HasAttrs) return 0;  // common case, no attributes.
