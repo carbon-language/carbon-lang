@@ -3039,7 +3039,9 @@ def err_constant_integer_arg_type : Error<
   "argument to %0 must be a constant integer">;
 
 def ext_mixed_decls_code : Extension<
-  "ISO C90 forbids mixing declarations and code">;
+  "ISO C90 forbids mixing declarations and code">,
+  InGroup<DiagGroup<"declaration-after-statement">>;
+  
 def err_non_variable_decl_in_for : Error<
   "declaration of non-local variable in 'for' loop">;
 def err_toomany_element_decls : Error<
