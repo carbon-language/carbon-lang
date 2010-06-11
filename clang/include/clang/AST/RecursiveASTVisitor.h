@@ -732,6 +732,7 @@ DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
 
 DEF_TRAVERSE_DECL(UsingDecl, {
     TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameDecl()));
+    // FIXME: should we be iterating over the shadows?
     for (UsingDecl::shadow_iterator I = D->shadow_begin(), E = D->shadow_end();
          I != E; ++I) {
       TRY_TO(TraverseDecl(*I));
@@ -1163,6 +1164,16 @@ DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
     TRY_TO(TraverseType(S->getTypeAsWritten()));
   })
 
+DEF_TRAVERSE_STMT(InitListExpr, {
+    // FIXME: I think this is the right thing to do...
+#if 0
+    // We want the syntactic initializer list, not semantic.
+    if (InitListExpr *Syn=S->getSyntacticList())
+      S = Syn;
+    // Now the default actions will work on the syntactic list.
+#endif
+})
+
 // These exprs (most of them), do not need any action except iterating
 // over the children.
 DEF_TRAVERSE_STMT(AddrLabelExpr, { })
@@ -1189,7 +1200,6 @@ DEF_TRAVERSE_STMT(DesignatedInitExpr, { })
 DEF_TRAVERSE_STMT(ExtVectorElementExpr, { })
 DEF_TRAVERSE_STMT(GNUNullExpr, { })
 DEF_TRAVERSE_STMT(ImplicitValueInitExpr, { })
-DEF_TRAVERSE_STMT(InitListExpr, { })
 DEF_TRAVERSE_STMT(ObjCEncodeExpr, { })
 DEF_TRAVERSE_STMT(ObjCImplicitSetterGetterRefExpr, { })
 DEF_TRAVERSE_STMT(ObjCIsaExpr, { })
