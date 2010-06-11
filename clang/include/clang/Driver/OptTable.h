@@ -33,6 +33,7 @@ namespace options {
 }
 
   class Arg;
+  class ArgList;
   class InputArgList;
   class Option;
 
@@ -150,7 +151,7 @@ namespace options {
     /// \return - The parsed argument, or 0 if the argument is missing values
     /// (in which case Index still points at the conceptual next argument string
     /// to parse).
-    Arg *ParseOneArg(const InputArgList &Args, unsigned &Index) const;
+    Arg *ParseOneArg(const ArgList &Args, unsigned &Index) const;
 
     /// ParseArgs - Parse an list of arguments into an InputArgList.
     ///

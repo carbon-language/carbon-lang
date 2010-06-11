@@ -179,6 +179,11 @@ namespace driver {
     /// getArgString - Return the input argument string at \arg Index.
     virtual const char *getArgString(unsigned Index) const = 0;
 
+    /// getNumInputArgStrings - Return the number of original argument strings,
+    /// which are guaranteed to be the first strings in the argument string
+    /// list.
+    virtual unsigned getNumInputArgStrings() const = 0;
+
     /// @}
     /// @name Argument Lookup Utilities
     /// @{
@@ -258,6 +263,9 @@ namespace driver {
   };
 
   class InputArgList : public ArgList  {
+    InputArgList(const ArgList &); // DO NOT IMPLEMENT
+    void operator=(const ArgList &); // DO NOT IMPLEMENT
+
   private:
     /// The internal list of arguments.
     arglist_type ActualArgs;
@@ -281,16 +289,15 @@ namespace driver {
 
   public:
     InputArgList(const char **ArgBegin, const char **ArgEnd);
-    InputArgList(const ArgList &);
     ~InputArgList();
 
     virtual const char *getArgString(unsigned Index) const {
       return ArgStrings[Index];
     }
 
-    /// getNumInputArgStrings - Return the number of original input
-    /// argument strings.
-    unsigned getNumInputArgStrings() const { return NumInputArgStrings; }
+    virtual unsigned getNumInputArgStrings() const {
+      return NumInputArgStrings;
+    }
 
     /// @name Arg Synthesis
     /// @{
@@ -329,6 +336,10 @@ namespace driver {
 
     virtual const char *getArgString(unsigned Index) const {
       return BaseArgs.getArgString(Index);
+    }
+
+    virtual unsigned getNumInputArgStrings() const {
+      return BaseArgs.getNumInputArgStrings();
     }
 
     /// @name Arg Synthesis

@@ -21,7 +21,7 @@ using llvm::dyn_cast_or_null;
 namespace clang {
 namespace driver {
   class Arg;
-  class InputArgList;
+  class ArgList;
   class OptionGroup;
 
   /// Option - Abstract representation for a single form of driver
@@ -154,7 +154,7 @@ namespace driver {
     /// If the option accepts the current argument, accept() sets
     /// Index to the position where argument parsing should resume
     /// (even if the argument is missing values).
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const = 0;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const = 0;
 
     void dump() const;
 
@@ -167,7 +167,7 @@ namespace driver {
   public:
     OptionGroup(OptSpecifier ID, const char *Name, const OptionGroup *Group);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::GroupClass;
@@ -182,7 +182,7 @@ namespace driver {
   public:
     InputOption(OptSpecifier ID);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::InputClass;
@@ -195,7 +195,7 @@ namespace driver {
   public:
     UnknownOption(OptSpecifier ID);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::UnknownClass;
@@ -210,7 +210,7 @@ namespace driver {
     FlagOption(OptSpecifier ID, const char *Name, const OptionGroup *Group,
                const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::FlagClass;
@@ -223,7 +223,7 @@ namespace driver {
     JoinedOption(OptSpecifier ID, const char *Name, const OptionGroup *Group,
                  const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::JoinedClass;
@@ -236,7 +236,7 @@ namespace driver {
     SeparateOption(OptSpecifier ID, const char *Name,
                    const OptionGroup *Group, const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::SeparateClass;
@@ -249,7 +249,7 @@ namespace driver {
     CommaJoinedOption(OptSpecifier ID, const char *Name,
                       const OptionGroup *Group, const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::CommaJoinedClass;
@@ -270,7 +270,7 @@ namespace driver {
 
     unsigned getNumArgs() const { return NumArgs; }
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::MultiArgClass;
@@ -285,7 +285,7 @@ namespace driver {
     JoinedOrSeparateOption(OptSpecifier ID, const char *Name,
                            const OptionGroup *Group, const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::JoinedOrSeparateClass;
@@ -300,7 +300,7 @@ namespace driver {
     JoinedAndSeparateOption(OptSpecifier ID, const char *Name,
                             const OptionGroup *Group, const Option *Alias);
 
-    virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
+    virtual Arg *accept(const ArgList &Args, unsigned &Index) const;
 
     static bool classof(const Option *O) {
       return O->getKind() == Option::JoinedAndSeparateClass;

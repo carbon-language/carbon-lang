@@ -182,7 +182,7 @@ Option *OptTable::CreateOption(unsigned id) const {
   return Opt;
 }
 
-Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
+Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
   unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
 
