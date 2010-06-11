@@ -9,8 +9,7 @@
 
 #include "lldb/Core/ArchSpec.h"
 
-//#include <mach/mach.h>
-//#include <mach-o/nlist.h>
+#include <stdio.h>
 
 #include <string>
 
@@ -1610,7 +1609,7 @@ ArchSpec::GetAddressByteSize() const
         break;
 
     case eArchTypeMachO:
-        if (GetCPUType() & CPU_ARCH_ABI64)
+        if (GetCPUType() & llvm::MachO::CPUArchABI64)
             return 8;
         else
             return 4;
