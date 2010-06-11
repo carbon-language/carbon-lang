@@ -50,7 +50,8 @@ class Compilation {
   /// The root list of jobs.
   JobList Jobs;
 
-  /// Cache of translated arguments for a particular tool chain.
+  /// Cache of translated arguments for a particular tool chain and bound
+  /// architecture.
   llvm::DenseMap<std::pair<const ToolChain*, const char*>,
                  DerivedArgList*> TCArgs;
 
@@ -69,9 +70,9 @@ public:
 
   const ToolChain &getDefaultToolChain() const { return DefaultToolChain; }
 
-  const InputArgList &getArgs() const { return *Args; }
+  const InputArgList &getInputArgs() const { return *Args; }
 
-  const DerivedArgList &getTranslatedArgs() const { return *TranslatedArgs; }
+  const DerivedArgList &getArgs() const { return *TranslatedArgs; }
 
   ActionList &getActions() { return Actions; }
   const ActionList &getActions() const { return Actions; }

@@ -198,7 +198,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
-    PrintOptions(C->getArgs());
+    PrintOptions(C->getInputArgs());
     return C;
   }
 
