@@ -1165,15 +1165,15 @@ DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
   })
 
 DEF_TRAVERSE_STMT(InitListExpr, {
-    // FIXME: I think this is the right thing to do...
+})
+  // FIXME: I think this is the right thing to do...
 #if 0
-    // We want the syntactic initializer list, not semantic.
-    if (InitListExpr *Syn=S->getSyntacticList())
-      S = Syn;
+  // We want the syntactic initializer list, not semantic.
+  if (InitListExpr *Syn=S->getSyntacticList())
+    S = Syn;
     // Now the default actions will work on the syntactic list.
 #endif
-})
-
+    
 // These exprs (most of them), do not need any action except iterating
 // over the children.
 DEF_TRAVERSE_STMT(AddrLabelExpr, { })
