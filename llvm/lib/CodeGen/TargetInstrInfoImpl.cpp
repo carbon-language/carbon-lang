@@ -232,11 +232,9 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
   return NewMI;
 }
 
-bool
-TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(const MachineInstr *
-                                                            MI,
-                                                          AliasAnalysis *
-                                                            AA) const {
+bool TargetInstrInfo::
+isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
+                                         AliasAnalysis *AA) const {
   const MachineFunction &MF = *MI->getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   const TargetMachine &TM = MF.getTarget();
