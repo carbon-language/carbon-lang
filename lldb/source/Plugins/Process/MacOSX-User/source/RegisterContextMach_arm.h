@@ -11,6 +11,8 @@
 #define liblldb_RegisterContextMach_arm_h_
 
 // C Includes
+#include <mach/mach_types.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
