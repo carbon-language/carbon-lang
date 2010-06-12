@@ -4,6 +4,7 @@ config.llvm_src_root = "@LLVM_SOURCE_DIR@"
 config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvmgcc_dir = "@LLVMGCCDIR@"
+config.python_executable = "@PYTHON_EXECUTABLE@"
 
 # Let the main config do the real work.
 lit.load_config(config, "@LLVM_SOURCE_DIR@/test/lit.cfg")
