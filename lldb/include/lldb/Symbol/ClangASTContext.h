@@ -343,6 +343,10 @@ public:
     void *
     CreateRValueReferenceType (void * clang_type);
 
+    void *
+    CreateMemberPointerType (void * clang_pointee_type,
+                             void * clang_class_type);
+
     size_t
     GetPointerBitSize ();
 

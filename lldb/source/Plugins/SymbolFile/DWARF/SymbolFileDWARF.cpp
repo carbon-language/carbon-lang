@@ -3123,7 +3123,49 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                 }
                 break;
 
+            case DW_TAG_ptr_to_member_type:
+                {
+                    dw_offset_t type_die_offset = DW_INVALID_OFFSET;
+                    dw_offset_t containing_type_die_offset = DW_INVALID_OFFSET;
+
+                    const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
+                    
+                    if (num_attributes > 0) {
+                        uint32_t i;
+                        for (i=0; i<num_attributes; ++i)
+                        {
+                            attr = attributes.AttributeAtIndex(i);
+                            DWARFFormValue form_value;
+                            if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                            {
+                                switch (attr)
+                                {
+                                    case DW_AT_type:
+                                        type_die_offset = form_value.Reference(dwarf_cu); break;
+                                    case DW_AT_containing_type:
+                                        containing_type_die_offset = form_value.Reference(dwarf_cu); break;
+                                }
+                            }
+                        }
+                        
+                        Type *pointee_type = ResolveTypeUID(type_die_offset);
+                        Type *class_type = ResolveTypeUID(containing_type_die_offset);
+                        
+                        void *pointee_clang_type = pointee_type->GetOpaqueClangQualType();
+                        void *class_clang_type = pointee_type->GetOpaqueClangQualType();
+
+                        void *clang_type = type_list->GetClangASTContext().CreateMemberPointerType(pointee_clang_type, class_clang_type);
+
+                        size_t byte_size = ClangASTContext::GetTypeBitSize(type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
+
+                        type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, byte_size, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, NULL, clang_type));
+                        const_cast<DWARFDebugInfoEntry*>(die)->SetUserData(type_sp.get());
+                    }
+                                            
+                    break;
+                }
             default:
+                assert(false && "Unhandled type tag!");
                 break;
             }
 

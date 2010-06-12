@@ -2165,6 +2165,15 @@ ClangASTContext::CreateRValueReferenceType (void *clang_type)
     return NULL;
 }
 
+void *
+ClangASTContext::CreateMemberPointerType (void * clang_pointee_type, void * clang_class_type)
+{
+    if (clang_pointee_type && clang_pointee_type)
+        return getASTContext()->getMemberPointerType(QualType::getFromOpaquePtr(clang_pointee_type),
+                                                     QualType::getFromOpaquePtr(clang_class_type).getTypePtr()).getAsOpaquePtr();
+    return NULL;
+}
+
 size_t
 ClangASTContext::GetPointerBitSize ()
 {
