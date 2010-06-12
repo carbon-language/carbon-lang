@@ -785,6 +785,22 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Intrinsic operation, reg+reg.
+  def V#NAME#SSrr_Int : VSSI<opc, MRMSrcReg, (outs VR128:$dst),
+                                             (ins VR128:$src1, VR128:$src2),
+       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+       [(set VR128:$dst, (!nameconcat<Intrinsic>("int_x86_sse_",
+                          !strconcat(OpcodeStr, "_ss")) VR128:$src1,
+                                                      VR128:$src2))]>;
+                          // int_x86_sse_xxx_ss
+
+  def V#NAME#SDrr_Int : VSDI<opc, MRMSrcReg, (outs VR128:$dst),
+                                             (ins VR128:$src1, VR128:$src2),
+       !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+       [(set VR128:$dst, (!nameconcat<Intrinsic>("int_x86_sse2_",
+                          !strconcat(OpcodeStr, "_sd")) VR128:$src1,
+                                                      VR128:$src2))]>;
+                          // int_x86_sse2_xxx_sd
+
   def SSrr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
        !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
@@ -802,6 +818,22 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                           // int_x86_sse2_xxx_sd
 
   // Intrinsic operation, reg+mem.
+  def V#NAME#SSrm_Int : VSSI<opc, MRMSrcMem, (outs VR128:$dst),
+                                             (ins VR128:$src1, ssmem:$src2),
+       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+       [(set VR128:$dst, (!nameconcat<Intrinsic>("int_x86_sse_",
+                          !strconcat(OpcodeStr, "_ss")) VR128:$src1,
+                                               sse_load_f32:$src2))]>;
+                          // int_x86_sse_xxx_ss
+
+  def V#NAME#SDrm_Int : VSDI<opc, MRMSrcMem, (outs VR128:$dst),
+                                             (ins VR128:$src1, sdmem:$src2),
+       !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+       [(set VR128:$dst, (!nameconcat<Intrinsic>("int_x86_sse2_",
+                          !strconcat(OpcodeStr, "_sd")) VR128:$src1,
+                                               sse_load_f64:$src2))]>;
+                          // int_x86_sse2_xxx_sd
+
   def SSrm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
                                      (ins VR128:$src1, ssmem:$src2),
        !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
