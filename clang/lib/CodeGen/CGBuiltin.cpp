@@ -1221,7 +1221,35 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vrhaddq_v:
     Int = usgn ? Intrinsic::arm_neon_vrhaddu : Intrinsic::arm_neon_vrhadds;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vrhadd");
-  // FIXME: rounding shifts
+  case ARM::BI__builtin_neon_vrshl_v:
+  case ARM::BI__builtin_neon_vrshlq_v:
+    Int = usgn ? Intrinsic::arm_neon_vrshiftu : Intrinsic::arm_neon_vrshifts;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vrshl");
+  case ARM::BI__builtin_neon_vrshrn_n_v:
+    Ops[1] = EmitNeonShiftVector(Ops[1], Ty, true);
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrshiftn, &Ty, 1),
+                        Ops, "vrshrn_n");
+  case ARM::BI__builtin_neon_vrshr_n_v:
+  case ARM::BI__builtin_neon_vrshrq_n_v:
+    Ops[1] = EmitNeonShiftVector(Ops[1], Ty, true);
+    Int = usgn ? Intrinsic::arm_neon_vrshiftu : Intrinsic::arm_neon_vrshifts;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vrshr_n");
+  case ARM::BI__builtin_neon_vrsqrte_v:
+  case ARM::BI__builtin_neon_vrsqrteq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrsqrte, &Ty, 1),
+                        Ops, "vrsqrte");
+  case ARM::BI__builtin_neon_vrsqrts_v:
+  case ARM::BI__builtin_neon_vrsqrtsq_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrsqrts, &Ty, 1),
+                        Ops, "vrsqrts");
+  case ARM::BI__builtin_neon_vrsra_n_v:
+  case ARM::BI__builtin_neon_vrsraq_n_v:
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Ops[2] = EmitNeonShiftVector(Ops[2], Ty, true);
+    Int = usgn ? Intrinsic::arm_neon_vrshiftu : Intrinsic::arm_neon_vrshifts;
+    Ops[1] = Builder.CreateCall2(CGM.getIntrinsic(Int, &Ty, 1), Ops[1], Ops[2]); 
+    return Builder.CreateAdd(Ops[0], Ops[1], "vrsra_n");
   case ARM::BI__builtin_neon_vrsubhn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrsubhn, &Ty, 1),
                         Ops, "vrsubhn");
