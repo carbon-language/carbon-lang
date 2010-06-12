@@ -991,7 +991,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vaddw_v:
     Int = usgn ? Intrinsic::arm_neon_vaddws : Intrinsic::arm_neon_vaddwu;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vaddw");
-  // FIXME: vbsl -> or ((0 & 1), (0 & 2)) in arm_neon.h
   case ARM::BI__builtin_neon_vcale_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcage_v: {
@@ -1218,7 +1217,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vrecpsq_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrecps, &Ty, 1),
                         Ops, "vrecps");
-  // FIXME: rev16, 32, 16 -> shufflevector
   case ARM::BI__builtin_neon_vrhadd_v:
   case ARM::BI__builtin_neon_vrhaddq_v:
     Int = usgn ? Intrinsic::arm_neon_vrhaddu : Intrinsic::arm_neon_vrhadds;

@@ -40,6 +40,10 @@ def OP_HI    : Op;
 def OP_LO    : Op;
 def OP_CONC  : Op;
 def OP_DUP   : Op;
+def OP_SEL   : Op;
+def OP_REV64 : Op;
+def OP_REV32 : Op;
+def OP_REV16 : Op;
 
 class Inst <string p, string t, Op o> {
   string Prototype = p;
@@ -298,9 +302,9 @@ def VEXT : WInst<"dddi", "cUcPcsUsPsiUilUlQcQUcQPcQsQUsQPsQiQUiQlQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.27 Reverse vector elements (sdap endianness)
-def VREV64 : WInst<"dd", "csiUcUsUiPcPsfQcQsQiQUcQUsQUiQPcQPsQf">;
-def VREV32 : WInst<"dd", "csUcUsPcQcQsQUcQUsQPc">;
-def VREV16 : WInst<"dd", "cUcPcQcQUcQPc">;
+def VREV64 : Inst<"dd", "csiUcUsUiPcPsfQcQsQiQUcQUsQUiQPcQPsQf", OP_REV64>;
+def VREV32 : Inst<"dd", "csUcUsPcQcQsQUcQUsQPc", OP_REV32>;
+def VREV16 : Inst<"dd", "cUcPcQcQUcQPc", OP_REV16>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.28 Other single operand arithmetic
@@ -322,7 +326,7 @@ def VORR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_OR>;
 def VEOR : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_XOR>;
 def VBIC : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ANDN>;
 def VORN : Inst<"ddd",   "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl", OP_ORN>;
-def VBSL : SInst<"dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs">;
+def VBSL : Inst<"dudd",  "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs", OP_SEL>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations
