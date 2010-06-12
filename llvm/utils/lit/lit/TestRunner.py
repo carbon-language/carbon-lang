@@ -66,6 +66,7 @@ def executeShCmd(cmd, cfg, cwd, results):
     input = subprocess.PIPE
     stderrTempFiles = []
     opened_files = []
+    named_temp_files = []
     # To avoid deadlock, we use a single stderr stream for piped
     # output. This is null until we have seen some output using
     # stderr.
@@ -148,6 +149,15 @@ def executeShCmd(cmd, cfg, cwd, results):
         if not args[0]:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
+        # Replace uses of /dev/null with temporary files.
+        if kAvoidDevNull:
+            for i,arg in enumerate(args):
+                if arg == "/dev/null":
+                    f = tempfile.NamedTemporaryFile(delete=False)
+                    f.close()
+                    named_temp_files.append(f.name)
+                    args[i] = f.name
+
         procs.append(subprocess.Popen(args, cwd=cwd,
                                       stdin = stdin,
                                       stdout = stdout,
@@ -208,6 +218,13 @@ def executeShCmd(cmd, cfg, cwd, results):
     # Explicitly close any redirected files.
     for f in opened_files:
         f.close()
+
+    # Remove any named temporary files we created.
+    for f in named_temp_files:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
     if cmd.negate:
         exitCode = not exitCode
