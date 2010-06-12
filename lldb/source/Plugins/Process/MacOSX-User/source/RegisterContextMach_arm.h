@@ -191,10 +191,10 @@ protected:
     FPU fpu;
     EXC exc;
     DBG dbg;
-    kern_return_t gpr_errs[2]; // Read/Write errors
-    kern_return_t fpu_errs[2]; // Read/Write errors
-    kern_return_t exc_errs[2]; // Read/Write errors
-    kern_return_t dbg_errs[2]; // Read/Write errors
+    int gpr_errs[2]; // Read/Write errors
+    int fpu_errs[2]; // Read/Write errors
+    int exc_errs[2]; // Read/Write errors
+    int dbg_errs[2]; // Read/Write errors
 
     void
     InvalidateAllRegisterStates()
@@ -204,7 +204,7 @@ protected:
         SetError (EXCRegSet, Read, -1);
     }
 
-    kern_return_t
+    int
     GetError (int flavor, uint32_t err_idx) const
     {
         if (err_idx < kNumErrors)
@@ -224,7 +224,7 @@ protected:
     }
 
     bool
-    SetError (int flavor, uint32_t err_idx, kern_return_t err)
+    SetError (int flavor, uint32_t err_idx, int err)
     {
         if (err_idx < kNumErrors)
         {
@@ -255,37 +255,37 @@ protected:
     bool
     RegisterSetIsCached (int set) const
     {
-        return GetError(set, Read) == KERN_SUCCESS;
+        return GetError(set, Read) == 0;
     }
 
-    kern_return_t
+    int
     ReadGPR (bool force);
 
-    kern_return_t
+    int
     ReadFPU (bool force);
 
-    kern_return_t
+    int
     ReadEXC (bool force);
 
-    kern_return_t
+    int
     ReadDBG (bool force);
 
-    kern_return_t
+    int
     WriteGPR ();
 
-    kern_return_t
+    int
     WriteFPU ();
 
-    kern_return_t
+    int
     WriteEXC ();
 
-    kern_return_t
+    int
     WriteDBG ();
 
-    kern_return_t
+    int
     ReadRegisterSet (uint32_t set, bool force);
 
-    kern_return_t
+    int
     WriteRegisterSet (uint32_t set);
 
     static uint32_t

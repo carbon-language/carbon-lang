@@ -479,7 +479,7 @@ RegisterContextMach_arm::GetSetForNativeRegNum (int reg)
     return -1;
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::ReadGPR (bool force)
 {
     int set = GPRRegSet;
@@ -491,7 +491,7 @@ RegisterContextMach_arm::ReadGPR (bool force)
     return GetError(GPRRegSet, Read);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::ReadFPU (bool force)
 {
     int set = FPURegSet;
@@ -503,7 +503,7 @@ RegisterContextMach_arm::ReadFPU (bool force)
     return GetError(FPURegSet, Read);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::ReadEXC (bool force)
 {
     int set = EXCRegSet;
@@ -515,7 +515,7 @@ RegisterContextMach_arm::ReadEXC (bool force)
     return GetError(EXCRegSet, Read);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::ReadDBG (bool force)
 {
     int set = DBGRegSet;
@@ -527,7 +527,7 @@ RegisterContextMach_arm::ReadDBG (bool force)
     return GetError(DBGRegSet, Read);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::WriteGPR ()
 {
     int set = GPRRegSet;
@@ -540,7 +540,7 @@ RegisterContextMach_arm::WriteGPR ()
     return GetError(GPRRegSet, Write);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::WriteFPU ()
 {
     int set = FPURegSet;
@@ -553,7 +553,7 @@ RegisterContextMach_arm::WriteFPU ()
     return GetError(FPURegSet, Write);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::WriteEXC ()
 {
     int set = EXCRegSet;
@@ -566,7 +566,7 @@ RegisterContextMach_arm::WriteEXC ()
     return GetError(EXCRegSet, Write);
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::WriteDBG ()
 {
     int set = DBGRegSet;
@@ -580,7 +580,7 @@ RegisterContextMach_arm::WriteDBG ()
 }
 
 
-kern_return_t
+int
 RegisterContextMach_arm::ReadRegisterSet (uint32_t set, bool force)
 {
     switch (set)
@@ -594,7 +594,7 @@ RegisterContextMach_arm::ReadRegisterSet (uint32_t set, bool force)
     return KERN_INVALID_ARGUMENT;
 }
 
-kern_return_t
+int
 RegisterContextMach_arm::WriteRegisterSet (uint32_t set)
 {
     // Make sure we have a valid context to set.
@@ -1178,7 +1178,7 @@ RegisterContextMach_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t size)
     if (addr & 1)
         return LLDB_INVALID_INDEX32;
 
-    kern_return_t kret = ReadDBG (false);
+    int kret = ReadDBG (false);
 
     if (kret == KERN_SUCCESS)
     {
@@ -1248,7 +1248,7 @@ RegisterContextMach_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t size)
 bool
 RegisterContextMach_arm::ClearHardwareBreakpoint (uint32_t hw_index)
 {
-    kern_return_t kret = ReadDBG (false);
+    int kret = ReadDBG (false);
 
     const uint32_t num_hw_points = NumSupportedHardwareBreakpoints();
     if (kret == KERN_SUCCESS)
@@ -1329,7 +1329,7 @@ RegisterContextMach_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t size, 
         return LLDB_INVALID_INDEX32;
 
     // Read the debug state
-    kern_return_t kret = ReadDBG (false);
+    int kret = ReadDBG (false);
 
     if (kret == KERN_SUCCESS)
     {
@@ -1372,7 +1372,7 @@ RegisterContextMach_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t size, 
 bool
 RegisterContextMach_arm::ClearHardwareWatchpoint (uint32_t hw_index)
 {
-    kern_return_t kret = ReadDBG (false);
+    int kret = ReadDBG (false);
 
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
     if (kret == KERN_SUCCESS)
