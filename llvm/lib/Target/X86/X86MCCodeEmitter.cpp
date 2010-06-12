@@ -502,7 +502,7 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   
   unsigned REX = 0;
   if (TSFlags & X86II::REX_W)
-    REX |= 1 << 3;
+    REX |= 1 << 3; // set REX.W
   
   if (MI.getNumOperands() == 0) return REX;
   
@@ -520,7 +520,7 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
     if (!X86InstrInfo::isX86_64NonExtLowByteReg(Reg)) continue;
     // FIXME: The caller of DetermineREXPrefix slaps this prefix onto anything
     // that returns non-zero.
-    REX |= 0x40;
+    REX |= 0x40; // REX fixed encoding prefix
     break;
   }
   
@@ -529,25 +529,25 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   case X86II::MRMSrcReg:
     if (MI.getOperand(0).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
-      REX |= 1 << 2;
+      REX |= 1 << 2; // set REX.R
     i = isTwoAddr ? 2 : 1;
     for (; i != NumOps; ++i) {
       const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
-        REX |= 1 << 0;
+        REX |= 1 << 0; // set REX.B
     }
     break;
   case X86II::MRMSrcMem: {
     if (MI.getOperand(0).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
-      REX |= 1 << 2;
+      REX |= 1 << 2; // set REX.R
     unsigned Bit = 0;
     i = isTwoAddr ? 2 : 1;
     for (; i != NumOps; ++i) {
       const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg()) {
         if (X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
-          REX |= 1 << Bit;
+          REX |= 1 << Bit; // set REX.B (Bit=0) and REX.X (Bit=1)
         Bit++;
       }
     }
@@ -562,13 +562,13 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
     i = isTwoAddr ? 1 : 0;
     if (NumOps > e && MI.getOperand(e).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(e).getReg()))
-      REX |= 1 << 2;
+      REX |= 1 << 2; // set REX.R
     unsigned Bit = 0;
     for (; i != e; ++i) {
       const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg()) {
         if (X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
-          REX |= 1 << Bit;
+          REX |= 1 << Bit; // REX.B (Bit=0) and REX.X (Bit=1)
         Bit++;
       }
     }
@@ -577,12 +577,12 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   default:
     if (MI.getOperand(0).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
-      REX |= 1 << 0;
+      REX |= 1 << 0; // set REX.B
     i = isTwoAddr ? 2 : 1;
     for (unsigned e = NumOps; i != e; ++i) {
       const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
-        REX |= 1 << 2;
+        REX |= 1 << 2; // set REX.R
     }
     break;
   }
