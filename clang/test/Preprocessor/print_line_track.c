@@ -3,8 +3,8 @@
  * RUN: %clang_cc1 -E -P %s | grep 'a 3'
  * RUN: %clang_cc1 -E -P %s | grep 'b 16'
  * RUN: %clang_cc1 -E %s | not grep '# 0 '
- * PR1848
- * PR3437
+ * RUN: %clang_cc1 -E -P %s | count 4
+ * PR1848 PR3437 PR7360
 */
 
 #define t(x) x

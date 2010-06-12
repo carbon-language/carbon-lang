@@ -174,20 +174,6 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
 /// #line directive.  This returns false if already at the specified line, true
 /// if some newlines were emitted.
 bool PrintPPOutputPPCallbacks::MoveToLine(unsigned LineNo) {
-  if (DisableLineMarkers) {
-    if (LineNo == CurLine) return false;
-
-    CurLine = LineNo;
-
-    if (!EmittedTokensOnThisLine && !EmittedMacroOnThisLine)
-      return true;
-
-    OS << '\n';
-    EmittedTokensOnThisLine = false;
-    EmittedMacroOnThisLine = false;
-    return true;
-  }
-
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
   if (LineNo-CurLine <= 8) {
@@ -199,8 +185,17 @@ bool PrintPPOutputPPCallbacks::MoveToLine(unsigned LineNo) {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OS.write(NewLines, LineNo-CurLine);
     }
-  } else {
+  } else if (!DisableLineMarkers) {
+    // Emit a #line or line marker.
     WriteLineInfo(LineNo, 0, 0);
+  } else {
+    // Okay, we're in -P mode, which turns off line markers.  However, we still
+    // need to emit a newline between tokens on different lines.
+    if (EmittedTokensOnThisLine || EmittedMacroOnThisLine) {
+      OS << '\n';
+      EmittedTokensOnThisLine = false;
+      EmittedMacroOnThisLine = false;
+    }
   }
 
   CurLine = LineNo;
