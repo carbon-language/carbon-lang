@@ -20,13 +20,10 @@
 //----------------------------------------------------------------------
 
 #include <assert.h>
-#include <mach/mach_types.h>
-#include <machine/endian.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/syslimits.h>
 #include <unistd.h>
 
 #ifndef NO_RTTI
