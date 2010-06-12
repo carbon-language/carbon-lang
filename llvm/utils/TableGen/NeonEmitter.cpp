@@ -443,20 +443,8 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
-static std::string Duplicate(StringRef typestr, const std::string &a) {
-  bool dummy, quad = false;
-  char type = ClassifyType(typestr, quad, dummy, dummy);
-  unsigned nElts = 0;
-  switch (type) {
-    case 'c': nElts = 8; break;
-    case 's': nElts = 4; break;
-    case 'i': nElts = 2; break;
-    case 'l': nElts = 1; break;
-    case 'h': nElts = 4; break;
-    case 'f': nElts = 2; break;
-  }
-  nElts <<= quad;
-
+static std::string Duplicate(unsigned nElts, StringRef typestr, 
+                             const std::string &a) {
   std::string s;
   
   s = "(__neon_" + TypeString('d', typestr) + "){ ";
@@ -475,6 +463,18 @@ static std::string Duplicate(StringRef typestr, const std::string &a) {
 // than vector types, and the call becomes "a.val + b.val"
 static std::string GenOpString(OpKind op, const std::string &proto,
                                StringRef typestr, bool structTypes = true) {
+  bool dummy, quad = false;
+  char type = ClassifyType(typestr, quad, dummy, dummy);
+  unsigned nElts = 0;
+  switch (type) {
+    case 'c': nElts = 8; break;
+    case 's': nElts = 4; break;
+    case 'i': nElts = 2; break;
+    case 'l': nElts = 1; break;
+    case 'h': nElts = 4; break;
+    case 'f': nElts = 2; break;
+  }
+  
   std::string ts = TypeString(proto[0], typestr);
   std::string s = ts + " r; r";
   
@@ -497,17 +497,17 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += a + " - " + b;
     break;
   case OpMulN:
-    b = Duplicate(typestr, "b");
+    b = Duplicate(nElts << quad, typestr, "b");
   case OpMul:
     s += a + " * " + b;
     break;
   case OpMlaN:
-    c = Duplicate(typestr, "c");
+    c = Duplicate(nElts << quad, typestr, "c");
   case OpMla:
     s += a + " + ( " + b + " * " + c + " )";
     break;
   case OpMlsN:
-    c = Duplicate(typestr, "c");
+    c = Duplicate(nElts << quad, typestr, "c");
   case OpMls:
     s += a + " - ( " + b + " * " + c + " )";
     break;
@@ -561,7 +561,35 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[0])";
     break;
   case OpDup:
-    s += Duplicate(typestr, a);
+    s += Duplicate(nElts << quad, typestr, a);
+    break;
+  case OpSelect:
+    // ((0 & 1) | (~0 & 2))
+    ts = TypeString(proto[1], typestr);
+    s += "( " + a + " & (__neon_" + ts + ")" + b + ") | ";
+    s += "(~" + a + " & (__neon_" + ts + ")" + c + ")";
+    break;
+  case OpRev16:
+    s += "__builtin_shufflevector(" + a + ", " + a;
+    for (unsigned i = 2; i <= nElts << quad; i += 2)
+      for (unsigned j = 0; j != 2; ++j)
+        s += ", " + utostr(i - j - 1);
+    s += ")";
+    break;
+  case OpRev32:
+    nElts >>= 1;
+    s += "__builtin_shufflevector(" + a + ", " + a;
+    for (unsigned i = nElts; i <= nElts << (1 + quad); i += nElts)
+      for (unsigned j = 0; j != nElts; ++j)
+        s += ", " + utostr(i - j - 1);
+    s += ")";
+    break;
+  case OpRev64:
+    s += "__builtin_shufflevector(" + a + ", " + a;
+    for (unsigned i = nElts; i <= nElts << quad; i += nElts)
+      for (unsigned j = 0; j != nElts; ++j)
+        s += ", " + utostr(i - j - 1);
+    s += ")";
     break;
   default:
     throw "unknown OpKind!";
@@ -630,6 +658,19 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck,
                               bool structTypes = true) {
+  bool dummy, quad = false;
+  char type = ClassifyType(typestr, quad, dummy, dummy);
+  unsigned nElts = 0;
+  switch (type) {
+    case 'c': nElts = 8; break;
+    case 's': nElts = 4; break;
+    case 'i': nElts = 2; break;
+    case 'l': nElts = 1; break;
+    case 'h': nElts = 4; break;
+    case 'f': nElts = 2; break;
+  }
+  nElts <<= quad;
+
   char arg = 'a';
   std::string s;
 
@@ -678,12 +719,15 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
+    std::string args = std::string(&arg, 1);
+    if (define)
+      args = "(" + args + ")";
+    
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
     if (structTypes && (proto[i] == '2' || proto[i] == '3' || proto[i] == '4')){
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
-        s.push_back(arg);
-        s += ".val[" + utostr(vi) + "]";
+        s += args + ".val[" + utostr(vi) + "]";
         if ((vi + 1) < ve)
           s += ", ";
       }
@@ -693,18 +737,10 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       continue;
     }
     
-    // Parenthesize the args from the macro.
-    if (define)
-      s.push_back('(');
-    
     if (splat && (i + 1) == e) 
-      s += Duplicate(typestr, std::string(&arg, 1));
+      s += Duplicate(nElts, typestr, args);
     else
-      s.push_back(arg);
-
-    // Parenthesize the args from the macro.
-    if (define)
-      s.push_back(')');
+      s += args;
     
     if (structTypes && proto[i] != 's' && proto[i] != 'i' && proto[i] != 'l' &&
         proto[i] != 'p' && proto[i] != 'c' && proto[i] != 'a') {

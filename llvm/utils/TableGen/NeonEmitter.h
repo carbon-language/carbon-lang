@@ -47,7 +47,11 @@ enum OpKind {
   OpConcat,
   OpDup,
   OpHi,
-  OpLo
+  OpLo,
+  OpSelect,
+  OpRev16,
+  OpRev32,
+  OpRev64
 };
 
 enum ClassKind {
@@ -93,6 +97,10 @@ namespace llvm {
       OpMap["OP_HI"]    = OpHi;
       OpMap["OP_LO"]    = OpLo;
       OpMap["OP_DUP"]   = OpDup;
+      OpMap["OP_SEL"]   = OpSelect;
+      OpMap["OP_REV16"] = OpRev16;
+      OpMap["OP_REV32"] = OpRev32;
+      OpMap["OP_REV64"] = OpRev64;
 
       Record *SI = R.getClass("SInst");
       Record *II = R.getClass("IInst");
