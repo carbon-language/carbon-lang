@@ -85,7 +85,8 @@ namespace {  // Anonymous namespace for class
 
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
         if (I->empty() || !I->back().isTerminator()) {
-          dbgs() << "Basic Block does not have terminator!\n";
+          dbgs() << "Basic Block in function '" << F.getName() 
+                 << "' does not have terminator!\n";
           WriteAsOperand(dbgs(), I, true);
           dbgs() << "\n";
           Broken = true;
