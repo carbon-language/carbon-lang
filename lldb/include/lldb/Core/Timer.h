@@ -12,6 +12,7 @@
 #if defined(__cplusplus)
 
 #include <memory>
+#include <stdio.h>
 #include "lldb/lldb-private.h"
 #include "lldb/Host/TimeValue.h"
 
