@@ -26,7 +26,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "SharingPtr.h"
+#include "lldb/Utility/SharingPtr.h"
 
 //----------------------------------------------------------------------
 // All host systems must define:

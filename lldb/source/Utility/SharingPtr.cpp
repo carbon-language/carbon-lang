@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SharingPtr.h"
+#include "lldb/Utility/SharingPtr.h"
 
 namespace lldb {
 

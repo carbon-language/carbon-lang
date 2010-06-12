@@ -11,6 +11,7 @@
 #define utility_SharingPtr_h_
 
 #include <algorithm>
+#include <memory>
 
 namespace lldb {
 
@@ -67,6 +68,7 @@ private:
     element_type*      ptr_;
     imp::shared_count* cntrl_;
 
+    struct nat {int for_bool_;};
 public:
     SharingPtr();
     template<class Y> explicit SharingPtr(Y* p);
@@ -90,7 +92,7 @@ public:
     long use_count() const {return cntrl_ ? cntrl_->use_count() : 0;}
     bool unique() const {return use_count() == 1;}
     bool empty() const {return cntrl_ == 0;}
-    operator void*() const { return get(); }
+    operator nat*() const {return (nat*)get();}
 
 private:
 
