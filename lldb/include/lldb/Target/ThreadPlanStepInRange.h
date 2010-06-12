@@ -59,7 +59,8 @@ private:
                                          lldb::StepType type,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
-                                         lldb::RunMode stop_others);
+                                         lldb::RunMode stop_others,
+                                         bool avoid_code_without_debug_info);
 
 
     // Need an appropriate marker for the current stack so we can tell step out

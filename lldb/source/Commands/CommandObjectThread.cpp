@@ -512,22 +512,8 @@ public:
                     new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans, m_step_type, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything), 
-                                                                    stop_other_threads);
-                    if (new_plan)
-                    {
-                        ThreadPlanStepInRange *real_plan = dynamic_cast<ThreadPlanStepInRange *> (new_plan);
-                        if (real_plan)
-                        {
-                            if (m_options.m_avoid_no_debug)
-                            {
-                                real_plan->GetFlags().Set (ThreadPlanShouldStopHere::eAvoidNoDebug);
-                            }
-                            else
-                            {
-                                real_plan->GetFlags().Clear (ThreadPlanShouldStopHere::eAvoidNoDebug);
-                            }
-                        }
-                    }
+                                                                    stop_other_threads,
+                                                                    m_options.m_avoid_no_debug);
                 }
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
@@ -545,7 +531,8 @@ public:
                                                                     m_step_type, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything), 
-                                                                    stop_other_threads);
+                                                                    stop_other_threads,
+                                                                    false);
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (true, 
                                                                                 abort_other_plans, 

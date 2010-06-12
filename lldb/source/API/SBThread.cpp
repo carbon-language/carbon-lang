@@ -325,7 +325,8 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
                                                                eStepTypeOver,
                                                                sc.line_entry.range, 
                                                                sc,
-                                                               stop_other_threads);
+                                                               stop_other_threads,
+                                                               false);
                 
             }
             else
@@ -354,24 +355,14 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
+            bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            ThreadPlan *new_plan = m_lldb_object_sp->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                                                  eStepTypeInto, 
-                                                                                  sc.line_entry.range, 
-                                                                                  sc, 
-                                                                                  stop_other_threads);
-            if (new_plan)
-            {
-                ThreadPlanStepInRange *real_plan = dynamic_cast<ThreadPlanStepInRange *> (new_plan);
-                if (real_plan)
-                {
-                    bool avoid_no_debug = true;
-                    if (avoid_no_debug)
-                        real_plan->GetFlags().Set (ThreadPlanShouldStopHere::eAvoidNoDebug);
-                    else
-                        real_plan->GetFlags().Clear (ThreadPlanShouldStopHere::eAvoidNoDebug);
-                }
-            }
+            m_lldb_object_sp->QueueThreadPlanForStepRange (abort_other_plans, 
+                                                           eStepTypeInto, 
+                                                           sc.line_entry.range, 
+                                                           sc, 
+                                                           stop_other_threads,
+                                                           avoid_code_without_debug_info);
         }
         else
         {

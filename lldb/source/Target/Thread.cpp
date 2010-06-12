@@ -419,9 +419,15 @@ Thread::SetupForResume ()
             // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
             // special to step over a breakpoint.
             
-            ThreadPlan *cur_plan = GetCurrentPlan();
-            ThreadPlanStepOverBreakpoint *step_over_bp = dynamic_cast<ThreadPlanStepOverBreakpoint *> (cur_plan);
-            if (step_over_bp == NULL)
+            // TODO: Jim Ingham -- this is the only place left that does RTTI in
+            // all of LLDB. I am adding a hack right now to let us compile 
+            // without RTTI, but we will need to look at and fix this. Right
+            // now it will always push the breakpoint thread plan which is 
+            // probably wrong. We will need to work around this.
+    
+//            ThreadPlan *cur_plan = GetCurrentPlan();
+//            ThreadPlanStepOverBreakpoint *step_over_bp = dynamic_cast<ThreadPlanStepOverBreakpoint *> (cur_plan);
+//            if (step_over_bp == NULL)
             {
 
                 ThreadPlanSP step_bp_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
@@ -861,11 +867,26 @@ Thread::QueueThreadPlanForStepSingleInstruction (bool step_over, bool abort_othe
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForStepRange (bool abort_other_plans, StepType type, const AddressRange &range, const SymbolContext &addr_context, lldb::RunMode stop_other_threads)
+Thread::QueueThreadPlanForStepRange 
+(
+    bool abort_other_plans, 
+    StepType type, 
+    const AddressRange &range, 
+    const SymbolContext &addr_context, 
+    lldb::RunMode stop_other_threads,
+    bool avoid_code_without_debug_info
+)
 {
     ThreadPlanSP thread_plan_sp;
     if (type == eStepTypeInto)
-        thread_plan_sp.reset (new ThreadPlanStepInRange (*this, range, addr_context, stop_other_threads));
+    {
+        ThreadPlanStepInRange *plan = new ThreadPlanStepInRange (*this, range, addr_context, stop_other_threads);
+        if (avoid_code_without_debug_info)
+            plan->GetFlags().Set (ThreadPlanShouldStopHere::eAvoidNoDebug);
+        else
+            plan->GetFlags().Clear (ThreadPlanShouldStopHere::eAvoidNoDebug);
+        thread_plan_sp.reset (plan);
+    }
     else
         thread_plan_sp.reset (new ThreadPlanStepOverRange (*this, range, addr_context, stop_other_threads));
 

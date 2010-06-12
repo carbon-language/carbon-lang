@@ -420,7 +420,8 @@ public:
                                  lldb::StepType type,
                                  const AddressRange &range,
                                  const SymbolContext &addr_context,
-                                 lldb::RunMode stop_other_threads);
+                                 lldb::RunMode stop_other_threads,
+                                 bool avoid_code_without_debug_info);
 
     //------------------------------------------------------------------
     /// Queue the plan used to step out of the function at the current PC of

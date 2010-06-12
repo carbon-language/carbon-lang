@@ -500,7 +500,7 @@
 		261744771168585B005ADD65 /* SBType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBType.cpp; path = source/API/SBType.cpp; sourceTree = "<group>"; };
 		2617447911685869005ADD65 /* SBType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBType.h; path = include/lldb/API/SBType.h; sourceTree = "<group>"; };
 		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
-		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = source/Utility/SharingPtr.h; sourceTree = "<group>"; };
+		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteRegisterContext.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h"; sourceTree = "<group>"; };
 		261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteRegisterContext.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.cpp"; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
@@ -2296,7 +2296,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\tsed -i '' 's/\\(#include[ ]*\\)\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\ndone\n";
+			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\tsed -i '' 's/\\(#include\\)[ ]*\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\n\tsed -i '' 's|<LLDB/Utility|<LLDB|' \"$file\"\ndone\n";
 		};
 		26D5B06111B07468009A862E /* Build llvm and clang */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2755,6 +2755,7 @@
 					"-DSUPPORT_REMOTE_UNWINDING",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);
@@ -2806,6 +2807,7 @@
 					"-DSUPPORT_REMOTE_UNWINDING",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);
@@ -2912,6 +2914,7 @@
 					"-DSUPPORT_REMOTE_UNWINDING",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
+					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 				);

@@ -45,7 +45,8 @@ private:
                                          lldb::StepType type,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
-                                         lldb::RunMode stop_others);
+                                         lldb::RunMode stop_others,
+                                         bool avoid_code_without_debug_info);
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOverRange);
 
