@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define NO_RTTI
 // C Includes
 // C++ Includes
 // Other libraries and framework includes

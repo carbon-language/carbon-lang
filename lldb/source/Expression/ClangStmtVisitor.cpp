@@ -14,7 +14,6 @@
 // Other libraries and framework includes
 #include "clang/AST/RecordLayout.h"
 
-#define NO_RTTI
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"

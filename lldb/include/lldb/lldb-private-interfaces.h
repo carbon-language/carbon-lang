@@ -11,7 +11,6 @@
 #define liblldb_lldb_interfaces_h_
 
 #if defined(__cplusplus)
-#ifndef NO_RTTI
 
 #include "lldb/lldb-private.h"
 
@@ -31,7 +30,6 @@ namespace lldb_private
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);
 } // namespace lldb_private
 
-#endif  // #ifndef NO_RTTI
 #endif  // #if defined(__cplusplus)
 
 #endif  // liblldb_lldb_interfaces_h_

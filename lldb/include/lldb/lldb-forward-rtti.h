@@ -12,13 +12,6 @@
 
 #if defined(__cplusplus)
 
-#ifndef NO_RTTI
-//----------------------------------------------------------------------
-// And source files that may not have RTTI enabled during their
-// compilation will want to do a "#define NO_RTTI" before including the
-// lldb-include.h file.
-//----------------------------------------------------------------------
-
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-forward.h"
 
@@ -68,8 +61,6 @@ namespace lldb {
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;
 
 } // namespace lldb
-
-#endif  // #ifndef NO_RTTI
 
 #endif  // #if defined(__cplusplus)
 

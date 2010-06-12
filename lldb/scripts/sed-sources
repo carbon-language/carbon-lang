@@ -97,7 +97,6 @@ $opt_h and help();
 our %seds = (
 	'\s+$' => "\n",		# Get rid of spaces at the end of a line
 	'^\s+$' => "\n",	# Get rid spaces on lines that are all spaces
-	'^\s*//\s*[Cc]opyright.*$' => '//', # Get rid of all copyright lines
 );
 
 

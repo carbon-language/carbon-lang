@@ -58,7 +58,6 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
-#define NO_RTTI
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/dwarf.h"

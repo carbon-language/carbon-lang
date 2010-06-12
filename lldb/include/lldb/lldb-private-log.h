@@ -68,12 +68,8 @@ IsLogVerbose ();
 void
 DisableLog ();
 
-#ifndef NO_RTTI
-
 Log *
 EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm);
-
-#endif
 
 void
 ListLogCategories (Stream *strm);

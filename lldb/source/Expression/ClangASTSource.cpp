@@ -7,8 +7,6 @@
  *
  */
 
-#define NO_RTTI
-
 #include "clang/AST/ASTContext.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"

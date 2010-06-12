@@ -26,17 +26,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#ifndef NO_RTTI
-
-//----------------------------------------------------------------------
-// And source files that may not have RTTI enabled during their
-// compilation will want to do a "#define NO_RTTI" before including the
-// lldb-include.h file.
-//----------------------------------------------------------------------
-
-#include <tr1/memory> // for std::tr1::shared_ptr
-
-#endif
+#include "SharingPtr.h"
 
 //----------------------------------------------------------------------
 // All host systems must define:
@@ -67,7 +57,6 @@ namespace lldb {
         typedef void *              thread_result_t;            // Host thread result type
         typedef void *              (*thread_func_t)(void *);   // Host thread function type
 
-#ifndef NO_RTTI
         // The template below can be used in a few useful ways:
         //
         //      // Make a single shared pointer a class Foo
@@ -79,9 +68,8 @@ namespace lldb {
         template<typename _Tp>
         struct SharedPtr
         {
-            typedef std::tr1::shared_ptr<_Tp> Type;
+            typedef lldb::SharingPtr<_Tp> Type;
         };
-#endif
 
 } // namespace lldb
 

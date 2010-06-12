@@ -10,6 +10,8 @@
 		260C876A10F538E700BB2B04 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
+		261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -497,6 +499,8 @@
 		26109B3C1155D70100CC3529 /* LogChannelDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogChannelDWARF.h; sourceTree = "<group>"; };
 		261744771168585B005ADD65 /* SBType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBType.cpp; path = source/API/SBType.cpp; sourceTree = "<group>"; };
 		2617447911685869005ADD65 /* SBType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBType.h; path = include/lldb/API/SBType.h; sourceTree = "<group>"; };
+		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
+		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = source/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteRegisterContext.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h"; sourceTree = "<group>"; };
 		261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteRegisterContext.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.cpp"; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
@@ -676,7 +680,6 @@
 		26BC7DD410F1B7D500F91463 /* Host.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Host.h; path = include/lldb/Host/Host.h; sourceTree = "<group>"; };
 		26BC7DD510F1B7D500F91463 /* Mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Mutex.h; path = include/lldb/Host/Mutex.h; sourceTree = "<group>"; };
 		26BC7DD610F1B7D500F91463 /* Predicate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Predicate.h; path = include/lldb/Host/Predicate.h; sourceTree = "<group>"; };
-		26BC7DD710F1B7D500F91463 /* Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Types.h; path = include/lldb/Host/Types.h; sourceTree = "<group>"; };
 		26BC7DE110F1B7F900F91463 /* CommandContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandContext.h; path = include/lldb/Interpreter/CommandContext.h; sourceTree = "<group>"; };
 		26BC7DE210F1B7F900F91463 /* CommandInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandInterpreter.h; path = include/lldb/Interpreter/CommandInterpreter.h; sourceTree = "<group>"; };
 		26BC7DE310F1B7F900F91463 /* CommandObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObject.h; path = include/lldb/Interpreter/CommandObject.h; sourceTree = "<group>"; };
@@ -1497,6 +1500,8 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */,
+				261B5A5311C3F2AD00AABD0A /* SharingPtr.h */,
 				26F996A7119B79C300412154 /* ARM_DWARF_Registers.h */,
 				26F996A8119B79C300412154 /* ARM_GCC_Registers.h */,
 				2660D9F611922A1300958FBD /* StringExtractor.cpp */,
@@ -1862,7 +1867,6 @@
 				26BC7DD610F1B7D500F91463 /* Predicate.h */,
 				2689B0A4113EE3CD00A4AEDB /* Symbols.h */,
 				26B4E26E112F35F700AB3F64 /* TimeValue.h */,
-				26BC7DD710F1B7D500F91463 /* Types.h */,
 			);
 			name = Host;
 			sourceTree = "<group>";
@@ -2186,6 +2190,7 @@
 				49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */,
 				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
 				4CA9637C11B6E99A00780E28 /* CommandObjectApropos.h in Headers */,
+				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2202,6 +2207,7 @@
 				26680203115FD0ED008E1FE4 /* Resources */,
 				26680204115FD0ED008E1FE4 /* Sources */,
 				26680205115FD0ED008E1FE4 /* Frameworks */,
+				261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */,
 				9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */,
 			);
 			buildRules = (
@@ -2278,6 +2284,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Fixup Framework Headers";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\tsed -i '' 's/\\(#include[ ]*\\)\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\ndone\n";
+		};
 		26D5B06111B07468009A862E /* Build llvm and clang */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2622,6 +2642,7 @@
 				49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */,
 				4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */,
 				AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */,
+				261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
