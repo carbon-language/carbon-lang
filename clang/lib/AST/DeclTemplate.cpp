@@ -426,7 +426,7 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
                   SpecializedTemplate->getIdentifier(),
                   PrevDecl),
     SpecializedTemplate(SpecializedTemplate),
-    TypeAsWritten(0),
+    ExplicitInfo(0),
     TemplateArgs(Context, Builder, /*TakeArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
@@ -449,6 +449,8 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
 }
 
 void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
+  delete ExplicitInfo;
+
   if (SpecializedPartialSpecialization *PartialSpec
         = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
     C.Deallocate(PartialSpec);

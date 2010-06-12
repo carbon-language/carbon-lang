@@ -3981,8 +3981,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   TypeSourceInfo *WrittenTy
     = Context.getTemplateSpecializationTypeInfo(Name, TemplateNameLoc,
                                                 TemplateArgs, CanonType);
-  if (TUK != TUK_Friend)
+  if (TUK != TUK_Friend) {
     Specialization->setTypeAsWritten(WrittenTy);
+    Specialization->setTemplateKeywordLoc(KWLoc);
+  }
   TemplateArgsIn.release();
 
   // C++ [temp.expl.spec]p9:
@@ -4076,7 +4078,7 @@ static void StripImplicitInstantiation(NamedDecl *D) {
 /// \param PrevPointOfInstantiation if valid, indicates where the previus 
 /// declaration was instantiated (either implicitly or explicitly).
 ///
-/// \param SuppressNew will be set to true to indicate that the new 
+/// \param HasNoEffect will be set to true to indicate that the new 
 /// specialization or instantiation has no effect and should be ignored.
 ///
 /// \returns true if there was an error that should prevent the introduction of
@@ -4087,8 +4089,8 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
                                              NamedDecl *PrevDecl,
                                              TemplateSpecializationKind PrevTSK,
                                         SourceLocation PrevPointOfInstantiation,
-                                             bool &SuppressNew) {
-  SuppressNew = false;
+                                             bool &HasNoEffect) {
+  HasNoEffect = false;
   
   switch (NewTSK) {
   case TSK_Undeclared:
@@ -4145,7 +4147,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
     switch (PrevTSK) {
     case TSK_ExplicitInstantiationDeclaration:
       // This explicit instantiation declaration is redundant (that's okay).
-      SuppressNew = true;
+      HasNoEffect = true;
       return false;
         
     case TSK_Undeclared:
@@ -4160,7 +4162,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   of a template appears after a declaration of an explicit 
       //   specialization for that template, the explicit instantiation has no
       //   effect.
-      SuppressNew = true;
+      HasNoEffect = true;
       return false;
         
     case TSK_ExplicitInstantiationDefinition:
@@ -4174,7 +4176,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
            diag::note_explicit_instantiation_definition_here);
       assert(PrevPointOfInstantiation.isValid() &&
              "Explicit instantiation without point of instantiation?");
-      SuppressNew = true;
+      HasNoEffect = true;
       return false;
     }
     break;
@@ -4203,7 +4205,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
         Diag(PrevDecl->getLocation(),
              diag::note_previous_template_specialization);
       }
-      SuppressNew = true;
+      HasNoEffect = true;
       return false;
         
     case TSK_ExplicitInstantiationDeclaration:
@@ -4220,7 +4222,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
         << PrevDecl;
       Diag(PrevPointOfInstantiation, 
            diag::note_previous_explicit_instantiation);
-      SuppressNew = true;
+      HasNoEffect = true;
       return false;        
     }
     break;
@@ -4369,14 +4371,14 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
     = Specialization->getTemplateSpecializationInfo();
   assert(SpecInfo && "Function template specialization info missing?");
 
-  bool SuppressNew = false;
+  bool HasNoEffect = false;
   if (!isFriend &&
       CheckSpecializationInstantiationRedecl(FD->getLocation(),
                                              TSK_ExplicitSpecialization,
                                              Specialization,
                                    SpecInfo->getTemplateSpecializationKind(),
                                          SpecInfo->getPointOfInstantiation(),
-                                             SuppressNew))
+                                             HasNoEffect))
     return true;
   
   // Mark the prior declaration as an explicit specialization, so that later
@@ -4503,13 +4505,13 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   //   use occurs; no diagnostic is required.
   assert(MSInfo && "Member specialization info missing?");
 
-  bool SuppressNew = false;
+  bool HasNoEffect = false;
   if (CheckSpecializationInstantiationRedecl(Member->getLocation(),
                                              TSK_ExplicitSpecialization,
                                              Instantiation,
                                      MSInfo->getTemplateSpecializationKind(),
                                            MSInfo->getPointOfInstantiation(),
-                                             SuppressNew))
+                                             HasNoEffect))
     return true;
   
   // Check the scope of this explicit specialization.
@@ -4711,6 +4713,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   ClassTemplateSpecializationDecl *PrevDecl
     = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
 
+  TemplateSpecializationKind PrevDecl_TSK
+    = PrevDecl ? PrevDecl->getTemplateSpecializationKind() : TSK_Undeclared;
+
   // C++0x [temp.explicit]p2:
   //   [...] An explicit instantiation shall appear in an enclosing
   //   namespace of its template. [...]
@@ -4722,31 +4727,31 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   ClassTemplateSpecializationDecl *Specialization = 0;
 
   bool ReusedDecl = false;
+  bool HasNoEffect = false;
   if (PrevDecl) {
-    bool SuppressNew = false;
     if (CheckSpecializationInstantiationRedecl(TemplateNameLoc, TSK,
-                                               PrevDecl, 
-                                              PrevDecl->getSpecializationKind(), 
+                                               PrevDecl, PrevDecl_TSK,
                                             PrevDecl->getPointOfInstantiation(),
-                                               SuppressNew))
+                                               HasNoEffect))
       return DeclPtrTy::make(PrevDecl);
 
-    if (SuppressNew)
-      return DeclPtrTy::make(PrevDecl);
-    
-    if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation ||
-        PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+    // Even though HasNoEffect == true means that this explicit instantiation
+    // has no effect on semantics, we go on to put its syntax in the AST.
+
+    if (PrevDecl_TSK == TSK_ImplicitInstantiation ||
+        PrevDecl_TSK == TSK_Undeclared) {
       // Since the only prior class template specialization with these
       // arguments was referenced but not declared, reuse that
-      // declaration node as our own, updating its source location to
-      // reflect our new declaration.
+      // declaration node as our own, updating the source location
+      // for the template name to reflect our new declaration.
+      // (Other source locations will be updated later.)
       Specialization = PrevDecl;
       Specialization->setLocation(TemplateNameLoc);
       PrevDecl = 0;
       ReusedDecl = true;
     }
   }
-  
+
   if (!Specialization) {
     // Create a new class template specialization declaration node for
     // this explicit specialization.
@@ -4758,15 +4763,16 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                 Converted, PrevDecl);
     SetNestedNameSpecifier(Specialization, SS);
 
-    if (PrevDecl) {
-      // Remove the previous declaration from the folding set, since we want
-      // to introduce a new declaration.
-      ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
-      ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-    } 
-    
-    // Insert the new specialization.
-    ClassTemplate->getSpecializations().InsertNode(Specialization, InsertPos);
+    if (!HasNoEffect) {
+      if (PrevDecl) {
+        // Remove the previous declaration from the folding set, since we want
+        // to introduce a new declaration.
+        ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
+        ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      }
+      // Insert the new specialization.
+      ClassTemplate->getSpecializations().InsertNode(Specialization, InsertPos);
+    }
   }
 
   // Build the fully-sugared type for this explicit instantiation as
@@ -4783,12 +4789,21 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Specialization->setTypeAsWritten(WrittenTy);
   TemplateArgsIn.release();
 
-  if (!ReusedDecl) {
-    // Add the explicit instantiation into its lexical context. However,
-    // since explicit instantiations are never found by name lookup, we
-    // just put it into the declaration context directly.
-    Specialization->setLexicalDeclContext(CurContext);
-    CurContext->addDecl(Specialization);
+  // Set source locations for keywords.
+  Specialization->setExternLoc(ExternLoc);
+  Specialization->setTemplateKeywordLoc(TemplateLoc);
+
+  // Add the explicit instantiation into its lexical context. However,
+  // since explicit instantiations are never found by name lookup, we
+  // just put it into the declaration context directly.
+  Specialization->setLexicalDeclContext(CurContext);
+  CurContext->addDecl(Specialization);
+
+  // Syntax is now OK, so return if it has no other effect on semantics.
+  if (HasNoEffect) {
+    // Set the template specialization kind.
+    Specialization->setTemplateSpecializationKind(TSK);
+    return DeclPtrTy::make(Specialization);
   }
 
   // C++ [temp.explicit]p3:
@@ -4803,8 +4818,10 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                               Specialization->getDefinition());
   if (!Def)
     InstantiateClassTemplateSpecialization(TemplateNameLoc, Specialization, TSK);
-  else if (TSK == TSK_ExplicitInstantiationDefinition)
+  else if (TSK == TSK_ExplicitInstantiationDefinition) {
     MarkVTableUsed(TemplateNameLoc, Specialization, true);
+    Specialization->setPointOfInstantiation(Def->getPointOfInstantiation());
+  }
 
   // Instantiate the members of this class template specialization.
   Def = cast_or_null<ClassTemplateSpecializationDecl>(
@@ -4821,6 +4838,8 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
   }
 
+  // Set the template specialization kind.
+  Specialization->setTemplateSpecializationKind(TSK);
   return DeclPtrTy::make(Specialization);
 }
 
@@ -4898,15 +4917,15 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     PrevDecl = Record;
   if (PrevDecl) {
     MemberSpecializationInfo *MSInfo = PrevDecl->getMemberSpecializationInfo();
-    bool SuppressNew = false;
+    bool HasNoEffect = false;
     assert(MSInfo && "No member specialization information?");
     if (CheckSpecializationInstantiationRedecl(TemplateLoc, TSK, 
                                                PrevDecl,
                                         MSInfo->getTemplateSpecializationKind(),
                                              MSInfo->getPointOfInstantiation(), 
-                                               SuppressNew))
+                                               HasNoEffect))
       return true;
-    if (SuppressNew)
+    if (HasNoEffect)
       return TagD;
   }
   
@@ -5055,13 +5074,13 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // Verify that it is okay to explicitly instantiate here.
     MemberSpecializationInfo *MSInfo = Prev->getMemberSpecializationInfo();
     assert(MSInfo && "Missing static data member specialization info?");
-    bool SuppressNew = false;
+    bool HasNoEffect = false;
     if (CheckSpecializationInstantiationRedecl(D.getIdentifierLoc(), TSK, Prev,
                                         MSInfo->getTemplateSpecializationKind(),
                                               MSInfo->getPointOfInstantiation(), 
-                                               SuppressNew))
+                                               HasNoEffect))
       return true;
-    if (SuppressNew)
+    if (HasNoEffect)
       return DeclPtrTy();
     
     // Instantiate static data member.
@@ -5158,17 +5177,17 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     PrevDecl = Specialization;
 
   if (PrevDecl) {
-    bool SuppressNew = false;
+    bool HasNoEffect = false;
     if (CheckSpecializationInstantiationRedecl(D.getIdentifierLoc(), TSK,
                                                PrevDecl, 
                                      PrevDecl->getTemplateSpecializationKind(), 
                                           PrevDecl->getPointOfInstantiation(),
-                                               SuppressNew))
+                                               HasNoEffect))
       return true;
     
     // FIXME: We may still want to build some representation of this
     // explicit specialization.
-    if (SuppressNew)
+    if (HasNoEffect)
       return DeclPtrTy();
   }
 
