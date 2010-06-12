@@ -400,9 +400,7 @@ static bool EqEnumVals(const std::pair<llvm::APSInt, EnumConstantDecl*>& lhs,
 /// GetTypeBeforeIntegralPromotion - Returns the pre-promotion type of
 /// potentially integral-promoted expression @p expr.
 static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
-  const ImplicitCastExpr *ImplicitCast =
-      dyn_cast_or_null<ImplicitCastExpr>(expr);
-  if (ImplicitCast != NULL) {
+  if (const CastExpr *ImplicitCast = dyn_cast<ImplicitCastExpr>(expr)) {
     const Expr *ExprBeforePromotion = ImplicitCast->getSubExpr();
     QualType TypeBeforePromotion = ExprBeforePromotion->getType();
     if (TypeBeforePromotion->isIntegralType()) {

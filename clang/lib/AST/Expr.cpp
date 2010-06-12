@@ -52,7 +52,9 @@ bool Expr::isKnownToHaveBooleanValue() const {
     }
   }
   
-  if (const CastExpr *CE = dyn_cast<CastExpr>(this))
+  // Only look through implicit casts.  If the user writes
+  // '(int) (a && b)' treat it as an arbitrary int.
+  if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(this))
     return CE->getSubExpr()->isKnownToHaveBooleanValue();
   
   if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(this)) {

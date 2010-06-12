@@ -277,3 +277,14 @@ void test16() {
   case '6': return;
   }
 }
+
+// PR7359
+void test17(int x) {
+  switch (x >= 17) { // expected-warning {{switch condition has boolean value}}
+  case 0: return;
+  }
+
+  switch ((int) (x <= 17)) {
+  case 0: return;
+  }
+}
