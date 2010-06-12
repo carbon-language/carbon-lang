@@ -65,7 +65,7 @@
 }
 
 
-/* The liblld header files to be included. */
+/* The liblldb header files to be included. */
 
 %{
 #include "lldb/lldb-types.h"
@@ -95,7 +95,6 @@
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBValue.h"
-using namespace lldb;
 using namespace lldb_private;
 %}
 
@@ -103,19 +102,23 @@ using namespace lldb_private;
 
 %{
 typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
 typedef int int32_t;
-typedef int32_t pid_t;
 typedef uint32_t tid_t;
 typedef uint64_t addr_t;
+typedef int32_t break_id_t;
+typedef lldb::SBStringList SBStringList;
+typedef lldb::RegisterKind RegisterKind;
+const RegisterKind kNumRegisterKinds = lldb::kNumRegisterKinds ;
 %}
 
 typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
 typedef int int32_t;
-typedef int32_t pid_t;
 typedef uint32_t tid_t;
 typedef uint64_t addr_t;
+typedef int32_t break_id_t;
+typedef lldb::SBStringList SBStringList;
+typedef lldb::RegisterKind RegisterKind;
+const RegisterKind kNumRegisterKinds = lldb::kNumRegisterKinds ;
 
 
 %include "lldb/API/SBAddress.h"
