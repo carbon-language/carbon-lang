@@ -392,11 +392,15 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // functionality of a SIMD prefix
   //
   //  0b00: None
-  //  0b01: 66 (not handled yet)
+  //  0b01: 66
   //  0b10: F3
   //  0b11: F2
   //
   unsigned char VEX_PP = 0;
+
+  // Encode the operand size opcode prefix as needed.
+  if (TSFlags & X86II::OpSize)
+    VEX_PP = 0x01;
 
   switch (TSFlags & X86II::Op0Mask) {
   default: assert(0 && "Invalid prefix!");

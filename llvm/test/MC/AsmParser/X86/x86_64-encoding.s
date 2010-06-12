@@ -167,3 +167,35 @@ vmulsd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK:   vdivsd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK:   encoding: [0xc5,0x2b,0x5e,0x5c,0xd9,0xfc]
 vdivsd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vaddps  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x20,0x58,0xfa]
+vaddps  %xmm10, %xmm11, %xmm15
+
+// CHECK: vsubps  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x20,0x5c,0xfa]
+vsubps  %xmm10, %xmm11, %xmm15
+
+// CHECK: vmulps  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x20,0x59,0xfa]
+vmulps  %xmm10, %xmm11, %xmm15
+
+// CHECK: vdivps  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x20,0x5e,0xfa]
+vdivps  %xmm10, %xmm11, %xmm15
+
+// CHECK: vaddpd  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x21,0x58,0xfa]
+vaddpd  %xmm10, %xmm11, %xmm15
+
+// CHECK: vsubpd  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x21,0x5c,0xfa]
+vsubpd  %xmm10, %xmm11, %xmm15
+
+// CHECK: vmulpd  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x21,0x59,0xfa]
+vmulpd  %xmm10, %xmm11, %xmm15
+
+// CHECK: vdivpd  %xmm10, %xmm11, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x21,0x5e,0xfa]
+vdivpd  %xmm10, %xmm11, %xmm15

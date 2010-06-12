@@ -737,6 +737,26 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
     let isCommutable = Commutable;
   }
 
+  def V#NAME#PSrr : VPSI<opc, MRMSrcReg, (outs VR128:$dst),
+               (ins VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr,
+                          "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+               []> {
+    let isCommutable = Commutable;
+    let Constraints = "";
+    let isAsmParserOnly = 1;
+  }
+
+  def V#NAME#PDrr : VPDI<opc, MRMSrcReg, (outs VR128:$dst),
+               (ins VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr,
+                          "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+               []> {
+    let isCommutable = Commutable;
+    let Constraints = "";
+    let isAsmParserOnly = 1;
+  }
+
   // Vector operation, reg+mem.
   def PSrm : PSI<opc, MRMSrcMem, (outs VR128:$dst),
                                  (ins VR128:$src1, f128mem:$src2),

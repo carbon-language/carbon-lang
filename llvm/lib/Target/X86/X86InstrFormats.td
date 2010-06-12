@@ -220,6 +220,7 @@ class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
 //   PSI   - SSE1 instructions with TB prefix.
 //   PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
 //   VSSI  - SSE1 instructions with XS prefix in AVX form.
+//   VPSI  - SSE1 instructions with TB prefix in AVX form.
 
 class SSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE1]>;
@@ -237,6 +238,10 @@ class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XS, VEX_4V,
         Requires<[HasAVX, HasSSE1]>;
+class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>,
+        VEX_4V, Requires<[HasAVX, HasSSE1]>;
 
 // SSE2 Instruction Templates:
 // 
@@ -246,6 +251,7 @@ class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   PDI    - SSE2 instructions with TB and OpSize prefixes.
 //   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
 //   VSDI   - SSE2 instructions with XD prefix in AVX form.
+//   VPDI   - SSE2 instructions with TB and OpSize prefixes in AVX form.
 
 class SDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE2]>;
@@ -266,6 +272,10 @@ class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XD, VEX_4V,
         Requires<[HasAVX, HasSSE2]>;
+class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedDouble>,
+        VEX_4V, OpSize, Requires<[HasAVX, HasSSE2]>;
 
 // SSE3 Instruction Templates:
 // 
