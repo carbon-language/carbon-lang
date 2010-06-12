@@ -106,7 +106,8 @@ struct InstrItinerary {
 /// Instruction itinerary Data - Itinerary data supplied by a subtarget to be
 /// used by a target.
 ///
-struct InstrItineraryData {
+class InstrItineraryData {
+public:
   const InstrStage     *Stages;         ///< Array of stages selected
   const unsigned       *OperandCycles;  ///< Array of operand cycles selected
   const InstrItinerary *Itineratries;   ///< Array of itineraries selected

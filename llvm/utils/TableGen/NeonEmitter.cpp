@@ -669,7 +669,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     case 'h': nElts = 4; break;
     case 'f': nElts = 2; break;
   }
-  nElts <<= quad;
+  if (quad) nElts <<= 1;
 
   char arg = 'a';
   std::string s;
