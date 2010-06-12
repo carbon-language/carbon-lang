@@ -10,7 +10,11 @@
 #ifndef LLDB_enumerations_h_
 #define LLDB_enumerations_h_
 
-#include "llvm/System/Host.h"
+#if !defined (__APPLE__)
+
+#include <endian.h>
+
+#endif
 
 namespace lldb {
 
@@ -73,17 +77,40 @@ typedef enum ByteOrder
     eByteOrderInvalid   = 0,
     eByteOrderLittle    = 1234,
     eByteOrderBig       = 4321,
-    eByteOrderPDP       = 3412
+    eByteOrderPDP       = 3412,
+
+#if defined (__APPLE__)
+
+// On Mac OS X there are preprocessor defines automatically defined
+// for the byte order that we can rely on.
+
+#if   defined (__LITTLE_ENDIAN__)
+    eByteOrderHost      = eByteOrderLittle
+#elif defined (__BIG_ENDIAN__)
+    eByteOrderHost      = eByteOrderBig
+#elif defined (__PDP_ENDIAN__)
+    eByteOrderHost      = eByteOrderPDP
+#else
+#error unable to detect endianness
+#endif
+
+#else
+
+// On linux we rely upon the defines in <endian.h>
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    eByteOrderHost      = eByteOrderLittle
+#elif __BYTE_ORDER == __BIG_ENDIAN
+    eByteOrderHost      = eByteOrderBig
+#elif __BYTE_ORDER == __PDP_ENDIAN
+    eByteOrderHost      = eByteOrderPDP
+#else
+#error unable to detect endianness
+#endif
+
+#endif
+
 } ByteOrder;
-
-inline ByteOrder getHostByteOrder() {
-  if (llvm::sys::isLittleEndianHost())
-    return eByteOrderLittle;
-  return eByteOrderBig;
-}
-
-// FIXME: Replace uses of eByteOrderHost with getHostByteOrder()!
-#define eByteOrderHost getHostByteOrder()
 
 //----------------------------------------------------------------------
 // Register encoding definitions
