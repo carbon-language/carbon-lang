@@ -3152,7 +3152,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         Type *class_type = ResolveTypeUID(containing_type_die_offset);
                         
                         void *pointee_clang_type = pointee_type->GetOpaqueClangQualType();
-                        void *class_clang_type = pointee_type->GetOpaqueClangQualType();
+                        void *class_clang_type = class_type->GetOpaqueClangQualType();
 
                         void *clang_type = type_list->GetClangASTContext().CreateMemberPointerType(pointee_clang_type, class_clang_type);
 
