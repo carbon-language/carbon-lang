@@ -28,6 +28,8 @@ class FunctionTemplateDecl;
 class Stmt;
 class CompoundStmt;
 class StringLiteral;
+class NestedNameSpecifier;
+class TemplateParameterList;
 class TemplateArgumentList;
 class MemberSpecializationInfo;
 class FunctionTemplateSpecializationInfo;
@@ -364,15 +366,42 @@ public:
   static bool classofKind(Kind K) { return K >= firstValue && K <= lastValue; }
 };
 
+/// QualifierInfo - A struct with extended info about a syntactic
+/// name qualifier, to be used for the case of out-of-line declarations.
+struct QualifierInfo {
+  /// NNS - The syntactic name qualifier.
+  NestedNameSpecifier *NNS;
+  /// NNSRange - The source range for the qualifier.
+  SourceRange NNSRange;
+  /// NumTemplParamLists - The number of template parameter lists
+  /// that were matched against the template-ids occurring into the NNS.
+  unsigned NumTemplParamLists;
+  /// TemplParamLists - A new-allocated array of size NumTemplParamLists,
+  /// containing pointers to the matched template parameter lists.
+  TemplateParameterList** TemplParamLists;
+
+  /// Default constructor.
+  QualifierInfo()
+    : NNS(0), NNSRange(), NumTemplParamLists(0), TemplParamLists(0) {}
+  /// setTemplateParameterListsInfo - Sets info about matched template
+  /// parameter lists.
+  void setTemplateParameterListsInfo(unsigned NumTPLists,
+                                     TemplateParameterList **TPLists);
+  /// Destructor: frees the array of template parameter lists pointers.
+  ~QualifierInfo() { delete[] TemplParamLists; }
+private:
+  // Copy constructor and copy assignment are disabled.
+  QualifierInfo(const QualifierInfo&);
+  QualifierInfo& operator=(const QualifierInfo&);
+};
+
 /// \brief Represents a ValueDecl that came out of a declarator.
 /// Contains type source information through TypeSourceInfo.
 class DeclaratorDecl : public ValueDecl {
   // A struct representing both a TInfo and a syntactic qualifier,
   // to be used for the (uncommon) case of out-of-line declarations.
-  struct ExtInfo {
+  struct ExtInfo : public QualifierInfo {
     TypeSourceInfo *TInfo;
-    NestedNameSpecifier *NNS;
-    SourceRange NNSRange;
   };
 
   llvm::PointerUnion<TypeSourceInfo*, ExtInfo*> DeclInfo;
@@ -392,24 +421,36 @@ public:
 
   TypeSourceInfo *getTypeSourceInfo() const {
     return hasExtInfo()
-      ? DeclInfo.get<ExtInfo*>()->TInfo
+      ? getExtInfo()->TInfo
       : DeclInfo.get<TypeSourceInfo*>();
   }
   void setTypeSourceInfo(TypeSourceInfo *TI) {
     if (hasExtInfo())
-      DeclInfo.get<ExtInfo*>()->TInfo = TI;
+      getExtInfo()->TInfo = TI;
     else
       DeclInfo = TI;
   }
 
   NestedNameSpecifier *getQualifier() const {
-    return hasExtInfo() ? DeclInfo.get<ExtInfo*>()->NNS : 0;
+    return hasExtInfo() ? getExtInfo()->NNS : 0;
   }
   SourceRange getQualifierRange() const {
-    return hasExtInfo() ? DeclInfo.get<ExtInfo*>()->NNSRange : SourceRange();
+    return hasExtInfo() ? getExtInfo()->NNSRange : SourceRange();
   }
   void setQualifierInfo(NestedNameSpecifier *Qualifier,
                         SourceRange QualifierRange);
+
+  unsigned getNumTemplateParameterLists() const {
+    return hasExtInfo() ? getExtInfo()->NumTemplParamLists : 0;
+  }
+  TemplateParameterList *getTemplateParameterList(unsigned index) const {
+    assert(index < getNumTemplateParameterLists());
+    return getExtInfo()->TemplParamLists[index];
+  }
+  void setTemplateParameterListsInfo(unsigned NumTPLists,
+                                     TemplateParameterList **TPLists) {
+    getExtInfo()->setTemplateParameterListsInfo(NumTPLists, TPLists);
+  }
 
   SourceLocation getTypeSpecStartLoc() const;
 
@@ -1715,10 +1756,7 @@ private:
 
   // A struct representing syntactic qualifier info,
   // to be used for the (uncommon) case of out-of-line declarations.
-  struct ExtInfo {
-    NestedNameSpecifier *NNS;
-    SourceRange NNSRange;
-  };
+  typedef QualifierInfo ExtInfo;
 
   /// TypedefDeclOrQualifier - If the (out-of-line) tag declaration name
   /// is qualified, it points to the qualifier info (nns and range);
@@ -1830,19 +1868,29 @@ public:
   TypedefDecl *getTypedefForAnonDecl() const {
     return hasExtInfo() ? 0 : TypedefDeclOrQualifier.get<TypedefDecl*>();
   }
-    
+
   void setTypedefForAnonDecl(TypedefDecl *TDD);
-    
+
   NestedNameSpecifier *getQualifier() const {
-    return hasExtInfo() ? TypedefDeclOrQualifier.get<ExtInfo*>()->NNS : 0;
+    return hasExtInfo() ? getExtInfo()->NNS : 0;
   }
   SourceRange getQualifierRange() const {
-    return hasExtInfo()
-      ? TypedefDeclOrQualifier.get<ExtInfo*>()->NNSRange
-      : SourceRange();
+    return hasExtInfo() ? getExtInfo()->NNSRange : SourceRange();
   }
   void setQualifierInfo(NestedNameSpecifier *Qualifier,
                         SourceRange QualifierRange);
+
+  unsigned getNumTemplateParameterLists() const {
+    return hasExtInfo() ? getExtInfo()->NumTemplParamLists : 0;
+  }
+  TemplateParameterList *getTemplateParameterList(unsigned i) const {
+    assert(i < getNumTemplateParameterLists());
+    return getExtInfo()->TemplParamLists[i];
+  }
+  void setTemplateParameterListsInfo(unsigned NumTPLists,
+                                     TemplateParameterList **TPLists) {
+    getExtInfo()->setTemplateParameterListsInfo(NumTPLists, TPLists);
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -566,6 +566,29 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
   }
 }
 
+void
+QualifierInfo::setTemplateParameterListsInfo(unsigned NumTPLists,
+                                             TemplateParameterList **TPLists) {
+  assert((NumTPLists == 0 || TPLists != 0) &&
+         "Empty array of template parameters with positive size!");
+  assert((NumTPLists == 0 || NNS) &&
+         "Nonempty array of template parameters with no qualifier!");
+
+  // Free previous template parameters (if any).
+  if (NumTemplParamLists > 0) {
+    delete[] TemplParamLists;
+    TemplParamLists = 0;
+    NumTemplParamLists = 0;
+  }
+  // Set info on matched template parameter lists (if any).
+  if (NumTPLists > 0) {
+    TemplParamLists = new TemplateParameterList*[NumTPLists];
+    NumTemplParamLists = NumTPLists;
+    for (unsigned i = NumTPLists; i-- > 0; )
+      TemplParamLists[i] = TPLists[i];
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//

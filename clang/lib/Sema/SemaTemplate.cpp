@@ -3666,6 +3666,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                               TemplateParameterLists.size(),
                                               TUK == TUK_Friend,
                                               isExplicitSpecialization);
+  unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
+  if (TemplateParams)
+    --NumMatchedTemplateParamLists;
+
   if (TemplateParams && TemplateParams->size() > 0) {
     isPartialSpecialization = true;
 
@@ -3857,6 +3861,10 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        PrevPartial,
                                                        SequenceNumber);
     SetNestedNameSpecifier(Partial, SS);
+    if (NumMatchedTemplateParamLists > 0) {
+      Partial->setTemplateParameterListsInfo(NumMatchedTemplateParamLists,
+                    (TemplateParameterList**) TemplateParameterLists.release());
+    }
 
     if (PrevPartial) {
       ClassTemplate->getPartialSpecializations().RemoveNode(PrevPartial);
@@ -3914,6 +3922,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 Converted,
                                                 PrevDecl);
     SetNestedNameSpecifier(Specialization, SS);
+    if (NumMatchedTemplateParamLists > 0) {
+      Specialization->setTemplateParameterListsInfo(
+                    NumMatchedTemplateParamLists,
+                    (TemplateParameterList**) TemplateParameterLists.release());
+    }
 
     if (PrevDecl) {
       ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
