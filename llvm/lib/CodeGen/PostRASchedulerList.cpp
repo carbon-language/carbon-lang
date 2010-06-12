@@ -67,8 +67,8 @@ EnableAntiDepBreaking("break-anti-dependencies",
                       cl::init("none"), cl::Hidden);
 static cl::opt<bool>
 EnablePostRAHazardAvoidance("avoid-hazards",
-                      cl::desc("Enable exact hazard avoidance"),
-                      cl::init(true), cl::Hidden);
+                            cl::desc("Enable exact hazard avoidance"),
+                            cl::init(true), cl::Hidden);
 
 // If DebugDiv > 0 then only schedule MBB with (ID % DebugDiv) == DebugMod
 static cl::opt<int>
@@ -237,10 +237,10 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
-  const InstrItineraryData &InstrItins = Fn.getTarget().getInstrItineraryData();
-  ScheduleHazardRecognizer *HR = EnablePostRAHazardAvoidance ?
-    (ScheduleHazardRecognizer *)new ExactHazardRecognizer(InstrItins) :
-    (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
+  const TargetMachine &TM = Fn.getTarget();
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  ScheduleHazardRecognizer *HR =
+    TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins);
   AntiDepBreaker *ADB =
     ((AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ?
      (AntiDepBreaker *)new AggressiveAntiDepBreaker(Fn, CriticalPathRCs) :
@@ -717,6 +717,16 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 #ifndef NDEBUG
   VerifySchedule(/*isBottomUp=*/false);
 #endif
+}
+
+// Default implementation of CreateTargetPostRAHazardRecognizer. This should
+// be in TargetInstrInfoImpl.cpp except it reference local command line
+// option EnablePostRAHazardAvoidance
+ScheduleHazardRecognizer *TargetInstrInfoImpl::
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
+  if (EnablePostRAHazardAvoidance)
+    return (ScheduleHazardRecognizer *)new ExactHazardRecognizer(II);
+  return (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
 }
 
 //===----------------------------------------------------------------------===//
