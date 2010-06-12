@@ -45,6 +45,7 @@ public:
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "?");
   void mangleName(const NamedDecl *ND);
+  void mangleType(QualType T);
 
 private:
   void mangleUnqualifiedName(const NamedDecl *ND) {
@@ -56,6 +57,12 @@ private:
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
 
+  // Declare manglers for every type class.
+#define ABSTRACT_TYPE(CLASS, PARENT)
+#define NON_CANONICAL_TYPE(CLASS, PARENT)
+#define TYPE(CLASS, PARENT) void mangleType(const CLASS##Type *T);
+#include "clang/AST/TypeNodes.def"
+  
 };
 
 /// MicrosoftMangleContext - Overrides the default MangleContext for the
@@ -109,7 +116,7 @@ static bool isInCLinkageSpecification(const Decl *D) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
       return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
   }
-  
+
   return false;
 }
 
@@ -134,6 +141,13 @@ bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
   // Otherwise, no mangling is done outside C++ mode.
   if (!getASTContext().getLangOptions().CPlusPlus)
     return false;
+
+  // Variables at global scope with internal linkage are not mangled.
+  if (!FD) {
+    const DeclContext *DC = D->getDeclContext();
+    if (DC->isTranslationUnit() && D->getLinkage() == InternalLinkage)
+      return false;
+  }
 
   // C functions and "main" are not mangled.
   if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
@@ -297,6 +311,101 @@ void MicrosoftCXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   llvm::SmallString<64> Buffer;
   MiscNameMangler(Context, Buffer).mangleObjCMethodName(MD);
   Out << Buffer;
+}
+
+void MicrosoftCXXNameMangler::mangleType(QualType T) {
+  // Only operate on the canonical type!
+  T = getASTContext().getCanonicalType(T);
+  
+  switch (T->getTypeClass()) {
+#define ABSTRACT_TYPE(CLASS, PARENT)
+#define NON_CANONICAL_TYPE(CLASS, PARENT) \
+case Type::CLASS: \
+llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
+return;
+#define TYPE(CLASS, PARENT)
+#include "clang/AST/TypeNodes.def"
+  case Type::Builtin:
+    mangleType(static_cast<BuiltinType *>(T.getTypePtr()));
+    break;
+  default:
+    assert(false && "Don't know how to mangle this type!");
+    break;
+  }
+}
+
+void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
+  //  <type>         ::= <builtin-type>
+  //  <builtin-type> ::= X  # void
+  //                 ::= C  # signed char
+  //                 ::= D  # char
+  //                 ::= E  # unsigned char
+  //                 ::= F  # short
+  //                 ::= G  # unsigned short (or wchar_t if it's not a builtin)
+  //                 ::= H  # int
+  //                 ::= I  # unsigned int
+  //                 ::= J  # long
+  //                 ::= K  # unsigned long
+  //                     L  # <none>
+  //                 ::= M  # float
+  //                 ::= N  # double
+  //                 ::= O  # long double (__float80 is mangled differently)
+  //                 ::= _D # __int8 (yup, it's a distinct type in MSVC)
+  //                 ::= _E # unsigned __int8
+  //                 ::= _F # __int16
+  //                 ::= _G # unsigned __int16
+  //                 ::= _H # __int32
+  //                 ::= _I # unsigned __int32
+  //                 ::= _J # long long, __int64
+  //                 ::= _K # unsigned long long, __int64
+  //                 ::= _L # __int128
+  //                 ::= _M # unsigned __int128
+  //                 ::= _N # bool
+  //                     _O # <array in parameter>
+  //                 ::= _T # __float80 (Intel)
+  //                 ::= _W # wchar_t
+  //                 ::= _Z # __float80 (Digital Mars)
+  switch (T->getKind()) {
+  case BuiltinType::Void: Out << 'X'; break;
+  case BuiltinType::SChar: Out << 'C'; break;
+  case BuiltinType::Char_U: case BuiltinType::Char_S: Out << 'D'; break;
+  case BuiltinType::UChar: Out << 'E'; break;
+  case BuiltinType::Short: Out << 'F'; break;
+  case BuiltinType::UShort: Out << 'G'; break;
+  case BuiltinType::Int: Out << 'H'; break;
+  case BuiltinType::UInt: Out << 'I'; break;
+  case BuiltinType::Long: Out << 'J'; break;
+  case BuiltinType::ULong: Out << 'K'; break;
+  case BuiltinType::Float: Out << 'M'; break;
+  case BuiltinType::Double: Out << 'N'; break;
+  // TODO: Determine size and mangle accordingly
+  case BuiltinType::LongDouble: Out << 'O'; break;
+  // TODO: __int8 and friends
+  case BuiltinType::LongLong: Out << "_J"; break;
+  case BuiltinType::ULongLong: Out << "_K"; break;
+  case BuiltinType::Int128: Out << "_L"; break;
+  case BuiltinType::UInt128: Out << "_M"; break;
+  case BuiltinType::Bool: Out << "_N"; break;
+  case BuiltinType::WChar: Out << "_W"; break;
+
+  case BuiltinType::Overload:
+  case BuiltinType::Dependent:
+    assert(false &&
+           "Overloaded and dependent types shouldn't get to name mangling");
+    break;
+  case BuiltinType::UndeducedAuto:
+    assert(0 && "Should not see undeduced auto here");
+    break;
+  case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
+  case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
+  case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
+
+  case BuiltinType::Char16:
+  case BuiltinType::Char32:
+  case BuiltinType::NullPtr:
+    assert(false && "Don't know how to mangle this type");
+    break;
+  }
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
