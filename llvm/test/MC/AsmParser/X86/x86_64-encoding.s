@@ -199,3 +199,35 @@ vmulpd  %xmm10, %xmm11, %xmm15
 // CHECK: vdivpd  %xmm10, %xmm11, %xmm15
 // CHECK: encoding: [0xc4,0x41,0x21,0x5e,0xfa]
 vdivpd  %xmm10, %xmm11, %xmm15
+
+// CHECK: vaddps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x28,0x58,0x5c,0xd9,0xfc]
+vaddps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vsubps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x28,0x5c,0x5c,0xd9,0xfc]
+vsubps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vmulps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x28,0x59,0x5c,0xd9,0xfc]
+vmulps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vdivps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x28,0x5e,0x5c,0xd9,0xfc]
+vdivps  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vaddpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x29,0x58,0x5c,0xd9,0xfc]
+vaddpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vsubpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x29,0x5c,0x5c,0xd9,0xfc]
+vsubpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vmulpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x29,0x59,0x5c,0xd9,0xfc]
+vmulpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+
+// CHECK: vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
+// CHECK: encoding: [0xc5,0x29,0x5e,0x5c,0xd9,0xfc]
+vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11

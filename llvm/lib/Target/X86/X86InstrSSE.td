@@ -768,6 +768,22 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                  !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"),
              [(set VR128:$dst, (OpNode VR128:$src1, (memopv2f64 addr:$src2)))]>;
 
+  def V#NAME#PSrm : VPSI<opc, MRMSrcMem, (outs VR128:$dst),
+               (ins VR128:$src1, f128mem:$src2),
+               !strconcat(OpcodeStr,
+                          "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []> {
+    let Constraints = "";
+    let isAsmParserOnly = 1;
+  }
+
+  def V#NAME#PDrm : VPDI<opc, MRMSrcMem, (outs VR128:$dst),
+               (ins VR128:$src1, f128mem:$src2),
+               !strconcat(OpcodeStr,
+                          "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []> {
+    let Constraints = "";
+    let isAsmParserOnly = 1;
+  }
+
   // Intrinsic operation, reg+reg.
   def SSrr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
