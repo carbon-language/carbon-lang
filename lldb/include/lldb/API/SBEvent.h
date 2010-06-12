@@ -10,6 +10,7 @@
 #ifndef LLDB_SBEvent_h_
 #define LLDB_SBEvent_h_
 
+#include <stdio.h>
 #include <vector>
 
 #include "lldb/API/SBDefines.h"

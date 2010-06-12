@@ -11,6 +11,7 @@
 #define LLDB_SBBreakpoint_h_
 
 #include "lldb/API/SBDefines.h"
+#include <stdio.h>
 
 namespace lldb {
 

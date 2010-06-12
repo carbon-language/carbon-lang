@@ -12,6 +12,8 @@
 
 #include "lldb/API/SBDefines.h"
 
+#include <stdio.h>
+
 namespace lldb {
 
 class SBFrame;

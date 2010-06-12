@@ -13,6 +13,7 @@
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBTarget.h"
+#include <stdio.h>
 
 namespace lldb {
 
