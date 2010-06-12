@@ -2851,7 +2851,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include/lldb/Utility";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 				ZERO_LINK = NO;
 			};
@@ -2972,11 +2972,11 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
+					"-Wl,-rpath,@loader_path/",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include/lldb/Utility";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 				ZERO_LINK = NO;
 			};
