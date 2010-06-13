@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClangASTContext.h"
+#include "lldb/Symbol/ClangASTContext.h"
 
 // C Includes
 // C++ Includes
@@ -29,6 +29,8 @@
 
 // Project includes
 #include "lldb/Core/dwarf.h"
+
+#include <stdio.h>
 
 using namespace lldb_private;
 using namespace llvm;
