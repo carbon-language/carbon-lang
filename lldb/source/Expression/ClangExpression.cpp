@@ -567,7 +567,6 @@ ClangExpression::Compile()
 //            compiler_instance->getFrontendOpts().ProgramAction = frontend::FixIt;
 
         for (unsigned i = 0, e = m_clang_ap->getFrontendOpts().Inputs.size(); i != e; ++i) {
-            const std::string &InFile = m_clang_ap->getFrontendOpts().Inputs[i].second;
 
             // If we aren't using an AST file, setup the file and source managers and
             // the preprocessor.
@@ -592,7 +591,9 @@ ClangExpression::Compile()
             if (!Act)
                 break;
 
-            if (Act->BeginSourceFile(*m_clang_ap, InFile, IsAST)) {
+            if (Act->BeginSourceFile(*m_clang_ap, 
+                                     m_clang_ap->getFrontendOpts().Inputs[i].second, 
+                                     m_clang_ap->getFrontendOpts().Inputs[i].first)) {
                 Act->Execute();
                 Act->EndSourceFile();
             }

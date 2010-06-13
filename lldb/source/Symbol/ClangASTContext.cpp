@@ -39,7 +39,7 @@ static void
 ParseLangArgs
 (
     LangOptions &Opts,
-    FrontendOptions::InputKind IK
+    InputKind IK
 )
 {
     // FIXME: Cleanup per-file based stuff.
@@ -47,12 +47,12 @@ ParseLangArgs
     // Set some properties which depend soley on the input kind; it would be nice
     // to move these to the language standard, and have the driver resolve the
     // input kind + language standard.
-    if (IK == FrontendOptions::IK_Asm) {
+    if (IK == IK_Asm) {
         Opts.AsmPreprocessor = 1;
-    } else if (IK == FrontendOptions::IK_ObjC ||
-               IK == FrontendOptions::IK_ObjCXX ||
-               IK == FrontendOptions::IK_PreprocessedObjC ||
-               IK == FrontendOptions::IK_PreprocessedObjCXX) {
+    } else if (IK == IK_ObjC ||
+               IK == IK_ObjCXX ||
+               IK == IK_PreprocessedObjC ||
+               IK == IK_PreprocessedObjCXX) {
         Opts.ObjC1 = Opts.ObjC2 = 1;
     }
 
@@ -61,23 +61,23 @@ ParseLangArgs
     if (LangStd == LangStandard::lang_unspecified) {
         // Based on the base language, pick one.
         switch (IK) {
-            case FrontendOptions::IK_None:
-            case FrontendOptions::IK_AST:
+            case IK_None:
+            case IK_AST:
                 assert(0 && "Invalid input kind!");
-            case FrontendOptions::IK_OpenCL:
+            case IK_OpenCL:
                 LangStd = LangStandard::lang_opencl;
                 break;
-            case FrontendOptions::IK_Asm:
-            case FrontendOptions::IK_C:
-            case FrontendOptions::IK_PreprocessedC:
-            case FrontendOptions::IK_ObjC:
-            case FrontendOptions::IK_PreprocessedObjC:
+            case IK_Asm:
+            case IK_C:
+            case IK_PreprocessedC:
+            case IK_ObjC:
+            case IK_PreprocessedObjC:
                 LangStd = LangStandard::lang_gnu99;
                 break;
-            case FrontendOptions::IK_CXX:
-            case FrontendOptions::IK_PreprocessedCXX:
-            case FrontendOptions::IK_ObjCXX:
-            case FrontendOptions::IK_PreprocessedObjCXX:
+            case IK_CXX:
+            case IK_PreprocessedCXX:
+            case IK_ObjCXX:
+            case IK_PreprocessedObjCXX:
                 LangStd = LangStandard::lang_gnucxx98;
                 break;
         }
@@ -331,8 +331,8 @@ ClangASTContext::getLanguageOptions()
     if (m_language_options_ap.get() == NULL)
     {
         m_language_options_ap.reset(new LangOptions());
-        ParseLangArgs(*m_language_options_ap, FrontendOptions::IK_ObjCXX);
-//        InitializeLangOptions(*m_language_options_ap, FrontendOptions::IK_ObjCXX);
+        ParseLangArgs(*m_language_options_ap, IK_ObjCXX);
+//        InitializeLangOptions(*m_language_options_ap, IK_ObjCXX);
     }
     return m_language_options_ap.get();
 }
