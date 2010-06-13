@@ -1448,7 +1448,6 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
          "Converted template argument list is too short!");
 
   QualType CanonType;
-  bool IsCurrentInstantiation = false;
 
   if (Name.isDependent() ||
       TemplateSpecializationType::anyDependentTemplateArguments(
@@ -1505,7 +1504,6 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
         // class name type of the record we just found.
         assert(ICNT.isCanonical());
         CanonType = ICNT;
-        IsCurrentInstantiation = true;
         break;
       }
     }
@@ -1543,8 +1541,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
   // Build the fully-sugared type for this class template
   // specialization, which refers back to the class template
   // specialization we created or found.
-  return Context.getTemplateSpecializationType(Name, TemplateArgs, CanonType,
-                                               IsCurrentInstantiation);
+  return Context.getTemplateSpecializationType(Name, TemplateArgs, CanonType);
 }
 
 Action::TypeResult

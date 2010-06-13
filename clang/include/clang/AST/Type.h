@@ -2419,10 +2419,6 @@ public:
 /// dependent.
 class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
-
-  // The bool is whether this is a current instantiation.
-  bool IsCurrentInstantiation;
-
   /// \brief The name of the template being specialized.
   TemplateName Template;
 
@@ -2431,7 +2427,6 @@ class TemplateSpecializationType
   unsigned NumArgs;
 
   TemplateSpecializationType(TemplateName T,
-                             bool IsCurrentInstantiation,
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon);
 
@@ -2466,7 +2461,7 @@ public:
   /// True if this template specialization type matches a current
   /// instantiation in the context in which it is found.
   bool isCurrentInstantiation() const {
-    return IsCurrentInstantiation;
+    return isa<InjectedClassNameType>(getCanonicalTypeInternal());
   }
 
   typedef const TemplateArgument * iterator;
@@ -2495,11 +2490,10 @@ public:
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
   void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Ctx) {
-    Profile(ID, Template, isCurrentInstantiation(), getArgs(), NumArgs, Ctx);
+    Profile(ID, Template, getArgs(), NumArgs, Ctx);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
-                      bool IsCurrentInstantiation,
                       const TemplateArgument *Args,
                       unsigned NumArgs,
                       ASTContext &Context);

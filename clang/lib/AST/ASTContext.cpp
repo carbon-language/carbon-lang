@@ -1778,8 +1778,7 @@ ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgumentListInfo &Args,
-                                          QualType Canon,
-                                          bool IsCurrentInstantiation) {
+                                          QualType Canon) {
   unsigned NumArgs = Args.size();
 
   llvm::SmallVector<TemplateArgument, 4> ArgVec;
@@ -1788,22 +1787,17 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
     ArgVec.push_back(Args[i].getArgument());
 
   return getTemplateSpecializationType(Template, ArgVec.data(), NumArgs,
-                                       Canon, IsCurrentInstantiation);
+                                       Canon);
 }
 
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
-                                          QualType Canon,
-                                          bool IsCurrentInstantiation) {
+                                          QualType Canon) {
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
   else {
-    assert(!IsCurrentInstantiation &&
-           "current-instantiation specializations should always "
-           "have a canonical type");
-
     // Build the canonical template specialization type.
     TemplateName CanonTemplate = getCanonicalTemplateName(Template);
     llvm::SmallVector<TemplateArgument, 4> CanonArgs;
@@ -1814,7 +1808,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
     // Determine whether this canonical template specialization type already
     // exists.
     llvm::FoldingSetNodeID ID;
-    TemplateSpecializationType::Profile(ID, CanonTemplate, false,
+    TemplateSpecializationType::Profile(ID, CanonTemplate,
                                         CanonArgs.data(), NumArgs, *this);
 
     void *InsertPos = 0;
@@ -1826,7 +1820,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
       void *Mem = Allocate((sizeof(TemplateSpecializationType) +
                             sizeof(TemplateArgument) * NumArgs),
                            TypeAlignment);
-      Spec = new (Mem) TemplateSpecializationType(CanonTemplate, false,
+      Spec = new (Mem) TemplateSpecializationType(CanonTemplate,
                                                   CanonArgs.data(), NumArgs,
                                                   Canon);
       Types.push_back(Spec);
@@ -1847,7 +1841,6 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                        TypeAlignment);
   TemplateSpecializationType *Spec
     = new (Mem) TemplateSpecializationType(Template,
-                                           IsCurrentInstantiation,
                                            Args, NumArgs,
                                            Canon);
 
