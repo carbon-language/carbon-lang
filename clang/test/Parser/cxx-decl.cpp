@@ -37,6 +37,10 @@ class someclass {
   }
 };
 
+class asm_class_test {
+  void foo() __asm__("baz");
+};
+
 enum { fooenum = 1 };
 
 struct a {

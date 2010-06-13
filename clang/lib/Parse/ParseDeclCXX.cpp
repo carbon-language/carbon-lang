@@ -1373,7 +1373,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     //   declarator pure-specifier[opt]
     //   declarator constant-initializer[opt]
     //   identifier[opt] ':' constant-expression
-
     if (Tok.is(tok::colon)) {
       ConsumeToken();
       BitfieldSize = ParseConstantExpression();
@@ -1390,7 +1389,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // defaulted/deleted function-definition:
     //   '=' 'default'                          [TODO]
     //   '=' 'delete'
-
     if (Tok.is(tok::equal)) {
       ConsumeToken();
       if (getLang().CPlusPlus0x && Tok.is(tok::kw_delete)) {
@@ -1401,6 +1399,17 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         if (Init.isInvalid())
           SkipUntil(tok::comma, true, true);
       }
+    }
+
+    // If a simple-asm-expr is present, parse it.
+    if (Tok.is(tok::kw_asm)) {
+      SourceLocation Loc;
+      OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
+      if (AsmLabel.isInvalid())
+        SkipUntil(tok::comma, true, true);
+ 
+      DeclaratorInfo.setAsmLabel(AsmLabel.release());
+      DeclaratorInfo.SetRangeEnd(Loc);
     }
 
     // If attributes exist after the declarator, parse them.
