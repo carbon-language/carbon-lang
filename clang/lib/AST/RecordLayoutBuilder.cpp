@@ -81,7 +81,7 @@ class EmptySubobjectMap {
   bool CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
                                      uint64_t Offset);
   void UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
-                                 uint64_t Offset);
+                                 uint64_t Offset, bool PlacingEmptyBase);
   
   bool CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD, 
                                       const CXXRecordDecl *Class,
@@ -256,7 +256,17 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
 }
 
 void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info, 
-                                                  uint64_t Offset) {
+                                                  uint64_t Offset,
+                                                  bool PlacingEmptyBase) {
+  if (!PlacingEmptyBase && Offset >= SizeOfLargestEmptySubobject) {
+    // We know that the only empty subobjects that can conflict with empty
+    // subobject of non-empty bases, are empty bases that can be placed at
+    // offset zero. Because of this, we only need to keep track of empty base 
+    // subobjects with offsets less than the size of the largest empty
+    // subobject for our class.    
+    return;
+  }
+
   AddSubobjectAtOffset(Info->Class, Offset);
 
   // Traverse all non-virtual bases.
@@ -267,14 +277,15 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
       continue;
 
     uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base->Class);
-    UpdateEmptyBaseSubobjects(Base, BaseOffset);
+    UpdateEmptyBaseSubobjects(Base, BaseOffset, PlacingEmptyBase);
   }
 
   if (Info->PrimaryVirtualBaseInfo) {
     BaseSubobjectInfo *PrimaryVirtualBaseInfo = Info->PrimaryVirtualBaseInfo;
     
     if (Info == PrimaryVirtualBaseInfo->Derived)
-      UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset);
+      UpdateEmptyBaseSubobjects(PrimaryVirtualBaseInfo, Offset,
+                                PlacingEmptyBase);
   }
 
   // Traverse all member variables.
@@ -300,7 +311,7 @@ bool EmptySubobjectMap::CanPlaceBaseAtOffset(const BaseSubobjectInfo *Info,
 
   // We are able to place the base at this offset. Make sure to update the
   // empty base subobject map.
-  UpdateEmptyBaseSubobjects(Info, Offset);
+  UpdateEmptyBaseSubobjects(Info, Offset, Info->Class->isEmpty());
   return true;
 }
 
@@ -416,7 +427,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
                                                    const CXXRecordDecl *Class,
                                                    uint64_t Offset) {
   // We know that the only empty subobjects that can conflict with empty
-  // field subobjects are subobjects empty bases that can be placed at offset
+  // field subobjects are subobjects of empty bases that can be placed at offset
   // zero. Because of this, we only need to keep track of empty field 
   // subobjects with offsets less than the size of the largest empty
   // subobject for our class.
@@ -488,7 +499,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
     
     for (uint64_t I = 0; I != NumElements; ++I) {
       // We know that the only empty subobjects that can conflict with empty
-      // field subobjects are subobjects empty bases that can be placed at 
+      // field subobjects are subobjects of empty bases that can be placed at 
       // offset zero. Because of this, we only need to keep track of empty field
       // subobjects with offsets less than the size of the largest empty
       // subobject for our class.
