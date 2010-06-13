@@ -258,6 +258,8 @@ namespace llvm {
     LiveRange(); // DO NOT IMPLEMENT
   };
 
+  template <> struct isPodLike<LiveRange> { static const bool value = true; };
+
   raw_ostream& operator<<(raw_ostream& os, const LiveRange &LR);
 
 
