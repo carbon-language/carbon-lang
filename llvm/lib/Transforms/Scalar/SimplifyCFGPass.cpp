@@ -137,6 +137,9 @@ static bool MarkAliveBlocks(BasicBlock *BB,
       // they should be changed to unreachable by passes that can't modify the
       // CFG.
       if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
+        // Don't touch volatile stores.
+        if (SI->isVolatile()) continue;
+
         Value *Ptr = SI->getOperand(1);
         
         if (isa<UndefValue>(Ptr) ||
