@@ -9,23 +9,28 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-private-log.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
-#include "ABIMacOSX_i386.h"
-#include "ABISysV_x86_64.h"
-#include "DisassemblerLLVM.h"
-#include "DynamicLoaderMacOSXDYLD.h"
-#include "ObjectContainerBSDArchive.h"
-#include "ObjectContainerUniversalMachO.h"
-#include "ObjectFileELF.h"
-#include "ObjectFileMachO.h"
-#include "ProcessMacOSX.h"
-#include "ProcessGDBRemote.h"
-#include "SymbolFileDWARF.h"
-#include "SymbolFileDWARFDebugMap.h"
-#include "SymbolFileSymtab.h"
-#include "SymbolVendorMacOSX.h"
+#include "lldb/Host/Mutex.h"
+
+#include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
+#include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
+#include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
+#include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
+#include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
+#include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
+#include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
+#ifdef __APPLE__
+#include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
+#include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
+#include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
+#include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
+#include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
+#include "Plugins/Process/MacOSX-User/source/ProcessMacOSX.h"
+#include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
+#endif
 
 using namespace lldb_private;
 
@@ -47,20 +52,22 @@ lldb_private::Initialize ()
         Log::Callbacks log_callbacks = { DisableLog, EnableLog, ListLogCategories };
 
         Log::RegisterLogChannel ("lldb", log_callbacks);
-        ABIMacOSX_i386::Initialize();
-        ABISysV_x86_64::Initialize();
         DisassemblerLLVM::Initialize();
-        DynamicLoaderMacOSXDYLD::Initialize();
-        ObjectContainerUniversalMachO::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
-        ObjectFileMachO::Initialize();
-        ProcessGDBRemote::Initialize();
-        ProcessMacOSX::Initialize();
+        SymbolVendorMacOSX::Initialize();
         SymbolFileDWARF::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         SymbolFileSymtab::Initialize();
-        SymbolVendorMacOSX::Initialize();
+#ifdef __APPLE__
+        ABIMacOSX_i386::Initialize();
+        ABISysV_x86_64::Initialize();
+        DynamicLoaderMacOSXDYLD::Initialize();
+        ObjectContainerUniversalMachO::Initialize();
+        ObjectFileMachO::Initialize();
+        ProcessGDBRemote::Initialize();
+        ProcessMacOSX::Initialize();
+#endif
     }
 }
 
@@ -75,17 +82,19 @@ lldb_private::Terminate ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     DisassemblerLLVM::Terminate();
-    DynamicLoaderMacOSXDYLD::Terminate();
-    ObjectContainerUniversalMachO::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
-    ObjectFileMachO::Terminate();
-    ProcessGDBRemote::Terminate();
-    ProcessMacOSX::Terminate();
+    SymbolVendorMacOSX::Terminate();
     SymbolFileDWARF::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     SymbolFileSymtab::Terminate();
-    SymbolVendorMacOSX::Terminate();
+#ifdef __APPLE__
+    DynamicLoaderMacOSXDYLD::Terminate();
+    ObjectContainerUniversalMachO::Terminate();
+    ObjectFileMachO::Terminate();
+    ProcessGDBRemote::Terminate();
+    ProcessMacOSX::Terminate();
+#endif
 }
 
 const char *
