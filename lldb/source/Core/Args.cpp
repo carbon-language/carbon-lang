@@ -477,8 +477,12 @@ Args::ParseOptions (Options &options)
             }
         }
     }
+#ifdef __GLIBC__
+    optind = 0;
+#else
     optreset = 1;
     optind = 1;
+#endif
     int val;
     while (1)
     {
@@ -837,8 +841,12 @@ Args::ParseAliasOptions
         }
     }
 
+#ifdef __GLIBC__
+    optind = 0;
+#else
     optreset = 1;
     optind = 1;
+#endif
     int val;
     while (1)
     {
@@ -974,8 +982,12 @@ Args::ParseArgsForCompletion
         }
     }
 
+#ifdef __GLIBC__
+    optind = 0;
+#else
     optreset = 1;
     optind = 1;
+#endif
     opterr = 0;
 
     int val;

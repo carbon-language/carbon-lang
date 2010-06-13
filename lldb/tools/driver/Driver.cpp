@@ -349,9 +349,12 @@ ParseOptions (Driver::OptionData &data, int argc, const char **argv)
     }
 
     // Prepare for & make calls to getopt_long.
-
+#if __GLIBC__
+    optind = 0;
+#else
     optreset = 1;
     optind = 1;
+#endif
     int val;
     while (1)
     {
