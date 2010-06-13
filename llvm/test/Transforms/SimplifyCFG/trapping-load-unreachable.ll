@@ -31,3 +31,14 @@ entry:
 ; CHECK: call void @llvm.trap
 ; CHECK: unreachable
 }
+
+; PR7369
+define void @test3() nounwind {
+entry:
+        volatile store i32 4, i32* null
+        ret void
+
+; CHECK: @test3
+; CHECK: volatile store i32 4, i32* null
+; CHECK: ret
+}
