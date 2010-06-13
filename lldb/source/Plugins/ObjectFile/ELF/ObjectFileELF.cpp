@@ -9,7 +9,6 @@
 
 #include "ObjectFileELF.h"
 
-#include <mach/machine.h>
 #include <assert.h>
 
 #include <algorithm>
@@ -28,10 +27,6 @@
 using namespace lldb;
 using namespace lldb_private;
 using namespace std;
-
-
-#include <mach-o/nlist.h>
-#include <mach-o/stab.h>
 
 
 void
