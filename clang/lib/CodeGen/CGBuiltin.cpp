@@ -954,7 +954,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned type = Result.getZExtValue();
   bool usgn = type & 0x08;
   bool quad = type & 0x10;
-  bool poly = type & 0x20;
+  bool poly = (type & 0x7) == 5 || (type & 0x7) == 6;
   bool splat = false;
 
   const llvm::Type *Ty = GetNeonType(VMContext, type & 0x7, quad);

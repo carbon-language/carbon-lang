@@ -26,6 +26,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
@@ -244,26 +245,231 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   llvm::APSInt Result;
 
+  unsigned mask = 0;
   switch (BuiltinID) {
-    case ARM::BI__builtin_neon_vget_lane_i8:
-    case ARM::BI__builtin_neon_vget_lane_i16:
-    case ARM::BI__builtin_neon_vget_lane_i32:
-    case ARM::BI__builtin_neon_vget_lane_f32:
-    case ARM::BI__builtin_neon_vget_lane_i64:
-    case ARM::BI__builtin_neon_vgetq_lane_i8:
-    case ARM::BI__builtin_neon_vgetq_lane_i16:
-    case ARM::BI__builtin_neon_vgetq_lane_i32:
-    case ARM::BI__builtin_neon_vgetq_lane_f32:
-    case ARM::BI__builtin_neon_vgetq_lane_i64:
-      // Check constant-ness first.
-      if (SemaBuiltinConstantArg(TheCall, 1, Result))
-        return true;
-      break;
+  case ARM::BI__builtin_neon_vaba_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vabaq_v: mask = 0x7070000; break;
+  case ARM::BI__builtin_neon_vabal_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vabd_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vabdq_v: mask = 0x7170000; break;
+  case ARM::BI__builtin_neon_vabdl_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vabs_v: mask = 0x17; break;
+  case ARM::BI__builtin_neon_vabsq_v: mask = 0x170000; break;
+  case ARM::BI__builtin_neon_vaddhn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vaddl_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vaddw_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vcage_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcageq_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vcagt_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcagtq_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vcale_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcaleq_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vcalt_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcaltq_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vcls_v: mask = 0x7; break;
+  case ARM::BI__builtin_neon_vclsq_v: mask = 0x70000; break;
+  case ARM::BI__builtin_neon_vclz_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vclzq_v: mask = 0x7070000; break;
+  case ARM::BI__builtin_neon_vcnt_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vcntq_v: mask = 0x1210000; break;
+  case ARM::BI__builtin_neon_vcvt_f16_v: mask = 0x80; break;
+  case ARM::BI__builtin_neon_vcvt_f32_v: mask = 0x404; break;
+  case ARM::BI__builtin_neon_vcvtq_f32_v: mask = 0x4040000; break;
+  case ARM::BI__builtin_neon_vcvt_f32_f16: mask = 0x100000; break;
+  case ARM::BI__builtin_neon_vcvt_n_f32_v: mask = 0x404; break;
+  case ARM::BI__builtin_neon_vcvtq_n_f32_v: mask = 0x4040000; break;
+  case ARM::BI__builtin_neon_vcvt_n_s32_v: mask = 0x4; break;
+  case ARM::BI__builtin_neon_vcvtq_n_s32_v: mask = 0x40000; break;
+  case ARM::BI__builtin_neon_vcvt_n_u32_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcvtq_n_u32_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vcvt_s32_v: mask = 0x4; break;
+  case ARM::BI__builtin_neon_vcvtq_s32_v: mask = 0x40000; break;
+  case ARM::BI__builtin_neon_vcvt_u32_v: mask = 0x400; break;
+  case ARM::BI__builtin_neon_vcvtq_u32_v: mask = 0x4000000; break;
+  case ARM::BI__builtin_neon_vext_v: mask = 0xF6F; break;
+  case ARM::BI__builtin_neon_vextq_v: mask = 0xF6F0000; break;
+  case ARM::BI__builtin_neon_vhadd_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vhaddq_v: mask = 0x7070000; break;
+  case ARM::BI__builtin_neon_vhsub_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vhsubq_v: mask = 0x7070000; break;
+  case ARM::BI__builtin_neon_vld1_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld1q_v: mask = 0xFFF0000; break;
+  case ARM::BI__builtin_neon_vld1_dup_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld1q_dup_v: mask = 0xFFF0000; break;
+  case ARM::BI__builtin_neon_vld1_lane_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld1q_lane_v: mask = 0xFFF0000; break;
+  case ARM::BI__builtin_neon_vld2_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld2q_v: mask = 0x7F70000; break;
+  case ARM::BI__builtin_neon_vld2_dup_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld2_lane_v: mask = 0x7F7; break;
+  case ARM::BI__builtin_neon_vld2q_lane_v: mask = 0x6D60000; break;
+  case ARM::BI__builtin_neon_vld3_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld3q_v: mask = 0x7F70000; break;
+  case ARM::BI__builtin_neon_vld3_dup_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld3_lane_v: mask = 0x7F7; break;
+  case ARM::BI__builtin_neon_vld3q_lane_v: mask = 0x6D60000; break;
+  case ARM::BI__builtin_neon_vld4_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld4q_v: mask = 0x7F70000; break;
+  case ARM::BI__builtin_neon_vld4_dup_v: mask = 0xFFF; break;
+  case ARM::BI__builtin_neon_vld4_lane_v: mask = 0x7F7; break;
+  case ARM::BI__builtin_neon_vld4q_lane_v: mask = 0x6D60000; break;
+  case ARM::BI__builtin_neon_vmax_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vmaxq_v: mask = 0x7170000; break;
+  case ARM::BI__builtin_neon_vmin_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vminq_v: mask = 0x7170000; break;
+  case ARM::BI__builtin_neon_vmlal_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vmlal_lane_v: mask = 0xC0C0000; break;
+  case ARM::BI__builtin_neon_vmla_lane_v: mask = 0x616; break;
+  case ARM::BI__builtin_neon_vmlaq_lane_v: mask = 0x6160000; break;
+  case ARM::BI__builtin_neon_vmlsl_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vmlsl_lane_v: mask = 0xC0C0000; break;
+  case ARM::BI__builtin_neon_vmls_lane_v: mask = 0x616; break;
+  case ARM::BI__builtin_neon_vmlsq_lane_v: mask = 0x6160000; break;
+  case ARM::BI__builtin_neon_vmovl_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vmovn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vmull_v: mask = 0xE4E0000; break;
+  case ARM::BI__builtin_neon_vmull_lane_v: mask = 0xC0C0000; break;
+  case ARM::BI__builtin_neon_vpadal_v: mask = 0xE0E; break;
+  case ARM::BI__builtin_neon_vpadalq_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vpadd_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vpaddl_v: mask = 0xE0E; break;
+  case ARM::BI__builtin_neon_vpaddlq_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vpmax_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vpmin_v: mask = 0x717; break;
+  case ARM::BI__builtin_neon_vqabs_v: mask = 0x7; break;
+  case ARM::BI__builtin_neon_vqabsq_v: mask = 0x70000; break;
+  case ARM::BI__builtin_neon_vqadd_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vqaddq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vqdmlal_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqdmlal_lane_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqdmlsl_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqdmlsl_lane_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqdmulh_v: mask = 0x6; break;
+  case ARM::BI__builtin_neon_vqdmulhq_v: mask = 0x60000; break;
+  case ARM::BI__builtin_neon_vqdmulh_lane_v: mask = 0x6; break;
+  case ARM::BI__builtin_neon_vqdmulhq_lane_v: mask = 0x60000; break;
+  case ARM::BI__builtin_neon_vqdmull_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqdmull_lane_v: mask = 0xC0000; break;
+  case ARM::BI__builtin_neon_vqmovn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vqmovun_v: mask = 0x700; break;
+  case ARM::BI__builtin_neon_vqneg_v: mask = 0x7; break;
+  case ARM::BI__builtin_neon_vqnegq_v: mask = 0x70000; break;
+  case ARM::BI__builtin_neon_vqrdmulh_v: mask = 0x6; break;
+  case ARM::BI__builtin_neon_vqrdmulhq_v: mask = 0x60000; break;
+  case ARM::BI__builtin_neon_vqrdmulh_lane_v: mask = 0x6; break;
+  case ARM::BI__builtin_neon_vqrdmulhq_lane_v: mask = 0x60000; break;
+  case ARM::BI__builtin_neon_vqrshl_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vqrshlq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vqrshrn_n_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vqrshrun_n_v: mask = 0x700; break;
+  case ARM::BI__builtin_neon_vqshl_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vqshlq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vqshlu_n_v: mask = 0xF00; break;
+  case ARM::BI__builtin_neon_vqshluq_n_v: mask = 0xF000000; break;
+  case ARM::BI__builtin_neon_vqshl_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vqshlq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vqshrn_n_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vqshrun_n_v: mask = 0x700; break;
+  case ARM::BI__builtin_neon_vqsub_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vqsubq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vraddhn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vrecpe_v: mask = 0x410; break;
+  case ARM::BI__builtin_neon_vrecpeq_v: mask = 0x4100000; break;
+  case ARM::BI__builtin_neon_vrecps_v: mask = 0x10; break;
+  case ARM::BI__builtin_neon_vrecpsq_v: mask = 0x100000; break;
+  case ARM::BI__builtin_neon_vrhadd_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vrhaddq_v: mask = 0x7070000; break;
+  case ARM::BI__builtin_neon_vrshl_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vrshlq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vrshrn_n_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vrshr_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vrshrq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vrsqrte_v: mask = 0x410; break;
+  case ARM::BI__builtin_neon_vrsqrteq_v: mask = 0x4100000; break;
+  case ARM::BI__builtin_neon_vrsqrts_v: mask = 0x10; break;
+  case ARM::BI__builtin_neon_vrsqrtsq_v: mask = 0x100000; break;
+  case ARM::BI__builtin_neon_vrsra_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vrsraq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vrsubhn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vshl_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vshlq_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vshll_n_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vshl_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vshlq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vshrn_n_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vshr_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vshrq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vsli_n_v: mask = 0xF6F; break;
+  case ARM::BI__builtin_neon_vsliq_n_v: mask = 0xF6F0000; break;
+  case ARM::BI__builtin_neon_vsra_n_v: mask = 0xF0F; break;
+  case ARM::BI__builtin_neon_vsraq_n_v: mask = 0xF0F0000; break;
+  case ARM::BI__builtin_neon_vsri_n_v: mask = 0xF6F; break;
+  case ARM::BI__builtin_neon_vsriq_n_v: mask = 0xF6F0000; break;
+  case ARM::BI__builtin_neon_vst1_v: mask = 0x9F; break;
+  case ARM::BI__builtin_neon_vst1q_v: mask = 0x9F0000; break;
+  case ARM::BI__builtin_neon_vst1_lane_v: mask = 0x9F; break;
+  case ARM::BI__builtin_neon_vst1q_lane_v: mask = 0x9F0000; break;
+  case ARM::BI__builtin_neon_vst2_v: mask = 0x9F; break;
+  case ARM::BI__builtin_neon_vst2q_v: mask = 0x970000; break;
+  case ARM::BI__builtin_neon_vst2_lane_v: mask = 0x97; break;
+  case ARM::BI__builtin_neon_vst2q_lane_v: mask = 0x960000; break;
+  case ARM::BI__builtin_neon_vst3_v: mask = 0x9F; break;
+  case ARM::BI__builtin_neon_vst3q_v: mask = 0x970000; break;
+  case ARM::BI__builtin_neon_vst3_lane_v: mask = 0x97; break;
+  case ARM::BI__builtin_neon_vst3q_lane_v: mask = 0x960000; break;
+  case ARM::BI__builtin_neon_vst4_v: mask = 0x9F; break;
+  case ARM::BI__builtin_neon_vst4q_v: mask = 0x970000; break;
+  case ARM::BI__builtin_neon_vst4_lane_v: mask = 0x97; break;
+  case ARM::BI__builtin_neon_vst4q_lane_v: mask = 0x960000; break;
+  case ARM::BI__builtin_neon_vsubhn_v: mask = 0x707; break;
+  case ARM::BI__builtin_neon_vsubl_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vsubw_v: mask = 0xE0E0000; break;
+  case ARM::BI__builtin_neon_vtbl1_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbl2_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbl3_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbl4_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbx1_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbx2_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbx3_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtbx4_v: mask = 0x121; break;
+  case ARM::BI__builtin_neon_vtrn_v: mask = 0x777; break;
+  case ARM::BI__builtin_neon_vtrnq_v: mask = 0x7770000; break;
+  case ARM::BI__builtin_neon_vtst_v: mask = 0x700; break;
+  case ARM::BI__builtin_neon_vtstq_v: mask = 0x7000000; break;
+  case ARM::BI__builtin_neon_vuzp_v: mask = 0x777; break;
+  case ARM::BI__builtin_neon_vuzpq_v: mask = 0x7770000; break;
+  case ARM::BI__builtin_neon_vzip_v: mask = 0x373; break;
+  case ARM::BI__builtin_neon_vzipq_v: mask = 0x7770000; break;
   }
   
-  // Now, range check values.
-  //unsigned lower = 0, upper = 0;
+  // For NEON intrinsics which are overloaded on vector element type, validate
+  // the immediate which specifies which variant to emit.
+  if (mask) {
+    unsigned ArgNo = TheCall->getNumArgs()-1;
+    if (SemaBuiltinConstantArg(TheCall, ArgNo, Result))
+      return true;
+    
+    unsigned Val = Result.getLimitedValue(32);
+    if ((Val > 31) || (mask & (1 << Val)) == 0)
+      return Diag(TheCall->getLocStart(), diag::err_invalid_neon_type_code)
+        << TheCall->getArg(ArgNo)->getSourceRange();
+  }
   
+  // For NEON intrinsics which take an immediate value as part of the 
+  // instruction, range check them here.
+  unsigned i = 0, upper = 0;
+  switch (BuiltinID) {
+  default: return false;
+  };
+
+  if (SemaBuiltinConstantArg(TheCall, i, Result))
+    return true;
+
+  unsigned Val = Result.getZExtValue();
+  if (Val > upper)
+    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
+      << "0" << llvm::utostr(upper) << TheCall->getArg(i)->getSourceRange();
+
   return false;
 }
 
