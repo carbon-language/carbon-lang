@@ -415,7 +415,14 @@ EmptySubobjectMap::CanPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset) {
 void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD, 
                                                    const CXXRecordDecl *Class,
                                                    uint64_t Offset) {
-  
+  // We know that the only empty subobjects that can conflict with empty
+  // field subobjects are subobjects empty bases that can be placed at offset
+  // zero. Because of this, we only need to keep track of empty field 
+  // subobjects with offsets less than the size of the largest empty
+  // subobject for our class.
+  if (Offset >= SizeOfLargestEmptySubobject)
+    return;
+
   AddSubobjectAtOffset(RD, Offset);
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -480,6 +487,14 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
     uint64_t ElementOffset = Offset;
     
     for (uint64_t I = 0; I != NumElements; ++I) {
+      // We know that the only empty subobjects that can conflict with empty
+      // field subobjects are subobjects empty bases that can be placed at 
+      // offset zero. Because of this, we only need to keep track of empty field
+      // subobjects with offsets less than the size of the largest empty
+      // subobject for our class.
+      if (ElementOffset >= SizeOfLargestEmptySubobject)
+        return;
+
       UpdateEmptyFieldSubobjects(RD, RD, ElementOffset);
       ElementOffset += Layout.getSize();
     }
