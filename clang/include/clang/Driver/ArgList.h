@@ -340,6 +340,38 @@ namespace driver {
 
     virtual const char *MakeArgString(llvm::StringRef Str) const;
 
+    /// AddFlagArg - Construct a new FlagArg for the given option \arg Id and
+    /// append it to the argument list.
+    void AddFlagArg(const Arg *BaseArg, const Option *Opt) {
+      append(MakeFlagArg(BaseArg, Opt));
+    }
+
+    /// AddPositionalArg - Construct a new Positional arg for the given option
+    /// \arg Id, with the provided \arg Value and append it to the argument
+    /// list.
+    void AddPositionalArg(const Arg *BaseArg, const Option *Opt,
+                          llvm::StringRef Value) {
+      append(MakePositionalArg(BaseArg, Opt, Value));
+    }
+
+
+    /// AddSeparateArg - Construct a new Positional arg for the given option
+    /// \arg Id, with the provided \arg Value and append it to the argument
+    /// list.
+    void AddSeparateArg(const Arg *BaseArg, const Option *Opt,
+                        llvm::StringRef Value) {
+      append(MakeSeparateArg(BaseArg, Opt, Value));
+    }
+
+
+    /// AddJoinedArg - Construct a new Positional arg for the given option \arg
+    /// Id, with the provided \arg Value and append it to the argument list.
+    void AddJoinedArg(const Arg *BaseArg, const Option *Opt,
+                      llvm::StringRef Value) {
+      append(MakeJoinedArg(BaseArg, Opt, Value));
+    }
+
+
     /// MakeFlagArg - Construct a new FlagArg for the given option
     /// \arg Id.
     Arg *MakeFlagArg(const Arg *BaseArg, const Option *Opt) const;

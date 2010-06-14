@@ -522,66 +522,61 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     case options::OPT_mkernel:
     case options::OPT_fapple_kext:
       DAL->append(A);
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
       break;
 
     case options::OPT_dependency_file:
-      DAL->append(DAL->MakeSeparateArg(A, Opts.getOption(options::OPT_MF),
-                                       A->getValue(Args)));
+      DAL->AddSeparateArg(A, Opts.getOption(options::OPT_MF),
+                          A->getValue(Args));
       break;
 
     case options::OPT_gfull:
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_g_Flag)));
-      DAL->append(DAL->MakeFlagArg(A,
-             Opts.getOption(options::OPT_fno_eliminate_unused_debug_symbols)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_g_Flag));
+      DAL->AddFlagArg(A,
+               Opts.getOption(options::OPT_fno_eliminate_unused_debug_symbols));
       break;
 
     case options::OPT_gused:
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_g_Flag)));
-      DAL->append(DAL->MakeFlagArg(A,
-             Opts.getOption(options::OPT_feliminate_unused_debug_symbols)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_g_Flag));
+      DAL->AddFlagArg(A,
+             Opts.getOption(options::OPT_feliminate_unused_debug_symbols));
       break;
 
     case options::OPT_fterminated_vtables:
     case options::OPT_findirect_virtual_calls:
-      DAL->append(DAL->MakeFlagArg(A,
-                                   Opts.getOption(options::OPT_fapple_kext)));
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_fapple_kext));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
       break;
 
     case options::OPT_shared:
-      DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_dynamiclib)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_dynamiclib));
       break;
 
     case options::OPT_fconstant_cfstrings:
-      DAL->append(DAL->MakeFlagArg(A,
-                             Opts.getOption(options::OPT_mconstant_cfstrings)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_mconstant_cfstrings));
       break;
 
     case options::OPT_fno_constant_cfstrings:
-      DAL->append(DAL->MakeFlagArg(A,
-                          Opts.getOption(options::OPT_mno_constant_cfstrings)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_mno_constant_cfstrings));
       break;
 
     case options::OPT_Wnonportable_cfstrings:
-      DAL->append(DAL->MakeFlagArg(A,
-                     Opts.getOption(options::OPT_mwarn_nonportable_cfstrings)));
+      DAL->AddFlagArg(A,
+                      Opts.getOption(options::OPT_mwarn_nonportable_cfstrings));
       break;
 
     case options::OPT_Wno_nonportable_cfstrings:
-      DAL->append(DAL->MakeFlagArg(A,
-                  Opts.getOption(options::OPT_mno_warn_nonportable_cfstrings)));
+      DAL->AddFlagArg(A,
+                   Opts.getOption(options::OPT_mno_warn_nonportable_cfstrings));
       break;
 
     case options::OPT_fpascal_strings:
-      DAL->append(DAL->MakeFlagArg(A,
-                                 Opts.getOption(options::OPT_mpascal_strings)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_mpascal_strings));
       break;
 
     case options::OPT_fno_pascal_strings:
-      DAL->append(DAL->MakeFlagArg(A,
-                              Opts.getOption(options::OPT_mno_pascal_strings)));
+      DAL->AddFlagArg(A, Opts.getOption(options::OPT_mno_pascal_strings));
       break;
     }
   }
@@ -589,8 +584,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   if (getTriple().getArch() == llvm::Triple::x86 ||
       getTriple().getArch() == llvm::Triple::x86_64)
     if (!Args.hasArgNoClaim(options::OPT_mtune_EQ))
-      DAL->append(DAL->MakeJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ),
-                                     "core2"));
+      DAL->AddJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ), "core2");
 
   // Add the arch options based on the particular spelling of -arch, to match
   // how the driver driver works.
@@ -604,57 +598,57 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     if (Name == "ppc")
       ;
     else if (Name == "ppc601")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "601"));
+      DAL->AddJoinedArg(0, MCpu, "601");
     else if (Name == "ppc603")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "603"));
+      DAL->AddJoinedArg(0, MCpu, "603");
     else if (Name == "ppc604")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "604"));
+      DAL->AddJoinedArg(0, MCpu, "604");
     else if (Name == "ppc604e")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "604e"));
+      DAL->AddJoinedArg(0, MCpu, "604e");
     else if (Name == "ppc750")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "750"));
+      DAL->AddJoinedArg(0, MCpu, "750");
     else if (Name == "ppc7400")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "7400"));
+      DAL->AddJoinedArg(0, MCpu, "7400");
     else if (Name == "ppc7450")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "7450"));
+      DAL->AddJoinedArg(0, MCpu, "7450");
     else if (Name == "ppc970")
-      DAL->append(DAL->MakeJoinedArg(0, MCpu, "970"));
+      DAL->AddJoinedArg(0, MCpu, "970");
 
     else if (Name == "ppc64")
-      DAL->append(DAL->MakeFlagArg(0, Opts.getOption(options::OPT_m64)));
+      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
 
     else if (Name == "i386")
       ;
     else if (Name == "i486")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "i486"));
+      DAL->AddJoinedArg(0, MArch, "i486");
     else if (Name == "i586")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "i586"));
+      DAL->AddJoinedArg(0, MArch, "i586");
     else if (Name == "i686")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "i686"));
+      DAL->AddJoinedArg(0, MArch, "i686");
     else if (Name == "pentium")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium"));
+      DAL->AddJoinedArg(0, MArch, "pentium");
     else if (Name == "pentium2")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium2"));
+      DAL->AddJoinedArg(0, MArch, "pentium2");
     else if (Name == "pentpro")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentiumpro"));
+      DAL->AddJoinedArg(0, MArch, "pentiumpro");
     else if (Name == "pentIIm3")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium2"));
+      DAL->AddJoinedArg(0, MArch, "pentium2");
 
     else if (Name == "x86_64")
-      DAL->append(DAL->MakeFlagArg(0, Opts.getOption(options::OPT_m64)));
+      DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
 
     else if (Name == "arm")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv4t"));
+      DAL->AddJoinedArg(0, MArch, "armv4t");
     else if (Name == "armv4t")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv4t"));
+      DAL->AddJoinedArg(0, MArch, "armv4t");
     else if (Name == "armv5")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv5tej"));
+      DAL->AddJoinedArg(0, MArch, "armv5tej");
     else if (Name == "xscale")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "xscale"));
+      DAL->AddJoinedArg(0, MArch, "xscale");
     else if (Name == "armv6")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv6k"));
+      DAL->AddJoinedArg(0, MArch, "armv6k");
     else if (Name == "armv7")
-      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv7a"));
+      DAL->AddJoinedArg(0, MArch, "armv7a");
 
     else
       llvm_unreachable("invalid Darwin arch");
