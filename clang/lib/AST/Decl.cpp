@@ -713,7 +713,7 @@ VarDecl *VarDecl::getActingDefinition() {
   if (Kind != TentativeDefinition)
     return 0;
 
-  VarDecl *LastTentative = false;
+  VarDecl *LastTentative = 0;
   VarDecl *First = getFirstDeclaration();
   for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
        I != E; ++I) {

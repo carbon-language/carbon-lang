@@ -532,7 +532,7 @@ RopePieceBTreeInterior::HandleChildPiece(unsigned i, RopePieceBTreeNode *RHS) {
               (getNumChildren()-i-1)*sizeof(Children[0]));
     Children[i+1] = RHS;
     ++NumChildren;
-    return false;
+    return 0;
   }
 
   // Okay, this node is full.  Split it in half, moving WidthFactor children to
