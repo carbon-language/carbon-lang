@@ -1,4 +1,4 @@
-//===----- ExactHazardRecognizer.cpp - hazard recognizer -------- ---------===//
+//===----- PostRAHazardRecognizer.cpp - hazard recognizer -------- ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "post-RA-sched"
-#include "ExactHazardRecognizer.h"
-#include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/CodeGen/PostRAHazardRecognizer.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,10 +22,9 @@
 
 using namespace llvm;
 
-ExactHazardRecognizer::
-ExactHazardRecognizer(const InstrItineraryData &LItinData) :
-  ScheduleHazardRecognizer(), ItinData(LItinData) 
-{
+PostRAHazardRecognizer::
+PostRAHazardRecognizer(const InstrItineraryData &LItinData) :
+  ScheduleHazardRecognizer(), ItinData(LItinData) {
   // Determine the maximum depth of any itinerary. This determines the
   // depth of the scoreboard. We always make the scoreboard at least 1
   // cycle deep to avoid dealing with the boundary condition.
@@ -48,16 +47,16 @@ ExactHazardRecognizer(const InstrItineraryData &LItinData) :
   ReservedScoreboard.reset(ScoreboardDepth);
   RequiredScoreboard.reset(ScoreboardDepth);
 
-  DEBUG(dbgs() << "Using exact hazard recognizer: ScoreboardDepth = " 
+  DEBUG(dbgs() << "Using post-ra hazard recognizer: ScoreboardDepth = " 
                << ScoreboardDepth << '\n');
 }
 
-void ExactHazardRecognizer::Reset() {
+void PostRAHazardRecognizer::Reset() {
   RequiredScoreboard.reset();
   ReservedScoreboard.reset();
 }
 
-void ExactHazardRecognizer::ScoreBoard::dump() const {
+void PostRAHazardRecognizer::ScoreBoard::dump() const {
   dbgs() << "Scoreboard:\n";
 
   unsigned last = Depth - 1;
@@ -73,7 +72,8 @@ void ExactHazardRecognizer::ScoreBoard::dump() const {
   }
 }
 
-ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU) {
+PostRAHazardRecognizer::HazardType
+PostRAHazardRecognizer::getHazardType(SUnit *SU) {
   if (ItinData.isEmpty())
     return NoHazard;
 
@@ -120,7 +120,7 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
   return NoHazard;
 }
 
-void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
+void PostRAHazardRecognizer::EmitInstruction(SUnit *SU) {
   if (ItinData.isEmpty())
     return;
 
@@ -174,7 +174,7 @@ void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
   DEBUG(RequiredScoreboard.dump());
 }
 
-void ExactHazardRecognizer::AdvanceCycle() {
+void PostRAHazardRecognizer::AdvanceCycle() {
   ReservedScoreboard[0] = 0; ReservedScoreboard.advance();
   RequiredScoreboard[0] = 0; RequiredScoreboard.advance();
 }

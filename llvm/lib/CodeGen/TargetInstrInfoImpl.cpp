@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PostRAHazardRecognizer.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -313,4 +314,10 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
 
   // Everything checked out.
   return true;
+}
+
+// Default implementation of CreateTargetPostRAHazardRecognizer.
+ScheduleHazardRecognizer *TargetInstrInfoImpl::
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
+  return (ScheduleHazardRecognizer *)new PostRAHazardRecognizer(II);
 }

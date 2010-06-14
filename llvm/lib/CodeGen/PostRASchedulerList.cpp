@@ -22,8 +22,6 @@
 #include "AntiDepBreaker.h"
 #include "AggressiveAntiDepBreaker.h"
 #include "CriticalAntiDepBreaker.h"
-#include "ExactHazardRecognizer.h"
-#include "SimpleHazardRecognizer.h"
 #include "ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
@@ -65,10 +63,6 @@ EnableAntiDepBreaking("break-anti-dependencies",
                       cl::desc("Break post-RA scheduling anti-dependencies: "
                                "\"critical\", \"all\", or \"none\""),
                       cl::init("none"), cl::Hidden);
-static cl::opt<bool>
-EnablePostRAHazardAvoidance("avoid-hazards",
-                            cl::desc("Enable exact hazard avoidance"),
-                            cl::init(true), cl::Hidden);
 
 // If DebugDiv > 0 then only schedule MBB with (ID % DebugDiv) == DebugMod
 static cl::opt<int>
@@ -680,15 +674,6 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
       CycleHasInsts = true;
-
-      // If we are using the target-specific hazards, then don't
-      // advance the cycle time just because we schedule a node. If
-      // the target allows it we can schedule multiple nodes in the
-      // same cycle.
-      if (!EnablePostRAHazardAvoidance) {
-        if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
-          ++CurCycle;
-      }
     } else {
       if (CycleHasInsts) {
         DEBUG(dbgs() << "*** Finished cycle " << CurCycle << '\n');
@@ -717,16 +702,6 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 #ifndef NDEBUG
   VerifySchedule(/*isBottomUp=*/false);
 #endif
-}
-
-// Default implementation of CreateTargetPostRAHazardRecognizer. This should
-// be in TargetInstrInfoImpl.cpp except it reference local command line
-// option EnablePostRAHazardAvoidance
-ScheduleHazardRecognizer *TargetInstrInfoImpl::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
-  if (EnablePostRAHazardAvoidance)
-    return (ScheduleHazardRecognizer *)new ExactHazardRecognizer(II);
-  return (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
 }
 
 //===----------------------------------------------------------------------===//
