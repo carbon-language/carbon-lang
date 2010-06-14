@@ -240,3 +240,34 @@ Issues:
    expensive addressing mode.
 
 //===---------------------------------------------------------------------===//
+
+Consider the following (contrived testcase, but contains common factors):
+
+#include <stdarg.h>
+int test(int x, ...) {
+  int sum, i;
+  va_list l;
+  va_start(l, x);
+  for (i = 0; i < x; i++)
+    sum += va_arg(l, int);
+  va_end(l);
+  return sum;
+}
+
+Testcase given in C because fixing it will likely involve changing the IR
+generated for it.  The primary issue with the result is that it doesn't do any
+of the optimizations which are possible if we know the address of a va_list
+in the current function is never taken:
+1. We shouldn't spill the XMM registers because we only call va_arg with "int".
+2. It would be nice if we could scalarrepl the va_list.
+3. Probably overkill, but it'd be cool if we could peel off the first five
+iterations of the loop.
+
+Other optimizations involving functions which use va_arg on floats which don't
+have the address of a va_list taken:
+1. Conversely to the above, we shouldn't spill general registers if we only
+   call va_arg on "double".
+2. If we know nothing more than 64 bits wide is read from the XMM registers,
+   we can change the spilling code to reduce the amount of stack used by half.
+
+//===---------------------------------------------------------------------===//
