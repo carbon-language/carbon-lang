@@ -1050,6 +1050,18 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
   if (Quals.hasConst())
     Out << 'K';
 
+  if (Quals.hasAddressSpace()) {
+    // Extension:
+    //
+    //   <type> ::= U <address-space-number>
+    // 
+    // where <address-space-number> is a source name consisting of 'AS' 
+    // followed by the address space <number>.
+    llvm::SmallString<64> ASString;
+    ASString = "AS" + llvm::utostr_32(Quals.getAddressSpace());
+    Out << 'U' << ASString.size() << ASString;
+  }
+  
   // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
