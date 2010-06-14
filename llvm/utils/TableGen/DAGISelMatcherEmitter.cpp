@@ -635,6 +635,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   if (!ComplexPatterns.empty()) {
     OS << "bool CheckComplexPattern(SDNode *Root, SDValue N,\n";
     OS << "      unsigned PatternNo, SmallVectorImpl<SDValue> &Result) {\n";
+    OS << "  unsigned NextRes = Result.size();\n";
     OS << "  switch (PatternNo) {\n";
     OS << "  default: assert(0 && \"Invalid pattern # in table?\");\n";
     for (unsigned i = 0, e = ComplexPatterns.size(); i != e; ++i) {
@@ -645,12 +646,12 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
         ++NumOps;  // Get the chained node too.
       
       OS << "  case " << i << ":\n";
-      OS << "    Result.resize(Result.size()+" << NumOps << ");\n";
+      OS << "    Result.resize(NextRes+" << NumOps << ");\n";
       OS << "    return "  << P.getSelectFunc();
 
       OS << "(Root, N";
       for (unsigned i = 0; i != NumOps; ++i)
-        OS << ", Result[Result.size()-" << (NumOps-i) << ']';
+        OS << ", Result[NextRes+" << i << ']';
       OS << ");\n";
     }
     OS << "  }\n";
