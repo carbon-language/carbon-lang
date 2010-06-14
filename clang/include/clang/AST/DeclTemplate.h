@@ -264,6 +264,11 @@ public:
     return K >= firstTemplate && K <= lastTemplate;
   }
 
+  SourceRange getSourceRange() const {
+    return SourceRange(TemplateParams->getTemplateLoc(),
+                       TemplatedDecl->getSourceRange().getEnd());
+  }
+
 protected:
   NamedDecl *TemplatedDecl;
   TemplateParameterList* TemplateParams;
