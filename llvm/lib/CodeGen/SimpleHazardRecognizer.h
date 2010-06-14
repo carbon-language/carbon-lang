@@ -35,6 +35,10 @@ namespace llvm {
     /// instructions.
     Class Window[8];
 
+    /// Pos - Current position pointing into Window.
+    ///
+    unsigned Pos;
+
     /// getClass - Classify the given SUnit.
     Class getClass(const SUnit *SU) {
       const MachineInstr *MI = SU->getInstr();
@@ -49,8 +53,11 @@ namespace llvm {
     /// Step - Rotate the existing entries in Window and insert the
     /// given class value in position as the most recent.
     void Step(Class C) {
-      std::copy(Window+1, array_endof(Window), Window);
-      Window[array_lengthof(Window)-1] = C;
+      Window[Pos] = C;
+      if (Pos == 0)
+        Pos = array_lengthof(Window)-1;
+      else
+        --Pos;
     }
 
   public:
@@ -62,18 +69,23 @@ namespace llvm {
       Class C = getClass(SU);
       if (C == Other)
         return NoHazard;
+
       unsigned Score = 0;
-      for (unsigned i = 0; i != array_lengthof(Window); ++i)
-        if (Window[i] == C)
-          Score += i + 1;
-      if (Score > array_lengthof(Window) * 2)
-        return Hazard;
+      for (unsigned i = array_lengthof(Window); i != 0; --i) {
+        unsigned RealPos = (Pos + (i-1)) % array_lengthof(Window);
+        if (Window[RealPos] == C) {
+          Score += i;
+          if (Score > array_lengthof(Window) * 2)
+            return Hazard;
+        }
+      }
       return NoHazard;
     }
 
     virtual void Reset() {
       for (unsigned i = 0; i != array_lengthof(Window); ++i)
         Window[i] = Other;
+      Pos = array_lengthof(Window)-1;
     }
 
     virtual void EmitInstruction(SUnit *SU) {
