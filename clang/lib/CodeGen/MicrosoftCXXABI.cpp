@@ -45,6 +45,7 @@ public:
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "?");
   void mangleName(const NamedDecl *ND);
+  void mangleVariableEncoding(const VarDecl *VD);
   void mangleType(QualType T);
 
 private:
@@ -54,6 +55,7 @@ private:
   void mangleUnqualifiedName(const NamedDecl *ND, DeclarationName Name);
   void mangleSourceName(const IdentifierInfo *II);
   void manglePostfix(const DeclContext *DC, bool NoFunction=false);
+  void mangleQualifiers(Qualifiers Quals, bool IsMember);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
 
@@ -175,7 +177,38 @@ void MicrosoftCXXNameMangler::mangle(const NamedDecl *D,
   // <mangled-name> ::= ? <name> <type>
   Out << Prefix;
   mangleName(D);
-  // TODO: Mangle type.
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    mangleVariableEncoding(VD);
+  // TODO: Function types.
+}
+
+void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
+  // <encoding> ::= <variable name> <storage-class> <variable-type>
+  // <storage-class> ::= 0  # private static member
+  //                 ::= 1  # protected static member
+  //                 ::= 2  # public static member
+  //                 ::= 3  # global
+  //                 ::= 4  # static local
+  
+  // The first character in the encoding (after the name) is the storage class.
+  if (VD->isStaticDataMember()) {
+    // If it's a static member, it also encodes the access level.
+    switch (VD->getAccess()) {
+      default:
+      case AS_private: Out << '0'; break;
+      case AS_protected: Out << '1'; break;
+      case AS_public: Out << '2'; break;
+    }
+  }
+  else if (!VD->isStaticLocal())
+    Out << '3';
+  else
+    Out << '4';
+  // Now mangle the type.
+  // <variable-type> ::= <type> <cvr-qualifiers>
+  QualType Ty = VD->getType();
+  mangleType(Ty.getLocalUnqualifiedType());
+  mangleQualifiers(Ty.getLocalQualifiers(), false);
 }
 
 void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
@@ -311,6 +344,88 @@ void MicrosoftCXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   llvm::SmallString<64> Buffer;
   MiscNameMangler(Context, Buffer).mangleObjCMethodName(MD);
   Out << Buffer;
+}
+
+void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
+                                               bool IsMember) {
+  // <cvr-qualifiers> ::= [E] [F] [I] <base-cvr-qualifiers>
+  // 'E' means __ptr64 (32-bit only); 'F' means __unaligned (32/64-bit only);
+  // 'I' means __restrict (32/64-bit).
+  // Note that the MSVC __restrict keyword isn't the same as the C99 restrict
+  // keyword!
+  // <base-cvr-qualifiers> ::= A  # near
+  //                       ::= B  # near const
+  //                       ::= C  # near volatile
+  //                       ::= D  # near const volatile
+  //                       ::= E  # far (16-bit)
+  //                       ::= F  # far const (16-bit)
+  //                       ::= G  # far volatile (16-bit)
+  //                       ::= H  # far const volatile (16-bit)
+  //                       ::= I  # huge (16-bit)
+  //                       ::= J  # huge const (16-bit)
+  //                       ::= K  # huge volatile (16-bit)
+  //                       ::= L  # huge const volatile (16-bit)
+  //                       ::= M <basis> # based
+  //                       ::= N <basis> # based const
+  //                       ::= O <basis> # based volatile
+  //                       ::= P <basis> # based const volatile
+  //                       ::= Q  # near member
+  //                       ::= R  # near const member
+  //                       ::= S  # near volatile member
+  //                       ::= T  # near const volatile member
+  //                       ::= U  # far member (16-bit)
+  //                       ::= V  # far const member (16-bit)
+  //                       ::= W  # far volatile member (16-bit)
+  //                       ::= X  # far const volatile member (16-bit)
+  //                       ::= Y  # huge member (16-bit)
+  //                       ::= Z  # huge const member (16-bit)
+  //                       ::= 0  # huge volatile member (16-bit)
+  //                       ::= 1  # huge const volatile member (16-bit)
+  //                       ::= 2 <basis> # based member
+  //                       ::= 3 <basis> # based const member
+  //                       ::= 4 <basis> # based volatile member
+  //                       ::= 5 <basis> # based const volatile member
+  //                       ::= 6  # near function (pointers only)
+  //                       ::= 7  # far function (pointers only)
+  //                       ::= 8  # near method (pointers only)
+  //                       ::= 9  # far method (pointers only)
+  //                       ::= _A <basis> # based function (pointers only)
+  //                       ::= _B <basis> # based function (far?) (pointers only)
+  //                       ::= _C <basis> # based method (pointers only)
+  //                       ::= _D <basis> # based method (far?) (pointers only)
+  // <basis> ::= 0 # __based(void)
+  //         ::= 1 # __based(segment)?
+  //         ::= 2 <name> # __based(name)
+  //         ::= 3 # ?
+  //         ::= 4 # ?
+  //         ::= 5 # not really based
+  if (!IsMember) {
+    if (!Quals.hasVolatile()) {
+      if (!Quals.hasConst())
+        Out << 'A';
+      else
+        Out << 'B';
+    } else {
+      if (!Quals.hasConst())
+        Out << 'C';
+      else
+        Out << 'D';
+    }
+  } else {
+    if (!Quals.hasVolatile()) {
+      if (!Quals.hasConst())
+        Out << 'Q';
+      else
+        Out << 'R';
+    } else {
+      if (!Quals.hasConst())
+        Out << 'S';
+      else
+        Out << 'T';
+    }
+  }
+
+  // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
 void MicrosoftCXXNameMangler::mangleType(QualType T) {
