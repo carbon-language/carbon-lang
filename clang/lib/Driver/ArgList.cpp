@@ -62,12 +62,14 @@ Arg *ArgList::getLastArg(OptSpecifier Id) const {
 }
 
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
-  Arg *Res, *A0 = getLastArgNoClaim(Id0), *A1 = getLastArgNoClaim(Id1);
-
-  if (A0 && A1)
-    Res = A0->getIndex() > A1->getIndex() ? A0 : A1;
-  else
-    Res = A0 ? A0 : A1;
+  Arg *Res = 0;
+  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it) {
+    if ((*it)->getOption().matches(Id0) ||
+        (*it)->getOption().matches(Id1)) {
+      Res = *it;
+      break;
+    }
+  }
 
   if (Res)
     Res->claim();
@@ -78,24 +80,13 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2) const {
   Arg *Res = 0;
-  Arg *A0 = getLastArgNoClaim(Id0);
-  Arg *A1 = getLastArgNoClaim(Id1);
-  Arg *A2 = getLastArgNoClaim(Id2);
-
-  int A0Idx = A0 ? (int) A0->getIndex() : -1;
-  int A1Idx = A1 ? (int) A1->getIndex() : -1;
-  int A2Idx = A2 ? (int) A2->getIndex() : -1;
-
-  if (A0Idx > A1Idx) {
-    if (A0Idx > A2Idx)
-      Res = A0;
-    else if (A2Idx != -1)
-      Res = A2;
-  } else {
-    if (A1Idx > A2Idx)
-      Res = A1;
-    else if (A2Idx != -1)
-      Res = A2;
+  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it) {
+    if ((*it)->getOption().matches(Id0) ||
+        (*it)->getOption().matches(Id1) ||
+        (*it)->getOption().matches(Id2)) {
+      Res = *it;
+      break;
+    }
   }
 
   if (Res)
@@ -272,7 +263,7 @@ Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt,
 Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
                                      llvm::StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt->getName(), Value);
-  Arg *A = new Arg(Opt, Index, BaseArgs.getArgString(Index), BaseArg);
+  Arg *A = new Arg(Opt, Index, BaseArgs.getArgString(Index + 1), BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
 }
