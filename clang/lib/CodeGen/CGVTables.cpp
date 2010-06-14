@@ -2926,6 +2926,9 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
   
   // Set the correct linkage.
   VTable->setLinkage(Linkage);
+  
+  // Set the right visibility.
+  CGM.setGlobalVisibility(VTable, RD);
 }
 
 llvm::GlobalVariable *

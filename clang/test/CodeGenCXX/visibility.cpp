@@ -5,7 +5,7 @@
 #define DEFAULT __attribute__((visibility("default")))
 
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
-
+// CHECK: @_ZTVN5Test63fooE = weak_odr hidden constant 
 namespace Test1 {
   // CHECK: define hidden void @_ZN5Test11fEv
   void HIDDEN f() { }
@@ -63,4 +63,22 @@ namespace Test5 {
     // CHECK: define void @_ZN5Test52NS1gEv
     void g() { }
   }
+}
+
+// <rdar://problem/8091955>
+namespace Test6 {
+  struct HIDDEN foo {
+    foo() { }
+    void bonk();
+    virtual void bar() = 0;
+
+    virtual void zonk() {}
+  };
+
+  struct barc : public foo {
+    barc();
+    virtual void bar();
+  };
+
+  barc::barc() {}
 }
