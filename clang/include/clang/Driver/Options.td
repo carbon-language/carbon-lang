@@ -715,3 +715,6 @@ def _warn_ : Joined<"--warn-">, Alias<W_Joined>;
 def _write_dependencies : Flag<"--write-dependencies">, Alias<MD>;
 def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
 def _ : Joined<"--">, Flags<[Unsupported]>;
+
+// Special internal option to handle -Xlinker --no-demangle.
+def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">, Flags<[Unsupported]>;

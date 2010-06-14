@@ -114,8 +114,32 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   DerivedArgList *DAL = new DerivedArgList(Args);
 
   for (ArgList::const_iterator it = Args.begin(),
-         ie = Args.end(); it != ie; ++it)
+         ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+
+    // Unfortunately, we have to parse some forwarding options (-Xassembler,
+    // -Xlinker, -Xpreprocessor) because we either integrate their functionality
+    // (assembler and preprocessor), or bypass a previous driver ('collect2').
+    if (A->getOption().matches(options::OPT_Xlinker) &&
+        A->getValue(Args) == llvm::StringRef("--no-demangle")) {
+      DAL->AddFlagArg(A, Opts->getOption(options::OPT_Z_Xlinker__no_demangle));
+      continue;
+    } else if (A->getOption().matches(options::OPT_Wl_COMMA) &&
+               A->containsValue("--no-demangle")) {
+      // Add the rewritten no-demangle argument.
+      DAL->AddFlagArg(A, Opts->getOption(options::OPT_Z_Xlinker__no_demangle));
+
+      // Add the remaining values as Xlinker arguments.
+      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+        if (llvm::StringRef(A->getValue(Args, i)) != "--no-demangle")
+          DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker),
+                              A->getValue(Args, i));
+
+      continue;
+    }
+
     DAL->append(*it);
+  }
 
   return DAL;
 }
@@ -322,7 +346,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     llvm::outs() << CLANG_VERSION_STRING "\n";
     return false;
   }
-  
+
   if (C.getArgs().hasArg(options::OPT__print_diagnostic_categories)) {
     PrintDiagnosticCategories(llvm::outs());
     return false;
@@ -1230,7 +1254,7 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
 
   // TCE is an osless target
   if (Triple.getArchName() == "tce")
-    return createTCEHostInfo(*this, Triple); 
+    return createTCEHostInfo(*this, Triple);
 
   switch (Triple.getOS()) {
   case llvm::Triple::AuroraUX:

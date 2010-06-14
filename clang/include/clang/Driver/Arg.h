@@ -12,6 +12,7 @@
 
 #include "Util.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 #include <string>
 
@@ -89,6 +90,13 @@ namespace driver {
 
     llvm::SmallVectorImpl<const char*> &getValues() {
       return Values;
+    }
+
+    bool containsValue(llvm::StringRef Value) const {
+      for (unsigned i = 0, e = getNumValues(); i != e; ++i)
+        if (Values[i] == Value)
+          return true;
+      return false;
     }
 
     /// render - Append the argument onto the given array as strings.
