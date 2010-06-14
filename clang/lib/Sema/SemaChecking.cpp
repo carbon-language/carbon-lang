@@ -242,10 +242,40 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   return false;
 }
 
+// Get the valid immediate range for the specified NEON type code.
+static unsigned RFT(unsigned t, bool shift = false) {
+  bool quad = t & 0x10;
+  
+  switch (t & 0x7) {
+    case 0: // i8
+      return shift ? 7 : (8 << quad) - 1;
+    case 1: // i16
+      return shift ? 15 : (4 << quad) - 1;
+    case 2: // i32
+      return shift ? 31 : (2 << quad) - 1;
+    case 3: // i64
+      return shift ? 63 : (1 << quad) - 1;
+    case 4: // f32
+      assert(!shift && "cannot shift float types!");
+      return (2 << quad) - 1;
+    case 5: // poly8
+      assert(!shift && "cannot shift polynomial types!");
+      return (8 << quad) - 1;
+    case 6: // poly16
+      assert(!shift && "cannot shift polynomial types!");
+      return (4 << quad) - 1;
+    case 7: // float16
+      assert(!shift && "cannot shift float types!");
+      return (4 << quad) - 1;
+  }
+  return 0;
+}
+
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   llvm::APSInt Result;
 
   unsigned mask = 0;
+  unsigned TV = 0;
   switch (BuiltinID) {
   case ARM::BI__builtin_neon_vaba_v: mask = 0x707; break;
   case ARM::BI__builtin_neon_vabaq_v: mask = 0x7070000; break;
@@ -449,26 +479,112 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinConstantArg(TheCall, ArgNo, Result))
       return true;
     
-    unsigned Val = Result.getLimitedValue(32);
-    if ((Val > 31) || (mask & (1 << Val)) == 0)
+    TV = Result.getLimitedValue(32);
+    if ((TV > 31) || (mask & (1 << TV)) == 0)
       return Diag(TheCall->getLocStart(), diag::err_invalid_neon_type_code)
         << TheCall->getArg(ArgNo)->getSourceRange();
   }
   
   // For NEON intrinsics which take an immediate value as part of the 
   // instruction, range check them here.
-  unsigned i = 0, upper = 0;
+  unsigned i = 0, l = 0, u = 0;
   switch (BuiltinID) {
   default: return false;
+  case ARM::BI__builtin_neon_vcvt_n_f32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vcvtq_n_f32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vcvt_n_s32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vcvtq_n_s32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vcvt_n_u32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vcvtq_n_u32_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vext_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vextq_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vget_lane_i8: i = 1; u = 7; break;
+  case ARM::BI__builtin_neon_vget_lane_i16: i = 1; u = 3; break;
+  case ARM::BI__builtin_neon_vget_lane_i32: i = 1; u = 1; break;
+  case ARM::BI__builtin_neon_vget_lane_f32: i = 1; u = 1; break;
+  case ARM::BI__builtin_neon_vgetq_lane_i8: i = 1; u = 15; break;
+  case ARM::BI__builtin_neon_vgetq_lane_i16: i = 1; u = 7; break;
+  case ARM::BI__builtin_neon_vgetq_lane_i32: i = 1; u = 3; break;
+  case ARM::BI__builtin_neon_vgetq_lane_f32: i = 1; u = 3; break;
+  case ARM::BI__builtin_neon_vget_lane_i64: i = 1; u = 0; break;
+  case ARM::BI__builtin_neon_vgetq_lane_i64: i = 1; u = 1; break;
+  case ARM::BI__builtin_neon_vld1q_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld1_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld2q_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld2_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld3q_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld3_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld4q_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vld4_lane_v: i = 1; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmlal_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmla_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmlaq_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmlsl_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmls_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmlsq_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vmull_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqdmlal_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqdmlsl_lane_v: i = 3; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqdmulh_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqdmulhq_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqdmull_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqrdmulh_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqrdmulhq_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vqrshrn_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqrshrun_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshlu_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshluq_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshl_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshlq_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshrn_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vqshrun_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vrshrn_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vrshr_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vrshrq_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vrsra_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vrsraq_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vset_lane_i8: i = 2; u = 7; break;
+  case ARM::BI__builtin_neon_vset_lane_i16: i = 2; u = 3; break;
+  case ARM::BI__builtin_neon_vset_lane_i32: i = 2; u = 1; break;
+  case ARM::BI__builtin_neon_vset_lane_f32: i = 2; u = 1; break;
+  case ARM::BI__builtin_neon_vsetq_lane_i8: i = 2; u = 15; break;
+  case ARM::BI__builtin_neon_vsetq_lane_i16: i = 2; u = 7; break;
+  case ARM::BI__builtin_neon_vsetq_lane_i32: i = 2; u = 3; break;
+  case ARM::BI__builtin_neon_vsetq_lane_f32: i = 2; u = 3; break;
+  case ARM::BI__builtin_neon_vset_lane_i64: i = 2; u = 0; break;
+  case ARM::BI__builtin_neon_vsetq_lane_i64: i = 2; u = 1; break;
+  case ARM::BI__builtin_neon_vshll_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vshl_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vshlq_n_v: i = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vshrn_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vshr_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vshrq_n_v: i = 1; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsli_n_v: i = 2; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsliq_n_v: i = 2; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsra_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsraq_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsri_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vsriq_n_v: i = 2; l = 1; u = RFT(TV, true); break;
+  case ARM::BI__builtin_neon_vst1q_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst1_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst2q_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst2_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst3q_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst3_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst4q_lane_v: i = 2; u = RFT(TV); break;
+  case ARM::BI__builtin_neon_vst4_lane_v: i = 2; u = RFT(TV); break;
   };
 
+  // Check that the immediate argument is actually a constant.
   if (SemaBuiltinConstantArg(TheCall, i, Result))
     return true;
 
+  // Range check against the upper/lower values for this isntruction.
   unsigned Val = Result.getZExtValue();
-  if (Val > upper)
+  if (Val < l || Val > (u + l))
     return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-      << "0" << llvm::utostr(upper) << TheCall->getArg(i)->getSourceRange();
+      << llvm::utostr(l) << llvm::utostr(u+l)  
+      << TheCall->getArg(i)->getSourceRange();
 
   return false;
 }

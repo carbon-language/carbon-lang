@@ -1147,10 +1147,11 @@ public:
   llvm::Value *EmitARMBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitNeonCall(llvm::Function *F, 
                             llvm::SmallVectorImpl<llvm::Value*> &O,
-                            const char *name, bool splat = false);
+                            const char *name, bool splat = false,
+                            unsigned shift = 0, bool rightshift = false);
   llvm::Value *EmitNeonSplat(llvm::Value *V, llvm::Constant *Idx);
   llvm::Value *EmitNeonShiftVector(llvm::Value *V, const llvm::Type *Ty,
-                                   bool negateForRightShift = false);
+                                   bool negateForRightShift);
   
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitPPCBuiltinExpr(unsigned BuiltinID, const CallExpr *E);

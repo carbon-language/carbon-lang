@@ -49,6 +49,7 @@ class Inst <string p, string t, Op o> {
   string Prototype = p;
   string Types = t;
   Op Operand = o;
+  bit isShift = 0;
 }
 
 // Used to generate Builtins.def
@@ -174,6 +175,7 @@ def VQRSHL : SInst<"ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.12 Shifts by constant
+let isShift = 1 in {
 def VSHR_N     : SInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VSHL_N     : IInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VRSHR_N    : SInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
@@ -181,18 +183,19 @@ def VSRA_N     : SInst<"dddi", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VRSRA_N    : SInst<"dddi", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VQSHL_N    : SInst<"ddi",  "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VQSHLU_N   : SInst<"udi",  "csilQcQsQiQl">;
-def VSHRN_N    : IInst<"dwi",  "csiUcUsUi">;
-def VQSHRUN_N  : SInst<"uwi",  "csi">;
-def VQRSHRUN_N : SInst<"uwi",  "csi">;
-def VQSHRN_N   : SInst<"dwi",  "csiUcUsUi">;
-def VRSHRN_N   : IInst<"dwi",  "csiUcUsUi">;
-def VQRSHRN_N  : SInst<"dwi",  "csiUcUsUi">;
+def VSHRN_N    : IInst<"hki",  "silUsUiUl">;
+def VQSHRUN_N  : SInst<"eki",  "sil">;
+def VQRSHRUN_N : SInst<"eki",  "sil">;
+def VQSHRN_N   : SInst<"hki",  "silUsUiUl">;
+def VRSHRN_N   : IInst<"hki",  "silUsUiUl">;
+def VQRSHRN_N  : SInst<"hki",  "silUsUiUl">;
 def VSHLL_N    : SInst<"wdi",  "csiUcUsUi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.13 Shifts with insert
 def VSRI_N : WInst<"dddi", "csilUcUsUiUlPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
 def VSLI_N : WInst<"dddi", "csilUcUsUiUlPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.14 Loads and stores of a single vector
