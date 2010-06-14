@@ -53,9 +53,12 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasDLLImportLinkage())
     return X86II::MO_DLLIMPORT;
 
-  // Materializable GVs (in JIT lazy compilation mode) do not require an
-  // extra load from stub.
-  bool isDecl = GV->isDeclaration() && !GV->isMaterializable();
+  // Determine whether this is a reference to a definition or a declaration.
+  // Materializable GVs (in JIT lazy compilation mode) do not require an extra
+  // load from stub.
+  bool isDecl = GV->hasAvailableExternallyLinkage();
+  if (GV->isDeclaration() && !GV->isMaterializable())
+    isDecl = true;
 
   // X86-64 in PIC mode.
   if (isPICStyleRIPRel()) {

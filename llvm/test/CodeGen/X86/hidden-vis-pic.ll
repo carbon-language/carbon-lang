@@ -1,4 +1,27 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
+
+
+
+; PR7353
+
+define available_externally hidden 
+void @_ZNSbIcED1Ev() nounwind readnone ssp align 2 {
+entry:
+  ret void
+}
+
+define void()* @test1() nounwind {
+entry:
+  ret void()* @_ZNSbIcED1Ev
+}
+
+; This must use movl of the stub, not an lea, since the function isn't being
+; emitted here.
+; CHECK: movl L__ZNSbIcED1Ev$non_lazy_ptr-L1$pb(
+
+
+
+
 ; <rdar://problem/7383328>
 
 @.str = private constant [12 x i8] c"hello world\00", align 1 ; <[12 x i8]*> [#uses=1]
@@ -28,3 +51,5 @@ return:                                           ; preds = %entry
 
 ; CHECK: .private_extern _func.eh
 ; CHECK: .private_extern _main.eh
+
+
