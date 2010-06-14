@@ -368,15 +368,15 @@ static ld_plugin_status all_symbols_read_hook(void) {
           api_file << I->syms[i].name << "\n";
       }
     }
+  }
 
-    if (options::generate_api_file)
-      api_file.close();
+  if (options::generate_api_file)
+    api_file.close();
 
-    if (!anySymbolsPreserved) {
-      // This entire file is unnecessary!
-      lto_codegen_dispose(cg);
-      return LDPS_OK;
-    }
+  if (!anySymbolsPreserved) {
+    // All of the IL is unnecessary!
+    lto_codegen_dispose(cg);
+    return LDPS_OK;
   }
 
   lto_codegen_set_pic_model(cg, output_type);
