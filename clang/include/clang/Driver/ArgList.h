@@ -338,6 +338,12 @@ namespace driver {
     /// @name Arg Synthesis
     /// @{
 
+    /// AddSynthesizedArg - Add a argument to the list of synthesized arguments
+    /// (to be freed).
+    void AddSynthesizedArg(Arg *A) {
+      SynthesizedArgs.push_back(A);
+    }
+
     virtual const char *MakeArgString(llvm::StringRef Str) const;
 
     /// AddFlagArg - Construct a new FlagArg for the given option \arg Id and

@@ -487,9 +487,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       if (getArchName() != A->getValue(Args, 0))
         continue;
 
-      // FIXME: The arg is leaked here, and we should have a nicer
-      // interface for this.
-      unsigned Prev, Index = Prev = A->getIndex() + 1;
+      unsigned Index = Args.getBaseArgs().MakeIndex(A->getValue(Args, 1));
+      unsigned Prev = Index;
       Arg *XarchArg = Opts.ParseOneArg(Args, Index);
 
       // If the argument parsing failed or more than one argument was
@@ -509,6 +508,8 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
 
       XarchArg->setBaseArg(A);
       A = XarchArg;
+
+      DAL->AddSynthesizedArg(A);
     }
 
     // Sob. These is strictly gcc compatible for the time being. Apple

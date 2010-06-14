@@ -1074,8 +1074,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       Std->render(Args, CmdArgs);
 
-    if (Arg *A = Args.getLastArg(options::OPT_trigraphs))
-      if (A->getIndex() > Std->getIndex())
+    if (Arg *A = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi,
+                                 options::OPT_trigraphs))
+      if (A != Std)
         A->render(Args, CmdArgs);
   } else {
     // Honor -std-default.
