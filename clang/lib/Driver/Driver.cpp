@@ -120,12 +120,12 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // Unfortunately, we have to parse some forwarding options (-Xassembler,
     // -Xlinker, -Xpreprocessor) because we either integrate their functionality
     // (assembler and preprocessor), or bypass a previous driver ('collect2').
-    if (A->getOption().matches(options::OPT_Xlinker) &&
-        A->getValue(Args) == llvm::StringRef("--no-demangle")) {
-      DAL->AddFlagArg(A, Opts->getOption(options::OPT_Z_Xlinker__no_demangle));
-      continue;
-    } else if (A->getOption().matches(options::OPT_Wl_COMMA) &&
-               A->containsValue("--no-demangle")) {
+
+    // Rewrite linker options, to replace --no-demangle with a custom internal
+    // option.
+    if ((A->getOption().matches(options::OPT_Wl_COMMA) ||
+         A->getOption().matches(options::OPT_Xlinker)) &&
+        A->containsValue("--no-demangle")) {
       // Add the rewritten no-demangle argument.
       DAL->AddFlagArg(A, Opts->getOption(options::OPT_Z_Xlinker__no_demangle));
 
@@ -135,6 +135,19 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
           DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker),
                               A->getValue(Args, i));
 
+      continue;
+    }
+
+    // Rewrite preprocessor options, to replace -Wp,-MD,FOO which is used by
+    // some build systems. We don't try to be complete here because we don't
+    // care to encourage this usage model.
+    if (A->getOption().matches(options::OPT_Wp_COMMA) &&
+        A->getNumValues() == 2 &&
+        A->getValue(Args, 0) == llvm::StringRef("-MD")) {
+      // Rewrite to -MD along with -MF.
+      DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
+      DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
+                          A->getValue(Args, 1));
       continue;
     }
 
