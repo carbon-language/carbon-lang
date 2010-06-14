@@ -946,6 +946,28 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "#endif /* __ARM_NEON_H */\n";
 }
 
+static unsigned RangeFromType(StringRef typestr) {
+  // base type to get the type string for.
+  bool quad = false, dummy = false;
+  char type = ClassifyType(typestr, quad, dummy, dummy);
+  
+  switch (type) {
+    case 'c':
+      return (8 << quad) - 1;
+    case 'h':
+    case 's':
+      return (4 << quad) - 1;
+    case 'f':
+    case 'i':
+      return (2 << quad) - 1;
+    case 'l':
+      return (1 << quad) - 1;
+    default:
+      throw "unhandled type!";
+      break;
+  }
+}
+
 /// runHeader - generate one of three different tables which are used by clang
 /// to support ARM NEON codegen.  By default, this will produce the contents of
 /// BuiltinsARM.def's NEON section.  You may also enable the genSemaTypes or
@@ -1020,11 +1042,32 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       }
       
       if (genSemaRange) {
-        if (Proto.find('s') == std::string::npos)
+        std::string namestr, shiftstr, rangestr;
+        
+        // Builtins which are overloaded by type will need to have their upper
+        // bound computed at Sema time based on the type constant.
+        if (Proto.find('s') == std::string::npos) {
           ck = ClassB;
+          if (R->getValueAsBit("isShift")) {
+            shiftstr = ", true";
+            
+            // Right shifts have an 'r' in the name, left shifts do not.
+            if (name.find('r') != std::string::npos)
+              rangestr = "l = 1; ";
+          }
+          rangestr += "u = RFT(TV" + shiftstr + ")";
+        } else {
+          rangestr = "u = " + utostr(RangeFromType(TypeVec[ti]));
+        }
+        // Make sure cases appear only once.
+        namestr = MangleName(name, TypeVec[ti], ck);
+        if (EmittedMap.count(namestr))
+          continue;
+        EmittedMap[namestr] = OpNone;
         
         OS << "case ARM::BI__builtin_neon_" 
-           << MangleName(name, TypeVec[ti], ck) << "\n";
+           << MangleName(name, TypeVec[ti], ck) << ": i = " << Proto.find('i')-1 
+           << "; " << rangestr << "; break;\n";
         continue;
       }
       
