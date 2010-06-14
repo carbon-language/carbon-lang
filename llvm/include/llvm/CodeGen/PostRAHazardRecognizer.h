@@ -20,6 +20,7 @@
 #include "llvm/System/DataTypes.h"
 
 #include <cassert>
+#include <cstring>
 #include <string>
 
 namespace llvm {
