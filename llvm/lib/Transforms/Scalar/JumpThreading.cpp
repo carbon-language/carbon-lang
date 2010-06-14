@@ -870,9 +870,14 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
     // Add all the unavailable predecessors to the PredsToSplit list.
     for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
-         PI != PE; ++PI)
+         PI != PE; ++PI) {
+      // If the predecessor is an indirect goto, we can't split the edge.
+      if (isa<IndirectBrInst>((*PI)->getTerminator()))
+        return false;
+      
       if (!AvailablePredSet.count(*PI))
         PredsToSplit.push_back(*PI);
+    }
     
     // Split them out to their own block.
     UnavailablePred =

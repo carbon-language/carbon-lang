@@ -341,3 +341,25 @@ if.end12:                                         ; preds = %if.then, %lbl_51
   ret void
 }
 
+
+
+; PR7356
+define i32 @test13(i32* %P, i8* %Ptr) {
+entry:
+  indirectbr i8* %Ptr, [label %BrBlock, label %B2]
+  
+B2:
+  store i32 4, i32 *%P
+  br label %BrBlock
+
+BrBlock:
+  %L = load i32* %P
+  %C = icmp eq i32 %L, 42
+  br i1 %C, label %T, label %F
+  
+T:
+  ret i32 123
+F:
+  ret i32 1422
+}
+
