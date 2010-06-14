@@ -2,7 +2,7 @@
 
 
 
-; PR7353
+; PR7353 PR7334 rdar://8072315 rdar://8018308
 
 define available_externally hidden 
 void @_ZNSbIcED1Ev() nounwind readnone ssp align 2 {
