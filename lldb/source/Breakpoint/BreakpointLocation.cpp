@@ -48,7 +48,7 @@ BreakpointLocation::~BreakpointLocation()
 }
 
 lldb::addr_t
-BreakpointLocation::GetLoadAddress ()
+BreakpointLocation::GetLoadAddress () const
 {
     return m_address.GetLoadAddress(m_owner.GetTarget().GetProcessSP().get());
 }

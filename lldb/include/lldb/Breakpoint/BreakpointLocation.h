@@ -61,7 +61,7 @@ public:
     ///     LLDB_INVALID_ADDRESS if not yet set.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetLoadAddress ();
+    GetLoadAddress () const;
 
     //------------------------------------------------------------------
     /// Gets the Address for this breakpoint location
