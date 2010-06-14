@@ -1714,7 +1714,7 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // the "template" keyword prior to a template-name that was not a
     // dependent name. C++ DR468 relaxed this requirement (the
     // "template" keyword is now permitted). We follow the C++0x
-    // rules, even in C++03 mode, retroactively applying the DR.
+    // rules, even in C++03 mode with a warning, retroactively applying the DR.
     TemplateTy Template;
     bool MemberOfUnknownSpecialization;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
@@ -1733,6 +1733,15 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
       return TemplateTy();
     } else {
       // We found something; return it.
+      if (ActiveTemplateInstantiations.empty() &&
+          !getLangOptions().CPlusPlus0x &&
+          !SS.isEmpty() && !isDependentScopeSpecifier(SS))
+        Diag(TemplateKWLoc.isValid()? TemplateKWLoc 
+                                    : Name.getSourceRange().getBegin(), 
+             diag::ext_template_nondependent)
+        << SourceRange(Name.getSourceRange().getBegin())
+        << FixItHint::CreateRemoval(TemplateKWLoc);
+      
       return Template;
     }
   }
@@ -5368,7 +5377,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
   // the "typename" keyword itself is superfluous. In C++03, the
   // program is actually ill-formed. However, DR 382 (in C++0x CD1)
   // allows such extraneous "typename" keywords, and we retroactively
-  // apply this DR to C++03 code.  In any case we continue.
+  // apply this DR to C++03 code with only a warning. In any case we continue.
 
   if (RequireCompleteDeclContext(SS, Ctx))
     return QualType();
@@ -5389,6 +5398,14 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
+      if (ActiveTemplateInstantiations.empty() &&
+          !getLangOptions().CPlusPlus0x && !SS.isEmpty() &&
+          !isDependentScopeSpecifier(SS))
+        Diag(KeywordLoc.isValid()? KeywordLoc : IILoc, 
+             diag::ext_typename_nondependent)
+          << SourceRange(IILoc)
+          << FixItHint::CreateRemoval(KeywordLoc);
+      
       // We found a type. Build an ElaboratedType, since the
       // typename-specifier was just sugar.
       return Context.getElaboratedType(ETK_Typename, NNS,

@@ -21,7 +21,7 @@ namespace N {
   }
 
   M::Promote<int>::type *ret_intptr3(int* ip) { return ip; }
-  M::template Promote<int>::type *ret_intptr4(int* ip) { return ip; }
+  M::template Promote<int>::type *ret_intptr4(int* ip) { return ip; } // expected-warning{{'template' refers to a non-dependent template name; accepted as a C++0x extension}}
 }
 
 N::M::Promote<int>::type *ret_intptr5(int* ip) { return ip; }

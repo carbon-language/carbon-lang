@@ -27,7 +27,7 @@ struct make_pair {
 int a0[is_same<metafun_apply2<make_pair, int, float>::type, 
                pair<int, float> >::value? 1 : -1];
 int a1[is_same<
-         typename make_pair::template apply<int, float>,
+         typename make_pair::template apply<int, float>, // expected-warning{{'template' refers to a non-dependent template name}}
          make_pair::apply<int, float>
        >::value? 1 : -1];
 
