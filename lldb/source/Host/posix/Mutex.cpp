@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/Mutex.h"
-#include "lldb/Core/Log.h"
 
 #if 0
-#include "lldb/Host/Host.h"
+// This logging is way too verbose to enable even for a log channel. 
+// This logging can be enabled by changing the "#if 0", but should be
+// reverted prior to checking in.
+#include <cstdio>
 #define DEBUG_LOG(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_LOG(fmt, ...)
