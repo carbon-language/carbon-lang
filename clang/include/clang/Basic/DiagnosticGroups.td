@@ -64,6 +64,7 @@ def : DiagGroup<"newline-eof">;
 def LongLong : DiagGroup<"long-long">;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
 def MissingFieldInitializers : DiagGroup<"missing-field-initializers">;
+def InitializerOverrides : DiagGroup<"initializer-overrides">;
 def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"non-virtual-dtor">;
@@ -162,6 +163,7 @@ def Format2 : DiagGroup<"format=2",
 
 def Extra : DiagGroup<"extra", [
     MissingFieldInitializers,
+    InitializerOverrides,
     SemiBeforeMethodBody,
     SignCompare,
     UnusedParameter

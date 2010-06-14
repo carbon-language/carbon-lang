@@ -80,9 +80,10 @@ def err_designator_for_scalar_init : Error<
   "designator in initializer for scalar type %0">;
 def warn_subobject_initializer_overrides : Warning<
   "subobject initialization overrides initialization of other fields "
-  "within its enclosing subobject">;
+  "within its enclosing subobject">, InGroup<InitializerOverrides>;
 def warn_initializer_overrides : Warning<
-  "initializer overrides prior initialization of this subobject">;
+  "initializer overrides prior initialization of this subobject">,
+  InGroup<InitializerOverrides>;
 def note_previous_initializer : Note<
   "previous initialization %select{|with side effects }0is here"
   "%select{| (side effects may not occur at run time)}0">;
