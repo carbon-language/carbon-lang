@@ -1091,6 +1091,13 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Remove the duplicated instructions at the beginnings of both paths.
   MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
   MachineBasicBlock::iterator DI2 = BBI2->BB->begin();
+  MachineBasicBlock::iterator DIE1 = BBI1->BB->end();
+  MachineBasicBlock::iterator DIE2 = BBI2->BB->end();
+  // Skip dbg_value instructions
+  while (DI1 != DIE1 && DI1->isDebugValue())
+    ++DI1;
+  while (DI2 != DIE2 && DI2->isDebugValue())
+    ++DI2;
   BBI1->NonPredSize -= NumDups1;
   BBI2->NonPredSize -= NumDups1;
   while (NumDups1 != 0) {
@@ -1104,8 +1111,15 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Predicate the 'true' block after removing its branch.
   BBI1->NonPredSize -= TII->RemoveBranch(*BBI1->BB);
   DI1 = BBI1->BB->end();
-  for (unsigned i = 0; i != NumDups2; ++i)
+  for (unsigned i = 0; i != NumDups2; ) {
+    // NumDups2 only counted non-dbg_value instructions, so this won't
+    // run off the head of the list.
+    assert (DI1 != BBI1->BB->begin());
     --DI1;
+    // skip dbg_value instructions
+    if (!DI1->isDebugValue())
+      ++i;
+  }
   BBI1->BB->erase(DI1, BBI1->BB->end());
   PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1);
 
@@ -1113,8 +1127,13 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
   DI2 = BBI2->BB->end();
   while (NumDups2 != 0) {
+    // NumDups2 only counted non-dbg_value instructions, so this won't
+    // run off the head of the list.
+    assert (DI2 != BBI2->BB->begin());
     --DI2;
-    --NumDups2;
+    // skip dbg_value instructions
+    if (!DI2->isDebugValue())
+      --NumDups2;
   }
   PredicateBlock(*BBI2, DI2, *Cond2);
 
