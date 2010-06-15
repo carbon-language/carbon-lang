@@ -388,7 +388,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   if (Literal.Pascal) StrTy = Context.UnsignedCharTy;
 
   // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
-  if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings )
+  if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings)
     StrTy.addConst();
 
   // Get an array type for the string, according to C99 6.4.5.  This includes
