@@ -1179,7 +1179,7 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     // If there are no other uses than extract_subreg which feed into
     // the reg_sequence, then we might be able to coalesce them.
     bool CanCoalesce = true;
-    SmallVector<unsigned, 4> SubIndices;
+    SmallVector<unsigned, 4> SrcSubIndices, DstSubIndices;
     for (MachineRegisterInfo::use_nodbg_iterator
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
@@ -1190,24 +1190,35 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
         CanCoalesce = false;
         break;
       }
-      SubIndices.push_back(UseMI->getOperand(2).getImm());
+      SrcSubIndices.push_back(UseMI->getOperand(2).getImm());
+      DstSubIndices.push_back(UseMI->getOperand(0).getSubReg());
     }
 
-    if (!CanCoalesce || SubIndices.size() < 2)
+    if (!CanCoalesce || SrcSubIndices.size() < 2)
       continue;
 
-    std::sort(SubIndices.begin(), SubIndices.end());
+    // Check that the source subregisters can be combined.
+    std::sort(SrcSubIndices.begin(), SrcSubIndices.end());
     unsigned NewSrcSubIdx = 0;
-    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SubIndices,
+    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SrcSubIndices,
                                       NewSrcSubIdx))
+      continue;
+
+    // Check that the destination subregisters can also be combined.
+    std::sort(DstSubIndices.begin(), DstSubIndices.end());
+    unsigned NewDstSubIdx = 0;
+    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(DstReg), DstSubIndices,
+                                      NewDstSubIdx))
+      continue;
+
+    // If neither source nor destination can be combined to the full register,
+    // just give up.  This could be improved if it ever matters.
+    if (NewSrcSubIdx != 0 && NewDstSubIdx != 0)
       continue;
 
     // Now that we know that all the uses are extract_subregs and that those
     // subregs can somehow be combined, scan all the extract_subregs again to
     // make sure the subregs are in the right order and can be composed.
-    // Also keep track of the destination subregisters so we can make sure
-    // that those can be combined.
-    SubIndices.clear();
     MachineInstr *SomeMI = 0;
     CanCoalesce = true;
     for (MachineRegisterInfo::use_nodbg_iterator
@@ -1218,27 +1229,17 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
       unsigned DstSubIdx = UseMI->getOperand(0).getSubReg();
       unsigned SrcSubIdx = UseMI->getOperand(2).getImm();
       assert(DstSubIdx != 0 && "missing subreg from RegSequence elimination");
-      if (TRI->composeSubRegIndices(NewSrcSubIdx, DstSubIdx) != SrcSubIdx) {
+      if ((NewDstSubIdx == 0 &&
+           TRI->composeSubRegIndices(NewSrcSubIdx, DstSubIdx) != SrcSubIdx) ||
+          (NewSrcSubIdx == 0 &&
+           TRI->composeSubRegIndices(NewDstSubIdx, SrcSubIdx) != DstSubIdx)) {
         CanCoalesce = false;
         break;
       }
-      SubIndices.push_back(DstSubIdx);
       // Keep track of one of the uses.
       SomeMI = UseMI;
     }
     if (!CanCoalesce)
-      continue;
-
-    // Check that the destination subregisters can also be combined.
-    std::sort(SubIndices.begin(), SubIndices.end());
-    unsigned NewDstSubIdx = 0;
-    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(DstReg), SubIndices,
-                                      NewDstSubIdx))
-      continue;
-
-    // If neither source nor destination can be combined to the full register,
-    // just give up.  This could be improved if it ever matters.
-    if (NewSrcSubIdx != 0 && NewDstSubIdx != 0)
       continue;
 
     // Insert a copy or an extract to replace the original extracts.
