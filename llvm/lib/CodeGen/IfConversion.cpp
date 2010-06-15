@@ -33,19 +33,19 @@ using namespace llvm;
 static cl::opt<int> IfCvtFnStart("ifcvt-fn-start", cl::init(-1), cl::Hidden);
 static cl::opt<int> IfCvtFnStop("ifcvt-fn-stop", cl::init(-1), cl::Hidden);
 static cl::opt<int> IfCvtLimit("ifcvt-limit", cl::init(-1), cl::Hidden);
-static cl::opt<bool> DisableSimple("disable-ifcvt-simple", 
+static cl::opt<bool> DisableSimple("disable-ifcvt-simple",
                                    cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableSimpleF("disable-ifcvt-simple-false", 
+static cl::opt<bool> DisableSimpleF("disable-ifcvt-simple-false",
                                     cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableTriangle("disable-ifcvt-triangle", 
+static cl::opt<bool> DisableTriangle("disable-ifcvt-triangle",
                                      cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableTriangleR("disable-ifcvt-triangle-rev", 
+static cl::opt<bool> DisableTriangleR("disable-ifcvt-triangle-rev",
                                       cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableTriangleF("disable-ifcvt-triangle-false", 
+static cl::opt<bool> DisableTriangleF("disable-ifcvt-triangle-false",
                                       cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev", 
+static cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev",
                                        cl::init(false), cl::Hidden);
-static cl::opt<bool> DisableDiamond("disable-ifcvt-diamond", 
+static cl::opt<bool> DisableDiamond("disable-ifcvt-diamond",
                                     cl::init(false), cl::Hidden);
 
 STATISTIC(NumSimple,       "Number of simple if-conversions performed");
@@ -281,7 +281,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       case ICSimpleFalse: {
         bool isFalse = Kind == ICSimpleFalse;
         if ((isFalse && DisableSimpleF) || (!isFalse && DisableSimple)) break;
-        DEBUG(dbgs() << "Ifcvt (Simple" << (Kind == ICSimpleFalse ? " false" :"")
+        DEBUG(dbgs() << "Ifcvt (Simple" << (Kind == ICSimpleFalse ?
+                                            " false" : "")
                      << "): BB#" << BBI.BB->getNumber() << " ("
                      << ((Kind == ICSimpleFalse)
                          ? BBI.FalseBB->getNumber()
@@ -431,7 +432,7 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups) const {
 /// ValidTriangle - Returns true if the 'true' and 'false' blocks (along
 /// with their common predecessor) forms a valid triangle shape for ifcvt.
 /// If 'FalseBranch' is true, it checks if 'true' block's false branch
-/// branches to the false branch rather than the other way around. It also
+/// branches to the 'false' block rather than the other way around. It also
 /// returns the number of instructions that the ifcvt would need to duplicate
 /// if performed in 'Dups'.
 bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
@@ -570,7 +571,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     // No false branch. This BB must end with a conditional branch and a
     // fallthrough.
     if (!BBI.FalseBB)
-      BBI.FalseBB = findFalseBlock(BBI.BB, BBI.TrueBB);  
+      BBI.FalseBB = findFalseBlock(BBI.BB, BBI.TrueBB);
     if (!BBI.FalseBB) {
       // Malformed bcc? True and false blocks are the same?
       BBI.IsUnpredicable = true;
@@ -749,7 +750,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
     Tokens.push_back(new IfcvtToken(BBI, ICTriangle, TNeedSub, Dups));
     Enqueued = true;
   }
-  
+
   if (ValidTriangle(TrueBBI, FalseBBI, true, Dups) &&
       MeetIfcvtSizeLimit(TrueBBI.NonPredSize) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond, true, true)) {
@@ -765,7 +766,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
     //   | \_
     //   |  |
     //   | TBB---> exit
-    //   |    
+    //   |
     //   FBB
     Tokens.push_back(new IfcvtToken(BBI, ICSimple, TNeedSub, Dups));
     Enqueued = true;
@@ -1022,7 +1023,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   RemoveExtraEdges(BBI);
 
   // Update block info. BB can be iteratively if-converted.
-  if (!IterIfcvt) 
+  if (!IterIfcvt)
     BBI.IsDone = true;
   InvalidatePreds(BBI.BB);
   CvtBBI->IsDone = true;
@@ -1253,7 +1254,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
       continue;
     Pred->ReplaceUsesOfBlockWith(FromBBI.BB, ToBBI.BB);
   }
- 
+
   std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
                                          FromBBI.BB->succ_end());
   MachineBasicBlock *NBB = getNextBlock(FromBBI.BB);
