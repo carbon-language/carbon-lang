@@ -115,7 +115,7 @@ namespace {
                  BB(0), TrueBB(0), FalseBB(0) {}
     };
 
-    /// IfcvtToken - Record information about pending if-conversions to attemp:
+    /// IfcvtToken - Record information about pending if-conversions to attempt:
     /// BBI             - Corresponding BBInfo.
     /// Kind            - Type of block. See IfcvtKind.
     /// NeedSubsumption - True if the to-be-predicated BB has already been
