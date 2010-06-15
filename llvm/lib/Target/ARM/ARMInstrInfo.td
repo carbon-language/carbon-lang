@@ -1044,7 +1044,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                      Pseudo, IIC_Br,
                      "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
 
-  def TCRETURNri : AInoP<(outs), (ins tGPR:$dst, variable_ops),
+  def TCRETURNri : AInoP<(outs), (ins tcGPR:$dst, variable_ops),
                      Pseudo, IIC_Br,
                      "@TC_RETURN","\t$dst", []>, Requires<[IsDarwin]>;
 
@@ -1052,7 +1052,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                  IIC_Br, "b\t$dst  @ TAILCALL",
                  []>, Requires<[IsDarwin]>;
 
-  def TAILJMPr : AXI<(outs), (ins tGPR:$dst, variable_ops),
+  def TAILJMPr : AXI<(outs), (ins tcGPR:$dst, variable_ops),
                    BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
                  []>, Requires<[IsDarwin]> {
                  let Inst{7-4}   = 0b0001;
@@ -1472,6 +1472,14 @@ def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
 let neverHasSideEffects = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
                 "mov", "\t$dst, $src", []>, UnaryDP {
+  let Inst{11-4} = 0b00000000;
+  let Inst{25} = 0;
+}
+
+// A version for the smaller set of tail call registers.
+let neverHasSideEffects = 1 in
+def MOVr_TC : AsI1<0b1101, (outs tcGPR:$dst), (ins tcGPR:$src), DPFrm, 
+                IIC_iMOVr, "mov", "\t$dst, $src", []>, UnaryDP {
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
 }
@@ -2700,8 +2708,8 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // TODO: add,sub,and, 3-instr forms?
 
 // Tail calls
-def : ARMPat<(ARMtcret tGPR:$dst),
-          (TCRETURNri tGPR:$dst)>, Requires<[IsDarwin]>;
+def : ARMPat<(ARMtcret tcGPR:$dst),
+          (TCRETURNri tcGPR:$dst)>, Requires<[IsDarwin]>;
 
 def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
           (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
@@ -2709,8 +2717,8 @@ def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
 def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
           (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
 
-def : ARMPat<(ARMtcret tGPR:$dst),
-          (TCRETURNriND tGPR:$dst)>, Requires<[IsNotDarwin]>;
+def : ARMPat<(ARMtcret tcGPR:$dst),
+          (TCRETURNriND tcGPR:$dst)>, Requires<[IsNotDarwin]>;
 
 def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
           (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotDarwin]>;
