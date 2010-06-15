@@ -5408,9 +5408,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   bool RHSIsNull = rex->isNullPointerConstant(Context,
                                               Expr::NPC_ValueDependentIsNull);
 
-  // All of the following pointer related warnings are GCC extensions, except
-  // when handling null pointer constants. One day, we can consider making them
-  // errors (when -pedantic-errors is enabled).
+  // All of the following pointer-related warnings are GCC extensions, except
+  // when handling null pointer constants. 
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
     QualType LCanPointeeTy =
       Context.getCanonicalType(lType->getAs<PointerType>()->getPointeeType());
@@ -5424,10 +5423,19 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           (LCanPointeeTy->isVoidType() || RCanPointeeTy->isVoidType())) {
         // Valid unless comparison between non-null pointer and function pointer
         // This is a gcc extension compatibility comparison.
+        // In a SFINAE context, we treat this as a hard error to maintain
+        // conformance with the C++ standard.
         if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
             && !LHSIsNull && !RHSIsNull) {
-          Diag(Loc, diag::ext_typecheck_comparison_of_fptr_to_void)
+          Diag(Loc, 
+               isSFINAEContext()? 
+                   diag::err_typecheck_comparison_of_fptr_to_void
+                 : diag::ext_typecheck_comparison_of_fptr_to_void)
             << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+          
+          if (isSFINAEContext())
+            return QualType();
+          
           ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
           return ResultTy;
         }
@@ -5591,40 +5599,36 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return ResultTy;
     }
   }
-  if (lType->isAnyPointerType() && rType->isIntegerType()) {
+  if ((lType->isAnyPointerType() && rType->isIntegerType()) ||
+      (lType->isIntegerType() && rType->isAnyPointerType())) {
     unsigned DiagID = 0;
-    if (RHSIsNull) {
-      if (isRelational)
+    bool isError = false;
+    if ((LHSIsNull && lType->isIntegerType()) ||
+        (RHSIsNull && rType->isIntegerType())) {
+      if (isRelational && !getLangOptions().CPlusPlus)
         DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_and_zero;
-    } else if (isRelational)
+    } else if (isRelational && !getLangOptions().CPlusPlus)
       DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_integer;
-    else
+    else if (getLangOptions().CPlusPlus) {
+      DiagID = diag::err_typecheck_comparison_of_pointer_integer;
+      isError = true;
+    } else
       DiagID = diag::ext_typecheck_comparison_of_pointer_integer;
 
     if (DiagID) {
       Diag(Loc, DiagID)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      if (isError)
+        return QualType();
     }
-    ImpCastExprToType(rex, lType, CastExpr::CK_IntegralToPointer);
-    return ResultTy;
-  }
-  if (lType->isIntegerType() && rType->isAnyPointerType()) {
-    unsigned DiagID = 0;
-    if (LHSIsNull) {
-      if (isRelational)
-        DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_and_zero;
-    } else if (isRelational)
-      DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_integer;
+    
+    if (lType->isIntegerType())
+      ImpCastExprToType(lex, rType, CastExpr::CK_IntegralToPointer);
     else
-      DiagID = diag::ext_typecheck_comparison_of_pointer_integer;
-
-    if (DiagID) {
-      Diag(Loc, DiagID)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-    }
-    ImpCastExprToType(lex, rType, CastExpr::CK_IntegralToPointer);
+      ImpCastExprToType(rex, lType, CastExpr::CK_IntegralToPointer);
     return ResultTy;
   }
+  
   // Handle block pointers.
   if (!isRelational && RHSIsNull
       && lType->isBlockPointerType() && rType->isIntegerType()) {
