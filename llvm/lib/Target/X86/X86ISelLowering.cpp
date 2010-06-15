@@ -8465,21 +8465,41 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
   unsigned Opc =
     X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
+
   BuildMI(BB, DL, TII->get(Opc)).addMBB(sinkMBB);
   F->insert(It, copy0MBB);
   F->insert(It, sinkMBB);
+
   // Update machine-CFG edges by first adding all successors of the current
   // block to the new block which will contain the Phi node for the select.
   for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
          E = BB->succ_end(); I != E; ++I)
     sinkMBB->addSuccessor(*I);
+
   // Next, remove all successors of the current block, and add the true
   // and fallthrough blocks as its successors.
   while (!BB->succ_empty())
     BB->removeSuccessor(BB->succ_begin());
+
   // Add the true and fallthrough blocks as its successors.
   BB->addSuccessor(copy0MBB);
   BB->addSuccessor(sinkMBB);
+
+  // If the EFLAGS register isn't dead in the terminator, then claim that it's
+  // live into the sink and copy blocks.
+  const MachineFunction *MF = BB->getParent();
+  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+  BitVector ReservedRegs = TRI->getReservedRegs(*MF);
+  const MachineInstr *Term = BB->getFirstTerminator();
+
+  for (unsigned I = 0, E = Term->getNumOperands(); I != E; ++I) {
+    const MachineOperand &MO = Term->getOperand(I);
+    if (!MO.isReg() || MO.isKill() || MO.isDead()) continue;
+    unsigned Reg = MO.getReg();
+    if (Reg != X86::EFLAGS) continue;
+    copy0MBB->addLiveIn(Reg);
+    sinkMBB->addLiveIn(Reg);
+  }
 
   //  copy0MBB:
   //   %FalseValue = ...
