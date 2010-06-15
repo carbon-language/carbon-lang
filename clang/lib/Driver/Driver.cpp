@@ -143,9 +143,13 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // care to encourage this usage model.
     if (A->getOption().matches(options::OPT_Wp_COMMA) &&
         A->getNumValues() == 2 &&
-        A->getValue(Args, 0) == llvm::StringRef("-MD")) {
-      // Rewrite to -MD along with -MF.
-      DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
+        (A->getValue(Args, 0) == llvm::StringRef("-MD") ||
+         A->getValue(Args, 0) == llvm::StringRef("-MMD"))) {
+      // Rewrite to -MD/-MMD along with -MF.
+      if (A->getValue(Args, 0) == llvm::StringRef("-MD"))
+        DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
+      else
+        DAL->AddFlagArg(A, Opts->getOption(options::OPT_MMD));
       DAL->AddSeparateArg(A, Opts->getOption(options::OPT_MF),
                           A->getValue(Args, 1));
       continue;
