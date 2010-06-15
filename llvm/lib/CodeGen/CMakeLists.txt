@@ -1,6 +1,6 @@
 add_llvm_library(LLVMCodeGen
-  Analysis.cpp
   AggressiveAntiDepBreaker.cpp
+  Analysis.cpp
   BranchFolding.cpp
   CalcSpillWeights.cpp
   CodePlacementOpt.cpp
@@ -9,7 +9,6 @@ add_llvm_library(LLVMCodeGen
   DwarfEHPrepare.cpp
   ELFCodeEmitter.cpp
   ELFWriter.cpp
-  ExactHazardRecognizer.cpp
   GCMetadata.cpp
   GCMetadataPrinter.cpp
   GCStrategy.cpp
@@ -45,6 +44,7 @@ add_llvm_library(LLVMCodeGen
   OptimizePHIs.cpp
   PHIElimination.cpp
   Passes.cpp
+  PostRAHazardRecognizer.cpp
   PostRASchedulerList.cpp
   PreAllocSplitting.cpp
   ProcessImplicitDefs.cpp
