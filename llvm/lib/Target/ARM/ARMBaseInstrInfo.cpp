@@ -596,6 +596,7 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
     return true;
   }
   case ARM::MOVr:
+  case ARM::MOVr_TC:
   case ARM::tMOVr:
   case ARM::tMOVgpr2tgpr:
   case ARM::tMOVtgpr2gpr:
@@ -701,11 +702,11 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                const TargetRegisterClass *DestRC,
                                const TargetRegisterClass *SrcRC,
                                DebugLoc DL) const {
-  // tGPR is used sometimes in ARM instructions that need to avoid using
-  // certain registers.  Just treat it as GPR here.
-  if (DestRC == ARM::tGPRRegisterClass)
+  // tGPR or tcGPR is used sometimes in ARM instructions that need to avoid
+  // using certain registers.  Just treat them as GPR here.
+  if (DestRC == ARM::tGPRRegisterClass || DestRC == ARM::tcGPRRegisterClass)
     DestRC = ARM::GPRRegisterClass;
-  if (SrcRC == ARM::tGPRRegisterClass)
+  if (SrcRC == ARM::tGPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass)
     SrcRC = ARM::GPRRegisterClass;
 
   // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
@@ -799,7 +800,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   // tGPR is used sometimes in ARM instructions that need to avoid using
   // certain registers.  Just treat it as GPR here.
-  if (RC == ARM::tGPRRegisterClass)
+  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass)
     RC = ARM::GPRRegisterClass;
 
   if (RC == ARM::GPRRegisterClass) {
@@ -890,7 +891,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   // tGPR is used sometimes in ARM instructions that need to avoid using
   // certain registers.  Just treat it as GPR here.
-  if (RC == ARM::tGPRRegisterClass)
+  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass)
     RC = ARM::GPRRegisterClass;
 
   if (RC == ARM::GPRRegisterClass) {

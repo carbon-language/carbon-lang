@@ -570,6 +570,7 @@ static void X86ExtractSemantics(
 static int ARMFlagFromOpName(LiteralConstantEmitter *type,
                              const std::string &name) {
   REG("GPR");
+  REG("tcGPR");
   REG("cc_out");
   REG("s_cc_out");
   REG("tGPR");

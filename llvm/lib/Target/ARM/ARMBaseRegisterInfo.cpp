@@ -1662,13 +1662,15 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                          JumpTarget.getTargetFlags());
     } else if (RetOpcode == ARM::TCRETURNri) {
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPr), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPr)).
+        addReg(JumpTarget.getReg(), RegState::Kill);
     } else if (RetOpcode == ARM::TCRETURNriND) {
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPrND), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPrND)).
+        addReg(JumpTarget.getReg(), RegState::Kill);
     } 
 
     MachineInstr *NewMI = prior(MBBI);
-    for (unsigned i = 2, e = MBBI->getNumOperands(); i != e; ++i)
+    for (unsigned i = 1, e = MBBI->getNumOperands(); i != e; ++i)
       NewMI->addOperand(MBBI->getOperand(i));
 
     // Delete the pseudo instruction TCRETURN.

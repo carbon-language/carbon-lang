@@ -349,6 +349,83 @@ def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
   }];
 }
 
+// For tail calls, we can't use callee-saved registers, as they are restored
+// to the saved value before the tail call, which would clobber a call address.
+// Note, getMinimalPhysRegClass(R0) returns tGPR because of the names of
+// this class and the preceding one(!)  This is what we want.
+def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    // R9 is available.
+    static const unsigned ARM_GPR_R9_TC[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R9, ARM::R12 };
+    // R9 is not available.
+    static const unsigned ARM_GPR_NOR9_TC[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R12 };
+
+    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
+    // don't know how to spill them. If we make our prologue/epilogue code
+    // smarter at some point, we can go back to using the above allocation
+    // orders for the Thumb1 instructions that know how to use hi regs.
+    static const unsigned THUMB_GPR_AO_TC[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
+
+    tcGPRClass::iterator
+    tcGPRClass::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      if (Subtarget.isThumb1Only())
+        return THUMB_GPR_AO_TC;
+      if (Subtarget.isTargetDarwin()) {
+        if (Subtarget.isR9Reserved())
+          return ARM_GPR_NOR9_TC;
+        else
+          return ARM_GPR_R9_TC;
+      } else {
+        if (Subtarget.isR9Reserved())
+          return ARM_GPR_NOR9_TC;
+        else if (Subtarget.isThumb())
+          return ARM_GPR_R9_TC;
+        else
+          return ARM_GPR_R9_TC;
+      }
+    }
+
+    tcGPRClass::iterator
+    tcGPRClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      GPRClass::iterator I;
+
+      if (Subtarget.isThumb1Only()) {
+        I = THUMB_GPR_AO_TC + (sizeof(THUMB_GPR_AO_TC)/sizeof(unsigned));
+        return I;
+      }
+
+      if (Subtarget.isTargetDarwin()) {
+        if (Subtarget.isR9Reserved())
+          I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
+        else
+          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
+      } else {
+        if (Subtarget.isR9Reserved())
+          I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
+        else if (Subtarget.isThumb())
+          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
+        else
+          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
+      }
+      return I;
+    }
+  }];
+}
+
+
 // Scalar single precision floating point register class..
 def SPR : RegisterClass<"ARM", [f32], 32, [S0, S1, S2, S3, S4, S5, S6, S7, S8,
   S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22,

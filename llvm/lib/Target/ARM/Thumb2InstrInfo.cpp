@@ -42,8 +42,8 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                               const TargetRegisterClass *DestRC,
                               const TargetRegisterClass *SrcRC,
                               DebugLoc DL) const {
-  if (DestRC == ARM::GPRRegisterClass) {
-    if (SrcRC == ARM::GPRRegisterClass) {
+  if (DestRC == ARM::GPRRegisterClass || DestRC == ARM::tcGPRRegisterClass) {
+    if (SrcRC == ARM::GPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass) {
       BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
       return true;
     } else if (SrcRC == ARM::tGPRRegisterClass) {
@@ -51,7 +51,7 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       return true;
     }
   } else if (DestRC == ARM::tGPRRegisterClass) {
-    if (SrcRC == ARM::GPRRegisterClass) {
+    if (SrcRC == ARM::GPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass) {
       BuildMI(MBB, I, DL, get(ARM::tMOVgpr2tgpr), DestReg).addReg(SrcReg);
       return true;
     } else if (SrcRC == ARM::tGPRRegisterClass) {
@@ -70,7 +70,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
-  if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass) {
+  if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass ||
+      RC == ARM::tcGPRRegisterClass) {
     DebugLoc DL;
     if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -95,7 +96,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC,
                      const TargetRegisterInfo *TRI) const {
-  if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass) {
+  if (RC == ARM::GPRRegisterClass || RC == ARM::tGPRRegisterClass ||
+      RC == ARM::tcGPRRegisterClass) {
     DebugLoc DL;
     if (I != MBB.end()) DL = I->getDebugLoc();
 
