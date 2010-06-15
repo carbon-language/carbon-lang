@@ -1271,7 +1271,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
   EVT WidenEltVT = WidenVT.getVectorElementType();
   EVT VT = WidenVT;
   unsigned NumElts =  VT.getVectorNumElements();
-  while (!TLI.isTypeLegal(VT) && NumElts != 1) {
+  while (!TLI.isTypeSynthesizable(VT) && NumElts != 1) {
      NumElts = NumElts / 2;
      VT = EVT::getVectorVT(*DAG.getContext(), WidenEltVT, NumElts);
   }
@@ -1286,13 +1286,20 @@ SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
     return DAG.UnrollVectorOp(N, WidenVT.getVectorNumElements());
   } else {
     // Since the operation can trap, apply operation on the original vector.
+    EVT MaxVT = VT;
     SDValue InOp1 = GetWidenedVector(N->getOperand(0));
     SDValue InOp2 = GetWidenedVector(N->getOperand(1));
     unsigned CurNumElts = N->getValueType(0).getVectorNumElements();
 
     SmallVector<SDValue, 16> ConcatOps(CurNumElts);
     unsigned ConcatEnd = 0;  // Current ConcatOps index.
-    unsigned Idx = 0;        // Current Idx into input vectors.
+    int Idx = 0;        // Current Idx into input vectors.
+
+    // NumElts := greatest synthesizable vector size (at most WidenVT)
+    // while (orig. vector has unhandled elements) {
+    //   take munches of size NumElts from the beginning and add to ConcatOps
+    //   NumElts := next smaller supported vector size or 1
+    // }
     while (CurNumElts != 0) {
       while (CurNumElts >= NumElts) {
         SDValue EOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, InOp1,
@@ -1303,26 +1310,21 @@ SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
         Idx += NumElts;
         CurNumElts -= NumElts;
       }
-      EVT PrevVecVT = VT;
       do {
         NumElts = NumElts / 2;
         VT = EVT::getVectorVT(*DAG.getContext(), WidenEltVT, NumElts);
-      } while (!TLI.isTypeLegal(VT) && NumElts != 1);
+      } while (!TLI.isTypeSynthesizable(VT) && NumElts != 1);
 
       if (NumElts == 1) {
-        // Since we are using concat vector, build a vector from the scalar ops.
-        SDValue VecOp = DAG.getUNDEF(PrevVecVT);
         for (unsigned i = 0; i != CurNumElts; ++i, ++Idx) {
           SDValue EOp1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, WidenEltVT, 
                                      InOp1, DAG.getIntPtrConstant(Idx));
           SDValue EOp2 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, WidenEltVT, 
                                      InOp2, DAG.getIntPtrConstant(Idx));
-          VecOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, PrevVecVT, VecOp,
-                              DAG.getNode(Opcode, dl, WidenEltVT, EOp1, EOp2),
-                              DAG.getIntPtrConstant(i));
+          ConcatOps[ConcatEnd++] = DAG.getNode(Opcode, dl, WidenEltVT,
+                                               EOp1, EOp2);
         }
         CurNumElts = 0;
-        ConcatOps[ConcatEnd++] = VecOp;
       }
     }
 
@@ -1333,23 +1335,65 @@ SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
         return ConcatOps[0];
     }
 
-    // Rebuild vector to one with the widen type
-    Idx = ConcatEnd - 1;
-    while (Idx != 0) {
+    // while (Some element of ConcatOps is not of type MaxVT) {
+    //   From the end of ConcatOps, collect elements of the same type and put
+    //   them into an op of the next larger supported type
+    // }
+    while (ConcatOps[ConcatEnd-1].getValueType() != MaxVT) {
+      Idx = ConcatEnd - 1;
       VT = ConcatOps[Idx--].getValueType();
-      while (Idx != 0 && ConcatOps[Idx].getValueType() == VT)
-        --Idx;
-      if (Idx != 0) {
-        VT = ConcatOps[Idx].getValueType();
-        ConcatOps[Idx+1] = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
-                                     &ConcatOps[Idx+1], ConcatEnd - Idx - 1);
+      while (Idx >= 0 && ConcatOps[Idx].getValueType() == VT)
+        Idx--;
+
+      int NextSize = VT.isVector() ? VT.getVectorNumElements() : 1;
+      EVT NextVT;
+      do {
+        NextSize *= 2;
+        NextVT = EVT::getVectorVT(*DAG.getContext(), WidenEltVT, NextSize);
+      } while (!TLI.isTypeSynthesizable(NextVT));
+
+      if (!VT.isVector()) {
+        // Scalar type, create an INSERT_VECTOR_ELEMENT of type NextVT
+        SDValue VecOp = DAG.getUNDEF(NextVT);
+        unsigned NumToInsert = ConcatEnd - Idx - 1;
+        for (unsigned i = 0, OpIdx = Idx+1; i < NumToInsert; i++, OpIdx++) {
+          VecOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NextVT, VecOp,
+                              ConcatOps[OpIdx], DAG.getIntPtrConstant(i));
+        }
+        ConcatOps[Idx+1] = VecOp;
         ConcatEnd = Idx + 2;
+      } 
+      else {
+        // Vector type, create a CONCAT_VECTORS of type NextVT
+        SDValue undefVec = DAG.getUNDEF(VT);
+        unsigned OpsToConcat = NextSize/VT.getVectorNumElements();
+        SmallVector<SDValue, 16> SubConcatOps(OpsToConcat);
+        unsigned RealVals = ConcatEnd - Idx - 1;
+        unsigned SubConcatEnd = 0;
+        unsigned SubConcatIdx = Idx + 1;
+        while (SubConcatEnd < RealVals)
+          SubConcatOps[SubConcatEnd++] = ConcatOps[++Idx];
+        while (SubConcatEnd < OpsToConcat)
+          SubConcatOps[SubConcatEnd++] = undefVec;
+        ConcatOps[SubConcatIdx] = DAG.getNode(ISD::CONCAT_VECTORS, dl,
+                                              NextVT, &SubConcatOps[0],
+                                              OpsToConcat);
+        ConcatEnd = SubConcatIdx + 1;
       }
     }
+
+    // Check to see if we have a single operation with the widen type.
+    if (ConcatEnd == 1) {
+      VT = ConcatOps[0].getValueType();
+      if (VT == WidenVT)
+        return ConcatOps[0];
+    }
     
-    unsigned NumOps = WidenVT.getVectorNumElements()/VT.getVectorNumElements();
+    // add undefs of size MaxVT until ConcatOps grows to length of WidenVT
+    unsigned NumOps = 
+        WidenVT.getVectorNumElements()/MaxVT.getVectorNumElements();
     if (NumOps != ConcatEnd ) {
-      SDValue UndefVal = DAG.getUNDEF(VT);
+      SDValue UndefVal = DAG.getUNDEF(MaxVT);
       for (unsigned j = ConcatEnd; j < NumOps; ++j)
         ConcatOps[j] = UndefVal;
     }
@@ -1379,7 +1423,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
       return DAG.getNode(Opcode, dl, WidenVT, InOp);
   }
 
-  if (TLI.isTypeLegal(InWidenVT)) {
+  if (TLI.isTypeSynthesizable(InWidenVT)) {
     // Because the result and the input are different vector types, widening
     // the result could create a legal type but widening the input might make
     // it an illegal type that might lead to repeatedly splitting the input
@@ -1521,7 +1565,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_BIT_CONVERT(SDNode *N) {
       NewInVT = EVT::getVectorVT(*DAG.getContext(), InVT, NewNumElts);
     }
 
-    if (TLI.isTypeLegal(NewInVT)) {
+    if (TLI.isTypeSynthesizable(NewInVT)) {
       // Because the result and the input are different vector types, widening
       // the result could create a legal type but widening the input might make
       // it an illegal type that might lead to repeatedly splitting the input
@@ -1662,7 +1706,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
                                   SatOp, CvtCode);
   }
 
-  if (TLI.isTypeLegal(InWidenVT)) {
+  if (TLI.isTypeSynthesizable(InWidenVT)) {
     // Because the result and the input are different vector types, widening
     // the result could create a legal type but widening the input might make
     // it an illegal type that might lead to repeatedly splitting the input
@@ -1988,7 +2032,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_BIT_CONVERT(SDNode *N) {
   if (InWidenSize % Size == 0 && !VT.isVector()) {
     unsigned NewNumElts = InWidenSize / Size;
     EVT NewVT = EVT::getVectorVT(*DAG.getContext(), VT, NewNumElts);
-    if (TLI.isTypeLegal(NewVT)) {
+    if (TLI.isTypeSynthesizable(NewVT)) {
       SDValue BitOp = DAG.getNode(ISD::BIT_CONVERT, dl, NewVT, InOp);
       return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, VT, BitOp,
                          DAG.getIntPtrConstant(0));
@@ -2086,7 +2130,7 @@ static EVT FindMemType(SelectionDAG& DAG, const TargetLowering &TLI,
     unsigned MemVTWidth = MemVT.getSizeInBits();
     if (MemVT.getSizeInBits() <= WidenEltWidth)
       break;
-    if (TLI.isTypeLegal(MemVT) && (WidenWidth % MemVTWidth) == 0 &&
+    if (TLI.isTypeSynthesizable(MemVT) && (WidenWidth % MemVTWidth) == 0 &&
         (MemVTWidth <= Width ||
          (Align!=0 && MemVTWidth<=AlignInBits && MemVTWidth<=Width+WidenEx))) {
       RetVT = MemVT;
@@ -2100,7 +2144,7 @@ static EVT FindMemType(SelectionDAG& DAG, const TargetLowering &TLI,
        VT >= (unsigned)MVT::FIRST_VECTOR_VALUETYPE; --VT) {
     EVT MemVT = (MVT::SimpleValueType) VT;
     unsigned MemVTWidth = MemVT.getSizeInBits();
-    if (TLI.isTypeLegal(MemVT) && WidenEltVT == MemVT.getVectorElementType() &&
+    if (TLI.isTypeSynthesizable(MemVT) && WidenEltVT == MemVT.getVectorElementType() &&
         (WidenWidth % MemVTWidth) == 0 &&
         (MemVTWidth <= Width ||
          (Align!=0 && MemVTWidth<=AlignInBits && MemVTWidth<=Width+WidenEx))) {
