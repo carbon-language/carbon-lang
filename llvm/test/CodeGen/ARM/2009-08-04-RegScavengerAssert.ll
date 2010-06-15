@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv6-elf
+; RUN: llc < %s -mtriple=arm-linux-gnueabi
 ; PR4528
 
 define i32 @file_read_actor(i32 %desc, i32 %page, i32 %offset, i32 %size) nounwind optsize {

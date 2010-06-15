@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc < %s -mtriple=arm-linux-gnueabi
 ; PR4528
 
 ; Inline asm is allowed to contain operands "=&r", "0".

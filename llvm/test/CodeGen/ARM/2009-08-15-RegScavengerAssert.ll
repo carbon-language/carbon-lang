@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc < %s -mtriple=arm-linux-gnueabi
 ; PR4716
 
 define void @_start() nounwind naked {
