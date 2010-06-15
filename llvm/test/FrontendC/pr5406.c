@@ -8,7 +8,7 @@ typedef struct { char x[3]; } A0;
 void foo (int i, ...);
 
 
-// CHECK: call arm_aapcscc  void (i32, ...)* @foo(i32 1, i32 {{.*}}) nounwind
+// CHECK: call void (i32, ...)* @foo(i32 1, i32 {{.*}}) nounwind
 int main (void)
 {
   A0 a3;
