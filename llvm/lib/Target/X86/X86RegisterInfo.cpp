@@ -1279,9 +1279,11 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       for (unsigned i = 0; i != 5; ++i)
         MIB.addOperand(MBBI->getOperand(i));
     } else if (RetOpcode == X86::TCRETURNri64) {
-      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64)).
+        addReg(JumpTarget.getReg(), RegState::Kill);
     } else {
-      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr)).
+        addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
     MachineInstr *NewMI = prior(MBBI);
