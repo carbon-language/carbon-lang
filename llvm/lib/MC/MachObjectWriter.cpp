@@ -738,6 +738,38 @@ public:
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
+  void RecordTLVPRelocation(const MCAssembler &Asm,
+                                 const MCAsmLayout &Layout,
+                                 const MCFragment *Fragment,
+                                 const MCFixup &Fixup, MCValue Target,
+                                 uint64_t &FixedValue) {
+    assert(Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP &&
+           !Is64Bit &&
+           "Should only be called with a 32-bit TLVP relocation!");
+
+    // If this is a subtraction then we're pcrel.
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
+    uint32_t Value = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
+    unsigned IsPCRel = 0;
+
+    // Get the symbol data.
+    MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+    unsigned Index = SD_A->getIndex();
+
+    if (Target.getSymB())
+      IsPCRel = 1;
+    
+    // struct relocation_info (8 bytes)
+    MachRelocationEntry MRE;
+    MRE.Word0 = Value;
+    MRE.Word1 = ((Index     <<  0) |
+                 (IsPCRel   << 24) |
+                 (Log2Size  << 25) |
+                 (1         << 27) | // Extern
+                 (RIT_TLV   << 28)); // Type
+    Relocations[Fragment->getParent()].push_back(MRE);
+  }
+  
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {
@@ -749,6 +781,12 @@ public:
     unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
+    // If this is a 32-bit TLVP reloc it's handled a bit differently.
+    if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP) {
+      RecordTLVPRelocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
+      return;
+    }
+    
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
     // Differences always require scattered relocations.
