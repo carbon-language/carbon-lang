@@ -1574,7 +1574,7 @@ public:
                ));
     }
 
-    ~OurCppRunException (void) throw () {};
+    ~OurCppRunException (void) throw () {}
 };
 
 
