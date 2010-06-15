@@ -200,19 +200,28 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   if (Message.startswith("error: "))
     Message = Message.substr(7);
 
-  // There are two cases: the SMDiagnostic could have a inline asm source
-  // location or it might not.  If it does, translate the location.
+  // If the SMDiagnostic has an inline asm source location, translate it.
   FullSourceLoc Loc;
   if (D.getLoc() != SMLoc())
     Loc = ConvertBackendLocation(D, Context->getSourceManager());
-  Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
+  
 
-  // This could be a problem with no clang-level source location information.
-  // In this case, LocCookie is invalid.  If there is source level information,
-  // print an "generated from" note.
-  if (LocCookie.isValid())
+  // If this problem has clang-level source location information, report the
+  // issue as being an error in the source with a note showing the instantiated
+  // code.
+  if (LocCookie.isValid()) {
     Diags.Report(FullSourceLoc(LocCookie, Context->getSourceManager()),
-                 diag::note_fe_inline_asm_here);
+                 diag::err_fe_inline_asm).AddString(Message);
+    
+    if (D.getLoc().isValid())
+      Diags.Report(Loc, diag::note_fe_inline_asm_here);
+    return;
+  }
+  
+  // Otherwise, report the backend error as occuring in the generated .s file.
+  // If Loc is invalid, we still need to report the error, it just gets no
+  // location info.
+  Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);
 }
 
 //
