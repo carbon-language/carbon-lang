@@ -152,6 +152,13 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
     }
   }
 
+  // If -fvisibility-inlines-hidden was provided, then inline C++ member
+  // functions get "hidden" visibility by default.
+  if (getLangOptions().InlineVisibilityHidden)
+    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+      if (Method->isInlined())
+        return LangOptions::Hidden;
+  
   // This decl should have the same visibility as its parent.
   if (const DeclContext *DC = D->getDeclContext()) 
     return getDeclVisibilityMode(cast<Decl>(DC));

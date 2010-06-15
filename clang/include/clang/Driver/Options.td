@@ -383,6 +383,7 @@ def funwind_tables : Flag<"-funwind-tables">, Group<f_Group>;
 def fuse_cxa_atexit : Flag<"-fuse-cxa-atexit">, Group<f_Group>;
 def fverbose_asm : Flag<"-fverbose-asm">, Group<f_Group>;
 def fvisibility_EQ : Joined<"-fvisibility=">, Group<f_Group>;
+def fvisibility_inlines_hidden : Flag<"-fvisibility-inlines-hidden">, Group<f_Group>;
 def fwritable_strings : Flag<"-fwritable-strings">, Group<f_Group>;
 def fzero_initialized_in_bss : Flag<"-fzero-initialized-in-bss">, Group<f_Group>;
 def ffunction_sections: Flag <"-ffunction-sections">, Group<f_Group>;

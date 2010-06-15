@@ -1976,6 +1976,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                  Proto->getExtInfo()));
   }
 
+  InstantiateAttrs(Tmpl, New);
+
   return false;
 }
 

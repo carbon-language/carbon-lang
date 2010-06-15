@@ -102,6 +102,8 @@ public:
   unsigned DumpRecordLayouts : 1; /// Dump the layout of IRgen'd records.
   unsigned DumpVTableLayouts : 1; /// Dump the layouts of emitted vtables.
   unsigned NoConstantCFStrings : 1;  // Do not do CF strings
+  unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
+                                       // hidden visibility by default.  
 
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
@@ -135,7 +137,7 @@ public:
     GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
-    NoConstantCFStrings = 0;
+    NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
@@ -146,7 +148,7 @@ public:
     AltiVec = OpenCL = StackProtector = 0;
 
     SymbolVisibility = (unsigned) Default;
-
+      
     ThreadsafeStatics = 1;
     POSIXThreads = 0;
     Blocks = 0;

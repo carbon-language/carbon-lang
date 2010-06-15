@@ -595,6 +595,9 @@ static void LangOptsToArgs(const LangOptions &Opts,
       Res.push_back("protected");
     }
   }
+  if (Opts.InlineVisibilityHidden)
+    Res.push_back("-fvisibility-inlines-hidden");
+  
   if (Opts.getStackProtectorMode() != 0) {
     Res.push_back("-stack-protector");
     Res.push_back(llvm::utostr(Opts.getStackProtectorMode()));
@@ -1238,6 +1241,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fvisibility)->getAsString(Args) << Vis;
 
+  if (Args.hasArg(OPT_fvisibility_inlines_hidden))
+    Opts.InlineVisibilityHidden = 1;
+    
   Opts.OverflowChecking = Args.hasArg(OPT_ftrapv);
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs

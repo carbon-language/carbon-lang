@@ -437,6 +437,8 @@ def stack_protector : Separate<"-stack-protector">,
   HelpText<"Enable stack protectors">;
 def fvisibility : Separate<"-fvisibility">,
   HelpText<"Default symbol visibility">;
+def fvisibility_inlines_hidden : Flag<"-fvisibility-inlines-hidden">,
+  HelpText<"Give inline C++ member functions default visibility by default">;
 def ftemplate_depth : Separate<"-ftemplate-depth">,
   HelpText<"Maximum depth of recursive template instantiation">;
 def trigraphs : Flag<"-trigraphs">,

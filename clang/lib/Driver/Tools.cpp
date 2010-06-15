@@ -1149,6 +1149,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  Args.AddLastArg(CmdArgs, options::OPT_fvisibility_inlines_hidden);
+                        
   // -fhosted is default.
   if (KernelOrKext || Args.hasFlag(options::OPT_ffreestanding,
                                    options::OPT_fhosted,
