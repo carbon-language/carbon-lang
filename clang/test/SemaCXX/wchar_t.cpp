@@ -25,3 +25,8 @@ int t(void) {
   basic_string<wchar_t>() + L'-';
   return (0);
 }
+
+
+// rdar://8040728
+wchar_t in[] = L"\x434" "\x434";  // No warning
+

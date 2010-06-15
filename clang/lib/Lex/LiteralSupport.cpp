@@ -169,9 +169,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 /// we will likely rework our support for UCN's.
 static void ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              char *&ResultBuf, bool &HadError,
-                             SourceLocation Loc, bool IsWide, Preprocessor &PP,
-                             bool Complain)
-{
+                             SourceLocation Loc, Preprocessor &PP,
+                             bool Complain) {
   // FIXME: Add a warning - UCN's are only valid in C++ & C99.
   // FIXME: Handle wide strings.
 
@@ -835,11 +834,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     // TODO: Input character set mapping support.
 
     // Skip L marker for wide strings.
-    bool ThisIsWide = false;
-    if (ThisTokBuf[0] == 'L') {
+    if (ThisTokBuf[0] == 'L')
       ++ThisTokBuf;
-      ThisIsWide = true;
-    }
 
     assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
     ++ThisTokBuf;
@@ -884,14 +880,13 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       // Is this a Universal Character Name escape?
       if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
         ProcessUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
-                         hadError, StringToks[i].getLocation(), ThisIsWide, PP,
-                         Complain);
+                         hadError, StringToks[i].getLocation(), PP, Complain);
         continue;
       }
       // Otherwise, this is a non-UCN escape character.  Process it.
       unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
                                               StringToks[i].getLocation(),
-                                              ThisIsWide, PP, Complain);
+                                              AnyWide, PP, Complain);
 
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultPtr++ = ResultChar & 0xFF;
