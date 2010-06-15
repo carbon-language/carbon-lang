@@ -278,8 +278,9 @@ void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
-  if (!Opts.AnalyzeAll &&
-      !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
+  SourceManager &SM = Ctx->getSourceManager();
+  SourceLocation SL = SM.getInstantiationLoc(D->getLocation());
+  if (!Opts.AnalyzeAll && !SM.isFromMainFile(SL))
     return;
 
   // Clear the AnalysisManager of old AnalysisContexts.

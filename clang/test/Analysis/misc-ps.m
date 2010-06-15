@@ -971,3 +971,13 @@ void r7979430(id x) {
   @synchronized(x) {}
 }
 
+//===----------------------------------------------------------------------===
+// PR 7361 - Test that functions wrapped in macro instantiations are analyzed.
+//===----------------------------------------------------------------------===
+#define MAKE_TEST_FN() \
+  void test_pr7361 (char a) {\
+    char* b = 0x0;  *b = a;\
+  }
+
+MAKE_TEST_FN() // expected-warning{{null pointer}}
+
