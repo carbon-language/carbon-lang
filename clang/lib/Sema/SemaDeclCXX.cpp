@@ -4557,6 +4557,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   
   // \brief Reference to the __builtin_memcpy function.
   Expr *BuiltinMemCpyRef = 0;
+  // \brief Reference to the objc_memmove_collectable function.
+  Expr *CollectableMemCpyRef = 0;
   
   // Assign non-static members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -4633,9 +4635,34 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       // Take the address of the field references for "from" and "to".
       From = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(From));
       To = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(To));
-      
+          
+      bool NeedsCollectableMemCpy = 
+          (BaseType->isRecordType() && 
+           BaseType->getAs<RecordType>()->getDecl()->hasObjectMember());
+          
+      if (NeedsCollectableMemCpy) {
+        if (!CollectableMemCpyRef) {
+          // Create a reference to the objc_memmove_collectable function.
+          LookupResult R(*this, &Context.Idents.get("objc_memmove_collectable"), 
+                         Loc, LookupOrdinaryName);
+          LookupName(R, TUScope, true);
+        
+          FunctionDecl *CollectableMemCpy = R.getAsSingle<FunctionDecl>();
+          if (!CollectableMemCpy) {
+            // Something went horribly wrong earlier, and we will have 
+            // complained about it.
+            Invalid = true;
+            continue;
+          }
+        
+          CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
+                                                  CollectableMemCpy->getType(),
+                                                  Loc, 0).takeAs<Expr>();
+          assert(CollectableMemCpyRef && "Builtin reference cannot fail");
+        }
+      }
       // Create a reference to the __builtin_memcpy builtin function.
-      if (!BuiltinMemCpyRef) {
+      else if (!BuiltinMemCpyRef) {
         LookupResult R(*this, &Context.Idents.get("__builtin_memcpy"), Loc,
                        LookupOrdinaryName);
         LookupName(R, TUScope, true);
@@ -4661,10 +4688,12 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       llvm::SmallVector<SourceLocation, 4> Commas; // FIXME: Silly
       Commas.push_back(Loc);
       Commas.push_back(Loc);
-      OwningExprResult Call = ActOnCallExpr(/*Scope=*/0, 
-                                            Owned(BuiltinMemCpyRef->Retain()),
-                                            Loc, move_arg(CallArgs), 
-                                            Commas.data(), Loc);
+      OwningExprResult Call = ActOnCallExpr(/*Scope=*/0,
+                                  NeedsCollectableMemCpy ?
+                                    Owned(CollectableMemCpyRef->Retain()) :
+                                    Owned(BuiltinMemCpyRef->Retain()),
+                                  Loc, move_arg(CallArgs), 
+                                  Commas.data(), Loc);
       assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
       Statements.push_back(Call.takeAs<Expr>());
       continue;

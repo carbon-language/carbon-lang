@@ -208,7 +208,7 @@ public:
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr,
-                                        QualType Ty) = 0;
+                                        llvm::Value *Size) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.

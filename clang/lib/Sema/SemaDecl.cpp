@@ -6232,6 +6232,12 @@ void Sema::ActOnFields(Scope* S,
                (FD->getType()->isObjCObjectPointerType() ||
                 FD->getType().isObjCGCStrong()))
       Record->setHasObjectMember(true);
+    else if (Context.getAsArrayType(FD->getType())) {
+      QualType BaseType = Context.getBaseElementType(FD->getType());
+      if (Record && BaseType->isRecordType() && 
+          BaseType->getAs<RecordType>()->getDecl()->hasObjectMember())
+        Record->setHasObjectMember(true);
+    }
     // Keep track of the number of named members.
     if (FD->getIdentifier())
       ++NumNamedMembers;

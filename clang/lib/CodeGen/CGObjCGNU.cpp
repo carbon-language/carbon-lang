@@ -197,7 +197,7 @@ public:
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr,
-                                        QualType Ty);
+                                        llvm::Value *Size);
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
@@ -2174,17 +2174,12 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCGNU::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *DestPtr,
                                          llvm::Value *SrcPtr,
-                                         QualType Ty) {
+                                         llvm::Value *Size) {
   CGBuilderTy B = CGF.Builder;
   DestPtr = EnforceType(B, DestPtr, IdTy);
   SrcPtr = EnforceType(B, SrcPtr, PtrToIdTy);
 
-  std::pair<uint64_t, unsigned> TypeInfo = CGM.getContext().getTypeInfo(Ty);
-  unsigned long size = TypeInfo.first/8;
-  // FIXME: size_t
-  llvm::Value *N = llvm::ConstantInt::get(LongTy, size);
-
-  B.CreateCall3(MemMoveFn, DestPtr, SrcPtr, N);
+  B.CreateCall3(MemMoveFn, DestPtr, SrcPtr, Size);
 }
 
 llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(

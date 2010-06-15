@@ -14,6 +14,7 @@
 #include "TargetInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGObjCRuntime.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
@@ -483,6 +484,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                   llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0));
     return RValue::get(Address);
   }
+      
+  case Builtin::BIobjc_memmove_collectable: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *SrcAddr = EmitScalarExpr(E->getArg(1));
+    Value *SizeVal = EmitScalarExpr(E->getArg(2));
+    CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, 
+                                                  Address, SrcAddr, SizeVal);
+    return RValue::get(Address);
+  }
+      
   case Builtin::BImemmove:
   case Builtin::BI__builtin_memmove: {
     Value *Address = EmitScalarExpr(E->getArg(0));

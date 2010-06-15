@@ -177,11 +177,16 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 /// directly into the return value slot.  If GC does interfere, a final
 /// move will be performed.
 void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
-  if (!RequiresGCollection) return;
-
-  CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, DestPtr,
+  if (RequiresGCollection) {
+    std::pair<uint64_t, unsigned> TypeInfo = 
+      CGF.getContext().getTypeInfo(E->getType());
+    unsigned long size = TypeInfo.first/8;
+    const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+    CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, DestPtr,
                                                     Src.getAggregateAddr(),
-                                                    E->getType());
+                                                    SizeVal);
+  }
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
@@ -198,9 +203,14 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   }
 
   if (RequiresGCollection) {
+    std::pair<uint64_t, unsigned> TypeInfo = 
+    CGF.getContext().getTypeInfo(E->getType());
+    unsigned long size = TypeInfo.first/8;
+    const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
                                               DestPtr, Src.getAggregateAddr(),
-                                              E->getType());
+                                              SizeVal);
     return;
   }
   // If the result of the assignment is used, copy the LHS there also.
@@ -837,6 +847,30 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   if (SrcPtr->getType() != SBP)
     SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
 
+  if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
+    RecordDecl *Record = RecordTy->getDecl();
+    if (Record->hasObjectMember()) {
+      unsigned long size = TypeInfo.first/8;
+      const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+      llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+      CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
+                                                    SizeVal);
+      return;
+    }
+  } else if (getContext().getAsArrayType(Ty)) {
+    QualType BaseType = getContext().getBaseElementType(Ty);
+    if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
+      if (RecordTy->getDecl()->hasObjectMember()) {
+        unsigned long size = TypeInfo.first/8;
+        const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+        llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+        CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
+                                                      SizeVal);
+        return;
+      }
+    }
+  }
+  
   Builder.CreateCall5(CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(),
                                       IntPtr),
                       DestPtr, SrcPtr,

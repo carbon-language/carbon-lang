@@ -275,10 +275,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
       
       llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
       QualType Ty = E->getType();
-      if (ClassDecl->hasObjectMember())
-        CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, This, Src, Ty);
-      else 
-        EmitAggregateCopy(This, Src, Ty);
+      EmitAggregateCopy(This, Src, Ty);
       return RValue::get(This);
     }
   }
