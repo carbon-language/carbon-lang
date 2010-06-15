@@ -51,7 +51,15 @@ static const char *BackupNumber(const char *Pos, const char *FirstChar) {
   if (!isNumberChar(*Pos)) return Pos;
 
   // Otherwise, return to the start of the number.
+  bool HasPeriod = false;
   while (Pos > FirstChar && isNumberChar(Pos[-1])) {
+    // Backup over at most one period.
+    if (Pos[-1] == '.') {
+      if (HasPeriod)
+        break;
+      HasPeriod = true;
+    }
+
     --Pos;
     if (Pos > FirstChar && isSignedChar(Pos[0]) && !isExponentChar(Pos[-1]))
       break;
