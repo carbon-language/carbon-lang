@@ -212,16 +212,16 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
   const char *F1P = File1Start;
   const char *F2P = File2Start;
 
-  if (A_size == B_size) {
-    // Are the buffers identical?  Common case: Handle this efficiently.
-    if (std::memcmp(File1Start, File2Start, A_size) == 0)
-      return 0;
+  // Are the buffers identical?  Common case: Handle this efficiently.
+  if (A_size == B_size &&
+      std::memcmp(File1Start, File2Start, A_size) == 0)
+    return 0;
 
-    if (AbsTol == 0 && RelTol == 0) {
-      if (Error)
-        *Error = "Files differ without tolerance allowance";
-      return 1;   // Files different!
-    }
+  // Otherwise, we are done a tolerances are set.
+  if (AbsTol == 0 && RelTol == 0) {
+    if (Error)
+      *Error = "Files differ without tolerance allowance";
+    return 1;   // Files different!
   }
 
   bool CompareFailed = false;
