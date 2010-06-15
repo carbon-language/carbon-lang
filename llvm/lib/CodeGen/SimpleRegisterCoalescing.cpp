@@ -2310,7 +2310,8 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
 
       // Figure out the value # from the RHS.
       LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
-      assert(lr && "Cannot find live range");
+      // The copy could be to an aliased physreg.
+      if (!lr) continue;
       LHSValsDefinedFromRHS[VNI] = lr->valno;
     }
 
@@ -2329,7 +2330,8 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
 
       // Figure out the value # from the LHS.
       LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
-      assert(lr && "Cannot find live range");
+      // The copy could be to an aliased physreg.
+      if (!lr) continue;
       RHSValsDefinedFromLHS[VNI] = lr->valno;
     }
 
