@@ -3,7 +3,7 @@
 
 %0 = type { double, double }
 
-define arm_aapcscc void @foo(%0* noalias nocapture sret %agg.result, double %x.0, double %y.0) nounwind {
+define void @foo(%0* noalias nocapture sret %agg.result, double %x.0, double %y.0) nounwind {
 ; CHECK: foo:
 ; CHECK: bl __adddf3
 ; CHECK-NOT: strd

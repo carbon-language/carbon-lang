@@ -3,7 +3,7 @@
 ; PR4344
 ; PR4416
 
-define arm_aapcscc i8* @t() nounwind {
+define i8* @t() nounwind {
 entry:
 ; DARWIN: t:
 ; DARWIN: mov r0, r7

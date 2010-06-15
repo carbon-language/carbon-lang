@@ -5,7 +5,7 @@
 ; RUN: llc < %s -mtriple=armv4-unknown-eabi | FileCheck %s -check-prefix=ARM
 ; RUN: llc < %s -mtriple=armv4t-unknown-eabi | FileCheck %s -check-prefix=THUMB
 
-define arm_aapcscc i32 @test(i32 %a) nounwind readnone {
+define i32 @test(i32 %a) nounwind readnone {
 entry:
 ; ARM: mov pc
 ; THUMB: bx

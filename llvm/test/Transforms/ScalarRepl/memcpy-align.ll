@@ -9,7 +9,7 @@ target triple = "arm-u-u"
 
 @c = external global %0                           ; <%0*> [#uses=1]
 
-define arm_aapcscc void @good() nounwind {
+define void @good() nounwind {
 entry:
   %x0 = alloca %struct.anon, align 4              ; <%struct.anon*> [#uses=2]
   %tmp = bitcast %struct.anon* %x0 to i8*         ; <i8*> [#uses=1]

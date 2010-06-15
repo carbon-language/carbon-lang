@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=armv6-elf
 ; PR4528
 
-define arm_aapcscc i32 @file_read_actor(i32 %desc, i32 %page, i32 %offset, i32 %size) nounwind optsize {
+define i32 @file_read_actor(i32 %desc, i32 %page, i32 %offset, i32 %size) nounwind optsize {
 entry:
 	br i1 undef, label %fault_in_pages_writeable.exit, label %bb5.i
 
@@ -18,8 +18,8 @@ bb2:		; preds = %fault_in_pages_writeable.exit
 	unreachable
 
 bb3:		; preds = %fault_in_pages_writeable.exit
-	%2 = tail call arm_aapcscc  i32 @__copy_to_user(i8* undef, i8* undef, i32 undef) nounwind		; <i32> [#uses=0]
+	%2 = tail call  i32 @__copy_to_user(i8* undef, i8* undef, i32 undef) nounwind		; <i32> [#uses=0]
 	unreachable
 }
 
-declare arm_aapcscc i32 @__copy_to_user(i8*, i8*, i32)
+declare i32 @__copy_to_user(i8*, i8*, i32)
