@@ -369,8 +369,6 @@ getRequiredQualification(ASTContext &Context,
       Result = NestedNameSpecifier::Create(Context, Result,
                                            false,
                                      Context.getTypeDeclType(TD).getTypePtr());
-    else
-      assert(Parent->isTranslationUnit());
   }  
   return Result;
 }
