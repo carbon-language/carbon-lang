@@ -18,7 +18,7 @@
 #include "CGObjCRuntime.h"
 #include "Mangle.h"
 #include "TargetInfo.h"
-#include "clang/CodeGen/CodeGenOptions.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"

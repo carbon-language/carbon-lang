@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CODEGEN_CODEGENOPTIONS_H
-#define LLVM_CLANG_CODEGEN_CODEGENOPTIONS_H
+#ifndef LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
+#define LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 
 #include <string>
 
