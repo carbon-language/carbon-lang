@@ -790,7 +790,7 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
 
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
-    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
+    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
   else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
     return true;
 
@@ -806,7 +806,7 @@ bool ResultBuilder::IsOrdinaryNonTypeName(NamedDecl *ND) const {
   
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
-    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace;
+    IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
   else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
     return true;
   

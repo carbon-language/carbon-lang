@@ -33,6 +33,10 @@ void test_overloaded() {
   overloaded(Z(), 0);
 }
 
+Z::operator int() const {
+  return 0;
+}
+
 // CHECK-MEMBER: FieldDecl:{ResultType double}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType int}{Text X::}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
@@ -52,3 +56,12 @@ void test_overloaded() {
 // CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType double &}{Text overloaded}{LeftParen (}{Text float f}{Comma , }{CurrentParameter int second}{RightParen )}
+
+// RUN: c-index-test -code-completion-at=%s:37:10 %s | FileCheck -check-prefix=CHECK-EXPR %s
+// CHECK-EXPR: NotImplemented:{TypedText int} (40)
+// CHECK-EXPR: NotImplemented:{TypedText long} (40)
+// CHECK-EXPR: FieldDecl:{ResultType double}{TypedText member} (10)
+// CHECK-EXPR: FieldDecl:{ResultType int}{Text X::}{TypedText member} (5)
+// CHECK-EXPR: FieldDecl:{ResultType float}{Text Y::}{TypedText member} (11)
+// CHECK-EXPR: FunctionDecl:{ResultType void}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )} (22)
+
