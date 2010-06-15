@@ -708,7 +708,8 @@ void RAFast::AllocateBasicBlock() {
       if (MO.isUse()) {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
-        definePhysReg(MI, Reg, MO.isDead() ? regFree : regReserved);
+        definePhysReg(MI, Reg, (MO.isImplicit() || MO.isDead()) ?
+                               regFree : regReserved);
         PhysECs.push_back(Reg);
       }
     }
@@ -731,8 +732,11 @@ void RAFast::AllocateBasicBlock() {
         // Note: defineVirtReg may invalidate MO.
         LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
         unsigned PhysReg = LRI->second.PhysReg;
-        setPhysReg(MI, i, PhysReg);
+        if (setPhysReg(MI, i, PhysReg))
+          VirtDead.push_back(Reg);
         PhysECs.push_back(PhysReg);
+        // Don't attempt coalescing when earlyclobbers are present.
+        CopyDst = 0;
       }
     }
 
@@ -767,7 +771,8 @@ void RAFast::AllocateBasicBlock() {
     // Allocate defs and collect dead defs.
     for (unsigned i = 0; i != DefOpEnd; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || !MO.isDef() || !MO.getReg()) continue;
+      if (!MO.isReg() || !MO.isDef() || !MO.getReg() || MO.isEarlyClobber())
+        continue;
       unsigned Reg = MO.getReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
