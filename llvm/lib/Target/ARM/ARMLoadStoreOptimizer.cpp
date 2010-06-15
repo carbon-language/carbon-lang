@@ -1491,7 +1491,8 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
       } else {
         // This is the new location for the loads / stores.
         MachineBasicBlock::iterator InsertPos = isLd ? FirstOp : LastOp;
-        while (InsertPos != MBB->end() && MemOps.count(InsertPos))
+        while (InsertPos != MBB->end()
+               && (MemOps.count(InsertPos) || InsertPos->isDebugValue()))
           ++InsertPos;
 
         // If we are moving a pair of loads / stores, see if it makes sense
