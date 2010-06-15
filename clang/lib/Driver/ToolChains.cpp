@@ -848,6 +848,8 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)
   : Generic_GCC(Host, Triple) {
+  getProgramPaths().push_back(getDriver().Dir + "/../libexec");
+  getProgramPaths().push_back("/usr/libexec");
   if (Lib32) {
     getFilePaths().push_back(getDriver().Dir + "/../lib32");
     getFilePaths().push_back("/usr/lib32");
