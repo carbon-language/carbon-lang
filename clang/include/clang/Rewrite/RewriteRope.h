@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 
 namespace clang {

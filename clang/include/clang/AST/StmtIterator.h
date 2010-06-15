@@ -16,6 +16,7 @@
 
 #include "llvm/System/DataTypes.h"
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 
 namespace clang {
