@@ -349,6 +349,11 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     U = C;
   }
 
+  if (const PointerType *Ty = dyn_cast<PointerType>(V->getType()))
+    if (Ty->getAddressSpace() > 255)
+      // Fast instruction selection doesn't support pointers through %fs or %gs
+      return false;
+
   switch (Opcode) {
   default: break;
   case Instruction::BitCast:
