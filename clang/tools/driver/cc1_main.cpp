@@ -14,12 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Checker/FrontendActions.h"
+#include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/CC1Options.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/OptTable.h"
-#include "clang/Frontend/CodeGenAction.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -27,6 +28,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Rewrite/FrontendActions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"

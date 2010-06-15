@@ -4,24 +4,18 @@ add_clang_library(clangFrontend
   ASTConsumers.cpp
   ASTMerge.cpp
   ASTUnit.cpp
-  AnalysisConsumer.cpp
-  BackendUtil.cpp
   BoostConAction.cpp
   CacheTokens.cpp
-  CodeGenAction.cpp
   CompilerInstance.cpp
   CompilerInvocation.cpp
   DeclXML.cpp
   DependencyFile.cpp
   DiagChecker.cpp
   DocumentXML.cpp
-  FixItRewriter.cpp
   FrontendAction.cpp
   FrontendActions.cpp
   FrontendOptions.cpp
   GeneratePCH.cpp
-  HTMLDiagnostics.cpp
-  HTMLPrint.cpp
   InitHeaderSearch.cpp
   InitPreprocessor.cpp
   LangStandards.cpp
@@ -31,12 +25,8 @@ add_clang_library(clangFrontend
   PCHWriter.cpp
   PCHWriterDecl.cpp
   PCHWriterStmt.cpp
-  PlistDiagnostics.cpp
   PrintParserCallbacks.cpp
   PrintPreprocessedOutput.cpp
-  RewriteMacros.cpp
-  RewriteObjC.cpp
-  RewriteTest.cpp
   StmtXML.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Checker/PathDiagnosticClients.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"

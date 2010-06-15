@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/BackendUtil.h"
+#include "clang/CodeGen/BackendUtil.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/CodeGenOptions.h"

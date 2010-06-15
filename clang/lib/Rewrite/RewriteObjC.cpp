@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/ASTConsumers.h"
+#include "clang/Rewrite/ASTConsumers.h"
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"

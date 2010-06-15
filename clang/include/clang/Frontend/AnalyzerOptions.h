@@ -1,4 +1,4 @@
-//===--- AnalysisConsumer.h - Front-end Analysis Engine Hooks ---*- C++ -*-===//
+//===--- AnalyzerOptions.h - Analysis Engine Options ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header contains the functions necessary for a front-end to run various
-// analyses.
+// This header contains the structures necessary for a front-end to specify
+// various analyses.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_ANALYSISCONSUMER_H
-#define LLVM_CLANG_FRONTEND_ANALYSISCONSUMER_H
+#ifndef LLVM_CLANG_FRONTEND_ANALYZEROPTIONS_H
+#define LLVM_CLANG_FRONTEND_ANALYZEROPTIONS_H
 
 #include <string>
 #include <vector>
@@ -91,13 +91,6 @@ public:
     EnableExperimentalInternalChecks = 0;
   }
 };
-
-/// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
-/// analysis passes.  (The set of analyses run is controlled by command-line
-/// options.)
-ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
-                                    const std::string &output,
-                                    const AnalyzerOptions& Opts);
 
 }
 

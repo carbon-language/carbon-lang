@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_CODEGEN_BACKEND_UTIL_H
+#define LLVM_CLANG_CODEGEN_BACKEND_UTIL_H
+
 namespace llvm {
   class Module;
   class raw_ostream;
@@ -30,3 +33,5 @@ namespace clang {
                          const TargetOptions &TOpts, llvm::Module *M,
                          BackendAction Action, llvm::raw_ostream *OS);
 }
+
+#endif

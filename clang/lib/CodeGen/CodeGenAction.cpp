@@ -7,15 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/CodeGenAction.h"
+#include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/CodeGen/BackendUtil.h"
 #include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Frontend/ASTConsumers.h"
-#include "clang/Frontend/BackendUtil.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/LLVMContext.h"

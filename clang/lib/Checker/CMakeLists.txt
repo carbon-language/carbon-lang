@@ -3,6 +3,7 @@ set(LLVM_NO_RTTI 1)
 add_clang_library(clangChecker
   AdjustedReturnValueChecker.cpp
   AggExprVisitor.cpp
+  AnalysisConsumer.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicConstraintManager.cpp
@@ -30,12 +31,14 @@ add_clang_library(clangChecker
   ExplodedGraph.cpp
   FixedAddressChecker.cpp
   FlatStore.cpp
+  FrontendActions.cpp
   GRBlockCounter.cpp
   GRCoreEngine.cpp
   GRCXXExprEngine.cpp
   GRExprEngine.cpp
   GRExprEngineExperimentalChecks.cpp
   GRState.cpp
+  HTMLDiagnostics.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp
   MallocChecker.cpp
@@ -47,6 +50,7 @@ add_clang_library(clangChecker
   ObjCUnusedIVarsChecker.cpp
   OSAtomicChecker.cpp
   PathDiagnostic.cpp
+  PlistDiagnostics.cpp
   PointerArithChecker.cpp
   PointerSubChecker.cpp
   PthreadLockChecker.cpp

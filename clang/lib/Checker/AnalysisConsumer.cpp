@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/AnalysisConsumer.h"
+#include "clang/Checker/AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -27,9 +27,10 @@
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
+#include "clang/Checker/PathDiagnosticClients.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"

@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/FixItRewriter.h"
+#include "clang/Rewrite/FixItRewriter.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"

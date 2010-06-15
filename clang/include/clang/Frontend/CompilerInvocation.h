@@ -13,7 +13,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/CodeGenOptions.h"
-#include "clang/Frontend/AnalysisConsumer.h"
+#include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
