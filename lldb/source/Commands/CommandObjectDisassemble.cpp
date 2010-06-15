@@ -34,7 +34,8 @@ using namespace lldb_private;
 CommandObjectDisassemble::CommandOptions::CommandOptions () :
     Options(),
     m_func_name(),
-    m_load_addr()
+    m_start_addr(),
+    m_end_addr ()
 {
     ResetOptionValues();
 }
@@ -64,13 +65,21 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const 
         show_bytes = true;
         break;
 
-    case 'a':
-        m_load_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 0);
-        if (m_load_addr == LLDB_INVALID_ADDRESS)
-            m_load_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 16);
+    case 's':
+        m_start_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 0);
+        if (m_start_addr == LLDB_INVALID_ADDRESS)
+            m_start_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 16);
 
-        if (m_load_addr == LLDB_INVALID_ADDRESS)
-            error.SetErrorStringWithFormat ("Invalid address string '%s'.\n", optarg);
+        if (m_start_addr == LLDB_INVALID_ADDRESS)
+            error.SetErrorStringWithFormat ("Invalid start address string '%s'.\n", optarg);
+        break;
+    case 'e':
+        m_end_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 0);
+        if (m_end_addr == LLDB_INVALID_ADDRESS)
+            m_end_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 16);
+
+        if (m_end_addr == LLDB_INVALID_ADDRESS)
+            error.SetErrorStringWithFormat ("Invalid end address string '%s'.\n", optarg);
         break;
 
     case 'n':
@@ -97,7 +106,8 @@ CommandObjectDisassemble::CommandOptions::ResetOptionValues ()
     show_bytes = false;
     num_lines_context = 0;
     m_func_name.clear();
-    m_load_addr = LLDB_INVALID_ADDRESS;
+    m_start_addr = LLDB_INVALID_ADDRESS;
+    m_end_addr = LLDB_INVALID_ADDRESS;
 }
 
 const lldb::OptionDefinition*
@@ -109,22 +119,17 @@ CommandObjectDisassemble::CommandOptions::GetDefinitions ()
 lldb::OptionDefinition
 CommandObjectDisassemble::CommandOptions::g_option_table[] =
 {
-{ 0, false, "bytes",    'b', no_argument,       NULL, 0, NULL,             "Show opcode bytes when disassembling."},
-{ 0, false, "context",  'c', required_argument, NULL, 0, "<num-lines>",    "Number of context lines of source to show."},
-{ 0, false, "mixed",    'm', no_argument,       NULL, 0, NULL,             "Enable mixed source and assembly display."},
-{ 0, false, "raw",      'r', no_argument,       NULL, 0, NULL,             "Print raw disassembly with no symbol information."},
+{ LLDB_OPT_SET_ALL, false, "bytes",    'b', no_argument,       NULL, 0, NULL,             "Show opcode bytes when disassembling."},
+{ LLDB_OPT_SET_ALL, false, "context",  'c', required_argument, NULL, 0, "<num-lines>",    "Number of context lines of source to show."},
+{ LLDB_OPT_SET_ALL, false, "mixed",    'm', no_argument,       NULL, 0, NULL,             "Enable mixed source and assembly display."},
+{ LLDB_OPT_SET_ALL, false, "raw",      'r', no_argument,       NULL, 0, NULL,             "Print raw disassembly with no symbol information."},
 
-{ 1, false, "address",  'a', required_argument, NULL, 0, "<address>",      "Address to start disassembling."},
-{ 1, false, "bytes",    'b', no_argument,       NULL, 0, NULL,             "Show opcode bytes when disassembling."},
-{ 1, false, "context",  'c', required_argument, NULL, 0, "<num-lines>",    "Number of context lines of source to show."},
-{ 1, false, "mixed",    'm', no_argument,       NULL, 0, NULL,             "Enable mixed source and assembly display."},
-{ 1, false, "raw",      'r', no_argument,       NULL, 0, NULL,             "Print raw disassembly with no symbol information."},
+{ LLDB_OPT_SET_1, true, "start-address",  's', required_argument, NULL, 0, "<start-address>",      "Address to start disassembling."},
+{ LLDB_OPT_SET_1, false, "end-address",  'e', required_argument, NULL, 0, "<end-address>",      "Address to start disassembling."},
 
-{ 2, false, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<function-name>",             "Disassemble entire contents of the given function name."},
-{ 2, false, "bytes",    'b', no_argument,       NULL, 0, NULL,             "Show opcode bytes when disassembling."},
-{ 2, false, "context",  'c', required_argument, NULL, 0, "<num-lines>",    "Number of context lines of source to show."},
-{ 2, false, "mixed",    'm', no_argument,       NULL, 0, NULL,             "Enable mixed source and assembly display."},
-{ 2, false, "raw",      'r', no_argument,       NULL, 0, NULL,             "Print raw disassembly with no symbol information."},
+{ LLDB_OPT_SET_2, true, "name",     'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<function-name>",             "Disassemble entire contents of the given function name."},
+
+{ LLDB_OPT_SET_3, false, "current-frame",     'f', no_argument, NULL, 0, "<current-frame>",             "Disassemble entire contents of the current frame's function."},
 
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
@@ -138,7 +143,7 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 CommandObjectDisassemble::CommandObjectDisassemble () :
     CommandObject ("disassemble",
                      "Disassemble bytes in the current function or anywhere in the inferior program.",
-                     "disassemble [[<start-addr> [<end-addr>]] | <function-name>] [<cmd-options>]")
+                     "disassemble [<cmd-options>]")
 {
 }
 
@@ -317,15 +322,35 @@ CommandObjectDisassemble::Execute
     lldb::addr_t end_addr = LLDB_INVALID_ADDRESS;
     ConstString name;
     const size_t argc = command.GetArgumentCount();
-    if (argc == 0 && m_options.m_load_addr != LLDB_INVALID_ADDRESS)
+    if (argc != 0)
     {
-        addr = m_options.m_load_addr;
-        end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
-    } else if (argc == 0 && !m_options.m_func_name.empty())
+        result.AppendErrorWithFormat ("\"disassemble\" doesn't take any arguments.\n");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+    
+    if (m_options.m_start_addr != LLDB_INVALID_ADDRESS)
+    {
+        addr = m_options.m_start_addr;
+        if (m_options.m_end_addr != LLDB_INVALID_ADDRESS)
+        {
+            end_addr = m_options.m_end_addr;
+            if (end_addr < addr)
+            {
+                result.AppendErrorWithFormat ("End address before start address.\n");
+                result.SetStatus (eReturnStatusFailed);
+                return false;            
+            }
+        }
+        else
+            end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
+    } 
+    else if (!m_options.m_func_name.empty())
     {
         ConstString tmpname(m_options.m_func_name.c_str());
         name = tmpname;
-    } else if (argc == 0)
+    } 
+    else
     {
         ExecutionContext exe_ctx(context->GetExecutionContext());
         if (exe_ctx.frame)
@@ -361,38 +386,6 @@ CommandObjectDisassemble::Execute
             return false;
         }
     }
-    else if (argc == 1)
-    {
-        const char *arg = command.GetArgumentAtIndex(0);
-        addr = Args::StringToAddress (arg);
-        if (addr == LLDB_INVALID_ADDRESS)
-        {   
-            // Lookup function or symbol name?
-            ConstString tmpname(arg);
-            name = tmpname;
-        }
-        else
-        {
-            end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
-        }
-    }
-    else if (argc >= 1 && argc <= 2)
-    {
-        addr = Args::StringToAddress (command.GetArgumentAtIndex(0));
-        if (addr == LLDB_INVALID_ADDRESS)
-        {
-            result.AppendErrorWithFormat ("Unable to parse address '%s'.\n", command.GetArgumentAtIndex(0));
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-        end_addr = Args::StringToAddress (command.GetArgumentAtIndex(1), addr);
-        if (end_addr == LLDB_INVALID_ADDRESS)
-        {
-            result.AppendErrorWithFormat ("Unable to parse address '%s'.\n", command.GetArgumentAtIndex(1));
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-    }
 
     if (!name.IsEmpty())
     {
@@ -413,19 +406,10 @@ CommandObjectDisassemble::Execute
             return false;
         }
     }
-
-    if (addr < end_addr)
+    else
     {
         Disassemble (context, interpreter, result, disassembler, addr, end_addr);
     }
 
-    if (addr == LLDB_INVALID_ADDRESS && name.IsEmpty())
-    {
-        result.AppendError ("No recognizable address of function name provided");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-    {
-        return result.Succeeded();
-    }
+    return result.Succeeded();
 }

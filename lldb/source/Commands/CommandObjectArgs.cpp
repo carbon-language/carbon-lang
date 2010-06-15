@@ -273,7 +273,7 @@ CommandObjectArgs::Execute(Args &command,
 lldb::OptionDefinition
 CommandObjectArgs::CommandOptions::g_option_table[] =
 {
-    { 0, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
+    { LLDB_OPT_SET_1, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
     { 0, false, NULL, 0, 0, NULL, NULL, NULL, NULL }
 };
 

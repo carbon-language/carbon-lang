@@ -85,9 +85,9 @@ CommandObjectSourceFile::CommandOptions::GetDefinitions ()
 lldb::OptionDefinition
 CommandObjectSourceFile::CommandOptions::g_option_table[] =
 {
-{ 0, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
-{ 0, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
-{ 0, false, "count",      'n', required_argument, NULL, 0, "<count>",   "The number of source lines to display."},
+{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
+{ LLDB_OPT_SET_1, false, "count",      'n', required_argument, NULL, 0, "<count>",   "The number of source lines to display."},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 

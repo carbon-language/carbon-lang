@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/lldb-defines.h"
 #include "lldb/Core/Args.h"
 
 namespace lldb_private {
@@ -134,8 +135,9 @@ public:
     struct option *
     GetLongOptions ();
 
+    // This gets passed the short option as an integer...
     void
-    OptionSeen (int option_idx);
+    OptionSeen (int short_option);
 
     bool
     VerifyOptions (CommandReturnObject &result);
@@ -163,10 +165,10 @@ public:
     // this class.
 
     virtual const lldb::OptionDefinition*
-    GetDefinitions () = 0;
+    GetDefinitions () { return NULL; };
 
     virtual void
-    ResetOptionValues () = 0;
+    ResetOptionValues ();
 
     //------------------------------------------------------------------
     /// Set the value of an option.
@@ -272,6 +274,7 @@ public:
                                             StringList &matches);
 
 protected:
+    // This is a set of options expressed as indexes into the options table for this Option.
     typedef std::set<char> OptionSet;
 
     std::vector<struct option> m_getopt_table;

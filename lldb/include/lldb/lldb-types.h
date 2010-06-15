@@ -131,7 +131,8 @@ namespace lldb {
     
     typedef struct
     {
-        uint32_t        usage_level;    // Used to mark options that can be used together.
+        uint32_t        usage_mask;    // Used to mark options that can be used together.  If 1 << n && usage_mask != 0
+                                       // then this option belongs to option set n.
         bool            required;       // This option is required (in the current usage level)
         CONST_CHAR_PTR  long_option;    // Full name for this option.
         char            short_option;   // Single character for this option.

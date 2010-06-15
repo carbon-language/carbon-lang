@@ -49,7 +49,8 @@ public:
         uint32_t num_lines_context;
         bool raw;
         std::string m_func_name;
-        lldb::addr_t m_load_addr;
+        lldb::addr_t m_start_addr;
+        lldb::addr_t m_end_addr;
         static lldb::OptionDefinition g_option_table[];
     };
 

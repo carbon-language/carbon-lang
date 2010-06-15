@@ -44,13 +44,13 @@ CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
-    { 0, true, "script",    's', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_1, true, "script",    's', no_argument, NULL, 0, NULL,
         "Write the breakpoint command script in the default scripting language."},
 
-    { 1, true, "python",    'p', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_2, true, "python",    'p', no_argument, NULL, 0, NULL,
         "Write the breakpoint command script in the Python scripting language."},
 
-    { 2, true, "commands",  'c', no_argument, NULL, 0, NULL,
+    { LLDB_OPT_SET_3, true, "commands",  'c', no_argument, NULL, 0, NULL,
         "Write the breakpoint command script using the command line commands."},
 
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }

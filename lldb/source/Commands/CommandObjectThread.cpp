@@ -619,8 +619,8 @@ g_duo_running_mode[] =
 lldb::OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
-{ 0, true, "avoid_no_debug", 'a', required_argument,       NULL, 0, "<avoid_no_debug>",        "Should step-in step over functions with no debug information"},
-{ 0, true, "run_mode", 'm', required_argument,       g_tri_running_mode, 0, "<run_mode>",        "Determine how to run other threads while stepping this one"},
+{ LLDB_OPT_SET_1, true, "avoid_no_debug", 'a', required_argument,       NULL, 0, "<avoid_no_debug>",        "Should step-in step over functions with no debug information"},
+{ LLDB_OPT_SET_1, true, "run_mode", 'm', required_argument,       g_tri_running_mode, 0, "<run_mode>",        "Determine how to run other threads while stepping this one"},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
@@ -1056,9 +1056,9 @@ protected:
 lldb::OptionDefinition
 CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 {
-{ 0, true, "frame", 'f', required_argument,       NULL, 0, "<frame>",        "Frame index for until operation - defaults to 0"},
-{ 0, true, "thread", 't', required_argument,       NULL, 0, "<thread>",      "Thread index for the thread for until operation"},
-{ 0, true, "run_mode", 'm', required_argument,       g_duo_running_mode, 0, "<run_mode>",        "Determine how to run other threads while stepping this one"},
+{ LLDB_OPT_SET_1, true, "frame", 'f', required_argument,       NULL, 0, "<frame>",        "Frame index for until operation - defaults to 0"},
+{ LLDB_OPT_SET_1, true, "thread", 't', required_argument,       NULL, 0, "<thread>",      "Thread index for the thread for until operation"},
+{ LLDB_OPT_SET_1, true, "run_mode", 'm', required_argument,       g_duo_running_mode, 0, "<run_mode>",        "Determine how to run other threads while stepping this one"},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 

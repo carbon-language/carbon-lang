@@ -49,28 +49,28 @@ reset_stdin_termios ()
 
 static lldb::OptionDefinition g_options[] =
 {
-    { 0,  true,  "help",            'h',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_1,  true,  "help",            'h',  no_argument,        NULL,  NULL,  NULL,
         "Prints out the usage information for the LLDB debugger." },
 
-    { 1,  true,  "version",         'v',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_2,  true,  "version",         'v',  no_argument,        NULL,  NULL,  NULL,
         "Prints out the current version number of the LLDB debugger." },
 
-    { 2,  false,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
-        "Tells the debugger to use the file <filename> as the program to be debugged." },
-
-    { 2,  false,  "arch",           'a',  required_argument,  NULL,  NULL,  "<architecture>",
+    { LLDB_OPT_SET_3,  false,  "arch",           'a',  required_argument,  NULL,  NULL,  "<architecture>",
         "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
 
-    { 2,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  "<scripting-language>",
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  "<scripting-language>",
         "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
 
-    { 2,  false,  "debug",          'd',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "debug",          'd',  no_argument,        NULL,  NULL,  NULL,
         "Tells the debugger to print out extra information for debugging itself." },
 
-    { 2,  false,  "source",         's',  required_argument,  NULL,  NULL,  "<file>",
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "source",         's',  required_argument,  NULL,  NULL,  "<file>",
         "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
 
-    { 3,  false,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
+    { LLDB_OPT_SET_3,  false,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
+        "Tells the debugger to use the file <filename> as the program to be debugged." },
+
+    { LLDB_OPT_SET_4,  false,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
         "Load executable images from a crash log for symbolication." },
 
     { 0, false, NULL, 0, 0, NULL, NULL,  NULL, NULL }
@@ -172,7 +172,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
     const char *name = "lldb";
     char spaces[screen_width+1];
     uint32_t i;
-
+    
     for (i = 0; i < screen_width; ++i)
       spaces[i] = ' ';
     spaces[i] = '\n';
@@ -188,39 +188,63 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
     //                                                   <cmd> [options-for-level-1]
     //                                                   etc.
 
-    uint32_t usage_level = 0;
     uint32_t num_options;
-
-    for (num_options = 0; option_table[num_options].long_option != NULL; ++num_options);
-
-    for (i = 0; i < num_options; ++i)
+    uint32_t num_option_sets = 0;
+    
+    for (num_options = 0; option_table[num_options].long_option != NULL; ++num_options)
     {
-        if (i == 0 || option_table[i].usage_level > usage_level)
+        uint32_t this_usage_mask = option_table[num_options].usage_mask;
+        if (this_usage_mask == LLDB_OPT_SET_ALL)
         {
-            // Start a new level.
-            usage_level = option_table[i].usage_level;
-            if (usage_level > 0)
-                fprintf (out, "\n\n");
-            fprintf (out, "%s%s", spaces_string.substr(0, indent_level).c_str(), name);
-        }
-
-        if (option_table[i].required)
-        {
-            if (option_table[i].option_has_arg == required_argument)
-                fprintf (out, " -%c %s", option_table[i].short_option, option_table[i].argument_name);
-            else if (option_table[i].option_has_arg == optional_argument)
-                fprintf (out, " -%c [%s]", option_table[i].short_option, option_table[i].argument_name);
-            else
-                fprintf (out, " -%c", option_table[i].short_option);
+            if (num_option_sets == 0)
+                num_option_sets = 1;
         }
         else
         {
-            if (option_table[i].option_has_arg == required_argument)
-                fprintf (out, " [-%c %s]", option_table[i].short_option, option_table[i].argument_name);
-            else if (option_table[i].option_has_arg == optional_argument)
-                fprintf (out, " [-%c [%s]]", option_table[i].short_option, option_table[i].argument_name);
-            else
-                fprintf (out, " [-%c]", option_table[i].short_option);
+            for (int j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
+            {
+                if (this_usage_mask & 1 << j)
+                {
+                    if (num_option_sets <= j)
+                        num_option_sets = j + 1;
+                }
+            }
+        }
+    }
+
+    for (uint32_t opt_set = 0; opt_set < num_option_sets; opt_set++)
+    {
+        uint32_t opt_set_mask;
+        
+        opt_set_mask = 1 << opt_set;
+        
+        if (opt_set > 0)
+            fprintf (out, "\n");
+        fprintf (out, "%s%s", spaces_string.substr(0, indent_level).c_str(), name);
+        
+        for (uint32_t i = 0; i < num_options; ++i)
+        {
+            if (option_table[i].usage_mask & opt_set_mask)
+            {
+                if (option_table[i].required)
+                {
+                    if (option_table[i].option_has_arg == required_argument)
+                        fprintf (out, " -%c %s", option_table[i].short_option, option_table[i].argument_name);
+                    else if (option_table[i].option_has_arg == optional_argument)
+                        fprintf (out, " -%c [%s]", option_table[i].short_option, option_table[i].argument_name);
+                    else
+                        fprintf (out, " -%c", option_table[i].short_option);
+                }
+                else
+                {
+                    if (option_table[i].option_has_arg == required_argument)
+                        fprintf (out, " [-%c %s]", option_table[i].short_option, option_table[i].argument_name);
+                    else if (option_table[i].option_has_arg == optional_argument)
+                        fprintf (out, " [-%c [%s]]", option_table[i].short_option, option_table[i].argument_name);
+                    else
+                        fprintf (out, " [-%c]", option_table[i].short_option);
+                }
+            }
         }
     }
 
@@ -239,7 +263,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
 
     indent_level += 5;
 
-    for (i = 0; i < num_options; ++i)
+    for (uint32_t i = 0; i < num_options; ++i)
     {
         // Only print this option if we haven't already seen it.
         pos = options_seen.find (option_table[i].short_option);
@@ -555,27 +579,40 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, FILE *err_fh)
 
     ResetOptionValues ();
 
-    if (argc == 2 && *(argv[1]) != '-')
-    {
-        m_option_data.m_filename = argv[1];
-    }
-    else
-    {
-        SBCommandReturnObject result;
+    SBCommandReturnObject result;
 
-        SBError error = ParseOptions (m_option_data, argc, argv);
-        if (error.Fail())
+    SBError error = ParseOptions (m_option_data, argc, argv);
+    if (error.Fail())
+    {
+        const char *error_cstr = error.GetCString ();
+        if (error_cstr)
+            ::fprintf (err_fh, "error: %s\n", error_cstr);
+        valid = false;
+    }
+    
+    // If there is a trailing argument, it is the filename.
+    if (optind == argc - 1)
+    {
+        if (m_option_data.m_filename.empty())
         {
-            const char *error_cstr = error.GetCString ();
-            if (error_cstr)
-                ::fprintf (err_fh, "error: %s\n", error_cstr);
+            m_option_data.m_filename = argv[optind];
         }
+        else
+        {
+            ::fprintf (err_fh, "error: don't provide a file both on in the -f option and as an argument.");
+            valid = false;
+        }
+
     }
-
-    // Check to see if they just invoked the debugger with a filename.
-
-
-    if (m_option_data.m_print_help)
+    else if (optind < argc - 1)
+    {
+        // Trailing extra arguments...
+        ::fprintf (err_fh, "error: trailing extra arguments - only one the filename is allowed.");
+        valid = false;
+        
+    }
+    
+    if (!valid || m_option_data.m_print_help)
     {
         ShowUsage (out_fh, g_options, m_option_data);
         valid = false;

@@ -1066,13 +1066,13 @@ protected:
 lldb::OptionDefinition
 CommandObjectImageList::CommandOptions::g_option_table[] =
 {
-{ 0, false, "arch",       'a', optional_argument, NULL, 0, "<width>",   "Display the architecture when listing images."},
-{ 0, false, "uuid",       'u', no_argument,       NULL, 0, NULL,        "Display the UUID when listing images."},
-{ 0, false, "fullpath",   'f', optional_argument, NULL, 0, "<width>",   "Display the fullpath to the image object file."},
-{ 0, false, "directory",  'd', optional_argument, NULL, 0, "<width>",   "Display the directory with optional width for the image object file."},
-{ 0, false, "basename",   'b', optional_argument, NULL, 0, "<width>",   "Display the basename with optional width for the image object file."},
-{ 0, false, "symfile",    's', optional_argument, NULL, 0, "<width>",   "Display the fullpath to the image symbol file with optional width."},
-{ 0, false, "symfile-basename", 'S', optional_argument, NULL, 0, "<width>",   "Display the basename to the image symbol file with optional width."},
+{ LLDB_OPT_SET_1, false, "arch",       'a', optional_argument, NULL, 0, "<width>",   "Display the architecture when listing images."},
+{ LLDB_OPT_SET_1, false, "uuid",       'u', no_argument,       NULL, 0, NULL,        "Display the UUID when listing images."},
+{ LLDB_OPT_SET_1, false, "fullpath",   'f', optional_argument, NULL, 0, "<width>",   "Display the fullpath to the image object file."},
+{ LLDB_OPT_SET_1, false, "directory",  'd', optional_argument, NULL, 0, "<width>",   "Display the directory with optional width for the image object file."},
+{ LLDB_OPT_SET_1, false, "basename",   'b', optional_argument, NULL, 0, "<width>",   "Display the basename with optional width for the image object file."},
+{ LLDB_OPT_SET_1, false, "symfile",    's', optional_argument, NULL, 0, "<width>",   "Display the fullpath to the image symbol file with optional width."},
+{ LLDB_OPT_SET_1, false, "symfile-basename", 'S', optional_argument, NULL, 0, "<width>",   "Display the basename to the image symbol file with optional width."},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
@@ -1381,15 +1381,14 @@ protected:
 lldb::OptionDefinition
 CommandObjectImageLookup::CommandOptions::g_option_table[] =
 {
-{ 1, true,  "address",    'a', required_argument, NULL, 0, "<addr>",    "Lookup an address in one or more executable images."},
-{ 1, false, "offset",     'o', required_argument, NULL, 0, "<offset>",  "When looking up an address subtract <offset> from any addresses before doing the lookup."},
-{ 2, true,  "symbol",     's', required_argument, NULL, 0, "<name>",    "Lookup a symbol by name in the symbol tables in one or more executable images."},
-{ 2, false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
-{ 3, true,  "file",       'f', required_argument, NULL, 0, "<file>",    "Lookup a file by fullpath or basename in one or more executable images."},
-{ 3, false, "line",       'l', required_argument, NULL, 0, "<line>",    "Lookup a line number in a file (must be used in conjunction with --file)."},
-{ 3, false, "no-inlines", 'i', no_argument,       NULL, 0, NULL,        "Check inline line entries (must be used in conjunction with --file)."},
-{ 4, true,  "function",   'n', required_argument, NULL, 0, "<name>",    "Lookup a function by name in the debug symbols in one or more executable images."},
-{ 5, false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_1, true,  "address",    'a', required_argument, NULL, 0, "<addr>",    "Lookup an address in one or more executable images."},
+{ LLDB_OPT_SET_1, false, "offset",     'o', required_argument, NULL, 0, "<offset>",  "When looking up an address subtract <offset> from any addresses before doing the lookup."},
+{ LLDB_OPT_SET_2, true,  "symbol",     's', required_argument, NULL, 0, "<name>",    "Lookup a symbol by name in the symbol tables in one or more executable images."},
+{ LLDB_OPT_SET_2, false, "regex",      'r', no_argument,       NULL, 0, NULL,        "The <name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_3, true,  "file",       'f', required_argument, NULL, 0, "<file>",    "Lookup a file by fullpath or basename in one or more executable images."},
+{ LLDB_OPT_SET_3, false, "line",       'l', required_argument, NULL, 0, "<line>",    "Lookup a line number in a file (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_3, false, "no-inlines", 'i', no_argument,       NULL, 0, NULL,        "Check inline line entries (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_4, true,  "function",   'n', required_argument, NULL, 0, "<name>",    "Lookup a function by name in the debug symbols in one or more executable images."},
 { 0, false, NULL,           0, 0,                 NULL, 0, NULL, NULL }
 };
 

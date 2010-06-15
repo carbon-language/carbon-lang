@@ -38,7 +38,7 @@ CommandObjectFile::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectFile::CommandOptions::g_option_table[] =
 {
-    { 0, false, "arch", 'a', required_argument, NULL, 0, "<arch>", "Specify the architecture to launch."},
+    { LLDB_OPT_SET_1, false, "arch", 'a', required_argument, NULL, 0, "<arch>", "Specify the architecture to launch."},
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 

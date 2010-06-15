@@ -31,6 +31,7 @@ using namespace lldb_private;
 Options::Options () :
     m_getopt_table ()
 {
+    BuildValidOptionSets();
 }
 
 Options::~Options ()
@@ -160,6 +161,9 @@ Options::VerifyOptions (CommandReturnObject &result)
     return options_are_valid;
 }
 
+// This is called in the Options constructor, though we could call it lazily if that ends up being
+// a performance problem.
+
 void
 Options::BuildValidOptionSets ()
 {
@@ -173,32 +177,52 @@ Options::BuildValidOptionSets ()
         return;
 
     const lldb::OptionDefinition *full_options_table = GetDefinitions();
-    uint32_t usage_level = 0;
     m_required_options.resize(1);
     m_optional_options.resize(1);
-
-    for (int i = 0; i < num_options; ++i)
+    
+    // First count the number of option sets we've got.  Ignore LLDB_ALL_OPTION_SETS...
+    
+    uint32_t num_option_sets = 0;
+    
+    for (int i = 0; i < num_options; i++)
     {
-        // NOTE:  Assumption:  The full options table is ordered with usage level growing monotonically.
-        assert (full_options_table[i].usage_level >= usage_level);
-
-        if (full_options_table[i].usage_level > usage_level)
+        uint32_t this_usage_mask = full_options_table[i].usage_mask;
+        if (this_usage_mask == LLDB_OPT_SET_ALL)
         {
-            // start a new level
-            usage_level = full_options_table[i].usage_level;
-            m_required_options.resize(m_required_options.size()+1);
-            m_optional_options.resize(m_optional_options.size()+1);
+            if (num_option_sets == 0)
+                num_option_sets = 1;
         }
         else
         {
-            assert (m_required_options.empty() == false);
-            assert (m_optional_options.empty() == false);
+            for (int j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
+            {
+                if (this_usage_mask & 1 << j)
+                {
+                    if (num_option_sets <= j)
+                        num_option_sets = j + 1;
+                }
+            }
         }
+    }
 
-        if (full_options_table[i].required)
-            m_required_options.back().insert(full_options_table[i].short_option);
-        else
-            m_optional_options.back().insert(full_options_table[i].short_option);
+    if (num_option_sets > 0)
+    {
+        m_required_options.resize(num_option_sets);
+        m_optional_options.resize(num_option_sets);
+        
+        for (int i = 0; i < num_options; ++i)
+        {
+            for (int j = 0; j < num_option_sets; j++)
+            {
+                if (full_options_table[i].usage_mask & 1 << j)
+                {
+                    if (full_options_table[i].required)
+                        m_required_options[j].insert(full_options_table[i].short_option);
+                    else
+                        m_optional_options[j].insert(full_options_table[i].short_option);
+                }
+            }
+        }
     }
 }
 
@@ -206,6 +230,9 @@ uint32_t
 Options::NumCommandOptions ()
 {
     const lldb::OptionDefinition *full_options_table = GetDefinitions ();
+    if (full_options_table == NULL) 
+        return 0;
+        
     int i = 0;
 
     if (full_options_table != NULL)
@@ -352,54 +379,61 @@ Options::GenerateOptionUsage
     //                                                   <cmd> [options-for-level-1]
     //                                                   etc.
 
-    uint32_t usage_level = 0;
     const uint32_t num_options = NumCommandOptions();
+    if (num_options == 0)
+        return;
+        
+    BuildValidOptionSets ();
+    int num_option_sets = m_required_options.size();
+    
     uint32_t i;
-    for (i = 0; i < num_options; ++i)
+    
+    for (uint32_t opt_set = 0; opt_set < num_option_sets; ++opt_set)
     {
-        if (i==0 || full_options_table[i].usage_level > usage_level)
+        uint32_t opt_set_mask;
+        
+        opt_set_mask = 1 << opt_set;
+        if (opt_set > 0)
+            strm.Printf ("\n");
+        strm.Indent (name);
+        
+        for (i = 0; i < num_options; ++i)
         {
-            // start a new level
-            usage_level = full_options_table[i].usage_level;
-            if (usage_level > 0)
+            if (full_options_table[i].usage_mask & opt_set_mask)
             {
-                strm.Printf ("\n");
-            }
-            strm.Indent (name);
-        }
+                // Add current option to the end of out_stream.
 
-        // Add current option to the end of out_stream.
-
-        if (full_options_table[i].required)
-        {
-            if (full_options_table[i].option_has_arg == required_argument)
-            {
-                strm.Printf (" -%c %s",
-                            full_options_table[i].short_option,
-                            full_options_table[i].argument_name);
+                if (full_options_table[i].required)
+                {
+                    if (full_options_table[i].option_has_arg == required_argument)
+                    {
+                        strm.Printf (" -%c %s",
+                                    full_options_table[i].short_option,
+                                    full_options_table[i].argument_name);
+                    }
+                    else if (full_options_table[i].option_has_arg == optional_argument)
+                    {
+                        strm.Printf (" -%c [%s]",
+                                     full_options_table[i].short_option,
+                                     full_options_table[i].argument_name);
+                    }
+                    else
+                        strm.Printf (" -%c", full_options_table[i].short_option);
+                }
+                else
+                {
+                    if (full_options_table[i].option_has_arg == required_argument)
+                        strm.Printf (" [-%c %s]", full_options_table[i].short_option,
+                                           full_options_table[i].argument_name);
+                    else if (full_options_table[i].option_has_arg == optional_argument)
+                        strm.Printf (" [-%c [%s]]", full_options_table[i].short_option,
+                                           full_options_table[i].argument_name);
+                    else
+                        strm.Printf (" [-%c]", full_options_table[i].short_option);
+                }
             }
-            else if (full_options_table[i].option_has_arg == optional_argument)
-            {
-                strm.Printf (" -%c [%s]",
-                             full_options_table[i].short_option,
-                             full_options_table[i].argument_name);
-            }
-            else
-                strm.Printf (" -%c", full_options_table[i].short_option);
-        }
-        else
-        {
-            if (full_options_table[i].option_has_arg == required_argument)
-                strm.Printf (" [-%c %s]", full_options_table[i].short_option,
-                                   full_options_table[i].argument_name);
-            else if (full_options_table[i].option_has_arg == optional_argument)
-                strm.Printf (" [-%c [%s]]", full_options_table[i].short_option,
-                                   full_options_table[i].argument_name);
-            else
-                strm.Printf (" [-%c]", full_options_table[i].short_option);
         }
     }
-
     strm.Printf ("\n\n");
 
     // Now print out all the detailed information about the various options:  long form, short form and help text:
