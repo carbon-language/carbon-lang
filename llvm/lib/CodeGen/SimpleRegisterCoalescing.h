@@ -111,14 +111,15 @@ namespace llvm {
     /// physreg, this method always canonicalizes DestInt to be it.  The output
     /// "SrcInt" will not have been modified, so we can use this information
     /// below to update aliases.
-    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped);
+    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped,
+                       CoalescerPair &CP);
     
     /// SimpleJoin - Attempt to join the specified interval into this one. The
     /// caller of this method must guarantee that the RHS only contains a single
     /// value number and that the RHS is not defined by a copy from this
     /// interval.  This returns false if the intervals are not joinable, or it
     /// joins them and returns true.
-    bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS);
+    bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS, CoalescerPair &CP);
     
     /// Return true if the two specified registers belong to different register
     /// classes.  The registers may be either phys or virt regs.
@@ -210,11 +211,10 @@ namespace llvm {
     bool ValueLiveAt(LiveInterval::iterator LRItr, LiveInterval::iterator LREnd, 
                      SlotIndex defPoint) const;                                  
 
-    /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
-    /// the specified live interval is defined by a copy from the specified
-    /// register.
-    bool RangeIsDefinedByCopyFromReg(LiveInterval &li, LiveRange *LR,
-                                     unsigned Reg);
+    /// RangeIsDefinedByCopy - Return true if the specified live range of the
+    /// specified live interval is defined by a coalescable copy.
+    bool RangeIsDefinedByCopy(LiveInterval &li, LiveRange *LR,
+                              CoalescerPair &CP);
 
     /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a

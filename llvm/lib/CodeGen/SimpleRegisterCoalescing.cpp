@@ -1395,6 +1395,12 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     return false;  // Not coalescable.
   }
 
+  CoalescerPair CP(*tii_, *tri_);
+  if (!CP.setRegisters(CopyMI)) {
+    DEBUG(dbgs() << "\tNot coalescable.\n");
+    return false;
+  }
+
   bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
   bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
 
@@ -1722,7 +1728,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       DEBUG(dbgs() << "\tNot profitable!\n");
       return false;
     }
-  } else if (!JoinIntervals(DstInt, SrcInt, Swapped)) {
+  } else if (!JoinIntervals(DstInt, SrcInt, Swapped, CP)) {
     // Coalescing failed.
 
     // If definition of source is defined by trivial computation, try
@@ -1919,33 +1925,13 @@ static bool InVector(VNInfo *Val, const SmallVector<VNInfo*, 8> &V) {
   return std::find(V.begin(), V.end(), Val) != V.end();
 }
 
-static bool isValNoDefMove(const MachineInstr *MI, unsigned DR, unsigned SR,
-                           const TargetInstrInfo *TII,
-                           const TargetRegisterInfo *TRI) {
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
-    ;
-  else if (MI->isExtractSubreg()) {
-    DstReg = MI->getOperand(0).getReg();
-    SrcReg = MI->getOperand(1).getReg();
-  } else if (MI->isSubregToReg() ||
-             MI->isInsertSubreg()) {
-    DstReg = MI->getOperand(0).getReg();
-    SrcReg = MI->getOperand(2).getReg();
-  } else
-    return false;
-  return (SrcReg == SR || TRI->isSuperRegister(SR, SrcReg)) &&
-         (DstReg == DR || TRI->isSuperRegister(DR, DstReg));
-}
-
 /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
 /// the specified live interval is defined by a copy from the specified
 /// register.
-bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
-                                                           LiveRange *LR,
-                                                           unsigned Reg) {
-  unsigned SrcReg = li_->getVNInfoSourceReg(LR->valno);
-  if (SrcReg == Reg)
+bool SimpleRegisterCoalescing::RangeIsDefinedByCopy(LiveInterval &li,
+                                                    LiveRange *LR,
+                                                    CoalescerPair &CP) {
+  if (CP.isCoalescable(LR->valno->getCopy()))
     return true;
   // FIXME: Do isPHIDef and isDefAccurate both need to be tested?
   if ((LR->valno->isPHIDef() || !LR->valno->isDefAccurate()) &&
@@ -1954,7 +1940,7 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
     // It's a sub-register live interval, we may not have precise information.
     // Re-compute it.
     MachineInstr *DefMI = li_->getInstructionFromIndex(LR->start);
-    if (DefMI && isValNoDefMove(DefMI, li.reg, Reg, tii_, tri_)) {
+    if (CP.isCoalescable(DefMI)) {
       // Cache computed info.
       LR->valno->def = LR->start;
       LR->valno->setCopy(DefMI);
@@ -1986,7 +1972,8 @@ bool SimpleRegisterCoalescing::ValueLiveAt(LiveInterval::iterator LRItr,
 /// value number and that the RHS is not defined by a copy from this
 /// interval.  This returns false if the intervals are not joinable, or it
 /// joins them and returns true.
-bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
+bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS,
+                                          CoalescerPair &CP) {
   assert(RHS.containsOneValue());
 
   // Some number (potentially more than one) value numbers in the current
@@ -2028,7 +2015,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
         if (LHSIt->valno->hasRedefByEC())
           return false;
         // Copy from the RHS?
-        if (!RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg))
+        if (!RangeIsDefinedByCopy(LHS, LHSIt, CP))
           return false;    // Nope, bail out.
 
         if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
@@ -2072,7 +2059,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
             return false;
           // Otherwise, if this is a copy from the RHS, mark it as being merged
           // in.
-          if (RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg)) {
+          if (RangeIsDefinedByCopy(LHS, LHSIt, CP)) {
             if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
               // Here is an interesting situation:
               // BB1:
@@ -2171,7 +2158,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
 /// below to update aliases.
 bool
 SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
-                                        bool &Swapped) {
+                                        bool &Swapped, CoalescerPair &CP) {
   // Compute the final value assignment, assuming that the live ranges can be
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
@@ -2252,7 +2239,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
       // faster checks to see if the live ranges are coalescable.  This joiner
       // can't swap the LHS/RHS intervals though.
       if (!TargetRegisterInfo::isPhysicalRegister(RHS.reg)) {
-        return SimpleJoin(LHS, RHS);
+        return SimpleJoin(LHS, RHS, CP);
       } else {
         RHSValNoInfo = RHSValNoInfo0;
       }
@@ -2318,7 +2305,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
 
       // DstReg is known to be a register in the LHS interval.  If the src is
       // from the RHS interval, we can use its value #.
-      if (li_->getVNInfoSourceReg(VNI) != RHS.reg)
+      if (!CP.isCoalescable(VNI->getCopy()))
         continue;
 
       // Figure out the value # from the RHS.
@@ -2337,7 +2324,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
 
       // DstReg is known to be a register in the RHS interval.  If the src is
       // from the LHS interval, we can use its value #.
-      if (li_->getVNInfoSourceReg(VNI) != LHS.reg)
+      if (!CP.isCoalescable(VNI->getCopy()))
         continue;
 
       // Figure out the value # from the LHS.

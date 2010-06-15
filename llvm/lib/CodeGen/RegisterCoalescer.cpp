@@ -16,6 +16,8 @@
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Pass.h"
 
@@ -32,6 +34,151 @@ char RegisterCoalescer::ID = 0;
 // tool correctly!
 //
 RegisterCoalescer::~RegisterCoalescer() {}
+
+unsigned CoalescerPair::compose(unsigned a, unsigned b) const {
+  if (!a) return b;
+  if (!b) return a;
+  return tri_.composeSubRegIndices(a, b);
+}
+
+bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
+                                unsigned &Src, unsigned &Dst,
+                                unsigned &SrcSub, unsigned &DstSub) const {
+  if (MI->isExtractSubreg()) {
+    Dst = MI->getOperand(0).getReg();
+    DstSub = MI->getOperand(0).getSubReg();
+    Src = MI->getOperand(1).getReg();
+    SrcSub = compose(MI->getOperand(1).getSubReg(), MI->getOperand(2).getImm());
+  } else if (MI->isInsertSubreg() || MI->isSubregToReg()) {
+    Dst = MI->getOperand(0).getReg();
+    DstSub = compose(MI->getOperand(0).getSubReg(), MI->getOperand(3).getImm());
+    Src = MI->getOperand(2).getReg();
+    SrcSub = MI->getOperand(2).getSubReg();
+  } else if (!tii_.isMoveInstr(*MI, Src, Dst, SrcSub, DstSub)) {
+    return false;
+  }
+  return true;
+}
+
+bool CoalescerPair::setRegisters(const MachineInstr *MI) {
+  srcReg_ = dstReg_ = subIdx_ = 0;
+  newRC_ = 0;
+  flipped_ = false;
+
+  unsigned Src, Dst, SrcSub, DstSub;
+  if (!isMoveInstr(MI, Src, Dst, SrcSub, DstSub))
+    return false;
+  partial_ = SrcSub || DstSub;
+
+  // If one register is a physreg, it must be Dst.
+  if (TargetRegisterInfo::isPhysicalRegister(Src)) {
+    if (TargetRegisterInfo::isPhysicalRegister(Dst))
+      return false;
+    std::swap(Src, Dst);
+    std::swap(SrcSub, DstSub);
+    flipped_ = true;
+  }
+
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+
+  if (TargetRegisterInfo::isPhysicalRegister(Dst)) {
+    // Eliminate DstSub on a physreg.
+    if (DstSub) {
+      Dst = tri_.getSubReg(Dst, DstSub);
+      if (!Dst) return false;
+      DstSub = 0;
+    }
+
+    // Eliminate SrcSub by picking a corresponding Dst superregister.
+    if (SrcSub) {
+      Dst = tri_.getMatchingSuperReg(Dst, SrcSub, MRI.getRegClass(Src));
+      if (!Dst) return false;
+      SrcSub = 0;
+    } else if (!MRI.getRegClass(Src)->contains(Dst)) {
+      return false;
+    }
+  } else {
+    // Both registers are virtual.
+
+    // Identical sub to sub.
+    if (SrcSub == DstSub)
+      SrcSub = DstSub = 0;
+    else if (SrcSub && DstSub)
+      return false; // FIXME: Qreg:ssub_3 + Dreg:ssub_1 => QReg:dsub_1 + Dreg.
+
+    // There can be no SrcSub.
+    if (SrcSub) {
+      std::swap(Src, Dst);
+      DstSub = SrcSub;
+      SrcSub = 0;
+      assert(!flipped_ && "Unexpected flip");
+      flipped_ = true;
+    }
+
+    // Find the new register class.
+    const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
+    const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
+    if (DstSub)
+      newRC_ = tri_.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
+    else
+      newRC_ = getCommonSubClass(DstRC, SrcRC);
+    if (!newRC_)
+      return false;
+  }
+  // Check our invariants
+  assert(TargetRegisterInfo::isVirtualRegister(Src) && "Src must be virtual");
+  assert(!(TargetRegisterInfo::isPhysicalRegister(Dst) && DstSub) &&
+         "Cannot have a physical SubIdx");
+  srcReg_ = Src;
+  dstReg_ = Dst;
+  subIdx_ = DstSub;
+  return true;
+}
+
+bool CoalescerPair::flip() {
+  if (subIdx_ || TargetRegisterInfo::isPhysicalRegister(dstReg_))
+    return false;
+  std::swap(srcReg_, dstReg_);
+  flipped_ = !flipped_;
+  return true;
+}
+
+bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
+  if (!MI)
+    return false;
+  unsigned Src, Dst, SrcSub, DstSub;
+  if (!isMoveInstr(MI, Src, Dst, SrcSub, DstSub))
+    return false;
+
+  // Find the virtual register that is srcReg_.
+  if (Dst == srcReg_) {
+    std::swap(Src, Dst);
+    std::swap(SrcSub, DstSub);
+  } else if (Src != srcReg_) {
+    return false;
+  }
+
+  // Now check that Dst matches dstReg_.
+  if (TargetRegisterInfo::isPhysicalRegister(dstReg_)) {
+    if (!TargetRegisterInfo::isPhysicalRegister(Dst))
+      return false;
+    assert(!subIdx_ && "Inconsistent CoalescerPair state.");
+    // DstSub could be set for a physreg from INSERT_SUBREG.
+    if (DstSub)
+      Dst = tri_.getSubReg(Dst, DstSub);
+    // Full copy of Src.
+    if (!SrcSub)
+      return dstReg_ == Dst;
+    // This is a partial register copy. Check that the parts match.
+    return tri_.getSubReg(dstReg_, SrcSub) == Dst;
+  } else {
+    // dstReg_ is virtual.
+    if (dstReg_ != Dst)
+      return false;
+    // Registers match, do the subregisters line up?
+    return compose(subIdx_, SrcSub) == DstSub;
+  }
+}
 
 // Because of the way .a files work, we must force the SimpleRC
 // implementation to be pulled in if the RegisterCoalescer classes are
