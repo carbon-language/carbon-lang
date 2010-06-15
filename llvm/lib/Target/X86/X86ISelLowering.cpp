@@ -8543,6 +8543,15 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addReg(0);
     MIB = BuildMI(BB, DL, TII->get(X86::CALL64m));
     addDirectMem(MIB, X86::RDI).addReg(0);
+  } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rm), X86::EAX)
+    .addReg(0)
+    .addImm(0).addReg(0)
+    .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
+                      MI->getOperand(3).getTargetFlags())
+    .addReg(0);
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL32m));
+    addDirectMem(MIB, X86::EAX).addReg(0);
   } else {
     MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rm), X86::EAX)
     .addReg(TII->getGlobalBaseReg(F))
