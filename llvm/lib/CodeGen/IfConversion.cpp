@@ -167,8 +167,7 @@ namespace {
                          std::vector<IfcvtToken*> &Tokens);
     bool FeasibilityAnalysis(BBInfo &BBI, SmallVectorImpl<MachineOperand> &Cond,
                              bool isTriangle = false, bool RevBranch = false);
-    bool AnalyzeBlocks(MachineFunction &MF,
-                       std::vector<IfcvtToken*> &Tokens);
+    void AnalyzeBlocks(MachineFunction &MF, std::vector<IfcvtToken*> &Tokens);
     void InvalidatePreds(MachineBasicBlock *BB);
     void RemoveExtraEdges(BBInfo &BBI);
     bool IfConvertSimple(BBInfo &BBI, IfcvtKind Kind);
@@ -253,7 +252,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   while (IfCvtLimit == -1 || (int)NumIfCvts < IfCvtLimit) {
     // Do an initial analysis for each basic block and find all the potential
     // candidates to perform if-conversion.
-    bool Change = AnalyzeBlocks(MF, Tokens);
+    bool Change = false;
+    AnalyzeBlocks(MF, Tokens);
     while (!Tokens.empty()) {
       IfcvtToken *Token = Tokens.back();
       Tokens.pop_back();
@@ -802,11 +802,9 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
 }
 
 /// AnalyzeBlocks - Analyze all blocks and find entries for all if-conversion
-/// candidates. It returns true if any CFG restructuring is done to expose more
-/// if-conversion opportunities.
-bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
+/// candidates.
+void IfConverter::AnalyzeBlocks(MachineFunction &MF,
                                 std::vector<IfcvtToken*> &Tokens) {
-  bool Change = false;
   std::set<MachineBasicBlock*> Visited;
   for (unsigned i = 0, e = Roots.size(); i != e; ++i) {
     for (idf_ext_iterator<MachineBasicBlock*> I=idf_ext_begin(Roots[i],Visited),
@@ -818,8 +816,6 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
 
   // Sort to favor more complex ifcvt scheme.
   std::stable_sort(Tokens.begin(), Tokens.end(), IfcvtTokenCmp);
-
-  return Change;
 }
 
 /// canFallThroughTo - Returns true either if ToBB is the next block after BB or
