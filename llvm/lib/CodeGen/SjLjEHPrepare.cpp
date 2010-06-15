@@ -71,7 +71,7 @@ namespace {
     void insertCallSiteStore(Instruction *I, int Number, Value *CallSite);
     void markInvokeCallSite(InvokeInst *II, int InvokeNo, Value *CallSite,
                             SwitchInst *CatchSwitch);
-    void splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
+    void splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
     bool insertSjLjEHSupport(Function &F);
   };
 } // end anonymous namespace
@@ -182,7 +182,7 @@ static void MarkBlocksLiveIn(BasicBlock *BB, std::set<BasicBlock*> &LiveBBs) {
 /// FIXME: Move this function to a common utility file (Local.cpp?) so
 /// both SjLj and LowerInvoke can use it.
 void SjLjEHPass::
-splitLiveRangesLiveAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
+splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
   // First step, split all critical edges from invoke instructions.
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
     InvokeInst *II = Invokes[i];
@@ -364,7 +364,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // we spill into a stack location, guaranteeing that there is nothing live
     // across the unwind edge.  This process also splits all critical edges
     // coming out of invoke's.
-    splitLiveRangesLiveAcrossInvokes(Invokes);
+    splitLiveRangesAcrossInvokes(Invokes);
 
     BasicBlock *EntryBB = F.begin();
     // Create an alloca for the incoming jump buffer ptr and the new jump buffer
