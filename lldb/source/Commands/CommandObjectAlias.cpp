@@ -15,8 +15,8 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObjectMultiword.h"
-#include "lldb/Core/Args.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandInterpreter.h"

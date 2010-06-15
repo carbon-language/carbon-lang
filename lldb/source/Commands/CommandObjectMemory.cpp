@@ -13,10 +13,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandContext.h"

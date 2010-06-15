@@ -15,7 +15,7 @@
 // Project includes
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
 using namespace lldb;

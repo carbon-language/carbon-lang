@@ -22,7 +22,7 @@
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Interpreter/StateVariable.h"
 #include "lldb/Core/Event.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/StringList.h"
 
 namespace lldb_private {

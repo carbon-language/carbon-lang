@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 
 // C Includes
 // C++ Includes

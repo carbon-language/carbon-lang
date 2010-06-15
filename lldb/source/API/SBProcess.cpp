@@ -12,7 +12,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
 
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/State.h"

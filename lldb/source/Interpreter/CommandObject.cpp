@@ -17,7 +17,7 @@
 #include <ctype.h>
 
 #include "lldb/Core/Address.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 
 // These are for the Sourcename completers.
 // FIXME: Make a separate file for the completers.

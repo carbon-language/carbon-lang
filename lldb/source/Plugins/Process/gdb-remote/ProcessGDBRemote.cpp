@@ -26,7 +26,7 @@
 // Other libraries and framework includes
 
 #include "lldb/Breakpoint/WatchpointLocation.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"

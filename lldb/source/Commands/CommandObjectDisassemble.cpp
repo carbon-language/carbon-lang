@@ -14,12 +14,12 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/AddressRange.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Core/Disassembler.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Symbol/Symbol.h"

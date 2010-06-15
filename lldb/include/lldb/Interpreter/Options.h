@@ -21,12 +21,12 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-defines.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class Options Options.h "lldb/Core/Options.h"
+/// @class Options Options.h "lldb/Interpreter/Options.h"
 /// @brief A command line option parsing protocol class.
 ///
 /// Options is designed to be subclassed to contain all needed

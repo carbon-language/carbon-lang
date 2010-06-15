@@ -18,7 +18,7 @@
 // Project includes
 
 #include "lldb/lldb-types.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"

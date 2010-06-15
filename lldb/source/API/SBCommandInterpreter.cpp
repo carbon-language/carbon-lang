@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/lldb-types.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Interpreter/CommandInterpreter.h"

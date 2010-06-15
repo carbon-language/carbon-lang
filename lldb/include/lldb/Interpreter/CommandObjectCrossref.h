@@ -15,7 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 
 namespace lldb_private {
 

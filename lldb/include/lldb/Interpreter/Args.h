@@ -48,7 +48,7 @@ struct OptionArgElement
 typedef std::vector<OptionArgElement> OptionElementVector;
 
 //----------------------------------------------------------------------
-/// @class Args Args.h "lldb/Core/Args.h"
+/// @class Args Args.h "lldb/Interpreter/Args.h"
 /// @brief A command line argument class.
 ///
 /// The Args class is designed to be fed a command line. The

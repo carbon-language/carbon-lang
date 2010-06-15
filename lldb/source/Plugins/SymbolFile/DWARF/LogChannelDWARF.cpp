@@ -9,7 +9,7 @@
 
 #include "LogChannelDWARF.h"
 
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
 #include "SymbolFileDWARF.h"

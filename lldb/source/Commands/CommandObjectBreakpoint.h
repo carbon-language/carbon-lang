@@ -20,7 +20,7 @@
 // Project includes
 #include "lldb/Core/Address.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
-#include "lldb/Core/Options.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/STLUtils.h"
 
 namespace lldb_private {

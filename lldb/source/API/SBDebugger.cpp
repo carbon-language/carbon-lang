@@ -10,7 +10,7 @@
 #include "lldb/API/SBDebugger.h"
 
 #include "lldb/lldb-include.h"
-#include "lldb/Core/Args.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Target/Process.h"
