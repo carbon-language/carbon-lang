@@ -526,17 +526,17 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += a + " - " + b;
     break;
   case OpMulN:
-    b = Duplicate(nElts << quad, typestr, "b");
+    b = Duplicate(nElts << (int)quad, typestr, "b");
   case OpMul:
     s += a + " * " + b;
     break;
   case OpMlaN:
-    c = Duplicate(nElts << quad, typestr, "c");
+    c = Duplicate(nElts << (int)quad, typestr, "c");
   case OpMla:
     s += a + " + ( " + b + " * " + c + " )";
     break;
   case OpMlsN:
-    c = Duplicate(nElts << quad, typestr, "c");
+    c = Duplicate(nElts << (int)quad, typestr, "c");
   case OpMls:
     s += a + " - ( " + b + " * " + c + " )";
     break;
@@ -590,7 +590,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "(__neon_int64x1_t)(((__neon_int64x2_t)" + a + ")[0])";
     break;
   case OpDup:
-    s += Duplicate(nElts << quad, typestr, a);
+    s += Duplicate(nElts << (int)quad, typestr, a);
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
@@ -600,7 +600,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpRev16:
     s += "__builtin_shufflevector(" + a + ", " + a;
-    for (unsigned i = 2; i <= nElts << quad; i += 2)
+    for (unsigned i = 2; i <= nElts << (int)quad; i += 2)
       for (unsigned j = 0; j != 2; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
@@ -608,14 +608,14 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpRev32:
     nElts >>= 1;
     s += "__builtin_shufflevector(" + a + ", " + a;
-    for (unsigned i = nElts; i <= nElts << (1 + quad); i += nElts)
+    for (unsigned i = nElts; i <= nElts << (1 + (int)quad); i += nElts)
       for (unsigned j = 0; j != nElts; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
     break;
   case OpRev64:
     s += "__builtin_shufflevector(" + a + ", " + a;
-    for (unsigned i = nElts; i <= nElts << quad; i += nElts)
+    for (unsigned i = nElts; i <= nElts << (int)quad; i += nElts)
       for (unsigned j = 0; j != nElts; ++j)
         s += ", " + utostr(i - j - 1);
     s += ")";
@@ -953,15 +953,15 @@ static unsigned RangeFromType(StringRef typestr) {
   
   switch (type) {
     case 'c':
-      return (8 << quad) - 1;
+      return (8 << (int)quad) - 1;
     case 'h':
     case 's':
-      return (4 << quad) - 1;
+      return (4 << (int)quad) - 1;
     case 'f':
     case 'i':
-      return (2 << quad) - 1;
+      return (2 << (int)quad) - 1;
     case 'l':
-      return (1 << quad) - 1;
+      return (1 << (int)quad) - 1;
     default:
       throw "unhandled type!";
       break;
