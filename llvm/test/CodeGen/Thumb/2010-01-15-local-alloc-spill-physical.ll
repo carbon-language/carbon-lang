@@ -1,4 +1,3 @@
-; RUN: llc < %s -regalloc=local -relocation-model=pic | FileCheck %s
 ; RUN: llc < %s -regalloc=fast -relocation-model=pic | FileCheck %s
 
 target triple = "thumbv6-apple-darwin10"

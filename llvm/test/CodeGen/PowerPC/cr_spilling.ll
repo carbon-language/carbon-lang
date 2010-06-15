@@ -1,4 +1,3 @@
-; RUN: llc < %s -march=ppc32 -regalloc=local -O0 -relocation-model=pic -o -
 ; RUN: llc < %s -march=ppc32 -regalloc=fast -O0 -relocation-model=pic -o -
 ; PR1638
 

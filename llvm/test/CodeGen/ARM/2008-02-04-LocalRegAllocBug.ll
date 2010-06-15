@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=arm-linux-gnueabi -regalloc=local
 ; RUN: llc < %s -mtriple=arm-linux-gnueabi -regalloc=fast
 ; PR1925
 

@@ -1,4 +1,3 @@
-; RUN-XFAIL: llc < %s -O0 -regalloc=local | FileCheck %s
 ; RUN: llc < %s -O0 -regalloc=fast | FileCheck %s
 ; PR6520
 

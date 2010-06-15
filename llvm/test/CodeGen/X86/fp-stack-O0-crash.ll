@@ -1,4 +1,3 @@
-; RUN: llc %s -O0 -fast-isel -regalloc=local -o -
 ; RUN: llc %s -O0 -fast-isel -regalloc=fast -o -
 ; PR4767
 

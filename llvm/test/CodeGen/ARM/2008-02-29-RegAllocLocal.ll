@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=local
 ; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=fast
 ; PR1925
 

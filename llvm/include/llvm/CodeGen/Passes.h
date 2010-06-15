@@ -90,12 +90,6 @@ namespace llvm {
   ///
   FunctionPass *createRegisterAllocator(CodeGenOpt::Level OptLevel);
 
-  /// LocalRegisterAllocation Pass - This pass register allocates the input code
-  /// a basic block at a time, yielding code better than the simple register
-  /// allocator, but not as good as a global allocator.
-  ///
-  FunctionPass *createLocalRegisterAllocator();
-
   /// FastRegisterAllocation Pass - This pass register allocates as fast as
   /// possible. It is best suited for debug code where live ranges are short.
   ///

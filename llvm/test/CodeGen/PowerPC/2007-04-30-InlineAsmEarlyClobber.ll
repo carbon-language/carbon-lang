@@ -1,5 +1,4 @@
 ; RUN: llc < %s | FileCheck %s
-; RUN: llc < %s -regalloc=local | FileCheck %s
 ; RUN: llc < %s -regalloc=fast | FileCheck %s
 ; The first argument of subfc must not be the same as any other register.
 

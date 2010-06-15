@@ -1594,22 +1594,22 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
    different register allocators:</p>
 
 <ul>
-  <li><i>Simple</i> &mdash; This is a very simple implementation that does not
-      keep values in registers across instructions. This register allocator
-      immediately spills every value right after it is computed, and reloads all
-      used operands from memory to temporary registers before each
-      instruction.</li>
-
-  <li><i>Local</i> &mdash; This register allocator is an improvement on the
-      <i>Simple</i> implementation. It allocates registers on a basic block
-      level, attempting to keep values in registers and reusing registers as
-      appropriate.</li>
-
   <li><i>Linear Scan</i> &mdash; <i>The default allocator</i>. This is the
       well-know linear scan register allocator. Whereas the
       <i>Simple</i> and <i>Local</i> algorithms use a direct mapping
       implementation technique, the <i>Linear Scan</i> implementation
       uses a spiller in order to place load and stores.</li>
+
+  <li><i>Fast</i> &mdash; This register allocator is the default for debug
+      builds. It allocates registers on a basic block level, attempting to keep
+      values in registers and reusing registers as appropriate.</li>
+
+  <li><i>PBQP</i> &mdash; A Partitioned Boolean Quadratic Programming (PBQP)
+      based register allocator. This allocator works by constructing a PBQP
+      problem representing the register allocation problem under consideration,
+      solving this using a PBQP solver, and mapping the solution back to a
+      register assignment.</li>
+
 </ul>
 
 <p>The type of register allocator used in <tt>llc</tt> can be chosen with the
@@ -1617,9 +1617,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 
 <div class="doc_code">
 <pre>
-$ llc -regalloc=simple file.bc -o sp.s;
-$ llc -regalloc=local file.bc -o lc.s;
 $ llc -regalloc=linearscan file.bc -o ln.s;
+$ llc -regalloc=fast file.bc -o fa.s;
+$ llc -regalloc=pbqp file.bc -o pbqp.s;
 </pre>
 </div>
 

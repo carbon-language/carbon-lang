@@ -1,4 +1,3 @@
-; RUN: llc < %s -O0 -verify-machineinstrs -regalloc=local
 ; RUN: llc < %s -O0 -verify-machineinstrs -regalloc=fast
 ; rdar://problem/7948106
 ;; This test would spill %R4 before the call to zz, but it forgot to move the

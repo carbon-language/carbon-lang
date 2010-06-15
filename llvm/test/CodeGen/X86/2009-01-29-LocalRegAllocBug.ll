@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin9.6 -regalloc=local -disable-fp-elim
 ; RUN: llc < %s -mtriple=i386-apple-darwin9.6 -regalloc=fast -disable-fp-elim
 ; rdar://6538384
 

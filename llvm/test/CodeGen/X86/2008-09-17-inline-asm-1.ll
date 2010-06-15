@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s
-; RUN: llc < %s -march=x86 -regalloc=local | FileCheck %s
 ; RUN: llc < %s -march=x86 -regalloc=fast | FileCheck %s
 
 ; %0 must not be put in EAX or EDX.

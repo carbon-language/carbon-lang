@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -O0 -regalloc=local | not grep sil
 ; RUN: llc < %s -mtriple=i386-apple-darwin -O0 -regalloc=fast | not grep sil
 ; rdar://6787136
 

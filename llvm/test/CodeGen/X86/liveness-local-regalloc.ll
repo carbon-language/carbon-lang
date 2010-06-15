@@ -1,4 +1,3 @@
-; RUN: llc < %s -O3 -regalloc=local -mtriple=x86_64-apple-darwin10
 ; RUN: llc < %s -O3 -regalloc=fast -mtriple=x86_64-apple-darwin10
 ; <rdar://problem/7755473>
 

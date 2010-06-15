@@ -1,4 +1,3 @@
-; RUN: llc -regalloc=local %s -o %t
 ; RUN: llc -regalloc=fast %s -o %t
 ; PR7066
 

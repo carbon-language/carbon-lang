@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -regalloc=local
 ; RUN: llc < %s -mtriple=i386-apple-darwin -regalloc=fast
 
 @_ZTVN10Evaluation10GridOutputILi3EEE = external constant [5 x i32 (...)*]		; <[5 x i32 (...)*]*> [#uses=1]
