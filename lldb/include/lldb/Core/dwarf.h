@@ -449,23 +449,24 @@ typedef uint32_t    dw_offset_t;    // Dwarf Debug Information Entry offset for 
 
 /* [7.12] Figure 27 "Language encodings" (p. 143) in DWARFv3 draft 8 */
 
-#define DW_LANG_C89            0x1
-#define DW_LANG_C              0x2
-#define DW_LANG_Ada83          0x3
-#define DW_LANG_C_plus_plus    0x4
-#define DW_LANG_Cobol74        0x5
-#define DW_LANG_Cobol85        0x6
-#define DW_LANG_Fortran77      0x7
-#define DW_LANG_Fortran90      0x8
-#define DW_LANG_Pascal83       0x9
-#define DW_LANG_Modula2        0xA
-#define DW_LANG_Java           0xB
-#define DW_LANG_C99            0xC
-#define DW_LANG_Ada95          0xD
-#define DW_LANG_Fortran95      0xE
-#define DW_LANG_PLI            0xF
-#define DW_LANG_lo_user     0x8000
-#define DW_LANG_hi_user     0xFFFF
+#define DW_LANG_C89               0x1
+#define DW_LANG_C                 0x2
+#define DW_LANG_Ada83             0x3
+#define DW_LANG_C_plus_plus       0x4
+#define DW_LANG_Cobol74           0x5
+#define DW_LANG_Cobol85           0x6
+#define DW_LANG_Fortran77         0x7
+#define DW_LANG_Fortran90         0x8
+#define DW_LANG_Pascal83          0x9
+#define DW_LANG_Modula2           0xA
+#define DW_LANG_Java              0xB
+#define DW_LANG_C99               0xC
+#define DW_LANG_Ada95             0xD
+#define DW_LANG_Fortran95         0xE
+#define DW_LANG_PLI               0xF
+#define DW_LANG_lo_user        0x8000
+#define DW_LANG_hi_user        0xFFFF
+#define DW_LANG_MIPS_Assembler 0x8001
 
 /* [7.13], "Address Class Encodings" (p. 144) in DWARFv3 draft 8 */
 
