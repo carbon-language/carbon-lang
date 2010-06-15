@@ -76,15 +76,15 @@
 // FIXME: I'm sure there's some #define magic that can create all 32 sets on the
 // fly.  That would have the added benefit of making this unreadable.
 #define LLDB_MAX_NUM_OPTION_SETS        32
-#define LLDB_OPT_SET_ALL            0xFFFFFFFF
-#define LLDB_OPT_SET_1                1 << 0
-#define LLDB_OPT_SET_2                1 << 1
-#define LLDB_OPT_SET_3                1 << 2
-#define LLDB_OPT_SET_4                1 << 3
-#define LLDB_OPT_SET_5                1 << 4
-#define LLDB_OPT_SET_6                1 << 5
-#define LLDB_OPT_SET_7                1 << 6
-#define LLDB_OPT_SET_8                1 << 7
+#define LLDB_OPT_SET_ALL                0xFFFFFFFF
+#define LLDB_OPT_SET_1                  (1 << 0)
+#define LLDB_OPT_SET_2                  (1 << 1)
+#define LLDB_OPT_SET_3                  (1 << 2)
+#define LLDB_OPT_SET_4                  (1 << 3)
+#define LLDB_OPT_SET_5                  (1 << 4)
+#define LLDB_OPT_SET_6                  (1 << 5)
+#define LLDB_OPT_SET_7                  (1 << 6)
+#define LLDB_OPT_SET_8                  (1 << 7)
 
 #if defined(__cplusplus)
 
