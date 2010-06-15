@@ -11,11 +11,11 @@ entry:
   %0 = getelementptr inbounds %foo* %quat_addr, i32 0, i32 0 ; <<4 x float>*> [#uses=1]
   store <4 x float> %quat.0, <4 x float>* %0
   %1 = call arm_aapcs_vfpcc  <4 x float> @quux(%foo* %quat_addr) nounwind ; <<4 x float>> [#uses=3]
-;CHECK: vmov.f32
-;CHECK: vmov.f32
   %2 = fmul <4 x float> %1, %1                    ; <<4 x float>> [#uses=2]
   %3 = shufflevector <4 x float> %2, <4 x float> undef, <2 x i32> <i32 0, i32 1> ; <<2 x float>> [#uses=1]
   %4 = shufflevector <4 x float> %2, <4 x float> undef, <2 x i32> <i32 2, i32 3> ; <<2 x float>> [#uses=1]
+;CHECK-NOT: vmov
+;CHECK: vpadd
   %5 = call <2 x float> @llvm.arm.neon.vpadd.v2f32(<2 x float> %3, <2 x float> %4) nounwind ; <<2 x float>> [#uses=2]
   %6 = call <2 x float> @llvm.arm.neon.vpadd.v2f32(<2 x float> %5, <2 x float> %5) nounwind ; <<2 x float>> [#uses=2]
   %7 = shufflevector <2 x float> %6, <2 x float> %6, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=2]

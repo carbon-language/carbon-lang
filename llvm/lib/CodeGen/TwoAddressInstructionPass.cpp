@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -1183,11 +1184,8 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
       MachineInstr *UseMI = &*UI;
-      // FIXME: For now require that the destination subregs match the subregs
-      // being extracted.
       if (!UseMI->isExtractSubreg() ||
           UseMI->getOperand(0).getReg() != DstReg ||
-          UseMI->getOperand(0).getSubReg() != UseMI->getOperand(2).getImm() ||
           UseMI->getOperand(1).getSubReg() != 0) {
         CanCoalesce = false;
         break;
@@ -1198,40 +1196,92 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     if (!CanCoalesce || SubIndices.size() < 2)
       continue;
 
-    // FIXME: For now require that the src and dst registers are in the
-    // same regclass.
-    if (MRI->getRegClass(SrcReg) != MRI->getRegClass(DstReg))
+    std::sort(SubIndices.begin(), SubIndices.end());
+    unsigned NewSrcSubIdx = 0;
+    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SubIndices,
+                                      NewSrcSubIdx))
       continue;
 
-    std::sort(SubIndices.begin(), SubIndices.end());
-    unsigned NewSubIdx = 0;
-    if (TRI->canCombineSubRegIndices(MRI->getRegClass(SrcReg), SubIndices,
-                                     NewSubIdx)) {
-      bool Proceed = true;
-      if (NewSubIdx)
-        for (MachineRegisterInfo::reg_nodbg_iterator
-               RI = MRI->reg_nodbg_begin(SrcReg), RE = MRI->reg_nodbg_end();
-             RI != RE; ) {
-          MachineOperand &MO = RI.getOperand();
-          ++RI;
-          // FIXME: If the sub-registers do not combine to the whole
-          // super-register, i.e. NewSubIdx != 0, and any of the use has a
-          // sub-register index, then abort the coalescing attempt.
-          if (MO.getSubReg()) {
-            Proceed = false;
-            break;
-          }
-        }
-      if (Proceed)
-        for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-               RE = MRI->reg_end(); RI != RE; ) {
-          MachineOperand &MO = RI.getOperand();
-          ++RI;
-          MO.setReg(DstReg);
-          if (NewSubIdx)
-            MO.setSubReg(NewSubIdx);
-        }
+    // Now that we know that all the uses are extract_subregs and that those
+    // subregs can somehow be combined, scan all the extract_subregs again to
+    // make sure the subregs are in the right order and can be composed.
+    // Also keep track of the destination subregisters so we can make sure
+    // that those can be combined.
+    SubIndices.clear();
+    MachineInstr *SomeMI = 0;
+    CanCoalesce = true;
+    for (MachineRegisterInfo::use_nodbg_iterator
+           UI = MRI->use_nodbg_begin(SrcReg),
+           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
+      MachineInstr *UseMI = &*UI;
+      assert(UseMI->isExtractSubreg());
+      unsigned DstSubIdx = UseMI->getOperand(0).getSubReg();
+      unsigned SrcSubIdx = UseMI->getOperand(2).getImm();
+      assert(DstSubIdx != 0 && "missing subreg from RegSequence elimination");
+      if (TRI->composeSubRegIndices(NewSrcSubIdx, DstSubIdx) != SrcSubIdx) {
+        CanCoalesce = false;
+        break;
       }
+      SubIndices.push_back(DstSubIdx);
+      // Keep track of one of the uses.
+      SomeMI = UseMI;
+    }
+    if (!CanCoalesce)
+      continue;
+
+    // Check that the destination subregisters can also be combined.
+    std::sort(SubIndices.begin(), SubIndices.end());
+    unsigned NewDstSubIdx = 0;
+    if (!TRI->canCombineSubRegIndices(MRI->getRegClass(DstReg), SubIndices,
+                                      NewDstSubIdx))
+      continue;
+
+    // If neither source nor destination can be combined to the full register,
+    // just give up.  This could be improved if it ever matters.
+    if (NewSrcSubIdx != 0 && NewDstSubIdx != 0)
+      continue;
+
+    // Insert a copy or an extract to replace the original extracts.
+    MachineBasicBlock::iterator InsertLoc = SomeMI;
+    if (NewSrcSubIdx) {
+      // Insert an extract subreg.
+      BuildMI(*SomeMI->getParent(), InsertLoc, SomeMI->getDebugLoc(),
+              TII->get(TargetOpcode::EXTRACT_SUBREG), DstReg)
+        .addReg(SrcReg).addImm(NewSrcSubIdx);
+    } else if (NewDstSubIdx) {
+      // Do a subreg insertion.
+      BuildMI(*SomeMI->getParent(), InsertLoc, SomeMI->getDebugLoc(),
+              TII->get(TargetOpcode::INSERT_SUBREG), DstReg)
+        .addReg(DstReg).addReg(SrcReg).addImm(NewDstSubIdx);
+    } else {
+      // Insert a copy.
+      bool Emitted =
+        TII->copyRegToReg(*SomeMI->getParent(), InsertLoc, DstReg, SrcReg,
+                          MRI->getRegClass(DstReg), MRI->getRegClass(SrcReg),
+                          SomeMI->getDebugLoc());
+      (void)Emitted;
+    }
+    MachineBasicBlock::iterator CopyMI = prior(InsertLoc);
+
+    // Remove all the old extract instructions.
+    for (MachineRegisterInfo::use_nodbg_iterator
+           UI = MRI->use_nodbg_begin(SrcReg),
+           UE = MRI->use_nodbg_end(); UI != UE; ) {
+      MachineInstr *UseMI = &*UI;
+      ++UI;
+      if (UseMI == CopyMI)
+        continue;
+      assert(UseMI->isExtractSubreg());
+      // Move any kills to the new copy or extract instruction.
+      if (UseMI->getOperand(1).isKill()) {
+        MachineOperand *KillMO = CopyMI->findRegisterUseOperand(SrcReg);
+        KillMO->setIsKill();
+        if (LV)
+          // Update live variables
+          LV->replaceKillInstruction(SrcReg, UseMI, &*CopyMI);
+      }
+      UseMI->eraseFromParent();
+    }
   }
 }
 
