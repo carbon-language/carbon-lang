@@ -759,7 +759,10 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     else
       return false;
 
-    AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg));
+    MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
+    MIB.addReg(SrcReg);
+    if (Opc != ARM::VMOVQQ && Opc != ARM::VMOVQQQQ)
+      AddDefaultPred(MIB);
   }
 
   return true;
