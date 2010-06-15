@@ -148,6 +148,7 @@ public:
     Kind = tok::unknown;
     Flags = 0;
     PtrData = 0;
+    UintData = 0;
     Loc = SourceLocation();
   }
 

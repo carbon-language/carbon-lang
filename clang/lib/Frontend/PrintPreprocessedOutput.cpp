@@ -392,10 +392,9 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                                     PrintPPOutputPPCallbacks *Callbacks,
                                     llvm::raw_ostream &OS) {
   char Buffer[256];
-  Token PrevPrevTok;
-  Token PrevTok;
-  PrevPrevTok.setKind(tok::unknown);
-  PrevTok.setKind(tok::unknown);
+  Token PrevPrevTok, PrevTok;
+  PrevPrevTok.startToken();
+  PrevTok.startToken();
   while (1) {
 
     // If this token is at the start of a line, emit newlines if needed.
