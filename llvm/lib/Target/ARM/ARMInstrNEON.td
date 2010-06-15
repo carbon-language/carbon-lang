@@ -2820,34 +2820,34 @@ def  VMOVQQQQ : PseudoInst<(outs QQQQPR:$dst), (ins QQQQPR:$src),
 
 // VMOV_get_imm8 xform function: convert build_vector to VMOV.i8 imm.
 def VMOV_get_imm8 : SDNodeXForm<build_vector, [{
-  return ARM::getNEONModImm(N, 1, *CurDAG);
+  return ARM::getNEONModImm(N, 1, true, *CurDAG);
 }]>;
 def vmovImm8 : PatLeaf<(build_vector), [{
-  return ARM::getNEONModImm(N, 1, *CurDAG).getNode() != 0;
+  return ARM::getNEONModImm(N, 1, true, *CurDAG).getNode() != 0;
 }], VMOV_get_imm8>;
 
 // VMOV_get_imm16 xform function: convert build_vector to VMOV.i16 imm.
 def VMOV_get_imm16 : SDNodeXForm<build_vector, [{
-  return ARM::getNEONModImm(N, 2, *CurDAG);
+  return ARM::getNEONModImm(N, 2, true, *CurDAG);
 }]>;
 def vmovImm16 : PatLeaf<(build_vector), [{
-  return ARM::getNEONModImm(N, 2, *CurDAG).getNode() != 0;
+  return ARM::getNEONModImm(N, 2, true, *CurDAG).getNode() != 0;
 }], VMOV_get_imm16>;
 
 // VMOV_get_imm32 xform function: convert build_vector to VMOV.i32 imm.
 def VMOV_get_imm32 : SDNodeXForm<build_vector, [{
-  return ARM::getNEONModImm(N, 4, *CurDAG);
+  return ARM::getNEONModImm(N, 4, true, *CurDAG);
 }]>;
 def vmovImm32 : PatLeaf<(build_vector), [{
-  return ARM::getNEONModImm(N, 4, *CurDAG).getNode() != 0;
+  return ARM::getNEONModImm(N, 4, true, *CurDAG).getNode() != 0;
 }], VMOV_get_imm32>;
 
 // VMOV_get_imm64 xform function: convert build_vector to VMOV.i64 imm.
 def VMOV_get_imm64 : SDNodeXForm<build_vector, [{
-  return ARM::getNEONModImm(N, 8, *CurDAG);
+  return ARM::getNEONModImm(N, 8, true, *CurDAG);
 }]>;
 def vmovImm64 : PatLeaf<(build_vector), [{
-  return ARM::getNEONModImm(N, 8, *CurDAG).getNode() != 0;
+  return ARM::getNEONModImm(N, 8, true, *CurDAG).getNode() != 0;
 }], VMOV_get_imm64>;
 
 // Note: Some of the cmode bits in the following VMOV instructions need to

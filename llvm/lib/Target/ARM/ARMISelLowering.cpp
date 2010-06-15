@@ -2766,9 +2766,17 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 /// bits7-0=Immediate.
 static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
                                  unsigned SplatBitSize, SelectionDAG &DAG,
-                                 bool DoEncode) {
+                                 bool isVMOV, bool DoEncode) {
   unsigned Op, Cmode, Imm;
   EVT VT;
+
+  // SplatBitSize is set to the smallest size that splats the vector, so a
+  // zero vector will always have SplatBitSize == 8.  However, NEON modified
+  // immediate instructions others than VMOV do not support the 8-bit encoding
+  // of a zero vector, and the default encoding of zero is supposed to be the
+  // 32-bit version.
+  if (SplatBits == 0)
+    SplatBitSize = 32;
 
   Op = 0;
   switch (SplatBitSize) {
@@ -2855,6 +2863,8 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
 
   case 64: {
     // NEON has a 64-bit VMOV splat where each byte is either 0 or 0xff.
+    if (!isVMOV)
+      return SDValue();
     uint64_t BitMask = 0xff;
     uint64_t Val = 0;
     unsigned ImmMask = 1;
@@ -2892,7 +2902,8 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
 /// with a "modified immediate" operand (e.g., VMOV) of the specified element
 /// size, return the encoded value for that immediate.  The ByteSize field
 /// indicates the number of bytes of each element [1248].
-SDValue ARM::getNEONModImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
+SDValue ARM::getNEONModImm(SDNode *N, unsigned ByteSize, bool isVMOV,
+                           SelectionDAG &DAG) {
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N);
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
@@ -2905,7 +2916,7 @@ SDValue ARM::getNEONModImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     return SDValue();
 
   return isNEONModifiedImm(SplatBits.getZExtValue(), SplatUndef.getZExtValue(),
-                           SplatBitSize, DAG, true);
+                           SplatBitSize, DAG, isVMOV, true);
 }
 
 static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
@@ -3148,7 +3159,7 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
       // Check if an immediate VMOV works.
       SDValue Val = isNEONModifiedImm(SplatBits.getZExtValue(),
                                       SplatUndef.getZExtValue(),
-                                      SplatBitSize, DAG, false);
+                                      SplatBitSize, DAG, true, false);
       if (Val.getNode())
         return BuildSplat(Val, VT, DAG, dl);
     }
