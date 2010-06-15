@@ -69,6 +69,31 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
   return CI;
 }
 
+/// EmitStrNCmp - Emit a call to the strncmp function to the builder.
+Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
+                         IRBuilder<> &B, const TargetData *TD) {
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
+  AttributeWithIndex AWI[3];
+  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[2] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
+                                   Attribute::NoUnwind);
+
+  LLVMContext &Context = B.GetInsertBlock()->getContext();
+  Value *StrNCmp = M->getOrInsertFunction("strncmp", AttrListPtr::get(AWI, 3),
+                                          B.getInt32Ty(),
+                                          B.getInt8PtrTy(),
+                                          B.getInt8PtrTy(),
+                                          TD->getIntPtrType(Context), NULL);
+  CallInst *CI = B.CreateCall3(StrNCmp, CastToCStr(Ptr1, B),
+                               CastToCStr(Ptr2, B), Len, "strncmp");
+
+  if (const Function *F = dyn_cast<Function>(StrNCmp->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
+  return CI;
+}
+
 /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
 /// specified pointer arguments.
 Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,

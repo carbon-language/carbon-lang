@@ -92,6 +92,20 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
   return true;
 }
 
+/// IsOnlyUsedInEqualityComparison - Return true if it is only used in equality
+/// comparisons with With.
+static bool IsOnlyUsedInEqualityComparison(Value *V, Value *With) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI) {
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+      if (IC->isEquality() && IC->getOperand(1) == With)
+        continue;
+    // Unknown instruction.
+    return false;
+  }
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // String and Memory LibCall Optimizations
 //===----------------------------------------------------------------------===//
@@ -502,6 +516,23 @@ struct StrStrOpt : public LibCallOptimization {
     // fold strstr(x, x) -> x.
     if (CI->getOperand(1) == CI->getOperand(2))
       return B.CreateBitCast(CI->getOperand(1), CI->getType());
+
+    // fold strstr(a, b) == a -> strncmp(a, b, strlen(b)) == 0
+    if (TD && IsOnlyUsedInEqualityComparison(CI, CI->getOperand(1))) {
+      Value *StrLen = EmitStrLen(CI->getOperand(2), B, TD);
+      Value *StrNCmp = EmitStrNCmp(CI->getOperand(1), CI->getOperand(2),
+                                   StrLen, B, TD);
+      for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
+           UI != UE; ) {
+        ICmpInst *Old = cast<ICmpInst>(UI++);
+        Value *Cmp = B.CreateICmp(Old->getPredicate(), StrNCmp,
+                                  ConstantInt::getNullValue(StrNCmp->getType()),
+                                  "cmp");
+        Old->replaceAllUsesWith(Cmp);
+        Old->eraseFromParent();
+      }
+      return CI;
+    }
 
     // See if either input string is a constant string.
     std::string SearchStr, ToFindStr;

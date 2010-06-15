@@ -46,3 +46,15 @@ entry:
 ; CHECK: @test4
 ; CHECK: ret i8* %P
 }
+
+define i1 @test5(i8* %P, i8* %Q) nounwind readonly {
+entry:
+  %call = tail call i8* @strstr(i8* %P, i8* %Q) nounwind ; <i8*> [#uses=1]
+  %cmp = icmp eq i8* %call, %P
+  ret i1 %cmp
+; CHECK: @test5
+; CHECK: [[LEN:%[a-z]+]] = call {{i[0-9]+}} @strlen(i8* %Q)
+; CHECK: [[NCMP:%[a-z]+]] = call {{i[0-9]+}} @strncmp(i8* %P, i8* %Q, {{i[0-9]+}} [[LEN]])
+; CHECK: icmp eq {{i[0-9]+}} [[NCMP]], 0
+; CHECK: ret i1
+}

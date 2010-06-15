@@ -34,6 +34,10 @@ namespace llvm {
   /// and the return value has 'i8*' type.
   Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B, const TargetData *TD);
 
+  /// EmitStrNCmp - Emit a call to the strncmp function to the builder.
+  Value *EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
+                     const TargetData *TD);
+
   /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
   /// specified pointer arguments.
   Value *EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
