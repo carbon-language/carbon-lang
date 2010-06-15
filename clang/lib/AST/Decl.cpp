@@ -567,7 +567,8 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
 }
 
 void
-QualifierInfo::setTemplateParameterListsInfo(unsigned NumTPLists,
+QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
+                                             unsigned NumTPLists,
                                              TemplateParameterList **TPLists) {
   assert((NumTPLists == 0 || TPLists != 0) &&
          "Empty array of template parameters with positive size!");
@@ -576,17 +577,23 @@ QualifierInfo::setTemplateParameterListsInfo(unsigned NumTPLists,
 
   // Free previous template parameters (if any).
   if (NumTemplParamLists > 0) {
-    delete[] TemplParamLists;
+    Context.Deallocate(TemplParamLists);
     TemplParamLists = 0;
     NumTemplParamLists = 0;
   }
   // Set info on matched template parameter lists (if any).
   if (NumTPLists > 0) {
-    TemplParamLists = new TemplateParameterList*[NumTPLists];
+    TemplParamLists = new (Context) TemplateParameterList*[NumTPLists];
     NumTemplParamLists = NumTPLists;
     for (unsigned i = NumTPLists; i-- > 0; )
       TemplParamLists[i] = TPLists[i];
   }
+}
+
+void QualifierInfo::Destroy(ASTContext &Context) {
+  // FIXME: Deallocate template parameter lists themselves!
+  if (TemplParamLists)
+    Context.Deallocate(TemplParamLists);
 }
 
 //===----------------------------------------------------------------------===//

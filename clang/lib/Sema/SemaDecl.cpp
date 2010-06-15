@@ -2573,7 +2573,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   SetNestedNameSpecifier(NewVD, D);
 
   if (NumMatchedTemplateParamLists > 0) {
-    NewVD->setTemplateParameterListsInfo(NumMatchedTemplateParamLists,
+    NewVD->setTemplateParameterListsInfo(Context,
+                                         NumMatchedTemplateParamLists,
                         (TemplateParameterList**)TemplateParamLists.release());
   }
 
@@ -3151,7 +3152,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (NumMatchedTemplateParamLists > 0) {
-    NewFD->setTemplateParameterListsInfo(NumMatchedTemplateParamLists,
+    NewFD->setTemplateParameterListsInfo(Context,
+                                         NumMatchedTemplateParamLists,
                         (TemplateParameterList**)TemplateParamLists.release());
   }
 
@@ -5412,7 +5414,8 @@ CreateNewDecl:
         = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
       New->setQualifierInfo(NNS, SS.getRange());
       if (NumMatchedTemplateParamLists > 0) {
-        New->setTemplateParameterListsInfo(NumMatchedTemplateParamLists,
+        New->setTemplateParameterListsInfo(Context,
+                                           NumMatchedTemplateParamLists,
                     (TemplateParameterList**) TemplateParameterLists.release());
       }
     }

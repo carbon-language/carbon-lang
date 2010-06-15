@@ -385,10 +385,12 @@ struct QualifierInfo {
     : NNS(0), NNSRange(), NumTemplParamLists(0), TemplParamLists(0) {}
   /// setTemplateParameterListsInfo - Sets info about matched template
   /// parameter lists.
-  void setTemplateParameterListsInfo(unsigned NumTPLists,
+  void setTemplateParameterListsInfo(ASTContext &Context,
+                                     unsigned NumTPLists,
                                      TemplateParameterList **TPLists);
-  /// Destructor: frees the array of template parameter lists pointers.
-  ~QualifierInfo() { delete[] TemplParamLists; }
+  
+  void Destroy(ASTContext &Context);
+  
 private:
   // Copy constructor and copy assignment are disabled.
   QualifierInfo(const QualifierInfo&);
@@ -447,9 +449,9 @@ public:
     assert(index < getNumTemplateParameterLists());
     return getExtInfo()->TemplParamLists[index];
   }
-  void setTemplateParameterListsInfo(unsigned NumTPLists,
+  void setTemplateParameterListsInfo(ASTContext &Context, unsigned NumTPLists,
                                      TemplateParameterList **TPLists) {
-    getExtInfo()->setTemplateParameterListsInfo(NumTPLists, TPLists);
+    getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
   }
 
   SourceLocation getTypeSpecStartLoc() const;
@@ -1887,9 +1889,9 @@ public:
     assert(i < getNumTemplateParameterLists());
     return getExtInfo()->TemplParamLists[i];
   }
-  void setTemplateParameterListsInfo(unsigned NumTPLists,
+  void setTemplateParameterListsInfo(ASTContext &Context, unsigned NumTPLists,
                                      TemplateParameterList **TPLists) {
-    getExtInfo()->setTemplateParameterListsInfo(NumTPLists, TPLists);
+    getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
   }
 
   // Implement isa/cast/dyncast/etc.
