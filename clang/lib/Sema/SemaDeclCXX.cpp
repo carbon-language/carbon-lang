@@ -1217,18 +1217,25 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 /// containing the field that is being initialized. Returns true if there is an
 /// uninitialized field was used an updates the SourceLocation parameter; false
 /// otherwise.
-static bool InitExprContainsUninitializedFields(const Stmt* S,
-                                                const FieldDecl* LhsField,
-                                                SourceLocation* L) {
-  const MemberExpr* ME = dyn_cast<MemberExpr>(S);
-  if (ME) {
-    const NamedDecl* RhsField = ME->getMemberDecl();
+static bool InitExprContainsUninitializedFields(const Stmt *S,
+                                                const FieldDecl *LhsField,
+                                                SourceLocation *L) {
+  if (isa<CallExpr>(S)) {
+    // Do not descend into function calls or constructors, as the use
+    // of an uninitialized field may be valid. One would have to inspect
+    // the contents of the function/ctor to determine if it is safe or not.
+    // i.e. Pass-by-value is never safe, but pass-by-reference and pointers
+    // may be safe, depending on what the function/ctor does.
+    return false;
+  }
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
+    const NamedDecl *RhsField = ME->getMemberDecl();
     if (RhsField == LhsField) {
       // Initializing a field with itself. Throw a warning.
       // But wait; there are exceptions!
       // Exception #1:  The field may not belong to this record.
       // e.g. Foo(const Foo& rhs) : A(rhs.A) {}
-      const Expr* base = ME->getBase();
+      const Expr *base = ME->getBase();
       if (base != NULL && !isa<CXXThisExpr>(base->IgnoreParenCasts())) {
         // Even though the field matches, it does not belong to this record.
         return false;
@@ -1239,21 +1246,16 @@ static bool InitExprContainsUninitializedFields(const Stmt* S,
       return true;
     }
   }
-  bool found = false;
-  for (Stmt::const_child_iterator it = S->child_begin();
-       it != S->child_end() && found == false;
-       ++it) {
-    if (isa<CallExpr>(S)) {
-      // Do not descend into function calls or constructors, as the use
-      // of an uninitialized field may be valid. One would have to inspect
-      // the contents of the function/ctor to determine if it is safe or not.
-      // i.e. Pass-by-value is never safe, but pass-by-reference and pointers
-      // may be safe, depending on what the function/ctor does.
+  for (Stmt::const_child_iterator it = S->child_begin(), e = S->child_end();
+       it != e; ++it) {
+    if (!*it) {
+      // An expression such as 'member(arg ?: "")' may trigger this.
       continue;
     }
-    found = InitExprContainsUninitializedFields(*it, LhsField, L);
+    if (InitExprContainsUninitializedFields(*it, LhsField, L))
+      return true;
   }
-  return found;
+  return false;
 }
 
 Sema::MemInitResult
