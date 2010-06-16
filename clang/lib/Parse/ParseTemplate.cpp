@@ -914,15 +914,14 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       // If the next token signals the end of a template argument,
       // then we have a dependent template name that could be a template
       // template argument.
-      if (isEndOfTemplateArgument(Tok)) {
-        TemplateTy Template
-          = Actions.ActOnDependentTemplateName(CurScope, TemplateLoc, SS, Name, 
-                                               /*ObjectType=*/0,
-                                               /*EnteringContext=*/false);
-        if (Template.get())
-          return ParsedTemplateArgument(SS, Template, Name.StartLocation);
-      }
-    } 
+      TemplateTy Template;
+      if (isEndOfTemplateArgument(Tok) &&
+          Actions.ActOnDependentTemplateName(CurScope, TemplateLoc, SS, Name, 
+                                             /*ObjectType=*/0,
+                                             /*EnteringContext=*/false,
+                                             Template))
+        return ParsedTemplateArgument(SS, Template, Name.StartLocation);
+    }
   } else if (Tok.is(tok::identifier)) {
     // We may have a (non-dependent) template name.
     TemplateTy Template;

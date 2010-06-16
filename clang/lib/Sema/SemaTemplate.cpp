@@ -1686,12 +1686,13 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
 /// example, given "MetaFun::template apply", the scope specifier \p
 /// SS will be "MetaFun::", \p TemplateKWLoc contains the location
 /// of the "template" keyword, and "apply" is the \p Name.
-Sema::TemplateTy
-Sema::ActOnDependentTemplateName(Scope *S, SourceLocation TemplateKWLoc,
-                                 CXXScopeSpec &SS,
-                                 UnqualifiedId &Name,
-                                 TypeTy *ObjectType,
-                                 bool EnteringContext) {
+TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S, 
+                                                  SourceLocation TemplateKWLoc,
+                                                  CXXScopeSpec &SS,
+                                                  UnqualifiedId &Name,
+                                                  TypeTy *ObjectType,
+                                                  bool EnteringContext,
+                                                  TemplateTy &Result) {
   if (TemplateKWLoc.isValid() && S && !S->getTemplateParamParent() &&
       !getLangOptions().CPlusPlus0x)
     Diag(TemplateKWLoc, diag::ext_template_outside_of_template)
@@ -1719,25 +1720,24 @@ Sema::ActOnDependentTemplateName(Scope *S, SourceLocation TemplateKWLoc,
     // dependent name. C++ DR468 relaxed this requirement (the
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode with a warning, retroactively applying the DR.
-    TemplateTy Template;
     bool MemberOfUnknownSpecialization;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
-                                          EnteringContext, Template,
+                                          EnteringContext, Result,
                                           MemberOfUnknownSpecialization);
     if (TNK == TNK_Non_template && LookupCtx->isDependentContext() &&
         isa<CXXRecordDecl>(LookupCtx) &&
         cast<CXXRecordDecl>(LookupCtx)->hasAnyDependentBases()) {
-      // This is a dependent template.
+      // This is a dependent template. Handle it below.
     } else if (TNK == TNK_Non_template) {
       Diag(Name.getSourceRange().getBegin(), 
            diag::err_template_kw_refers_to_non_template)
         << GetNameFromUnqualifiedId(Name)
         << Name.getSourceRange()
         << TemplateKWLoc;
-      return TemplateTy();
+      return TNK_Non_template;
     } else {
       // We found something; return it.
-      return Template;
+      return TNK;
     }
   }
 
@@ -1746,12 +1746,14 @@ Sema::ActOnDependentTemplateName(Scope *S, SourceLocation TemplateKWLoc,
   
   switch (Name.getKind()) {
   case UnqualifiedId::IK_Identifier:
-    return TemplateTy::make(Context.getDependentTemplateName(Qualifier, 
-                                                             Name.Identifier));
+    Result = TemplateTy::make(Context.getDependentTemplateName(Qualifier, 
+                                                              Name.Identifier));
+    return TNK_Dependent_template_name;
     
   case UnqualifiedId::IK_OperatorFunctionId:
-    return TemplateTy::make(Context.getDependentTemplateName(Qualifier,
+    Result = TemplateTy::make(Context.getDependentTemplateName(Qualifier,
                                              Name.OperatorFunctionId.Operator));
+    return TNK_Dependent_template_name;
 
   case UnqualifiedId::IK_LiteralOperatorId:
     assert(false && "We don't support these; Parse shouldn't have allowed propagation");
@@ -1765,7 +1767,7 @@ Sema::ActOnDependentTemplateName(Scope *S, SourceLocation TemplateKWLoc,
     << GetNameFromUnqualifiedId(Name)
     << Name.getSourceRange()
     << TemplateKWLoc;
-  return TemplateTy();
+  return TNK_Non_template;
 }
 
 bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,

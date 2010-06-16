@@ -2006,13 +2006,21 @@ public:
   ///
   /// \param EnteringContext whether we are entering the context of this
   /// template.
-  virtual TemplateTy ActOnDependentTemplateName(Scope *S, 
+  ///
+  /// \param Template Will be set to the dependent template name, on success.
+  ///
+  /// \returns The kind of template name that was produced. Generally, this will
+  /// be \c TNK_Dependent_template_name. However, if the nested-name-specifier
+  /// is not dependent, or refers to the current instantiation, then we may
+  /// be able to resolve the template kind more specifically.
+  virtual TemplateNameKind ActOnDependentTemplateName(Scope *S, 
                                                 SourceLocation TemplateKWLoc,
                                                 CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 TypeTy *ObjectType,
-                                                bool EnteringContext) {
-    return TemplateTy();
+                                                bool EnteringContext,
+                                                TemplateTy &Template) {
+    return TNK_Non_template;
   }
 
   /// \brief Process the declaration or definition of an explicit

@@ -164,14 +164,18 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       
       // Commit to parsing the template-id.
       TPA.Commit();
-      TemplateTy Template
-        = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
-                                             TemplateName,
-                                             ObjectType, EnteringContext);
-      if (!Template)
-        return true;
-      if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
-                                  &SS, TemplateName, TemplateKWLoc, false))
+      TemplateTy Template;
+      if (TemplateNameKind TNK = Actions.ActOnDependentTemplateName(CurScope, 
+                                                                TemplateKWLoc, 
+                                                                    SS, 
+                                                                  TemplateName,
+                                                                    ObjectType, 
+                                                                EnteringContext,
+                                                                    Template)) {
+        if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
+                                    TemplateKWLoc, false))
+          return true;
+      } else
         return true;
 
       continue;
@@ -320,19 +324,20 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           << II.getName()
           << FixItHint::CreateInsertion(Tok.getLocation(), "template ");
         
-        Template = Actions.ActOnDependentTemplateName(CurScope, 
-                                                      Tok.getLocation(), SS, 
-                                                      TemplateName, ObjectType,
-                                                      EnteringContext);
-        if (!Template.get())
+        if (TemplateNameKind TNK 
+              = Actions.ActOnDependentTemplateName(CurScope, 
+                                                   Tok.getLocation(), SS, 
+                                                   TemplateName, ObjectType,
+                                                   EnteringContext, Template)) {
+          // Consume the identifier.
+          ConsumeToken();
+          if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
+                                      SourceLocation(), false))
+            return true;                
+        }
+        else
           return true;     
-        
-        // Consume the identifier.
-        ConsumeToken();
-        if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name, &SS,
-                                    TemplateName, SourceLocation(), false))
-          return true;
-        
+                
         continue;        
       }
     }
@@ -1013,12 +1018,11 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   case UnqualifiedId::IK_OperatorFunctionId:
   case UnqualifiedId::IK_LiteralOperatorId:
     if (AssumeTemplateId) {
-      Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
-                                                    Id, ObjectType,
-                                                    EnteringContext);
-      TNK = TNK_Dependent_template_name;
-      if (!Template.get())
-        return true;      
+      TNK = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
+                                               Id, ObjectType, EnteringContext,
+                                               Template);
+      if (TNK == TNK_Non_template)
+        return true;
     } else {
       bool MemberOfUnknownSpecialization;
       TNK = Actions.isTemplateName(CurScope, SS, Id, ObjectType, 
@@ -1044,11 +1048,10 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
         Diag(Id.StartLocation, diag::err_missing_dependent_template_keyword)
           << Name
           << FixItHint::CreateInsertion(Id.StartLocation, "template ");
-        Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc,
-                                                      SS, Id, ObjectType,
-                                                      EnteringContext);
-        TNK = TNK_Dependent_template_name;
-        if (!Template.get())
+        TNK = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc,
+                                                 SS, Id, ObjectType,
+                                                 EnteringContext, Template);
+        if (TNK == TNK_Non_template)
           return true;              
       }
     }
@@ -1069,11 +1072,10 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     bool MemberOfUnknownSpecialization;
     TemplateName.setIdentifier(Name, NameLoc);
     if (ObjectType) {
-      Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
-                                                    TemplateName, ObjectType,
-                                                    EnteringContext);
-      TNK = TNK_Dependent_template_name;
-      if (!Template.get())
+      TNK = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
+                                               TemplateName, ObjectType,
+                                               EnteringContext, Template);
+      if (TNK == TNK_Non_template)
         return true;
     } else {
       TNK = Actions.isTemplateName(CurScope, SS, TemplateName, ObjectType, 

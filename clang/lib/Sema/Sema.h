@@ -2937,12 +2937,13 @@ public:
                                                 SourceLocation NameLoc,
                                const TemplateArgumentListInfo &TemplateArgs);
 
-  virtual TemplateTy ActOnDependentTemplateName(Scope *S,
-                                                SourceLocation TemplateKWLoc,
-                                                CXXScopeSpec &SS,
-                                                UnqualifiedId &Name,
-                                                TypeTy *ObjectType,
-                                                bool EnteringContext);
+  virtual TemplateNameKind ActOnDependentTemplateName(Scope *S,
+                                                  SourceLocation TemplateKWLoc,
+                                                      CXXScopeSpec &SS,
+                                                      UnqualifiedId &Name,
+                                                      TypeTy *ObjectType,
+                                                      bool EnteringContext,
+                                                      TemplateTy &Template);
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,

@@ -6495,13 +6495,15 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SS.setScopeRep(Qualifier);
   UnqualifiedId Name;
   Name.setIdentifier(&II, /*FIXME:*/getDerived().getBaseLocation());
-  return getSema().ActOnDependentTemplateName(/*Scope=*/0,
-                                      /*FIXME:*/getDerived().getBaseLocation(),
-                                              SS,
-                                              Name,
-                                              ObjectType.getAsOpaquePtr(),
-                                              /*EnteringContext=*/false)
-           .template getAsVal<TemplateName>();
+  Sema::TemplateTy Template;
+  getSema().ActOnDependentTemplateName(/*Scope=*/0,
+                                       /*FIXME:*/getDerived().getBaseLocation(),
+                                       SS,
+                                       Name,
+                                       ObjectType.getAsOpaquePtr(),
+                                       /*EnteringContext=*/false,
+                                       Template);
+  return Template.template getAsVal<TemplateName>();
 }
 
 template<typename Derived>
@@ -6516,13 +6518,15 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SourceLocation SymbolLocations[3]; // FIXME: Bogus location information.
   Name.setOperatorFunctionId(/*FIXME:*/getDerived().getBaseLocation(),
                              Operator, SymbolLocations);
-  return getSema().ActOnDependentTemplateName(/*Scope=*/0,
+  Sema::TemplateTy Template;
+  getSema().ActOnDependentTemplateName(/*Scope=*/0,
                                        /*FIXME:*/getDerived().getBaseLocation(),
-                                              SS,
-                                              Name,
-                                              ObjectType.getAsOpaquePtr(),
-                                              /*EnteringContext=*/false)
-           .template getAsVal<TemplateName>();
+                                       SS,
+                                       Name,
+                                       ObjectType.getAsOpaquePtr(),
+                                       /*EnteringContext=*/false,
+                                       Template);
+  return Template.template getAsVal<TemplateName>();
 }
   
 template<typename Derived>
