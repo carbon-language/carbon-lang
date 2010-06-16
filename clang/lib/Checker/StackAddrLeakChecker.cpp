@@ -133,8 +133,8 @@ void StackAddrLeakChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
        I != E; ++I) {
     if (VarDecl *VD = dyn_cast<VarDecl>(*I)) {
       const LocationContext *LCtx = B.getPredecessor()->getLocationContext();
-      SVal L = state->getLValue(VD, LCtx);
-      SVal V = state->getSVal(cast<Loc>(L));
+      Loc L = state->getLValue(VD, LCtx);
+      SVal V = state->getSVal(L);
       if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {
         const MemRegion *R = RV->getRegion();
 

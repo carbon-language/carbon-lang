@@ -216,13 +216,13 @@ public:
   const GRState *unbindLoc(Loc LV) const;
 
   /// Get the lvalue for a variable reference.
-  SVal getLValue(const VarDecl *D, const LocationContext *LC) const;
+  Loc getLValue(const VarDecl *D, const LocationContext *LC) const;
 
   /// Get the lvalue for a StringLiteral.
-  SVal getLValue(const StringLiteral *literal) const;
+  Loc getLValue(const StringLiteral *literal) const;
 
-  SVal getLValue(const CompoundLiteralExpr *literal,
-                 const LocationContext *LC) const;
+  Loc getLValue(const CompoundLiteralExpr *literal, 
+                const LocationContext *LC) const;
 
   /// Get the lvalue for an ivar reference.
   SVal getLValue(const ObjCIvarDecl *decl, SVal base) const;
@@ -628,16 +628,16 @@ inline const GRState *GRState::bindDefault(SVal loc, SVal V) const {
   return makeWithStore(new_store);
 }
 
-inline SVal GRState::getLValue(const VarDecl* VD,
+inline Loc GRState::getLValue(const VarDecl* VD,
                                const LocationContext *LC) const {
   return getStateManager().StoreMgr->getLValueVar(VD, LC);
 }
 
-inline SVal GRState::getLValue(const StringLiteral *literal) const {
+inline Loc GRState::getLValue(const StringLiteral *literal) const {
   return getStateManager().StoreMgr->getLValueString(literal);
 }
 
-inline SVal GRState::getLValue(const CompoundLiteralExpr *literal,
+inline Loc GRState::getLValue(const CompoundLiteralExpr *literal,
                                const LocationContext *LC) const {
   return getStateManager().StoreMgr->getLValueCompoundLiteral(literal, LC);
 }
