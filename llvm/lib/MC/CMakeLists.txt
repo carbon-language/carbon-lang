@@ -14,6 +14,7 @@ add_llvm_library(LLVMMC
   MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
   MCNullStreamer.cpp
+  MCObjectStreamer.cpp
   MCObjectWriter.cpp
   MCSection.cpp
   MCSectionCOFF.cpp
