@@ -1778,10 +1778,11 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
 
   const llvm::Triple &Triple(Context.Target.getTriple());
   llvm::CallingConv::ID DefaultCC;
-  if (Triple.getOS() == llvm::Triple::Darwin)
-    DefaultCC = llvm::CallingConv::ARM_APCS;
-  else
+  if (Triple.getEnvironmentName() == "gnueabi" ||
+      Triple.getEnvironmentName() == "eabi")
     DefaultCC = llvm::CallingConv::ARM_AAPCS;
+  else
+    DefaultCC = llvm::CallingConv::ARM_APCS;
 
   switch (getABIKind()) {
   case APCS:

@@ -394,20 +394,13 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     ABIName = A->getValue(Args);
   } else {
     // Select the default based on the platform.
-    switch (getToolChain().getTriple().getOS()) {
-      // FIXME: Is this right for non-Darwin and non-Linux?
-    default:
-      ABIName = "aapcs";
-      break;
-
-    case llvm::Triple::Darwin:
-      ABIName = "apcs-gnu";
-      break;
-
-    case llvm::Triple::Linux:
+    llvm::StringRef env = getToolChain().getTriple().getEnvironmentName();
+    if (env == "gnueabi")
       ABIName = "aapcs-linux";
-      break;
-    }
+    else if (env == "eabi")
+      ABIName = "aapcs";
+    else
+      ABIName = "apcs-gnu";
   }
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);

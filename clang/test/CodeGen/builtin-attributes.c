@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm-unknown-unknown -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm-unknown-linux-gnueabi -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: declare i32 @printf(i8*, ...)
 void f0() {
