@@ -330,7 +330,6 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     else if (GVKind.isThreadData()) {
       OutStreamer.SwitchSection(TheSection);
 
-      EmitLinkage(GV->getLinkage(), MangSym);
       EmitAlignment(AlignLog, GV);      
       OutStreamer.EmitLabel(MangSym);
       
