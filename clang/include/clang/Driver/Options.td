@@ -268,6 +268,8 @@ def fencoding_EQ : Joined<"-fencoding=">, Group<f_Group>;
 def fexceptions : Flag<"-fexceptions">, Group<f_Group>;
 def fextdirs_EQ : Joined<"-fextdirs=">, Group<f_Group>;
 def fhosted : Flag<"-fhosted">, Group<f_Group>;
+def ffast_math : Flag<"-ffast-math">, Group<clang_ignored_f_Group>;
+def ffinite_math_only : Flag<"-ffinite-math-only">, Group<clang_ignored_f_Group>;
 def ffreestanding : Flag<"-ffreestanding">, Group<f_Group>;
 def fgnu_keywords : Flag<"-fgnu-keywords">, Group<f_Group>;
 def fgnu_runtime : Flag<"-fgnu-runtime">, Group<f_Group>;
@@ -308,6 +310,7 @@ def fno_diagnostics_show_option : Flag<"-fno-diagnostics-show-option">, Group<f_
 def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">, Group<f_Group>;
 def fno_eliminate_unused_debug_symbols : Flag<"-fno-eliminate-unused-debug-symbols">, Group<f_Group>;
 def fno_exceptions : Flag<"-fno-exceptions">, Group<f_Group>;
+def fno_finite_math_only : Flag<"-fno-finite-math-only">, Group<clang_ignored_f_Group>;
 def fno_gnu_keywords : Flag<"-fno-gnu-keywords">, Group<f_Group>;
 def fno_inline_functions : Flag<"-fno-inline-functions">, Group<clang_ignored_f_Group>;
 def fno_inline : Flag<"-fno-inline">, Group<clang_ignored_f_Group>;
