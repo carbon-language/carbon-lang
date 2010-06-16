@@ -4688,12 +4688,18 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       llvm::SmallVector<SourceLocation, 4> Commas; // FIXME: Silly
       Commas.push_back(Loc);
       Commas.push_back(Loc);
-      OwningExprResult Call = ActOnCallExpr(/*Scope=*/0,
-                                  NeedsCollectableMemCpy ?
-                                    Owned(CollectableMemCpyRef->Retain()) :
-                                    Owned(BuiltinMemCpyRef->Retain()),
-                                  Loc, move_arg(CallArgs), 
-                                  Commas.data(), Loc);
+      OwningExprResult Call = ExprError();
+      if (NeedsCollectableMemCpy)
+        Call = ActOnCallExpr(/*Scope=*/0,
+                             Owned(CollectableMemCpyRef->Retain()),
+                             Loc, move_arg(CallArgs), 
+                             Commas.data(), Loc);
+      else
+        Call = ActOnCallExpr(/*Scope=*/0,
+                             Owned(BuiltinMemCpyRef->Retain()),
+                             Loc, move_arg(CallArgs), 
+                             Commas.data(), Loc);
+          
       assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
       Statements.push_back(Call.takeAs<Expr>());
       continue;
