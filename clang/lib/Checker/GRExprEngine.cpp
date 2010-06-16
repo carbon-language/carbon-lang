@@ -312,8 +312,10 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
   RegisterAdjustedReturnValueChecker(Eng);
-  RegisterAttrNonNullChecker(Eng);
+  // CallAndMessageChecker should be registered before AttrNonNullChecker,
+  // where we assume arguments are not undefined.
   RegisterCallAndMessageChecker(Eng);
+  RegisterAttrNonNullChecker(Eng);
   RegisterDereferenceChecker(Eng);
   RegisterVLASizeChecker(Eng);
   RegisterDivZeroChecker(Eng);
