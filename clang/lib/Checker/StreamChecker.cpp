@@ -80,15 +80,15 @@ void StreamChecker::FOpen(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
-  SVal RetVal = ValMgr.getConjuredSymbolVal(0, CE, Count);
+  DefinedSVal RetVal = cast<DefinedSVal>(ValMgr.getConjuredSymbolVal(0, CE, 
+                                                                     Count));
   state = state->BindExpr(CE, RetVal);
 
   ConstraintManager &CM = C.getConstraintManager();
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
   // with a NULL.
   const GRState *stateNotNull, *stateNull;
-  llvm::tie(stateNotNull, stateNull) 
-    = CM.AssumeDual(state, cast<DefinedSVal>(RetVal));
+  llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, RetVal);
 
   C.addTransition(stateNotNull);
   C.addTransition(stateNull);
