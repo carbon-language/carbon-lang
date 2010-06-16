@@ -721,9 +721,20 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     break;
   }
   case EQ: {
-    // Make sure we've resolved
+    // try to fold eq comparison for 'bit' and 'int', otherwise fallback
+    // to string objects.
+    IntInit* L =
+      dynamic_cast<IntInit*>(LHS->convertInitializerTo(new IntRecTy()));
+    IntInit* R =
+      dynamic_cast<IntInit*>(RHS->convertInitializerTo(new IntRecTy()));
+
+    if (L && R)
+      return new IntInit(L->getValue() == R->getValue());
+
     StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
     StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+
+    // Make sure we've resolved
     if (LHSs && RHSs)
       return new IntInit(LHSs->getValue() == RHSs->getValue());
 
