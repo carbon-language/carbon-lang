@@ -98,19 +98,21 @@ void StreamChecker::FRead(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
 
   // Assume CallAndMessageChecker has been run.
-  const DefinedSVal &StreamVal=cast<DefinedSVal>(state->getSVal(CE->getArg(3)));
+  SVal StreamVal = state->getSVal(CE->getArg(3));
 
-  ConstraintManager &CM = C.getConstraintManager();
-  const GRState *stateNotNull, *stateNull;
-  llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, StreamVal);
+  if (const DefinedSVal *DV = cast<DefinedSVal>(&StreamVal)) {
+    ConstraintManager &CM = C.getConstraintManager();
+    const GRState *stateNotNull, *stateNull;
+    llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
 
-  if (!stateNotNull && stateNull) {
-    if (ExplodedNode *N = C.GenerateSink(stateNull)) {
-      if (!BT_nullfp)
-        BT_nullfp = new BuiltinBug("NULL stream pointer",
-                                   "Stream pointer might be NULL.");
-      BugReport *R = new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
-      C.EmitReport(R);
+    if (!stateNotNull && stateNull) {
+      if (ExplodedNode *N = C.GenerateSink(stateNull)) {
+        if (!BT_nullfp)
+          BT_nullfp = new BuiltinBug("NULL stream pointer",
+                                     "Stream pointer might be NULL.");
+        BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
+        C.EmitReport(R);
+      }
     }
   }
 }
