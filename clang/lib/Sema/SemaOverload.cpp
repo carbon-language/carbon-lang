@@ -962,7 +962,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Complex promotion (Clang extension)
     SCS.Second = ICK_Complex_Promotion;
     FromType = ToType.getUnqualifiedType();
-  } else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
+  } else if (FromType->isIntegralOrEnumerationType() &&
            (ToType->isIntegralType() && !ToType->isEnumeralType())) {
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
@@ -983,7 +983,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   } else if ((FromType->isFloatingType() &&
               ToType->isIntegralType() && (!ToType->isBooleanType() &&
                                            !ToType->isEnumeralType())) ||
-             ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
+             (FromType->isIntegralOrEnumerationType() &&
               ToType->isFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
     SCS.Second = ICK_Floating_Integral;
@@ -1273,7 +1273,7 @@ static bool isNullPointerConstantForConversion(Expr *Expr,
   // Handle value-dependent integral null pointer constants correctly.
   // http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#903
   if (Expr->isValueDependent() && !Expr->isTypeDependent() &&
-      Expr->getType()->isIntegralType())
+      Expr->getType()->isIntegerType() && !Expr->getType()->isEnumeralType())
     return !InOverloadResolution;
 
   return Expr->isNullPointerConstant(Context,

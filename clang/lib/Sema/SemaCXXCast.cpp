@@ -1163,7 +1163,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     return TC_Success;
   }
 
-  if (SrcType->isIntegralType() || SrcType->isEnumeralType()) {
+  if (SrcType->isIntegralOrEnumerationType()) {
     assert(destIsPtr && "One type must be a pointer");
     // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
     //   converted to a pointer.

@@ -894,7 +894,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     QualType ET = Context.getCanonicalType(CT->getElementType());
 
     uint64_t Size = Context.getTypeSize(Ty);
-    if (ET->isIntegralType()) {
+    if (ET->isIntegralOrEnumerationType()) {
       if (Size <= 64)
         Current = Integer;
       else if (Size <= 128)

@@ -3201,7 +3201,7 @@ CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) {
   CharUnits sz = getTypeSizeInChars(type);
 
   // Make all integer and enum types at least as large as an int
-  if (sz.isPositive() && type->isIntegralType())
+  if (sz.isPositive() && type->isIntegralOrEnumerationType())
     sz = std::max(sz, getTypeSizeInChars(IntTy));
   // Treat arrays as pointers, since that's how they're passed in.
   else if (type->isArrayType())

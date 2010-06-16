@@ -549,7 +549,7 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   // (optionally cv-qualified) types:
   //
   //       -- integral or enumeration type,
-  if (T->isIntegralType() || T->isEnumeralType() ||
+  if (T->isIntegralOrEnumerationType() ||
       //   -- pointer to object or pointer to function,
       (T->isPointerType() &&
        (T->getAs<PointerType>()->getPointeeType()->isObjectType() ||
@@ -2777,7 +2777,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //        conversions (4.7) are applied.
   QualType ParamType = InstantiatedParamType;
   QualType ArgType = Arg->getType();
-  if (ParamType->isIntegralType() || ParamType->isEnumeralType()) {
+  if (ParamType->isIntegralOrEnumerationType()) {
     // C++ [temp.arg.nontype]p1:
     //   A template-argument for a non-type, non-template
     //   template-parameter shall be one of:
@@ -2787,7 +2787,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //     -- the name of a non-type template-parameter; or
     SourceLocation NonConstantLoc;
     llvm::APSInt Value;
-    if (!ArgType->isIntegralType() && !ArgType->isEnumeralType()) {
+    if (!ArgType->isIntegralOrEnumerationType()) {
       Diag(Arg->getSourceRange().getBegin(),
            diag::err_template_arg_not_integral_or_enumeral)
         << ArgType << Arg->getSourceRange();

@@ -3949,7 +3949,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     QualType T = VDecl->getType();
     if (!T->isDependentType() &&
         (!Context.getCanonicalType(T).isConstQualified() ||
-         !T->isIntegralType())) {
+         !T->isIntegralOrEnumerationType())) {
       Diag(VDecl->getLocation(), diag::err_member_initialization)
         << VDecl->getDeclName() << Init->getSourceRange();
       VDecl->setInvalidDecl();
@@ -3960,7 +3960,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       //   can specify a constant-initializer which shall be an
       //   integral constant expression (5.19).
       if (!Init->isTypeDependent() &&
-          !Init->getType()->isIntegralType()) {
+          !Init->getType()->isIntegralOrEnumerationType()) {
         // We have a non-dependent, non-integral or enumeration type.
         Diag(Init->getSourceRange().getBegin(),
              diag::err_in_class_initializer_non_integral_type)
@@ -5573,7 +5573,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 
   // C99 6.7.2.1p4 - verify the field type.
   // C++ 9.6p3: A bit-field shall have integral or enumeration type.
-  if (!FieldTy->isDependentType() && !FieldTy->isIntegralType()) {
+  if (!FieldTy->isDependentType() && !FieldTy->isIntegralOrEnumerationType()) {
     // Handle incomplete types with specific error.
     if (RequireCompleteType(FieldLoc, FieldTy, diag::err_field_incomplete))
       return true;

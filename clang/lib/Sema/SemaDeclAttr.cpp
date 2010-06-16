@@ -1525,7 +1525,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   if (!OldTy->getAs<BuiltinType>() && !OldTy->isComplexType())
     S.Diag(Attr.getLoc(), diag::err_mode_not_primitive);
   else if (IntegerMode) {
-    if (!OldTy->isIntegralType())
+    if (!OldTy->isIntegralOrEnumerationType())
       S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
   } else if (ComplexMode) {
     if (!OldTy->isComplexType())

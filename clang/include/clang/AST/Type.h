@@ -851,6 +851,9 @@ public:
   bool isAnyCharacterType() const;
   bool isIntegralType() const;
   
+  /// \brief Determine whether this type is an integral or enumeration type.
+  bool isIntegralOrEnumerationType() const;
+                                   
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
   /// isComplexType() does *not* include complex integers (a GCC extension).

@@ -37,7 +37,7 @@ bool Expr::isKnownToHaveBooleanValue() const {
   // If this value has _Bool type, it is obvious 0/1.
   if (getType()->isBooleanType()) return true;
   // If this is a non-scalar-integer type, we don't care enough to try. 
-  if (!getType()->isIntegralType()) return false;
+  if (!getType()->isIntegralOrEnumerationType()) return false;
   
   if (const ParenExpr *PE = dyn_cast<ParenExpr>(this))
     return PE->getSubExpr()->isKnownToHaveBooleanValue();
@@ -160,7 +160,7 @@ void DeclRefExpr::computeDependence() {
   //  (VD) - a constant with integral or enumeration type and is
   //         initialized with an expression that is value-dependent.
   else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if (Var->getType()->isIntegralType() &&
+    if (Var->getType()->isIntegralOrEnumerationType() &&
         Var->getType().getCVRQualifiers() == Qualifiers::Const) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent())
@@ -1598,7 +1598,7 @@ Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
 
     if (CastExpr *P = dyn_cast<CastExpr>(E)) {
       // We ignore integer <-> casts that are of the same width, ptr<->ptr and
-      // ptr<->int casts of the same width.  We also ignore all identify casts.
+      // ptr<->int casts of the same width.  We also ignore all identity casts.
       Expr *SE = P->getSubExpr();
 
       if (Ctx.hasSameUnqualifiedType(E->getType(), SE->getType())) {
@@ -1797,7 +1797,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
       // If the unthinkable happens, fall through to the safest alternative.
         
     case NPC_ValueDependentIsNull:
-      return isTypeDependent() || getType()->isIntegralType();
+      return isTypeDependent() || 
+             (getType()->isIntegralType() && !getType()->isEnumeralType());
         
     case NPC_ValueDependentIsNotNull:
       return false;

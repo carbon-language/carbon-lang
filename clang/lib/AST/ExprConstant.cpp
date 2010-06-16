@@ -157,7 +157,7 @@ static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
 
 static bool HandleConversionToBool(const Expr* E, bool& Result,
                                    EvalInfo &Info) {
-  if (E->getType()->isIntegralType()) {
+  if (E->getType()->isIntegralOrEnumerationType()) {
     APSInt IntResult;
     if (!EvaluateInteger(E, IntResult, Info))
       return false;
@@ -542,7 +542,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
         SubExpr->getType()->isBlockPointerType())
       return Visit(SubExpr);
 
-    if (SubExpr->getType()->isIntegralType()) {
+    if (SubExpr->getType()->isIntegralOrEnumerationType()) {
       APValue Value;
       if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
         break;
@@ -839,7 +839,8 @@ public:
     : Info(info), Result(result) {}
 
   bool Success(const llvm::APSInt &SI, const Expr *E) {
-    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
+    assert(E->getType()->isIntegralOrEnumerationType() && 
+           "Invalid evaluation result.");
     assert(SI.isSigned() == E->getType()->isSignedIntegerType() &&
            "Invalid evaluation result.");
     assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
@@ -849,7 +850,8 @@ public:
   }
 
   bool Success(const llvm::APInt &I, const Expr *E) {
-    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
+    assert(E->getType()->isIntegralOrEnumerationType() && 
+           "Invalid evaluation result.");
     assert(I.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
     Result = APValue(APSInt(I));
@@ -858,7 +860,8 @@ public:
   }
 
   bool Success(uint64_t Value, const Expr *E) {
-    assert(E->getType()->isIntegralType() && "Invalid evaluation result.");
+    assert(E->getType()->isIntegralOrEnumerationType() && 
+           "Invalid evaluation result.");
     Result = APValue(Info.Ctx.MakeIntValue(Value, E->getType()));
     return true;
   }
@@ -964,12 +967,12 @@ private:
 } // end anonymous namespace
 
 static bool EvaluateIntegerOrLValue(const Expr* E, APValue &Result, EvalInfo &Info) {
-  assert(E->getType()->isIntegralType());
+  assert(E->getType()->isIntegralOrEnumerationType());
   return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
 static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
-  assert(E->getType()->isIntegralType());
+  assert(E->getType()->isIntegralOrEnumerationType());
 
   APValue Val;
   if (!EvaluateIntegerOrLValue(E, Val, Info) || !Val.isInt())
@@ -1335,8 +1338,8 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       return Success(Result, E);
     }
   }
-  if (!LHSTy->isIntegralType() ||
-      !RHSTy->isIntegralType()) {
+  if (!LHSTy->isIntegralOrEnumerationType() ||
+      !RHSTy->isIntegralOrEnumerationType()) {
     // We can't continue from here for non-integral types, and they
     // could potentially confuse the following operations.
     return false;
@@ -1591,7 +1594,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   }
 
   // Only handle integral operations...
-  if (!E->getSubExpr()->getType()->isIntegralType())
+  if (!E->getSubExpr()->getType()->isIntegralOrEnumerationType())
     return false;
 
   // Get the operand value into 'Result'.
@@ -1634,7 +1637,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   }
 
   // Handle simple integer->integer casts.
-  if (SrcType->isIntegralType()) {
+  if (SrcType->isIntegralOrEnumerationType()) {
     if (!Visit(SubExpr))
       return false;
 
@@ -1929,7 +1932,7 @@ bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
 bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr* SubExpr = E->getSubExpr();
 
-  if (SubExpr->getType()->isIntegralType()) {
+  if (SubExpr->getType()->isIntegralOrEnumerationType()) {
     APSInt IntResult;
     if (!EvaluateInteger(SubExpr, IntResult, Info))
       return false;
@@ -2337,7 +2340,7 @@ static ICEDiag CheckEvalInICE(const Expr* E, ASTContext &Ctx) {
 
 static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   assert(!E->isValueDependent() && "Should not see value dependent exprs!");
-  if (!E->getType()->isIntegralType()) {
+  if (!E->getType()->isIntegralOrEnumerationType()) {
     return ICEDiag(2, E->getLocStart());
   }
 
@@ -2600,7 +2603,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
-    if (SubExpr->getType()->isIntegralType())
+    if (SubExpr->getType()->isIntegralOrEnumerationType())
       return CheckICE(SubExpr, Ctx);
     if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
       return NoDiag();

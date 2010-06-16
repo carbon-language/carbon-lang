@@ -2659,7 +2659,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
           // approriately delegated to the respective StoreManagers while
           // still allowing us to do checker-specific logic (e.g.,
           // invalidating reference counts), probably via callbacks.
-          if (ER->getElementType()->isIntegralType()) {
+          if (ER->getElementType()->isIntegralOrEnumerationType()) {
             const MemRegion *superReg = ER->getSuperRegion();
             if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
                 isa<ObjCIvarRegion>(superReg))

@@ -3913,7 +3913,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
 
   if (!castType->isArithmeticType()) {
     QualType castExprType = castExpr->getType();
-    if (!castExprType->isIntegralType() && castExprType->isArithmeticType())
+    if (!castExprType->isIntegralType() && 
+        castExprType->isArithmeticType())
       return Diag(castExpr->getLocStart(),
                   diag::err_cast_pointer_from_non_pointer_int)
         << castExprType << castExpr->getSourceRange();

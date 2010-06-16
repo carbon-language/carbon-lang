@@ -403,7 +403,7 @@ static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
   if (const CastExpr *ImplicitCast = dyn_cast<ImplicitCastExpr>(expr)) {
     const Expr *ExprBeforePromotion = ImplicitCast->getSubExpr();
     QualType TypeBeforePromotion = ExprBeforePromotion->getType();
-    if (TypeBeforePromotion->isIntegralType()) {
+    if (TypeBeforePromotion->isIntegralOrEnumerationType()) {
       return TypeBeforePromotion;
     }
   }
@@ -445,7 +445,7 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
       if (CXXConversionDecl *Conversion
             = dyn_cast<CXXConversionDecl>((*I)->getUnderlyingDecl()))
         if (Conversion->getConversionType().getNonReferenceType()
-              ->isIntegralType()) {
+              ->isIntegralOrEnumerationType()) {
           if (Conversion->isExplicit())
             ExplicitConversions.addDecl(I.getDecl(), I.getAccess());
           else
