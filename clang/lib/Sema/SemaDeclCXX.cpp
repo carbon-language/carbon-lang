@@ -1368,8 +1368,48 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();
 
-  SourceLocation BaseLoc = BaseTInfo->getTypeLoc().getLocalSourceRange().getBegin();
-  if (BaseType->isDependentType() || HasDependentArg) {
+  SourceLocation BaseLoc
+    = BaseTInfo->getTypeLoc().getLocalSourceRange().getBegin();
+  
+  if (!BaseType->isDependentType() && !BaseType->isRecordType())
+    return Diag(BaseLoc, diag::err_base_init_does_not_name_class)
+             << BaseType << BaseTInfo->getTypeLoc().getLocalSourceRange();
+
+  // C++ [class.base.init]p2:
+  //   [...] Unless the mem-initializer-id names a nonstatic data
+  //   member of the constructor’s class or a direct or virtual base
+  //   of that class, the mem-initializer is ill-formed. A
+  //   mem-initializer-list can initialize a base class using any
+  //   name that denotes that base class type.
+  bool Dependent = BaseType->isDependentType() || HasDependentArg;
+
+  // Check for direct and virtual base classes.
+  const CXXBaseSpecifier *DirectBaseSpec = 0;
+  const CXXBaseSpecifier *VirtualBaseSpec = 0;
+  if (!Dependent) { 
+    FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
+                        VirtualBaseSpec);
+
+    // C++ [base.class.init]p2:
+    // Unless the mem-initializer-id names a nonstatic data member of the
+    // constructor's class or a direct or virtual base of that class, the
+    // mem-initializer is ill-formed.
+    if (!DirectBaseSpec && !VirtualBaseSpec) {
+      // If the class has any dependent bases, then it's possible that
+      // one of those types will resolve to the same type as
+      // BaseType. Therefore, just treat this as a dependent base
+      // class initialization.  FIXME: Should we try to check the
+      // initialization anyway? It seems odd.
+      if (ClassDecl->hasAnyDependentBases())
+        Dependent = true;
+      else
+        return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
+          << BaseType << Context.getTypeDeclType(ClassDecl)
+          << BaseTInfo->getTypeLoc().getLocalSourceRange();
+    }
+  }
+
+  if (Dependent) {
     // Can't check initialization for a base of dependent type or when
     // any of the arguments are type-dependent expressions.
     OwningExprResult BaseInit
@@ -1389,23 +1429,6 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                     BaseInit.takeAs<Expr>(),
                                                     RParenLoc);
   }
-  
-  if (!BaseType->isRecordType())
-    return Diag(BaseLoc, diag::err_base_init_does_not_name_class)
-             << BaseType << BaseTInfo->getTypeLoc().getLocalSourceRange();
-
-  // C++ [class.base.init]p2:
-  //   [...] Unless the mem-initializer-id names a nonstatic data
-  //   member of the constructor’s class or a direct or virtual base
-  //   of that class, the mem-initializer is ill-formed. A
-  //   mem-initializer-list can initialize a base class using any
-  //   name that denotes that base class type.
-
-  // Check for direct and virtual base classes.
-  const CXXBaseSpecifier *DirectBaseSpec = 0;
-  const CXXBaseSpecifier *VirtualBaseSpec = 0;
-  FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
-                      VirtualBaseSpec);
 
   // C++ [base.class.init]p2:
   //   If a mem-initializer-id is ambiguous because it designates both
@@ -1414,14 +1437,6 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (DirectBaseSpec && VirtualBaseSpec)
     return Diag(BaseLoc, diag::err_base_init_direct_and_virtual)
       << BaseType << BaseTInfo->getTypeLoc().getLocalSourceRange();
-  // C++ [base.class.init]p2:
-  // Unless the mem-initializer-id names a nonstatic data membeer of the
-  // constructor's class ot a direst or virtual base of that class, the
-  // mem-initializer is ill-formed.
-  if (!DirectBaseSpec && !VirtualBaseSpec)
-    return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
-      << BaseType << Context.getTypeDeclType(ClassDecl)
-      << BaseTInfo->getTypeLoc().getLocalSourceRange();
 
   CXXBaseSpecifier *BaseSpec
     = const_cast<CXXBaseSpecifier *>(DirectBaseSpec);

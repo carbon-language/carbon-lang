@@ -31,3 +31,25 @@ struct TmplD : Tmpl<char>, TmplB<char> {
             TmplB<char>() {}
 };
 
+namespace PR7259 {
+  class Base {
+  public:
+    Base() {}
+  };
+
+  template <class ParentClass>
+  class Derived : public ParentClass {
+  public:
+    Derived() : Base() {}
+  };
+
+  class Final : public Derived<Base> {
+  };
+
+  int
+  main (void)
+  {
+    Final final();
+    return 0;
+  }
+}
