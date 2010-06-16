@@ -4567,7 +4567,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   
   // \brief Reference to the __builtin_memcpy function.
   Expr *BuiltinMemCpyRef = 0;
-  // \brief Reference to the objc_memmove_collectable function.
+  // \brief Reference to the __builtin_objc_memmove_collectable function.
   Expr *CollectableMemCpyRef = 0;
   
   // Assign non-static members.
@@ -4652,8 +4652,9 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
           
       if (NeedsCollectableMemCpy) {
         if (!CollectableMemCpyRef) {
-          // Create a reference to the objc_memmove_collectable function.
-          LookupResult R(*this, &Context.Idents.get("objc_memmove_collectable"), 
+          // Create a reference to the __builtin_objc_memmove_collectable function.
+          LookupResult R(*this, 
+                         &Context.Idents.get("__builtin_objc_memmove_collectable"), 
                          Loc, LookupOrdinaryName);
           LookupName(R, TUScope, true);
         

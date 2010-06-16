@@ -485,7 +485,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Address);
   }
       
-  case Builtin::BIobjc_memmove_collectable: {
+  case Builtin::BI__builtin_objc_memmove_collectable: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));

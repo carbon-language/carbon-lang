@@ -540,7 +540,7 @@ LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h")
 //   id objc_msgSend(id, SEL)
 // but we need new type letters for that.
 LIBBUILTIN(objc_msgSend, "v*.",   "f",     "objc/message.h")
-LIBBUILTIN(objc_memmove_collectable, "v*v*vC*z", "nF", "objc/objc-auto.h")
+BUILTIN(__builtin_objc_memmove_collectable, "v*v*vC*z", "nF")
 
 // Builtin math library functions
 LIBBUILTIN(pow, "ddd", "fe", "math.h")
