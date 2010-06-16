@@ -45,6 +45,7 @@ public:
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "?");
   void mangleName(const NamedDecl *ND);
+  void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
   void mangleType(QualType T);
 
@@ -65,6 +66,11 @@ private:
 #define TYPE(CLASS, PARENT) void mangleType(const CLASS##Type *T);
 #include "clang/AST/TypeNodes.def"
   
+  void mangleType(const FunctionType *T, bool IsStructor);
+  void mangleFunctionClass(const FunctionDecl *FD);
+  void mangleCallingConvention(const FunctionType *T);
+  void mangleThrowSpecification(const FunctionProtoType *T);
+
 };
 
 /// MicrosoftMangleContext - Overrides the default MangleContext for the
@@ -174,16 +180,64 @@ void MicrosoftCXXNameMangler::mangle(const NamedDecl *D,
     return;
   }
 
-  // <mangled-name> ::= ? <name> <type>
+  // <mangled-name> ::= ? <name> <type-encoding>
   Out << Prefix;
   mangleName(D);
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    mangleFunctionEncoding(FD);
+  else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     mangleVariableEncoding(VD);
-  // TODO: Function types.
+  // TODO: Fields? Can MSVC even mangle them?
+}
+
+void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
+  // <type-encoding> ::= <function-class> <function-type>
+
+  // Don't mangle in the type if this isn't a decl we should typically mangle.
+  if (!Context.shouldMangleDeclName(FD))
+    return;
+  
+  // We should never ever see a FunctionNoProtoType at this point.
+  // We don't even know how to mangle their types anyway :).
+  FunctionProtoType *OldType = cast<FunctionProtoType>(FD->getType());
+
+  bool InStructor = false;
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+  if (MD) {
+    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
+      InStructor = true;
+  }
+
+  // First, the function class.
+  mangleFunctionClass(FD);
+
+  // If this is a C++ instance method, mangle the CVR qualifiers for the
+  // this pointer.
+  if (MD && MD->isInstance())
+    mangleQualifiers(Qualifiers::fromCVRMask(OldType->getTypeQuals()), false);
+
+  // Do the canonicalization out here because parameter types can
+  // undergo additional canonicalization (e.g. array decay).
+  const FunctionProtoType *FT = cast<FunctionProtoType>(getASTContext()
+                                                    .getCanonicalType(OldType));
+  // If the function's type had a throw spec, canonicalization removed it.
+  // Get it back.
+  FT = cast<FunctionProtoType>(getASTContext().getFunctionType(
+                                                FT->getResultType(),
+                                                FT->arg_type_begin(),
+                                                FT->getNumArgs(),
+                                                FT->isVariadic(),
+                                                FT->getTypeQuals(),
+                                                OldType->hasExceptionSpec(),
+                                                OldType->hasAnyExceptionSpec(),
+                                                OldType->getNumExceptions(),
+                                                OldType->exception_begin(),
+                                                FT->getExtInfo()).getTypePtr());
+  mangleType(FT, InStructor);
 }
 
 void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
-  // <encoding> ::= <variable name> <storage-class> <variable-type>
+  // <type-encoding> ::= <storage-class> <variable-type>
   // <storage-class> ::= 0  # private static member
   //                 ::= 1  # protected static member
   //                 ::= 2  # public static member
@@ -520,6 +574,149 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::NullPtr:
     assert(false && "Don't know how to mangle this type");
     break;
+  }
+}
+
+// <type>          ::= <function-type>
+void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T) {
+  // Structors only appear in decls, so at this point we know it's not a
+  // structor type.
+  mangleType(T, false);
+}
+void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T) {
+  llvm_unreachable("Can't mangle K&R function prototypes");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
+                                         bool IsStructor) {
+  // <function-type> ::= <calling-convention> <return-type> <argument-list>
+  //                                                              <throw-spec>
+  mangleCallingConvention(T);
+
+  const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
+
+  // Structors always have a 'void' return type, but MSVC mangles them as an
+  // '@' (because they have no declared return type).
+  if (IsStructor)
+    Out << '@';
+  else
+    mangleType(Proto->getResultType());
+
+  // <argument-list> ::= X # void
+  //                 ::= <type>+ @
+  //                 ::= <type>* Z # varargs
+  if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
+    Out << 'X';
+  } else {
+    for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
+         ArgEnd = Proto->arg_type_end();
+         Arg != ArgEnd; ++Arg)
+      mangleType(*Arg);
+    
+    // <builtin-type>      ::= Z  # ellipsis
+    if (Proto->isVariadic())
+      Out << 'Z';
+    else
+      Out << '@';
+  }
+
+  mangleThrowSpecification(Proto);
+}
+
+void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
+  // <function-class> ::= A # private: near
+  //                  ::= B # private: far
+  //                  ::= C # private: static near
+  //                  ::= D # private: static far
+  //                  ::= E # private: virtual near
+  //                  ::= F # private: virtual far
+  //                  ::= G # private: thunk near
+  //                  ::= H # private: thunk far
+  //                  ::= I # protected: near
+  //                  ::= J # protected: far
+  //                  ::= K # protected: static near
+  //                  ::= L # protected: static far
+  //                  ::= M # protected: virtual near
+  //                  ::= N # protected: virtual far
+  //                  ::= O # protected: thunk near
+  //                  ::= P # protected: thunk far
+  //                  ::= Q # public: near
+  //                  ::= R # public: far
+  //                  ::= S # public: static near
+  //                  ::= T # public: static far
+  //                  ::= U # public: virtual near
+  //                  ::= V # public: virtual far
+  //                  ::= W # public: thunk near
+  //                  ::= X # public: thunk far
+  //                  ::= Y # global near
+  //                  ::= Z # global far
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+    switch (MD->getAccess()) {
+      default:
+      case AS_private:
+        if (MD->isStatic())
+          Out << 'C';
+        else if (MD->isVirtual())
+          Out << 'E';
+        else
+          Out << 'A';
+        break;
+      case AS_protected:
+        if (MD->isStatic())
+          Out << 'K';
+        else if (MD->isVirtual())
+          Out << 'M';
+        else
+          Out << 'I';
+        break;
+      case AS_public:
+        if (MD->isStatic())
+          Out << 'S';
+        else if (MD->isVirtual())
+          Out << 'U';
+        else
+          Out << 'Q';
+    }
+  } else
+    Out << 'Y';
+}
+void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
+  // <calling-convention> ::= A # __cdecl
+  //                      ::= B # __export __cdecl
+  //                      ::= C # __pascal
+  //                      ::= D # __export __pascal
+  //                      ::= E # __thiscall
+  //                      ::= F # __export __thiscall
+  //                      ::= G # __stdcall
+  //                      ::= H # __export __stdcall
+  //                      ::= I # __fastcall
+  //                      ::= J # __export __fastcall
+  // The 'export' calling conventions are from a bygone era
+  // (*cough*Win16*cough*) when functions were declared for export with
+  // that keyword. (It didn't actually export them, it just made them so
+  // that they could be in a DLL and somebody from another module could call
+  // them.)
+  switch (T->getCallConv()) {
+    case CC_Default:
+    case CC_C: Out << 'A'; break;
+    case CC_X86ThisCall: Out << 'E'; break;
+    case CC_X86StdCall: Out << 'G'; break;
+    case CC_X86FastCall: Out << 'I'; break;
+  }
+}
+void MicrosoftCXXNameMangler::mangleThrowSpecification(
+                                                const FunctionProtoType *FT) {
+  // <throw-spec> ::= Z # throw(...) (default)
+  //              ::= @ # throw() or __declspec/__attribute__((nothrow))
+  //              ::= <type>+
+  if (!FT->hasExceptionSpec() || FT->hasAnyExceptionSpec())
+    Out << 'Z';
+  else {
+    for (unsigned Exception = 0, NumExceptions = FT->getNumExceptions();
+         Exception < NumExceptions;
+         ++Exception)
+      mangleType(FT->getExceptionType(Exception).getLocalUnqualifiedType());
+    Out << '@';
   }
 }
 
