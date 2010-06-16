@@ -344,7 +344,7 @@ DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
     char triple[256];
 
     if (TripleForArchSpec (arch, triple, sizeof(triple)))
-        return new DisassemblerLLVM(triple);
+        return new DisassemblerLLVM(arch);
     return NULL;
 }
 
