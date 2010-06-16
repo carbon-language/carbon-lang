@@ -120,11 +120,11 @@ Note that the forthcoming C++0x standard will allow this.
 <p>Some versions of GCC accept the following invalid code:
 
 <pre>
-#include &lt;iostream>
-#include &lt;utility>
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
 
-template&lt;typename T>
-void Dump(const T& value) {
+template&lt;typename T&gt;
+void Dump(const T&amp; value) {
   std::cout &lt;&lt; value &lt;&lt; "\n";
 }
 
@@ -132,7 +132,7 @@ namespace ns {
   struct Data {};
 }
 
-std::ostream& operator&lt;&lt;(std::ostream& out, ns::Data) {
+std::ostream& operator&lt;&lt;(std::ostream&amp; out, ns::Data) {
   return out &lt;&lt; "Some data";
 }
 
@@ -141,8 +141,8 @@ void Use() {
   Dump(ns::Data());
 }
 
-template&lt;typename T, typename U>
-std::ostream& operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U>& p) {
+template&lt;typename T, typename U&gt;
+std::ostream&amp; operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U&gt;&amp; p) {
   return out &lt;&lt; '(' &lt;&lt; p.first &lt;&lt; ", " &lt;&lt; p.second &lt;&lt; ")";
 }
 </pre>
@@ -150,16 +150,16 @@ std::ostream& operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U>& p) {
 <p>Clang complains:</p>
 
 <pre>
-<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char>') and 'std::pair&lt;int, double> const')</b>
+<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'std::pair&lt;int, double&gt; const')</b>
   std::cout &lt;&lt; value &lt;&lt; "\n";
   <span class=caret>~~~~~~~~~ ^  ~~~~~</span>
-<b>test.cc:18:3: note:</b> in instantiation of function template specialization 'Dump&lt;std::pair&lt;int, double> >' requested here
+<b>test.cc:18:3: note:</b> in instantiation of function template specialization 'Dump&lt;std::pair&lt;int, double&gt; &gt;' requested here
   Dump(std::make_pair(3, 4.5));
   <span class=caret>^</span>
-<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char>') and 'ns::Data const')</b>
+<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'ns::Data const')</b>
   std::cout &lt;&lt; value &lt;&lt; "\n";
   <span class=caret>~~~~~~~~~ ^  ~~~~~</span>
-<b>test.cc:19:3: note:</b> in instantiation of function template specialization 'Dump&lt;ns::Data>' requested here
+<b>test.cc:19:3: note:</b> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here
   Dump(ns::Data());
   <span class=caret>^</span>
 2 errors generated.
@@ -168,8 +168,8 @@ std::ostream& operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U>& p) {
 <p>The standard, in [temp.dep.candidate], says that unqualified names
 like <tt>operator&lt;&lt;</tt> are looked up when the template is
 defined, not when it's instantiated. Since
-<tt>operator&lt;&lt;(std::ostream&, const std::pair&lt;>&)</tt>
-and <tt>operator&lt;&lt;(std::ostream&, ns::Data)</tt> were not
+<tt>operator&lt;&lt;(std::ostream&amp;, const std::pair&lt;>&amp;)</tt>
+and <tt>operator&lt;&lt;(std::ostream&amp;, ns::Data)</tt> were not
 declared yet when <tt>Dump</tt> was defined, they're not considered.
 
 <p>This is complicated by <i>argument-dependent lookup</i> (ADL),
