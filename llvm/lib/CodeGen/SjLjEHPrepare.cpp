@@ -289,6 +289,9 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
       }
 
       // If we decided we need a spill, do it.
+      // FIXME: Spilling this way is overkill, as it forces all uses of
+      // the value to be reloaded from the stack slot, even those that aren't
+      // in the unwind blocks. We should be more selective.
       if (NeedsSpill) {
         ++NumSpilled;
         DemoteRegToStack(*Inst, true);
