@@ -1583,10 +1583,9 @@ def note_explicit_instantiation_candidate : Note<
   "explicit instantiation candidate function template here %0">;
 def err_explicit_instantiation_inline : Error<
   "explicit instantiation cannot be 'inline'">;
-def err_explicit_instantiation_without_qualified_id : Error<
-  "qualifier in explicit instantiation of %q0 requires a template-id">;
-def err_explicit_instantiation_without_qualified_id_quals : Error<
-  "qualifier in explicit instantiation of '%0%1' requires a template-id">;
+def ext_explicit_instantiation_without_qualified_id : ExtWarn<
+  "qualifier in explicit instantiation of %q0 requires a template-id "
+  "(a typedef is not permitted)">;
 def err_explicit_instantiation_unqualified_wrong_namespace : Error<
   "explicit instantiation of %q0 must occur in %1">;
 def warn_explicit_instantiation_unqualified_wrong_namespace_0x : Warning<

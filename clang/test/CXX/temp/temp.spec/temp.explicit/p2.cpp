@@ -25,9 +25,9 @@ T X0<T>::value = 17;
 
 typedef X0<int> XInt;
 
-template struct XInt::Inner; // expected-error{{template-id}}
-template void XInt::f(); // expected-error{{template-id}}
-template int XInt::value; // expected-error{{template-id}}
+template struct XInt::Inner; // expected-warning{{template-id}}
+template void XInt::f(); // expected-warning{{template-id}}
+template int XInt::value; // expected-warning{{template-id}}
 
 namespace N {
   template<typename T>

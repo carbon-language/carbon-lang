@@ -4911,7 +4911,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   //
   // C++98 has the same restriction, just worded differently.
   if (!ScopeSpecifierHasTemplateId(SS))
-    Diag(TemplateLoc, diag::err_explicit_instantiation_without_qualified_id)
+    Diag(TemplateLoc, diag::ext_explicit_instantiation_without_qualified_id)
       << Record << SS.getRange();
            
   // C++0x [temp.explicit]p2:
@@ -5084,7 +5084,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // C++98 has the same restriction, just worded differently.
     if (!ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()))
       Diag(D.getIdentifierLoc(), 
-           diag::err_explicit_instantiation_without_qualified_id)
+           diag::ext_explicit_instantiation_without_qualified_id)
         << Prev << D.getCXXScopeSpec().getRange();
     
     // Check the scope of this explicit instantiation.
@@ -5228,7 +5228,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
       D.getCXXScopeSpec().isSet() && 
       !ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()))
     Diag(D.getIdentifierLoc(), 
-         diag::err_explicit_instantiation_without_qualified_id)
+         diag::ext_explicit_instantiation_without_qualified_id)
     << Specialization << D.getCXXScopeSpec().getRange();
   
   CheckExplicitInstantiationScope(*this,
