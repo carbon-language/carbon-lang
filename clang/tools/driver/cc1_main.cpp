@@ -85,21 +85,15 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
 
   case PluginAction: {
-    if (CI.getFrontendOpts().ActionName == "help") {
-      llvm::errs() << "clang -cc1 plugins:\n";
-      for (FrontendPluginRegistry::iterator it =
-             FrontendPluginRegistry::begin(),
-             ie = FrontendPluginRegistry::end();
-           it != ie; ++it)
-        llvm::errs() << "  " << it->getName() << " - " << it->getDesc() << "\n";
-      return 0;
-    }
 
     for (FrontendPluginRegistry::iterator it =
            FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
          it != ie; ++it) {
-      if (it->getName() == CI.getFrontendOpts().ActionName)
-        return it->instantiate();
+      if (it->getName() == CI.getFrontendOpts().ActionName) {
+        PluginASTAction* plugin = it->instantiate();
+        plugin->ParseArgs(CI.getFrontendOpts().PluginArgs);
+        return plugin;
+      }
     }
 
     CI.getDiagnostics().Report(diag::err_fe_invalid_plugin_name)

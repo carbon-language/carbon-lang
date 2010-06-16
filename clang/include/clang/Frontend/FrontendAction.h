@@ -13,6 +13,11 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
+#include <vector>
+
+namespace llvm {
+  class raw_ostream;
+}
 
 namespace clang {
 class ASTConsumer;
@@ -212,6 +217,16 @@ protected:
 
 public:
   virtual bool usesPreprocessorOnly() const { return false; }
+};
+
+class PluginASTAction : public ASTFrontendAction {
+protected:
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         llvm::StringRef InFile) = 0;
+
+public:
+  virtual bool ParseArgs(const std::vector<std::string>& arg) = 0;
+  virtual void PrintHelp(llvm::raw_ostream&) = 0;
 };
 
 /// PreprocessorFrontendAction - Abstract base class to use for preprocessor

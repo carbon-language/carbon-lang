@@ -264,8 +264,11 @@ def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
 def o : Separate<"-o">, MetaVarName<"<path>">, HelpText<"Specify output file">;
 def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
-def plugin : Separate<"-plugin">,
+def plugin : Separate<"-plugin">, MetaVarName<"<name>">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
+def plugin_arg : JoinedAndSeparate<"-plugin-arg-">, 
+    MetaVarName<"<name> <arg>">,
+    HelpText<"Pass <arg> to plugin <name>">;
 def resource_dir : Separate<"-resource-dir">,
   HelpText<"The directory which holds the compiler resource files">;
 def version : Flag<"-version">,

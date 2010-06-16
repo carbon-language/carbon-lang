@@ -397,6 +397,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   if (!Opts.ActionName.empty()) {
     Res.push_back("-plugin");
     Res.push_back(Opts.ActionName);
+    for(unsigned i = 0, e = Opts.PluginArgs.size(); i != e; ++i) {
+      Res.push_back("-plugin-arg-" + Opts.ActionName);
+      Res.push_back(Opts.PluginArgs[i]);
+    }
   }
   for (unsigned i = 0, e = Opts.Plugins.size(); i != e; ++i) {
     Res.push_back("-load");
@@ -989,9 +993,17 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::RunPreprocessorOnly; break;
     }
   }
-  if (const Arg *A = Args.getLastArg(OPT_plugin)) {
+
+  if (const Arg* A = Args.getLastArg(OPT_plugin)) {
+    Opts.Plugins.push_back(A->getValue(Args,0));
     Opts.ProgramAction = frontend::PluginAction;
     Opts.ActionName = A->getValue(Args);
+
+    for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
+           end = Args.filtered_end(); it != end; ++it) {
+      if ((*it)->getValue(Args, 0) == Opts.ActionName)
+        Opts.PluginArgs.push_back((*it)->getValue(Args, 1));
+    }
   }
 
   if (const Arg *A = Args.getLastArg(OPT_code_completion_at)) {

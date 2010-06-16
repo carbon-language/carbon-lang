@@ -16,7 +16,7 @@
 namespace clang {
 
 /// The frontend plugin registry.
-typedef llvm::Registry<FrontendAction> FrontendPluginRegistry;
+typedef llvm::Registry<PluginASTAction> FrontendPluginRegistry;
 
 } // end namespace clang
 

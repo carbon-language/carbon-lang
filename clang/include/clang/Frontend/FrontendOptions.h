@@ -94,6 +94,9 @@ public:
   /// The name of the action to run when using a plugin action.
   std::string ActionName;
 
+  /// Arg to pass to the plugin
+  std::vector<std::string> PluginArgs;
+
   /// The list of plugins to load.
   std::vector<std::string> Plugins;
 

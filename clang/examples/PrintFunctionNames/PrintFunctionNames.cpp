@@ -31,11 +31,24 @@ public:
   }
 }; 
 
-class PrintFunctionNamesAction : public ASTFrontendAction {
+class PrintFunctionNamesAction : public PluginASTAction {
 protected:
   ASTConsumer *CreateASTConsumer(CompilerInstance &CI, llvm::StringRef) {
     return new PrintFunctionsConsumer();
   }
+
+  bool ParseArgs(const std::vector<std::string>& args) {
+    for (unsigned i=0; i<args.size(); ++i)
+      llvm::errs() << "PrintFunctionNames arg = " << args[i] << "\n";
+    if (args.size() && args[0] == "help")
+      PrintHelp(llvm::errs());
+
+    return true;
+  }
+  void PrintHelp(llvm::raw_ostream& ros) { 
+    ros << "Help for PrintFunctionNames plugin goes here\n";
+  }
+
 };
 
 }

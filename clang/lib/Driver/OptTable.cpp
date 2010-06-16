@@ -267,7 +267,7 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
   case Option::GroupClass: case Option::InputClass: case Option::UnknownClass:
     assert(0 && "Invalid option with help text.");
 
-  case Option::MultiArgClass: case Option::JoinedAndSeparateClass:
+  case Option::MultiArgClass:
     assert(0 && "Cannot print metavar for this kind of option.");
 
   case Option::FlagClass:
@@ -277,6 +277,7 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
     Name += ' ';
     // FALLTHROUGH
   case Option::JoinedClass: case Option::CommaJoinedClass:
+  case Option::JoinedAndSeparateClass:
     if (const char *MetaVarName = Opts.getOptionMetaVar(Id))
       Name += MetaVarName;
     else
