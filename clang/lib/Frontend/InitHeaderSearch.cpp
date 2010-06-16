@@ -545,6 +545,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
         System, true, false, false);
     AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++",
         System, true, false, false);
+    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++/i686-pc-cygwin",
+        System, true, false, false);
     break;
   case llvm::Triple::MinGW64:
     // Try gcc 4.4.0
