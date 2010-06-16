@@ -434,11 +434,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // are actually two values in the live interval.  Because of this we
       // need to take the LiveRegion that defines this register and split it
       // into two values.
-      // Two-address vregs should always only be redefined once.  This means
-      // that at this point, there should be exactly one value number in it.
-      assert((PartReDef || interval.containsOneValue()) &&
-             "Unexpected 2-addr liveint!");
-      SlotIndex DefIndex = interval.getValNumInfo(0)->def.getDefIndex();
       SlotIndex RedefIndex = MIIdx.getDefIndex();
       if (MO.isEarlyClobber())
         RedefIndex = MIIdx.getUseIndex();
@@ -446,8 +441,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       const LiveRange *OldLR =
         interval.getLiveRangeContaining(RedefIndex.getUseIndex());
       VNInfo *OldValNo = OldLR->valno;
+      SlotIndex DefIndex = OldValNo->def.getDefIndex();
 
-      // Delete the initial value, which should be short and continuous,
+      // Delete the previous value, which should be short and continuous,
       // because the 2-addr copy must be in the same MBB as the redef.
       interval.removeRange(DefIndex, RedefIndex);
 
