@@ -120,8 +120,60 @@ Note that the forthcoming C++0x standard will allow this.
 <p>Some versions of GCC accept the following invalid code:
 
 <pre>
-#include &lt;iostream&gt;
-#include &lt;utility&gt;
+template &lt;typename T&gt; T Squared(T x) {
+  return Multiply(x, x);
+}
+
+int Multiply(int x, int y) {
+  return x * y;
+}
+
+int main() {
+  Squared(5);
+}
+</pre>
+
+<p>Clang complains:
+
+<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> use of undeclared identifier 'Multiply'</b>
+    return Multiply(x, x);
+  <span class="caret">         ^</span>
+
+  <b>my_file.cpp:10:3: <span class="note">note:</span> in instantiation of function template specialization 'Squared&lt;int&gt;' requested here</b>
+    Squared(5);
+  <span class="caret">  ^</span>
+</pre>
+
+<p>The C++ standard says that unqualified names like <q>Multiply</q>
+are looked up in two ways.
+
+<p>First, the compiler does <i>unqualified lookup</i> in the scope
+where the name was written.  For a template, this means the lookup is
+done at the point where the template is defined, not where it's
+instantiated.  Since <tt>Multiply</tt> hasn't been declared yet at
+this point, unqualified lookup won't find it.
+
+<p>Second, if the name is called like a function, then the compiler
+also does <i>argument-dependent lookup</i> (ADL).  (Sometimes
+unqualified lookup can suppress ADL; see [basic.lookup.argdep]p3 for
+more information.)  In ADL, the compiler looks at the types of all the
+arguments to the call.  When it finds a class type, it looks up the
+name in that class's namespace; the result is all the declarations it
+finds in those namespaces, plus the declarations from unqualified
+lookup.  However, the compiler doesn't do ADL until it knows all the
+argument types.
+
+<p>In our example, <tt>Multiply</tt> is called with dependent
+arguments, so ADL isn't done until the template is instantiated.  At
+that point, the arguments both have type <tt>int</tt>, which doesn't
+contain any class types, and so ADL doesn't look in any namespaces.
+Since neither form of lookup found the declaration
+of <tt>Multiply</tt>, the code doesn't compile.
+
+<p>Here's another example, this time using overloaded operators,
+which obey very similar rules.
+
+<pre>#include &lt;iostream&gt;
 
 template&lt;typename T&gt;
 void Dump(const T&amp; value) {
@@ -132,88 +184,50 @@ namespace ns {
   struct Data {};
 }
 
-std::ostream& operator&lt;&lt;(std::ostream&amp; out, ns::Data) {
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; out, ns::Data data) {
   return out &lt;&lt; "Some data";
 }
 
 void Use() {
-  Dump(std::make_pair(3, 4.5));
   Dump(ns::Data());
-}
+}</pre>
 
-template&lt;typename T, typename U&gt;
-std::ostream&amp; operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U&gt;&amp; p) {
-  return out &lt;&lt; '(' &lt;&lt; p.first &lt;&lt; ", " &lt;&lt; p.second &lt;&lt; ")";
-}
-</pre>
-
-<p>Clang complains:</p>
+<p>Again, Clang complains about not finding a matching function:</p>
 
 <pre>
-<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'std::pair&lt;int, double&gt; const')</b>
+<b>my_file.cpp:5:13: <span class="error">error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'ns::Data const')</b>
   std::cout &lt;&lt; value &lt;&lt; "\n";
-  <span class=caret>~~~~~~~~~ ^  ~~~~~</span>
-<b>test.cc:18:3: note:</b> in instantiation of function template specialization 'Dump&lt;std::pair&lt;int, double&gt; &gt;' requested here
-  Dump(std::make_pair(3, 4.5));
-  <span class=caret>^</span>
-<b>test.cc:6:13: <span class=error>error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'ns::Data const')</b>
-  std::cout &lt;&lt; value &lt;&lt; "\n";
-  <span class=caret>~~~~~~~~~ ^  ~~~~~</span>
-<b>test.cc:19:3: note:</b> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here
+  <span class="caret">~~~~~~~~~ ^  ~~~~~</span>
+<b>my_file.cpp:17:3: <span class="note">note:</span> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here</b>
   Dump(ns::Data());
-  <span class=caret>^</span>
-2 errors generated.
+  <span class="caret">^</span>
 </pre>
 
-<p>The standard, in [temp.dep.candidate], says that unqualified names
-like <tt>operator&lt;&lt;</tt> are looked up when the template is
-defined, not when it's instantiated. Since
-<tt>operator&lt;&lt;(std::ostream&amp;, const std::pair&lt;>&amp;)</tt>
-and <tt>operator&lt;&lt;(std::ostream&amp;, ns::Data)</tt> were not
-declared yet when <tt>Dump</tt> was defined, they're not considered.
+<p>Just like before, unqualified lookup didn't find any declarations
+with the name <tt>operator&lt;&lt;</tt>.  Unlike before, the argument
+types both contain class types: one of them is an instance of the
+class template type <tt>std::basic_ostream</tt>, and the other is the
+type <tt>ns::Data</tt> that we declared above.  Therefore, ADL will
+look in the namespaces <tt>std</tt> and <tt>ns</tt> for
+an <tt>operator&lt;&lt;</tt>.  Since one of the argument types was
+still dependent during the template definition, ADL isn't done until
+the template is instantiated during <tt>Use</tt>, which means that
+the <tt>operator&lt;&lt;</tt> we want it to find has already been
+declared.  Unfortunately, it was declared in the global namespace, not
+in either of the namespaces that ADL will look in!
 
-<p>This is complicated by <i>argument-dependent lookup</i> (ADL),
-which is done when unqualified names are called as functions,
-like <tt>operator&lt;&lt;</tt> above.  The standard says that ADL is
-performed in both places if any of the arguments are type-dependent,
-like <tt>value</tt> and <tt>p</tt> are in this example.
-
-<p>The fix is usually to</p>
-<ol><li>Add a declaration before the use of the function,
-<li>Move the definition to before the use of the function, or
+<p>There are two ways to fix this problem:</p>
+<ol><li>Make sure the function you want to call is declared before the
+template that might call it.  This is the only option if none of its
+argument types contain classes.  You can do this either by moving the
+template definition, or by moving the function definition, or by
+adding a forward declaration of the function before the template.</li>
 <li>Move the function into the same namespace as one of its arguments
-so that ADL applies.  (Note that it still needs to be declared before
-the template is <i>instantiated</i>, and that ADL doesn't apply to
-built-in types.)
-</ol>
+so that ADL applies.</li></ol>
 
-<pre>
-#include &lt;iostream>
-#include &lt;utility>
-
-template&lt;typename T, typename U>  // Fix 2
-std::ostream& operator&lt;&lt;(std::ostream& out, const std::pair&lt;T, U>& p) {
-  return out &lt;&lt; '(' &lt;&lt; p.first &lt;&lt; ", " &lt;&lt; p.second &lt;&lt; ")";
-}
-
-template&lt;typename T>
-void Dump(const T& value) {
-  std::cout &lt;&lt; value &lt;&lt; "\n";
-}
-
-namespace ns {
-  struct Data {};
-
-  std::ostream& operator&lt;&lt;(std::ostream& out, Data) {  // Fix 3
-    return out &lt;&lt; "Some data";
-  }
-}
-
-void Use() {
-  Dump(std::make_pair(3, 4.5));
-  Dump(ns::Data());
-}
-</pre>
+<p>For more information about argument-dependent lookup, see
+[basic.lookup.argdep].  For more information about the ordering of
+lookup in templates, see [temp.dep.candidate].
 
 <!-- ======================================================================= -->
 <h2 id="dep_lookup_bases">Unqualified lookup into dependent bases of class templates</h2>
