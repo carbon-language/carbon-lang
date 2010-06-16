@@ -1826,7 +1826,8 @@ public:
                    Sema::LookupMemberName);
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IvarLoc,
-                                                         SS, DeclPtrTy());
+                                                         SS, DeclPtrTy(),
+                                                         false);
     if (Result.isInvalid())
       return getSema().ExprError();
     
@@ -1855,7 +1856,8 @@ public:
     bool IsArrow = false;
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/PropertyLoc,
-                                                         SS, DeclPtrTy());
+                                                         SS, DeclPtrTy(),
+                                                         false);
     if (Result.isInvalid())
       return getSema().ExprError();
     
@@ -1903,7 +1905,8 @@ public:
                    Sema::LookupMemberName);
     OwningExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IsaLoc,
-                                                         SS, DeclPtrTy());
+                                                         SS, DeclPtrTy(),
+                                                         false);
     if (Result.isInvalid())
       return getSema().ExprError();
     

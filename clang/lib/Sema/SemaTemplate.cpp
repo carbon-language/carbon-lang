@@ -27,12 +27,12 @@ using namespace clang;
 /// \brief Determine whether the declaration found is acceptable as the name
 /// of a template and, if so, return that template declaration. Otherwise,
 /// returns NULL.
-static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
-  if (!D)
-    return 0;
+static NamedDecl *isAcceptableTemplateName(ASTContext &Context,
+                                           NamedDecl *Orig) {
+  NamedDecl *D = Orig->getUnderlyingDecl();
 
   if (isa<TemplateDecl>(D))
-    return D;
+    return Orig;
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
     // C++ [temp.local]p1:
@@ -68,7 +68,7 @@ static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
   LookupResult::Filter filter = R.makeFilter();
   while (filter.hasNext()) {
     NamedDecl *Orig = filter.next();
-    NamedDecl *Repl = isAcceptableTemplateName(C, Orig->getUnderlyingDecl());
+    NamedDecl *Repl = isAcceptableTemplateName(C, Orig);
     if (!Repl)
       filter.erase();
     else if (Repl != Orig) {
@@ -260,7 +260,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     if (DeclarationName Corrected = CorrectTypo(Found, S, &SS, LookupCtx, 
                                                  false, CTC_CXXCasts)) {
       FilterAcceptableTemplateNames(Context, Found);
-      if (!Found.empty() && isa<TemplateDecl>(*Found.begin())) {
+      if (!Found.empty()) {
         if (LookupCtx)
           Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
             << Name << LookupCtx << Found.getLookupName() << SS.getRange()
@@ -274,8 +274,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
         if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
           Diag(Template->getLocation(), diag::note_previous_decl)
             << Template->getDeclName();
-      } else
-        Found.clear();
+      }
     } else {
       Found.clear();
     }
@@ -303,7 +302,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
       //   - if the name is found in the context of the entire
       //     postfix-expression and does not name a class template, the name
       //     found in the class of the object expression is used, otherwise
-    } else {
+    } else if (!Found.isSuppressingDiagnostics()) {
       //   - if the name found is a class template, it must refer to the same
       //     entity as the one found in the class of the object expression,
       //     otherwise the program is ill-formed.

@@ -424,6 +424,11 @@ public:
     Diagnose = false;
   }
 
+  /// Determines whether this lookup is suppressing diagnostics.
+  bool isSuppressingDiagnostics() const {
+    return Diagnose;
+  }
+
   /// Sets a 'context' source range.
   void setContextRange(SourceRange SR) {
     NameContextRange = SR;

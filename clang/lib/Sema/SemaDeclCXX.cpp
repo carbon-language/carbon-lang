@@ -3649,7 +3649,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
       FD = cast<FunctionDecl>(Target);
 
     NamedDecl *OldDecl = 0;
-    switch (CheckOverload(FD, Previous, OldDecl)) {
+    switch (CheckOverload(0, FD, Previous, OldDecl, /*IsForUsingDecl*/ true)) {
     case Ovl_Overload:
       return false;
 
@@ -3659,11 +3659,6 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
       
     // We found a decl with the exact signature.
     case Ovl_Match:
-      if (isa<UsingShadowDecl>(OldDecl)) {
-        // Silently ignore the possible conflict.
-        return false;
-      }
-
       // If we're in a record, we want to hide the target, so we
       // return true (without a diagnostic) to tell the caller not to
       // build a shadow decl.

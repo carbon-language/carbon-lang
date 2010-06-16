@@ -111,34 +111,53 @@ namespace test3 {
 
   struct Derived1 : Base {
     using Base::foo;
-    template <int n> Opaque<2> foo() { return Opaque<2>(); }
+    template <int n> Opaque<2> foo() { return Opaque<2>(); } // expected-note {{invalid explicitly-specified argument for template parameter 'n'}}
   };
 
   struct Derived2 : Base {
-    template <int n> Opaque<2> foo() { return Opaque<2>(); }
+    template <int n> Opaque<2> foo() { return Opaque<2>(); } // expected-note {{invalid explicitly-specified argument for template parameter 'n'}}
     using Base::foo;
   };
 
   struct Derived3 : Base {
     using Base::foo;
-    template <class T> Opaque<3> foo() { return Opaque<3>(); }
+    template <class T> Opaque<3> foo() { return Opaque<3>(); } // expected-note {{invalid explicitly-specified argument for template parameter 'T'}}
   };
 
   struct Derived4 : Base {
-    template <class T> Opaque<3> foo() { return Opaque<3>(); }
+    template <class T> Opaque<3> foo() { return Opaque<3>(); } // expected-note {{invalid explicitly-specified argument for template parameter 'T'}}
     using Base::foo;
   };
 
   void test() {
     expect<0>(Base().foo<int>());
     expect<1>(Base().foo<0>());
-    expect<0>(Derived1().foo<int>());
+    expect<0>(Derived1().foo<int>()); // expected-error {{no matching member function for call to 'foo'}}
     expect<2>(Derived1().foo<0>());
-    expect<0>(Derived2().foo<int>());
+    expect<0>(Derived2().foo<int>()); // expected-error {{no matching member function for call to 'foo'}}
     expect<2>(Derived2().foo<0>());
     expect<3>(Derived3().foo<int>());
-    expect<1>(Derived3().foo<0>());
+    expect<1>(Derived3().foo<0>()); // expected-error {{no matching member function for call to 'foo'}}
     expect<3>(Derived4().foo<int>());
-    expect<1>(Derived4().foo<0>());
+    expect<1>(Derived4().foo<0>()); // expected-error {{no matching member function for call to 'foo'}}
+  }
+}
+
+// PR7384: access control for member templates.
+namespace test4 {
+  class Base {
+  protected:
+    template<typename T> void foo(T);
+    template<typename T> void bar(T); // expected-note {{declared protected here}}
+  };
+
+  struct Derived : Base {
+    using Base::foo;
+  };
+
+  void test() {
+    Derived d;
+    d.foo<int>(3);
+    d.bar<int>(3); // expected-error {{'bar' is a protected member}}
   }
 }

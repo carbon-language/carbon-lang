@@ -500,19 +500,54 @@ void OverloadCandidateSet::clear() {
 // identical (return types of functions are not part of the
 // signature), IsOverload returns false and MatchedDecl will be set to
 // point to the FunctionDecl for #2.
+//
+// 'NewIsUsingShadowDecl' indicates that 'New' is being introduced
+// into a class by a using declaration.  The rules for whether to hide
+// shadow declarations ignore some properties which otherwise figure
+// into a function template's signature.
 Sema::OverloadKind
-Sema::CheckOverload(FunctionDecl *New, const LookupResult &Old,
-                    NamedDecl *&Match) {
+Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
+                    NamedDecl *&Match, bool NewIsUsingDecl) {
   for (LookupResult::iterator I = Old.begin(), E = Old.end();
          I != E; ++I) {
-    NamedDecl *OldD = (*I)->getUnderlyingDecl();
+    NamedDecl *OldD = *I;
+
+    bool OldIsUsingDecl = false;
+    if (isa<UsingShadowDecl>(OldD)) {
+      OldIsUsingDecl = true;
+
+      // We can always introduce two using declarations into the same
+      // context, even if they have identical signatures.
+      if (NewIsUsingDecl) continue;
+
+      OldD = cast<UsingShadowDecl>(OldD)->getTargetDecl();
+    }
+
+    // If either declaration was introduced by a using declaration,
+    // we'll need to use slightly different rules for matching.
+    // Essentially, these rules are the normal rules, except that
+    // function templates hide function templates with different
+    // return types or template parameter lists.
+    bool UseMemberUsingDeclRules =
+      (OldIsUsingDecl || NewIsUsingDecl) && CurContext->isRecord();
+
     if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(OldD)) {
-      if (!IsOverload(New, OldT->getTemplatedDecl())) {
+      if (!IsOverload(New, OldT->getTemplatedDecl(), UseMemberUsingDeclRules)) {
+        if (UseMemberUsingDeclRules && OldIsUsingDecl) {
+          HideUsingShadowDecl(S, cast<UsingShadowDecl>(*I));
+          continue;
+        }
+
         Match = *I;
         return Ovl_Match;
       }
     } else if (FunctionDecl *OldF = dyn_cast<FunctionDecl>(OldD)) {
-      if (!IsOverload(New, OldF)) {
+      if (!IsOverload(New, OldF, UseMemberUsingDeclRules)) {
+        if (UseMemberUsingDeclRules && OldIsUsingDecl) {
+          HideUsingShadowDecl(S, cast<UsingShadowDecl>(*I));
+          continue;
+        }
+
         Match = *I;
         return Ovl_Match;
       }
@@ -536,7 +571,8 @@ Sema::CheckOverload(FunctionDecl *New, const LookupResult &Old,
   return Ovl_Overload;
 }
 
-bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {
+bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
+                      bool UseUsingDeclRules) {
   FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
   FunctionTemplateDecl *NewTemplate = New->getDescribedFunctionTemplate();
 
@@ -581,7 +617,10 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {
   //
   // We check the return type and template parameter lists for function
   // templates first; the remaining checks follow.
-  if (NewTemplate &&
+  //
+  // However, we don't consider either of these when deciding whether
+  // a member introduced by a shadow declaration is hidden.
+  if (!UseUsingDeclRules && NewTemplate &&
       (!TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
                                        OldTemplate->getTemplateParameters(),
                                        false, TPL_TemplateMatch) ||

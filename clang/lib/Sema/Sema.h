@@ -1103,10 +1103,12 @@ public:
     /// non-function.
     Ovl_NonFunction
   };
-  OverloadKind CheckOverload(FunctionDecl *New,
+  OverloadKind CheckOverload(Scope *S,
+                             FunctionDecl *New,
                              const LookupResult &OldDecls,
-                             NamedDecl *&OldDecl);
-  bool IsOverload(FunctionDecl *New, FunctionDecl *Old);
+                             NamedDecl *&OldDecl,
+                             bool IsForUsingDecl);
+  bool IsOverload(FunctionDecl *New, FunctionDecl *Old, bool IsForUsingDecl);
 
   bool TryImplicitConversion(InitializationSequence &Sequence,
                              const InitializedEntity &Entity,
@@ -1952,7 +1954,8 @@ public:
   OwningExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
                                     bool &IsArrow, SourceLocation OpLoc,
                                     CXXScopeSpec &SS,
-                                    DeclPtrTy ObjCImpDecl);
+                                    DeclPtrTy ObjCImpDecl,
+                                    bool HasTemplateArgs);
 
   bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,
                                      const CXXScopeSpec &SS,

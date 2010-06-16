@@ -677,26 +677,6 @@ static void DecomposeUnqualifiedId(Sema &SemaRef,
   }
 }
 
-/// Decompose the given template name into a list of lookup results.
-///
-/// The unqualified ID must name a non-dependent template, which can
-/// be more easily tested by checking whether DecomposeUnqualifiedId
-/// found template arguments.
-static void DecomposeTemplateName(LookupResult &R, const UnqualifiedId &Id) {
-  assert(Id.getKind() == UnqualifiedId::IK_TemplateId);
-  TemplateName TName =
-    Sema::TemplateTy::make(Id.TemplateId->Template).getAsVal<TemplateName>();
-
-  if (TemplateDecl *TD = TName.getAsTemplateDecl())
-    R.addDecl(TD);
-  else if (OverloadedTemplateStorage *OT = TName.getAsOverloadedTemplate())
-    for (OverloadedTemplateStorage::iterator I = OT->begin(), E = OT->end();
-           I != E; ++I)
-      R.addDecl(*I);
-
-  R.resolveKind();
-}
-
 /// Determines whether the given record is "fully-formed" at the given
 /// location, i.e. whether a qualified lookup into it is assured of
 /// getting consistent results already.
@@ -2580,12 +2560,22 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
 static bool
 LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                          SourceRange BaseRange, const RecordType *RTy,
-                         SourceLocation OpLoc, CXXScopeSpec &SS) {
+                         SourceLocation OpLoc, CXXScopeSpec &SS,
+                         bool HasTemplateArgs) {
   RecordDecl *RDecl = RTy->getDecl();
   if (SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
                               SemaRef.PDiag(diag::err_typecheck_incomplete_tag)
                                     << BaseRange))
     return true;
+
+  if (HasTemplateArgs) {
+    // LookupTemplateName doesn't expect these both to exist simultaneously.
+    QualType ObjectType = SS.isSet() ? QualType() : QualType(RTy, 0);
+
+    bool MOUS;
+    SemaRef.LookupTemplateName(R, 0, SS, ObjectType, false, MOUS);
+    return false;
+  }
 
   DeclContext *DC = RDecl;
   if (SS.isSet()) {
@@ -2660,14 +2650,14 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
     if (IsArrow) RecordTy = RecordTy->getAs<PointerType>()->getPointeeType();
     if (LookupMemberExprInRecord(*this, R, SourceRange(),
                                  RecordTy->getAs<RecordType>(),
-                                 OpLoc, SS))
+                                 OpLoc, SS, TemplateArgs != 0))
       return ExprError();
 
   // Explicit member accesses.
   } else {
     OwningExprResult Result =
       LookupMemberExpr(R, Base, IsArrow, OpLoc,
-                       SS, /*ObjCImpDecl*/ DeclPtrTy());
+                       SS, /*ObjCImpDecl*/ DeclPtrTy(), TemplateArgs != 0);
 
     if (Result.isInvalid()) {
       Owned(Base);
@@ -2880,7 +2870,7 @@ Sema::OwningExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                        bool &IsArrow, SourceLocation OpLoc,
                        CXXScopeSpec &SS,
-                       DeclPtrTy ObjCImpDecl) {
+                       DeclPtrTy ObjCImpDecl, bool HasTemplateArgs) {
   assert(BaseExpr && "no base expression");
 
   // Perform default conversions.
@@ -3057,7 +3047,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // Handle field access to simple records.
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     if (LookupMemberExprInRecord(*this, R, BaseExpr->getSourceRange(),
-                                 RTy, OpLoc, SS))
+                                 RTy, OpLoc, SS, HasTemplateArgs))
       return ExprError();
     return Owned((Expr*) 0);
   }
@@ -3259,44 +3249,24 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
                                       TemplateArgs);
   } else {
     LookupResult R(*this, Name, NameLoc, LookupMemberName);
-    if (TemplateArgs) {
-      // Re-use the lookup done for the template name.
-      DecomposeTemplateName(R, Id);
+    Result = LookupMemberExpr(R, Base, IsArrow, OpLoc,
+                              SS, ObjCImpDecl, TemplateArgs != 0);
 
-      // Re-derive the naming class.
-      if (SS.isSet()) {
-        NestedNameSpecifier *Qualifier
-        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-        if (const Type *Ty = Qualifier->getAsType())
-          if (CXXRecordDecl *NamingClass = Ty->getAsCXXRecordDecl())
-            R.setNamingClass(NamingClass);
-      } else {
-        QualType BaseType = Base->getType();
-        if (const PointerType *Ptr = BaseType->getAs<PointerType>())
-          BaseType = Ptr->getPointeeType();
-        if (CXXRecordDecl *NamingClass = BaseType->getAsCXXRecordDecl())
-          R.setNamingClass(NamingClass);
-      }
-    } else {
-      Result = LookupMemberExpr(R, Base, IsArrow, OpLoc,
-                                SS, ObjCImpDecl);
+    if (Result.isInvalid()) {
+      Owned(Base);
+      return ExprError();
+    }
 
-      if (Result.isInvalid()) {
-        Owned(Base);
-        return ExprError();
-      }
+    if (Result.get()) {
+      // The only way a reference to a destructor can be used is to
+      // immediately call it, which falls into this case.  If the
+      // next token is not a '(', produce a diagnostic and build the
+      // call now.
+      if (!HasTrailingLParen &&
+          Id.getKind() == UnqualifiedId::IK_DestructorName)
+        return DiagnoseDtorReference(NameLoc, move(Result));
 
-      if (Result.get()) {
-        // The only way a reference to a destructor can be used is to
-        // immediately call it, which falls into this case.  If the
-        // next token is not a '(', produce a diagnostic and build the
-        // call now.
-        if (!HasTrailingLParen &&
-            Id.getKind() == UnqualifiedId::IK_DestructorName)
-          return DiagnoseDtorReference(NameLoc, move(Result));
-
-        return move(Result);
-      }
+      return move(Result);
     }
 
     Result = BuildMemberReferenceExpr(ExprArg(*this, Base), Base->getType(),

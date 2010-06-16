@@ -2863,7 +2863,7 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
   
   // FIXME: Do we care about other names here too?
   if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
-    // We really want to find the base class constructor here.
+    // We really want to find the base class destructor here.
     QualType T = Data->S->Context.getTypeDeclType(BaseRecord);
     CanQualType CT = Data->S->Context.getCanonicalType(T);
     
@@ -2873,8 +2873,9 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
   for (Path.Decls = BaseRecord->lookup(Name);
        Path.Decls.first != Path.Decls.second;
        ++Path.Decls.first) {
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*Path.Decls.first)) {
-      if (MD->isVirtual() && !Data->S->IsOverload(Data->Method, MD))
+    NamedDecl *D = (*Path.Decls.first)->getUnderlyingDecl();
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+      if (MD->isVirtual() && !Data->S->IsOverload(Data->Method, MD, false))
         return true;
     }
   }
@@ -3588,13 +3589,10 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
         }
       }
 
-      switch (CheckOverload(NewFD, Previous, OldDecl)) {
+      switch (CheckOverload(S, NewFD, Previous, OldDecl,
+                            /*NewIsUsingDecl*/ false)) {
       case Ovl_Match:
         Redeclaration = true;
-        if (isa<UsingShadowDecl>(OldDecl) && CurContext->isRecord()) {
-          HideUsingShadowDecl(S, cast<UsingShadowDecl>(OldDecl));
-          Redeclaration = false;
-        }
         break;
 
       case Ovl_NonFunction:
