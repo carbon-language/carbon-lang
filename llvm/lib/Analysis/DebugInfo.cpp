@@ -406,6 +406,8 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
 /// information for the function F.
 bool DISubprogram::describes(const Function *F) {
   assert(F && "Invalid function");
+  if (F == getFunction())
+    return true;
   StringRef Name = getLinkageName();
   if (Name.empty())
     Name = getName();
