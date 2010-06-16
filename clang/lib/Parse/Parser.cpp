@@ -919,7 +919,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     TypeResult Ty;
     if (Tok.is(tok::identifier)) {
       // FIXME: check whether the next token is '<', first!
-      Ty = Actions.ActOnTypenameType(TypenameLoc, SS, *Tok.getIdentifierInfo(),
+      Ty = Actions.ActOnTypenameType(CurScope, TypenameLoc, SS, 
+                                     *Tok.getIdentifierInfo(),
                                      Tok.getLocation());
     } else if (Tok.is(tok::annot_template_id)) {
       TemplateIdAnnotation *TemplateId
@@ -934,7 +935,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       assert(Tok.is(tok::annot_typename) &&
              "AnnotateTemplateIdTokenAsType isn't working properly");
       if (Tok.getAnnotationValue())
-        Ty = Actions.ActOnTypenameType(TypenameLoc, SS, SourceLocation(),
+        Ty = Actions.ActOnTypenameType(CurScope, TypenameLoc, SS, 
+                                       SourceLocation(),
                                        Tok.getAnnotationValue());
       else
         Ty = true;

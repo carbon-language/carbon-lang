@@ -62,15 +62,15 @@ struct identity {
   // or typename-specifiers.
   if (false) {
     if (true)
-      return [typename identity<I3>::type method]; // expected-warning{{'typename' refers to a non-dependent type name; accepted as a C++0x extension}}
+      return [typename identity<I3>::type method]; // expected-warning{{occurs outside of a template}}
 
     return [::I3 method];
   }
 
   int* ip1 = {[super method]};
   int* ip2 = {[::I3 method]};
-  int* ip3 = {[typename identity<I3>::type method]}; // expected-warning{{'typename' refers to a non-dependent type name; accepted as a C++0x extension}}
-  int* ip4 = {[typename identity<I2_holder>::type().get() method]}; // expected-warning{{'typename' refers to a non-dependent type name; accepted as a C++0x extension}}
+  int* ip3 = {[typename identity<I3>::type method]}; // expected-warning{{occurs outside of a template}}
+  int* ip4 = {[typename identity<I2_holder>::type().get() method]}; // expected-warning{{occurs outside of a template}}
   int array[5] = {[3] = 2};
   return [super method];
 }

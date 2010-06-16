@@ -1989,6 +1989,8 @@ public:
   /// SS will be "MetaFun::", \p TemplateKWLoc contains the location
   /// of the "template" keyword, and "apply" is the \p Name.
   ///
+  /// \param S The scope in which the dependent template name was parsed.
+  ///
   /// \param TemplateKWLoc the location of the "template" keyword (if any).
   ///
   /// \param SS the nested-name-specifier that precedes the "template" keyword
@@ -2004,7 +2006,8 @@ public:
   ///
   /// \param EnteringContext whether we are entering the context of this
   /// template.
-  virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+  virtual TemplateTy ActOnDependentTemplateName(Scope *S, 
+                                                SourceLocation TemplateKWLoc,
                                                 CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 TypeTy *ObjectType,
@@ -2246,8 +2249,9 @@ public:
   /// \param II the identifier we're retrieving (e.g., 'type' in the example).
   /// \param IdLoc the location of the identifier.
   virtual TypeResult
-  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                    const IdentifierInfo &II, SourceLocation IdLoc) {
+  ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                    const CXXScopeSpec &SS, const IdentifierInfo &II, 
+                    SourceLocation IdLoc) {
     return TypeResult();
   }
 
@@ -2260,8 +2264,9 @@ public:
   /// \param TemplateLoc the location of the 'template' keyword, if any.
   /// \param Ty the type that the typename specifier refers to.
   virtual TypeResult
-  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                    SourceLocation TemplateLoc, TypeTy *Ty) {
+  ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                    const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
+                    TypeTy *Ty) {
     return TypeResult();
   }
 

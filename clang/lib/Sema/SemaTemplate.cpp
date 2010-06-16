@@ -1687,11 +1687,16 @@ Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
 /// SS will be "MetaFun::", \p TemplateKWLoc contains the location
 /// of the "template" keyword, and "apply" is the \p Name.
 Sema::TemplateTy
-Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+Sema::ActOnDependentTemplateName(Scope *S, SourceLocation TemplateKWLoc,
                                  CXXScopeSpec &SS,
                                  UnqualifiedId &Name,
                                  TypeTy *ObjectType,
                                  bool EnteringContext) {
+  if (TemplateKWLoc.isValid() && S && !S->getTemplateParamParent() &&
+      !getLangOptions().CPlusPlus0x)
+    Diag(TemplateKWLoc, diag::ext_template_outside_of_template)
+      << FixItHint::CreateRemoval(TemplateKWLoc);    
+  
   DeclContext *LookupCtx = 0;
   if (SS.isSet())
     LookupCtx = computeDeclContext(SS, EnteringContext);
@@ -1732,15 +1737,6 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
       return TemplateTy();
     } else {
       // We found something; return it.
-      if (ActiveTemplateInstantiations.empty() &&
-          !getLangOptions().CPlusPlus0x &&
-          !SS.isEmpty() && !isDependentScopeSpecifier(SS))
-        Diag(TemplateKWLoc.isValid()? TemplateKWLoc 
-                                    : Name.getSourceRange().getBegin(), 
-             diag::ext_template_nondependent)
-        << SourceRange(Name.getSourceRange().getBegin())
-        << FixItHint::CreateRemoval(TemplateKWLoc);
-      
       return Template;
     }
   }
@@ -5266,13 +5262,19 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 }
 
 Sema::TypeResult
-Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                        const IdentifierInfo &II, SourceLocation IdLoc) {
+Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                        const CXXScopeSpec &SS, const IdentifierInfo &II, 
+                        SourceLocation IdLoc) {
   NestedNameSpecifier *NNS
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   if (!NNS)
     return true;
 
+  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
+      !getLangOptions().CPlusPlus0x)
+    Diag(TypenameLoc, diag::ext_typename_outside_of_template)
+      << FixItHint::CreateRemoval(TypenameLoc);    
+  
   QualType T = CheckTypenameType(ETK_Typename, NNS, II,
                                  TypenameLoc, SS.getRange(), IdLoc);
   if (T.isNull())
@@ -5295,8 +5297,14 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
 }
 
 Sema::TypeResult
-Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                        SourceLocation TemplateLoc, TypeTy *Ty) {
+Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                        const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
+                        TypeTy *Ty) {
+  if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
+      !getLangOptions().CPlusPlus0x)
+    Diag(TypenameLoc, diag::ext_typename_outside_of_template)
+      << FixItHint::CreateRemoval(TypenameLoc);    
+  
   TypeSourceInfo *InnerTSI = 0;
   QualType T = GetTypeFromParser(Ty, &InnerTSI);
   NestedNameSpecifier *NNS
@@ -5397,15 +5405,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
     return Context.getDependentNameType(Keyword, NNS, &II);
 
   case LookupResult::Found:
-    if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
-      if (ActiveTemplateInstantiations.empty() &&
-          !getLangOptions().CPlusPlus0x && !SS.isEmpty() &&
-          !isDependentScopeSpecifier(SS))
-        Diag(KeywordLoc.isValid()? KeywordLoc : IILoc, 
-             diag::ext_typename_nondependent)
-          << SourceRange(IILoc)
-          << FixItHint::CreateRemoval(KeywordLoc);
-      
+    if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {      
       // We found a type. Build an ElaboratedType, since the
       // typename-specifier was just sugar.
       return Context.getElaboratedType(ETK_Typename, NNS,

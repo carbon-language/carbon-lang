@@ -6495,7 +6495,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SS.setScopeRep(Qualifier);
   UnqualifiedId Name;
   Name.setIdentifier(&II, /*FIXME:*/getDerived().getBaseLocation());
-  return getSema().ActOnDependentTemplateName(
+  return getSema().ActOnDependentTemplateName(/*Scope=*/0,
                                       /*FIXME:*/getDerived().getBaseLocation(),
                                               SS,
                                               Name,
@@ -6516,7 +6516,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   SourceLocation SymbolLocations[3]; // FIXME: Bogus location information.
   Name.setOperatorFunctionId(/*FIXME:*/getDerived().getBaseLocation(),
                              Operator, SymbolLocations);
-  return getSema().ActOnDependentTemplateName(
+  return getSema().ActOnDependentTemplateName(/*Scope=*/0,
                                        /*FIXME:*/getDerived().getBaseLocation(),
                                               SS,
                                               Name,

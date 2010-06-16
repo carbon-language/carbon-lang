@@ -307,7 +307,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
       << FixItHint::CreateInsertion(SS->getRange().getBegin(), "typename ");
-    SuggestedType = ActOnTypenameType(SourceLocation(), *SS, II, IILoc).get();
+    SuggestedType = ActOnTypenameType(S, SourceLocation(), *SS, II, IILoc).get();
   } else {
     assert(SS && SS->isInvalid() && 
            "Invalid scope specifier has already been diagnosed");

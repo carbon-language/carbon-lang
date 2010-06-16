@@ -2937,7 +2937,8 @@ public:
                                                 SourceLocation NameLoc,
                                const TemplateArgumentListInfo &TemplateArgs);
 
-  virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
+  virtual TemplateTy ActOnDependentTemplateName(Scope *S,
+                                                SourceLocation TemplateKWLoc,
                                                 CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 TypeTy *ObjectType,
@@ -3121,25 +3122,29 @@ public:
   /// \brief Called when the parser has parsed a C++ typename
   /// specifier, e.g., "typename T::type".
   ///
+  /// \param S The scope in which this typename type occurs.
   /// \param TypenameLoc the location of the 'typename' keyword
   /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
   /// \param II the identifier we're retrieving (e.g., 'type' in the example).
   /// \param IdLoc the location of the identifier.
   virtual TypeResult
-  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                    const IdentifierInfo &II, SourceLocation IdLoc);
+  ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                    const CXXScopeSpec &SS, const IdentifierInfo &II, 
+                    SourceLocation IdLoc);
 
   /// \brief Called when the parser has parsed a C++ typename
   /// specifier that ends in a template-id, e.g.,
   /// "typename MetaFun::template apply<T1, T2>".
   ///
+  /// \param S The scope in which this typename type occurs.
   /// \param TypenameLoc the location of the 'typename' keyword
   /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
   /// \param TemplateLoc the location of the 'template' keyword, if any.
   /// \param Ty the type that the typename specifier refers to.
   virtual TypeResult
-  ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
-                    SourceLocation TemplateLoc, TypeTy *Ty);
+  ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                    const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
+                    TypeTy *Ty);
 
   QualType CheckTypenameType(ElaboratedTypeKeyword Keyword,
                              NestedNameSpecifier *NNS,

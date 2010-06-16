@@ -165,7 +165,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       // Commit to parsing the template-id.
       TPA.Commit();
       TemplateTy Template
-        = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, TemplateName,
+        = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
+                                             TemplateName,
                                              ObjectType, EnteringContext);
       if (!Template)
         return true;
@@ -319,7 +320,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           << II.getName()
           << FixItHint::CreateInsertion(Tok.getLocation(), "template ");
         
-        Template = Actions.ActOnDependentTemplateName(Tok.getLocation(), SS, 
+        Template = Actions.ActOnDependentTemplateName(CurScope, 
+                                                      Tok.getLocation(), SS, 
                                                       TemplateName, ObjectType,
                                                       EnteringContext);
         if (!Template.get())
@@ -1011,7 +1013,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   case UnqualifiedId::IK_OperatorFunctionId:
   case UnqualifiedId::IK_LiteralOperatorId:
     if (AssumeTemplateId) {
-      Template = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, 
+      Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
                                                     Id, ObjectType,
                                                     EnteringContext);
       TNK = TNK_Dependent_template_name;
@@ -1042,8 +1044,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
         Diag(Id.StartLocation, diag::err_missing_dependent_template_keyword)
           << Name
           << FixItHint::CreateInsertion(Id.StartLocation, "template ");
-        Template = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, 
-                                                      Id, ObjectType,
+        Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc,
+                                                      SS, Id, ObjectType,
                                                       EnteringContext);
         TNK = TNK_Dependent_template_name;
         if (!Template.get())
@@ -1067,7 +1069,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     bool MemberOfUnknownSpecialization;
     TemplateName.setIdentifier(Name, NameLoc);
     if (ObjectType) {
-      Template = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, 
+      Template = Actions.ActOnDependentTemplateName(CurScope, TemplateKWLoc, SS, 
                                                     TemplateName, ObjectType,
                                                     EnteringContext);
       TNK = TNK_Dependent_template_name;

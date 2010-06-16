@@ -1610,9 +1610,8 @@ def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
 def err_typename_missing : Error<
   "missing 'typename' prior to dependent type name '%0%1'">;
-def ext_typename_nondependent : ExtWarn<
-  "'typename' refers to a non-dependent type name; accepted as a C++0x "
-  "extension">;
+def ext_typename_outside_of_template : ExtWarn<
+  "'typename' occurs outside of a template">;
 
 def err_template_kw_refers_to_non_template : Error<
     "%0 following the 'template' keyword does not refer to a template">;
@@ -1624,9 +1623,8 @@ def note_referenced_class_template : Error<
     "class template declared here">;
 def err_template_kw_missing : Error<
   "missing 'template' keyword prior to dependent template name '%0%1'">;
-def ext_template_nondependent : ExtWarn<
-  "'template' refers to a non-dependent template name; accepted as a C++0x "
-  "extension">;
+def ext_template_outside_of_template : ExtWarn<
+  "'template' keyword outside of a template">;
 
 // C++0x Variadic Templates
 def err_template_param_pack_default_arg : Error<

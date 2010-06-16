@@ -916,9 +916,9 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       // template argument.
       if (isEndOfTemplateArgument(Tok)) {
         TemplateTy Template
-        = Actions.ActOnDependentTemplateName(TemplateLoc, SS, Name, 
-                                             /*ObjectType=*/0,
-                                             /*EnteringContext=*/false);
+          = Actions.ActOnDependentTemplateName(CurScope, TemplateLoc, SS, Name, 
+                                               /*ObjectType=*/0,
+                                               /*EnteringContext=*/false);
         if (Template.get())
           return ParsedTemplateArgument(SS, Template, Name.StartLocation);
       }

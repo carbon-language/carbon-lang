@@ -62,12 +62,12 @@ struct Y0 {
 
   template<typename U>
   void f() {
-    Y0::template f1<U>(0); // expected-warning{{'template' refers to a non-dependent template name}}
-    Y0::template f1(0); // expected-warning{{'template' refers to a non-dependent template name}}
+    Y0::template f1<U>(0);
+    Y0::template f1(0);
     this->template f1(0);
 
-    Y0::template f2<U>(0); // expected-warning{{'template' refers to a non-dependent template name}}
-    Y0::template f2(0);// expected-warning{{'template' refers to a non-dependent template name}}
+    Y0::template f2<U>(0);
+    Y0::template f2(0);
 
     Y0::template f3(0); // expected-error {{'f3' following the 'template' keyword does not refer to a template}}
     Y0::template f3(); // expected-error {{'f3' following the 'template' keyword does not refer to a template}}
@@ -75,8 +75,7 @@ struct Y0 {
     int x;
     x = Y0::f4(0);
     x = Y0::f4<int>(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
-    x = Y0::template f4(0); // expected-error {{assigning to 'int' from incompatible type 'void'}} \
-    // expected-warning{{'template' refers to a non-dependent template name}}
+    x = Y0::template f4(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
 
     x = this->f4(0);
     x = this->f4<int>(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
