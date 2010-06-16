@@ -1358,8 +1358,8 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 //??  if (RegInfo->needsStackRealignment(MF))
 //??    return false;
 
-  // Do not sibcall optimize vararg calls unless the call site is not passing any
-  // arguments.
+  // Do not sibcall optimize vararg calls unless the call site is not passing
+  // any arguments.
   if (isVarArg && !Outs.empty())
     return false;
 
@@ -1814,8 +1814,7 @@ ARMTargetLowering::LowerEH_SJLJ_LONGJMP(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
-                                           const ARMSubtarget *Subtarget)
-                                             const {
+                                          const ARMSubtarget *Subtarget) const {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   DebugLoc dl = Op.getDebugLoc();
   switch (IntNo) {
@@ -1855,7 +1854,7 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
 }
 
 static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
-                          const ARMSubtarget *Subtarget) {
+                               const ARMSubtarget *Subtarget) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Op5 = Op.getOperand(5);
   SDValue Res;
