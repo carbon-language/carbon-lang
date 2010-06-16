@@ -66,6 +66,11 @@ public:
     this->TD = TD;
     if (CI->getCalledFunction())
       Context = &CI->getCalledFunction()->getContext();
+
+    // We never change the calling convention.
+    if (CI->getCallingConv() != llvm::CallingConv::C)
+      return NULL;
+
     return CallOptimizer(CI->getCalledFunction(), CI, B);
   }
 };
