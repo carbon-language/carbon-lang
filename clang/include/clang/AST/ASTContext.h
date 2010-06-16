@@ -601,7 +601,7 @@ public:
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index,
                                    bool ParameterPack,
-                                   TemplateTypeParmDecl *ParmDecl = 0);
+                                   IdentifierInfo *Name = 0);
 
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgument *Args,

@@ -1442,12 +1442,14 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
 Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                                     TemplateTypeParmDecl *D) {
   // TODO: don't always clone when decls are refcounted.
-  assert(D->getTypeForDecl()->isTemplateTypeParmType());
+  const Type* T = D->getTypeForDecl();
+  assert(T->isTemplateTypeParmType());
+  const TemplateTypeParmType *TTPT = T->getAs<TemplateTypeParmType>();
 
   TemplateTypeParmDecl *Inst =
     TemplateTypeParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                 D->getDepth() - 1, D->getIndex(),
-                                 D->getIdentifier(),
+                                 TTPT->getDepth() - 1, TTPT->getIndex(),
+                                 TTPT->getName(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
 

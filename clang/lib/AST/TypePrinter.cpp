@@ -506,12 +506,12 @@ void TypePrinter::PrintTemplateTypeParm(const TemplateTypeParmType *T,
                                         std::string &S) { 
   if (!S.empty())    // Prefix the basic type, e.g. 'parmname X'.
     S = ' ' + S;
-
-  if (IdentifierInfo *Id = T->getDecl() ? T->getDecl()->getIdentifier() : 0)
-    S = Id->getName().str() + S;
-  else
+  
+  if (!T->getName())
     S = "type-parameter-" + llvm::utostr_32(T->getDepth()) + '-' +
         llvm::utostr_32(T->getIndex()) + S;
+  else
+    S = T->getName()->getName().str() + S;  
 }
 
 void TypePrinter::PrintSubstTemplateTypeParm(const SubstTemplateTypeParmType *T, 

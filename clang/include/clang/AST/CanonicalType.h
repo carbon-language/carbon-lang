@@ -640,6 +640,7 @@ struct CanProxyAdaptor<TemplateTypeParmType>
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getDepth)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getIndex)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isParameterPack)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(IdentifierInfo *, getName)
 };
 
 template<>

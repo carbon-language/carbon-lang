@@ -662,13 +662,18 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// default argument.
   bool InheritedDefault : 1;
 
+  /// \brief Whether this is a parameter pack.
+  bool ParameterPack : 1;
+
   /// \brief The default template argument, if any.
   TypeSourceInfo *DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-                       bool Typename)
+                       bool Typename, QualType Type, bool ParameterPack)
     : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename),
-      InheritedDefault(false), DefaultArgument() { }
+      InheritedDefault(false), ParameterPack(ParameterPack), DefaultArgument() {
+    TypeForDecl = Type.getTypePtr();
+  }
 
 public:
   static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
@@ -719,7 +724,7 @@ public:
   unsigned getIndex() const;
 
   /// \brief Returns whether this is a parameter pack.
-  bool isParameterPack() const;
+  bool isParameterPack() const { return ParameterPack; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

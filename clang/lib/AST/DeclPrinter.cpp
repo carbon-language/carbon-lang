@@ -623,7 +623,7 @@ void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
       if (TTP->isParameterPack())
         Out << "... ";
 
-      Out << TTP->getNameAsString();
+      Out << ParamType.getAsString(Policy);
 
       if (TTP->hasDefaultArgument()) {
         Out << " = ";

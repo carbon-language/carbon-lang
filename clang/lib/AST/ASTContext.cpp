@@ -1728,9 +1728,9 @@ ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
 /// name.
 QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
                                              bool ParameterPack,
-                                             TemplateTypeParmDecl *TTPDecl) {
+                                             IdentifierInfo *Name) {
   llvm::FoldingSetNodeID ID;
-  TemplateTypeParmType::Profile(ID, Depth, Index, ParameterPack, TTPDecl);
+  TemplateTypeParmType::Profile(ID, Depth, Index, ParameterPack, Name);
   void *InsertPos = 0;
   TemplateTypeParmType *TypeParm
     = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -1738,9 +1738,10 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
   if (TypeParm)
     return QualType(TypeParm, 0);
 
-  if (TTPDecl) {
+  if (Name) {
     QualType Canon = getTemplateTypeParmType(Depth, Index, ParameterPack);
-    TypeParm = new (*this, TypeAlignment) TemplateTypeParmType(TTPDecl, Canon);
+    TypeParm = new (*this, TypeAlignment)
+      TemplateTypeParmType(Depth, Index, ParameterPack, Name, Canon);
 
     TemplateTypeParmType *TypeCheck 
       = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);

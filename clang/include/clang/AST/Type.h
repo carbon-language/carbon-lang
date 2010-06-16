@@ -2311,63 +2311,42 @@ public:
 };
 
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
-  // Helper data collector for canonical types.
-  struct CanonicalTTPTInfo {
-    unsigned Depth : 15;
-    unsigned Index : 16;
-    unsigned ParameterPack : 1;
-  };
+  unsigned Depth : 15;
+  unsigned Index : 16;
+  unsigned ParameterPack : 1;
+  IdentifierInfo *Name;
 
-  union {
-    // Info for the canonical type.
-    CanonicalTTPTInfo CanTTPTInfo;
-    // Info for the non-canonical type.
-    TemplateTypeParmDecl *TTPDecl;
-  };
-
-  /// Build a non-canonical type.
-  TemplateTypeParmType(TemplateTypeParmDecl *TTPDecl, QualType Canon)
+  TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N,
+                       QualType Canon)
     : Type(TemplateTypeParm, Canon, /*Dependent=*/true),
-      TTPDecl(TTPDecl) { }
+      Depth(D), Index(I), ParameterPack(PP), Name(N) { }
 
-  /// Build the canonical type.
   TemplateTypeParmType(unsigned D, unsigned I, bool PP)
-    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true) {
-    CanTTPTInfo.Depth = D;
-    CanTTPTInfo.Index = I;
-    CanTTPTInfo.ParameterPack = PP;
-  }
+    : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true),
+      Depth(D), Index(I), ParameterPack(PP), Name(0) { }
 
   friend class ASTContext;  // ASTContext creates these
 
-  const CanonicalTTPTInfo& getCanTTPTInfo() const {
-    QualType Can = getCanonicalTypeInternal();
-    return Can->getAs<TemplateTypeParmType>()->CanTTPTInfo;
-  }
-
 public:
-  unsigned getDepth() const { return getCanTTPTInfo().Depth; }
-  unsigned getIndex() const { return getCanTTPTInfo().Index; }
-  bool isParameterPack() const { return getCanTTPTInfo().ParameterPack; }
-
-  TemplateTypeParmDecl *getDecl() const {
-    return isCanonicalUnqualified() ? 0 : TTPDecl;
-  }
+  unsigned getDepth() const { return Depth; }
+  unsigned getIndex() const { return Index; }
+  bool isParameterPack() const { return ParameterPack; }
+  IdentifierInfo *getName() const { return Name; }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getDepth(), getIndex(), isParameterPack(), getDecl());
+    Profile(ID, Depth, Index, ParameterPack, Name);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, unsigned Depth,
                       unsigned Index, bool ParameterPack,
-                      TemplateTypeParmDecl *TTPDecl) {
+                      IdentifierInfo *Name) {
     ID.AddInteger(Depth);
     ID.AddInteger(Index);
     ID.AddBoolean(ParameterPack);
-    ID.AddPointer(TTPDecl);
+    ID.AddPointer(Name);
   }
 
   static bool classof(const Type *T) {
@@ -2394,6 +2373,8 @@ class SubstTemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;
 
 public:
+  IdentifierInfo *getName() const { return Replaced->getName(); }
+
   /// Gets the template parameter that was substituted for.
   const TemplateTypeParmType *getReplacedParameter() const {
     return Replaced;
