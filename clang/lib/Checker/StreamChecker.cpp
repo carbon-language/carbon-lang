@@ -100,7 +100,7 @@ void StreamChecker::FRead(CheckerContext &C, const CallExpr *CE) {
   // Assume CallAndMessageChecker has been run.
   SVal StreamVal = state->getSVal(CE->getArg(3));
 
-  if (const DefinedSVal *DV = cast<DefinedSVal>(&StreamVal)) {
+  if (const DefinedSVal *DV = dyn_cast<DefinedSVal>(&StreamVal)) {
     ConstraintManager &CM = C.getConstraintManager();
     const GRState *stateNotNull, *stateNull;
     llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
