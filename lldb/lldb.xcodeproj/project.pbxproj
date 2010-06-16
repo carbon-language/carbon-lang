@@ -2337,15 +2337,13 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/scripts/lldb.swig",
-				"$(SRCROOT)/source/LLDBWrapPython.cpp",
 			);
 			name = "Build swig wrapper classes";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "sh $SRCROOT/scripts/build-swig-wrapper-classes.sh\n";
+			shellScript = "sh $SRCROOT/scripts/build-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $CONFIGURATION_BUILD_DIR \"\"\n";
 		};
 		9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2365,7 +2363,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "sh $SRCROOT/scripts/finish-swig-wrapper-classes.sh";
+			shellScript = "sh $SRCROOT/scripts/finish-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $CONFIGURATION_BUILD_DIR \"\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 

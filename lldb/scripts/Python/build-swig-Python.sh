@@ -2,8 +2,24 @@
 
 # build-swig-Python.sh
 
+# SRC_ROOT is the root of the lldb source tree.
+# TARGET_DIR is where the lldb framework/shared library gets put.
+# CONFIG_BUILD_DIR is where the build-swig-Python-LLDB.sh  shell script 
+#           put the lldb.py file it was generated from running SWIG.
+# PREFIX is the root directory used to determine where third-party modules
+#         for scripting languages should be installed.
+# debug_flag (optional) determines whether or not this script outputs 
+#           additional information when running.
 
-debug_flag=$1
+SRC_ROOT=$1
+TARGET_DIR=$2
+CONFIG_BUILD_DIR=$3
+PYTHON_INSTALL_DIR=$4
+debug_flag=$5 
+
+swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
+swig_input_file=${SRC_ROOT}/scripts/lldb.swig
+
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
@@ -13,33 +29,33 @@ else
 fi
 
 
-HEADER_FILES="${SRCROOT}/include/lldb/lldb-types.h"\
-" ${SRCROOT}/include/lldb/API/SBAddress.h"\
-" ${SRCROOT}/include/lldb/API/SBBlock.h"\
-" ${SRCROOT}/include/lldb/API/SBBreakpoint.h"\
-" ${SRCROOT}/include/lldb/API/SBBreakpointLocation.h"\
-" ${SRCROOT}/include/lldb/API/SBBroadcaster.h"\
-" ${SRCROOT}/include/lldb/API/SBCommandContext.h"\
-" ${SRCROOT}/include/lldb/API/SBCommandInterpreter.h"\
-" ${SRCROOT}/include/lldb/API/SBCommandReturnObject.h"\
-" ${SRCROOT}/include/lldb/API/SBCompileUnit.h"\
-" ${SRCROOT}/include/lldb/API/SBDebugger.h"\
-" ${SRCROOT}/include/lldb/API/SBError.h"\
-" ${SRCROOT}/include/lldb/API/SBEvent.h"\
-" ${SRCROOT}/include/lldb/API/SBFrame.h"\
-" ${SRCROOT}/include/lldb/API/SBFunction.h"\
-" ${SRCROOT}/include/lldb/API/SBLineEntry.h"\
-" ${SRCROOT}/include/lldb/API/SBListener.h"\
-" ${SRCROOT}/include/lldb/API/SBModule.h"\
-" ${SRCROOT}/include/lldb/API/SBProcess.h"\
-" ${SRCROOT}/include/lldb/API/SBSourceManager.h"\
-" ${SRCROOT}/include/lldb/API/SBStringList.h"\
-" ${SRCROOT}/include/lldb/API/SBSymbol.h"\
-" ${SRCROOT}/include/lldb/API/SBSymbolContext.h"\
-" ${SRCROOT}/include/lldb/API/SBTarget.h"\
-" ${SRCROOT}/include/lldb/API/SBThread.h"\
-" ${SRCROOT}/include/lldb/API/SBType.h"\
-" ${SRCROOT}/include/lldb/API/SBValue.h"
+HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-types.h"\
+" ${SRC_ROOT}/include/lldb/API/SBAddress.h"\
+" ${SRC_ROOT}/include/lldb/API/SBBlock.h"\
+" ${SRC_ROOT}/include/lldb/API/SBBreakpoint.h"\
+" ${SRC_ROOT}/include/lldb/API/SBBreakpointLocation.h"\
+" ${SRC_ROOT}/include/lldb/API/SBBroadcaster.h"\
+" ${SRC_ROOT}/include/lldb/API/SBCommandContext.h"\
+" ${SRC_ROOT}/include/lldb/API/SBCommandInterpreter.h"\
+" ${SRC_ROOT}/include/lldb/API/SBCommandReturnObject.h"\
+" ${SRC_ROOT}/include/lldb/API/SBCompileUnit.h"\
+" ${SRC_ROOT}/include/lldb/API/SBDebugger.h"\
+" ${SRC_ROOT}/include/lldb/API/SBError.h"\
+" ${SRC_ROOT}/include/lldb/API/SBEvent.h"\
+" ${SRC_ROOT}/include/lldb/API/SBFrame.h"\
+" ${SRC_ROOT}/include/lldb/API/SBFunction.h"\
+" ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
+" ${SRC_ROOT}/include/lldb/API/SBListener.h"\
+" ${SRC_ROOT}/include/lldb/API/SBModule.h"\
+" ${SRC_ROOT}/include/lldb/API/SBProcess.h"\
+" ${SRC_ROOT}/include/lldb/API/SBSourceManager.h"\
+" ${SRC_ROOT}/include/lldb/API/SBStringList.h"\
+" ${SRC_ROOT}/include/lldb/API/SBSymbol.h"\
+" ${SRC_ROOT}/include/lldb/API/SBSymbolContext.h"\
+" ${SRC_ROOT}/include/lldb/API/SBTarget.h"\
+" ${SRC_ROOT}/include/lldb/API/SBThread.h"\
+" ${SRC_ROOT}/include/lldb/API/SBType.h"\
+" ${SRC_ROOT}/include/lldb/API/SBValue.h"
 
 
 if [ $Debug == 1 ]
@@ -50,7 +66,6 @@ fi
 
 NeedToUpdate=0
 
-swig_output_file=${SCRIPT_INPUT_FILE_1}
 
 if [ ! -f $swig_output_file ]
 then
@@ -77,7 +92,16 @@ then
     done
 fi
 
-framework_python_dir="${CONFIGURATION_BUILD_DIR}/LLDB.framework/Versions/A/Resources/Python"
+os_name=`uname -s`
+python_version=`/usr/bin/python --version 2>&1 | sed -e 's,Python ,,' -e 's,[.][0-9],,2' -e 's,[a-z][a-z][0-9],,'`
+
+if [ "$os_name" == "Darwin" ]
+then
+    framework_python_dir="${TARGET_DIR}/LLDB.framework/Resources/Python"
+else
+    framework_python_dir="${PYTHON_INSTALL_DIR}/python${python_version}"
+fi
+
 
 if [ ! -L "${framework_python_dir}/_lldb.so" ]
 then
@@ -101,27 +125,5 @@ fi
 
 # Build the SWIG C++ wrapper file for Python.
 
-swig -c++ -shadow -python -I"${SRCROOT}/include" -I./. -outdir "${CONFIGURATION_BUILD_DIR}" -o "${SCRIPT_INPUT_FILE_1}" "${SCRIPT_INPUT_FILE_0}"
+swig -c++ -shadow -python -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
-# Edit the C++ wrapper file that SWIG generated for Python.  There are two
-# global string replacements needed, which the following script file takes
-# care of.  It reads in 'LLDBWrapPython.cpp' and generates 
-# 'LLDBWrapPython.cpp.edited'.
-
-# The need for this has been eliminated by fixing the namespace qualifiers on return types.
-# Leaving this here for now, just in case...
-#
-#if [ -f "${SRCROOT}/scripts/Python/edit-swig-python-wrapper-file.py" ]
-#then
-#    python "${SRCROOT}/scripts/Python/edit-swig-python-wrapper-file.py"
-#fi
-
-#
-# Now that we've got a C++ file we're happy with (hopefully), rename the
-# edited file and move it to the appropriate places.
-#
-
-if [ -f "${SCRIPT_INPUT_FILE_1}.edited" ]
-then
-    mv "${SCRIPT_INPUT_FILE_1}.edited" "${SCRIPT_INPUT_FILE_1}"
-fi

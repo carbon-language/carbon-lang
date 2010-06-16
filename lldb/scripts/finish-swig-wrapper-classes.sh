@@ -13,7 +13,20 @@
 # language stuff fully functional.  Any such post-processing is handled through
 # the shell scripts called here.
 
-debug_flag=$1
+# SRC_ROOT is the root of the lldb source tree.
+# TARGET_DIR is where the lldb framework/shared library gets put.
+# CONFIG_BUILD_DIR is where the build-swig-Python-LLDB.sh  shell script
+#           put the lldb.py file it generated from running SWIG.
+# PREFIX is the root directory used to determine where third-party modules
+#         for scripting languages should be installed.
+# debug_flag (optional) determines whether or not this script outputs
+#           additional information when running.
+
+SRC_ROOT=$1
+TARGET_DIR=$2
+CONFIG_BUILD_DIR=$3
+PREFIX=$4
+debug_flag=$5
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
@@ -31,7 +44,7 @@ fi
 # change.
 
 languages="Python"
-cwd=${SRCROOT}/scripts
+cwd=${SRC_ROOT}/scripts
 
 for curlang in $languages
 do
@@ -53,17 +66,18 @@ do
 
         cd $cwd/$curlang
 
-        filename="./finish-swig-${curlang}-${TARGET_NAME}.sh"
+        filename="./finish-swig-${curlang}-LLDB.sh"
 
         if [ -f $filename ]
         then
             if [ $Debug == 1 ]
             then
-                echo "Found $curlang post-processing script for ${TARGET_NAME}"
+                echo "Found $curlang post-processing script for LLDB"
                 echo "Executing $curlang post-processing script..."
             fi
 
-            ./finish-swig-${curlang}-${TARGET_NAME}.sh
+            
+            ./finish-swig-${curlang}-LLDB.sh $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}"
         fi
     fi
 done
