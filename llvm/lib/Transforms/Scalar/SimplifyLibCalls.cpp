@@ -342,6 +342,9 @@ struct StrNCmpOpt : public LibCallOptimization {
     if (Length == 0) // strncmp(x,y,0)   -> 0
       return ConstantInt::get(CI->getType(), 0);
 
+    if (TD && Length == 1) // strncmp(x,y,1) -> memcmp(x,y,1)
+      return EmitMemCmp(Str1P, Str2P, CI->getOperand(3), B, TD);
+
     std::string Str1, Str2;
     bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
     bool HasStr2 = GetConstantStringInfo(Str2P, Str2);
