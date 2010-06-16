@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GVMaterializer.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LeakDetector.h"
@@ -314,6 +315,12 @@ GlobalAlias *Module::getNamedAlias(StringRef Name) const {
 //// specified name is not found.
 NamedMDNode *Module::getNamedMetadata(StringRef Name) const {
   return NamedMDSymTab->lookup(Name);
+}
+
+NamedMDNode *Module::getNamedMetadataUsingTwine(Twine Name) const {
+  SmallString<256> NameData;
+  StringRef NameRef = Name.toStringRef(NameData);
+   return NamedMDSymTab->lookup(NameRef);
 }
 
 /// getOrInsertNamedMetadata - Return the first named MDNode in the module 

@@ -1053,8 +1053,12 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     // The optimizer may remove local variable. If there is an interest
     // to preserve variable info in such situation then stash it in a
     // named mdnode.
-    NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.lv");
-    NMD->addOperand(Node);
+    DISubprogram Fn(getDISubprogram(Context));
+    const Twine FnLVName = Twine("llvm.dbg.lv.", Fn.getName());
+    NamedMDNode *FnLocals = M.getNamedMetadataUsingTwine(FnLVName);
+    if (!FnLocals)
+      FnLocals = NamedMDNode::Create(VMContext, FnLVName, NULL, 0, &M);
+    FnLocals->addOperand(Node);
   }
   return DIVariable(Node);
 }
