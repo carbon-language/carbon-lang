@@ -14,11 +14,26 @@ using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
                                    raw_ostream &_OS, MCCodeEmitter *_Emitter)
-  : MCStreamer(Context),
-    Assembler(new MCAssembler(Context, TAB, *_Emitter, _OS))
+  : MCStreamer(Context), Assembler(new MCAssembler(Context, TAB,
+                                                   *_Emitter, _OS)),
+    CurSectionData(0)
 {
 }
 
 MCObjectStreamer::~MCObjectStreamer() {
   delete Assembler;
+}
+
+void MCObjectStreamer::SwitchSection(const MCSection *Section) {
+  assert(Section && "Cannot switch to a null section!");
+
+  // If already in this section, then this is a noop.
+  if (Section == CurSection) return;
+
+  CurSection = Section;
+  CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
+}
+
+void MCObjectStreamer::Finish() {
+  getAssembler().Finish();
 }

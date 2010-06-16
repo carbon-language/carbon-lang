@@ -28,14 +28,27 @@ class raw_ostream;
 /// implementation.
 class MCObjectStreamer : public MCStreamer {
   MCAssembler *Assembler;
+  MCSectionData *CurSectionData;
 
 protected:
   MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
                    raw_ostream &_OS, MCCodeEmitter *_Emitter);
   ~MCObjectStreamer();
 
+  MCSectionData *getCurrentSectionData() const {
+    return CurSectionData;
+  }
+
 public:
   MCAssembler &getAssembler() { return *Assembler; }
+
+  /// @name MCStreamer Interface
+  /// @{
+
+  virtual void SwitchSection(const MCSection *Section);
+  virtual void Finish();
+
+  /// @}
 };
 
 } // end namespace llvm

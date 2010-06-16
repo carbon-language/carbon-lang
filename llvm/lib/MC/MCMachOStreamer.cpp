@@ -27,19 +27,16 @@ using namespace llvm;
 namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
-
 private:
-  MCSectionData *CurSectionData;
-
   /// Track the current atom for each section.
   DenseMap<const MCSectionData*, MCSymbolData*> CurrentAtomMap;
 
 private:
   MCFragment *getCurrentFragment() const {
-    assert(CurSectionData && "No current section!");
+    assert(getCurrentSectionData() && "No current section!");
 
-    if (!CurSectionData->empty())
-      return &CurSectionData->getFragmentList().back();
+    if (!getCurrentSectionData()->empty())
+      return &getCurrentSectionData()->getFragmentList().back();
 
     return 0;
   }
@@ -55,8 +52,8 @@ private:
 
   /// Create a new data fragment in the current section.
   MCDataFragment *createDataFragment() const {
-    MCDataFragment *DF = new MCDataFragment(CurSectionData);
-    DF->setAtom(CurrentAtomMap.lookup(CurSectionData));
+    MCDataFragment *DF = new MCDataFragment(getCurrentSectionData());
+    DF->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
     return DF;
   }
 
@@ -66,7 +63,7 @@ private:
 public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
-    : MCObjectStreamer(Context, TAB, OS, Emitter), CurSectionData(0) {}
+    : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
   const MCExpr *AddValueSymbols(const MCExpr *Value) {
     switch (Value->getKind()) {
@@ -97,7 +94,6 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void SwitchSection(const MCSection *Section);
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -148,22 +144,11 @@ public:
   }
 
   virtual void EmitInstruction(const MCInst &Inst);
-  virtual void Finish();
 
   /// @}
 };
 
 } // end anonymous namespace.
-
-void MCMachOStreamer::SwitchSection(const MCSection *Section) {
-  assert(Section && "Cannot switch to a null section!");
-
-  // If already in this section, then this is a noop.
-  if (Section == CurSection) return;
-
-  CurSection = Section;
-  CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
-}
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
@@ -175,7 +160,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   // Update the current atom map, if necessary.
   bool MustCreateFragment = false;
   if (getAssembler().isSymbolLinkerVisible(&SD)) {
-    CurrentAtomMap[CurSectionData] = &SD;
+    CurrentAtomMap[getCurrentSectionData()] = &SD;
 
     // We have to create a new fragment, fragments cannot span atoms.
     MustCreateFragment = true;
@@ -228,7 +213,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     // important for matching the string table that 'as' generates.
     IndirectSymbolData ISD;
     ISD.Symbol = Symbol;
-    ISD.SectionData = CurSectionData;
+    ISD.SectionData = getCurrentSectionData();
     getAssembler().getIndirectSymbols().push_back(ISD);
     return;
   }
@@ -389,12 +374,12 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   MCFragment *F = new MCAlignFragment(ByteAlignment, Value, ValueSize,
-                                      MaxBytesToEmit, CurSectionData);
-  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
+                                      MaxBytesToEmit, getCurrentSectionData());
+  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 
   // Update the maximum alignment on the current section if necessary.
-  if (ByteAlignment > CurSectionData->getAlignment())
-    CurSectionData->setAlignment(ByteAlignment);
+  if (ByteAlignment > getCurrentSectionData()->getAlignment())
+    getCurrentSectionData()->setAlignment(ByteAlignment);
 }
 
 void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
@@ -402,24 +387,24 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   MCAlignFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
-                                           CurSectionData);
+                                           getCurrentSectionData());
   F->setEmitNops(true);
-  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
+  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 
   // Update the maximum alignment on the current section if necessary.
-  if (ByteAlignment > CurSectionData->getAlignment())
-    CurSectionData->setAlignment(ByteAlignment);
+  if (ByteAlignment > getCurrentSectionData()->getAlignment())
+    getCurrentSectionData()->setAlignment(ByteAlignment);
 }
 
 void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
-  MCFragment *F = new MCOrgFragment(*Offset, Value, CurSectionData);
-  F->setAtom(CurrentAtomMap.lookup(CurSectionData));
+  MCFragment *F = new MCOrgFragment(*Offset, Value, getCurrentSectionData());
+  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 }
 
 void MCMachOStreamer::EmitInstToFragment(const MCInst &Inst) {
-  MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
-  IF->setAtom(CurrentAtomMap.lookup(CurSectionData));
+  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+  IF->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 
   // Add the fixups and data.
   //
@@ -458,7 +443,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
     if (Inst.getOperand(i).isExpr())
       AddValueSymbols(Inst.getOperand(i).getExpr());
 
-  CurSectionData->setHasInstructions(true);
+  getCurrentSectionData()->setHasInstructions(true);
 
   // If this instruction doesn't need relaxation, just emit it as data.
   if (!getAssembler().getBackend().MayNeedRelaxation(Inst)) {
@@ -479,10 +464,6 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   // Otherwise emit to a separate fragment.
   EmitInstToFragment(Inst);
-}
-
-void MCMachOStreamer::Finish() {
-  getAssembler().Finish();
 }
 
 MCStreamer *llvm::createMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
