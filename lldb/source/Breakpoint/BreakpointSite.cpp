@@ -80,9 +80,8 @@ BreakpointSite::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("BreakpointSite %u: tid = %4.4x  addr = 0x%8.8llx  type = %s breakpoint  hw_index = %i  hit_count = %-4u",
+    s->Printf("BreakpointSite %u: addr = 0x%8.8llx  type = %s breakpoint  hw_index = %i  hit_count = %-4u",
             GetID(),
-            m_tid,
             (uint64_t)m_addr,
             IsHardware() ? "hardware" : "software",
             GetHardwareIndex(),
@@ -175,6 +174,12 @@ BreakpointLocationSP
 BreakpointSite::GetOwnerAtIndex (uint32_t index)
 {
     return m_owners.GetByIndex (index);
+}
+
+bool
+BreakpointSite::ValidForThisThread (Thread *thread)
+{
+    return m_owners.ValidForThisThread(thread);
 }
 
 bool

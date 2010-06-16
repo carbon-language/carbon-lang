@@ -20,9 +20,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // StoppointLocation constructor
 //----------------------------------------------------------------------
-StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, tid_t tid, bool hardware) :
+StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, bool hardware) :
     m_loc_id(bid),
-    m_tid(tid),
     m_byte_size(0),
     m_addr(addr),
     m_hit_count(0),
@@ -31,9 +30,8 @@ StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, tid_t tid, bo
 {
 }
 
-StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, tid_t tid, size_t size, bool hardware) :
+StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, size_t size, bool hardware) :
     m_loc_id(bid),
-    m_tid(tid),
     m_byte_size(size),
     m_addr(addr),
     m_hit_count(0),
@@ -60,12 +58,6 @@ addr_t
 StoppointLocation::GetLoadAddress() const
 {
     return m_addr;
-}
-
-tid_t
-StoppointLocation::GetThreadID() const
-{
-    return m_tid;
 }
 
 uint32_t

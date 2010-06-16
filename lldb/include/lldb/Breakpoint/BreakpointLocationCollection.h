@@ -156,6 +156,20 @@ public:
     /// @see lldb::DescriptionLevel
     //------------------------------------------------------------------
     void GetDescription (Stream *s, lldb::DescriptionLevel level);
+    
+    //------------------------------------------------------------------
+    /// Check whether this collection of breakpoint locations have any
+    /// thread specifiers, and if yes, is \a thread_id contained in any
+    /// of these specifiers.
+    ///
+    /// @param[in] thread
+    ///     The thread against which to test.
+    ///
+    /// return
+    ///     \b true if the collection contains at least one location that
+    ///     would be valid for this thread, false otherwise.
+    //------------------------------------------------------------------
+    bool ValidForThisThread (Thread *thread);
 
 
 

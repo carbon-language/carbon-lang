@@ -28,7 +28,6 @@ CommandObjectFile::CommandOptions::CommandOptions() :
     Options (),
     m_arch ()  // Breakpoint info defaults to brief descriptions
 {
-    BuildValidOptionSets();
 }
 
 CommandObjectFile::CommandOptions::~CommandOptions ()

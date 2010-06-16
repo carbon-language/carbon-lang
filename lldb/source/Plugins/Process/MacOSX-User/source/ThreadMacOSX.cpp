@@ -81,11 +81,19 @@ ThreadMacOSX::GetRawStopReason (Thread::StopInfo *stop_info )
             if (data_0 == MACH_SOFTWARE_BREAKPOINT_DATA_0)
             {
                 lldb::addr_t pc = GetRegisterContext()->GetPC();
-                lldb::user_id_t break_id = m_process.GetBreakpointSiteList().FindIDByAddress(pc);
-                if (break_id != LLDB_INVALID_BREAK_ID)
+                lldb::BreakpointSiteSP bp_site_sp = m_process.GetBreakpointSiteList().FindByAddress(pc);
+                if (bp_site_sp)
                 {
-                    stop_info->Clear ();
-                    stop_info->SetStopReasonWithBreakpointSiteID (break_id);
+                    if (bp_site_sp->ValidForThisThread (this))
+                    {
+                        stop_info->Clear ();
+                        stop_info->SetStopReasonWithBreakpointSiteID (GetID());
+                    }
+                    else
+                    {
+                        stop_info->Clear ();
+                        stop_info->SetStopReasonToNone();
+                    }
                     return success;
                 }
             }

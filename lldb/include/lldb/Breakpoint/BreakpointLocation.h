@@ -179,16 +179,6 @@ public:
     SetThreadID (lldb::tid_t thread_id);
 
     //------------------------------------------------------------------
-    /// Return the current stop thread value.
-    ///
-    /// @return
-    ///     The thread id for which the breakpoint hit will stop,
-    ///     LLDB_INVALID_THREAD_ID for all threads.
-    //------------------------------------------------------------------
-    lldb::tid_t
-    GetThreadID ();
-
-    //------------------------------------------------------------------
     // The next section deals with this location's breakpoint sites.
     //------------------------------------------------------------------
 
@@ -267,8 +257,11 @@ public:
     ///     A pointer to the containing breakpoint's options if this
     ///     location doesn't have its own copy.
     //------------------------------------------------------------------
-    BreakpointOptions *
-    GetOptionsNoCopy ();
+    const BreakpointOptions *
+    GetOptionsNoCopy () const;
+    
+    bool
+    ValidForThisThread (Thread *thread);
 
 protected:
     friend class Breakpoint;

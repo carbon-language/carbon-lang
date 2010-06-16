@@ -16,6 +16,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -35,7 +36,7 @@ BreakpointOptions::BreakpointOptions() :
     m_callback_baton_sp (),
     m_enabled (true),
     m_ignore_count (0),
-    m_thread_id (LLDB_INVALID_THREAD_ID)
+    m_thread_spec_ap (NULL)
 {
 }
 
@@ -48,8 +49,10 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     m_callback_is_synchronous (rhs.m_callback_is_synchronous),
     m_enabled (rhs.m_enabled),
     m_ignore_count (rhs.m_ignore_count),
-    m_thread_id (rhs.m_thread_id)
+    m_thread_spec_ap (NULL)
 {
+    if (rhs.m_thread_spec_ap.get() != NULL)
+        m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
 }
 
 //----------------------------------------------------------------------
@@ -63,7 +66,8 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     m_callback_is_synchronous = rhs.m_callback_is_synchronous;
     m_enabled = rhs.m_enabled;
     m_ignore_count = rhs.m_ignore_count;
-    m_thread_id = rhs.m_thread_id;
+    if (rhs.m_thread_spec_ap.get() != NULL)
+        m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     return *this;
 }
 
@@ -94,6 +98,12 @@ BreakpointOptions::ClearCallback ()
 
 Baton *
 BreakpointOptions::GetBaton ()
+{
+    return m_callback_baton_sp.get();
+}
+
+const Baton *
+BreakpointOptions::GetBaton () const
 {
     return m_callback_baton_sp.get();
 }
@@ -141,19 +151,26 @@ BreakpointOptions::SetIgnoreCount (int32_t n)
     m_ignore_count = n;
 }
 
+const ThreadSpec *
+BreakpointOptions::GetThreadSpec () const
+{
+    return m_thread_spec_ap.get();
+}
+
+ThreadSpec *
+BreakpointOptions::GetThreadSpec ()
+{
+    if (m_thread_spec_ap.get() == NULL)
+        m_thread_spec_ap.reset (new ThreadSpec());
+        
+    return m_thread_spec_ap.get();
+}
+
 void
 BreakpointOptions::SetThreadID (lldb::tid_t thread_id)
 {
-    m_thread_id = thread_id;
+    GetThreadSpec()->SetTID(thread_id);
 }
-
-lldb::tid_t
-BreakpointOptions::GetThreadID () const
-{
-    return m_thread_id;
-}
-
-
 
 void
 BreakpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLevel level) const

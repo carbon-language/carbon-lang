@@ -1034,8 +1034,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     else if (exc_type == EXC_BREAKPOINT && exc_data[0] == MACH_EXC_DATA0_SOFTWARE_BREAKPOINT)
                     {
                         addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
-                        user_id_t break_id = GetBreakpointSiteList().FindIDByAddress(pc);
-                        if (break_id == LLDB_INVALID_BREAK_ID)
+                        lldb::BreakpointSiteSP bp_site_sp = GetBreakpointSiteList().FindByAddress(pc);
+                        if (!bp_site_sp)
                         {
                             //log->Printf("got EXC_BREAKPOINT at 0x%llx but didn't find a breakpoint site.\n", pc);
                             stop_info.SetStopReasonWithException(exc_type, exc_data.size());
@@ -1044,8 +1044,17 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         }
                         else
                         {
-                            stop_info.Clear ();
-                            stop_info.SetStopReasonWithBreakpointSiteID (break_id);
+                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                            {
+                                stop_info.Clear ();
+                                stop_info.SetStopReasonWithBreakpointSiteID (bp_site_sp->GetID());
+                            }
+                            else
+                            {
+                                stop_info.Clear ();
+                                stop_info.SetStopReasonToNone();
+                            }
+
                         }
                     }
 #endif

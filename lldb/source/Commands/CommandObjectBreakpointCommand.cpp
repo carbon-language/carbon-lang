@@ -34,7 +34,6 @@ using namespace lldb_private;
 CommandObjectBreakpointCommandAdd::CommandOptions::CommandOptions () :
     Options ()
 {
-    BuildValidOptionSets();
 }
 
 CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
@@ -532,7 +531,7 @@ CommandObjectBreakpointCommandList::Execute (Args& command,
                 
                 if (bp)
                 {
-                    BreakpointOptions *bp_options = NULL;
+                    const BreakpointOptions *bp_options = NULL;
                     if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
                     {
                         BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
@@ -556,7 +555,7 @@ CommandObjectBreakpointCommandList::Execute (Args& command,
                     {
                         StreamString id_str;
                         BreakpointID::GetCanonicalReference (&id_str, cur_bp_id.GetBreakpointID(), cur_bp_id.GetLocationID());
-                        Baton *baton = bp_options->GetBaton();
+                        const Baton *baton = bp_options->GetBaton();
                         if (baton)
                         {
                             result.GetOutputStream().Printf ("Breakpoint %s:\n", id_str.GetData());

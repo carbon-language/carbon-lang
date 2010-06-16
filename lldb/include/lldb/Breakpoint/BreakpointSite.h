@@ -182,6 +182,22 @@ public:
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     GetOwnerAtIndex (uint32_t index);
+    
+    //------------------------------------------------------------------
+    /// Check whether the owners of this breakpoint site have any
+    /// thread specifiers, and if yes, is \a thread contained in any
+    /// of these specifiers.
+    ///
+    /// @param[in] thread
+    ///     The thread against which to test.
+    ///
+    /// return
+    ///     \b true if the collection contains at least one location that
+    ///     would be valid for this thread, false otherwise.
+    //------------------------------------------------------------------
+    bool 
+    ValidForThisThread (Thread *thread);
+
 
     //------------------------------------------------------------------
     /// Print a description of this breakpoint site to the stream \a s.

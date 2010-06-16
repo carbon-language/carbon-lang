@@ -335,6 +335,8 @@
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
 		49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */; };
+		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
+		4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */; };
 		4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
 		4CA9637C11B6E99A00780E28 /* CommandObjectApropos.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -920,6 +922,8 @@
 		49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionDeclMap.h; path = include/lldb/Expression/ClangExpressionDeclMap.h; sourceTree = "<group>"; };
 		4C00986F11500B4300F316B0 /* UnixSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnixSignals.h; path = include/lldb/Target/UnixSignals.h; sourceTree = "<group>"; };
 		4C00987011500B4300F316B0 /* UnixSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnixSignals.cpp; path = source/Target/UnixSignals.cpp; sourceTree = "<group>"; };
+		4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadSpec.cpp; path = source/Target/ThreadSpec.cpp; sourceTree = "<group>"; };
+		4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSpec.h; path = include/lldb/Target/ThreadSpec.h; sourceTree = "<group>"; };
 		4C09CB73116BD98B00C7A725 /* CommandCompletions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandCompletions.h; path = include/lldb/Interpreter/CommandCompletions.h; sourceTree = "<group>"; };
 		4C09CB74116BD98B00C7A725 /* CommandCompletions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandCompletions.cpp; path = source/Commands/CommandCompletions.cpp; sourceTree = "<group>"; };
 		4C43DEF9110641F300E55CBF /* ThreadPlanShouldStopHere.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanShouldStopHere.h; path = include/lldb/Target/ThreadPlanShouldStopHere.h; sourceTree = "<group>"; };
@@ -1963,6 +1967,8 @@
 				260C847510F50EFC00BB2B04 /* ThreadPlanStepThrough.cpp */,
 				4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */,
 				2660D9FE11922A7F00958FBD /* ThreadPlanStepUntil.cpp */,
+				4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */,
+				4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */,
 				4C00986F11500B4300F316B0 /* UnixSignals.h */,
 				4C00987011500B4300F316B0 /* UnixSignals.cpp */,
 				26E3EEBD11A9870400FBADB6 /* Unwind.h */,
@@ -2199,6 +2205,7 @@
 				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
 				4CA9637C11B6E99A00780E28 /* CommandObjectApropos.h in Headers */,
 				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
+				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2651,6 +2658,7 @@
 				4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */,
 				AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */,
 				261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */,
+				4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

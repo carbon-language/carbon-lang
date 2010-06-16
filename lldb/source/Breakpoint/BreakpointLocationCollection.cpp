@@ -16,6 +16,8 @@
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointLocationList.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -144,6 +146,22 @@ BreakpointLocationCollection::ShouldStop (StoppointCallbackContext *context)
     }
     return shouldStop;
 }
+
+bool 
+BreakpointLocationCollection::ValidForThisThread (Thread *thread)
+{
+    collection::iterator pos,
+        begin = m_break_loc_collection.begin(),
+        end = m_break_loc_collection.end();
+
+    for (pos = begin; pos != end; ++pos)
+    {
+        if ((*pos)->ValidForThisThread (thread))
+            return true;
+    }
+    return false;
+}
+
 
 void
 BreakpointLocationCollection::GetDescription (Stream *s, lldb::DescriptionLevel level)

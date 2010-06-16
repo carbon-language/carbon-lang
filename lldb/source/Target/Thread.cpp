@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/lldb-private-log.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -29,6 +30,7 @@
 #include "lldb/Target/ThreadPlanStepOverRange.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 #include "lldb/Target/ThreadPlanStepUntil.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -292,14 +294,25 @@ Thread::StopInfo::Dump (Stream *s) const
         case eStopReasonBreakpoint:
             {
                 bool no_details = true;
-                s->PutCString ("breakpoint ");
+                s->PutCString ("breakpoint");
                 if (m_thread)
                 {
                     BreakpointSiteSP bp_site_sp = m_thread->GetProcess().GetBreakpointSiteList().FindByID(m_details.breakpoint.bp_site_id);
                     if (bp_site_sp)
                     {
-                        bp_site_sp->GetDescription(s, lldb::eDescriptionLevelBrief);
-                        no_details = false;
+                        // Only report the breakpoint locations that actually caused this hit - some of them may
+                        // have options that would have caused us not to stop here...
+                        uint32_t num_locations = bp_site_sp->GetNumberOfOwners();
+                        for (uint32_t i = 0; i < num_locations; i++)
+                        {
+                            BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(i);
+                            if (bp_loc_sp->ValidForThisThread(m_thread))
+                            {
+                                s->PutCString(" ");
+                                bp_loc_sp->GetDescription(s, lldb::eDescriptionLevelBrief);
+                                no_details = false;
+                            }
+                        }
                     }
                 }
 
@@ -597,6 +610,27 @@ Thread::ShouldReportRun (Event* event_ptr)
     }
     else
         return GetCurrentPlan()->ShouldReportRun (event_ptr);
+}
+
+bool
+Thread::MatchesSpec (const ThreadSpec *spec)
+{
+    if (spec == NULL)
+        return true;
+    
+    if (!spec->TIDMatches(GetID()))
+        return false;
+        
+    if (!spec->IndexMatches(GetIndexID()))
+        return false;
+        
+    if (!spec->NameMatches (GetName()))
+        return false;
+        
+    if (!spec->QueueNameMatches (GetQueueName()))
+        return false;
+        
+    return true;
 }
 
 void
@@ -990,7 +1024,7 @@ void
 Thread::DumpThreadPlans (lldb_private::Stream *s) const
 {
     uint32_t stack_size = m_plan_stack.size();
-    s->Printf ("Plan Stack: %d elements.\n", stack_size);
+    s->Printf ("Plan Stack for thread #%u: tid = 0x%4.4x - %d elements.\n", GetIndexID(), GetID(), stack_size);
     for (int i = stack_size - 1; i > 0; i--)
     {
         s->Printf ("Element %d: ", i);

@@ -24,6 +24,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadSpec.h"
 #include "lldb/lldb-private-log.h"
 
 using namespace lldb;
@@ -166,13 +167,16 @@ Breakpoint::GetIgnoreCount () const
 void
 Breakpoint::SetThreadID (lldb::tid_t thread_id)
 {
-    m_options.SetThreadID(thread_id);
+    m_options.GetThreadSpec()->SetTID(thread_id);
 }
 
 lldb::tid_t
 Breakpoint::GetThreadID ()
 {
-    return m_options.GetThreadID();
+    if (m_options.GetThreadSpec() == NULL)
+        return LLDB_INVALID_THREAD_ID;
+    else
+        return m_options.GetThreadSpec()->GetTID();
 }
 
 // This function is used when "baton" doesn't need to be freed

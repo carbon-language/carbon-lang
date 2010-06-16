@@ -129,6 +129,7 @@ class   ThreadPlanStepOverBreakpoint;
 class   ThreadPlanStepThrough;
 class   ThreadPlanStepRange;
 class   ThreadPlanRunToAddress;
+class   ThreadSpec;
 class   TimeValue;
 class   Type;
 class   TypeList;

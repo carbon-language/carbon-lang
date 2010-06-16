@@ -153,6 +153,15 @@ public:
 
     void
     ClearAllBreakpointSites ();
+    
+    //------------------------------------------------------------------
+    /// Sets the passed in Locker to hold the Breakpoint List mutex.
+    ///
+    /// @param[in] locker
+    ///   The locker object that is set.
+    //------------------------------------------------------------------
+    void
+    GetListMutex (lldb_private::Mutex::Locker &locker);
 
 protected:
     typedef std::list<lldb::BreakpointSP> bp_collection;

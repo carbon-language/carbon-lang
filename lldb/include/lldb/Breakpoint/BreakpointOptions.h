@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -84,6 +85,7 @@ public:
         return m_callback_is_synchronous;
     };
     Baton *GetBaton ();
+    const Baton *GetBaton () const;
     void ClearCallback ();
 
     //------------------------------------------------------------------
@@ -122,21 +124,24 @@ public:
     //------------------------------------------------------------------
 
     //------------------------------------------------------------------
-    /// Return the current stop thread value.
+    /// Return the current thread spec.  This is used to pass to Thread::MatchesSpec.
     /// @return
-    ///     The thread id for which the breakpoint hit will stop, 
-    ///     LLDB_INVALID_THREAD_ID for all threads.
+    ///     The thread specification pointer for this option, or NULL if none has
+    ///     been set yet.
     //------------------------------------------------------------------
-    lldb::tid_t
-    GetThreadID () const;
+    const ThreadSpec *
+    GetThreadSpec () const;
 
     //------------------------------------------------------------------
-    /// Set the valid thread to be checked when the breakpoint is hit.
-    /// @param[in] thread_id
-    ///    If this thread hits the breakpoint, we stop, otherwise not.
+    /// Returns a pointer to the ThreadSpec for this option, creating it.
+    /// if it hasn't been created already.   This API is used for setting the
+    /// ThreadSpec items for this option.
     //------------------------------------------------------------------
+    ThreadSpec *
+    GetThreadSpec ();
+    
     void
-    SetThreadID (lldb::tid_t thread_id);
+    SetThreadID(lldb::tid_t thread_id);
 
     //------------------------------------------------------------------
     /// This is the default empty callback.
@@ -201,7 +206,7 @@ private:
     bool m_callback_is_synchronous;
     bool m_enabled;
     int32_t m_ignore_count; // Number of times to ignore this breakpoint
-    lldb::tid_t m_thread_id; // Thread for which this breakpoint will take
+    std::auto_ptr<ThreadSpec> m_thread_spec_ap; // Thread for which this breakpoint will take
 
 };
 

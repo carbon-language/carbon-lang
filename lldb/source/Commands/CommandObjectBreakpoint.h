@@ -106,6 +106,70 @@ public:
         std::string m_func_regexp;
         lldb::addr_t m_load_addr;
         STLStringArray m_modules;
+        int32_t m_ignore_count;
+        lldb::tid_t m_thread_id;
+        uint32_t m_thread_index;
+        std::string m_thread_name;
+        std::string m_queue_name;
+
+    };
+
+private:
+    CommandOptions m_options;
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectMultiwordBreakpointConfigure
+//-------------------------------------------------------------------------
+
+
+class CommandObjectBreakpointConfigure : public CommandObject
+{
+public:
+
+    CommandObjectBreakpointConfigure ();
+
+    virtual
+    ~CommandObjectBreakpointConfigure ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandContext *context,
+             CommandInterpreter *interpreter,
+             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions ();
+
+        virtual
+        ~CommandOptions ();
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg);
+
+        void
+        ResetOptionValues ();
+
+        const lldb::OptionDefinition*
+        GetDefinitions ();
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        int32_t m_ignore_count;
+        lldb::tid_t m_thread_id;
+        uint32_t m_thread_index;
+        std::string m_thread_name;
+        std::string m_queue_name;
 
     };
 

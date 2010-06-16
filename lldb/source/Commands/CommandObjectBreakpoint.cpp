@@ -25,6 +25,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -51,9 +53,13 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
     m_func_name (),
     m_func_regexp (),
     m_modules (),
-    m_load_addr()
+    m_load_addr(),
+    m_thread_id(LLDB_INVALID_THREAD_ID),
+    m_thread_index (-1),
+    m_thread_name(),
+    m_queue_name(),
+    m_ignore_count (-1)
 {
-    BuildValidOptionSets();
 }
 
 CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
@@ -68,6 +74,21 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_ALL, false, "ignore_inlines", 'i', no_argument,   NULL, 0, NULL,
         "Ignore inlined subroutines when setting the breakppoint." },
+
+    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, NULL,
+        "Set the number of times this breakpoint is sKipped before stopping." },
+
+    { LLDB_OPT_SET_ALL, false, "thread_index",       'x', required_argument, NULL, NULL, "<thread_index>",
+        "The breakpoint stops only for the thread whose indeX matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "thread_id",       't', required_argument, NULL, NULL, "<thread_id>",
+        "The breakpoint stops only for the thread whose TID matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "thread_name",       'T', required_argument, NULL, NULL, "<thread_name>",
+        "The breakpoint stops only for the thread whose thread name matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "queue_name",       'q', required_argument, NULL, NULL, "<queue_name>",
+        "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
     { LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<filename>",
         "Set the breakpoint by source location in this particular file."},
@@ -138,6 +159,33 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
                 m_modules.push_back (std::string (option_arg));
                 break;
             }
+        case 'k':
+        {
+            m_ignore_count = Args::StringToSInt32(optarg, -1, 0);
+            if (m_ignore_count == -1)
+               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
+        }
+        case 't' :
+        {
+            m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+            if (m_thread_id == LLDB_INVALID_THREAD_ID)
+               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+        }
+        break;
+        case 'T':
+            m_thread_name = option_arg;
+            break;
+        case 'q':
+            m_queue_name = option_arg;
+            break;
+        case 'x':
+        {
+            m_thread_index = Args::StringToUInt64(optarg, -1, 0);
+            if (m_thread_id == -1)
+               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+            
+        }
+        break;
         default:
             error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
             break;
@@ -159,6 +207,11 @@ CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
     m_func_regexp.clear();
     m_load_addr = LLDB_INVALID_ADDRESS;
     m_modules.clear();
+    m_ignore_count = -1;
+    m_thread_id = LLDB_INVALID_THREAD_ID;
+    m_thread_index = -1;
+    m_thread_name.clear();
+    m_queue_name.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -223,7 +276,7 @@ CommandObjectBreakpointSet::Execute
 
     if ((num_modules > 0) && (break_type != eSetTypeAddress))
         use_module = true;
-
+     
     switch (break_type)
     {
         case eSetTypeFileAndLine: // Breakpoint by source position
@@ -361,6 +414,25 @@ CommandObjectBreakpointSet::Execute
             break;
     }
 
+    // Now set the various options that were passed in:
+    if (bp)
+    {
+        if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
+            bp->SetThreadID (m_options.m_thread_id);
+            
+        if (m_options.m_thread_index != -1)
+            bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
+        
+        if (!m_options.m_thread_name.empty())
+            bp->GetOptions()->GetThreadSpec()->SetName(m_options.m_thread_name.c_str());
+        
+        if (!m_options.m_queue_name.empty())
+            bp->GetOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
+            
+        if (m_options.m_ignore_count != -1)
+            bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
+    }
+    
     if (bp && !use_module)
     {
         StreamString &output_stream = result.GetOutputStream();
@@ -377,8 +449,6 @@ CommandObjectBreakpointSet::Execute
 
     return result.Succeeded();
 }
-
-
 
 //-------------------------------------------------------------------------
 // CommandObjectMultiwordBreakpoint
@@ -397,12 +467,14 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable ());
     CommandObjectSP set_command_object (new CommandObjectBreakpointSet ());
     CommandObjectSP command_command_object (new CommandObjectBreakpointCommand (interpreter));
+    CommandObjectSP configure_command_object (new CommandObjectBreakpointConfigure());
 
     enable_command_object->SetCommandName("breakpoint enable");
     disable_command_object->SetCommandName("breakpoint disable");
     set_command_object->SetCommandName("breakpoint set");
     command_command_object->SetCommandName ("breakpoint command");
     list_command_object->SetCommandName ("breakpoint list");
+    configure_command_object->SetCommandName ("breakpoint configure");
 
     status = LoadSubCommand (list_command_object, "list", interpreter);
     status = LoadSubCommand (enable_command_object, "enable", interpreter);
@@ -410,6 +482,7 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     status = LoadSubCommand (delete_command_object, "delete", interpreter);
     status = LoadSubCommand (set_command_object, "set", interpreter);
     status = LoadSubCommand (command_command_object, "command", interpreter);
+    status = LoadSubCommand (configure_command_object, "configure", interpreter);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
@@ -481,7 +554,6 @@ CommandObjectBreakpointList::CommandOptions::CommandOptions() :
     Options (),
     m_level (lldb::eDescriptionLevelFull)  // Breakpoint List defaults to brief descriptions
 {
-    BuildValidOptionSets();
 }
 
 CommandObjectBreakpointList::CommandOptions::~CommandOptions ()
@@ -590,6 +662,9 @@ CommandObjectBreakpointList::Execute
     }
 
     const BreakpointList &breakpoints = target->GetBreakpointList(m_options.m_internal);
+    Mutex::Locker locker;
+    target->GetBreakpointList(m_options.m_internal).GetListMutex(locker);
+
     size_t num_breakpoints = breakpoints.GetSize();
 
     if (num_breakpoints == 0)
@@ -672,7 +747,11 @@ CommandObjectBreakpointEnable::Execute (Args& args, CommandContext *context,
         return false;
     }
 
+    Mutex::Locker locker;
+    target->GetBreakpointList().GetListMutex(locker);
+
     const BreakpointList &breakpoints = target->GetBreakpointList();
+
     size_t num_breakpoints = breakpoints.GetSize();
 
     if (num_breakpoints == 0)
@@ -771,6 +850,9 @@ CommandObjectBreakpointDisable::Execute (Args& args, CommandContext *context,
         return false;
     }
 
+    Mutex::Locker locker;
+    target->GetBreakpointList().GetListMutex(locker);
+
     const BreakpointList &breakpoints = target->GetBreakpointList();
     size_t num_breakpoints = breakpoints.GetSize();
 
@@ -866,7 +948,11 @@ CommandObjectBreakpointDelete::Execute (Args& args, CommandContext *context,
         return false;
     }
 
+    Mutex::Locker locker;
+    target->GetBreakpointList().GetListMutex(locker);
+    
     const BreakpointList &breakpoints = target->GetBreakpointList();
+
     size_t num_breakpoints = breakpoints.GetSize();
 
     if (num_breakpoints == 0)
@@ -931,3 +1017,210 @@ CommandObjectBreakpointDelete::Execute (Args& args, CommandContext *context,
     }
     return result.Succeeded();
 }
+
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointConfigure::CommandOptions
+//-------------------------------------------------------------------------
+
+CommandObjectBreakpointConfigure::CommandOptions::CommandOptions() :
+    Options (),
+    m_thread_id(LLDB_INVALID_THREAD_ID),
+    m_thread_index (-1),
+    m_thread_name(),
+    m_queue_name(),
+    m_ignore_count (-1)
+{
+}
+
+CommandObjectBreakpointConfigure::CommandOptions::~CommandOptions ()
+{
+}
+
+lldb::OptionDefinition
+CommandObjectBreakpointConfigure::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, NULL,
+        "Set the number of times this breakpoint is sKipped before stopping." },
+
+    { LLDB_OPT_SET_ALL, false, "thread_index",       'x', required_argument, NULL, NULL, "<thread_index>",
+        "The breakpoint stops only for the thread whose indeX matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "thread_id",       't', required_argument, NULL, NULL, "<thread_id>",
+        "The breakpoint stops only for the thread whose TID matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "thread_name",       'T', required_argument, NULL, NULL, "<thread_name>",
+        "The breakpoint stops only for the thread whose thread name matches this argument."},
+
+    { LLDB_OPT_SET_ALL, false, "queue_name",       'q', required_argument, NULL, NULL, "<queue_name>",
+        "The breakpoint stops only for threads in the queue whose name is given by this argument."},
+
+    { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+};
+
+const lldb::OptionDefinition*
+CommandObjectBreakpointConfigure::CommandOptions::GetDefinitions ()
+{
+    return g_option_table;
+}
+
+Error
+CommandObjectBreakpointConfigure::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+{
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+
+    switch (short_option)
+    {
+        case 'k':
+        {
+            m_ignore_count = Args::StringToSInt32(optarg, -1, 0);
+            if (m_ignore_count == -1)
+               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
+        }
+        case 't' :
+        {
+            m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+            if (m_thread_id == LLDB_INVALID_THREAD_ID)
+               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+        }
+        break;
+        case 'T':
+            m_thread_name = option_arg;
+            break;
+        case 'q':
+            m_queue_name = option_arg;
+            break;
+        case 'x':
+        {
+            m_thread_index = Args::StringToUInt64(optarg, -1, 0);
+            if (m_thread_id == -1)
+               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+            
+        }
+        break;
+        default:
+            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            break;
+    }
+
+    return error;
+}
+
+void
+CommandObjectBreakpointConfigure::CommandOptions::ResetOptionValues ()
+{
+    Options::ResetOptionValues();
+
+    m_ignore_count = -1;
+    m_thread_id = LLDB_INVALID_THREAD_ID;
+    m_thread_index = -1;
+    m_thread_name.clear();
+    m_queue_name.clear();
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointSet
+//-------------------------------------------------------------------------
+
+CommandObjectBreakpointConfigure::CommandObjectBreakpointConfigure () :
+    CommandObject ("breakpoint configure", "Configures the options on a breakpoint or set of breakpoints in the executable.", 
+                   "breakpoint configure <cmd-options> break-id [break-id ...]")
+{
+}
+
+CommandObjectBreakpointConfigure::~CommandObjectBreakpointConfigure ()
+{
+}
+
+Options *
+CommandObjectBreakpointConfigure::GetOptions ()
+{
+    return &m_options;
+}
+
+bool
+CommandObjectBreakpointConfigure::Execute
+(
+    Args& command,
+    CommandContext *context,
+    CommandInterpreter *interpreter,
+    CommandReturnObject &result
+)
+{
+    if (command.GetArgumentCount() == 0)
+    {
+        result.AppendError ("No breakpoints specified.");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+
+    Target *target = context->GetTarget();
+    if (target == NULL)
+    {
+        result.AppendError ("Invalid target, set executable file using 'file' command.");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+
+    Mutex::Locker locker;
+    target->GetBreakpointList().GetListMutex(locker);
+    
+    BreakpointIDList valid_bp_ids;
+
+    CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+    if (result.Succeeded())
+    {
+        for (int i = 0; i < valid_bp_ids.Size(); ++i)
+        {
+            BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
+
+            if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
+            {
+                Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
+                if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
+                {
+                    BreakpointLocation *location = bp->FindLocationByID (cur_bp_id.GetLocationID()).get();
+                    if (location)
+                    {
+                        if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
+                            location->SetThreadID (m_options.m_thread_id);
+                            
+                        if (m_options.m_thread_index != -1)
+                            location->GetLocationOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
+                        
+                        if (!m_options.m_thread_name.empty())
+                            location->GetLocationOptions()->GetThreadSpec()->SetName(m_options.m_thread_name.c_str());
+                        
+                        if (!m_options.m_queue_name.empty())
+                            location->GetLocationOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
+                            
+                        if (m_options.m_ignore_count != -1)
+                            location->GetLocationOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                    }
+                }
+                else
+                {
+                    if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
+                        bp->SetThreadID (m_options.m_thread_id);
+                        
+                    if (m_options.m_thread_index != -1)
+                        bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
+                    
+                    if (!m_options.m_thread_name.empty())
+                        bp->GetOptions()->GetThreadSpec()->SetName(m_options.m_thread_name.c_str());
+                    
+                    if (!m_options.m_queue_name.empty())
+                        bp->GetOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
+                        
+                    if (m_options.m_ignore_count != -1)
+                        bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                }
+            }
+        }
+    }
+    
+    return result.Succeeded();
+}
+
+

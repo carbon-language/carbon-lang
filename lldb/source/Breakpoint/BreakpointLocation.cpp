@@ -22,6 +22,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -34,12 +35,13 @@ BreakpointLocation::BreakpointLocation
     lldb::tid_t tid,
     bool hardware
 ) :
-    StoppointLocation (loc_id, addr.GetLoadAddress(owner.GetTarget().GetProcessSP().get()), tid, hardware),
+    StoppointLocation (loc_id, addr.GetLoadAddress(owner.GetTarget().GetProcessSP().get()), hardware),
     m_address (addr),
     m_owner (owner),
     m_options_ap (),
     m_bp_site_sp ()
 {
+    SetThreadID (tid);
 }
 
 BreakpointLocation::~BreakpointLocation()
@@ -93,13 +95,15 @@ BreakpointLocation::SetEnabled (bool enabled)
 void
 BreakpointLocation::SetThreadID (lldb::tid_t thread_id)
 {
-    GetLocationOptions()->SetThreadID(thread_id);
-}
-
-lldb::tid_t
-BreakpointLocation::GetThreadID ()
-{
-    return GetOptionsNoCopy()->GetThreadID();
+    if (thread_id != LLDB_INVALID_THREAD_ID)
+        GetLocationOptions()->SetThreadID(thread_id);
+    else
+    {
+        // If we're resetting this to an invalid thread id, then
+        // don't make an options pointer just to do that.
+        if (m_options_ap.get() != NULL)
+            m_options_ap->SetThreadID (thread_id);
+    }
 }
 
 bool
@@ -150,8 +154,8 @@ BreakpointLocation::SetIgnoreCount (int32_t n)
     GetLocationOptions()->SetIgnoreCount(n);
 }
 
-BreakpointOptions *
-BreakpointLocation::GetOptionsNoCopy ()
+const BreakpointOptions *
+BreakpointLocation::GetOptionsNoCopy () const
 {
     if (m_options_ap.get() != NULL)
         return m_options_ap.get();
@@ -168,8 +172,16 @@ BreakpointLocation::GetLocationOptions ()
     return m_options_ap.get();
 }
 
+bool
+BreakpointLocation::ValidForThisThread (Thread *thread)
+{
+    return thread->MatchesSpec(GetOptionsNoCopy()->GetThreadSpec());
+}
+
 // RETURNS - true if we should stop at this breakpoint, false if we
-// should continue.
+// should continue.  Note, we don't check the thread spec for the breakpoint
+// here, since if the breakpoint is not for this thread, then the event won't
+// even get reported, so the check is redundant.
 
 bool
 BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
@@ -179,10 +191,6 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     m_hit_count++;
 
     if (!IsEnabled())
-        return false;
-
-    if (GetThreadID() != LLDB_INVALID_THREAD_ID
-          && context->context.thread->GetID() != GetThreadID())
         return false;
 
     if (m_hit_count <= GetIgnoreCount())
@@ -379,7 +387,7 @@ BreakpointLocation::Dump(Stream *s) const
 
     s->Printf("BreakpointLocation %u: tid = %4.4x  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
             GetID(),
-            m_tid,
+            GetOptionsNoCopy()->GetThreadSpec()->GetTID(),
             (uint64_t) m_address.GetLoadAddress(m_owner.GetTarget().GetProcessSP().get()),
             (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
             IsHardware() ? "hardware" : "software",

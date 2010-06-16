@@ -14,6 +14,7 @@
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-defines.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Target/ThreadSpec.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 
@@ -102,7 +103,7 @@ SBBreakpointLocation::GetThreadID ()
 {
     tid_t sb_thread_id = (lldb::tid_t) LLDB_INVALID_THREAD_ID;
     if (m_break_loc_sp)
-        sb_thread_id = m_break_loc_sp->GetThreadID();
+        sb_thread_id = m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->GetTID();
 
     return sb_thread_id;
 }

@@ -1000,16 +1000,20 @@ ProcessMacOSX::EnableBreakpoint (BreakpointSite *bp_site)
 
     if (bp_site->HardwarePreferred())
     {
-        ThreadMacOSX *thread = (ThreadMacOSX *)m_thread_list.FindThreadByID(bp_site->GetThreadID()).get();
-        if (thread)
-        {
-            bp_site->SetHardwareIndex (thread->SetHardwareBreakpoint(bp_site));
-            if (bp_site->IsHardware())
-            {
-                bp_site->SetEnabled(true);
-                return error;
-            }
-        }
+        // FIXME: This code doesn't make sense.  Breakpoint sites don't really have single ThreadID's, since one site could be
+        // owned by a number of Locations, each with a different Thread ID.  So either this should run over all the Locations and
+        // set it for all threads owned by those locations, or set it for all threads, and let the thread specific code sort it out.
+        
+//        ThreadMacOSX *thread = (ThreadMacOSX *)m_thread_list.FindThreadByID(bp_site->GetThreadID()).get();
+//        if (thread)
+//        {
+//            bp_site->SetHardwareIndex (thread->SetHardwareBreakpoint(bp_site));
+//            if (bp_site->IsHardware())
+//            {
+//                bp_site->SetEnabled(true);
+//                return error;
+//            }
+//        }
     }
 
     // Just let lldb::Process::EnableSoftwareBreakpoint() handle everything...
@@ -1030,17 +1034,6 @@ ProcessMacOSX::DisableBreakpoint (BreakpointSite *bp_site)
 
     if (bp_site->IsHardware())
     {
-        ThreadMacOSX *thread = (ThreadMacOSX *)m_thread_list.FindThreadByID(bp_site->GetThreadID()).get();
-        if (thread)
-        {
-            if (thread->ClearHardwareBreakpoint(bp_site))
-            {
-                bp_site->SetEnabled(false);
-                if (log)
-                    log->Printf ("ProcessMacOSX::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx -- SUCCESS (hardware)", site_id, (uint64_t)addr);
-                return error;
-            }
-        }
         error.SetErrorString("hardware breakpoints are no supported");
         return error;
     }
@@ -1068,20 +1061,8 @@ ProcessMacOSX::EnableWatchpoint (WatchpointLocation *wp)
         }
         else
         {
-            ThreadMacOSX *thread = (ThreadMacOSX *)m_thread_list.FindThreadByID(wp->GetThreadID()).get();
-            if (thread)
-            {
-                wp->SetHardwareIndex (thread->SetHardwareWatchpoint (wp));
-                if (wp->IsHardware ())
-                {
-                    wp->SetEnabled(true);
-                    return error;
-                }
-            }
-            else
-            {
-                error.SetErrorString("Watchpoints currently only support thread specific watchpoints.");
-            }
+            // Watchpoints aren't supported at present.
+            error.SetErrorString("Watchpoints aren't currently supported.");
         }
     }
     return error;
@@ -1103,17 +1084,7 @@ ProcessMacOSX::DisableWatchpoint (WatchpointLocation *wp)
 
         if (wp->IsHardware())
         {
-            ThreadMacOSX *thread = (ThreadMacOSX *)m_thread_list.FindThreadByID(wp->GetThreadID()).get();
-            if (thread)
-            {
-                if (thread->ClearHardwareWatchpoint (wp))
-                {
-                    wp->SetEnabled(false);
-                    if (log)
-                        log->Printf ("ProcessMacOSX::Disablewatchpoint (watchID = %d) addr = 0x%8.8llx (hardware) => success", watchID, (uint64_t)addr);
-                    return error;
-                }
-            }
+            error.SetErrorString("Watchpoints aren't currently supported.");
         }
         // TODO: clear software watchpoints if we implement them
         error.SetErrorToGenericError();

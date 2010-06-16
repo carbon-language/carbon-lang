@@ -262,6 +262,9 @@ public:
 
     lldb::Vote
     ShouldReportRun (Event *event_ptr);
+    
+    virtual bool
+    MatchesSpec (const ThreadSpec *spec);
 
     bool
     GetStopInfo (StopInfo *stop_info);

@@ -127,8 +127,8 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
 
         if (log)
-            log->Printf("About to resume the \"%s\" plan - state: %s - stop others: %d.", 
-                        m_name.c_str(), StateAsCString(resume_state), StopOthers());
+            log->Printf("Thread #%u: tid = 0x%4.4x about to resume the \"%s\" plan - state: %s - stop others: %d.", 
+                        m_thread.GetIndexID(), m_thread.GetID(),  m_name.c_str(), StateAsCString(resume_state), StopOthers());
     }
     return true;
 }
