@@ -1619,8 +1619,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.
+    SourceLocation SavedPrevTokLocation = PrevTokLocation;
     ParseLexedMethodDeclarations(getCurrentClass());
     ParseLexedMethodDefs(getCurrentClass());
+    PrevTokLocation = SavedPrevTokLocation;
   }
 
   if (TagDecl)

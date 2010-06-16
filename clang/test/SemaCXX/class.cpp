@@ -159,3 +159,9 @@ namespace PR7196 {
     }
   };
 }
+
+namespace rdar8066414 {
+  class C {
+    C() {}
+  } // expected-error{{expected ';' after class}}
+}
