@@ -641,7 +641,7 @@ public:
   /// in the symbol table, or whether it can be discarded by the assembler. This
   /// also effects whether the assembler treats the label as potentially
   /// defining a separate atom.
-  bool isSymbolLinkerVisible(const MCSymbolData *SD) const;
+  bool isSymbolLinkerVisible(const MCSymbol &SD) const;
 
   /// Emit the section contents using the given object writer.
   //

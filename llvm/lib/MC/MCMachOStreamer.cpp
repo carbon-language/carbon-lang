@@ -159,7 +159,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 
   // Update the current atom map, if necessary.
   bool MustCreateFragment = false;
-  if (getAssembler().isSymbolLinkerVisible(&SD)) {
+  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol())) {
     CurrentAtomMap[getCurrentSectionData()] = &SD;
 
     // We have to create a new fragment, fragments cannot span atoms.
@@ -328,7 +328,7 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
   SD.setFragment(F);
-  if (getAssembler().isSymbolLinkerVisible(&SD))
+  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol()))
     F->setAtom(&SD);
 
   Symbol->setSection(*Section);

@@ -308,24 +308,23 @@ static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
   return !B_Base && BaseSymbol == A_Base;
 }
 
-bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
+bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {
   // Non-temporary labels should always be visible to the linker.
-  if (!SD->getSymbol().isTemporary())
+  if (!Symbol.isTemporary())
     return true;
 
   // Absolute temporary labels are never visible.
-  if (!SD->getFragment())
+  if (!Symbol.isInSection())
     return false;
 
   // Otherwise, check if the section requires symbols even for temporary labels.
-  return getBackend().doesSectionRequireSymbols(
-    SD->getFragment()->getParent()->getSection());
+  return getBackend().doesSectionRequireSymbols(Symbol.getSection());
 }
 
 const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
                                          const MCSymbolData *SD) const {
   // Linker visible symbols define atoms.
-  if (isSymbolLinkerVisible(SD))
+  if (isSymbolLinkerVisible(SD->getSymbol()))
     return SD;
 
   // Absolute and undefined symbols have no defining atom.
