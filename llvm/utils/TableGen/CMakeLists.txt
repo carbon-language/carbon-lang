@@ -5,6 +5,7 @@ add_executable(tblgen
   AsmWriterInst.cpp
   CallingConvEmitter.cpp
   ClangASTNodesEmitter.cpp
+  ClangAttrNodesEmitter.cpp
   ClangDiagnosticsEmitter.cpp
   CodeEmitterGen.cpp
   CodeGenDAGPatterns.cpp
