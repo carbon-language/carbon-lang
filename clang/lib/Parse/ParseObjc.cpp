@@ -1014,7 +1014,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
 
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
-      Diag(Tok, diag::ext_extra_struct_semi)
+      Diag(Tok, diag::ext_extra_ivar_semi)
         << FixItHint::CreateRemoval(Tok.getLocation());
       ConsumeToken();
       continue;

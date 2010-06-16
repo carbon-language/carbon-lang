@@ -1,7 +1,7 @@
 _Complex cd; // CHECK: code-complete-errors.c:1:1: warning: plain '_Complex' requires a type specifier; assuming '_Complex double'
 // CHECK: FIX-IT: Insert " double" at 1:9
 struct s {
-  int x, y;; // CHECK: code-complete-errors.c:4:12: warning: extra ';' inside a struct or union
+  int x, y;; // CHECK: code-complete-errors.c:4:12: warning: extra ';' inside a struct
 }; // CHECK: FIX-IT: Remove [4:12 - 4:13]
 
 struct s s0 = { y: 5 }; // CHECK: code-complete-errors.c:7:20: warning: use of GNU old-style field designator extension

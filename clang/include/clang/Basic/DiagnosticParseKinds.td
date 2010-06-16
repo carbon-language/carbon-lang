@@ -24,7 +24,9 @@ def ext_empty_source_file : Extension<"ISO C forbids an empty source file">;
 def ext_top_level_semi : Extension<
   "extra ';' outside of a function">;
 def ext_extra_struct_semi : Extension<
-  "extra ';' inside a struct or union">;
+  "extra ';' inside a %0">;
+def ext_extra_ivar_semi : Extension<
+  "extra ';' inside instance variable list">;
 
 def ext_duplicate_declspec : Extension<"duplicate '%0' declaration specifier">;
 def ext_plain_complex : ExtWarn<
