@@ -3913,13 +3913,13 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
 
   if (!castType->isArithmeticType()) {
     QualType castExprType = castExpr->getType();
-    if (!castExprType->isIntegralType() && 
+    if (!castExprType->isIntegralType(Context) && 
         castExprType->isArithmeticType())
       return Diag(castExpr->getLocStart(),
                   diag::err_cast_pointer_from_non_pointer_int)
         << castExprType << castExpr->getSourceRange();
   } else if (!castExpr->getType()->isArithmeticType()) {
-    if (!castType->isIntegralType() && castType->isArithmeticType())
+    if (!castType->isIntegralType(Context) && castType->isArithmeticType())
       return Diag(castExpr->getLocStart(),
                   diag::err_cast_pointer_to_non_pointer_int)
         << castType << castExpr->getSourceRange();
@@ -4953,7 +4953,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   // Handle the case of an ext vector and scalar.
   if (const ExtVectorType *LV = lhsType->getAs<ExtVectorType>()) {
     QualType EltTy = LV->getElementType();
-    if (EltTy->isIntegralType() && rhsType->isIntegralType()) {
+    if (EltTy->isIntegralType(Context) && rhsType->isIntegralType(Context)) {
       if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
         ImpCastExprToType(rex, lhsType, CastExpr::CK_IntegralCast);
         if (swapped) std::swap(rex, lex);

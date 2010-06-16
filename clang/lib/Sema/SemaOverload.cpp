@@ -963,7 +963,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     SCS.Second = ICK_Complex_Promotion;
     FromType = ToType.getUnqualifiedType();
   } else if (FromType->isIntegralOrEnumerationType() &&
-           (ToType->isIntegralType() && !ToType->isEnumeralType())) {
+             ToType->isIntegralType(Context)) {
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
@@ -981,8 +981,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
   } else if ((FromType->isFloatingType() &&
-              ToType->isIntegralType() && (!ToType->isBooleanType() &&
-                                           !ToType->isEnumeralType())) ||
+              ToType->isIntegralType(Context) && !ToType->isBooleanType()) ||
              (FromType->isIntegralOrEnumerationType() &&
               ToType->isFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
@@ -1143,7 +1142,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   if (From)
     if (FieldDecl *MemberDecl = From->getBitField()) {
       APSInt BitWidth;
-      if (FromType->isIntegralType() && !FromType->isEnumeralType() &&
+      if (FromType->isIntegralType(Context) &&
           MemberDecl->getBitWidth()->isIntegerConstantExpr(BitWidth, Context)) {
         APSInt ToSize(BitWidth.getBitWidth(), BitWidth.isUnsigned());
         ToSize = Context.getTypeSize(ToType);

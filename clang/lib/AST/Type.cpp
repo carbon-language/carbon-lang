@@ -439,14 +439,35 @@ bool Type::isIntegerType() const {
   return false;
 }
 
-bool Type::isIntegralType() const {
+/// \brief Determine whether this type is an integral type.
+///
+/// This routine determines whether the given type is an integral type per 
+/// C++ [basic.fundamental]p7. Although the C standard does not define the
+/// term "integral type", it has a similar term "integer type", and in C++
+/// the two terms are equivalent. However, C's "integer type" includes 
+/// enumeration types, while C++'s "integer type" does not. The \c ASTContext
+/// parameter is used to determine whether we should be following the C or
+/// C++ rules when determining whether this type is an integral/integer type.
+///
+/// For cases where C permits "an integer type" and C++ permits "an integral
+/// type", use this routine.
+///
+/// For cases where C permits "an integer type" and C++ permits "an integral
+/// or enumeration type", use \c isIntegralOrEnumerationType() instead. 
+///
+/// \param Ctx The context in which this type occurs.
+///
+/// \returns true if the type is considered an integral type, false otherwise.
+bool Type::isIntegralType(ASTContext &Ctx) const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
     BT->getKind() <= BuiltinType::Int128;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
-      return true;  // Complete enum types are integral.
-                    // FIXME: In C++, enum types are never integral.
+  
+  if (!Ctx.getLangOptions().CPlusPlus)
+    if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+      if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
+        return true;  // Complete enum types are integral in C.
+  
   return false;
 }
 

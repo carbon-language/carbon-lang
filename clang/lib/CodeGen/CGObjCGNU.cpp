@@ -624,8 +624,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   // to be on the stack / in those registers at the time) on most platforms,
   // and generates a SegV on SPARC.  With LLVM it corrupts the stack.  
   bool isPointerSizedReturn = false;
-  if (ResultType->isAnyPointerType() || ResultType->isIntegralType() ||
-      ResultType->isVoidType())
+  if (ResultType->isAnyPointerType() || 
+      ResultType->isIntegralOrEnumerationType() || ResultType->isVoidType())
     isPointerSizedReturn = true;
 
   llvm::BasicBlock *startBB = 0;

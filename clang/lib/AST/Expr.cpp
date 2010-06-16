@@ -1606,8 +1606,10 @@ Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
         continue;
       }
 
-      if ((E->getType()->isPointerType() || E->getType()->isIntegralType()) &&
-          (SE->getType()->isPointerType() || SE->getType()->isIntegralType()) &&
+      if ((E->getType()->isPointerType() || 
+           E->getType()->isIntegralType(Ctx)) &&
+          (SE->getType()->isPointerType() || 
+           SE->getType()->isIntegralType(Ctx)) &&
           Ctx.getTypeSize(E->getType()) == Ctx.getTypeSize(SE->getType())) {
         E = SE;
         continue;
@@ -1797,8 +1799,7 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
       // If the unthinkable happens, fall through to the safest alternative.
         
     case NPC_ValueDependentIsNull:
-      return isTypeDependent() || 
-             (getType()->isIntegralType() && !getType()->isEnumeralType());
+      return isTypeDependent() || getType()->isIntegralType(Ctx);
         
     case NPC_ValueDependentIsNotNull:
       return false;

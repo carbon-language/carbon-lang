@@ -849,7 +849,7 @@ public:
   bool isCharType() const;
   bool isWideCharType() const;
   bool isAnyCharacterType() const;
-  bool isIntegralType() const;
+  bool isIntegralType(ASTContext &Ctx) const;
   
   /// \brief Determine whether this type is an integral or enumeration type.
   bool isIntegralOrEnumerationType() const;

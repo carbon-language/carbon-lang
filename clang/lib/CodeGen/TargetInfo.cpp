@@ -1084,7 +1084,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
 
-    if (Ty->isIntegralType() || Ty->hasPointerRepresentation())
+    if (Ty->isIntegralOrEnumerationType() || Ty->hasPointerRepresentation())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   } else if (CoerceTo == llvm::Type::getDoubleTy(CoerceTo->getContext())) {

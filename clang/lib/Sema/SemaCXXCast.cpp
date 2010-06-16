@@ -1085,8 +1085,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   }
 
   // See below for the enumeral issue.
-  if (SrcType->isNullPtrType() && DestType->isIntegralType() &&
-      !DestType->isEnumeralType()) {
+  if (SrcType->isNullPtrType() && DestType->isIntegralType(Self.Context)) {
     // C++0x 5.2.10p4: A pointer can be explicitly converted to any integral
     //   type large enough to hold it. A value of std::nullptr_t can be
     //   converted to an integral type; the conversion has the same meaning
@@ -1103,9 +1102,9 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   bool destIsVector = DestType->isVectorType();
   bool srcIsVector = SrcType->isVectorType();
   if (srcIsVector || destIsVector) {
-    bool srcIsScalar = SrcType->isIntegralType() && !SrcType->isEnumeralType();
-    bool destIsScalar = 
-      DestType->isIntegralType() && !DestType->isEnumeralType();
+    // FIXME: Should this also apply to floating point types?
+    bool srcIsScalar = SrcType->isIntegralType(Self.Context);
+    bool destIsScalar = DestType->isIntegralType(Self.Context);
     
     // Check if this is a cast between a vector and something else.
     if (!(srcIsScalar && destIsVector) && !(srcIsVector && destIsScalar) &&
@@ -1148,9 +1147,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     return TC_Success;
   }
 
-  // Note: Clang treats enumeration types as integral types. If this is ever
-  // changed for C++, the additional check here will be redundant.
-  if (DestType->isIntegralType() && !DestType->isEnumeralType()) {
+  if (DestType->isIntegralType(Self.Context)) {
     assert(srcIsPtr && "One type must be a pointer");
     // C++ 5.2.10p4: A pointer can be explicitly converted to any integral
     //   type large enough to hold it.
