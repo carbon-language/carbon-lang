@@ -1439,33 +1439,6 @@ This pattern repeats several times, basically doing:
 
 //===---------------------------------------------------------------------===//
 
-186.crafty contains this interesting pattern:
-
-%77 = call i8* @strstr(i8* getelementptr ([6 x i8]* @"\01LC5", i32 0, i32 0),
-                       i8* %30)
-%phitmp648 = icmp eq i8* %77, getelementptr ([6 x i8]* @"\01LC5", i32 0, i32 0)
-br i1 %phitmp648, label %bb70, label %bb76
-
-bb70:           ; preds = %OptionMatch.exit91, %bb69
-        %78 = call i32 @strlen(i8* %30) nounwind readonly align 1               ; <i32> [#uses=1]
-
-This is basically:
-  cststr = "abcdef";
-  if (strstr(cststr, P) == cststr) {
-     x = strlen(P);
-     ...
-
-The strstr call would be significantly cheaper written as:
-
-cststr = "abcdef";
-if (memcmp(P, str, strlen(P)))
-  x = strlen(P);
-
-This is memcmp+strlen instead of strstr.  This also makes the strlen fully
-redundant.
-
-//===---------------------------------------------------------------------===//
-
 186.crafty also contains this code:
 
 %1906 = call i32 @strlen(i8* getelementptr ([32 x i8]* @pgn_event, i32 0,i32 0))
