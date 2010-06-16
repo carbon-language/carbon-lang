@@ -448,8 +448,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
     assert(DefMI->isExtractSubreg());
     MO.setReg(LastSrcReg);
     MO.setSubReg(SubIds[R]);
-    if (R != 0)
-      MO.setIsKill(false);
+    MO.setIsKill(false);
     // Delete the EXTRACT_SUBREG if its result is now dead.
     if (MRI->use_empty(OldReg))
       DefMI->eraseFromParent();
