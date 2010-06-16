@@ -1776,14 +1776,22 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
     it->info = classifyArgumentType(it->type, Context, VMContext);
   }
 
-  // ARM always overrides the calling convention.
+  const llvm::Triple &Triple(Context.Target.getTriple());
+  llvm::CallingConv::ID DefaultCC;
+  if (Triple.getOS() == llvm::Triple::Darwin)
+    DefaultCC = llvm::CallingConv::ARM_APCS;
+  else
+    DefaultCC = llvm::CallingConv::ARM_AAPCS;
+
   switch (getABIKind()) {
   case APCS:
-    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_APCS);
+    if (DefaultCC != llvm::CallingConv::ARM_APCS)
+      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_APCS);
     break;
 
   case AAPCS:
-    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS);
+    if (DefaultCC != llvm::CallingConv::ARM_AAPCS)
+      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS);
     break;
 
   case AAPCS_VFP:
