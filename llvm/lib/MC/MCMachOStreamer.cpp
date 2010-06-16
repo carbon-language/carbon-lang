@@ -28,10 +28,6 @@ namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
 private:
-  /// Track the current atom for each section.
-  DenseMap<const MCSectionData*, MCSymbolData*> CurrentAtomMap;
-
-private:
   MCFragment *getCurrentFragment() const {
     assert(getCurrentSectionData() && "No current section!");
 
@@ -46,15 +42,8 @@ private:
   MCDataFragment *getOrCreateDataFragment() const {
     MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
     if (!F)
-      F = createDataFragment();
+      F = new MCDataFragment(getCurrentSectionData());
     return F;
-  }
-
-  /// Create a new data fragment in the current section.
-  MCDataFragment *createDataFragment() const {
-    MCDataFragment *DF = new MCDataFragment(getCurrentSectionData());
-    DF->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
-    return DF;
   }
 
   void EmitInstToFragment(const MCInst &Inst);
@@ -145,6 +134,8 @@ public:
 
   virtual void EmitInstruction(const MCInst &Inst);
 
+  virtual void Finish();
+
   /// @}
 };
 
@@ -155,23 +146,20 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(CurSection && "Cannot emit before setting section!");
 
+  Symbol->setSection(*CurSection);
+
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 
-  // Update the current atom map, if necessary.
-  bool MustCreateFragment = false;
-  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol())) {
-    CurrentAtomMap[getCurrentSectionData()] = &SD;
-
-    // We have to create a new fragment, fragments cannot span atoms.
-    MustCreateFragment = true;
-  }
+  // We have to create a new fragment if this is an atom defining symbol,
+  // fragments cannot span atoms.
+  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol()))
+    new MCDataFragment(getCurrentSectionData());
 
   // FIXME: This is wasteful, we don't necessarily need to create a data
   // fragment. Instead, we should mark the symbol as pointing into the data
   // fragment if it exists, otherwise we should just queue the label and set its
   // fragment pointer when we emit the next fragment.
-  MCDataFragment *F =
-    MustCreateFragment ? createDataFragment() : getOrCreateDataFragment();
+  MCDataFragment *F = getOrCreateDataFragment();
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
   SD.setFragment(F);
   SD.setOffset(F->getContents().size());
@@ -184,8 +172,6 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   // FIXME: Cleanup this code, these bits should be emitted based on semantic
   // properties, not on the order of definition, etc.
   SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
-
-  Symbol->setSection(*CurSection);
 }
 
 void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -328,8 +314,6 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
   MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
   SD.setFragment(F);
-  if (getAssembler().isSymbolLinkerVisible(SD.getSymbol()))
-    F->setAtom(&SD);
 
   Symbol->setSection(*Section);
 
@@ -373,9 +357,8 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                            unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  MCFragment *F = new MCAlignFragment(ByteAlignment, Value, ValueSize,
-                                      MaxBytesToEmit, getCurrentSectionData());
-  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
+  new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
+                      getCurrentSectionData());
 
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
@@ -389,7 +372,6 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   MCAlignFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
                                            getCurrentSectionData());
   F->setEmitNops(true);
-  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
@@ -398,13 +380,11 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 
 void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
-  MCFragment *F = new MCOrgFragment(*Offset, Value, getCurrentSectionData());
-  F->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
+  new MCOrgFragment(*Offset, Value, getCurrentSectionData());
 }
 
 void MCMachOStreamer::EmitInstToFragment(const MCInst &Inst) {
   MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
-  IF->setAtom(CurrentAtomMap.lookup(getCurrentSectionData()));
 
   // Add the fixups and data.
   //
@@ -464,6 +444,39 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   // Otherwise emit to a separate fragment.
   EmitInstToFragment(Inst);
+}
+
+void MCMachOStreamer::Finish() {
+  // We have to set the fragment atom associations so we can relax properly for
+  // Mach-O.
+
+  // First, scan the symbol table to build a lookup table from fragments to
+  // defining symbols.
+  DenseMap<const MCFragment*, MCSymbolData*> DefiningSymbolMap;
+  for (MCAssembler::symbol_iterator it = getAssembler().symbol_begin(),
+         ie = getAssembler().symbol_end(); it != ie; ++it) {
+    if (getAssembler().isSymbolLinkerVisible(it->getSymbol()) &&
+        it->getFragment()) {
+      // An atom defining symbol should never be internal to a fragment.
+      assert(it->getOffset() == 0 && "Invalid offset in atom defining symbol!");
+      DefiningSymbolMap[it->getFragment()] = it;
+    }
+  }
+
+  // Set the fragment atom associations by tracking the last seen atom defining
+  // symbol.
+  for (MCAssembler::iterator it = getAssembler().begin(),
+         ie = getAssembler().end(); it != ie; ++it) {
+    MCSymbolData *CurrentAtom = 0;
+    for (MCSectionData::iterator it2 = it->begin(),
+           ie2 = it->end(); it2 != ie2; ++it2) {
+      if (MCSymbolData *SD = DefiningSymbolMap.lookup(it2))
+        CurrentAtom = SD;
+      it2->setAtom(CurrentAtom);
+    }
+  }
+
+  this->MCObjectStreamer::Finish();
 }
 
 MCStreamer *llvm::createMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
