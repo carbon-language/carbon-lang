@@ -97,7 +97,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
           BasicBlock::iterator It = I; ++It;
           if (isa<InvokeInst>(I))
             It = cast<InvokeInst>(I)->getNormalDest()->begin();
-          while (isa<PHINode>(It)) ++It;
+          while (isa<PHINode>(It) || isa<DbgInfoIntrinsic>(It)) ++It;
           if (It != BasicBlock::iterator(CI)) {
             // Recreate the cast after the user.
             // The old cast is left in place in case it is being used
@@ -115,7 +115,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
-  while (isa<PHINode>(IP)) ++IP;
+  while (isa<PHINode>(IP) || isa<DbgInfoIntrinsic>(IP)) ++IP;
   Instruction *CI = CastInst::Create(Op, V, Ty, V->getName(), IP);
   rememberInstruction(CI);
   return CI;
@@ -1070,7 +1070,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
     BasicBlock::iterator NewInsertPt =
       llvm::next(BasicBlock::iterator(cast<Instruction>(V)));
-    while (isa<PHINode>(NewInsertPt)) ++NewInsertPt;
+    while (isa<PHINode>(NewInsertPt) || isa<DbgInfoIntrinsic>(NewInsertPt))
+      ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
                       NewInsertPt);
     restoreInsertPoint(SaveInsertBB, SaveInsertPt);
