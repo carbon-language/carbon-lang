@@ -1,4 +1,5 @@
-; RUN: llc -O2 < %s | grep this | grep -v undef
+; RUN: llc -O2  %s -o %t
+; RUN: grep this %t | grep -v undef
 ; Test to check that unused argument 'this' is not undefined in debug info.
 
 %struct.foo = type { i32 }
