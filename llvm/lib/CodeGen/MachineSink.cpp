@@ -282,9 +282,10 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (MI->getParent() == SuccToSinkTo)
     return false;
 
-  // If the instruction to move defines a dead physical register which is live
-  // when leaving the basic block, don't move it because it could turn into a
-  // "zombie" define of that preg. E.g., EFLAGS. (<rdar://problem/8030636>)
+  // If the instruction to move defines or uses a dead physical register which
+  // is live when leaving the basic block, don't move it because it could turn
+  // into a zombie define or misuse of that preg. E.g., EFLAGS.
+  // (<rdar://problem/8030636>)
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
     const MachineOperand &MO = MI->getOperand(I);
     if (!MO.isReg()) continue;
