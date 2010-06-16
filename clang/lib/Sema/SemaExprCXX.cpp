@@ -17,6 +17,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
@@ -2605,6 +2606,16 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
     if (FTy->getResultType()->isReferenceType())
       return Owned(E);
   }
+  else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
+    QualType Ty = ME->getType();
+    if (const PointerType *PT = Ty->getAs<PointerType>())
+      Ty = PT->getPointeeType();
+    else if (const BlockPointerType *BPT = Ty->getAs<BlockPointerType>())
+      Ty = BPT->getPointeeType();
+    if (Ty->isReferenceType())
+      return Owned(E);    
+  }
+
 
   // That should be enough to guarantee that this type is complete.
   // If it has a trivial destructor, we can avoid the extra copy.

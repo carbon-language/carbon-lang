@@ -1018,6 +1018,11 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, LBracLoc, Receiver, 
                                      Sel, Method, Args, NumArgs, RBracLoc);
+  if (Context.getLangOptions().CPlusPlus && !ReturnType->isVoidType()) {
+    if (RequireCompleteType(LBracLoc, ReturnType, 
+                      diag::err_illegal_message_expr_incomplete_type))
+      return ExprError();
+    }
   return MaybeBindToTemporary(Result);
 }
 
