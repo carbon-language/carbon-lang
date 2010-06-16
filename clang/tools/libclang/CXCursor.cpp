@@ -78,9 +78,9 @@ static CXCursorKind GetCursorKind(const Attr *A) {
   assert(A && "Invalid arguments!");
   switch (A->getKind()) {
     default: break;
-    case Attr::IBActionKind: return CXCursor_IBActionAttr;
-    case Attr::IBOutletKind: return CXCursor_IBOutletAttr;
-    case Attr::IBOutletCollectionKind: return CXCursor_IBOutletCollectionAttr;
+    case attr::IBAction: return CXCursor_IBActionAttr;
+    case attr::IBOutlet: return CXCursor_IBOutletAttr;
+    case attr::IBOutletCollection: return CXCursor_IBOutletCollectionAttr;
   }
 
   return CXCursor_UnexposedAttr;

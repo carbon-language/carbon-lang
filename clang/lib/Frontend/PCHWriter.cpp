@@ -1842,66 +1842,66 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     default:
       assert(0 && "Does not support PCH writing for this attribute yet!");
       break;
-    case Attr::Alias:
+    case attr::Alias:
       AddString(cast<AliasAttr>(Attr)->getAliasee(), Record);
       break;
 
-    case Attr::AlignMac68k:
+    case attr::AlignMac68k:
       break;
 
-    case Attr::Aligned:
+    case attr::Aligned:
       Record.push_back(cast<AlignedAttr>(Attr)->getAlignment());
       break;
 
-    case Attr::AlwaysInline:
+    case attr::AlwaysInline:
       break;
 
-    case Attr::AnalyzerNoReturn:
+    case attr::AnalyzerNoReturn:
       break;
 
-    case Attr::Annotate:
+    case attr::Annotate:
       AddString(cast<AnnotateAttr>(Attr)->getAnnotation(), Record);
       break;
 
-    case Attr::AsmLabel:
+    case attr::AsmLabel:
       AddString(cast<AsmLabelAttr>(Attr)->getLabel(), Record);
       break;
 
-    case Attr::BaseCheck:
+    case attr::BaseCheck:
       break;
 
-    case Attr::Blocks:
+    case attr::Blocks:
       Record.push_back(cast<BlocksAttr>(Attr)->getType()); // FIXME: stable
       break;
 
-    case Attr::CDecl:
+    case attr::CDecl:
       break;
 
-    case Attr::Cleanup:
+    case attr::Cleanup:
       AddDeclRef(cast<CleanupAttr>(Attr)->getFunctionDecl(), Record);
       break;
 
-    case Attr::Const:
+    case attr::Const:
       break;
 
-    case Attr::Constructor:
+    case attr::Constructor:
       Record.push_back(cast<ConstructorAttr>(Attr)->getPriority());
       break;
 
-    case Attr::DLLExport:
-    case Attr::DLLImport:
-    case Attr::Deprecated:
+    case attr::DLLExport:
+    case attr::DLLImport:
+    case attr::Deprecated:
       break;
 
-    case Attr::Destructor:
+    case attr::Destructor:
       Record.push_back(cast<DestructorAttr>(Attr)->getPriority());
       break;
 
-    case Attr::FastCall:
-    case Attr::Final:
+    case attr::FastCall:
+    case attr::Final:
       break;
 
-    case Attr::Format: {
+    case attr::Format: {
       const FormatAttr *Format = cast<FormatAttr>(Attr);
       AddString(Format->getType(), Record);
       Record.push_back(Format->getFormatIdx());
@@ -1909,93 +1909,93 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       break;
     }
 
-    case Attr::FormatArg: {
+    case attr::FormatArg: {
       const FormatArgAttr *Format = cast<FormatArgAttr>(Attr);
       Record.push_back(Format->getFormatIdx());
       break;
     }
 
-    case Attr::Sentinel : {
+    case attr::Sentinel : {
       const SentinelAttr *Sentinel = cast<SentinelAttr>(Attr);
       Record.push_back(Sentinel->getSentinel());
       Record.push_back(Sentinel->getNullPos());
       break;
     }
 
-    case Attr::GNUInline:
-    case Attr::Hiding:
-    case Attr::IBActionKind:
-    case Attr::IBOutletKind:
-    case Attr::Malloc:
-    case Attr::NoDebug:
-    case Attr::NoInline:
-    case Attr::NoReturn:
-    case Attr::NoThrow:
+    case attr::GNUInline:
+    case attr::Hiding:
+    case attr::IBAction:
+    case attr::IBOutlet:
+    case attr::Malloc:
+    case attr::NoDebug:
+    case attr::NoInline:
+    case attr::NoReturn:
+    case attr::NoThrow:
       break;
 
-    case Attr::IBOutletCollectionKind: {
+    case attr::IBOutletCollection: {
       const IBOutletCollectionAttr *ICA = cast<IBOutletCollectionAttr>(Attr);
       AddDeclRef(ICA->getClass(), Record);
       break;
     }
 
-    case Attr::NonNull: {
+    case attr::NonNull: {
       const NonNullAttr *NonNull = cast<NonNullAttr>(Attr);
       Record.push_back(NonNull->size());
       Record.insert(Record.end(), NonNull->begin(), NonNull->end());
       break;
     }
 
-    case Attr::CFReturnsNotRetained:
-    case Attr::CFReturnsRetained:
-    case Attr::NSReturnsNotRetained:
-    case Attr::NSReturnsRetained:
-    case Attr::ObjCException:
-    case Attr::ObjCNSObject:
-    case Attr::Overloadable:
-    case Attr::Override:
+    case attr::CFReturnsNotRetained:
+    case attr::CFReturnsRetained:
+    case attr::NSReturnsNotRetained:
+    case attr::NSReturnsRetained:
+    case attr::ObjCException:
+    case attr::ObjCNSObject:
+    case attr::Overloadable:
+    case attr::Override:
       break;
 
-    case Attr::MaxFieldAlignment:
+    case attr::MaxFieldAlignment:
       Record.push_back(cast<MaxFieldAlignmentAttr>(Attr)->getAlignment());
       break;
 
-    case Attr::Packed:
+    case attr::Packed:
       break;
 
-    case Attr::Pure:
+    case attr::Pure:
       break;
 
-    case Attr::Regparm:
+    case attr::Regparm:
       Record.push_back(cast<RegparmAttr>(Attr)->getNumParams());
       break;
 
-    case Attr::ReqdWorkGroupSize:
+    case attr::ReqdWorkGroupSize:
       Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getXDim());
       Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getYDim());
       Record.push_back(cast<ReqdWorkGroupSizeAttr>(Attr)->getZDim());
       break;
 
-    case Attr::Section:
+    case attr::Section:
       AddString(cast<SectionAttr>(Attr)->getName(), Record);
       break;
 
-    case Attr::StdCall:
-    case Attr::TransparentUnion:
-    case Attr::Unavailable:
-    case Attr::Unused:
-    case Attr::Used:
+    case attr::StdCall:
+    case attr::TransparentUnion:
+    case attr::Unavailable:
+    case attr::Unused:
+    case attr::Used:
       break;
 
-    case Attr::Visibility:
+    case attr::Visibility:
       // FIXME: stable encoding
       Record.push_back(cast<VisibilityAttr>(Attr)->getVisibility());
       break;
 
-    case Attr::WarnUnusedResult:
-    case Attr::Weak:
-    case Attr::WeakRef:
-    case Attr::WeakImport:
+    case attr::WarnUnusedResult:
+    case attr::Weak:
+    case attr::WeakRef:
+    case attr::WeakImport:
       break;
     }
   }

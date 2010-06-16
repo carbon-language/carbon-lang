@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/StringRef.h"
+#include "clang/Basic/AttrKinds.h"
 #include <cassert>
 #include <cstring>
 #include <algorithm>
@@ -41,75 +42,9 @@ namespace clang {
 
 /// Attr - This represents one attribute.
 class Attr {
-public:
-  enum Kind {
-    Alias,
-    Aligned,
-    AlignMac68k,
-    AlwaysInline,
-    AnalyzerNoReturn, // Clang-specific.
-    Annotate,
-    AsmLabel, // Represent GCC asm label extension.
-    BaseCheck,
-    Blocks,
-    CDecl,
-    Cleanup,
-    Const,
-    Constructor,
-    Deprecated,
-    Destructor,
-    FastCall,
-    Final,
-    Format,
-    FormatArg,
-    GNUInline,
-    Hiding,
-    IBOutletKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
-    IBOutletCollectionKind, // Clang-specific.
-    IBActionKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
-    Malloc,
-    MaxFieldAlignment,
-    NoDebug,
-    NoInline,
-    NonNull,
-    NoReturn,
-    NoThrow,
-    ObjCException,
-    ObjCNSObject,
-    Override,
-    CFReturnsRetained,      // Clang/Checker-specific.
-    CFReturnsNotRetained,   // Clang/Checker-specific.
-    NSReturnsRetained,      // Clang/Checker-specific.
-    NSReturnsNotRetained,   // Clang/Checker-specific.
-    Overloadable, // Clang-specific
-    Packed,
-    Pure,
-    Regparm,
-    ReqdWorkGroupSize,   // OpenCL-specific
-    Section,
-    Sentinel,
-    StdCall,
-    ThisCall,
-    TransparentUnion,
-    Unavailable,
-    Unused,
-    Used,
-    Visibility,
-    WarnUnusedResult,
-    Weak,
-    WeakImport,
-    WeakRef,
-
-    FIRST_TARGET_ATTRIBUTE,
-    DLLExport,
-    DLLImport,
-    MSP430Interrupt,
-    X86ForceAlignArgPointer
-  };
-
 private:
   Attr *Next;
-  Kind AttrKind;
+  attr::Kind AttrKind;
   bool Inherited : 1;
 
 protected:
@@ -122,7 +57,7 @@ protected:
   }
 
 protected:
-  Attr(Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
+  Attr(attr::Kind AK) : Next(0), AttrKind(AK), Inherited(false) {}
   virtual ~Attr() {
     assert(Next == 0 && "Destroy didn't work");
   }
@@ -133,7 +68,7 @@ public:
   /// declarations.
   virtual bool isMerged() const { return true; }
 
-  Kind getKind() const { return AttrKind; }
+  attr::Kind getKind() const { return AttrKind; }
 
   Attr *getNext() { return Next; }
   const Attr *getNext() const { return Next; }
@@ -163,13 +98,15 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *) { return true; }
 };
+
+#include "clang/AST/Attrs.inc"
   
 class AttrWithString : public Attr {
 private:
   const char *Str;
   unsigned StrLen;
 protected:
-  AttrWithString(Attr::Kind AK, ASTContext &C, llvm::StringRef s);
+  AttrWithString(attr::Kind AK, ASTContext &C, llvm::StringRef s);
   llvm::StringRef getString() const { return llvm::StringRef(Str, StrLen); }
   void ReplaceString(ASTContext &C, llvm::StringRef newS);
 public:
@@ -179,9 +116,9 @@ public:
 #define DEF_SIMPLE_ATTR(ATTR)                                           \
 class ATTR##Attr : public Attr {                                        \
 public:                                                                 \
-  ATTR##Attr() : Attr(ATTR) {}                                          \
+  ATTR##Attr() : Attr(attr::ATTR) {}                                          \
   virtual Attr *clone(ASTContext &C) const;                             \
-  static bool classof(const Attr *A) { return A->getKind() == ATTR; }   \
+  static bool classof(const Attr *A) { return A->getKind() == attr::ATTR; }   \
   static bool classof(const ATTR##Attr *A) { return true; }             \
 }
 
@@ -194,7 +131,7 @@ class MaxFieldAlignmentAttr : public Attr {
 
 public:
   MaxFieldAlignmentAttr(unsigned alignment)
-    : Attr(MaxFieldAlignment), Alignment(alignment) {}
+    : Attr(attr::MaxFieldAlignment), Alignment(alignment) {}
 
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
@@ -203,7 +140,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == MaxFieldAlignment;
+    return A->getKind() == attr::MaxFieldAlignment;
   }
   static bool classof(const MaxFieldAlignmentAttr *A) { return true; }
 };
@@ -214,7 +151,7 @@ class AlignedAttr : public Attr {
   unsigned Alignment;
 public:
   AlignedAttr(unsigned alignment)
-    : Attr(Aligned), Alignment(alignment) {}
+    : Attr(attr::Aligned), Alignment(alignment) {}
 
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
@@ -232,7 +169,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == Aligned;
+    return A->getKind() == attr::Aligned;
   }
   static bool classof(const AlignedAttr *A) { return true; }
 };
@@ -240,7 +177,7 @@ public:
 class AnnotateAttr : public AttrWithString {
 public:
   AnnotateAttr(ASTContext &C, llvm::StringRef ann)
-    : AttrWithString(Annotate, C, ann) {}
+    : AttrWithString(attr::Annotate, C, ann) {}
 
   llvm::StringRef getAnnotation() const { return getString(); }
 
@@ -248,7 +185,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == Annotate;
+    return A->getKind() == attr::Annotate;
   }
   static bool classof(const AnnotateAttr *A) { return true; }
 };
@@ -256,7 +193,7 @@ public:
 class AsmLabelAttr : public AttrWithString {
 public:
   AsmLabelAttr(ASTContext &C, llvm::StringRef L)
-    : AttrWithString(AsmLabel, C, L) {}
+    : AttrWithString(attr::AsmLabel, C, L) {}
 
   llvm::StringRef getLabel() const { return getString(); }
 
@@ -264,7 +201,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == AsmLabel;
+    return A->getKind() == attr::AsmLabel;
   }
   static bool classof(const AsmLabelAttr *A) { return true; }
 };
@@ -274,54 +211,56 @@ DEF_SIMPLE_ATTR(AlwaysInline);
 class AliasAttr : public AttrWithString {
 public:
   AliasAttr(ASTContext &C, llvm::StringRef aliasee)
-    : AttrWithString(Alias, C, aliasee) {}
+    : AttrWithString(attr::Alias, C, aliasee) {}
 
   llvm::StringRef getAliasee() const { return getString(); }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Alias; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Alias; }
   static bool classof(const AliasAttr *A) { return true; }
 };
 
 class ConstructorAttr : public Attr {
   int priority;
 public:
-  ConstructorAttr(int p) : Attr(Constructor), priority(p) {}
+  ConstructorAttr(int p) : Attr(attr::Constructor), priority(p) {}
 
   int getPriority() const { return priority; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Constructor; }
+  static bool classof(const Attr *A)
+    { return A->getKind() == attr::Constructor; }
   static bool classof(const ConstructorAttr *A) { return true; }
 };
 
 class DestructorAttr : public Attr {
   int priority;
 public:
-  DestructorAttr(int p) : Attr(Destructor), priority(p) {}
+  DestructorAttr(int p) : Attr(attr::Destructor), priority(p) {}
 
   int getPriority() const { return priority; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Destructor; }
+  static bool classof(const Attr *A)
+    { return A->getKind() == attr::Destructor; }
   static bool classof(const DestructorAttr *A) { return true; }
 };
 
 class IBOutletAttr : public Attr {
 public:
-  IBOutletAttr() : Attr(IBOutletKind) {}
+  IBOutletAttr() : Attr(attr::IBOutlet) {}
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == IBOutletKind;
+    return A->getKind() == attr::IBOutlet;
   }
   static bool classof(const IBOutletAttr *A) { return true; }
 };
@@ -330,7 +269,7 @@ class IBOutletCollectionAttr : public Attr {
   const ObjCInterfaceDecl *D;
 public:
   IBOutletCollectionAttr(const ObjCInterfaceDecl *d = 0)
-    : Attr(IBOutletCollectionKind), D(d) {}
+    : Attr(attr::IBOutletCollection), D(d) {}
 
   const ObjCInterfaceDecl *getClass() const { return D; }
 
@@ -338,27 +277,26 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == IBOutletCollectionKind;
+    return A->getKind() == attr::IBOutletCollection;
   }
   static bool classof(const IBOutletCollectionAttr *A) { return true; }
 };
 
 class IBActionAttr : public Attr {
 public:
-  IBActionAttr() : Attr(IBActionKind) {}
+  IBActionAttr() : Attr(attr::IBAction) {}
 
   virtual Attr *clone(ASTContext &C) const;
 
     // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == IBActionKind;
+    return A->getKind() == attr::IBAction;
   }
   static bool classof(const IBActionAttr *A) { return true; }
 };
 
 DEF_SIMPLE_ATTR(AnalyzerNoReturn);
 DEF_SIMPLE_ATTR(Deprecated);
-DEF_SIMPLE_ATTR(Final);
 DEF_SIMPLE_ATTR(GNUInline);
 DEF_SIMPLE_ATTR(Malloc);
 DEF_SIMPLE_ATTR(NoReturn);
@@ -366,7 +304,7 @@ DEF_SIMPLE_ATTR(NoReturn);
 class SectionAttr : public AttrWithString {
 public:
   SectionAttr(ASTContext &C, llvm::StringRef N)
-    : AttrWithString(Section, C, N) {}
+    : AttrWithString(attr::Section, C, N) {}
 
   llvm::StringRef getName() const { return getString(); }
 
@@ -374,7 +312,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == Section;
+    return A->getKind() == attr::Section;
   }
   static bool classof(const SectionAttr *A) { return true; }
 };
@@ -408,7 +346,7 @@ public:
 
   virtual Attr *clone(ASTContext &C) const;
 
-  static bool classof(const Attr *A) { return A->getKind() == NonNull; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::NonNull; }
   static bool classof(const NonNullAttr *A) { return true; }
 };
 
@@ -416,7 +354,7 @@ class FormatAttr : public AttrWithString {
   int formatIdx, firstArg;
 public:
   FormatAttr(ASTContext &C, llvm::StringRef type, int idx, int first)
-    : AttrWithString(Format, C, type), formatIdx(idx), firstArg(first) {}
+    : AttrWithString(attr::Format, C, type), formatIdx(idx), firstArg(first) {}
 
   llvm::StringRef getType() const { return getString(); }
   void setType(ASTContext &C, llvm::StringRef type);
@@ -426,27 +364,27 @@ public:
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Format; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Format; }
   static bool classof(const FormatAttr *A) { return true; }
 };
 
 class FormatArgAttr : public Attr {
   int formatIdx;
 public:
-  FormatArgAttr(int idx) : Attr(FormatArg), formatIdx(idx) {}
+  FormatArgAttr(int idx) : Attr(attr::FormatArg), formatIdx(idx) {}
   int getFormatIdx() const { return formatIdx; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == FormatArg; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::FormatArg; }
   static bool classof(const FormatArgAttr *A) { return true; }
 };
 
 class SentinelAttr : public Attr {
   int sentinel, NullPos;
 public:
-  SentinelAttr(int sentinel_val, int nullPos) : Attr(Sentinel),
+  SentinelAttr(int sentinel_val, int nullPos) : Attr(attr::Sentinel),
                sentinel(sentinel_val), NullPos(nullPos) {}
   int getSentinel() const { return sentinel; }
   int getNullPos() const { return NullPos; }
@@ -454,7 +392,7 @@ public:
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Sentinel; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Sentinel; }
   static bool classof(const SentinelAttr *A) { return true; }
 };
 
@@ -469,7 +407,7 @@ public:
 private:
   VisibilityTypes VisibilityType;
 public:
-  VisibilityAttr(VisibilityTypes v) : Attr(Visibility),
+  VisibilityAttr(VisibilityTypes v) : Attr(attr::Visibility),
                  VisibilityType(v) {}
 
   VisibilityTypes getVisibility() const { return VisibilityType; }
@@ -477,7 +415,8 @@ public:
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Visibility; }
+  static bool classof(const Attr *A)
+    { return A->getKind() == attr::Visibility; }
   static bool classof(const VisibilityAttr *A) { return true; }
 };
 
@@ -491,13 +430,14 @@ DEF_SIMPLE_ATTR(ObjCException);
 
 class OverloadableAttr : public Attr {
 public:
-  OverloadableAttr() : Attr(Overloadable) { }
+  OverloadableAttr() : Attr(attr::Overloadable) { }
 
   virtual bool isMerged() const { return false; }
 
   virtual Attr *clone(ASTContext &C) const;
 
-  static bool classof(const Attr *A) { return A->getKind() == Overloadable; }
+  static bool classof(const Attr *A)
+    { return A->getKind() == attr::Overloadable; }
   static bool classof(const OverloadableAttr *) { return true; }
 };
 
@@ -509,14 +449,14 @@ public:
 private:
   BlocksAttrTypes BlocksAttrType;
 public:
-  BlocksAttr(BlocksAttrTypes t) : Attr(Blocks), BlocksAttrType(t) {}
+  BlocksAttr(BlocksAttrTypes t) : Attr(attr::Blocks), BlocksAttrType(t) {}
 
   BlocksAttrTypes getType() const { return BlocksAttrType; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Blocks; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Blocks; }
   static bool classof(const BlocksAttr *A) { return true; }
 };
 
@@ -526,14 +466,14 @@ class CleanupAttr : public Attr {
   FunctionDecl *FD;
 
 public:
-  CleanupAttr(FunctionDecl *fd) : Attr(Cleanup), FD(fd) {}
+  CleanupAttr(FunctionDecl *fd) : Attr(attr::Cleanup), FD(fd) {}
 
   const FunctionDecl *getFunctionDecl() const { return FD; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Cleanup; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Cleanup; }
   static bool classof(const CleanupAttr *A) { return true; }
 };
 
@@ -545,14 +485,14 @@ class RegparmAttr : public Attr {
   unsigned NumParams;
 
 public:
-  RegparmAttr(unsigned np) : Attr(Regparm), NumParams(np) {}
+  RegparmAttr(unsigned np) : Attr(attr::Regparm), NumParams(np) {}
 
   unsigned getNumParams() const { return NumParams; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == Regparm; }
+  static bool classof(const Attr *A) { return A->getKind() == attr::Regparm; }
   static bool classof(const RegparmAttr *A) { return true; }
 };
 
@@ -560,7 +500,7 @@ class ReqdWorkGroupSizeAttr : public Attr {
   unsigned X, Y, Z;
 public:
   ReqdWorkGroupSizeAttr(unsigned X, unsigned Y, unsigned Z)
-  : Attr(ReqdWorkGroupSize), X(X), Y(Y), Z(Z) {}
+  : Attr(attr::ReqdWorkGroupSize), X(X), Y(Y), Z(Z) {}
 
   unsigned getXDim() const { return X; }
   unsigned getYDim() const { return Y; }
@@ -570,7 +510,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
-    return A->getKind() == ReqdWorkGroupSize;
+    return A->getKind() == attr::ReqdWorkGroupSize;
   }
   static bool classof(const ReqdWorkGroupSizeAttr *A) { return true; }
 };
@@ -581,11 +521,6 @@ DEF_SIMPLE_ATTR(CFReturnsRetained);
 DEF_SIMPLE_ATTR(NSReturnsNotRetained);
 DEF_SIMPLE_ATTR(NSReturnsRetained);
 
-// C++0x member checking attributes.
-DEF_SIMPLE_ATTR(BaseCheck);
-DEF_SIMPLE_ATTR(Hiding);
-DEF_SIMPLE_ATTR(Override);
-
 // Target-specific attributes
 DEF_SIMPLE_ATTR(DLLImport);
 DEF_SIMPLE_ATTR(DLLExport);
@@ -594,14 +529,15 @@ class MSP430InterruptAttr : public Attr {
   unsigned Number;
 
 public:
-  MSP430InterruptAttr(unsigned n) : Attr(MSP430Interrupt), Number(n) {}
+  MSP430InterruptAttr(unsigned n) : Attr(attr::MSP430Interrupt), Number(n) {}
 
   unsigned getNumber() const { return Number; }
 
   virtual Attr *clone(ASTContext &C) const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) { return A->getKind() == MSP430Interrupt; }
+  static bool classof(const Attr *A)
+    { return A->getKind() == attr::MSP430Interrupt; }
   static bool classof(const MSP430InterruptAttr *A) { return true; }
 };
 

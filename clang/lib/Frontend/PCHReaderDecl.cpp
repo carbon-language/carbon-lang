@@ -679,24 +679,24 @@ Attr *PCHReader::ReadAttributes() {
   (void)RecCode;
 
 #define SIMPLE_ATTR(Name)                       \
- case Attr::Name:                               \
+ case attr::Name:                               \
    New = ::new (*Context) Name##Attr();         \
    break
 
 #define STRING_ATTR(Name)                                       \
- case Attr::Name:                                               \
+ case attr::Name:                                               \
    New = ::new (*Context) Name##Attr(*Context, ReadString(Record, Idx));  \
    break
 
 #define UNSIGNED_ATTR(Name)                             \
- case Attr::Name:                                       \
+ case attr::Name:                                       \
    New = ::new (*Context) Name##Attr(Record[Idx++]);    \
    break
 
   Attr *Attrs = 0;
   while (Idx < Record.size()) {
     Attr *New = 0;
-    Attr::Kind Kind = (Attr::Kind)Record[Idx++];
+    attr::Kind Kind = (attr::Kind)Record[Idx++];
     bool IsInherited = Record[Idx++];
 
     switch (Kind) {
@@ -712,14 +712,14 @@ Attr *PCHReader::ReadAttributes() {
     STRING_ATTR(AsmLabel);
     SIMPLE_ATTR(BaseCheck);
 
-    case Attr::Blocks:
+    case attr::Blocks:
       New = ::new (*Context) BlocksAttr(
                                   (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
       break;
 
     SIMPLE_ATTR(CDecl);
 
-    case Attr::Cleanup:
+    case attr::Cleanup:
       New = ::new (*Context) CleanupAttr(
                                   cast<FunctionDecl>(GetDecl(Record[Idx++])));
       break;
@@ -733,7 +733,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(FastCall);
     SIMPLE_ATTR(Final);
 
-    case Attr::Format: {
+    case attr::Format: {
       std::string Type = ReadString(Record, Idx);
       unsigned FormatIdx = Record[Idx++];
       unsigned FirstArg = Record[Idx++];
@@ -741,13 +741,13 @@ Attr *PCHReader::ReadAttributes() {
       break;
     }
 
-    case Attr::FormatArg: {
+    case attr::FormatArg: {
       unsigned FormatIdx = Record[Idx++];
       New = ::new (*Context) FormatArgAttr(FormatIdx);
       break;
     }
 
-    case Attr::Sentinel: {
+    case attr::Sentinel: {
       int sentinel = Record[Idx++];
       int nullPos = Record[Idx++];
       New = ::new (*Context) SentinelAttr(sentinel, nullPos);
@@ -757,15 +757,15 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(GNUInline);
     SIMPLE_ATTR(Hiding);
 
-    case Attr::IBActionKind:
+    case attr::IBAction:
       New = ::new (*Context) IBActionAttr();
       break;
 
-    case Attr::IBOutletKind:
+    case attr::IBOutlet:
       New = ::new (*Context) IBOutletAttr();
       break;
 
-    case Attr::IBOutletCollectionKind: {
+    case attr::IBOutletCollection: {
       ObjCInterfaceDecl *D =
         cast_or_null<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
       New = ::new (*Context) IBOutletCollectionAttr(D);
@@ -778,7 +778,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(NoReturn);
     SIMPLE_ATTR(NoThrow);
 
-    case Attr::NonNull: {
+    case attr::NonNull: {
       unsigned Size = Record[Idx++];
       llvm::SmallVector<unsigned, 16> ArgNums;
       ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
@@ -787,7 +787,7 @@ Attr *PCHReader::ReadAttributes() {
       break;
     }
 
-    case Attr::ReqdWorkGroupSize: {
+    case attr::ReqdWorkGroupSize: {
       unsigned X = Record[Idx++];
       unsigned Y = Record[Idx++];
       unsigned Z = Record[Idx++];
@@ -815,7 +815,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Unused);
     SIMPLE_ATTR(Used);
 
-    case Attr::Visibility:
+    case attr::Visibility:
       New = ::new (*Context) VisibilityAttr(
                               (VisibilityAttr::VisibilityTypes)Record[Idx++]);
       break;

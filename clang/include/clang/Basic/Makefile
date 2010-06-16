@@ -3,7 +3,7 @@ BUILT_SOURCES = DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
-        DiagnosticGroups.inc
+        DiagnosticGroups.inc AttrList.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -19,4 +19,7 @@ $(ObjDir)/DiagnosticGroups.inc.tmp : Diagnostic.td DiagnosticGroups.td $(INPUT_T
 	$(Echo) "Building Clang diagnostic groups with tblgen"
 	$(Verb) $(TableGen) -gen-clang-diag-groups -o $(call SYSPATH, $@) $<
 
-
+$(ObjDir)/AttrList.inc.tmp : Attr.td $(TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang attribute list with tblgen"
+	$(Verb) $(TableGen) -gen-clang-attr-list -o $(call SYSPATH, $@) \
+	  -I $(PROJ_SRC_DIR)/../.. $<

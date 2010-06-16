@@ -24,7 +24,7 @@ void Attr::Destroy(ASTContext &C) {
   C.Deallocate((void*)this);
 }
 
-AttrWithString::AttrWithString(Attr::Kind AK, ASTContext &C, llvm::StringRef s)
+AttrWithString::AttrWithString(attr::Kind AK, ASTContext &C, llvm::StringRef s)
   : Attr(AK) {
   assert(!s.empty());
   StrLen = s.size();
@@ -51,7 +51,7 @@ void FormatAttr::setType(ASTContext &C, llvm::StringRef type) {
 }
 
 NonNullAttr::NonNullAttr(ASTContext &C, unsigned* arg_nums, unsigned size)
-  : Attr(NonNull), ArgNums(0), Size(0) {  
+  : Attr(attr::NonNull), ArgNums(0), Size(0) {
   if (size == 0)
     return;
   assert(arg_nums);

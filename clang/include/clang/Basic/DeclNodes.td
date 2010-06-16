@@ -1,4 +1,6 @@
-class Decl<bit abstract = 0> {
+class AttrSubject;
+
+class Decl<bit abstract = 0> : AttrSubject {
   bit Abstract = abstract;
 }
 
