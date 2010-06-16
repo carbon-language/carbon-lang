@@ -3465,7 +3465,7 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
     default:
       break;
     }
-  } else if (Tok.getIdentifierInfo() == Ident_pixel &&
+  } else if ((Tok.getIdentifierInfo() == Ident_pixel) &&
              DS.isTypeAltiVecVector()) {
     isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
     return true;
