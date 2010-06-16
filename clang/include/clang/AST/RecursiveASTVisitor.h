@@ -1253,6 +1253,7 @@ DEF_TRAVERSE_STMT(ObjCStringLiteral, { })
 // FIXME: go through all the stmts and exprs again, and see which of them
 // create new types, and recurse on the types (TypeLocs?) of those.
 // Candidates:
+//
 //    http://clang.llvm.org/doxygen/classclang_1_1CXXTypeidExpr.html
 //    http://clang.llvm.org/doxygen/classclang_1_1SizeOfAlignOfExpr.html
 //    http://clang.llvm.org/doxygen/classclang_1_1TypesCompatibleExpr.html
