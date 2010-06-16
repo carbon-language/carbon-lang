@@ -467,8 +467,7 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
     unsigned FirstOpnd, NumRegs, Offset, Stride;
     if (!isNEONMultiRegOp(MI->getOpcode(), FirstOpnd, NumRegs, Offset, Stride))
       continue;
-    if (llvm::ModelWithRegSequence() &&
-        FormsRegSequence(MI, FirstOpnd, NumRegs, Offset, Stride))
+    if (FormsRegSequence(MI, FirstOpnd, NumRegs, Offset, Stride))
       continue;
 
     MachineBasicBlock::iterator NextI = llvm::next(MBBI);

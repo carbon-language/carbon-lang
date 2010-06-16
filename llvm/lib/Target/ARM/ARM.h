@@ -90,10 +90,6 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   }
 }
 
-/// ModelWithRegSequence - Return true if isel should use REG_SEQUENCE to model
-/// operations involving sub-registers.
-bool ModelWithRegSequence();
-
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 
