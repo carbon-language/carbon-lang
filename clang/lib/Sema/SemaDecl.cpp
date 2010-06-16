@@ -5803,41 +5803,42 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
 
     if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
-
-      if (!RDecl->hasTrivialConstructor())
-        CXXRecord->setHasTrivialConstructor(false);
-      if (!RDecl->hasTrivialCopyConstructor())
-        CXXRecord->setHasTrivialCopyConstructor(false);
-      if (!RDecl->hasTrivialCopyAssignment())
-        CXXRecord->setHasTrivialCopyAssignment(false);
-      if (!RDecl->hasTrivialDestructor())
-        CXXRecord->setHasTrivialDestructor(false);
-
-      // C++ 9.5p1: An object of a class with a non-trivial
-      // constructor, a non-trivial copy constructor, a non-trivial
-      // destructor, or a non-trivial copy assignment operator
-      // cannot be a member of a union, nor can an array of such
-      // objects.
-      // TODO: C++0x alters this restriction significantly.
-      if (Record->isUnion()) {
-        // We check for copy constructors before constructors
-        // because otherwise we'll never get complaints about
-        // copy constructors.
-
-        CXXSpecialMember member = CXXInvalid;
+      if (RDecl->getDefinition()) {
+        if (!RDecl->hasTrivialConstructor())
+          CXXRecord->setHasTrivialConstructor(false);
         if (!RDecl->hasTrivialCopyConstructor())
-          member = CXXCopyConstructor;
-        else if (!RDecl->hasTrivialConstructor())
-          member = CXXConstructor;
-        else if (!RDecl->hasTrivialCopyAssignment())
-          member = CXXCopyAssignment;
-        else if (!RDecl->hasTrivialDestructor())
-          member = CXXDestructor;
+          CXXRecord->setHasTrivialCopyConstructor(false);
+        if (!RDecl->hasTrivialCopyAssignment())
+          CXXRecord->setHasTrivialCopyAssignment(false);
+        if (!RDecl->hasTrivialDestructor())
+          CXXRecord->setHasTrivialDestructor(false);
 
-        if (member != CXXInvalid) {
-          Diag(Loc, diag::err_illegal_union_member) << Name << member;
-          DiagnoseNontrivial(RT, member);
-          NewFD->setInvalidDecl();
+        // C++ 9.5p1: An object of a class with a non-trivial
+        // constructor, a non-trivial copy constructor, a non-trivial
+        // destructor, or a non-trivial copy assignment operator
+        // cannot be a member of a union, nor can an array of such
+        // objects.
+        // TODO: C++0x alters this restriction significantly.
+        if (Record->isUnion()) {
+          // We check for copy constructors before constructors
+          // because otherwise we'll never get complaints about
+          // copy constructors.
+
+          CXXSpecialMember member = CXXInvalid;
+          if (!RDecl->hasTrivialCopyConstructor())
+            member = CXXCopyConstructor;
+          else if (!RDecl->hasTrivialConstructor())
+            member = CXXConstructor;
+          else if (!RDecl->hasTrivialCopyAssignment())
+            member = CXXCopyAssignment;
+          else if (!RDecl->hasTrivialDestructor())
+            member = CXXDestructor;
+
+          if (member != CXXInvalid) {
+            Diag(Loc, diag::err_illegal_union_member) << Name << member;
+            DiagnoseNontrivial(RT, member);
+            NewFD->setInvalidDecl();
+          }
         }
       }
     }

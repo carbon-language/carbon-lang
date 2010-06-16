@@ -81,3 +81,12 @@ namespace PR7123 {
     sort(x,x);
   }
 }
+
+namespace PR7355 {
+  template<typename T1> class A {
+    class D; // expected-note{{declared here}}
+    D d; //expected-error{{implicit instantiation of undefined member 'PR7355::A<int>::D'}}
+  };
+
+  A<int> ai; // expected-note{{in instantiation of}}
+}
