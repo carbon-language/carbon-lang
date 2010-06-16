@@ -739,10 +739,10 @@ public:
   }
 
   void RecordTLVPRelocation(const MCAssembler &Asm,
-                                 const MCAsmLayout &Layout,
-                                 const MCFragment *Fragment,
-                                 const MCFixup &Fixup, MCValue Target,
-                                 uint64_t &FixedValue) {
+                            const MCAsmLayout &Layout,
+                            const MCFragment *Fragment,
+                            const MCFixup &Fixup, MCValue Target,
+                            uint64_t &FixedValue) {
     assert(Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP &&
            !Is64Bit &&
            "Should only be called with a 32-bit TLVP relocation!");
