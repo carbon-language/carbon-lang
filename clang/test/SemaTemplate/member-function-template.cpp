@@ -85,3 +85,19 @@ namespace TTP {
 
   void test_f(X<3> x, Y<int> y) { x.f(y); }
 }
+
+namespace PR7387 {
+  template <typename T> struct X {};
+
+  template <typename T1> struct S {
+    template <template <typename> class TC> void foo(const TC<T1>& arg);
+  };
+
+  template <typename T1> template <template <typename> class TC>
+  void S<T1>::foo(const TC<T1>& arg) {}
+
+  void test(const X<int>& x) {
+    S<int> s;
+    s.foo(x);
+  }
+}

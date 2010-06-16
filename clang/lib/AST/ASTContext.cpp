@@ -35,6 +35,96 @@ enum FloatingRank {
   FloatRank, DoubleRank, LongDoubleRank
 };
 
+void 
+ASTContext::CanonicalTemplateTemplateParm::Profile(llvm::FoldingSetNodeID &ID, 
+                                               TemplateTemplateParmDecl *Parm) {
+  ID.AddInteger(Parm->getDepth());
+  ID.AddInteger(Parm->getPosition());
+  // FIXME: Parameter pack
+
+  TemplateParameterList *Params = Parm->getTemplateParameters();
+  ID.AddInteger(Params->size());
+  for (TemplateParameterList::const_iterator P = Params->begin(), 
+                                          PEnd = Params->end();
+       P != PEnd; ++P) {
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P)) {
+      ID.AddInteger(0);
+      ID.AddBoolean(TTP->isParameterPack());
+      continue;
+    }
+    
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      ID.AddInteger(1);
+      // FIXME: Parameter pack
+      ID.AddPointer(NTTP->getType().getAsOpaquePtr());
+      continue;
+    }
+    
+    TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*P);
+    ID.AddInteger(2);
+    Profile(ID, TTP);
+  }
+}
+
+TemplateTemplateParmDecl *
+ASTContext::getCanonicalTemplateTemplateParmDecl(
+                                                 TemplateTemplateParmDecl *TTP) {
+  // Check if we already have a canonical template template parameter.
+  llvm::FoldingSetNodeID ID;
+  CanonicalTemplateTemplateParm::Profile(ID, TTP);
+  void *InsertPos = 0;
+  CanonicalTemplateTemplateParm *Canonical
+    = CanonTemplateTemplateParms.FindNodeOrInsertPos(ID, InsertPos);
+  if (Canonical)
+    return Canonical->getParam();
+  
+  // Build a canonical template parameter list.
+  TemplateParameterList *Params = TTP->getTemplateParameters();
+  llvm::SmallVector<NamedDecl *, 4> CanonParams;
+  CanonParams.reserve(Params->size());
+  for (TemplateParameterList::const_iterator P = Params->begin(), 
+                                          PEnd = Params->end();
+       P != PEnd; ++P) {
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P))
+      CanonParams.push_back(
+                  TemplateTypeParmDecl::Create(*this, getTranslationUnitDecl(), 
+                                               SourceLocation(), TTP->getDepth(),
+                                               TTP->getIndex(), 0, false,
+                                               TTP->isParameterPack()));
+    else if (NonTypeTemplateParmDecl *NTTP
+             = dyn_cast<NonTypeTemplateParmDecl>(*P))
+      CanonParams.push_back(
+            NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
+                                            SourceLocation(), NTTP->getDepth(),
+                                            NTTP->getPosition(), 0, 
+                                            getCanonicalType(NTTP->getType()),
+                                            0));
+    else
+      CanonParams.push_back(getCanonicalTemplateTemplateParmDecl(
+                                           cast<TemplateTemplateParmDecl>(*P)));
+  }
+
+  TemplateTemplateParmDecl *CanonTTP
+    = TemplateTemplateParmDecl::Create(*this, getTranslationUnitDecl(), 
+                                       SourceLocation(), TTP->getDepth(),
+                                       TTP->getPosition(), 0,
+                         TemplateParameterList::Create(*this, SourceLocation(),
+                                                       SourceLocation(),
+                                                       CanonParams.data(),
+                                                       CanonParams.size(),
+                                                       SourceLocation()));
+
+  // Get the new insert position for the node we care about.
+  Canonical = CanonTemplateTemplateParms.FindNodeOrInsertPos(ID, InsertPos);
+  assert(Canonical == 0 && "Shouldn't be in the map!");
+  (void)Canonical;
+
+  // Create the canonical template template parameter entry.
+  Canonical = new (*this) CanonicalTemplateTemplateParm(CanonTTP);
+  CanonTemplateTemplateParms.InsertNode(Canonical, InsertPos);
+  return CanonTTP;
+}
+
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
@@ -2419,10 +2509,14 @@ DeclarationName ASTContext::getNameForTemplate(TemplateName Name) {
 }
 
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
-  // If this template name refers to a template, the canonical
-  // template name merely stores the template itself.
-  if (TemplateDecl *Template = Name.getAsTemplateDecl())
+  if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
+    if (TemplateTemplateParmDecl *TTP 
+                              = dyn_cast<TemplateTemplateParmDecl>(Template))
+      Template = getCanonicalTemplateTemplateParmDecl(TTP);
+  
+    // The canonical template name is the canonical template declaration.
     return TemplateName(cast<TemplateDecl>(Template->getCanonicalDecl()));
+  }
 
   assert(!Name.getAsOverloadedTemplate());
 

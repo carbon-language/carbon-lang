@@ -62,6 +62,7 @@ namespace clang {
   class RecordDecl;
   class StoredDeclsMap;
   class TagDecl;
+  class TemplateTemplateParmDecl;
   class TemplateTypeParmDecl;
   class TranslationUnitDecl;
   class TypeDecl;
@@ -127,6 +128,27 @@ class ASTContext {
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
 
+  /// \brief Representation of a "canonical" template template parameter that
+  /// is used in canonical template names.
+  class CanonicalTemplateTemplateParm : public llvm::FoldingSetNode {
+    TemplateTemplateParmDecl *Parm;
+    
+  public:
+    CanonicalTemplateTemplateParm(TemplateTemplateParmDecl *Parm) 
+      : Parm(Parm) { }
+    
+    TemplateTemplateParmDecl *getParam() const { return Parm; }
+    
+    void Profile(llvm::FoldingSetNodeID &ID) { Profile(ID, Parm); }
+    
+    static void Profile(llvm::FoldingSetNodeID &ID, 
+                        TemplateTemplateParmDecl *Parm);
+  };
+  llvm::FoldingSet<CanonicalTemplateTemplateParm> CanonTemplateTemplateParms;
+  
+  TemplateTemplateParmDecl *getCanonicalTemplateTemplateParmDecl(
+                                               TemplateTemplateParmDecl *TTP);
+  
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
