@@ -35,7 +35,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
     I.eraseFromParent();
     return 0;
   }
-  
+
   // Create a stack slot to hold the value.
   AllocaInst *Slot;
   if (AllocaPoint) {
@@ -46,7 +46,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
     Slot = new AllocaInst(I.getType(), 0, I.getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
-  
+
   // Change all of the users of the instruction to read from the stack slot
   // instead.
   while (!I.use_empty()) {
@@ -67,7 +67,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
           Value *&V = Loads[PN->getIncomingBlock(i)];
           if (V == 0) {
             // Insert the load into the predecessor block
-            V = new LoadInst(Slot, I.getName()+".reload", VolatileLoads, 
+            V = new LoadInst(Slot, I.getName()+".reload", VolatileLoads,
                              PN->getIncomingBlock(i)->getTerminator());
           }
           PN->setIncomingValue(i, V);
@@ -110,8 +110,8 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
 /// The phi node is deleted and it returns the pointer to the alloca inserted.
 AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   if (P->use_empty()) {
-    P->eraseFromParent();    
-    return 0;                
+    P->eraseFromParent();
+    return 0;
   }
 
   // Create a stack slot to hold the value.
@@ -124,23 +124,23 @@ AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
     Slot = new AllocaInst(P->getType(), 0, P->getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
-  
+
   // Iterate over each operand, insert store in each predecessor.
   for (unsigned i = 0, e = P->getNumIncomingValues(); i < e; ++i) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(P->getIncomingValue(i))) {
-      assert(II->getParent() != P->getIncomingBlock(i) && 
+      assert(II->getParent() != P->getIncomingBlock(i) &&
              "Invoke edge not supported yet"); II=II;
     }
-    new StoreInst(P->getIncomingValue(i), Slot, 
+    new StoreInst(P->getIncomingValue(i), Slot,
                   P->getIncomingBlock(i)->getTerminator());
   }
-  
+
   // Insert load in place of the phi and replace all uses.
   Value *V = new LoadInst(Slot, P->getName()+".reload", P);
   P->replaceAllUsesWith(V);
-  
+
   // Delete phi.
   P->eraseFromParent();
-  
+
   return Slot;
 }
