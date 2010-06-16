@@ -19,6 +19,7 @@
 #include "AsmWriterEmitter.h"
 #include "CallingConvEmitter.h"
 #include "ClangASTNodesEmitter.h"
+#include "ClangAttrEmitter.h"
 #include "ClangDiagnosticsEmitter.h"
 #include "CodeEmitterGen.h"
 #include "DAGISelEmitter.h"
@@ -53,6 +54,8 @@ enum ActionType {
   GenARMDecoder,
   GenDisassembler,
   GenCallingConv,
+  GenClangAttrClasses,
+  GenClangAttrList,
   GenClangDiagsDefs,
   GenClangDiagGroups,
   GenClangDeclNodes,
@@ -111,6 +114,10 @@ namespace {
                                "Generate intrinsic information"),
                     clEnumValN(GenTgtIntrinsic, "gen-tgt-intrinsic",
                                "Generate target intrinsic information"),
+                    clEnumValN(GenClangAttrClasses, "gen-clang-attr-classes",
+                               "Generate clang attribute clases"),
+                    clEnumValN(GenClangAttrList, "gen-clang-attr-list",
+                               "Generate a clang attribute list"),
                     clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
@@ -247,6 +254,12 @@ int main(int argc, char **argv) {
       break;
     case GenAsmMatcher:
       AsmMatcherEmitter(Records).run(Out);
+      break;
+    case GenClangAttrClasses:
+      ClangAttrClassEmitter(Records).run(Out);
+      break;
+    case GenClangAttrList:
+      ClangAttrListEmitter(Records).run(Out);
       break;
     case GenClangDiagsDefs:
       ClangDiagsDefsEmitter(Records, ClangComponent).run(Out);
