@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 %s
+; RUN: llc -march=x86 < %s
 
 %vec = type <9 x float>
 define %vec @vecdiv( %vec %p1, %vec %p2)
