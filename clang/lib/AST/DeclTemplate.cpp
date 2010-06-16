@@ -265,8 +265,11 @@ TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, unsigned D, unsigned P,
                              IdentifierInfo *Id, bool Typename,
                              bool ParameterPack) {
-  QualType Type = C.getTemplateTypeParmType(D, P, ParameterPack, Id);
-  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
+  TemplateTypeParmDecl *TTPDecl
+    = new (C) TemplateTypeParmDecl(DC, L, Id, Typename);
+  QualType TTPType = C.getTemplateTypeParmType(D, P, ParameterPack, TTPDecl);
+  TTPDecl->TypeForDecl = TTPType.getTypePtr();
+  return TTPDecl;
 }
 
 SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
@@ -279,6 +282,10 @@ unsigned TemplateTypeParmDecl::getDepth() const {
 
 unsigned TemplateTypeParmDecl::getIndex() const {
   return TypeForDecl->getAs<TemplateTypeParmType>()->getIndex();
+}
+
+bool TemplateTypeParmDecl::isParameterPack() const {
+  return TypeForDecl->getAs<TemplateTypeParmType>()->isParameterPack();
 }
 
 //===----------------------------------------------------------------------===//
