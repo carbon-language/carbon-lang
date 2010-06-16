@@ -1,7 +1,7 @@
 ; RUN: llc -O2  %s -o %t
-; RUN: grep this %t | grep -v undef
+; RUN: grep "this <- undef" %t | count 0
 ; Test to check that unused argument 'this' is not undefined in debug info.
-
+; XFAIL: *
 %struct.foo = type { i32 }
 
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (%struct.foo*, i32)* @_ZN3foo3bazEi to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
