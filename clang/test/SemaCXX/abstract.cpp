@@ -168,3 +168,21 @@ namespace PureImplicit {
   struct D : C {};
   D y;
 }
+
+namespace test1 {
+  struct A {
+    virtual void foo() = 0;
+  };
+
+  struct B : A {
+    using A::foo;
+  };
+
+  struct C : B {
+    void foo();
+  };
+
+  void test() {
+    C c;
+  }
+}
