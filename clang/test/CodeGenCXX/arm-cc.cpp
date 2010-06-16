@@ -16,5 +16,5 @@ void baz() {
   zed(a);
 }
 
-// CHECK: declare arm_aapcscc void @_Z3fooPv(%class.SMLoc* sret, i8*)
-// CHECK: declare arm_aapcscc void @_Z3zed5SMLoc(%class.SMLoc*)
+// CHECK: declare void @_Z3fooPv(%class.SMLoc* sret, i8*)
+// CHECK: declare void @_Z3zed5SMLoc(%class.SMLoc*)

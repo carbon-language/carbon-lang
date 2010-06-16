@@ -33,8 +33,8 @@
 // CHECK-ARMV6: @"OBJC_EHTYPE_$_EH2" = external global
 // CHECK-ARMV6: @"OBJC_EHTYPE_$_EH3" = global {{.*}}, section "__DATA,__objc_const", align 4
 // CHECK-ARMV6: @"\01L_OBJC_LABEL_CLASS_$" = internal global {{.*}}, section "__DATA, __objc_classlist, regular, no_dead_strip", align 4
-// CHECK-ARMV6: define internal arm_apcscc void @"\01-[A im0]"
-// CHECK-ARMV6: define internal arm_apcscc void @"\01-[A(Cat) im1]"
+// CHECK-ARMV6: define internal void @"\01-[A im0]"
+// CHECK-ARMV6: define internal void @"\01-[A(Cat) im1]"
 
 @interface A
 @end

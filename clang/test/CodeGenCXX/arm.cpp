@@ -16,5 +16,4 @@ public:
 bar baz;
 
 // CHECK: @_GLOBAL__D_a()
-// CHECK: call arm_apcscc  void @_ZN3barD1Ev(%class.bar* @baz)
-
+// CHECK: call void @_ZN3barD1Ev(%class.bar* @baz)
