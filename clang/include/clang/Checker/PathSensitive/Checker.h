@@ -144,6 +144,7 @@ public:
     // If the 'state' is not new, we need to check if the cached state 'ST'
     // is new.
     if (state != getState() || (ST && ST != B.GetState(Pred)))
+      // state is new or equals to ST.
       GenerateNode(state, true);
     else
       Dst.Add(Pred);

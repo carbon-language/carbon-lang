@@ -21,6 +21,7 @@ class GRExprEngine;
 
 void RegisterPthreadLockChecker(GRExprEngine &Eng);
 void RegisterMallocChecker(GRExprEngine &Eng);
+void RegisterStreamChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

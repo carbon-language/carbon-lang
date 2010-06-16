@@ -62,6 +62,7 @@ add_clang_library(clangChecker
   SimpleSValuator.cpp
   StackAddrLeakChecker.cpp
   Store.cpp
+  StreamChecker.cpp
   SVals.cpp
   SValuator.cpp
   SymbolManager.cpp
