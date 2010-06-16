@@ -756,8 +756,14 @@ public:
     MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
     unsigned Index = SD_A->getIndex();
 
-    if (Target.getSymB())
+    // We're only going to have a second symbol in pic mode and it'll be a
+    // subtraction from the picbase. For 32-bit pic the addend is the difference
+    // between the picbase and the next address.
+    if (Target.getSymB()) {
       IsPCRel = 1;
+    } else {
+      FixedValue = 0;
+    }
     
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
