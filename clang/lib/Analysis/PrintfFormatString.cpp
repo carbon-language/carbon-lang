@@ -39,7 +39,6 @@ public:
                         const FormatSpecifier &fs)
     : FS(fs), Start(start), Stop(false) {}
 
-
   const char *getStart() const { return Start; }
   bool shouldStop() const { return Stop; }
   bool hasValue() const { return Start != 0; }
@@ -178,7 +177,6 @@ static bool ParseFieldWidth(FormatStringHandler &H, FormatSpecifier &FS,
   }
   return false;
 }
-
 
 static bool ParseArgPosition(FormatStringHandler &H,
                              FormatSpecifier &FS, const char *Start,
@@ -424,95 +422,111 @@ FormatStringHandler::~FormatStringHandler() {}
 //===----------------------------------------------------------------------===//
 
 bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
-  assert(isValid());
-
-  if (K == UnknownTy)
-    return true;
-
-  if (K == SpecificTy) {
-    argTy = C.getCanonicalType(argTy).getUnqualifiedType();
-
-    if (T == argTy)
+  switch (K) {
+    case InvalidTy:
+      assert(false && "ArgTypeResult must be valid");
       return true;
 
-    if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
-      switch (BT->getKind()) {
-        default:
-          break;
-        case BuiltinType::Char_S:
-        case BuiltinType::SChar:
-          return T == C.UnsignedCharTy;
-        case BuiltinType::Char_U:
-        case BuiltinType::UChar:
-          return T == C.SignedCharTy;
-        case BuiltinType::Short:
-          return T == C.UnsignedShortTy;
-        case BuiltinType::UShort:
-          return T == C.ShortTy;
-        case BuiltinType::Int:
-          return T == C.UnsignedIntTy;
-        case BuiltinType::UInt:
-          return T == C.IntTy;
-        case BuiltinType::Long:
-          return T == C.UnsignedLongTy;
-        case BuiltinType::ULong:
-          return T == C.LongTy;
-        case BuiltinType::LongLong:
-          return T == C.UnsignedLongLongTy;
-        case BuiltinType::ULongLong:
-          return T == C.LongLongTy;
-      }
+    case UnknownTy:
+      return true;
 
-    return false;
-  }
-
-  if (K == CStrTy) {
-    const PointerType *PT = argTy->getAs<PointerType>();
-    if (!PT)
+    case SpecificTy: {
+      argTy = C.getCanonicalType(argTy).getUnqualifiedType();
+      if (T == argTy)
+        return true;
+      if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
+        switch (BT->getKind()) {
+          default:
+            break;
+          case BuiltinType::Char_S:
+          case BuiltinType::SChar:
+            return T == C.UnsignedCharTy;
+          case BuiltinType::Char_U:
+          case BuiltinType::UChar:
+            return T == C.SignedCharTy;
+          case BuiltinType::Short:
+            return T == C.UnsignedShortTy;
+          case BuiltinType::UShort:
+            return T == C.ShortTy;
+          case BuiltinType::Int:
+            return T == C.UnsignedIntTy;
+          case BuiltinType::UInt:
+            return T == C.IntTy;
+          case BuiltinType::Long:
+            return T == C.UnsignedLongTy;
+          case BuiltinType::ULong:
+            return T == C.LongTy;
+          case BuiltinType::LongLong:
+            return T == C.UnsignedLongLongTy;
+          case BuiltinType::ULongLong:
+            return T == C.LongLongTy;
+        }
       return false;
+    }
 
-    QualType pointeeTy = PT->getPointeeType();
+    case CStrTy: {
+      const PointerType *PT = argTy->getAs<PointerType>();
+      if (!PT)
+        return false;
+      QualType pointeeTy = PT->getPointeeType();
+      if (const BuiltinType *BT = pointeeTy->getAs<BuiltinType>())
+        switch (BT->getKind()) {
+          case BuiltinType::Void:
+          case BuiltinType::Char_U:
+          case BuiltinType::UChar:
+          case BuiltinType::Char_S:
+          case BuiltinType::SChar:
+            return true;
+          default:
+            break;
+        }
 
-    if (const BuiltinType *BT = pointeeTy->getAs<BuiltinType>())
-      switch (BT->getKind()) {
-        case BuiltinType::Void:
-        case BuiltinType::Char_U:
-        case BuiltinType::UChar:
-        case BuiltinType::Char_S:
-        case BuiltinType::SChar:
-          return true;
-        default:
-          break;
-      }
-
-    return false;
-  }
-
-  if (K == WCStrTy) {
-    const PointerType *PT = argTy->getAs<PointerType>();
-    if (!PT)
       return false;
+    }
 
-    QualType pointeeTy =
-      C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
+    case WCStrTy: {
+      const PointerType *PT = argTy->getAs<PointerType>();
+      if (!PT)
+        return false;
+      QualType pointeeTy =
+        C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
+      return pointeeTy == C.getWCharType();
+    }
 
-    return pointeeTy == C.getWCharType();
+    case CPointerTy:
+      return argTy->getAs<PointerType>() != NULL ||
+      	     argTy->getAs<ObjCObjectPointerType>() != NULL;
+
+    case ObjCPointerTy:
+      return argTy->getAs<ObjCObjectPointerType>() != NULL;
   }
 
+  // FIXME: Should be unreachable, but Clang is currently emitting
+  // a warning.
   return false;
 }
 
 QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
-  assert(isValid());
-  if (K == SpecificTy)
-    return T;
-  if (K == CStrTy)
-    return C.getPointerType(C.CharTy);
-  if (K == WCStrTy)
-    return C.getPointerType(C.getWCharType());
-  if (K == ObjCPointerTy)
-    return C.ObjCBuiltinIdTy;
+  switch (K) {
+    case InvalidTy:
+      assert(false && "No representative type for Invalid ArgTypeResult");
+      // Fall-through.
+    case UnknownTy:
+      return QualType();
+    case SpecificTy:
+      return T;
+    case CStrTy:
+      return C.getPointerType(C.CharTy);
+    case WCStrTy:
+      return C.getPointerType(C.getWCharType());
+    case ObjCPointerTy:
+      return C.ObjCBuiltinIdTy;
+    case CPointerTy:
+      return C.VoidPtrTy;
+  }
 
+  // FIXME: Should be unreachable, but Clang is currently emitting
+  // a warning.
   return QualType();
 }
 
@@ -673,6 +687,8 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
       return ArgTypeResult::WCStrTy;
     case ConversionSpecifier::CArg:
       return Ctx.WCharTy;
+    case ConversionSpecifier::VoidPtrArg:
+      return ArgTypeResult::CPointerTy;
     default:
       break;
   }

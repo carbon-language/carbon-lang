@@ -55,3 +55,11 @@ void rdar_7068334() {
 void rdar_7697748() {
   NSLog(@"%@!"); // expected-warning{{more '%' conversions than data arguments}}
 }
+
+@protocol Foo;
+
+void test_p_conversion_with_objc_pointer(id x, id<Foo> y) {
+  printf("%p", x); // no-warning
+  printf("%p", y); // no-warning
+}
+

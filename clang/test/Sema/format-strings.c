@@ -176,6 +176,7 @@ void test10(int x, float f, int i, long long lli) {
 
 void test11(void *p, char *s) {
   printf("%p", p); // no-warning
+  printf("%p", 123); // expected-warning{{conversion specifies type 'void *' but the argument has type 'int'}}
   printf("%.4p", p); // expected-warning{{precision used in 'p' conversion specifier (where it has no meaning)}}
   printf("%+p", p); // expected-warning{{flag '+' results in undefined behavior in 'p' conversion specifier}}
   printf("% p", p); // expected-warning{{flag ' ' results in undefined behavior in 'p' conversion specifier}}

@@ -25,8 +25,8 @@ namespace analyze_printf {
 
 class ArgTypeResult {
 public:
-  enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CStrTy,
-              WCStrTy };
+  enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CPointerTy,
+              CStrTy, WCStrTy };
 private:
   const Kind K;
   QualType T;
