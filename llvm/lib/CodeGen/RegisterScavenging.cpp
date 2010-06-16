@@ -141,6 +141,10 @@ void RegScavenger::forward() {
 
   // Find out which registers are early clobbered, killed, defined, and marked
   // def-dead in this instruction.
+  // FIXME: The scavenger is not predication aware. If the instruction is
+  // predicated, conservatively assume "kill" markers do not actually kill the
+  // register. Similarly ignores "dead" markers.
+  bool isPred = TII->isPredicated(MI);
   BitVector EarlyClobberRegs(NumPhysRegs);
   BitVector KillRegs(NumPhysRegs);
   BitVector DefRegs(NumPhysRegs);
@@ -155,11 +159,11 @@ void RegScavenger::forward() {
 
     if (MO.isUse()) {
       // Two-address operands implicitly kill.
-      if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+      if (!isPred && (MO.isKill() || MI->isRegTiedToDefOperand(i)))
         addRegWithSubRegs(KillRegs, Reg);
     } else {
       assert(MO.isDef());
-      if (MO.isDead())
+      if (!isPred && MO.isDead())
         addRegWithSubRegs(DeadRegs, Reg);
       else
         addRegWithSubRegs(DefRegs, Reg);

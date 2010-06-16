@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -114,6 +115,7 @@ AggressiveAntiDepBreaker(MachineFunction& MFi,
                          TargetSubtarget::RegClassVector& CriticalPathRCs) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
+  TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   AllocatableSet(TRI->getAllocatableSet(MF)),
   State(NULL) {
@@ -163,25 +165,27 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
         DefIndices[AliasReg] = ~0u;
       }
     }
-  } else {
-    // In a non-return block, examine the live-in regs of all successors.
-    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         SE = BB->succ_end(); SI != SE; ++SI)
-      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-           E = (*SI)->livein_end(); I != E; ++I) {
-        unsigned Reg = *I;
-        State->UnionGroups(Reg, 0);
-        KillIndices[Reg] = BB->size();
-        DefIndices[Reg] = ~0u;
-        // Repeat, for all aliases.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          State->UnionGroups(AliasReg, 0);
-          KillIndices[AliasReg] = BB->size();
-          DefIndices[AliasReg] = ~0u;
-        }
-      }
   }
+
+  // In a non-return block, examine the live-in regs of all successors.
+  // Note a return block can have successors if the return instruction is
+  // predicated.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+         SE = BB->succ_end(); SI != SE; ++SI)
+    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
+           E = (*SI)->livein_end(); I != E; ++I) {
+      unsigned Reg = *I;
+      State->UnionGroups(Reg, 0);
+      KillIndices[Reg] = BB->size();
+      DefIndices[Reg] = ~0u;
+      // Repeat, for all aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        unsigned AliasReg = *Alias;
+        State->UnionGroups(AliasReg, 0);
+        KillIndices[AliasReg] = BB->size();
+        DefIndices[AliasReg] = ~0u;
+      }
+    }
 
   // Mark live-out callee-saved registers. In a return block this is
   // all callee-saved registers. In non-return this is any
@@ -390,7 +394,8 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
     // If MI's defs have a special allocation requirement, don't allow
     // any def registers to be changed. Also assume all registers
     // defined in a call must not be changed (ABI).
-    if (MI->getDesc().isCall() || MI->getDesc().hasExtraDefRegAllocReq()) {
+    if (MI->getDesc().isCall() || MI->getDesc().hasExtraDefRegAllocReq() ||
+        TII->isPredicated(MI)) {
       DEBUG(if (State->GetGroup(Reg) != 0) dbgs() << "->g0(alloc-req)");
       State->UnionGroups(Reg, 0);
     }
@@ -443,6 +448,26 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
+  // If MI's uses have special allocation requirement, don't allow
+  // any use registers to be changed. Also assume all registers
+  // used in a call must not be changed (ABI).
+  // FIXME: The issue with predicated instruction is more complex. We are being
+  // conservatively here because the kill markers cannot be trusted after
+  // if-conversion:
+  // %R6<def> = LDR %SP, %reg0, 92, pred:14, pred:%reg0; mem:LD4[FixedStack14]
+  // ...
+  // STR %R0, %R6<kill>, %reg0, 0, pred:0, pred:%CPSR; mem:ST4[%395]
+  // %R6<def> = LDR %SP, %reg0, 100, pred:0, pred:%CPSR; mem:LD4[FixedStack12]
+  // STR %R0, %R6<kill>, %reg0, 0, pred:14, pred:%reg0; mem:ST4[%396](align=8)
+  //
+  // The first R6 kill is not really a kill since it's killed by a predicated
+  // instruction which may not be executed. The second R6 def may or may not
+  // re-define R6 so it's not safe to change it since the last R6 use cannot be
+  // changed.
+  bool Special = MI->getDesc().isCall() ||
+    MI->getDesc().hasExtraSrcRegAllocReq() ||
+    TII->isPredicated(MI);
+
   // Scan the register uses for this instruction and update
   // live-ranges, groups and RegRefs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -459,10 +484,7 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     // for the register.
     HandleLastUse(Reg, Count, "(last-use)");
 
-    // If MI's uses have special allocation requirement, don't allow
-    // any use registers to be changed. Also assume all registers
-    // used in a call must not be changed (ABI).
-    if (MI->getDesc().isCall() || MI->getDesc().hasExtraSrcRegAllocReq()) {
+    if (Special) {
       DEBUG(if (State->GetGroup(Reg) != 0) dbgs() << "->g0(alloc-req)");
       State->UnionGroups(Reg, 0);
     }

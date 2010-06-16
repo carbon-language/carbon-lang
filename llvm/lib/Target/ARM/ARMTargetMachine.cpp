@@ -27,6 +27,11 @@ EarlyITBlockFormation("thumb2-early-it-blocks", cl::Hidden,
   cl::desc("Form IT blocks early before register allocation"),
   cl::init(false));
 
+static cl::opt<bool>
+EarlyIfConvert("arm-early-if-convert", cl::Hidden,
+  cl::desc("Run if-conversion before post-ra scheduling"),
+  cl::init(false));
+
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
@@ -125,13 +130,17 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   // proper scheduling.
   PM.add(createARMExpandPseudoPass());
 
+  if (EarlyIfConvert && OptLevel != CodeGenOpt::None) {
+    if (!Subtarget.isThumb1Only()) 
+      PM.add(createIfConverterPass());
+  }
+
   return true;
 }
 
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
-  // FIXME: temporarily disabling load / store optimization pass for Thumb1.
-  if (OptLevel != CodeGenOpt::None) {
+  if (!EarlyIfConvert && OptLevel != CodeGenOpt::None) {
     if (!Subtarget.isThumb1Only())
       PM.add(createIfConverterPass());
   }

@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -47,6 +48,8 @@ static cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev",
                                        cl::init(false), cl::Hidden);
 static cl::opt<bool> DisableDiamond("disable-ifcvt-diamond",
                                     cl::init(false), cl::Hidden);
+static cl::opt<bool> IfCvtBranchFold("ifcvt-branch-fold",
+                                     cl::init(true), cl::Hidden);
 
 STATISTIC(NumSimple,       "Number of simple if-conversions performed");
 STATISTIC(NumSimpleFalse,  "Number of simple (F) if-conversions performed");
@@ -146,6 +149,7 @@ namespace {
 
     const TargetLowering *TLI;
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
     bool MadeChange;
     int FnNum;
   public:
@@ -176,9 +180,11 @@ namespace {
                           unsigned NumDups1, unsigned NumDups2);
     void PredicateBlock(BBInfo &BBI,
                         MachineBasicBlock::iterator E,
-                        SmallVectorImpl<MachineOperand> &Cond);
+                        SmallVectorImpl<MachineOperand> &Cond,
+                        SmallSet<unsigned, 4> &Redefs);
     void CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                SmallVectorImpl<MachineOperand> &Cond,
+                               SmallSet<unsigned, 4> &Redefs,
                                bool IgnoreBr = false);
     void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI);
 
@@ -226,6 +232,7 @@ FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
   TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getRegisterInfo();
   if (!TII) return false;
 
   DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
@@ -362,7 +369,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   Roots.clear();
   BBAnalysis.clear();
 
-  if (MadeChange) {
+  if (MadeChange && !IfCvtBranchFold) {
     BranchFolder BF(false);
     BF.OptimizeFunction(MF, TII,
                         MF.getTarget().getRegisterInfo(),
@@ -823,12 +830,17 @@ void IfConverter::AnalyzeBlocks(MachineFunction &MF,
 /// that all the intervening blocks are empty (given BB can fall through to its
 /// next block).
 static bool canFallThroughTo(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
-  MachineFunction::iterator I = BB;
+  MachineFunction::iterator PI = BB;
+  MachineFunction::iterator I = llvm::next(PI);
   MachineFunction::iterator TI = ToBB;
   MachineFunction::iterator E = BB->getParent()->end();
-  while (++I != TI)
-    if (I == E || !I->empty())
+  while (I != TI) {
+    // Check isSuccessor to avoid case where the next block is empty, but
+    // it's not a successor.
+    if (I == E || !I->empty() || !PI->isSuccessor(I))
       return false;
+    PI = I++;
+  }
   return true;
 }
 
@@ -863,6 +875,66 @@ void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
     BBI.BB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
 }
 
+/// InitPredRedefs / UpdatePredRedefs - Defs by predicated instructions are
+/// modeled as read + write (sort like two-address instructions). These
+/// routines track register liveness and add implicit uses to if-converted
+/// instructions to conform to the model.
+static void InitPredRedefs(MachineBasicBlock *BB, SmallSet<unsigned,4> &Redefs,
+                           const TargetRegisterInfo *TRI) {
+  for (MachineBasicBlock::livein_iterator I = BB->livein_begin(),
+         E = BB->livein_end(); I != E; ++I) {
+    unsigned Reg = *I;
+    Redefs.insert(Reg);
+    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+         *Subreg; ++Subreg)
+      Redefs.insert(*Subreg);
+  }
+}
+
+static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
+                             const TargetRegisterInfo *TRI,
+                             bool AddImpUse = false) {
+  SmallVector<unsigned, 4> Defs;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg)
+      continue;
+    if (MO.isDef())
+      Defs.push_back(Reg);
+    else if (MO.isKill()) {
+      Redefs.erase(Reg);
+      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+        Redefs.erase(*SR);
+    }
+  }
+  for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
+    unsigned Reg = Defs[i];
+    if (Redefs.count(Reg)) {
+      if (AddImpUse)
+        // Treat predicated update as read + write.
+        MI->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
+                                                 true/*IsImp*/,false/*IsKill*/));
+    } else {
+      Redefs.insert(Reg);
+      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+        Redefs.insert(*SR);
+    }
+  }
+}
+
+static void UpdatePredRedefs(MachineBasicBlock::iterator I,
+                             MachineBasicBlock::iterator E,
+                             SmallSet<unsigned,4> &Redefs,
+                             const TargetRegisterInfo *TRI) {
+  while (I != E) {
+    UpdatePredRedefs(I, Redefs, TRI);
+    ++I;
+  }
+}
+
 /// IfConvertSimple - If convert a simple (split, no rejoin) sub-CFG.
 ///
 bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
@@ -887,13 +959,19 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
     if (TII->ReverseBranchCondition(Cond))
       assert(false && "Unable to reverse branch condition!");
 
+  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // predicated instructions.
+  SmallSet<unsigned, 4> Redefs;
+  InitPredRedefs(CvtBBI->BB, Redefs, TRI);
+  InitPredRedefs(NextBBI->BB, Redefs, TRI);
+
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
-    CopyAndPredicateBlock(BBI, *CvtBBI, Cond);
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs);
   } else {
-    PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond);
+    PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond, Redefs);
 
     // Merge converted block into entry block.
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -971,17 +1049,23 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     }
   }
 
+  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // predicated instructions.
+  SmallSet<unsigned, 4> Redefs;
+  InitPredRedefs(CvtBBI->BB, Redefs, TRI);
+  InitPredRedefs(NextBBI->BB, Redefs, TRI);
+
   bool HasEarlyExit = CvtBBI->FalseBB != NULL;
   bool DupBB = CvtBBI->BB->pred_size() > 1;
   if (DupBB) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
-    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, true);
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, Redefs, true);
   } else {
     // Predicate the 'true' block after removing its branch.
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
-    PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond);
+    PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond, Redefs);
 
     // Now merge the entry of the triangle with the true block.
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -1085,6 +1169,11 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Remove the conditional branch from entry to the blocks.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
 
+  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // predicated instructions.
+  SmallSet<unsigned, 4> Redefs;
+  InitPredRedefs(BBI1->BB, Redefs, TRI);
+
   // Remove the duplicated instructions at the beginnings of both paths.
   MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
   MachineBasicBlock::iterator DI2 = BBI2->BB->begin();
@@ -1102,6 +1191,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     ++DI2;
     --NumDups1;
   }
+
+  UpdatePredRedefs(BBI1->BB->begin(), DI1, Redefs, TRI);
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);
 
@@ -1118,7 +1209,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
       ++i;
   }
   BBI1->BB->erase(DI1, BBI1->BB->end());
-  PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1);
+  PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1, Redefs);
 
   // Predicate the 'false' block.
   BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
@@ -1132,7 +1223,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     if (!DI2->isDebugValue())
       --NumDups2;
   }
-  PredicateBlock(*BBI2, DI2, *Cond2);
+  PredicateBlock(*BBI2, DI2, *Cond2, Redefs);
 
   // Merge the true block into the entry of the diamond.
   MergeBlocks(BBI, *BBI1);
@@ -1168,7 +1259,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
 /// specified end with the specified condition.
 void IfConverter::PredicateBlock(BBInfo &BBI,
                                  MachineBasicBlock::iterator E,
-                                 SmallVectorImpl<MachineOperand> &Cond) {
+                                 SmallVectorImpl<MachineOperand> &Cond,
+                                 SmallSet<unsigned, 4> &Redefs) {
   for (MachineBasicBlock::iterator I = BBI.BB->begin(); I != E; ++I) {
     if (I->isDebugValue() || TII->isPredicated(I))
       continue;
@@ -1178,6 +1270,10 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 #endif
       llvm_unreachable(0);
     }
+
+    // If the predicated instruction now re-defines a register as the result of
+    // if-conversion, add an implicit kill.
+    UpdatePredRedefs(I, Redefs, TRI, true);
   }
 
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
@@ -1192,6 +1288,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 /// the destination block. Skip end of block branches if IgnoreBr is true.
 void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                         SmallVectorImpl<MachineOperand> &Cond,
+                                        SmallSet<unsigned, 4> &Redefs,
                                         bool IgnoreBr) {
   MachineFunction &MF = *ToBBI.BB->getParent();
 
@@ -1207,13 +1304,18 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
     ToBBI.NonPredSize++;
 
-    if (!isPredicated && !MI->isDebugValue())
+    if (!isPredicated && !MI->isDebugValue()) {
       if (!TII->PredicateInstruction(MI, Cond)) {
 #ifndef NDEBUG
         dbgs() << "Unable to predicate " << *I << "!\n";
 #endif
         llvm_unreachable(0);
       }
+    }
+
+    // If the predicated instruction now re-defines a register as the result of
+    // if-conversion, add an implicit kill.
+    UpdatePredRedefs(MI, Redefs, TRI, true);
   }
 
   std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),

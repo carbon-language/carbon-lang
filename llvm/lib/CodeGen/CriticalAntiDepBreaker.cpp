@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -29,6 +30,7 @@ CriticalAntiDepBreaker::
 CriticalAntiDepBreaker(MachineFunction& MFi) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
+  TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   AllocatableSet(TRI->getAllocatableSet(MF))
 {
@@ -71,25 +73,27 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
         DefIndices[AliasReg] = ~0u;
       }
     }
-  } else {
-    // In a non-return block, examine the live-in regs of all successors.
-    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         SE = BB->succ_end(); SI != SE; ++SI)
-      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-           E = (*SI)->livein_end(); I != E; ++I) {
-        unsigned Reg = *I;
-        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[Reg] = BB->size();
-        DefIndices[Reg] = ~0u;
-        // Repeat, for all aliases.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-          KillIndices[AliasReg] = BB->size();
-          DefIndices[AliasReg] = ~0u;
-        }
-      }
   }
+
+  // In a non-return block, examine the live-in regs of all successors.
+  // Note a return block can have successors if the return instruction is
+  // predicated.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+         SE = BB->succ_end(); SI != SE; ++SI)
+    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
+           E = (*SI)->livein_end(); I != E; ++I) {
+      unsigned Reg = *I;
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[Reg] = BB->size();
+      DefIndices[Reg] = ~0u;
+      // Repeat, for all aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        unsigned AliasReg = *Alias;
+        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[AliasReg] = BB->size();
+        DefIndices[AliasReg] = ~0u;
+      }
+    }
 
   // Mark live-out callee-saved registers. In a return block this is
   // all callee-saved registers. In non-return this is any
@@ -164,6 +168,26 @@ static const SDep *CriticalPathStep(const SUnit *SU) {
 }
 
 void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
+  // It's not safe to change register allocation for source operands of
+  // that have special allocation requirements. Also assume all registers
+  // used in a call must not be changed (ABI).
+  // FIXME: The issue with predicated instruction is more complex. We are being
+  // conservatively here because the kill markers cannot be trusted after
+  // if-conversion:
+  // %R6<def> = LDR %SP, %reg0, 92, pred:14, pred:%reg0; mem:LD4[FixedStack14]
+  // ...
+  // STR %R0, %R6<kill>, %reg0, 0, pred:0, pred:%CPSR; mem:ST4[%395]
+  // %R6<def> = LDR %SP, %reg0, 100, pred:0, pred:%CPSR; mem:LD4[FixedStack12]
+  // STR %R0, %R6<kill>, %reg0, 0, pred:14, pred:%reg0; mem:ST4[%396](align=8)
+  //
+  // The first R6 kill is not really a kill since it's killed by a predicated
+  // instruction which may not be executed. The second R6 def may or may not
+  // re-define R6 so it's not safe to change it since the last R6 use cannot be
+  // changed.
+  bool Special = MI->getDesc().isCall() ||
+    MI->getDesc().hasExtraSrcRegAllocReq() ||
+    TII->isPredicated(MI);
+
   // Scan the register operands for this instruction and update
   // Classes and RegRefs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -199,9 +223,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     if (Classes[Reg] != reinterpret_cast<TargetRegisterClass *>(-1))
       RegRefs.insert(std::make_pair(Reg, &MO));
 
-    // It's not safe to change register allocation for source operands of
-    // that have special allocation requirements.
-    if (MO.isUse() && MI->getDesc().hasExtraSrcRegAllocReq()) {
+    if (MO.isUse() && Special) {
       if (KeepRegs.insert(Reg)) {
         for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg)
@@ -216,38 +238,43 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
   // Update liveness.
   // Proceding upwards, registers that are defed but not used in this
   // instruction are now dead.
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg()) continue;
-    unsigned Reg = MO.getReg();
-    if (Reg == 0) continue;
-    if (!MO.isDef()) continue;
-    // Ignore two-addr defs.
-    if (MI->isRegTiedToUseOperand(i)) continue;
 
-    DefIndices[Reg] = Count;
-    KillIndices[Reg] = ~0u;
-    assert(((KillIndices[Reg] == ~0u) !=
-            (DefIndices[Reg] == ~0u)) &&
-           "Kill and Def maps aren't consistent for Reg!");
-    KeepRegs.erase(Reg);
-    Classes[Reg] = 0;
-    RegRefs.erase(Reg);
-    // Repeat, for all subregs.
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-         *Subreg; ++Subreg) {
-      unsigned SubregReg = *Subreg;
-      DefIndices[SubregReg] = Count;
-      KillIndices[SubregReg] = ~0u;
-      KeepRegs.erase(SubregReg);
-      Classes[SubregReg] = 0;
-      RegRefs.erase(SubregReg);
-    }
-    // Conservatively mark super-registers as unusable.
-    for (const unsigned *Super = TRI->getSuperRegisters(Reg);
-         *Super; ++Super) {
-      unsigned SuperReg = *Super;
-      Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+  if (!TII->isPredicated(MI)) {
+    // Predicated defs are modeled as read + write, i.e. similar to two
+    // address updates.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg()) continue;
+      unsigned Reg = MO.getReg();
+      if (Reg == 0) continue;
+      if (!MO.isDef()) continue;
+      // Ignore two-addr defs.
+      if (MI->isRegTiedToUseOperand(i)) continue;
+
+      DefIndices[Reg] = Count;
+      KillIndices[Reg] = ~0u;
+      assert(((KillIndices[Reg] == ~0u) !=
+              (DefIndices[Reg] == ~0u)) &&
+             "Kill and Def maps aren't consistent for Reg!");
+      KeepRegs.erase(Reg);
+      Classes[Reg] = 0;
+      RegRefs.erase(Reg);
+      // Repeat, for all subregs.
+      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+           *Subreg; ++Subreg) {
+        unsigned SubregReg = *Subreg;
+        DefIndices[SubregReg] = Count;
+        KillIndices[SubregReg] = ~0u;
+        KeepRegs.erase(SubregReg);
+        Classes[SubregReg] = 0;
+        RegRefs.erase(SubregReg);
+      }
+      // Conservatively mark super-registers as unusable.
+      for (const unsigned *Super = TRI->getSuperRegisters(Reg);
+           *Super; ++Super) {
+        unsigned SuperReg = *Super;
+        Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      }
     }
   }
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -478,7 +505,11 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
 
     PrescanInstruction(MI);
 
-    if (MI->getDesc().hasExtraDefRegAllocReq())
+    // If MI's defs have a special allocation requirement, don't allow
+    // any def registers to be changed. Also assume all registers
+    // defined in a call must not be changed (ABI).
+    if (MI->getDesc().isCall() || MI->getDesc().hasExtraDefRegAllocReq() ||
+        TII->isPredicated(MI))
       // If this instruction's defs have special allocation requirement, don't
       // break this anti-dependency.
       AntiDepReg = 0;
@@ -490,7 +521,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
         if (!MO.isReg()) continue;
         unsigned Reg = MO.getReg();
         if (Reg == 0) continue;
-        if (MO.isUse() && AntiDepReg == Reg) {
+        if (MO.isUse() && TRI->regsOverlap(AntiDepReg, Reg)) {
           AntiDepReg = 0;
           break;
         }

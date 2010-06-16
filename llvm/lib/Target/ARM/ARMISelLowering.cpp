@@ -62,6 +62,11 @@ EnableARMLongCalls("arm-long-calls", cl::Hidden,
   cl::desc("Generate calls via indirect call instructions."),
   cl::init(false));
 
+static cl::opt<bool>
+ARMInterworking("arm-interworking", cl::Hidden,
+  cl::desc("Enable / disable ARM interworking (for debugging only)"),
+  cl::init(true));
+
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
                                    ISD::ArgFlagsTy &ArgFlags,
@@ -1188,7 +1193,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // ARM call to a local ARM function is predicable.
-    isLocalARMFunc = !Subtarget->isThumb() && !isExt;
+    isLocalARMFunc = !Subtarget->isThumb() && (!isExt || !ARMInterworking);
     // tBX takes a register source operand.
     if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       unsigned ARMPCLabelIndex = AFI->createConstPoolEntryUId();

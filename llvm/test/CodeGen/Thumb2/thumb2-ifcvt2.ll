@@ -31,7 +31,7 @@ entry:
 ; CHECK: CountTree:
 ; CHECK: it eq
 ; CHECK: cmpeq
-; CHECK: bne
+; CHECK: beq
 ; CHECK: itt eq
 ; CHECK: moveq
 ; CHECK: popeq

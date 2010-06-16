@@ -115,6 +115,7 @@ namespace llvm {
   class AggressiveAntiDepBreaker : public AntiDepBreaker {
     MachineFunction& MF;
     MachineRegisterInfo &MRI;
+    const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
 
     /// AllocatableSet - The set of allocatable registers.

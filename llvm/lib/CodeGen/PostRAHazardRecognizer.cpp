@@ -72,7 +72,7 @@ void PostRAHazardRecognizer::ScoreBoard::dump() const {
   }
 }
 
-PostRAHazardRecognizer::HazardType
+ScheduleHazardRecognizer::HazardType
 PostRAHazardRecognizer::getHazardType(SUnit *SU) {
   if (ItinData.isEmpty())
     return NoHazard;

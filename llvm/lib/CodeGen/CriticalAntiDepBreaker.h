@@ -22,15 +22,18 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include <map>
 
 namespace llvm {
+class TargetInstrInfo;
+class TargetRegisterInfo;
+
   class CriticalAntiDepBreaker : public AntiDepBreaker {
     MachineFunction& MF;
     MachineRegisterInfo &MRI;
+    const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
 
     /// AllocatableSet - The set of allocatable registers.
