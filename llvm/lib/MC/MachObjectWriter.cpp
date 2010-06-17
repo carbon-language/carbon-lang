@@ -758,7 +758,8 @@ public:
 
     // We're only going to have a second symbol in pic mode and it'll be a
     // subtraction from the picbase. For 32-bit pic the addend is the difference
-    // between the picbase and the next address.
+    // between the picbase and the next address.  For 32-bit static the addend
+    // is zero.
     if (Target.getSymB()) {
       IsPCRel = 1;
     } else {
