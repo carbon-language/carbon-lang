@@ -9,7 +9,7 @@ target triple = "armv6-apple-darwin9"
 @delim1 = external global i32                     ; <i32*> [#uses=1]
 @delim2 = external global i32                     ; <i32*> [#uses=1]
 
-define arm_apcscc i32 @ineqn(i8* %s, i8* %p) nounwind readonly {
+define i32 @ineqn(i8* %s, i8* %p) nounwind readonly {
 entry:
   %0 = load i32* @delim1, align 4                 ; <i32> [#uses=1]
   %1 = load i32* @delim2, align 4                 ; <i32> [#uses=1]

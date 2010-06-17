@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
-define arm_apcscc <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+define <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: test_vextd:
 ;CHECK: vext
 	%tmp1 = load <8 x i8>* %A
@@ -9,7 +9,7 @@ define arm_apcscc <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 	ret <8 x i8> %tmp3
 }
 
-define arm_apcscc <8 x i8> @test_vextRd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+define <8 x i8> @test_vextRd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: test_vextRd:
 ;CHECK: vext
 	%tmp1 = load <8 x i8>* %A
@@ -18,7 +18,7 @@ define arm_apcscc <8 x i8> @test_vextRd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 	ret <8 x i8> %tmp3
 }
 
-define arm_apcscc <16 x i8> @test_vextq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+define <16 x i8> @test_vextq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK: test_vextq:
 ;CHECK: vext
 	%tmp1 = load <16 x i8>* %A
@@ -27,7 +27,7 @@ define arm_apcscc <16 x i8> @test_vextq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 	ret <16 x i8> %tmp3
 }
 
-define arm_apcscc <16 x i8> @test_vextRq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+define <16 x i8> @test_vextRq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK: test_vextRq:
 ;CHECK: vext
 	%tmp1 = load <16 x i8>* %A
@@ -36,7 +36,7 @@ define arm_apcscc <16 x i8> @test_vextRq(<16 x i8>* %A, <16 x i8>* %B) nounwind 
 	ret <16 x i8> %tmp3
 }
 
-define arm_apcscc <4 x i16> @test_vextd16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+define <4 x i16> @test_vextd16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK: test_vextd16:
 ;CHECK: vext
 	%tmp1 = load <4 x i16>* %A
@@ -45,7 +45,7 @@ define arm_apcscc <4 x i16> @test_vextd16(<4 x i16>* %A, <4 x i16>* %B) nounwind
 	ret <4 x i16> %tmp3
 }
 
-define arm_apcscc <4 x i32> @test_vextq32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+define <4 x i32> @test_vextq32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK: test_vextq32:
 ;CHECK: vext
 	%tmp1 = load <4 x i32>* %A

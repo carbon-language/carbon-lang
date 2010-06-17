@@ -4,7 +4,7 @@
 
 @getNeighbour = external global void (i32, i32, i32, i32, %struct.pix_pos*)*, align 4 ; <void (i32, i32, i32, i32, %struct.pix_pos*)**> [#uses=2]
 
-define arm_apcscc void @t() nounwind {
+define void @t() nounwind {
 ; CHECK: t:
 ; CHECK:      it eq
 ; CHECK-NEXT: cmpeq
@@ -47,12 +47,12 @@ if.then1992:                                      ; preds = %for.body1940
   %tmp14.i302 = load i32* undef                   ; <i32> [#uses=4]
   %add.i307452 = or i32 %shl1959, 1               ; <i32> [#uses=1]
   %sub.i308 = add i32 %shl, -1                    ; <i32> [#uses=4]
-  call arm_apcscc  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 %shl1959, i32 0, %struct.pix_pos* undef) nounwind
+  call  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 %shl1959, i32 0, %struct.pix_pos* undef) nounwind
   %tmp49.i309 = load void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
-  call arm_apcscc  void %tmp49.i309(i32 %tmp14.i302, i32 %sub.i308, i32 %add.i307452, i32 0, %struct.pix_pos* null) nounwind
+  call  void %tmp49.i309(i32 %tmp14.i302, i32 %sub.i308, i32 %add.i307452, i32 0, %struct.pix_pos* null) nounwind
   %tmp49.1.i = load void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
-  call arm_apcscc  void %tmp49.1.i(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.2.i) nounwind
-  call arm_apcscc  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.3.i) nounwind
+  call  void %tmp49.1.i(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.2.i) nounwind
+  call  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.3.i) nounwind
   unreachable
 
 if.else2003:                                      ; preds = %for.body1940

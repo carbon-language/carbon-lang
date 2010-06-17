@@ -3,7 +3,7 @@
 	%struct.rtunion = type { i64 }
 	%struct.rtx_def = type { i16, i8, i8, [1 x %struct.rtunion] }
 
-define arm_apcscc void @simplify_unary_real(i8* nocapture %p) nounwind {
+define void @simplify_unary_real(i8* nocapture %p) nounwind {
 entry:
 	%tmp121 = load i64* null, align 4		; <i64> [#uses=1]
 	%0 = getelementptr %struct.rtx_def* null, i32 0, i32 3, i32 3, i32 0		; <i64*> [#uses=1]

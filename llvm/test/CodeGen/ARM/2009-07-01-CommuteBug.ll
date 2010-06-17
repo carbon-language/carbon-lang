@@ -4,7 +4,7 @@
 @II = external global i32*		; <i32**> [#uses=1]
 @JJ = external global i32*		; <i32**> [#uses=1]
 
-define arm_apcscc void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
+define void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
 entry:
 	br i1 undef, label %bb5, label %bb
 

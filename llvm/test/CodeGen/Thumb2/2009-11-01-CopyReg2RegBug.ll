@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=pic -disable-fp-elim -mcpu=cortex-a8
 
-define arm_apcscc void @get_initial_mb16x16_cost() nounwind {
+define void @get_initial_mb16x16_cost() nounwind {
 entry:
   br i1 undef, label %bb4, label %bb1
 

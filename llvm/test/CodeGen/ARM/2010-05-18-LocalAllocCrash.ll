@@ -10,7 +10,7 @@ target triple = "armv6-apple-darwin"
 
 @.str = external constant [1 x i8]                ; <[1 x i8]*> [#uses=1]
 
-define arm_apcscc void @yy(%struct.q* %qq) nounwind {
+define void @yy(%struct.q* %qq) nounwind {
 entry:
   %vla6 = alloca i8, i32 undef, align 1           ; <i8*> [#uses=1]
   %vla10 = alloca i8, i32 undef, align 1          ; <i8*> [#uses=1]
@@ -19,18 +19,18 @@ entry:
   %tmp21 = load i32* undef                        ; <i32> [#uses=1]
   %0 = mul i32 1, %tmp21                          ; <i32> [#uses=1]
   %vla22 = alloca i8, i32 %0, align 1             ; <i8*> [#uses=1]
-  call arm_apcscc  void (...)* @zz(i8* getelementptr inbounds ([1 x i8]* @.str, i32 0, i32 0), i32 2, i32 1)
+  call  void (...)* @zz(i8* getelementptr inbounds ([1 x i8]* @.str, i32 0, i32 0), i32 2, i32 1)
   br i1 undef, label %if.then, label %if.end36
 
 if.then:                                          ; preds = %entry
-  %call = call arm_apcscc  i32 (...)* @x(%struct.q* undef, i8* undef, i8* %vla6, i8* %vla10, i32 undef) ; <i32> [#uses=0]
-  %call35 = call arm_apcscc  i32 (...)* @x(%struct.q* undef, i8* %vla14, i8* %vla18, i8* %vla22, i32 undef) ; <i32> [#uses=0]
+  %call = call  i32 (...)* @x(%struct.q* undef, i8* undef, i8* %vla6, i8* %vla10, i32 undef) ; <i32> [#uses=0]
+  %call35 = call  i32 (...)* @x(%struct.q* undef, i8* %vla14, i8* %vla18, i8* %vla22, i32 undef) ; <i32> [#uses=0]
   unreachable
 
 if.end36:                                         ; preds = %entry
   ret void
 }
 
-declare arm_apcscc void @zz(...)
+declare void @zz(...)
 
-declare arm_apcscc i32 @x(...)
+declare i32 @x(...)

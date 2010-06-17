@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mcpu=arm1136jf-s
 ; Radar 7854640
 
-define arm_apcscc void @test() nounwind {
+define void @test() nounwind {
 bb:
   br i1 undef, label %bb9, label %bb10
 

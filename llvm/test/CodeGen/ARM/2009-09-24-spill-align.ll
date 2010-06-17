@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 ; pr4926
 
-define arm_apcscc void @test_vget_lanep16() nounwind {
+define void @test_vget_lanep16() nounwind {
 entry:
   %arg0_poly16x4_t = alloca <4 x i16>             ; <<4 x i16>*> [#uses=1]
   %out_poly16_t = alloca i16                      ; <i16*> [#uses=1]

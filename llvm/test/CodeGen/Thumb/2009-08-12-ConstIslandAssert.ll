@@ -2,7 +2,7 @@
 
 	%struct.BF_KEY = type { [18 x i32], [1024 x i32] }
 
-define arm_apcscc void @BF_encrypt(i32* nocapture %data, %struct.BF_KEY* nocapture %key, i32 %encrypt) nounwind {
+define void @BF_encrypt(i32* nocapture %data, %struct.BF_KEY* nocapture %key, i32 %encrypt) nounwind {
 entry:
 	%0 = getelementptr %struct.BF_KEY* %key, i32 0, i32 0, i32 0; <i32*> [#uses=2]
 	%1 = load i32* %data, align 4             ; <i32> [#uses=2]

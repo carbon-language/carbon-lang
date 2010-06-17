@@ -13,7 +13,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 ; CHECK: InlineAsm End
 ; CHECK: cmp
 ; CHECK: beq
-define arm_apcscc void @test(%s1* %this, i32 %format, i32 %w, i32 %h, i32 %levels, i32* %s, i8* %data, i32* nocapture %rowbytes, void (i8*, i8*)* %release, i8* %info) nounwind {
+define void @test(%s1* %this, i32 %format, i32 %w, i32 %h, i32 %levels, i32* %s, i8* %data, i32* nocapture %rowbytes, void (i8*, i8*)* %release, i8* %info) nounwind {
 entry:
   %tmp1 = getelementptr inbounds %s1* %this, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0
   volatile store i32 1, i32* %tmp1, align 4
@@ -32,9 +32,9 @@ entry:
   %tmp19 = getelementptr inbounds %s1* %this, i32 0, i32 10
   store i64 0, i64* %tmp19, align 4
   %tmp20 = getelementptr inbounds %s1* %this, i32 0, i32 0
-  tail call arm_apcscc  void @f1(%s3* %tmp20, i32* %s) nounwind
+  tail call  void @f1(%s3* %tmp20, i32* %s) nounwind
   %tmp21 = shl i32 %format, 6
-  %tmp22 = tail call arm_apcscc  zeroext i8 @f2(i32 %format) nounwind
+  %tmp22 = tail call  zeroext i8 @f2(i32 %format) nounwind
   %toBoolnot = icmp eq i8 %tmp22, 0
   %tmp23 = zext i1 %toBoolnot to i32
   %flags.0 = or i32 %tmp23, %tmp21
@@ -59,5 +59,5 @@ return:
   ret void
 }
 
-declare arm_apcscc void @f1(%s3*, i32*)
-declare arm_apcscc zeroext i8 @f2(i32)
+declare void @f1(%s3*, i32*)
+declare zeroext i8 @f2(i32)

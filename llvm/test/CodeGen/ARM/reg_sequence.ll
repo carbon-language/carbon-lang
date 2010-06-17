@@ -8,7 +8,7 @@
 %struct.__neon_int16x8x2_t = type { <8 x i16>, <8 x i16> }
 %struct.__neon_int32x4x2_t = type { <4 x i32>, <4 x i32> }
 
-define arm_apcscc void @t1(i16* %i_ptr, i16* %o_ptr, %struct.int32x4_t* nocapture %vT0ptr, %struct.int32x4_t* nocapture %vT1ptr) nounwind {
+define void @t1(i16* %i_ptr, i16* %o_ptr, %struct.int32x4_t* nocapture %vT0ptr, %struct.int32x4_t* nocapture %vT1ptr) nounwind {
 entry:
 ; CHECK:        t1:
 ; CHECK:        vld1.16
@@ -41,7 +41,7 @@ entry:
   ret void
 }
 
-define arm_apcscc void @t2(i16* %i_ptr, i16* %o_ptr, %struct.int16x8_t* nocapture %vT0ptr, %struct.int16x8_t* nocapture %vT1ptr) nounwind {
+define void @t2(i16* %i_ptr, i16* %o_ptr, %struct.int16x8_t* nocapture %vT0ptr, %struct.int16x8_t* nocapture %vT1ptr) nounwind {
 entry:
 ; CHECK:        t2:
 ; CHECK:        vld1.16
@@ -88,7 +88,7 @@ define <8 x i8> @t3(i8* %A, i8* %B) nounwind {
   ret <8 x i8> %tmp4
 }
 
-define arm_apcscc void @t4(i32* %in, i32* %out) nounwind {
+define void @t4(i32* %in, i32* %out) nounwind {
 entry:
 ; CHECK:        t4:
 ; CHECK:        vld2.32
@@ -163,7 +163,7 @@ define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
   ret <8 x i8> %tmp5
 }
 
-define arm_apcscc void @t7(i32* %iptr, i32* %optr) nounwind {
+define void @t7(i32* %iptr, i32* %optr) nounwind {
 entry:
 ; CHECK:        t7:
 ; CHECK:        vld2.32

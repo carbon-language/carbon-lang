@@ -17,14 +17,14 @@ target triple = "thumbv7-apple-darwin10"
 @_ZN3WTFL12thread_heapsE = internal global %"struct.WTF::TCMalloc_ThreadCache"* null ; <%"struct.WTF::TCMalloc_ThreadCache"**> [#uses=1]
 @llvm.used = appending global [1 x i8*] [i8* bitcast (%"struct.WTF::TCMalloc_ThreadCache"* ()* @_ZN3WTF20TCMalloc_ThreadCache22CreateCacheIfNecessaryEv to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
 
-define arm_apcscc %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache22CreateCacheIfNecessaryEv() nounwind {
+define %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache22CreateCacheIfNecessaryEv() nounwind {
 entry:
-  %0 = tail call arm_apcscc  i32 @pthread_mutex_lock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
+  %0 = tail call  i32 @pthread_mutex_lock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
   %.b24 = load i1* @_ZN3WTFL10tsd_initedE.b, align 4 ; <i1> [#uses=1]
   br i1 %.b24, label %bb5, label %bb6
 
 bb5:                                              ; preds = %entry
-  %1 = tail call arm_apcscc  %struct._opaque_pthread_t* @pthread_self() nounwind
+  %1 = tail call  %struct._opaque_pthread_t* @pthread_self() nounwind
   br label %bb6
 
 bb6:                                              ; preds = %bb5, %entry
@@ -34,7 +34,7 @@ bb6:                                              ; preds = %bb5, %entry
 bb7:                                              ; preds = %bb11
   %2 = getelementptr inbounds %"struct.WTF::TCMalloc_ThreadCache"* %h.0, i32 0, i32 1
   %3 = load %struct._opaque_pthread_t** %2, align 4
-  %4 = tail call arm_apcscc  i32 @pthread_equal(%struct._opaque_pthread_t* %3, %struct._opaque_pthread_t* %me.0) nounwind
+  %4 = tail call  i32 @pthread_equal(%struct._opaque_pthread_t* %3, %struct._opaque_pthread_t* %me.0) nounwind
   %5 = icmp eq i32 %4, 0
   br i1 %5, label %bb10, label %bb14
 
@@ -49,12 +49,12 @@ bb11:                                             ; preds = %bb10, %bb6
   br i1 %7, label %bb13, label %bb7
 
 bb13:                                             ; preds = %bb11
-  %8 = tail call arm_apcscc  %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache7NewHeapEP17_opaque_pthread_t(%struct._opaque_pthread_t* %me.0) nounwind
+  %8 = tail call  %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache7NewHeapEP17_opaque_pthread_t(%struct._opaque_pthread_t* %me.0) nounwind
   br label %bb14
 
 bb14:                                             ; preds = %bb13, %bb7
   %heap.1 = phi %"struct.WTF::TCMalloc_ThreadCache"* [ %8, %bb13 ], [ %h.0, %bb7 ] ; <%"struct.WTF::TCMalloc_ThreadCache"*> [#uses=4]
-  %9 = tail call arm_apcscc  i32 @pthread_mutex_unlock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
+  %9 = tail call  i32 @pthread_mutex_unlock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
   %10 = getelementptr inbounds %"struct.WTF::TCMalloc_ThreadCache"* %heap.1, i32 0, i32 2
   %11 = load i8* %10, align 4
   %toBool15not = icmp eq i8 %11, 0                ; <i1> [#uses=1]
@@ -68,22 +68,22 @@ bb21:                                             ; preds = %bb19
   store i8 1, i8* %10, align 4
   %12 = load i32* @_ZN3WTFL8heap_keyE, align 4
   %13 = bitcast %"struct.WTF::TCMalloc_ThreadCache"* %heap.1 to i8*
-  %14 = tail call arm_apcscc  i32 @pthread_setspecific(i32 %12, i8* %13) nounwind
+  %14 = tail call  i32 @pthread_setspecific(i32 %12, i8* %13) nounwind
   ret %"struct.WTF::TCMalloc_ThreadCache"* %heap.1
 
 bb22:                                             ; preds = %bb19, %bb14
   ret %"struct.WTF::TCMalloc_ThreadCache"* %heap.1
 }
 
-declare arm_apcscc i32 @pthread_mutex_lock(%struct.PlatformMutex*)
+declare i32 @pthread_mutex_lock(%struct.PlatformMutex*)
 
-declare arm_apcscc i32 @pthread_mutex_unlock(%struct.PlatformMutex*)
+declare i32 @pthread_mutex_unlock(%struct.PlatformMutex*)
 
-declare hidden arm_apcscc %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache7NewHeapEP17_opaque_pthread_t(%struct._opaque_pthread_t*) nounwind
+declare hidden %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache7NewHeapEP17_opaque_pthread_t(%struct._opaque_pthread_t*) nounwind
 
-declare arm_apcscc i32 @pthread_setspecific(i32, i8*)
+declare i32 @pthread_setspecific(i32, i8*)
 
-declare arm_apcscc %struct._opaque_pthread_t* @pthread_self()
+declare %struct._opaque_pthread_t* @pthread_self()
 
-declare arm_apcscc i32 @pthread_equal(%struct._opaque_pthread_t*, %struct._opaque_pthread_t*)
+declare i32 @pthread_equal(%struct._opaque_pthread_t*, %struct._opaque_pthread_t*)
 

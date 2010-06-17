@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -stats -info-output-file - | grep "Number of re-materialization"
 
-define arm_apcscc i32 @main(i32 %argc, i8** nocapture %argv, double %d1, double %d2) nounwind {
+define i32 @main(i32 %argc, i8** nocapture %argv, double %d1, double %d2) nounwind {
 entry:
   br i1 undef, label %smvp.exit, label %bb.i3
 
@@ -25,7 +25,7 @@ bb142:                                            ; preds = %bb.nph218.bb.nph218
   br i1 %14, label %phi1.exit, label %bb.i35
 
 bb.i35:                                           ; preds = %bb142
-  %5 = call arm_apcscc  double @sin(double %15) nounwind readonly ; <double> [#uses=1]
+  %5 = call  double @sin(double %15) nounwind readonly ; <double> [#uses=1]
   %6 = fmul double %5, 0x4031740AFA84AD8A         ; <double> [#uses=1]
   %7 = fsub double 1.000000e+00, undef            ; <double> [#uses=1]
   %8 = fdiv double %7, 6.000000e-01               ; <double> [#uses=1]
@@ -62,4 +62,4 @@ bb166:                                            ; preds = %bb127
   unreachable
 }
 
-declare arm_apcscc double @sin(double) nounwind readonly
+declare double @sin(double) nounwind readonly

@@ -40,7 +40,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 %22 = type { void (%0*)*, void (%0*, i8***, i32, i8**, i32)* }
 %23 = type { void (%0*, i32)*, void (%0*, i8**, i8**, i32)*, void (%0*)*, void (%0*)* }
 
-define arm_apcscc void @test(%0* nocapture %a0, %11* nocapture %a1, i16* nocapture %a2, i8** nocapture %a3, i32 %a4) nounwind {
+define void @test(%0* nocapture %a0, %11* nocapture %a1, i16* nocapture %a2, i8** nocapture %a3, i32 %a4) nounwind {
 bb:
   %t = alloca [64 x float], align 4           
   %t5 = getelementptr inbounds %0* %a0, i32 0, i32 65
@@ -393,7 +393,7 @@ bb295:
 %struct.z_stream = type { i8*, i32, i32, i8*, i32, i32, i8*, %struct.internal_state*, i8* (i8*, i32, i32)*, void (i8*, i8*)*, i8*, i32, i32, i32 }
 %union.anon = type { i16 }
 
-define arm_apcscc i32 @longest_match(%struct.internal_state* %s, i32 %cur_match) nounwind optsize {
+define i32 @longest_match(%struct.internal_state* %s, i32 %cur_match) nounwind optsize {
 entry:
   %0 = getelementptr inbounds %struct.internal_state* %s, i32 0, i32 31 ; <i32*> [#uses=1]
   %1 = load i32* %0, align 4                      ; <i32> [#uses=2]

@@ -5,7 +5,7 @@
 @nextaddr = global i8* null                       ; <i8**> [#uses=2]
 @C.0.2070 = private constant [5 x i8*] [i8* blockaddress(@foo, %L1), i8* blockaddress(@foo, %L2), i8* blockaddress(@foo, %L3), i8* blockaddress(@foo, %L4), i8* blockaddress(@foo, %L5)] ; <[5 x i8*]*> [#uses=1]
 
-define internal arm_apcscc i32 @foo(i32 %i) nounwind {
+define internal i32 @foo(i32 %i) nounwind {
 ; ARM: foo:
 ; THUMB: foo:
 ; THUMB2: foo:

@@ -30,11 +30,11 @@ target triple = "thumbv7-apple-darwin9"
 @.str218 = private constant [6 x i8] c"%7d%c\00", align 1 ; <[6 x i8]*> [#uses=1]
 @.str319 = private constant [30 x i8] c"Failed to allocate %u bytes.\0A\00", align 1 ; <[30 x i8]*> [#uses=1]
 
-declare arm_apcscc i32 @puts(i8* nocapture) nounwind
+declare i32 @puts(i8* nocapture) nounwind
 
-declare arm_apcscc i32 @getchar() nounwind
+declare i32 @getchar() nounwind
 
-define internal arm_apcscc i32 @transpose() nounwind readonly {
+define internal i32 @transpose() nounwind readonly {
 ; CHECK: push
 entry:
   %0 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 1), align 4 ; <i32> [#uses=1]
@@ -101,6 +101,6 @@ bb7:                                              ; preds = %bb5
   ret i32 -128
 }
 
-declare arm_apcscc noalias i8* @calloc(i32, i32) nounwind
+declare noalias i8* @calloc(i32, i32) nounwind
 
 declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind

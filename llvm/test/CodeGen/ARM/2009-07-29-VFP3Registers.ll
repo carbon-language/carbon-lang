@@ -4,7 +4,7 @@
 
 declare double @llvm.exp.f64(double) nounwind readonly
 
-define arm_apcscc void @findratio(double* nocapture %res1, double* nocapture %res2) nounwind {
+define void @findratio(double* nocapture %res1, double* nocapture %res2) nounwind {
 entry:
 	br label %bb
 

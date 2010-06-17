@@ -4,7 +4,7 @@
 @a = common global float 0.000000e+00             ; <float*> [#uses=2]
 @b = common global float 0.000000e+00             ; <float*> [#uses=1]
 
-define arm_apcscc float @t(i32 %c) nounwind {
+define float @t(i32 %c) nounwind {
 entry:
   %0 = icmp sgt i32 %c, 1                         ; <i1> [#uses=1]
   %1 = load float* @a, align 4                    ; <float> [#uses=2]

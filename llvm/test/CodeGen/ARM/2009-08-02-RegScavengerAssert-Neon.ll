@@ -4,7 +4,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:64"
 target triple = "armv7-apple-darwin9"
 
-define arm_apcscc <4 x i32> @scale(<4 x i32> %v, i32 %f) nounwind {
+define <4 x i32> @scale(<4 x i32> %v, i32 %f) nounwind {
 entry:
 	%v_addr = alloca <4 x i32>		; <<4 x i32>*> [#uses=2]
 	%f_addr = alloca i32		; <i32*> [#uses=2]

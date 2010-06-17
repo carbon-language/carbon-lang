@@ -22,9 +22,9 @@
 	%"struct.xalanc_1_8::XalanDOMString" = type { %"struct.std::vector<short unsigned int,std::allocator<short unsigned int> >", i32 }
 	%"struct.xalanc_1_8::XalanOutputStream" = type { i32 (...)**, i32, %"struct.std::basic_ostream<char,std::char_traits<char> >.base"*, i32, %"struct.std::vector<short unsigned int,std::allocator<short unsigned int> >", %"struct.xalanc_1_8::XalanDOMString", i8, i8, %"struct.std::CharVectorType" }
 
-declare arm_apcscc void @_ZN10xalanc_1_814FormatterToXML17writeParentTagEndEv(%"struct.xalanc_1_8::FormatterToXML"*)
+declare void @_ZN10xalanc_1_814FormatterToXML17writeParentTagEndEv(%"struct.xalanc_1_8::FormatterToXML"*)
 
-define arm_apcscc void @_ZN10xalanc_1_814FormatterToXML5cdataEPKtj(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length) {
+define void @_ZN10xalanc_1_814FormatterToXML5cdataEPKtj(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length) {
 entry:
 	%0 = getelementptr %"struct.xalanc_1_8::FormatterToXML"* %this, i32 0, i32 13		; <i8*> [#uses=1]
 	br i1 undef, label %bb4, label %bb
@@ -36,11 +36,11 @@ bb:		; preds = %entry
 	%3 = getelementptr i32 (...)** %2, i32 11		; <i32 (...)**> [#uses=1]
 	%4 = load i32 (...)** %3, align 4		; <i32 (...)*> [#uses=1]
 	%5 = bitcast i32 (...)* %4 to void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32)*		; <void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32)*> [#uses=1]
-	tail call arm_apcscc  void %5(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length)
+	tail call  void %5(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length)
 	ret void
 
 bb4:		; preds = %entry
-	tail call arm_apcscc  void @_ZN10xalanc_1_814FormatterToXML17writeParentTagEndEv(%"struct.xalanc_1_8::FormatterToXML"* %this)
-	tail call arm_apcscc  void undef(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 0, i32 %length, i8 zeroext undef)
+	tail call  void @_ZN10xalanc_1_814FormatterToXML17writeParentTagEndEv(%"struct.xalanc_1_8::FormatterToXML"* %this)
+	tail call  void undef(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 0, i32 %length, i8 zeroext undef)
 	ret void
 }

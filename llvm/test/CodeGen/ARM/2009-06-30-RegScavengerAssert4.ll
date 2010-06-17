@@ -6,9 +6,9 @@
 @no_mis = external global i32		; <i32*> [#uses=1]
 @name1 = external global i8*		; <i8**> [#uses=1]
 
-declare arm_apcscc void @diff(i8*, i8*, i32, i32, i32, i32) nounwind
+declare void @diff(i8*, i8*, i32, i32, i32, i32) nounwind
 
-define arm_apcscc void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
+define void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
 entry:
 	br i1 undef, label %bb5, label %bb
 
@@ -35,7 +35,7 @@ bb11:		; preds = %bb9
 	store i32 0, i32* @no_mis, align 4
 	%1 = getelementptr i8* %A, i32 0		; <i8*> [#uses=1]
 	%2 = getelementptr i8* %B, i32 0		; <i8*> [#uses=1]
-	tail call arm_apcscc  void @diff(i8* %1, i8* %2, i32 undef, i32 undef, i32 undef, i32 undef) nounwind
+	tail call  void @diff(i8* %1, i8* %2, i32 undef, i32 undef, i32 undef, i32 undef) nounwind
 	br i1 undef, label %bb15, label %bb12
 
 bb12:		; preds = %bb11

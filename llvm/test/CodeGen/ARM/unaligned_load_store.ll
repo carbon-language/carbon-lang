@@ -4,7 +4,7 @@
 
 ; rdar://7113725
 
-define arm_apcscc void @t(i8* nocapture %a, i8* nocapture %b) nounwind {
+define void @t(i8* nocapture %a, i8* nocapture %b) nounwind {
 entry:
 ; GENERIC: t:
 ; GENERIC: ldrb r2

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-fp-elim | FileCheck %s
 ; rdar://7268481
 
-define arm_apcscc void @t() nounwind {
+define void @t() nounwind {
 ; CHECK:       t:
 ; CHECK-NEXT : push {r7}
 entry:

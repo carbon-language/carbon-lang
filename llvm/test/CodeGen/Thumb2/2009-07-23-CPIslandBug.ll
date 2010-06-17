@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2
 ; rdar://7083961
 
-define arm_apcscc i32 @value(i64 %b1, i64 %b2) nounwind readonly {
+define i32 @value(i64 %b1, i64 %b2) nounwind readonly {
 entry:
 	%0 = icmp eq i32 undef, 0		; <i1> [#uses=1]
 	%mod.0.ph.ph = select i1 %0, float -1.000000e+00, float 1.000000e+00		; <float> [#uses=1]

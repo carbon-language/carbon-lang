@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin10
 ; rdar://7394794
 
-define arm_apcscc void @lshift_double(i64 %l1, i64 %h1, i64 %count, i32 %prec, i64* nocapture %lv, i64* nocapture %hv, i32 %arith) nounwind {
+define void @lshift_double(i64 %l1, i64 %h1, i64 %count, i32 %prec, i64* nocapture %lv, i64* nocapture %hv, i32 %arith) nounwind {
 entry:
   %..i = select i1 false, i64 0, i64 0            ; <i64> [#uses=1]
   br i1 undef, label %bb11.i, label %bb6.i

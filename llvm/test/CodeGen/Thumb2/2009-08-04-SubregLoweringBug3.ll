@@ -6,7 +6,7 @@
 	%struct.Patient = type { i32, i32, i32, %struct.Village* }
 	%struct.Village = type { [4 x %struct.Village*], %struct.Village*, %struct.List, %struct.Hosp, i32, i32 }
 
-define arm_apcscc %struct.List* @sim(%struct.Village* %village) nounwind {
+define %struct.List* @sim(%struct.Village* %village) nounwind {
 entry:
 	br i1 undef, label %bb14, label %bb3.preheader
 

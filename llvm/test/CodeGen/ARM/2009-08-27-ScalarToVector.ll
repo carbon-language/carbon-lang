@@ -8,7 +8,7 @@ target triple = "thumbv7-elf"
 %quux = type { i32 (...)**, %baz*, i32 }
 %quuz = type { %quux, i32, %bar, [128 x i8], [16 x %foo], %foo, %foo, %foo }
 
-define arm_apcscc void @aaaa(%quuz* %this, i8* %block) {
+define void @aaaa(%quuz* %this, i8* %block) {
 entry:
   br i1 undef, label %bb.nph269, label %bb201
 

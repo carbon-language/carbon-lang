@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv6-elf | not grep "subs sp"
 ; PR4567
 
-define arm_apcscc i8* @__gets_chk(i8* %s, i32 %slen) nounwind {
+define i8* @__gets_chk(i8* %s, i32 %slen) nounwind {
 entry:
 	br i1 undef, label %bb, label %bb1
 
@@ -23,11 +23,11 @@ bb4:		; preds = %bb3, %bb2
 	br i1 undef, label %bb5, label %bb6
 
 bb5:		; preds = %bb4
-	%2 = call arm_apcscc  i8* @gets(i8* %s) nounwind		; <i8*> [#uses=1]
+	%2 = call  i8* @gets(i8* %s) nounwind		; <i8*> [#uses=1]
 	ret i8* %2
 
 bb6:		; preds = %bb4
 	unreachable
 }
 
-declare arm_apcscc i8* @gets(i8*) nounwind
+declare i8* @gets(i8*) nounwind

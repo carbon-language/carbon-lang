@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+vfp2
 
-define arm_apcscc float @t1(i32 %v0) nounwind {
+define float @t1(i32 %v0) nounwind {
 entry:
 	store i32 undef, i32* undef, align 4
 	%0 = load [4 x i8]** undef, align 4		; <[4 x i8]*> [#uses=1]

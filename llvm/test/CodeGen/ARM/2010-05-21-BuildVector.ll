@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
 ; Radar 7872877
 
-define arm_apcscc void @test(float* %fltp, i32 %packedValue, float* %table) nounwind {
+define void @test(float* %fltp, i32 %packedValue, float* %table) nounwind {
 entry:
   %0 = load float* %fltp
   %1 = insertelement <4 x float> undef, float %0, i32 0

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin | FileCheck %s
 ; rdar://7268481
 
-define arm_apcscc void @t(i8* %a, ...) nounwind {
+define void @t(i8* %a, ...) nounwind {
 ; CHECK:      t:
 ; CHECK:      pop {r3}
 ; CHECK-NEXT: add sp, #12

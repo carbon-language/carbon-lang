@@ -3,7 +3,7 @@
 ; Radar 7449043
 %struct.int32x4_t = type { <4 x i32> }
 
-define arm_apcscc void @t() nounwind {
+define void @t() nounwind {
 entry:
 ; CHECK: vmov.I64 q15, #0
 ; CHECK: vmov.32 d30[0], r0
@@ -16,7 +16,7 @@ entry:
 ; Radar 7457110
 %struct.int32x2_t = type { <4 x i32> }
 
-define arm_apcscc void @t2() nounwind {
+define void @t2() nounwind {
 entry:
 ; CHECK: vmov d30, d0
 ; CHECK: vmov.32 r0, d30[0]

@@ -6,11 +6,11 @@
 @"\01LC15" = external constant [33 x i8], align 1		; <[33 x i8]*> [#uses=1]
 @"\01LC17" = external constant [47 x i8], align 1		; <[47 x i8]*> [#uses=1]
 
-declare arm_apcscc i32 @printf(i8* nocapture, ...) nounwind
+declare i32 @printf(i8* nocapture, ...) nounwind
 
-declare arm_apcscc void @diff(i8*, i8*, i32, i32, i32, i32) nounwind
+declare void @diff(i8*, i8*, i32, i32, i32, i32) nounwind
 
-define arm_apcscc void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
+define void @SIM(i8* %A, i8* %B, i32 %M, i32 %N, i32 %K, [256 x i32]* %V, i32 %Q, i32 %R, i32 %nseq) nounwind {
 entry:
 	br i1 undef, label %bb5, label %bb
 
@@ -41,11 +41,11 @@ bb11:		; preds = %bb9
 	store i32 0, i32* @no_mat, align 4
 	store i32 0, i32* @no_mis, align 4
 	%4 = getelementptr i8* %B, i32 %0		; <i8*> [#uses=1]
-	tail call arm_apcscc  void @diff(i8* undef, i8* %4, i32 undef, i32 %3, i32 undef, i32 undef) nounwind
-	%5 = tail call arm_apcscc  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC11", i32 0, i32 0), i32 %tmp13) nounwind		; <i32> [#uses=0]
+	tail call  void @diff(i8* undef, i8* %4, i32 undef, i32 %3, i32 undef, i32 undef) nounwind
+	%5 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC11", i32 0, i32 0), i32 %tmp13) nounwind		; <i32> [#uses=0]
 	%6 = load i32* @no_mis, align 4		; <i32> [#uses=1]
-	%7 = tail call arm_apcscc  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC15", i32 0, i32 0), i32 %6) nounwind		; <i32> [#uses=0]
-	%8 = tail call arm_apcscc  i32 (i8*, ...)* @printf(i8* getelementptr ([47 x i8]* @"\01LC17", i32 0, i32 0), i32 undef, i32 %1, i32 undef, i32 %2) nounwind		; <i32> [#uses=0]
+	%7 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC15", i32 0, i32 0), i32 %6) nounwind		; <i32> [#uses=0]
+	%8 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([47 x i8]* @"\01LC17", i32 0, i32 0), i32 undef, i32 %1, i32 undef, i32 %2) nounwind		; <i32> [#uses=0]
 	br i1 undef, label %bb15, label %bb12
 
 bb12:		; preds = %bb11

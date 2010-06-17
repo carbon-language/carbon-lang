@@ -4,9 +4,9 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv6t2-elf"
 	%struct.dwarf_cie = type <{ i32, i32, i8, [0 x i8], [3 x i8] }>
 
-declare arm_apcscc i8* @read_sleb128(i8*, i32* nocapture) nounwind
+declare i8* @read_sleb128(i8*, i32* nocapture) nounwind
 
-define arm_apcscc i32 @get_cie_encoding(%struct.dwarf_cie* %cie) nounwind {
+define i32 @get_cie_encoding(%struct.dwarf_cie* %cie) nounwind {
 entry:
 	br i1 undef, label %bb1, label %bb13
 
@@ -27,7 +27,7 @@ read_uleb128.exit:		; preds = %bb.i
 	%.sum40 = add i32 %indvar.i, undef		; <i32> [#uses=1]
 	%.sum31 = add i32 %.sum40, 2		; <i32> [#uses=1]
 	%scevgep.i = getelementptr %struct.dwarf_cie* %cie, i32 0, i32 3, i32 %.sum31		; <i8*> [#uses=1]
-	%3 = call arm_apcscc  i8* @read_sleb128(i8* %scevgep.i, i32* undef)		; <i8*> [#uses=0]
+	%3 = call  i8* @read_sleb128(i8* %scevgep.i, i32* undef)		; <i8*> [#uses=0]
 	unreachable
 
 bb13:		; preds = %entry

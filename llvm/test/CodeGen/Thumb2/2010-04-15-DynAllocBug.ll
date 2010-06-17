@@ -4,7 +4,7 @@
 ; Make sure the result of the first dynamic_alloc isn't copied back to sp more
 ; than once. We'll deal with poor codegen later.
 
-define arm_apcscc void @t() nounwind ssp {
+define void @t() nounwind ssp {
 entry:
 ; CHECK: t:
 ; CHECK: mov r0, sp

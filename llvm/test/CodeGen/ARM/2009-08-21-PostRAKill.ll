@@ -7,7 +7,7 @@ target triple = "armv7-apple-darwin9"
 %struct.tree = type { i32, double, double, %struct.tree*, %struct.tree*, %struct.tree*, %struct.tree* }
 @g = common global %struct.tree* null
 
-define arm_apcscc %struct.tree* @tsp(%struct.tree* %t, i32 %nproc) nounwind {
+define %struct.tree* @tsp(%struct.tree* %t, i32 %nproc) nounwind {
 entry:
   %t.idx51.val.i = load double* null              ; <double> [#uses=1]
   br i1 undef, label %bb4.i, label %bb.i

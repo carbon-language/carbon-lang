@@ -11,7 +11,7 @@
 @G = external global i32                          ; <i32*> [#uses=2]
 @array = external global i32*                     ; <i32**> [#uses=1]
 
-define arm_apcscc void @t() nounwind optsize {
+define void @t() nounwind optsize {
 ; CHECK: t:
 ; CHECK: mov.w r2, #1000
 entry:

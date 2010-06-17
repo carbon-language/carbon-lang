@@ -13,7 +13,7 @@
 @__stderrp = external global %struct.FILE*		; <%struct.FILE**> [#uses=1]
 @.str1 = private constant [28 x i8] c"Final valprev=%d, index=%d\0A\00", section "__TEXT,__cstring,cstring_literals", align 1		; <[28 x i8]*> [#uses=1]
 
-define arm_apcscc void @adpcm_coder(i16* nocapture %indata, i8* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
+define void @adpcm_coder(i16* nocapture %indata, i8* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
 entry:
 	%0 = getelementptr %struct.adpcm_state* %state, i32 0, i32 0		; <i16*> [#uses=2]
 	%1 = load i16* %0, align 2		; <i16> [#uses=1]
@@ -138,7 +138,7 @@ bb29:		; preds = %bb28, %bb27
 	ret void
 }
 
-define arm_apcscc void @adpcm_decoder(i8* nocapture %indata, i16* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
+define void @adpcm_decoder(i8* nocapture %indata, i16* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
 entry:
 	%0 = getelementptr %struct.adpcm_state* %state, i32 0, i32 0		; <i16*> [#uses=2]
 	%1 = load i16* %0, align 2		; <i16> [#uses=1]
@@ -245,17 +245,17 @@ bb22:		; preds = %bb20, %entry
 	ret void
 }
 
-define arm_apcscc i32 @main() nounwind {
+define i32 @main() nounwind {
 entry:
 	br label %bb
 
 bb:		; preds = %bb3, %entry
-	%0 = tail call arm_apcscc  i32 (...)* @read(i32 0, i8* getelementptr ([500 x i8]* @abuf, i32 0, i32 0), i32 500) nounwind		; <i32> [#uses=4]
+	%0 = tail call  i32 (...)* @read(i32 0, i8* getelementptr ([500 x i8]* @abuf, i32 0, i32 0), i32 500) nounwind		; <i32> [#uses=4]
 	%1 = icmp slt i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb1, label %bb2
 
 bb1:		; preds = %bb
-	tail call arm_apcscc  void @perror(i8* getelementptr ([11 x i8]* @.str, i32 0, i32 0)) nounwind
+	tail call  void @perror(i8* getelementptr ([11 x i8]* @.str, i32 0, i32 0)) nounwind
 	ret i32 1
 
 bb2:		; preds = %bb
@@ -264,9 +264,9 @@ bb2:		; preds = %bb
 
 bb3:		; preds = %bb2
 	%3 = shl i32 %0, 1		; <i32> [#uses=1]
-	tail call arm_apcscc  void @adpcm_decoder(i8* getelementptr ([500 x i8]* @abuf, i32 0, i32 0), i16* getelementptr ([1000 x i16]* @sbuf, i32 0, i32 0), i32 %3, %struct.adpcm_state* @state) nounwind
+	tail call  void @adpcm_decoder(i8* getelementptr ([500 x i8]* @abuf, i32 0, i32 0), i16* getelementptr ([1000 x i16]* @sbuf, i32 0, i32 0), i32 %3, %struct.adpcm_state* @state) nounwind
 	%4 = shl i32 %0, 2		; <i32> [#uses=1]
-	%5 = tail call arm_apcscc  i32 (...)* @write(i32 1, i16* getelementptr ([1000 x i16]* @sbuf, i32 0, i32 0), i32 %4) nounwind		; <i32> [#uses=0]
+	%5 = tail call  i32 (...)* @write(i32 1, i16* getelementptr ([1000 x i16]* @sbuf, i32 0, i32 0), i32 %4) nounwind		; <i32> [#uses=0]
 	br label %bb
 
 bb4:		; preds = %bb2
@@ -275,14 +275,14 @@ bb4:		; preds = %bb2
 	%8 = sext i16 %7 to i32		; <i32> [#uses=1]
 	%9 = load i8* getelementptr (%struct.adpcm_state* @state, i32 0, i32 1), align 2		; <i8> [#uses=1]
 	%10 = sext i8 %9 to i32		; <i32> [#uses=1]
-	%11 = tail call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %6, i8* getelementptr ([28 x i8]* @.str1, i32 0, i32 0), i32 %8, i32 %10) nounwind		; <i32> [#uses=0]
+	%11 = tail call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %6, i8* getelementptr ([28 x i8]* @.str1, i32 0, i32 0), i32 %8, i32 %10) nounwind		; <i32> [#uses=0]
 	ret i32 0
 }
 
-declare arm_apcscc i32 @read(...)
+declare i32 @read(...)
 
-declare arm_apcscc void @perror(i8* nocapture) nounwind
+declare void @perror(i8* nocapture) nounwind
 
-declare arm_apcscc i32 @write(...)
+declare i32 @write(...)
 
-declare arm_apcscc i32 @fprintf(%struct.FILE* nocapture, i8* nocapture, ...) nounwind
+declare i32 @fprintf(%struct.FILE* nocapture, i8* nocapture, ...) nounwind

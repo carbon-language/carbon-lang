@@ -8,7 +8,7 @@
 @_2E_str7 = internal constant [21 x i8] c"ERROR: Only 1 point!\00", section "__TEXT,__cstring,cstring_literals", align 1		; <[21 x i8]*> [#uses=1]
 @llvm.used = appending global [1 x i8*] [i8* bitcast (void (%struct.EDGE_PAIR*, %struct.VERTEX*, %struct.VERTEX*)* @build_delaunay to i8*)], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]
 
-define arm_apcscc void @build_delaunay(%struct.EDGE_PAIR* noalias nocapture sret %agg.result, %struct.VERTEX* %tree, %struct.VERTEX* %extra) nounwind {
+define void @build_delaunay(%struct.EDGE_PAIR* noalias nocapture sret %agg.result, %struct.VERTEX* %tree, %struct.VERTEX* %extra) nounwind {
 entry:
 	%delright = alloca %struct.EDGE_PAIR, align 8		; <%struct.EDGE_PAIR*> [#uses=3]
 	%delleft = alloca %struct.EDGE_PAIR, align 8		; <%struct.EDGE_PAIR*> [#uses=3]
@@ -29,10 +29,10 @@ bb1.i:		; preds = %bb1.i, %bb
 	br i1 %6, label %get_low.exit, label %bb1.i
 
 get_low.exit:		; preds = %bb1.i
-	call arm_apcscc  void @build_delaunay(%struct.EDGE_PAIR* noalias sret %delright, %struct.VERTEX* %2, %struct.VERTEX* %extra) nounwind
+	call  void @build_delaunay(%struct.EDGE_PAIR* noalias sret %delright, %struct.VERTEX* %2, %struct.VERTEX* %extra) nounwind
 	%7 = getelementptr %struct.VERTEX* %tree, i32 0, i32 1		; <%struct.VERTEX**> [#uses=1]
 	%8 = load %struct.VERTEX** %7, align 4		; <%struct.VERTEX*> [#uses=1]
-	call arm_apcscc  void @build_delaunay(%struct.EDGE_PAIR* noalias sret %delleft, %struct.VERTEX* %8, %struct.VERTEX* %tree) nounwind
+	call  void @build_delaunay(%struct.EDGE_PAIR* noalias sret %delleft, %struct.VERTEX* %8, %struct.VERTEX* %tree) nounwind
 	%9 = getelementptr %struct.EDGE_PAIR* %delleft, i32 0, i32 0		; <%struct.edge_rec**> [#uses=1]
 	%10 = load %struct.edge_rec** %9, align 8		; <%struct.edge_rec*> [#uses=2]
 	%11 = getelementptr %struct.EDGE_PAIR* %delleft, i32 0, i32 1		; <%struct.edge_rec**> [#uses=1]
@@ -141,7 +141,7 @@ bb5.i:		; preds = %bb3.i
 	%85 = inttoptr i32 %84 to %struct.edge_rec*		; <%struct.edge_rec*> [#uses=1]
 	%86 = getelementptr %struct.edge_rec* %ldi_addr.0.i, i32 0, i32 0		; <%struct.VERTEX**> [#uses=1]
 	%87 = load %struct.VERTEX** %86, align 4		; <%struct.VERTEX*> [#uses=1]
-	%88 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=6]
+	%88 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=6]
 	%89 = getelementptr %struct.edge_rec* %88, i32 0, i32 1		; <%struct.edge_rec**> [#uses=4]
 	store %struct.edge_rec* %88, %struct.edge_rec** %89, align 4
 	%90 = getelementptr %struct.edge_rec* %88, i32 0, i32 0		; <%struct.VERTEX**> [#uses=2]
@@ -780,7 +780,7 @@ bb24.i:		; preds = %bb23.i, %bb21.i
 	%592 = and i32 %589, -64		; <i32> [#uses=1]
 	%593 = or i32 %591, %592		; <i32> [#uses=1]
 	%594 = inttoptr i32 %593 to %struct.edge_rec*		; <%struct.edge_rec*> [#uses=1]
-	%595 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=5]
+	%595 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=5]
 	%596 = getelementptr %struct.edge_rec* %595, i32 0, i32 1		; <%struct.edge_rec**> [#uses=4]
 	store %struct.edge_rec* %595, %struct.edge_rec** %596, align 4
 	%597 = getelementptr %struct.edge_rec* %595, i32 0, i32 0		; <%struct.VERTEX**> [#uses=1]
@@ -882,7 +882,7 @@ bb25.i:		; preds = %bb23.i, %bb22.i
 	%677 = and i32 %674, -64		; <i32> [#uses=1]
 	%678 = or i32 %676, %677		; <i32> [#uses=1]
 	%679 = inttoptr i32 %678 to %struct.edge_rec*		; <%struct.edge_rec*> [#uses=1]
-	%680 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
+	%680 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
 	%681 = getelementptr %struct.edge_rec* %680, i32 0, i32 1		; <%struct.edge_rec**> [#uses=5]
 	store %struct.edge_rec* %680, %struct.edge_rec** %681, align 4
 	%682 = getelementptr %struct.edge_rec* %680, i32 0, i32 0		; <%struct.VERTEX**> [#uses=1]
@@ -1005,15 +1005,15 @@ bb7:		; preds = %bb
 	%762 = getelementptr %struct.VERTEX* %tree, i32 0, i32 1		; <%struct.VERTEX**> [#uses=1]
 	%763 = load %struct.VERTEX** %762, align 4		; <%struct.VERTEX*> [#uses=4]
 	%764 = icmp eq %struct.VERTEX* %763, null		; <i1> [#uses=1]
-	%765 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=5]
+	%765 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=5]
 	%766 = getelementptr %struct.edge_rec* %765, i32 0, i32 1		; <%struct.edge_rec**> [#uses=4]
 	store %struct.edge_rec* %765, %struct.edge_rec** %766, align 4
 	%767 = getelementptr %struct.edge_rec* %765, i32 0, i32 0		; <%struct.VERTEX**> [#uses=3]
 	br i1 %764, label %bb10, label %bb11
 
 bb8:		; preds = %entry
-	%768 = call arm_apcscc  i32 @puts(i8* getelementptr ([21 x i8]* @_2E_str7, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
-	call arm_apcscc  void @exit(i32 -1) noreturn nounwind
+	%768 = call  i32 @puts(i8* getelementptr ([21 x i8]* @_2E_str7, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
+	call  void @exit(i32 -1) noreturn nounwind
 	unreachable
 
 bb10:		; preds = %bb7
@@ -1053,7 +1053,7 @@ bb11:		; preds = %bb7
 	store %struct.VERTEX* %tree, %struct.VERTEX** %790, align 4
 	%791 = getelementptr %struct.edge_rec* %785, i32 0, i32 1		; <%struct.edge_rec**> [#uses=1]
 	store %struct.edge_rec* %783, %struct.edge_rec** %791, align 4
-	%792 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
+	%792 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
 	%793 = getelementptr %struct.edge_rec* %792, i32 0, i32 1		; <%struct.edge_rec**> [#uses=4]
 	store %struct.edge_rec* %792, %struct.edge_rec** %793, align 4
 	%794 = getelementptr %struct.edge_rec* %792, i32 0, i32 0		; <%struct.VERTEX**> [#uses=1]
@@ -1117,7 +1117,7 @@ bb11:		; preds = %bb7
 	%843 = or i32 %841, %842		; <i32> [#uses=1]
 	%844 = inttoptr i32 %843 to %struct.edge_rec*		; <%struct.edge_rec*> [#uses=1]
 	%845 = load %struct.VERTEX** %767, align 4		; <%struct.VERTEX*> [#uses=1]
-	%846 = call arm_apcscc  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
+	%846 = call  %struct.edge_rec* @alloc_edge() nounwind		; <%struct.edge_rec*> [#uses=4]
 	%847 = getelementptr %struct.edge_rec* %846, i32 0, i32 1		; <%struct.edge_rec**> [#uses=7]
 	store %struct.edge_rec* %846, %struct.edge_rec** %847, align 4
 	%848 = getelementptr %struct.edge_rec* %846, i32 0, i32 0		; <%struct.VERTEX**> [#uses=1]
@@ -1316,8 +1316,8 @@ bb15:		; preds = %bb14, %bb13, %bb11, %bb10, %bb6
 	ret void
 }
 
-declare arm_apcscc i32 @puts(i8* nocapture) nounwind
+declare i32 @puts(i8* nocapture) nounwind
 
-declare arm_apcscc void @exit(i32) noreturn nounwind
+declare void @exit(i32) noreturn nounwind
 
-declare arm_apcscc %struct.edge_rec* @alloc_edge() nounwind
+declare %struct.edge_rec* @alloc_edge() nounwind

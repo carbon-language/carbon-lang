@@ -1,7 +1,7 @@
 ; RUN: llc -march=arm -mattr=+neon < %s
 ; Radar 7770501: Don't crash on SELECT and SELECT_CC with NEON vector values.
 
-define arm_apcscc void @vDSP_FFT16_copv(float* nocapture %O, float* nocapture %I, i32 %Direction) nounwind {
+define void @vDSP_FFT16_copv(float* nocapture %O, float* nocapture %I, i32 %Direction) nounwind {
 entry:
   %.22 = select i1 undef, <4 x float> undef, <4 x float> zeroinitializer ; <<4 x float>> [#uses=1]
   %0 = fadd <4 x float> undef, %.22               ; <<4 x float>> [#uses=1]

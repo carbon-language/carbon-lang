@@ -9,7 +9,7 @@
 
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (%struct.asl_file_t*, i64, i64*)* @t to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
 
-define arm_apcscc i32 @t(%struct.asl_file_t* %s, i64 %off, i64* %out) nounwind optsize {
+define i32 @t(%struct.asl_file_t* %s, i64 %off, i64* %out) nounwind optsize {
 ; CHECK: t:
 ; CHECK: adds r0, #8
 entry:
@@ -32,7 +32,7 @@ bb3:                                              ; preds = %bb1
   br i1 %8, label %bb13, label %bb5
 
 bb5:                                              ; preds = %bb3
-  %9 = call arm_apcscc  i32 @fseeko(%struct.FILE* %2, i64 %off, i32 0) nounwind ; <i32> [#uses=1]
+  %9 = call  i32 @fseeko(%struct.FILE* %2, i64 %off, i32 0) nounwind ; <i32> [#uses=1]
   %10 = icmp eq i32 %9, 0                         ; <i1> [#uses=1]
   br i1 %10, label %bb7, label %bb13
 
@@ -40,7 +40,7 @@ bb7:                                              ; preds = %bb5
   store i64 0, i64* %val, align 4
   %11 = load %struct.FILE** %1, align 4           ; <%struct.FILE*> [#uses=1]
   %val8 = bitcast i64* %val to i8*                ; <i8*> [#uses=1]
-  %12 = call arm_apcscc  i32 @fread(i8* noalias %val8, i32 8, i32 1, %struct.FILE* noalias %11) nounwind ; <i32> [#uses=1]
+  %12 = call  i32 @fread(i8* noalias %val8, i32 8, i32 1, %struct.FILE* noalias %11) nounwind ; <i32> [#uses=1]
   %13 = icmp eq i32 %12, 1                        ; <i1> [#uses=1]
   br i1 %13, label %bb10, label %bb13
 
@@ -50,7 +50,7 @@ bb10:                                             ; preds = %bb7
 
 bb11:                                             ; preds = %bb10
   %15 = load i64* %val, align 4                   ; <i64> [#uses=1]
-  %16 = call arm_apcscc  i64 @asl_core_ntohq(i64 %15) nounwind ; <i64> [#uses=1]
+  %16 = call  i64 @asl_core_ntohq(i64 %15) nounwind ; <i64> [#uses=1]
   store i64 %16, i64* %out, align 4
   ret i32 0
 
@@ -59,8 +59,8 @@ bb13:                                             ; preds = %bb10, %bb7, %bb5, %
   ret i32 %.0
 }
 
-declare arm_apcscc i32 @fseeko(%struct.FILE* nocapture, i64, i32) nounwind
+declare i32 @fseeko(%struct.FILE* nocapture, i64, i32) nounwind
 
-declare arm_apcscc i32 @fread(i8* noalias nocapture, i32, i32, %struct.FILE* noalias nocapture) nounwind
+declare i32 @fread(i8* noalias nocapture, i32, i32, %struct.FILE* noalias nocapture) nounwind
 
-declare arm_apcscc i64 @asl_core_ntohq(i64)
+declare i64 @asl_core_ntohq(i64)

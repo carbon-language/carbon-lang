@@ -3,7 +3,7 @@
 
 target triple = "thumbv7-apple-darwin10"
 
-define arm_apcscc i32 @f1(i16* %ptr) nounwind {
+define i32 @f1(i16* %ptr) nounwind {
 ; CHECK-A8: f1
 ; CHECK-A8: sxth
 ; CHECK-M3: f1

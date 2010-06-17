@@ -6,9 +6,9 @@
 	%struct.cli_bm_patt = type { i8*, i8*, i16, i16, i8*, i8*, i8, %struct.cli_bm_patt*, i16 }
 	%struct.cli_matcher = type { i16, i8, i8*, %struct.cli_bm_patt**, i32*, i32, i8, i8, %struct.cli_ac_node*, %struct.cli_ac_node**, %struct.cli_ac_patt**, i32, i32, i32 }
 
-declare arm_apcscc i32 @strlen(i8* nocapture) nounwind readonly
+declare i32 @strlen(i8* nocapture) nounwind readonly
 
-define arm_apcscc i32 @cli_ac_addsig(%struct.cli_matcher* nocapture %root, i8* %virname, i8* %hexsig, i32 %sigid, i16 zeroext %parts, i16 zeroext %partno, i16 zeroext %type, i32 %mindist, i32 %maxdist, i8* %offset, i8 zeroext %target) nounwind {
+define i32 @cli_ac_addsig(%struct.cli_matcher* nocapture %root, i8* %virname, i8* %hexsig, i32 %sigid, i16 zeroext %parts, i16 zeroext %partno, i16 zeroext %type, i32 %mindist, i32 %maxdist, i8* %offset, i8 zeroext %target) nounwind {
 entry:
 	br i1 undef, label %bb126, label %bb1
 
@@ -86,7 +86,7 @@ bb52:		; preds = %cli_calloc.exit
 	%0 = load i16* undef, align 4		; <i16> [#uses=1]
 	%1 = icmp eq i16 %0, 0		; <i1> [#uses=1]
 	%iftmp.20.0 = select i1 %1, i8* %hexsig, i8* null		; <i8*> [#uses=1]
-	%2 = tail call arm_apcscc  i32 @strlen(i8* %iftmp.20.0) nounwind readonly		; <i32> [#uses=0]
+	%2 = tail call  i32 @strlen(i8* %iftmp.20.0) nounwind readonly		; <i32> [#uses=0]
 	unreachable
 
 bb126:		; preds = %entry

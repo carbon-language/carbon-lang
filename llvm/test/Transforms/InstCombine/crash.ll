@@ -127,11 +127,11 @@ l10:
 }
 
 ; PR5471
-define arm_apcscc i32 @test5a() {
+define i32 @test5a() {
        ret i32 0
 }
 
-define arm_apcscc void @test5() {
+define void @test5() {
        store i1 true, i1* undef
        %1 = invoke i32 @test5a() to label %exit unwind label %exit
 exit:
@@ -212,7 +212,7 @@ define i8* @test10(i8* %self, i8* %tmp3) {
 entry:
   store i1 true, i1* undef
   store i1 true, i1* undef
-  invoke arm_apcscc void @test10a()
+  invoke void @test10a()
           to label %invoke.cont unwind label %try.handler ; <i8*> [#uses=0]
 
 invoke.cont:                                      ; preds = %entry

@@ -6,16 +6,16 @@
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 target triple = "thumbv7-apple-darwin10"
 
-declare arm_apcscc void @etoe53(i16* nocapture, i16* nocapture) nounwind
+declare void @etoe53(i16* nocapture, i16* nocapture) nounwind
 
-define arm_apcscc void @earith(double* nocapture %value, i32 %icode, double* nocapture %r1, double* nocapture %r2) nounwind {
+define void @earith(double* nocapture %value, i32 %icode, double* nocapture %r1, double* nocapture %r2) nounwind {
 entry:
   %v = alloca [6 x i16], align 4                  ; <[6 x i16]*> [#uses=1]
   br i1 undef, label %bb2.i, label %bb5
 
 bb2.i:                                            ; preds = %entry
   %0 = bitcast double* %value to i16*             ; <i16*> [#uses=1]
-  call arm_apcscc  void @etoe53(i16* null, i16* %0) nounwind
+  call  void @etoe53(i16* null, i16* %0) nounwind
   ret void
 
 bb5:                                              ; preds = %entry
@@ -48,6 +48,6 @@ bb35:                                             ; preds = %bb5
 bb46:                                             ; preds = %bb26, %bb10
   %1 = bitcast double* %value to i16*             ; <i16*> [#uses=1]
   %v47 = getelementptr inbounds [6 x i16]* %v, i32 0, i32 0 ; <i16*> [#uses=1]
-  call arm_apcscc  void @etoe53(i16* %v47, i16* %1) nounwind
+  call  void @etoe53(i16* %v47, i16* %1) nounwind
   ret void
 }

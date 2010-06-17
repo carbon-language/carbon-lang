@@ -2,7 +2,7 @@
 
 %struct.A = type { i32* }
 
-define arm_apcscc void @"\01-[MyFunction Name:]"() {
+define void @"\01-[MyFunction Name:]"() {
 entry:
   %save_filt.1 = alloca i32                       ; <i32*> [#uses=2]
   %save_eptr.0 = alloca i8*                       ; <i8**> [#uses=2]
@@ -10,12 +10,12 @@ entry:
   %eh_exception = alloca i8*                      ; <i8**> [#uses=5]
   %eh_selector = alloca i32                       ; <i32*> [#uses=3]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call arm_apcscc  void @_ZN1AC1Ev(%struct.A* %a)
-  invoke arm_apcscc  void @_Z3barv()
+  call  void @_ZN1AC1Ev(%struct.A* %a)
+  invoke  void @_Z3barv()
           to label %invcont unwind label %lpad
 
 invcont:                                          ; preds = %entry
-  call arm_apcscc  void @_ZN1AD1Ev(%struct.A* %a) nounwind
+  call  void @_ZN1AD1Ev(%struct.A* %a) nounwind
   br label %return
 
 bb:                                               ; preds = %ppad
@@ -23,7 +23,7 @@ bb:                                               ; preds = %ppad
   store i32 %eh_select, i32* %save_filt.1, align 4
   %eh_value = load i8** %eh_exception             ; <i8*> [#uses=1]
   store i8* %eh_value, i8** %save_eptr.0, align 4
-  call arm_apcscc  void @_ZN1AD1Ev(%struct.A* %a) nounwind
+  call  void @_ZN1AD1Ev(%struct.A* %a) nounwind
   %0 = load i8** %save_eptr.0, align 4            ; <i8*> [#uses=1]
   store i8* %0, i8** %eh_exception, align 4
   %1 = load i32* %save_filt.1, align 4            ; <i32> [#uses=1]
@@ -46,16 +46,16 @@ ppad:                                             ; preds = %lpad
 
 Unwind:                                           ; preds = %bb
   %eh_ptr3 = load i8** %eh_exception              ; <i8*> [#uses=1]
-  call arm_apcscc  void @_Unwind_SjLj_Resume(i8* %eh_ptr3)
+  call  void @_Unwind_SjLj_Resume(i8* %eh_ptr3)
   unreachable
 }
 
-define linkonce_odr arm_apcscc void @_ZN1AC1Ev(%struct.A* %this) {
+define linkonce_odr void @_ZN1AC1Ev(%struct.A* %this) {
 entry:
   %this_addr = alloca %struct.A*                  ; <%struct.A**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %struct.A* %this, %struct.A** %this_addr
-  %0 = call arm_apcscc  i8* @_Znwm(i32 4)         ; <i8*> [#uses=1]
+  %0 = call  i8* @_Znwm(i32 4)         ; <i8*> [#uses=1]
   %1 = bitcast i8* %0 to i32*                     ; <i32*> [#uses=1]
   %2 = load %struct.A** %this_addr, align 4       ; <%struct.A*> [#uses=1]
   %3 = getelementptr inbounds %struct.A* %2, i32 0, i32 0 ; <i32**> [#uses=1]
@@ -66,9 +66,9 @@ return:                                           ; preds = %entry
   ret void
 }
 
-declare arm_apcscc i8* @_Znwm(i32)
+declare i8* @_Znwm(i32)
 
-define linkonce_odr arm_apcscc void @_ZN1AD1Ev(%struct.A* %this) nounwind {
+define linkonce_odr void @_ZN1AD1Ev(%struct.A* %this) nounwind {
 entry:
   %this_addr = alloca %struct.A*                  ; <%struct.A**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -77,7 +77,7 @@ entry:
   %1 = getelementptr inbounds %struct.A* %0, i32 0, i32 0 ; <i32**> [#uses=1]
   %2 = load i32** %1, align 4                     ; <i32*> [#uses=1]
   %3 = bitcast i32* %2 to i8*                     ; <i8*> [#uses=1]
-  call arm_apcscc  void @_ZdlPv(i8* %3) nounwind
+  call  void @_ZdlPv(i8* %3) nounwind
   br label %bb
 
 bb:                                               ; preds = %entry
@@ -88,9 +88,9 @@ return:                                           ; preds = %bb
 }
 ;CHECK: L_LSDA_0:
 
-declare arm_apcscc void @_ZdlPv(i8*) nounwind
+declare void @_ZdlPv(i8*) nounwind
 
-declare arm_apcscc void @_Z3barv()
+declare void @_Z3barv()
 
 declare i8* @llvm.eh.exception() nounwind
 
@@ -98,6 +98,6 @@ declare i32 @llvm.eh.selector.i32(i8*, i8*, ...) nounwind
 
 declare i32 @llvm.eh.typeid.for.i32(i8*) nounwind
 
-declare arm_apcscc i32 @__gxx_personality_sj0(...)
+declare i32 @__gxx_personality_sj0(...)
 
-declare arm_apcscc void @_Unwind_SjLj_Resume(i8*)
+declare void @_Unwind_SjLj_Resume(i8*)

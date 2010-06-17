@@ -10,7 +10,7 @@ target triple = "thumbv7-elf"
 
 declare <2 x i32> @llvm.arm.neon.vpadd.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
 
-define arm_apcscc void @_ZN6squish10ClusterFit9Compress3EPv(%quuz* %this, i8* %block) {
+define void @_ZN6squish10ClusterFit9Compress3EPv(%quuz* %this, i8* %block) {
 entry:
   %0 = lshr <4 x i32> zeroinitializer, <i32 31, i32 31, i32 31, i32 31> ; <<4 x i32>> [#uses=1]
   %1 = shufflevector <4 x i32> %0, <4 x i32> undef, <2 x i32> <i32 2, i32 3> ; <<2 x i32>> [#uses=1]

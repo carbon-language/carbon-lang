@@ -4,7 +4,7 @@
 
 %struct.foo = type { i64, i64 }
 
-define arm_apcscc zeroext i8 @t(%struct.foo* %this) noreturn optsize {
+define zeroext i8 @t(%struct.foo* %this) noreturn optsize {
 entry:
 ; ARM:       t:
 ; ARM:       str r0, [r1], r0

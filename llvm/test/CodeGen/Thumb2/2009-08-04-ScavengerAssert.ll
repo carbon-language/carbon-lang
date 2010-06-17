@@ -55,25 +55,25 @@
 @.str1872951 = external constant [17 x i8], align 1		; <[17 x i8]*> [#uses=1]
 @.str1932957 = external constant [26 x i8], align 1		; <[26 x i8]*> [#uses=1]
 
-declare arm_apcscc i32 @fprintf(%struct.FILE* nocapture, i8* nocapture, ...) nounwind
+declare i32 @fprintf(%struct.FILE* nocapture, i8* nocapture, ...) nounwind
 
-declare arm_apcscc i32 @"\01_fwrite"(i8*, i32, i32, i8*)
+declare i32 @"\01_fwrite"(i8*, i32, i32, i8*)
 
-declare arm_apcscc i32 @remove(i8* nocapture) nounwind
+declare i32 @remove(i8* nocapture) nounwind
 
-declare arm_apcscc %struct.FILE* @OpenIncGraphicFile(i8*, i8 zeroext, %struct.rec** nocapture, %struct.FILE_POS*, i32* nocapture) nounwind
+declare %struct.FILE* @OpenIncGraphicFile(i8*, i8 zeroext, %struct.rec** nocapture, %struct.FILE_POS*, i32* nocapture) nounwind
 
-declare arm_apcscc %struct.rec* @MakeWord(i32, i8* nocapture, %struct.FILE_POS*) nounwind
+declare %struct.rec* @MakeWord(i32, i8* nocapture, %struct.FILE_POS*) nounwind
 
-declare arm_apcscc void @Error(i32, i32, i8*, i32, %struct.FILE_POS*, ...) nounwind
+declare void @Error(i32, i32, i8*, i32, %struct.FILE_POS*, ...) nounwind
 
-declare arm_apcscc i32 @"\01_fputs"(i8*, %struct.FILE*)
+declare i32 @"\01_fputs"(i8*, %struct.FILE*)
 
-declare arm_apcscc noalias i8* @calloc(i32, i32) nounwind
+declare noalias i8* @calloc(i32, i32) nounwind
 
-declare arm_apcscc i8* @fgets(i8*, i32, %struct.FILE* nocapture) nounwind
+declare i8* @fgets(i8*, i32, %struct.FILE* nocapture) nounwind
 
-define arm_apcscc void @PS_PrintGraphicInclude(%struct.rec* %x, i32 %colmark, i32 %rowmark) nounwind {
+define void @PS_PrintGraphicInclude(%struct.rec* %x, i32 %colmark, i32 %rowmark) nounwind {
 entry:
 	%buff = alloca [512 x i8], align 4		; <[512 x i8]*> [#uses=5]
 	%0 = getelementptr %struct.rec* %x, i32 0, i32 0, i32 1, i32 0, i32 0		; <i8*> [#uses=2]
@@ -94,7 +94,7 @@ bb1:		; preds = %bb, %entry
 	br i1 %8, label %bb2, label %bb3
 
 bb2:		; preds = %bb1
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([40 x i8]* @.str1802944, i32 0, i32 0)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([40 x i8]* @.str1802944, i32 0, i32 0)) nounwind
 	br label %bb3
 
 bb3:		; preds = %bb2, %bb1
@@ -108,7 +108,7 @@ bb5:		; preds = %bb5, %bb3
 bb6:		; preds = %bb5
 	%10 = load i8* %0, align 4		; <i8> [#uses=1]
 	%11 = getelementptr %struct.rec* %y.0, i32 0, i32 0, i32 1, i32 0		; <%struct.FILE_POS*> [#uses=1]
-	%12 = call arm_apcscc  %struct.FILE* @OpenIncGraphicFile(i8* undef, i8 zeroext %10, %struct.rec** null, %struct.FILE_POS* %11, i32* undef) nounwind		; <%struct.FILE*> [#uses=4]
+	%12 = call  %struct.FILE* @OpenIncGraphicFile(i8* undef, i8 zeroext %10, %struct.rec** null, %struct.FILE_POS* %11, i32* undef) nounwind		; <%struct.FILE*> [#uses=4]
 	br i1 false, label %bb7, label %bb8
 
 bb7:		; preds = %bb6
@@ -124,7 +124,7 @@ bb9:		; preds = %bb8
 	br i1 %15, label %bb.i, label %FontHalfXHeight.exit
 
 bb.i:		; preds = %bb9
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([17 x i8]* @.str111875, i32 0, i32 0)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([17 x i8]* @.str111875, i32 0, i32 0)) nounwind
 	%.pre186 = load i32* @currentfont, align 4		; <i32> [#uses=1]
 	br label %FontHalfXHeight.exit
 
@@ -139,7 +139,7 @@ bb1.i:		; preds = %bb.i1, %FontHalfXHeight.exit
 	br i1 undef, label %bb2.i, label %FontSize.exit
 
 bb2.i:		; preds = %bb1.i
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 37, i32 61, i8* getelementptr ([30 x i8]* @.str101874, i32 0, i32 0), i32 1, %struct.FILE_POS* null) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 37, i32 61, i8* getelementptr ([30 x i8]* @.str101874, i32 0, i32 0), i32 1, %struct.FILE_POS* null) nounwind
 	unreachable
 
 FontSize.exit:		; preds = %bb1.i
@@ -151,35 +151,35 @@ FontSize.exit:		; preds = %bb1.i
 	br i1 %21, label %bb.i5, label %FontName.exit
 
 bb.i5:		; preds = %FontSize.exit
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([10 x i8]* @.str81872, i32 0, i32 0)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([10 x i8]* @.str81872, i32 0, i32 0)) nounwind
 	br label %FontName.exit
 
 FontName.exit:		; preds = %bb.i5, %FontSize.exit
 	%22 = phi %struct.FONT_INFO* [ undef, %bb.i5 ], [ undef, %FontSize.exit ]		; <%struct.FONT_INFO*> [#uses=1]
 	%23 = getelementptr %struct.FONT_INFO* %22, i32 %19, i32 5		; <%struct.rec**> [#uses=0]
-	%24 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([8 x i8]* @.str1822946, i32 0, i32 0), i32 %18, i8* null) nounwind		; <i32> [#uses=0]
+	%24 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([8 x i8]* @.str1822946, i32 0, i32 0), i32 %18, i8* null) nounwind		; <i32> [#uses=0]
 	br label %bb10
 
 bb10:		; preds = %FontName.exit, %bb8
-	%25 = call arm_apcscc  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
+	%25 = call  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
 	%26 = sub i32 %rowmark, undef		; <i32> [#uses=1]
 	%27 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
-	%28 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %27, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %26) nounwind		; <i32> [#uses=0]
+	%28 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %27, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %26) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
-	%29 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([17 x i8]* @.str192782, i32 0, i32 0), double 2.000000e+01, double 2.000000e+01) nounwind		; <i32> [#uses=0]
+	%29 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([17 x i8]* @.str192782, i32 0, i32 0), double 2.000000e+01, double 2.000000e+01) nounwind		; <i32> [#uses=0]
 	%30 = getelementptr %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 0		; <i32*> [#uses=1]
 	%31 = load i32* %30, align 4		; <i32> [#uses=1]
 	%32 = sub i32 0, %31		; <i32> [#uses=1]
 	%33 = load i32* undef, align 4		; <i32> [#uses=1]
 	%34 = sub i32 0, %33		; <i32> [#uses=1]
 	%35 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
-	%36 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %35, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %32, i32 %34) nounwind		; <i32> [#uses=0]
+	%36 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %35, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %32, i32 %34) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	%37 = load %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
 	%38 = getelementptr %struct.rec* %37, i32 0, i32 0, i32 4		; <%struct.FOURTH_UNION*> [#uses=1]
-	%39 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([23 x i8]* @.str1852949, i32 0, i32 0), %struct.FOURTH_UNION* %38) nounwind		; <i32> [#uses=0]
+	%39 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([23 x i8]* @.str1852949, i32 0, i32 0), %struct.FOURTH_UNION* %38) nounwind		; <i32> [#uses=0]
 	%buff14 = getelementptr [512 x i8]* %buff, i32 0, i32 0		; <i8*> [#uses=5]
-	%40 = call arm_apcscc  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
+	%40 = call  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
 	%iftmp.506.0 = select i1 undef, i32 2, i32 0		; <i32> [#uses=1]
 	%41 = getelementptr [512 x i8]* %buff, i32 0, i32 26		; <i8*> [#uses=1]
 	br label %bb100.outer.outer
@@ -230,7 +230,7 @@ bb3.i77:		; preds = %bb2.i75, %StringBeginsWith.exit88
 	br i1 %50, label %bb24, label %bb2.i.i68
 
 bb24:		; preds = %bb3.i77
-	%51 = call arm_apcscc  %struct.rec* @MakeWord(i32 11, i8* %41, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=0]
+	%51 = call  %struct.rec* @MakeWord(i32 11, i8* %41, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=0]
 	%52 = load i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
 	%53 = zext i8 %52 to i32		; <i32> [#uses=2]
 	%54 = getelementptr [524 x %struct.rec*]* @zz_free, i32 0, i32 %53		; <%struct.rec**> [#uses=2]
@@ -245,7 +245,7 @@ bb.i56:		; preds = %bb27
 	br i1 undef, label %bb1.i58, label %bb2.i60
 
 bb1.i58:		; preds = %bb.i56
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 31, i32 1, i8* getelementptr ([32 x i8]* @.str1575, i32 0, i32 0), i32 1, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 31, i32 1, i8* getelementptr ([32 x i8]* @.str1575, i32 0, i32 0), i32 1, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind
 	br label %bb2.i60
 
 bb2.i60:		; preds = %bb1.i58, %bb.i56
@@ -287,7 +287,7 @@ bb37:		; preds = %bb35
 	br label %bb41
 
 bb41:		; preds = %bb37, %bb35
-	%61 = call arm_apcscc  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=1]
+	%61 = call  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=1]
 	%62 = icmp eq i8* %61, null		; <i1> [#uses=1]
 	%iftmp.554.0 = select i1 %62, i32 2, i32 1		; <i32> [#uses=1]
 	br label %bb100.outer
@@ -342,11 +342,11 @@ bb2.i6.i26:		; preds = %bb2.i6.i26, %StringBeginsWith.exit.i20
 	br i1 undef, label %bb2.i6.i26, label %bb55
 
 bb55:		; preds = %bb2.i6.i26
-	%69 = call arm_apcscc  i32 @"\01_fputs"(i8* %buff14, %struct.FILE* undef) nounwind		; <i32> [#uses=0]
+	%69 = call  i32 @"\01_fputs"(i8* %buff14, %struct.FILE* undef) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb58:		; preds = %StringBeginsWith.exit.i20
-	%70 = call arm_apcscc  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
+	%70 = call  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
 	%iftmp.560.0 = select i1 undef, i32 2, i32 0		; <i32> [#uses=1]
 	br label %bb100.outer
 
@@ -367,7 +367,7 @@ StringBeginsWith.exit:		; preds = %StringBeginsWith.exitthread-split, %bb3.i
 	br i1 %phitmp93, label %bb66, label %bb2.i.i
 
 bb66:		; preds = %StringBeginsWith.exit
-	%71 = call arm_apcscc  %struct.rec* @MakeWord(i32 11, i8* undef, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=4]
+	%71 = call  %struct.rec* @MakeWord(i32 11, i8* undef, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=4]
 	%72 = load i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
 	%73 = zext i8 %72 to i32		; <i32> [#uses=2]
 	%74 = getelementptr [524 x %struct.rec*]* @zz_free, i32 0, i32 %73		; <%struct.rec**> [#uses=2]
@@ -379,13 +379,13 @@ bb69:		; preds = %bb66
 	br i1 undef, label %bb.i2, label %GetMemory.exit
 
 bb.i2:		; preds = %bb69
-	%77 = call arm_apcscc  noalias i8* @calloc(i32 1020, i32 4) nounwind		; <i8*> [#uses=1]
+	%77 = call  noalias i8* @calloc(i32 1020, i32 4) nounwind		; <i8*> [#uses=1]
 	%78 = bitcast i8* %77 to i8**		; <i8**> [#uses=3]
 	store i8** %78, i8*** @next_free.4772, align 4
 	br i1 undef, label %bb1.i3, label %bb2.i4
 
 bb1.i3:		; preds = %bb.i2
-	call arm_apcscc  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 31, i32 1, i8* getelementptr ([32 x i8]* @.str1575, i32 0, i32 0), i32 1, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 31, i32 1, i8* getelementptr ([32 x i8]* @.str1575, i32 0, i32 0), i32 1, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind
 	br label %bb2.i4
 
 bb2.i4:		; preds = %bb1.i3, %bb.i2
@@ -482,7 +482,7 @@ bb91:		; preds = %strip_out.exit, %bb.i2.i
 	unreachable
 
 bb94:		; preds = %strip_out.exit, %StringBeginsWith.exit.i
-	%96 = call arm_apcscc  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
+	%96 = call  i8* @fgets(i8* %buff14, i32 512, %struct.FILE* %12) nounwind		; <i8*> [#uses=0]
 	unreachable
 
 bb100.outer:		; preds = %bb58, %bb41, %bb100.outer.outer
@@ -497,12 +497,12 @@ bb101.split:		; preds = %bb100.outer
 	br i1 %97, label %bb103, label %bb102
 
 bb102:		; preds = %bb101.split
-	%98 = call arm_apcscc  i32 @remove(i8* getelementptr ([9 x i8]* @.str19294, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
+	%98 = call  i32 @remove(i8* getelementptr ([9 x i8]* @.str19294, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb103:		; preds = %bb101.split
 	%99 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
-	%100 = call arm_apcscc  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %99, i8* getelementptr ([26 x i8]* @.str1932957, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
+	%100 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %99, i8* getelementptr ([26 x i8]* @.str1932957, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @wordcount, align 4
 	ret void
 }

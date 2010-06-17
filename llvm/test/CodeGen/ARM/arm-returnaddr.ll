@@ -3,7 +3,7 @@
 ; rdar://8015977
 ; rdar://8020118
 
-define arm_apcscc i8* @rt0(i32 %x) nounwind readnone {
+define i8* @rt0(i32 %x) nounwind readnone {
 entry:
 ; CHECK: rt0:
 ; CHECK: mov r0, lr
@@ -11,7 +11,7 @@ entry:
   ret i8* %0
 }
 
-define arm_apcscc i8* @rt2() nounwind readnone {
+define i8* @rt2() nounwind readnone {
 entry:
 ; CHECK: rt2:
 ; CHECK: ldr r0, [r7]

@@ -6,7 +6,7 @@
 @lefline = external global [100 x [20 x i32]]		; <[100 x [20 x i32]]*> [#uses=1]
 @sep = external global [20 x i32]		; <[20 x i32]*> [#uses=1]
 
-define arm_apcscc void @main(i32 %argc, i8** %argv) noreturn nounwind {
+define void @main(i32 %argc, i8** %argv) noreturn nounwind {
 ; CHECK: main:
 ; CHECK: ldrb
 entry:

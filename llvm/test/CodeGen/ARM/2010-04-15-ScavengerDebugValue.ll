@@ -3,7 +3,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:64-n32"
 target triple = "armv4t-apple-darwin10"
 
-define hidden arm_apcscc i32 @__addvsi3(i32 %a, i32 %b) nounwind {
+define hidden i32 @__addvsi3(i32 %a, i32 %b) nounwind {
 entry:
   tail call void @llvm.dbg.value(metadata !{i32 %b}, i64 0, metadata !0)
   %0 = add nsw i32 %b, %a, !dbg !9                ; <i32> [#uses=1]

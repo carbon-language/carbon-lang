@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 ; rdar://7961298
 
-define arm_apcscc void @t() nounwind {
+define void @t() nounwind {
 entry:
 ; CHECK: t:
 ; CHECK: trap

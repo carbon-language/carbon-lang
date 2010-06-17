@@ -9,7 +9,7 @@ target triple = "thumbv7-apple-darwin10"
 %struct.int16x8x2_t = type { [2 x %struct.int16x8_t] }
 %union..0anon = type { %struct.int16x8x2_t }
 
-define arm_apcscc void @test(<8 x i16> %tmp.0, %struct.int16x8x2_t* %dst) nounwind {
+define void @test(<8 x i16> %tmp.0, %struct.int16x8x2_t* %dst) nounwind {
 ; CHECK: @test
 ; CHECK-NOT: alloca
 ; CHECK: "alloca point"
@@ -68,7 +68,7 @@ return:                                           ; preds = %entry
 ; Radar 7466574
 %struct._NSRange = type { i64 }
 
-define arm_apcscc void @test_memcpy_self() nounwind {
+define void @test_memcpy_self() nounwind {
 ; CHECK: @test_memcpy_self
 ; CHECK-NOT: alloca
 ; CHECK: br i1

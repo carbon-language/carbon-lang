@@ -9,7 +9,7 @@ target triple = "armv7-apple-darwin9"
 %struct.icstruct = type { [3 x i32], i16 }
 %struct.node = type { i16, double, [3 x double], i32, i32 }
 
-declare arm_apcscc double @floor(double) nounwind readnone
+declare double @floor(double) nounwind readnone
 
 define void @intcoord(%struct.icstruct* noalias nocapture sret %agg.result, i1 %a, double %b) {
 entry:
@@ -28,7 +28,7 @@ bb7:                                              ; preds = %bb3
   br i1 %a, label %bb11, label %bb9
 
 bb9:                                              ; preds = %bb7
-  %0 = tail call arm_apcscc  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
+  %0 = tail call  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
   br label %bb11
 
 bb11:                                             ; preds = %bb9, %bb7

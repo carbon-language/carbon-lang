@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm                | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -march=arm -mattr=+thumb2 | FileCheck %s --check-prefix=T2
 
-define arm_apcscc i32 @t1(i32 %c) nounwind readnone {
+define i32 @t1(i32 %c) nounwind readnone {
 entry:
 ; ARM: t1:
 ; ARM: mov r1, #101
@@ -17,7 +17,7 @@ entry:
   ret i32 %1
 }
 
-define arm_apcscc i32 @t2(i32 %c) nounwind readnone {
+define i32 @t2(i32 %c) nounwind readnone {
 entry:
 ; ARM: t2:
 ; ARM: mov r1, #101
@@ -33,7 +33,7 @@ entry:
   ret i32 %1
 }
 
-define arm_apcscc i32 @t3(i32 %a) nounwind readnone {
+define i32 @t3(i32 %a) nounwind readnone {
 entry:
 ; ARM: t3:
 ; ARM: mov r0, #0

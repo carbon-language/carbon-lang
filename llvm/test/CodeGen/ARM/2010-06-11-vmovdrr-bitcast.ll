@@ -3,7 +3,7 @@
 
 %struct.__int8x8x2_t = type { [2 x <8 x i8>] }
 
-define arm_apcscc void @foo(%struct.__int8x8x2_t* nocapture %a, i8* %b) nounwind {
+define void @foo(%struct.__int8x8x2_t* nocapture %a, i8* %b) nounwind {
 entry:
  %0 = bitcast %struct.__int8x8x2_t* %a to i128*  ; <i128*> [#uses=1]
  %srcval = load i128* %0, align 8                ; <i128> [#uses=2]

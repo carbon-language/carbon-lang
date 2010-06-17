@@ -4,9 +4,9 @@
 %struct.__sFILEX = type opaque
 %struct.__sbuf = type { i8*, i32 }
 
-declare arm_apcscc i32 @fgetc(%struct.FILE* nocapture) nounwind
+declare i32 @fgetc(%struct.FILE* nocapture) nounwind
 
-define arm_apcscc i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
+define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 entry:
   br i1 undef, label %bb, label %bb1
 
@@ -20,7 +20,7 @@ bb.i1:                                            ; preds = %bb1
   unreachable
 
 bb1.i2:                                           ; preds = %bb1
-  %0 = call arm_apcscc  i32 @fgetc(%struct.FILE* undef) nounwind ; <i32> [#uses=0]
+  %0 = call  i32 @fgetc(%struct.FILE* undef) nounwind ; <i32> [#uses=0]
   br i1 undef, label %bb2.i3, label %bb3.i4
 
 bb2.i3:                                           ; preds = %bb1.i2

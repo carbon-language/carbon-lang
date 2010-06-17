@@ -136,7 +136,7 @@ define <2 x i64> @v_movQi64() nounwind {
 
 ; Check for correct assembler printing for immediate values.
 %struct.int8x8_t = type { <8 x i8> }
-define arm_apcscc void @vdupn128(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
+define void @vdupn128(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
 entry:
 ;CHECK: vdupn128:
 ;CHECK: vmov.i8 d0, #0x80
@@ -145,7 +145,7 @@ entry:
   ret void
 }
 
-define arm_apcscc void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
+define void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
 entry:
 ;CHECK: vdupnneg75:
 ;CHECK: vmov.i8 d0, #0xB5

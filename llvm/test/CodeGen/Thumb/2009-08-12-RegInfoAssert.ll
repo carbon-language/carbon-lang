@@ -3,15 +3,15 @@
 	%struct.vorbis_comment = type { i8**, i32*, i32, i8* }
 @.str16 = external constant [2 x i8], align 1     ; <[2 x i8]*> [#uses=1]
 
-declare arm_apcscc i8* @__strcpy_chk(i8*, i8*, i32) nounwind
+declare i8* @__strcpy_chk(i8*, i8*, i32) nounwind
 
-declare arm_apcscc i8* @__strcat_chk(i8*, i8*, i32) nounwind
+declare i8* @__strcat_chk(i8*, i8*, i32) nounwind
 
-define arm_apcscc i8* @vorbis_comment_query(%struct.vorbis_comment* nocapture %vc, i8* %tag, i32 %count) nounwind {
+define i8* @vorbis_comment_query(%struct.vorbis_comment* nocapture %vc, i8* %tag, i32 %count) nounwind {
 entry:
 	%0 = alloca i8, i32 undef, align 4        ; <i8*> [#uses=2]
-	%1 = call arm_apcscc  i8* @__strcpy_chk(i8* %0, i8* %tag, i32 -1) nounwind; <i8*> [#uses=0]
-	%2 = call arm_apcscc  i8* @__strcat_chk(i8* %0, i8* getelementptr ([2 x i8]* @.str16, i32 0, i32 0), i32 -1) nounwind; <i8*> [#uses=0]
+	%1 = call  i8* @__strcpy_chk(i8* %0, i8* %tag, i32 -1) nounwind; <i8*> [#uses=0]
+	%2 = call  i8* @__strcat_chk(i8* %0, i8* getelementptr ([2 x i8]* @.str16, i32 0, i32 0), i32 -1) nounwind; <i8*> [#uses=0]
 	%3 = getelementptr %struct.vorbis_comment* %vc, i32 0, i32 0; <i8***> [#uses=1]
 	br label %bb11
 

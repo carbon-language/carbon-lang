@@ -100,7 +100,7 @@ define void @test7() {
 declare void @test8a()
 
 define i8* @test8() {
-  invoke arm_apcscc void @test8a()
+  invoke void @test8a()
           to label %invoke.cont unwind label %try.handler
 
 invoke.cont:                                      ; preds = %entry
@@ -114,5 +114,5 @@ try.handler:                                      ; preds = %entry
 ; calling conv, but the implementation of test8a may actually end up using the
 ; right calling conv.
 ; CHECK: @test8() {
-; CHECK-NEXT: invoke arm_apcscc void @test8a()
+; CHECK-NEXT: invoke void @test8a()
 

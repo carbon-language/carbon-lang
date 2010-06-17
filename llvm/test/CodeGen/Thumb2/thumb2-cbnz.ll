@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 | FileCheck %s
 ; rdar://7354379
 
-declare arm_apcscc double @floor(double) nounwind readnone
+declare double @floor(double) nounwind readnone
 
 define void @t(i1 %a, double %b) {
 entry:
@@ -23,7 +23,7 @@ bb9:                                              ; preds = %bb7
 ; CHECK:      cmp r0, #0
 ; CHECK-NEXT: cmp r0, #0
 ; CHECK-NEXT: cbnz
-  %0 = tail call arm_apcscc  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
+  %0 = tail call  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
   br label %bb11
 
 bb11:                                             ; preds = %bb9, %bb7

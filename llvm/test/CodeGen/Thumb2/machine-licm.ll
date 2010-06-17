@@ -8,7 +8,7 @@
 
 @GV = external global i32                         ; <i32*> [#uses=2]
 
-define arm_apcscc void @t1(i32* nocapture %vals, i32 %c) nounwind {
+define void @t1(i32* nocapture %vals, i32 %c) nounwind {
 entry:
 ; CHECK: t1:
 ; CHECK: cbz
@@ -52,7 +52,7 @@ return:                                           ; preds = %bb, %entry
 }
 
 ; rdar://8001136
-define arm_apcscc void @t2(i8* %ptr1, i8* %ptr2) nounwind {
+define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
 ; CHECK: adr r{{.}}, #LCPI1_0

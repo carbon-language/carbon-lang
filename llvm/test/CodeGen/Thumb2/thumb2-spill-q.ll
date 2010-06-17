@@ -9,7 +9,7 @@
 
 declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*) nounwind readonly
 
-define arm_apcscc void @aaa(%quuz* %this, i8* %block) {
+define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK: aaa:
 ; CHECK: bic r4, r4, #15
 ; CHECK: vst1.64 {{.*}}[{{.*}}, :128]

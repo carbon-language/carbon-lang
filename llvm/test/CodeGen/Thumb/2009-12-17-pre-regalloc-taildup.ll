@@ -10,7 +10,7 @@ target triple = "thumbv7-apple-darwin10"
 @codetable.2928 = internal constant [5 x i8*] [i8* blockaddress(@interpret_threaded, %RETURN), i8* blockaddress(@interpret_threaded, %INCREMENT), i8* blockaddress(@interpret_threaded, %DECREMENT), i8* blockaddress(@interpret_threaded, %DOUBLE), i8* blockaddress(@interpret_threaded, %SWAPWORD)] ; <[5 x i8*]*> [#uses=5]
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (i8*)* @interpret_threaded to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
 
-define arm_apcscc i32 @interpret_threaded(i8* nocapture %opcodes) nounwind readonly optsize {
+define i32 @interpret_threaded(i8* nocapture %opcodes) nounwind readonly optsize {
 entry:
   %0 = load i8* %opcodes, align 1                 ; <i8> [#uses=1]
   %1 = zext i8 %0 to i32                          ; <i32> [#uses=1]

@@ -4,10 +4,10 @@
 	%struct.List = type { i32, i32* }
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 ()* @main to i8*)], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]
 
-define arm_apcscc i32 @main() nounwind {
+define i32 @main() nounwind {
 entry:
 	%ll = alloca %struct.LinkList*, align 4		; <%struct.LinkList**> [#uses=1]
-	%0 = call arm_apcscc  i32 @ReadList(%struct.LinkList** %ll, %struct.List** null) nounwind		; <i32> [#uses=1]
+	%0 = call  i32 @ReadList(%struct.LinkList** %ll, %struct.List** null) nounwind		; <i32> [#uses=1]
 	switch i32 %0, label %bb5 [
 		i32 7, label %bb4
 		i32 42, label %bb3
@@ -23,4 +23,4 @@ bb5:		; preds = %entry
 	ret i32 1
 }
 
-declare arm_apcscc i32 @ReadList(%struct.LinkList** nocapture, %struct.List** nocapture) nounwind
+declare i32 @ReadList(%struct.LinkList** nocapture, %struct.List** nocapture) nounwind

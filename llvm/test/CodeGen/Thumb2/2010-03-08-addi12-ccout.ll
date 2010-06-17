@@ -2,13 +2,13 @@
 
 @.str41196 = external constant [2 x i8], align 4  ; <[2 x i8]*> [#uses=1]
 
-declare arm_apcscc void @syStopraw(i32) nounwind
+declare void @syStopraw(i32) nounwind
 
-declare arm_apcscc i32 @SyFopen(i8*, i8*) nounwind
+declare i32 @SyFopen(i8*, i8*) nounwind
 
-declare arm_apcscc i8* @SyFgets(i8*, i32) nounwind
+declare i8* @SyFgets(i8*, i32) nounwind
 
-define arm_apcscc void @SyHelp(i8* nocapture %topic, i32 %fin) nounwind {
+define void @SyHelp(i8* nocapture %topic, i32 %fin) nounwind {
 entry:
   %line = alloca [256 x i8], align 4              ; <[256 x i8]*> [#uses=1]
   %secname = alloca [1024 x i8], align 4          ; <[1024 x i8]*> [#uses=0]
@@ -70,7 +70,7 @@ bb163:                                            ; preds = %bb162, %bb161
   unreachable
 
 bb224:                                            ; preds = %bb162
-  %0 = call arm_apcscc  i32 @SyFopen(i8* undef, i8* getelementptr inbounds ([2 x i8]* @.str41196, i32 0, i32 0)) nounwind ; <i32> [#uses=2]
+  %0 = call  i32 @SyFopen(i8* undef, i8* getelementptr inbounds ([2 x i8]* @.str41196, i32 0, i32 0)) nounwind ; <i32> [#uses=2]
   br i1 false, label %bb297, label %bb300
 
 bb297:                                            ; preds = %bb224
@@ -177,7 +177,7 @@ bb369:                                            ; preds = %bb368, %bb356
   br i1 undef, label %bb373, label %bb388
 
 bb373:                                            ; preds = %bb383, %bb369
-  %7 = call arm_apcscc  i8* @SyFgets(i8* undef, i32 %0) nounwind ; <i8*> [#uses=1]
+  %7 = call  i8* @SyFgets(i8* undef, i32 %0) nounwind ; <i8*> [#uses=1]
   %8 = icmp eq i8* %7, null                       ; <i1> [#uses=1]
   br i1 %8, label %bb375, label %bb383
 
@@ -241,7 +241,7 @@ bb405:                                            ; preds = %bb404, %bb403
   br i1 undef, label %return, label %bb406
 
 bb406:                                            ; preds = %bb405
-  call arm_apcscc  void @syStopraw(i32 %fin) nounwind
+  call  void @syStopraw(i32 %fin) nounwind
   ret void
 
 bb407:                                            ; preds = %bb404
@@ -255,7 +255,7 @@ bb428:                                            ; preds = %bb407
   br label %bb440
 
 bb440:                                            ; preds = %bb428, %bb300
-  %13 = call arm_apcscc  i8* @SyFgets(i8* undef, i32 %0) nounwind ; <i8*> [#uses=0]
+  %13 = call  i8* @SyFgets(i8* undef, i32 %0) nounwind ; <i8*> [#uses=0]
   br i1 false, label %bb442, label %bb308
 
 bb442:                                            ; preds = %bb440

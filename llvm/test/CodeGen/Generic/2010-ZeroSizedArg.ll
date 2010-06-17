@@ -6,7 +6,7 @@
 
 @.str = private constant [1 x i8] c" "
 
-define arm_apcscc void @t(%0) nounwind {
+define void @t(%0) nounwind {
 entry:
   %arg0 = alloca %union.T0
   %1 = bitcast %union.T0* %arg0 to %0*
@@ -14,4 +14,4 @@ entry:
   ret void
 }
 
-declare arm_apcscc i32 @printf(i8*, ...)
+declare i32 @printf(i8*, ...)

@@ -7,7 +7,7 @@
 
 @GV = external global i32                         ; <i32*> [#uses=2]
 
-define arm_apcscc void @t(i32* nocapture %vals, i32 %c) nounwind {
+define void @t(i32* nocapture %vals, i32 %c) nounwind {
 entry:
 ; CHECK: t:
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]

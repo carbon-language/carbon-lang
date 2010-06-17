@@ -9,7 +9,7 @@ target triple = "armv7-apple-darwin9"
 %struct.Patient = type { i32, i32, i32, %struct.Village* }
 %struct.Village = type { [4 x %struct.Village*], %struct.Village*, %struct.List, %struct.Hosp, i32, i32 }
 
-define arm_apcscc %struct.Village* @alloc_tree(i32 %level, i32 %label, %struct.Village* %back, i1 %p) nounwind {
+define %struct.Village* @alloc_tree(i32 %level, i32 %label, %struct.Village* %back, i1 %p) nounwind {
 entry:
   br i1 %p, label %bb8, label %bb1
 
