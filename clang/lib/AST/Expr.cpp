@@ -1194,7 +1194,6 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   case ObjCIsaExprClass:
   case StringLiteralClass:  // C99 6.5.1p4
   case ObjCEncodeExprClass: // @encode behaves like its string in every way.
-  case ObjCSelectorExprClass: // @selector
     return LV_Valid;
   case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
     // For vectors, make sure base is an lvalue (i.e. not a function call).

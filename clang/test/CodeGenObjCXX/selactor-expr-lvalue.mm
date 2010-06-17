@@ -2,7 +2,7 @@
 // PR7390
 
 @interface NSObject {}
-- (void)respondsToSelector:(SEL&)s : (SEL*)s1;
+- (void)respondsToSelector:(const SEL&)s : (SEL*)s1;
 - (void) setPriority:(int)p;
 - (void)Meth;
 @end
@@ -12,5 +12,5 @@
     [self respondsToSelector:@selector(setPriority:) : &@selector(setPriority:)];
 }
 - (void) setPriority:(int)p{}
-- (void)respondsToSelector:(SEL&)s : (SEL*)s1 {}
+- (void)respondsToSelector:(const SEL&)s : (SEL*)s1 {}
 @end

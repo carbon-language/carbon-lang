@@ -6060,6 +6060,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       << op->getType() << op->getSourceRange();
     if (isSFINAEContext())
       return QualType();
+  } else if (isa<ObjCSelectorExpr>(op)) {
+      return Context.getPointerType(op->getType());
   } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
