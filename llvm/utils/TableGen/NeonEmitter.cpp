@@ -968,109 +968,41 @@ static unsigned RangeFromType(StringRef typestr) {
   }
 }
 
-/// runHeader - generate one of three different tables which are used by clang
-/// to support ARM NEON codegen.  By default, this will produce the contents of
-/// BuiltinsARM.def's NEON section.  You may also enable the genSemaTypes or
-/// getSemaRange variables below to generate code that SemaChecking will use to
-/// validate the builtin function calls.
-///
-/// This is not used as part of the build system currently, but is run manually
-/// and the output placed in the appropriate file.
+/// runHeader - Emit a file with sections defining:
+/// 1. the NEON section of BuiltinsARM.def.
+/// 2. the SemaChecking code for the type overload checking.
+/// 3. the SemaChecking code for validation of intrinsic immedate arguments.
 void NeonEmitter::runHeader(raw_ostream &OS) {
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
   StringMap<OpKind> EmittedMap;
   
-  // Set true to generate the overloaded type checking code for SemaChecking.cpp
-  bool genSemaTypes = false;
-  
-  // Set true to generate the intrinsic range checking code for shift/lane
-  // immediates for SemaChecking.cpp
-  bool genSemaRange = true;
-  
+  // Generate BuiltinsARM.def for NEON
+  OS << "#ifdef GET_NEON_BUILTINS\n";
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-
     OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
     if (k != OpNone)
       continue;
-    
-    std::string name = LowercaseString(R->getName());
-    std::string Proto = R->getValueAsString("Prototype");
-    std::string Types = R->getValueAsString("Types");
 
+    std::string Proto = R->getValueAsString("Prototype");
+    
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
     if (Proto.find('a') != std::string::npos)
       continue;
     
-    // Functions which have a scalar argument cannot be overloaded, no need to
-    // check them if we are emitting the type checking code.
-    if (genSemaTypes && Proto.find('s') != std::string::npos)
-      continue;
-    
-    // Functions which do not have an immediate do not need to have range
-    // checking code emitted.
-    if (genSemaRange && Proto.find('i') == std::string::npos)
-      continue;
-    
+    std::string Types = R->getValueAsString("Types");
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
     
     if (R->getSuperClasses().size() < 2)
       throw TGError(R->getLoc(), "Builtin has no class kind");
     
+    std::string name = LowercaseString(R->getName());
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
     
-    int si = -1, qi = -1;
-    unsigned mask = 0, qmask = 0;
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
-      
-      // Generate the switch case(s) for this builtin for the type validation.
-      if (genSemaTypes) {
-        bool quad = false, poly = false, usgn = false;
-        (void) ClassifyType(TypeVec[ti], quad, poly, usgn);
-        
-        if (quad) {
-          qi = ti;
-          qmask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
-        } else {
-          si = ti;
-          mask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
-        }
-        continue;
-      }
-      
-      if (genSemaRange) {
-        std::string namestr, shiftstr, rangestr;
-        
-        // Builtins which are overloaded by type will need to have their upper
-        // bound computed at Sema time based on the type constant.
-        if (Proto.find('s') == std::string::npos) {
-          ck = ClassB;
-          if (R->getValueAsBit("isShift")) {
-            shiftstr = ", true";
-            
-            // Right shifts have an 'r' in the name, left shifts do not.
-            if (name.find('r') != std::string::npos)
-              rangestr = "l = 1; ";
-          }
-          rangestr += "u = RFT(TV" + shiftstr + ")";
-        } else {
-          rangestr = "u = " + utostr(RangeFromType(TypeVec[ti]));
-        }
-        // Make sure cases appear only once.
-        namestr = MangleName(name, TypeVec[ti], ck);
-        if (EmittedMap.count(namestr))
-          continue;
-        EmittedMap[namestr] = OpNone;
-        
-        OS << "case ARM::BI__builtin_neon_" 
-           << MangleName(name, TypeVec[ti], ck) << ": i = " << Proto.find('i')-1 
-           << "; " << rangestr << "; break;\n";
-        continue;
-      }
-      
       // Generate the BuiltinsARM.def declaration for this builtin, ensuring
       // that each unique BUILTIN() macro appears only once in the output
       // stream.
@@ -1081,17 +1013,131 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       EmittedMap[bd] = OpNone;
       OS << bd << "\n";
     }
-    
-    if (genSemaTypes) {
-      if (mask)
-        OS << "case ARM::BI__builtin_neon_" 
-        << MangleName(name, TypeVec[si], ClassB)
-        << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
-      if (qmask)
-        OS << "case ARM::BI__builtin_neon_" 
-        << MangleName(name, TypeVec[qi], ClassB)
-        << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
+  }
+  OS << "#endif\n\n";
+  
+  // Generate the overloaded type checking code for SemaChecking.cpp
+  OS << "#ifdef GET_NEON_OVERLOAD_CHECK\n";
+  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
+    Record *R = RV[i];
+    OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
+    if (k != OpNone)
       continue;
+    
+    std::string Proto = R->getValueAsString("Prototype");
+    std::string Types = R->getValueAsString("Types");
+    std::string name = LowercaseString(R->getName());
+    
+    // Functions with 'a' (the splat code) in the type prototype should not get
+    // their own builtin as they use the non-splat variant.
+    if (Proto.find('a') != std::string::npos)
+      continue;
+    
+    // Functions which have a scalar argument cannot be overloaded, no need to
+    // check them if we are emitting the type checking code.
+    if (Proto.find('s') != std::string::npos)
+      continue;
+    
+    SmallVector<StringRef, 16> TypeVec;
+    ParseTypes(R, Types, TypeVec);
+    
+    if (R->getSuperClasses().size() < 2)
+      throw TGError(R->getLoc(), "Builtin has no class kind");
+    
+    int si = -1, qi = -1;
+    unsigned mask = 0, qmask = 0;
+    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+      // Generate the switch case(s) for this builtin for the type validation.
+      bool quad = false, poly = false, usgn = false;
+      (void) ClassifyType(TypeVec[ti], quad, poly, usgn);
+      
+      if (quad) {
+        qi = ti;
+        qmask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
+      } else {
+        si = ti;
+        mask |= 1 << GetNeonEnum(Proto, TypeVec[ti]);
+      }
+    }
+    if (mask)
+      OS << "case ARM::BI__builtin_neon_" 
+      << MangleName(name, TypeVec[si], ClassB)
+      << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
+    if (qmask)
+      OS << "case ARM::BI__builtin_neon_" 
+      << MangleName(name, TypeVec[qi], ClassB)
+      << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
+  }
+  OS << "#endif\n\n";
+  
+  // Generate the intrinsic range checking code for shift/lane immediates.
+  OS << "#ifdef GET_NEON_IMMEDIATE_CHECK\n";
+  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
+    Record *R = RV[i];
+    
+    OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
+    if (k != OpNone)
+      continue;
+    
+    std::string name = LowercaseString(R->getName());
+    std::string Proto = R->getValueAsString("Prototype");
+    std::string Types = R->getValueAsString("Types");
+    
+    // Functions with 'a' (the splat code) in the type prototype should not get
+    // their own builtin as they use the non-splat variant.
+    if (Proto.find('a') != std::string::npos)
+      continue;
+    
+    // Functions which do not have an immediate do not need to have range
+    // checking code emitted.
+    if (Proto.find('i') == std::string::npos)
+      continue;
+    
+    SmallVector<StringRef, 16> TypeVec;
+    ParseTypes(R, Types, TypeVec);
+    
+    if (R->getSuperClasses().size() < 2)
+      throw TGError(R->getLoc(), "Builtin has no class kind");
+    
+    ClassKind ck = ClassMap[R->getSuperClasses()[1]];
+    
+    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+      std::string namestr, shiftstr, rangestr;
+      
+      // Builtins which are overloaded by type will need to have their upper
+      // bound computed at Sema time based on the type constant.
+      if (Proto.find('s') == std::string::npos) {
+        ck = ClassB;
+        if (R->getValueAsBit("isShift")) {
+          shiftstr = ", true";
+          
+          // Right shifts have an 'r' in the name, left shifts do not.
+          if (name.find('r') != std::string::npos)
+            rangestr = "l = 1; ";
+        }
+        rangestr += "u = RFT(TV" + shiftstr + ")";
+      } else {
+        rangestr = "u = " + utostr(RangeFromType(TypeVec[ti]));
+      }
+      // Make sure cases appear only once.
+      namestr = MangleName(name, TypeVec[ti], ck);
+      if (EmittedMap.count(namestr))
+        continue;
+      EmittedMap[namestr] = OpNone;
+      
+      unsigned immidx = 0;
+      for (unsigned ii = 1, ie = Proto.size(); ii != ie; ++ii) {
+        switch (Proto[ii]) {
+          default:  immidx += 1; break;
+          case '2': immidx += 2; break;
+          case '3': immidx += 3; break;
+          case '4': immidx += 4; break;
+          case 'i': ie = ii + 1; break;
+        }
+      }
+      OS << "case ARM::BI__builtin_neon_"  << MangleName(name, TypeVec[ti], ck)
+         << ": i = " << immidx << "; " << rangestr << "; break;\n";
     }
   }
+  OS << "#endif\n\n";
 }
