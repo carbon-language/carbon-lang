@@ -108,6 +108,7 @@ CommandObjectDisassemble::CommandOptions::ResetOptionValues ()
     m_func_name.clear();
     m_start_addr = LLDB_INVALID_ADDRESS;
     m_end_addr = LLDB_INVALID_ADDRESS;
+    raw = false;
 }
 
 const lldb::OptionDefinition*
