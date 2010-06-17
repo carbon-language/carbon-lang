@@ -232,11 +232,9 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
       Actions.ActOnDefaultCtorInitializers(LM.D);
 
     ParseFunctionStatementBody(LM.D);
-    assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
-                                                           Tok.getLocation()) &&
-           "We consumed more than the cached tokens!");
-    assert(Tok.getLocation() == origLoc &&
-           "Tokens were left in the token stream!");
+
+    // FIXME:  We need to make sure the caching mechanism here is robust
+    //  against the parser reading too few token
   }
 
   for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
