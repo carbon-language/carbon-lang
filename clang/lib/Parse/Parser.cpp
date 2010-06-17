@@ -127,7 +127,16 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
   }
   Diag(Tok, DID);
   Diag(LHSLoc, diag::note_matching) << LHSName;
-  SkipUntil(RHSTok);
+  if (!SkipUntil(RHSTok)) {
+    // We stopped before finding a RHS token, e.g. we encountered a ';'.
+    // Balance Paren/Brace/Bracket counting. 
+    switch (RHSTok) {
+    default: break;
+    case tok::r_paren : assert(ParenCount > 0); --ParenCount; break;
+    case tok::r_brace : assert(BraceCount > 0); --BraceCount; break;
+    case tok::r_square: assert(BracketCount > 0); --BracketCount; break;
+    }
+  }
   return R;
 }
 
@@ -401,6 +410,8 @@ void Parser::ParseTranslationUnit() {
 ///
 /// [C++0x/GNU] 'extern' 'template' declaration
 Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr) {
+  ParenBraceBracketBalancer BalancerRAIIObj(*this);
+  
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::semi:

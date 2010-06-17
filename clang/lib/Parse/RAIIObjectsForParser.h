@@ -80,6 +80,23 @@ namespace clang {
     }
   };
   
+  /// \brief RAII object that makes sure paren/bracket/brace count is correct
+  /// after declaration/statement parsing, even when there's a parsing error.
+  class ParenBraceBracketBalancer {
+    Parser &P;
+    unsigned short ParenCount, BracketCount, BraceCount;
+  public:
+    ParenBraceBracketBalancer(Parser &p)
+      : P(p), ParenCount(p.ParenCount), BracketCount(p.BracketCount),
+        BraceCount(p.BraceCount) { }
+    
+    ~ParenBraceBracketBalancer() {
+      P.ParenCount = ParenCount;
+      P.BracketCount = BracketCount;
+      P.BraceCount = BraceCount;
+    }
+  };
+  
 } // end namespace clang
 
 #endif

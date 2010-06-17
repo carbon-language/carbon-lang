@@ -309,6 +309,8 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
 Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
                                                 SourceLocation &DeclEnd,
                                                 CXX0XAttributeList Attr) {
+  ParenBraceBracketBalancer BalancerRAIIObj(*this);
+  
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::kw_template:

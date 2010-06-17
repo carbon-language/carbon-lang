@@ -77,6 +77,8 @@ Parser::OwningStmtResult
 Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
   OwningStmtResult Res(Actions);
+  
+  ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
   CXX0XAttributeList Attr;
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())

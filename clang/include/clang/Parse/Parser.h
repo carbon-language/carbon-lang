@@ -72,6 +72,7 @@ namespace prec {
 class Parser {
   friend class PragmaUnusedHandler;
   friend class ColonProtectionRAIIObject;
+  friend class ParenBraceBracketBalancer;
   PrettyStackTraceParserEntry CrashInfo;
 
   Preprocessor &PP;
