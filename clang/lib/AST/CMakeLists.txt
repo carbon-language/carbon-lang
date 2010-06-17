@@ -39,5 +39,5 @@ add_clang_library(clangAST
   TypePrinter.cpp
   )
 
-add_dependencies(clangAST ClangAttrClasses ClangAttrList ClangDiagnosticAST
-                 ClangDeclNodes ClangStmtNodes)
+add_dependencies(clangAST ClangARMNeon ClangAttrClasses ClangAttrList 
+                 ClangDiagnosticAST ClangDeclNodes ClangStmtNodes)

@@ -25,3 +25,8 @@ tablegen(AttrList.inc
          -I ${CMAKE_CURRENT_SOURCE_DIR}/../../)
 add_custom_target(ClangAttrList
   DEPENDS AttrList.inc)
+
+# ARM NEON
+set(LLVM_TARGET_DEFINITIONS arm_neon.td)
+tablegen(arm_neon.inc -gen-arm-neon-sema)
+add_custom_target(ClangARMNeon DEPENDS arm_neon.inc)

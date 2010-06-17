@@ -22,9 +22,8 @@ else ()
 endif ()
 
 # Generate arm_neon.h
-set(LLVM_TARGET_DEFINITIONS arm_neon.td)
+set(LLVM_TARGET_DEFINITIONS ${CLANG_SOURCE_DIR}/include/clang/Basic/arm_neon.td)
 tablegen(arm_neon.h.inc -gen-arm-neon)
-add_custom_target(ClangARMNeon DEPENDS arm_neon.h.inc)
 
 add_custom_command(OUTPUT ${output_dir}/arm_neon.h 
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/arm_neon.h.inc
