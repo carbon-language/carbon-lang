@@ -97,7 +97,7 @@ public:
   /// return value should have the LLVM type for pointer-to
   /// ASTContext::getObjCSelType().
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
-                                   Selector Sel) = 0;
+                                   Selector Sel, bool lval=false) = 0;
 
   /// Get a typed selector.
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,

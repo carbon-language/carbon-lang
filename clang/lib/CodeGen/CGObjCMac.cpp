@@ -1129,7 +1129,8 @@ private:
 
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
-  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
+  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel, 
+                            bool lval=false);
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
@@ -1160,7 +1161,8 @@ public:
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
 
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel, 
+                                   bool lval = false);
 
   /// The NeXT/Apple runtimes do not support typed selectors; just emit an
   /// untyped one.
@@ -1328,7 +1330,8 @@ private:
 
   /// EmitSelector - Return a Value*, of type ObjCTypes.SelectorPtrTy,
   /// for the given selector.
-  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel);
+  llvm::Value *EmitSelector(CGBuilderTy &Builder, Selector Sel, 
+                            bool lval=false);
 
   /// GetInterfaceEHType - Get the cached ehtype for the given Objective-C
   /// interface. The return value has type EHTypePtrTy.
@@ -1391,8 +1394,9 @@ public:
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
 
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel)
-    { return EmitSelector(Builder, Sel); }
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
+                                   bool lvalue = false)
+    { return EmitSelector(Builder, Sel, lvalue); }
 
   /// The NeXT/Apple runtimes do not support typed selectors; just emit an
   /// untyped one.
@@ -1492,8 +1496,9 @@ llvm::Value *CGObjCMac::GetClass(CGBuilderTy &Builder,
 }
 
 /// GetSelector - Return the pointer to the unique'd string for this selector.
-llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel) {
-  return EmitSelector(Builder, Sel);
+llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, Selector Sel, 
+                                    bool lval) {
+  return EmitSelector(Builder, Sel, lval);
 }
 llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
                                     *Method) {
@@ -3107,7 +3112,8 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
   return Builder.CreateLoad(Entry, "tmp");
 }
 
-llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
+llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel,
+                                     bool lvalue) {
   llvm::GlobalVariable *&Entry = SelectorReferences[Sel];
 
   if (!Entry) {
@@ -3120,6 +3126,8 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
                         4, true);
   }
 
+  if (lvalue)
+    return Entry;
   return Builder.CreateLoad(Entry, "tmp");
 }
 
@@ -5408,7 +5416,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
-                                                  Selector Sel) {
+                                                  Selector Sel, bool lval) {
   llvm::GlobalVariable *&Entry = SelectorReferences[Sel];
 
   if (!Entry) {
@@ -5423,6 +5431,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
 
+  if (lval)
+    return Entry;
   return Builder.CreateLoad(Entry, "tmp");
 }
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.

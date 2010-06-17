@@ -568,6 +568,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: return EmitUnsupportedLValue(E, "l-value expression");
 
+  case Expr::ObjCSelectorExprClass:
+  return EmitObjCSelectorLValue(cast<ObjCSelectorExpr>(E));
   case Expr::ObjCIsaExprClass:
     return EmitObjCIsaExpr(cast<ObjCIsaExpr>(E));
   case Expr::BinaryOperatorClass:
@@ -1975,6 +1977,12 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
   RValue RV = EmitObjCMessageExpr(E);
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
+}
+
+LValue CodeGenFunction::EmitObjCSelectorLValue(const ObjCSelectorExpr *E) {
+  llvm::Value *V = 
+    CGM.getObjCRuntime().GetSelector(Builder, E->getSelector(), true);
+  return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
 }
 
 llvm::Value *CodeGenFunction::EmitIvarOffset(const ObjCInterfaceDecl *Interface,

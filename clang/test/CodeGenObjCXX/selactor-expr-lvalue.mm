@@ -1,0 +1,16 @@
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -emit-llvm -o - %s 
+// PR7390
+
+@interface NSObject {}
+- (void)respondsToSelector:(SEL&)s : (SEL*)s1;
+- (void) setPriority:(int)p;
+- (void)Meth;
+@end
+
+@implementation  NSObject
+- (void)Meth {
+    [self respondsToSelector:@selector(setPriority:) : &@selector(setPriority:)];
+}
+- (void) setPriority:(int)p{}
+- (void)respondsToSelector:(SEL&)s : (SEL*)s1 {}
+@end

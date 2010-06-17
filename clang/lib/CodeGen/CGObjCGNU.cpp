@@ -162,7 +162,8 @@ public:
                            const ObjCMethodDecl *Method);
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID);
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
+  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
+                                   bool lval = false);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
       *Method);
 
@@ -360,14 +361,16 @@ llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
 
-llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
+llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
+                                    bool lval) {
   llvm::GlobalAlias *&US = UntypedSelectors[Sel.getAsString()];
   if (US == 0)
     US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
                                llvm::GlobalValue::PrivateLinkage,
                                ".objc_untyped_selector_alias"+Sel.getAsString(),
                                NULL, &TheModule);
-
+  if (lval)
+    return US;
   return Builder.CreateLoad(US);
 }
 
