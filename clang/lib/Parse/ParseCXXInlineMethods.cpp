@@ -216,8 +216,10 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
       assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
                                                            Tok.getLocation()) &&
              "ParseFunctionTryBlock went over the cached tokens!");
-      assert(Tok.getLocation() == origLoc &&
-             "ParseFunctionTryBlock left tokens in the token stream!");
+      // There could be leftover tokens (e.g. because of an error).
+      // Skip through until we reach the original token position.
+      while (Tok.getLocation() != origLoc)
+        ConsumeAnyToken();
       continue;
     }
     if (Tok.is(tok::colon)) {
@@ -233,8 +235,18 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 
     ParseFunctionStatementBody(LM.D);
 
-    // FIXME:  We need to make sure the caching mechanism here is robust
-    //  against the parser reading too few token
+    if (Tok.getLocation() != origLoc) {
+      // Due to parsing error, we either went over the cached tokens or
+      // there are still cached tokens left. If it's the latter case skip the
+      // leftover tokens.
+      // Since this is an uncommon situation that should be avoided, use the
+      // expensive isBeforeInTranslationUnit call.
+      if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
+                                                          origLoc))
+        while (Tok.getLocation() != origLoc)
+          ConsumeAnyToken();
+
+    }
   }
 
   for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
