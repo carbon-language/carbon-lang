@@ -2393,6 +2393,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::ATOMIC_CMP_SWAP: {
     assert (0 && "atomic intrinsic not lowered!");
     Results.push_back(Node->getOperand(0));
+    break;
   }
   case ISD::DYNAMIC_STACKALLOC:
     ExpandDYNAMIC_STACKALLOC(Node, Results);
