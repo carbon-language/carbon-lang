@@ -315,8 +315,9 @@ public:
   /// branch to analyze.  At least this much must be implemented, else tail
   /// merging needs to be disabled.
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                            MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond) const {
+                                MachineBasicBlock *FBB,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                DebugLoc DL) const {
     assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
     return 0;
   }

@@ -347,11 +347,9 @@ unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 unsigned
 ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                            MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond) const {
-  // FIXME this should probably have a DebugLoc argument
-  DebugLoc dl;
-
+                               MachineBasicBlock *FBB,
+                               const SmallVectorImpl<MachineOperand> &Cond,
+                               DebugLoc DL) const {
   ARMFunctionInfo *AFI = MBB.getParent()->getInfo<ARMFunctionInfo>();
   int BOpc   = !AFI->isThumbFunction()
     ? ARM::B : (AFI->isThumb2Function() ? ARM::t2B : ARM::tB);
@@ -365,17 +363,17 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   if (FBB == 0) {
     if (Cond.empty()) // Unconditional branch?
-      BuildMI(&MBB, dl, get(BOpc)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
     else
-      BuildMI(&MBB, dl, get(BccOpc)).addMBB(TBB)
+      BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
     return 1;
   }
 
   // Two-way conditional branch.
-  BuildMI(&MBB, dl, get(BccOpc)).addMBB(TBB)
+  BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
-  BuildMI(&MBB, dl, get(BOpc)).addMBB(FBB);
+  BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB);
   return 2;
 }
 

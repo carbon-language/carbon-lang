@@ -110,9 +110,8 @@ static bool isAlphaIntCondCode(unsigned Opcode) {
 unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,
                                       MachineBasicBlock *TBB,
                                       MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond) const {
-  // FIXME this should probably have a DebugLoc argument
-  DebugLoc dl;
+                                      const SmallVectorImpl<MachineOperand> &Cond,
+                                      DebugLoc DL) const {
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
          "Alpha branch conditions have two components!");
@@ -120,25 +119,25 @@ unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
-      BuildMI(&MBB, dl, get(Alpha::BR)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(Alpha::BR)).addMBB(TBB);
     else                // Conditional branch
       if (isAlphaIntCondCode(Cond[0].getImm()))
-        BuildMI(&MBB, dl, get(Alpha::COND_BRANCH_I))
+        BuildMI(&MBB, DL, get(Alpha::COND_BRANCH_I))
           .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
       else
-        BuildMI(&MBB, dl, get(Alpha::COND_BRANCH_F))
+        BuildMI(&MBB, DL, get(Alpha::COND_BRANCH_F))
           .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
     return 1;
   }
   
   // Two-way Conditional Branch.
   if (isAlphaIntCondCode(Cond[0].getImm()))
-    BuildMI(&MBB, dl, get(Alpha::COND_BRANCH_I))
+    BuildMI(&MBB, DL, get(Alpha::COND_BRANCH_I))
       .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   else
-    BuildMI(&MBB, dl, get(Alpha::COND_BRANCH_F))
+    BuildMI(&MBB, DL, get(Alpha::COND_BRANCH_F))
       .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-  BuildMI(&MBB, dl, get(Alpha::BR)).addMBB(FBB);
+  BuildMI(&MBB, DL, get(Alpha::BR)).addMBB(FBB);
   return 2;
 }
 

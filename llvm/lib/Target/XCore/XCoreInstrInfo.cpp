@@ -299,9 +299,8 @@ XCoreInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
 unsigned
 XCoreInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                              MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond)const{
-  // FIXME there should probably be a DebugLoc argument here
-  DebugLoc dl;
+                             const SmallVectorImpl<MachineOperand> &Cond,
+                             DebugLoc DL)const{
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
@@ -310,11 +309,11 @@ XCoreInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch
-      BuildMI(&MBB, dl, get(XCore::BRFU_lu6)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(XCore::BRFU_lu6)).addMBB(TBB);
     } else {
       // Conditional branch.
       unsigned Opc = GetCondBranchFromCond((XCore::CondCode)Cond[0].getImm());
-      BuildMI(&MBB, dl, get(Opc)).addReg(Cond[1].getReg())
+      BuildMI(&MBB, DL, get(Opc)).addReg(Cond[1].getReg())
                              .addMBB(TBB);
     }
     return 1;
@@ -323,9 +322,9 @@ XCoreInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   // Two-way Conditional branch.
   assert(Cond.size() == 2 && "Unexpected number of components!");
   unsigned Opc = GetCondBranchFromCond((XCore::CondCode)Cond[0].getImm());
-  BuildMI(&MBB, dl, get(Opc)).addReg(Cond[1].getReg())
+  BuildMI(&MBB, DL, get(Opc)).addReg(Cond[1].getReg())
                          .addMBB(TBB);
-  BuildMI(&MBB, dl, get(XCore::BRFU_lu6)).addMBB(FBB);
+  BuildMI(&MBB, DL, get(XCore::BRFU_lu6)).addMBB(FBB);
   return 2;
 }
 

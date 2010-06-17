@@ -185,10 +185,11 @@ foldMemoryOperandImpl(MachineFunction &MF,
 unsigned MBlazeInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
              MachineBasicBlock *FBB,
-             const SmallVectorImpl<MachineOperand> &Cond) const {
+             const SmallVectorImpl<MachineOperand> &Cond,
+             DebugLoc DL) const {
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, DebugLoc(), get(MBlaze::BRI)).addMBB(TBB);
+  BuildMI(&MBB, DL, get(MBlaze::BRI)).addMBB(TBB);
   return 1;
 }
 

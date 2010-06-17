@@ -196,15 +196,15 @@ bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
 unsigned PIC16InstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
              MachineBasicBlock *FBB,
-             const SmallVectorImpl<MachineOperand> &Cond) const {
+             const SmallVectorImpl<MachineOperand> &Cond,
+             DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch?
-      DebugLoc dl;
-      BuildMI(&MBB, dl, get(PIC16::br_uncond)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(PIC16::br_uncond)).addMBB(TBB);
     }
     return 1;
   }

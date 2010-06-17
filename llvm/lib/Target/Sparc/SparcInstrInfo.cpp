@@ -109,12 +109,11 @@ unsigned SparcInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
 unsigned
 SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                              MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond)const{
-  // FIXME this should probably take a DebugLoc argument
-  DebugLoc dl;
+                             const SmallVectorImpl<MachineOperand> &Cond,
+                             DebugLoc DL)const{
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, dl, get(SP::BA)).addMBB(TBB);
+  BuildMI(&MBB, DL, get(SP::BA)).addMBB(TBB);
   return 1;
 }
 

@@ -286,7 +286,7 @@ protected:
   /// FastEmitBranch - Emit an unconditional branch to the given block,
   /// unless it is the immediate (fall-through) successor, and update
   /// the CFG.
-  void FastEmitBranch(MachineBasicBlock *MBB);
+  void FastEmitBranch(MachineBasicBlock *MBB, DebugLoc DL);
 
   unsigned UpdateValueMap(const Value* I, unsigned Reg);
 

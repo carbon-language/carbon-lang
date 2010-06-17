@@ -402,6 +402,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   assert(A && B && "Missing MBB end point");
 
   MachineFunction *MF = A->getParent();
+  DebugLoc dl;  // FIXME: this is nowhere
 
   // We may need to update A's terminator, but we can't do that if AnalyzeBranch
   // fails. If A uses a jump table, we won't touch it.
@@ -427,7 +428,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   NMBB->addSuccessor(B);
   if (!NMBB->isLayoutSuccessor(B)) {
     Cond.clear();
-    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
+    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond, dl);
   }
 
   // Fix PHI nodes in B so they refer to NMBB instead of A

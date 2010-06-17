@@ -1839,9 +1839,8 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 unsigned
 X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            MachineBasicBlock *FBB,
-                           const SmallVectorImpl<MachineOperand> &Cond) const {
-  // FIXME this should probably have a DebugLoc operand
-  DebugLoc dl;
+                           const SmallVectorImpl<MachineOperand> &Cond,
+                           DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -1850,7 +1849,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (Cond.empty()) {
     // Unconditional branch?
     assert(!FBB && "Unconditional branch with multiple successors!");
-    BuildMI(&MBB, dl, get(X86::JMP_4)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JMP_4)).addMBB(TBB);
     return 1;
   }
 
@@ -1860,27 +1859,27 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   switch (CC) {
   case X86::COND_NP_OR_E:
     // Synthesize NP_OR_E with two branches.
-    BuildMI(&MBB, dl, get(X86::JNP_4)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JNP_4)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, dl, get(X86::JE_4)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JE_4)).addMBB(TBB);
     ++Count;
     break;
   case X86::COND_NE_OR_P:
     // Synthesize NE_OR_P with two branches.
-    BuildMI(&MBB, dl, get(X86::JNE_4)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JNE_4)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, dl, get(X86::JP_4)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JP_4)).addMBB(TBB);
     ++Count;
     break;
   default: {
     unsigned Opc = GetCondBranchFromCond(CC);
-    BuildMI(&MBB, dl, get(Opc)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(Opc)).addMBB(TBB);
     ++Count;
   }
   }
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
-    BuildMI(&MBB, dl, get(X86::JMP_4)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(X86::JMP_4)).addMBB(FBB);
     ++Count;
   }
   return Count;

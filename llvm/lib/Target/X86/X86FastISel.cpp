@@ -891,7 +891,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         BuildMI(MBB, DL, TII.get(X86::JP_4)).addMBB(TrueMBB);
       }
 
-      FastEmitBranch(FalseMBB);
+      FastEmitBranch(FalseMBB, DL);
       MBB->addSuccessor(TrueMBB);
       return true;
     }
@@ -946,7 +946,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
             BuildMI(MBB, DL, TII.get(OpCode == X86::SETOr ?
                                         X86::JO_4 : X86::JB_4))
               .addMBB(TrueMBB);
-            FastEmitBranch(FalseMBB);
+            FastEmitBranch(FalseMBB, DL);
             MBB->addSuccessor(TrueMBB);
             return true;
           }
@@ -961,7 +961,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
   BuildMI(MBB, DL, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
   BuildMI(MBB, DL, TII.get(X86::JNE_4)).addMBB(TrueMBB);
-  FastEmitBranch(FalseMBB);
+  FastEmitBranch(FalseMBB, DL);
   MBB->addSuccessor(TrueMBB);
   return true;
 }

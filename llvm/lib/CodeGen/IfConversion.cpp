@@ -395,9 +395,10 @@ static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
 /// ReverseBranchCondition - Reverse the condition of the end of the block
 /// branch. Swap block's 'true' and 'false' successors.
 bool IfConverter::ReverseBranchCondition(BBInfo &BBI) {
+  DebugLoc dl;  // FIXME: this is nowhere
   if (!TII->ReverseBranchCondition(BBI.BrCond)) {
     TII->RemoveBranch(*BBI.BB);
-    TII->InsertBranch(*BBI.BB, BBI.FalseBB, BBI.TrueBB, BBI.BrCond);
+    TII->InsertBranch(*BBI.BB, BBI.FalseBB, BBI.TrueBB, BBI.BrCond, dl);
     std::swap(BBI.TrueBB, BBI.FalseBB);
     return true;
   }
@@ -862,8 +863,9 @@ void IfConverter::InvalidatePreds(MachineBasicBlock *BB) {
 ///
 static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
                                const TargetInstrInfo *TII) {
+  DebugLoc dl;  // FIXME: this is nowhere
   SmallVector<MachineOperand, 0> NoCond;
-  TII->InsertBranch(*BB, ToBB, NULL, NoCond);
+  TII->InsertBranch(*BB, ToBB, NULL, NoCond, dl);
 }
 
 /// RemoveExtraEdges - Remove true / false edges if either / both are no longer
@@ -1014,6 +1016,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   BBInfo *CvtBBI = &TrueBBI;
   BBInfo *NextBBI = &FalseBBI;
+  DebugLoc dl;  // FIXME: this is nowhere
 
   SmallVector<MachineOperand, 4> Cond(BBI.BrCond.begin(), BBI.BrCond.end());
   if (Kind == ICTriangleFalse || Kind == ICTriangleFRev)
@@ -1078,7 +1081,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
                                            CvtBBI->BrCond.end());
     if (TII->ReverseBranchCondition(RevCond))
       assert(false && "Unable to reverse branch condition!");
-    TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond);
+    TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond, dl);
     BBI.BB->addSuccessor(CvtBBI->FalseBB);
   }
 

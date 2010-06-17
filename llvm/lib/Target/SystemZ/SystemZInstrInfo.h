@@ -102,7 +102,8 @@ public:
                              bool AllowModify) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond) const;
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                DebugLoc DL) const;
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
 
   SystemZCC::CondCodes getOppositeCondition(SystemZCC::CondCodes CC) const;

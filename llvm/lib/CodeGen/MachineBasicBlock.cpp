@@ -245,6 +245,7 @@ void MachineBasicBlock::updateTerminator() {
 
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
+  DebugLoc dl;  // FIXME: this is nowhere
   bool B = TII->AnalyzeBranch(*this, TBB, FBB, Cond);
   (void) B;
   assert(!B && "UpdateTerminators requires analyzable predecessors!");
@@ -259,7 +260,7 @@ void MachineBasicBlock::updateTerminator() {
       // its layout successor, insert a branch.
       TBB = *succ_begin();
       if (!isLayoutSuccessor(TBB))
-        TII->InsertBranch(*this, TBB, 0, Cond);
+        TII->InsertBranch(*this, TBB, 0, Cond, dl);
     }
   } else {
     if (FBB) {
@@ -270,10 +271,10 @@ void MachineBasicBlock::updateTerminator() {
         if (TII->ReverseBranchCondition(Cond))
           return;
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, FBB, 0, Cond);
+        TII->InsertBranch(*this, FBB, 0, Cond, dl);
       } else if (isLayoutSuccessor(FBB)) {
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, TBB, 0, Cond);
+        TII->InsertBranch(*this, TBB, 0, Cond, dl);
       }
     } else {
       // The block has a fallthrough conditional branch.
@@ -284,14 +285,14 @@ void MachineBasicBlock::updateTerminator() {
         if (TII->ReverseBranchCondition(Cond)) {
           // We can't reverse the condition, add an unconditional branch.
           Cond.clear();
-          TII->InsertBranch(*this, MBBA, 0, Cond);
+          TII->InsertBranch(*this, MBBA, 0, Cond, dl);
           return;
         }
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, MBBA, 0, Cond);
+        TII->InsertBranch(*this, MBBA, 0, Cond, dl);
       } else if (!isLayoutSuccessor(MBBA)) {
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, TBB, MBBA, Cond);
+        TII->InsertBranch(*this, TBB, MBBA, Cond, dl);
       }
     }
   }

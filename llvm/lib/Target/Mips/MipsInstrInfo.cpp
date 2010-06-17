@@ -520,9 +520,8 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 unsigned MipsInstrInfo::
 InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
              MachineBasicBlock *FBB,
-             const SmallVectorImpl<MachineOperand> &Cond) const {
-  // FIXME this should probably have a DebugLoc argument
-  DebugLoc dl;
+             const SmallVectorImpl<MachineOperand> &Cond,
+             DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 3 || Cond.size() == 2 || Cond.size() == 0) &&
@@ -531,18 +530,18 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch?
-      BuildMI(&MBB, dl, get(Mips::J)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(Mips::J)).addMBB(TBB);
     } else {
       // Conditional branch.
       unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
       const TargetInstrDesc &TID = get(Opc);
 
       if (TID.getNumOperands() == 3)
-        BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg())
+        BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg())
                           .addReg(Cond[2].getReg())
                           .addMBB(TBB);
       else
-        BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg())
+        BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg())
                           .addMBB(TBB);
 
     }                             
@@ -554,12 +553,12 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   const TargetInstrDesc &TID = get(Opc);
 
   if (TID.getNumOperands() == 3)
-    BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
+    BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
                       .addMBB(TBB);
   else
-    BuildMI(&MBB, dl, TID).addReg(Cond[1].getReg()).addMBB(TBB);
+    BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg()).addMBB(TBB);
 
-  BuildMI(&MBB, dl, get(Mips::J)).addMBB(FBB);
+  BuildMI(&MBB, DL, get(Mips::J)).addMBB(FBB);
   return 2;
 }
 
