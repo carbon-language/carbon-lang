@@ -6361,6 +6361,12 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   }
 
   if (Input->isTypeDependent()) {
+    if (Fns.empty())
+      return Owned(new (Context) UnaryOperator(input.takeAs<Expr>(),
+                                               Opc, 
+                                               Context.DependentTy,
+                                               OpLoc));
+    
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
