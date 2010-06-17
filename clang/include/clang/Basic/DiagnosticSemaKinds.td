@@ -2910,11 +2910,17 @@ def warn_printf_asterisk_missing_arg : Warning<
 def warn_printf_asterisk_wrong_type : Warning<
   "field %select{width|precision}0 should have type %1, but argument has type %2">,
   InGroup<Format>;
-def warn_printf_nonsensical_precision: Warning<
-  "precision used in '%0' conversion specifier (where it has no meaning)">,
+def warn_printf_nonsensical_optional_amount: Warning<
+  "%select{field width|precision}0 used with '%1' conversion specifier, resulting in undefined behavior">,
   InGroup<Format>;
 def warn_printf_nonsensical_flag: Warning<
-  "flag '%0' results in undefined behavior in '%1' conversion specifier">,
+  "flag '%0' results in undefined behavior with '%1' conversion specifier">,
+  InGroup<Format>;
+def warn_printf_nonsensical_length: Warning<
+  "length modifier '%0' results in undefined behavior or no effect with '%1' conversion specifier">,
+  InGroup<Format>;
+def warn_printf_ignored_flag: Warning<
+  "flag '%0' is ignored when flag '%1' is present">,
   InGroup<Format>;
   
 // CHECK: returning address/reference of stack memory

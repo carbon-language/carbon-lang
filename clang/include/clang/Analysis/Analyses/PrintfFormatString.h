@@ -189,12 +189,13 @@ public:
   OptionalAmount(HowSpecified howSpecified,
                  unsigned amount,
                  const char *amountStart,
+                 unsigned amountLength,
                  bool usesPositionalArg)
-    : start(amountStart), hs(howSpecified), amt(amount),
+    : start(amountStart), length(amountLength), hs(howSpecified), amt(amount),
       UsesPositionalArg(usesPositionalArg) {}
 
   OptionalAmount(bool valid = true)
-    : start(0), hs(valid ? NotSpecified : Invalid), amt(0),
+    : start(0),length(0), hs(valid ? NotSpecified : Invalid), amt(0),
       UsesPositionalArg(0) {}
 
   bool isInvalid() const {
@@ -220,6 +221,11 @@ public:
     return start;
   }
 
+  unsigned getConstantLength() const {
+    assert(hs == Constant);
+    return length;
+  }
+
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
   void toString(llvm::raw_ostream &os) const;
@@ -232,30 +238,62 @@ public:
 
 private:
   const char *start;
+  unsigned length;
   HowSpecified hs;
   unsigned amt;
   bool UsesPositionalArg : 1;
 };
 
+// Class representing optional flags with location and representation
+// information.
+class OptionalFlag {
+public:
+  OptionalFlag(const char *Representation)
+      : representation(Representation), flag(false) {}
+  bool isSet() { return flag; }
+  void set() { flag = true; }
+  void clear() { flag = false; }
+  void setPosition(const char *position) {
+    assert(position);
+    this->position = position;
+  }
+  const char *getPosition() const {
+    assert(position);
+    return position;
+  }
+  const char *toString() const { return representation; }
+
+  // Overloaded operators for bool like qualities
+  operator bool() const { return flag; }
+  OptionalFlag& operator=(const bool &rhs) {
+    flag = rhs;
+    return *this;  // Return a reference to myself.
+  }
+private:
+  const char *representation;
+  const char *position;
+  bool flag;
+};
+
 class FormatSpecifier {
   LengthModifier LM;
-  unsigned IsLeftJustified : 1;
-  unsigned HasPlusPrefix : 1;
-  unsigned HasSpacePrefix : 1;
-  unsigned HasAlternativeForm : 1;
-  unsigned HasLeadingZeroes : 1;
+  OptionalFlag IsLeftJustified; // '-'
+  OptionalFlag HasPlusPrefix; // '+'
+  OptionalFlag HasSpacePrefix; // ' '
+  OptionalFlag HasAlternativeForm; // '#'
+  OptionalFlag HasLeadingZeroes; // '0'
   /// Positional arguments, an IEEE extension:
   ///  IEEE Std 1003.1, 2004 Edition
   ///  http://www.opengroup.org/onlinepubs/009695399/functions/printf.html
-  unsigned UsesPositionalArg : 1;
+  bool UsesPositionalArg;
   unsigned argIndex;
   ConversionSpecifier CS;
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
   FormatSpecifier() :
-    IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
-    HasAlternativeForm(0), HasLeadingZeroes(0), UsesPositionalArg(0),
+    IsLeftJustified("-"), HasPlusPrefix("+"), HasSpacePrefix(" "),
+    HasAlternativeForm("#"), HasLeadingZeroes("0"), UsesPositionalArg(false),
     argIndex(0) {}
 
   static FormatSpecifier Parse(const char *beg, const char *end);
@@ -267,12 +305,27 @@ public:
   void setLengthModifier(LengthModifier lm) {
     LM = lm;
   }
-  void setIsLeftJustified() { IsLeftJustified = 1; }
-  void setHasPlusPrefix() { HasPlusPrefix = 1; }
-  void setHasSpacePrefix() { HasSpacePrefix = 1; }
-  void setHasAlternativeForm() { HasAlternativeForm = 1; }
-  void setHasLeadingZeros() { HasLeadingZeroes = 1; }
-  void setUsesPositionalArg() { UsesPositionalArg = 1; }
+  void setIsLeftJustified(const char *position) {
+    IsLeftJustified = true;
+    IsLeftJustified.setPosition(position);
+  }
+  void setHasPlusPrefix(const char *position) {
+    HasPlusPrefix = true;
+    HasPlusPrefix.setPosition(position);
+  }
+  void setHasSpacePrefix(const char *position) {
+    HasSpacePrefix = true;
+    HasSpacePrefix.setPosition(position);
+  }
+  void setHasAlternativeForm(const char *position) {
+    HasAlternativeForm = true;
+    HasAlternativeForm.setPosition(position);
+  }
+  void setHasLeadingZeros(const char *position) {
+    HasLeadingZeroes = true;
+    HasLeadingZeroes.setPosition(position);
+  }
+  void setUsesPositionalArg() { UsesPositionalArg = true; }
 
   void setArgIndex(unsigned i) {
     assert(CS.consumesDataArgument());
@@ -295,7 +348,7 @@ public:
     return CS;
   }
 
-  LengthModifier getLengthModifier() const {
+  const LengthModifier &getLengthModifier() const {
     return LM;
   }
 
@@ -322,12 +375,12 @@ public:
   /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
-  bool isLeftJustified() const { return (bool) IsLeftJustified; }
-  bool hasPlusPrefix() const { return (bool) HasPlusPrefix; }
-  bool hasAlternativeForm() const { return (bool) HasAlternativeForm; }
-  bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }
-  bool hasSpacePrefix() const { return (bool) HasSpacePrefix; }
-  bool usesPositionalArg() const { return (bool) UsesPositionalArg; }
+  const OptionalFlag &isLeftJustified() const { return IsLeftJustified; }
+  const OptionalFlag &hasPlusPrefix() const { return HasPlusPrefix; }
+  const OptionalFlag &hasAlternativeForm() const { return HasAlternativeForm; }
+  const OptionalFlag &hasLeadingZeros() const { return HasLeadingZeroes; }
+  const OptionalFlag &hasSpacePrefix() const { return HasSpacePrefix; }
+  bool usesPositionalArg() const { return UsesPositionalArg; }
 
   /// Changes the specifier and length according to a QualType, retaining any
   /// flags or options. Returns true on success, or false when a conversion
@@ -335,6 +388,17 @@ public:
   bool fixType(QualType QT);
 
   void toString(llvm::raw_ostream &os) const;
+
+  // Validation methods - to check if any element results in undefined behavior
+  bool hasValidPlusPrefix() const;
+  bool hasValidAlternativeForm() const;
+  bool hasValidLeadingZeros() const;
+  bool hasValidSpacePrefix() const;
+  bool hasValidLeftJustified() const;
+
+  bool hasValidLengthModifier() const;
+  bool hasValidPrecision() const;
+  bool hasValidFieldWidth() const;
 };
 
 enum PositionContext { FieldWidthPos = 0, PrecisionPos = 1 };

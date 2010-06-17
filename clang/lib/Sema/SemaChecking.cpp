@@ -1200,9 +1200,17 @@ private:
 
   bool HandleAmount(const analyze_printf::OptionalAmount &Amt, unsigned k,
                     const char *startSpecifier, unsigned specifierLen);
-  void HandleFlags(const analyze_printf::FormatSpecifier &FS,
-                   llvm::StringRef flag, llvm::StringRef cspec,
-                   const char *startSpecifier, unsigned specifierLen);
+  void HandleInvalidAmount(const analyze_printf::FormatSpecifier &FS,
+                           const analyze_printf::OptionalAmount &Amt,
+                           unsigned type,
+                           const char *startSpecifier, unsigned specifierLen);
+  void HandleFlag(const analyze_printf::FormatSpecifier &FS,
+                  const analyze_printf::OptionalFlag &flag,
+                  const char *startSpecifier, unsigned specifierLen);
+  void HandleIgnoredFlag(const analyze_printf::FormatSpecifier &FS,
+                         const analyze_printf::OptionalFlag &ignoredFlag,
+                         const analyze_printf::OptionalFlag &flag,
+                         const char *startSpecifier, unsigned specifierLen);
 
   const Expr *getDataArg(unsigned i) const;
 };
@@ -1287,16 +1295,6 @@ const Expr *CheckPrintfHandler::getDataArg(unsigned i) const {
   return TheCall->getArg(FirstDataArg + i);
 }
 
-void CheckPrintfHandler::HandleFlags(const analyze_printf::FormatSpecifier &FS,
-                                     llvm::StringRef flag,
-                                     llvm::StringRef cspec,
-                                     const char *startSpecifier,
-                                     unsigned specifierLen) {
-  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
-  S.Diag(getLocationOfByte(CS.getStart()), diag::warn_printf_nonsensical_flag)
-    << flag << cspec << getFormatSpecifierRange(startSpecifier, specifierLen);
-}
-
 bool
 CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
                                  unsigned k, const char *startSpecifier,
@@ -1339,6 +1337,62 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
     }
   }
   return true;
+}
+
+void CheckPrintfHandler::HandleInvalidAmount(
+                                      const analyze_printf::FormatSpecifier &FS,
+                                      const analyze_printf::OptionalAmount &Amt,
+                                      unsigned type,
+                                      const char *startSpecifier,
+                                      unsigned specifierLen) {
+  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
+  switch (Amt.getHowSpecified()) {
+  case analyze_printf::OptionalAmount::Constant:
+    S.Diag(getLocationOfByte(Amt.getStart()),
+        diag::warn_printf_nonsensical_optional_amount)
+      << type
+      << CS.toString()
+      << getFormatSpecifierRange(startSpecifier, specifierLen)
+      << FixItHint::CreateRemoval(getFormatSpecifierRange(Amt.getStart(),
+          Amt.getConstantLength()));
+    break;
+
+  default:
+    S.Diag(getLocationOfByte(Amt.getStart()),
+        diag::warn_printf_nonsensical_optional_amount)
+      << type
+      << CS.toString()
+      << getFormatSpecifierRange(startSpecifier, specifierLen);
+    break;
+  }
+}
+
+void CheckPrintfHandler::HandleFlag(const analyze_printf::FormatSpecifier &FS,
+                                    const analyze_printf::OptionalFlag &flag,
+                                    const char *startSpecifier,
+                                    unsigned specifierLen) {
+  // Warn about pointless flag with a fixit removal.
+  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
+  S.Diag(getLocationOfByte(flag.getPosition()),
+      diag::warn_printf_nonsensical_flag)
+    << flag.toString() << CS.toString()
+    << getFormatSpecifierRange(startSpecifier, specifierLen)
+    << FixItHint::CreateRemoval(getFormatSpecifierRange(flag.getPosition(), 1));
+}
+
+void CheckPrintfHandler::HandleIgnoredFlag(
+                                const analyze_printf::FormatSpecifier &FS,
+                                const analyze_printf::OptionalFlag &ignoredFlag,
+                                const analyze_printf::OptionalFlag &flag,
+                                const char *startSpecifier,
+                                unsigned specifierLen) {
+  // Warn about ignored flag with a fixit removal.
+  S.Diag(getLocationOfByte(ignoredFlag.getPosition()),
+      diag::warn_printf_ignored_flag)
+    << ignoredFlag.toString() << flag.toString()
+    << getFormatSpecifierRange(startSpecifier, specifierLen)
+    << FixItHint::CreateRemoval(getFormatSpecifierRange(
+        ignoredFlag.getPosition(), 1));
 }
 
 bool
@@ -1395,32 +1449,59 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
     return HandleInvalidConversionSpecifier(FS, startSpecifier, specifierLen);
   }
 
-  // Are we using '%n'?  Issue a warning about this being
-  // a possible security issue.
+  // Check for invalid use of field width
+  if (!FS.hasValidFieldWidth()) {
+    HandleInvalidAmount(FS, FS.getFieldWidth(), /* field width */ 1,
+        startSpecifier, specifierLen);
+  }
+
+  // Check for invalid use of precision
+  if (!FS.hasValidPrecision()) {
+    HandleInvalidAmount(FS, FS.getPrecision(), /* precision */ 1,
+        startSpecifier, specifierLen);
+  }
+
+  // Check each flag does not conflict with any other component.
+  if (!FS.hasValidLeadingZeros())
+    HandleFlag(FS, FS.hasLeadingZeros(), startSpecifier, specifierLen);
+  if (!FS.hasValidPlusPrefix())
+    HandleFlag(FS, FS.hasPlusPrefix(), startSpecifier, specifierLen);
+  // FIXME: the following lines are disabled due to clang assertions on
+  // highlights containing spaces.
+  // if (!FS.hasValidSpacePrefix())
+  //   HandleFlag(FS, FS.hasSpacePrefix(), startSpecifier, specifierLen);
+  if (!FS.hasValidAlternativeForm())
+    HandleFlag(FS, FS.hasAlternativeForm(), startSpecifier, specifierLen);
+  if (!FS.hasValidLeftJustified())
+    HandleFlag(FS, FS.isLeftJustified(), startSpecifier, specifierLen);
+
+  // Check that flags are not ignored by another flag
+  // FIXME: the following lines are disabled due to clang assertions on
+  // highlights containing spaces.
+  //if (FS.hasSpacePrefix() && FS.hasPlusPrefix()) // ' ' ignored by '+'
+  //  HandleIgnoredFlag(FS, FS.hasSpacePrefix(), FS.hasPlusPrefix(),
+  //      startSpecifier, specifierLen);
+  if (FS.hasLeadingZeros() && FS.isLeftJustified()) // '0' ignored by '-'
+    HandleIgnoredFlag(FS, FS.hasLeadingZeros(), FS.isLeftJustified(),
+            startSpecifier, specifierLen);
+
+  // Check the length modifier is valid with the given conversion specifier.
+  const LengthModifier &LM = FS.getLengthModifier();
+  if (!FS.hasValidLengthModifier())
+    S.Diag(getLocationOfByte(LM.getStart()),
+        diag::warn_printf_nonsensical_length)
+      << LM.toString() << CS.toString()
+      << getFormatSpecifierRange(startSpecifier, specifierLen)
+      << FixItHint::CreateRemoval(getFormatSpecifierRange(LM.getStart(),
+          LM.getLength()));
+
+  // Are we using '%n'?
   if (CS.getKind() == ConversionSpecifier::OutIntPtrArg) {
+    // Issue a warning about this being a possible security issue.
     S.Diag(getLocationOfByte(CS.getStart()), diag::warn_printf_write_back)
       << getFormatSpecifierRange(startSpecifier, specifierLen);
     // Continue checking the other format specifiers.
     return true;
-  }
-
-  if (CS.getKind() == ConversionSpecifier::VoidPtrArg) {
-    if (FS.getPrecision().getHowSpecified() != OptionalAmount::NotSpecified)
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_nonsensical_precision)
-        << CS.getCharacters()
-        << getFormatSpecifierRange(startSpecifier, specifierLen);
-  }
-  if (CS.getKind() == ConversionSpecifier::VoidPtrArg ||
-      CS.getKind() == ConversionSpecifier::CStrArg) {
-    // FIXME: Instead of using "0", "+", etc., eventually get them from
-    // the FormatSpecifier.
-    if (FS.hasLeadingZeros())
-      HandleFlags(FS, "0", CS.getCharacters(), startSpecifier, specifierLen);
-    if (FS.hasPlusPrefix())
-      HandleFlags(FS, "+", CS.getCharacters(), startSpecifier, specifierLen);
-    if (FS.hasSpacePrefix())
-      HandleFlags(FS, " ", CS.getCharacters(), startSpecifier, specifierLen);
   }
 
   // The remaining checks depend on the data arguments.

@@ -83,7 +83,8 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
     }
 
     if (hasDigits)
-      return OptionalAmount(OptionalAmount::Constant, accumulator, Beg, 0);
+      return OptionalAmount(OptionalAmount::Constant, accumulator, Beg, I - Beg,
+          false);
 
     break;
   }
@@ -95,7 +96,7 @@ static OptionalAmount ParseNonPositionAmount(const char *&Beg, const char *E,
                                              unsigned &argIndex) {
   if (*Beg == '*') {
     ++Beg;
-    return OptionalAmount(OptionalAmount::Arg, argIndex++, Beg, 0);
+    return OptionalAmount(OptionalAmount::Arg, argIndex++, Beg, 0, false);
   }
 
   return ParseAmount(Beg, E);
@@ -135,7 +136,7 @@ static OptionalAmount ParsePositionAmount(FormatStringHandler &H,
       Beg = ++I;
 
       return OptionalAmount(OptionalAmount::Arg, Amt.getConstantAmount() - 1,
-                            Tmp, 1);
+                            Tmp, 0, true);
     }
 
     H.HandleInvalidPosition(Beg, I - Beg, p);
@@ -261,11 +262,11 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   for ( ; I != E; ++I) {
     switch (*I) {
       default: hasMore = false; break;
-      case '-': FS.setIsLeftJustified(); break;
-      case '+': FS.setHasPlusPrefix(); break;
-      case ' ': FS.setHasSpacePrefix(); break;
-      case '#': FS.setHasAlternativeForm(); break;
-      case '0': FS.setHasLeadingZeros(); break;
+      case '-': FS.setIsLeftJustified(I); break;
+      case '+': FS.setHasPlusPrefix(I); break;
+      case ' ': FS.setHasSpacePrefix(I); break;
+      case '#': FS.setHasAlternativeForm(I); break;
+      case '0': FS.setHasLeadingZeros(I); break;
     }
     if (!hasMore)
       break;
@@ -616,12 +617,12 @@ void OptionalAmount::toString(llvm::raw_ostream &os) const {
     return;
   case Arg:
     if (usesPositionalArg())
-      os << ".*" << getPositionalArgIndex() << "$";
+      os << "*" << getPositionalArgIndex() << "$";
     else
-      os << ".*";
+      os << "*";
     break;
   case Constant:
-    os << "." << amt;
+    os << amt;
     break;
   }
 }
@@ -749,6 +750,7 @@ bool FormatSpecifier::fixType(QualType QT) {
     Precision.setHowSpecified(OptionalAmount::NotSpecified);
     HasAlternativeForm = 0;
     HasLeadingZeroes = 0;
+    HasPlusPrefix = 0;
   }
   // Test for Floating type first as LongDouble can pass isUnsignedIntegerType
   else if (QT->isFloatingType()) {
@@ -759,6 +761,7 @@ bool FormatSpecifier::fixType(QualType QT) {
     Precision.setHowSpecified(OptionalAmount::NotSpecified);
     HasAlternativeForm = 0;
     HasLeadingZeroes = 0;
+    HasPlusPrefix = 0;
   }
   else if (QT->isSignedIntegerType()) {
     CS.setKind(ConversionSpecifier::dArg);
@@ -767,6 +770,7 @@ bool FormatSpecifier::fixType(QualType QT) {
   else if (QT->isUnsignedIntegerType()) {
     CS.setKind(ConversionSpecifier::uArg);
     HasAlternativeForm = 0;
+    HasPlusPrefix = 0;
   }
   else {
     return false;
@@ -800,4 +804,223 @@ void FormatSpecifier::toString(llvm::raw_ostream &os) const {
   os << LM.toString();
   // Conversion specifier
   os << CS.toString();
+}
+
+bool FormatSpecifier::hasValidPlusPrefix() const {
+  if (!HasPlusPrefix)
+    return true;
+
+  // The plus prefix only makes sense for signed conversions
+  switch (CS.getKind()) {
+  case ConversionSpecifier::dArg:
+  case ConversionSpecifier::iArg:
+  case ConversionSpecifier::fArg:
+  case ConversionSpecifier::FArg:
+  case ConversionSpecifier::eArg:
+  case ConversionSpecifier::EArg:
+  case ConversionSpecifier::gArg:
+  case ConversionSpecifier::GArg:
+  case ConversionSpecifier::aArg:
+  case ConversionSpecifier::AArg:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+bool FormatSpecifier::hasValidAlternativeForm() const {
+  if (!HasAlternativeForm)
+    return true;
+
+  // Alternate form flag only valid with the oxaAeEfFgG conversions
+  switch (CS.getKind()) {
+  case ConversionSpecifier::oArg:
+  case ConversionSpecifier::xArg:
+  case ConversionSpecifier::aArg:
+  case ConversionSpecifier::AArg:
+  case ConversionSpecifier::eArg:
+  case ConversionSpecifier::EArg:
+  case ConversionSpecifier::fArg:
+  case ConversionSpecifier::FArg:
+  case ConversionSpecifier::gArg:
+  case ConversionSpecifier::GArg:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+bool FormatSpecifier::hasValidLeadingZeros() const {
+  if (!HasLeadingZeroes)
+    return true;
+
+  // Leading zeroes flag only valid with the diouxXaAeEfFgG conversions
+  switch (CS.getKind()) {
+  case ConversionSpecifier::dArg:
+  case ConversionSpecifier::iArg:
+  case ConversionSpecifier::oArg:
+  case ConversionSpecifier::uArg:
+  case ConversionSpecifier::xArg:
+  case ConversionSpecifier::XArg:
+  case ConversionSpecifier::aArg:
+  case ConversionSpecifier::AArg:
+  case ConversionSpecifier::eArg:
+  case ConversionSpecifier::EArg:
+  case ConversionSpecifier::fArg:
+  case ConversionSpecifier::FArg:
+  case ConversionSpecifier::gArg:
+  case ConversionSpecifier::GArg:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+bool FormatSpecifier::hasValidSpacePrefix() const {
+  if (!HasSpacePrefix)
+    return true;
+
+  // The space prefix only makes sense for signed conversions
+  switch (CS.getKind()) {
+  case ConversionSpecifier::dArg:
+  case ConversionSpecifier::iArg:
+  case ConversionSpecifier::fArg:
+  case ConversionSpecifier::FArg:
+  case ConversionSpecifier::eArg:
+  case ConversionSpecifier::EArg:
+  case ConversionSpecifier::gArg:
+  case ConversionSpecifier::GArg:
+  case ConversionSpecifier::aArg:
+  case ConversionSpecifier::AArg:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+bool FormatSpecifier::hasValidLeftJustified() const {
+  if (!IsLeftJustified)
+    return true;
+
+  // The left justified flag is valid for all conversions except n
+  switch (CS.getKind()) {
+  case ConversionSpecifier::OutIntPtrArg:
+    return false;
+
+  default:
+    return true;
+  }
+}
+
+bool FormatSpecifier::hasValidLengthModifier() const {
+  switch (LM.getKind()) {
+  case LengthModifier::None:
+    return true;
+
+  // Handle most integer flags
+  case LengthModifier::AsChar:
+  case LengthModifier::AsShort:
+  case LengthModifier::AsLongLong:
+  case LengthModifier::AsIntMax:
+  case LengthModifier::AsSizeT:
+  case LengthModifier::AsPtrDiff:
+    switch (CS.getKind()) {
+    case ConversionSpecifier::dArg:
+    case ConversionSpecifier::iArg:
+    case ConversionSpecifier::oArg:
+    case ConversionSpecifier::uArg:
+    case ConversionSpecifier::xArg:
+    case ConversionSpecifier::XArg:
+    case ConversionSpecifier::OutIntPtrArg:
+      return true;
+    default:
+      return false;
+    }
+
+  // Handle 'l' flag
+  case LengthModifier::AsLong:
+    switch (CS.getKind()) {
+    case ConversionSpecifier::dArg:
+    case ConversionSpecifier::iArg:
+    case ConversionSpecifier::oArg:
+    case ConversionSpecifier::uArg:
+    case ConversionSpecifier::xArg:
+    case ConversionSpecifier::XArg:
+    case ConversionSpecifier::aArg:
+    case ConversionSpecifier::AArg:
+    case ConversionSpecifier::fArg:
+    case ConversionSpecifier::FArg:
+    case ConversionSpecifier::eArg:
+    case ConversionSpecifier::EArg:
+    case ConversionSpecifier::gArg:
+    case ConversionSpecifier::GArg:
+    case ConversionSpecifier::OutIntPtrArg:
+    case ConversionSpecifier::IntAsCharArg:
+    case ConversionSpecifier::CStrArg:
+      return true;
+    default:
+      return false;
+    }
+
+  case LengthModifier::AsLongDouble:
+    switch (CS.getKind()) {
+    case ConversionSpecifier::aArg:
+    case ConversionSpecifier::AArg:
+    case ConversionSpecifier::fArg:
+    case ConversionSpecifier::FArg:
+    case ConversionSpecifier::eArg:
+    case ConversionSpecifier::EArg:
+    case ConversionSpecifier::gArg:
+    case ConversionSpecifier::GArg:
+      return true;
+    default:
+      return false;
+    }
+  }
+  return false;
+}
+
+bool FormatSpecifier::hasValidPrecision() const {
+  if (Precision.getHowSpecified() == OptionalAmount::NotSpecified)
+    return true;
+
+  // Precision is only valid with the diouxXaAeEfFgGs conversions
+  switch (CS.getKind()) {
+  case ConversionSpecifier::dArg:
+  case ConversionSpecifier::iArg:
+  case ConversionSpecifier::oArg:
+  case ConversionSpecifier::uArg:
+  case ConversionSpecifier::xArg:
+  case ConversionSpecifier::XArg:
+  case ConversionSpecifier::aArg:
+  case ConversionSpecifier::AArg:
+  case ConversionSpecifier::eArg:
+  case ConversionSpecifier::EArg:
+  case ConversionSpecifier::fArg:
+  case ConversionSpecifier::FArg:
+  case ConversionSpecifier::gArg:
+  case ConversionSpecifier::GArg:
+  case ConversionSpecifier::CStrArg:
+    return true;
+
+  default:
+    return false;
+  }
+}
+bool FormatSpecifier::hasValidFieldWidth() const {
+  if (FieldWidth.getHowSpecified() == OptionalAmount::NotSpecified)
+      return true;
+
+  // The field width is valid for all conversions except n
+  switch (CS.getKind()) {
+  case ConversionSpecifier::OutIntPtrArg:
+    return false;
+
+  default:
+    return true;
+  }
 }
