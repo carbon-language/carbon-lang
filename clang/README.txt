@@ -4,7 +4,7 @@
 
 Welcome to Clang.  This is a compiler front-end for the C family of languages
 (C, C++, Objective-C, and Objective-C++) which is built as part of the LLVM
-compiler intrastructure project.
+compiler infrastructure project.
 
 Unlike many other compiler frontends, Clang is useful for a number of things
 beyond just compiling code: we intend for Clang to be host to a number of
