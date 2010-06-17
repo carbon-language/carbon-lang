@@ -89,7 +89,8 @@ public:
     // The 'this' pointer really points to a
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    return ((std::pair<IdentifierInfo, const char*>*) this)->second;
+    typedef std::pair<IdentifierInfo, const char*> actualtype;
+    return ((const actualtype*) this)->second;
   }
 
   /// getLength - Efficiently return the length of this identifier info.
@@ -101,7 +102,8 @@ public:
     // The 'this' pointer really points to a
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    const char* p = ((std::pair<IdentifierInfo, const char*>*) this)->second-2;
+    typedef std::pair<IdentifierInfo, const char*> actualtype;
+    const char* p = ((const actualtype*) this)->second - 2;
     return (((unsigned) p[0]) | (((unsigned) p[1]) << 8)) - 1;
   }
 
