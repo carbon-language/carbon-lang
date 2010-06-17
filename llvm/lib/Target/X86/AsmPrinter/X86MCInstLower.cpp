@@ -277,10 +277,21 @@ static void SimplifyShortMoveForm(MCInst &Inst, unsigned Opcode) {
     return;
 
   // Check whether this is an absolute address.
-  if (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
-      Inst.getOperand(AddrBase + 2).getReg() != 0 ||
-      Inst.getOperand(AddrBase + 4).getReg() != 0 ||
-      Inst.getOperand(AddrBase + 1).getImm() != 1)
+  // FIXME: We know TLVP symbol refs aren't, but there should be a better way 
+  // to do this here.
+  bool Absolute = true;
+  if (Inst.getOperand(AddrOp).isExpr()) {
+    const MCExpr *MCE = Inst.getOperand(AddrOp).getExpr();
+    if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(MCE))
+      if (SRE->getKind() == MCSymbolRefExpr::VK_TLVP)
+        Absolute = false;
+  }
+  
+  if (Absolute &&
+      (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
+       Inst.getOperand(AddrBase + 2).getReg() != 0 ||
+       Inst.getOperand(AddrBase + 4).getReg() != 0 ||
+       Inst.getOperand(AddrBase + 1).getImm() != 1))
     return;
 
   // If so, rewrite the instruction.
