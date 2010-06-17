@@ -399,12 +399,17 @@ public: // Part of public interface to class.
              const char *sep);
 
   void iterBindings(Store store, BindingsHandler& f) {
-    // FIXME: Implement.
-  }
-
-  // FIXME: Remove.
-  BasicValueFactory& getBasicVals() {
-      return StateMgr.getBasicVals();
+    RegionBindings B = GetRegionBindings(store);
+    for (RegionBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {
+      const BindingKey &K = I.getKey();
+      if (!K.isDirect())
+        continue;
+      if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey().getRegion())) {
+        // FIXME: Possibly incorporate the offset?
+        if (!f.HandleBinding(*this, store, R, I.getData()))
+          return;
+      }
+    }
   }
 
   // FIXME: Remove.
