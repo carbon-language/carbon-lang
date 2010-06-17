@@ -21,7 +21,11 @@ protected:
   static volatile long e;
 public:
   static const volatile char f;
+  int operator+(int a);
 };
+
+int foo::operator+(int a) {return a;}
+// CHECK: @"\01??Hfoo@@QAAHH@Z"
 
 const short foo::d = 0;
 volatile long foo::e;

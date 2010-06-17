@@ -56,6 +56,7 @@ private:
   void mangleUnqualifiedName(const NamedDecl *ND, DeclarationName Name);
   void mangleSourceName(const IdentifierInfo *II);
   void manglePostfix(const DeclContext *DC, bool NoFunction=false);
+  void mangleOperatorName(OverloadedOperatorKind OO);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
@@ -344,7 +345,8 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       break;
       
     case DeclarationName::CXXOperatorName:
-      assert(false && "Can't mangle operators yet!");
+      mangleOperatorName(Name.getCXXOverloadedOperator());
+      break;
       
     case DeclarationName::CXXLiteralOperatorName:
       // FIXME: Was this added in VS2010? Does MS even know how to mangle this?
@@ -386,6 +388,134 @@ void MicrosoftCXXNameMangler::manglePostfix(const DeclContext *DC,
   else {
     mangleUnqualifiedName(cast<NamedDecl>(DC));
     manglePostfix(DC->getParent(), NoFunction);
+  }
+}
+
+void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO) {
+  switch (OO) {
+  //                     ?0 # constructor
+  //                     ?1 # destructor
+  // <operator-name> ::= ?2 # new
+  case OO_New: Out << "?2"; break;
+  // <operator-name> ::= ?3 # delete
+  case OO_Delete: Out << "?3"; break;
+  // <operator-name> ::= ?4 # =
+  case OO_Equal: Out << "?4"; break;
+  // <operator-name> ::= ?5 # >>
+  case OO_GreaterGreater: Out << "?5"; break;
+  // <operator-name> ::= ?6 # <<
+  case OO_LessLess: Out << "?6"; break;
+  // <operator-name> ::= ?7 # !
+  case OO_Exclaim: Out << "?7"; break;
+  // <operator-name> ::= ?8 # ==
+  case OO_EqualEqual: Out << "?8"; break;
+  // <operator-name> ::= ?9 # !=
+  case OO_ExclaimEqual: Out << "?9"; break;
+  // <operator-name> ::= ?A # []
+  case OO_Subscript: Out << "?A"; break;
+  //                     ?B # conversion
+  // <operator-name> ::= ?C # ->
+  case OO_Arrow: Out << "?C"; break;
+  // <operator-name> ::= ?D # *
+  case OO_Star: Out << "?D"; break;
+  // <operator-name> ::= ?E # ++
+  case OO_PlusPlus: Out << "?E"; break;
+  // <operator-name> ::= ?F # --
+  case OO_MinusMinus: Out << "?F"; break;
+  // <operator-name> ::= ?G # -
+  case OO_Minus: Out << "?G"; break;
+  // <operator-name> ::= ?H # +
+  case OO_Plus: Out << "?H"; break;
+  // <operator-name> ::= ?I # &
+  case OO_Amp: Out << "?I"; break;
+  // <operator-name> ::= ?J # ->*
+  case OO_ArrowStar: Out << "?J"; break;
+  // <operator-name> ::= ?K # /
+  case OO_Slash: Out << "?K"; break;
+  // <operator-name> ::= ?L # %
+  case OO_Percent: Out << "?L"; break;
+  // <operator-name> ::= ?M # <
+  case OO_Less: Out << "?M"; break;
+  // <operator-name> ::= ?N # <=
+  case OO_LessEqual: Out << "?N"; break;
+  // <operator-name> ::= ?O # >
+  case OO_Greater: Out << "?O"; break;
+  // <operator-name> ::= ?P # >=
+  case OO_GreaterEqual: Out << "?P"; break;
+  // <operator-name> ::= ?Q # ,
+  case OO_Comma: Out << "?Q"; break;
+  // <operator-name> ::= ?R # ()
+  case OO_Call: Out << "?R"; break;
+  // <operator-name> ::= ?S # ~
+  case OO_Tilde: Out << "?S"; break;
+  // <operator-name> ::= ?T # ^
+  case OO_Caret: Out << "?T"; break;
+  // <operator-name> ::= ?U # |
+  case OO_Pipe: Out << "?U"; break;
+  // <operator-name> ::= ?V # &&
+  case OO_AmpAmp: Out << "?V"; break;
+  // <operator-name> ::= ?W # ||
+  case OO_PipePipe: Out << "?W"; break;
+  // <operator-name> ::= ?X # *=
+  case OO_StarEqual: Out << "?X"; break;
+  // <operator-name> ::= ?Y # +=
+  case OO_PlusEqual: Out << "?Y"; break;
+  // <operator-name> ::= ?Z # -=
+  case OO_MinusEqual: Out << "?Z"; break;
+  // <operator-name> ::= ?_0 # /=
+  case OO_SlashEqual: Out << "?_0"; break;
+  // <operator-name> ::= ?_1 # %=
+  case OO_PercentEqual: Out << "?_1"; break;
+  // <operator-name> ::= ?_2 # >>=
+  case OO_GreaterGreaterEqual: Out << "?_2"; break;
+  // <operator-name> ::= ?_3 # <<=
+  case OO_LessLessEqual: Out << "?_3"; break;
+  // <operator-name> ::= ?_4 # &=
+  case OO_AmpEqual: Out << "?_4"; break;
+  // <operator-name> ::= ?_5 # |=
+  case OO_PipeEqual: Out << "?_5"; break;
+  // <operator-name> ::= ?_6 # ^=
+  case OO_CaretEqual: Out << "?_6"; break;
+  //                     ?_7 # vftable
+  //                     ?_8 # vbtable
+  //                     ?_9 # vcall
+  //                     ?_A # typeof
+  //                     ?_B # local static guard
+  //                     ?_C # string
+  //                     ?_D # vbase destructor
+  //                     ?_E # vector deleting destructor
+  //                     ?_F # default constructor closure
+  //                     ?_G # scalar deleting destructor
+  //                     ?_H # vector constructor iterator
+  //                     ?_I # vector destructor iterator
+  //                     ?_J # vector vbase constructor iterator
+  //                     ?_K # virtual displacement map
+  //                     ?_L # eh vector constructor iterator
+  //                     ?_M # eh vector destructor iterator
+  //                     ?_N # eh vector vbase constructor iterator
+  //                     ?_O # copy constructor closure
+  //                     ?_P<name> # udt returning <name>
+  //                     ?_Q # <unknown>
+  //                     ?_R0 # RTTI Type Descriptor
+  //                     ?_R1 # RTTI Base Class Descriptor at (a,b,c,d)
+  //                     ?_R2 # RTTI Base Class Array
+  //                     ?_R3 # RTTI Class Hierarchy Descriptor
+  //                     ?_R4 # RTTI Complete Object Locator
+  //                     ?_S # local vftable
+  //                     ?_T # local vftable constructor closure
+  // <operator-name> ::= ?_U # new[]
+  case OO_Array_New: Out << "?_U"; break;
+  // <operator-name> ::= ?_V # delete[]
+  case OO_Array_Delete: Out << "?_V"; break;
+    
+  case OO_Conditional:
+    assert(false && "Don't know how to mangle ?:");
+    break;
+    
+  case OO_None:
+  case NUM_OVERLOADED_OPERATORS:
+    assert(false && "Not an overloaded operator");
+    break;
   }
 }
 
