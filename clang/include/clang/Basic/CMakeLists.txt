@@ -22,6 +22,6 @@ add_custom_target(ClangDiagnosticGroups
 set(LLVM_TARGET_DEFINITIONS Attr.td)
 tablegen(AttrList.inc
          -gen-clang-attr-list
-         -I ${CMAKE_CURRENT_SOURCE_DIR}/.././)
+         -I ${CMAKE_CURRENT_SOURCE_DIR}/../../)
 add_custom_target(ClangAttrList
   DEPENDS AttrList.inc)
