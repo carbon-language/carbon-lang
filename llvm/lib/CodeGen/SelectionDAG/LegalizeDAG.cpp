@@ -2359,10 +2359,22 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::EH_RETURN:
   case ISD::EH_LABEL:
   case ISD::PREFETCH:
-  case ISD::MEMBARRIER:
   case ISD::VAEND:
     Results.push_back(Node->getOperand(0));
     break;
+  case ISD::MEMBARRIER: {
+    // If the target didn't lower this, lower it to '__sync_synchronize()' call
+    TargetLowering::ArgListTy Args;
+    std::pair<SDValue, SDValue> CallResult =
+      TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
+                      false, false, false, false, 0, CallingConv::C, false,
+                      /*isReturnValueUsed=*/true,
+                      DAG.getExternalSymbol("__sync_synchronize",
+                                            TLI.getPointerTy()),
+                      Args, DAG, dl);
+    Results.push_back(CallResult.second);
+    break;
+  }
   case ISD::DYNAMIC_STACKALLOC:
     ExpandDYNAMIC_STACKALLOC(Node, Results);
     break;
