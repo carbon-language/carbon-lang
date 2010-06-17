@@ -2924,7 +2924,8 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
   // record types and dependent types matter.
   void *ObjectTypePtrForLookup = 0;
   if (!SS.isSet()) {
-    ObjectTypePtrForLookup = (void *)ObjectType->getAs<RecordType>();
+    ObjectTypePtrForLookup = const_cast<RecordType*>(
+                                               ObjectType->getAs<RecordType>());
     if (!ObjectTypePtrForLookup && ObjectType->isDependentType())
       ObjectTypePtrForLookup = Context.DependentTy.getAsOpaquePtr();
   }
