@@ -172,6 +172,8 @@ void test10(int x, float f, int i, long long lli) {
   printf("%f\n", (long double) 1.0); // expected-warning{{conversion specifies type 'double' but the argument has type 'long double'}}
   // The man page says that a zero precision is okay.
   printf("%.0Lf", (long double) 1.0); // no-warning
+  printf("%c\n", "x"); // expected-warning{{conversion specifies type 'int' but the argument has type 'char *'}}
+  printf("%c\n", 1.23); // expected-warning{{conversion specifies type 'int' but the argument has type 'double'}}
 } 
 
 void test11(void *p, char *s) {

@@ -15,6 +15,8 @@ void test() {
   printf("abc%0f", "testing testing 123");
   printf("%u", (long) -12);
   printf("%p", 123);
+  printf("%c\n", "x");
+  printf("%c\n", 1.23);
 
   // Larger types
   printf("%+.2d", (unsigned long long) 123456);

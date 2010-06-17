@@ -57,6 +57,7 @@ public:
    InvalidSpecifier = 0,
     // C99 conversion specifiers.
    dArg, // 'd'
+   IntAsCharArg,  // 'c'
    iArg, // 'i',
    oArg, // 'o',
    uArg, // 'u',
@@ -70,7 +71,6 @@ public:
    GArg, // 'G',
    aArg, // 'a',
    AArg, // 'A',
-   IntAsCharArg,  // 'c'
    CStrArg,       // 's'
    VoidPtrArg,    // 'p'
    OutIntPtrArg,  // 'n'
