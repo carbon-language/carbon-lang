@@ -270,7 +270,15 @@ Init *RecordRecTy::convertValue(TypedInit *TI) {
 }
 
 bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
-  return Rec == RHS->getRecord() || RHS->getRecord()->isSubClassOf(Rec);
+  if (Rec == RHS->getRecord() || RHS->getRecord()->isSubClassOf(Rec))
+    return true;
+
+  const std::vector<Record*> &SC = Rec->getSuperClasses();
+  for (unsigned i = 0, e = SC.size(); i != e; ++i)
+    if (RHS->getRecord()->isSubClassOf(SC[i]))
+      return true;
+
+  return false;
 }
 
 
