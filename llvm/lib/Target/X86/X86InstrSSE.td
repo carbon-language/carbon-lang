@@ -646,6 +646,17 @@ let Constraints = "$src1 = $dst" in {
     defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef, 1, 1, 0>;
 }
 
+/// sse12_fp_scalar - SSE 1 & 2 scalar instructions class
+multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           RegisterClass RC, X86MemOperand memop> {
+  let isCommutable = 1 in {
+    def rr : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
+  }
+  def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
+}
+
 /// basic_sse12_fp_binop_rm - SSE 1 & 2 binops come in both scalar and
 /// vector forms.
 ///
@@ -660,66 +671,30 @@ let Constraints = "$src1 = $dst" in {
 let Constraints = "$src1 = $dst" in {
 multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                  SDNode OpNode, bit Commutable = 0> {
-  // Scalar operation, reg+reg.
-  def SSrr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
-                 !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
-    let isCommutable = Commutable;
+
+  let Constraints = "", isAsmParserOnly = 1, hasVEX_4VPrefix = 1 in {
+    // Scalar operation, reg+reg.
+    let Prefix = 12 /* XS */ in
+      defm V#NAME#SS : sse12_fp_scalar<opc,
+        !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   OpNode, FR32, f32mem>;
+
+    let Prefix = 11 /* XD */ in
+      defm V#NAME#SD : sse12_fp_scalar<opc,
+        !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   OpNode, FR64, f64mem>;
   }
 
-  def SDrr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
-                 !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
-    let isCommutable = Commutable;
-  }
-
-  def V#NAME#SSrr : VSSI<opc, MRMSrcReg, (outs FR32:$dst),
-                 (ins FR32:$src1, FR32:$src2),
-                 !strconcat(OpcodeStr,
-                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let isCommutable = Commutable;
-    let Constraints = "";
-    let isAsmParserOnly = 1;
-  }
-
-  def V#NAME#SDrr : VSDI<opc, MRMSrcReg, (outs FR64:$dst),
-                 (ins FR64:$src1, FR64:$src2),
-                 !strconcat(OpcodeStr,
-                            "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let isCommutable = Commutable;
-    let Constraints = "";
-    let isAsmParserOnly = 1;
-  }
-
-  // Scalar operation, reg+mem.
-  def SSrm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
-                                 (ins FR32:$src1, f32mem:$src2),
-                 !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
-
-  def SDrm : SDI<opc, MRMSrcMem, (outs FR64:$dst),
-                                 (ins FR64:$src1, f64mem:$src2),
-                 !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
-
-  def V#NAME#SSrm : VSSI<opc, MRMSrcMem, (outs FR32:$dst),
-                 (ins FR32:$src1, f32mem:$src2),
-                 !strconcat(OpcodeStr,
-                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let Constraints = "";
-    let isAsmParserOnly = 1;
-  }
-
-  def V#NAME#SDrm : VSDI<opc, MRMSrcMem, (outs FR64:$dst),
-                 (ins FR64:$src1, f64mem:$src2),
-                 !strconcat(OpcodeStr,
-                            "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 []> {
-    let Constraints = "";
-    let isAsmParserOnly = 1;
+  let Constraints = "$src1 = $dst" in {
+    // Scalar operation, reg+reg.
+    let Prefix = 12 /* XS */ in
+      defm SS : sse12_fp_scalar<opc,
+                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                      OpNode, FR32, f32mem>;
+    let Prefix = 11 /* XD */ in
+      defm SD : sse12_fp_scalar<opc,
+                      !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+                      OpNode, FR64, f64mem>;
   }
 
   // Vector operation, reg+reg.
@@ -863,8 +838,11 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
 // Arithmetic instructions
 defm ADD : basic_sse12_fp_binop_rm<0x58, "add", fadd, 1>;
 defm MUL : basic_sse12_fp_binop_rm<0x59, "mul", fmul, 1>;
-defm SUB : basic_sse12_fp_binop_rm<0x5C, "sub", fsub>;
-defm DIV : basic_sse12_fp_binop_rm<0x5E, "div", fdiv>;
+
+let isCommutable = 0 in {
+  defm SUB : basic_sse12_fp_binop_rm<0x5C, "sub", fsub>;
+  defm DIV : basic_sse12_fp_binop_rm<0x5E, "div", fdiv>;
+}
 
 /// sse12_fp_binop_rm - Other SSE 1 & 2 binops
 ///
