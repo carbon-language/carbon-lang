@@ -1857,22 +1857,18 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
                                const ARMSubtarget *Subtarget) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Op5 = Op.getOperand(5);
-  SDValue Res;
   unsigned isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue();
-  if (isDeviceBarrier) {
-    if (Subtarget->hasV7Ops())
-      Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other, Op.getOperand(0));
-    else
-      Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other, Op.getOperand(0),
-                        DAG.getConstant(0, MVT::i32));
-  } else {
-    if (Subtarget->hasV7Ops())
-      Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0));
-    else
-      Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                        DAG.getConstant(0, MVT::i32));
-  }
-  return Res;
+  // v6 and v7 can both handle barriers directly, but need handled a bit
+  // differently. Thumb1 and pre-v6 ARM mode use a libcall instead and should
+  // never get here.
+  unsigned Opc = isDeviceBarrier ? ARMISD::SYNCBARRIER : ARMISD::MEMBARRIER;
+  if (Subtarget->hasV7Ops())
+    return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0));
+  else if (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())
+    return DAG.getNode(Opc, dl, MVT::Other, Op.getOperand(0),
+                       DAG.getConstant(0, MVT::i32));
+  assert(0 && "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
+  return SDValue();
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) {
