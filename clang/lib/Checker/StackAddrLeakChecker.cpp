@@ -125,46 +125,63 @@ void StackAddrLeakChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                                        GRExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
-  TranslationUnitDecl *TU = Eng.getContext().getTranslationUnitDecl();
 
-  // Check each global variable if it contains a MemRegionVal of a stack
-  // variable declared in the function we are leaving.
-  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
-       I != E; ++I) {
-    if (VarDecl *VD = dyn_cast<VarDecl>(*I)) {
-      const LocationContext *LCtx = B.getPredecessor()->getLocationContext();
-      Loc L = state->getLValue(VD, LCtx);
-      SVal V = state->getSVal(L);
-      if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {
-        const MemRegion *R = RV->getRegion();
+  // Iterate over all bindings to global variables and see if it contains
+  // a memory region in the stack space.
+  class CallBack : public StoreManager::BindingsHandler {
+  private:
+    const StackFrameContext *CurSFC;
+  public:
+    const MemRegion *src, *dst;    
 
-        if (const StackSpaceRegion *SSR = 
-                              dyn_cast<StackSpaceRegion>(R->getMemorySpace())) {
-          const StackFrameContext *ValSFC = SSR->getStackFrame();
-          const StackFrameContext *CurSFC = LCtx->getCurrentStackFrame();
-          // If the global variable holds a location in the current stack frame,
-          // emit a warning.
-          if (ValSFC == CurSFC) {
-            // The variable is declared in the function scope which we are 
-            // leaving. Keeping this variable's address in a global variable
-            // is dangerous.
-
-            // FIXME: better warning location.
-            
-            ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
-            if (N) {
-              if (!BT_stackleak)
-                BT_stackleak = new BuiltinBug("Stack address leak",
-                        "Stack address was saved into a global variable. "
-                        "is dangerous because the address will become invalid "
-                        "after returning from the function.");
-              BugReport *R = new BugReport(*BT_stackleak, 
-                                           BT_stackleak->getDescription(), N);
-              Eng.getBugReporter().EmitReport(R);
-            }
-          }
+    CallBack(const LocationContext *LCtx)
+      : CurSFC(LCtx->getCurrentStackFrame()), src(0), dst(0) {}
+    
+    bool HandleBinding(StoreManager &SMgr, Store store,
+                       const MemRegion *region, SVal val) {
+      
+      if (!isa<GlobalsSpaceRegion>(region->getMemorySpace()))
+        return true;
+      
+      const MemRegion *vR = val.getAsRegion();
+      if (!vR)
+        return true;
+      
+      if (const StackSpaceRegion *SSR = 
+          dyn_cast<StackSpaceRegion>(vR->getMemorySpace())) {
+        // If the global variable holds a location in the current stack frame,
+        // record the binding to emit a warning.
+        if (SSR->getStackFrame() == CurSFC) {        
+          src = region;
+          dst = vR;
+          return false;
         }
       }
+      
+      return true;
     }
-  }
+  };
+    
+  CallBack cb(B.getPredecessor()->getLocationContext());
+  state->getStateManager().getStoreManager().iterBindings(state->getStore(),cb);
+  
+  // Did we find any globals referencing stack memory?
+  if (!cb.src)
+    return;
+
+  // Generate an error node.
+  ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+  if (!N)
+    return;
+  
+  if (!BT_stackleak)
+    BT_stackleak = new BuiltinBug("Stack address stored into global variable",
+                      "Stack address was saved into a global variable. "
+                      "is dangerous because the address will become invalid "
+                      "after returning from the function");
+  
+  BugReport *R =
+    new BugReport(*BT_stackleak,  BT_stackleak->getDescription(), N);
+
+  Eng.getBugReporter().EmitReport(R);
 }
