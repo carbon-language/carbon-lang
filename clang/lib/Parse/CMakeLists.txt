@@ -18,4 +18,4 @@ add_clang_library(clangParse
   Parser.cpp
   )
 
-add_dependencies(clangParse ClangDiagnosticParse)
+add_dependencies(clangParse ClangAttrList ClangDiagnosticParse)

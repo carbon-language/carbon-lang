@@ -44,6 +44,8 @@ IF(MSVC)
 ENDIF(MSVC)
 
 add_dependencies(clangFrontend 
+  ClangAttrClasses
+  ClangAttrList
   ClangDiagnosticFrontend 
   ClangDiagnosticLex
   ClangDiagnosticSema

@@ -25,6 +25,7 @@ if (Subversion_FOUND AND EXISTS "${CLANG_SOURCE_DIR}/.svn")
 endif()
 
 add_dependencies(clangBasic 
+                 ClangAttrList
                  ClangDiagnosticAnalysis
                  ClangDiagnosticAST
                  ClangDiagnosticCommon

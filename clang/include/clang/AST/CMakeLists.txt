@@ -1,3 +1,10 @@
+set(LLVM_TARGET_DEFINITIONS ../Basic/Attr.td)
+tablegen(Attrs.inc
+         -gen-clang-attr-classes
+         -I ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+add_custom_target(ClangAttrClasses
+  DEPENDS Attrs.inc)
+
 set(LLVM_TARGET_DEFINITIONS ../Basic/StmtNodes.td)
 tablegen(StmtNodes.inc
          -gen-clang-stmt-nodes)

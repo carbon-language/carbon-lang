@@ -21,5 +21,5 @@ add_clang_library(clangDriver
   Types.cpp
   )
 
-add_dependencies(clangDriver ClangDiagnosticDriver ClangDriverOptions
-                 ClangCC1Options ClangCC1AsOptions)
+add_dependencies(clangDriver ClangAttrList ClangDiagnosticDriver
+                 ClangDriverOptions ClangCC1Options ClangCC1AsOptions)

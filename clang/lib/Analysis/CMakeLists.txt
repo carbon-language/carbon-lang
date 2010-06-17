@@ -9,4 +9,5 @@ add_clang_library(clangAnalysis
   UninitializedValues.cpp
   )
 
-add_dependencies(clangAnalysis ClangDiagnosticAnalysis ClangDeclNodes ClangStmtNodes)
+add_dependencies(clangAnalysis ClangAttrClasses ClangAttrList
+                 ClangDiagnosticAnalysis ClangDeclNodes ClangStmtNodes)
