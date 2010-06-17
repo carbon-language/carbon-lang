@@ -254,7 +254,10 @@ Symtab::SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_du
     if (indexes.size() <= 1)
         return;
 
-    // Sort the indexes in place using std::sort
+    // Sort the indexes in place using std::stable_sort.
+    // NOTE: The use of std::stable_sort instead of std::sort here is strictly for performance,
+    // not correctness.  The indexes vector tends to be "close" to sorted, which the
+    // stable sort handles better.
     std::stable_sort(indexes.begin(), indexes.end(), SymbolIndexComparator(m_symbols));
 
     // Remove any duplicates if requested
