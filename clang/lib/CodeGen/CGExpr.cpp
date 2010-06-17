@@ -1818,10 +1818,18 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
     
     LValue LV = EmitLValue(E->getSubExpr());
+    llvm::Value *This;
+    if (LV.isPropertyRef()) {
+      RValue RV = EmitLoadOfPropertyRefLValue(LV, E->getSubExpr()->getType());
+      assert (!RV.isScalar() && "EmitCastLValue");
+      This = RV.getAggregateAddr();
+    }
+    else
+      This = LV.getAddress();
     
     // Perform the derived-to-base conversion
     llvm::Value *Base = 
-      GetAddressOfBaseClass(LV.getAddress(), DerivedClassDecl, 
+      GetAddressOfBaseClass(This, DerivedClassDecl, 
                             E->getBasePath(), /*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
