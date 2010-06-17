@@ -302,6 +302,7 @@ private:
   bool TraverseRecordHelper(RecordDecl *D);
   bool TraverseCXXRecordHelper(CXXRecordDecl *D);
   bool TraverseDeclaratorHelper(DeclaratorDecl *D);
+  bool TraverseDeclContextHelper(DeclContext* DC);
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
 };
@@ -613,18 +614,27 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
 // Therefore each Traverse* only needs to worry about children other
 // than those.
 
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseDeclContextHelper(DeclContext* DC) {
+  if (!DC)
+    return true;
+
+  for (DeclContext::decl_iterator Child = DC->decls_begin(),
+           ChildEnd = DC->decls_end();
+       Child != ChildEnd; ++Child) {
+    TRY_TO(TraverseDecl(*Child));
+  }
+
+  return true;
+}
+
 // This macro makes available a variable D, the passed-in decl.
 #define DEF_TRAVERSE_DECL(DECL, CODE)                           \
 template<typename Derived>                                      \
 bool RecursiveASTVisitor<Derived>::Traverse##DECL (DECL *D) {   \
   TRY_TO(WalkUpFrom##DECL (D));                                 \
   { CODE; }                                                     \
-  if (DeclContext *DC = dyn_cast<DeclContext>(D)) {             \
-    for (DeclContext::decl_iterator Child = DC->decls_begin(),  \
-                                 ChildEnd = DC->decls_end();    \
-         Child != ChildEnd; ++Child)                            \
-      TRY_TO(TraverseDecl(*Child));                             \
-  }                                                             \
+  TRY_TO(TraverseDeclContextHelper(dyn_cast<DeclContext>(D)));  \
   return true;                                                  \
 }
 
@@ -856,6 +866,9 @@ DEF_TRAVERSE_DECL(RecordDecl, {
   })
 
 DEF_TRAVERSE_DECL(CXXRecordDecl, {
+    // FIXME: don't traverse compiler-generated constructor,
+    // destructor, and operator=, as they aren't written in the source
+    // code.
     TRY_TO(TraverseCXXRecordHelper(D));
   })
 
@@ -939,43 +952,69 @@ DEF_TRAVERSE_DECL(ObjCIvarDecl, {
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
-  // The function parameters will be traversed by
-  // decls_begin/decls_end.  We don't traverse D->getResultType(), as
-  // it's part of the TypeSourceInfo for the function declaration.
-  TRY_TO(TraverseDeclaratorHelper(D));
+  TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+
+  // Visit the function type itself, which can be either
+  // FunctionNoProtoType or FunctionProtoType.
+  Type *FuncType = D->getType().getTypePtr();
+  if (FunctionNoProtoType *FuncNoProto =
+      dyn_cast<FunctionNoProtoType>(FuncType)) {
+    // Don't call Traverse*, or the result type will be double
+    // counted.
+    TRY_TO(WalkUpFromFunctionNoProtoType(FuncNoProto));
+  } else {
+    // Don't call Traverse*, or the result type and parameter types
+    // will be double counted.
+    TRY_TO(WalkUpFromFunctionProtoType(dyn_cast<FunctionProtoType>(FuncType)));
+  }
+
+  TRY_TO(TraverseType(D->getResultType()));
+  TRY_TO(TraverseDeclContextHelper(D));  // Parameters.
   if (D->isThisDeclarationADefinition()) {
-    TRY_TO(TraverseStmt(D->getBody()));
+    TRY_TO(TraverseStmt(D->getBody()));  // Function body.
   }
   return true;
 }
 
 DEF_TRAVERSE_DECL(FunctionDecl, {
-    TRY_TO(TraverseFunctionHelper(D));
+    // We skip decls_begin/decls_end, which are already covered by
+    // TraverseFunctionHelper().
+    return TraverseFunctionHelper(D);
   })
 
 DEF_TRAVERSE_DECL(CXXMethodDecl, {
-    // FIXME: verify we don't need anything more than the superclass does.
-    // If we do, change 3 subclasses to call our helper method, instead.
-    TRY_TO(TraverseFunctionHelper(D));
+    // We skip decls_begin/decls_end, which are already covered by
+    // TraverseFunctionHelper().
+    return TraverseFunctionHelper(D);
   })
 
 DEF_TRAVERSE_DECL(CXXConstructorDecl, {
     TRY_TO(TraverseFunctionHelper(D));
+    // FIXME: traverse the initializers before traversing the
+    // constructor body.
     for (CXXConstructorDecl::init_iterator I = D->init_begin(),
                                            E = D->init_end();
          I != E; ++I) {
       // FIXME: figure out how to recurse on the initializers
     }
+
+    // We skip decls_begin/decls_end, which are already covered by
+    // TraverseFunctionHelper().
+    return true;
   })
 
+// CXXConversionDecl is the declaration of a type conversion operator.
+// It's not a cast expression.
 DEF_TRAVERSE_DECL(CXXConversionDecl, {
-    TRY_TO(TraverseFunctionHelper(D));
-    // FIXME: is this redundant with GetResultType in VisitFunctionDecl?
-    TRY_TO(TraverseType(D->getConversionType()));
+    // We skip decls_begin/decls_end, which are already covered by
+    // TraverseFunctionHelper().
+    return TraverseFunctionHelper(D);
   })
 
 DEF_TRAVERSE_DECL(CXXDestructorDecl, {
-    TRY_TO(TraverseFunctionHelper(D));
+    // We skip decls_begin/decls_end, which are already covered by
+    // TraverseFunctionHelper().
+    return TraverseFunctionHelper(D);
   })
 
 template<typename Derived>
