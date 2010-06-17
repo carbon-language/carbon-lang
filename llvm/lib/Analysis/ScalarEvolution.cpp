@@ -1747,17 +1747,9 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
       //  NLI * LI * {Start,+,Step}  -->  NLI * {LI*Start,+,LI*Step}
       SmallVector<const SCEV *, 4> NewOps;
       NewOps.reserve(AddRec->getNumOperands());
-      if (LIOps.size() == 1) {
-        const SCEV *Scale = LIOps[0];
-        for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
-          NewOps.push_back(getMulExpr(Scale, AddRec->getOperand(i)));
-      } else {
-        for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i) {
-          SmallVector<const SCEV *, 4> MulOps(LIOps.begin(), LIOps.end());
-          MulOps.push_back(AddRec->getOperand(i));
-          NewOps.push_back(getMulExpr(MulOps));
-        }
-      }
+      const SCEV *Scale = getMulExpr(LIOps);
+      for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
+        NewOps.push_back(getMulExpr(Scale, AddRec->getOperand(i)));
 
       // It's tempting to propagate the NSW flag here, but nsw multiplication
       // is not associative so this isn't necessarily safe.
