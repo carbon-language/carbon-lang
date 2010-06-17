@@ -3387,7 +3387,8 @@ QualType TreeTransform<Derived>::
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     NewTL.setQualifierRange(TL.getQualifierRange());
   } else {
-    TLB.pushFullCopy(TL);
+    TypeLoc NewTL(Result, TL.getOpaqueData());
+    TLB.pushFullCopy(NewTL);
   }
   return Result;
 }

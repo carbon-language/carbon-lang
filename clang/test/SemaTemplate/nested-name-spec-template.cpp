@@ -72,3 +72,19 @@ namespace N1 {
 }
 
 template<typename T> T N1::f0() { }
+
+namespace PR7385 {
+  template< typename > struct has_xxx0
+  {
+    template< typename > struct has_xxx0_introspect
+    {
+      template< typename > struct has_xxx0_substitute ;
+      template< typename V > 
+      int int00( has_xxx0_substitute < typename V::template xxx< > > = 0 );
+    };
+    static const int value = has_xxx0_introspect<int>::value; // expected-error{{no member named 'value'}}
+    typedef int type;
+  };
+
+  has_xxx0<int>::type t; // expected-note{{instantiation of}}
+}
