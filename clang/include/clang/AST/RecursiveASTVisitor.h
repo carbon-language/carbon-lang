@@ -85,18 +85,18 @@ namespace clang {
 ///      function to actually visit the node.
 ///
 /// These tasks are done by three groups of methods, respectively:
-///   1. TraverseDecl(Decl* x) does task #1.  It is the entry point
+///   1. TraverseDecl(Decl *x) does task #1.  It is the entry point
 ///      for traversing an AST rooted at x.  This method simply
-///      dispatches (i.e. forwards) to TraverseFoo(Foo* x) where Foo
+///      dispatches (i.e. forwards) to TraverseFoo(Foo *x) where Foo
 ///      is the dynamic type of *x, which calls WalkUpFromFoo(x) and
 ///      then recursively visits the child nodes of x.
-///      TraverseStmt(Stmt* x) and TraverseType(QualType x) work
+///      TraverseStmt(Stmt *x) and TraverseType(QualType x) work
 ///      similarly.
-///   2. WalkUpFromFoo(Foo* x) does task #2.  It does not try to visit
+///   2. WalkUpFromFoo(Foo *x) does task #2.  It does not try to visit
 ///      any child node of x.  Instead, it first calls WalkUpFromBar(x)
 ///      where Bar is the direct parent class of Foo (unless Foo has
 ///      no parent), and then calls VisitFoo(x) (see the next list item).
-///   3. VisitFoo(Foo* x) does task #3.
+///   3. VisitFoo(Foo *x) does task #3.
 ///
 /// These three method groups are tiered (Traverse* > WalkUpFrom* >
 /// Visit*).  A method (e.g. Traverse*) may call methods from the same
@@ -1013,9 +1013,6 @@ DEF_TRAVERSE_DECL(ParmVarDecl, {
         !D->hasUnparsedDefaultArg())
       TRY_TO(TraverseStmt(D->getDefaultArg()));
 
-    // FIXME: we should traverse the TypeSourceInfo, which is far
-    // better that traversing getOriginalType(), since the
-    // TypeSourceInfo describes the original type as written.
     TRY_TO(TraverseVarHelper(D));
   })
 
@@ -1164,16 +1161,36 @@ DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
     TRY_TO(TraverseType(S->getTypeAsWritten()));
   })
 
-DEF_TRAVERSE_STMT(InitListExpr, {
-})
-  // FIXME: I think this is the right thing to do...
-#if 0
-  // We want the syntactic initializer list, not semantic.
-  if (InitListExpr *Syn=S->getSyntacticList())
+// InitListExpr is a tricky one, because we want to do all our work on
+// the syntactic form of the listexpr, but this method takes the
+// semantic form by default.  We can't use the macro helper because it
+// calls WalkUp*() on the semantic form, before our code can convert
+// to the syntactic form.
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
+  if (InitListExpr *Syn = S->getSyntacticForm())
     S = Syn;
-    // Now the default actions will work on the syntactic list.
-#endif
-    
+  TRY_TO(WalkUpFromInitListExpr(S));
+  // All we need are the default actions.  FIXME: use a helper function.
+  for (Stmt::child_iterator C = S->child_begin(), CEnd = S->child_end();
+       C != CEnd; ++C) {
+    TRY_TO(TraverseStmt(*C));
+  }
+  return true;
+}
+
+DEF_TRAVERSE_STMT(CXXZeroInitValueExpr, {
+    // This is called for code like 'return MyClass()' where MyClass
+    // has no user-defined constructor.  It's also called for 'return
+    // int()'.  We recurse on type MyClass/int.
+    if (!S->isImplicit())
+      TRY_TO(TraverseType(S->getType()));
+  })
+
+DEF_TRAVERSE_STMT(CXXNewExpr, {
+    TRY_TO(TraverseType(S->getAllocatedType()));
+  })
+
 // These exprs (most of them), do not need any action except iterating
 // over the children.
 DEF_TRAVERSE_STMT(AddrLabelExpr, { })
@@ -1188,14 +1205,12 @@ DEF_TRAVERSE_STMT(CXXBoolLiteralExpr, { })
 DEF_TRAVERSE_STMT(CXXDefaultArgExpr, { })
 DEF_TRAVERSE_STMT(CXXDeleteExpr, { })
 DEF_TRAVERSE_STMT(CXXExprWithTemporaries, { })
-DEF_TRAVERSE_STMT(CXXNewExpr, { })
 DEF_TRAVERSE_STMT(CXXNullPtrLiteralExpr, { })
 DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { })
 DEF_TRAVERSE_STMT(CXXThisExpr, { })
 DEF_TRAVERSE_STMT(CXXThrowExpr, { })
 DEF_TRAVERSE_STMT(CXXTypeidExpr, { })
 DEF_TRAVERSE_STMT(CXXUnresolvedConstructExpr, { })
-DEF_TRAVERSE_STMT(CXXZeroInitValueExpr, { })
 DEF_TRAVERSE_STMT(DesignatedInitExpr, { })
 DEF_TRAVERSE_STMT(ExtVectorElementExpr, { })
 DEF_TRAVERSE_STMT(GNUNullExpr, { })
