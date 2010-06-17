@@ -422,7 +422,8 @@ class.  This operation is analogous to $(foreach) in GNU make.</dd>
 <dt><tt>!null(a)</tt></dt>
   <dd>An integer {0,1} indicating whether list 'a' is empty.</dd>
 <dt><tt>!if(a,b,c)</tt></dt>
-  <dd>'b' if the result of integer operator 'a' is nonzero, 'c' otherwise.</dd>
+  <dd>'b' if the result of 'int' or 'bit' operator 'a' is nonzero,
+      'c' otherwise.</dd>
 <dt><tt>!eq(a,b)</tt></dt>
   <dd>Integer one if string a is equal to string b, zero otherwise.  This
       only operates on string, int and bit objects.  Use !cast<string> to

@@ -981,7 +981,8 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
   }
 
   case IF: {
-    IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
+    IntInit *LHSi =
+      dynamic_cast<IntInit*>(LHS->convertInitializerTo(new IntRecTy()));
     if (LHSi) {
       if (LHSi->getValue()) {
         return MHS;
@@ -1000,7 +1001,8 @@ Init *TernOpInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *lhs = LHS->resolveReferences(R, RV);
 
   if (Opc == IF && lhs != LHS) {
-    IntInit *Value = dynamic_cast<IntInit*>(lhs);
+    IntInit *Value =
+      dynamic_cast<IntInit*>(LHS->convertInitializerTo(new IntRecTy()));
     if (Value != 0) {
       // Short-circuit
       if (Value->getValue()) {
