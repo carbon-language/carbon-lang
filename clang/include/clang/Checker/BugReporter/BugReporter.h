@@ -70,6 +70,7 @@ protected:
 
   virtual void Profile(llvm::FoldingSetNodeID& hash) const {
     hash.AddInteger(getLocation().getRawEncoding());
+    hash.AddString(Description);
   }
 
 public:
