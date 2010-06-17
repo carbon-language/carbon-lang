@@ -475,7 +475,8 @@ void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
   BindingsTy B = GetBindings(store);
 
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I != E; ++I)
-    f.HandleBinding(*this, store, I.getKey(), I.getData());
+    if (!f.HandleBinding(*this, store, I.getKey(), I.getData()))
+      return;
 
 }
 
