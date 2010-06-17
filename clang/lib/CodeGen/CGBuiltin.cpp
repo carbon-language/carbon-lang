@@ -952,13 +952,13 @@ const llvm::Type *GetNeonType(LLVMContext &Ctx, unsigned type, bool q) {
   switch (type) {
     default: break;
     case 0: 
-    case 5: return llvm::VectorType::get(llvm::Type::getInt8Ty(Ctx), 8 << q);
+    case 5: return llvm::VectorType::get(llvm::Type::getInt8Ty(Ctx), 8 << (int)q);
     case 6:
     case 7:
-    case 1: return llvm::VectorType::get(llvm::Type::getInt16Ty(Ctx), 4 << q);
-    case 2: return llvm::VectorType::get(llvm::Type::getInt32Ty(Ctx), 2 << q);
-    case 3: return llvm::VectorType::get(llvm::Type::getInt64Ty(Ctx), 1 << q);
-    case 4: return llvm::VectorType::get(llvm::Type::getFloatTy(Ctx), 2 << q);
+    case 1: return llvm::VectorType::get(llvm::Type::getInt16Ty(Ctx), 4 << (int)q);
+    case 2: return llvm::VectorType::get(llvm::Type::getInt32Ty(Ctx), 2 << (int)q);
+    case 3: return llvm::VectorType::get(llvm::Type::getInt64Ty(Ctx), 1 << (int)q);
+    case 4: return llvm::VectorType::get(llvm::Type::getFloatTy(Ctx), 2 << (int)q);
   };
   return 0;
 }

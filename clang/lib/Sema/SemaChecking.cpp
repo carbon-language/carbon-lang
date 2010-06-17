@@ -248,25 +248,25 @@ static unsigned RFT(unsigned t, bool shift = false) {
   
   switch (t & 0x7) {
     case 0: // i8
-      return shift ? 7 : (8 << quad) - 1;
+      return shift ? 7 : (8 << (int)quad) - 1;
     case 1: // i16
-      return shift ? 15 : (4 << quad) - 1;
+      return shift ? 15 : (4 << (int)quad) - 1;
     case 2: // i32
-      return shift ? 31 : (2 << quad) - 1;
+      return shift ? 31 : (2 << (int)quad) - 1;
     case 3: // i64
-      return shift ? 63 : (1 << quad) - 1;
+      return shift ? 63 : (1 << (int)quad) - 1;
     case 4: // f32
       assert(!shift && "cannot shift float types!");
-      return (2 << quad) - 1;
+      return (2 << (int)quad) - 1;
     case 5: // poly8
       assert(!shift && "cannot shift polynomial types!");
-      return (8 << quad) - 1;
+      return (8 << (int)quad) - 1;
     case 6: // poly16
       assert(!shift && "cannot shift polynomial types!");
-      return (4 << quad) - 1;
+      return (4 << (int)quad) - 1;
     case 7: // float16
       assert(!shift && "cannot shift float types!");
-      return (4 << quad) - 1;
+      return (4 << (int)quad) - 1;
   }
   return 0;
 }
