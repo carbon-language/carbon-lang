@@ -405,7 +405,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // doesn't yet know how to not do that for SjLj.
   setExceptionSelectorRegister(ARM::R0);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
-  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
+  // Handle atomics directly for ARMv[67] (except for Thumb1), otherwise
+  // use the default expansion.
+  TargetLowering::LegalizeAction AtomicAction =
+    (Subtarget->hasV7Ops() ||
+      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())) ? Custom : Expand;
+  setOperationAction(ISD::MEMBARRIER, MVT::Other, AtomicAction);
 
   // If the subtarget does not have extract instructions, sign_extend_inreg
   // needs to be expanded. Extract is available in ARM mode on v6 and up,
