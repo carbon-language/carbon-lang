@@ -23,7 +23,7 @@ endif ()
 
 # Generate arm_neon.h
 set(LLVM_TARGET_DEFINITIONS arm_neon.td)
-tablegen(arm_neon.h.inc -gen-arm-neon-header)
+tablegen(arm_neon.h.inc -gen-arm-neon)
 add_custom_target(ClangARMNeon DEPENDS arm_neon.h.inc)
 
 add_custom_command(OUTPUT ${output_dir}/arm_neon.h 

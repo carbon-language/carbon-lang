@@ -3,7 +3,7 @@ BUILT_SOURCES = DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
-        DiagnosticGroups.inc AttrList.inc
+  DiagnosticGroups.inc AttrList.inc arm_neon.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -23,3 +23,7 @@ $(ObjDir)/AttrList.inc.tmp : Attr.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute list with tblgen"
 	$(Verb) $(TableGen) -gen-clang-attr-list -o $(call SYSPATH, $@) \
 	  -I $(PROJ_SRC_DIR)/../.. $<
+
+$(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang arm_neon.inc with tblgen"
+	$(Verb) $(TableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
