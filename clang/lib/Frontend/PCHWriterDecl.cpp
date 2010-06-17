@@ -118,7 +118,7 @@ void PCHDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isInvalidDecl());
   Record.push_back(D->hasAttrs());
   Record.push_back(D->isImplicit());
-  Record.push_back(D->isUsed());
+  Record.push_back(D->isUsed(false));
   Record.push_back(D->getAccess());
   Record.push_back(D->getPCHLevel());
 }
@@ -443,7 +443,7 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   if (!D->getTypeSourceInfo() &&
       !D->hasAttrs() &&
       !D->isImplicit() &&
-      !D->isUsed() &&
+      !D->isUsed(false) &&
       D->getAccess() == AS_none &&
       D->getPCHLevel() == 0 &&
       D->getStorageClass() == 0 &&

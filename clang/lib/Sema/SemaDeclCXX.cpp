@@ -4216,7 +4216,7 @@ namespace {
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
   assert((Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
-          !Constructor->isUsed()) &&
+          !Constructor->isUsed(false)) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
   CXXRecordDecl *ClassDecl = Constructor->getParent();
@@ -4237,7 +4237,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
                                     CXXDestructorDecl *Destructor) {
-  assert((Destructor->isImplicit() && !Destructor->isUsed()) &&
+  assert((Destructor->isImplicit() && !Destructor->isUsed(false)) &&
          "DefineImplicitDestructor - call it for implicit default dtor");
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
@@ -4466,7 +4466,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   assert((CopyAssignOperator->isImplicit() && 
           CopyAssignOperator->isOverloadedOperator() &&
           CopyAssignOperator->getOverloadedOperator() == OO_Equal &&
-          !CopyAssignOperator->isUsed()) &&
+          !CopyAssignOperator->isUsed(false)) &&
          "DefineImplicitCopyAssignment called for wrong function");
 
   CXXRecordDecl *ClassDecl = CopyAssignOperator->getParent();
@@ -4766,7 +4766,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                    unsigned TypeQuals) {
   assert((CopyConstructor->isImplicit() &&
           CopyConstructor->isCopyConstructor(TypeQuals) &&
-          !CopyConstructor->isUsed()) &&
+          !CopyConstructor->isUsed(false)) &&
          "DefineImplicitCopyConstructor - call it for implicit copy ctor");
 
   CXXRecordDecl *ClassDecl = CopyConstructor->getParent();

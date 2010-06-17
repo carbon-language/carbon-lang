@@ -330,7 +330,11 @@ public:
 
   /// \brief Whether this declaration was used, meaning that a definition
   /// is required.
-  bool isUsed() const;
+  ///
+  /// \param CheckUsedAttr When true, also consider the "used" attribute
+  /// (in addition to the "used" bit set by \c setUsed()) when determining
+  /// whether the function is used.
+  bool isUsed(bool CheckUsedAttr = true) const;
   
   void setUsed(bool U = true) { Used = U; }
 

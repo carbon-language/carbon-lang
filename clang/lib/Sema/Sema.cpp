@@ -226,7 +226,8 @@ void Sema::ActOnEndOfTranslationUnit() {
   // Remove functions that turned out to be used.
   UnusedStaticFuncs.erase(std::remove_if(UnusedStaticFuncs.begin(), 
                                          UnusedStaticFuncs.end(), 
-                                         std::mem_fun(&FunctionDecl::isUsed)), 
+                             std::bind2nd(std::mem_fun(&FunctionDecl::isUsed),
+                                          true)), 
                           UnusedStaticFuncs.end());
 
   // Check for #pragma weak identifiers that were never declared

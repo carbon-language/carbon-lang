@@ -7500,7 +7500,7 @@ Sema::PopExpressionEvaluationContext() {
 void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   assert(D && "No declaration?");
 
-  if (D->isUsed())
+  if (D->isUsed(false))
     return;
 
   // Mark a parameter or variable declaration "used", regardless of whether we're in a
@@ -7543,24 +7543,24 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
     unsigned TypeQuals;
     if (Constructor->isImplicit() && Constructor->isDefaultConstructor()) {
-        if (!Constructor->isUsed())
+        if (!Constructor->isUsed(false))
           DefineImplicitDefaultConstructor(Loc, Constructor);
     } else if (Constructor->isImplicit() &&
                Constructor->isCopyConstructor(TypeQuals)) {
-      if (!Constructor->isUsed())
+      if (!Constructor->isUsed(false))
         DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
     }
 
     MarkVTableUsed(Loc, Constructor->getParent());
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
-    if (Destructor->isImplicit() && !Destructor->isUsed())
+    if (Destructor->isImplicit() && !Destructor->isUsed(false))
       DefineImplicitDestructor(Loc, Destructor);
     if (Destructor->isVirtual())
       MarkVTableUsed(Loc, Destructor->getParent());
   } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
     if (MethodDecl->isImplicit() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
-      if (!MethodDecl->isUsed())
+      if (!MethodDecl->isUsed(false))
         DefineImplicitCopyAssignment(Loc, MethodDecl);
     } else if (MethodDecl->isVirtual())
       MarkVTableUsed(Loc, MethodDecl->getParent());

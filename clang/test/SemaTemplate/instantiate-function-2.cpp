@@ -20,3 +20,14 @@ namespace PR7184 {
 
   template void f<int>();
 }
+
+namespace UsedAttr {
+  template<typename T>
+  void __attribute__((used)) foo() {
+    T *x = 1; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+  }
+
+  void bar() {
+    foo<int>(); // expected-note{{instantiation of}}
+  }
+}

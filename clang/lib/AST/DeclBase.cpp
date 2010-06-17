@@ -212,17 +212,17 @@ ASTContext &Decl::getASTContext() const {
   return getTranslationUnitDecl()->getASTContext();
 }
 
-bool Decl::isUsed() const { 
+bool Decl::isUsed(bool CheckUsedAttr) const { 
   if (Used)
     return true;
   
   // Check for used attribute.
-  if (hasAttr<UsedAttr>())
+  if (CheckUsedAttr && hasAttr<UsedAttr>())
     return true;
   
   // Check redeclarations for used attribute.
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
-    if (I->hasAttr<UsedAttr>() || I->Used)
+    if ((CheckUsedAttr && I->hasAttr<UsedAttr>()) || I->Used)
       return true;
   }
   
