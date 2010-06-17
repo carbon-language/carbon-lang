@@ -4,6 +4,10 @@
 // be reached at rideau3@gmail.com.
 ////////////////////////////////////////////////////////////////////////////////
 
+// An attribute's subject is whatever it appertains to. In this file, it is
+// more accurately a list of things that an attribute can appertain to. All
+// Decls and Stmts are possibly AttrSubjects (even though the syntax may not
+// allow attributes on a given Decl or Stmt).
 class AttrSubject;
 
 include "clang/Basic/DeclNodes.td"
@@ -18,7 +22,6 @@ include "clang/Basic/StmtNodes.td"
 // The code fragment is a boolean expression that will confirm that the subject
 // meets the requirements; the subject will have the name S, and will have the
 // type specified by the base. It should be a simple boolean expression.
-
 class SubsetSubject<AttrSubject base, string description, code check>
     : AttrSubject {
   AttrSubject Base = base;
@@ -26,6 +29,8 @@ class SubsetSubject<AttrSubject base, string description, code check>
   code CheckCode = check;
 }
 
+// This is the type of a variable which C++0x defines [[aligned()]] as being
+// a possible subject.
 def NormalVar : SubsetSubject<Var, "non-register, non-parameter variable",
                               [{S->getStorageClass() != VarDecl::Register &&
                                 S->getKind() != Decl::ImplicitParam
@@ -36,6 +41,7 @@ def CXXVirtualMethod : SubsetSubject<CXXRecord, "virtual member function",
 def NonBitField : SubsetSubject<Field, "non-bit field",
                                 [{!S->isBitField()}]>;
 
+// A single argument to an attribute
 class Argument<string name> {
   string Name = name;
 }
@@ -49,20 +55,29 @@ class ObjCInterfaceArgument<string name> : Argument<name>;
 class UnsignedIntArgument<string name> : Argument<name>;
 class UnsignedIntOrTypeArgument<string name> : Argument<name>;
 
+// An integer argument with a default value
 class DefaultIntArgument<string name, int default> : IntArgument<name> {
   int Default = default;
 }
 
+// Zero or more arguments of a type
 class VariadicArgument<Argument arg> : Argument<arg.Name> {
   Argument VariadicArg = arg;
 }
 
 class Attr {
+  // The various ways in which an attribute can be spelled in source
   list<string> Spellings;
+  // The things to which an attribute can appertain
   list<AttrSubject> Subjects;
+  // The arguments allowed on an attribute
   list<Argument> Args = [];
+  // The namespaces in which the attribute appears in C++0x attributes.
+  // The attribute will not be permitted in C++0x attribute-specifiers if
+  // this is empty; the empty string can be used as a namespace.
   list<string> Namespaces = [];
-  list<string> Aliases = [];
+  // A temporary development bit to tell TableGen not to emit certain
+  // information about the attribute.
   bit DoNotEmit = 1;
 }
 
