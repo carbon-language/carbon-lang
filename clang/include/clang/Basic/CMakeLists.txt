@@ -24,4 +24,4 @@ tablegen(AttrList.inc
          -gen-clang-attr-list
          -I ${CMAKE_CURRENT_SOURCE_DIR}/.././)
 add_custom_target(ClangAttrList
-  DEPENDS AttrLit.inc)
+  DEPENDS AttrList.inc)
