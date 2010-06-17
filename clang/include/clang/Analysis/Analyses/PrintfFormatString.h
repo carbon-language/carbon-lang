@@ -192,11 +192,11 @@ public:
                  unsigned amountLength,
                  bool usesPositionalArg)
     : start(amountStart), length(amountLength), hs(howSpecified), amt(amount),
-      UsesPositionalArg(usesPositionalArg) {}
+      UsesPositionalArg(usesPositionalArg), UsesDotPrefix(0) {}
 
   OptionalAmount(bool valid = true)
     : start(0),length(0), hs(valid ? NotSpecified : Invalid), amt(0),
-      UsesPositionalArg(0) {}
+      UsesPositionalArg(0), UsesDotPrefix(0) {}
 
   bool isInvalid() const {
     return hs == Invalid;
@@ -236,12 +236,16 @@ public:
     return amt + 1;
   }
 
+  bool usesDotPrefix() const { return UsesDotPrefix; }
+  void setUsesDotPrefix() { UsesDotPrefix = true; }
+
 private:
   const char *start;
   unsigned length;
   HowSpecified hs;
   unsigned amt;
   bool UsesPositionalArg : 1;
+  bool UsesDotPrefix;
 };
 
 // Class representing optional flags with location and representation
@@ -362,6 +366,7 @@ public:
 
   void setPrecision(const OptionalAmount &Amt) {
     Precision = Amt;
+    Precision.setUsesDotPrefix();
   }
 
   const OptionalAmount &getPrecision() const {

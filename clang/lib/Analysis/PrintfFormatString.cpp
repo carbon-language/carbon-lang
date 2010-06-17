@@ -611,6 +611,9 @@ const char *LengthModifier::toString() const {
 //===----------------------------------------------------------------------===//
 
 void OptionalAmount::toString(llvm::raw_ostream &os) const {
+  if (UsesDotPrefix)
+    os << ".";
+
   switch (hs) {
   case Invalid:
   case NotSpecified:
