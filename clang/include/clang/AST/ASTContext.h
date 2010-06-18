@@ -1345,6 +1345,11 @@ private:
   // by DeclContext objects.  This probably should not be in ASTContext,
   // but we include it here so that ASTContext can quickly deallocate them.
   llvm::PointerIntPair<StoredDeclsMap*,1> LastSDM;
+
+  /// \brief A counter used to uniquely identify "blocks".
+  unsigned int UniqueBlockByRefTypeID;
+  unsigned int UniqueBlockParmTypeID;
+  
   friend class DeclContext;
   friend class DeclarationNameTable;
   void ReleaseDeclContextMaps();

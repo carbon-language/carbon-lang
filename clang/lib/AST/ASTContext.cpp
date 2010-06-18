@@ -142,7 +142,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   BuiltinInfo(builtins),
   DeclarationNames(*this),
   ExternalSource(0), PrintingPolicy(LOpts),
-  LastSDM(0, 0) {
+  LastSDM(0, 0),
+  UniqueBlockByRefTypeID(0), UniqueBlockParmTypeID(0) {
   ObjCIdRedefinitionType = QualType();
   ObjCClassRedefinitionType = QualType();
   ObjCSelRedefinitionType = QualType();
@@ -3154,7 +3155,6 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
   bool HasCopyAndDispose = BlockRequiresCopying(Ty);
 
   // FIXME: Move up
-  static unsigned int UniqueBlockByRefTypeID = 0;
   llvm::SmallString<36> Name;
   llvm::raw_svector_ostream(Name) << "__Block_byref_" <<
                                   ++UniqueBlockByRefTypeID << '_' << DeclName;
@@ -3206,7 +3206,6 @@ QualType ASTContext::getBlockParmType(
   llvm::SmallVectorImpl<const Expr *> &Layout) {
 
   // FIXME: Move up
-  static unsigned int UniqueBlockParmTypeID = 0;
   llvm::SmallString<36> Name;
   llvm::raw_svector_ostream(Name) << "__block_literal_"
                                   << ++UniqueBlockParmTypeID;
