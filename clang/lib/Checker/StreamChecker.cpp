@@ -24,11 +24,13 @@ using namespace clang;
 namespace {
 
 class StreamChecker : public CheckerVisitor<StreamChecker> {
-  IdentifierInfo *II_fopen, *II_fread;
+  IdentifierInfo *II_fopen, *II_fread, *II_fseek, *II_ftell, *II_rewind;
   BuiltinBug *BT_nullfp;
 
 public:
-  StreamChecker() : II_fopen(0), II_fread(0), BT_nullfp(0) {}
+  StreamChecker() 
+    : II_fopen(0), II_fread(0), II_fseek(0), II_ftell(0), II_rewind(0), 
+      BT_nullfp(0) {}
 
   static void *getTag() {
     static int x;
@@ -40,9 +42,13 @@ public:
 private:
   void FOpen(CheckerContext &C, const CallExpr *CE);
   void FRead(CheckerContext &C, const CallExpr *CE);
+  void FSeek(CheckerContext &C, const CallExpr *CE);
+  void FTell(CheckerContext &C, const CallExpr *CE);
+  void Rewind(CheckerContext &C, const CallExpr *CE);
+  bool CheckNullStream(SVal SV, const GRState *state, CheckerContext &C);
 };
 
-}
+} // end anonymous namespace
 
 void clang::RegisterStreamChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
@@ -63,6 +69,15 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (!II_fread)
     II_fread = &Ctx.Idents.get("fread");
 
+  if (!II_fseek)
+    II_fseek = &Ctx.Idents.get("fseek");
+
+  if (!II_ftell)
+    II_ftell = &Ctx.Idents.get("ftell");
+
+  if (!II_rewind)
+    II_rewind = &Ctx.Idents.get("rewind");
+
   if (FD->getIdentifier() == II_fopen) {
     FOpen(C, CE);
     return true;
@@ -70,6 +85,21 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   if (FD->getIdentifier() == II_fread) {
     FRead(C, CE);
+    return true;
+  }
+
+  if (FD->getIdentifier() == II_fseek) {
+    FSeek(C, CE);
+    return true;
+  }
+
+  if (FD->getIdentifier() == II_ftell) {
+    FTell(C, CE);
+    return true;
+  }
+
+  if (FD->getIdentifier() == II_rewind) {
+    Rewind(C, CE);
     return true;
   }
 
@@ -96,23 +126,47 @@ void StreamChecker::FOpen(CheckerContext &C, const CallExpr *CE) {
 
 void StreamChecker::FRead(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+    return;
+}
 
-  // Assume CallAndMessageChecker has been run.
-  SVal StreamVal = state->getSVal(CE->getArg(3));
+void StreamChecker::FSeek(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
 
-  if (const DefinedSVal *DV = dyn_cast<DefinedSVal>(&StreamVal)) {
-    ConstraintManager &CM = C.getConstraintManager();
-    const GRState *stateNotNull, *stateNull;
-    llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
+void StreamChecker::FTell(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
 
-    if (!stateNotNull && stateNull) {
-      if (ExplodedNode *N = C.GenerateSink(stateNull)) {
-        if (!BT_nullfp)
-          BT_nullfp = new BuiltinBug("NULL stream pointer",
+void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+bool StreamChecker::CheckNullStream(SVal SV, const GRState *state,
+                                    CheckerContext &C) {
+  const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
+  if (!DV)
+    return false;
+
+  ConstraintManager &CM = C.getConstraintManager();
+  const GRState *stateNotNull, *stateNull;
+  llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
+
+  if (!stateNotNull && stateNull) {
+    if (ExplodedNode *N = C.GenerateSink(stateNull)) {
+      if (!BT_nullfp)
+        BT_nullfp = new BuiltinBug("NULL stream pointer",
                                      "Stream pointer might be NULL.");
-        BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
-        C.EmitReport(R);
-      }
+      BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
+      C.EmitReport(R);
     }
+    return true;
   }
+  return false;
 }
