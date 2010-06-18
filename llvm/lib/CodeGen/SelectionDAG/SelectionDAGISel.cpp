@@ -437,8 +437,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     BlockName = MF->getFunction()->getNameStr() + ":" +
                 BB->getBasicBlock()->getNameStr();
 
-  DEBUG(dbgs() << "Initial selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Initial selection DAG:\n"; CurDAG->dump());
 
   if (ViewDAGCombine1) CurDAG->viewGraph("dag-combine1 input for " + BlockName);
 
@@ -448,8 +447,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     CurDAG->Combine(Unrestricted, *AA, OptLevel);
   }
 
-  DEBUG(dbgs() << "Optimized lowered selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Optimized lowered selection DAG:\n"; CurDAG->dump());
 
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
@@ -462,8 +460,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     Changed = CurDAG->LegalizeTypes();
   }
 
-  DEBUG(dbgs() << "Type-legalized selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Type-legalized selection DAG:\n"; CurDAG->dump());
 
   if (Changed) {
     if (ViewDAGCombineLT)
@@ -476,8 +473,8 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
       CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
     }
 
-    DEBUG(dbgs() << "Optimized type-legalized selection DAG:\n");
-    DEBUG(CurDAG->dump());
+    DEBUG(dbgs() << "Optimized type-legalized selection DAG:\n";
+          CurDAG->dump());
   }
 
   {
@@ -501,8 +498,8 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
       CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
     }
 
-    DEBUG(dbgs() << "Optimized vector-legalized selection DAG:\n");
-    DEBUG(CurDAG->dump());
+    DEBUG(dbgs() << "Optimized vector-legalized selection DAG:\n";
+          CurDAG->dump());
   }
 
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
@@ -512,8 +509,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     CurDAG->Legalize(OptLevel);
   }
 
-  DEBUG(dbgs() << "Legalized selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Legalized selection DAG:\n"; CurDAG->dump());
 
   if (ViewDAGCombine2) CurDAG->viewGraph("dag-combine2 input for " + BlockName);
 
@@ -523,8 +519,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
   }
 
-  DEBUG(dbgs() << "Optimized legalized selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Optimized legalized selection DAG:\n"; CurDAG->dump());
 
   if (OptLevel != CodeGenOpt::None)
     ComputeLiveOutVRegInfo();
@@ -538,8 +533,7 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
     DoInstructionSelection();
   }
 
-  DEBUG(dbgs() << "Selected selection DAG:\n");
-  DEBUG(CurDAG->dump());
+  DEBUG(dbgs() << "Selected selection DAG:\n"; CurDAG->dump());
 
   if (ViewSchedDAGs) CurDAG->viewGraph("scheduler input for " + BlockName);
 
@@ -784,8 +778,8 @@ void
 SelectionDAGISel::FinishBasicBlock(MachineBasicBlock *BB) {
 
   DEBUG(dbgs() << "Total amount of phi nodes to update: "
-               << FuncInfo->PHINodesToUpdate.size() << "\n");
-  DEBUG(for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i)
+               << FuncInfo->PHINodesToUpdate.size() << "\n";
+        for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i)
           dbgs() << "Node " << i << " : ("
                  << FuncInfo->PHINodesToUpdate[i].first
                  << ", " << FuncInfo->PHINodesToUpdate[i].second << ")\n");
