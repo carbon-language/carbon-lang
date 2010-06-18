@@ -142,7 +142,7 @@ private:
 
 /// \brief Return the TypeLoc for a type source info.
 inline TypeLoc TypeSourceInfo::getTypeLoc() const {
-  return TypeLoc(Ty, const_cast<TypeSourceInfo*>(this + 1));
+  return TypeLoc(Ty, const_cast<void*>(static_cast<const void*>(this + 1)));
 }
 
 /// \brief Wrapper of type source information for a type with
