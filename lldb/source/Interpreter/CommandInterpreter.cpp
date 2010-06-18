@@ -237,7 +237,6 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectSource ());
     m_command_dict["source-file"] = CommandObjectSP (new CommandObjectSourceFile ());
     //m_command_dict["syntax"]    = CommandObjectSP (new CommandObjectSyntax ());
-    m_command_dict["status"]    = CommandObjectSP (new CommandObjectStatus ());
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (this));
     //m_command_dict["translate"] = CommandObjectSP (new CommandObjectTranslate ());

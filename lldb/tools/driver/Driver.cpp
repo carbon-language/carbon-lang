@@ -775,7 +775,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             break;
 
         case eStateExited:
-            SBDebugger::HandleCommand("status");
+            SBDebugger::HandleCommand("process status");
             m_io_channel_ap->RefreshPrompt();
             break;
 
@@ -794,7 +794,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             else
             {
                 UpdateCurrentThread ();
-                SBDebugger::HandleCommand("status");
+                SBDebugger::HandleCommand("process status");
                 m_io_channel_ap->RefreshPrompt();
             }
             break;

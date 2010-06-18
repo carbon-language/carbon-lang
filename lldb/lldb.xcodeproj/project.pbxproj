@@ -97,7 +97,6 @@
 		26D5B08711B07550009A862E /* CommandObjectShow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4110F1B84700F91463 /* CommandObjectShow.cpp */; };
 		26D5B08811B07550009A862E /* CommandObjectSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */; };
 		26D5B08911B07550009A862E /* CommandObjectSourceFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4310F1B84700F91463 /* CommandObjectSourceFile.cpp */; };
-		26D5B08A11B07550009A862E /* CommandObjectStatus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4410F1B84700F91463 /* CommandObjectStatus.cpp */; };
 		26D5B08B11B07550009A862E /* CommandObjectSyntax.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */; };
 		26D5B08C11B07550009A862E /* CommandObjectThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */; };
 		26D5B08D11B07550009A862E /* CommandObjectVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E4810F1B84700F91463 /* CommandObjectVariable.cpp */; };
@@ -617,7 +616,6 @@
 		26BC7D2810F1B76300F91463 /* CommandObjectShow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectShow.h; path = source/Commands/CommandObjectShow.h; sourceTree = "<group>"; };
 		26BC7D2910F1B76300F91463 /* CommandObjectSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSource.h; path = source/Commands/CommandObjectSource.h; sourceTree = "<group>"; };
 		26BC7D2A10F1B76300F91463 /* CommandObjectSourceFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSourceFile.h; path = source/Commands/CommandObjectSourceFile.h; sourceTree = "<group>"; };
-		26BC7D2B10F1B76300F91463 /* CommandObjectStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectStatus.h; path = source/Commands/CommandObjectStatus.h; sourceTree = "<group>"; };
 		26BC7D2C10F1B76300F91463 /* CommandObjectSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSyntax.h; path = source/Commands/CommandObjectSyntax.h; sourceTree = "<group>"; };
 		26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectThread.h; path = source/Commands/CommandObjectThread.h; sourceTree = "<group>"; };
 		26BC7D2E10F1B76300F91463 /* CommandObjectTranslate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTranslate.h; path = source/Commands/CommandObjectTranslate.h; sourceTree = "<group>"; };
@@ -740,7 +738,6 @@
 		26BC7E4110F1B84700F91463 /* CommandObjectShow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectShow.cpp; path = source/Commands/CommandObjectShow.cpp; sourceTree = "<group>"; };
 		26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSource.cpp; path = source/Commands/CommandObjectSource.cpp; sourceTree = "<group>"; };
 		26BC7E4310F1B84700F91463 /* CommandObjectSourceFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSourceFile.cpp; path = source/Commands/CommandObjectSourceFile.cpp; sourceTree = "<group>"; };
-		26BC7E4410F1B84700F91463 /* CommandObjectStatus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectStatus.cpp; path = source/Commands/CommandObjectStatus.cpp; sourceTree = "<group>"; };
 		26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSyntax.cpp; path = source/Commands/CommandObjectSyntax.cpp; sourceTree = "<group>"; };
 		26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectThread.cpp; path = source/Commands/CommandObjectThread.cpp; sourceTree = "<group>"; };
 		26BC7E4710F1B84700F91463 /* CommandObjectTranslate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTranslate.cpp; path = source/Commands/CommandObjectTranslate.cpp; sourceTree = "<group>"; };
@@ -1815,8 +1812,6 @@
 				26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */,
 				26BC7D2A10F1B76300F91463 /* CommandObjectSourceFile.h */,
 				26BC7E4310F1B84700F91463 /* CommandObjectSourceFile.cpp */,
-				26BC7D2B10F1B76300F91463 /* CommandObjectStatus.h */,
-				26BC7E4410F1B84700F91463 /* CommandObjectStatus.cpp */,
 				26BC7D2C10F1B76300F91463 /* CommandObjectSyntax.h */,
 				26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */,
 				269416AE119A024800FF2715 /* CommandObjectTarget.h */,
@@ -2409,7 +2404,6 @@
 				26D5B08711B07550009A862E /* CommandObjectShow.cpp in Sources */,
 				26D5B08811B07550009A862E /* CommandObjectSource.cpp in Sources */,
 				26D5B08911B07550009A862E /* CommandObjectSourceFile.cpp in Sources */,
-				26D5B08A11B07550009A862E /* CommandObjectStatus.cpp in Sources */,
 				26D5B08B11B07550009A862E /* CommandObjectSyntax.cpp in Sources */,
 				26D5B08C11B07550009A862E /* CommandObjectThread.cpp in Sources */,
 				26D5B08D11B07550009A862E /* CommandObjectVariable.cpp in Sources */,
