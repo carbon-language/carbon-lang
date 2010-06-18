@@ -42,10 +42,28 @@ public:
     SetIgnoreCount (int32_t n);
 
     void
-    SetThreadID (lldb::tid_t thread_id);
+    SetThreadID (lldb::tid_t sb_thread_id);
 
     lldb::tid_t
     GetThreadID ();
+    
+    void
+    SetThreadIndex (uint32_t index);
+    
+    uint32_t
+    GetThreadIndex() const;
+    
+    void
+    SetThreadName (const char *thread_name);
+    
+    const char *
+    GetThreadName () const;
+    
+    void 
+    SetQueueName (const char *queue_name);
+    
+    const char *
+    GetQueueName () const;
 
     bool
     IsResolved ();

@@ -20,8 +20,9 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadSpec.h"
 
 
 #include "lldb/lldb-enumerations.h"
@@ -274,6 +275,70 @@ SBBreakpoint::GetThreadID ()
         lldb_thread_id = m_break_sp->GetThreadID();
 
     return lldb_thread_id;
+}
+
+void
+SBBreakpoint::SetThreadIndex (uint32_t index)
+{
+    if (m_break_sp)
+        m_break_sp->GetOptions()->GetThreadSpec()->SetIndex (index);
+}
+
+uint32_t
+SBBreakpoint::GetThreadIndex() const
+{
+    if (m_break_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return 0;
+        else
+            return thread_spec->GetIndex();
+    }
+    return 0;
+}
+    
+
+void
+SBBreakpoint::SetThreadName (const char *thread_name)
+{
+    if (m_break_sp)
+        m_break_sp->GetOptions()->GetThreadSpec()->SetName (thread_name);
+}
+
+const char *
+SBBreakpoint::GetThreadName () const
+{
+    if (m_break_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return NULL;
+        else
+            return thread_spec->GetName();
+    }
+    return NULL;
+}
+
+void
+SBBreakpoint::SetQueueName (const char *queue_name)
+{
+    if (m_break_sp)
+        m_break_sp->GetOptions()->GetThreadSpec()->SetQueueName (queue_name);
+}
+
+const char *
+SBBreakpoint::GetQueueName () const
+{
+    if (m_break_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return NULL;
+        else
+            return thread_spec->GetQueueName();
+    }
+    return NULL;
 }
 
 size_t

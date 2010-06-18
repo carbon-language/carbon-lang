@@ -17,6 +17,7 @@
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -106,6 +107,70 @@ SBBreakpointLocation::GetThreadID ()
         sb_thread_id = m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->GetTID();
 
     return sb_thread_id;
+}
+
+void
+SBBreakpointLocation::SetThreadIndex (uint32_t index)
+{
+    if (m_break_loc_sp)
+        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetIndex (index);
+}
+
+uint32_t
+SBBreakpointLocation::GetThreadIndex() const
+{
+    if (m_break_loc_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return 0;
+        else
+            return thread_spec->GetIndex();
+    }
+    return 0;
+}
+    
+
+void
+SBBreakpointLocation::SetThreadName (const char *thread_name)
+{
+    if (m_break_loc_sp)
+        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetName (thread_name);
+}
+
+const char *
+SBBreakpointLocation::GetThreadName () const
+{
+    if (m_break_loc_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return NULL;
+        else
+            return thread_spec->GetName();
+    }
+    return NULL;
+}
+
+void
+SBBreakpointLocation::SetQueueName (const char *queue_name)
+{
+    if (m_break_loc_sp)
+        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetQueueName (queue_name);
+}
+
+const char *
+SBBreakpointLocation::GetQueueName () const
+{
+    if (m_break_loc_sp)
+    {
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        if (thread_spec == NULL)
+            return NULL;
+        else
+            return thread_spec->GetQueueName();
+    }
+    return NULL;
 }
 
 bool
