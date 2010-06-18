@@ -407,10 +407,46 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   // Handle atomics directly for ARMv[67] (except for Thumb1), otherwise
   // use the default expansion.
-  TargetLowering::LegalizeAction AtomicAction =
+  bool canHandleAtomics =
     (Subtarget->hasV7Ops() ||
-      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only())) ? Custom : Expand;
-  setOperationAction(ISD::MEMBARRIER, MVT::Other, AtomicAction);
+      (Subtarget->hasV6Ops() && !Subtarget->isThumb1Only()));
+  if (canHandleAtomics) {
+    // membarrier needs custom lowering; the rest are legal and handled
+    // normally.
+    setOperationAction(ISD::MEMBARRIER, MVT::Other, Custom);
+  } else {
+    // Set them all for expansion, which will force libcalls.
+    setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i32, Expand);
+  }
+  // 64-bit versions are always libcalls (for now)
+  setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
   // If the subtarget does not have extract instructions, sign_extend_inreg
   // needs to be expanded. Extract is available in ARM mode on v6 and up,
