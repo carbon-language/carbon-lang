@@ -151,6 +151,7 @@ public:
   /// getRangeSize - Return the size in bytes of the specified range if they
   /// are in the same file.  If not, this returns -1.
   int getRangeSize(SourceRange Range) const;
+  int getRangeSize(const CharSourceRange &Range) const;
 
   /// getRewrittenText - Return the rewritten form of the text in the specified
   /// range.  If the start or end of the range was unrewritable or if they are

@@ -50,14 +50,14 @@ static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
 /// does the appropriate translation.
 CXSourceRange translateSourceRange(const SourceManager &SM, 
                                    const LangOptions &LangOpts,
-                                   SourceRange R);
+                                   const CharSourceRange &R);
   
 /// \brief Translate a Clang source range into a CIndex source range.
 static inline CXSourceRange translateSourceRange(ASTContext &Context,
                                                  SourceRange R) {
   return translateSourceRange(Context.getSourceManager(),
                               Context.getLangOptions(),
-                              R);
+                              CharSourceRange::getTokenRange(R));
 }
 
 static inline SourceLocation translateSourceLocation(CXSourceLocation L) {

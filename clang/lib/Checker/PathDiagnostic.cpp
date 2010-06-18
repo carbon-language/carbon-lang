@@ -107,7 +107,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
     new PathDiagnosticEventPiece(Info.getLocation(), StrC.str());
 
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
-    P->addRange(Info.getRange(i));
+    P->addRange(Info.getRange(i).getAsRange());
   for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i)
     P->addFixItHint(Info.getFixItHint(i));
   D->push_front(P);

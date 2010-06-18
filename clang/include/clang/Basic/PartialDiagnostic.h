@@ -59,7 +59,7 @@ public:
   
     /// DiagRanges - The list of ranges added to this diagnostic.  It currently
     /// only support 10 ranges, could easily be extended if needed.
-    SourceRange DiagRanges[10];
+    CharSourceRange DiagRanges[10];
     
     enum { MaxFixItHints = 3 };
     
@@ -142,7 +142,7 @@ private:
     DiagStorage = 0;
   }
   
-  void AddSourceRange(const SourceRange &R) const {
+  void AddSourceRange(const CharSourceRange &R) const {
     if (!DiagStorage)
       DiagStorage = getStorage();
 
@@ -264,10 +264,16 @@ public:
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const SourceRange &R) {
-    PD.AddSourceRange(R);
+    PD.AddSourceRange(CharSourceRange::getTokenRange(R));
     return PD;
   }
 
+  friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                                    const CharSourceRange &R) {
+    PD.AddSourceRange(R);
+    return PD;
+  }
+  
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              const FixItHint &Hint) {
     PD.AddFixItHint(Hint);

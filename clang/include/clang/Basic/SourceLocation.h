@@ -172,6 +172,56 @@ public:
     return B != X.B || E != X.E;
   }
 };
+  
+/// CharSourceRange - This class represents a character granular source range.
+/// The underlying SourceRange can either specify the starting/ending character
+/// of the range, or it can specify the start or the range and the start of the
+/// last token of the range (a "token range").  In the token range case, the
+/// size of the last token must be measured to determine the actual end of the
+/// range.
+class CharSourceRange { 
+  SourceRange Range;
+  bool IsTokenRange;
+public:
+  CharSourceRange() : IsTokenRange(false) {}
+  CharSourceRange(SourceRange R, bool ITR) : Range(R),IsTokenRange(ITR){}
+
+  static CharSourceRange getTokenRange(SourceRange R) {
+    CharSourceRange Result;
+    Result.Range = R;
+    Result.IsTokenRange = true;
+    return Result;
+  }
+
+  static CharSourceRange getCharRange(SourceRange R) {
+    CharSourceRange Result;
+    Result.Range = R;
+    Result.IsTokenRange = false;
+    return Result;
+  }
+    
+  static CharSourceRange getTokenRange(SourceLocation B, SourceLocation E) {
+    return getTokenRange(SourceRange(B, E));
+  }
+  static CharSourceRange getCharRange(SourceLocation B, SourceLocation E) {
+    return getCharRange(SourceRange(B, E));
+  }
+  
+  /// isTokenRange - Return true if the end of this range specifies the start of
+  /// the last token.  Return false if the end of this range specifies the last
+  /// character in the range.
+  bool isTokenRange() const { return IsTokenRange; }
+  
+  SourceLocation getBegin() const { return Range.getBegin(); }
+  SourceLocation getEnd() const { return Range.getEnd(); }
+  const SourceRange &getAsRange() const { return Range; }
+ 
+  void setBegin(SourceLocation b) { Range.setBegin(b); }
+  void setEnd(SourceLocation e) { Range.setEnd(e); }
+  
+  bool isValid() const { return Range.isValid(); }
+  bool isInvalid() const { return !isValid(); }
+};
 
 /// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
 /// for argument passing to functions that expect both objects.

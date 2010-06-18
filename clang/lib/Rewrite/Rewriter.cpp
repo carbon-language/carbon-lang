@@ -72,7 +72,7 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 
 /// getRangeSize - Return the size in bytes of the specified range if they
 /// are in the same file.  If not, this returns -1.
-int Rewriter::getRangeSize(SourceRange Range) const {
+int Rewriter::getRangeSize(const CharSourceRange &Range) const {
   if (!isRewritable(Range.getBegin()) ||
       !isRewritable(Range.getEnd())) return -1;
 
@@ -97,11 +97,17 @@ int Rewriter::getRangeSize(SourceRange Range) const {
 
 
   // Adjust the end offset to the end of the last token, instead of being the
-  // start of the last token.
-  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr, *LangOpts);
+  // start of the last token if this is a token range.
+  if (Range.isTokenRange())
+    EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr, *LangOpts);
 
   return EndOff-StartOff;
 }
+
+int Rewriter::getRangeSize(SourceRange Range) const {
+  return getRangeSize(CharSourceRange::getTokenRange(Range));
+}
+
 
 /// getRewrittenText - Return the rewritten form of the text in the specified
 /// range.  If the start or end of the range was unrewritable or if they are

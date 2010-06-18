@@ -177,12 +177,12 @@ static RangeComparisonResult LocationCompare(SourceManager &SM,
 /// does the appropriate translation.
 CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
                                           const LangOptions &LangOpts,
-                                          SourceRange R) {
+                                          const CharSourceRange &R) {
   // We want the last character in this location, so we will adjust the
   // location accordingly.
   // FIXME: How do do this with a macro instantiation location?
   SourceLocation EndLoc = R.getEnd();
-  if (!EndLoc.isInvalid() && EndLoc.isFileID()) {
+  if (R.isTokenRange() && !EndLoc.isInvalid() && EndLoc.isFileID()) {
     unsigned Length = Lexer::MeasureTokenLength(EndLoc, SM, LangOpts);
     EndLoc = EndLoc.getFileLocWithOffset(Length);
   }

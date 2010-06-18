@@ -70,7 +70,7 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
-void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
+void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
                                            const SourceManager &SM,
                                            unsigned LineNo, FileID FID,
                                            std::string &CaretLine,
@@ -112,8 +112,10 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
 
-      // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += Lexer::MeasureTokenLength(End, SM, *LangOpts);
+      // Add in the length of the token, so that we cover multi-char tokens if
+      // this is a token range.
+      if (R.isTokenRange())
+        EndColNo += Lexer::MeasureTokenLength(End, SM, *LangOpts);
     } else {
       EndColNo = CaretLine.size();
     }
@@ -281,7 +283,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
 }
 
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
-                                                SourceRange *Ranges,
+                                                CharSourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 const SourceManager &SM,
                                                 const FixItHint *Hints,
@@ -312,10 +314,12 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
     // Map the ranges.
     for (unsigned i = 0; i != NumRanges; ++i) {
-      SourceLocation S = Ranges[i].getBegin(), E = Ranges[i].getEnd();
-      if (S.isMacroID()) S = SM.getImmediateSpellingLoc(S);
-      if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
-      Ranges[i] = SourceRange(S, E);
+      CharSourceRange &R = Ranges[i];
+      SourceLocation S = R.getBegin(), E = R.getEnd();
+      if (S.isMacroID())
+        R.setBegin(SM.getImmediateSpellingLoc(S));
+      if (E.isMacroID())
+        R.setEnd(SM.getImmediateSpellingLoc(E));
     }
 
     if (!Suppressed) {
@@ -777,7 +781,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
             continue;
 
           // Add in the length of the token, so that we cover multi-char tokens.
-          unsigned TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
+          unsigned TokSize = 0;
+          if (Info.getRange(i).isTokenRange())
+            TokSize = Lexer::MeasureTokenLength(E, SM, *LangOpts);
 
           OS << '{' << SM.getLineNumber(BInfo.first, BInfo.second) << ':'
              << SM.getColumnNumber(BInfo.first, BInfo.second) << '-'
@@ -904,15 +910,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
 
     // Get the ranges into a local array we can hack on.
-    SourceRange Ranges[20];
+    CharSourceRange Ranges[20];
     unsigned NumRanges = Info.getNumRanges();
     assert(NumRanges < 20 && "Out of space");
     for (unsigned i = 0; i != NumRanges; ++i)
       Ranges[i] = Info.getRange(i);
 
     unsigned NumHints = Info.getNumFixItHints();
-    for (unsigned idx = 0; idx < NumHints; ++idx) {
-      const FixItHint &Hint = Info.getFixItHint(idx);
+    for (unsigned i = 0; i != NumHints; ++i) {
+      const FixItHint &Hint = Info.getFixItHint(i);
       if (Hint.RemoveRange.isValid()) {
         assert(NumRanges < 20 && "Out of space");
         Ranges[NumRanges++] = Hint.RemoveRange;
