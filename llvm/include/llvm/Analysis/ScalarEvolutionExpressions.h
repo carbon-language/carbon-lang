@@ -37,8 +37,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     ConstantInt *V;
-    SCEVConstant(const FoldingSetNodeIDRef ID, ConstantInt *v) :
-      SCEV(ID, scConstant), V(v) {}
+    SCEVConstant(const FoldingSetNodeIDRef ID, unsigned Num, ConstantInt *v)
+      : SCEV(ID, Num, scConstant), V(v) {}
   public:
     ConstantInt *getValue() const { return V; }
 
@@ -81,7 +81,7 @@ namespace llvm {
     const SCEV *Op;
     const Type *Ty;
 
-    SCEVCastExpr(const FoldingSetNodeIDRef ID,
+    SCEVCastExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                  unsigned SCEVTy, const SCEV *op, const Type *ty);
 
   public:
@@ -120,7 +120,7 @@ namespace llvm {
   class SCEVTruncateExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
+    SCEVTruncateExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                      const SCEV *op, const Type *ty);
 
   public:
@@ -140,7 +140,7 @@ namespace llvm {
   class SCEVZeroExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
+    SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                        const SCEV *op, const Type *ty);
 
   public:
@@ -160,7 +160,7 @@ namespace llvm {
   class SCEVSignExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVSignExtendExpr(const FoldingSetNodeIDRef ID,
+    SCEVSignExtendExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                        const SCEV *op, const Type *ty);
 
   public:
@@ -187,9 +187,9 @@ namespace llvm {
     const SCEV *const *Operands;
     size_t NumOperands;
 
-    SCEVNAryExpr(const FoldingSetNodeIDRef ID,
+    SCEVNAryExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                  enum SCEVTypes T, const SCEV *const *O, size_t N)
-      : SCEV(ID, T), Operands(O), NumOperands(N) {}
+      : SCEV(ID, Num, T), Operands(O), NumOperands(N) {}
 
   public:
     size_t getNumOperands() const { return NumOperands; }
@@ -262,9 +262,9 @@ namespace llvm {
   ///
   class SCEVCommutativeExpr : public SCEVNAryExpr {
   protected:
-    SCEVCommutativeExpr(const FoldingSetNodeIDRef ID,
+    SCEVCommutativeExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                         enum SCEVTypes T, const SCEV *const *O, size_t N)
-      : SCEVNAryExpr(ID, T, O, N) {}
+      : SCEVNAryExpr(ID, Num, T, O, N) {}
 
   public:
     virtual const char *getOperationStr() const = 0;
@@ -288,9 +288,9 @@ namespace llvm {
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVAddExpr(const FoldingSetNodeIDRef ID,
+    SCEVAddExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                 const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scAddExpr, O, N) {
+      : SCEVCommutativeExpr(ID, Num, scAddExpr, O, N) {
     }
 
   public:
@@ -316,9 +316,9 @@ namespace llvm {
   class SCEVMulExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVMulExpr(const FoldingSetNodeIDRef ID,
+    SCEVMulExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                 const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scMulExpr, O, N) {
+      : SCEVCommutativeExpr(ID, Num, scMulExpr, O, N) {
     }
 
   public:
@@ -340,8 +340,9 @@ namespace llvm {
 
     const SCEV *LHS;
     const SCEV *RHS;
-    SCEVUDivExpr(const FoldingSetNodeIDRef ID, const SCEV *lhs, const SCEV *rhs)
-      : SCEV(ID, scUDivExpr), LHS(lhs), RHS(rhs) {}
+    SCEVUDivExpr(const FoldingSetNodeIDRef ID, unsigned Num,
+                 const SCEV *lhs, const SCEV *rhs)
+      : SCEV(ID, Num, scUDivExpr), LHS(lhs), RHS(rhs) {}
 
   public:
     const SCEV *getLHS() const { return LHS; }
@@ -390,9 +391,9 @@ namespace llvm {
 
     const Loop *L;
 
-    SCEVAddRecExpr(const FoldingSetNodeIDRef ID,
+    SCEVAddRecExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                    const SCEV *const *O, size_t N, const Loop *l)
-      : SCEVNAryExpr(ID, scAddRecExpr, O, N), L(l) {
+      : SCEVNAryExpr(ID, Num, scAddRecExpr, O, N), L(l) {
       for (size_t i = 0, e = NumOperands; i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
@@ -472,9 +473,9 @@ namespace llvm {
   class SCEVSMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVSMaxExpr(const FoldingSetNodeIDRef ID,
+    SCEVSMaxExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                  const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scSMaxExpr, O, N) {
+      : SCEVCommutativeExpr(ID, Num, scSMaxExpr, O, N) {
       // Max never overflows.
       setHasNoUnsignedWrap(true);
       setHasNoSignedWrap(true);
@@ -497,9 +498,9 @@ namespace llvm {
   class SCEVUMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVUMaxExpr(const FoldingSetNodeIDRef ID,
+    SCEVUMaxExpr(const FoldingSetNodeIDRef ID, unsigned Num,
                  const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scUMaxExpr, O, N) {
+      : SCEVCommutativeExpr(ID, Num, scUMaxExpr, O, N) {
       // Max never overflows.
       setHasNoUnsignedWrap(true);
       setHasNoSignedWrap(true);
@@ -524,8 +525,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     Value *V;
-    SCEVUnknown(const FoldingSetNodeIDRef ID, Value *v) :
-      SCEV(ID, scUnknown), V(v) {}
+    SCEVUnknown(const FoldingSetNodeIDRef ID, unsigned Num, Value *v)
+      : SCEV(ID, Num, scUnknown), V(v) {}
 
   public:
     Value *getValue() const { return V; }
