@@ -523,8 +523,8 @@ public:
   /// getRegClass - Returns the register class associated with the enumeration
   /// value.  See class TargetOperandInfo.
   const TargetRegisterClass *getRegClass(unsigned i) const {
-    assert(i <= getNumRegClasses() && "Register Class ID out of range");
-    return i ? RegClassBegin[i - 1] : NULL;
+    assert(i < getNumRegClasses() && "Register Class ID out of range");
+    return RegClassBegin[i];
   }
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer

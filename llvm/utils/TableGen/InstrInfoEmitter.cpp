@@ -92,7 +92,8 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       else if (OpR->isSubClassOf("PointerLikeRegClass"))
         Res += utostr(OpR->getValueAsInt("RegClassKind")) + ", ";
       else
-        Res += "0, ";
+        // -1 means the operand does not have a fixed register class.
+        Res += "-1, ";
       
       // Fill in applicable flags.
       Res += "0";

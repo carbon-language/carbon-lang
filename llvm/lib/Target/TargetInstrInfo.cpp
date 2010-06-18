@@ -28,6 +28,10 @@ const TargetRegisterClass *
 TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
   if (isLookupPtrRegClass())
     return TRI->getPointerRegClass(RegClass);
+  // Instructions like INSERT_SUBREG do not have fixed register classes.
+  if (RegClass < 0)
+    return 0;
+  // Otherwise just look it up normally.
   return TRI->getRegClass(RegClass);
 }
 

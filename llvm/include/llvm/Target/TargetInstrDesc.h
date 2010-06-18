@@ -55,7 +55,7 @@ public:
   ///
   /// NOTE: This member should be considered to be private, all access should go
   /// through "getRegClass(TRI)" below.
-  unsigned short RegClass;
+  short RegClass;
   
   /// Flags - These are flags from the TOI::OperandFlags enum.
   unsigned short Flags;

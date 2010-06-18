@@ -35,7 +35,7 @@ class MachineRegisterInfo {
   /// RegClassVRegMap - This vector acts as a map from TargetRegisterClass to
   /// virtual registers. For each target register class, it keeps a list of
   /// virtual registers belonging to the class.
-  std::vector<std::vector<unsigned> > RegClass2VRegMap;
+  std::vector<unsigned> *RegClass2VRegMap;
 
   /// RegAllocHints - This vector records register allocation hints for virtual
   /// registers. For each virtual register, it keeps a register and hint type

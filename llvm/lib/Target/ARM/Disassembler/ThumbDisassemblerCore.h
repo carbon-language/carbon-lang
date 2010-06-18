@@ -395,7 +395,7 @@ static bool DisassembleThumb1General(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::tGPRRegClassID,
                                                        getT1tRm(insn))));
   } else {
-    assert(OpInfo[OpIdx].RegClass == 0 &&
+    assert(OpInfo[OpIdx].RegClass < 0 &&
            !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()
            && "Pure imm operand expected");
     MI.addOperand(MCOperand::CreateImm(UseRt ? getT1Imm8(insn)
@@ -531,7 +531,7 @@ static bool DisassembleThumb1LdPC(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (!OpInfo) return false;
 
   assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::tGPRRegClassID &&
-         (OpInfo[1].RegClass == 0 &&
+         (OpInfo[1].RegClass < 0 &&
           !OpInfo[1].isPredicate() &&
           !OpInfo[1].isOptionalDef())
          && "Invalid arguments");
@@ -598,7 +598,7 @@ static bool DisassembleThumb1LdSt(unsigned opA, MCInst &MI, unsigned Opcode,
 
   assert(OpIdx < NumOps && "More operands expected");
 
-  if (OpInfo[OpIdx].RegClass == 0 && !OpInfo[OpIdx].isPredicate() &&
+  if (OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate() &&
       !OpInfo[OpIdx].isOptionalDef()) {
 
     MI.addOperand(MCOperand::CreateImm(Imm5 ? getT1Imm5(insn) : 0));
@@ -632,7 +632,7 @@ static bool DisassembleThumb1LdStSP(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::tGPRRegClassID &&
          OpInfo[1].RegClass == ARM::GPRRegClassID &&
-         (OpInfo[2].RegClass == 0 &&
+         (OpInfo[2].RegClass < 0 &&
           !OpInfo[2].isPredicate() &&
           !OpInfo[2].isOptionalDef())
          && "Invalid arguments");
@@ -658,7 +658,7 @@ static bool DisassembleThumb1AddPCi(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (!OpInfo) return false;
 
   assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::tGPRRegClassID &&
-         (OpInfo[1].RegClass == 0 &&
+         (OpInfo[1].RegClass < 0 &&
           !OpInfo[1].isPredicate() &&
           !OpInfo[1].isOptionalDef())
          && "Invalid arguments");
@@ -685,7 +685,7 @@ static bool DisassembleThumb1AddSPi(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(NumOps >= 3 &&
          OpInfo[0].RegClass == ARM::tGPRRegClassID &&
          OpInfo[1].RegClass == ARM::GPRRegClassID &&
-         (OpInfo[2].RegClass == 0 &&
+         (OpInfo[2].RegClass < 0 &&
           !OpInfo[2].isPredicate() &&
           !OpInfo[2].isOptionalDef())
          && "Invalid arguments");
@@ -761,7 +761,7 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
   // Predicate operands are handled elsewhere.
   if (NumOps == 2 &&
       OpInfo[0].isPredicate() && OpInfo[1].isPredicate() &&
-      OpInfo[0].RegClass == 0 && OpInfo[1].RegClass == ARM::CCRRegClassID) {
+      OpInfo[0].RegClass < 0 && OpInfo[1].RegClass == ARM::CCRRegClassID) {
     return true;
   }
 
@@ -808,7 +808,7 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
   }
 
   assert(NumOps >= 2 && OpInfo[0].RegClass == ARM::tGPRRegClassID &&
-         (OpInfo[1].RegClass==0 || OpInfo[1].RegClass==ARM::tGPRRegClassID)
+         (OpInfo[1].RegClass < 0 || OpInfo[1].RegClass==ARM::tGPRRegClassID)
          && "Expect >=2 operands");
 
   // Add the destination operand.
@@ -913,7 +913,7 @@ static bool DisassembleThumb1CondBr(MCInst &MI, unsigned Opcode, uint32_t insn,
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
   if (!OpInfo) return false;
 
-  assert(NumOps == 3 && OpInfo[0].RegClass == 0 &&
+  assert(NumOps == 3 && OpInfo[0].RegClass < 0 &&
          OpInfo[1].isPredicate() && OpInfo[2].RegClass == ARM::CCRRegClassID
          && "Exactly 3 operands expected");
 
@@ -939,7 +939,7 @@ static bool DisassembleThumb1Br(MCInst &MI, unsigned Opcode, uint32_t insn,
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
   if (!OpInfo) return false;
 
-  assert(NumOps == 1 && OpInfo[0].RegClass == 0 && "1 imm operand expected");
+  assert(NumOps == 1 && OpInfo[0].RegClass < 0 && "1 imm operand expected");
 
   unsigned Imm11 = getT1Imm11(insn);
 
@@ -1239,7 +1239,7 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
          && OpInfo[0].RegClass == ARM::GPRRegClassID
          && OpInfo[1].RegClass == ARM::GPRRegClassID
          && OpInfo[2].RegClass == ARM::GPRRegClassID
-         && OpInfo[3].RegClass == 0
+         && OpInfo[3].RegClass < 0
          && "Expect >= 4 operands and first 3 as reg operands");
 
   // Add the <Rt> <Rt2> operands.
@@ -1322,8 +1322,8 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
     assert(NumOps == 4
            && OpInfo[0].RegClass == ARM::GPRRegClassID
            && OpInfo[1].RegClass == ARM::GPRRegClassID
-           && OpInfo[2].RegClass == 0
-           && OpInfo[3].RegClass == 0
+           && OpInfo[2].RegClass < 0
+           && OpInfo[3].RegClass < 0
            && "Exactlt 4 operands expect and first two as reg operands");
     // Only need to populate the src reg operand.
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
@@ -1375,7 +1375,7 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (NumOps == OpIdx)
     return true;
 
-  if (OpInfo[OpIdx].RegClass == 0 && !OpInfo[OpIdx].isPredicate()
+  if (OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
       && !OpInfo[OpIdx].isOptionalDef()) {
 
     if (Thumb2ShiftOpcode(Opcode))
@@ -1440,7 +1440,7 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
   }
 
   // The modified immediate operand should come next.
-  assert(OpIdx < NumOps && OpInfo[OpIdx].RegClass == 0 &&
+  assert(OpIdx < NumOps && OpInfo[OpIdx].RegClass < 0 &&
          !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()
          && "Pure imm operand expected");
 
@@ -1555,7 +1555,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
     ++OpIdx;
   }
 
-  assert(OpInfo[OpIdx].RegClass == 0 && !OpInfo[OpIdx].isPredicate()
+  assert(OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
          && !OpInfo[OpIdx].isOptionalDef()
          && "Pure imm operand expected");
 
@@ -1772,7 +1772,7 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
   } else {
-    assert(OpInfo[OpIdx].RegClass == 0 && !OpInfo[OpIdx].isPredicate()
+    assert(OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
            && !OpInfo[OpIdx].isOptionalDef()
            && "Pure imm operand expected");
     int Offset = 0;
@@ -1792,7 +1792,7 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
   }
   ++OpIdx;
 
-  if (OpIdx < NumOps && OpInfo[OpIdx].RegClass == 0 &&
+  if (OpIdx < NumOps && OpInfo[OpIdx].RegClass < 0 &&
       !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
     // Fills in the shift amount for t2PLDs, t2PLDWs, t2PLIs.
     MI.addOperand(MCOperand::CreateImm(slice(insn, 5, 4)));
@@ -1818,7 +1818,7 @@ static bool DisassembleThumb2Ldpci(MCInst &MI, unsigned Opcode,
 
   assert(NumOps >= 2 &&
          OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass == 0 &&
+         OpInfo[1].RegClass < 0 &&
          "Expect >= 2 operands, first as reg, and second as imm operand");
 
   // Build the register operand, followed by the (+/-)imm12 immediate.
@@ -1930,7 +1930,7 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
     ++OpIdx;
   }
 
-  assert(OpInfo[OpIdx].RegClass == 0 && !OpInfo[OpIdx].isPredicate()
+  assert(OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
          && !OpInfo[OpIdx].isOptionalDef()
          && "Pure imm operand expected");
 
@@ -1981,7 +1981,7 @@ static bool DisassembleThumb2DPReg(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRm(insn))));
   ++OpIdx;
 
-  if (OpIdx < NumOps && OpInfo[OpIdx].RegClass == 0
+  if (OpIdx < NumOps && OpInfo[OpIdx].RegClass < 0
       && !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
     // Add the rotation amount immediate.
     MI.addOperand(MCOperand::CreateImm(decodeRotate(insn)));
