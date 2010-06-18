@@ -342,6 +342,12 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
   const User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    // Don't walk into other basic blocks; it's possible we haven't
+    // visited them yet, so the instructions may not yet be assigned
+    // virtual registers.
+    if (MBBMap[I->getParent()] != MBB)
+      return false;
+
     Opcode = I->getOpcode();
     U = I;
   } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(V)) {
