@@ -10251,7 +10251,6 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   case 'e': {
     // 32-bit signed value
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      const ConstantInt *CI = C->getConstantIntValue();
       if (ConstantInt::isValueValidForType(Type::getInt32Ty(*DAG.getContext()),
                                            C->getSExtValue())) {
         // Widen to 64 bits here to get it sign extended.
@@ -10266,7 +10265,6 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   case 'Z': {
     // 32-bit unsigned value
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      const ConstantInt *CI = C->getConstantIntValue();
       if (ConstantInt::isValueValidForType(Type::getInt32Ty(*DAG.getContext()),
                                            C->getZExtValue())) {
         Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
