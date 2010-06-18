@@ -807,7 +807,6 @@ void SelectionDAG::init(MachineFunction &mf) {
 SelectionDAG::~SelectionDAG() {
   allnodes_clear();
   delete Ordering;
-  DbgInfo->clear();
   delete DbgInfo;
 }
 
@@ -837,8 +836,6 @@ void SelectionDAG::clear() {
   delete Ordering;
   Ordering = new SDNodeOrdering();
   DbgInfo->clear();
-  delete DbgInfo;
-  DbgInfo = new SDDbgInfo();
 }
 
 SDValue SelectionDAG::getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
