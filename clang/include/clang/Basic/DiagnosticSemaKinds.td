@@ -818,6 +818,9 @@ def err_attribute_argument_not_int : Error<
 def err_attribute_argument_outof_range : Error<
   "init_priority attribute requires integer constant between "
   "101 and 65535 inclusive">;
+def err_init_priority_object_attr : Error<
+  "can only use ‘init_priority’ attribute on file-scope definitions "
+  "of objects of class type">;
 def err_attribute_argument_n_not_int : Error<
   "'%0' attribute requires parameter %1 to be an integer constant">;
 def err_attribute_argument_n_not_string : Error<

@@ -1189,12 +1189,27 @@ static void HandleInitPriorityAttr(Decl *d, const AttributeList &Attr,
     return;
   }
   
+  if (!isa<VarDecl>(d) || S.getCurFunctionOrMethodDecl()) {
+    S.Diag(Attr.getLoc(), diag::err_init_priority_object_attr);
+    Attr.setInvalid();
+    return;
+  }
+  QualType T = dyn_cast<VarDecl>(d)->getType();
+  if (S.Context.getAsArrayType(T))
+    T = S.Context.getBaseElementType(T);
+  if (!T->getAs<RecordType>()) {
+    S.Diag(Attr.getLoc(), diag::err_init_priority_object_attr);
+    Attr.setInvalid();
+    return;
+  }
+  
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     Attr.setInvalid();
     return;
   }
   Expr *priorityExpr = static_cast<Expr *>(Attr.getArg(0));
+  
   llvm::APSInt priority(32);
   if (priorityExpr->isTypeDependent() || priorityExpr->isValueDependent() ||
       !priorityExpr->isIntegerConstantExpr(priority, S.Context)) {
