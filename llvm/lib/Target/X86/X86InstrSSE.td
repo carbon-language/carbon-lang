@@ -857,29 +857,30 @@ let Constraints = "$src1 = $dst" in {
 multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                             SDNode OpNode, bit Commutable = 0> {
 
-  // Scalar operation, reg+reg.
-  def SSrr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
-                 !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
-    let isCommutable = Commutable;
+  let Constraints = "", isAsmParserOnly = 1, hasVEX_4VPrefix = 1 in {
+    // Scalar operation, reg+reg.
+    let Prefix = 12 /* XS */ in
+      defm V#NAME#SS : sse12_fp_scalar<opc,
+        !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   OpNode, FR32, f32mem>;
+
+    let Prefix = 11 /* XD */ in
+      defm V#NAME#SD : sse12_fp_scalar<opc,
+        !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   OpNode, FR64, f64mem>;
   }
 
-  def SDrr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
-                 !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
-    let isCommutable = Commutable;
+  let Constraints = "$src1 = $dst" in {
+    // Scalar operation, reg+reg.
+    let Prefix = 12 /* XS */ in
+      defm SS : sse12_fp_scalar<opc,
+                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                      OpNode, FR32, f32mem>;
+    let Prefix = 11 /* XD */ in
+      defm SD : sse12_fp_scalar<opc,
+                      !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+                      OpNode, FR64, f64mem>;
   }
-
-  // Scalar operation, reg+mem.
-  def SSrm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
-                                 (ins FR32:$src1, f32mem:$src2),
-                 !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
-
-  def SDrm : SDI<opc, MRMSrcMem, (outs FR64:$dst),
-                                 (ins FR64:$src1, f64mem:$src2),
-                 !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                 [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
 
   // Vector operation, reg+reg.
   def PSrr : PSI<opc, MRMSrcReg, (outs VR128:$dst),
@@ -985,8 +986,10 @@ multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
 }
 }
 
-defm MAX : sse12_fp_binop_rm<0x5F, "max", X86fmax>;
-defm MIN : sse12_fp_binop_rm<0x5D, "min", X86fmin>;
+let isCommutable = 0 in {
+  defm MAX : sse12_fp_binop_rm<0x5F, "max", X86fmax>;
+  defm MIN : sse12_fp_binop_rm<0x5D, "min", X86fmin>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE packed FP Instructions
