@@ -672,29 +672,25 @@ let Constraints = "$src1 = $dst" in {
 multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                  SDNode OpNode, bit Commutable = 0> {
 
-  let Constraints = "", isAsmParserOnly = 1, hasVEX_4VPrefix = 1 in {
+  let Constraints = "", isAsmParserOnly = 1 in {
     // Scalar operation, reg+reg.
-    let Prefix = 12 /* XS */ in
-      defm V#NAME#SS : sse12_fp_scalar<opc,
+    defm V#NAME#SS : sse12_fp_scalar<opc,
         !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR32, f32mem>;
+                   OpNode, FR32, f32mem>, XS, VEX_4V;
 
-    let Prefix = 11 /* XD */ in
-      defm V#NAME#SD : sse12_fp_scalar<opc,
+    defm V#NAME#SD : sse12_fp_scalar<opc,
         !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR64, f64mem>;
+                   OpNode, FR64, f64mem>, XD, VEX_4V;
   }
 
   let Constraints = "$src1 = $dst" in {
     // Scalar operation, reg+reg.
-    let Prefix = 12 /* XS */ in
-      defm SS : sse12_fp_scalar<opc,
-                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                      OpNode, FR32, f32mem>;
-    let Prefix = 11 /* XD */ in
-      defm SD : sse12_fp_scalar<opc,
-                      !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                      OpNode, FR64, f64mem>;
+    defm SS : sse12_fp_scalar<opc,
+                    !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                    OpNode, FR32, f32mem>, XS;
+    defm SD : sse12_fp_scalar<opc,
+                    !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+                    OpNode, FR64, f64mem>, XD;
   }
 
   // Vector operation, reg+reg.
@@ -857,29 +853,25 @@ let Constraints = "$src1 = $dst" in {
 multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                             SDNode OpNode, bit Commutable = 0> {
 
-  let Constraints = "", isAsmParserOnly = 1, hasVEX_4VPrefix = 1 in {
+  let Constraints = "", isAsmParserOnly = 1 in {
     // Scalar operation, reg+reg.
-    let Prefix = 12 /* XS */ in
-      defm V#NAME#SS : sse12_fp_scalar<opc,
-        !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR32, f32mem>;
+    defm V#NAME#SS : sse12_fp_scalar<opc,
+      !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                 OpNode, FR32, f32mem>, XS, VEX_4V;
 
-    let Prefix = 11 /* XD */ in
-      defm V#NAME#SD : sse12_fp_scalar<opc,
-        !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR64, f64mem>;
+    defm V#NAME#SD : sse12_fp_scalar<opc,
+      !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                 OpNode, FR64, f64mem>, XD, VEX_4V;
   }
 
   let Constraints = "$src1 = $dst" in {
     // Scalar operation, reg+reg.
-    let Prefix = 12 /* XS */ in
-      defm SS : sse12_fp_scalar<opc,
-                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                      OpNode, FR32, f32mem>;
-    let Prefix = 11 /* XD */ in
-      defm SD : sse12_fp_scalar<opc,
-                      !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                      OpNode, FR64, f64mem>;
+    defm SS : sse12_fp_scalar<opc,
+                    !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                    OpNode, FR32, f32mem>, XS;
+    defm SD : sse12_fp_scalar<opc,
+                    !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
+                    OpNode, FR64, f64mem>, XD;
   }
 
   // Vector operation, reg+reg.
