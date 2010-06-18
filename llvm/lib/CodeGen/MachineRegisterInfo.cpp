@@ -37,6 +37,7 @@ MachineRegisterInfo::~MachineRegisterInfo() {
            "PhysRegUseDefLists has entries after all instructions are deleted");
 #endif
   delete [] PhysRegUseDefLists;
+  delete [] RegClass2VRegMap;
 }
 
 /// setRegClass - Set the register class of the specified virtual register.
