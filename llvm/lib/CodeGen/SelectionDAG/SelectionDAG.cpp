@@ -2474,10 +2474,18 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
         OpOpcode == ISD::ANY_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
       return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
+
+    // (ext (trunx x)) -> x
+    if (OpOpcode == ISD::TRUNCATE) {
+      SDValue OpOp = Operand.getNode()->getOperand(0);
+      if (OpOp.getValueType() == VT)
+        return OpOp;
+    }
     break;
   case ISD::TRUNCATE:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&

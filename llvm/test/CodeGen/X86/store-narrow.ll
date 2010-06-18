@@ -67,7 +67,7 @@ entry:
 ; X64: movw	%si, 2(%rdi)
 
 ; X32: test4:
-; X32: movzwl	8(%esp), %eax
+; X32: movl	8(%esp), %eax
 ; X32: movw	%ax, 2(%{{.*}})
 }
 

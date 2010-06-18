@@ -2028,7 +2028,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // fold (OP (zext x), (zext y)) -> (zext (OP x, y))
   // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
   // fold (OP (aext x), (aext y)) -> (aext (OP x, y))
-  // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y))
+  // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y)) (if trunc isn't free)
   //
   // do not sink logical op inside of a vector extend, since it may combine
   // into a vsetcc.
@@ -2038,7 +2038,10 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
        // Avoid infinite looping with PromoteIntBinOp.
        (N0.getOpcode() == ISD::ANY_EXTEND &&
         (!LegalTypes || TLI.isTypeDesirableForOp(N->getOpcode(), Op0VT))) ||
-       (N0.getOpcode() == ISD::TRUNCATE && TLI.isTypeLegal(Op0VT))) &&
+       (N0.getOpcode() == ISD::TRUNCATE &&
+        (!TLI.isZExtFree(VT, Op0VT) ||
+         !TLI.isTruncateFree(Op0VT, VT)) &&
+        TLI.isTypeLegal(Op0VT))) &&
       !VT.isVector() &&
       Op0VT == N1.getOperand(0).getValueType() &&
       (!LegalOperations || TLI.isOperationLegal(N->getOpcode(), Op0VT))) {
@@ -2424,6 +2427,11 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   // See if this is some rotate idiom.
   if (SDNode *Rot = MatchRotate(N0, N1, N->getDebugLoc()))
     return SDValue(Rot, 0);
+
+  // Simplify the operands using demanded-bits information.
+  if (!VT.isVector() &&
+      SimplifyDemandedBits(SDValue(N, 0)))
+    return SDValue(N, 0);
 
   return SDValue();
 }
@@ -3158,6 +3166,11 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       return NewSRL;
   }
 
+  // Attempt to convert a srl of a load into a narrower zero-extending load.
+  SDValue NarrowLoad = ReduceLoadWidth(N);
+  if (NarrowLoad.getNode())
+    return NarrowLoad;
+
   // Here is a common situation. We want to optimize:
   //
   //   %a = ...
@@ -3635,10 +3648,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext (truncate x)) -> (and x, mask)
   if (N0.getOpcode() == ISD::TRUNCATE &&
-      (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT)) &&
-      (!TLI.isTruncateFree(N0.getOperand(0).getValueType(),
-                           N0.getValueType()) ||
-       !TLI.isZExtFree(N0.getValueType(), VT))) {
+      (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT))) {
     SDValue Op = N0.getOperand(0);
     if (Op.getValueType().bitsLT(VT)) {
       Op = DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, Op);
@@ -4024,6 +4034,7 @@ SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
 /// extended, also fold the extension to form a extending load.
 SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   unsigned Opc = N->getOpcode();
+
   ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -4040,6 +4051,15 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     ExtVT = cast<VTSDNode>(N->getOperand(1))->getVT();
     if (LegalOperations && !TLI.isLoadExtLegal(ISD::SEXTLOAD, ExtVT))
       return SDValue();
+  } else if (Opc == ISD::SRL) {
+    // Annother special-case: SRL is basically zero-extending a narrower
+    // value.
+    ExtType = ISD::ZEXTLOAD;
+    N0 = SDValue(N, 0);
+    ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+    if (!N01) return SDValue();
+    ExtVT = EVT::getIntegerVT(*DAG.getContext(),
+                              VT.getSizeInBits() - N01->getZExtValue());
   }
 
   unsigned EVTBits = ExtVT.getSizeInBits();
@@ -4243,8 +4263,17 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
 
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
-  if (!LegalTypes || TLI.isTypeDesirableForOp(N0.getOpcode(), VT))
-    return ReduceLoadWidth(N);
+  if (!LegalTypes || TLI.isTypeDesirableForOp(N0.getOpcode(), VT)) {
+    SDValue Reduced = ReduceLoadWidth(N);
+    if (Reduced.getNode())
+      return Reduced;
+  }
+
+  // Simplify the operands using demanded-bits information.
+  if (!VT.isVector() &&
+      SimplifyDemandedBits(SDValue(N, 0)))
+    return SDValue(N, 0);
+
   return SDValue();
 }
 

@@ -9641,8 +9641,10 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   if (ShAmt1.getOpcode() == ISD::SUB) {
     SDValue Sum = ShAmt1.getOperand(0);
     if (ConstantSDNode *SumC = dyn_cast<ConstantSDNode>(Sum)) {
-      if (SumC->getSExtValue() == Bits &&
-          ShAmt1.getOperand(1) == ShAmt0)
+      SDValue ShAmt1Op1 = ShAmt1.getOperand(1);
+      if (ShAmt1Op1.getNode()->getOpcode() == ISD::TRUNCATE)
+        ShAmt1Op1 = ShAmt1Op1.getOperand(0);
+      if (SumC->getSExtValue() == Bits && ShAmt1Op1 == ShAmt0)
         return DAG.getNode(Opc, DL, VT,
                            Op0, Op1,
                            DAG.getNode(ISD::TRUNCATE, DL,

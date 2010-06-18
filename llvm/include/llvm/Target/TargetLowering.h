@@ -766,14 +766,12 @@ public:
     SelectionDAG &DAG;
     bool LegalTys;
     bool LegalOps;
-    bool ShrinkOps;
     SDValue Old;
     SDValue New;
 
     explicit TargetLoweringOpt(SelectionDAG &InDAG,
-                               bool LT, bool LO,
-                               bool Shrink = false) :
-      DAG(InDAG), LegalTys(LT), LegalOps(LO), ShrinkOps(Shrink) {}
+                               bool LT, bool LO) :
+      DAG(InDAG), LegalTys(LT), LegalOps(LO) {}
 
     bool LegalTypes() const { return LegalTys; }
     bool LegalOperations() const { return LegalOps; }

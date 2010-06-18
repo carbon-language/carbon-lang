@@ -372,102 +372,6 @@ public:
 };
 }
 
-/// TrivialTruncElim - Eliminate some trivial nops that can result from
-/// ShrinkDemandedOps: (trunc (ext n)) -> n.
-static bool TrivialTruncElim(SDValue Op,
-                             TargetLowering::TargetLoweringOpt &TLO) {
-  SDValue N0 = Op.getOperand(0);
-  EVT VT = Op.getValueType();
-  if ((N0.getOpcode() == ISD::ZERO_EXTEND ||
-       N0.getOpcode() == ISD::SIGN_EXTEND ||
-       N0.getOpcode() == ISD::ANY_EXTEND) &&
-      N0.getOperand(0).getValueType() == VT) {
-    return TLO.CombineTo(Op, N0.getOperand(0));
-  }
-  return false;
-}
-
-/// ShrinkDemandedOps - A late transformation pass that shrink expressions
-/// using TargetLowering::TargetLoweringOpt::ShrinkDemandedOp. It converts
-/// x+y to (VT)((SmallVT)x+(SmallVT)y) if the casts are free.
-void SelectionDAGISel::ShrinkDemandedOps() {
-  SmallVector<SDNode*, 128> Worklist;
-  SmallPtrSet<SDNode*, 128> InWorklist;
-
-  // Add all the dag nodes to the worklist.
-  Worklist.reserve(CurDAG->allnodes_size());
-  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
-       E = CurDAG->allnodes_end(); I != E; ++I) {
-    Worklist.push_back(I);
-    InWorklist.insert(I);
-  }
-
-  TargetLowering::TargetLoweringOpt TLO(*CurDAG, true, true, true);
-  while (!Worklist.empty()) {
-    SDNode *N = Worklist.pop_back_val();
-    InWorklist.erase(N);
-
-    if (N->use_empty() && N != CurDAG->getRoot().getNode()) {
-      // Deleting this node may make its operands dead, add them to the worklist
-      // if they aren't already there.
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        if (InWorklist.insert(N->getOperand(i).getNode()))
-          Worklist.push_back(N->getOperand(i).getNode());
-      
-      CurDAG->DeleteNode(N);
-      continue;
-    }
-
-    // Run ShrinkDemandedOp on scalar binary operations.
-    if (N->getNumValues() != 1 ||
-        !N->getValueType(0).isSimple() || !N->getValueType(0).isInteger())
-      continue;
-    
-    unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
-    APInt Demanded = APInt::getAllOnesValue(BitWidth);
-    APInt KnownZero, KnownOne;
-    if (!TLI.SimplifyDemandedBits(SDValue(N, 0), Demanded,
-                                  KnownZero, KnownOne, TLO) &&
-        (N->getOpcode() != ISD::TRUNCATE ||
-         !TrivialTruncElim(SDValue(N, 0), TLO)))
-      continue;
-    
-    // Revisit the node.
-    assert(!InWorklist.count(N) && "Already in worklist");
-    Worklist.push_back(N);
-    InWorklist.insert(N);
-
-    // Replace the old value with the new one.
-    DEBUG(errs() << "\nShrinkDemandedOps replacing "; 
-          TLO.Old.getNode()->dump(CurDAG);
-          errs() << "\nWith: ";
-          TLO.New.getNode()->dump(CurDAG);
-          errs() << '\n');
-
-    if (InWorklist.insert(TLO.New.getNode()))
-      Worklist.push_back(TLO.New.getNode());
-
-    SDOPsWorkListRemover DeadNodes(Worklist, InWorklist);
-    CurDAG->ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
-
-    if (!TLO.Old.getNode()->use_empty()) continue;
-        
-    for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands();
-         i != e; ++i) {
-      SDNode *OpNode = TLO.Old.getNode()->getOperand(i).getNode(); 
-      if (OpNode->hasOneUse()) {
-        // Add OpNode to the end of the list to revisit.
-        DeadNodes.RemoveFromWorklist(OpNode);
-        Worklist.push_back(OpNode);
-        InWorklist.insert(OpNode);
-      }
-    }
-
-    DeadNodes.RemoveFromWorklist(TLO.Old.getNode());
-    CurDAG->DeleteNode(TLO.Old.getNode());
-  }
-}
-
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   SmallPtrSet<SDNode*, 128> VisitedNodes;
   SmallVector<SDNode*, 128> Worklist;
@@ -636,10 +540,8 @@ MachineBasicBlock *SelectionDAGISel::CodeGenAndEmitDAG(MachineBasicBlock *BB) {
   DEBUG(dbgs() << "Optimized legalized selection DAG:\n");
   DEBUG(CurDAG->dump());
 
-  if (OptLevel != CodeGenOpt::None) {
-    ShrinkDemandedOps();
+  if (OptLevel != CodeGenOpt::None)
     ComputeLiveOutVRegInfo();
-  }
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
 
