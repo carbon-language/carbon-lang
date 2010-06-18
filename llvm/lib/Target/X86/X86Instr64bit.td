@@ -293,7 +293,7 @@ def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins lea64mem:$src),
                   "lea{q}\t{$src|$dst}, {$dst|$src}",
                   [(set GR64:$dst, lea64addr:$src)]>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
                   "bswap{q}\t$dst", 
                   [(set GR64:$dst, (bswap GR64:$src))]>, TB;
@@ -521,7 +521,7 @@ let Defs = [EFLAGS] in {
 def ADD64i32 : RIi32<0x05, RawFrm, (outs), (ins i64i32imm:$src),
                      "add{q}\t{$src, %rax|%rax, $src}", []>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let isConvertibleToThreeAddress = 1 in {
 let isCommutable = 1 in
 // Register-Register Addition
@@ -559,7 +559,7 @@ def ADD64rm     : RI<0x03, MRMSrcMem, (outs GR64:$dst),
                      [(set GR64:$dst, EFLAGS,
                            (X86add_flag GR64:$src1, (load addr:$src2)))]>;
 
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 // Memory-Register Addition
 def ADD64mr  : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
@@ -580,7 +580,7 @@ let Uses = [EFLAGS] in {
 def ADC64i32 : RIi32<0x15, RawFrm, (outs), (ins i64i32imm:$src),
                      "adc{q}\t{$src, %rax|%rax, $src}", []>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in
 def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), 
                   (ins GR64:$src1, GR64:$src2),
@@ -606,7 +606,7 @@ def ADC64ri32 : RIi32<0x81, MRM2r, (outs GR64:$dst),
                       (ins GR64:$src1, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
                       [(set GR64:$dst, (adde GR64:$src1, i64immSExt32:$src2))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 def ADC64mr  : RI<0x11, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                   "adc{q}\t{$src2, $dst|$dst, $src2}",
@@ -621,7 +621,7 @@ def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
                   addr:$dst)]>;
 } // Uses = [EFLAGS]
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 // Register-Register Subtraction
 def SUB64rr  : RI<0x29, MRMDestReg, (outs GR64:$dst), 
                   (ins GR64:$src1, GR64:$src2),
@@ -653,7 +653,7 @@ def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
                       "sub{q}\t{$src2, $dst|$dst, $src2}",
                       [(set GR64:$dst, EFLAGS,
                             (X86sub_flag GR64:$src1, i64immSExt32:$src2))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 def SUB64i32 : RIi32<0x2D, RawFrm, (outs), (ins i64i32imm:$src),
                      "sub{q}\t{$src, %rax|%rax, $src}", []>;
@@ -677,7 +677,7 @@ def SUB64mi32 : RIi32<0x81, MRM5m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
                        (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
@@ -702,7 +702,7 @@ def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst),
                       (ins GR64:$src1, i64i32imm:$src2),
                       "sbb{q}\t{$src2, $dst|$dst, $src2}",
                       [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 def SBB64i32 : RIi32<0x1D, RawFrm, (outs), (ins i64i32imm:$src),
                      "sbb{q}\t{$src, %rax|%rax, $src}", []>;
@@ -736,7 +736,7 @@ def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
 }
 
 let Defs = [EFLAGS] in {
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in
 // Register-Register Signed Integer Multiplication
 def IMUL64rr : RI<0xAF, MRMSrcReg, (outs GR64:$dst),
@@ -751,7 +751,7 @@ def IMUL64rm : RI<0xAF, MRMSrcMem, (outs GR64:$dst),
                   "imul{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, EFLAGS,
                         (X86smul_flag GR64:$src1, (load addr:$src2)))]>, TB;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 // Suprisingly enough, these are not two address instructions!
 
@@ -803,7 +803,7 @@ def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),
 
 // Unary instructions
 let Defs = [EFLAGS], CodeSize = 2 in {
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def NEG64r : RI<0xF7, MRM3r, (outs GR64:$dst), (ins GR64:$src), "neg{q}\t$dst",
                 [(set GR64:$dst, (ineg GR64:$src)),
                  (implicit EFLAGS)]>;
@@ -811,14 +811,14 @@ def NEG64m : RI<0xF7, MRM3m, (outs), (ins i64mem:$dst), "neg{q}\t$dst",
                 [(store (ineg (loadi64 addr:$dst)), addr:$dst),
                  (implicit EFLAGS)]>;
 
-let isTwoAddress = 1, isConvertibleToThreeAddress = 1 in
+let Constraints = "$src = $dst", isConvertibleToThreeAddress = 1 in
 def INC64r : RI<0xFF, MRM0r, (outs GR64:$dst), (ins GR64:$src), "inc{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86inc_flag GR64:$src))]>;
 def INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst), "inc{q}\t$dst",
                 [(store (add (loadi64 addr:$dst), 1), addr:$dst),
                  (implicit EFLAGS)]>;
 
-let isTwoAddress = 1, isConvertibleToThreeAddress = 1 in
+let Constraints = "$src = $dst", isConvertibleToThreeAddress = 1 in
 def DEC64r : RI<0xFF, MRM1r, (outs GR64:$dst), (ins GR64:$src), "dec{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86dec_flag GR64:$src))]>;
 def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
@@ -826,7 +826,7 @@ def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
                  (implicit EFLAGS)]>;
 
 // In 64-bit mode, single byte INC and DEC cannot be encoded.
-let isTwoAddress = 1, isConvertibleToThreeAddress = 1 in {
+let Constraints = "$src = $dst", isConvertibleToThreeAddress = 1 in {
 // Can transform into LEA.
 def INC64_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src), 
                   "inc{w}\t$dst",
@@ -844,38 +844,36 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src),
                   "dec{l}\t$dst",
                   [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src))]>,
                 Requires<[In64BitMode]>;
-} // isConvertibleToThreeAddress
+} // Constraints = "$src = $dst", isConvertibleToThreeAddress
 
 // These are duplicates of their 32-bit counterparts. Only needed so X86 knows
 // how to unfold them.
-let isTwoAddress = 0, CodeSize = 2 in {
-  def INC64_16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
-                    [(store (add (loadi16 addr:$dst), 1), addr:$dst),
-                     (implicit EFLAGS)]>,
-                  OpSize, Requires<[In64BitMode]>;
-  def INC64_32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
-                    [(store (add (loadi32 addr:$dst), 1), addr:$dst),
-                     (implicit EFLAGS)]>,
-                  Requires<[In64BitMode]>;
-  def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
-                    [(store (add (loadi16 addr:$dst), -1), addr:$dst),
-                     (implicit EFLAGS)]>,
-                  OpSize, Requires<[In64BitMode]>;
-  def DEC64_32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
-                    [(store (add (loadi32 addr:$dst), -1), addr:$dst),
-                     (implicit EFLAGS)]>,
-                  Requires<[In64BitMode]>;
-}
+def INC64_16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
+                  [(store (add (loadi16 addr:$dst), 1), addr:$dst),
+                    (implicit EFLAGS)]>,
+                OpSize, Requires<[In64BitMode]>;
+def INC64_32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
+                  [(store (add (loadi32 addr:$dst), 1), addr:$dst),
+                    (implicit EFLAGS)]>,
+                Requires<[In64BitMode]>;
+def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
+                  [(store (add (loadi16 addr:$dst), -1), addr:$dst),
+                    (implicit EFLAGS)]>,
+                OpSize, Requires<[In64BitMode]>;
+def DEC64_32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
+                  [(store (add (loadi32 addr:$dst), -1), addr:$dst),
+                    (implicit EFLAGS)]>,
+                Requires<[In64BitMode]>;
 } // Defs = [EFLAGS], CodeSize
 
 
 let Defs = [EFLAGS] in {
 // Shift instructions
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in
-def SHL64rCL : RI<0xD3, MRM4r, (outs GR64:$dst), (ins GR64:$src),
+def SHL64rCL : RI<0xD3, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
                   "shl{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (shl GR64:$src, CL))]>;
+                  [(set GR64:$dst, (shl GR64:$src1, CL))]>;
 let isConvertibleToThreeAddress = 1 in   // Can transform into LEA.
 def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst), 
                     (ins GR64:$src1, i8imm:$src2),
@@ -885,7 +883,7 @@ def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst),
 // 'add reg,reg' is cheaper.
 def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
                  "shl{q}\t$dst", []>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 let Uses = [CL] in
 def SHL64mCL : RI<0xD3, MRM4m, (outs), (ins i64mem:$dst),
@@ -898,18 +896,18 @@ def SHL64m1 : RI<0xD1, MRM4m, (outs), (ins i64mem:$dst),
                   "shl{q}\t$dst",
                  [(store (shl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in
-def SHR64rCL : RI<0xD3, MRM5r, (outs GR64:$dst), (ins GR64:$src),
+def SHR64rCL : RI<0xD3, MRM5r, (outs GR64:$dst), (ins GR64:$src1),
                   "shr{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (srl GR64:$src, CL))]>;
+                  [(set GR64:$dst, (srl GR64:$src1, CL))]>;
 def SHR64ri : RIi8<0xC1, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                   "shr{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (srl GR64:$src1, (i8 imm:$src2)))]>;
 def SHR64r1  : RI<0xD1, MRM5r, (outs GR64:$dst), (ins GR64:$src1),
                  "shr{q}\t$dst",
                  [(set GR64:$dst, (srl GR64:$src1, (i8 1)))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 let Uses = [CL] in
 def SHR64mCL : RI<0xD3, MRM5m, (outs), (ins i64mem:$dst),
@@ -922,11 +920,11 @@ def SHR64m1 : RI<0xD1, MRM5m, (outs), (ins i64mem:$dst),
                   "shr{q}\t$dst",
                  [(store (srl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in
-def SAR64rCL : RI<0xD3, MRM7r, (outs GR64:$dst), (ins GR64:$src),
+def SAR64rCL : RI<0xD3, MRM7r, (outs GR64:$dst), (ins GR64:$src1),
                  "sar{q}\t{%cl, $dst|$dst, %CL}",
-                 [(set GR64:$dst, (sra GR64:$src, CL))]>;
+                 [(set GR64:$dst, (sra GR64:$src1, CL))]>;
 def SAR64ri  : RIi8<0xC1, MRM7r, (outs GR64:$dst),
                     (ins GR64:$src1, i8imm:$src2),
                     "sar{q}\t{$src2, $dst|$dst, $src2}",
@@ -934,7 +932,7 @@ def SAR64ri  : RIi8<0xC1, MRM7r, (outs GR64:$dst),
 def SAR64r1  : RI<0xD1, MRM7r, (outs GR64:$dst), (ins GR64:$src1),
                  "sar{q}\t$dst",
                  [(set GR64:$dst, (sra GR64:$src1, (i8 1)))]>;
-} // isTwoAddress
+} // Constraints = "$src = $dst"
 
 let Uses = [CL] in
 def SAR64mCL : RI<0xD3, MRM7m, (outs), (ins i64mem:$dst), 
@@ -949,7 +947,7 @@ def SAR64m1 : RI<0xD1, MRM7m, (outs), (ins i64mem:$dst),
 
 // Rotate instructions
 
-let isTwoAddress = 1 in {
+let Constraints = "$src = $dst" in {
 def RCL64r1 : RI<0xD1, MRM2r, (outs GR64:$dst), (ins GR64:$src),
                  "rcl{q}\t{1, $dst|$dst, 1}", []>;
 def RCL64ri : RIi8<0xC1, MRM2r, (outs GR64:$dst), (ins GR64:$src, i8imm:$cnt),
@@ -966,9 +964,8 @@ def RCL64rCL : RI<0xD3, MRM2r, (outs GR64:$dst), (ins GR64:$src),
 def RCR64rCL : RI<0xD3, MRM3r, (outs GR64:$dst), (ins GR64:$src),
                   "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
 }
-}
+} // Constraints = "$src = $dst"
 
-let isTwoAddress = 0 in {
 def RCL64m1 : RI<0xD1, MRM2m, (outs), (ins i64mem:$dst),
                  "rcl{q}\t{1, $dst|$dst, 1}", []>;
 def RCL64mi : RIi8<0xC1, MRM2m, (outs), (ins i64mem:$dst, i8imm:$cnt),
@@ -984,13 +981,12 @@ def RCL64mCL : RI<0xD3, MRM2m, (outs), (ins i64mem:$dst),
 def RCR64mCL : RI<0xD3, MRM3m, (outs), (ins i64mem:$dst),
                   "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
 }
-}
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in
-def ROL64rCL : RI<0xD3, MRM0r, (outs GR64:$dst), (ins GR64:$src),
+def ROL64rCL : RI<0xD3, MRM0r, (outs GR64:$dst), (ins GR64:$src1),
                   "rol{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (rotl GR64:$src, CL))]>;
+                  [(set GR64:$dst, (rotl GR64:$src1, CL))]>;
 def ROL64ri  : RIi8<0xC1, MRM0r, (outs GR64:$dst), 
                     (ins GR64:$src1, i8imm:$src2),
                     "rol{q}\t{$src2, $dst|$dst, $src2}",
@@ -998,7 +994,7 @@ def ROL64ri  : RIi8<0xC1, MRM0r, (outs GR64:$dst),
 def ROL64r1  : RI<0xD1, MRM0r, (outs GR64:$dst), (ins GR64:$src1),
                   "rol{q}\t$dst",
                   [(set GR64:$dst, (rotl GR64:$src1, (i8 1)))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 let Uses = [CL] in
 def ROL64mCL :  RI<0xD3, MRM0m, (outs), (ins i64mem:$dst),
@@ -1011,11 +1007,11 @@ def ROL64m1  : RI<0xD1, MRM0m, (outs), (ins i64mem:$dst),
                  "rol{q}\t$dst",
                [(store (rotl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in
-def ROR64rCL : RI<0xD3, MRM1r, (outs GR64:$dst), (ins GR64:$src),
+def ROR64rCL : RI<0xD3, MRM1r, (outs GR64:$dst), (ins GR64:$src1),
                   "ror{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (rotr GR64:$src, CL))]>;
+                  [(set GR64:$dst, (rotr GR64:$src1, CL))]>;
 def ROR64ri  : RIi8<0xC1, MRM1r, (outs GR64:$dst), 
                     (ins GR64:$src1, i8imm:$src2),
                     "ror{q}\t{$src2, $dst|$dst, $src2}",
@@ -1023,7 +1019,7 @@ def ROR64ri  : RIi8<0xC1, MRM1r, (outs GR64:$dst),
 def ROR64r1  : RI<0xD1, MRM1r, (outs GR64:$dst), (ins GR64:$src1),
                   "ror{q}\t$dst",
                   [(set GR64:$dst, (rotr GR64:$src1, (i8 1)))]>;
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 let Uses = [CL] in
 def ROR64mCL : RI<0xD3, MRM1m, (outs), (ins i64mem:$dst), 
@@ -1037,7 +1033,7 @@ def ROR64m1  : RI<0xD1, MRM1m, (outs), (ins i64mem:$dst),
                [(store (rotr (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
 // Double shift instructions (generalizations of rotate)
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Uses = [CL] in {
 def SHLD64rrCL : RI<0xA5, MRMDestReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
@@ -1067,7 +1063,7 @@ def SHRD64rri8 : RIi8<0xAC, MRMDestReg,
                                        (i8 imm:$src3)))]>,
                  TB;
 } // isCommutable
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 let Uses = [CL] in {
 def SHLD64mrCL : RI<0xA5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
