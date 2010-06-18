@@ -219,7 +219,7 @@ class SI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern> {
   let Predicates = !if(hasVEX_4VPrefix /* VEX_4V */,
             !if(!eq(Prefix, 11 /* XD */), [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
-            !if(!eq(Prefix, 12 /* XS */), [HasSSE2], [HasSSE1]));
+            !if(!eq(Prefix, 12 /* XS */), [HasSSE1], [HasSSE2]));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEX_4VPrefix, !strconcat("v", asm), asm);
