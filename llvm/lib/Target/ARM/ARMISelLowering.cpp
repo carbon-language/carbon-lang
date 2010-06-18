@@ -420,6 +420,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i8,  Expand);
     setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i8,  Expand);
+    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i16, Expand);
+    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i8,  Expand);
     setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i32, Expand);
@@ -441,6 +444,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
   // 64-bit versions are always libcalls (for now)
   setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i64, Expand);
+  setOperationAction(ISD::ATOMIC_SWAP,      MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i64, Expand);

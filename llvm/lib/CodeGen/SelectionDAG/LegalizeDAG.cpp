@@ -2399,6 +2399,15 @@ std::pair <SDValue, SDValue> SelectionDAGLegalize::ExpandAtomic(SDNode *Node) {
   default:
     llvm_unreachable("Unhandled atomic intrinsic Expand!");
     break;
+  case ISD::ATOMIC_SWAP:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_LOCK_TEST_AND_SET_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_8; break;
+    }
+    break;
   case ISD::ATOMIC_CMP_SWAP:
     switch (VT.SimpleTy) {
     default: llvm_unreachable("Unexpected value type for atomic!");
