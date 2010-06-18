@@ -12,7 +12,7 @@
 //
 // This differs from traditional loop dependence analysis in that it tests
 // for dependencies within a single iteration of a loop, rather than
-// dependences between different iterations.
+// dependencies between different iterations.
 //
 // ScalarEvolution has a more complete understanding of pointer arithmetic
 // than BasicAliasAnalysis' collection of ad-hoc analyses.
