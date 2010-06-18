@@ -591,7 +591,7 @@ void Interpreter::popStackAndReturnValueToCaller(const Type *RetTy,
   ECStack.pop_back();
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
-    if (RetTy && RetTy->isIntegerTy()) {          // Nonvoid return type?
+    if (RetTy && !RetTy->isVoidTy()) {          // Nonvoid return type?
       ExitValue = Result;   // Capture the exit value of the program
     } else {
       memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
