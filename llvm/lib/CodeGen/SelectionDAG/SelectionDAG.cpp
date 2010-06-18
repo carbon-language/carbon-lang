@@ -4439,17 +4439,16 @@ SDVTList SelectionDAG::getVTList(const EVT *VTs, unsigned NumVTs) {
 /// already exists.  If the resultant node does not exist in the DAG, the
 /// input node is returned.  As a degenerate case, if you specify the same
 /// input operands as the node already has, the input node is returned.
-SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
-  SDNode *N = InN.getNode();
+SDNode *SelectionDAG::UpdateNodeOperands(SDNode *N, SDValue Op) {
   assert(N->getNumOperands() == 1 && "Update with wrong number of operands");
 
   // Check to see if there is no change.
-  if (Op == N->getOperand(0)) return InN;
+  if (Op == N->getOperand(0)) return N;
 
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op, InsertPos))
-    return SDValue(Existing, InN.getResNo());
+    return Existing;
 
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -4461,22 +4460,20 @@ SDValue SelectionDAG::UpdateNodeOperands(SDValue InN, SDValue Op) {
 
   // If this gets put into a CSE map, add it.
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
-  return InN;
+  return N;
 }
 
-SDValue SelectionDAG::
-UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
-  SDNode *N = InN.getNode();
+SDNode *SelectionDAG::UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2) {
   assert(N->getNumOperands() == 2 && "Update with wrong number of operands");
 
   // Check to see if there is no change.
   if (Op1 == N->getOperand(0) && Op2 == N->getOperand(1))
-    return InN;   // No operands changed, just return the input node.
+    return N;   // No operands changed, just return the input node.
 
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op1, Op2, InsertPos))
-    return SDValue(Existing, InN.getResNo());
+    return Existing;
 
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -4491,32 +4488,31 @@ UpdateNodeOperands(SDValue InN, SDValue Op1, SDValue Op2) {
 
   // If this gets put into a CSE map, add it.
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
-  return InN;
+  return N;
 }
 
-SDValue SelectionDAG::
-UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2, SDValue Op3) {
+SDNode *SelectionDAG::
+UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2, SDValue Op3) {
   SDValue Ops[] = { Op1, Op2, Op3 };
   return UpdateNodeOperands(N, Ops, 3);
 }
 
-SDValue SelectionDAG::
-UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+SDNode *SelectionDAG::
+UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                    SDValue Op3, SDValue Op4) {
   SDValue Ops[] = { Op1, Op2, Op3, Op4 };
   return UpdateNodeOperands(N, Ops, 4);
 }
 
-SDValue SelectionDAG::
-UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+SDNode *SelectionDAG::
+UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                    SDValue Op3, SDValue Op4, SDValue Op5) {
   SDValue Ops[] = { Op1, Op2, Op3, Op4, Op5 };
   return UpdateNodeOperands(N, Ops, 5);
 }
 
-SDValue SelectionDAG::
-UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
-  SDNode *N = InN.getNode();
+SDNode *SelectionDAG::
+UpdateNodeOperands(SDNode *N, const SDValue *Ops, unsigned NumOps) {
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
 
@@ -4530,12 +4526,12 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
   }
 
   // No operands changed, just return the input node.
-  if (!AnyChange) return InN;
+  if (!AnyChange) return N;
 
   // See if the modified node already exists.
   void *InsertPos = 0;
   if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, NumOps, InsertPos))
-    return SDValue(Existing, InN.getResNo());
+    return Existing;
 
   // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
@@ -4549,7 +4545,7 @@ UpdateNodeOperands(SDValue InN, const SDValue *Ops, unsigned NumOps) {
 
   // If this gets put into a CSE map, add it.
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
-  return InN;
+  return N;
 }
 
 /// DropOperands - Release the operands and set this node to have

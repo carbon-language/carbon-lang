@@ -370,14 +370,14 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
   }
   for (unsigned i = 1, e = OrigChain.getNumOperands(); i != e; ++i)
     Ops.push_back(OrigChain.getOperand(i));
-  CurDAG->UpdateNodeOperands(OrigChain, &Ops[0], Ops.size());
-  CurDAG->UpdateNodeOperands(Load, Call.getOperand(0),
+  CurDAG->UpdateNodeOperands(OrigChain.getNode(), &Ops[0], Ops.size());
+  CurDAG->UpdateNodeOperands(Load.getNode(), Call.getOperand(0),
                              Load.getOperand(1), Load.getOperand(2));
   Ops.clear();
   Ops.push_back(SDValue(Load.getNode(), 1));
   for (unsigned i = 1, e = Call.getNode()->getNumOperands(); i != e; ++i)
     Ops.push_back(Call.getOperand(i));
-  CurDAG->UpdateNodeOperands(Call, &Ops[0], Ops.size());
+  CurDAG->UpdateNodeOperands(Call.getNode(), &Ops[0], Ops.size());
 }
 
 /// isCalleeLoad - Return true if call address is a load and it can be

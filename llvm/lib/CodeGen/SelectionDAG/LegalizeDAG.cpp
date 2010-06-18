@@ -927,8 +927,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       break;
     }
 
-    Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops.data(),
-                                    Ops.size());
+    Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(), Ops.data(),
+                                            Ops.size()), 0);
     switch (Action) {
     case TargetLowering::Legal:
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
@@ -1018,7 +1018,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     if (Tmp1 != Node->getOperand(0)) {
       SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
       Ops[0] = Tmp1;
-      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
+      Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(), &Ops[0], Ops.size()),
+                       Result.getResNo());
     }
 
     // Remember that the CALLSEQ_START is legalized.
@@ -1060,7 +1061,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       if (Tmp1 != Node->getOperand(0)) {
         SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
         Ops[0] = Tmp1;
-        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
+        Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                                &Ops[0], Ops.size()),
+                         Result.getResNo());
       }
     } else {
       Tmp2 = LegalizeOp(Node->getOperand(Node->getNumOperands()-1));
@@ -1069,7 +1072,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
         Ops[0] = Tmp1;
         Ops.back() = Tmp2;
-        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
+        Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                                &Ops[0], Ops.size()),
+                         Result.getResNo());
       }
     }
     assert(IsLegalizingCall && "Call sequence imbalance between start/end?");
@@ -1089,7 +1094,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     ISD::LoadExtType ExtType = LD->getExtensionType();
     if (ExtType == ISD::NON_EXTLOAD) {
       EVT VT = Node->getValueType(0);
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
+      Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                              Tmp1, Tmp2, LD->getOffset()),
+                       Result.getResNo());
       Tmp3 = Result.getValue(0);
       Tmp4 = Result.getValue(1);
 
@@ -1269,7 +1276,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           isCustom = true;
           // FALLTHROUGH
         case TargetLowering::Legal:
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
+          Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                                  Tmp1, Tmp2, LD->getOffset()),
+                           Result.getResNo());
           Tmp1 = Result.getValue(0);
           Tmp2 = Result.getValue(1);
 
@@ -1357,8 +1366,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
       {
         Tmp3 = LegalizeOp(ST->getValue());
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
-                                        ST->getOffset());
+        Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                                Tmp1, Tmp3, Tmp2,
+                                                ST->getOffset()),
+                         Result.getResNo());
 
         EVT VT = Tmp3.getValueType();
         switch (TLI.getOperationAction(ISD::STORE, VT)) {
@@ -1461,8 +1472,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       } else {
         if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
             Tmp2 != ST->getBasePtr())
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
-                                          ST->getOffset());
+          Result = SDValue(DAG.UpdateNodeOperands(Result.getNode(),
+                                                  Tmp1, Tmp3, Tmp2,
+                                                  ST->getOffset()),
+                           Result.getResNo());
 
         switch (TLI.getTruncStoreAction(ST->getValue().getValueType(), StVT)) {
         default: assert(0 && "This action is not supported yet!");

@@ -132,8 +132,8 @@ static void UpdateNodeOperand(SelectionDAG &DAG,
                               SDValue Val) {
   SmallVector<SDValue, 8> ops(N->op_begin(), N->op_end());
   ops[Num] = Val;
-  SDValue New = DAG.UpdateNodeOperands(SDValue(N, 0), ops.data(), ops.size());
-  DAG.ReplaceAllUsesWith(N, New.getNode());
+  SDNode *New = DAG.UpdateNodeOperands(N, ops.data(), ops.size());
+  DAG.ReplaceAllUsesWith(N, New);
 }
 
 // After instruction selection, insert COPY_TO_REGCLASS nodes to help in

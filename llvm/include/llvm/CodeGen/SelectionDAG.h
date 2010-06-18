@@ -678,15 +678,15 @@ public:
   /// already exists.  If the resultant node does not exist in the DAG, the
   /// input node is returned.  As a degenerate case, if you specify the same
   /// input operands as the node already has, the input node is returned.
-  SDValue UpdateNodeOperands(SDValue N, SDValue Op);
-  SDValue UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2);
-  SDValue UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+  SDNode *UpdateNodeOperands(SDNode *N, SDValue Op);
+  SDNode *UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2);
+  SDNode *UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                                SDValue Op3);
-  SDValue UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+  SDNode *UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                                SDValue Op3, SDValue Op4);
-  SDValue UpdateNodeOperands(SDValue N, SDValue Op1, SDValue Op2,
+  SDNode *UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                                SDValue Op3, SDValue Op4, SDValue Op5);
-  SDValue UpdateNodeOperands(SDValue N,
+  SDNode *UpdateNodeOperands(SDNode *N,
                                const SDValue *Ops, unsigned NumOps);
 
   /// SelectNodeTo - These are used for target selectors to *mutate* the

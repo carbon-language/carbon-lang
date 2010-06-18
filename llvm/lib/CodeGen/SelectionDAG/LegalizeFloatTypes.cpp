@@ -698,9 +698,10 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                 DAG.getCondCode(CCCode), NewLHS, NewRHS,
-                                N->getOperand(4));
+                                N->getOperand(4)),
+                 0);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_FP_TO_SINT(SDNode *N) {
@@ -739,9 +740,10 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
                                 N->getOperand(2), N->getOperand(3),
-                                DAG.getCondCode(CCCode));
+                                DAG.getCondCode(CCCode)),
+                 0);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
@@ -757,8 +759,9 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
   }
 
   // Otherwise, update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
-                                DAG.getCondCode(CCCode));
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
+                                DAG.getCondCode(CCCode)),
+                 0);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
@@ -1294,9 +1297,9 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                 DAG.getCondCode(CCCode), NewLHS, NewRHS,
-                                N->getOperand(4));
+                                N->getOperand(4)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandFloatOp_FP_ROUND(SDNode *N) {
@@ -1375,9 +1378,9 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SELECT_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
                                 N->getOperand(2), N->getOperand(3),
-                                DAG.getCondCode(CCCode));
+                                DAG.getCondCode(CCCode)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandFloatOp_SETCC(SDNode *N) {
@@ -1393,8 +1396,8 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SETCC(SDNode *N) {
   }
 
   // Otherwise, update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
-                                DAG.getCondCode(CCCode));
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
+                                DAG.getCondCode(CCCode)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {

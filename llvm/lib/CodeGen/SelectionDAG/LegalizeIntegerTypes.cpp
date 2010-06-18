@@ -725,8 +725,9 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo) {
 
   // The chain (Op#0), CC (#1) and basic block destination (Op#4) are always
   // legal types.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
-                                N->getOperand(1), LHS, RHS, N->getOperand(4));
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
+                                N->getOperand(1), LHS, RHS, N->getOperand(4)),
+                 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
@@ -737,8 +738,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   SDValue Cond = PromoteTargetBoolean(N->getOperand(1), SVT);
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Cond,
-                                N->getOperand(2));
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0), Cond,
+                                        N->getOperand(2)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_PAIR(SDNode *N) {
@@ -773,7 +774,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
   for (unsigned i = 0; i < NumElts; ++i)
     NewOps.push_back(GetPromotedInteger(N->getOperand(i)));
 
-  return DAG.UpdateNodeOperands(SDValue(N, 0), &NewOps[0], NumElts);
+  return SDValue(DAG.UpdateNodeOperands(N, &NewOps[0], NumElts), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {
@@ -798,17 +799,18 @@ SDValue DAGTypeLegalizer::PromoteIntOp_INSERT_VECTOR_ELT(SDNode *N,
     assert(N->getOperand(1).getValueType().getSizeInBits() >=
            N->getValueType(0).getVectorElementType().getSizeInBits() &&
            "Type of inserted value narrower than vector element type!");
-    return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
+    return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                   GetPromotedInteger(N->getOperand(1)),
-                                  N->getOperand(2));
+                                  N->getOperand(2)),
+                   0);
   }
 
   assert(OpNo == 2 && "Different operand and result vector types?");
 
   // Promote the index.
   SDValue Idx = ZExtPromotedInteger(N->getOperand(2));
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
-                                N->getOperand(1), Idx);
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
+                                N->getOperand(1), Idx), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
@@ -819,15 +821,14 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MEMBARRIER(SDNode *N) {
     SDValue Flag = GetPromotedInteger(N->getOperand(i));
     NewOps[i] = DAG.getZeroExtendInReg(Flag, dl, MVT::i1);
   }
-  return DAG.UpdateNodeOperands(SDValue (N, 0), NewOps,
-                                array_lengthof(NewOps));
+  return SDValue(DAG.UpdateNodeOperands(N, NewOps, array_lengthof(NewOps)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SCALAR_TO_VECTOR(SDNode *N) {
   // Integer SCALAR_TO_VECTOR operands are implicitly truncated, so just promote
   // the operand in place.
-  return DAG.UpdateNodeOperands(SDValue(N, 0),
-                                GetPromotedInteger(N->getOperand(0)));
+  return SDValue(DAG.UpdateNodeOperands(N,
+                                GetPromotedInteger(N->getOperand(0))), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
@@ -837,8 +838,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   EVT SVT = TLI.getSetCCResultType(N->getOperand(1).getValueType());
   SDValue Cond = PromoteTargetBoolean(N->getOperand(0), SVT);
 
-  return DAG.UpdateNodeOperands(SDValue(N, 0), Cond,
-                                N->getOperand(1), N->getOperand(2));
+  return SDValue(DAG.UpdateNodeOperands(N, Cond,
+                                N->getOperand(1), N->getOperand(2)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {
@@ -849,8 +850,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {
   PromoteSetCCOperands(LHS, RHS, cast<CondCodeSDNode>(N->getOperand(4))->get());
 
   // The CC (#4) and the possible return values (#2 and #3) have legal types.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), LHS, RHS, N->getOperand(2),
-                                N->getOperand(3), N->getOperand(4));
+  return SDValue(DAG.UpdateNodeOperands(N, LHS, RHS, N->getOperand(2),
+                                N->getOperand(3), N->getOperand(4)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SETCC(SDNode *N, unsigned OpNo) {
@@ -861,12 +862,12 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SETCC(SDNode *N, unsigned OpNo) {
   PromoteSetCCOperands(LHS, RHS, cast<CondCodeSDNode>(N->getOperand(2))->get());
 
   // The CC (#2) is always legal.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), LHS, RHS, N->getOperand(2));
+  return SDValue(DAG.UpdateNodeOperands(N, LHS, RHS, N->getOperand(2)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_Shift(SDNode *N) {
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
-                                ZExtPromotedInteger(N->getOperand(1)));
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
+                                ZExtPromotedInteger(N->getOperand(1))), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SIGN_EXTEND(SDNode *N) {
@@ -878,8 +879,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SIGN_EXTEND(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SINT_TO_FP(SDNode *N) {
-  return DAG.UpdateNodeOperands(SDValue(N, 0),
-                                SExtPromotedInteger(N->getOperand(0)));
+  return SDValue(DAG.UpdateNodeOperands(N,
+                                SExtPromotedInteger(N->getOperand(0))), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
@@ -905,8 +906,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_TRUNCATE(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_UINT_TO_FP(SDNode *N) {
-  return DAG.UpdateNodeOperands(SDValue(N, 0),
-                                ZExtPromotedInteger(N->getOperand(0)));
+  return SDValue(DAG.UpdateNodeOperands(N,
+                                ZExtPromotedInteger(N->getOperand(0))), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_ZERO_EXTEND(SDNode *N) {
@@ -2224,9 +2225,9 @@ SDValue DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0),
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                 DAG.getCondCode(CCCode), NewLHS, NewRHS,
-                                N->getOperand(4));
+                                N->getOperand(4)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_SELECT_CC(SDNode *N) {
@@ -2242,9 +2243,9 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SELECT_CC(SDNode *N) {
   }
 
   // Update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
                                 N->getOperand(2), N->getOperand(3),
-                                DAG.getCondCode(CCCode));
+                                DAG.getCondCode(CCCode)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
@@ -2260,8 +2261,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
   }
 
   // Otherwise, update N to have the operands specified.
-  return DAG.UpdateNodeOperands(SDValue(N, 0), NewLHS, NewRHS,
-                                DAG.getCondCode(CCCode));
+  return SDValue(DAG.UpdateNodeOperands(N, NewLHS, NewRHS,
+                                DAG.getCondCode(CCCode)), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_Shift(SDNode *N) {
@@ -2270,7 +2271,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_Shift(SDNode *N) {
   // upper half of the shift amount is zero.  Just use the lower half.
   SDValue Lo, Hi;
   GetExpandedInteger(N->getOperand(1), Lo, Hi);
-  return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Lo);
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0), Lo), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_RETURNADDR(SDNode *N) {
@@ -2279,7 +2280,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_RETURNADDR(SDNode *N) {
   // constant to valid type.
   SDValue Lo, Hi;
   GetExpandedInteger(N->getOperand(0), Lo, Hi);
-  return DAG.UpdateNodeOperands(SDValue(N, 0), Lo);
+  return SDValue(DAG.UpdateNodeOperands(N, Lo), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDNode *N) {

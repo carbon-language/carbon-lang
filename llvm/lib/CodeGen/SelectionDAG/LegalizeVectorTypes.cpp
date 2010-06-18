@@ -1087,10 +1087,11 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
     uint64_t LoElts = Lo.getValueType().getVectorNumElements();
 
     if (IdxVal < LoElts)
-      return DAG.UpdateNodeOperands(SDValue(N, 0), Lo, Idx);
-    return DAG.UpdateNodeOperands(SDValue(N, 0), Hi,
+      return SDValue(DAG.UpdateNodeOperands(N, Lo, Idx), 0);
+    return SDValue(DAG.UpdateNodeOperands(N, Hi,
                                   DAG.getConstant(IdxVal - LoElts,
-                                                  Idx.getValueType()));
+                                                  Idx.getValueType())),
+                   0);
   }
 
   // Store the vector to the stack.

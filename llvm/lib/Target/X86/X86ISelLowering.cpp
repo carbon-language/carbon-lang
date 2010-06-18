@@ -6609,14 +6609,14 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
             (X86::CondCode)Cond.getOperand(0).getConstantOperandVal(0);
           CCode = X86::GetOppositeBranchCondition(CCode);
           CC = DAG.getConstant(CCode, MVT::i8);
-          SDValue User = SDValue(*Op.getNode()->use_begin(), 0);
+          SDNode *User = *Op.getNode()->use_begin();
           // Look for an unconditional branch following this conditional branch.
           // We need this because we need to reverse the successors in order
           // to implement FCMP_OEQ.
-          if (User.getOpcode() == ISD::BR) {
-            SDValue FalseBB = User.getOperand(1);
-            SDValue NewBR =
-              DAG.UpdateNodeOperands(User, User.getOperand(0), Dest);
+          if (User->getOpcode() == ISD::BR) {
+            SDValue FalseBB = User->getOperand(1);
+            SDNode *NewBR =
+              DAG.UpdateNodeOperands(User, User->getOperand(0), Dest);
             assert(NewBR == User);
             Dest = FalseBB;
 
@@ -9871,9 +9871,10 @@ static SDValue PerformMEMBARRIERCombine(SDNode* N, SelectionDAG &DAG) {
 
   switch (atomic.getOpcode()) {
     case ISD::ATOMIC_CMP_SWAP:
-      return DAG.UpdateNodeOperands(atomic, fence.getOperand(0),
+      return SDValue(DAG.UpdateNodeOperands(atomic.getNode(),
+                                    fence.getOperand(0),
                                     atomic.getOperand(1), atomic.getOperand(2),
-                                    atomic.getOperand(3));
+                                    atomic.getOperand(3)), atomic.getResNo());
     case ISD::ATOMIC_SWAP:
     case ISD::ATOMIC_LOAD_ADD:
     case ISD::ATOMIC_LOAD_SUB:
@@ -9885,8 +9886,10 @@ static SDValue PerformMEMBARRIERCombine(SDNode* N, SelectionDAG &DAG) {
     case ISD::ATOMIC_LOAD_MAX:
     case ISD::ATOMIC_LOAD_UMIN:
     case ISD::ATOMIC_LOAD_UMAX:
-      return DAG.UpdateNodeOperands(atomic, fence.getOperand(0),
-                                    atomic.getOperand(1), atomic.getOperand(2));
+      return SDValue(DAG.UpdateNodeOperands(atomic.getNode(),
+                                    fence.getOperand(0),
+                                    atomic.getOperand(1), atomic.getOperand(2)),
+                     atomic.getResNo());
     default:
       return SDValue();
   }
