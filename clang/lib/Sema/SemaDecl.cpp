@@ -1057,13 +1057,27 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   }
 
   // FIXME: diagnose the other way around?
-  if (OldType->getNoReturnAttr() &&
-      !NewType->getNoReturnAttr()) {
+  if (OldType->getNoReturnAttr() && !NewType->getNoReturnAttr()) {
     NewQType = Context.getNoReturnType(NewQType);
     New->setType(NewQType);
     assert(NewQType.isCanonical());
   }
 
+  // Merge regparm attribute.
+  if (OldType->getRegParmType() != NewType->getRegParmType()) {
+    if (NewType->getRegParmType()) {
+      Diag(New->getLocation(), diag::err_regparm_mismatch)
+        << NewType->getRegParmType()
+        << OldType->getRegParmType();
+      Diag(Old->getLocation(), diag::note_previous_declaration);      
+      return true;
+    }
+    
+    NewQType = Context.getRegParmType(NewQType, OldType->getRegParmType());
+    New->setType(NewQType);
+    assert(NewQType.isCanonical());    
+  }
+  
   if (getLangOptions().CPlusPlus) {
     // (C++98 13.1p2):
     //   Certain function declarations cannot be overloaded:
