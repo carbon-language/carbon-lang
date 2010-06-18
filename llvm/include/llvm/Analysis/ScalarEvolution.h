@@ -54,10 +54,6 @@ namespace llvm {
     /// The ScalarEvolution's BumpPtrAllocator holds the data.
     FoldingSetNodeIDRef FastID;
 
-    /// AllocationSequenceNumber - This is used as a deterministic tie
-    /// breaker when sorting SCEVs.
-    unsigned AllocationSequenceNumber;
-
     // The SCEV baseclass this node corresponds to
     const unsigned short SCEVType;
 
@@ -72,17 +68,10 @@ namespace llvm {
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(const FoldingSetNodeIDRef ID, unsigned num, unsigned SCEVTy) :
-      FastID(ID), AllocationSequenceNumber(num),
-      SCEVType(SCEVTy), SubclassData(0) {}
+    explicit SCEV(const FoldingSetNodeIDRef ID, unsigned SCEVTy) :
+      FastID(ID), SCEVType(SCEVTy), SubclassData(0) {}
 
     unsigned getSCEVType() const { return SCEVType; }
-
-    /// getAllocationSequenceNumber - Return an arbitrary value which can be
-    /// used to deterministically order a sequence of SCEVs.
-    unsigned getAllocationSequenceNumber() const {
-      return AllocationSequenceNumber;
-    }
 
     /// Profile - FoldingSet support.
     void Profile(FoldingSetNodeID& ID) { ID = FastID; }
@@ -674,7 +663,6 @@ namespace llvm {
   private:
     FoldingSet<SCEV> UniqueSCEVs;
     BumpPtrAllocator SCEVAllocator;
-    unsigned CurAllocationSequenceNumber;
   };
 }
 
