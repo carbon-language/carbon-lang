@@ -1397,8 +1397,11 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       MI->eraseFromParent();
     }
 
-    // Try coalescing some EXTRACT_SUBREG instructions.
-    CoalesceExtSubRegs(RealSrcs, DstReg);
+    // Try coalescing some EXTRACT_SUBREG instructions. This can create
+    // INSERT_SUBREG instructions that must have <undef> flags added by
+    // LiveIntervalAnalysis, so only run it when LiveVariables is available.
+    if (LV)
+      CoalesceExtSubRegs(RealSrcs, DstReg);
   }
 
   RegSequences.clear();
