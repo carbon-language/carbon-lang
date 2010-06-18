@@ -345,7 +345,7 @@ bool FastISel::SelectGetElementPtr(const User *I) {
 
       // If this is a constant subscript, handle it quickly.
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
-        if (CI->getZExtValue() == 0) continue;
+        if (CI->isZero()) continue;
         uint64_t Offs = 
           TD.getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, Offs, VT);

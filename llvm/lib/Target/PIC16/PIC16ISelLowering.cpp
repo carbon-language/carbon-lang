@@ -1791,14 +1791,14 @@ static PIC16CC::CondCodes IntCCToPIC16CC(ISD::CondCode CC) {
 static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
                              ISD::CondCode CC, unsigned &SPCC) {
   if (isa<ConstantSDNode>(RHS) &&
-      cast<ConstantSDNode>(RHS)->getZExtValue() == 0 &&
+      cast<ConstantSDNode>(RHS)->isNullValue() &&
       CC == ISD::SETNE &&
       (LHS.getOpcode() == PIC16ISD::SELECT_ICC &&
         LHS.getOperand(3).getOpcode() == PIC16ISD::SUBCC) &&
       isa<ConstantSDNode>(LHS.getOperand(0)) &&
       isa<ConstantSDNode>(LHS.getOperand(1)) &&
-      cast<ConstantSDNode>(LHS.getOperand(0))->getZExtValue() == 1 &&
-      cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue() == 0) {
+      cast<ConstantSDNode>(LHS.getOperand(0))->isOne() &&
+      cast<ConstantSDNode>(LHS.getOperand(1))->isNullValue()) {
     SDValue CMPCC = LHS.getOperand(3);
     SPCC = cast<ConstantSDNode>(LHS.getOperand(2))->getZExtValue();
     LHS = CMPCC.getOperand(0);

@@ -5042,19 +5042,19 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case PPCISD::SHL:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getZExtValue() == 0)   // 0 << V -> 0.
+      if (C->isNullValue())   // 0 << V -> 0.
         return N->getOperand(0);
     }
     break;
   case PPCISD::SRL:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getZExtValue() == 0)   // 0 >>u V -> 0.
+      if (C->isNullValue())   // 0 >>u V -> 0.
         return N->getOperand(0);
     }
     break;
   case PPCISD::SRA:
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
-      if (C->getZExtValue() == 0 ||   //  0 >>s V -> 0.
+      if (C->isNullValue() ||   //  0 >>s V -> 0.
           C->isAllOnesValue())    // -1 >>s V -> -1.
         return N->getOperand(0);
     }

@@ -101,7 +101,7 @@ static bool IsNullTerminatedString(const Constant *C) {
 
     ConstantInt *Null =
       dyn_cast<ConstantInt>(CVA->getOperand(ATy->getNumElements()-1));
-    if (Null == 0 || Null->getZExtValue() != 0)
+    if (Null == 0 || !Null->isZero())
       return false; // Not null terminated.
 
     // Verify that the null doesn't occur anywhere else in the string.

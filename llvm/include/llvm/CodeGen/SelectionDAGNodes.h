@@ -1082,6 +1082,7 @@ public:
   uint64_t getZExtValue() const { return Value->getZExtValue(); }
   int64_t getSExtValue() const { return Value->getSExtValue(); }
 
+  bool isOne() const { return Value->isOne(); }
   bool isNullValue() const { return Value->isNullValue(); }
   bool isAllOnesValue() const { return Value->isAllOnesValue(); }
 

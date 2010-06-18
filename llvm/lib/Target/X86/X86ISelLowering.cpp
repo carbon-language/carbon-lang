@@ -3185,7 +3185,7 @@ unsigned X86::getShufflePALIGNRImmediate(SDNode *N) {
 /// constant +0.0.
 bool X86::isZeroNode(SDValue Elt) {
   return ((isa<ConstantSDNode>(Elt) &&
-           cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
+           cast<ConstantSDNode>(Elt)->isNullValue()) ||
           (isa<ConstantFPSDNode>(Elt) &&
            cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
 }
@@ -6229,7 +6229,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (Op0.getOpcode() == ISD::AND &&
       Op0.hasOneUse() &&
       Op1.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(Op1)->getZExtValue() == 0 &&
+      cast<ConstantSDNode>(Op1)->isNullValue() &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
     SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG);
     if (NewSetCC.getNode())

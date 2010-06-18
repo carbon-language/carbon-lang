@@ -536,7 +536,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDNode *Op, SDValue N,
   DebugLoc dl = Op->getDebugLoc();
   if (N.getOpcode() != ISD::ADD) {
     ConstantSDNode *NC = dyn_cast<ConstantSDNode>(N);
-    if (!NC || NC->getZExtValue() != 0)
+    if (!NC || !NC->isNullValue())
       return false;
 
     Base = Offset = N;

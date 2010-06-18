@@ -2734,7 +2734,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
       // If this is a constant subscript, handle it quickly.
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
-        if (CI->getZExtValue() == 0) continue;
+        if (CI->isZero()) continue;
         uint64_t Offs =
             TD->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         SDValue OffsVal;
@@ -4367,7 +4367,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     SDValue Arg = getValue(I.getOperand(0));
     EVT Ty = Arg.getValueType();
 
-    if (CI->getZExtValue() == 0)
+    if (CI->isZero())
       Res = DAG.getConstant(-1ULL, Ty);
     else
       Res = DAG.getConstant(0, Ty);

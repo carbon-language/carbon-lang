@@ -208,7 +208,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
          i != e; ++i, ++GTI) {
       ConstantInt *CI = dyn_cast<ConstantInt>(*i);
       if (!CI) return false;  // Index isn't a simple constant?
-      if (CI->getZExtValue() == 0) continue;  // Not adding anything.
+      if (CI->isZero()) continue;  // Not adding anything.
       
       if (const StructType *ST = dyn_cast<StructType>(*GTI)) {
         // N = N + Offset

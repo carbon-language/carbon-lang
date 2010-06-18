@@ -2867,7 +2867,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   case SPUISD::IndirectAddr: {
     if (!ST->usingLargeMem() && Op0.getOpcode() == SPUISD::AFormAddr) {
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1));
-      if (CN != 0 && CN->getZExtValue() == 0) {
+      if (CN != 0 && CN->isNullValue()) {
         // (SPUindirect (SPUaform <addr>, 0), 0) ->
         // (SPUaform <addr>, 0)
 

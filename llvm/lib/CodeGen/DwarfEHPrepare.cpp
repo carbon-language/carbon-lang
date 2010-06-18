@@ -210,7 +210,7 @@ bool DwarfEHPrepare::IsACleanupSelector(IntrinsicInst *II) {
       if (Val + 4 == NumOps) {
         if (ConstantInt *FinalVal =
             dyn_cast<ConstantInt>(II->getOperand(NumOps - 1)))
-          return (FinalVal->getZExtValue() == 0);
+          return FinalVal->isZero();
       }
     }
   }

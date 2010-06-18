@@ -1210,7 +1210,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, DL, TII.get(OpC), ResultReg).
-                                  addImm(CI->getZExtValue() == 0 ? -1ULL : 0);
+                                  addImm(CI->isZero() ? -1ULL : 0);
     UpdateValueMap(&I, ResultReg);
     return true;
   }

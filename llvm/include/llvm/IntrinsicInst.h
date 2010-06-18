@@ -136,7 +136,7 @@ namespace llvm {
       return cast<ConstantInt>(const_cast<Value*>(getOperand(5)));
     }
     bool isVolatile() const {
-      return getVolatileCst()->getZExtValue() != 0;
+      return !getVolatileCst()->isZero();
     }
 
     /// getDest - This is just like getRawDest, but it strips off any cast
