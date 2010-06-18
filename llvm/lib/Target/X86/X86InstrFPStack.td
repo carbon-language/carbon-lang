@@ -371,7 +371,7 @@ multiclass FPCMov<PatLeaf cc> {
                                         Requires<[HasCMov]>;
 }
 
-let Uses = [EFLAGS], isTwoAddress = 1 in {
+let Uses = [EFLAGS], Constraints = "$src1 = $dst" in {
 defm CMOVB  : FPCMov<X86_COND_B>;
 defm CMOVBE : FPCMov<X86_COND_BE>;
 defm CMOVE  : FPCMov<X86_COND_E>;
@@ -380,7 +380,7 @@ defm CMOVNB : FPCMov<X86_COND_AE>;
 defm CMOVNBE: FPCMov<X86_COND_A>;
 defm CMOVNE : FPCMov<X86_COND_NE>;
 defm CMOVNP : FPCMov<X86_COND_NP>;
-}
+} // Uses = [EFLAGS], Constraints = "$src1 = $dst"
 
 let Predicates = [HasCMov] in {
 // These are not factored because there's no clean way to pass DA/DB.
