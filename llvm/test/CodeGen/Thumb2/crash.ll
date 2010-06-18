@@ -19,3 +19,31 @@ entry:
 }
 
 declare void @llvm.arm.neon.vst4.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>) nounwind
+
+@sbuf = common global [16 x i32] zeroinitializer, align 16 ; <[16 x i32]*> [#uses=5]
+@dbuf = common global [16 x i32] zeroinitializer  ; <[16 x i32]*> [#uses=2]
+
+; This function creates 4 chained INSERT_SUBREGS and then invokes the register scavenger.
+; The first INSERT_SUBREG needs an <undef> use operand for that to work.
+define arm_apcscc i32 @main() nounwind {
+bb.nph:
+  br label %bb
+
+bb:                                               ; preds = %bb, %bb.nph
+  %0 = phi i32 [ 0, %bb.nph ], [ %1, %bb ]        ; <i32> [#uses=4]
+  %scevgep = getelementptr [16 x i32]* @sbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
+  %scevgep5 = getelementptr [16 x i32]* @dbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
+  store i32 %0, i32* %scevgep, align 4
+  store i32 -1, i32* %scevgep5, align 4
+  %1 = add nsw i32 %0, 1                          ; <i32> [#uses=2]
+  %exitcond = icmp eq i32 %1, 16                  ; <i1> [#uses=1]
+  br i1 %exitcond, label %bb2, label %bb
+
+bb2:                                              ; preds = %bb
+  %2 = load <4 x i32>* bitcast ([16 x i32]* @sbuf to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
+  %3 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 4) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
+  %4 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 8) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
+  %5 = load <4 x i32>* bitcast (i32* getelementptr inbounds ([16 x i32]* @sbuf, i32 0, i32 12) to <4 x i32>*), align 16 ; <<4 x i32>> [#uses=1]
+  tail call void @llvm.arm.neon.vst4.v4i32(i8* bitcast ([16 x i32]* @dbuf to i8*), <4 x i32> %2, <4 x i32> %3, <4 x i32> %4, <4 x i32> %5) nounwind
+  ret i32 0
+}
