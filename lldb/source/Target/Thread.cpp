@@ -617,20 +617,8 @@ Thread::MatchesSpec (const ThreadSpec *spec)
 {
     if (spec == NULL)
         return true;
-    
-    if (!spec->TIDMatches(GetID()))
-        return false;
         
-    if (!spec->IndexMatches(GetIndexID()))
-        return false;
-        
-    if (!spec->NameMatches (GetName()))
-        return false;
-        
-    if (!spec->QueueNameMatches (GetQueueName()))
-        return false;
-        
-    return true;
+    return spec->ThreadPassesBasicTests(this);    
 }
 
 void

@@ -109,15 +109,10 @@ BreakpointLocation::SetThreadID (lldb::tid_t thread_id)
 bool
 BreakpointLocation::InvokeCallback (StoppointCallbackContext *context)
 {
-    bool owner_result;
-
-    owner_result = m_owner.InvokeCallback (context, GetID());
-    if (owner_result == false)
-        return false;
-    else if (m_options_ap.get() != NULL)
+    if (m_options_ap.get() != NULL && m_options_ap->HasCallback())
         return m_options_ap->InvokeCallback (context, m_owner.GetID(), GetID());
-    else
-        return true;
+    else    
+        return m_owner.InvokeCallback (context, GetID());
 }
 
 void
@@ -166,9 +161,12 @@ BreakpointLocation::GetOptionsNoCopy () const
 BreakpointOptions *
 BreakpointLocation::GetLocationOptions ()
 {
+    // If we make the copy we don't copy the callbacks because that is potentially 
+    // expensive and we don't want to do that for the simple case where someone is
+    // just disabling the location.
     if (m_options_ap.get() == NULL)
-        m_options_ap.reset(new BreakpointOptions (*m_owner.GetOptions ()));
-
+        m_options_ap.reset(BreakpointOptions::CopyOptionsNoCallback(*m_owner.GetOptions ()));
+    
     return m_options_ap.get();
 }
 
@@ -257,7 +255,8 @@ BreakpointLocation::ClearBreakpointSite ()
 {
     if (m_bp_site_sp.get())
     {
-        m_owner.GetTarget().GetProcessSP()->RemoveOwnerFromBreakpointSite (GetBreakpoint().GetID(), GetID(), m_bp_site_sp);
+        m_owner.GetTarget().GetProcessSP()->RemoveOwnerFromBreakpointSite (GetBreakpoint().GetID(), 
+                                                                           GetID(), m_bp_site_sp);
         m_bp_site_sp.reset();
         return true;
     }
@@ -353,29 +352,25 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->Printf("resolved = %s\n", IsResolved() ? "true" : "false");
 
         s->Indent();
-        s->Printf("enabled = %s\n", IsEnabled() ? "true" : "false");
-
-        s->Indent();
         s->Printf ("hit count = %-4u\n", GetHitCount());
 
         if (m_options_ap.get())
         {
-            Baton *baton = m_options_ap->GetBaton();
-            if (baton)
-            {
-                s->Indent();
-                baton->GetDescription (s, level);
-                s->EOL();
-            }
+            s->Indent();
+            m_options_ap->GetDescription (s, level);
+            s->EOL();
         }
         s->IndentLess();
     }
     else
     {
-        s->Printf(", %sresolved, %s, hit count = %u",
+        s->Printf(", %sresolved, hit count = %u ",
                   (IsResolved() ? "" : "un"),
-                  (IsEnabled() ? "enabled" : "disabled"),
                   GetHitCount());
+        if (m_options_ap.get())
+        {
+            m_options_ap->GetDescription (s, level);
+        }
     }
 }
 
@@ -385,7 +380,8 @@ BreakpointLocation::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("BreakpointLocation %u: tid = %4.4x  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
+    s->Printf("BreakpointLocation %u: tid = %4.4x  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
+              "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
             GetID(),
             GetOptionsNoCopy()->GetThreadSpec()->GetTID(),
             (uint64_t) m_address.GetLoadAddress(m_owner.GetTarget().GetProcessSP().get()),

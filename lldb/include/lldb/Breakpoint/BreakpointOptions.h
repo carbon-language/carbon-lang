@@ -39,7 +39,8 @@ public:
     BreakpointOptions();
     BreakpointOptions(const BreakpointOptions& rhs);
 
-    
+    static BreakpointOptions *
+    CopyOptionsNoCallback (BreakpointOptions &rhs);
     //------------------------------------------------------------------
     /// This constructor allows you to specify all the breakpoint options.
     ///
@@ -142,6 +143,15 @@ public:
     
     void
     SetThreadID(lldb::tid_t thread_id);
+    
+    void
+    GetDescription (Stream *s, lldb::DescriptionLevel level) const;
+    
+    //------------------------------------------------------------------
+    /// Returns true if the breakpoint option has a callback set.
+    //------------------------------------------------------------------
+    bool
+    HasCallback();
 
     //------------------------------------------------------------------
     /// This is the default empty callback.

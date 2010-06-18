@@ -121,6 +121,15 @@ public:
             return m_queue_name == queue_name;
     }
     
+    bool
+    ThreadPassesBasicTests (Thread *thread) const;
+    
+    bool
+    HasSpecification () const;
+    
+    void
+    GetDescription (Stream *s, lldb::DescriptionLevel level) const;
+
 protected:
 private:
     uint32_t m_index;

@@ -71,6 +71,21 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     return *this;
 }
 
+BreakpointOptions *
+BreakpointOptions::CopyOptionsNoCallback (BreakpointOptions &orig)
+{
+    BreakpointHitCallback orig_callback = orig.m_callback;
+    lldb::BatonSP orig_callback_baton_sp = orig.m_callback_baton_sp;
+    bool orig_is_sync = orig.m_callback_is_synchronous;
+    
+    orig.ClearCallback();
+    BreakpointOptions *ret_val = new BreakpointOptions(orig);
+    
+    orig.SetCallback (orig_callback, orig_callback_baton_sp, orig_is_sync);
+    
+    return ret_val;
+}
+
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
@@ -124,6 +139,12 @@ BreakpointOptions::InvokeCallback (StoppointCallbackContext *context,
         return true;
 }
 
+bool
+BreakpointOptions::HasCallback ()
+{
+    return m_callback != BreakpointOptions::NullCallback;
+}
+
 //------------------------------------------------------------------
 // Enabled/Ignore Count
 //------------------------------------------------------------------
@@ -173,10 +194,68 @@ BreakpointOptions::SetThreadID (lldb::tid_t thread_id)
 }
 
 void
+BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) const
+{
+
+    // Figure out if there are any options not at their default value, and only print 
+    // anything if there are:
+    
+    if (m_ignore_count != 0 || !m_enabled || (GetThreadSpec() != NULL && GetThreadSpec()->HasSpecification ()))
+    {
+        if (level == lldb::eDescriptionLevelVerbose)
+        {
+            s->EOL ();
+            s->IndentMore();
+            s->Indent();
+            s->PutCString("Breakpoint Options:\n");
+            s->IndentMore();
+            s->Indent();
+        }
+        else
+            s->PutCString(" Options: ");
+                
+        if (m_ignore_count > 0)
+            s->Printf("ignore: %d ", m_ignore_count);
+        s->Printf("%sabled ", m_enabled ? "en" : "dis");
+        
+        if (m_thread_spec_ap.get())
+            m_thread_spec_ap->GetDescription (s, level);
+        else if (level == eDescriptionLevelBrief)
+            s->PutCString ("thread spec: no ");
+        if (level == lldb::eDescriptionLevelFull)
+        {
+            s->IndentLess();
+            s->IndentMore();
+        }
+    }
+            
+    if (m_callback_baton_sp.get())
+    {
+        if (level != eDescriptionLevelBrief)
+            s->EOL();
+        m_callback_baton_sp->GetDescription (s, level);
+    }
+    else if (level == eDescriptionLevelBrief)
+        s->PutCString ("commands: no ");
+    
+}
+
+void
 BreakpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 {
-    s->Indent("Breakpoint commands:\n");
     CommandData *data = (CommandData *)m_data;
+
+    if (level == eDescriptionLevelBrief)
+    {
+        if (data && data->user_source.GetSize() > 0)
+            s->PutCString("commands: yes ");
+        else
+            s->PutCString("commands: no ");
+        return;
+    }
+    
+    s->IndentMore ();
+    s->Indent("Breakpoint commands:\n");
     
     s->IndentMore ();
     if (data && data->user_source.GetSize() > 0)
@@ -192,6 +271,7 @@ BreakpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLev
     {
         s->PutCString ("No commands.\n");
     }
+    s->IndentLess ();
     s->IndentLess ();
 }
 

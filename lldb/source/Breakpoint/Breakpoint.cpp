@@ -380,28 +380,21 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
             s->Printf(" with 0 locations (Pending Breakpoint).");
         }
 
+        GetOptions()->GetDescription(s, level);
+        
         if (level == lldb::eDescriptionLevelFull)
         {
-            Baton *baton = GetOptions()->GetBaton();
-            if (baton)
-            {
-                s->EOL ();
-                s->Indent();
-                baton->GetDescription(s, level);
-            }
+            s->IndentLess();
+            s->EOL();
         }
         break;
 
     case lldb::eDescriptionLevelVerbose:
         // Verbose mode does a debug dump of the breakpoint
         Dump (s);
-        Baton *baton = GetOptions()->GetBaton();
-        if (baton)
-        {
-            s->EOL ();
-            s->Indent();
-            baton->GetDescription(s, level);
-        }
+        s->EOL ();
+        s->Indent();
+        GetOptions()->GetDescription(s, level);
         break;
     }
 
@@ -420,7 +413,8 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     }
 }
 
-Breakpoint::BreakpointEventData::BreakpointEventData (Breakpoint::BreakpointEventData::EventSubType sub_type, BreakpointSP &new_breakpoint_sp) :
+Breakpoint::BreakpointEventData::BreakpointEventData (Breakpoint::BreakpointEventData::EventSubType sub_type, 
+                                                      BreakpointSP &new_breakpoint_sp) :
     EventData (),
     m_sub_type (sub_type),
     m_new_breakpoint_sp (new_breakpoint_sp)

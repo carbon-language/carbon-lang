@@ -56,3 +56,67 @@ ThreadSpec::GetQueueName () const
     else
         return m_queue_name.c_str();
 }
+
+bool
+ThreadSpec::ThreadPassesBasicTests (Thread *thread) const
+{
+
+    if (!HasSpecification())
+        return true;
+        
+    if (!TIDMatches(thread->GetID()))
+        return false;
+        
+    if (!IndexMatches(thread->GetIndexID()))
+        return false;
+        
+    if (!NameMatches (thread->GetName()))
+        return false;
+        
+    if (!QueueNameMatches (thread->GetQueueName()))
+        return false;
+        
+    return true;
+
+}
+
+bool
+ThreadSpec::HasSpecification() const
+{
+    return (m_index != -1 || m_tid != LLDB_INVALID_THREAD_ID || !m_name.empty() || !m_queue_name.empty());
+}
+void
+ThreadSpec::GetDescription (Stream *s, lldb::DescriptionLevel level) const
+{
+    if (!HasSpecification())
+    {
+        if (level == eDescriptionLevelBrief)
+        {
+            s->PutCString("thread spec: no ");
+        }
+    }
+    else
+    {
+        if (level == eDescriptionLevelBrief)
+        {
+            s->PutCString("thread spec: yes ");
+        }
+        else
+        {
+            if (GetTID() != LLDB_INVALID_THREAD_ID)
+                s->Printf("tid: 0x%llx ", GetTID());
+                
+            if (GetIndex() != -1)
+                s->Printf("index: %d ", GetIndex());
+                
+            const char *name = GetName();
+            if (name)
+                s->Printf ("thread name: \"%s\" ", name);
+                
+            const char *queue_name = GetQueueName();
+            if (queue_name)
+                s->Printf ("queue name: \"%s\" ", queue_name);
+        }
+
+    }
+}

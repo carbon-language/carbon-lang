@@ -263,6 +263,11 @@ public:
     lldb::Vote
     ShouldReportRun (Event *event_ptr);
     
+    // Return whether this thread matches the specification in ThreadSpec.  This is a virtual
+    // method because at some point we may extend the thread spec with a platform specific
+    // dictionary of attributes, which then only the platform specific Thread implementation
+    // would know how to match.  For now, this just calls through to the ThreadSpec's 
+    // ThreadPassesBasicTests method.
     virtual bool
     MatchesSpec (const ThreadSpec *spec);
 
