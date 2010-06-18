@@ -36,7 +36,7 @@ class CalleeSavedInfo {
   int FrameIdx;
   
 public:
-  CalleeSavedInfo(unsigned R, int FI = 0)
+  explicit CalleeSavedInfo(unsigned R, int FI = 0)
   : Reg(R), FrameIdx(FI) {}
   
   // Accessors.

@@ -74,7 +74,7 @@ private:
   JTEntryKind EntryKind;
   std::vector<MachineJumpTableEntry> JumpTables;
 public:
-  MachineJumpTableInfo(JTEntryKind Kind): EntryKind(Kind) {}
+  explicit MachineJumpTableInfo(JTEntryKind Kind): EntryKind(Kind) {}
     
   JTEntryKind getEntryKind() const { return EntryKind; }
 
