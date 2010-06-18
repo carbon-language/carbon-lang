@@ -33,6 +33,7 @@ add_llvm_target(ARMCodeGen
   NEONPreAllocPass.cpp
   Thumb1InstrInfo.cpp
   Thumb1RegisterInfo.cpp
+  Thumb2HazardRecognizer.cpp
   Thumb2ITBlockPass.cpp
   Thumb2InstrInfo.cpp
   Thumb2RegisterInfo.cpp
