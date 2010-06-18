@@ -41,7 +41,6 @@
 #include "../Commands/CommandObjectShow.h"
 #include "../Commands/CommandObjectSource.h"
 #include "../Commands/CommandObjectSourceFile.h"
-#include "../Commands/CommandObjectStatus.h"
 #include "../Commands/CommandObjectSyntax.h"
 #include "../Commands/CommandObjectTarget.h"
 #include "../Commands/CommandObjectThread.h"
