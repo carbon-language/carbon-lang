@@ -1114,7 +1114,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   // Emit warnings for missing struct field initializers.
-  if (CheckForMissingFields && Field != FieldEnd && 
+  if (InitializedSomething && CheckForMissingFields && Field != FieldEnd && 
       !Field->getType()->isIncompleteArrayType() && !DeclType->isUnionType()) {
     // It is possible we have one or more unnamed bitfields remaining.
     // Find first (if any) named field and emit warning.

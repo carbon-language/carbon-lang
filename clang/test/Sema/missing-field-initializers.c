@@ -20,6 +20,8 @@ struct Foo bar1[] = {
   1
 }; // expected-warning {{missing field 'b' initializer}}
 
+struct Foo bar2[] = { {}, {}, {} };
+
 struct One { int a; int b; };
 struct Two { float c; float d; float e; };
 
