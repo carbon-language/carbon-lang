@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Note: This file is a work in progress. Please update it only if you believe
-// there is an obvious error; otherwise please check with Sean Hunt. He can
-// be reached at rideau3@gmail.com.
+// Note: This file is a work in progress. Please do not apply non-trivial
+// updates unless you have talked to Sean Hunt <rideau3@gmail.com> prior.
+// Merely adding a new attribute is a trivial update.
 ////////////////////////////////////////////////////////////////////////////////
 
 // An attribute's subject is whatever it appertains to. In this file, it is
