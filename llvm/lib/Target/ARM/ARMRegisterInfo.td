@@ -197,9 +197,9 @@ def QQQQ3 : ARMReg<3, "qqqq3", [QQ6, QQ7]>;
 }
 
 // Current Program Status Register.
-def CPSR  : ARMReg<0, "cpsr">;
-
-def FPSCR : ARMReg<1, "fpscr">;
+def CPSR    : ARMReg<0, "cpsr">;
+def FPSCR   : ARMReg<1, "fpscr">;
+def ITSTATE : ARMReg<2, "itstate">;
 
 // Register classes.
 //
@@ -557,4 +557,3 @@ def QQQQPR : RegisterClass<"ARM", [v8i64],
 
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
-

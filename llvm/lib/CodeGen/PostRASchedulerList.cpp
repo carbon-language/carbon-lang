@@ -79,6 +79,7 @@ AntiDepBreaker::~AntiDepBreaker() { }
 namespace {
   class PostRAScheduler : public MachineFunctionPass {
     AliasAnalysis *AA;
+    const TargetInstrInfo *TII;
     CodeGenOpt::Level OptLevel;
 
   public:
@@ -181,30 +182,9 @@ namespace {
   };
 }
 
-/// isSchedulingBoundary - Test if the given instruction should be
-/// considered a scheduling boundary. This primarily includes labels
-/// and terminators.
-///
-static bool isSchedulingBoundary(const MachineInstr *MI,
-                                 const MachineFunction &MF) {
-  // Terminators and labels can't be scheduled around.
-  if (MI->getDesc().isTerminator() || MI->isLabel())
-    return true;
-
-  // Don't attempt to schedule around any instruction that defines
-  // a stack-oriented pointer, as it's unlikely to be profitable. This
-  // saves compile time, because it doesn't require every single
-  // stack slot reference to depend on the instruction that does the
-  // modification.
-  const TargetLowering &TLI = *MF.getTarget().getTargetLowering();
-  if (MI->definesRegister(TLI.getStackPointerRegisterToSaveRestore()))
-    return true;
-
-  return false;
-}
-
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   AA = &getAnalysis<AliasAnalysis>();
+  TII = Fn.getTarget().getInstrInfo();
 
   // Check for explicit enable/disable of post-ra scheduling.
   TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
@@ -265,8 +245,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     MachineBasicBlock::iterator Current = MBB->end();
     unsigned Count = MBB->size(), CurrentCount = Count;
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
-      MachineInstr *MI = prior(I);
-      if (isSchedulingBoundary(MI, Fn)) {
+      MachineInstr *MI = llvm::prior(I);
+      if (TII->isSchedulingBoundary(MI, MBB, Fn)) {
         Scheduler.Run(MBB, I, Current, CurrentCount);
         Scheduler.EmitSchedule();
         Current = MI;

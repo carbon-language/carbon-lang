@@ -1306,6 +1306,34 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
   return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
 }
 
+bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
+                                            const MachineBasicBlock *MBB,
+                                            const MachineFunction &MF) const {
+  // Terminators and labels can't be scheduled around.
+  if (MI->getDesc().isTerminator() || MI->isLabel())
+    return true;
+
+  // Treat the start of the IT block as a scheduling boundary, but schedule
+  // t2IT along with all instructions following it.
+  // FIXME: This is a big hammer. But the alternative is to add all potential
+  // true and anti dependencies to IT block instructions as implicit operands
+  // to the t2IT instruction. The added compile time and complexity does not
+  // seem worth it.
+  MachineBasicBlock::const_iterator I = MI;
+  if (++I != MBB->end() && I->getOpcode() == ARM::t2IT)
+    return true;
+
+  // Don't attempt to schedule around any instruction that defines
+  // a stack-oriented pointer, as it's unlikely to be profitable. This
+  // saves compile time, because it doesn't require every single
+  // stack slot reference to depend on the instruction that does the
+  // modification.
+  if (MI->definesRegister(ARM::SP))
+    return true;
+
+  return false;
+}
+
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.

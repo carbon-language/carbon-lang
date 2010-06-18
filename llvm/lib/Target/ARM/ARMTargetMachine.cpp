@@ -131,8 +131,10 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   PM.add(createARMExpandPseudoPass());
 
   if (EarlyIfConvert && OptLevel != CodeGenOpt::None) {
-    if (!Subtarget.isThumb1Only()) 
+    if (!Subtarget.isThumb1Only())
       PM.add(createIfConverterPass());
+    if (Subtarget.isThumb2())
+      PM.add(createThumb2ITBlockPass());
   }
 
   return true;
@@ -146,7 +148,8 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
   }
 
   if (Subtarget.isThumb2()) {
-    PM.add(createThumb2ITBlockPass());
+    if (!EarlyIfConvert)
+      PM.add(createThumb2ITBlockPass());
     PM.add(createThumb2SizeReductionPass());
   }
 

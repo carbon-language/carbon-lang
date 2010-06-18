@@ -2528,6 +2528,7 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
 
 
 // IT block
+let Defs = [ITSTATE] in
 def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
                     AddrModeNone, Size2Bytes,  IIC_iALUx,
                     "it$mask\t$cc", "", []> {

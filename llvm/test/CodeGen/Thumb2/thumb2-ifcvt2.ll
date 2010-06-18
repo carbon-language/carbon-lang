@@ -32,6 +32,7 @@ entry:
 ; CHECK: it eq
 ; CHECK: cmpeq
 ; CHECK: bne
+; CHECK: cmp
 ; CHECK: itt eq
 ; CHECK: moveq
 ; CHECK: popeq

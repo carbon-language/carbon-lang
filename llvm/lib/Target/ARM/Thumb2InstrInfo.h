@@ -20,7 +20,8 @@
 #include "Thumb2RegisterInfo.h"
 
 namespace llvm {
-  class ARMSubtarget;
+class ARMSubtarget;
+class ScheduleHazardRecognizer;
 
 class Thumb2InstrInfo : public ARMBaseInstrInfo {
   Thumb2RegisterInfo RI;
@@ -30,6 +31,9 @@ public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
   unsigned getUnindexedOpcode(unsigned Opc) const;
+
+  void ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
+                               MachineBasicBlock *NewDest) const;
 
   bool copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I,
@@ -60,6 +64,9 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   const Thumb2RegisterInfo &getRegisterInfo() const { return RI; }
+
+  ScheduleHazardRecognizer *
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const;
 };
 }
 

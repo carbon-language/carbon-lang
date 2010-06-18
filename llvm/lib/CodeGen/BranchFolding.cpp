@@ -358,24 +358,10 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
 }
 
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
-/// after it, replacing it with an unconditional branch to NewDest.  This
-/// returns true if OldInst's block is modified, false if NewDest is modified.
+/// after it, replacing it with an unconditional branch to NewDest.
 void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                            MachineBasicBlock *NewDest) {
-  MachineBasicBlock *OldBB = OldInst->getParent();
-
-  // Remove all the old successors of OldBB from the CFG.
-  while (!OldBB->succ_empty())
-    OldBB->removeSuccessor(OldBB->succ_begin());
-
-  // Remove all the dead instructions from the end of OldBB.
-  OldBB->erase(OldInst, OldBB->end());
-
-  // If OldBB isn't immediately before OldBB, insert a branch to it.
-  if (++MachineFunction::iterator(OldBB) != MachineFunction::iterator(NewDest))
-    TII->InsertBranch(*OldBB, NewDest, 0, SmallVector<MachineOperand, 0>(),
-                      OldInst->getDebugLoc());
-  OldBB->addSuccessor(NewDest);
+  TII->ReplaceTailWithBranchTo(OldInst, NewDest);
   ++NumTailMerge;
 }
 

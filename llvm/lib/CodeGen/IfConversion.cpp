@@ -235,6 +235,12 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getTarget().getRegisterInfo();
   if (!TII) return false;
 
+  // Tail merge tend to expose more if-conversion opportunities.
+  BranchFolder BF(true);
+  bool BFChange = BF.OptimizeFunction(MF, TII,
+                                   MF.getTarget().getRegisterInfo(),
+                                   getAnalysisIfAvailable<MachineModuleInfo>());
+
   DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
                << MF.getFunction()->getName() << "\'");
 
@@ -376,6 +382,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
                         getAnalysisIfAvailable<MachineModuleInfo>());
   }
 
+  MadeChange |= BFChange;
   return MadeChange;
 }
 

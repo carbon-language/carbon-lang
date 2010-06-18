@@ -319,6 +319,10 @@ public:
 
   virtual bool produceSameValue(const MachineInstr *MI0,
                                 const MachineInstr *MI1) const;
+
+  virtual bool isSchedulingBoundary(const MachineInstr *MI,
+                                    const MachineBasicBlock *MBB,
+                                    const MachineFunction &MF) const;
 };
 
 static inline
