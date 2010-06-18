@@ -46,7 +46,6 @@ MachineDominatorTree::MachineDominatorTree()
 }
 
 MachineDominatorTree::~MachineDominatorTree() {
-  DT->releaseMemory();
   delete DT;
 }
 

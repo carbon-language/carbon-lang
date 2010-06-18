@@ -704,7 +704,6 @@ public:
   }
 
   ~DominatorTree() {
-    DT->releaseMemory();
     delete DT;
   }
 
