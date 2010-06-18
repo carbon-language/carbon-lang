@@ -467,6 +467,17 @@ void IndVarSimplify::EliminateIVRemainders() {
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
+  // If LoopSimplify form is not available, stay out of trouble. Some notes:
+  //  - LSR currently only supports LoopSimplify-form loops. Indvars'
+  //    canonicalization can be a pessimization without LSR to "clean up"
+  //    afterwards.
+  //  - We depend on having a preheader; in particular,
+  //    Loop::getCanonicalInductionVariable only supports loops with preheaders,
+  //    and we're in trouble if we can't find the induction variable even when
+  //    we've manually inserted one.
+  if (!L->isLoopSimplifyForm())
+    return false;
+
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
