@@ -1579,6 +1579,7 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
     if (Name == "TCRETURNdi" || Name == "TCRETURNdiND" ||
         Name == "TCRETURNri" || Name == "TCRETURNriND" ||
         Name == "TAILJMPd"  || Name == "TAILJMPdND" ||
+        Name == "TAILJMPdNDt" ||
         Name == "TAILJMPr"  || Name == "TAILJMPrND" ||
         Name == "MOVr_TC")
       return false;

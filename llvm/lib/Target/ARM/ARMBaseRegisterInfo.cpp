@@ -1658,7 +1658,8 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                          JumpTarget.getTargetFlags());
     } else if (RetOpcode == ARM::TCRETURNdiND) {
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPdND)).
+      BuildMI(MBB, MBBI, dl,
+            TII.get(STI.isThumb() ? ARM::TAILJMPdNDt : ARM::TAILJMPdND)).
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                          JumpTarget.getTargetFlags());
     } else if (RetOpcode == ARM::TCRETURNri) {
