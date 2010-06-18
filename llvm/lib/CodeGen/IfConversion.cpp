@@ -369,7 +369,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   Roots.clear();
   BBAnalysis.clear();
 
-  if (MadeChange && !IfCvtBranchFold) {
+  if (MadeChange && IfCvtBranchFold) {
     BranchFolder BF(false);
     BF.OptimizeFunction(MF, TII,
                         MF.getTarget().getRegisterInfo(),

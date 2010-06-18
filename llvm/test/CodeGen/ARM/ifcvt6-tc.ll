@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep cmpne | count 1
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
-; RUN:   grep bhi | count 1
+; RUN:   grep bls | count 1
 ; Here, tail call wins over eliminating branches.  It is 1 fewer instruction
 ; and removes all stack accesses, so seems like a win.
 
