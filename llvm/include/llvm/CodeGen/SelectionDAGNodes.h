@@ -549,6 +549,15 @@ public:
     return FoundNode;
   }
 
+  /// getFlaggedUser - If this node has a flag value with a user, return
+  /// the user (there is at most one). Otherwise return NULL.
+  SDNode *getFlaggedUser() const {
+    for (use_iterator UI = use_begin(), UE = use_end(); UI != UE; ++UI)
+      if (UI.getUse().get().getValueType() == MVT::Flag)
+        return *UI;
+    return 0;
+  }
+
   /// getNumValues - Return the number of values defined/returned by this
   /// operator.
   ///

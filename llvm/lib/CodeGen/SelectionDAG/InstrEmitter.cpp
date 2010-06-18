@@ -676,6 +676,33 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   // Create the new machine instruction.
   MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(), II);
+
+  // The MachineInstr constructor adds implicit-def operands. Scan through
+  // these to determine which are dead.
+  if (MI->getNumOperands() != 0 &&
+      Node->getValueType(Node->getNumValues()-1) == MVT::Flag) {
+    // First, collect all used registers.
+    SmallVector<unsigned, 8> UsedRegs;
+    for (SDNode *F = Node->getFlaggedUser(); F; F = F->getFlaggedUser())
+      if (F->getOpcode() == ISD::CopyFromReg)
+        UsedRegs.push_back(cast<RegisterSDNode>(F->getOperand(1))->getReg());
+      else {
+        // Collect declared implicit uses.
+        const TargetInstrDesc &TID = TII->get(F->getMachineOpcode());
+        UsedRegs.append(TID.getImplicitUses(),
+                        TID.getImplicitUses() + TID.getNumImplicitUses());
+        // In addition to declared implicit uses, we must also check for
+        // direct RegisterSDNode operands.
+        for (unsigned i = 0, e = F->getNumOperands(); i != e; ++i)
+          if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(F->getOperand(i))) {
+            unsigned Reg = R->getReg();
+            if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg))
+              UsedRegs.push_back(Reg);
+          }
+      }
+    // Then mark unused registers as dead.
+    MI->setPhysRegsDeadExcept(UsedRegs, *TRI);
+  }
   
   // Add result register values for things that are defined by this
   // instruction.

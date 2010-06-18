@@ -1461,6 +1461,25 @@ void MachineInstr::addRegisterDefined(unsigned IncomingReg,
                                        true  /*IsImp*/));
 }
 
+void MachineInstr::setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRegs,
+                                         const TargetRegisterInfo &TRI) {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (!MO.isReg() || !MO.isDef()) continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0) continue;
+    bool Dead = true;
+    for (SmallVectorImpl<unsigned>::const_iterator I = UsedRegs.begin(),
+         E = UsedRegs.end(); I != E; ++I)
+      if (TRI.regsOverlap(*I, Reg)) {
+        Dead = false;
+        break;
+      }
+    // If there are no uses, including partial uses, the def is dead.
+    if (Dead) MO.setIsDead();
+  }
+}
+
 unsigned
 MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
   unsigned Hash = MI->getOpcode() * 37;

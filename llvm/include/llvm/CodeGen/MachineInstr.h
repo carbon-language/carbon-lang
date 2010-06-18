@@ -364,6 +364,11 @@ public:
   void addRegisterDefined(unsigned IncomingReg,
                           const TargetRegisterInfo *RegInfo = 0);
 
+  /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as dead
+  /// except those in the UsedRegs list.
+  void setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRegs,
+                             const TargetRegisterInfo &TRI);
+
   /// isSafeToMove - Return true if it is safe to move this instruction. If
   /// SawStore is set to true, it means that there is a store (or call) between
   /// the instruction's location and its intended destination.

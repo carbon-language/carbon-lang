@@ -849,6 +849,7 @@ FastISel::FastISel(MachineFunction &mf,
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()),
+    TRI(*TM.getRegisterInfo()),
     IsBottomUp(false) {
 }
 
