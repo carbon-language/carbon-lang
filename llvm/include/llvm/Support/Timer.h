@@ -150,8 +150,10 @@ public:
 /// is primarily used for debugging and for hunting performance problems.
 ///
 struct NamedRegionTimer : public TimeRegion {
-  explicit NamedRegionTimer(StringRef Name);
-  explicit NamedRegionTimer(StringRef Name, StringRef GroupName);
+  explicit NamedRegionTimer(StringRef Name,
+                            bool Enabled = true);
+  explicit NamedRegionTimer(StringRef Name, StringRef GroupName,
+                            bool Enabled = true);
 };
 
 

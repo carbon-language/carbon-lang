@@ -322,11 +322,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0; 
   FunctionBeginSym = FunctionEndSym = 0;
-  if (TimePassesIsEnabled) {
-      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-      beginModule(M);
-  } else {
-      beginModule(M);
+  {
+    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+    beginModule(M);
   }
 }
 DwarfDebug::~DwarfDebug() {

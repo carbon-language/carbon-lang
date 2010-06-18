@@ -236,11 +236,13 @@ static Timer &getNamedRegionTimer(StringRef Name) {
   return T;
 }
 
-NamedRegionTimer::NamedRegionTimer(StringRef Name)
-  : TimeRegion(getNamedRegionTimer(Name)) {}
+NamedRegionTimer::NamedRegionTimer(StringRef Name,
+                                   bool Enabled)
+  : TimeRegion(!Enabled ? 0 : &getNamedRegionTimer(Name)) {}
 
-NamedRegionTimer::NamedRegionTimer(StringRef Name, StringRef GroupName)
-  : TimeRegion(NamedGroupedTimers->get(Name, GroupName)) {}
+NamedRegionTimer::NamedRegionTimer(StringRef Name, StringRef GroupName,
+                                   bool Enabled)
+  : TimeRegion(!Enabled ? 0 : &NamedGroupedTimers->get(Name, GroupName)) {}
 
 //===----------------------------------------------------------------------===//
 //   TimerGroup Implementation

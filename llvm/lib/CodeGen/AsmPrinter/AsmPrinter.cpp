@@ -427,20 +427,12 @@ void AsmPrinter::EmitFunctionHeader() {
   
   // Emit pre-function debug and/or EH information.
   if (DE) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(EHTimerName, DWARFGroupName);
-      DE->BeginFunction(MF);
-    } else {
-      DE->BeginFunction(MF);
-    }
+    NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DE->BeginFunction(MF);
   }
   if (DD) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-      DD->beginFunction(MF);
-    } else {
-      DD->beginFunction(MF);
-    }
+    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DD->beginFunction(MF);
   }
 }
 
@@ -610,12 +602,8 @@ void AsmPrinter::EmitFunctionBody() {
       }
 
       if (ShouldPrintDebugScopes) {
-	if (TimePassesIsEnabled) {
-	  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-	  DD->beginScope(II);
-	} else {
-	  DD->beginScope(II);
-	}
+        NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+        DD->beginScope(II);
       }
       
       if (isVerbose())
@@ -648,12 +636,8 @@ void AsmPrinter::EmitFunctionBody() {
       }
       
       if (ShouldPrintDebugScopes) {
-	if (TimePassesIsEnabled) {
-	  NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-	  DD->endScope(II);
-	} else {
-	  DD->endScope(II);
-	}
+        NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+        DD->endScope(II);
       }
     }
   }
@@ -691,20 +675,12 @@ void AsmPrinter::EmitFunctionBody() {
   
   // Emit post-function debug information.
   if (DD) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-      DD->endFunction(MF);
-    } else {
-      DD->endFunction(MF);
-    }
+    NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DD->endFunction(MF);
   }
   if (DE) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(EHTimerName, DWARFGroupName);
-      DE->EndFunction();
-    } else {
-      DE->EndFunction();
-    }
+    NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
+    DE->EndFunction();
   }
   MMI->EndFunction();
   
@@ -729,19 +705,15 @@ bool AsmPrinter::doFinalization(Module &M) {
   
   // Finalize debug and EH information.
   if (DE) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(EHTimerName, DWARFGroupName);
-      DE->EndModule();
-    } else {
+    {
+      NamedRegionTimer T(EHTimerName, DWARFGroupName, TimePassesIsEnabled);
       DE->EndModule();
     }
     delete DE; DE = 0;
   }
   if (DD) {
-    if (TimePassesIsEnabled) {
-      NamedRegionTimer T(DbgTimerName, DWARFGroupName);
-      DD->endModule();
-    } else {
+    {
+      NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
       DD->endModule();
     }
     delete DD; DD = 0;
