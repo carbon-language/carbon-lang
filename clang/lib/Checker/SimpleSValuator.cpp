@@ -261,63 +261,88 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
       }
     }
     case nonloc::SymExprValKind: {
-      // Logical not?
-      if (!(op == BinaryOperator::EQ && rhs.isZeroConstant()))
+      nonloc::SymExprVal *selhs = cast<nonloc::SymExprVal>(&lhs);
+
+      // Only handle LHS of the form "$sym op constant", at least for now.
+      const SymIntExpr *symIntExpr =
+        dyn_cast<SymIntExpr>(selhs->getSymbolicExpression());
+
+      if (!symIntExpr)
         return UnknownVal();
 
-      const SymExpr *symExpr =
-        cast<nonloc::SymExprVal>(lhs).getSymbolicExpression();
+      // Is this a logical not? (!x is represented as x == 0.)
+      if (op == BinaryOperator::EQ && rhs.isZeroConstant()) {
+        // We know how to negate certain expressions. Simplify them here.
 
-      // Only handle ($sym op constant) for now.
-      if (const SymIntExpr *symIntExpr = dyn_cast<SymIntExpr>(symExpr)) {
         BinaryOperator::Opcode opc = symIntExpr->getOpcode();
         switch (opc) {
-          case BinaryOperator::LAnd:
-          case BinaryOperator::LOr:
-            assert(false && "Logical operators handled by branching logic.");
-            return UnknownVal();
-          case BinaryOperator::Assign:
-          case BinaryOperator::MulAssign:
-          case BinaryOperator::DivAssign:
-          case BinaryOperator::RemAssign:
-          case BinaryOperator::AddAssign:
-          case BinaryOperator::SubAssign:
-          case BinaryOperator::ShlAssign:
-          case BinaryOperator::ShrAssign:
-          case BinaryOperator::AndAssign:
-          case BinaryOperator::XorAssign:
-          case BinaryOperator::OrAssign:
-          case BinaryOperator::Comma:
-            assert(false && "'=' and ',' operators handled by GRExprEngine.");
-            return UnknownVal();
-          case BinaryOperator::PtrMemD:
-          case BinaryOperator::PtrMemI:
-            assert(false && "Pointer arithmetic not handled here.");
-            return UnknownVal();
-          case BinaryOperator::Mul:
-          case BinaryOperator::Div:
-          case BinaryOperator::Rem:
-          case BinaryOperator::Add:
-          case BinaryOperator::Sub:
-          case BinaryOperator::Shl:
-          case BinaryOperator::Shr:
-          case BinaryOperator::And:
-          case BinaryOperator::Xor:
-          case BinaryOperator::Or:
-            // Not handled yet.
-            return UnknownVal();
-          case BinaryOperator::LT:
-          case BinaryOperator::GT:
-          case BinaryOperator::LE:
-          case BinaryOperator::GE:
-          case BinaryOperator::EQ:
-          case BinaryOperator::NE:
-            opc = NegateComparison(opc);
-            assert(symIntExpr->getType(ValMgr.getContext()) == resultTy);
-            return ValMgr.makeNonLoc(symIntExpr->getLHS(), opc,
-                                     symIntExpr->getRHS(), resultTy);
+        default:
+          // We don't know how to negate this operation.
+          // Just handle it as if it were a normal comparison to 0.
+          break;
+        case BinaryOperator::LAnd:
+        case BinaryOperator::LOr:
+          assert(false && "Logical operators handled by branching logic.");
+          return UnknownVal();
+        case BinaryOperator::Assign:
+        case BinaryOperator::MulAssign:
+        case BinaryOperator::DivAssign:
+        case BinaryOperator::RemAssign:
+        case BinaryOperator::AddAssign:
+        case BinaryOperator::SubAssign:
+        case BinaryOperator::ShlAssign:
+        case BinaryOperator::ShrAssign:
+        case BinaryOperator::AndAssign:
+        case BinaryOperator::XorAssign:
+        case BinaryOperator::OrAssign:
+        case BinaryOperator::Comma:
+          assert(false && "'=' and ',' operators handled by GRExprEngine.");
+          return UnknownVal();
+        case BinaryOperator::PtrMemD:
+        case BinaryOperator::PtrMemI:
+          assert(false && "Pointer arithmetic not handled here.");
+          return UnknownVal();
+        case BinaryOperator::LT:
+        case BinaryOperator::GT:
+        case BinaryOperator::LE:
+        case BinaryOperator::GE:
+        case BinaryOperator::EQ:
+        case BinaryOperator::NE:
+          // Negate the comparison and make a value.
+          opc = NegateComparison(opc);
+          assert(symIntExpr->getType(ValMgr.getContext()) == resultTy);
+          return ValMgr.makeNonLoc(symIntExpr->getLHS(), opc,
+                                   symIntExpr->getRHS(), resultTy);
         }
       }
+
+      // For now, only handle expressions whose RHS is a constant.
+      const nonloc::ConcreteInt *rhsInt = dyn_cast<nonloc::ConcreteInt>(&rhs);
+      if (!rhsInt)
+        return UnknownVal();
+
+      // If both the LHS and the current expression are additive,
+      // fold their constants.
+      if (BinaryOperator::isAdditiveOp(op)) {
+        BinaryOperator::Opcode lop = symIntExpr->getOpcode();
+        if (BinaryOperator::isAdditiveOp(lop)) {
+          BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+          const llvm::APSInt *newRHS;
+          if (lop == op)
+            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Add,
+                                        symIntExpr->getRHS(),
+                                        rhsInt->getValue());
+          else
+            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Sub,
+                                        symIntExpr->getRHS(),
+                                        rhsInt->getValue());
+          return ValMgr.makeNonLoc(symIntExpr->getLHS(), lop, *newRHS,
+                                   resultTy);
+        }
+      }
+
+      // Otherwise, make a SymExprVal out of the expression.
+      return ValMgr.makeNonLoc(symIntExpr, op, rhsInt->getValue(), resultTy);
     }
     case nonloc::ConcreteIntKind: {
       if (isa<nonloc::ConcreteInt>(rhs)) {

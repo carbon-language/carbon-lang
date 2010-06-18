@@ -35,12 +35,11 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
         case BinaryOperator::Or:
         case BinaryOperator::Xor:
           return false;
-        // We don't reason yet about arithmetic constraints on symbolic values.
+        // We don't reason yet about these arithmetic constraints on
+        // symbolic values.
         case BinaryOperator::Mul:
         case BinaryOperator::Div:
         case BinaryOperator::Rem:
-        case BinaryOperator::Add:
-        case BinaryOperator::Sub:
         case BinaryOperator::Shl:
         case BinaryOperator::Shr:
           return false;
@@ -90,12 +89,11 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     while (SubR) {
       // FIXME: now we only find the first symbolic region.
       if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
+        const llvm::APSInt &zero = BasicVals.getZeroWithPtrWidth();
         if (Assumption)
-          return AssumeSymNE(state, SymR->getSymbol(),
-                             BasicVals.getZeroWithPtrWidth());
+          return AssumeSymNE(state, SymR->getSymbol(), zero, zero);
         else
-          return AssumeSymEQ(state, SymR->getSymbol(),
-                             BasicVals.getZeroWithPtrWidth());
+          return AssumeSymEQ(state, SymR->getSymbol(), zero, zero);
       }
       SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
@@ -121,11 +119,27 @@ const GRState *SimpleConstraintManager::Assume(const GRState *state,
   return SU.ProcessAssume(state, cond, assumption);
 }
 
+static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
+  // FIXME: This should probably be part of BinaryOperator, since this isn't
+  // the only place it's used. (This code was copied from SimpleSValuator.cpp.)
+  switch (op) {
+  default:
+    assert(false && "Invalid opcode.");
+  case BinaryOperator::LT: return BinaryOperator::GE;
+  case BinaryOperator::GT: return BinaryOperator::LE;
+  case BinaryOperator::LE: return BinaryOperator::GT;
+  case BinaryOperator::GE: return BinaryOperator::LT;
+  case BinaryOperator::EQ: return BinaryOperator::NE;
+  case BinaryOperator::NE: return BinaryOperator::EQ;
+  }
+}
+
 const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
                                                   NonLoc Cond,
                                                   bool Assumption) {
 
-  // We cannot reason about SymIntExpr and SymSymExpr.
+  // We cannot reason about SymSymExprs,
+  // and can only reason about some SymIntExprs.
   if (!canReasonAbout(Cond)) {
     // Just return the current state indicating that the path is feasible.
     // This may be an over-approximation of what is possible.
@@ -144,30 +158,42 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     SymbolRef sym = SV.getSymbol();
     QualType T =  SymMgr.getType(sym);
     const llvm::APSInt &zero = BasicVals.getValue(0, T);
-
-    return Assumption ? AssumeSymNE(state, sym, zero)
-                      : AssumeSymEQ(state, sym, zero);
+    if (Assumption)
+      return AssumeSymNE(state, sym, zero, zero);
+    else
+      return AssumeSymEQ(state, sym, zero, zero);
   }
 
   case nonloc::SymExprValKind: {
     nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
-    if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression())){
-      // FIXME: This is a hack.  It silently converts the RHS integer to be
-      // of the same type as on the left side.  This should be removed once
-      // we support truncation/extension of symbolic values.      
-      GRStateManager &StateMgr = state->getStateManager();
-      ASTContext &Ctx = StateMgr.getContext();
-      QualType LHSType = SE->getLHS()->getType(Ctx);
-      BasicValueFactory &BasicVals = StateMgr.getBasicVals();
-      const llvm::APSInt &RHS = BasicVals.Convert(LHSType, SE->getRHS());
-      SymIntExpr SENew(SE->getLHS(), SE->getOpcode(), RHS, SE->getType(Ctx));
 
-      return AssumeSymInt(state, Assumption, &SENew);
-    }
+    // For now, we only handle expressions whose RHS is an integer.
+    // All other expressions are assumed to be feasible.
+    const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression());
+    if (!SE)
+      return state;
 
-    // For all other symbolic expressions, over-approximate and consider
-    // the constraint feasible.
-    return state;
+    GRStateManager &StateMgr = state->getStateManager();
+    ASTContext &Ctx = StateMgr.getContext();
+    BasicValueFactory &BasicVals = StateMgr.getBasicVals();
+
+    // FIXME: This is a hack.  It silently converts the RHS integer to be
+    // of the same type as on the left side.  This should be removed once
+    // we support truncation/extension of symbolic values.   
+    const SymExpr *LHS = SE->getLHS();
+    QualType LHSType = LHS->getType(Ctx);
+    const llvm::APSInt &RHS = BasicVals.Convert(LHSType, SE->getRHS());
+
+    BinaryOperator::Opcode op = SE->getOpcode();
+    // FIXME: We should implicitly compare non-comparison expressions to 0.
+    if (!BinaryOperator::isComparisonOp(op))
+      return state;
+
+    // From here on out, op is the real comparison we'll be testing.
+    if (!Assumption)
+      op = NegateComparison(op);
+  
+    return AssumeSymRel(state, LHS, op, RHS);
   }
 
   case nonloc::ConcreteIntKind: {
@@ -182,43 +208,76 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::AssumeSymInt(const GRState *state,
-                                                     bool Assumption,
-                                                     const SymIntExpr *SE) {
+const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
+                                                     const SymExpr *LHS,
+                                                     BinaryOperator::Opcode op,
+                                                     const llvm::APSInt& Int) {
+  assert(BinaryOperator::isComparisonOp(op) &&
+         "Non-comparison ops should be rewritten as comparisons to zero.");
 
+   // We only handle simple comparisons of the form "$sym == constant"
+   // or "($sym+constant1) == constant2".
+   // The adjustment is "constant1" in the above expression. It's used to
+   // "slide" the solution range around for modular arithmetic. For example,
+   // x < 4 has the solution [0, 3]. x+2 < 4 has the solution [0-2, 3-2], which
+   // in modular arithmetic is [0, 1] U [UINT_MAX-1, UINT_MAX]. It's up to
+   // the subclasses of SimpleConstraintManager to handle the adjustment.
+   llvm::APSInt Adjustment(Int.getBitWidth(), Int.isUnsigned());
 
-  // Here we assume that LHS is a symbol.  This is consistent with the
-  // rest of the constraint manager logic.
-  SymbolRef Sym = cast<SymbolData>(SE->getLHS());
-  const llvm::APSInt &Int = SE->getRHS();
+  // First check if the LHS is a simple symbol reference.
+  SymbolRef Sym = dyn_cast<SymbolData>(LHS);
+  if (!Sym) {
+    // Next, see if it's a "($sym+constant1)" expression.
+    const SymIntExpr *SE = dyn_cast<SymIntExpr>(LHS);
 
-  switch (SE->getOpcode()) {
+    // We don't handle "($sym1+$sym2)".
+    // Give up and assume the constraint is feasible.
+    if (!SE)
+      return state;
+
+    // We don't handle "(<expr>+constant1)".
+    // Give up and assume the constraint is feasible.
+    Sym = dyn_cast<SymbolData>(SE->getLHS());
+    if (!Sym)
+      return state;
+
+    // Get the constant out of the expression "($sym+constant1)".
+    switch (SE->getOpcode()) {
+    case BinaryOperator::Add:
+      Adjustment = SE->getRHS();
+      break;
+    case BinaryOperator::Sub:
+      Adjustment = -SE->getRHS();
+      break;
+    default:
+      // We don't handle non-additive operators.
+      // Give up and assume the constraint is feasible.
+      return state;
+    }
+  }
+
+  switch (op) {
   default:
     // No logic yet for other operators.  Assume the constraint is feasible.
     return state;
 
   case BinaryOperator::EQ:
-    return Assumption ? AssumeSymEQ(state, Sym, Int)
-                      : AssumeSymNE(state, Sym, Int);
+    return AssumeSymEQ(state, Sym, Int, Adjustment);
 
   case BinaryOperator::NE:
-    return Assumption ? AssumeSymNE(state, Sym, Int)
-                      : AssumeSymEQ(state, Sym, Int);
+    return AssumeSymNE(state, Sym, Int, Adjustment);
+
   case BinaryOperator::GT:
-    return Assumption ? AssumeSymGT(state, Sym, Int)
-                      : AssumeSymLE(state, Sym, Int);
+    return AssumeSymGT(state, Sym, Int, Adjustment);
 
   case BinaryOperator::GE:
-    return Assumption ? AssumeSymGE(state, Sym, Int)
-                      : AssumeSymLT(state, Sym, Int);
+    return AssumeSymGE(state, Sym, Int, Adjustment);
 
   case BinaryOperator::LT:
-    return Assumption ? AssumeSymLT(state, Sym, Int)
-                      : AssumeSymGE(state, Sym, Int);
+    return AssumeSymLT(state, Sym, Int, Adjustment);
 
   case BinaryOperator::LE:
-    return Assumption ? AssumeSymLE(state, Sym, Int)
-                      : AssumeSymGT(state, Sym, Int);
+    return AssumeSymLE(state, Sym, Int, Adjustment);
   } // end switch
 }
 

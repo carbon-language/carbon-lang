@@ -38,8 +38,10 @@ public:
 
   const GRState *Assume(const GRState *state, NonLoc Cond, bool Assumption);
 
-  const GRState *AssumeSymInt(const GRState *state, bool Assumption,
-                              const SymIntExpr *SE);
+  const GRState *AssumeSymRel(const GRState *state,
+                              const SymExpr *LHS,
+                              BinaryOperator::Opcode op,
+                              const llvm::APSInt& Int);
 
   const GRState *AssumeInBound(const GRState *state, DefinedSVal Idx,
                                DefinedSVal UpperBound,
@@ -51,23 +53,31 @@ protected:
   // Interface that subclasses must implement.
   //===------------------------------------------------------------------===//
 
+  // Each of these is of the form "$sym+Adj <> V", where "<>" is the comparison
+  // operation for the method being invoked.
   virtual const GRState *AssumeSymNE(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   virtual const GRState *AssumeSymEQ(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   virtual const GRState *AssumeSymLT(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   virtual const GRState *AssumeSymGT(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   virtual const GRState *AssumeSymLE(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   virtual const GRState *AssumeSymGE(const GRState *state, SymbolRef sym,
-                                     const llvm::APSInt& V) = 0;
+                                     const llvm::APSInt& V,
+                                     const llvm::APSInt& Adjustment) = 0;
 
   //===------------------------------------------------------------------===//
   // Internal implementation.

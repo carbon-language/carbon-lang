@@ -105,97 +105,69 @@ public:
     return ranges.isSingleton() ? ranges.begin()->getConcreteValue() : 0;
   }
 
-  /// AddEQ - Create a new RangeSet with the additional constraint that the
-  ///  value be equal to V.
-  RangeSet AddEQ(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
-    // Search for a range that includes 'V'.  If so, return a new RangeSet
-    // representing { [V, V] }.
-    for (PrimRangeSet::iterator i = begin(), e = end(); i!=e; ++i)
-      if (i->Includes(V))
-        return RangeSet(F, V, V);
-
-    return RangeSet(F);
-  }
-
-  /// AddNE - Create a new RangeSet with the additional constraint that the
-  ///  value be not be equal to V.
-  RangeSet AddNE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
-    PrimRangeSet newRanges = ranges;
-
-    // FIXME: We can perhaps enhance ImmutableSet to do this search for us
-    // in log(N) time using the sorted property of the internal AVL tree.
-    for (iterator i = begin(), e = end(); i != e; ++i) {
-      if (i->Includes(V)) {
-        // Remove the old range.
-        newRanges = F.Remove(newRanges, *i);
-        // Split the old range into possibly one or two ranges.
-        if (V != i->From())
-          newRanges = F.Add(newRanges, Range(i->From(), BV.Sub1(V)));
-        if (V != i->To())
-          newRanges = F.Add(newRanges, Range(BV.Add1(V), i->To()));
-        // All of the ranges are non-overlapping, so we can stop.
+private:
+  void IntersectInRange(BasicValueFactory &BV, Factory &F,
+                        const llvm::APSInt &Lower,
+                        const llvm::APSInt &Upper,
+                        PrimRangeSet &newRanges,
+                        PrimRangeSet::iterator &i,
+                        PrimRangeSet::iterator &e) const {
+    // There are six cases for each range R in the set:
+    //   1. R is entirely before the intersection range.
+    //   2. R is entirely after the intersection range.
+    //   3. R contains the entire intersection range.
+    //   4. R starts before the intersection range and ends in the middle.
+    //   5. R starts in the middle of the intersection range and ends after it.
+    //   6. R is entirely contained in the intersection range.
+    // These correspond to each of the conditions below.
+    for (/* i = begin(), e = end() */; i != e; ++i) {
+      if (i->To() < Lower) {
+        continue;
+      }
+      if (i->From() > Upper) {
         break;
       }
-    }
 
-    return newRanges;
+      if (i->Includes(Lower)) {
+        if (i->Includes(Upper)) {
+          newRanges = F.Add(newRanges, Range(BV.getValue(Lower),
+                                             BV.getValue(Upper)));
+          break;
+        } else
+          newRanges = F.Add(newRanges, Range(BV.getValue(Lower), i->To()));
+      } else {
+        if (i->Includes(Upper)) {
+          newRanges = F.Add(newRanges, Range(i->From(), BV.getValue(Upper)));
+          break;
+        } else
+          newRanges = F.Add(newRanges, *i);
+      }
+    }
   }
 
-  /// AddNE - Create a new RangeSet with the additional constraint that the
-  ///  value be less than V.
-  RangeSet AddLT(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
+public:
+  // Returns a set containing the values in the receiving set, intersected with
+  // the closed range [Lower, Upper]. Unlike the Range type, this range uses
+  // modular arithmetic, corresponding to the common treatment of C integer
+  // overflow. Thus, if the Lower bound is greater than the Upper bound, the
+  // range is taken to wrap around. This is equivalent to taking the
+  // intersection with the two ranges [Min, Upper] and [Lower, Max],
+  // or, alternatively, /removing/ all integers between Upper and Lower.
+  RangeSet Intersect(BasicValueFactory &BV, Factory &F,
+                     const llvm::APSInt &Lower,
+                     const llvm::APSInt &Upper) const {
     PrimRangeSet newRanges = F.GetEmptySet();
 
-    for (iterator i = begin(), e = end() ; i != e ; ++i) {
-      if (i->Includes(V) && i->From() < V)
-        newRanges = F.Add(newRanges, Range(i->From(), BV.Sub1(V)));
-      else if (i->To() < V)
-        newRanges = F.Add(newRanges, *i);
+    PrimRangeSet::iterator i = begin(), e = end();
+    if (Lower <= Upper)
+      IntersectInRange(BV, F, Lower, Upper, newRanges, i, e);
+    else {
+      // The order of the next two statements is important!
+      // IntersectInRange() does not reset the iteration state for i and e.
+      // Therefore, the lower range most be handled first.
+      IntersectInRange(BV, F, BV.getMinValue(Upper), Upper, newRanges, i, e);
+      IntersectInRange(BV, F, Lower, BV.getMaxValue(Lower), newRanges, i, e);
     }
-
-    return newRanges;
-  }
-
-  RangeSet AddLE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
-    PrimRangeSet newRanges = F.GetEmptySet();
-
-    for (iterator i = begin(), e = end(); i != e; ++i) {
-      // Strictly we should test for includes *V + 1, but no harm is
-      // done by this formulation
-      if (i->Includes(V))
-        newRanges = F.Add(newRanges, Range(i->From(), V));
-      else if (i->To() <= V)
-        newRanges = F.Add(newRanges, *i);
-    }
-
-    return newRanges;
-  }
-
-  RangeSet AddGT(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
-    PrimRangeSet newRanges = F.GetEmptySet();
-
-    for (PrimRangeSet::iterator i = begin(), e = end(); i != e; ++i) {
-      if (i->Includes(V) && i->To() > V)
-        newRanges = F.Add(newRanges, Range(BV.Add1(V), i->To()));
-      else if (i->From() > V)
-        newRanges = F.Add(newRanges, *i);
-    }
-
-    return newRanges;
-  }
-
-  RangeSet AddGE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
-    PrimRangeSet newRanges = F.GetEmptySet();
-
-    for (PrimRangeSet::iterator i = begin(), e = end(); i != e; ++i) {
-      // Strictly we should test for includes *V - 1, but no harm is
-      // done by this formulation
-      if (i->Includes(V))
-        newRanges = F.Add(newRanges, Range(V, i->To()));
-      else if (i->From() >= V)
-        newRanges = F.Add(newRanges, *i);
-    }
-
     return newRanges;
   }
 
@@ -237,23 +209,29 @@ public:
   RangeConstraintManager(GRSubEngine &subengine)
     : SimpleConstraintManager(subengine) {}
 
-  const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymEQ(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymEQ(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLT(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymLT(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGT(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymGT(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymGE(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLE(const GRState* St, SymbolRef sym,
-                             const llvm::APSInt& V);
+  const GRState* AssumeSymLE(const GRState* state, SymbolRef sym,
+                             const llvm::APSInt& Int,
+                             const llvm::APSInt& Adjustment);
 
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) const;
 
@@ -303,10 +281,6 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* state,
   return state->set<ConstraintRange>(CR);
 }
 
-//===------------------------------------------------------------------------===
-// AssumeSymX methods: public interface for RangeConstraintManager.
-//===------------------------------------------------------------------------===/
-
 RangeSet
 RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
   if (ConstraintRangeTy::data_type* V = state->get<ConstraintRange>(sym))
@@ -323,20 +297,127 @@ RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
 // AssumeSymX methods: public interface for RangeConstraintManager.
 //===------------------------------------------------------------------------===/
 
-#define AssumeX(OP)\
-const GRState*\
-RangeConstraintManager::AssumeSym ## OP(const GRState* state, SymbolRef sym,\
-  const llvm::APSInt& V){\
-  const RangeSet& R = GetRange(state, sym).Add##OP(state->getBasicVals(), F, V);\
-  return !R.isEmpty() ? state->set<ConstraintRange>(sym, R) : NULL;\
+// The syntax for ranges below is mathematical, using [x, y] for closed ranges
+// and (x, y) for open ranges. These ranges are modular, corresponding with
+// a common treatment of C integer overflow. This means that these methods
+// do not have to worry about overflow; RangeSet::Intersect can handle such a
+// "wraparound" range.
+// As an example, the range [UINT_MAX-1, 3) contains five values: UINT_MAX-1,
+// UINT_MAX, 0, 1, and 2.
+
+const GRState*
+RangeConstraintManager::AssumeSymNE(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  BasicValueFactory &BV = state->getBasicVals();
+
+  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Upper = Lower;
+  --Lower;
+  ++Upper;
+
+  // [Int-Adjustment+1, Int-Adjustment-1]
+  // Notice that the lower bound is greater than the upper bound.
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, Upper, Lower);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-AssumeX(EQ)
-AssumeX(NE)
-AssumeX(LT)
-AssumeX(GT)
-AssumeX(LE)
-AssumeX(GE)
+const GRState*
+RangeConstraintManager::AssumeSymEQ(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  // [Int-Adjustment, Int-Adjustment]
+  BasicValueFactory &BV = state->getBasicVals();
+  llvm::APSInt AdjInt = Int-Adjustment;
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, AdjInt, AdjInt);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+}
+
+const GRState*
+RangeConstraintManager::AssumeSymLT(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  BasicValueFactory &BV = state->getBasicVals();
+
+  QualType T = state->getSymbolManager().getType(sym);
+  const llvm::APSInt &Min = BV.getMinValue(T);
+
+  // Special case for Int == Min. This is always false.
+  if (Int == Min)
+    return NULL;
+
+  llvm::APSInt Lower = Min-Adjustment;
+  llvm::APSInt Upper = Int-Adjustment;
+  --Upper;
+
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+}
+
+const GRState*
+RangeConstraintManager::AssumeSymGT(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  BasicValueFactory &BV = state->getBasicVals();
+
+  QualType T = state->getSymbolManager().getType(sym);
+  const llvm::APSInt &Max = BV.getMaxValue(T);
+
+  // Special case for Int == Max. This is always false.
+  if (Int == Max)
+    return NULL;
+
+  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Upper = Max-Adjustment;
+  ++Lower;
+
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+}
+
+const GRState*
+RangeConstraintManager::AssumeSymGE(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  BasicValueFactory &BV = state->getBasicVals();
+
+  QualType T = state->getSymbolManager().getType(sym);
+  const llvm::APSInt &Min = BV.getMinValue(T);
+
+  // Special case for Int == Min. This is always feasible.
+  if (Int == Min)
+    return state;
+
+  const llvm::APSInt &Max = BV.getMaxValue(T);
+
+  llvm::APSInt Lower = Int-Adjustment;
+  llvm::APSInt Upper = Max-Adjustment;
+
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+}
+
+const GRState*
+RangeConstraintManager::AssumeSymLE(const GRState* state, SymbolRef sym,
+                                    const llvm::APSInt& Int,
+                                    const llvm::APSInt& Adjustment) {
+  BasicValueFactory &BV = state->getBasicVals();
+
+  QualType T = state->getSymbolManager().getType(sym);
+  const llvm::APSInt &Max = BV.getMaxValue(T);
+
+  // Special case for Int == Max. This is always feasible.
+  if (Int == Max)
+    return state;
+
+  const llvm::APSInt &Min = BV.getMinValue(T);
+
+  llvm::APSInt Lower = Min-Adjustment;
+  llvm::APSInt Upper = Int-Adjustment;
+
+  RangeSet New = GetRange(state, sym).Intersect(BV, F, Lower, Upper);
+  return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
+}
 
 //===------------------------------------------------------------------------===
 // Pretty-printing.

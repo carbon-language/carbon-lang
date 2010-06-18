@@ -54,22 +54,28 @@ public:
       ISetFactory(statemgr.getAllocator()) {}
 
   const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AssumeSymEQ(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AssumeSymLT(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AssumeSymGT(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AssumeSymGE(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AssumeSymLE(const GRState* state, SymbolRef sym,
-                             const llvm::APSInt& V);
+                             const llvm::APSInt& V,
+                             const llvm::APSInt& Adjustment);
 
   const GRState* AddEQ(const GRState* state, SymbolRef sym, const llvm::APSInt& V);
 
@@ -94,46 +100,52 @@ ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& statemgr,
   return new BasicConstraintManager(statemgr, subengine);
 }
 
+
 const GRState*
 BasicConstraintManager::AssumeSymNE(const GRState *state, SymbolRef sym,
-                                    const llvm::APSInt& V) {
-  // First, determine if sym == X, where X != V.
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
+  // First, determine if sym == X, where X+Adjustment != V.
+  llvm::APSInt Adjusted = V-Adjustment;
   if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = (*X != V);
+    bool isFeasible = (*X != Adjusted);
     return isFeasible ? state : NULL;
   }
 
-  // Second, determine if sym != V.
-  if (isNotEqual(state, sym, V))
+  // Second, determine if sym+Adjustment != V.
+  if (isNotEqual(state, sym, Adjusted))
     return state;
 
   // If we reach here, sym is not a constant and we don't know if it is != V.
   // Make that assumption.
-  return AddNE(state, sym, V);
+  return AddNE(state, sym, Adjusted);
 }
 
-const GRState *BasicConstraintManager::AssumeSymEQ(const GRState *state,
-                                                   SymbolRef sym,
-                                                   const llvm::APSInt &V) {
-  // First, determine if sym == X, where X != V.
+const GRState*
+BasicConstraintManager::AssumeSymEQ(const GRState *state, SymbolRef sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
+  // First, determine if sym == X, where X+Adjustment != V.
+  llvm::APSInt Adjusted = V-Adjustment;
   if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = *X == V;
+    bool isFeasible = (*X == Adjusted);
     return isFeasible ? state : NULL;
   }
 
-  // Second, determine if sym != V.
-  if (isNotEqual(state, sym, V))
+  // Second, determine if sym+Adjustment != V.
+  if (isNotEqual(state, sym, Adjusted))
     return NULL;
 
   // If we reach here, sym is not a constant and we don't know if it is == V.
   // Make that assumption.
-  return AddEQ(state, sym, V);
+  return AddEQ(state, sym, Adjusted);
 }
 
-// These logic will be handled in another ConstraintManager.
-const GRState *BasicConstraintManager::AssumeSymLT(const GRState *state,
-                                                   SymbolRef sym,
-                                                   const llvm::APSInt& V) {
+// The logic for these will be handled in another ConstraintManager.
+const GRState*
+BasicConstraintManager::AssumeSymLT(const GRState *state, SymbolRef sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
   // Is 'V' the smallest possible value?
   if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
     // sym cannot be any value less than 'V'.  This path is infeasible.
@@ -141,13 +153,13 @@ const GRState *BasicConstraintManager::AssumeSymLT(const GRState *state,
   }
 
   // FIXME: For now have assuming x < y be the same as assuming sym != V;
-  return AssumeSymNE(state, sym, V);
+  return AssumeSymNE(state, sym, V, Adjustment);
 }
 
-const GRState *BasicConstraintManager::AssumeSymGT(const GRState *state,
-                                                   SymbolRef sym,
-                                                   const llvm::APSInt& V) {
-
+const GRState*
+BasicConstraintManager::AssumeSymGT(const GRState *state, SymbolRef sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
   // Is 'V' the largest possible value?
   if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
     // sym cannot be any value greater than 'V'.  This path is infeasible.
@@ -155,56 +167,60 @@ const GRState *BasicConstraintManager::AssumeSymGT(const GRState *state,
   }
 
   // FIXME: For now have assuming x > y be the same as assuming sym != V;
-  return AssumeSymNE(state, sym, V);
+  return AssumeSymNE(state, sym, V, Adjustment);
 }
 
-const GRState *BasicConstraintManager::AssumeSymGE(const GRState *state,
-                                                   SymbolRef sym,
-                                                   const llvm::APSInt &V) {
-
-  // Reject a path if the value of sym is a constant X and !(X >= V).
+const GRState*
+BasicConstraintManager::AssumeSymGE(const GRState *state, SymbolRef sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
+  // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
   if (const llvm::APSInt *X = getSymVal(state, sym)) {
-    bool isFeasible = *X >= V;
+    bool isFeasible = (*X >= V-Adjustment);
     return isFeasible ? state : NULL;
   }
 
   // Sym is not a constant, but it is worth looking to see if V is the
   // maximum integer value.
   if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
-    // If we know that sym != V, then this condition is infeasible since
-    // there is no other value greater than V.
-    bool isFeasible = !isNotEqual(state, sym, V);
+    llvm::APSInt Adjusted = V-Adjustment;
+
+    // If we know that sym != V (after adjustment), then this condition
+    // is infeasible since there is no other value greater than V.
+    bool isFeasible = !isNotEqual(state, sym, Adjusted);
 
     // If the path is still feasible then as a consequence we know that
-    // 'sym == V' because we cannot have 'sym > V' (no larger values).
+    // 'sym+Adjustment == V' because there are no larger values.
     // Add this constraint.
-    return isFeasible ? AddEQ(state, sym, V) : NULL;
+    return isFeasible ? AddEQ(state, sym, Adjusted) : NULL;
   }
 
   return state;
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymLE(const GRState* state, SymbolRef sym,
-                                    const llvm::APSInt& V) {
-
-  // Reject a path if the value of sym is a constant X and !(X <= V).
+BasicConstraintManager::AssumeSymLE(const GRState *state, SymbolRef sym,
+                                    const llvm::APSInt &V,
+                                    const llvm::APSInt &Adjustment) {
+  // Reject a path if the value of sym is a constant X and !(X+Adj <= V).
   if (const llvm::APSInt* X = getSymVal(state, sym)) {
-    bool isFeasible = *X <= V;
+    bool isFeasible = (*X <= V-Adjustment);
     return isFeasible ? state : NULL;
   }
 
   // Sym is not a constant, but it is worth looking to see if V is the
   // minimum integer value.
   if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
-    // If we know that sym != V, then this condition is infeasible since
-    // there is no other value less than V.
-    bool isFeasible = !isNotEqual(state, sym, V);
+    llvm::APSInt Adjusted = V-Adjustment;
+
+    // If we know that sym != V (after adjustment), then this condition
+    // is infeasible since there is no other value less than V.
+    bool isFeasible = !isNotEqual(state, sym, Adjusted);
 
     // If the path is still feasible then as a consequence we know that
-    // 'sym == V' because we cannot have 'sym < V' (no smaller values).
+    // 'sym+Adjustment == V' because there are no smaller values.
     // Add this constraint.
-    return isFeasible ? AddEQ(state, sym, V) : NULL;
+    return isFeasible ? AddEQ(state, sym, Adjusted) : NULL;
   }
 
   return state;
@@ -213,7 +229,7 @@ BasicConstraintManager::AssumeSymLE(const GRState* state, SymbolRef sym,
 const GRState* BasicConstraintManager::AddEQ(const GRState* state, SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
-  return state->set<ConstEq>(sym, &V);
+  return state->set<ConstEq>(sym, &state->getBasicVals().getValue(V));
 }
 
 const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym,
@@ -224,7 +240,7 @@ const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym
   GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
 
   // Now add V to the NE set.
-  S = ISetFactory.Add(S, &V);
+  S = ISetFactory.Add(S, &state->getBasicVals().getValue(V));
 
   // Create a new state with the old binding replaced.
   return state->set<ConstNotEq>(sym, S);
@@ -243,7 +259,7 @@ bool BasicConstraintManager::isNotEqual(const GRState* state, SymbolRef sym,
   const ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
 
   // See if V is present in the NE-set.
-  return T ? T->contains(&V) : false;
+  return T ? T->contains(&state->getBasicVals().getValue(V)) : false;
 }
 
 bool BasicConstraintManager::isEqual(const GRState* state, SymbolRef sym,
