@@ -1084,11 +1084,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                      "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
 
   def TAILJMPdND : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                 IIC_Br, "b.w\t$dst  @ TAILCALL",
+                 IIC_Br, "b\t$dst  @ TAILCALL",
                  []>, Requires<[IsARM, IsNotDarwin]>;
 
   def TAILJMPdNDt : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                 IIC_Br, "b\t$dst  @ TAILCALL",
+                 IIC_Br, "b.w\t$dst  @ TAILCALL",
                  []>, Requires<[IsThumb, IsNotDarwin]>;
 
   def TAILJMPrND : AXI<(outs), (ins tGPR:$dst, variable_ops),
