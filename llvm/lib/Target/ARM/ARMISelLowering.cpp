@@ -1101,7 +1101,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       }
     } else if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else {
+    } else if (!IsSibCall) {
       assert(VA.isMemLoc());
 
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
@@ -1357,12 +1357,6 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // Look for obvious safe cases to perform tail call optimization that do not
   // require ABI changes. This is what gcc calls sibcall.
 
-  // Can't do sibcall if stack needs to be dynamically re-aligned. PEI needs to
-  // emit a special epilogue.
-  // Not sure yet if this is true on ARM.
-//??  if (RegInfo->needsStackRealignment(MF))
-//??    return false;
-
   // Do not sibcall optimize vararg calls unless the call site is not passing
   // any arguments.
   if (isVarArg && !Outs.empty())
@@ -1372,6 +1366,19 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // return semantics.
   if (isCalleeStructRet || isCallerStructRet)
     return false;
+
+  // On Thumb, for the moment, we can only do this to functions defined in this
+  // compilation, or to indirect calls.  A Thumb B to an ARM function is not
+  // easily fixed up in the linker, unlike BL.
+  if (Subtarget->isThumb()) {
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+      const GlobalValue *GV = G->getGlobal();
+      if (GV->isDeclaration() || GV->isWeakForLinker())
+        return false;
+    } else if (isa<ExternalSymbolSDNode>(Callee)) {
+      return false;
+    }
+  }
 
   // If the calling conventions do not match, then we'd better make sure the
   // results are returned in the same way as what the caller expects.
