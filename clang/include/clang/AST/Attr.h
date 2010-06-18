@@ -515,6 +515,23 @@ public:
   static bool classof(const ReqdWorkGroupSizeAttr *A) { return true; }
 };
 
+class InitPriorityAttr : public Attr {
+  unsigned Priority;
+public:
+  InitPriorityAttr(unsigned priority) 
+    : Attr(attr::InitPriority),  Priority(priority) {}
+    
+  virtual void Destroy(ASTContext &C) { Attr::Destroy(C); }
+    
+  unsigned getPriority() const { return Priority; }
+    
+  virtual Attr *clone(ASTContext &C) const;
+    
+  static bool classof(const Attr *A) 
+    { return A->getKind() == attr::InitPriority; }
+  static bool classof(const InitPriorityAttr *A) { return true; }
+};
+  
 // Checker-specific attributes.
 DEF_SIMPLE_ATTR(CFReturnsNotRetained);
 DEF_SIMPLE_ATTR(CFReturnsRetained);

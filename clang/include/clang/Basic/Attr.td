@@ -311,6 +311,11 @@ def ReqdWorkGroupSize : Attr {
               UnsignedIntArgument<"ZDim">];
 }
 
+def InitPriority : Attr {
+  let Spellings = ["init_priority"];
+  let Args = [UnsignedIntArgument<"Priority">];
+}
+
 def Section : Attr {
   let Spellings = ["section"];
   let Args = [StringArgument<"Name">];

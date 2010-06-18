@@ -200,6 +200,10 @@ Attr *ReqdWorkGroupSizeAttr::clone(ASTContext &C) const {
   return ::new (C) ReqdWorkGroupSizeAttr(X, Y, Z);
 }
 
+Attr *InitPriorityAttr::clone(ASTContext &C) const {
+  return ::new (C) InitPriorityAttr(Priority);
+}
+
 Attr *MSP430InterruptAttr::clone(ASTContext &C) const {
   return ::new (C) MSP430InterruptAttr(Number);
 }

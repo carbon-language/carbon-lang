@@ -1180,6 +1180,39 @@ static FormatAttrKind getFormatAttrKind(llvm::StringRef Format) {
   return InvalidFormat;
 }
 
+/// Handle __attribute__((init_priority(priority))) attributes based on
+/// http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Attributes.html
+static void HandleInitPriorityAttr(Decl *d, const AttributeList &Attr, 
+                                   Sema &S) {
+  if (!S.getLangOptions().CPlusPlus) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
+  }
+  
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
+    return;
+  }
+  Expr *priorityExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt priority(32);
+  if (priorityExpr->isTypeDependent() || priorityExpr->isValueDependent() ||
+      !priorityExpr->isIntegerConstantExpr(priority, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+    << "init_priority" << priorityExpr->getSourceRange();
+    Attr.setInvalid();
+    return;
+  }
+  unsigned prioritynum = static_cast<unsigned>(priority.getZExtValue() * 8);
+  if (prioritynum < 101 || prioritynum > 65535) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_outof_range)
+    <<  priorityExpr->getSourceRange();
+    Attr.setInvalid();
+    return;
+  }
+  d->addAttr(::new (S.Context) InitPriorityAttr(prioritynum));
+}
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
 /// http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1951,6 +1984,9 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_reqd_wg_size:
     HandleReqdWorkGroupSize(D, Attr, S); break;
 
+  case AttributeList::AT_init_priority: 
+      HandleInitPriorityAttr(D, Attr, S); break;
+      
   case AttributeList::AT_packed:      HandlePackedAttr      (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr     (D, Attr, S); break;
   case AttributeList::AT_unavailable: HandleUnavailableAttr (D, Attr, S); break;
