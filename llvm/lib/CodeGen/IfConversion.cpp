@@ -1298,16 +1298,15 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
     const TargetInstrDesc &TID = I->getDesc();
-    bool isPredicated = TII->isPredicated(I);
     // Do not copy the end of the block branches.
-    if (IgnoreBr && !isPredicated && TID.isBranch())
+    if (IgnoreBr && TID.isBranch())
       break;
 
     MachineInstr *MI = MF.CloneMachineInstr(I);
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
     ToBBI.NonPredSize++;
 
-    if (!isPredicated && !MI->isDebugValue()) {
+    if (!TII->isPredicated(I) && !MI->isDebugValue()) {
       if (!TII->PredicateInstruction(MI, Cond)) {
 #ifndef NDEBUG
         dbgs() << "Unable to predicate " << *I << "!\n";
