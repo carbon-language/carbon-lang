@@ -28,7 +28,7 @@ no such file to look for.
 
 <p>Depending on the architecture, this can impact the debugging experience in
 different ways.  For example, on most 32-bit x86 architectures, you can simply
-compile with -fno-omit-framepointer for GCC and -fdisable-fp-elim for LLVM.
+compile with -fno-omit-frame-pointer for GCC and -fdisable-fp-elim for LLVM.
 When GDB creates a backtrace, it can properly unwind the stack, but the stack
 frames owned by JITed code have ??'s instead of the appropriate symbol name.
 However, on Linux x86_64 in particular, GDB relies on the DWARF CFA debug
