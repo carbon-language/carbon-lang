@@ -544,6 +544,9 @@ public:
     TemplateName InstName =
       getDerived().RebuildTemplateName(NNS, *Name, QualType());
     
+    if (InstName.isNull())
+      return QualType();
+
     // If it's still dependent, make a dependent specialization.
     if (InstName.getAsDependentTemplateName())
       return SemaRef.Context.getDependentTemplateSpecializationType(
