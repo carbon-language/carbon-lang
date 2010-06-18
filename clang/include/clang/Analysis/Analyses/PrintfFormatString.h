@@ -166,6 +166,7 @@ public:
     default:
       return 1;
     case AsLongLong:
+    case AsChar:
       return 2;
     case None:
       return 0;
@@ -218,12 +219,13 @@ public:
   }
 
   const char *getStart() const {
-    return start;
+    // We include the . character if it is given.
+    return start - UsesDotPrefix;
   }
 
   unsigned getConstantLength() const {
     assert(hs == Constant);
-    return length;
+    return length + UsesDotPrefix;
   }
 
   ArgTypeResult getArgType(ASTContext &Ctx) const;

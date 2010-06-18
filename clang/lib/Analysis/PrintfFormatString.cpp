@@ -611,20 +611,21 @@ const char *LengthModifier::toString() const {
 //===----------------------------------------------------------------------===//
 
 void OptionalAmount::toString(llvm::raw_ostream &os) const {
-  if (UsesDotPrefix)
-    os << ".";
-
   switch (hs) {
   case Invalid:
   case NotSpecified:
     return;
   case Arg:
+    if (UsesDotPrefix)
+        os << ".";
     if (usesPositionalArg())
       os << "*" << getPositionalArgIndex() << "$";
     else
       os << "*";
     break;
   case Constant:
+    if (UsesDotPrefix)
+        os << ".";
     os << amt;
     break;
   }
