@@ -31,6 +31,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
@@ -143,6 +144,8 @@ private:
                              DebugLoc dl);
 
   SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned);
+  std::pair<SDValue, SDValue> ExpandChainLibCall(RTLIB::Libcall LC,
+                                                 SDNode *Node, bool isSigned);
   SDValue ExpandFPLibCall(SDNode *Node, RTLIB::Libcall Call_F32,
                           RTLIB::Libcall Call_F64, RTLIB::Libcall Call_F80,
                           RTLIB::Libcall Call_PPCF128);
@@ -171,6 +174,8 @@ private:
 
   SDValue ExpandExtractFromVectorThroughStack(SDValue Op);
   SDValue ExpandVectorBuildThroughStack(SDNode* Node);
+
+  std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
 
   void ExpandNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
   void PromoteNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
@@ -1941,6 +1946,44 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   return CallInfo.first;
 }
 
+// ExpandChainLibCall - Expand a node into a call to a libcall. Similar to
+// ExpandLibCall except that the first operand is the in-chain.
+std::pair<SDValue, SDValue>
+SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
+                                         SDNode *Node,
+                                         bool isSigned) {
+  assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
+  SDValue InChain = Node->getOperand(0);
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i) {
+    EVT ArgVT = Node->getOperand(i).getValueType();
+    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Entry.Node = Node->getOperand(i);
+    Entry.Ty = ArgTy;
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                         TLI.getPointerTy());
+
+  // Splice the libcall in wherever FindInputOutputChains tells us to.
+  const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
+  std::pair<SDValue, SDValue> CallInfo =
+    TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
+                    0, TLI.getLibcallCallingConv(LC), false,
+                    /*isReturnValueUsed=*/true,
+                    Callee, Args, DAG, Node->getDebugLoc());
+
+  // Legalize the call sequence, starting with the chain.  This will advance
+  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // was added by LowerCallTo (guaranteeing proper serialization of calls).
+  LegalizeOp(CallInfo.second);
+  return CallInfo;
+}
+
 SDValue SelectionDAGLegalize::ExpandFPLibCall(SDNode* Node,
                                               RTLIB::Libcall Call_F32,
                                               RTLIB::Libcall Call_F64,
@@ -2347,6 +2390,83 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
   }
 }
 
+std::pair <SDValue, SDValue> SelectionDAGLegalize::ExpandAtomic(SDNode *Node) {
+  unsigned Opc = Node->getOpcode();
+  MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
+  RTLIB::Libcall LC;
+
+  switch (Opc) {
+  default:
+    llvm_unreachable("Unhandled atomic intrinsic Expand!");
+    break;
+  case ISD::ATOMIC_CMP_SWAP:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_ADD:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_ADD_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_ADD_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_ADD_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_ADD_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_SUB:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_SUB_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_SUB_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_SUB_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_SUB_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_AND:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_AND_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_AND_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_AND_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_AND_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_OR:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_OR_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_OR_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_OR_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_OR_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_XOR:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_XOR_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_XOR_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_XOR_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_XOR_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_NAND:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_NAND_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_NAND_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_NAND_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_NAND_8; break;
+    }
+    break;
+  }
+
+  return ExpandChainLibCall(LC, Node, false);
+}
+
 void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                       SmallVectorImpl<SDValue> &Results) {
   DebugLoc dl = Node->getDebugLoc();
@@ -2403,11 +2523,11 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_CMP_SWAP: {
-    assert (0 && "atomic intrinsic not lowered!");
-    Results.push_back(Node->getOperand(0));
+  case ISD::ATOMIC_CMP_SWAP:
+    std::pair<SDValue, SDValue> Tmp = ExpandAtomic(Node);
+    Results.push_back(Tmp.first);
+    Results.push_back(Tmp.second);
     break;
-  }
   case ISD::DYNAMIC_STACKALLOC:
     ExpandDYNAMIC_STACKALLOC(Node, Results);
     break;
