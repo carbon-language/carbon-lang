@@ -808,7 +808,7 @@ ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 $(RecursiveTargets)::
 	$(Verb) for dir in $(DIRS); do \
 	  if ([ ! -f $$dir/Makefile ] || \
-	      test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
+	      command test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
 	    $(MKDIR) $$dir; \
 	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
@@ -831,7 +831,7 @@ ifdef EXPERIMENTAL_DIRS
 $(RecursiveTargets)::
 	$(Verb) for dir in $(EXPERIMENTAL_DIRS); do \
 	  if ([ ! -f $$dir/Makefile ] || \
-	      test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
+	      command test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
 	    $(MKDIR) $$dir; \
 	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
@@ -866,7 +866,7 @@ ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 
 $(ParallelTargets) :
 	$(Verb) if ([ ! -f $(@D)/Makefile ] || \
-	            test $(@D)/Makefile -ot \
+	            command test $(@D)/Makefile -ot \
                       $(PROJ_SRC_DIR)/$(@D)/Makefile ); then \
 	  $(MKDIR) $(@D); \
 	  $(CP) $(PROJ_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
@@ -887,7 +887,7 @@ $(RecursiveTargets)::
 	$(Verb) for dir in $(OPTIONAL_DIRS); do \
 	  if [ -d $(PROJ_SRC_DIR)/$$dir ]; then\
 	    if ([ ! -f $$dir/Makefile ] || \
-	        test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
+	        command test $$dir/Makefile -ot $(PROJ_SRC_DIR)/$$dir/Makefile ); then \
 	      $(MKDIR) $$dir; \
 	      $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
