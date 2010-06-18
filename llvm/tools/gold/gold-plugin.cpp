@@ -41,6 +41,7 @@ namespace {
   ld_plugin_add_symbols add_symbols = NULL;
   ld_plugin_get_symbols get_symbols = NULL;
   ld_plugin_add_input_file add_input_file = NULL;
+  ld_plugin_add_input_library add_input_library = NULL;
   ld_plugin_message message = discard_message;
 
   int api_version = 0;
@@ -64,6 +65,7 @@ namespace options {
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
   static std::string as_path;
+  static std::vector<std::string> pass_through;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -86,6 +88,9 @@ namespace options {
       } else {
         as_path = opt.substr(strlen("as="));
       }
+    } else if (opt.startswith("pass-through=")) {
+      llvm::StringRef item = opt.substr(strlen("pass-through="));
+      pass_through.push_back(item.str());
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
     } else if (opt == "also-emit-llvm") {
@@ -189,6 +194,9 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         break;
       case LDPT_ADD_INPUT_FILE:
         add_input_file = tv->tv_u.tv_add_input_file;
+        break;
+      case LDPT_ADD_INPUT_LIBRARY:
+        add_input_library = tv->tv_u.tv_add_input_file;
         break;
       case LDPT_MESSAGE:
         message = tv->tv_u.tv_message;
@@ -435,6 +443,24 @@ static ld_plugin_status all_symbols_read_hook(void) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
     (*message)(LDPL_ERROR, "File left behind in: %s", uniqueObjPath.c_str());
     return LDPS_ERR;
+  }
+
+  for (std::vector<std::string>::iterator i = options::pass_through.begin(),
+                                          e = options::pass_through.end();
+       i != e; ++i) {
+    std::string &item = *i;
+    char *item_p = const_cast<char*>(item.c_str());
+    if (llvm::StringRef(item).startswith("-l")) {
+      if (add_input_library(item_p + 2) != LDPS_OK) {
+        (*message)(LDPL_ERROR, "Unable to add library to the link.");
+        return LDPS_ERR;
+      }
+    } else {
+      if (add_input_file(item_p) != LDPS_OK) {
+        (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
+        return LDPS_ERR;
+      }
+    }
   }
 
   Cleanup.push_back(uniqueObjPath);
