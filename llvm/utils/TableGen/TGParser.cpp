@@ -1907,6 +1907,12 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   if (Lex.Lex() != tgtok::colon)
     return TokError("expected ':' after defm identifier");
 
+  // Keep track of the new generated record definitions.
+  std::vector<Record*> NewRecDefs;
+
+  // This record also inherits from a regular class (non-multiclass)?
+  bool InheritFromClass = false;
+
   // eat the colon.
   Lex.Lex();
 
@@ -2016,13 +2022,57 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
         Records.addDef(CurRec);
         CurRec->resolveReferences();
       }
+
+      NewRecDefs.push_back(CurRec);
     }
 
     if (Lex.getCode() != tgtok::comma) break;
     Lex.Lex(); // eat ','.
 
     SubClassLoc = Lex.getLoc();
+
+    // A defm can inherit from regular classes (non-multiclass) as
+    // long as they come in the end of the inheritance list.
+    InheritFromClass = (Records.getClass(Lex.getCurStrVal()) != 0);
+
+    if (InheritFromClass)
+      break;
+
     Ref = ParseSubClassReference(0, true);
+  }
+
+  if (InheritFromClass) {
+    // Process all the classes to inherit as if they were part of a
+    // regular 'def' and inherit all record values.
+    SubClassReference SubClass = ParseSubClassReference(0, false);
+    while (1) {
+      // Check for error.
+      if (SubClass.Rec == 0) return true;
+
+      // Get the expanded definition prototypes and teach them about
+      // the record values the current class to inherit has
+      for (unsigned i = 0, e = NewRecDefs.size(); i != e; ++i) {
+        Record *CurRec = NewRecDefs[i];
+
+        // Add it.
+        if (AddSubClass(CurRec, SubClass))
+          return true;
+
+        // Process any variables on the let stack.
+        for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+          for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+            if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
+                         LetStack[i][j].Bits, LetStack[i][j].Value))
+              return true;
+
+        if (!CurMultiClass)
+          CurRec->resolveReferences();
+      }
+
+      if (Lex.getCode() != tgtok::comma) break;
+      Lex.Lex(); // eat ','.
+      SubClass = ParseSubClassReference(0, false);
+    }
   }
 
   if (Lex.getCode() != tgtok::semi)

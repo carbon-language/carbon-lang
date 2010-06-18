@@ -732,6 +732,47 @@ multiclass instanciations.
 </pre>
 </div>
 
+<p>
+defm declarations can inherit from classes too, the
+rule to follow is that the class list must start after the
+last multiclass, and there must be at least one multiclass
+before them.
+</p>
+
+<div class="doc_code">
+<pre>
+<b>class</b> XD { bits&lt;4&gt; Prefix = 11; }
+<b>class</b> XS { bits&lt;4&gt; Prefix = 12; }
+
+<b>class</b> I&lt;bits<4&gt; op> {
+  bits&lt;4&gt; opcode = op;
+}
+
+<b>multiclass</b> R {
+  <b>def</b> rr : I&lt;4&gt;;
+  <b>def</b> rm : I&lt;2&gt;;
+}
+
+<b>multiclass</b> Y {
+  <b>defm</b> SS : R, XD;
+  <b>defm</b> SD : R, XS;
+}
+
+<b>defm</b> Instr : Y;
+
+<i>// Results</i>
+<b>def</b> InstrSDrm {
+  bits&lt;4&gt; opcode = { 0, 0, 1, 0 };
+  bits&lt;4&gt; Prefix = { 1, 1, 0, 0 };
+}
+...
+<b>def</b> InstrSSrr {
+  bits&lt;4&gt; opcode = { 0, 1, 0, 0 };
+  bits&lt;4&gt; Prefix = { 1, 0, 1, 1 };
+}
+</pre>
+</div>
+
 </div>
 
 <!-- ======================================================================= -->
