@@ -1130,7 +1130,7 @@ public:
   }
   bool isExactlyValue(const APFloat& V) const;
 
-  bool isValueValidForType(EVT VT, const APFloat& Val);
+  static bool isValueValidForType(EVT VT, const APFloat& Val);
 
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {

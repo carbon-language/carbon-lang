@@ -357,7 +357,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   EVT SVT = VT;
   while (SVT != MVT::f32) {
     SVT = (MVT::SimpleValueType)(SVT.getSimpleVT().SimpleTy - 1);
-    if (CFP->isValueValidForType(SVT, CFP->getValueAPF()) &&
+    if (ConstantFPSDNode::isValueValidForType(SVT, CFP->getValueAPF()) &&
         // Only do this if the target has a native EXTLOAD instruction from
         // smaller type.
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
