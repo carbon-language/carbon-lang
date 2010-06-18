@@ -357,7 +357,8 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
 
   if (const PointerType *Ty = dyn_cast<PointerType>(V->getType()))
     if (Ty->getAddressSpace() > 255)
-      // Fast instruction selection doesn't support pointers through %fs or %gs
+      // Fast instruction selection doesn't support the special
+      // address spaces.
       return false;
 
   switch (Opcode) {
