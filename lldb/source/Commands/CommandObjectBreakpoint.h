@@ -119,18 +119,18 @@ private:
 };
 
 //-------------------------------------------------------------------------
-// CommandObjectMultiwordBreakpointConfigure
+// CommandObjectMultiwordBreakpointModify
 //-------------------------------------------------------------------------
 
 
-class CommandObjectBreakpointConfigure : public CommandObject
+class CommandObjectBreakpointModify : public CommandObject
 {
 public:
 
-    CommandObjectBreakpointConfigure ();
+    CommandObjectBreakpointModify ();
 
     virtual
-    ~CommandObjectBreakpointConfigure ();
+    ~CommandObjectBreakpointModify ();
 
     virtual bool
     Execute (Args& command,
@@ -170,6 +170,8 @@ public:
         uint32_t m_thread_index;
         std::string m_thread_name;
         std::string m_queue_name;
+        bool m_enable_passed;
+        bool m_enable_value;
 
     };
 

@@ -43,6 +43,7 @@ AddBreakpointDescription (CommandContext *context, StreamString *s, Breakpoint *
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointSet::CommandOptions
 //-------------------------------------------------------------------------
+#pragma mark Set::CommandOptions
 
 CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
     Options (),
@@ -165,6 +166,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             if (m_ignore_count == -1)
                error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
         }
+        break;
         case 't' :
         {
             m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
@@ -217,6 +219,7 @@ CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointSet
 //-------------------------------------------------------------------------
+#pragma mark Set
 
 CommandObjectBreakpointSet::CommandObjectBreakpointSet () :
     CommandObject ("breakpoint set", "Sets a breakpoint or set of breakpoints in the executable.", 
@@ -453,6 +456,7 @@ CommandObjectBreakpointSet::Execute
 //-------------------------------------------------------------------------
 // CommandObjectMultiwordBreakpoint
 //-------------------------------------------------------------------------
+#pragma mark MultiwordBreakpoint
 
 CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInterpreter *interpreter) :
     CommandObjectMultiword ("breakpoint",
@@ -467,14 +471,14 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable ());
     CommandObjectSP set_command_object (new CommandObjectBreakpointSet ());
     CommandObjectSP command_command_object (new CommandObjectBreakpointCommand (interpreter));
-    CommandObjectSP configure_command_object (new CommandObjectBreakpointConfigure());
+    CommandObjectSP modify_command_object (new CommandObjectBreakpointModify());
 
+    command_command_object->SetCommandName ("breakpoint command");
     enable_command_object->SetCommandName("breakpoint enable");
     disable_command_object->SetCommandName("breakpoint disable");
-    set_command_object->SetCommandName("breakpoint set");
-    command_command_object->SetCommandName ("breakpoint command");
     list_command_object->SetCommandName ("breakpoint list");
-    configure_command_object->SetCommandName ("breakpoint configure");
+    modify_command_object->SetCommandName ("breakpoint modify");
+    set_command_object->SetCommandName("breakpoint set");
 
     status = LoadSubCommand (list_command_object, "list", interpreter);
     status = LoadSubCommand (enable_command_object, "enable", interpreter);
@@ -482,7 +486,7 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     status = LoadSubCommand (delete_command_object, "delete", interpreter);
     status = LoadSubCommand (set_command_object, "set", interpreter);
     status = LoadSubCommand (command_command_object, "command", interpreter);
-    status = LoadSubCommand (configure_command_object, "configure", interpreter);
+    status = LoadSubCommand (modify_command_object, "modify", interpreter);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
@@ -549,6 +553,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointList::Options
 //-------------------------------------------------------------------------
+#pragma mark List::CommandOptions
 
 CommandObjectBreakpointList::CommandOptions::CommandOptions() :
     Options (),
@@ -626,6 +631,7 @@ CommandObjectBreakpointList::CommandOptions::ResetOptionValues ()
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointList
 //-------------------------------------------------------------------------
+#pragma mark List
 
 CommandObjectBreakpointList::CommandObjectBreakpointList () :
     CommandObject ("breakpoint list",
@@ -716,6 +722,7 @@ CommandObjectBreakpointList::Execute
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointEnable
 //-------------------------------------------------------------------------
+#pragma mark Enable
 
 CommandObjectBreakpointEnable::CommandObjectBreakpointEnable () :
     CommandObject ("enable",
@@ -791,22 +798,13 @@ CommandObjectBreakpointEnable::Execute (Args& args, CommandContext *context,
                         if (location)
                         {
                             location->SetEnabled (true);
-                            breakpoint->SetEnabled (true);
                             ++loc_count;
                         }
                     }
                     else
                     {
-                        target->EnableBreakpointByID (cur_bp_id.GetBreakpointID());
+                        breakpoint->SetEnabled (true);
                         ++enable_count;
-
-                        int num_locations = breakpoint->GetNumLocations ();
-                        for (int j = 0; j < num_locations; ++j)
-                        {
-                            BreakpointLocation *cur_loc = breakpoint->GetLocationAtIndex(j).get();
-                            if (cur_loc)
-                                cur_loc->SetEnabled (true);
-                        }
                     }
                 }
             }
@@ -821,6 +819,7 @@ CommandObjectBreakpointEnable::Execute (Args& args, CommandContext *context,
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointDisable
 //-------------------------------------------------------------------------
+#pragma mark Disable
 
 CommandObjectBreakpointDisable::CommandObjectBreakpointDisable () :
     CommandObject ("disable",
@@ -899,16 +898,8 @@ CommandObjectBreakpointDisable::Execute (Args& args, CommandContext *context,
                     }
                     else
                     {
-                        target->DisableBreakpointByID (cur_bp_id.GetBreakpointID());
+                        breakpoint->SetEnabled (false);
                         ++disable_count;
-
-                        int num_locations = breakpoint->GetNumLocations();
-                        for (int j = 0; j < num_locations; ++j)
-                        {
-                            BreakpointLocation *cur_loc = breakpoint->GetLocationAtIndex(j).get();
-                            if (cur_loc)
-                                cur_loc->SetEnabled (false);
-                        }
                     }
                 }
             }
@@ -923,6 +914,7 @@ CommandObjectBreakpointDisable::Execute (Args& args, CommandContext *context,
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointDelete
 //-------------------------------------------------------------------------
+#pragma mark Delete
 
 CommandObjectBreakpointDelete::CommandObjectBreakpointDelete() :
     CommandObject ("breakpoint delete",
@@ -1019,25 +1011,27 @@ CommandObjectBreakpointDelete::Execute (Args& args, CommandContext *context,
 }
 
 //-------------------------------------------------------------------------
-// CommandObjectBreakpointConfigure::CommandOptions
+// CommandObjectBreakpointModify::CommandOptions
 //-------------------------------------------------------------------------
+#pragma mark Modify::CommandOptions
 
-CommandObjectBreakpointConfigure::CommandOptions::CommandOptions() :
+CommandObjectBreakpointModify::CommandOptions::CommandOptions() :
     Options (),
     m_thread_id(LLDB_INVALID_THREAD_ID),
     m_thread_index (-1),
     m_thread_name(),
     m_queue_name(),
-    m_ignore_count (-1)
+    m_ignore_count (-1),
+    m_enable_passed (false)
 {
 }
 
-CommandObjectBreakpointConfigure::CommandOptions::~CommandOptions ()
+CommandObjectBreakpointModify::CommandOptions::~CommandOptions ()
 {
 }
 
 lldb::OptionDefinition
-CommandObjectBreakpointConfigure::CommandOptions::g_option_table[] =
+CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, NULL,
         "Set the number of times this breakpoint is sKipped before stopping." },
@@ -1054,29 +1048,45 @@ CommandObjectBreakpointConfigure::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "queue_name",       'q', required_argument, NULL, NULL, "<queue_name>",
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
+    { LLDB_OPT_SET_1, false, "enable",       'e', no_argument, NULL, NULL, NULL,
+        "Enable the breakpoint."},
+
+    { LLDB_OPT_SET_2, false, "disable",       'd', no_argument, NULL, NULL, NULL,
+        "Disable the breakpoint."},
+
+
     { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
 const lldb::OptionDefinition*
-CommandObjectBreakpointConfigure::CommandOptions::GetDefinitions ()
+CommandObjectBreakpointModify::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
 }
 
 Error
-CommandObjectBreakpointConfigure::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
 
     switch (short_option)
     {
+        case 'd':
+            m_enable_passed = true;
+            m_enable_value = false;
+            break;
+        case 'e':
+            m_enable_passed = true;
+            m_enable_value = true;
+            break;
         case 'k':
         {
             m_ignore_count = Args::StringToSInt32(optarg, -1, 0);
             if (m_ignore_count == -1)
                error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
         }
+        break;
         case 't' :
         {
             m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
@@ -1107,7 +1117,7 @@ CommandObjectBreakpointConfigure::CommandOptions::SetOptionValue (int option_idx
 }
 
 void
-CommandObjectBreakpointConfigure::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 {
     Options::ResetOptionValues();
 
@@ -1116,30 +1126,32 @@ CommandObjectBreakpointConfigure::CommandOptions::ResetOptionValues ()
     m_thread_index = -1;
     m_thread_name.clear();
     m_queue_name.clear();
+    m_enable_passed = false;
 }
 
 //-------------------------------------------------------------------------
-// CommandObjectBreakpointSet
+// CommandObjectBreakpointModify
 //-------------------------------------------------------------------------
+#pragma mark Modify
 
-CommandObjectBreakpointConfigure::CommandObjectBreakpointConfigure () :
-    CommandObject ("breakpoint configure", "Configures the options on a breakpoint or set of breakpoints in the executable.", 
-                   "breakpoint configure <cmd-options> break-id [break-id ...]")
+CommandObjectBreakpointModify::CommandObjectBreakpointModify () :
+    CommandObject ("breakpoint modify", "Modifys the options on a breakpoint or set of breakpoints in the executable.", 
+                   "breakpoint modify <cmd-options> break-id [break-id ...]")
 {
 }
 
-CommandObjectBreakpointConfigure::~CommandObjectBreakpointConfigure ()
+CommandObjectBreakpointModify::~CommandObjectBreakpointModify ()
 {
 }
 
 Options *
-CommandObjectBreakpointConfigure::GetOptions ()
+CommandObjectBreakpointModify::GetOptions ()
 {
     return &m_options;
 }
 
 bool
-CommandObjectBreakpointConfigure::Execute
+CommandObjectBreakpointModify::Execute
 (
     Args& command,
     CommandContext *context,
@@ -1197,6 +1209,9 @@ CommandObjectBreakpointConfigure::Execute
                             
                         if (m_options.m_ignore_count != -1)
                             location->GetLocationOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                            
+                        if (m_options.m_enable_passed)
+                            location->SetEnabled (m_options.m_enable_value);
                     }
                 }
                 else
@@ -1215,6 +1230,10 @@ CommandObjectBreakpointConfigure::Execute
                         
                     if (m_options.m_ignore_count != -1)
                         bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                        
+                    if (m_options.m_enable_passed)
+                        bp->SetEnabled (m_options.m_enable_value);
+
                 }
             }
         }
