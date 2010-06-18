@@ -6,6 +6,7 @@
 // CHECK: @"\01?d@foo@@0FB"
 // CHECK: @"\01?e@foo@@1JC"
 // CHECK: @"\01?f@foo@@2DD"
+// CHECK: @"\01?g@bar@@2HA"
 
 int a;
 
@@ -24,12 +25,30 @@ public:
   int operator+(int a);
 };
 
+struct bar {
+  static int g;
+};
+
+union baz {
+  int a;
+  char b;
+  double c;
+};
+
+enum quux {
+  qone,
+  qtwo,
+  qthree
+};
+
 int foo::operator+(int a) {return a;}
 // CHECK: @"\01??Hfoo@@QAAHH@Z"
 
 const short foo::d = 0;
 volatile long foo::e;
 const volatile char foo::f = 'C';
+
+int bar::g;
 
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
@@ -41,4 +60,8 @@ bool __fastcall beta(long long a, wchar_t b) throw(signed char, unsigned char) {
 }
 
 // CHECK: @"\01?alpha@@YGXMN@@"
+
+// Make sure tag-type mangling works.
+void gamma(class foo, struct bar, union baz, enum quux) {}
+// CHECK: @"\01?gamma@@YAXVfoo@@Ubar@@Tbaz@@W4quux@@@Z"
 

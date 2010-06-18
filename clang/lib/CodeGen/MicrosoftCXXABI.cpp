@@ -47,6 +47,7 @@ public:
   void mangleName(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
+  void mangleNumber(int64_t Number);
   void mangleType(QualType T);
 
 private:
@@ -67,6 +68,7 @@ private:
 #define TYPE(CLASS, PARENT) void mangleType(const CLASS##Type *T);
 #include "clang/AST/TypeNodes.def"
   
+  void mangleType(const TagType*);
   void mangleType(const FunctionType *T, bool IsStructor);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T);
@@ -283,6 +285,30 @@ void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
 
   // Terminate the whole name with an '@'.
   Out << '@';
+}
+
+void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
+  // <number> ::= [?] <decimal digit> # <= 9
+  //          ::= [?] <hex digit>+ @ # > 9; A = 0, B = 1, etc...
+  if (Number < 0) {
+    Out << '?';
+    Number = -Number;
+  }
+  if (Number <= 9) {
+    Out << Number;
+  } else {
+    // We have to build up the encoding in reverse order, so it will come
+    // out right when we write it out.
+    char Encoding[16];
+    char *EndPtr = Encoding+sizeof(Encoding);
+    char *CurPtr = EndPtr;
+    while (Number) {
+      *--CurPtr = 'A' + (Number % 16);
+      Number /= 16;
+    }
+    Out.write(CurPtr, EndPtr-CurPtr);
+    Out << '@';
+  }
 }
 
 void
@@ -627,6 +653,12 @@ return;
   case Type::Builtin:
     mangleType(static_cast<BuiltinType *>(T.getTypePtr()));
     break;
+  case Type::Enum:
+    mangleType(static_cast<EnumType *>(T.getTypePtr()));
+    break;
+  case Type::Record:
+    mangleType(static_cast<RecordType *>(T.getTypePtr()));
+    break;
   default:
     assert(false && "Don't know how to mangle this type!");
     break;
@@ -848,6 +880,37 @@ void MicrosoftCXXNameMangler::mangleThrowSpecification(
       mangleType(FT->getExceptionType(Exception).getLocalUnqualifiedType());
     Out << '@';
   }
+}
+
+// <type>        ::= <union-type> | <struct-type> | <class-type> | <enum-type>
+// <union-type>  ::= T <name>
+// <struct-type> ::= U <name>
+// <class-type>  ::= V <name>
+// <enum-type>   ::= W <size> <name>
+void MicrosoftCXXNameMangler::mangleType(const EnumType *T) {
+  mangleType(static_cast<const TagType*>(T));
+}
+void MicrosoftCXXNameMangler::mangleType(const RecordType *T) {
+  mangleType(static_cast<const TagType*>(T));
+}
+void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
+  switch (T->getDecl()->getTagKind()) {
+    case TTK_Union:
+      Out << 'T';
+      break;
+    case TTK_Struct:
+      Out << 'U';
+      break;
+    case TTK_Class:
+      Out << 'V';
+      break;
+    case TTK_Enum:
+      Out << 'W';
+      mangleNumber(getASTContext().getTypeSizeInChars(
+                cast<EnumDecl>(T->getDecl())->getIntegerType()).getQuantity());
+      break;
+  }
+  mangleName(T->getDecl());
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
