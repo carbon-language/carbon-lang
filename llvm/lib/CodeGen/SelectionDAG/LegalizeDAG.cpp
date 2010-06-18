@@ -2523,11 +2523,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_CMP_SWAP:
+  case ISD::ATOMIC_CMP_SWAP: {
     std::pair<SDValue, SDValue> Tmp = ExpandAtomic(Node);
     Results.push_back(Tmp.first);
     Results.push_back(Tmp.second);
     break;
+  }
   case ISD::DYNAMIC_STACKALLOC:
     ExpandDYNAMIC_STACKALLOC(Node, Results);
     break;
