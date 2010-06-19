@@ -23,6 +23,11 @@ ifeq ($(BUILD_EXAMPLES),1)
 endif
 endif
 
+ifeq ($(MAKECMDGOALS),libs-only)
+  DIRS := $(filter-out tools docs, $(DIRS))
+  OPTIONAL_DIRS :=
+endif
+
 ###
 # Common Makefile code, shared by all Clang Makefiles.
 
@@ -69,6 +74,8 @@ report::
 
 clean::
 	@ $(MAKE) -C test clean
+	
+libs-only: all
 
 tags::
 	$(Verb) etags `find . -type f -name '*.h' -or -name '*.cpp' | \
