@@ -1772,6 +1772,48 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   switch (BuiltinID) {
   default: return 0;
 
+  // vec_ld, vec_lvsl, vec_lvsr
+  case PPC::BI__builtin_altivec_lvx:
+  case PPC::BI__builtin_altivec_lvxl:
+  case PPC::BI__builtin_altivec_lvebx:
+  case PPC::BI__builtin_altivec_lvehx:
+  case PPC::BI__builtin_altivec_lvewx:
+  case PPC::BI__builtin_altivec_lvsl:
+  case PPC::BI__builtin_altivec_lvsr:
+  {
+    Ops[1] = Builder.CreateBitCast(Ops[1], llvm::Type::getInt8PtrTy(VMContext));
+
+    Ops[0] = Builder.CreateGEP(Ops[1], Ops[0], "tmp");
+    Ops.pop_back();
+
+    switch (BuiltinID) {
+    default: assert(0 && "Unsupported ld/lvsl/lvsr intrinsic!");
+    case PPC::BI__builtin_altivec_lvx:
+      ID = Intrinsic::ppc_altivec_lvx;
+      break;
+    case PPC::BI__builtin_altivec_lvxl:
+      ID = Intrinsic::ppc_altivec_lvxl;
+      break;
+    case PPC::BI__builtin_altivec_lvebx:
+      ID = Intrinsic::ppc_altivec_lvebx;
+      break;
+    case PPC::BI__builtin_altivec_lvehx:
+      ID = Intrinsic::ppc_altivec_lvehx;
+      break;
+    case PPC::BI__builtin_altivec_lvewx:
+      ID = Intrinsic::ppc_altivec_lvewx;
+      break;
+    case PPC::BI__builtin_altivec_lvsl:
+      ID = Intrinsic::ppc_altivec_lvsl;
+      break;
+    case PPC::BI__builtin_altivec_lvsr:
+      ID = Intrinsic::ppc_altivec_lvsr;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), "");
+  }
+
   // vec_st
   case PPC::BI__builtin_altivec_stvx:
   case PPC::BI__builtin_altivec_stvxl:
@@ -1780,12 +1822,11 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   case PPC::BI__builtin_altivec_stvewx:
   {
     Ops[2] = Builder.CreateBitCast(Ops[2], llvm::Type::getInt8PtrTy(VMContext));
-    Ops[1] = !isa<Constant>(Ops[1]) || !cast<Constant>(Ops[1])->isNullValue()
-           ? Builder.CreateGEP(Ops[2], Ops[1], "tmp") : Ops[2];
+    Ops[1] = Builder.CreateGEP(Ops[2], Ops[1], "tmp");
     Ops.pop_back();
 
     switch (BuiltinID) {
-    default: assert(0 && "Unsupported vavg intrinsic!");
+    default: assert(0 && "Unsupported st intrinsic!");
     case PPC::BI__builtin_altivec_stvx:
       ID = Intrinsic::ppc_altivec_stvx;
       break;

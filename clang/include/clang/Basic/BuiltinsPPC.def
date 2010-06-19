@@ -18,14 +18,6 @@
 // The format of this database matches clang/Basic/Builtins.def.
 
 // This is just a placeholder, the types and attributes are wrong.
-BUILTIN(__builtin_altivec_abs_v16qi, "V16UcV16Sc", "")
-BUILTIN(__builtin_altivec_abs_v8hi, "V8UsV8Ss", "")
-BUILTIN(__builtin_altivec_abs_v4si, "V4UiV4Si", "")
-
-BUILTIN(__builtin_altivec_abss_v16qi, "V16UcV16Sc", "")
-BUILTIN(__builtin_altivec_abss_v8hi, "V8UsV8Ss", "")
-BUILTIN(__builtin_altivec_abss_v4si, "V4UiV4Si", "")
-
 BUILTIN(__builtin_altivec_vaddcuw, "V4UiV4UiV4Ui", "")
 
 BUILTIN(__builtin_altivec_vaddsbs, "V16ScV16ScV16Sc", "")
@@ -48,6 +40,67 @@ BUILTIN(__builtin_altivec_vavgsh, "V8SsV8SsV8Ss", "")
 BUILTIN(__builtin_altivec_vavguh, "V8UsV8UsV8Us", "")
 BUILTIN(__builtin_altivec_vavgsw, "V4SiV4SiV4Si", "")
 BUILTIN(__builtin_altivec_vavguw, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_vrfip, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vcfsx, "V4fV4ii", "")
+BUILTIN(__builtin_altivec_vcfux, "V4fV4ii", "")
+BUILTIN(__builtin_altivec_vctsxs, "V4SiV4fi", "")
+BUILTIN(__builtin_altivec_vctuxs, "V4UiV4fi", "")
+
+BUILTIN(__builtin_altivec_dss, "vUi", "")
+BUILTIN(__builtin_altivec_dssall, "v", "")
+BUILTIN(__builtin_altivec_dst, "vv*iUi", "") 
+BUILTIN(__builtin_altivec_dstt, "vv*iUi", "")
+BUILTIN(__builtin_altivec_dstst, "vv*iUi", "")
+BUILTIN(__builtin_altivec_dststt, "vv*iUi", "")
+
+BUILTIN(__builtin_altivec_vexptefp, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vrfim, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_lvx, "V4iiv*", "")
+BUILTIN(__builtin_altivec_lvxl, "V4iiv*", "")
+BUILTIN(__builtin_altivec_lvebx, "V16civ*", "")
+BUILTIN(__builtin_altivec_lvehx, "V8siv*", "")
+BUILTIN(__builtin_altivec_lvewx, "V4iiv*", "")
+
+BUILTIN(__builtin_altivec_vlogefp, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_lvsl, "V16cUcv*", "")
+BUILTIN(__builtin_altivec_lvsr, "V16cUcv*", "")
+
+BUILTIN(__builtin_altivec_vmaddfp, "V4fV4fV4fV4f", "")
+BUILTIN(__builtin_altivec_vmhaddshs, "V8sV8sV8sV8s", "")
+BUILTIN(__builtin_altivec_vmhraddshs, "V8sV8sV8sV8s", "")
+
+BUILTIN(__builtin_altivec_vmsumubm, "V4UiV16UcV16UcV4Ui", "")
+BUILTIN(__builtin_altivec_vmsummbm, "V4SiV16ScV16UcV4Si", "")
+BUILTIN(__builtin_altivec_vmsumuhm, "V4UiV8UsV8UsV4Ui", "")
+BUILTIN(__builtin_altivec_vmsumshm, "V4SiV8SsV8SsV4Si", "")
+BUILTIN(__builtin_altivec_vmsumuhs, "V4UiV8UsV8UsV4Ui", "")
+BUILTIN(__builtin_altivec_vmsumshs, "V4SiV8SsV8SsV4Si", "")
+
+BUILTIN(__builtin_altivec_vmuleub, "V8UsV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vmulesb, "V8SsV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vmuleuh, "V4UiV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vmulesh, "V4SiV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vmuloub, "V8UsV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vmulosb, "V8SsV16ScV16Sc", "")
+BUILTIN(__builtin_altivec_vmulouh, "V4UiV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vmulosh, "V4SiV8SsV8Ss", "")
+
+BUILTIN(__builtin_altivec_vnmsubfp, "V4fV4fV4fV4f", "")
+
+BUILTIN(__builtin_altivec_vpkpx, "V8sV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vpkuhus, "V16UcV8UsV8Us", "")
+BUILTIN(__builtin_altivec_vpkshss, "V16ScV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vpkuwus, "V8UsV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vpkswss, "V8SsV4SiV4Si", "")
+BUILTIN(__builtin_altivec_vpkshus, "V16UcV8SsV8Ss", "")
+BUILTIN(__builtin_altivec_vpkswus, "V8UsV4SiV4Si", "")
+
+BUILTIN(__builtin_altivec_vperm_4si, "V4iV4iV4iV16Uc", "")
 
 BUILTIN(__builtin_altivec_stvx, "vV4iiv*", "")
 BUILTIN(__builtin_altivec_stvxl, "vV4iiv*", "")
@@ -91,6 +144,48 @@ BUILTIN(__builtin_altivec_vminuw, "V4UiV4UiV4Ui", "")
 BUILTIN(__builtin_altivec_vminfp, "V4fV4fV4f", "")
 
 BUILTIN(__builtin_altivec_mtvscr, "vV4i", "")
+
+BUILTIN(__builtin_altivec_vrefp, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vrlb, "V16cV16cV16Uc", "")
+BUILTIN(__builtin_altivec_vrlh, "V8sV8sV8Us", "")
+BUILTIN(__builtin_altivec_vrlw, "V4iV4iV4Ui", "")
+
+BUILTIN(__builtin_altivec_vsel_4si, "V4iV4iV4iV4Ui", "")
+
+BUILTIN(__builtin_altivec_vsl, "V4iV4iV4i", "")
+BUILTIN(__builtin_altivec_vslo, "V4iV4iV4i", "")
+
+BUILTIN(__builtin_altivec_vsrab, "V16cV16cV16Uc", "")
+BUILTIN(__builtin_altivec_vsrah, "V8sV8sV8Us", "")
+BUILTIN(__builtin_altivec_vsraw, "V4iV4iV4Ui", "")
+
+BUILTIN(__builtin_altivec_vsr, "V4iV4iV4i", "")
+BUILTIN(__builtin_altivec_vsro, "V4iV4iV4i", "")
+
+BUILTIN(__builtin_altivec_vrfin, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vrsqrtefp, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vsubcuw, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_altivec_vsum4sbs, "V4SiV16ScV4Si", "")
+BUILTIN(__builtin_altivec_vsum4ubs, "V4UiV16UcV4Ui", "")
+BUILTIN(__builtin_altivec_vsum4shs, "V4SiV8SsV4Si", "")
+
+BUILTIN(__builtin_altivec_vsum2sws, "V4SiV4SiV4Si", "")
+
+BUILTIN(__builtin_altivec_vsumsws, "V4SiV4SiV4Si", "")
+
+BUILTIN(__builtin_altivec_vrfiz, "V4fV4f", "")
+
+BUILTIN(__builtin_altivec_vupkhsb, "V8sV16c", "")
+BUILTIN(__builtin_altivec_vupkhpx, "V4UiV8s", "")
+BUILTIN(__builtin_altivec_vupkhsh, "V4iV8s", "")
+
+BUILTIN(__builtin_altivec_vupklsb, "V8sV16c", "")
+BUILTIN(__builtin_altivec_vupklpx, "V4UiV8s", "")
+BUILTIN(__builtin_altivec_vupklsh, "V4iV8s", "")
 
 BUILTIN(__builtin_altivec_vcmpbfp_p, "iiV4fV4f", "")
 
