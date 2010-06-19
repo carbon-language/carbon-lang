@@ -2208,13 +2208,26 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getInjectedClassNameType(D, TST);
   }
   
-  case pch::TYPE_TEMPLATE_TYPE_PARM:
-    assert(false && "can't read template type parm types yet");
-    break;
+  case pch::TYPE_TEMPLATE_TYPE_PARM: {
+    unsigned Idx = 0;
+    unsigned Depth = Record[Idx++];
+    unsigned Index = Record[Idx++];
+    bool Pack = Record[Idx++];
+    IdentifierInfo *Name = GetIdentifierInfo(Record, Idx);
+    return Context->getTemplateTypeParmType(Depth, Index, Pack, Name);
+  }
 
-  case pch::TYPE_TEMPLATE_SPECIALIZATION:
-    assert(false && "can't read template specialization types yet");
-    break;
+  case pch::TYPE_TEMPLATE_SPECIALIZATION: {
+    unsigned Idx = 0;
+    TemplateName Name = ReadTemplateName(Record, Idx);
+    unsigned NumArgs = Record[Idx++];
+    llvm::SmallVector<TemplateArgument, 8> Args;
+    Args.reserve(NumArgs);
+    while (NumArgs--)
+      Args.push_back(ReadTemplateArgument(Record, Idx));
+    return Context->getTemplateSpecializationType(Name, Args.data(),Args.size(),
+                                                  QualType());
+  }
   }
   // Suppress a GCC warning
   return QualType();
@@ -2930,6 +2943,74 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 
   // Required to silence GCC warning
   return DeclarationName();
+}
+
+TemplateName
+PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
+  TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++]; 
+  switch (Kind) {
+  case TemplateName::Template:
+    return TemplateName(cast_or_null<TemplateDecl>(GetDecl(Record[Idx++])));
+
+  case TemplateName::OverloadedTemplate: {
+    unsigned size = Record[Idx++];
+    UnresolvedSet<8> Decls;
+    while (size--)
+      Decls.addDecl(cast<NamedDecl>(GetDecl(Record[Idx++])));
+
+    return Context->getOverloadedTemplateName(Decls.begin(), Decls.end());
+  }
+    
+  case TemplateName::QualifiedTemplate: {
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
+    bool hasTemplKeyword = Record[Idx++];
+    TemplateDecl *Template = cast<TemplateDecl>(GetDecl(Record[Idx++]));
+    return Context->getQualifiedTemplateName(NNS, hasTemplKeyword, Template);
+  }
+    
+  case TemplateName::DependentTemplate: {
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
+    if (Record[Idx++])  // isIdentifier
+      return Context->getDependentTemplateName(NNS,
+                                               GetIdentifierInfo(Record, Idx));
+    return Context->getDependentTemplateName(NNS,
+                                             (OverloadedOperatorKind)Record[Idx++]);
+  }
+  }
+  
+  assert(0 && "Unhandled template name kind!");
+  return TemplateName();
+}
+
+TemplateArgument
+PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
+  switch ((TemplateArgument::ArgKind)Record[Idx++]) {
+  case TemplateArgument::Null:
+    return TemplateArgument();
+  case TemplateArgument::Type:
+    return TemplateArgument(GetType(Record[Idx++]));
+  case TemplateArgument::Declaration:
+    return TemplateArgument(GetDecl(Record[Idx++]));
+  case TemplateArgument::Integral:
+    return TemplateArgument(ReadAPSInt(Record, Idx), GetType(Record[Idx++]));
+  case TemplateArgument::Template:
+    return TemplateArgument(ReadTemplateName(Record, Idx));
+  case TemplateArgument::Expression:
+    return TemplateArgument(ReadDeclExpr());
+  case TemplateArgument::Pack: {
+    unsigned NumArgs = Record[Idx++];
+    llvm::SmallVector<TemplateArgument, 8> Args;
+    Args.reserve(NumArgs);
+    while (NumArgs--)
+      Args.push_back(ReadTemplateArgument(Record, Idx));
+    TemplateArgument TemplArg;
+    TemplArg.setArgumentPack(Args.data(), Args.size(), /*CopyArgs=*/true);
+    return TemplArg;
+  }
+  }
+  
+  assert(0 && "Unhandled template argument kind!");
+  return TemplateArgument();
 }
 
 NestedNameSpecifier *

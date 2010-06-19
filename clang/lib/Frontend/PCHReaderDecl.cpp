@@ -567,6 +567,28 @@ CXXBaseSpecifier *PCHDeclReader::ReadCXXBaseSpecifier() {
 void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // assert(false && "cannot read CXXRecordDecl");
   VisitRecordDecl(D);
+  
+  enum CXXRecKind {
+    CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
+  };
+  switch ((CXXRecKind)Record[Idx++]) {
+  default:
+    assert(false && "Out of sync with PCHDeclWriter::VisitCXXRecordDecl?");
+  case CXXRecNotTemplate:
+    break;
+  case CXXRecTemplate:
+    D->setDescribedClassTemplate(
+                        cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++])));
+    break;
+  case CXXRecMemberSpecialization: {
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
+    TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
+    SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
+    D->setInstantiationOfMemberClass(RD, TSK);
+    D->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
+    break;
+  }
+  }
 
   // FIXME: this is far from complete
 
@@ -618,11 +640,76 @@ void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
 }
 
 void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
-  assert(false && "cannot read TemplateDecl");
+  VisitNamedDecl(D);
+
+  NamedDecl *TemplatedDecl = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+
+  // TemplateParams.
+  SourceLocation TemplateLoc = Reader.ReadSourceLocation(Record, Idx);
+  SourceLocation LAngleLoc = Reader.ReadSourceLocation(Record, Idx);
+  SourceLocation RAngleLoc = Reader.ReadSourceLocation(Record, Idx);
+
+  unsigned NumParams = Record[Idx++];
+  assert(NumParams && "No template params!");
+  llvm::SmallVector<NamedDecl *, 16> Params;
+  Params.reserve(NumParams);
+  while (NumParams--)
+    Params.push_back(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+    
+  TemplateParameterList* TemplateParams = 
+    TemplateParameterList::Create(*Reader.getContext(), TemplateLoc, LAngleLoc,
+                                  Params.data(), Params.size(), RAngleLoc);
+  
+  D->init(TemplatedDecl, TemplateParams);
 }
 
 void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-  assert(false && "cannot read ClassTemplateDecl");
+  VisitTemplateDecl(D);
+
+  ClassTemplateDecl *PrevDecl =
+      cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+  D->initPreviousDeclaration(*Reader.getContext(), PrevDecl);
+  if (PrevDecl == 0) {
+    // This ClassTemplateDecl owns a CommonPtr; read it.
+
+    unsigned size = Record[Idx++];
+    while (size--) {
+      ClassTemplateSpecializationDecl *CTSD
+         = cast<ClassTemplateSpecializationDecl>(Reader.GetDecl(Record[Idx++]));
+      llvm::FoldingSetNodeID ID;
+      void *InsertPos = 0;
+      ClassTemplateSpecializationDecl::Profile(ID, 
+                                  CTSD->getTemplateArgs().getFlatArgumentList(),
+                                            CTSD->getTemplateArgs().flat_size(),
+                                               *Reader.getContext());
+      D->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      D->getSpecializations().InsertNode(CTSD, InsertPos);
+    }
+
+    size = Record[Idx++];
+    while (size--) {
+      ClassTemplatePartialSpecializationDecl *CTSD
+         = cast<ClassTemplatePartialSpecializationDecl>(
+                                                 Reader.GetDecl(Record[Idx++]));
+      llvm::FoldingSetNodeID ID;
+      void *InsertPos = 0;
+      ClassTemplatePartialSpecializationDecl::Profile(ID, 
+                                  CTSD->getTemplateArgs().getFlatArgumentList(),
+                                            CTSD->getTemplateArgs().flat_size(),
+                                               *Reader.getContext());
+      D->getPartialSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      D->getPartialSpecializations().InsertNode(CTSD, InsertPos);
+    }
+
+    // InjectedClassNameType is computed.
+
+    if (ClassTemplateDecl *CTD
+          = cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
+      D->setInstantiatedFromMemberTemplate(CTD);
+      if (Record[Idx++])
+        D->setMemberSpecialization();
+    }
+  }
 }
 
 void PCHDeclReader::VisitClassTemplateSpecializationDecl(
@@ -640,7 +727,14 @@ void PCHDeclReader::visitFunctionTemplateDecl(FunctionTemplateDecl *D) {
 }
 
 void PCHDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
-  assert(false && "cannot read TemplateTypeParmDecl");
+  VisitTypeDecl(D);
+
+  D->setDeclaredWithTypename(Record[Idx++]);
+  D->setParameterPack(Record[Idx++]);
+
+  bool Inherited = Record[Idx++];
+  TypeSourceInfo *DefArg = Reader.GetTypeSourceInfo(Record, Idx);
+  D->setDefaultArgument(DefArg, Inherited);
 }
 
 void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
@@ -988,7 +1082,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     assert(false && "cannot read FriendTemplateDecl");
     break;
   case pch::DECL_CLASS_TEMPLATE:
-    assert(false && "cannot read ClassTemplateDecl");
+    D = ClassTemplateDecl::CreateEmpty(*Context);
     break;
   case pch::DECL_CLASS_TEMPLATE_SPECIALIZATION:
     assert(false && "cannot read ClasstemplateSpecializationDecl");
@@ -1000,7 +1094,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     assert(false && "cannot read FunctionTemplateDecl");
     break;
   case pch::DECL_TEMPLATE_TYPE_PARM:
-    assert(false && "cannot read TemplateTypeParmDecl");
+    D = TemplateTypeParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,0,0);
     break;
   case pch::DECL_NON_TYPE_TEMPLATE_PARM:
     assert(false && "cannot read NonTypeTemplateParmDecl");

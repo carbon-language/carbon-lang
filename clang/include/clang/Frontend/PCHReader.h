@@ -693,6 +693,12 @@ public:
   NestedNameSpecifier *ReadNestedNameSpecifier(const RecordData &Record,
                                                unsigned &Idx);
 
+  /// \brief Read a template name.
+  TemplateName ReadTemplateName(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read a template argument.
+  TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx);
+
   /// \brief Read a source location.
   SourceLocation ReadSourceLocation(const RecordData &Record, unsigned& Idx) {
     return SourceLocation::getFromRawEncoding(Record[Idx++]);

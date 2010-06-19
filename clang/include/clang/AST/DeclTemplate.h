@@ -272,6 +272,16 @@ public:
 protected:
   NamedDecl *TemplatedDecl;
   TemplateParameterList* TemplateParams;
+  
+public:
+  /// \brief Initialize the underlying templated declaration and
+  /// template parameters.
+  void init(NamedDecl *templatedDecl, TemplateParameterList* templateParams) {
+    assert(TemplatedDecl == 0 && "TemplatedDecl already set!");
+    assert(TemplateParams == 0 && "TemplateParams already set!");
+    TemplatedDecl = templatedDecl;
+    TemplateParams = templateParams;
+  }
 };
 
 /// \brief Provides information about a function template specialization,
@@ -716,6 +726,13 @@ public:
     DefaultArgument = 0;
     InheritedDefault = false;
   }
+  
+  /// \brief Set whether this template type parameter was declared with
+  /// the 'typename' or 'class' keyword.
+  void setDeclaredWithTypename(bool withTypename) { Typename = withTypename; }
+
+  /// \brief Set whether this is a parameter pack.
+  void setParameterPack(bool isParamPack) { ParameterPack = isParamPack; }
 
   /// \brief Retrieve the depth of the template parameter.
   unsigned getDepth() const;
@@ -1292,10 +1309,9 @@ protected:
   Common *CommonPtr;
 
   ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
-                    TemplateParameterList *Params, NamedDecl *Decl,
-                    ClassTemplateDecl *PrevDecl, Common *CommonPtr)
+                    TemplateParameterList *Params, NamedDecl *Decl)
     : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl),
-      PreviousDeclaration(PrevDecl), CommonPtr(CommonPtr) { }
+      PreviousDeclaration(0), CommonPtr(0) { }
 
   ~ClassTemplateDecl();
 
@@ -1310,6 +1326,10 @@ public:
     return PreviousDeclaration;
   }
 
+  /// \brief Initialize the previous declaration. Only valid to call on a
+  /// ClassTemplateDecl that is created using ClassTemplateDecl::CreateEmpty.
+  void initPreviousDeclaration(ASTContext &C, ClassTemplateDecl *PrevDecl);
+
   virtual ClassTemplateDecl *getCanonicalDecl();
 
   /// Create a class template node.
@@ -1319,6 +1339,11 @@ public:
                                    TemplateParameterList *Params,
                                    NamedDecl *Decl,
                                    ClassTemplateDecl *PrevDecl);
+
+  /// \brief Create an empty class template node. Mainly used for PCH reading.
+  static ClassTemplateDecl *CreateEmpty(ASTContext &C) {
+    return new (C) ClassTemplateDecl(0,SourceLocation(),DeclarationName(),0,0);
+  }
 
   /// \brief Retrieve the set of specializations of this class template.
   llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {

@@ -155,6 +155,21 @@ ClassTemplateDecl *ClassTemplateDecl::getCanonicalDecl() {
   return Template;
 }
 
+void ClassTemplateDecl::initPreviousDeclaration(ASTContext &C,
+                                                ClassTemplateDecl *PrevDecl) {
+  assert(PreviousDeclaration == 0 && "PreviousDeclaration already set!");
+  assert(CommonPtr == 0 && "initPreviousDeclaration already called!");
+
+  PreviousDeclaration = PrevDecl;
+
+  if (PrevDecl)
+    CommonPtr = PrevDecl->CommonPtr;
+  else {
+    CommonPtr = new (C) Common;
+    C.AddDeallocation(DeallocateCommon, CommonPtr);
+  }
+}
+
 ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation L,
@@ -162,16 +177,9 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              TemplateParameterList *Params,
                                              NamedDecl *Decl,
                                              ClassTemplateDecl *PrevDecl) {
-  Common *CommonPtr;
-  if (PrevDecl)
-    CommonPtr = PrevDecl->CommonPtr;
-  else {
-    CommonPtr = new (C) Common;
-    C.AddDeallocation(DeallocateCommon, CommonPtr);
-  }
-
-  return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl, PrevDecl,
-                                   CommonPtr);
+  ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
+  New->initPreviousDeclaration(C, PrevDecl);
+  return New;
 }
 
 ClassTemplateDecl::~ClassTemplateDecl() {
