@@ -987,10 +987,6 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   case pch::DECL_FRIEND_TEMPLATE:
     assert(false && "cannot read FriendTemplateDecl");
     break;
-  case pch::DECL_TEMPLATE:
-    // FIXME: Should TemplateDecl be ABSTRACT_DECL???
-    assert(false && "TemplateDecl should be abstract!");
-    break;
   case pch::DECL_CLASS_TEMPLATE:
     assert(false && "cannot read ClassTemplateDecl");
     break;

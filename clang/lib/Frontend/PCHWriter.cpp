@@ -61,9 +61,7 @@ namespace {
 
 #define TYPE(Class, Base) void Visit##Class##Type(const Class##Type *T);
 #define ABSTRACT_TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
-    void VisitInjectedClassNameType(const InjectedClassNameType *T);
   };
 }
 
@@ -169,13 +167,10 @@ void PCHTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   Code = pch::TYPE_FUNCTION_PROTO;
 }
 
-#if 0
-// For when we want it....
 void PCHTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Code = pch::TYPE_UNRESOLVED_USING;
 }
-#endif
 
 void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
@@ -224,8 +219,47 @@ PCHTypeWriter::VisitSubstTemplateTypeParmType(
 void
 PCHTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {
+  Writer.AddTemplateName(T->getTemplateName(), Record);
+  Record.push_back(T->getNumArgs());
+  for (TemplateSpecializationType::iterator ArgI = T->begin(), ArgE = T->end();
+         ArgI != ArgE; ++ArgI)
+    Writer.AddTemplateArgument(*ArgI, Record);
+  Code = pch::TYPE_TEMPLATE_SPECIALIZATION;
+}
+
+void
+PCHTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
   // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize template specialization types");
+  assert(false && "Cannot serialize dependent sized array types");
+}
+
+void
+PCHTypeWriter::VisitDependentSizedExtVectorType(
+                                        const DependentSizedExtVectorType *T) {
+  // FIXME: Serialize this type (C++ only)
+  assert(false && "Cannot serialize dependent sized extended vector types");
+}
+
+void
+PCHTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
+  Record.push_back(T->getDepth());
+  Record.push_back(T->getIndex());
+  Record.push_back(T->isParameterPack());
+  Writer.AddIdentifierRef(T->getName(), Record);
+  Code = pch::TYPE_TEMPLATE_TYPE_PARM;
+}
+
+void
+PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
+  // FIXME: Serialize this type (C++ only)
+  assert(false && "Cannot serialize dependent name types");
+}
+
+void
+PCHTypeWriter::VisitDependentTemplateSpecializationType(
+                                const DependentTemplateSpecializationType *T) {
+  // FIXME: Serialize this type (C++ only)
+  assert(false && "Cannot serialize dependent template specialization types");
 }
 
 void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
@@ -1357,16 +1391,7 @@ void PCHWriter::WriteType(QualType T) {
 #define TYPE(Class, Base) \
     case Type::Class: W.Visit##Class##Type(cast<Class##Type>(T)); break;
 #define ABSTRACT_TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
-
-      // For all of the dependent type nodes (which only occur in C++
-      // templates), produce an error.
-#define TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base) case Type::Class:
-#include "clang/AST/TypeNodes.def"
-      assert(false && "Cannot serialize dependent type nodes");
-      break;
     }
   }
 
@@ -2467,5 +2492,74 @@ void PCHWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
       // Don't need to write an associated value.
       break;
     }
+  }
+}
+
+void PCHWriter::AddTemplateName(TemplateName Name, RecordData &Record) {
+  TemplateName::NameKind Kind = Name.getKind(); 
+  Record.push_back(Kind);
+  switch (Kind) {
+  case TemplateName::Template:
+    AddDeclRef(Name.getAsTemplateDecl(), Record);
+    break;
+
+  case TemplateName::OverloadedTemplate: {
+    OverloadedTemplateStorage *OvT = Name.getAsOverloadedTemplate();
+    Record.push_back(OvT->size());
+    for (OverloadedTemplateStorage::iterator I = OvT->begin(), E = OvT->end();
+           I != E; ++I)
+      AddDeclRef(*I, Record);
+    break;
+  }
+    
+  case TemplateName::QualifiedTemplate: {
+    QualifiedTemplateName *QualT = Name.getAsQualifiedTemplateName();
+    AddNestedNameSpecifier(QualT->getQualifier(), Record);
+    Record.push_back(QualT->hasTemplateKeyword());
+    AddDeclRef(QualT->getTemplateDecl(), Record);
+    break;
+  }
+    
+  case TemplateName::DependentTemplate: {
+    DependentTemplateName *DepT = Name.getAsDependentTemplateName();
+    AddNestedNameSpecifier(DepT->getQualifier(), Record);
+    Record.push_back(DepT->isIdentifier());
+    if (DepT->isIdentifier())
+      AddIdentifierRef(DepT->getIdentifier(), Record);
+    else
+      Record.push_back(DepT->getOperator());
+    break;
+  }
+  }
+}
+
+void PCHWriter::AddTemplateArgument(const TemplateArgument &Arg, 
+                                    RecordData &Record) {
+  Record.push_back(Arg.getKind());
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    break;
+  case TemplateArgument::Type:
+    AddTypeRef(Arg.getAsType(), Record);
+    break;
+  case TemplateArgument::Declaration:
+    AddDeclRef(Arg.getAsDecl(), Record);
+    break;
+  case TemplateArgument::Integral:
+    AddAPSInt(*Arg.getAsIntegral(), Record);
+    AddTypeRef(Arg.getIntegralType(), Record);
+    break;
+  case TemplateArgument::Template:
+    AddTemplateName(Arg.getAsTemplate(), Record);
+    break;
+  case TemplateArgument::Expression:
+    AddStmt(Arg.getAsExpr());
+    break;
+  case TemplateArgument::Pack:
+    Record.push_back(Arg.pack_size());
+    for (TemplateArgument::pack_iterator I=Arg.pack_begin(), E=Arg.pack_end();
+           I != E; ++I)
+      AddTemplateArgument(*I, Record);
+    break;
   }
 }

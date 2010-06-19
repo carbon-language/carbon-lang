@@ -574,6 +574,23 @@ void PCHDeclWriter::WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base) {
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // assert(false && "cannot write CXXRecordDecl");
   VisitRecordDecl(D);
+
+  enum {
+    CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
+  };
+  if (ClassTemplateDecl *TemplD = D->getDescribedClassTemplate()) {
+    Record.push_back(CXXRecTemplate);
+    Writer.AddDeclRef(TemplD, Record);
+  } else if (MemberSpecializationInfo *MSInfo
+               = D->getMemberSpecializationInfo()) {
+    Record.push_back(CXXRecMemberSpecialization);
+    Writer.AddDeclRef(MSInfo->getInstantiatedFrom(), Record);
+    Record.push_back(MSInfo->getTemplateSpecializationKind());
+    Writer.AddSourceLocation(MSInfo->getPointOfInstantiation(), Record);
+  } else {
+    Record.push_back(CXXRecNotTemplate);
+  }
+
   if (D->isDefinition()) {
     unsigned NumBases = D->getNumBases();
     Record.push_back(NumBases);
@@ -619,11 +636,49 @@ void PCHDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
 }
 
 void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
-  assert(false && "cannot write TemplateDecl");
+  VisitNamedDecl(D);
+
+  Writer.AddDeclRef(D->getTemplatedDecl(), Record);
+  {
+    // TemplateParams.
+    TemplateParameterList *TPL = D->getTemplateParameters();
+    assert(TPL && "No TemplateParameters!");
+    Writer.AddSourceLocation(TPL->getTemplateLoc(), Record);
+    Writer.AddSourceLocation(TPL->getLAngleLoc(), Record);
+    Writer.AddSourceLocation(TPL->getRAngleLoc(), Record);
+    Record.push_back(TPL->size());
+    for (TemplateParameterList::iterator P = TPL->begin(), PEnd = TPL->end();
+           P != PEnd; ++P)
+      Writer.AddDeclRef(*P, Record);
+  }
 }
 
 void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-  assert(false && "cannot write ClassTemplateDecl");
+  VisitTemplateDecl(D);
+
+  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  if (D->getPreviousDeclaration() == 0) {
+    // This ClassTemplateDecl owns the CommonPtr; write it.
+
+    typedef llvm::FoldingSet<ClassTemplateSpecializationDecl> CTSDSetTy;
+    CTSDSetTy &CTSDSet = D->getSpecializations();
+    Record.push_back(CTSDSet.size());
+    for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I)
+      Writer.AddDeclRef(&*I, Record);
+
+    typedef llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> CTPSDSetTy;
+    CTPSDSetTy &CTPSDSet = D->getPartialSpecializations();
+    Record.push_back(CTPSDSet.size());
+    for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E = CTPSDSet.end(); I!=E; ++I)
+      Writer.AddDeclRef(&*I, Record);
+
+    // InjectedClassNameType is computed, no need to write it.
+
+    Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
+    if (D->getInstantiatedFromMemberTemplate())
+      Record.push_back(D->isMemberSpecialization());
+  }
+  Code = pch::DECL_CLASS_TEMPLATE;
 }
 
 void PCHDeclWriter::VisitClassTemplateSpecializationDecl(
@@ -641,7 +696,14 @@ void PCHDeclWriter::visitFunctionTemplateDecl(FunctionTemplateDecl *D) {
 }
 
 void PCHDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
-  assert(false && "cannot write TemplateTypeParmDecl");
+  VisitTypeDecl(D);
+
+  Record.push_back(D->wasDeclaredWithTypename());
+  Record.push_back(D->isParameterPack());
+  Record.push_back(D->defaultArgumentWasInherited());
+  Writer.AddTypeSourceInfo(D->getDefaultArgumentInfo(), Record);
+
+  Code = pch::DECL_TEMPLATE_TYPE_PARM;
 }
 
 void PCHDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {

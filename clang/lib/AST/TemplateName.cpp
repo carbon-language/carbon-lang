@@ -21,6 +21,17 @@
 using namespace clang;
 using namespace llvm;
 
+TemplateName::NameKind TemplateName::getKind() const {
+  if (Storage.is<TemplateDecl *>())
+    return Template;
+  if (Storage.is<OverloadedTemplateStorage *>())
+    return OverloadedTemplate;
+  if (Storage.is<QualifiedTemplateName *>())
+    return QualifiedTemplate;
+  assert(Storage.is<DependentTemplateName *>() && "There's a case unhandled!");
+  return DependentTemplate;
+}
+
 TemplateDecl *TemplateName::getAsTemplateDecl() const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     return Template;

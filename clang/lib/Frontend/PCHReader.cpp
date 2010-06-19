@@ -2207,6 +2207,14 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     QualType TST = GetType(Record[1]); // probably derivable
     return Context->getInjectedClassNameType(D, TST);
   }
+  
+  case pch::TYPE_TEMPLATE_TYPE_PARM:
+    assert(false && "can't read template type parm types yet");
+    break;
+
+  case pch::TYPE_TEMPLATE_SPECIALIZATION:
+    assert(false && "can't read template specialization types yet");
+    break;
   }
   // Suppress a GCC warning
   return QualType();

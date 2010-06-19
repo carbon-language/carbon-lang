@@ -417,7 +417,11 @@ namespace clang {
       /// \brief An InjectedClassNameType record.
       TYPE_INJECTED_CLASS_NAME      = 27,
       /// \brief An ObjCObjectType record.
-      TYPE_OBJC_OBJECT              = 28
+      TYPE_OBJC_OBJECT              = 28,
+      /// \brief An TemplateTypeParmType record.
+      TYPE_TEMPLATE_TYPE_PARM       = 29,
+      /// \brief An TemplateSpecializationType record.
+      TYPE_TEMPLATE_SPECIALIZATION  = 30
     };
 
     /// \brief The type IDs for special types constructed by semantic
@@ -569,7 +573,6 @@ namespace clang {
       // allocates the order in which
       DECL_FRIEND,
       DECL_FRIEND_TEMPLATE,
-      DECL_TEMPLATE,
       DECL_CLASS_TEMPLATE,
       DECL_CLASS_TEMPLATE_SPECIALIZATION,
       DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION,

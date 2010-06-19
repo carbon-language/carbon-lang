@@ -101,6 +101,14 @@ class TemplateName {
   }
 
 public:
+  // \brief Kind of name that is actually stored.
+  enum NameKind {
+    Template,
+    OverloadedTemplate,
+    QualifiedTemplate,
+    DependentTemplate
+  };
+
   TemplateName() : Storage() { }
   explicit TemplateName(TemplateDecl *Template) : Storage(Template) { }
   explicit TemplateName(OverloadedTemplateStorage *Storage)
@@ -110,6 +118,9 @@ public:
 
   /// \brief Determine whether this template name is NULL.
   bool isNull() const { return Storage.isNull(); }
+  
+  // \brief Get the kind of name that is actually stored.
+  NameKind getKind() const;
 
   /// \brief Retrieve the the underlying template declaration that
   /// this template name refers to, if known.

@@ -315,6 +315,12 @@ public:
 
   /// \brief Emit a nested name specifier.
   void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordData &Record);
+  
+  /// \brief Emit a template name.
+  void AddTemplateName(TemplateName Name, RecordData &Record);
+
+  /// \brief Emit a template argument.
+  void AddTemplateArgument(const TemplateArgument &Arg, RecordData &Record);
 
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
