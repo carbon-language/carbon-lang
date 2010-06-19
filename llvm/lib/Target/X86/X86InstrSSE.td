@@ -368,6 +368,71 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
 }
 
 //===----------------------------------------------------------------------===//
+// SSE 1 & 2 Instructions Classes
+//===----------------------------------------------------------------------===//
+
+/// sse12_fp_scalar - SSE 1 & 2 scalar instructions class
+multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           RegisterClass RC, X86MemOperand memop> {
+  let isCommutable = 1 in {
+    def rr : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
+  }
+  def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
+}
+
+/// sse12_fp_scalar_int - SSE 1 & 2 scalar instructions intrinsics class
+multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                               string asm, string SSEVer, string FPSizeStr,
+                               Operand memop, ComplexPattern mem_cpat> {
+  def rr_Int : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                  asm, [(set RC:$dst, (
+                                !nameconcat<Intrinsic>("int_x86_sse",
+                                !strconcat(SSEVer, !strconcat("_",
+                                !strconcat(OpcodeStr, FPSizeStr))))
+                         RC:$src1, RC:$src2))]>;
+  def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+                  asm, [(set RC:$dst, (
+                                !nameconcat<Intrinsic>("int_x86_sse",
+                                !strconcat(SSEVer, !strconcat("_",
+                                !strconcat(OpcodeStr, FPSizeStr))))
+                         RC:$src1, mem_cpat:$src2))]>;
+}
+
+/// sse12_fp_packed - SSE 1 & 2 packed instructions class
+multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           RegisterClass RC, ValueType vt,
+                           X86MemOperand x86memop, PatFrag mem_frag,
+                           Domain d> {
+  let isCommutable = 1 in
+    def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                OpcodeStr, [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))],d>;
+  def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
+              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1,
+                                                (mem_frag addr:$src2)))],d>;
+}
+
+/// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
+multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                               string asm, string SSEVer, string FPSizeStr,
+                               X86MemOperand memop, PatFrag mem_frag,
+                               Domain d> {
+  def rr_Int : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                  asm, [(set RC:$dst, (
+                                !nameconcat<Intrinsic>("int_x86_sse",
+                                !strconcat(SSEVer, !strconcat("_",
+                                !strconcat(OpcodeStr, FPSizeStr))))
+                         RC:$src1, RC:$src2))], d>;
+  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+                  asm, [(set RC:$dst, (
+                                !nameconcat<Intrinsic>("int_x86_sse",
+                                !strconcat(SSEVer, !strconcat("_",
+                                !strconcat(OpcodeStr, FPSizeStr))))
+                         RC:$src1, (mem_frag addr:$src2)))], d>;
+}
+
+//===----------------------------------------------------------------------===//
 // SSE1 Instructions
 //===----------------------------------------------------------------------===//
 
@@ -644,67 +709,6 @@ let Constraints = "$src1 = $dst" in {
 
   let neverHasSideEffects = 1 in
     defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef, 1, 1, 0>;
-}
-
-/// sse12_fp_scalar - SSE 1 & 2 scalar instructions class
-multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                           RegisterClass RC, X86MemOperand memop> {
-  let isCommutable = 1 in {
-    def rr : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
-  }
-  def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
-              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
-}
-
-/// sse12_fp_scalar_int - SSE 1 & 2 scalar instructions intrinsics class
-multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                               string asm, string SSEVer, string FPSizeStr,
-                               Operand memop, ComplexPattern mem_cpat> {
-  def rr_Int : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, RC:$src2))]>;
-  def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, mem_cpat:$src2))]>;
-}
-
-/// sse12_fp_packed - SSE 1 & 2 packed instructions class
-multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                           RegisterClass RC, ValueType vt,
-                           X86MemOperand x86memop, PatFrag mem_frag,
-                           Domain d> {
-  let isCommutable = 1 in
-    def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                OpcodeStr, [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))],d>;
-  def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1,
-                                                (mem_frag addr:$src2)))],d>;
-}
-
-/// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
-multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                               string asm, string SSEVer, string FPSizeStr,
-                               X86MemOperand memop, PatFrag mem_frag,
-                               Domain d> {
-  def rr_Int : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, RC:$src2))], d>;
-  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
 /// basic_sse12_fp_binop_rm - SSE 1 & 2 binops come in both scalar and
