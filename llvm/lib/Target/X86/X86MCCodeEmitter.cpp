@@ -99,6 +99,9 @@ public:
   }
   
   
+  void EmitSegmentOverridePrefix(const MCOperand &Op, unsigned TSFlags,
+                                 unsigned &CurByte, raw_ostream &OS) const;
+
   void EmitMemModRMByte(const MCInst &MI, unsigned Op,
                         unsigned RegOpcodeField, 
                         uint64_t TSFlags, unsigned &CurByte, raw_ostream &OS,
@@ -188,6 +191,32 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
   EmitConstant(0, Size, CurByte, OS);
 }
 
+void X86MCCodeEmitter::EmitSegmentOverridePrefix(const MCOperand &Op,
+                                                 unsigned TSFlags,
+                                                 unsigned &CurByte,
+                                                 raw_ostream &OS) const {
+  // If no segment register is present, we don't need anything.
+  if (Op.getReg() == 0)
+    return;
+
+#if 0
+  // Otherwise, emit an address size prefix if we didn't already emit one.
+  if (Is64BitMode && !(TSFlags & X86II::AdSize))
+    EmitByte(0x67, CurByte, OS);
+#endif
+
+  // Check if we need an override.
+  switch (Op.getReg()) {
+  case X86::CS: EmitByte(0x2E, CurByte, OS); return;
+  case X86::SS: EmitByte(0x36, CurByte, OS); return;
+  case X86::DS: EmitByte(0x3E, CurByte, OS); return;
+  case X86::ES: EmitByte(0x26, CurByte, OS); return;
+  case X86::FS: EmitByte(0x64, CurByte, OS); return;
+  case X86::GS: EmitByte(0x65, CurByte, OS); return;
+  }
+
+  assert(0 && "Invalid segment register!");
+}
 
 void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         unsigned RegOpcodeField,
@@ -737,6 +766,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   
   case X86II::MRMDestMem:
+    EmitSegmentOverridePrefix(MI.getOperand(CurOp + 4), TSFlags, CurByte, OS);
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
@@ -757,22 +787,25 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
     
   case X86II::MRMSrcMem: {
-    EmitByte(BaseOpcode, CurByte, OS);
+    int AddrOperands = X86AddrNumOperands;
+    unsigned FirstMemOp = CurOp+1;
+    if (IsAVXForm) {
+      ++AddrOperands;
+      ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
+    }
 
     // FIXME: Maybe lea should have its own form?  This is a horrible hack.
-    int AddrOperands;
     if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
         Opcode == X86::LEA16r || Opcode == X86::LEA32r)
-      AddrOperands = X86AddrNumOperands - 1; // No segment register
+      --AddrOperands; // No segment register
     else
-      AddrOperands = X86AddrNumOperands;
+      EmitSegmentOverridePrefix(MI.getOperand(FirstMemOp+4),
+                                TSFlags, CurByte, OS);
 
-    if (IsAVXForm)
-      AddrOperands++;
+    EmitByte(BaseOpcode, CurByte, OS);
 
-    // Skip the register source (which is encoded in VEX_VVVV)
-    EmitMemModRMByte(MI, IsAVXForm ? CurOp+2 : CurOp+1,
-                     GetX86RegNum(MI.getOperand(CurOp)),
+    
+    EmitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
                      TSFlags, CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
     break;
@@ -791,6 +824,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
+    EmitSegmentOverridePrefix(MI.getOperand(CurOp+4), TSFlags, CurByte, OS);
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
                      TSFlags, CurByte, OS, Fixups);
