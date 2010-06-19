@@ -4238,8 +4238,11 @@ ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
   if (PN == 0) return getCouldNotCompute();
 
-  // Since the loop is canonicalized, the PHI node must have two entries.  One
-  // entry must be a constant (coming in from outside of the loop), and the
+  // If the loop is canonicalized, the PHI will have exactly two entries.
+  // That's the only form we support here.
+  if (PN->getNumIncomingValues() != 2) return getCouldNotCompute();
+
+  // One entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
   Constant *StartCST =

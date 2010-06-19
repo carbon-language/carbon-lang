@@ -74,3 +74,34 @@ loop:
 return:
   ret void
 }
+
+; Trip counts for non-polynomial iterations. It's theoretically possible
+; to compute a maximum count for these, but short of that, ScalarEvolution
+; should return unknown.
+
+; PR7416
+; CHECK: Determining loop execution counts for: @nonpolynomial
+; CHECK-NEXT: Loop %loophead: Unpredictable backedge-taken count
+; CHECK-NEXT: Loop %loophead: Unpredictable max backedge-taken count
+
+declare i1 @g() nounwind
+
+define void @nonpolynomial() {
+entry:
+  br label %loophead
+loophead:
+  %x = phi i32 [0, %entry], [%x.1, %bb1], [%x.2, %bb2]
+  %y = icmp slt i32 %x, 100
+  br i1 %y, label %loopbody, label %retbb
+loopbody:
+  %z = call i1 @g()
+  br i1 %z, label %bb1, label %bb2
+bb1:
+  %x.1 = add i32 %x, 2
+  br label %loophead
+bb2:
+  %x.2 = add i32 %x, 3
+  br label %loophead
+retbb:
+  ret void
+}
