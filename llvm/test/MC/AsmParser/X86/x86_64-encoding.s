@@ -264,3 +264,35 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0x1b,0x5d,0x54,0xcb,0xfc]
           vminsd  -4(%rbx,%rcx,8), %xmm12, %xmm10
 
+// CHECK: vmaxps  %xmm10, %xmm14, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x08,0x5f,0xe2]
+          vmaxps  %xmm10, %xmm14, %xmm12
+
+// CHECK: vmaxpd  %xmm10, %xmm14, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x09,0x5f,0xe2]
+          vmaxpd  %xmm10, %xmm14, %xmm12
+
+// CHECK: vminps  %xmm10, %xmm14, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x08,0x5d,0xe2]
+          vminps  %xmm10, %xmm14, %xmm12
+
+// CHECK: vminpd  %xmm10, %xmm14, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x09,0x5d,0xe2]
+          vminpd  %xmm10, %xmm14, %xmm12
+
+// CHECK: vmaxps  -4(%rbx,%rcx,8), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x18,0x5f,0x54,0xcb,0xfc]
+          vmaxps  -4(%rbx,%rcx,8), %xmm12, %xmm10
+
+// CHECK: vmaxpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x19,0x5f,0x54,0xcb,0xfc]
+          vmaxpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
+
+// CHECK: vminps  -4(%rbx,%rcx,8), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x18,0x5d,0x54,0xcb,0xfc]
+          vminps  -4(%rbx,%rcx,8), %xmm12, %xmm10
+
+// CHECK: vminpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x19,0x5d,0x54,0xcb,0xfc]
+          vminpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
+

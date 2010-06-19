@@ -10212,3 +10212,35 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0xeb,0x5d,0x6c,0xcb,0xfc]
           vminsd  -4(%ebx,%ecx,8), %xmm2, %xmm5
 
+// CHECK: vmaxps  %xmm2, %xmm4, %xmm6
+// CHECK: encoding: [0xc5,0xd8,0x5f,0xf2]
+          vmaxps  %xmm2, %xmm4, %xmm6
+
+// CHECK: vmaxpd  %xmm2, %xmm4, %xmm6
+// CHECK: encoding: [0xc5,0xd9,0x5f,0xf2]
+          vmaxpd  %xmm2, %xmm4, %xmm6
+
+// CHECK: vminps  %xmm2, %xmm4, %xmm6
+// CHECK: encoding: [0xc5,0xd8,0x5d,0xf2]
+          vminps  %xmm2, %xmm4, %xmm6
+
+// CHECK: vminpd  %xmm2, %xmm4, %xmm6
+// CHECK: encoding: [0xc5,0xd9,0x5d,0xf2]
+          vminpd  %xmm2, %xmm4, %xmm6
+
+// CHECK: vmaxps  -4(%ebx,%ecx,8), %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe8,0x5f,0x6c,0xcb,0xfc]
+          vmaxps  -4(%ebx,%ecx,8), %xmm2, %xmm5
+
+// CHECK: vmaxpd  -4(%ebx,%ecx,8), %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe9,0x5f,0x6c,0xcb,0xfc]
+          vmaxpd  -4(%ebx,%ecx,8), %xmm2, %xmm5
+
+// CHECK: vminps  -4(%ebx,%ecx,8), %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe8,0x5d,0x6c,0xcb,0xfc]
+          vminps  -4(%ebx,%ecx,8), %xmm2, %xmm5
+
+// CHECK: vminpd  -4(%ebx,%ecx,8), %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe9,0x5d,0x6c,0xcb,0xfc]
+          vminpd  -4(%ebx,%ecx,8), %xmm2, %xmm5
+
