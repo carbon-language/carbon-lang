@@ -151,7 +151,7 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
                "ParseAssignmentExpression went over the default arg tokens!");
         // There could be leftover tokens (e.g. because of an error).
         // Skip through until we reach the original token position.
-        while (Tok.getLocation() != origLoc)
+        while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
           ConsumeAnyToken();
 
         delete Toks;
@@ -218,7 +218,7 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
              "ParseFunctionTryBlock went over the cached tokens!");
       // There could be leftover tokens (e.g. because of an error).
       // Skip through until we reach the original token position.
-      while (Tok.getLocation() != origLoc)
+      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
         ConsumeAnyToken();
       continue;
     }
@@ -243,7 +243,7 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
       // expensive isBeforeInTranslationUnit call.
       if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
                                                           origLoc))
-        while (Tok.getLocation() != origLoc)
+        while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
           ConsumeAnyToken();
 
     }
