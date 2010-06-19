@@ -263,7 +263,6 @@ save_vfp_d8_d15_regs
 // point, new *vfp functions were added to do the same operations but with 
 // floating point parameters in floating point registers.
 
-
 // Undocumented functions
 
 float  __addsf3vfp(float a, float b);   // Appears to return a + b
