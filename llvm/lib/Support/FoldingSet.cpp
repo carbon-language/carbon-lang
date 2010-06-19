@@ -175,6 +175,14 @@ static void **GetBucketFor(const FoldingSetNodeID &ID,
   return Buckets + BucketNum;
 }
 
+/// AllocateBuckets - Allocated initialized bucket memory.
+static void **AllocateBuckets(unsigned NumBuckets) {
+  void **Buckets = static_cast<void**>(calloc(NumBuckets+1, sizeof(void*)));
+  // Set the very last bucket to be a non-null "pointer".
+  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
+  return Buckets;
+}
+
 //===----------------------------------------------------------------------===//
 // FoldingSetImpl Implementation
 
@@ -182,11 +190,11 @@ FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   assert(5 < Log2InitSize && Log2InitSize < 32 &&
          "Initial hash table size out of range");
   NumBuckets = 1 << Log2InitSize;
-  Buckets = new void*[NumBuckets+1];
-  clear();
+  Buckets = AllocateBuckets(NumBuckets);
+  NumNodes = 0;
 }
 FoldingSetImpl::~FoldingSetImpl() {
-  delete [] Buckets;
+  free(Buckets);
 }
 void FoldingSetImpl::clear() {
   // Set all but the last bucket to null pointers.
@@ -207,8 +215,8 @@ void FoldingSetImpl::GrowHashTable() {
   NumBuckets <<= 1;
   
   // Clear out new buckets.
-  Buckets = new void*[NumBuckets+1];
-  clear();
+  Buckets = AllocateBuckets(NumBuckets);
+  NumNodes = 0;
 
   // Walk the old buckets, rehashing nodes into their new place.
   FoldingSetNodeID ID;
@@ -227,7 +235,7 @@ void FoldingSetImpl::GrowHashTable() {
     }
   }
   
-  delete[] OldBuckets;
+  free(OldBuckets);
 }
 
 /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
