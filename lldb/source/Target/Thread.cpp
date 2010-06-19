@@ -20,7 +20,6 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
-#include "lldb/Target/ThreadPlanContinue.h"
 #include "lldb/Target/ThreadPlanBase.h"
 #include "lldb/Target/ThreadPlanStepInstruction.h"
 #include "lldb/Target/ThreadPlanStepOut.h"
@@ -431,28 +430,22 @@ Thread::SetupForResume ()
         {
             // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
             // special to step over a breakpoint.
-            
-            // TODO: Jim Ingham -- this is the only place left that does RTTI in
-            // all of LLDB. I am adding a hack right now to let us compile 
-            // without RTTI, but we will need to look at and fix this. Right
-            // now it will always push the breakpoint thread plan which is 
-            // probably wrong. We will need to work around this.
-    
-//            ThreadPlan *cur_plan = GetCurrentPlan();
-//            ThreadPlanStepOverBreakpoint *step_over_bp = dynamic_cast<ThreadPlanStepOverBreakpoint *> (cur_plan);
-//            if (step_over_bp == NULL)
-            {
+                
+            ThreadPlan *cur_plan = GetCurrentPlan();
 
-                ThreadPlanSP step_bp_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
-                if (step_bp_plan_sp)
+            if (cur_plan->GetKind() != ThreadPlan::eKindStepOverBreakpoint)
+            {
+                ThreadPlanStepOverBreakpoint *step_bp_plan = new ThreadPlanStepOverBreakpoint (*this);
+                if (step_bp_plan)
                 {
+                    ThreadPlanSP step_bp_plan_sp;
+                    step_bp_plan->SetPrivate (true);
+
                     if (GetCurrentPlan()->RunState() != eStateStepping)
                     {
-                        ThreadPlanSP continue_plan_sp (new ThreadPlanContinue(*this, false, eVoteNo, eVoteNoOpinion));
-                        continue_plan_sp->SetPrivate (true);
-                        QueueThreadPlan (continue_plan_sp, false);
+                        step_bp_plan->SetAutoContinue(true);
                     }
-                    step_bp_plan_sp->SetPrivate (true);
+                    step_bp_plan_sp.reset (step_bp_plan);
                     QueueThreadPlan (step_bp_plan_sp, false);
                 }
             }
@@ -524,6 +517,7 @@ Thread::ShouldStop (Event* event_ptr)
 
     if (current_plan->PlanExplainsStop())
     {
+        bool over_ride_stop = current_plan->ShouldAutoContinue(event_ptr);
         while (1)
         {
             should_stop = current_plan->ShouldStop(event_ptr);
@@ -558,6 +552,8 @@ Thread::ShouldStop (Event* event_ptr)
                 break;
             }
         }
+        if (over_ride_stop)
+            should_stop = false;
     }
     else
     {
@@ -944,14 +940,6 @@ Thread::QueueThreadPlanForStepThrough (bool abort_other_plans, bool stop_other_t
         if (thread_plan_sp && !thread_plan_sp->ValidatePlan (NULL))
             return false;
     }
-    QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
-}
-
-ThreadPlan *
-Thread::QueueThreadPlanForContinue (bool abort_other_plans, bool stop_other_threads, Vote stop_vote, Vote run_vote, bool immediate)
-{
-    ThreadPlanSP thread_plan_sp (new ThreadPlanContinue (*this, stop_other_threads, stop_vote, run_vote, immediate));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();
 }

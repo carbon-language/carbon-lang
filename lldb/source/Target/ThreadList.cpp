@@ -178,7 +178,7 @@ ThreadList::ShouldStop (Event *event_ptr)
     // Running events should never stop, obviously...
 
 
-    bool should_stop = false;
+    bool should_stop = false;    
     m_process->UpdateThreadListIfNeeded();
 
     collection::iterator pos, end = m_threads.end();
@@ -189,12 +189,12 @@ ThreadList::ShouldStop (Event *event_ptr)
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
-        if ((thread_sp->ThreadStoppedForAReason())
-            && (thread_sp->GetResumeState () != eStateSuspended))
+        if ((thread_sp->GetResumeState () != eStateSuspended) && (thread_sp->ThreadStoppedForAReason()))
         {
-            should_stop |= thread_sp->ShouldStop(event_ptr);
+            should_stop |=  thread_sp->ShouldStop(event_ptr);
         }
     }
+
     if (should_stop)
     {
         for (pos = m_threads.begin(); pos != end; ++pos)

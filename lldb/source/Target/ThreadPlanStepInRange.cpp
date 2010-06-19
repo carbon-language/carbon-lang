@@ -40,7 +40,7 @@ ThreadPlanStepInRange::ThreadPlanStepInRange
     const SymbolContext &addr_context,
     lldb::RunMode stop_others
 ) :
-    ThreadPlanStepRange ("Step Range stepping in", thread, range, addr_context, stop_others),
+    ThreadPlanStepRange (ThreadPlan::eKindStepInRange, "Step Range stepping in", thread, range, addr_context, stop_others),
     ThreadPlanShouldStopHere (this, ThreadPlanStepInRange::DefaultShouldStopHereCallback, NULL)
 {
     SetFlagsToDefault ();

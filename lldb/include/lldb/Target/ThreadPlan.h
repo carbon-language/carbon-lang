@@ -179,10 +179,27 @@ public:
         eThisThread
     } ThreadScope;
 
+    typedef enum
+    {
+        eKindGeneric,
+        eKindBase,
+        eKindCallFunction,
+        eKindStepInstruction,
+        eKindStepOut,
+        eKindStepOverBreakpoint,
+        eKindStepOverRange,
+        eKindStepInRange,
+        eKindRunToAddress,
+        eKindStepThrough,
+        eKindStepUntil
+        
+    } ThreadPlanKind;
+    
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ThreadPlan (const char *name,
+    ThreadPlan (ThreadPlanKind kind,
+                const char *name,
                 Thread &thread,
                 lldb::Vote stop_vote,
                 lldb::Vote run_vote);
@@ -259,6 +276,12 @@ public:
 
     virtual bool
     ShouldStop (Event *event_ptr) = 0;
+    
+    virtual bool
+    ShouldAutoContinue (Event *event_ptr)
+    {
+        return false;
+    }
 
     // Whether a "stop class" event should be reported to the "outside world".  In general
     // if a thread plan is active, events should not be reported.
@@ -313,6 +336,11 @@ public:
     // This pushes \a plan onto the plan stack of the current plan's thread.
     void
     PushPlan (lldb::ThreadPlanSP &thread_plan_sp);
+    
+    ThreadPlanKind GetKind() const
+    {
+        return m_kind;
+    }
 
 protected:
     //------------------------------------------------------------------
@@ -342,6 +370,7 @@ private:
     //------------------------------------------------------------------
     static lldb::user_id_t GetNextID ();
 
+    ThreadPlanKind m_kind;
     std::string m_name;
     Mutex m_plan_complete_mutex;
     bool m_plan_complete;

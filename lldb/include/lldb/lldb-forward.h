@@ -121,7 +121,6 @@ class   TargetList;
 class   Thread;
 class   ThreadList;
 class   ThreadPlan;
-class   ThreadPlanContinue;
 class   ThreadPlanBase;
 class   ThreadPlanStepInstruction;
 class   ThreadPlanStepOut;

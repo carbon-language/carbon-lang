@@ -39,7 +39,7 @@ ThreadPlanStepOverRange::ThreadPlanStepOverRange
     lldb::RunMode stop_others,
     bool okay_to_discard
 ) :
-    ThreadPlanStepRange ("Step range stepping over", thread, range, addr_context, stop_others)
+    ThreadPlanStepRange (ThreadPlan::eKindStepOverRange, "Step range stepping over", thread, range, addr_context, stop_others)
 {
     SetOkayToDiscard (okay_to_discard);
 }

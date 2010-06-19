@@ -39,7 +39,8 @@ public:
 
 protected:
 
-    ThreadPlanStepRange (const char *name,
+    ThreadPlanStepRange (ThreadPlanKind kind,
+                         const char *name,
                          Thread &thread,
                          const AddressRange &range,
                          const SymbolContext &addr_context,

@@ -38,7 +38,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     size_t num_addresses,
     bool stop_others
 ) :
-    ThreadPlan ("Step out", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindStepUntil, "Step until", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_step_from_insn (LLDB_INVALID_ADDRESS),
     m_return_addr (LLDB_INVALID_ADDRESS),
     m_return_bp_id(LLDB_INVALID_BREAK_ID),

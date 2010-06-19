@@ -30,7 +30,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 
 ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) :
-    ThreadPlan ("Step through trampolines and prologues", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindStepThrough, "Step through trampolines and prologues", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_start_address (0),
     m_stop_others (stop_others)
 {

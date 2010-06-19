@@ -494,31 +494,6 @@ public:
     ///    \b true if we discard the currently queued plans and replace them with this one.
     ///    Otherwise this plan will go on the end of the plan stack.
     ///
-    /// @param[in] stop_other_threads
-    ///    \b true if we will stop other threads while we single step this one.
-    ///
-    /// @param[in] stop_vote
-    /// @param[in] run_vote
-    ///    See standard meanings for the stop & run votes in ThreadPlan.h.
-    ///
-    /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
-    //------------------------------------------------------------------
-    virtual ThreadPlan *
-    QueueThreadPlanForContinue (bool abort_other_plans,
-                                bool stop_other_threads,
-                                    lldb::Vote stop_vote,
-                                    lldb::Vote run_vote = lldb::eVoteNoOpinion,
-                                    bool immediate = false);
-    //------------------------------------------------------------------
-    /// Gets the plan used to continue from the current PC.
-    /// This is a simple plan, mostly useful as a backstop when you are continuing
-    /// for some particular purpose.
-    ///
-    /// @param[in] abort_other_plans
-    ///    \b true if we discard the currently queued plans and replace them with this one.
-    ///    Otherwise this plan will go on the end of the plan stack.
-    ///
     /// @param[in] target_addr
     ///    The address to which we're running.
     ///

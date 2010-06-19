@@ -21,8 +21,6 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/ThreadPlanContinue.h"
-#include "lldb/Target/ThreadPlanStepOverBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -34,7 +32,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 
 ThreadPlanBase::ThreadPlanBase (Thread &thread) :
-    ThreadPlan("base plan", thread, eVoteYes, eVoteNoOpinion)
+    ThreadPlan(ThreadPlan::eKindBase, "base plan", thread, eVoteYes, eVoteNoOpinion)
 {
 
 }
@@ -94,13 +92,16 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
                 {
                     // We want to step over the breakpoint and then continue.  So push these two plans.
 
-                    StoppointCallbackContext hit_context(event_ptr, &m_thread.GetProcess(), &m_thread, m_thread.GetStackFrameAtIndex(0).get());
-                    bool should_stop = m_thread.GetProcess().GetBreakpointSiteList().ShouldStop(&hit_context, bp_site_sp->GetID());
+                    StoppointCallbackContext hit_context(event_ptr, &m_thread.GetProcess(), &m_thread, 
+                                                         m_thread.GetStackFrameAtIndex(0).get());
+                    bool should_stop = m_thread.GetProcess().GetBreakpointSiteList().ShouldStop(&hit_context, 
+                                                                                                bp_site_sp->GetID());
 
                     if (!should_stop)
                     {
-                        // If we aren't going to stop at this breakpoint, and it is internal, don't report this stop or the subsequent
-                        // running event.  Otherwise we will post the stopped & running, but the stopped event will get marked
+                        // If we aren't going to stop at this breakpoint, and it is internal, 
+                        // don't report this stop or the subsequent running event.  
+                        // Otherwise we will post the stopped & running, but the stopped event will get marked
                         // with "restarted" so the UI will know to wait and expect the consequent "running".
                         uint32_t i;
                         bool is_wholly_internal = true;

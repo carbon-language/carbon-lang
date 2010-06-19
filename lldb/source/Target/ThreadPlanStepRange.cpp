@@ -32,8 +32,8 @@ using namespace lldb_private;
 // based on the value of \a type.
 //----------------------------------------------------------------------
 
-ThreadPlanStepRange::ThreadPlanStepRange (const char *name, Thread &thread, const AddressRange &range, const SymbolContext &addr_context, lldb::RunMode stop_others) :
-    ThreadPlan (name, thread, eVoteNoOpinion, eVoteNoOpinion),
+ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind, const char *name, Thread &thread, const AddressRange &range, const SymbolContext &addr_context, lldb::RunMode stop_others) :
+    ThreadPlan (ThreadPlan::eKindGeneric, name, thread, eVoteNoOpinion, eVoteNoOpinion),
     m_address_range (range),
     m_addr_context (addr_context),
     m_stop_others (stop_others),

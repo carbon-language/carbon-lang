@@ -34,7 +34,7 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     Address &address,
     bool stop_others
 ) :
-    ThreadPlan ("Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_stop_others (stop_others),
     m_address (LLDB_INVALID_ADDRESS),
     m_break_id (LLDB_INVALID_BREAK_ID)
@@ -49,7 +49,7 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     lldb::addr_t address,
     bool stop_others
 ) :
-    ThreadPlan ("Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to breakpoint plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_stop_others (stop_others),
     m_address (address),
     m_break_id (LLDB_INVALID_BREAK_ID)

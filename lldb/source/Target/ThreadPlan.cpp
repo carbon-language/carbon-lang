@@ -23,7 +23,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ThreadPlan constructor
 //----------------------------------------------------------------------
-ThreadPlan::ThreadPlan(const char *name, Thread &thread, Vote stop_vote, Vote run_vote) :
+ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vote stop_vote, Vote run_vote) :
+    m_kind (kind),
     m_name (name),
     m_thread (thread),
     m_plan_complete(false),

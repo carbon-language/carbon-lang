@@ -36,7 +36,7 @@ ThreadPlanStepOut::ThreadPlanStepOut
     Vote stop_vote,
     Vote run_vote
 ) :
-    ThreadPlan ("Step out", thread, stop_vote, run_vote),
+    ThreadPlan (ThreadPlan::eKindStepOut, "Step out", thread, stop_vote, run_vote),
     m_step_from_context (context),
     m_step_from_insn (LLDB_INVALID_ADDRESS),
     m_return_addr (LLDB_INVALID_ADDRESS),

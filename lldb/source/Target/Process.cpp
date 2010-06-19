@@ -1313,7 +1313,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // We've stopped.  First see if we're going to restart the target.
             // If we are going to stop, then we always broadcast the event.
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
-            // If no thread has an opinion, we also report it.
+            // If no thread has an opinion, we don't report it.
             if (state != eStateInvalid)
             {
 
@@ -1326,8 +1326,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                         case eVoteYes:
                             Process::ProcessEventData::SetRestartedInEvent (event_ptr, true);
                         case eVoteNoOpinion:
-                            return_value = true;
-                            break;
                         case eVoteNo:
                             return_value = false;
                             break;

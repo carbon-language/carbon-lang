@@ -27,13 +27,15 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 
 ThreadPlanStepOverBreakpoint::ThreadPlanStepOverBreakpoint (Thread &thread) :
-    ThreadPlan ("Step over breakpoint trap",
+    ThreadPlan (ThreadPlan::eKindStepOverBreakpoint, "Step over breakpoint trap",
                 thread,
                 eVoteNo,
                 eVoteNoOpinion),  // We need to report the run since this happens
                             // first in the thread plan stack when stepping
                             // over a breakpoint
-    m_breakpoint_addr (LLDB_INVALID_ADDRESS)
+    m_breakpoint_addr (LLDB_INVALID_ADDRESS),
+    m_auto_continue(false)
+
 {
     m_breakpoint_addr = m_thread.GetRegisterContext()->GetPC();
     m_breakpoint_site_id =  m_thread.GetProcess().GetBreakpointSiteList().FindIDByAddress (m_breakpoint_addr);
@@ -128,3 +130,14 @@ ThreadPlanStepOverBreakpoint::MischiefManaged ()
     }
 }
 
+void
+ThreadPlanStepOverBreakpoint::SetAutoContinue (bool do_it)
+{
+    m_auto_continue = do_it;
+}
+
+bool
+ThreadPlanStepOverBreakpoint::ShouldAutoContinue (Event *event_ptr)
+{
+    return m_auto_continue;
+}
