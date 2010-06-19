@@ -2850,9 +2850,6 @@ def vmovImm64 : PatLeaf<(build_vector), [{
   return ARM::getNEONModImm(N, 8, true, *CurDAG).getNode() != 0;
 }], VMOV_get_imm64>;
 
-// Note: Some of the cmode bits in the following VMOV instructions need to
-// be encoded based on the immed values.
-
 let isReMaterializable = 1 in {
 def VMOVv8i8  : N1ModImm<1, 0b000, 0b1110, 0, 0, 0, 1, (outs DPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
