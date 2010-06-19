@@ -1268,7 +1268,7 @@ public:
   /// GenerateCXXGlobalDtorFunc - Generates code for destroying global
   /// variables.
   void GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
-                                 const std::vector<std::pair<llvm::Constant*,
+                                 const std::vector<std::pair<llvm::WeakVH,
                                    llvm::Constant*> > &DtorsAndObjects);
 
   void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn, const VarDecl *D);

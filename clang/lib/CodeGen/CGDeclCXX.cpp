@@ -193,11 +193,6 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   AddGlobalCtor(Fn);
 }
 
-void CodeGenModule::AddCXXDtorEntry(llvm::Constant *DtorFn,
-                                    llvm::Constant *Object) {
-  CXXGlobalDtors.push_back(std::make_pair(DtorFn, Object));
-}
-
 void CodeGenModule::EmitCXXGlobalDtorFunc() {
   if (CXXGlobalDtors.empty())
     return;
@@ -238,14 +233,14 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
 }
 
 void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
-                const std::vector<std::pair<llvm::Constant*, llvm::Constant*> >
+                  const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
                 SourceLocation());
 
   // Emit the dtors, in reverse order from construction.
   for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
-    llvm::Constant *Callee = DtorsAndObjects[e - i - 1].first;
+    llvm::Value *Callee = DtorsAndObjects[e - i - 1].first;
     llvm::CallInst *CI = Builder.CreateCall(Callee,
                                             DtorsAndObjects[e - i - 1].second);
     // Make sure the call and the callee agree on calling convention.

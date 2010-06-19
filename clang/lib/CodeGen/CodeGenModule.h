@@ -142,7 +142,7 @@ class CodeGenModule : public BlockModule {
 
   /// CXXGlobalDtors - Global destructor functions and arguments that need to
   /// run on termination.
-  std::vector<std::pair<llvm::Constant*,llvm::Constant*> > CXXGlobalDtors;
+  std::vector<std::pair<llvm::WeakVH,llvm::Constant*> > CXXGlobalDtors;
 
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
@@ -350,7 +350,9 @@ public:
 
   /// AddCXXDtorEntry - Add a destructor and object to add to the C++ global
   /// destructor function.
-  void AddCXXDtorEntry(llvm::Constant *DtorFn, llvm::Constant *Object);
+  void AddCXXDtorEntry(llvm::Constant *DtorFn, llvm::Constant *Object) {
+    CXXGlobalDtors.push_back(std::make_pair(DtorFn, Object));
+  }
 
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
