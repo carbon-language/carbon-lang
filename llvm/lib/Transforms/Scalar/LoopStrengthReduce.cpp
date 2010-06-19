@@ -1835,6 +1835,8 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
     NewMaxOffset = NewOffset;
   }
   // Check for a mismatched access type, and fall back conservatively as needed.
+  // TODO: Be less conservative when the type is similar and can use the same
+  // addressing modes.
   if (Kind == LSRUse::Address && AccessTy != LU.AccessTy)
     NewAccessTy = Type::getVoidTy(AccessTy->getContext());
 
