@@ -199,12 +199,6 @@ void X86MCCodeEmitter::EmitSegmentOverridePrefix(const MCOperand &Op,
   if (Op.getReg() == 0)
     return;
 
-#if 0
-  // Otherwise, emit an address size prefix if we didn't already emit one.
-  if (Is64BitMode && !(TSFlags & X86II::AdSize))
-    EmitByte(0x67, CurByte, OS);
-#endif
-
   // Check if we need an override.
   switch (Op.getReg()) {
   case X86::CS: EmitByte(0x2E, CurByte, OS); return;
