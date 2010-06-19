@@ -414,6 +414,17 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                                   (mem_frag addr:$src2)))],d>;
 }
 
+/// sse12_fp_packed_logical_rm - SSE 1 & 2 packed instructions class
+multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
+                                      string OpcodeStr, X86MemOperand x86memop,
+                                      list<dag> pat_rr, list<dag> pat_rm> {
+  let isCommutable = 1 in
+    def rr : PI<opc, MRMSrcReg, (outs RC:$dst),
+                (ins RC:$src1, RC:$src2), OpcodeStr, pat_rr, d>;
+  def rm : PI<opc, MRMSrcMem, (outs RC:$dst),
+                (ins RC:$src1, x86memop:$src2), OpcodeStr, pat_rm, d>;
+}
+
 /// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
 multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                                string asm, string SSEVer, string FPSizeStr,
@@ -1040,49 +1051,40 @@ defm RSQRT : sse1_fp_unop_rm<0x52, "rsqrt", X86frsqrt,
 defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
                              int_x86_sse_rcp_ss, int_x86_sse_rcp_ps>;
 
-/// sse12_fp_pack_logical - SSE 1 & 2 packed FP logical ops
+/// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
 ///
-multiclass sse12_fp_pack_logical<bits<8> opc, string OpcodeStr,
+multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                  SDNode OpNode, int HasPat = 0,
-                                 bit Commutable = 1,
                                  list<list<dag>> Pattern = []> {
-  def PSrr : PSI<opc, MRMSrcReg, (outs VR128:$dst),
-       (ins VR128:$src1, VR128:$src2),
-       !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"),
-       !if(HasPat, Pattern[0],
-                   [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
-                                                    VR128:$src2)))])>
-       { let isCommutable = Commutable; }
+  let Constraints = "$src1 = $dst" in {
+    defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
+         !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !if(HasPat, Pattern[0], // rr
+                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
+                                                      VR128:$src2)))]),
+         !if(HasPat, Pattern[2], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>, TB;
 
-  def PDrr : PDI<opc, MRMSrcReg, (outs VR128:$dst),
-       (ins VR128:$src1, VR128:$src2),
-       !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"),
-       !if(HasPat, Pattern[1],
-                   [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                             (bc_v2i64 (v2f64 VR128:$src2))))])>
-       { let isCommutable = Commutable; }
-
-  def PSrm : PSI<opc, MRMSrcMem, (outs VR128:$dst),
-       (ins VR128:$src1, f128mem:$src2),
-       !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"),
-       !if(HasPat, Pattern[2],
-                   [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                             (memopv2i64 addr:$src2)))])>;
-
-  def PDrm : PDI<opc, MRMSrcMem, (outs VR128:$dst),
-       (ins VR128:$src1, f128mem:$src2),
-       !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"),
-       !if(HasPat, Pattern[3],
-                   [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                             (memopv2i64 addr:$src2)))])>;
+    defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
+         !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !if(HasPat, Pattern[1], // rr
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (bc_v2i64 (v2f64
+                                               VR128:$src2))))]),
+         !if(HasPat, Pattern[3], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                                                    TB, OpSize;
+  }
 }
 
 // Logical
-let Constraints = "$src1 = $dst" in {
-  defm AND  : sse12_fp_pack_logical<0x54, "and", and>;
-  defm OR   : sse12_fp_pack_logical<0x56, "or", or>;
-  defm XOR  : sse12_fp_pack_logical<0x57, "xor", xor>;
-  defm ANDN : sse12_fp_pack_logical<0x55, "andn", undef /* dummy */, 1, 0, [
+defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
+defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
+defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
+let isCommutable = 0 in
+  defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
     // single r+r
     [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
                                        (bc_v2i64 (v4i32 immAllOnesV))),
@@ -1097,7 +1099,6 @@ let Constraints = "$src1 = $dst" in {
     // double r+m
     [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
                            (memopv2i64 addr:$src2)))]]>;
-}
 
 let Constraints = "$src1 = $dst" in {
   def CMPPSrri : PSIi8<0xC2, MRMSrcReg,
