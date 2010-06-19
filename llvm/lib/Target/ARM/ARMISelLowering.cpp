@@ -2949,7 +2949,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
   }
 
   default:
-    llvm_unreachable("unexpected size for EncodeNEONModImm");
+    llvm_unreachable("unexpected size for isNEONModifiedImm");
     return SDValue();
   }
 
