@@ -699,11 +699,10 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
 /// These three forms can each be reg+reg or reg+mem, so there are a total of
 /// six "instructions".
 ///
-let Constraints = "$src1 = $dst" in {
 multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                  SDNode OpNode, bit Commutable = 0> {
 
-  let Constraints = "", isAsmParserOnly = 1 in {
+  let isAsmParserOnly = 1 in {
     defm V#NAME#SS : sse12_fp_scalar<opc,
         !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                    OpNode, FR32, f32mem>, XS, VEX_4V;
@@ -756,7 +755,6 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
        !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
                   "2", "_sd", sdmem, sse_load_f64>, XD;
   }
-}
 }
 
 // Arithmetic instructions
