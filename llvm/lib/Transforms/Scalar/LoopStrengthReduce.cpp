@@ -976,6 +976,8 @@ public:
   void dump() const;
 };
 
+}
+
 /// HasFormula - Test whether this use as a formula which has the same
 /// registers as the given formula.
 bool LSRUse::HasFormulaWithSameRegs(const Formula &F) const {
@@ -1202,6 +1204,8 @@ static bool isAlwaysFoldable(const SCEV *S,
 
   return isLegalUse(AM, MinOffset, MaxOffset, Kind, AccessTy, TLI);
 }
+
+namespace {
 
 /// FormulaSorter - This class implements an ordering for formulae which sorts
 /// the by their standalone cost.
