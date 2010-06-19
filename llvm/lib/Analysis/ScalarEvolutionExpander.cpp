@@ -21,6 +21,40 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
+/// ReuseOrCreateCast - Arange for there to be a cast of V to Ty at IP,
+/// reusing an existing cast if a suitable one exists, moving an existing
+/// cast if a suitable one exists but isn't in the right place, or
+/// or creating a new one.
+Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
+                                       Instruction::CastOps Op,
+                                       BasicBlock::iterator IP) {
+  // Check to see if there is already a cast!
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI)
+    if ((*UI)->getType() == Ty)
+      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
+        if (CI->getOpcode() == Op) {
+          // If the cast isn't where we want it, fix it.
+          if (BasicBlock::iterator(CI) != IP) {
+            // Create a new cast, and leave the old cast in place in case
+            // it is being used as an insert point. Clear its operand
+            // so that it doesn't hold anything live.
+            Instruction *NewCI = CastInst::Create(Op, V, Ty, "", IP);
+            NewCI->takeName(CI);
+            CI->replaceAllUsesWith(NewCI);
+            CI->setOperand(0, UndefValue::get(V->getType()));
+            rememberInstruction(NewCI);
+            return NewCI;
+          }
+          return CI;
+        }
+
+  // Create a new cast.
+  Instruction *I = CastInst::Create(Op, V, Ty, V->getName(), IP);
+  rememberInstruction(I);
+  return I;
+}
+
 /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
 /// which must be possible with a noop cast, doing what we can to share
 /// the casts.
@@ -54,71 +88,29 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
         return CE->getOperand(0);
   }
 
+  // Fold a cast of a constant.
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getCast(Op, C, Ty);
 
+  // Cast the argument at the beginning of the entry block, after
+  // any bitcasts of other arguments.
   if (Argument *A = dyn_cast<Argument>(V)) {
-    // Check to see if there is already a cast!
-    for (Value::use_iterator UI = A->use_begin(), E = A->use_end();
-         UI != E; ++UI)
-      if ((*UI)->getType() == Ty)
-        if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
-          if (CI->getOpcode() == Op) {
-            // If the cast isn't the first instruction of the function, move it.
-            if (BasicBlock::iterator(CI) !=
-                A->getParent()->getEntryBlock().begin()) {
-              // Recreate the cast at the beginning of the entry block.
-              // The old cast is left in place in case it is being used
-              // as an insert point.
-              Instruction *NewCI =
-                CastInst::Create(Op, V, Ty, "",
-                                 A->getParent()->getEntryBlock().begin());
-              NewCI->takeName(CI);
-              CI->replaceAllUsesWith(NewCI);
-              return NewCI;
-            }
-            return CI;
-          }
-
-    Instruction *I = CastInst::Create(Op, V, Ty, V->getName(),
-                                      A->getParent()->getEntryBlock().begin());
-    rememberInstruction(I);
-    return I;
+    BasicBlock::iterator IP = A->getParent()->getEntryBlock().begin();
+    while ((isa<BitCastInst>(IP) &&
+            isa<Argument>(cast<BitCastInst>(IP)->getOperand(0)) &&
+            cast<BitCastInst>(IP)->getOperand(0) != A) ||
+           isa<DbgInfoIntrinsic>(IP))
+      ++IP;
+    return ReuseOrCreateCast(A, Ty, Op, IP);
   }
 
+  // Cast the instruction immediately after the instruction.
   Instruction *I = cast<Instruction>(V);
-
-  // Check to see if there is already a cast.  If there is, use it.
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI) {
-    if ((*UI)->getType() == Ty)
-      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
-        if (CI->getOpcode() == Op) {
-          BasicBlock::iterator It = I; ++It;
-          if (isa<InvokeInst>(I))
-            It = cast<InvokeInst>(I)->getNormalDest()->begin();
-          while (isa<PHINode>(It) || isa<DbgInfoIntrinsic>(It)) ++It;
-          if (It != BasicBlock::iterator(CI)) {
-            // Recreate the cast after the user.
-            // The old cast is left in place in case it is being used
-            // as an insert point.
-            Instruction *NewCI = CastInst::Create(Op, V, Ty, "", It);
-            NewCI->takeName(CI);
-            CI->replaceAllUsesWith(NewCI);
-            rememberInstruction(NewCI);
-            return NewCI;
-          }
-          rememberInstruction(CI);
-          return CI;
-        }
-  }
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP) || isa<DbgInfoIntrinsic>(IP)) ++IP;
-  Instruction *CI = CastInst::Create(Op, V, Ty, V->getName(), IP);
-  rememberInstruction(CI);
-  return CI;
+  return ReuseOrCreateCast(I, Ty, Op, IP);
 }
 
 /// InsertBinop - Insert the specified binary operator, doing a small amount

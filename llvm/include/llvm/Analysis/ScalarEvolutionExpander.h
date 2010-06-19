@@ -128,6 +128,14 @@ namespace llvm {
     /// of work to avoid inserting an obviously redundant operation.
     Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS, Value *RHS);
 
+    /// ReuseOrCreateCast - Arange for there to be a cast of V to Ty at IP,
+    /// reusing an existing cast if a suitable one exists, moving an existing
+    /// cast if a suitable one exists but isn't in the right place, or
+    /// or creating a new one.
+    Value *ReuseOrCreateCast(Value *V, const Type *Ty,
+                             Instruction::CastOps Op,
+                             BasicBlock::iterator IP);
+
     /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
     /// which must be possible with a noop cast, doing what we can to
     /// share the casts.
