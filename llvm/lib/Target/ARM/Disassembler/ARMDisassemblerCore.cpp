@@ -2290,7 +2290,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
            "Reg operand expected");
 
     RegClass = OpInfo[OpIdx].RegClass;
-    while (OpIdx < NumOps && OpInfo[OpIdx].RegClass == RegClass) {
+    while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
                       getRegisterEnum(B, RegClass, Rd,
                                       UseDRegPair(Opcode))));
@@ -2310,7 +2310,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
     // possible TIED_TO DPR/QPR's (ignored), then possible lane index.
     RegClass = OpInfo[0].RegClass;
 
-    while (OpIdx < NumOps && OpInfo[OpIdx].RegClass == RegClass) {
+    while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       MI.addOperand(MCOperand::CreateReg(
                       getRegisterEnum(B, RegClass, Rd,
                                       UseDRegPair(Opcode))));
@@ -2336,7 +2336,7 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
       ++OpIdx;
     }
 
-    while (OpIdx < NumOps && OpInfo[OpIdx].RegClass == RegClass) {
+    while (OpIdx < NumOps && (unsigned)OpInfo[OpIdx].RegClass == RegClass) {
       assert(TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1 &&
              "Tied to operand expected");
       MI.addOperand(MCOperand::CreateReg(0));
