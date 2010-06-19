@@ -590,6 +590,9 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   }
   }
 
+  // FIXME: Hack. See PCHDeclWriter::VisitTypeDecl.
+  D->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
+
   // FIXME: this is far from complete
 
   if (D->isDefinition()) {

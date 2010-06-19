@@ -136,7 +136,14 @@ void PCHDeclWriter::VisitNamedDecl(NamedDecl *D) {
 
 void PCHDeclWriter::VisitTypeDecl(TypeDecl *D) {
   VisitNamedDecl(D);
-  Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
+  if (isa<CXXRecordDecl>(D)) {
+    // FIXME: Hack. To read a templated CXXRecordDecl from PCH, we need an
+    // initialized CXXRecordDecl before creating an InjectedClassNameType.
+    // Delay emitting/reading CXXRecordDecl's TypeForDecl until when we handle
+    // CXXRecordDecl emitting/initialization.
+    Writer.AddTypeRef(QualType(), Record);
+  } else
+    Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
 }
 
 void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
@@ -590,6 +597,9 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   } else {
     Record.push_back(CXXRecNotTemplate);
   }
+
+  // FIXME: Hack. See PCHDeclWriter::VisitTypeDecl.
+  Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
 
   if (D->isDefinition()) {
     unsigned NumBases = D->getNumBases();
