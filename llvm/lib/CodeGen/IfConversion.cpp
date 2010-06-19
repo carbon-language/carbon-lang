@@ -994,7 +994,7 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
     if (TII->ReverseBranchCondition(Cond))
       assert(false && "Unable to reverse branch condition!");
 
-  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
   SmallSet<unsigned, 4> Redefs;
   InitPredRedefs(CvtBBI->BB, Redefs, TRI);
@@ -1085,7 +1085,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     }
   }
 
-  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   SmallSet<unsigned, 4> Redefs;
   InitPredRedefs(CvtBBI->BB, Redefs, TRI);
@@ -1205,7 +1205,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Remove the conditional branch from entry to the blocks.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
 
-  // Initialize liveins to the first BB. These are potentiall re-defined by
+  // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
   SmallSet<unsigned, 4> Redefs;
   InitPredRedefs(BBI1->BB, Redefs, TRI);
@@ -1307,7 +1307,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
       llvm_unreachable(0);
     }
 
-    // If the predicated instruction now re-defines a register as the result of
+    // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
     UpdatePredRedefs(I, Redefs, TRI, true);
   }
@@ -1348,7 +1348,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
       }
     }
 
-    // If the predicated instruction now re-defines a register as the result of
+    // If the predicated instruction now redefines a register as the result of
     // if-conversion, add an implicit kill.
     UpdatePredRedefs(MI, Redefs, TRI, true);
   }

@@ -72,7 +72,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Enumerate types used by the type symbol table.
   EnumerateTypeSymbolTable(M->getTypeSymbolTable());
 
-  // Insert constants and metadata  that are named at module level into the slot 
+  // Insert constants and metadata that are named at module level into the slot 
   // pool so that the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());
   EnumerateMDSymbolTable(M->getMDSymbolTable());
