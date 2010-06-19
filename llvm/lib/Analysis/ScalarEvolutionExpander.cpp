@@ -46,6 +46,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
             rememberInstruction(NewCI);
             return NewCI;
           }
+          rememberInstruction(CI);
           return CI;
         }
 
