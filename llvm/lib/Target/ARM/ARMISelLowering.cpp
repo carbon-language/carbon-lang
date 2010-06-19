@@ -1389,7 +1389,6 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
-
   const Function *CallerF = DAG.getMachineFunction().getFunction();
   CallingConv::ID CallerCC = CallerF->getCallingConv();
   bool CCMatch = CallerCC == CalleeCC;
@@ -1407,18 +1406,28 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // On Thumb, for the moment, we can only do this to functions defined in this
-  // compilation, or to indirect calls.  A Thumb B to an ARM function is not
-  // easily fixed up in the linker, unlike BL.
-  if (Subtarget->isThumb()) {
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  // FIXME: Completely disable sibcal for Thumb1 since Thumb1RegisterInfo::
+  // emitEpilogue is not ready for them.
+  if (Subtarget->isThumb1Only())
+    return false;
+
+  if (isa<ExternalSymbolSDNode>(Callee))
+      return false;
+
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    if (Subtarget->isThumb1Only())
+      return false;
+
+    // On Thumb, for the moment, we can only do this to functions defined in this
+    // compilation, or to indirect calls.  A Thumb B to an ARM function is not
+    // easily fixed up in the linker, unlike BL.
+    if (Subtarget->isThumb()) {
       const GlobalValue *GV = G->getGlobal();
       if (GV->isDeclaration() || GV->isWeakForLinker())
         return false;
-    } else if (isa<ExternalSymbolSDNode>(Callee)) {
-      return false;
     }
   }
+
 
   // If the calling conventions do not match, then we'd better make sure the
   // results are returned in the same way as what the caller expects.

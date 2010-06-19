@@ -7,22 +7,25 @@
 
 declare void @g(i32, i32, i32, i32)
 
-define void @f() {
+define void @t1() {
+; CHECKELF: t1:
 ; CHECKELF: PLT
         call void @g( i32 1, i32 2, i32 3, i32 4 )
         ret void
 }
 
-define void @g.upgrd.1() {
+define void @t2() {
+; CHECKV4: t2:
 ; CHECKV4: bx r0 @ TAILCALL
+; CHECKV5: t2:
 ; CHECKV5: bx r0 @ TAILCALL
         %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
         %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
 }
 
-define i32* @m_231b(i32, i32, i32*, i32*, i32*) nounwind {
-; CHECKV4: m_231b
+define i32* @t3(i32, i32, i32*, i32*, i32*) nounwind {
+; CHECKV4: t3:
 ; CHECKV4: bx r{{.*}}
 BB0:
   %5 = inttoptr i32 %0 to i32*                    ; <i32*> [#uses=1]

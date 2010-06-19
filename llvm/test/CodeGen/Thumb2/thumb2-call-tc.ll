@@ -11,7 +11,7 @@ define void @f() {
 
 ; LINUX: f:
 ; LINUX: bl g
-        call void @g( i32 1, i32 2, i32 3, i32 4 )
+        tail call void @g( i32 1, i32 2, i32 3, i32 4 )
         ret void
 }
 
