@@ -590,6 +590,47 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   return llvm::ConstantStruct::get(VMContext, Fields, 4, false);
 }
 
+static CodeGenModule::GVALinkage
+GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
+  // If this is a static data member, compute the kind of template
+  // specialization. Otherwise, this variable is not part of a
+  // template.
+  TemplateSpecializationKind TSK = TSK_Undeclared;
+  if (VD->isStaticDataMember())
+    TSK = VD->getTemplateSpecializationKind();
+
+  Linkage L = VD->getLinkage();
+  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
+      VD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return CodeGenModule::GVA_Internal;
+
+  case ExternalLinkage:
+    switch (TSK) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      return CodeGenModule::GVA_StrongExternal;
+
+    case TSK_ExplicitInstantiationDeclaration:
+      llvm_unreachable("Variable should not be instantiated");
+      // Fall through to treat this like any other instantiation.
+        
+    case TSK_ExplicitInstantiationDefinition:
+      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
+
+    case TSK_ImplicitInstantiation:
+      return CodeGenModule::GVA_TemplateInstantiation;      
+    }
+  }
+
+  return CodeGenModule::GVA_StrongExternal;
+}
+
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   // Never defer when EmitAllDecls is specified or the decl has
   // attribute used.
@@ -638,24 +679,10 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     }
   }
       
-  // Static data may be deferred, but out-of-line static data members
-  // cannot be.
-  Linkage L = VD->getLinkage();
-  if (L == ExternalLinkage && getContext().getLangOptions().CPlusPlus &&
-      VD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
-
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
-    // Initializer has side effects?
-    if (VD->getInit() && VD->getInit()->HasSideEffects(Context))
-      return false;
-    return !(VD->isStaticDataMember() && VD->isOutOfLine());
-
-  case ExternalLinkage:
-    break;
+  GVALinkage L = GetLinkageForVariable(getContext(), VD);
+  if (L == GVA_Internal || L == GVA_TemplateInstantiation) {
+    if (!(VD->getInit() && VD->getInit()->HasSideEffects(Context)))
+      return true;
   }
 
   return false;
@@ -1051,47 +1078,6 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
   
   // Silence GCC warning.
   return llvm::GlobalVariable::WeakODRLinkage;
-}
-
-static CodeGenModule::GVALinkage
-GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
-  // If this is a static data member, compute the kind of template
-  // specialization. Otherwise, this variable is not part of a
-  // template.
-  TemplateSpecializationKind TSK = TSK_Undeclared;
-  if (VD->isStaticDataMember())
-    TSK = VD->getTemplateSpecializationKind();
-
-  Linkage L = VD->getLinkage();
-  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
-      VD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
-
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
-    return CodeGenModule::GVA_Internal;
-
-  case ExternalLinkage:
-    switch (TSK) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      return CodeGenModule::GVA_StrongExternal;
-
-    case TSK_ExplicitInstantiationDeclaration:
-      llvm_unreachable("Variable should not be instantiated");
-      // Fall through to treat this like any other instantiation.
-        
-    case TSK_ExplicitInstantiationDefinition:
-      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
-
-    case TSK_ImplicitInstantiation:
-      return CodeGenModule::GVA_TemplateInstantiation;      
-    }
-  }
-
-  return CodeGenModule::GVA_StrongExternal;
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(const llvm::Type *Ty) const {
