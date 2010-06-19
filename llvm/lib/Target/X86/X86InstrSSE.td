@@ -719,7 +719,7 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
 /// six "instructions".
 ///
 multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                 SDNode OpNode, bit Commutable = 0> {
+                                   SDNode OpNode> {
 
   let isAsmParserOnly = 1 in {
     defm V#NAME#SS : sse12_fp_scalar<opc,
@@ -777,8 +777,8 @@ multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
 }
 
 // Arithmetic instructions
-defm ADD : basic_sse12_fp_binop_rm<0x58, "add", fadd, 1>;
-defm MUL : basic_sse12_fp_binop_rm<0x59, "mul", fmul, 1>;
+defm ADD : basic_sse12_fp_binop_rm<0x58, "add", fadd>;
+defm MUL : basic_sse12_fp_binop_rm<0x59, "mul", fmul>;
 
 let isCommutable = 0 in {
   defm SUB : basic_sse12_fp_binop_rm<0x5C, "sub", fsub>;
@@ -795,7 +795,7 @@ let isCommutable = 0 in {
 /// This provides a total of eight "instructions".
 ///
 multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                            SDNode OpNode, bit Commutable = 0> {
+                             SDNode OpNode> {
 
   let isAsmParserOnly = 1 in {
     // Scalar operation, reg+reg.
