@@ -17,7 +17,7 @@ ScheduleHazardRecognizer::HazardType
 Thumb2HazardRecognizer::getHazardType(SUnit *SU) {
   if (ITBlockSize) {
     MachineInstr *MI = SU->getInstr();
-    if (MI != ITBlockMIs[ITBlockSize-1])
+    if (!MI->isDebugValue() && MI != ITBlockMIs[ITBlockSize-1])
       return Hazard;
   }
 
@@ -42,6 +42,8 @@ void Thumb2HazardRecognizer::EmitInstruction(SUnit *SU) {
     MachineBasicBlock::iterator I = MI;
     for (unsigned i = 0; i < ITBlockSize; ++i) {
       ++I;
+      while (I->isDebugValue())
+        ++I;
       ITBlockMIs[ITBlockSize-1-i] = &*I;
     }
   }
