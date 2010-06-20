@@ -278,11 +278,11 @@ SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
 
   // Idempotent ops (like a*1) can still change the type of an expression.
   // Wrap the LHS up in a NonLoc again and let EvalCastNL do the dirty work.
-  if (isIdempotent)
+  if (isIdempotent) {
     if (SymbolRef LHSSym = dyn_cast<SymbolData>(LHS))
       return EvalCastNL(nonloc::SymbolVal(LHSSym), resultTy);
-    else
-      return EvalCastNL(nonloc::SymExprVal(LHS), resultTy);
+    return EvalCastNL(nonloc::SymExprVal(LHS), resultTy);
+  }
 
   // If we reach this point, the expression cannot be simplified.
   // Make a SymExprVal for the entire thing.
