@@ -6618,6 +6618,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
             SDNode *NewBR =
               DAG.UpdateNodeOperands(User, User->getOperand(0), Dest);
             assert(NewBR == User);
+            (void)NewBR;
             Dest = FalseBB;
 
             Chain = DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
