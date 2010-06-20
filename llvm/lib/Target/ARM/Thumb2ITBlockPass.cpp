@@ -317,12 +317,14 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
     // If not, then there is nothing to be gained by moving the copy.
     MachineBasicBlock::iterator I = MI; ++I;
     MachineBasicBlock::iterator E = MI->getParent()->end();
-    while (I != E && I->isDebugValue())
-      ++I;
-    unsigned NPredReg = 0;
-    ARMCC::CondCodes NCC = getPredicate(I, NPredReg);
-    if (NCC == CC || NCC == OCC)
-      return true;
+    if (I != E) {
+      while (I != E && I->isDebugValue())
+        ++I;
+      unsigned NPredReg = 0;
+      ARMCC::CondCodes NCC = getPredicate(I, NPredReg);
+      if (NCC == CC || NCC == OCC)
+        return true;
+    }
   }
   return false;
 }
