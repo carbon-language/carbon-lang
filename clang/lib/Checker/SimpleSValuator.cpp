@@ -34,6 +34,9 @@ public:
                            QualType resultTy);
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
+  
+  SVal MakeSymIntVal(const SymExpr *LHS, BinaryOperator::Opcode op,
+                     const llvm::APSInt &RHS, QualType resultTy);
 };
 } // end anonymous namespace
 
@@ -211,6 +214,81 @@ static SVal EvalEquality(ValueManager &ValMgr, Loc lhs, Loc rhs, bool isEqual,
   return ValMgr.makeTruthVal(isEqual ? lhs == rhs : lhs != rhs, resultTy);
 }
 
+SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
+                                    BinaryOperator::Opcode op,
+                                    const llvm::APSInt &RHS,
+                                    QualType resultTy) {
+  bool isIdempotent = false;
+
+  // Check for a few special cases with known reductions first.
+  switch (op) {
+  default:
+    // We can't reduce this case; just treat it normally.
+    break;
+  case BinaryOperator::Mul:
+    // a*0 and a*1
+    if (RHS == 0)
+      return ValMgr.makeIntVal(0, resultTy);
+    else if (RHS == 1)
+      isIdempotent = true;
+    break;
+  case BinaryOperator::Div:
+    // a/0 and a/1
+    if (RHS == 0)
+      // This is also handled elsewhere.
+      return UndefinedVal();
+    else if (RHS == 1)
+      isIdempotent = true;
+    break;
+  case BinaryOperator::Rem:
+    // a%0 and a%1
+    if (RHS == 0)
+      // This is also handled elsewhere.
+      return UndefinedVal();
+    else if (RHS == 1)
+      return ValMgr.makeIntVal(0, resultTy);
+    break;
+  case BinaryOperator::Add:
+  case BinaryOperator::Sub:
+  case BinaryOperator::Shl:
+  case BinaryOperator::Shr:
+  case BinaryOperator::Xor:
+    // a+0, a-0, a<<0, a>>0, a^0
+    if (RHS == 0)
+      isIdempotent = true;
+    break;
+  case BinaryOperator::And:
+    // a&0 and a&(~0)
+    if (RHS == 0)
+      return ValMgr.makeIntVal(0, resultTy);
+    else if (RHS.isAllOnesValue())
+      isIdempotent = true;
+    break;
+  case BinaryOperator::Or:
+    // a|0 and a|(~0)
+    if (RHS == 0)
+      isIdempotent = true;
+    else if (RHS.isAllOnesValue()) {
+      BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+      const llvm::APSInt &Result = BVF.Convert(resultTy, RHS);
+      return nonloc::ConcreteInt(Result);
+    }
+    break;
+  }
+
+  // Idempotent ops (like a*1) can still change the type of an expression.
+  // Wrap the LHS up in a NonLoc again and let EvalCastNL do the dirty work.
+  if (isIdempotent)
+    if (SymbolRef LHSSym = dyn_cast<SymbolData>(LHS))
+      return EvalCastNL(nonloc::SymbolVal(LHSSym), resultTy);
+    else
+      return EvalCastNL(nonloc::SymExprVal(LHS), resultTy);
+
+  // If we reach this point, the expression cannot be simplified.
+  // Make a SymExprVal for the entire thing.
+  return ValMgr.makeNonLoc(LHS, op, RHS, resultTy);
+}
+
 SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
@@ -228,6 +306,12 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
       case BinaryOperator::GT:
       case BinaryOperator::NE:
         return ValMgr.makeTruthVal(false, resultTy);
+      case BinaryOperator::Xor:
+      case BinaryOperator::Sub:
+        return ValMgr.makeIntVal(0, resultTy);
+      case BinaryOperator::Or:
+      case BinaryOperator::And:
+        return EvalCastNL(lhs, resultTy);
     }
 
   while (1) {
@@ -336,23 +420,25 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
             newRHS = BVF.EvaluateAPSInt(BinaryOperator::Sub,
                                         symIntExpr->getRHS(),
                                         rhsInt->getValue());
-          return ValMgr.makeNonLoc(symIntExpr->getLHS(), lop, *newRHS,
-                                   resultTy);
+          return MakeSymIntVal(symIntExpr->getLHS(), lop, *newRHS, resultTy);
         }
       }
 
       // Otherwise, make a SymExprVal out of the expression.
-      return ValMgr.makeNonLoc(symIntExpr, op, rhsInt->getValue(), resultTy);
+      return MakeSymIntVal(symIntExpr, op, rhsInt->getValue(), resultTy);
     }
     case nonloc::ConcreteIntKind: {
+      const nonloc::ConcreteInt& lhsInt = cast<nonloc::ConcreteInt>(lhs);
+
       if (isa<nonloc::ConcreteInt>(rhs)) {
-        const nonloc::ConcreteInt& lhsInt = cast<nonloc::ConcreteInt>(lhs);
         return lhsInt.evalBinOp(ValMgr, op, cast<nonloc::ConcreteInt>(rhs));
-      }
-      else {
+      } else {
+        const llvm::APSInt& lhsValue = lhsInt.getValue();
+        
         // Swap the left and right sides and flip the operator if doing so
         // allows us to better reason about the expression (this is a form
         // of expression canonicalization).
+        // While we're at it, catch some special cases for non-commutative ops.
         NonLoc tmp = rhs;
         rhs = lhs;
         lhs = tmp;
@@ -366,7 +452,20 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
           case BinaryOperator::NE:
           case BinaryOperator::Add:
           case BinaryOperator::Mul:
+          case BinaryOperator::And:
+          case BinaryOperator::Xor:
+          case BinaryOperator::Or:
             continue;
+          case BinaryOperator::Shr:
+            if (lhsValue.isAllOnesValue() && lhsValue.isSigned())
+              // At this point lhs and rhs have been swapped.
+              return rhs;
+            // FALL-THROUGH
+          case BinaryOperator::Shl:
+            if (lhsValue == 0)
+              // At this point lhs and rhs have been swapped.
+              return rhs;
+            return UnknownVal();
           default:
             return UnknownVal();
         }
@@ -402,9 +501,9 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         }
       
       if (isa<nonloc::ConcreteInt>(rhs)) {
-        return ValMgr.makeNonLoc(slhs->getSymbol(), op,
-                                 cast<nonloc::ConcreteInt>(rhs).getValue(),
-                                 resultTy);
+        return MakeSymIntVal(slhs->getSymbol(), op,
+                             cast<nonloc::ConcreteInt>(rhs).getValue(),
+                             resultTy);
       }
 
       return UnknownVal();
