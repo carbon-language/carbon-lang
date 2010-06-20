@@ -167,8 +167,6 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
     case 'c':
       cnst = true;
     case 'p':
-      usgn = false;
-      poly = false;
       pntr = true;
       scal = true;
       break;
@@ -302,9 +300,11 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // Based on the modifying character, change the type and width if necessary.
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
 
-  if (pntr)
+  if (pntr) {
+    usgn = false;
+    poly = false;
     type = 'v';
-  
+  }
   if (type == 'h') {
     type = 's';
     usgn = true;
@@ -330,14 +330,12 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   }
 
   // Since the return value must be one type, return a vector type of the
-  // appropriate width which we will bitcast.
+  // appropriate width which we will bitcast.  An exception is made for
+  // returning structs of 2, 3, or 4 vectors which are returned in a sret-like
+  // fashion, storing them to a pointer arg.
   if (ret) {
-    if (mod == '2')
-      return quad ? "V32c" : "V16c";
-    if (mod == '3')
-      return quad ? "V48c" : "V24c";
-    if (mod == '4')
-      return quad ? "V64c" : "V32c";
+    if (mod == '2' || mod == '3' || mod == '4')
+      return "vv*";
     if (mod == 'f' || (ck != ClassB && type == 'f'))
       return quad ? "V4f" : "V2f";
     if (ck != ClassB && type == 's')
@@ -701,7 +699,13 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   char arg = 'a';
   std::string s;
 
-  bool unioning = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+  // If this builtin returns a struct 2, 3, or 4 vectors, pass it as an implicit
+  // sret-like argument.
+  bool sret = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+
+  // If this builtin takes an immediate argument, we need to #define it rather
+  // than use a standard declaration, so that SemaChecking can range check
+  // the immediate passed by the user.
   bool define = proto.find('i') != std::string::npos;
 
   // If all types are the same size, bitcasting the args will take care 
@@ -714,19 +718,14 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     std::string ts = TypeString(proto[0], typestr);
     
     if (define) {
-      if (proto[0] != 's')
+      if (sret)
+        s += "({ " + ts + " r; ";
+      else if (proto[0] != 's')
         s += "(" + ts + "){(__neon_" + ts + ")";
+    } else if (sret) {
+      s += ts + " r; ";
     } else {
-      if (unioning) {
-        s += "union { ";
-        s += TypeString(proto[0], typestr, true) + " val; ";
-        s += TypeString(proto[0], typestr, false) + " s; ";
-        s += "} r;";
-      } else {
-        s += ts;
-      }
-      
-      s += " r; r";
+      s += ts + " r; r";
       if (structTypes && proto[0] != 's' && proto[0] != 'i' && proto[0] != 'l')
         s += ".val";
       
@@ -744,6 +743,11 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     s += MangleName(name, typestr, ck);
   }
   s += "(";
+
+  // Pass the address of the return variable as the first argument to sret-like
+  // builtins.
+  if (sret)
+    s += "&r, ";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     std::string args = std::string(&arg, 1);
@@ -788,13 +792,12 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 
   if (proto[0] != 'v') {
     if (define) {
-      if (proto[0] != 's')
+      if (sret)
+        s += "; r; })";
+      else if (proto[0] != 's')
         s += "}";
     } else {
-      if (unioning)
-        s += " return r.s;";
-      else
-        s += " return r;";
+      s += " return r;";
     }
   }
   return s;
@@ -1119,13 +1122,22 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       } else {
         rangestr = "u = " + utostr(RangeFromType(TypeVec[ti]));
       }
-      // Make sure cases appear only once.
+      // Make sure cases appear only once by uniquing them in a string map.
       namestr = MangleName(name, TypeVec[ti], ck);
       if (EmittedMap.count(namestr))
         continue;
       EmittedMap[namestr] = OpNone;
-      
+
+      // Calculate the index of the immediate that should be range checked.
       unsigned immidx = 0;
+      
+      // Builtins that return a struct of multiple vectors have an extra
+      // leading arg for the struct return.
+      if (Proto[0] == '2' || Proto[0] == '3' || Proto[0] == '4')
+        ++immidx;
+      
+      // Add one to the index for each argument until we reach the immediate 
+      // to be checked.  Structs of vectors are passed as multiple arguments.
       for (unsigned ii = 1, ie = Proto.size(); ii != ie; ++ii) {
         switch (Proto[ii]) {
           default:  immidx += 1; break;
