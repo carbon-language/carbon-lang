@@ -75,8 +75,20 @@ void PR6123() {
 void PR7217() {
   int *buf = malloc(2); // expected-warning{{Cast a region whose size is not a multiple of the destination type size.}}
   buf[1] = 'c'; // not crash
-
 }
+
+void mallocCastToVoid() {
+  void *p = malloc(2);
+  const void *cp = p; // not crash
+  free(p);
+}
+
+void mallocCastToFP() {
+  void *p = malloc(2);
+  void (*fp)() = p; // not crash
+  free(p);
+}
+
 // This tests that malloc() buffers are undefined by default
 char mallocGarbage () {
 	char *buf = malloc(2);

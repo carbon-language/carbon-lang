@@ -63,6 +63,11 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 
   CharUnits RegionSize = CharUnits::fromQuantity(CI->getValue().getSExtValue());
   CharUnits TypeSize = C.getASTContext().getTypeSizeInChars(ToPointeeTy);
+  
+  // void, and a few other un-sizeable types
+  if (TypeSize.isZero())
+    return;
+  
   if (RegionSize % TypeSize != 0) {
     if (ExplodedNode *N = C.GenerateSink()) {
       if (!BT)
