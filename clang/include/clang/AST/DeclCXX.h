@@ -1854,9 +1854,12 @@ class UsingShadowDecl : public NamedDecl {
 
   UsingShadowDecl(DeclContext *DC, SourceLocation Loc, UsingDecl *Using,
                   NamedDecl *Target)
-    : NamedDecl(UsingShadow, DC, Loc, Target->getDeclName()),
+    : NamedDecl(UsingShadow, DC, Loc, DeclarationName()),
       Underlying(Target), Using(Using) {
-    IdentifierNamespace = Target->getIdentifierNamespace();
+    if (Target) {
+      setDeclName(Target->getDeclName());
+      IdentifierNamespace = Target->getIdentifierNamespace();
+    }
     setImplicit();
   }
 
@@ -1873,7 +1876,11 @@ public:
 
   /// \brief Sets the underlying declaration which has been brought into the
   /// local scope.
-  void setTargetDecl(NamedDecl* ND) { Underlying = ND; }
+  void setTargetDecl(NamedDecl* ND) {
+    assert(ND && "Target decl is null!");
+    Underlying = ND;
+    IdentifierNamespace = ND->getIdentifierNamespace();
+  }
 
   /// \brief Gets the using declaration to which this declaration is tied.
   UsingDecl *getUsingDecl() const { return Using; }

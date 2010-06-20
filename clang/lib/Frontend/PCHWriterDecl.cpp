@@ -77,8 +77,8 @@ namespace {
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void visitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
-    void VisitUsing(UsingDecl *D);
-    void VisitUsingShadow(UsingShadowDecl *D);
+    void VisitUsingDecl(UsingDecl *D);
+    void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
@@ -521,7 +521,7 @@ void PCHDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   Code = pch::DECL_NAMESPACE_ALIAS;
 }
 
-void PCHDeclWriter::VisitUsing(UsingDecl *D) {
+void PCHDeclWriter::VisitUsingDecl(UsingDecl *D) {
   VisitNamedDecl(D);
   Writer.AddSourceRange(D->getNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLocation(), Record);
@@ -534,7 +534,7 @@ void PCHDeclWriter::VisitUsing(UsingDecl *D) {
   Code = pch::DECL_USING;
 }
 
-void PCHDeclWriter::VisitUsingShadow(UsingShadowDecl *D) {
+void PCHDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   Writer.AddDeclRef(D->getTargetDecl(), Record);
   Writer.AddDeclRef(D->getUsingDecl(), Record);

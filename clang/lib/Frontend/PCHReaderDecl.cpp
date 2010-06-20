@@ -76,8 +76,8 @@ namespace {
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void visitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
-    void VisitUsing(UsingDecl *D);
-    void VisitUsingShadow(UsingShadowDecl *D);
+    void VisitUsingDecl(UsingDecl *D);
+    void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
@@ -505,7 +505,7 @@ void PCHDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   D->setAliasedNamespace(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
-void PCHDeclReader::VisitUsing(UsingDecl *D) {
+void PCHDeclReader::VisitUsingDecl(UsingDecl *D) {
   VisitNamedDecl(D);
   D->setUsingLocation(Reader.ReadSourceLocation(Record, Idx));
   D->setNestedNameRange(Reader.ReadSourceRange(Record, Idx));
@@ -521,7 +521,7 @@ void PCHDeclReader::VisitUsing(UsingDecl *D) {
   D->setTypeName(Record[Idx++]);
 }
 
-void PCHDeclReader::VisitUsingShadow(UsingShadowDecl *D) {
+void PCHDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   D->setTargetDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
   D->setUsingDecl(cast<UsingDecl>(Reader.GetDecl(Record[Idx++])));
