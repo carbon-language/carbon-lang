@@ -948,17 +948,17 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   }
 }
 
-const llvm::Type *GetNeonType(LLVMContext &Ctx, unsigned type, bool q) {
+const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type, bool q) {
   switch (type) {
     default: break;
     case 0: 
-    case 5: return llvm::VectorType::get(llvm::Type::getInt8Ty(Ctx), 8 << (int)q);
+    case 5: return llvm::VectorType::get(llvm::Type::getInt8Ty(C), 8 << (int)q);
     case 6:
     case 7:
-    case 1: return llvm::VectorType::get(llvm::Type::getInt16Ty(Ctx), 4 << (int)q);
-    case 2: return llvm::VectorType::get(llvm::Type::getInt32Ty(Ctx), 2 << (int)q);
-    case 3: return llvm::VectorType::get(llvm::Type::getInt64Ty(Ctx), 1 << (int)q);
-    case 4: return llvm::VectorType::get(llvm::Type::getFloatTy(Ctx), 2 << (int)q);
+    case 1: return llvm::VectorType::get(llvm::Type::getInt16Ty(C),4 << (int)q);
+    case 2: return llvm::VectorType::get(llvm::Type::getInt32Ty(C),2 << (int)q);
+    case 3: return llvm::VectorType::get(llvm::Type::getInt64Ty(C),1 << (int)q);
+    case 4: return llvm::VectorType::get(llvm::Type::getFloatTy(C),2 << (int)q);
   };
   return 0;
 }
@@ -1030,7 +1030,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   bool poly = (type & 0x7) == 5 || (type & 0x7) == 6;
   bool splat = false;
 
-  const llvm::Type *Ty = GetNeonType(VMContext, type & 0x7, quad);
+  const llvm::VectorType *VTy = GetNeonType(VMContext, type & 0x7, quad);
+  const llvm::Type *Ty = VTy;
   if (!Ty)
     return 0;
 
@@ -1142,8 +1143,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
     
     SmallVector<Constant*, 16> Indices;
-    for (unsigned i = 0, e = cast<llvm::VectorType>(Ty)->getNumElements();
-         i != e; ++i)
+    for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
       Indices.push_back(ConstantInt::get(I32Ty, i+CV));
     
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1171,7 +1171,122 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vhsubq_v:
     Int = usgn ? Intrinsic::arm_neon_vhsubu : Intrinsic::arm_neon_vhsubs;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vhsub");
-  // FIXME: vld*
+  case ARM::BI__builtin_neon_vld1_v:
+  case ARM::BI__builtin_neon_vld1q_v:
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vld1, &Ty, 1),
+                        Ops, "vld1");
+  case ARM::BI__builtin_neon_vld1_lane_v:
+  case ARM::BI__builtin_neon_vld1q_lane_v:
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Ty = llvm::PointerType::getUnqual(VTy->getElementType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[0] = Builder.CreateLoad(Ops[0]);
+    return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vld1_lane");
+  case ARM::BI__builtin_neon_vld1_dup_v:
+  case ARM::BI__builtin_neon_vld1q_dup_v: {
+    Value *V = UndefValue::get(Ty);
+    Ty = llvm::PointerType::getUnqual(VTy->getElementType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[0] = Builder.CreateLoad(Ops[0]);
+    llvm::Constant *CI = ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
+    Ops[0] = Builder.CreateInsertElement(V, Ops[0], CI);
+    return EmitNeonSplat(Ops[0], CI);
+  }
+  case ARM::BI__builtin_neon_vld2_v:
+  case ARM::BI__builtin_neon_vld2q_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2, &Ty, 1);
+    Ops[1] = Builder.CreateCall(F, Ops[1], "vld2");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld3_v:
+  case ARM::BI__builtin_neon_vld3q_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld3, &Ty, 1);
+    Ops[1] = Builder.CreateCall(F, Ops[1], "vld3");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld4_v:
+  case ARM::BI__builtin_neon_vld4q_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld4, &Ty, 1);
+    Ops[1] = Builder.CreateCall(F, Ops[1], "vld4");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld2_lane_v:
+  case ARM::BI__builtin_neon_vld2q_lane_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2lane, &Ty, 1);
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
+    Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld2_lane");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld3_lane_v:
+  case ARM::BI__builtin_neon_vld3q_lane_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld3lane, &Ty, 1);
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
+    Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
+    Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld3_lane");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld4_lane_v:
+  case ARM::BI__builtin_neon_vld4q_lane_v: {
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld4lane, &Ty, 1);
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
+    Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
+    Ops[5] = Builder.CreateBitCast(Ops[5], Ty);
+    Ops[1] = Builder.CreateCall(F, Ops.begin() + 1, Ops.end(), "vld3_lane");
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case ARM::BI__builtin_neon_vld2_dup_v:
+  case ARM::BI__builtin_neon_vld3_dup_v:
+  case ARM::BI__builtin_neon_vld4_dup_v: {
+    switch (BuiltinID) {
+    case ARM::BI__builtin_neon_vld2_dup_v: 
+      Int = Intrinsic::arm_neon_vld2lane; 
+      break;
+    case ARM::BI__builtin_neon_vld3_dup_v:
+      Int = Intrinsic::arm_neon_vld2lane; 
+      break;
+    case ARM::BI__builtin_neon_vld4_dup_v:
+      Int = Intrinsic::arm_neon_vld2lane; 
+      break;
+    default: assert(0 && "unknown vld_dup intrinsic?");
+    }
+    Function *F = CGM.getIntrinsic(Int, &Ty, 1);
+    const llvm::StructType *STy = cast<llvm::StructType>(F->getReturnType());
+    
+    SmallVector<Value*, 6> Args;
+    Args.push_back(Ops[1]);
+    Args.append(STy->getNumElements(), UndefValue::get(Ty));
+
+    llvm::Constant *CI = ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
+    Args.push_back(CI);
+    
+    Ops[1] = Builder.CreateCall(F, Args.begin(), Args.end(), "vld_dup");
+    // splat lane 0 to all elts in each vector of the result.
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      Value *Val = Builder.CreateExtractValue(Ops[1], i);
+      Value *Elt = Builder.CreateBitCast(Val, Ty);
+      Elt = EmitNeonSplat(Elt, CI);
+      Elt = Builder.CreateBitCast(Elt, Val->getType());
+      Ops[1] = Builder.CreateInsertValue(Ops[1], Elt, i);
+    }
+    Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
   case ARM::BI__builtin_neon_vmax_v:
   case ARM::BI__builtin_neon_vmaxq_v:
     Int = usgn ? Intrinsic::arm_neon_vmaxu : Intrinsic::arm_neon_vmaxs;
@@ -1474,50 +1589,67 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                 ConstantAggregateZero::get(Ty));
     return Builder.CreateSExt(Ops[0], Ty, "vtst");
   }
-  // FIXME: transpose/zip/unzip don't currently match patterns for 
-  //        the non-q variants, but emitting 2 shufflevectors seems like a hack.
   case ARM::BI__builtin_neon_vtrn_v:
   case ARM::BI__builtin_neon_vtrnq_v: {
-    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
-    SmallVector<Constant*, 32> Indices;
-    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
-    for (unsigned vi = 0; vi != 2; ++vi) {
-      for (unsigned i = 0; i != nElts; i += 2) {
-        Indices.push_back(ConstantInt::get(I32Ty, i+vi));
-        Indices.push_back(ConstantInt::get(I32Ty, i+nElts+vi));
-      }
-    }
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
-    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vtrn");
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ty = llvm::Type::getInt32Ty(VMContext);
+    Value *SV;
+
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
+        Indices.push_back(ConstantInt::get(Ty, i+vi));
+        Indices.push_back(ConstantInt::get(Ty, i+e+vi));
+      }
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vtrn");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
   }
   case ARM::BI__builtin_neon_vuzp_v:
   case ARM::BI__builtin_neon_vuzpq_v: {
-    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
-    SmallVector<Constant*, 32> Indices;
-    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
-    for (unsigned vi = 0; vi != 2; ++vi)
-      for (unsigned i = 0; i != nElts; ++i)
-        Indices.push_back(ConstantInt::get(I32Ty, 2*i+vi));
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
-    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vuzp");
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ty = llvm::Type::getInt32Ty(VMContext);
+    Value *SV;
+    
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
+        Indices.push_back(ConstantInt::get(Ty, 2*i+vi));
+
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vuzp");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
   }
   case ARM::BI__builtin_neon_vzip_v: 
   case ARM::BI__builtin_neon_vzipq_v: {
-    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
-    SmallVector<Constant*, 32> Indices;
-    unsigned nElts = cast<llvm::VectorType>(Ty)->getNumElements();
-    for (unsigned i = 0; i != nElts; ++i) {
-      Indices.push_back(ConstantInt::get(I32Ty, i));
-      Indices.push_back(ConstantInt::get(I32Ty, i+nElts));
-    }
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::PointerType::getUnqual(Ty));
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
-    return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vzip");
+    Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
+    Ty = llvm::Type::getInt32Ty(VMContext);
+    Value *SV;
+    
+    for (unsigned vi = 0; vi != 2; ++vi) {
+      SmallVector<Constant*, 16> Indices;
+      for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
+        Indices.push_back(ConstantInt::get(Ty, (i >> 1)));
+        Indices.push_back(ConstantInt::get(Ty, (i >> 1)+e));
+      }
+      Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
+      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vzip");
+      SV = Builder.CreateStore(SV, Addr);
+    }
+    return SV;
   }
   }
 }

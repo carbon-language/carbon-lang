@@ -200,7 +200,7 @@ def VSLI_N : WInst<"dddi", "csilUcUsUiUlPcPsQcQsQiQlQUcQUsQUiQUlQPcQPs">;
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.14 Loads and stores of a single vector
 def VLD1      : WInst<"dc",   "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
-def VLD1_LANE : WInst<"dci",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
+def VLD1_LANE : WInst<"dcdi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VLD1_DUP  : WInst<"dc",   "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VST1      : WInst<"vpd",  "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VST1_LANE : WInst<"vpdi", "QUcQUsQUiQUlQcQsQiQlQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
@@ -213,9 +213,9 @@ def VLD4      : WInst<"4c",   "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VLD2_DUP  : WInst<"2c",   "UcUsUiUlcsilhfPcPs">;
 def VLD3_DUP  : WInst<"3c",   "UcUsUiUlcsilhfPcPs">;
 def VLD4_DUP  : WInst<"4c",   "UcUsUiUlcsilhfPcPs">;
-def VLD2_LANE : WInst<"2ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VLD3_LANE : WInst<"3ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
-def VLD4_LANE : WInst<"4ci",  "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD2_LANE : WInst<"2c2i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD3_LANE : WInst<"3c3i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
+def VLD4_LANE : WInst<"4c4i", "QUsQUiQsQiQhQfQPsUcUsUicsihfPcPs">;
 def VST2      : WInst<"vp2",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VST3      : WInst<"vp3",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
 def VST4      : WInst<"vp4",  "QUcQUsQUiQcQsQiQhQfQPcQPsUcUsUiUlcsilhfPcPs">;
