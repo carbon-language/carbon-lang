@@ -155,21 +155,6 @@ ClassTemplateDecl *ClassTemplateDecl::getCanonicalDecl() {
   return Template;
 }
 
-void ClassTemplateDecl::initPreviousDeclaration(ASTContext &C,
-                                                ClassTemplateDecl *PrevDecl) {
-  assert(PreviousDeclaration == 0 && "PreviousDeclaration already set!");
-  assert(CommonPtr == 0 && "initPreviousDeclaration already called!");
-
-  PreviousDeclaration = PrevDecl;
-
-  if (PrevDecl)
-    CommonPtr = PrevDecl->CommonPtr;
-  else {
-    CommonPtr = new (C) Common;
-    C.AddDeallocation(DeallocateCommon, CommonPtr);
-  }
-}
-
 ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation L,
@@ -178,29 +163,18 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              NamedDecl *Decl,
                                              ClassTemplateDecl *PrevDecl) {
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
-  New->initPreviousDeclaration(C, PrevDecl);
+  New->setPreviousDeclaration(PrevDecl);
   return New;
 }
 
-ClassTemplateDecl::~ClassTemplateDecl() {
-  assert(CommonPtr == 0 && "ClassTemplateDecl must be explicitly destroyed");
-}
-
 void ClassTemplateDecl::Destroy(ASTContext& C) {
-  if (!PreviousDeclaration) {
-    CommonPtr->~Common();
-    C.Deallocate((void*)CommonPtr);
-  }
-  CommonPtr = 0;
-
-  this->~ClassTemplateDecl();
-  C.Deallocate((void*)this);
+  Decl::Destroy(C);
 }
 
 void ClassTemplateDecl::getPartialSpecializations(
           llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS) {
   llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &PartialSpecs
-    = CommonPtr->PartialSpecializations;
+    = getPartialSpecializations();
   PS.clear();
   PS.resize(PartialSpecs.size());
   for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
@@ -228,6 +202,7 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
 
 QualType
 ClassTemplateDecl::getInjectedClassNameSpecialization(ASTContext &Context) {
+  Common *CommonPtr = getCommonPtr();
   if (!CommonPtr->InjectedClassNameType.isNull())
     return CommonPtr->InjectedClassNameType;
 
@@ -262,6 +237,20 @@ ClassTemplateDecl::getInjectedClassNameSpecialization(ASTContext &Context) {
                                             &TemplateArgs[0],
                                             TemplateArgs.size());
   return CommonPtr->InjectedClassNameType;
+}
+
+ClassTemplateDecl::Common *ClassTemplateDecl::getCommonPtr() {
+  // Find the first declaration of this function template.
+  ClassTemplateDecl *First = this;
+  while (First->getPreviousDeclaration())
+    First = First->getPreviousDeclaration();
+
+  if (First->CommonOrPrev.isNull()) {
+    Common *CommonPtr = new (getASTContext()) Common;
+    getASTContext().AddDeallocation(DeallocateCommon, CommonPtr);
+    First->CommonOrPrev = CommonPtr;
+  }
+  return First->CommonOrPrev.get<Common*>();
 }
 
 //===----------------------------------------------------------------------===//

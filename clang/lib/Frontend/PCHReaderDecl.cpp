@@ -671,7 +671,7 @@ void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   ClassTemplateDecl *PrevDecl =
       cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
-  D->initPreviousDeclaration(*Reader.getContext(), PrevDecl);
+  D->setPreviousDeclaration(PrevDecl);
   if (PrevDecl == 0) {
     // This ClassTemplateDecl owns a CommonPtr; read it.
 
@@ -1085,7 +1085,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     assert(false && "cannot read FriendTemplateDecl");
     break;
   case pch::DECL_CLASS_TEMPLATE:
-    D = ClassTemplateDecl::CreateEmpty(*Context);
+    D = ClassTemplateDecl::Create(*Context, 0, SourceLocation(),
+                                  DeclarationName(), 0, 0, 0);
     break;
   case pch::DECL_CLASS_TEMPLATE_SPECIALIZATION:
     assert(false && "cannot read ClasstemplateSpecializationDecl");

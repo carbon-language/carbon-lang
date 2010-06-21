@@ -1295,25 +1295,19 @@ protected:
     llvm::PointerIntPair<ClassTemplateDecl *, 1, bool> InstantiatedFromMember;
   };
 
-  // FIXME: Combine PreviousDeclaration with CommonPtr, as in 
-  // FunctionTemplateDecl.
-  
-  /// \brief Previous declaration of this class template.
-  ClassTemplateDecl *PreviousDeclaration;
+  /// \brief A pointer to the previous declaration (if this is a redeclaration)
+  /// or to the data that is common to all declarations of this class template.
+  llvm::PointerUnion<Common*, ClassTemplateDecl*> CommonOrPrev;
 
-  /// \brief Pointer to the data that is common to all of the
-  /// declarations of this class template.
-  ///
-  /// The first declaration of a class template (e.g., the declaration
-  /// with no "previous declaration") owns this pointer.
-  Common *CommonPtr;
+  /// \brief Retrieves the "common" pointer shared by all
+  /// (re-)declarations of the same class template. Calling this routine
+  /// may implicitly allocate memory for the common pointer.
+  Common *getCommonPtr();
 
   ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
                     TemplateParameterList *Params, NamedDecl *Decl)
     : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl),
-      PreviousDeclaration(0), CommonPtr(0) { }
-
-  ~ClassTemplateDecl();
+      CommonOrPrev((Common*)0) { }
 
 public:
   /// Get the underlying class declarations of the template.
@@ -1321,14 +1315,23 @@ public:
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
   }
 
-  /// \brief Retrieve the previous declaration of this template.
-  ClassTemplateDecl *getPreviousDeclaration() const {
-    return PreviousDeclaration;
+  /// \brief Retrieve the previous declaration of this class template, or
+  /// NULL if no such declaration exists.
+  const ClassTemplateDecl *getPreviousDeclaration() const {
+    return CommonOrPrev.dyn_cast<ClassTemplateDecl*>();
   }
 
-  /// \brief Initialize the previous declaration. Only valid to call on a
-  /// ClassTemplateDecl that is created using ClassTemplateDecl::CreateEmpty.
-  void initPreviousDeclaration(ASTContext &C, ClassTemplateDecl *PrevDecl);
+  /// \brief Retrieve the previous declaration of this function template, or
+  /// NULL if no such declaration exists.
+  ClassTemplateDecl *getPreviousDeclaration() {
+    return CommonOrPrev.dyn_cast<ClassTemplateDecl*>();
+  }
+
+  /// \brief Set the previous declaration of this class template.
+  void setPreviousDeclaration(ClassTemplateDecl *Prev) {
+    if (Prev)
+      CommonOrPrev = Prev;
+  }
 
   virtual ClassTemplateDecl *getCanonicalDecl();
 
@@ -1340,21 +1343,16 @@ public:
                                    NamedDecl *Decl,
                                    ClassTemplateDecl *PrevDecl);
 
-  /// \brief Create an empty class template node. Mainly used for PCH reading.
-  static ClassTemplateDecl *CreateEmpty(ASTContext &C) {
-    return new (C) ClassTemplateDecl(0,SourceLocation(),DeclarationName(),0,0);
-  }
-
   /// \brief Retrieve the set of specializations of this class template.
   llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
-    return CommonPtr->Specializations;
+    return getCommonPtr()->Specializations;
   }
 
   /// \brief Retrieve the set of partial specializations of this class
   /// template.
   llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
   getPartialSpecializations() {
-    return CommonPtr->PartialSpecializations;
+    return getCommonPtr()->PartialSpecializations;
   }
 
   /// \brief Retrieve the partial specializations as an ordered list.
@@ -1407,13 +1405,13 @@ public:
   /// X<T>::A<U>, a TemplateClassDecl (whose parent is X<T>, also a TCD).
   ///
   /// \returns null if this is not an instantiation of a member class template.
-  ClassTemplateDecl *getInstantiatedFromMemberTemplate() const {
-    return CommonPtr->InstantiatedFromMember.getPointer();
+  ClassTemplateDecl *getInstantiatedFromMemberTemplate() {
+    return getCommonPtr()->InstantiatedFromMember.getPointer();
   }
 
   void setInstantiatedFromMemberTemplate(ClassTemplateDecl *CTD) {
-    assert(!CommonPtr->InstantiatedFromMember.getPointer());
-    CommonPtr->InstantiatedFromMember.setPointer(CTD);
+    assert(!getCommonPtr()->InstantiatedFromMember.getPointer());
+    getCommonPtr()->InstantiatedFromMember.setPointer(CTD);
   }
 
   /// \brief Determines whether this template was a specialization of a 
@@ -1432,14 +1430,14 @@ public:
   /// struct X<int>::Inner { /* ... */ };
   /// \endcode
   bool isMemberSpecialization() {
-    return CommonPtr->InstantiatedFromMember.getInt();
+    return getCommonPtr()->InstantiatedFromMember.getInt();
   }
   
   /// \brief Note that this member template is a specialization.
   void setMemberSpecialization() {
-    assert(CommonPtr->InstantiatedFromMember.getPointer() &&
+    assert(getCommonPtr()->InstantiatedFromMember.getPointer() &&
            "Only member templates can be member template specializations");
-    CommonPtr->InstantiatedFromMember.setInt(true);
+    getCommonPtr()->InstantiatedFromMember.setInt(true);
   }
   
   // Implement isa/cast/dyncast support
