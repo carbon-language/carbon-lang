@@ -193,9 +193,9 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
     CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
   if (!PrioritizedCXXGlobalInits.empty()) {
-    std::vector<llvm::Constant*> LocalCXXGlobalInits;
-    std::sort(PrioritizedCXXGlobalInits.begin(), 
-              PrioritizedCXXGlobalInits.end());
+    llvm::SmallVector<llvm::Constant*, 8> LocalCXXGlobalInits;
+    llvm::array_pod_sort(PrioritizedCXXGlobalInits.begin(), 
+                         PrioritizedCXXGlobalInits.end());
     for (unsigned i = 0; i < PrioritizedCXXGlobalInits.size(); i++) {
       llvm::Function *Fn = PrioritizedCXXGlobalInits[i].second;
       LocalCXXGlobalInits.push_back(Fn);
