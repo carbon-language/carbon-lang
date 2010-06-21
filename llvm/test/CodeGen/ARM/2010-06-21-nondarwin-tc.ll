@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mtriple=armv4t-unknown-linux-gnueabi
+; RUN: llc < %s -march=arm -mtriple=armv4t-unknown-linux-gnueabi  | FileCheck %s
 ; PR 7433
 
 %0 = type { i8*, i8* }
