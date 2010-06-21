@@ -917,8 +917,9 @@ public:
     typedef _CharT                  char_type;
     typedef basic_string<char_type> string_type;
     typedef locale                  locale_type;
-    typedef unsigned                char_class_type;
+    typedef ctype_base::mask        char_class_type;
 
+    static const char_class_type __regex_word = 0x80;
 private:
     locale __loc_;
     const ctype<char_type>* __ct_;
@@ -945,9 +946,11 @@ public:
     template <class _ForwardIterator>
         char_class_type
         lookup_classname(_ForwardIterator __f, _ForwardIterator __l,
-                         bool __icase = false) const;
-    bool isctype(char_type __c, char_class_type __f) const;
-    int value(char_type __ch, int __radix) const;
+                         bool __icase = false) const
+            {return __lookup_classname(__f, __l, __icase, char_type());}
+    bool isctype(char_type __c, char_class_type __m) const;
+    int value(char_type __ch, int __radix) const
+        {return __value(__ch, __radix);}
     locale_type imbue(locale_type __l);
     locale_type getloc()const {return __loc_;}
 
@@ -967,6 +970,20 @@ private:
     template <class _ForwardIterator>
         string_type
         __lookup_collatename(_ForwardIterator __f, _ForwardIterator __l, wchar_t) const;
+
+    template <class _ForwardIterator>
+        char_class_type
+        __lookup_classname(_ForwardIterator __f, _ForwardIterator __l,
+                           bool __icase, char) const;
+    template <class _ForwardIterator>
+        char_class_type
+        __lookup_classname(_ForwardIterator __f, _ForwardIterator __l,
+                           bool __icase, wchar_t) const;
+
+    static int __value(unsigned char __ch, int __radix);
+    int __value(char __ch, int __radix) const
+        {return __value(static_cast<unsigned char>(__ch), __radix);}
+    int __value(wchar_t __ch, int __radix) const;
 };
 
 template <class _CharT>
@@ -1057,7 +1074,7 @@ regex_traits<_CharT>::__transform_primary(_ForwardIterator __f,
 
 // lookup_collatename is very FreeBSD-specific
 
-string __get_collation_name(const char* s);
+string __get_collation_name(const char* __s);
 
 template <class _CharT>
 template <class _ForwardIterator>
@@ -1114,6 +1131,80 @@ regex_traits<_CharT>::__lookup_collatename(_ForwardIterator __f,
         }
     }
     return __r;
+}
+
+// lookup_classname
+
+ctype_base::mask __get_classname(const char* __s, bool __icase);
+
+template <class _CharT>
+template <class _ForwardIterator>
+typename regex_traits<_CharT>::char_class_type
+regex_traits<_CharT>::__lookup_classname(_ForwardIterator __f,
+                                         _ForwardIterator __l,
+                                         bool __icase, char) const
+{
+    string_type __s(__f, __l);
+    __ct_->tolower(&__s[0], &__s[0] + __s.size());
+    return __get_classname(__s.c_str(), __icase);
+}
+
+template <class _CharT>
+template <class _ForwardIterator>
+typename regex_traits<_CharT>::char_class_type
+regex_traits<_CharT>::__lookup_classname(_ForwardIterator __f,
+                                         _ForwardIterator __l,
+                                         bool __icase, wchar_t) const
+{
+    string_type __s(__f, __l);
+    __ct_->tolower(&__s[0], &__s[0] + __s.size());
+    string __n;
+    __n.reserve(__s.size());
+    for (typename string_type::const_iterator __i = __s.begin(), __e = __s.end();
+                                                              __i != __e; ++__i)
+    {
+        if (static_cast<unsigned>(*__i) >= 127)
+            return char_class_type();
+        __n.push_back(char(*__i));
+    }
+    return __get_classname(__n.c_str(), __icase);
+}
+
+template <class _CharT>
+bool
+regex_traits<_CharT>::isctype(char_type __c, char_class_type __m) const
+{
+    if (__ct_->is(__m, __c))
+        return true;
+    return (__c == '_' && (__m & __regex_word));
+}
+
+template <class _CharT>
+int
+regex_traits<_CharT>::__value(unsigned char __ch, int __radix)
+{
+    if ((__ch & 0xF8u) == 0x30)  // '0' <= __ch && __ch <= '7'
+        return __ch - '0';
+    if (__radix != 8)
+    {
+        if ((__ch & 0xFEu) == 0x38)  // '8' <= __ch && __ch <= '9'
+            return __ch - '0';
+        if (__radix == 16)
+        {
+            __ch |= 0x20;  // tolower
+            if ('a' <= __ch && __ch <= 'f')
+                return __ch - 'a' + 10;
+        }
+    }
+    return -1;
+}
+
+template <class _CharT>
+inline
+int
+regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
+{
+    return __value(static_cast<unsigned char>(__ct_->narrow(__ch, char_type())), __radix);
 }
 
 _LIBCPP_END_NAMESPACE_STD

@@ -14,8 +14,15 @@
 // locale_type imbue(locale_type l);
 
 #include <regex>
+#include <locale>
+#include <cassert>
 
 int main()
 {
-#error imbue not implemented
+    {
+        std::regex_traits<char> t;
+        std::locale loc = t.imbue(std::locale("en_US"));
+        assert(loc.name() == "C");
+        assert(t.getloc().name() == "en_US");
+    }
 }

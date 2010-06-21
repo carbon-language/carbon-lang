@@ -11,7 +11,6 @@
 #include "algorithm"
 #include "iterator"
 
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 static
@@ -180,9 +179,36 @@ const collationnames collatenames[] =
     {"zero", 0x30}
 };
 
+struct classnames
+{
+    const char* elem_;
+    ctype_base::mask mask_;
+};
+
+const classnames ClassNames[] =
+{
+    {"alnum",  ctype_base::alnum},
+    {"alpha",  ctype_base::alpha},
+    {"blank",  ctype_base::blank},
+    {"cntrl",  ctype_base::cntrl},
+    {"d",      ctype_base::digit},
+    {"digit",  ctype_base::digit},
+    {"graph",  ctype_base::graph},
+    {"lower",  ctype_base::lower},
+    {"print",  ctype_base::print},
+    {"punct",  ctype_base::punct},
+    {"s",      ctype_base::space},
+    {"space",  ctype_base::space},
+    {"upper",  ctype_base::upper},
+    {"w",      regex_traits<char>::__regex_word},
+    {"xdigit", ctype_base::xdigit}
+};
+
 struct use_strcmp
 {
     bool operator()(const collationnames& x, const char* y)
+        {return strcmp(x.elem_, y) < 0;}
+    bool operator()(const classnames& x, const char* y)
         {return strcmp(x.elem_, y) < 0;}
 };
 
@@ -191,12 +217,31 @@ struct use_strcmp
 string
 __get_collation_name(const char* s)
 {
-    typedef std::pair<collationnames*, collationnames*> P;
     const collationnames* i =
             lower_bound(begin(collatenames), end(collatenames), s, use_strcmp());
     string r;
     if (i != end(collatenames) && strcmp(s, i->elem_) == 0)
         r = char(i->char_);
+    return r;
+}
+
+ctype_base::mask
+__get_classname(const char* s, bool __icase)
+{
+    const classnames* i =
+            lower_bound(begin(ClassNames), end(ClassNames), s, use_strcmp());
+    ctype_base::mask r = 0;
+    if (i != end(ClassNames) && strcmp(s, i->elem_) == 0)
+    {
+        r = i->mask_;
+        if (r == regex_traits<char>::__regex_word)
+            r |= ctype_base::alnum | ctype_base::upper | ctype_base::lower;
+        else if (__icase)
+        {
+            if (r & (ctype_base::lower | ctype_base::upper))
+                r |= ctype_base::alpha;
+        }
+    }
     return r;
 }
 
