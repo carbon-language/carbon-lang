@@ -894,11 +894,11 @@ def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
                     "adr$p\t$dst, #$label", []>,
                 T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
 
+} // neverHasSideEffects
 def tLEApcrelJT : T1I<(outs tGPR:$dst),
                       (ins i32imm:$label, nohash_imm:$id, pred:$p),
                       IIC_iALUi, "adr$p\t$dst, #${label}_${id}", []>,
                   T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
-} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

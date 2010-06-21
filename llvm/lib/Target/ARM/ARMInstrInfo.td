@@ -863,13 +863,13 @@ def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p),
                     Pseudo, IIC_iALUi,
                     "adr$p\t$dst, #$label", []>;
 
+} // neverHasSideEffects
 def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                            (ins i32imm:$label, nohash_imm:$id, pred:$p),
                       Pseudo, IIC_iALUi,
                       "adr$p\t$dst, #${label}_${id}", []> {
     let Inst{25} = 1;
 }
-} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
