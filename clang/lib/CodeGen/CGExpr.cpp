@@ -1981,10 +1981,17 @@ CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
 }
 
 LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
-  // Can only get l-value for message expression returning aggregate type
   RValue RV = EmitObjCMessageExpr(E);
-  // FIXME: can this be volatile?
-  return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
+  
+  if (!RV.isScalar())
+    return LValue::MakeAddr(RV.getAggregateAddr(),
+                            MakeQualifiers(E->getType()));
+  
+  assert(E->getMethodDecl()->getResultType()->isReferenceType() &&
+         "Can't have a scalar return unless the return type is a "
+         "reference type!");
+  
+  return LValue::MakeAddr(RV.getScalarVal(), MakeQualifiers(E->getType()));
 }
 
 LValue CodeGenFunction::EmitObjCSelectorLValue(const ObjCSelectorExpr *E) {

@@ -1634,6 +1634,11 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   const llvm::FunctionType *FTy =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
+  if (Method)
+    assert(CGM.getContext().getCanonicalType(Method->getResultType()) ==
+           CGM.getContext().getCanonicalType(ResultType) &&
+           "Result type mismatch!");
+
   llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)

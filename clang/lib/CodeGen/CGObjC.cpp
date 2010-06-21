@@ -90,11 +90,14 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   CallArgList Args;
   EmitCallArgs(Args, E->getMethodDecl(), E->arg_begin(), E->arg_end());
 
+  QualType ResultType =
+    E->getMethodDecl() ? E->getMethodDecl()->getResultType() : E->getType();
+
   if (isSuperMessage) {
     // super is only valid in an Objective-C method
     const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
     bool isCategoryImpl = isa<ObjCCategoryImplDecl>(OMD->getDeclContext());
-    return Runtime.GenerateMessageSendSuper(*this, Return, E->getType(),
+    return Runtime.GenerateMessageSendSuper(*this, Return, ResultType,
                                             E->getSelector(),
                                             OMD->getClassInterface(),
                                             isCategoryImpl,
@@ -104,7 +107,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
                                             E->getMethodDecl());
   }
 
-  return Runtime.GenerateMessageSend(*this, Return, E->getType(),
+  return Runtime.GenerateMessageSend(*this, Return, ResultType,
                                      E->getSelector(),
                                      Receiver, Args, OID,
                                      E->getMethodDecl());
