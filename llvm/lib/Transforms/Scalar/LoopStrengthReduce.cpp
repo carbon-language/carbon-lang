@@ -1951,7 +1951,7 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
         Strides.insert(AR->getStepRecurrence(SE));
         Worklist.push_back(AR->getStart());
       } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
-        Worklist.insert(Worklist.end(), Add->op_begin(), Add->op_end());
+        Worklist.append(Add->op_begin(), Add->op_end());
       }
     } while (!Worklist.empty());
   }
@@ -2118,7 +2118,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
     const SCEV *S = Worklist.pop_back_val();
 
     if (const SCEVNAryExpr *N = dyn_cast<SCEVNAryExpr>(S))
-      Worklist.insert(Worklist.end(), N->op_begin(), N->op_end());
+      Worklist.append(N->op_begin(), N->op_end());
     else if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(S))
       Worklist.push_back(C->getOperand());
     else if (const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S)) {
@@ -2248,11 +2248,10 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
         continue;
 
       // Collect all operands except *J.
-      SmallVector<const SCEV *, 8> InnerAddOps;
-      for (SmallVectorImpl<const SCEV *>::const_iterator K = AddOps.begin(),
-           KE = AddOps.end(); K != KE; ++K)
-        if (K != J)
-          InnerAddOps.push_back(*K);
+      SmallVector<const SCEV *, 8> InnerAddOps
+        (         ((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
+      InnerAddOps.append
+        (next(J), ((const SmallVector<const SCEV *, 8> &)AddOps).end());
 
       // Don't leave just a constant behind in a register if the constant could
       // be folded into an immediate field.

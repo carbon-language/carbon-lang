@@ -288,11 +288,11 @@ static void SimplifyAddOperands(SmallVectorImpl<const SCEV *> &Ops,
   // the sum into a single value, so just use that.
   Ops.clear();
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Sum))
-    Ops.insert(Ops.end(), Add->op_begin(), Add->op_end());
+    Ops.append(Add->op_begin(), Add->op_end());
   else if (!Sum->isZero())
     Ops.push_back(Sum);
   // Then append the addrecs.
-  Ops.insert(Ops.end(), AddRecs.begin(), AddRecs.end());
+  Ops.append(AddRecs.begin(), AddRecs.end());
 }
 
 /// SplitAddRecs - Flatten a list of add operands, moving addrec start values
@@ -315,7 +315,7 @@ static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
                                          A->getLoop()));
       if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Start)) {
         Ops[i] = Zero;
-        Ops.insert(Ops.end(), Add->op_begin(), Add->op_end());
+        Ops.append(Add->op_begin(), Add->op_end());
         e += Add->getNumOperands();
       } else {
         Ops[i] = Start;
@@ -323,7 +323,7 @@ static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
     }
   if (!AddRecs.empty()) {
     // Add the addrecs onto the end of the list.
-    Ops.insert(Ops.end(), AddRecs.begin(), AddRecs.end());
+    Ops.append(AddRecs.begin(), AddRecs.end());
     // Resort the operand list, moving any constants to the front.
     SimplifyAddOperands(Ops, Ty, SE);
   }

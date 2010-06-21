@@ -2626,7 +2626,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     if (N1.getOpcode() == ISD::BUILD_VECTOR &&
         N2.getOpcode() == ISD::BUILD_VECTOR) {
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
-      Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
+      Elts.append(N2.getNode()->op_begin(), N2.getNode()->op_end());
       return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;
@@ -3024,8 +3024,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
         N2.getOpcode() == ISD::BUILD_VECTOR &&
         N3.getOpcode() == ISD::BUILD_VECTOR) {
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(), N1.getNode()->op_end());
-      Elts.insert(Elts.end(), N2.getNode()->op_begin(), N2.getNode()->op_end());
-      Elts.insert(Elts.end(), N3.getNode()->op_begin(), N3.getNode()->op_end());
+      Elts.append(N2.getNode()->op_begin(), N2.getNode()->op_end());
+      Elts.append(N3.getNode()->op_begin(), N3.getNode()->op_end());
       return getNode(ISD::BUILD_VECTOR, DL, VT, &Elts[0], Elts.size());
     }
     break;

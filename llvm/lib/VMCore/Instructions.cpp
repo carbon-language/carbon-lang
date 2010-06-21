@@ -1456,7 +1456,7 @@ void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx,
   Op<0>() = Agg;
   Op<1>() = Val;
 
-  Indices.insert(Indices.end(), Idx, Idx + NumIdx);
+  Indices.append(Idx, Idx + NumIdx);
   setName(Name);
 }
 
@@ -1509,7 +1509,7 @@ void ExtractValueInst::init(const unsigned *Idx, unsigned NumIdx,
                             const Twine &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
 
-  Indices.insert(Indices.end(), Idx, Idx + NumIdx);
+  Indices.append(Idx, Idx + NumIdx);
   setName(Name);
 }
 

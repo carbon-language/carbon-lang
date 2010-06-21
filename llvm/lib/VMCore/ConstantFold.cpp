@@ -2194,7 +2194,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
         }
 
         NewIndices.push_back(Combined);
-        NewIndices.insert(NewIndices.end(), Idxs+1, Idxs+NumIdx);
+        NewIndices.append(Idxs+1, Idxs+NumIdx);
         return (inBounds && cast<GEPOperator>(CE)->isInBounds()) ?
           ConstantExpr::getInBoundsGetElementPtr(CE->getOperand(0),
                                                  &NewIndices[0],

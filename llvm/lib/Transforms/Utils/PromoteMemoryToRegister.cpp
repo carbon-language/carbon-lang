@@ -603,9 +603,8 @@ ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
   // To determine liveness, we must iterate through the predecessors of blocks
   // where the def is live.  Blocks are added to the worklist if we need to
   // check their predecessors.  Start with all the using blocks.
-  SmallVector<BasicBlock*, 64> LiveInBlockWorklist;
-  LiveInBlockWorklist.insert(LiveInBlockWorklist.end(), 
-                             Info.UsingBlocks.begin(), Info.UsingBlocks.end());
+  SmallVector<BasicBlock*, 64> LiveInBlockWorklist(Info.UsingBlocks.begin(),
+                                                   Info.UsingBlocks.end());
   
   // If any of the using blocks is also a definition block, check to see if the
   // definition occurs before or after the use.  If it happens before the use,

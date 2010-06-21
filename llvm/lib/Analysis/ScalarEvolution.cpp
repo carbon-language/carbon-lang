@@ -1406,8 +1406,8 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     while (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Ops[Idx])) {
       // If we have an add, expand the add operands onto the end of the operands
       // list.
-      Ops.insert(Ops.end(), Add->op_begin(), Add->op_end());
       Ops.erase(Ops.begin()+Idx);
+      Ops.append(Add->op_begin(), Add->op_end());
       DeletedAdd = true;
     }
 
@@ -1584,7 +1584,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
                                               AddRec->op_end());
           for (unsigned i = 0, e = OtherAddRec->getNumOperands(); i != e; ++i) {
             if (i >= NewOps.size()) {
-              NewOps.insert(NewOps.end(), OtherAddRec->op_begin()+i,
+              NewOps.append(OtherAddRec->op_begin()+i,
                             OtherAddRec->op_end());
               break;
             }
@@ -1717,8 +1717,8 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     while (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Ops[Idx])) {
       // If we have an mul, expand the mul operands onto the end of the operands
       // list.
-      Ops.insert(Ops.end(), Mul->op_begin(), Mul->op_end());
       Ops.erase(Ops.begin()+Idx);
+      Ops.append(Mul->op_begin(), Mul->op_end());
       DeletedMul = true;
     }
 
@@ -1940,8 +1940,7 @@ const SCEV *ScalarEvolution::getAddRecExpr(const SCEV *Start,
   Operands.push_back(Start);
   if (const SCEVAddRecExpr *StepChrec = dyn_cast<SCEVAddRecExpr>(Step))
     if (StepChrec->getLoop() == L) {
-      Operands.insert(Operands.end(), StepChrec->op_begin(),
-                      StepChrec->op_end());
+      Operands.append(StepChrec->op_begin(), StepChrec->op_end());
       return getAddRecExpr(Operands, L);
     }
 
@@ -2104,8 +2103,8 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   if (Idx < Ops.size()) {
     bool DeletedSMax = false;
     while (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(Ops[Idx])) {
-      Ops.insert(Ops.end(), SMax->op_begin(), SMax->op_end());
       Ops.erase(Ops.begin()+Idx);
+      Ops.append(SMax->op_begin(), SMax->op_end());
       DeletedSMax = true;
     }
 
@@ -2209,8 +2208,8 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   if (Idx < Ops.size()) {
     bool DeletedUMax = false;
     while (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(Ops[Idx])) {
-      Ops.insert(Ops.end(), UMax->op_begin(), UMax->op_end());
       Ops.erase(Ops.begin()+Idx);
+      Ops.append(UMax->op_begin(), UMax->op_end());
       DeletedUMax = true;
     }
 

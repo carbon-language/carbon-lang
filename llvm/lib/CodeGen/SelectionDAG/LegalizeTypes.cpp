@@ -485,7 +485,7 @@ SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
       NewOps.push_back(Op);
     } else if (Op != OrigOp) {
       // This is the first operand to change - add all operands so far.
-      NewOps.insert(NewOps.end(), N->op_begin(), N->op_begin() + i);
+      NewOps.append(N->op_begin(), N->op_begin() + i);
       NewOps.push_back(Op);
     }
   }

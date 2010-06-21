@@ -540,7 +540,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     for (; PDI != PDE; ++PDI) {
       MachineInstr *DbgMI= Emitter.EmitDbgValue(*PDI, VRBaseMap);
       if (DbgMI)
-        BB->insert(BB->end(), DbgMI);
+        BB->push_back(DbgMI);
     }
   }
 
