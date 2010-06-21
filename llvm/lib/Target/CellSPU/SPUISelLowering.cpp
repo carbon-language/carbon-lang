@@ -1791,7 +1791,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
         } else {
           rotate = false;
         }
-      } else if (PrevElt == 0) {
+      } else if (i == 0) {
         // First time through, need to keep track of previous element
         PrevElt = SrcElt;
       } else {
