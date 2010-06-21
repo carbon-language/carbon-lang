@@ -247,11 +247,6 @@ Address::Address (addr_t address, const SectionList * sections) :
     ResolveAddressUsingFileSections(address, sections);
 }
 
-Address::~Address ()
-{
-}
-
-
 const Address&
 Address::operator= (const Address& rhs)
 {
@@ -321,13 +316,6 @@ Address::GetModule () const
     return NULL;
 }
 
-const Section*
-Address::GetSection () const
-{
-    return m_section;
-}
-
-
 //addr_t
 //Address::Address() const
 //{
@@ -381,24 +369,12 @@ Address::GetLoadAddress (Process *process) const
     return m_offset;
 }
 
-addr_t
-Address::GetOffset () const
-{
-    return m_offset;
-}
-
 bool
 Address::SetOffset (addr_t offset)
 {
     bool changed = m_offset != offset;
     m_offset = offset;
     return changed;
-}
-
-void
-Address::SetSection (const Section* section)
-{
-    m_section = section;
 }
 
 void

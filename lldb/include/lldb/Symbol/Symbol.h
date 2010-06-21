@@ -68,88 +68,88 @@ public:
     GetAddressRangePtr () const;
 
     AddressRange &
-    GetAddressRangeRef();
+    GetAddressRangeRef() { return m_addr_range; }
 
     const AddressRange &
-    GetAddressRangeRef() const;
+    GetAddressRangeRef() const { return m_addr_range; }
 
     Mangled&
-    GetMangled ();
+    GetMangled () { return m_mangled; }
 
     const Mangled&
-    GetMangled () const;
+    GetMangled () const { return m_mangled; }
 
     bool
-    GetSizeIsSibling () const;
+    GetSizeIsSibling () const { return m_size_is_sibling; }
 
     bool
-    GetSizeIsSynthesized() const;
+    GetSizeIsSynthesized() const { return m_size_is_synthesized; }
 
     uint32_t
     GetSiblingIndex () const;
 
     uint32_t
-    GetByteSize () const;
+    GetByteSize () const { return m_addr_range.GetByteSize(); }
 
     lldb::SymbolType
-    GetType () const;
+    GetType () const { return m_type; }
 
     void
-    SetType (lldb::SymbolType type);
+    SetType (lldb::SymbolType type) { m_type = type; }
 
     const char *
     GetTypeAsString () const;
 
     uint32_t
-    GetFlags () const;
+    GetFlags () const { return m_flags; }
 
     void
-    SetFlags (uint32_t flags);
+    SetFlags (uint32_t flags) { m_flags = flags; }
 
     Function *
     GetFunction ();
 
     Address &
-    GetValue ();
+    GetValue () { return m_addr_range.GetBaseAddress(); }
 
     const Address &
-    GetValue () const;
+    GetValue () const { return m_addr_range.GetBaseAddress(); }
 
     bool
-    IsSynthetic () const;
+    IsSynthetic () const { return m_is_synthetic; }
 
     void
-    SetIsSynthetic (bool b);
+    SetIsSynthetic (bool b) { m_is_synthetic = b; }
 
     void
-    SetSizeIsSynthesized(bool b);
+    SetSizeIsSynthesized(bool b) { m_size_is_synthesized = b; }
 
     bool
-    IsDebug () const;
+    IsDebug () const { return m_is_debug; }
 
     void
-    SetDebug (bool b);
+    SetDebug (bool b) { m_is_debug = b; }
 
     bool
-    IsExternal () const;
+    IsExternal () const { return m_is_external; }
 
     void
-    SetExternal (bool b);
+    SetExternal (bool b) { m_is_external = b; }
 
     bool
     IsTrampoline () const;
 
     void
-    SetByteSize (uint32_t size);
+    SetByteSize (uint32_t size) { m_addr_range.SetByteSize(size); }
 
     void
-    SetSizeIsSibling (bool b);
+    SetSizeIsSibling (bool b) { m_size_is_sibling = b; }
 
     void
-    SetValue (Address &value);
+    SetValue (Address &value) { m_addr_range.GetBaseAddress() = value; }
 
     void
-    SetValue (const AddressRange &range);
+    SetValue (const AddressRange &range) { m_addr_range = range; }
 
     void
     SetValue (lldb::addr_t value);

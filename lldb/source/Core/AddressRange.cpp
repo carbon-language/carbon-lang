@@ -42,30 +42,6 @@ AddressRange::~AddressRange ()
 {
 }
 
-Address &
-AddressRange::GetBaseAddress()
-{
-    return m_base_addr;
-}
-
-const Address &
-AddressRange::GetBaseAddress() const
-{
-    return m_base_addr;
-}
-
-addr_t
-AddressRange::GetByteSize() const
-{
-    return m_byte_size;
-}
-
-void
-AddressRange::SetByteSize(addr_t byte_size)
-{
-    m_byte_size = byte_size;
-}
-
 //bool
 //AddressRange::Contains (const Address &addr) const
 //{
@@ -203,14 +179,6 @@ void
 AddressRange::DumpDebug (Stream *s) const
 {
     s->Printf("%.*p: AddressRange section = %*p, offset = 0x%16.16llx, byte_size = 0x%16.16llx\n", (int)sizeof(void*) * 2, this, (int)sizeof(void*) * 2, m_base_addr.GetSection(), m_base_addr.GetOffset(), GetByteSize());
-}
-
-size_t
-AddressRange::MemorySize () const
-{
-    // Noting special for the memory size of a single AddressRange object,
-    // it is just the size of itself.
-    return sizeof(AddressRange);
 }
 //
 //bool

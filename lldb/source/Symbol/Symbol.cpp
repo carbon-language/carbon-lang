@@ -139,18 +139,6 @@ Symbol::operator= (const Symbol& rhs)
     return *this;
 }
 
-AddressRange &
-Symbol::GetAddressRangeRef()
-{
-    return m_addr_range;
-}
-
-const AddressRange &
-Symbol::GetAddressRangeRef() const
-{
-    return m_addr_range;
-}
-
 AddressRange *
 Symbol::GetAddressRangePtr()
 {
@@ -167,113 +155,16 @@ Symbol::GetAddressRangePtr() const
     return NULL;
 }
 
-bool
-Symbol::GetSizeIsSibling() const
-{
-    return m_size_is_sibling;
-}
-
-bool
-Symbol::GetSizeIsSynthesized() const
-{
-    return m_size_is_synthesized;
-}
-
 uint32_t
 Symbol::GetSiblingIndex() const
 {
     return m_size_is_sibling ? m_addr_range.GetByteSize() : 0;
 }
 
-uint32_t
-Symbol::GetFlags() const
-{
-    return m_flags;
-}
-
-void
-Symbol::SetFlags (uint32_t flags)
-{
-    m_flags = flags;
-}
-
-SymbolType
-Symbol::GetType() const
-{
-    return m_type;
-}
-
-void
-Symbol::SetType(SymbolType type)
-{
-    m_type = type;
-}
-
-bool
-Symbol::IsSynthetic () const
-{
-    return m_is_synthetic;
-}
-
-void
-Symbol::SetIsSynthetic (bool b)
-{
-    m_is_synthetic = b;
-}
-
-void
-Symbol::SetSizeIsSynthesized(bool b)
-{
-    m_size_is_synthesized = b;
-}
-
-
-bool
-Symbol::IsDebug() const
-{
-    return m_is_debug;
-}
-
-void
-Symbol::SetDebug (bool b)
-{
-    m_is_debug = b;
-}
-
-bool
-Symbol::IsExternal() const
-{
-    return m_is_external;
-}
-
-void
-Symbol::SetExternal(bool b)
-{
-    m_is_external = b;
-}
-
 bool
 Symbol::IsTrampoline () const
 {
     return m_type == eSymbolTypeTrampoline;
-}
-
-uint32_t
-Symbol::GetByteSize() const
-{
-    return m_addr_range.GetByteSize();
-}
-
-void
-Symbol::SetByteSize (uint32_t size)
-{
-    m_addr_range.SetByteSize(size);
-}
-
-void
-Symbol::SetSizeIsSibling (bool b)
-{
-    m_size_is_sibling = b;
 }
 
 void
@@ -322,36 +213,6 @@ Symbol::Dump(Stream *s, Process *process, uint32_t index) const
     }
 }
 
-const Mangled&
-Symbol::GetMangled() const
-{
-    return m_mangled;
-}
-
-Mangled&
-Symbol::GetMangled()
-{
-    return m_mangled;
-}
-
-Address &
-Symbol::GetValue()
-{
-    return m_addr_range.GetBaseAddress();
-}
-
-const Address &
-Symbol::GetValue() const
-{
-    return m_addr_range.GetBaseAddress();
-}
-
-void
-Symbol::SetValue (Address &value)
-{
-    m_addr_range.GetBaseAddress() = value;
-}
-
 Function *
 Symbol::GetFunction ()
 {
@@ -395,13 +256,6 @@ Symbol::GetPrologueByteSize ()
     }
     return 0;
 }
-
-void
-Symbol::SetValue (const AddressRange &range)
-{
-    m_addr_range = range;
-}
-
 
 void
 Symbol::SetValue(addr_t value)

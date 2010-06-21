@@ -133,11 +133,6 @@ public:
     Address (lldb::addr_t file_addr, const SectionList * section_list);
 
     //------------------------------------------------------------------
-    /// Destructor.
-    //------------------------------------------------------------------
-    ~Address ();
-
-    //------------------------------------------------------------------
     /// Assignment operator.
     ///
     /// Copies the address value from another Address object \a rhs
@@ -283,7 +278,7 @@ public:
     ///     doesn't contain a valid offset.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetOffset () const;
+    GetOffset () const { return m_offset; }
 
     //------------------------------------------------------------------
     /// Check if an address is section offset.
@@ -362,7 +357,7 @@ public:
     ///     offset in, or NULL if this address is absolute.
     //------------------------------------------------------------------
     const Section*
-    GetSection() const;
+    GetSection() const { return m_section; }
 
     //------------------------------------------------------------------
     /// Set accessor for the offset.
@@ -385,7 +380,7 @@ public:
     ///     any section.
     //------------------------------------------------------------------
     void
-    SetSection (const Section* section);
+    SetSection (const Section* section) { m_section = section; }
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)

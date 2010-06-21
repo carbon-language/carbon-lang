@@ -227,7 +227,7 @@ public:
     ///     A reference to the base address object.
     //------------------------------------------------------------------
     Address &
-    GetBaseAddress();
+    GetBaseAddress() { return m_base_addr; }
 
     //------------------------------------------------------------------
     /// Get const accessor for the base address of the range.
@@ -236,7 +236,7 @@ public:
     ///     A const reference to the base address object.
     //------------------------------------------------------------------
     const Address &
-    GetBaseAddress() const;
+    GetBaseAddress() const { return m_base_addr; }
 
     //------------------------------------------------------------------
     /// Get accessor for the byte size of this range.
@@ -245,7 +245,7 @@ public:
     ///     The size in bytes of this address range.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetByteSize () const;
+    GetByteSize () const { return m_byte_size; }
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
@@ -254,7 +254,11 @@ public:
     ///     The number of bytes that this object occupies in memory.
     //------------------------------------------------------------------
     size_t
-    MemorySize () const;
+    MemorySize () const {
+        // Noting special for the memory size of a single AddressRange object,
+        // it is just the size of itself.
+        return sizeof(AddressRange);
+    }
 
     //------------------------------------------------------------------
     /// Set accessor for the byte size of this range.
@@ -263,7 +267,7 @@ public:
     ///     The new size in bytes of this address range.
     //------------------------------------------------------------------
     void
-    SetByteSize (lldb::addr_t byte_size);
+    SetByteSize (lldb::addr_t byte_size) { m_byte_size = byte_size; }
 
 protected:
     //------------------------------------------------------------------
