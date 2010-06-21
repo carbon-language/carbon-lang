@@ -444,6 +444,22 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                          RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
+/// sse12_unpack_interleave - SSE 1 & 2 unpack and interleave
+multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
+                                   PatFrag mem_frag, RegisterClass RC,
+                                   X86MemOperand x86memop, string asm,
+                                   Domain d> {
+    def rr : PI<opc, MRMSrcReg,
+                (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                asm, [(set RC:$dst,
+                           (vt (OpNode RC:$src1, RC:$src2)))], d>;
+    def rm : PI<opc, MRMSrcMem,
+                (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
+                asm, [(set RC:$dst,
+                           (vt (OpNode RC:$src1,
+                                       (mem_frag addr:$src2))))], d>;
+}
+
 //===----------------------------------------------------------------------===//
 // SSE1 Instructions
 //===----------------------------------------------------------------------===//
@@ -1201,50 +1217,32 @@ let Constraints = "$src1 = $dst" in {
                                   VR128:$src1, (memopv2f64 addr:$src2))))]>;
 
   let AddedComplexity = 10 in {
-    def UNPCKHPSrr : PSI<0x15, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpckhps\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v4f32 (unpckh VR128:$src1, VR128:$src2)))]>;
-    def UNPCKHPSrm : PSI<0x15, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpckhps\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v4f32 (unpckh VR128:$src1,
-                                          (memopv4f32 addr:$src2))))]>;
-
-    def UNPCKLPSrr : PSI<0x14, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpcklps\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v4f32 (unpckl VR128:$src1, VR128:$src2)))]>;
-    def UNPCKLPSrm : PSI<0x14, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpcklps\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (unpckl VR128:$src1, (memopv4f32 addr:$src2)))]>;
-    def UNPCKHPDrr : PDI<0x15, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckh VR128:$src1, VR128:$src2)))]>;
-    def UNPCKHPDrm : PDI<0x15, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckh VR128:$src1,
-                                          (memopv2f64 addr:$src2))))]>;
-
-    def UNPCKLPDrr : PDI<0x14, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckl VR128:$src1, VR128:$src2)))]>;
-    def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (unpckl VR128:$src1, (memopv2f64 addr:$src2)))]>;
+    let Constraints = "", isAsmParserOnly = 1 in {
+    defm VUNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
+          VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
+          VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+    defm VUNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
+          VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
+          VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+    }
+    defm UNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
+          VR128, f128mem, "unpckhps\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedSingle>, TB;
+    defm UNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
+          VR128, f128mem, "unpckhpd\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedDouble>, TB, OpSize;
+    defm UNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
+          VR128, f128mem, "unpcklps\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedSingle>, TB;
+    defm UNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
+          VR128, f128mem, "unpcklpd\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedDouble>, TB, OpSize;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
