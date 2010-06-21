@@ -733,7 +733,7 @@ def NEG : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
 // TODO setd, eet, eef, getts, setpt, outct, inct, chkct, outt, intt, out,
 // in, outshr, inshr, testct, testwct, tinitpc, tinitdp, tinitsp, tinitcp,
 // tsetmr, sext (reg), zext (reg)
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let neverHasSideEffects = 1 in
 def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                  "sext $dst, $src2",
