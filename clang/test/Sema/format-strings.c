@@ -1,7 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
-// XFAIL: *
-// FIXME: temporarily marking as expected fail until whitespace highlighting
-// is fixed.
 
 #include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
@@ -277,7 +274,8 @@ void bug7377_bad_length_mod_usage() {
 
   // Bad optional amount use
   printf("%.2c", 'a'); // expected-warning{{precision used with 'c' conversion specifier, resulting in undefined behavior}}
-  printf("%1n", (void *) 0); // expected-warning{{precision used with 'n' conversion specifier, resulting in undefined behavior}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
+  printf("%1n", (void *) 0); // expected-warning{{field width used with 'n' conversion specifier, resulting in undefined behavior}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
+  printf("%.9n", (void *) 0); // expected-warning{{precision used with 'n' conversion specifier, resulting in undefined behavior}} expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
 
   // Ignored flags
   printf("% +f", 1.23); // expected-warning{{flag ' ' is ignored when flag '+' is present}}

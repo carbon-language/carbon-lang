@@ -1194,8 +1194,8 @@ public:
                              unsigned specifierLen);
 private:
   SourceRange getFormatStringRange();
-  SourceRange getFormatSpecifierRange(const char *startSpecifier,
-                                      unsigned specifierLen);
+  CharSourceRange getFormatSpecifierRange(const char *startSpecifier,
+                                          unsigned specifierLen);
   SourceLocation getLocationOfByte(const char *x);
 
   bool HandleAmount(const analyze_printf::OptionalAmount &Amt, unsigned k,
@@ -1220,10 +1220,15 @@ SourceRange CheckPrintfHandler::getFormatStringRange() {
   return OrigFormatExpr->getSourceRange();
 }
 
-SourceRange CheckPrintfHandler::
+CharSourceRange CheckPrintfHandler::
 getFormatSpecifierRange(const char *startSpecifier, unsigned specifierLen) {
-  return SourceRange(getLocationOfByte(startSpecifier),
-                     getLocationOfByte(startSpecifier+specifierLen-1));
+  SourceLocation Start = getLocationOfByte(startSpecifier);
+  SourceLocation End   = getLocationOfByte(startSpecifier + specifierLen - 1);
+
+  // Advance the end SourceLocation by one due to half-open ranges.
+  End = End.getFileLocWithOffset(1);
+
+  return CharSourceRange::getCharRange(Start, End);
 }
 
 SourceLocation CheckPrintfHandler::getLocationOfByte(const char *x) {
@@ -1451,7 +1456,7 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
 
   // Check for invalid use of field width
   if (!FS.hasValidFieldWidth()) {
-    HandleInvalidAmount(FS, FS.getFieldWidth(), /* field width */ 1,
+    HandleInvalidAmount(FS, FS.getFieldWidth(), /* field width */ 0,
         startSpecifier, specifierLen);
   }
 
@@ -1466,21 +1471,17 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
     HandleFlag(FS, FS.hasLeadingZeros(), startSpecifier, specifierLen);
   if (!FS.hasValidPlusPrefix())
     HandleFlag(FS, FS.hasPlusPrefix(), startSpecifier, specifierLen);
-  // FIXME: the following lines are disabled due to clang assertions on
-  // highlights containing spaces.
-  // if (!FS.hasValidSpacePrefix())
-  //   HandleFlag(FS, FS.hasSpacePrefix(), startSpecifier, specifierLen);
+  if (!FS.hasValidSpacePrefix())
+    HandleFlag(FS, FS.hasSpacePrefix(), startSpecifier, specifierLen);
   if (!FS.hasValidAlternativeForm())
     HandleFlag(FS, FS.hasAlternativeForm(), startSpecifier, specifierLen);
   if (!FS.hasValidLeftJustified())
     HandleFlag(FS, FS.isLeftJustified(), startSpecifier, specifierLen);
 
   // Check that flags are not ignored by another flag
-  // FIXME: the following lines are disabled due to clang assertions on
-  // highlights containing spaces.
-  //if (FS.hasSpacePrefix() && FS.hasPlusPrefix()) // ' ' ignored by '+'
-  //  HandleIgnoredFlag(FS, FS.hasSpacePrefix(), FS.hasPlusPrefix(),
-  //      startSpecifier, specifierLen);
+  if (FS.hasSpacePrefix() && FS.hasPlusPrefix()) // ' ' ignored by '+'
+    HandleIgnoredFlag(FS, FS.hasSpacePrefix(), FS.hasPlusPrefix(),
+        startSpecifier, specifierLen);
   if (FS.hasLeadingZeros() && FS.isLeftJustified()) // '0' ignored by '-'
     HandleIgnoredFlag(FS, FS.hasLeadingZeros(), FS.isLeftJustified(),
             startSpecifier, specifierLen);

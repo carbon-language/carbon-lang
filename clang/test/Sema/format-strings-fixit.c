@@ -1,9 +1,6 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -pedantic -Wall -fixit %t || true
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror %t
-// XFAIL: *
-// FIXME: Some of these tests currently fail due to a bug in the HighlightRange
-// function in lib/Frontend/TextDiagnosticPrinter.cpp.
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
@@ -26,9 +23,10 @@ void test() {
   printf("%1d", (long double) 1.23);
 
   // Flag handling
-  printf("%0+s", (unsigned) 31337); // flags should stay
-  printf("%0f", "test"); // flag should be removed
+  printf("%0+s", (unsigned) 31337); // 0 flag should stay
   printf("%#p", (void *) 0);
+  printf("% +f", 1.23); // + flag should stay
+  printf("%0-f", 1.23); // - flag should stay
 
   // Positional arguments
   printf("%1$f:%2$.*3$f:%4$.*3$f\n", 1, 2, 3, 4);
