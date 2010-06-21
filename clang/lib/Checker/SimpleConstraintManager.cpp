@@ -173,17 +173,6 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     if (!SE)
       return state;
 
-    GRStateManager &StateMgr = state->getStateManager();
-    ASTContext &Ctx = StateMgr.getContext();
-    BasicValueFactory &BasicVals = StateMgr.getBasicVals();
-
-    // FIXME: This is a hack.  It silently converts the RHS integer to be
-    // of the same type as on the left side.  This should be removed once
-    // we support truncation/extension of symbolic values.   
-    const SymExpr *LHS = SE->getLHS();
-    QualType LHSType = LHS->getType(Ctx);
-    const llvm::APSInt &RHS = BasicVals.Convert(LHSType, SE->getRHS());
-
     BinaryOperator::Opcode op = SE->getOpcode();
     // FIXME: We should implicitly compare non-comparison expressions to 0.
     if (!BinaryOperator::isComparisonOp(op))
@@ -193,7 +182,7 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     if (!Assumption)
       op = NegateComparison(op);
   
-    return AssumeSymRel(state, LHS, op, RHS);
+    return AssumeSymRel(state, SE->getLHS(), op, SE->getRHS());
   }
 
   case nonloc::ConcreteIntKind: {
@@ -222,11 +211,13 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
    // x < 4 has the solution [0, 3]. x+2 < 4 has the solution [0-2, 3-2], which
    // in modular arithmetic is [0, 1] U [UINT_MAX-1, UINT_MAX]. It's up to
    // the subclasses of SimpleConstraintManager to handle the adjustment.
-   llvm::APSInt Adjustment(Int.getBitWidth(), Int.isUnsigned());
+   llvm::APSInt Adjustment;
 
   // First check if the LHS is a simple symbol reference.
   SymbolRef Sym = dyn_cast<SymbolData>(LHS);
-  if (!Sym) {
+  if (Sym) {
+    Adjustment = 0;
+  } else {
     // Next, see if it's a "($sym+constant1)" expression.
     const SymIntExpr *SE = dyn_cast<SymIntExpr>(LHS);
 
@@ -256,28 +247,48 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
     }
   }
 
+  // FIXME: This next section is a hack. It silently converts the integers to
+  // be of the same type as the symbol, which is not always correct. Really the
+  // comparisons should be performed using the Int's type, then mapped back to
+  // the symbol's range of values.
+  GRStateManager &StateMgr = state->getStateManager();
+  ASTContext &Ctx = StateMgr.getContext();
+
+  QualType T = Sym->getType(Ctx);
+  assert(T->isIntegerType() || Loc::IsLocType(T));
+  unsigned bitwidth = Ctx.getTypeSize(T);
+  bool isSymUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+
+  // Convert the adjustment.
+  Adjustment.setIsUnsigned(isSymUnsigned);
+  Adjustment.extOrTrunc(bitwidth);
+
+  // Convert the right-hand side integer.
+  llvm::APSInt ConvertedInt(Int, isSymUnsigned);
+  ConvertedInt.extOrTrunc(bitwidth);
+
   switch (op) {
   default:
     // No logic yet for other operators.  Assume the constraint is feasible.
     return state;
 
   case BinaryOperator::EQ:
-    return AssumeSymEQ(state, Sym, Int, Adjustment);
+    return AssumeSymEQ(state, Sym, ConvertedInt, Adjustment);
 
   case BinaryOperator::NE:
-    return AssumeSymNE(state, Sym, Int, Adjustment);
+    return AssumeSymNE(state, Sym, ConvertedInt, Adjustment);
 
   case BinaryOperator::GT:
-    return AssumeSymGT(state, Sym, Int, Adjustment);
+    return AssumeSymGT(state, Sym, ConvertedInt, Adjustment);
 
   case BinaryOperator::GE:
-    return AssumeSymGE(state, Sym, Int, Adjustment);
+    return AssumeSymGE(state, Sym, ConvertedInt, Adjustment);
 
   case BinaryOperator::LT:
-    return AssumeSymLT(state, Sym, Int, Adjustment);
+    return AssumeSymLT(state, Sym, ConvertedInt, Adjustment);
 
   case BinaryOperator::LE:
-    return AssumeSymLE(state, Sym, Int, Adjustment);
+    return AssumeSymLE(state, Sym, ConvertedInt, Adjustment);
   } // end switch
 }
 

@@ -33,6 +33,22 @@ void oneLongExpression (int a) {
   free(buf);
 }
 
+void mixedTypes (int a) {
+  char* buf = malloc(1);
+
+  // Different additive types should not cause crashes when constant-folding.
+  // This is part of PR7406.
+  int b = a + 1LL;
+  if (a != 0 && (b-1) == 0) // not crash
+    return; // no warning
+
+  int c = a + 1U;
+  if (a != 0 && (c-1) == 0) // not crash
+    return; // no warning
+
+  free(buf);
+}
+
 //---------------
 //  Comparisons
 //---------------
@@ -56,6 +72,30 @@ void ne_eq (unsigned a) {
   if (a+1 == 0)
     return; // no-warning
   if (a-1 == UINT_MAX-1)
+    return; // no-warning
+  free(b);
+}
+
+// Mixed typed inequalities (part of PR7406)
+// These should not crash.
+void mixed_eq_ne (int a) {
+  char* b = NULL;
+  if (a == 1)
+    b = malloc(1);
+  if (a+1U != 2)
+    return; // no-warning
+  if (a-1U != 0)
+    return; // no-warning
+  free(b);
+}
+
+void mixed_ne_eq (int a) {
+  char* b = NULL;
+  if (a != 1)
+    b = malloc(1);
+  if (a+1U == 2)
+    return; // no-warning
+  if (a-1U == 0)
     return; // no-warning
   free(b);
 }

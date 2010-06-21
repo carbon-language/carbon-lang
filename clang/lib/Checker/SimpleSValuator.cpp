@@ -411,15 +411,22 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         BinaryOperator::Opcode lop = symIntExpr->getOpcode();
         if (BinaryOperator::isAdditiveOp(lop)) {
           BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+
+          // resultTy may not be the best type to convert to, but it's
+          // probably the best choice in expressions with mixed type
+          // (such as x+1U+2LL). The rules for implicit conversions should
+          // choose a reasonable type to preserve the expression, and will
+          // at least match how the value is going to be used.
+          const llvm::APSInt &first =
+            BVF.Convert(resultTy, symIntExpr->getRHS());
+          const llvm::APSInt &second =
+            BVF.Convert(resultTy, rhsInt->getValue());
+
           const llvm::APSInt *newRHS;
           if (lop == op)
-            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Add,
-                                        symIntExpr->getRHS(),
-                                        rhsInt->getValue());
+            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Add, first, second);
           else
-            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Sub,
-                                        symIntExpr->getRHS(),
-                                        rhsInt->getValue());
+            newRHS = BVF.EvaluateAPSInt(BinaryOperator::Sub, first, second);
           return MakeSymIntVal(symIntExpr->getLHS(), lop, *newRHS, resultTy);
         }
       }
