@@ -442,6 +442,10 @@ FileSpec::GetPath(char *path, size_t max_path_length) const
     {
         strncpy (path, filename, max_path_length);
     }
+    else
+    {
+        return false;
+    }
 
     // Any code paths that reach here assume that strncpy, or a similar function was called
     // where any remaining bytes will be filled with NULLs and that the string won't be
