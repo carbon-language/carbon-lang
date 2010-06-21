@@ -541,7 +541,7 @@ let Predicates = [HasSwap] in {
 def MIPS_CMOV_ZERO  : PatLeaf<(i32 0)>;
 def MIPS_CMOV_NZERO : PatLeaf<(i32 1)>;
 
-let Predicates = [HasCondMov], isTwoAddress = 1 in {
+let Predicates = [HasCondMov], Constraints = "$F = $dst" in {
   def MOVN : CondMov<0x0a, "movn", MIPS_CMOV_NZERO>;
   def MOVZ : CondMov<0x0b, "movz", MIPS_CMOV_ZERO>;
 }
