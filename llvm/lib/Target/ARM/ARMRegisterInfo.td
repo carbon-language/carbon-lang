@@ -386,14 +386,9 @@ def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
           return ARM_GPR_NOR9_TC;
         else
           return ARM_GPR_R9_TC;
-      } else {
-        if (Subtarget.isR9Reserved())
-          return ARM_GPR_NOR9_TC;
-        else if (Subtarget.isThumb())
-          return ARM_GPR_R9_TC;
-        else
-          return ARM_GPR_R9_TC;
-      }
+      } else
+        // R9 is either callee-saved or reserved; can't use it.
+        return ARM_GPR_NOR9_TC;
     }
 
     tcGPRClass::iterator
@@ -412,14 +407,9 @@ def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
           I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
         else
           I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
-      } else {
-        if (Subtarget.isR9Reserved())
-          I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
-        else if (Subtarget.isThumb())
-          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
-        else
-          I = ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned));
-      }
+      } else
+        // R9 is either callee-saved or reserved; can't use it.
+        I = ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
       return I;
     }
   }];

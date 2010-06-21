@@ -1072,7 +1072,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                        Pseudo, IIC_Br,
                        "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
 
-    def TCRETURNriND : AInoP<(outs), (ins tGPR:$dst, variable_ops),
+    def TCRETURNriND : AInoP<(outs), (ins tcGPR:$dst, variable_ops),
                        Pseudo, IIC_Br,
                        "@TC_RETURN","\t$dst", []>, Requires<[IsNotDarwin]>;
 
@@ -1084,7 +1084,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                    IIC_Br, "b.w\t$dst  @ TAILCALL",
                    []>, Requires<[IsThumb, IsNotDarwin]>;
 
-    def TAILJMPrND : AXI<(outs), (ins tGPR:$dst, variable_ops),
+    def TAILJMPrND : AXI<(outs), (ins tcGPR:$dst, variable_ops),
                      BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
                    []>, Requires<[IsNotDarwin]> {
                    let Inst{7-4}   = 0b0001;
