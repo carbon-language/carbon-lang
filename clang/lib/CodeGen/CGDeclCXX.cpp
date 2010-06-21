@@ -172,13 +172,32 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
 
   if (D->hasAttr<InitPriorityAttr>()) {
+    static unsigned lix = 0; // to keep the lexical order of equal priority
+                             // objects intact;
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
-    PrioritizedCXXGlobalInits.push_back(std::make_pair(order,Fn));
+    OrderGlobalInitsType Key(order, lix++);
+    PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
   }
   else
     CXXGlobalInits.push_back(Fn);
 }
 
+typedef std::pair<CodeGen::OrderGlobalInitsType, 
+                  llvm::Function *> global_init_pair;
+static int PrioritizedCXXGlobalInitsCmp(const void* a, const void* b) {
+  const global_init_pair *LHS = static_cast<const global_init_pair*>(a);
+  const global_init_pair *RHS = static_cast<const global_init_pair*>(b);
+  if (LHS->first.priority < RHS->first.priority)
+    return -1;
+  if (LHS->first.priority == RHS->first.priority) {
+    if (LHS->first.lex_order < RHS->first.lex_order)
+      return -1;
+    if (LHS->first.lex_order == RHS->first.lex_order)
+      return 0;
+  }
+  return +1;
+}
+                                        
 void
 CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty() && PrioritizedCXXGlobalInits.empty())
@@ -195,7 +214,8 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   if (!PrioritizedCXXGlobalInits.empty()) {
     llvm::SmallVector<llvm::Constant*, 8> LocalCXXGlobalInits;
     llvm::array_pod_sort(PrioritizedCXXGlobalInits.begin(), 
-                         PrioritizedCXXGlobalInits.end());
+                         PrioritizedCXXGlobalInits.end(), 
+                         PrioritizedCXXGlobalInitsCmp);
     for (unsigned i = 0; i < PrioritizedCXXGlobalInits.size(); i++) {
       llvm::Function *Fn = PrioritizedCXXGlobalInits[i].second;
       LocalCXXGlobalInits.push_back(Fn);

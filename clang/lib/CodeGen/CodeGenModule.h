@@ -75,6 +75,13 @@ namespace CodeGen {
   class CGObjCRuntime;
   class MangleBuffer;
   
+  typedef struct OrderGlobalInits{
+    unsigned int priority;
+    unsigned int lex_order;
+    OrderGlobalInits(unsigned int p, unsigned int l) 
+    : priority(p), lex_order(l) {}
+  } OrderGlobalInitsType;
+  
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule : public BlockModule {
@@ -142,7 +149,8 @@ class CodeGenModule : public BlockModule {
   
   /// - Global variables with initializers whose order of initialization
   /// is set by init_priority attribute.
-  llvm::SmallVector<std::pair<unsigned int, llvm::Function*>, 8> 
+  
+  llvm::SmallVector<std::pair<OrderGlobalInitsType, llvm::Function*>, 8> 
     PrioritizedCXXGlobalInits;
 
   /// CXXGlobalDtors - Global destructor functions and arguments that need to
