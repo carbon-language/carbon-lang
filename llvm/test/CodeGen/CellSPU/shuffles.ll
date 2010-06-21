@@ -8,6 +8,9 @@ define <4 x float> @shuffle(<4 x float> %param1, <4 x float> %param2) {
 }
  
 define <4 x float> @splat(float %param1) {
+  ; CHECK: lqa
+  ; CHECK: shufb $3
+  ; CHECK: bi
   %vec = insertelement <1 x float> undef, float %param1, i32 0
   %val= shufflevector <1 x float> %vec, <1 x float> undef, <4 x i32> <i32 0,i32 0,i32 0,i32 0>
   ret <4 x float> %val  
