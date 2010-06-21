@@ -23,6 +23,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
@@ -151,14 +152,38 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
       return LangOptions::Protected;
     }
   }
-
-  // If -fvisibility-inlines-hidden was provided, then inline C++ member
-  // functions get "hidden" visibility by default.
-  if (getLangOptions().InlineVisibilityHidden)
-    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-      if (Method->isInlined())
-        return LangOptions::Hidden;
   
+  if (getLangOptions().CPlusPlus) {
+    // Entities subject to an explicit instantiation declaration get default
+    // visibility.
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+      if (Function->getTemplateSpecializationKind()
+                                        == TSK_ExplicitInstantiationDeclaration)
+        return LangOptions::Default;
+    } else if (const ClassTemplateSpecializationDecl *ClassSpec
+                              = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+      if (ClassSpec->getSpecializationKind()
+                                        == TSK_ExplicitInstantiationDeclaration)
+        return LangOptions::Default;
+    } else if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
+      if (Record->getTemplateSpecializationKind()
+                                        == TSK_ExplicitInstantiationDeclaration)
+        return LangOptions::Default;
+    } else if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
+      if (Var->isStaticDataMember() &&
+          (Var->getTemplateSpecializationKind()
+                                      == TSK_ExplicitInstantiationDeclaration))
+        return LangOptions::Default;
+    }
+
+    // If -fvisibility-inlines-hidden was provided, then inline C++ member
+    // functions get "hidden" visibility by default.
+    if (getLangOptions().InlineVisibilityHidden)
+      if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+        if (Method->isInlined())
+          return LangOptions::Hidden;
+  }
+           
   // This decl should have the same visibility as its parent.
   if (const DeclContext *DC = D->getDeclContext()) 
     return getDeclVisibilityMode(cast<Decl>(DC));
