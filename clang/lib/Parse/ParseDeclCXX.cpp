@@ -1563,40 +1563,45 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   else
     CurAS = AS_public;
 
-  // While we still have something to read, read the member-declarations.
-  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    // Each iteration of this loop reads one member-declaration.
+  SourceLocation RBraceLoc;
+  if (TagDecl) {
+    // While we still have something to read, read the member-declarations.
+    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+      // Each iteration of this loop reads one member-declaration.
 
-    // Check for extraneous top-level semicolon.
-    if (Tok.is(tok::semi)) {
-      Diag(Tok, diag::ext_extra_struct_semi)
-        << DeclSpec::getSpecifierName((DeclSpec::TST)TagType)
-        << FixItHint::CreateRemoval(Tok.getLocation());
-      ConsumeToken();
-      continue;
+      // Check for extraneous top-level semicolon.
+      if (Tok.is(tok::semi)) {
+        Diag(Tok, diag::ext_extra_struct_semi)
+          << DeclSpec::getSpecifierName((DeclSpec::TST)TagType)
+          << FixItHint::CreateRemoval(Tok.getLocation());
+        ConsumeToken();
+        continue;
+      }
+
+      AccessSpecifier AS = getAccessSpecifierIfPresent();
+      if (AS != AS_none) {
+        // Current token is a C++ access specifier.
+        CurAS = AS;
+        SourceLocation ASLoc = Tok.getLocation();
+        ConsumeToken();
+        if (Tok.is(tok::colon))
+          Actions.ActOnAccessSpecifier(AS, ASLoc, Tok.getLocation());
+        else
+          Diag(Tok, diag::err_expected_colon);
+        ConsumeToken();
+        continue;
+      }
+
+      // FIXME: Make sure we don't have a template here.
+
+      // Parse all the comma separated declarators.
+      ParseCXXClassMemberDeclaration(CurAS);
     }
 
-    AccessSpecifier AS = getAccessSpecifierIfPresent();
-    if (AS != AS_none) {
-      // Current token is a C++ access specifier.
-      CurAS = AS;
-      SourceLocation ASLoc = Tok.getLocation();
-      ConsumeToken();
-      if (Tok.is(tok::colon))
-        Actions.ActOnAccessSpecifier(AS, ASLoc, Tok.getLocation());
-      else
-        Diag(Tok, diag::err_expected_colon);
-      ConsumeToken();
-      continue;
-    }
-
-    // FIXME: Make sure we don't have a template here.
-
-    // Parse all the comma separated declarators.
-    ParseCXXClassMemberDeclaration(CurAS);
+    RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  } else {
+    SkipUntil(tok::r_brace, false, false);
   }
-
-  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
   // If attributes exist after class contents, parse them.
   llvm::OwningPtr<AttributeList> AttrList;
@@ -1615,7 +1620,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   //
   // FIXME: Only function bodies and constructor ctor-initializers are
   // parsed correctly, fix the rest.
-  if (NonNestedClass) {
+  if (TagDecl && NonNestedClass) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.
