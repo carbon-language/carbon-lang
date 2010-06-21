@@ -1135,6 +1135,16 @@ let Constraints = "$src1 = $dst" in {
                   "cmp${cc}ps\t{$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
                                             (memop addr:$src), imm:$cc))]>;
+  def CMPPDrri : PDIi8<0xC2, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
+                    "cmp${cc}pd\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                                        VR128:$src, imm:$cc))]>;
+  def CMPPDrmi : PDIi8<0xC2, MRMSrcMem,
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
+                  "cmp${cc}pd\t{$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                                 (memop addr:$src), imm:$cc))]>;
 
   // Accept explicit immediate argument form instead of comparison code.
 let isAsmParserOnly = 1 in {
@@ -1144,12 +1154,22 @@ let isAsmParserOnly = 1 in {
   def CMPPSrmi_alt : PSIi8<0xC2, MRMSrcMem,
                   (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, i8imm:$src2),
                   "cmpps\t{$src2, $src, $dst|$dst, $src, $src}", []>;
+  def CMPPDrri_alt : PDIi8<0xC2, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, i8imm:$src2),
+                    "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+  def CMPPDrmi_alt : PDIi8<0xC2, MRMSrcMem,
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, i8imm:$src2),
+                  "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
 }
 }
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
           (CMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
+          (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
@@ -1167,6 +1187,18 @@ let Constraints = "$src1 = $dst" in {
                         [(set VR128:$dst,
                           (v4f32 (shufp:$src3
                                   VR128:$src1, (memopv4f32 addr:$src2))))]>;
+  def SHUFPDrri : PDIi8<0xC6, MRMSrcReg,
+                 (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+                 "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                 [(set VR128:$dst,
+                   (v2f64 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
+  def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem,
+                        (outs VR128:$dst), (ins VR128:$src1,
+                         f128mem:$src2, i8imm:$src3),
+                        "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                        [(set VR128:$dst,
+                          (v2f64 (shufp:$src3
+                                  VR128:$src1, (memopv2f64 addr:$src2))))]>;
 
   let AddedComplexity = 10 in {
     def UNPCKHPSrr : PSI<0x15, MRMSrcReg,
@@ -1191,6 +1223,28 @@ let Constraints = "$src1 = $dst" in {
                          "unpcklps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
                            (unpckl VR128:$src1, (memopv4f32 addr:$src2)))]>;
+    def UNPCKHPDrr : PDI<0x15, MRMSrcReg,
+                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
+                         [(set VR128:$dst,
+                           (v2f64 (unpckh VR128:$src1, VR128:$src2)))]>;
+    def UNPCKHPDrm : PDI<0x15, MRMSrcMem,
+                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
+                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
+                         [(set VR128:$dst,
+                           (v2f64 (unpckh VR128:$src1,
+                                          (memopv2f64 addr:$src2))))]>;
+
+    def UNPCKLPDrr : PDI<0x14, MRMSrcReg,
+                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
+                         [(set VR128:$dst,
+                           (v2f64 (unpckl VR128:$src1, VR128:$src2)))]>;
+    def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
+                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
+                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
+                         [(set VR128:$dst,
+                           (unpckl VR128:$src1, (memopv2f64 addr:$src2)))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
@@ -1785,75 +1839,6 @@ defm SQRT  : sse2_fp_unop_rm<0x51, "sqrt",  fsqrt,
                              int_x86_sse2_sqrt_sd, int_x86_sse2_sqrt_pd>;
 
 // There is no f64 version of the reciprocal approximation instructions.
-
-let Constraints = "$src1 = $dst" in {
-  def CMPPDrri : PDIi8<0xC2, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
-                    "cmp${cc}pd\t{$src, $dst|$dst, $src}",
-                    [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                                        VR128:$src, imm:$cc))]>;
-  def CMPPDrmi : PDIi8<0xC2, MRMSrcMem,
-                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
-                  "cmp${cc}pd\t{$src, $dst|$dst, $src}",
-                  [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                                 (memop addr:$src), imm:$cc))]>;
-
-  // Accept explicit immediate argument form instead of comparison code.
-let isAsmParserOnly = 1 in {
-  def CMPPDrri_alt : PDIi8<0xC2, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, i8imm:$src2),
-                    "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
-  def CMPPDrmi_alt : PDIi8<0xC2, MRMSrcMem,
-                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, i8imm:$src2),
-                  "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
-}
-}
-def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
-          (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
-def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
-          (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
-
-// Shuffle and unpack instructions
-let Constraints = "$src1 = $dst" in {
-  def SHUFPDrri : PDIi8<0xC6, MRMSrcReg,
-                 (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-                 "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                 [(set VR128:$dst,
-                   (v2f64 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
-  def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1,
-                         f128mem:$src2, i8imm:$src3),
-                        "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                        [(set VR128:$dst,
-                          (v2f64 (shufp:$src3
-                                  VR128:$src1, (memopv2f64 addr:$src2))))]>;
-
-  let AddedComplexity = 10 in {
-    def UNPCKHPDrr : PDI<0x15, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckh VR128:$src1, VR128:$src2)))]>;
-    def UNPCKHPDrm : PDI<0x15, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckh VR128:$src1,
-                                          (memopv2f64 addr:$src2))))]>;
-
-    def UNPCKLPDrr : PDI<0x14, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (v2f64 (unpckl VR128:$src1, VR128:$src2)))]>;
-    def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                         "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (unpckl VR128:$src1, (memopv2f64 addr:$src2)))]>;
-  } // AddedComplexity
-} // Constraints = "$src1 = $dst"
-
 
 //===---------------------------------------------------------------------===//
 // SSE integer instructions
