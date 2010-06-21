@@ -1056,7 +1056,14 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     // to preserve variable info in such situation then stash it in a
     // named mdnode.
     DISubprogram Fn(getDISubprogram(Context));
-    const Twine FnLVName = Twine("llvm.dbg.lv.", Fn.getName());
+    StringRef FName = "fn";
+    if (Fn.getFunction())
+      FName = Fn.getFunction()->getName();
+    const Twine FnLVName = Twine("llvm.dbg.lv.", FName);
+    char One = '\1';
+    if (FName.startswith(StringRef(&One, 1)))
+      FName = FName.substr(1);
+
     NamedMDNode *FnLocals = M.getNamedMetadataUsingTwine(FnLVName);
     if (!FnLocals)
       FnLocals = NamedMDNode::Create(VMContext, FnLVName, NULL, 0, &M);
