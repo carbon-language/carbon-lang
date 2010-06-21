@@ -126,7 +126,7 @@ def FNABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                         (implicit PSW)]>;
 }
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let Defs = [PSW] in {
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def FADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
@@ -237,7 +237,7 @@ def FDIV64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2),
                        "ddb\t{$dst, $src2}",
                        [(set FP64:$dst, (fdiv FP64:$src1, (load rriaddr12:$src2)))]>;
 
-} // isTwoAddress = 1
+} // Constraints = "$src1 = $dst"
 
 def FSQRT32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
                        "sqebr\t{$dst, $src}",

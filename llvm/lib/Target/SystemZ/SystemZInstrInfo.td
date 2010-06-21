@@ -478,7 +478,8 @@ def MOV64rmm  : RSYI<0x04EB,
                      "lmg\t{$from, $to, $dst}",
                      []>;
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1, isTwoAddress = 1 in {
+let isReMaterializable = 1, isAsCheapAsAMove = 1,
+    Constraints = "$src = $dst" in {
 def MOV64Pr0_even : Pseudo<(outs GR64P:$dst), (ins GR64P:$src),
                            "lhi\t${dst:subreg_even}, 0",
                            []>;
@@ -537,7 +538,7 @@ def NEG64rr32 : RREI<0xB913, (outs GR64:$dst), (ins GR32:$src),
                       (implicit PSW)]>;
 }
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 
 let Defs = [PSW] in {
 
@@ -924,12 +925,12 @@ def UDIVREM64m : RXYI<0xE387, (outs GR128:$dst), (ins GR128:$src1, rriaddr:$src2
                       "dlg\t{$dst, $src2}",
                       []>;
 } // mayLoad
-} // isTwoAddress = 1
+} // Constraints = "$src1 = $dst"
 
 //===----------------------------------------------------------------------===//
 // Shifts
 
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def SRL32rri : RSI<0x88,
                    (outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                    "srl\t{$src, $amt}",
@@ -939,7 +940,7 @@ def SRL64rri : RSYI<0xEB0C,
                     "srlg\t{$dst, $src, $amt}",
                     [(set GR64:$dst, (srl GR64:$src, riaddr:$amt))]>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def SHL32rri : RSI<0x89,
                    (outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                    "sll\t{$src, $amt}",
@@ -950,7 +951,7 @@ def SHL64rri : RSYI<0xEB0D,
                     [(set GR64:$dst, (shl GR64:$src, riaddr:$amt))]>;
 
 let Defs = [PSW] in {
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def SRA32rri : RSI<0x8A,
                    (outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                    "sra\t{$src, $amt}",
