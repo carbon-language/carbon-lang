@@ -1891,6 +1891,8 @@ def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
           (MOV64ri tjumptable  :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri tglobaladdr :$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
+          (MOV64ri tglobaltlsaddr :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri texternalsym:$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
@@ -1905,6 +1907,8 @@ def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
           (MOV64ri64i32 tjumptable  :$dst)>, Requires<[SmallCode]>;
 def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri64i32 tglobaladdr :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
+          (MOV64ri64i32 tglobaltlsaddr :$dst)>, Requires<[SmallCode]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri64i32 texternalsym:$dst)>, Requires<[SmallCode]>;
 def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
@@ -1919,6 +1923,8 @@ def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
           (MOV64ri32 tjumptable  :$dst)>, Requires<[KernelCode]>;
 def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri32 tglobaladdr :$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tglobaltlsaddr :$dst)),
+          (MOV64ri32 tglobaltlsaddr :$dst)>, Requires<[KernelCode]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri32 texternalsym:$dst)>, Requires<[KernelCode]>;
 def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
@@ -1935,6 +1941,9 @@ def : Pat<(store (i64 (X86Wrapper tjumptable:$src)), addr:$dst),
           Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tglobaladdr:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tglobaltlsaddr:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tglobaltlsaddr:$src)>,
           Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, texternalsym:$src)>,
