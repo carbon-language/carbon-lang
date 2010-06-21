@@ -99,6 +99,7 @@ namespace {
     ValueSet DefinedValues;
     ForwardRefMap ForwardRefs;
     bool is_inline;
+    unsigned indent_level;
 
   public:
     static char ID;
@@ -120,6 +121,11 @@ namespace {
 
     void error(const std::string& msg);
 
+    
+    formatted_raw_ostream& nl(formatted_raw_ostream &Out, int delta = 0);
+    inline void in() { indent_level++; }
+    inline void out() { if (indent_level >0) indent_level--; }
+    
   private:
     void printLinkageType(GlobalValue::LinkageTypes LT);
     void printVisibilityType(GlobalValue::VisibilityTypes VisTypes);
@@ -155,19 +161,13 @@ namespace {
   };
 } // end anonymous namespace.
 
-// FIXME: Shouldn't be using globals for this.
-static unsigned indent_level = 0;
-static formatted_raw_ostream& nl(formatted_raw_ostream &Out, int delta = 0) {
-  Out << "\n";
+formatted_raw_ostream &CppWriter::nl(formatted_raw_ostream &Out, int delta) {
+  Out << '\n';
   if (delta >= 0 || indent_level >= unsigned(-delta))
     indent_level += delta;
-  for (unsigned i = 0; i < indent_level; ++i)
-    Out << "  ";
+  Out.indent(indent_level);
   return Out;
 }
-
-static inline void in() { indent_level++; }
-static inline void out() { if (indent_level >0) indent_level--; }
 
 static inline void sanitize(std::string &str) {
   for (size_t i = 0; i < str.length(); ++i)
