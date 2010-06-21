@@ -275,17 +275,17 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Global: // .globl/.global
     OS << MAI.getGlobalDirective();
     break;
-  case MCSA_Hidden:         OS << ".hidden ";          break;
-  case MCSA_IndirectSymbol: OS << ".indirect_symbol "; break;
-  case MCSA_Internal:       OS << ".internal ";        break;
-  case MCSA_LazyReference:  OS << ".lazy_reference ";  break;
-  case MCSA_Local:          OS << ".local ";           break;
-  case MCSA_NoDeadStrip:    OS << ".no_dead_strip ";   break;
-  case MCSA_PrivateExtern:  OS << ".private_extern ";  break;
-  case MCSA_Protected:      OS << ".protected ";       break;
-  case MCSA_Reference:      OS << ".reference ";       break;
-  case MCSA_Weak:           OS << ".weak ";            break;
-  case MCSA_WeakDefinition: OS << ".weak_definition "; break;
+  case MCSA_Hidden:         OS << "\t.hidden\t";          break;
+  case MCSA_IndirectSymbol: OS << "\t.indirect_symbol\t"; break;
+  case MCSA_Internal:       OS << "\t.internal\t";        break;
+  case MCSA_LazyReference:  OS << "\t.lazy_reference\t";  break;
+  case MCSA_Local:          OS << "\t.local\t";           break;
+  case MCSA_NoDeadStrip:    OS << "\t.no_dead_strip\t";   break;
+  case MCSA_PrivateExtern:  OS << "\t.private_extern\t";  break;
+  case MCSA_Protected:      OS << "\t.protected\t";       break;
+  case MCSA_Reference:      OS << "\t.reference\t";       break;
+  case MCSA_Weak:           OS << "\t.weak\t";            break;
+  case MCSA_WeakDefinition: OS << "\t.weak_definition\t"; break;
       // .weak_reference
   case MCSA_WeakReference:  OS << MAI.getWeakRefDirective(); break;
   }
