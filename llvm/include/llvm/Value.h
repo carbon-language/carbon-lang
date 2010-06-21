@@ -93,8 +93,8 @@ protected:
   /// printing behavior.
   virtual void printCustom(raw_ostream &O) const;
 
-public:
   Value(const Type *Ty, unsigned scid);
+public:
   virtual ~Value();
 
   /// dump - Support for debugging, callable in GDB: V->dump()
