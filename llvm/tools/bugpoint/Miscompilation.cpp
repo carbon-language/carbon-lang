@@ -894,6 +894,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
   }
   delete Test;
 
+  FileRemover TestModuleBCRemover(TestModuleBC, !SaveTemps);
+
   // Make the shared library
   sys::Path SafeModuleBC("bugpoint.safe.bc");
   if (SafeModuleBC.makeUnique(true, &ErrMsg)) {
@@ -907,10 +909,15 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
            << "'\nExiting.";
     exit(1);
   }
+
+  FileRemover SafeModuleBCRemover(SafeModuleBC, !SaveTemps);
+
   std::string SharedObject = BD.compileSharedObject(SafeModuleBC.str(), Error);
   if (!Error.empty())
     return false;
   delete Safe;
+
+  FileRemover SharedObjectRemover(sys::Path(SharedObject), !SaveTemps);
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
@@ -922,9 +929,6 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
     errs() << ": still failing!\n";
   else
     errs() << ": didn't fail.\n";
-  TestModuleBC.eraseFromDisk();
-  SafeModuleBC.eraseFromDisk();
-  sys::Path(SharedObject).eraseFromDisk();
 
   return Result;
 }
