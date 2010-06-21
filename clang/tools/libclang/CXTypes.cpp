@@ -116,6 +116,8 @@ CXType clang_getCursorType(CXCursor C) {
       return MakeCXType(QualType(ID->getTypeForDecl(), 0), AU);
     if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
       return MakeCXType(VD->getType(), AU);
+    if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
+      return MakeCXType(PD->getType(), AU);
 
     return MakeCXType(QualType(), AU);
   }
