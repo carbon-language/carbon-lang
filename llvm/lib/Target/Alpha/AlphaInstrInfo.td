@@ -680,18 +680,32 @@ def CPYSNSt : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
 }
 
 //conditional moves, floats
-let OutOperandList = (outs F4RC:$RDEST), InOperandList = (ins F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
-    isTwoAddress = 1 in {
-def FCMOVEQS : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if = zero
-def FCMOVGES : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if >= zero
-def FCMOVGTS : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if > zero
-def FCMOVLES : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if <= zero
-def FCMOVLTS : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RTRUE,$RDEST",[], s_fcmov>; // FCMOVE if < zero
-def FCMOVNES : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if != zero
+let OutOperandList = (outs F4RC:$RDEST),
+    InOperandList = (ins F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
+    Constraints = "$RTRUE = $RDEST" in {
+def FCMOVEQS : FPForm<0x17, 0x02A, 
+                      "fcmoveq $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; //FCMOVE if = zero
+def FCMOVGES : FPForm<0x17, 0x02D, 
+                      "fcmovge $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; //FCMOVE if >= zero
+def FCMOVGTS : FPForm<0x17, 0x02F, 
+                      "fcmovgt $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; //FCMOVE if > zero
+def FCMOVLES : FPForm<0x17, 0x02E, 
+                      "fcmovle $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; //FCMOVE if <= zero
+def FCMOVLTS : FPForm<0x17, 0x02C,
+                      "fcmovlt $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; // FCMOVE if < zero
+def FCMOVNES : FPForm<0x17, 0x02B, 
+                      "fcmovne $RCOND,$RTRUE,$RDEST",
+                      [], s_fcmov>; //FCMOVE if != zero
 }
 //conditional moves, doubles
-let OutOperandList = (outs F8RC:$RDEST), InOperandList = (ins F8RC:$RFALSE, F8RC:$RTRUE, F8RC:$RCOND),
-    isTwoAddress = 1 in {
+let OutOperandList = (outs F8RC:$RDEST), 
+    InOperandList = (ins F8RC:$RFALSE, F8RC:$RTRUE, F8RC:$RCOND),
+    Constraints = "$RTRUE = $RDEST" in {
 def FCMOVEQT : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 def FCMOVGET : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 def FCMOVGTT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RTRUE,$RDEST", [], s_fcmov>;

@@ -182,7 +182,7 @@ class OForm4<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
   bits<5> Rb;
   bits<7> Function = fun;
 
-//  let isTwoAddress = 1;
+//  let Constraints = "$RFALSE = $RDEST";
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
   let Inst{15-13} = 0;
@@ -223,7 +223,7 @@ class OForm4L<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Ins
   bits<8> LIT;
   bits<7> Function = fun;
 
-//  let isTwoAddress = 1;
+//  let Constraints = "$RFALSE = $RDEST";
   let Inst{25-21} = Ra;
   let Inst{20-13} = LIT;
   let Inst{12} = 1;
