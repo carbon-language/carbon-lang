@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
@@ -327,27 +328,23 @@ Error::SetErrorStringWithVarArg (const char *format, va_list args)
             SetErrorToGenericError();
 
         // Try and fit our error into a 1024 byte buffer first...
-        m_string.resize(1024);
+        llvm::SmallVector<char, 1024> buf;
+        buf.resize(1024);
         // Copy in case our first call to vsnprintf doesn't fit into our
         // allocated buffer above
         va_list copy_args;
         va_copy (copy_args, args);
-        int length = ::vsnprintf (&m_string[0], m_string.size(), format, args);
-        if (length < m_string.size())
-        {
-            // The error formatted string fit into our buffer, just chop it down
-            // to size
-            m_string.erase (length);
-        }
-        else
+        int length = ::vsnprintf (buf.data(), buf.size(), format, args);
+        if (length >= buf.size())
         {
             // The error formatted string didn't fit into our buffer, resize it
             // to the exact needed size, and retry
-            m_string.resize(length + 1);
-            length = ::vsnprintf (&m_string[0], m_string.size(), format, copy_args);
+            buf.resize(length + 1);
+            length = ::vsnprintf (buf.data(), buf.size(), format, copy_args);
             va_end (copy_args);
-            assert (length < m_string.size());
+            assert (length < buf.size());
         }
+        m_string.assign(buf.data(), length);
         va_end (args);
         return length;
     }
