@@ -1056,6 +1056,30 @@ defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
 multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                  SDNode OpNode, int HasPat = 0,
                                  list<list<dag>> Pattern = []> {
+  let isAsmParserOnly = 1 in {
+    defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
+         !strconcat(OpcodeStr, "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+         f128mem,
+         !if(HasPat, Pattern[0], // rr
+                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
+                                                      VR128:$src2)))]),
+         !if(HasPat, Pattern[2], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                               VEX_4V;
+
+    defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
+         !strconcat(OpcodeStr, "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+         f128mem,
+         !if(HasPat, Pattern[1], // rr
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (bc_v2i64 (v2f64
+                                               VR128:$src2))))]),
+         !if(HasPat, Pattern[3], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                                               OpSize, VEX_4V;
+  }
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"), f128mem,
