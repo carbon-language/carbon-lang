@@ -139,6 +139,11 @@ class CodeGenModule : public BlockModule {
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
   std::vector<llvm::Constant*> CXXGlobalInits;
+  
+  /// - Global variables with initializers whose order of initialization
+  /// is set by init_priority attribute.
+  llvm::SmallVector<std::pair<unsigned int, llvm::Function*>, 8> 
+    PrioritizedCXXGlobalInits;
 
   /// CXXGlobalDtors - Global destructor functions and arguments that need to
   /// run on termination.

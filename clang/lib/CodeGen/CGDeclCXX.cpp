@@ -171,12 +171,17 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
 
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
 
-  CXXGlobalInits.push_back(Fn);
+  if (D->hasAttr<InitPriorityAttr>()) {
+    unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
+    PrioritizedCXXGlobalInits.push_back(std::make_pair(order,Fn));
+  }
+  else
+    CXXGlobalInits.push_back(Fn);
 }
 
 void
 CodeGenModule::EmitCXXGlobalInitFunc() {
-  if (CXXGlobalInits.empty())
+  if (CXXGlobalInits.empty() && PrioritizedCXXGlobalInits.empty())
     return;
 
   const llvm::FunctionType *FTy
@@ -187,9 +192,24 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   llvm::Function *Fn = 
     CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
-  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                   &CXXGlobalInits[0],
-                                                   CXXGlobalInits.size());
+  if (!PrioritizedCXXGlobalInits.empty()) {
+    std::vector<llvm::Constant*> LocalCXXGlobalInits;
+    std::sort(PrioritizedCXXGlobalInits.begin(), 
+              PrioritizedCXXGlobalInits.end());
+    for (unsigned i = 0; i < PrioritizedCXXGlobalInits.size(); i++) {
+      llvm::Function *Fn = PrioritizedCXXGlobalInits[i].second;
+      LocalCXXGlobalInits.push_back(Fn);
+    }
+    for (unsigned i = 0; i < CXXGlobalInits.size(); i++)
+      LocalCXXGlobalInits.push_back(CXXGlobalInits[i]);
+    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
+                                                    &LocalCXXGlobalInits[0],
+                                                    LocalCXXGlobalInits.size());
+  }
+  else
+    CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
+                                                     &CXXGlobalInits[0],
+                                                     CXXGlobalInits.size());
   AddGlobalCtor(Fn);
 }
 

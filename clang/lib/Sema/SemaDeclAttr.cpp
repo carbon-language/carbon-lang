@@ -1218,7 +1218,7 @@ static void HandleInitPriorityAttr(Decl *d, const AttributeList &Attr,
     Attr.setInvalid();
     return;
   }
-  unsigned prioritynum = static_cast<unsigned>(priority.getZExtValue() * 8);
+  unsigned prioritynum = priority.getZExtValue();
   if (prioritynum < 101 || prioritynum > 65535) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_outof_range)
     <<  priorityExpr->getSourceRange();
