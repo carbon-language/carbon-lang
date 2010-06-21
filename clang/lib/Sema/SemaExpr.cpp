@@ -2903,6 +2903,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         OwningExprResult NewBase
           = ActOnCallExpr(0, ExprArg(*this, BaseExpr), Loc,
                           MultiExprArg(*this, 0, 0), 0, Loc);
+        BaseExpr = 0;
         if (NewBase.isInvalid())
           return ExprError();
 
