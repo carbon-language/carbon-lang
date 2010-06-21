@@ -1147,6 +1147,11 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   llvm_unreachable("Unable to schedule pass");
 }
 
+Pass *PMDataManager::getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
+  assert(0 && "Unable to find on the fly pass");
+  return NULL;
+}
+
 // Destructor
 PMDataManager::~PMDataManager() {
   for (SmallVector<Pass *, 8>::iterator I = PassVector.begin(),

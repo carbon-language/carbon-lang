@@ -302,10 +302,7 @@ public:
   /// through getAnalysis interface.
   virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
 
-  virtual Pass * getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
-    assert (0 && "Unable to find on the fly pass");
-    return NULL;
-  }
+  virtual Pass *getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F);
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 

@@ -109,13 +109,7 @@ public:
   }
 
   /// createPass() - Use this method to create an instance of this pass.
-  Pass *createPass() const {
-    assert((!isAnalysisGroup() || NormalCtor) &&
-           "No default implementation found for analysis group!");
-    assert(NormalCtor &&
-           "Cannot call createPass on PassInfo without default ctor!");
-    return NormalCtor();
-  }
+  Pass *createPass() const;
 
   /// addInterfaceImplemented - This method is called when this pass is
   /// registered as a member of an analysis group with the RegisterAnalysisGroup

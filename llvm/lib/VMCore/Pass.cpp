@@ -35,6 +35,15 @@ using namespace llvm;
 // Pass Implementation
 //
 
+Pass::Pass(PassKind K, intptr_t pid) : Resolver(0), PassID(pid), Kind(K) {
+  assert(pid && "pid cannot be 0");
+}
+
+Pass::Pass(PassKind K, const void *pid)
+  : Resolver(0), PassID((intptr_t)pid), Kind(K) {
+  assert(pid && "pid cannot be 0");
+}
+
 // Force out-of-line virtual method.
 Pass::~Pass() { 
   delete Resolver; 
@@ -90,6 +99,23 @@ void Pass::releaseMemory() {
 
 void Pass::verifyAnalysis() const {
   // By default, don't do anything.
+}
+
+void *Pass::getAdjustedAnalysisPointer(const PassInfo *) {
+  return this;
+}
+
+ImmutablePass *Pass::getAsImmutablePass() {
+  return 0;
+}
+
+PMDataManager *Pass::getAsPMDataManager() {
+  return 0;
+}
+
+void Pass::setResolver(AnalysisResolver *AR) {
+  assert(!Resolver && "Resolver is already set");
+  Resolver = AR;
 }
 
 // print - Print out the internal state of the pass.  This is called by Analyze
@@ -364,6 +390,14 @@ void PassInfo::unregisterPass() {
   getPassRegistrar()->UnregisterPass(*this);
 }
 
+Pass *PassInfo::createPass() const {
+  assert((!isAnalysisGroup() || NormalCtor) &&
+         "No default implementation found for analysis group!");
+  assert(NormalCtor &&
+         "Cannot call createPass on PassInfo without default ctor!");
+  return NormalCtor();
+}
+
 //===----------------------------------------------------------------------===//
 //                  Analysis Group Implementation Code
 //===----------------------------------------------------------------------===//
@@ -467,4 +501,15 @@ void AnalysisUsage::setPreservesCFG() {
   GetCFGOnlyPasses(Preserved).enumeratePasses();
 }
 
+AnalysisUsage &AnalysisUsage::addRequiredID(AnalysisID ID) {
+  assert(ID && "Pass class not registered!");
+  Required.push_back(ID);
+  return *this;
+}
 
+AnalysisUsage &AnalysisUsage::addRequiredTransitiveID(AnalysisID ID) {
+  assert(ID && "Pass class not registered!");
+  Required.push_back(ID);
+  RequiredTransitive.push_back(ID);
+  return *this;
+}

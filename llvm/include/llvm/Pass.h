@@ -31,7 +31,6 @@
 
 #include "llvm/System/DataTypes.h"
 
-#include <cassert>
 #include <string>
 #include <utility>
 #include <vector>
@@ -89,13 +88,8 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
   
 public:
-  explicit Pass(PassKind K, intptr_t pid) : Resolver(0), PassID(pid), Kind(K) {
-    assert(pid && "pid cannot be 0");
-  }
-  explicit Pass(PassKind K, const void *pid)
-    : Resolver(0), PassID((intptr_t)pid), Kind(K) {
-    assert(pid && "pid cannot be 0"); 
-  }
+  explicit Pass(PassKind K, intptr_t pid);
+  explicit Pass(PassKind K, const void *pid);
   virtual ~Pass();
 
   
@@ -138,13 +132,8 @@ public:
   virtual PassManagerType getPotentialPassManagerType() const;
 
   // Access AnalysisResolver
-  inline void setResolver(AnalysisResolver *AR) { 
-    assert(!Resolver && "Resolver is already set");
-    Resolver = AR; 
-  }
-  inline AnalysisResolver *getResolver() { 
-    return Resolver; 
-  }
+  void setResolver(AnalysisResolver *AR);
+  AnalysisResolver *getResolver() const { return Resolver; }
 
   /// getAnalysisUsage - This function should be overriden by passes that need
   /// analysis information to do their job.  If a pass specifies that it uses a
@@ -170,11 +159,9 @@ public:
   /// an analysis interface through multiple inheritance.  If needed, it should
   /// override this to adjust the this pointer as needed for the specified pass
   /// info.
-  virtual void *getAdjustedAnalysisPointer(const PassInfo *) {
-    return this;
-  }
-  virtual ImmutablePass *getAsImmutablePass() { return 0; }
-  virtual PMDataManager *getAsPMDataManager() { return 0; }
+  virtual void *getAdjustedAnalysisPointer(const PassInfo *);
+  virtual ImmutablePass *getAsImmutablePass();
+  virtual PMDataManager *getAsPMDataManager();
   
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
   /// check state of analysis information. 

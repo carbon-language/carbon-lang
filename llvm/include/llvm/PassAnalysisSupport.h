@@ -49,22 +49,13 @@ public:
   // addRequired - Add the specified ID to the required set of the usage info
   // for a pass.
   //
-  AnalysisUsage &addRequiredID(AnalysisID ID) {
-    assert(ID && "Pass class not registered!");
-    Required.push_back(ID);
-    return *this;
-  }
+  AnalysisUsage &addRequiredID(AnalysisID ID);
   template<class PassClass>
   AnalysisUsage &addRequired() {
     return addRequiredID(Pass::getClassPassInfo<PassClass>());
   }
 
-  AnalysisUsage &addRequiredTransitiveID(AnalysisID ID) {
-    assert(ID && "Pass class not registered!");
-    Required.push_back(ID);
-    RequiredTransitive.push_back(ID);
-    return *this;
-  }
+  AnalysisUsage &addRequiredTransitiveID(AnalysisID ID);
   template<class PassClass>
   AnalysisUsage &addRequiredTransitive() {
     AnalysisID ID = Pass::getClassPassInfo<PassClass>();
