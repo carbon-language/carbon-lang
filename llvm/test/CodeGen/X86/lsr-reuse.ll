@@ -465,14 +465,14 @@ bb5:                                              ; preds = %bb3, %entry
 ; And the one at %bb68, where we want to be sure to use superhero mode:
 
 ; CHECK:      BB10_10:
-; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}
-; CHECK-NEXT:   mulps   48(%r{{[^,]*}}), %xmm{{.*}}
-; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}
-; CHECK-NEXT:   mulps   32(%r{{[^,]*}}), %xmm{{.*}}
-; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}
-; CHECK-NEXT:   mulps   16(%r{{[^,]*}}), %xmm{{.*}}
-; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}
-; CHECK-NEXT:   mulps   (%r{{[^,]*}}), %xmm{{.*}}
+; CHECK-NEXT:   movaps  48(%r{{[^,]*}}), %xmm{{.*}}
+; CHECK-NEXT:   mulps   %xmm{{.*}}, %xmm{{.*}}
+; CHECK-NEXT:   movaps  32(%r{{[^,]*}}), %xmm{{.*}}
+; CHECK-NEXT:   mulps   %xmm{{.*}}, %xmm{{.*}}
+; CHECK-NEXT:   movaps  16(%r{{[^,]*}}), %xmm{{.*}}
+; CHECK-NEXT:   mulps   %xmm{{.*}}, %xmm{{.*}}
+; CHECK-NEXT:   movaps  (%r{{[^,]*}}), %xmm{{.*}}
+; CHECK-NEXT:   mulps   %xmm{{.*}}, %xmm{{.*}}
 ; CHECK-NEXT:   movaps  %xmm{{.*}}, (%r{{[^,]*}})
 ; CHECK-NEXT:   movaps  %xmm{{.*}}, 16(%r{{[^,]*}})
 ; CHECK-NEXT:   movaps  %xmm{{.*}}, 32(%r{{[^,]*}})

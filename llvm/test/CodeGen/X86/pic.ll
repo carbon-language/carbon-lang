@@ -189,7 +189,7 @@ bb12:
 ; LINUX:   call	.L7$pb
 ; LINUX: .L7$pb:
 ; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb),
-; LINUX:   addl	.LJTI7_0@GOTOFF(
+; LINUX:   .LJTI7_0@GOTOFF(
 ; LINUX:   jmpl	*
 
 ; LINUX: .LJTI7_0:

@@ -898,6 +898,90 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
       }
     }
   }
+
+  // If this is an instruction with a load folded into it, try unfolding
+  // the load, e.g. avoid this:
+  //   movq %rdx, %rcx
+  //   addq (%rax), %rcx
+  // in favor of this:
+  //   movq (%rax), %rcx
+  //   addq %rdx, %rcx
+  // because it's preferable to schedule a load than a register copy.
+  if (TID.mayLoad() && !regBKilled) {
+    // Determine if a load can be unfolded.
+    unsigned LoadRegIndex;
+    unsigned NewOpc =
+      TII->getOpcodeAfterMemoryUnfold(mi->getOpcode(),
+                                      /*UnfoldLoad=*/true,
+                                      /*UnfoldStore=*/false,
+                                      &LoadRegIndex);
+    if (NewOpc != 0) {
+      const TargetInstrDesc &UnfoldTID = TII->get(NewOpc);
+      if (UnfoldTID.getNumDefs() == 1) {
+        MachineFunction &MF = *mbbi->getParent();
+
+        // Unfold the load.
+        DEBUG(dbgs() << "2addr:   UNFOLDING: " << *mi);
+        const TargetRegisterClass *RC =
+          UnfoldTID.OpInfo[LoadRegIndex].getRegClass(TRI);
+        unsigned Reg = MRI->createVirtualRegister(RC);
+        SmallVector<MachineInstr *, 2> NewMIs;
+        bool Success =
+          TII->unfoldMemoryOperand(MF, mi, Reg,
+                                   /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
+                                   NewMIs);
+        (void)Success;
+        assert(Success &&
+               "unfoldMemoryOperand failed when getOpcodeAfterMemoryUnfold "
+               "succeeded!");
+        assert(NewMIs.size() == 2 &&
+               "Unfolded a load into multiple instructions!");
+        // The load was previously folded, so this is the only use.
+        NewMIs[1]->addRegisterKilled(Reg, TRI);
+
+        // Tentatively insert the instructions into the block so that they
+        // look "normal" to the transformation logic.
+        mbbi->insert(mi, NewMIs[0]);
+        mbbi->insert(mi, NewMIs[1]);
+
+        DEBUG(dbgs() << "2addr:    NEW LOAD: " << *NewMIs[0]
+                     << "2addr:    NEW INST: " << *NewMIs[1]);
+
+        // Transform the instruction, now that it no longer has a load.
+        unsigned NewDstIdx = NewMIs[1]->findRegisterDefOperandIdx(regA);
+        unsigned NewSrcIdx = NewMIs[1]->findRegisterUseOperandIdx(regB);
+        MachineBasicBlock::iterator NewMI = NewMIs[1];
+        bool TransformSuccess =
+          TryInstructionTransform(NewMI, mi, mbbi,
+                                  NewSrcIdx, NewDstIdx, Dist);
+        if (TransformSuccess ||
+            NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
+          // Success, or at least we made an improvement. Keep the unfolded
+          // instructions and discard the original.
+          if (LV) {
+            for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
+              MachineOperand &MO = mi->getOperand(i);
+              if (MO.isReg() && MO.isUse() && MO.isKill())
+                LV->replaceKillInstruction(Reg, mi, NewMIs[0]);
+            }
+            LV->addVirtualRegisterKilled(Reg, NewMIs[1]);
+          }
+          mi->eraseFromParent();
+          mi = NewMIs[1];
+          if (TransformSuccess)
+            return true;
+        } else {
+          // Transforming didn't eliminate the tie and didn't lead to an
+          // improvement. Clean up the unfolded instructions and keep the
+          // original.
+          DEBUG(dbgs() << "2addr: ABANDONING UNFOLD\n");
+          NewMIs[0]->eraseFromParent();
+          NewMIs[1]->eraseFromParent();
+        }
+      }
+    }
+  }
+
   return false;
 }
 
