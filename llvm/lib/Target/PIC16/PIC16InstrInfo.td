@@ -134,7 +134,7 @@ include "PIC16InstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 // W = W Op F : Load the value from F and do Op to W.
-let isTwoAddress = 1, mayLoad = 1 in
+let Constraints = "$src = $dst", mayLoad = 1 in
 class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -160,7 +160,7 @@ class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
                                              )]>;
 
 // W = W Op L : Do Op of L with W and place result in W.
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 class BinOpWL<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
@@ -220,7 +220,7 @@ def set_fsrlo:
              "movwf ${fsr}L",
              []>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 def set_fsrhi:
   ByteFormat<0, (outs FSR16:$dst), 
              (ins FSR16:$src, GPR:$val),
@@ -362,7 +362,7 @@ def addwfc: BinOpWF<0, "addwfc", adde>;  // With Carry.
 }
 
 // W -= [F] ; load from F and sub the value from W.
-let isTwoAddress = 1, mayLoad = 1 in
+let Constraints = "$src = $dst", mayLoad = 1 in
 class SUBFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs GPR:$dst),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
@@ -418,7 +418,7 @@ def orlw  : BinOpWL<0, "iorlw", or>;
 
 // sublw 
 // W = C - W ; sub W from literal. (Without borrow).
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 class SUBLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
@@ -426,7 +426,7 @@ class SUBLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
                 [(set GPR:$dst, (OpNode (i8 imm:$literal), GPR:$src))]>;
 // subwl 
 // W = W - C ; sub literal from W  (Without borrow).
-let isTwoAddress = 1 in
+let Constraints = "$src = $dst" in
 class SUBWL<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
