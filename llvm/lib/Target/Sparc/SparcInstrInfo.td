@@ -665,7 +665,7 @@ let Defs = [FCC] in {
 //===----------------------------------------------------------------------===//
 
 // V9 Conditional Moves.
-let Predicates = [HasV9], isTwoAddress = 1 in {
+let Predicates = [HasV9], Constraints = "$T = $dst" in {
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
   // FIXME: Add instruction encodings for the JIT some day.
   def MOVICCrr
