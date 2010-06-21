@@ -67,6 +67,7 @@ clang_getPointeeType
 clang_getRange
 clang_getRangeEnd
 clang_getRangeStart
+clang_getResultType
 clang_getTokenExtent
 clang_getTokenKind
 clang_getTokenLocation

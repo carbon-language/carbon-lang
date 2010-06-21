@@ -1086,7 +1086,9 @@ enum CXTypeKind {
   CXType_Enum = 106,
   CXType_Typedef = 107,
   CXType_ObjCInterface = 108,
-  CXType_ObjCObjectPointer = 109
+  CXType_ObjCObjectPointer = 109,
+  CXType_FunctionNoProto = 110,
+  CXType_FunctionProto = 111
 };
 
 /**
@@ -1137,6 +1139,11 @@ CINDEX_LINKAGE CXCursor clang_getTypeDeclaration(CXType T);
  * \brief Retrieve the spelling of a given CXTypeKind.
  */
 CINDEX_LINKAGE CXString clang_getTypeKindSpelling(enum CXTypeKind K);
+
+/**
+ * \brief Retrieve the result type associated with a function or method type.
+ */
+CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 
 /**
  * @}

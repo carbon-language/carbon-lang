@@ -455,16 +455,29 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
 
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
-    CXType CT = clang_getCanonicalType(T);
     CXString S = clang_getTypeKindSpelling(T.kind);
     PrintCursor(cursor);
     printf(" typekind=%s", clang_getCString(S));
-    if (!clang_equalTypes(T, CT)) {
-      CXString CS = clang_getTypeKindSpelling(CT.kind);
-      printf(" [canonical=%s]", clang_getCString(CS));
-      clang_disposeString(CS);
-    }
     clang_disposeString(S);
+    // Print the canonical type if it is different.
+    {
+      CXType CT = clang_getCanonicalType(T);
+      if (!clang_equalTypes(T, CT)) {
+        CXString CS = clang_getTypeKindSpelling(CT.kind);
+        printf(" [canonical=%s]", clang_getCString(CS));
+        clang_disposeString(CS);
+      }
+    }
+    // Print the return type if it exists.
+    {
+      CXType RT = clang_getResultType(T);
+      if (RT.kind != CXType_Invalid) {
+        CXString RS = clang_getTypeKindSpelling(RT.kind);
+        printf(" [result=%s]", clang_getCString(RS));
+        clang_disposeString(RS);
+      }
+    }
+
     printf("\n");
   }
   return CXChildVisit_Recurse;
