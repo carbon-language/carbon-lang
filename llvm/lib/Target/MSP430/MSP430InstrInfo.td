@@ -25,13 +25,16 @@ class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
 def SDT_MSP430Call         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_MSP430CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>]>;
 def SDT_MSP430CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
-def SDT_MSP430Wrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
+def SDT_MSP430Wrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
+                                                  SDTCisPtrTy<0>]>;
 def SDT_MSP430Cmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_MSP430BrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                                   SDTCisVT<1, i8>]>;
-def SDT_MSP430SelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
+def SDT_MSP430SelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>,
+                                                  SDTCisSameAs<1, 2>, 
                                                   SDTCisVT<3, i8>]>;
-def SDT_MSP430Shift        : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisI8<2>]>;
+def SDT_MSP430Shift        : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
+                                                  SDTCisI8<2>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -55,8 +58,10 @@ def MSP430callseq_end :
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper", SDT_MSP430Wrapper>;
 def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp, [SDNPOutFlag]>;
-def MSP430brcc    : SDNode<"MSP430ISD::BR_CC", SDT_MSP430BrCC, [SDNPHasChain, SDNPInFlag]>;
-def MSP430selectcc: SDNode<"MSP430ISD::SELECT_CC", SDT_MSP430SelectCC, [SDNPInFlag]>;
+def MSP430brcc    : SDNode<"MSP430ISD::BR_CC", SDT_MSP430BrCC,
+                            [SDNPHasChain, SDNPInFlag]>;
+def MSP430selectcc: SDNode<"MSP430ISD::SELECT_CC", SDT_MSP430SelectCC,
+                            [SDNPInFlag]>;
 def MSP430shl     : SDNode<"MSP430ISD::SHL", SDT_MSP430Shift, []>;
 def MSP430sra     : SDNode<"MSP430ISD::SRA", SDT_MSP430Shift, []>;
 def MSP430srl     : SDNode<"MSP430ISD::SRL", SDT_MSP430Shift, []>;
