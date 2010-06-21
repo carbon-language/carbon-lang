@@ -164,11 +164,9 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
            "invalid SPU OR<type>_<vec> or LR instruction!");
-    if (MI.getOperand(0).getReg() == MI.getOperand(1).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
-    }
     break;
   }
   case SPU::ORv16i8:

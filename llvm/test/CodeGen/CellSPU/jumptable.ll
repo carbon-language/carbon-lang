@@ -2,9 +2,9 @@
 ; This is to check that emitting jumptables doesn't crash llc
 define i32 @test(i32 %param) {
 entry:
-;CHECK:        ai      $4, $3, -1
-;CHECK:        clgti   $5, $4, 3
-;CHECK:        brnz    $5,.LBB0_2
+;CHECK:        ai      {{\$.}}, $3, -1
+;CHECK:        clgti   {{\$., \$.}}, 3
+;CHECK:        brnz    {{\$.}},.LBB0_2
   switch i32 %param, label %bb1 [
     i32 1, label %bb3
     i32 2, label %bb2
