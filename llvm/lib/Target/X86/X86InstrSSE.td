@@ -373,26 +373,26 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
 
 /// sse12_fp_scalar - SSE 1 & 2 scalar instructions class
 multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                           RegisterClass RC, X86MemOperand memop> {
+                           RegisterClass RC, X86MemOperand x86memop> {
   let isCommutable = 1 in {
     def rr : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
                 OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
   }
-  def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+  def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
               OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
 }
 
 /// sse12_fp_scalar_int - SSE 1 & 2 scalar instructions intrinsics class
 multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                                string asm, string SSEVer, string FPSizeStr,
-                               Operand memop, ComplexPattern mem_cpat> {
+                               Operand memopr, ComplexPattern mem_cpat> {
   def rr_Int : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
                   asm, [(set RC:$dst, (
                                 !nameconcat<Intrinsic>("int_x86_sse",
                                 !strconcat(SSEVer, !strconcat("_",
                                 !strconcat(OpcodeStr, FPSizeStr))))
                          RC:$src1, RC:$src2))]>;
-  def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+  def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
                   asm, [(set RC:$dst, (
                                 !nameconcat<Intrinsic>("int_x86_sse",
                                 !strconcat(SSEVer, !strconcat("_",
@@ -428,7 +428,7 @@ multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
 /// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
 multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                                string asm, string SSEVer, string FPSizeStr,
-                               X86MemOperand memop, PatFrag mem_frag,
+                               X86MemOperand x86memop, PatFrag mem_frag,
                                Domain d> {
   def rr_Int : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
                   asm, [(set RC:$dst, (
@@ -436,7 +436,7 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                                 !strconcat(SSEVer, !strconcat("_",
                                 !strconcat(OpcodeStr, FPSizeStr))))
                          RC:$src1, RC:$src2))], d>;
-  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memop:$src2),
+  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
                   asm, [(set RC:$dst, (
                                 !nameconcat<Intrinsic>("int_x86_sse",
                                 !strconcat(SSEVer, !strconcat("_",
