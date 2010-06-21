@@ -936,6 +936,9 @@ void CppWriter::printConstant(const Constant *CV) {
         Out << ", " << getCppName(CE->getOperand(i));
       Out << ");";
     }
+  } else if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
+    Out << "Constant* " << constName << " = ";
+    Out << "BlockAddress::get(" << getOpName(BA->getBasicBlock()) << ");";
   } else {
     error("Bad Constant");
     Out << "Constant* " << constName << " = 0; ";
@@ -1088,9 +1091,8 @@ void CppWriter::printInstruction(const Instruction *I,
   // forward references. So, we get the names of all the operands in advance
   const unsigned Ops(I->getNumOperands());
   std::string* opNames = new std::string[Ops];
-  for (unsigned i = 0; i < Ops; i++) {
+  for (unsigned i = 0; i < Ops; i++)
     opNames[i] = getOpName(I->getOperand(i));
-  }
 
   switch (I->getOpcode()) {
   default:
@@ -1106,7 +1108,7 @@ void CppWriter::printInstruction(const Instruction *I,
   case Instruction::Br: {
     const BranchInst* br = cast<BranchInst>(I);
     Out << "BranchInst::Create(" ;
-    if (br->getNumOperands() == 3 ) {
+    if (br->getNumOperands() == 3) {
       Out << opNames[2] << ", "
           << opNames[1] << ", "
           << opNames[0] << ", ";
