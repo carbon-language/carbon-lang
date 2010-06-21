@@ -492,6 +492,8 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
     unsigned MBBSize = 0;
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I) {
+      if (I->isDebugValue())
+        continue;
       // Add instruction size to MBBSize.
       MBBSize += TII->GetInstSizeInBytes(I);
 
