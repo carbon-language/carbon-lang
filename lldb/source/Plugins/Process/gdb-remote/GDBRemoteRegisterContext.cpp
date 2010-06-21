@@ -39,6 +39,7 @@ GDBRemoteRegisterContext::GDBRemoteRegisterContext
     RegisterContext (thread, frame),
     m_reg_info (reg_info),
     m_reg_valid (),
+    m_reg_valid_stop_id (),
     m_reg_data (),
     m_read_all_at_once (read_all_at_once)
 {
