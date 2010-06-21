@@ -41,6 +41,7 @@ clang_getCursorLinkage
 clang_getCursorLocation
 clang_getCursorReferenced
 clang_getCursorSpelling
+clang_getCursorResultType
 clang_getCursorType
 clang_getCursorUSR
 clang_getDefinitionSpellingAndExtent

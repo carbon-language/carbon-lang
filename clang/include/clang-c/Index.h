@@ -1141,9 +1141,15 @@ CINDEX_LINKAGE CXCursor clang_getTypeDeclaration(CXType T);
 CINDEX_LINKAGE CXString clang_getTypeKindSpelling(enum CXTypeKind K);
 
 /**
- * \brief Retrieve the result type associated with a function or method type.
+ * \brief Retrieve the result type associated with a function type.
  */
 CINDEX_LINKAGE CXType clang_getResultType(CXType T);
+
+/**
+ * \brief Retrieve the result type associated with a given cursor.  This only
+ *  returns a valid type of the cursor refers to a function or method.
+ */
+CINDEX_LINKAGE CXType clang_getCursorResultType(CXCursor C);
 
 /**
  * @}

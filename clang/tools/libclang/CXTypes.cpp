@@ -271,4 +271,16 @@ CXType clang_getResultType(CXType X) {
   return MakeCXType(QualType(), GetASTU(X));
 }
 
+CXType clang_getCursorResultType(CXCursor C) {
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+      return MakeCXType(MD->getResultType(), cxcursor::getCursorASTUnit(C));
+
+    return clang_getResultType(clang_getCursorType(C));
+  }
+
+  return MakeCXType(QualType(), cxcursor::getCursorASTUnit(C));
+}
+
 } // end: extern "C"
