@@ -488,7 +488,7 @@ def MOVE: F1<(outs ALL:$dst), (ins ALL:$src),
              "$dst = $src;",
              []>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src1 = $dst" in
 def MOVEcc: F1<(outs DP:$dst), (ins DP:$src1, DP:$src2, AnyCC:$cc),
                "if $cc $dst = $src2;",
                [(set DP:$dst, (select AnyCC:$cc, DP:$src2, DP:$src1))]>;
@@ -645,7 +645,7 @@ def XOR: F1<(outs D:$dst), (ins D:$src1, D:$src2),
 // Table C-15. Bit Operations Instructions
 //===----------------------------------------------------------------------===//
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 def BITCLR: F1<(outs D:$dst), (ins D:$src1, uimm5imask:$src2),
               "bitclr($dst, $src2);",
               [(set D:$dst, (and D:$src1, uimm5imask:$src2))]>;
@@ -691,7 +691,7 @@ multiclass SHIFT32<SDNode opnode, string ops> {
 }
 
 let Defs = [AZ, AN, V, VS],
-    isTwoAddress = 1 in {
+    Constraints = "$src = $dst" in {
 defm SRA : SHIFT32<sra, ">>>">;
 defm SRL : SHIFT32<srl, ">>">;
 defm SLL : SHIFT32<shl, "<<">;
@@ -748,7 +748,7 @@ def ADD16: F2<(outs D16:$dst), (ins D16:$src1, D16:$src2),
               "$dst = $src1 + $src2;",
               [(set D16:$dst, (add D16:$src1, D16:$src2))]>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src1 = $dst" in
 def ADDimm7: F1<(outs D:$dst), (ins D:$src1, i32imm:$src2),
                 "$dst += $src2;",
                 [(set D:$dst, (add D:$src1, imm7:$src2))]>;
@@ -775,7 +775,7 @@ def NEG: F1<(outs D:$dst), (ins D:$src),
 def ADDpp: F1<(outs P:$dst), (ins P:$src1, P:$src2),
               "$dst = $src1 + $src2;", []>;
 
-let isTwoAddress = 1 in
+let Constraints = "$src1 = $dst" in
 def ADDpp_imm7: F1<(outs P:$dst), (ins P:$src1, i32imm:$src2),
                 "$dst += $src2;", []>;
 
@@ -802,7 +802,7 @@ def MULhh32u: F2<(outs D:$dst), (ins D16:$src1, D16:$src2),
 }
 
 
-let isTwoAddress = 1 in
+let Constraints = "$src1 = $dst" in
 def MUL32: F1<(outs D:$dst), (ins D:$src1, D:$src2),
             "$dst *= $src2;",
             [(set D:$dst, (mul D:$src1, D:$src2))]>;
