@@ -60,11 +60,16 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
     if (!Att->isNonNull(idx))
       continue;
 
-    const DefinedSVal &V = cast<DefinedSVal>(state->getSVal(*I));
+    SVal V = state->getSVal(*I);
+    DefinedSVal *DV = dyn_cast<DefinedSVal>(&V);
+
+    // If the value is unknown or undefined, we can't perform this check.
+    if (!DV)
+      continue;
 
     ConstraintManager &CM = C.getConstraintManager();
     const GRState *stateNotNull, *stateNull;
-    llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, V);
+    llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
 
     if (stateNull && !stateNotNull) {
       // Generate an error node.  Check for a null node in case

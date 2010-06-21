@@ -118,6 +118,11 @@ void f6d(int *p) {
   }  
 }
 
+void f6e(int *p, int offset) {
+  // PR7406 - crash from treating an UnknownVal as defined, to see if it's 0.
+  bar((p+offset)+1, 0); // not crash
+}
+
 int* qux();
 
 int f7(int x) {
