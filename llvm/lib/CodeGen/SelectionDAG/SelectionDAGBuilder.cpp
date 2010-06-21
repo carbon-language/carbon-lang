@@ -805,59 +805,27 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
   }
 }
 
-/// getValue - Return an SDValue for the given Value.
 SDValue SelectionDAGBuilder::getValue(const Value *V) {
-  // If we already have an SDValue for this value, use it. It's important
-  // to do this first, so that we don't create a CopyFromReg if we already
-  // have a regular SDValue.
   SDValue &N = NodeMap[V];
   if (N.getNode()) return N;
 
-  // If there's a virtual register allocated and initialized for this
-  // value, use it.
-  DenseMap<const Value *, unsigned>::iterator It = FuncInfo.ValueMap.find(V);
-  if (It != FuncInfo.ValueMap.end()) {
-    unsigned InReg = It->second;
-    RegsForValue RFV(*DAG.getContext(), TLI, InReg, V->getType());
-    SDValue Chain = DAG.getEntryNode();
-    return N = RFV.getCopyFromRegs(DAG, FuncInfo, getCurDebugLoc(), Chain, NULL);
-  }
-
-  // Otherwise create a new SDValue and remember it.
-  return N = getValueImpl(V);
-}
-
-/// getNonRegisterValue - Return an SDValue for the given Value, but
-/// don't look in FuncInfo.ValueMap for a virtual register.
-SDValue SelectionDAGBuilder::getNonRegisterValue(const Value *V) {
-  // If we already have an SDValue for this value, use it.
-  SDValue &N = NodeMap[V];
-  if (N.getNode()) return N;
-
-  // Otherwise create a new SDValue and remember it.
-  return N = getValueImpl(V);
-}
-
-/// getValueImpl - Helper function for getValue and getMaterializedValue.
-/// Create an SDValue for the given value.
-SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   if (const Constant *C = dyn_cast<Constant>(V)) {
     EVT VT = TLI.getValueType(V->getType(), true);
 
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      return DAG.getConstant(*CI, VT);
+      return N = DAG.getConstant(*CI, VT);
 
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return DAG.getGlobalAddress(GV, VT);
+      return N = DAG.getGlobalAddress(GV, VT);
 
     if (isa<ConstantPointerNull>(C))
-      return DAG.getConstant(0, TLI.getPointerTy());
+      return N = DAG.getConstant(0, TLI.getPointerTy());
 
     if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
-      return DAG.getConstantFP(*CFP, VT);
+      return N = DAG.getConstantFP(*CFP, VT);
 
     if (isa<UndefValue>(C) && !V->getType()->isAggregateType())
-      return DAG.getUNDEF(VT);
+      return N = DAG.getUNDEF(VT);
 
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
@@ -945,18 +913,12 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
       return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
   }
 
-  // If this is an instruction which fast-isel has deferred, select it now.
-  if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
-    assert(Inst->isSafeToSpeculativelyExecute() &&
-           "Instruction with side effects deferred!");
-    visit(*Inst);
-    DenseMap<const Value *, SDValue>::iterator NIt = NodeMap.find(Inst);
-    if (NIt != NodeMap.end() && NIt->second.getNode())
-      return NIt->second;
-  }
+  unsigned InReg = FuncInfo.ValueMap[V];
+  assert(InReg && "Value not in map!");
 
-  llvm_unreachable("Can't get register for value!");
-  return SDValue();
+  RegsForValue RFV(*DAG.getContext(), TLI, InReg, V->getType());
+  SDValue Chain = DAG.getEntryNode();
+  return RFV.getCopyFromRegs(DAG, FuncInfo, getCurDebugLoc(), Chain, NULL);
 }
 
 /// Get the EVTs and ArgFlags collections that represent the legalized return 
@@ -5918,7 +5880,7 @@ SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
 void
 SelectionDAGBuilder::CopyValueToVirtualRegister(const Value *V, unsigned Reg) {
-  SDValue Op = getNonRegisterValue(V);
+  SDValue Op = getValue(V);
   assert((Op.getOpcode() != ISD::CopyFromReg ||
           cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
