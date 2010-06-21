@@ -1803,8 +1803,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   if (EltsFromV2 == 1 && monotonic) {
     // Compute mask and shuffle
-    MachineFunction &MF = DAG.getMachineFunction();
-    MachineRegisterInfo &RegInfo = MF.getRegInfo();
     EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
     // As SHUFFLE_MASK becomes a c?d instruction, feed it an address
