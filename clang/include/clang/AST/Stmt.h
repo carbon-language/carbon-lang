@@ -615,24 +615,16 @@ public:
 /// IfStmt - This represents an if/then/else.
 ///
 class IfStmt : public Stmt {
-  enum { COND, THEN, ELSE, END_EXPR };
+  enum { VAR, COND, THEN, ELSE, END_EXPR };
   Stmt* SubExprs[END_EXPR];
 
-  /// \brief If non-NULL, the declaration in the "if" statement.
-  VarDecl *Var;
-  
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
   
 public:
-  IfStmt(SourceLocation IL, VarDecl *var, Expr *cond, Stmt *then,
-         SourceLocation EL = SourceLocation(), Stmt *elsev = 0)
-    : Stmt(IfStmtClass), Var(var), IfLoc(IL), ElseLoc(EL)  {
-    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
-    SubExprs[THEN] = then;
-    SubExprs[ELSE] = elsev;
-  }
-
+  IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
+         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
+  
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
 
@@ -644,8 +636,8 @@ public:
   ///   printf("x is %d", x);
   /// }
   /// \endcode
-  VarDecl *getConditionVariable() const { return Var; }
-  void setConditionVariable(VarDecl *V) { Var = V; }
+  VarDecl *getConditionVariable() const;
+  void setConditionVariable(ASTContext &C, VarDecl *V);
   
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
@@ -687,9 +679,8 @@ protected:
 /// SwitchStmt - This represents a 'switch' stmt.
 ///
 class SwitchStmt : public Stmt {
-  enum { COND, BODY, END_EXPR };
+  enum { VAR, COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
-  VarDecl *Var;
   // This points to a linked list of case and default statements.
   SwitchCase *FirstCase;
   SourceLocation SwitchLoc;
@@ -698,12 +689,7 @@ protected:
   virtual void DoDestroy(ASTContext &Ctx);
 
 public:
-  SwitchStmt(VarDecl *Var, Expr *cond) 
-    : Stmt(SwitchStmtClass), Var(Var), FirstCase(0) 
-  {
-    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
-    SubExprs[BODY] = NULL;
-  }
+  SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond);
 
   /// \brief Build a empty switch statement.
   explicit SwitchStmt(EmptyShell Empty) : Stmt(SwitchStmtClass, Empty) { }
@@ -717,8 +703,8 @@ public:
   ///   // ...
   /// }
   /// \endcode
-  VarDecl *getConditionVariable() const { return Var; }
-  void setConditionVariable(VarDecl *V) { Var = V; }
+  VarDecl *getConditionVariable() const;
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Stmt *getBody() const { return SubExprs[BODY]; }
@@ -766,18 +752,12 @@ public:
 /// WhileStmt - This represents a 'while' stmt.
 ///
 class WhileStmt : public Stmt {
-  enum { COND, BODY, END_EXPR };
-  VarDecl *Var;
+  enum { VAR, COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
   SourceLocation WhileLoc;
 public:
-  WhileStmt(VarDecl *Var, Expr *cond, Stmt *body, SourceLocation WL)
-    : Stmt(WhileStmtClass), Var(Var) 
-  {
-    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
-    SubExprs[BODY] = body;
-    WhileLoc = WL;
-  }
+  WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body, 
+            SourceLocation WL);
 
   /// \brief Build an empty while statement.
   explicit WhileStmt(EmptyShell Empty) : Stmt(WhileStmtClass, Empty) { }
@@ -790,8 +770,8 @@ public:
   ///   // ...
   /// }
   /// \endcode
-  VarDecl *getConditionVariable() const { return Var; }
-  void setConditionVariable(VarDecl *V) { Var = V; }
+  VarDecl *getConditionVariable() const;
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
@@ -873,23 +853,14 @@ public:
 /// specified in the source.
 ///
 class ForStmt : public Stmt {
-  enum { INIT, COND, INC, BODY, END_EXPR };
+  enum { INIT, CONDVAR, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
-  VarDecl *CondVar;
   SourceLocation ForLoc;
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, Stmt *Body, 
-          SourceLocation FL, SourceLocation LP, SourceLocation RP)
-    : Stmt(ForStmtClass), CondVar(condVar), ForLoc(FL), LParenLoc(LP), 
-      RParenLoc(RP) 
-  {
-    SubExprs[INIT] = Init;
-    SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
-    SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
-    SubExprs[BODY] = Body;
-  }
+  ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, 
+          Stmt *Body, SourceLocation FL, SourceLocation LP, SourceLocation RP);
 
   /// \brief Build an empty for statement.
   explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
@@ -904,8 +875,8 @@ public:
   ///   // ...
   /// }
   /// \endcode
-  VarDecl *getConditionVariable() const { return CondVar; }
-  void setConditionVariable(VarDecl *V) { CondVar = V; }
+  VarDecl *getConditionVariable() const;
+  void setConditionVariable(ASTContext &C, VarDecl *V);
   
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }

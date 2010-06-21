@@ -65,6 +65,7 @@ class JumpScopeChecker {
 public:
   JumpScopeChecker(Stmt *Body, Sema &S);
 private:
+  void BuildScopeInformation(Decl *D, unsigned &ParentScope);
   void BuildScopeInformation(Stmt *S, unsigned ParentScope);
   void VerifyJumps();
   void VerifyIndirectJumps();
@@ -148,13 +149,33 @@ static std::pair<unsigned,unsigned>
   return std::make_pair(0U, 0U);
 }
 
+/// \brief Build scope information for a declaration that is part of a DeclStmt.
+void JumpScopeChecker::BuildScopeInformation(Decl *D, unsigned &ParentScope) {
+  bool isCPlusPlus = this->S.getLangOptions().CPlusPlus;
+  
+  // If this decl causes a new scope, push and switch to it.
+  std::pair<unsigned,unsigned> Diags
+    = GetDiagForGotoScopeDecl(D, isCPlusPlus);
+  if (Diags.first || Diags.second) {
+    Scopes.push_back(GotoScope(ParentScope, Diags.first, Diags.second,
+                               D->getLocation()));
+    ParentScope = Scopes.size()-1;
+  }
+  
+  // If the decl has an initializer, walk it with the potentially new
+  // scope we just installed.
+  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+    if (Expr *Init = VD->getInit())
+      BuildScopeInformation(Init, ParentScope);
+}
 
 /// BuildScopeInformation - The statements from CI to CE are known to form a
 /// coherent VLA scope with a specified parent node.  Walk through the
 /// statements, adding any labels or gotos to LabelAndGotoScopes and recursively
 /// walking the AST as needed.
 void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
-
+  bool SkipFirstSubStmt = false;
+  
   // If we found a label, remember that it is in ParentScope scope.
   switch (S->getStmtClass()) {
   case Stmt::LabelStmtClass:
@@ -172,8 +193,16 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     IndirectJumps.push_back(cast<IndirectGotoStmt>(S));
     break;
 
-  case Stmt::GotoStmtClass:
   case Stmt::SwitchStmtClass:
+    // Evaluate the condition variable before entering the scope of the switch
+    // statement.
+    if (VarDecl *Var = cast<SwitchStmt>(S)->getConditionVariable()) {
+      BuildScopeInformation(Var, ParentScope);
+      SkipFirstSubStmt = true;
+    }
+    // Fall through
+      
+  case Stmt::GotoStmtClass:
     // Remember both what scope a goto is in as well as the fact that we have
     // it.  This makes the second scan not have to walk the AST again.
     LabelAndGotoScopes[S] = ParentScope;
@@ -186,10 +215,13 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
 
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
        ++CI) {
+    if (SkipFirstSubStmt) {
+      SkipFirstSubStmt = false;
+      continue;
+    }
+    
     Stmt *SubStmt = *CI;
     if (SubStmt == 0) continue;
-
-    bool isCPlusPlus = this->S.getLangOptions().CPlusPlus;
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
@@ -197,22 +229,8 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
       // The decl statement creates a scope if any of the decls in it are VLAs
       // or have the cleanup attribute.
       for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-           I != E; ++I) {
-        // If this decl causes a new scope, push and switch to it.
-        std::pair<unsigned,unsigned> Diags
-          = GetDiagForGotoScopeDecl(*I, isCPlusPlus);
-        if (Diags.first || Diags.second) {
-          Scopes.push_back(GotoScope(ParentScope, Diags.first, Diags.second,
-                                     (*I)->getLocation()));
-          ParentScope = Scopes.size()-1;
-        }
-
-        // If the decl has an initializer, walk it with the potentially new
-        // scope we just installed.
-        if (VarDecl *VD = dyn_cast<VarDecl>(*I))
-          if (Expr *Init = VD->getInit())
-            BuildScopeInformation(Init, ParentScope);
-      }
+           I != E; ++I)
+        BuildScopeInformation(*I, ParentScope);
       continue;
     }
 

@@ -499,12 +499,99 @@ void DeclStmt::DoDestroy(ASTContext &C) {
     DG.getDeclGroup().Destroy(C);
 }
 
+IfStmt::IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond, 
+               Stmt *then, SourceLocation EL, Stmt *elsev)
+  : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL)
+{
+  setConditionVariable(C, var);
+  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[THEN] = then;
+  SubExprs[ELSE] = elsev;  
+}
+
+VarDecl *IfStmt::getConditionVariable() const {
+  if (!SubExprs[VAR])
+    return 0;
+  
+  DeclStmt *DS = cast<DeclStmt>(SubExprs[VAR]);
+  return cast<VarDecl>(DS->getSingleDecl());
+}
+
+void IfStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+  if (!V) {
+    SubExprs[VAR] = 0;
+    return;
+  }
+  
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
+                                   V->getSourceRange().getBegin(),
+                                   V->getSourceRange().getEnd());
+}
+
 void IfStmt::DoDestroy(ASTContext &C) {
   BranchDestroy(C, this, SubExprs, END_EXPR);
 }
 
+ForStmt::ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, 
+                 Expr *Inc, Stmt *Body, SourceLocation FL, SourceLocation LP, 
+                 SourceLocation RP)
+  : Stmt(ForStmtClass), ForLoc(FL), LParenLoc(LP), RParenLoc(RP) 
+{
+  SubExprs[INIT] = Init;
+  setConditionVariable(C, condVar);
+  SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
+  SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
+  SubExprs[BODY] = Body;
+}
+
+VarDecl *ForStmt::getConditionVariable() const {
+  if (!SubExprs[CONDVAR])
+    return 0;
+  
+  DeclStmt *DS = cast<DeclStmt>(SubExprs[CONDVAR]);
+  return cast<VarDecl>(DS->getSingleDecl());
+}
+
+void ForStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+  if (!V) {
+    SubExprs[CONDVAR] = 0;
+    return;
+  }
+  
+  SubExprs[CONDVAR] = new (C) DeclStmt(DeclGroupRef(V), 
+                                       V->getSourceRange().getBegin(),
+                                       V->getSourceRange().getEnd());
+}
+
 void ForStmt::DoDestroy(ASTContext &C) {
   BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+SwitchStmt::SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond) 
+  : Stmt(SwitchStmtClass), FirstCase(0) 
+{
+  setConditionVariable(C, Var);
+  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[BODY] = NULL;
+}
+
+VarDecl *SwitchStmt::getConditionVariable() const {
+  if (!SubExprs[VAR])
+    return 0;
+  
+  DeclStmt *DS = cast<DeclStmt>(SubExprs[VAR]);
+  return cast<VarDecl>(DS->getSingleDecl());
+}
+
+void SwitchStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+  if (!V) {
+    SubExprs[VAR] = 0;
+    return;
+  }
+  
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
+                                   V->getSourceRange().getBegin(),
+                                   V->getSourceRange().getEnd());
 }
 
 void SwitchStmt::DoDestroy(ASTContext &C) {
@@ -519,6 +606,35 @@ void SwitchStmt::DoDestroy(ASTContext &C) {
   }
   
   BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+WhileStmt::WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body, 
+                     SourceLocation WL)
+: Stmt(WhileStmtClass)
+{
+  setConditionVariable(C, Var);
+  SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+  SubExprs[BODY] = body;
+  WhileLoc = WL;
+}
+
+VarDecl *WhileStmt::getConditionVariable() const {
+  if (!SubExprs[VAR])
+    return 0;
+  
+  DeclStmt *DS = cast<DeclStmt>(SubExprs[VAR]);
+  return cast<VarDecl>(DS->getSingleDecl());
+}
+
+void WhileStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
+  if (!V) {
+    SubExprs[VAR] = 0;
+    return;
+  }
+  
+  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), 
+                                   V->getSourceRange().getBegin(),
+                                   V->getSourceRange().getEnd());
 }
 
 void WhileStmt::DoDestroy(ASTContext &C) {
@@ -572,26 +688,26 @@ Stmt::child_iterator LabelStmt::child_end() { return &SubStmt+1; }
 
 // IfStmt
 Stmt::child_iterator IfStmt::child_begin() {
-  return child_iterator(Var, &SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator IfStmt::child_end() {
-  return child_iterator(0, &SubExprs[0]+END_EXPR);
+  return &SubExprs[0]+END_EXPR;
 }
 
 // SwitchStmt
 Stmt::child_iterator SwitchStmt::child_begin() {
-  return child_iterator(Var, &SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator SwitchStmt::child_end() {
-  return child_iterator(0, &SubExprs[0]+END_EXPR);
+  return &SubExprs[0]+END_EXPR;
 }
 
 // WhileStmt
 Stmt::child_iterator WhileStmt::child_begin() {
-  return child_iterator(Var, &SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator WhileStmt::child_end() {
-  return child_iterator(0, &SubExprs[0]+END_EXPR);
+  return &SubExprs[0]+END_EXPR;
 }
 
 // DoStmt
@@ -600,10 +716,10 @@ Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
 // ForStmt
 Stmt::child_iterator ForStmt::child_begin() {
-  return child_iterator(CondVar, &SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator ForStmt::child_end() {
-  return child_iterator(0, &SubExprs[0]+END_EXPR);
+  return &SubExprs[0]+END_EXPR;
 }
 
 // ObjCForCollectionStmt

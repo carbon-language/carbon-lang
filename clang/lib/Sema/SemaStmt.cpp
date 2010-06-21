@@ -304,7 +304,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
   DiagnoseUnusedExprResult(elseStmt);
 
   CondResult.release();
-  return Owned(new (Context) IfStmt(IfLoc, ConditionVar, ConditionExpr, 
+  return Owned(new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr, 
                                     thenStmt, ElseLoc, elseStmt));
 }
 
@@ -543,7 +543,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond,
       return StmtError();
   }
     
-  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, CondExpr);
+  SwitchStmt *SS = new (Context) SwitchStmt(Context, ConditionVar, CondExpr);
   getSwitchStack().push_back(SS);
   return Owned(SS);
 }
@@ -927,8 +927,8 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   DiagnoseUnusedExprResult(bodyStmt);
 
   CondResult.release();
-  return Owned(new (Context) WhileStmt(ConditionVar, ConditionExpr, bodyStmt, 
-                                       WhileLoc));
+  return Owned(new (Context) WhileStmt(Context, ConditionVar, ConditionExpr,
+                                       bodyStmt, WhileLoc));
 }
 
 Action::OwningStmtResult
@@ -997,9 +997,10 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 
   first.release();
   body.release();
-  return Owned(new (Context) ForStmt(First, SecondResult.takeAs<Expr>(), 
-                                     ConditionVar, Third, Body, 
-                                     ForLoc, LParenLoc, RParenLoc));
+  return Owned(new (Context) ForStmt(Context, First, 
+                                     SecondResult.takeAs<Expr>(), ConditionVar, 
+                                     Third, Body, ForLoc, LParenLoc, 
+                                     RParenLoc));
 }
 
 Action::OwningStmtResult
