@@ -172,10 +172,8 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
 
   if (D->hasAttr<InitPriorityAttr>()) {
-    static unsigned lix = 0; // to keep the lexical order of equal priority
-                             // objects intact;
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
-    OrderGlobalInitsType Key(order, lix++);
+    OrderGlobalInitsType Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
   }
   else
