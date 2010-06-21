@@ -1455,6 +1455,10 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return;
   }
 
+  if (New->hasExternalStorage() &&
+      Old->getLinkage() == InternalLinkage)
+    New->setStorageClass(Old->getStorageClass());
+
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
 

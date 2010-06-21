@@ -701,7 +701,15 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
   // AST for 'extern "C" int foo;' is annotated with 'extern'.
   if (hasExternalStorage())
     return DeclarationOnly;
-
+  
+  if (getStorageClassAsWritten() == Extern ||
+       getStorageClassAsWritten() == PrivateExtern) {
+    for (const VarDecl *PrevVar = getPreviousDeclaration();
+         PrevVar; PrevVar = PrevVar->getPreviousDeclaration()) {
+      if (PrevVar->getLinkage() == InternalLinkage && PrevVar->hasInit())
+        return DeclarationOnly;
+    }
+  }
   // C99 6.9.2p2:
   //   A declaration of an object that has file scope without an initializer,
   //   and without a storage class specifier or the scs 'static', constitutes
