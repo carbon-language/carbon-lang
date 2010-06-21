@@ -439,7 +439,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
   lto_codegen_dispose(cg);
 
-  if ((*add_input_file)(const_cast<char*>(uniqueObjPath.c_str())) != LDPS_OK) {
+  if ((*add_input_file)(uniqueObjPath.c_str()) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
     (*message)(LDPL_ERROR, "File left behind in: %s", uniqueObjPath.c_str());
     return LDPS_ERR;
@@ -449,7 +449,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
                                           e = options::pass_through.end();
        i != e; ++i) {
     std::string &item = *i;
-    char *item_p = const_cast<char*>(item.c_str());
+    const char *item_p = item.c_str();
     if (llvm::StringRef(item).startswith("-l")) {
       if (add_input_library(item_p + 2) != LDPS_OK) {
         (*message)(LDPL_ERROR, "Unable to add library to the link.");
