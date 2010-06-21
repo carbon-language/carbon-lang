@@ -852,6 +852,9 @@ protected:
   /// MethodVarNames - uniqued method variable names.
   llvm::DenseMap<Selector, llvm::GlobalVariable*> MethodVarNames;
 
+  /// DefinedCategoryNames - list of category names in form Class_Category.
+  llvm::SetVector<std::string> DefinedCategoryNames;
+
   /// MethodVarTypes - uniqued method type signatures. We have to use
   /// a StringMap here because have no other unique reference.
   llvm::StringMap<llvm::GlobalVariable*> MethodVarTypes;
@@ -2068,6 +2071,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                       "__OBJC,__category,regular,no_dead_strip",
                       4, true);
   DefinedCategories.push_back(GV);
+  DefinedCategoryNames.insert(ExtName.str());
 }
 
 // FIXME: Get from somewhere?
@@ -3650,8 +3654,14 @@ void CGObjCMac::FinishModule() {
       OS << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
          << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
     for (llvm::SetVector<IdentifierInfo*>::iterator I = LazySymbols.begin(),
-         e = LazySymbols.end(); I != e; ++I)
+         e = LazySymbols.end(); I != e; ++I) {
       OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
+    }
+
+    for (size_t i = 0; i < DefinedCategoryNames.size(); ++i) {
+      OS << "\t.objc_category_name_" << DefinedCategoryNames[i] << "=0\n"
+         << "\t.globl .objc_category_name_" << DefinedCategoryNames[i] << "\n";
+    }
     
     CGM.getModule().setModuleInlineAsm(OS.str());
   }
