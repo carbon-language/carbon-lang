@@ -162,7 +162,7 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
     }
   } else if (const Operator *Op = dyn_cast<Operator>(V)) {
     if (!SelectOperator(Op, Op->getOpcode())) return 0;
-    Reg = LocalValueMap[Op];
+    Reg = lookUpRegForValue(Op);
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(MBB, DL, TII.get(TargetOpcode::IMPLICIT_DEF), Reg);
