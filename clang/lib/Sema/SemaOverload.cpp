@@ -1015,14 +1015,18 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Complex-real conversions (C99 6.3.1.7)
     SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
-  } else if (FromType->isFloatingType() && ToType->isFloatingType()) {
+  } else if (FromType->isFloatingType() && ToType->isFloatingType() &&
+             /*FIXME*/!FromType->isVectorType() && 
+             /*FIXME*/!ToType->isVectorType()) {
     // Floating point conversions (C++ 4.8).
     SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
-  } else if ((FromType->isFloatingType() &&
+  } else if ((FromType->isFloatingType() && 
+              /*FIXME*/!FromType->isVectorType() &&
               ToType->isIntegralType(Context) && !ToType->isBooleanType()) ||
              (FromType->isIntegralOrEnumerationType() &&
-              ToType->isFloatingType())) {
+              ToType->isFloatingType() &&
+              /*FIXME*/!FromType->isVectorType())) {
     // Floating-integral conversions (C++ 4.9).
     SCS.Second = ICK_Floating_Integral;
     FromType = ToType.getUnqualifiedType();
@@ -1041,7 +1045,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
               FromType->isAnyPointerType() ||
               FromType->isBlockPointerType() ||
               FromType->isMemberPointerType() ||
-              FromType->isNullPtrType())) {
+              FromType->isNullPtrType()) &&
+             /*FIXME*/!FromType->isVectorType()) {
     // Boolean conversions (C++ 4.12).
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;

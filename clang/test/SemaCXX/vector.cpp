@@ -186,3 +186,33 @@ void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16,
   (void)(Cond? to_c16 : to_ll16); // expected-error{{can't convert between vector values of different size}}
   (void)(Cond? to_c16e : to_ll16e); // expected-error{{can't convert between vector values of different size}}
 }
+
+typedef float fltx2 __attribute__((__vector_size__(8)));
+typedef float fltx4 __attribute__((__vector_size__(16)));
+typedef double dblx2 __attribute__((__vector_size__(16)));
+typedef double dblx4 __attribute__((__vector_size__(32)));
+
+void accept_fltx2(fltx2); // expected-note{{candidate function not viable: no known conversion from 'double' to 'fltx2' for 1st argument}}
+void accept_fltx4(fltx4);
+void accept_dblx2(dblx2);
+void accept_dblx4(dblx4);
+void accept_bool(bool); // expected-note{{candidate function not viable: no known conversion from 'fltx2' to 'bool' for 1st argument}}
+
+void test(fltx2 fltx2_val, fltx4 fltx4_val, dblx2 dblx2_val, dblx4 dblx4_val) {
+  // Exact matches
+  accept_fltx2(fltx2_val);
+  accept_fltx4(fltx4_val);
+  accept_dblx2(dblx2_val);
+  accept_dblx4(dblx4_val);
+
+  // Same-size conversions
+  // FIXME: G++ rejects these conversions, we accept them. Revisit this!
+  accept_fltx4(dblx2_val);
+  accept_dblx2(fltx4_val);
+
+  // Conversion to bool.
+  accept_bool(fltx2_val); // expected-error{{no matching function for call to 'accept_bool'}}
+
+  // Scalar-to-vector conversions.
+  accept_fltx2(1.0); // expected-error{{no matching function for call to 'accept_fltx2'}}
+}
