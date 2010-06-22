@@ -2011,11 +2011,17 @@ public:
   typedef specific_decl_iterator<EnumConstantDecl> enumerator_iterator;
 
   enumerator_iterator enumerator_begin() const {
-    return enumerator_iterator(this->decls_begin());
+    const EnumDecl *E = cast_or_null<EnumDecl>(getDefinition());
+    if (!E)
+      E = this;
+    return enumerator_iterator(E->decls_begin());
   }
 
   enumerator_iterator enumerator_end() const {
-    return enumerator_iterator(this->decls_end());
+    const EnumDecl *E = cast_or_null<EnumDecl>(getDefinition());
+    if (!E)
+      E = this;
+    return enumerator_iterator(E->decls_end());
   }
 
   /// getPromotionType - Return the integer type that enumerators
