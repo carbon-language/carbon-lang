@@ -4133,8 +4133,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   // constant or derived from a PHI node themselves.
   PHINode *PHI = 0;
   for (unsigned Op = 0, e = I->getNumOperands(); Op != e; ++Op)
-    if (!(isa<Constant>(I->getOperand(Op)) ||
-          isa<GlobalValue>(I->getOperand(Op)))) {
+    if (!isa<Constant>(I->getOperand(Op))) {
       PHINode *P = getConstantEvolvingPHI(I->getOperand(Op), L);
       if (P == 0) return 0;  // Not evolving from PHI
       if (PHI == 0)
@@ -4155,11 +4154,9 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal,
                                     const TargetData *TD) {
   if (isa<PHINode>(V)) return PHIVal;
   if (Constant *C = dyn_cast<Constant>(V)) return C;
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
   Instruction *I = cast<Instruction>(V);
 
-  std::vector<Constant*> Operands;
-  Operands.resize(I->getNumOperands());
+  std::vector<Constant*> Operands(I->getNumOperands());
 
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Operands[i] = EvaluateExpression(I->getOperand(i), PHIVal, TD);
@@ -4201,8 +4198,8 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     return RetVal = 0;  // Must be a constant.
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
-  PHINode *PN2 = getConstantEvolvingPHI(BEValue, L);
-  if (PN2 != PN)
+  if (getConstantEvolvingPHI(BEValue, L) != PN &&
+      !isa<Constant>(BEValue))
     return RetVal = 0;  // Not derived from same PHI.
 
   // Execute the loop symbolically to determine the exit value.
@@ -4249,8 +4246,9 @@ ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
   if (StartCST == 0) return getCouldNotCompute();  // Must be a constant.
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
-  PHINode *PN2 = getConstantEvolvingPHI(BEValue, L);
-  if (PN2 != PN) return getCouldNotCompute();  // Not derived from same PHI.
+  if (getConstantEvolvingPHI(BEValue, L) != PN &&
+      !isa<Constant>(BEValue))
+    return getCouldNotCompute();  // Not derived from same PHI.
 
   // Okay, we find a PHI node that defines the trip count of this loop.  Execute
   // the loop symbolically to determine when the condition gets a value of

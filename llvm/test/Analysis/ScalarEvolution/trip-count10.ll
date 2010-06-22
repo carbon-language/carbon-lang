@@ -105,3 +105,22 @@ bb2:
 retbb:
   ret void
 }
+
+; PHI nodes with all constant operands.
+
+; CHECK: Determining loop execution counts for: @constant_phi_operands
+; CHECK: Loop %loop: backedge-taken count is 1
+; CHECK: Loop %loop: max backedge-taken count is 1
+
+define void @constant_phi_operands() nounwind {
+entry:
+  br label %loop
+
+loop:
+  %i = phi i64 [ 1, %loop ], [ 0, %entry ]
+  %exitcond = icmp eq i64 %i, 1
+  br i1 %exitcond, label %return, label %loop
+
+return:
+  ret void
+}
