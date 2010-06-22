@@ -74,7 +74,7 @@ namespace {
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
-    void visitFunctionTemplateDecl(FunctionTemplateDecl *D);
+    void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
@@ -214,8 +214,71 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setCopyAssignment(Record[Idx++]);
   FD->setHasImplicitReturnZero(Record[Idx++]);
   FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  // FIXME: C++ TemplateOrInstantiation
 
+  switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
+  case FunctionDecl::TK_NonTemplate:
+    break;
+  case FunctionDecl::TK_FunctionTemplate:
+    FD->setDescribedFunctionTemplate(
+                     cast<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++])));
+    break;
+  case FunctionDecl::TK_MemberSpecialization: {
+    FunctionDecl *InstFD = cast<FunctionDecl>(Reader.GetDecl(Record[Idx++]));
+    TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
+    SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
+    FD->setInstantiationOfMemberFunction(InstFD, TSK);
+    FD->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
+    break;
+  }
+  case FunctionDecl::TK_FunctionTemplateSpecialization: {
+    FunctionTemplateDecl *Template
+      = cast<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+    TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
+    
+    // Template arguments.
+    unsigned NumTemplateArgs = Record[Idx++];
+    llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+    TemplArgs.reserve(NumTemplateArgs);
+    for (unsigned i=0; i != NumTemplateArgs; ++i)
+      TemplArgs.push_back(Reader.ReadTemplateArgument(Record, Idx));
+    
+    // Template args as written.
+    unsigned NumTemplateArgLocs = Record[Idx++];
+    llvm::SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
+    TemplArgLocs.reserve(NumTemplateArgLocs);
+    for (unsigned i=0; i != NumTemplateArgLocs; ++i)
+      TemplArgLocs.push_back(Reader.ReadTemplateArgumentLoc(Record, Idx));
+
+    SourceLocation LAngleLoc, RAngleLoc;
+    if (NumTemplateArgLocs) {
+      LAngleLoc = Reader.ReadSourceLocation(Record, Idx);
+      RAngleLoc = Reader.ReadSourceLocation(Record, Idx);
+    }
+
+    FD->setFunctionTemplateSpecialization(Template, NumTemplateArgs,
+                                          TemplArgs.data(), TSK,
+                                          NumTemplateArgLocs,
+                                  NumTemplateArgLocs ? TemplArgLocs.data() : 0,
+                                          LAngleLoc, RAngleLoc);
+  }
+  case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
+    // Templates.
+    UnresolvedSet<8> TemplDecls;
+    unsigned NumTemplates = Record[Idx++];
+    while (NumTemplates--)
+      TemplDecls.addDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+    
+    // Templates args.
+    TemplateArgumentListInfo TemplArgs;
+    unsigned NumArgs = Record[Idx++];
+    while (NumArgs--)
+      TemplArgs.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    
+    FD->setDependentTemplateSpecialization(*Reader.getContext(),
+                                           TemplDecls, TemplArgs);
+  }
+  }
+  
   // Read in the parameters.
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
@@ -725,8 +788,26 @@ void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
   assert(false && "cannot read ClassTemplatePartialSpecializationDecl");
 }
 
-void PCHDeclReader::visitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-  assert(false && "cannot read FunctionTemplateDecl");
+void PCHDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  VisitTemplateDecl(D);
+
+  FunctionTemplateDecl *PrevDecl =
+      cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+  D->setPreviousDeclaration(PrevDecl);
+  if (PrevDecl == 0) {
+    // This FunctionTemplateDecl owns a CommonPtr; read it.
+
+    // FunctionTemplateSpecializationInfos are filled through the
+    // templated FunctionDecl's setFunctionTemplateSpecialization, no need to
+    // read them here.
+
+    if (FunctionTemplateDecl *CTD
+          = cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {
+      D->setInstantiatedFromMemberTemplate(CTD);
+      if (Record[Idx++])
+        D->setMemberSpecialization();
+    }
+  }
 }
 
 void PCHDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
@@ -1095,7 +1176,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     assert(false && "cannot read ClassTemplatePartialSpecializationDecl");
     break;
   case pch::DECL_FUNCTION_TEMPLATE:
-    assert(false && "cannot read FunctionTemplateDecl");
+    D = FunctionTemplateDecl::Create(*Context, 0, SourceLocation(),
+                                     DeclarationName(), 0, 0);
     break;
   case pch::DECL_TEMPLATE_TYPE_PARM:
     D = TemplateTypeParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,0,0);

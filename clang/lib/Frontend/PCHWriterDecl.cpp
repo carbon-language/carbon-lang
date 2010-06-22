@@ -75,7 +75,7 @@ namespace {
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
-    void visitFunctionTemplateDecl(FunctionTemplateDecl *D);
+    void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
@@ -221,8 +221,63 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isTrivial());
   Record.push_back(D->isCopyAssignment());
   Record.push_back(D->hasImplicitReturnZero());
-  // FIXME: C++ TemplateOrInstantiation???
   Writer.AddSourceLocation(D->getLocEnd(), Record);
+  
+  Record.push_back(D->getTemplatedKind());
+  switch (D->getTemplatedKind()) {
+  case FunctionDecl::TK_NonTemplate:
+    break;
+  case FunctionDecl::TK_FunctionTemplate:
+    Writer.AddDeclRef(D->getDescribedFunctionTemplate(), Record);
+    break;
+  case FunctionDecl::TK_MemberSpecialization: {
+    MemberSpecializationInfo *MemberInfo = D->getMemberSpecializationInfo();
+    Writer.AddDeclRef(MemberInfo->getInstantiatedFrom(), Record);
+    Record.push_back(MemberInfo->getTemplateSpecializationKind());
+    Writer.AddSourceLocation(MemberInfo->getPointOfInstantiation(), Record);
+    break;
+  }
+  case FunctionDecl::TK_FunctionTemplateSpecialization: {
+    FunctionTemplateSpecializationInfo *
+      FTSInfo = D->getTemplateSpecializationInfo();
+    Writer.AddDeclRef(FTSInfo->getTemplate(), Record);
+    Record.push_back(FTSInfo->getTemplateSpecializationKind());
+    
+    // Template arguments.
+    assert(FTSInfo->TemplateArguments && "No template args!");
+    Record.push_back(FTSInfo->TemplateArguments->flat_size());
+    for (int i=0, e = FTSInfo->TemplateArguments->flat_size(); i != e; ++i)
+      Writer.AddTemplateArgument(FTSInfo->TemplateArguments->get(i), Record);
+    
+    // Template args as written.
+    if (FTSInfo->TemplateArgumentsAsWritten) {
+      Record.push_back(FTSInfo->TemplateArgumentsAsWritten->size());
+      for (int i=0, e = FTSInfo->TemplateArgumentsAsWritten->size(); i!=e; ++i)
+        Writer.AddTemplateArgumentLoc((*FTSInfo->TemplateArgumentsAsWritten)[i],
+                                      Record);
+      Writer.AddSourceLocation(FTSInfo->TemplateArgumentsAsWritten->getLAngleLoc(),
+                               Record);
+      Writer.AddSourceLocation(FTSInfo->TemplateArgumentsAsWritten->getRAngleLoc(),
+                               Record);
+    } else {
+      Record.push_back(0);
+    }
+  }
+  case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
+    DependentFunctionTemplateSpecializationInfo *
+      DFTSInfo = D->getDependentSpecializationInfo();
+    
+    // Templates.
+    Record.push_back(DFTSInfo->getNumTemplates());
+    for (int i=0, e = DFTSInfo->getNumTemplates(); i != e; ++i)
+      Writer.AddDeclRef(DFTSInfo->getTemplate(i), Record);
+    
+    // Templates args.
+    Record.push_back(DFTSInfo->getNumTemplateArgs());
+    for (int i=0, e = DFTSInfo->getNumTemplateArgs(); i != e; ++i)
+      Writer.AddTemplateArgumentLoc(DFTSInfo->getTemplateArg(i), Record);
+  }
+  }
 
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
@@ -701,8 +756,22 @@ void PCHDeclWriter::VisitClassTemplatePartialSpecializationDecl(
   assert(false && "cannot write ClassTemplatePartialSpecializationDecl");
 }
 
-void PCHDeclWriter::visitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-  assert(false && "cannot write FunctionTemplateDecl");
+void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+  VisitTemplateDecl(D);
+
+  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  if (D->getPreviousDeclaration() == 0) {
+    // This FunctionTemplateDecl owns the CommonPtr; write it.
+
+    // FunctionTemplateSpecializationInfos are filled through the
+    // templated FunctionDecl's setFunctionTemplateSpecialization, no need to
+    // write them here.
+
+    Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
+    if (D->getInstantiatedFromMemberTemplate())
+      Record.push_back(D->isMemberSpecialization());
+  }
+  Code = pch::DECL_FUNCTION_TEMPLATE;
 }
 
 void PCHDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
