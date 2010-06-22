@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false | FileCheck %s
 
 ; LSR's OptimizeMax should eliminate the select (max).
 
@@ -30,3 +30,46 @@ for.body:                                         ; preds = %for.body.preheader,
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
+
+; In this case, one of the max operands is another max, which folds,
+; leaving a two-operand max which doesn't fit the usual pattern.
+; OptimizeMax should handle this case.
+; PR7454
+
+;      CHECK: _Z18GenerateStatusPagei:
+
+;      CHECK:         jle
+; CHECK-NEXT:         xorl    %edi, %edi
+; CHECK-NEXT:         align
+; CHECK-NEXT: BB1_2:
+; CHECK-NEXT:         callq
+; CHECK-NEXT:         incl    %ebx
+; CHECK-NEXT:         cmpl    %r14d, %ebx
+; CHECK-NEXT:         movq    %rax, %rdi
+; CHECK-NEXT:         jl
+
+define void @_Z18GenerateStatusPagei(i32 %jobs_to_display) nounwind {
+entry:
+  %cmp.i = icmp sgt i32 %jobs_to_display, 0       ; <i1> [#uses=1]
+  %tmp = select i1 %cmp.i, i32 %jobs_to_display, i32 0 ; <i32> [#uses=3]
+  %cmp8 = icmp sgt i32 %tmp, 0                    ; <i1> [#uses=1]
+  br i1 %cmp8, label %bb.nph, label %for.end
+
+bb.nph:                                           ; preds = %entry
+  %tmp11 = icmp sgt i32 %tmp, 1                   ; <i1> [#uses=1]
+  %smax = select i1 %tmp11, i32 %tmp, i32 1       ; <i32> [#uses=1]
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %bb.nph
+  %i.010 = phi i32 [ 0, %bb.nph ], [ %inc, %for.body ] ; <i32> [#uses=1]
+  %it.0.09 = phi float* [ null, %bb.nph ], [ %call.i, %for.body ] ; <float*> [#uses=1]
+  %call.i = call float* @_ZSt18_Rb_tree_decrementPKSt18_Rb_tree_node_base(float* %it.0.09) ; <float*> [#uses=1]
+  %inc = add nsw i32 %i.010, 1                    ; <i32> [#uses=2]
+  %exitcond = icmp eq i32 %inc, %smax             ; <i1> [#uses=1]
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+
+declare float* @_ZSt18_Rb_tree_decrementPKSt18_Rb_tree_node_base(float*)
