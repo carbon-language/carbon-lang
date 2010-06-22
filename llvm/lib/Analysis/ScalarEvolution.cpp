@@ -4691,23 +4691,6 @@ ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   return getCouldNotCompute();
 }
 
-/// getLoopPredecessor - If the given loop's header has exactly one unique
-/// predecessor outside the loop, return it. Otherwise return null.
-/// This is less strict that the loop "preheader" concept, which requires
-/// the predecessor to have only one single successor.
-///
-BasicBlock *ScalarEvolution::getLoopPredecessor(const Loop *L) {
-  BasicBlock *Header = L->getHeader();
-  BasicBlock *Pred = 0;
-  for (pred_iterator PI = pred_begin(Header), E = pred_end(Header);
-       PI != E; ++PI)
-    if (!L->contains(*PI)) {
-      if (Pred && Pred != *PI) return 0; // Multiple predecessors.
-      Pred = *PI;
-    }
-  return Pred;
-}
-
 /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
 /// (which may not be an immediate predecessor) which has exactly one
 /// successor from which BB is reachable, or null if no such block is
@@ -4725,7 +4708,7 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
   // If the header has a unique predecessor outside the loop, it must be
   // a block that has exactly one successor that can reach the loop.
   if (Loop *L = LI->getLoopFor(BB))
-    return std::make_pair(getLoopPredecessor(L), L->getHeader());
+    return std::make_pair(L->getLoopPredecessor(), L->getHeader());
 
   return std::pair<BasicBlock *, BasicBlock *>();
 }
@@ -5176,7 +5159,7 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   // as there are predecessors that can be found that have unique successors
   // leading to the original header.
   for (std::pair<BasicBlock *, BasicBlock *>
-         Pair(getLoopPredecessor(L), L->getHeader());
+         Pair(L->getLoopPredecessor(), L->getHeader());
        Pair.first;
        Pair = getPredecessorWithUniqueSuccessorForBB(Pair.first)) {
 
