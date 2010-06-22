@@ -2541,16 +2541,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
-
-  // Find the first non-empty base input (we want to ignore linker
-  // inputs).
-  const char *BaseInput = "";
-  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
-    if (Inputs[i].getBaseInput()[0] != '\0') {
-      BaseInput = Inputs[i].getBaseInput();
-      break;
-    }
-  }
 }
 
 void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
