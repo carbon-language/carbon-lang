@@ -24,12 +24,16 @@ using namespace clang;
 namespace {
 
 class StreamChecker : public CheckerVisitor<StreamChecker> {
-  IdentifierInfo *II_fopen, *II_fread, *II_fseek, *II_ftell, *II_rewind;
+  IdentifierInfo *II_fopen, *II_fread, *II_fwrite, 
+                 *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
+                 *II_clearerr, *II_feof, *II_ferror, *II_fileno;
   BuiltinBug *BT_nullfp;
 
 public:
   StreamChecker() 
-    : II_fopen(0), II_fread(0), II_fseek(0), II_ftell(0), II_rewind(0), 
+    : II_fopen(0), II_fread(0), II_fwrite(0), 
+      II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
+      II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
       BT_nullfp(0) {}
 
   static void *getTag() {
@@ -40,11 +44,20 @@ public:
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
 
 private:
-  void FOpen(CheckerContext &C, const CallExpr *CE);
-  void FRead(CheckerContext &C, const CallExpr *CE);
-  void FSeek(CheckerContext &C, const CallExpr *CE);
-  void FTell(CheckerContext &C, const CallExpr *CE);
+  void Fopen(CheckerContext &C, const CallExpr *CE);
+  void Fread(CheckerContext &C, const CallExpr *CE);
+  void Fwrite(CheckerContext &C, const CallExpr *CE);
+  void Fseek(CheckerContext &C, const CallExpr *CE);
+  void Ftell(CheckerContext &C, const CallExpr *CE);
   void Rewind(CheckerContext &C, const CallExpr *CE);
+  void Fgetpos(CheckerContext &C, const CallExpr *CE);
+  void Fsetpos(CheckerContext &C, const CallExpr *CE);
+  void Clearerr(CheckerContext &C, const CallExpr *CE);
+  void Feof(CheckerContext &C, const CallExpr *CE);
+  void Ferror(CheckerContext &C, const CallExpr *CE);
+  void Fileno(CheckerContext &C, const CallExpr *CE);
+  
+  // Return true indicates the stream pointer is NULL.
   bool CheckNullStream(SVal SV, const GRState *state, CheckerContext &C);
 };
 
@@ -65,48 +78,82 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   ASTContext &Ctx = C.getASTContext();
   if (!II_fopen)
     II_fopen = &Ctx.Idents.get("fopen");
-
   if (!II_fread)
     II_fread = &Ctx.Idents.get("fread");
-
+  if (!II_fwrite)
+    II_fwrite = &Ctx.Idents.get("fwrite");
   if (!II_fseek)
     II_fseek = &Ctx.Idents.get("fseek");
-
   if (!II_ftell)
     II_ftell = &Ctx.Idents.get("ftell");
-
   if (!II_rewind)
     II_rewind = &Ctx.Idents.get("rewind");
+  if (!II_fgetpos)
+    II_fgetpos = &Ctx.Idents.get("fgetpos");
+  if (!II_fsetpos)
+    II_fsetpos = &Ctx.Idents.get("fsetpos");
+  if (!II_clearerr)
+    II_clearerr = &Ctx.Idents.get("clearerr");
+  if (!II_feof)
+    II_feof = &Ctx.Idents.get("feof");
+  if (!II_ferror)
+    II_ferror = &Ctx.Idents.get("ferror");
+  if (!II_fileno)
+    II_fileno = &Ctx.Idents.get("fileno");
 
   if (FD->getIdentifier() == II_fopen) {
-    FOpen(C, CE);
+    Fopen(C, CE);
     return true;
   }
-
   if (FD->getIdentifier() == II_fread) {
-    FRead(C, CE);
+    Fread(C, CE);
     return true;
   }
-
+  if (FD->getIdentifier() == II_fwrite) {
+    Fwrite(C, CE);
+    return true;
+  }
   if (FD->getIdentifier() == II_fseek) {
-    FSeek(C, CE);
+    Fseek(C, CE);
     return true;
   }
-
   if (FD->getIdentifier() == II_ftell) {
-    FTell(C, CE);
+    Ftell(C, CE);
     return true;
   }
-
   if (FD->getIdentifier() == II_rewind) {
     Rewind(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_fgetpos) {
+    Fgetpos(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_fsetpos) {
+    Fsetpos(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_clearerr) {
+    Clearerr(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_feof) {
+    Feof(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_ferror) {
+    Ferror(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_fileno) {
+    Fileno(C, CE);
     return true;
   }
 
   return false;
 }
 
-void StreamChecker::FOpen(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
@@ -124,25 +171,67 @@ void StreamChecker::FOpen(CheckerContext &C, const CallExpr *CE) {
   C.addTransition(stateNull);
 }
 
-void StreamChecker::FRead(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   if (CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
-void StreamChecker::FSeek(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+    return;
+}
+
+void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::FTell(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+    return;
+}
+
+void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
