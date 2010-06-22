@@ -36,7 +36,7 @@ class GlobalDecl {
 
     Value.setPointer(D);
   }
-  
+
 public:
   GlobalDecl() {}
 
@@ -49,6 +49,14 @@ public:
   : Value(D, Type) {}
   GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
   : Value(D, Type) {}
+
+  GlobalDecl getCanonicalDecl() const {
+    GlobalDecl CanonGD;
+    CanonGD.Value.setPointer(Value.getPointer()->getCanonicalDecl());
+    CanonGD.Value.setInt(Value.getInt());
+    
+    return CanonGD;
+  }
 
   const Decl *getDecl() const { return Value.getPointer(); }
 
