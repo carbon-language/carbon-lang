@@ -5,7 +5,6 @@ import math, os.path, re, sys, time, unittest
 
 def setupSysPath():
   testPath = sys.path[0]
-  print "sys.path[0] =", testPath
   rem = re.match("(^.*/)test$", testPath)
   if not rem:
     print "This script expects to reside in .../test."
