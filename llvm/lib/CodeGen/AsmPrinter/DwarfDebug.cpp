@@ -2260,8 +2260,8 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
   const Module *M = F->getParent();
   if (NamedMDNode *NMD = 
-      M->getNamedMetadataUsingTwine(Twine("llvm.dbg.lv.", 
-                                          getRealLinkageName(F->getName())))) {
+      M->getNamedMetadata(Twine("llvm.dbg.lv.", 
+                                getRealLinkageName(F->getName())))) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
       if (!DV || !Processed.insert(DV))

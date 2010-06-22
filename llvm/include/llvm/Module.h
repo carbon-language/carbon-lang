@@ -325,8 +325,7 @@ public:
   /// getNamedMetadata - Return the first NamedMDNode in the module with the
   /// specified name. This method returns null if a NamedMDNode with the 
   /// specified name is not found.
-  NamedMDNode *getNamedMetadata(StringRef Name) const;
-  NamedMDNode *getNamedMetadataUsingTwine(Twine Name) const;
+  NamedMDNode *getNamedMetadata(const Twine &Name) const;
 
   /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
   /// with the specified name. This method returns a new NamedMDNode if a 

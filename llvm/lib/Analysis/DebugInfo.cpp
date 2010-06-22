@@ -1062,8 +1062,7 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     char One = '\1';
     if (FName.startswith(StringRef(&One, 1)))
       FName = FName.substr(1);
-    NamedMDNode *FnLocals = 
-      M.getNamedMetadataUsingTwine(Twine("llvm.dbg.lv.", FName));
+    NamedMDNode *FnLocals = M.getNamedMetadata(Twine("llvm.dbg.lv.", FName));
     if (!FnLocals)
       FnLocals = NamedMDNode::Create(VMContext, Twine("llvm.dbg.lv.", FName),
                                      NULL, 0, &M);
