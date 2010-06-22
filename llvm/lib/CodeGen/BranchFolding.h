@@ -102,8 +102,9 @@ namespace llvm {
                               MachineBasicBlock *PredBB);
     void RemoveBlocksWithHash(unsigned CurHash, MachineBasicBlock* SuccBB,
                                                 MachineBasicBlock* PredBB);
-    unsigned CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
-                                       unsigned maxCommonTailLength);
+    bool CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
+                                   unsigned maxCommonTailLength,
+                                   unsigned &commonTailIndex);
 
     bool OptimizeBranches(MachineFunction &MF);
     bool OptimizeBlock(MachineBasicBlock *MBB);

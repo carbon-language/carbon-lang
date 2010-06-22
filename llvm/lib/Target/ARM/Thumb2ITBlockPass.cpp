@@ -62,13 +62,6 @@ namespace {
   char Thumb2ITBlockPass::ID = 0;
 }
 
-static ARMCC::CondCodes getPredicate(const MachineInstr *MI, unsigned &PredReg){
-  unsigned Opc = MI->getOpcode();
-  if (Opc == ARM::tBcc || Opc == ARM::t2Bcc)
-    return ARMCC::AL;
-  return llvm::getInstrPredicate(MI, PredReg);
-}
-
 bool
 Thumb2ITBlockPass::MoveCPSRUseUp(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI,
@@ -82,7 +75,7 @@ Thumb2ITBlockPass::MoveCPSRUseUp(MachineBasicBlock &MBB,
   for (unsigned i = 0; i < 4; ++i) {
     MachineInstr *MI = &*I;
     unsigned MPredReg = 0;
-    ARMCC::CondCodes MCC = getPredicate(MI, MPredReg);
+    ARMCC::CondCodes MCC = llvm::getITInstrPredicate(MI, MPredReg);
     if (MCC != ARMCC::AL) {
       if (MPredReg != PredReg || (MCC != CC && MCC != OCC))
         return false;
@@ -209,7 +202,7 @@ bool Thumb2ITBlockPass::InsertITBlock(MachineInstr *First, MachineInstr *Last) {
     return false;
 
   unsigned PredReg = 0;
-  ARMCC::CondCodes CC = getPredicate(First, PredReg);
+  ARMCC::CondCodes CC = llvm::getITInstrPredicate(First, PredReg);
   if (CC == ARMCC::AL)
     return Modified;
 
@@ -222,7 +215,7 @@ bool Thumb2ITBlockPass::InsertITBlock(MachineInstr *First, MachineInstr *Last) {
       return Modified;
     MachineInstr *NMI = &*MBBI;
     unsigned NPredReg = 0;
-    ARMCC::CondCodes NCC = getPredicate(NMI, NPredReg);
+    ARMCC::CondCodes NCC = llvm::getITInstrPredicate(NMI, NPredReg);
     if (NCC != CC && NCC != OCC) {
       if (NCC != ARMCC::AL)
         return Modified;
@@ -321,7 +314,7 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
       while (I != E && I->isDebugValue())
         ++I;
       unsigned NPredReg = 0;
-      ARMCC::CondCodes NCC = getPredicate(I, NPredReg);
+      ARMCC::CondCodes NCC = llvm::getITInstrPredicate(I, NPredReg);
       if (NCC == CC || NCC == OCC)
         return true;
     }
@@ -339,7 +332,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
     MachineInstr *MI = &*MBBI;
     DebugLoc dl = MI->getDebugLoc();
     unsigned PredReg = 0;
-    ARMCC::CondCodes CC = getPredicate(MI, PredReg);
+    ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
     if (CC == ARMCC::AL) {
       ++MBBI;
       continue;
@@ -375,7 +368,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
       MI = NMI;
 
       unsigned NPredReg = 0;
-      ARMCC::CondCodes NCC = getPredicate(NMI, NPredReg);
+      ARMCC::CondCodes NCC = llvm::getITInstrPredicate(NMI, NPredReg);
       if (NCC == CC || NCC == OCC) {
         Mask |= (NCC & 1) << Pos;
         // Add implicit use of ITSTATE.

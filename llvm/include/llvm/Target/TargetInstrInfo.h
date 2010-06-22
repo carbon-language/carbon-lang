@@ -327,6 +327,14 @@ public:
   /// used by the tail merging pass.
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
                                        MachineBasicBlock *NewDest) const = 0;
+
+  /// isLegalToSplitMBBAt - Return true if it's legal to split the given basic
+  /// block at the specified instruction (i.e. instruction would be the start
+  /// of a new basic block).
+  virtual bool isLegalToSplitMBBAt(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI) const {
+    return true;
+  }
   
   /// copyRegToReg - Emit instructions to copy between a pair of registers. It
   /// returns false if the target does not how to copy between the specified

@@ -88,6 +88,14 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
 }
 
 bool
+Thumb2InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MBBI) const {
+  unsigned PredReg = 0;
+  return llvm::getITInstrPredicate(MBBI, PredReg) == ARMCC::AL;
+}
+
+
+bool
 Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DestReg, unsigned SrcReg,
@@ -604,4 +612,12 @@ Thumb2InstrInfo::scheduleTwoAddrSource(MachineInstr *SrcMI,
     MBB->remove(SrcMI);
     MBB->insert(++MBBI, SrcMI);
   }
+}
+
+ARMCC::CondCodes
+llvm::getITInstrPredicate(const MachineInstr *MI, unsigned &PredReg) {
+  unsigned Opc = MI->getOpcode();
+  if (Opc == ARM::tBcc || Opc == ARM::t2Bcc)
+    return ARMCC::AL;
+  return llvm::getInstrPredicate(MI, PredReg);
 }

@@ -370,6 +370,9 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 /// iterator.  This returns the new MBB.
 MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
                                             MachineBasicBlock::iterator BBI1) {
+  if (!TII->isLegalToSplitMBBAt(CurMBB, BBI1))
+    return 0;
+
   MachineFunction &MF = *CurMBB.getParent();
 
   // Create the fall-through block.
@@ -614,9 +617,10 @@ void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
 
 /// CreateCommonTailOnlyBlock - None of the blocks to be tail-merged consist
 /// only of the common tail.  Create a block that does by splitting one.
-unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
-                                             unsigned maxCommonTailLength) {
-  unsigned commonTailIndex = 0;
+bool BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
+                                             unsigned maxCommonTailLength,
+                                             unsigned &commonTailIndex) {
+  commonTailIndex = 0;
   unsigned TimeEstimate = ~0U;
   for (unsigned i = 0, e = SameTails.size(); i != e; ++i) {
     // Use PredBB if possible; that doesn't require a new branch.
@@ -644,6 +648,11 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                << maxCommonTailLength);
 
   MachineBasicBlock *newMBB = SplitMBBAt(*MBB, BBI);
+  if (!newMBB) {
+    DEBUG(dbgs() << "... failed!");
+    return false;
+  }
+
   SameTails[commonTailIndex].setBlock(newMBB);
   SameTails[commonTailIndex].setTailStartPos(newMBB->begin());
 
@@ -651,7 +660,7 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
   if (PredBB == MBB)
     PredBB = newMBB;
 
-  return commonTailIndex;
+  return true;
 }
 
 // See if any of the blocks in MergePotentials (which all have a common single
@@ -746,7 +755,11 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
          !SameTails[commonTailIndex].tailIsWholeBlock())) {
       // None of the blocks consist entirely of the common tail.
       // Split a block so that one does.
-      commonTailIndex = CreateCommonTailOnlyBlock(PredBB, maxCommonTailLength);
+      if (!CreateCommonTailOnlyBlock(PredBB,
+                                     maxCommonTailLength, commonTailIndex)) {
+        RemoveBlocksWithHash(CurHash, SuccBB, PredBB);
+        continue;
+      }
     }
 
     MachineBasicBlock *MBB = SameTails[commonTailIndex].getBlock();

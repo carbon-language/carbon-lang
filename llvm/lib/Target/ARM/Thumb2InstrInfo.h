@@ -35,6 +35,9 @@ public:
   void ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
                                MachineBasicBlock *NewDest) const;
 
+  bool isLegalToSplitMBBAt(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI) const;
+
   bool copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I,
                     unsigned DestReg, unsigned SrcReg,
@@ -68,6 +71,13 @@ public:
   ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const;
 };
+
+/// getITInstrPredicate - Valid only in Thumb2 mode. This function is identical
+/// to llvm::getInstrPredicate except it returns AL for conditional branch
+/// instructions which are "predicated", but are not in IT blocks.
+ARMCC::CondCodes getITInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
+
+
 }
 
 #endif // THUMB2INSTRUCTIONINFO_H

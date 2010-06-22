@@ -28,6 +28,8 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+/// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
+/// after it, replacing it with an unconditional branch to NewDest.
 void
 TargetInstrInfoImpl::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
                                              MachineBasicBlock *NewDest) const {
