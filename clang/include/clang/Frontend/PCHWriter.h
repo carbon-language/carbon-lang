@@ -17,6 +17,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/TemplateBase.h"
 #include "clang/Frontend/PCHBitCodes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -298,6 +299,11 @@ public:
 
   /// \brief Emits a reference to a declarator info.
   void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record);
+
+  /// \brief Emits a template argument location info.
+  void AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                                  const TemplateArgumentLocInfo &Arg,
+                                  RecordData &Record);
 
   /// \brief Emits a template argument location.
   void AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,

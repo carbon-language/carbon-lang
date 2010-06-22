@@ -2509,6 +2509,13 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   return TemplateArgumentLocInfo();
 }
 
+TemplateArgumentLoc
+PCHReader::ReadTemplateArgumentLoc(const RecordData &Record, unsigned &Index) {
+  TemplateArgument Arg = ReadTemplateArgument(Record, Index);
+  return TemplateArgumentLoc(Arg, GetTemplateArgumentLocInfo(Arg.getKind(),
+                                                             Record, Index));
+}
+
 Decl *PCHReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }

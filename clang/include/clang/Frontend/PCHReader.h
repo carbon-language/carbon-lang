@@ -569,6 +569,10 @@ public:
   GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                              const RecordData &Record, unsigned &Idx);
 
+  /// \brief Reads a TemplateArgumentLoc.
+  TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
+                                              unsigned &Idx);
+
   /// \brief Reads a declarator info from the given record.
   TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
                                     unsigned &Idx);

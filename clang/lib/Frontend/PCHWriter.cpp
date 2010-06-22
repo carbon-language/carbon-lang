@@ -428,7 +428,8 @@ void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
-    Writer.AddTemplateArgumentLoc(TL.getArgLoc(i), Record);
+    Writer.AddTemplateArgumentLocInfo(TL.getArgLoc(i).getArgument().getKind(),
+                                      TL.getArgLoc(i).getLocInfo(), Record);
 }
 void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
@@ -450,7 +451,8 @@ void TypeLocWriter::VisitDependentTemplateSpecializationTypeLoc(
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
   for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
-    Writer.AddTemplateArgumentLoc(TL.getArgLoc(I), Record);
+    Writer.AddTemplateArgumentLocInfo(TL.getArgLoc(I).getArgument().getKind(),
+                                      TL.getArgLoc(I).getLocInfo(), Record);
 }
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
@@ -2284,14 +2286,15 @@ void PCHWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordData &Record) {
   AddDeclRef(Temp->getDestructor(), Record);
 }
 
-void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
-                                       RecordData &Record) {
-  switch (Arg.getArgument().getKind()) {
+void PCHWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                                           const TemplateArgumentLocInfo &Arg,
+                                           RecordData &Record) {
+  switch (Kind) {
   case TemplateArgument::Expression:
-    AddStmt(Arg.getLocInfo().getAsExpr());
+    AddStmt(Arg.getAsExpr());
     break;
   case TemplateArgument::Type:
-    AddTypeSourceInfo(Arg.getLocInfo().getAsTypeSourceInfo(), Record);
+    AddTypeSourceInfo(Arg.getAsTypeSourceInfo(), Record);
     break;
   case TemplateArgument::Template:
     Record.push_back(
@@ -2305,6 +2308,13 @@ void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
   case TemplateArgument::Pack:
     break;
   }
+}
+
+void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
+                                       RecordData &Record) {
+  AddTemplateArgument(Arg.getArgument(), Record);
+  AddTemplateArgumentLocInfo(Arg.getArgument().getKind(), Arg.getLocInfo(),
+                             Record);
 }
 
 void PCHWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
