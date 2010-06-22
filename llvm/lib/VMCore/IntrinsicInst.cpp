@@ -54,7 +54,7 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 ///
 
 Value *DbgDeclareInst::getAddress() const {
-  if (MDNode* MD = cast_or_null<MDNode>(getOperand(1)))
+  if (MDNode* MD = cast_or_null<MDNode>(getArgOperand(0)))
     return MD->getOperand(0);
   else
     return NULL;
@@ -65,9 +65,9 @@ Value *DbgDeclareInst::getAddress() const {
 ///
 
 const Value *DbgValueInst::getValue() const {
-  return cast<MDNode>(getOperand(1))->getOperand(0);
+  return cast<MDNode>(getArgOperand(0))->getOperand(0);
 }
 
 Value *DbgValueInst::getValue() {
-  return cast<MDNode>(getOperand(1))->getOperand(0);
+  return cast<MDNode>(getArgOperand(0))->getOperand(0);
 }
