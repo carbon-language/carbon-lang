@@ -134,6 +134,7 @@ namespace {
     
     unsigned VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     unsigned VisitCXXNewExpr(CXXNewExpr *E);
+    unsigned VisitCXXDeleteExpr(CXXDeleteExpr *E);
     
     unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
@@ -1087,6 +1088,16 @@ unsigned PCHStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   return TotalSubExprs;
 }
 
+unsigned PCHStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+  VisitExpr(E);
+  E->setGlobalDelete(Record[Idx++]);
+  E->setArrayForm(Record[Idx++]);
+  E->setOperatorDelete(
+                     cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setArgument(cast_or_null<Expr>(StmtStack.back()));
+  E->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 1;
+}
 
 unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
@@ -1474,6 +1485,9 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_CXX_NEW:
       S = new (Context) CXXNewExpr(Empty);
+      break;
+    case pch::EXPR_CXX_DELETE:
+      S = new (Context) CXXDeleteExpr(Empty);
       break;
         
         

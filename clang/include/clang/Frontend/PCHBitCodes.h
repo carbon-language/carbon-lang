@@ -763,6 +763,7 @@ namespace clang {
       //
       EXPR_CXX_ZERO_INIT_VALUE,   // CXXZeroInitValueExpr
       EXPR_CXX_NEW,               // CXXNewExpr
+      EXPR_CXX_DELETE,            // CXXDeleteExpr
       
       EXPR_CXX_EXPR_WITH_TEMPORARIES // CXXExprWithTemporaries
     };

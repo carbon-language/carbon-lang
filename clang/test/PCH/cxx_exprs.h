@@ -68,8 +68,8 @@ void Derived::g() {
   int A = int(0.5);  // CXXFunctionalCastExpr
   A = int();         // CXXZeroInitValueExpr
   
-  new Base(4);       // CXXNewExpr
-  
+  Base *b = new Base(4);       // CXXNewExpr
+  delete b;                    // CXXDeleteExpr
 }
 
 

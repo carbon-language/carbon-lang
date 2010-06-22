@@ -130,6 +130,7 @@ namespace {
     
     void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
+    void VisitCXXDeleteExpr(CXXDeleteExpr *E);
     
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   };
@@ -997,6 +998,16 @@ void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   Code = pch::EXPR_CXX_NEW;
 }
 
+void PCHStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->isGlobalDelete());
+  Record.push_back(E->isArrayForm());
+  Writer.AddDeclRef(E->getOperatorDelete(), Record);
+  Writer.WriteSubStmt(E->getArgument());
+  Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);
+  
+  Code = pch::EXPR_CXX_DELETE;
+}
 
 void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
