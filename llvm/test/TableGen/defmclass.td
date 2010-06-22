@@ -16,6 +16,7 @@ class BaseI {
 class I<bits<4> op> : BaseI {
   bits<4> opcode = op;
   int val = !if(!eq(Prefix, xd.Prefix), 7, 21);
+  int check = !if(hasVEX_4VPrefix, 0, 10);
 }
 
 multiclass R {
@@ -33,4 +34,5 @@ multiclass Y {
   defm SD : R, M, XS;
 }
 
+// CHECK: int check = 0;
 defm Instr : Y, VEX;

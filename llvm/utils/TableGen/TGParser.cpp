@@ -2020,7 +2020,6 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
         }
       } else {
         Records.addDef(CurRec);
-        CurRec->resolveReferences();
       }
 
       NewRecDefs.push_back(CurRec);
@@ -2064,9 +2063,6 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
             if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
                          LetStack[i][j].Bits, LetStack[i][j].Value))
               return true;
-
-        if (!CurMultiClass)
-          CurRec->resolveReferences();
       }
 
       if (Lex.getCode() != tgtok::comma) break;
@@ -2074,6 +2070,10 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
       SubClass = ParseSubClassReference(0, false);
     }
   }
+
+  if (!CurMultiClass)
+    for (unsigned i = 0, e = NewRecDefs.size(); i != e; ++i)
+      NewRecDefs[i]->resolveReferences();
 
   if (Lex.getCode() != tgtok::semi)
     return TokError("expected ';' at end of defm");
