@@ -1,7 +1,10 @@
-// RUN: %clang -c %s -o %t.o && libtool -static -o libcodegentest.a %t.o && %clang -bundle -o codegentestbundle -L. -lcodegentest -Wl,-ObjC && nm codegentestbundle | grep -F '[A(foo) foo_myStuff]'
-// XFAIL: *
-// XTARGET: darwin9
+// RUN: %clang_cc1 -triple i386-apple-darwin9  -emit-llvm -o - %s | FileCheck %s
 // PR7431
+
+// CHECK: module asm "\09.lazy_reference .objc_class_name_A"
+// CHECK: module asm "\09.objc_category_name_A_foo=0"
+// CHECK: module asm "\09.globl .objc_category_name_A_foo"
+
 @interface A
 @end
 @interface A(foo)
@@ -11,3 +14,4 @@
 - (void)foo_myStuff {
 }
 @end
+
