@@ -5,9 +5,10 @@ import math, os.path, re, sys, time, unittest
 
 def setupSysPath():
   testPath = sys.path[0]
-  rem = re.match("(^.*lldb/)test$", testPath)
+  print "sys.path[0] =", testPath
+  rem = re.match("(^.*/)test$", testPath)
   if not rem:
-    print "This script expects to reside in .../lldb/test."
+    print "This script expects to reside in .../test."
     sys.exit(-1)
   lldbBasePath = rem.group(1)
   lldbDebugPythonPath = "build/Debug/LLDB.framework/Resources/Python"
