@@ -166,10 +166,10 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
          MI->getOperand(1).isImm() &&
          (MI->getOperand(2).isReg() && MI->getOperand(2).isUse()) &&
           MI->getOperand(3).isImm() && "Invalid subreg_to_reg");
-          
+
   unsigned DstReg  = MI->getOperand(0).getReg();
   unsigned InsReg  = MI->getOperand(2).getReg();
-  unsigned InsSIdx = MI->getOperand(2).getSubReg();
+  assert(!MI->getOperand(2).getSubReg() && "SubIdx on physreg?");
   unsigned SubIdx  = MI->getOperand(3).getImm();
 
   assert(SubIdx != 0 && "Invalid index for insert_subreg");
@@ -182,13 +182,18 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
 
   DEBUG(dbgs() << "subreg: CONVERTING: " << *MI);
 
-  if (DstSubReg == InsReg && InsSIdx == 0) {
+  if (DstSubReg == InsReg) {
     // No need to insert an identify copy instruction.
     // Watch out for case like this:
-    // %RAX<def> = ...
-    // %RAX<def> = SUBREG_TO_REG 0, %EAX:3<kill>, 3
-    // The first def is defining RAX, not EAX so the top bits were not
-    // zero extended.
+    // %RAX<def> = SUBREG_TO_REG 0, %EAX<kill>, 3
+    // We must leave %RAX live.
+    if (DstReg != InsReg) {
+      MI->setDesc(TII->get(TargetOpcode::KILL));
+      MI->RemoveOperand(3);     // SubIdx
+      MI->RemoveOperand(1);     // Imm
+      DEBUG(dbgs() << "subreg: replace by: " << *MI);
+      return true;
+    }
     DEBUG(dbgs() << "subreg: eliminated!");
   } else {
     // Insert sub-register copy
