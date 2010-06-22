@@ -21,23 +21,44 @@
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
-  Value *&VMSlot = VM[V];
-  if (VMSlot) return VMSlot;      // Does it exist in the map yet?
+  ValueToValueMapTy::iterator VMI = VM.find(V);
+  if (VMI != VM.end()) 
+    return VMI->second;      // Does it exist in the map yet?
   
-  // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the
-  // DenseMap.  This includes any recursive calls to MapValue.
-
-  // Global values and non-function-local metadata do not need to be seeded into
+  // Global values, metadata strings and inline asm do not need to be seeded into
   // the ValueMap if they are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
-      (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
-    return VMSlot = const_cast<Value*>(V);
+  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V)) {
+    VM.insert(std::make_pair(V, const_cast<Value*>(V)));
+    return const_cast<Value*>(V);
+  }
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
+    // Insert a place holder in map to handle mdnode cycles.
+    Value *TmpV = MDString::get(V->getContext(),
+                                std::string("llvm.md.clone.tmp." + VM.size()));
+    VM.insert(std::make_pair(V, MDNode::get(V->getContext(), &TmpV, 1)));
+    
+    bool ReuseMD = true;
     SmallVector<Value*, 4> Elts;
-    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
-      Elts.push_back(MD->getOperand(i) ? MapValue(MD->getOperand(i), VM) : 0);
-    return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+    // If metadata element is mapped to a new value then seed metadata 
+    // in the map.
+    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
+      if (!MD->getOperand(i))
+        Elts.push_back(0);
+      else {
+        Value *MappedOp = MapValue(MD->getOperand(i), VM);
+        if (MappedOp != MD->getOperand(i))
+          ReuseMD = false;
+        Elts.push_back(MappedOp);
+      }
+    }
+    if (ReuseMD) {
+      VM.insert(std::make_pair(V, const_cast<Value*>(V)));
+      return const_cast<Value*>(V);
+    }
+    MDNode *NewMD = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+    VM.insert(std::make_pair(V, NewMD));
+    return NewMD;
   }
 
   Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
@@ -46,7 +67,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
       isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
       isa<UndefValue>(C) || isa<MDString>(C))
-    return VMSlot = C;           // Primitive constants map directly
+    return VM[V] = C;           // Primitive constants map directly
   
   if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
     for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
