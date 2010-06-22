@@ -73,15 +73,7 @@ public:
     GetConstCString (const char *cstr)
     {
         if (cstr)
-        {
-            Mutex::Locker locker (m_mutex);
-            llvm::StringRef string_ref (cstr);
-            llvm::StringMapEntry<uint32_t>& entry = m_string_map.GetOrCreateValue (string_ref);
-            const char *ccstr = entry.getKeyData();
-            llvm::StringMapEntry<uint32_t>&reconstituted_entry = GetStringMapEntryFromKeyData (ccstr);
-            assert (&entry == &reconstituted_entry);
-            return ccstr;
-        }
+            return GetConstCStringWithLength (cstr, strlen (cstr));
         return NULL;
     }
 
@@ -106,14 +98,8 @@ public:
     {
         if (cstr)
         {
-            Mutex::Locker locker (m_mutex);
-            int actual_cstr_len = strlen (cstr);
-            llvm::StringRef string_ref (cstr, std::min<int>(actual_cstr_len, cstr_len));
-            llvm::StringMapEntry<uint32_t>& entry = m_string_map.GetOrCreateValue (string_ref);
-            const char *ccstr = entry.getKeyData();
-            llvm::StringMapEntry<uint32_t>&reconstituted_entry = GetStringMapEntryFromKeyData (ccstr);
-            assert (&entry == &reconstituted_entry);
-            return ccstr;
+            int trimmed_len = std::min<int> (strlen (cstr), cstr_len);
+            return GetConstCStringWithLength (cstr, trimmed_len);
         }
         return NULL;
     }
