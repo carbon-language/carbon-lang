@@ -63,6 +63,9 @@
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
 
+/* Define to 1 if you have the <CrashReporterClient.h> header file. */
+#undef HAVE_CRASHREPORTERCLIENT_H
+
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
 
@@ -174,6 +177,10 @@
 
 /* Set to 1 if the isnan function is found in <math.h> */
 #undef HAVE_ISNAN_IN_MATH_H
+
+/* Define to 1 if you have the `CrashReporterClient' library
+   (-lCrashReporterClient). */
+#undef HAVE_LIBCRASHREPORTERCLIENT
 
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL

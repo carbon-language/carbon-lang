@@ -1248,6 +1248,10 @@ AC_ARG_WITH(oprofile,
 AC_DEFINE_UNQUOTED([USE_OPROFILE],$USE_OPROFILE,
                    [Define if we have the oprofile JIT-support library])
 
+dnl gCRAnnotations isn't the function we care about, but it's the only
+dnl thing exported.
+AC_CHECK_LIB(CrashReporterClient, gCRAnnotations)
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 6: Check for header files
@@ -1283,6 +1287,9 @@ dnl Try to find ffi.h.
 if test "$llvm_cv_enable_libffi" = "yes" ; then
   AC_CHECK_HEADERS([ffi.h ffi/ffi.h])
 fi
+
+dnl Try to find Darwin specific crash reporting library.
+AC_CHECK_HEADERS([CrashReporterClient.h])
 
 dnl===-----------------------------------------------------------------------===
 dnl===

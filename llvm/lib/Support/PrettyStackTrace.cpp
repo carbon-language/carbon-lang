@@ -12,11 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/ThreadLocal.h"
 #include "llvm/ADT/SmallString.h"
+
+#ifdef HAVE_CRASHREPORTERCLIENT_H
+#include <CrashReporterClient.h>
+#endif
+
 using namespace llvm;
 
 namespace llvm {
@@ -49,7 +55,7 @@ static void PrintCurStackTrace(raw_ostream &OS) {
 }
 
 // Integrate with crash reporter.
-#ifdef __APPLE__
+#if defined (__APPLE__) && !defined (HAVE_CRASHREPORTERCLIENT_H)
 static const char *__crashreporter_info__ = 0;
 asm(".desc ___crashreporter_info__, 0x10");
 #endif
@@ -71,7 +77,11 @@ static void CrashHandler(void *Cookie) {
   }
   
   if (!TmpStr.empty()) {
+#ifndef HAVE_CRASHREPORTERCLIENT_H
     __crashreporter_info__ = strdup(std::string(TmpStr.str()).c_str());
+#else
+    CRSetCrashLogMessage(std::string(TmpStr.str()).c_str());
+#endif
     errs() << TmpStr.str();
   }
   
