@@ -1174,7 +1174,9 @@ public:
       SS.setScopeRep(Qualifier);
     }
 
-    QualType BaseType = ((Expr*) Base.get())->getType();
+    Expr *BaseExpr = Base.takeAs<Expr>();
+    getSema().DefaultFunctionArrayConversion(BaseExpr);
+    QualType BaseType = BaseExpr->getType();
 
     // FIXME: this involves duplicating earlier analysis in a lot of
     // cases; we should avoid this when possible.
@@ -1183,8 +1185,8 @@ public:
     R.addDecl(FoundDecl);
     R.resolveKind();
 
-    return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
-                                              OpLoc, isArrow,
+    return getSema().BuildMemberReferenceExpr(getSema().Owned(BaseExpr),
+                                              BaseType, OpLoc, isArrow,
                                               SS, FirstQualifierInScope,
                                               R, ExplicitTemplateArgs);
   }
