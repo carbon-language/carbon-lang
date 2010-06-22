@@ -5401,10 +5401,17 @@ CreateNewDecl:
     New = EnumDecl::Create(Context, SearchDC, Loc, Name, KWLoc,
                            cast_or_null<EnumDecl>(PrevDecl));
     // If this is an undefined enum, warn.
-    if (TUK != TUK_Definition && !Invalid)  {
-      unsigned DK = getLangOptions().CPlusPlus? diag::err_forward_ref_enum
-                                              : diag::ext_forward_ref_enum;
-      Diag(Loc, DK);
+    if (TUK != TUK_Definition && !Invalid) {
+      TagDecl *Def;
+      if (PrevDecl && (Def = cast<EnumDecl>(PrevDecl)->getDefinition())) {
+        Diag(Loc, diag::ext_forward_ref_enum_def)
+          << New;
+        Diag(Def->getLocation(), diag::note_previous_definition);
+      } else {
+        Diag(Loc, 
+             getLangOptions().CPlusPlus? diag::err_forward_ref_enum
+                                       : diag::ext_forward_ref_enum);
+      }
     }
   } else {
     // struct/union/class
