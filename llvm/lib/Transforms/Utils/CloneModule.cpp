@@ -133,6 +133,21 @@ Module *llvm::CloneModule(const Module *M,
     NamedMDNode::Create(New->getContext(), NMD.getName(),
                         MDs.data(), MDs.size(), New);
   }
-  
+
+  // Update metadata attach with instructions.
+  for (Module::iterator MI = New->begin(), ME = New->end(); MI != ME; ++MI)   
+    for (Function::iterator FI = MI->begin(), FE = MI->end(); 
+         FI != FE; ++FI)
+      for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
+           BI != BE; ++BI) {
+        SmallVector<std::pair<unsigned, MDNode *>, 4 > MDs;
+        BI->getAllMetadata(MDs);
+        for (SmallVector<std::pair<unsigned, MDNode *>, 4>::iterator 
+               MDI = MDs.begin(), MDE = MDs.end(); MDI != MDE; ++MDI) {
+          Value *MappedValue = MapValue(MDI->second, ValueMap);
+          if (MDI->second != MappedValue && MappedValue)
+            BI->setMetadata(MDI->first, cast<MDNode>(MappedValue));
+        }
+      }
   return New;
 }
