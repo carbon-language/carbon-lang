@@ -45,3 +45,7 @@ static void test() {
 }
 
 typedef __attribute__(( ext_vector_type(2) )) float2 vecfloat2; // expected-error{{invalid vector type 'float2'}}
+
+void inc(float2 f2) {
+  f2++; // expected-error{{cannot increment value of type 'float2'}}
+}

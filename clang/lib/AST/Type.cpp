@@ -585,8 +585,6 @@ bool Type::isRealType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->isEnum() && TT->getDecl()->isDefinition();
-  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
-    return VT->getElementType()->isRealType();
   return false;
 }
 
