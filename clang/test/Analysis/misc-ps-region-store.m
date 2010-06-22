@@ -1033,3 +1033,11 @@ double rdar_8032791_1() {
    return x;
 }
 
+// PR 7450 - Handle pointer arithmetic with __builtin_alloca
+void pr_7450_aux(void *x);
+void pr_7450() {
+  void *p = __builtin_alloca(10);
+  // Don't crash when analyzing the following statement.
+  pr_7450_aux(p + 8);
+}
+

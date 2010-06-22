@@ -883,8 +883,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
     }
     case MemRegion::AllocaRegionKind: {
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
-      QualType T = getContext().CharTy; // Create an ElementRegion of bytes.
-      QualType EleTy = T->getAs<PointerType>()->getPointeeType();
+      QualType EleTy = getContext().CharTy; // Create an ElementRegion of bytes.
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
       break;
