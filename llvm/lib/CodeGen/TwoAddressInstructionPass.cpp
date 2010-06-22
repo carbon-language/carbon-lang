@@ -964,10 +964,24 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
               if (MO.isReg() && MO.getReg() != 0 &&
                   TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
                 if (MO.isUse()) {
-                  if (MO.isKill())
-                    LV->replaceKillInstruction(MO.getReg(), mi, NewMIs[0]);
-                } else if (LV->removeVirtualRegisterDead(MO.getReg(), mi))
-                  LV->addVirtualRegisterDead(MO.getReg(), NewMIs[1]);
+                  if (MO.isKill()) {
+                    if (NewMIs[0]->killsRegister(MO.getReg()))
+                      LV->replaceKillInstruction(MO.getReg(), mi, NewMIs[0]);
+                    else {
+                      assert(NewMIs[1]->killsRegister(MO.getReg()) &&
+                             "Kill missing after load unfold!");
+                      LV->replaceKillInstruction(MO.getReg(), mi, NewMIs[1]);
+                    }
+                  }
+                } else if (LV->removeVirtualRegisterDead(MO.getReg(), mi)) {
+                  if (NewMIs[1]->registerDefIsDead(MO.getReg()))
+                    LV->addVirtualRegisterDead(MO.getReg(), NewMIs[1]);
+                  else {
+                    assert(NewMIs[0]->registerDefIsDead(MO.getReg()) &&
+                           "Dead flag missing after load unfold!");
+                    LV->addVirtualRegisterDead(MO.getReg(), NewMIs[0]);
+                  }
+                }
               }
             }
             LV->addVirtualRegisterKilled(Reg, NewMIs[1]);
