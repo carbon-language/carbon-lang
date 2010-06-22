@@ -192,7 +192,7 @@ ReprocessLoop:
   if (!Preheader) {
     Preheader = InsertPreheaderForLoop(L);
     if (Preheader) {
-      NumInserted++;
+      ++NumInserted;
       Changed = true;
     }
   }
@@ -215,7 +215,7 @@ ReprocessLoop:
       // allowed.
       if (!L->contains(*PI)) {
         if (RewriteLoopExitBlock(L, ExitBlock)) {
-          NumInserted++;
+          ++NumInserted;
           Changed = true;
         }
         break;
@@ -244,7 +244,7 @@ ReprocessLoop:
     // loop header.
     LoopLatch = InsertUniqueBackedgeBlock(L, Preheader);
     if (LoopLatch) {
-      NumInserted++;
+      ++NumInserted;
       Changed = true;
     }
   }

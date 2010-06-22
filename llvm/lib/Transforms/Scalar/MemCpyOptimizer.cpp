@@ -632,7 +632,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   // Remove the memcpy
   MD.removeInstruction(cpy);
   cpy->eraseFromParent();
-  NumMemCpyInstr++;
+  ++NumMemCpyInstr;
 
   return true;
 }
@@ -710,7 +710,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (MD.getDependency(C) == dep) {
     MD.removeInstruction(M);
     M->eraseFromParent();
-    NumMemCpyInstr++;
+    ++NumMemCpyInstr;
     return true;
   }
   

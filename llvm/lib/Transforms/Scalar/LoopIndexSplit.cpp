@@ -649,7 +649,7 @@ bool LoopIndexSplit::updateLoopIterationSpace() {
       }
     }
   }
-  NumRestrictBounds++;
+  ++NumRestrictBounds;
   return true;
 }
 
@@ -1159,7 +1159,7 @@ bool LoopIndexSplit::splitLoop() {
                     B_SplitCondition, B_IndVar, B_IndVarIncrement, 
                     BLoop, EVOpNum);
 
-  NumIndexSplit++;
+  ++NumIndexSplit;
   return true;
 }
 

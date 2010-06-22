@@ -138,7 +138,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
         // MOVPC32r is basically a call plus a pop instruction.
         if (Desc.getOpcode() == X86::MOVPC32r)
           emitInstruction(*I, &II->get(X86::POP32r));
-        NumEmitted++;  // Keep track of the # of mi's emitted
+        ++NumEmitted;  // Keep track of the # of mi's emitted
       }
     }
   } while (MCE.finishFunction(MF));

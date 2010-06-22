@@ -133,7 +133,7 @@ namespace {
 
       // Emit an fxch to update the runtime processors version of the state.
       BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(STReg);
-      NumFXCH++;
+      ++NumFXCH;
     }
 
     void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
@@ -1021,7 +1021,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // StackTop can be 1 if a FpSET_ST0_* was before this. Exchange them.
     if (StackTop == 1) {
       BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(X86::ST1);
-      NumFXCH++;
+      ++NumFXCH;
       StackTop = 0;
       break;
     }
@@ -1058,7 +1058,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       // StackTop can be 1 if a FpSET_ST0_* was before this. Exchange them.
       if (StackTop == 1) {
         BuildMI(*MBB, I, dl, TII->get(X86::XCH_F)).addReg(X86::ST1);
-        NumFXCH++;
+        ++NumFXCH;
         StackTop = 0;
         break;
       }

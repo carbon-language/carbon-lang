@@ -350,7 +350,7 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
 
   MCE.processDebugLoc(MI.getDebugLoc(), true);
 
-  NumEmitted++;  // Keep track of the # of mi's emitted
+  ++NumEmitted;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
   default: {
     llvm_unreachable("Unhandled instruction encoding format!");

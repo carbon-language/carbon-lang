@@ -303,8 +303,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         RetVal = IfConvertSimple(BBI, Kind);
         DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) {
-          if (isFalse) NumSimpleFalse++;
-          else         NumSimple++;
+          if (isFalse) ++NumSimpleFalse;
+          else         ++NumSimple;
         }
        break;
       }
@@ -330,11 +330,11 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) {
           if (isFalse) {
-            if (isRev) NumTriangleFRev++;
-            else       NumTriangleFalse++;
+            if (isRev) ++NumTriangleFRev;
+            else       ++NumTriangleFalse;
           } else {
-            if (isRev) NumTriangleRev++;
-            else       NumTriangle++;
+            if (isRev) ++NumTriangleRev;
+            else       ++NumTriangle;
           }
         }
         break;
@@ -346,7 +346,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
                      << BBI.FalseBB->getNumber() << ") ");
         RetVal = IfConvertDiamond(BBI, Kind, NumDups, NumDups2);
         DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
-        if (RetVal) NumDiamonds++;
+        if (RetVal) ++NumDiamonds;
         break;
       }
       }
@@ -1317,7 +1317,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
   BBI.IsAnalyzed = false;
   BBI.NonPredSize = 0;
 
-  NumIfConvBBs++;
+  ++NumIfConvBBs;
 }
 
 /// CopyAndPredicateBlock - Copy and predicate instructions from source BB to
@@ -1373,7 +1373,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
   ToBBI.ClobbersPred |= FromBBI.ClobbersPred;
   ToBBI.IsAnalyzed = false;
 
-  NumDupBBs++;
+  ++NumDupBBs;
 }
 
 /// MergeBlocks - Move all instructions from FromBB to the end of ToBB.

@@ -218,7 +218,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           isElidable(DepStore)) {
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepStore);
-        NumFastStores++;
+        ++NumFastStores;
         MadeChange = true;
 
         // DeleteDeadInstruction can delete the current instruction in loop
@@ -249,7 +249,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
             BBI = BB.begin();
           else if (BBI != BB.begin())  // Revisit this instruction if possible.
             --BBI;
-          NumFastStores++;
+          ++NumFastStores;
           MadeChange = true;
           continue;
         }
@@ -270,7 +270,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           BBI = BB.begin();
         else if (BBI != BB.begin())  // Revisit this instruction if possible.
           --BBI;
-        NumFastStores++;
+        ++NumFastStores;
         MadeChange = true;
         continue;
       }
@@ -303,7 +303,7 @@ bool DSE::handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep) {
   
   // DCE instructions only used to calculate that store
   DeleteDeadInstruction(Dependency);
-  NumFastStores++;
+  ++NumFastStores;
   return true;
 }
 
@@ -349,9 +349,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         if (deadPointers.count(pointerOperand)) {
           // DCE instructions only used to calculate that store.
           Instruction *Dead = BBI;
-          BBI++;
+          ++BBI;
           DeleteDeadInstruction(Dead, &deadPointers);
-          NumFastStores++;
+          ++NumFastStores;
           MadeChange = true;
           continue;
         }
@@ -371,9 +371,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       // However, if this load is unused and not volatile, we can go ahead and
       // remove it, and not have to worry about it making our pointer undead!
       if (L->use_empty() && !L->isVolatile()) {
-        BBI++;
+        ++BBI;
         DeleteDeadInstruction(L, &deadPointers);
-        NumFastOther++;
+        ++NumFastOther;
         MadeChange = true;
         continue;
       }
@@ -391,9 +391,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       
       // Dead alloca's can be DCE'd when we reach them
       if (A->use_empty()) {
-        BBI++;
+        ++BBI;
         DeleteDeadInstruction(A, &deadPointers);
-        NumFastOther++;
+        ++NumFastOther;
         MadeChange = true;
       }
       
@@ -426,9 +426,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
                                                          getPointerSize(*I));
         
         if (A == AliasAnalysis::ModRef)
-          modRef++;
+          ++modRef;
         else
-          other++;
+          ++other;
         
         if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           dead.push_back(*I);
@@ -442,9 +442,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     } else if (isInstructionTriviallyDead(BBI)) {
       // For any non-memory-affecting non-terminators, DCE them as we reach them
       Instruction *Inst = BBI;
-      BBI++;
+      ++BBI;
       DeleteDeadInstruction(Inst, &deadPointers);
-      NumFastOther++;
+      ++NumFastOther;
       MadeChange = true;
       continue;
     }
@@ -497,7 +497,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
       // Remove it!
       ++BBI;
       DeleteDeadInstruction(S, &deadPointers);
-      NumFastStores++;
+      ++NumFastStores;
       MadeChange = true;
 
       continue;

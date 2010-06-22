@@ -147,7 +147,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
         continue;           // PHI nodes don't count.
       if (isa<DbgInfoIntrinsic>(OI))
         continue;  // Debug intrinsics don't count as size.
-      Size++;
+      ++Size;
   }
 
   if (Size > MAX_HEADER_SIZE)
@@ -263,7 +263,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
   preserveCanonicalLoopForm(LPM);
 
-  NumRotated++;
+  ++NumRotated;
   return true;
 }
 

@@ -836,7 +836,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
   if (IntervalSSMap.count(CurrLI->reg))
     IntervalSSMap[NewVReg] = IntervalSSMap[CurrLI->reg];
   
-  NumRenumbers++;
+  ++NumRenumbers;
 }
 
 bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
@@ -1192,7 +1192,7 @@ unsigned PreAllocSplitting::getNumberOfNonSpills(
     int StoreFrameIndex;
     unsigned StoreVReg = TII->isStoreToStackSlot(*UI, StoreFrameIndex);
     if (StoreVReg != Reg || StoreFrameIndex != FrameIndex)
-      NonSpills++;
+      ++NonSpills;
     
     int DefIdx = (*UI)->findRegisterDefOperandIdx(Reg);
     if (DefIdx != -1 && (*UI)->isRegTiedToUseOperand(DefIdx))
@@ -1255,7 +1255,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         (*LI)->removeValNo(CurrVN);
         DefMI->eraseFromParent();
         VNUseCount.erase(CurrVN);
-        NumDeadSpills++;
+        ++NumDeadSpills;
         changed = true;
         continue;
       }
@@ -1328,7 +1328,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
           if (VI->second.erase(use))
             VI->second.insert(NewMI);
 
-        NumDeadSpills++;
+        ++NumDeadSpills;
         changed = true;
         continue;
       }
@@ -1350,7 +1350,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
       LIs->RemoveMachineInstrFromMaps(DefMI);
       (*LI)->removeValNo(CurrVN);
       DefMI->eraseFromParent();
-      NumDeadSpills++;
+      ++NumDeadSpills;
       changed = true;
     }
   }

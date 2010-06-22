@@ -143,7 +143,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     ProfileInfo::Edge edge = ProfileInfo::getEdge(0,entry);
     if (!std::binary_search(MST.begin(), MST.end(), edge)) {
       printEdgeCounter(edge,entry,i);
-      IncrementCounterInBlock(entry, i, Counters); NumEdgesInserted++;
+      IncrementCounterInBlock(entry, i, Counters); ++NumEdgesInserted;
       Initializer[i++] = (Zero);
     } else{
       Initializer[i++] = (Uncounted);
@@ -166,7 +166,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
         ProfileInfo::Edge edge = ProfileInfo::getEdge(BB,0);
         if (!std::binary_search(MST.begin(), MST.end(), edge)) {
           printEdgeCounter(edge,BB,i);
-          IncrementCounterInBlock(BB, i, Counters); NumEdgesInserted++;
+          IncrementCounterInBlock(BB, i, Counters); ++NumEdgesInserted;
           Initializer[i++] = (Zero);
         } else{
           Initializer[i++] = (Uncounted);
@@ -189,11 +189,11 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
           if (TI->getNumSuccessors() == 1) {
             // Insert counter at the start of the block
             printEdgeCounter(edge,BB,i);
-            IncrementCounterInBlock(BB, i, Counters); NumEdgesInserted++;
+            IncrementCounterInBlock(BB, i, Counters); ++NumEdgesInserted;
           } else {
             // Insert counter at the start of the block
             printEdgeCounter(edge,Succ,i);
-            IncrementCounterInBlock(Succ, i, Counters); NumEdgesInserted++;
+            IncrementCounterInBlock(Succ, i, Counters); ++NumEdgesInserted;
           }
           Initializer[i++] = (Zero);
         } else {

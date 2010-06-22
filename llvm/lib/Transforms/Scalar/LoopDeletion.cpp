@@ -83,7 +83,7 @@ bool LoopDeletion::IsLoopDead(Loop* L,
       if (!L->makeLoopInvariant(I, Changed, Preheader->getTerminator()))
         return false;
       
-    BI++;
+    ++BI;
   }
   
   // Make sure that no instructions in the block have potential side-effects.
@@ -176,7 +176,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
     P->replaceUsesOfWith(exitingBlock, preheader);
-    BI++;
+    ++BI;
   }
   
   // Update the dominator tree and remove the instructions and blocks that will
@@ -226,7 +226,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   LPM.deleteLoopFromQueue(L);
   Changed = true;
   
-  NumDeleted++;
+  ++NumDeleted;
   
   return Changed;
 }

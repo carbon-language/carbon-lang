@@ -456,7 +456,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     // Okay, we have a cache entry.  If we know it is not dirty, just return it
     // with no computation.
     if (!CacheP.second) {
-      NumCacheNonLocal++;
+      ++NumCacheNonLocal;
       return Cache;
     }
     
@@ -478,7 +478,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     BasicBlock *QueryBB = QueryCS.getInstruction()->getParent();
     for (BasicBlock **PI = PredCache->GetPreds(QueryBB); *PI; ++PI)
       DirtyBlocks.push_back(*PI);
-    NumUncacheNonLocal++;
+    ++NumUncacheNonLocal;
   }
   
   // isReadonlyCall - If this is a read-only call, we can be more aggressive.

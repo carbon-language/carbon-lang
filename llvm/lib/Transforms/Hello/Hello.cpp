@@ -28,7 +28,7 @@ namespace {
     Hello() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      HelloCounter++;
+      ++HelloCounter;
       errs() << "Hello: ";
       errs().write_escaped(F.getName()) << '\n';
       return false;
@@ -46,7 +46,7 @@ namespace {
     Hello2() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      HelloCounter++;
+      ++HelloCounter;
       errs() << "Hello: ";
       errs().write_escaped(F.getName()) << '\n';
       return false;

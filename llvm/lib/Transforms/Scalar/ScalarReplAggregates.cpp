@@ -926,7 +926,7 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
   DeleteDeadInstructions();
   AI->eraseFromParent();
 
-  NumReplaced++;
+  ++NumReplaced;
 }
 
 /// DeleteDeadInstructions - Erase instructions on the DeadInstrs list,

@@ -131,30 +131,30 @@ namespace {
 static int getLoadStoreMultipleOpcode(int Opcode) {
   switch (Opcode) {
   case ARM::LDR:
-    NumLDMGened++;
+    ++NumLDMGened;
     return ARM::LDM;
   case ARM::STR:
-    NumSTMGened++;
+    ++NumSTMGened;
     return ARM::STM;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
-    NumLDMGened++;
+    ++NumLDMGened;
     return ARM::t2LDM;
   case ARM::t2STRi8:
   case ARM::t2STRi12:
-    NumSTMGened++;
+    ++NumSTMGened;
     return ARM::t2STM;
   case ARM::VLDRS:
-    NumVLDMGened++;
+    ++NumVLDMGened;
     return ARM::VLDMS;
   case ARM::VSTRS:
-    NumVSTMGened++;
+    ++NumVSTMGened;
     return ARM::VSTMS;
   case ARM::VLDRD:
-    NumVLDMGened++;
+    ++NumVLDMGened;
     return ARM::VLDMD;
   case ARM::VSTRD:
-    NumVSTMGened++;
+    ++NumVSTMGened;
     return ARM::VSTMD;
   default: llvm_unreachable("Unhandled opcode!");
   }
@@ -319,7 +319,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
 
   // Try to do the merge.
   MachineBasicBlock::iterator Loc = memOps[insertAfter].MBBI;
-  Loc++;
+  ++Loc;
   if (!MergeOps(MBB, Loc, Offset, Base, BaseKill, Opcode,
                 Pred, PredReg, Scratch, dl, Regs))
     return;
@@ -1082,7 +1082,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         CurrPred = Pred;
         CurrPredReg = PredReg;
         MemOps.push_back(MemOpQueueEntry(Offset, Reg, isKill, Position, MBBI));
-        NumMemOps++;
+        ++NumMemOps;
         Advance = true;
       } else {
         if (Clobber) {
@@ -1096,7 +1096,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
           if (Offset > MemOps.back().Offset) {
             MemOps.push_back(MemOpQueueEntry(Offset, Reg, isKill,
                                              Position, MBBI));
-            NumMemOps++;
+            ++NumMemOps;
             Advance = true;
           } else {
             for (MemOpQueueIter I = MemOps.begin(), E = MemOps.end();
@@ -1104,7 +1104,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
               if (Offset < I->Offset) {
                 MemOps.insert(I, MemOpQueueEntry(Offset, Reg, isKill,
                                                  Position, MBBI));
-                NumMemOps++;
+                ++NumMemOps;
                 Advance = true;
                 break;
               } else if (Offset == I->Offset) {

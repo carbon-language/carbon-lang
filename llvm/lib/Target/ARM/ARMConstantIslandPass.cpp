@@ -407,7 +407,7 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
     std::vector<CPEntry> CPEs;
     CPEs.push_back(CPEntry(CPEMI, i));
     CPEntries.push_back(CPEs);
-    NumCPEs++;
+    ++NumCPEs;
     DEBUG(errs() << "Moved CPI#" << i << " to end of function as #" << i
                  << "\n");
   }
@@ -725,7 +725,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // correspond to anything in the source.
   unsigned Opc = isThumb ? (isThumb2 ? ARM::t2B : ARM::tB) : ARM::B;
   BuildMI(OrigBB, DebugLoc(), TII->get(Opc)).addMBB(NewBB);
-  NumSplit++;
+  ++NumSplit;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
   while (!OrigBB->succ_empty()) {
@@ -948,7 +948,7 @@ bool ARMConstantIslands::DecrementOldEntry(unsigned CPI, MachineInstr *CPEMI) {
   if (--CPE->RefCount == 0) {
     RemoveDeadCPEMI(CPEMI);
     CPE->CPEMI = NULL;
-    NumCPEs--;
+    --NumCPEs;
     return true;
   }
   return false;
@@ -1249,7 +1249,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   U.CPEMI = BuildMI(NewIsland, DebugLoc(), TII->get(ARM::CONSTPOOL_ENTRY))
                 .addImm(ID).addConstantPoolIndex(CPI).addImm(Size);
   CPEntries[CPI].push_back(CPEntry(U.CPEMI, ID, 1));
-  NumCPEs++;
+  ++NumCPEs;
 
   BBOffsets[NewIsland->getNumber()] = BBOffsets[NewMBB->getNumber()];
   // Compensate for .align 2 in thumb mode.
@@ -1372,7 +1372,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br) {
   BBSizes[MBB->getNumber()] += 2;
   AdjustBBOffsetsAfter(MBB, 2);
   HasFarJump = true;
-  NumUBrFixed++;
+  ++NumUBrFixed;
 
   DEBUG(errs() << "  Changed B to long jump " << *MI);
 
@@ -1405,7 +1405,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
   MachineInstr *BMI = &MBB->back();
   bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
 
-  NumCBrFixed++;
+  ++NumCBrFixed;
   if (BMI != MI) {
     if (llvm::next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
         BMI->getOpcode() == Br.UncondBr) {

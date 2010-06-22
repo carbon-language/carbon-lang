@@ -83,7 +83,7 @@ bool ADCE::runOnFunction(Function& F) {
   
   for (SmallVector<Instruction*, 1024>::iterator I = worklist.begin(),
        E = worklist.end(); I != E; ++I) {
-    NumRemoved++;
+    ++NumRemoved;
     (*I)->eraseFromParent();
   }
 
