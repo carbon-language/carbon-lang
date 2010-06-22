@@ -113,14 +113,7 @@ namespace llvm {
     /// below to update aliases.
     bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped,
                        CoalescerPair &CP);
-    
-    /// SimpleJoin - Attempt to join the specified interval into this one. The
-    /// caller of this method must guarantee that the RHS only contains a single
-    /// value number and that the RHS is not defined by a copy from this
-    /// interval.  This returns false if the intervals are not joinable, or it
-    /// joins them and returns true.
-    bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS, CoalescerPair &CP);
-    
+
     /// Return true if the two specified registers belong to different register
     /// classes.  The registers may be either phys or virt regs.
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
@@ -161,23 +154,6 @@ namespace llvm {
     bool CanCoalesceWithImpDef(MachineInstr *CopyMI,
                                LiveInterval &li, LiveInterval &ImpLi) const;
 
-    /// TurnCopiesFromValNoToImpDefs - The specified value# is defined by an
-    /// implicit_def and it is being removed. Turn all copies from this value#
-    /// into implicit_defs.
-    void TurnCopiesFromValNoToImpDefs(LiveInterval &li, VNInfo *VNI);
-
-    /// isWinToJoinVRWithSrcPhysReg - Return true if it's worth while to join a
-    /// a virtual destination register with physical source register.
-    bool isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
-                                    MachineBasicBlock *CopyMBB,
-                                    LiveInterval &DstInt, LiveInterval &SrcInt);
-
-    /// isWinToJoinVRWithDstPhysReg - Return true if it's worth while to join a
-    /// copy from a virtual source register to a physical destination register.
-    bool isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
-                                    MachineBasicBlock *CopyMBB,
-                                    LiveInterval &DstInt, LiveInterval &SrcInt);
-
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
     bool isWinToJoinCrossClass(unsigned SrcReg,
@@ -204,17 +180,6 @@ namespace llvm {
     /// reg1024 = INSERT_SUBREG reg1024, c1, 0
     bool CanJoinInsertSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
                                       unsigned SubIdx, unsigned &RealDstReg);
-
-    /// ValueLiveAt - Return true if the LiveRange pointed to by the given
-    /// iterator, or any subsequent range with the same value number,
-    /// is live at the given point.
-    bool ValueLiveAt(LiveInterval::iterator LRItr, LiveInterval::iterator LREnd, 
-                     SlotIndex defPoint) const;                                  
-
-    /// RangeIsDefinedByCopy - Return true if the specified live range of the
-    /// specified live interval is defined by a coalescable copy.
-    bool RangeIsDefinedByCopy(LiveInterval &li, LiveRange *LR,
-                              CoalescerPair &CP);
 
     /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a

@@ -1034,119 +1034,6 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
 }
 
 
-/// isWinToJoinVRWithSrcPhysReg - Return true if it's worth while to join a
-/// a virtual destination register with physical source register.
-bool
-SimpleRegisterCoalescing::isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
-                                                     MachineBasicBlock *CopyMBB,
-                                                     LiveInterval &DstInt,
-                                                     LiveInterval &SrcInt) {
-  // If the virtual register live interval is long but it has low use desity,
-  // do not join them, instead mark the physical register as its allocation
-  // preference.
-  const TargetRegisterClass *RC = mri_->getRegClass(DstInt.reg);
-  unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-  unsigned Length = li_->getApproximateInstructionCount(DstInt);
-  if (Length > Threshold &&
-      std::distance(mri_->use_nodbg_begin(DstInt.reg),
-                    mri_->use_nodbg_end()) * Threshold < Length)
-    return false;
-
-  // If the virtual register live interval extends into a loop, turn down
-  // aggressiveness.
-  SlotIndex CopyIdx =
-    li_->getInstructionIndex(CopyMI).getDefIndex();
-  const MachineLoop *L = loopInfo->getLoopFor(CopyMBB);
-  if (!L) {
-    // Let's see if the virtual register live interval extends into the loop.
-    LiveInterval::iterator DLR = DstInt.FindLiveRangeContaining(CopyIdx);
-    assert(DLR != DstInt.end() && "Live range not found!");
-    DLR = DstInt.FindLiveRangeContaining(DLR->end.getNextSlot());
-    if (DLR != DstInt.end()) {
-      CopyMBB = li_->getMBBFromIndex(DLR->start);
-      L = loopInfo->getLoopFor(CopyMBB);
-    }
-  }
-
-  if (!L || Length <= Threshold)
-    return true;
-
-  SlotIndex UseIdx = CopyIdx.getUseIndex();
-  LiveInterval::iterator SLR = SrcInt.FindLiveRangeContaining(UseIdx);
-  MachineBasicBlock *SMBB = li_->getMBBFromIndex(SLR->start);
-  if (loopInfo->getLoopFor(SMBB) != L) {
-    if (!loopInfo->isLoopHeader(CopyMBB))
-      return false;
-    // If vr's live interval extends pass the loop header, do not join.
-    for (MachineBasicBlock::succ_iterator SI = CopyMBB->succ_begin(),
-           SE = CopyMBB->succ_end(); SI != SE; ++SI) {
-      MachineBasicBlock *SuccMBB = *SI;
-      if (SuccMBB == CopyMBB)
-        continue;
-      if (DstInt.overlaps(li_->getMBBStartIdx(SuccMBB),
-                          li_->getMBBEndIdx(SuccMBB)))
-        return false;
-    }
-  }
-  return true;
-}
-
-/// isWinToJoinVRWithDstPhysReg - Return true if it's worth while to join a
-/// copy from a virtual source register to a physical destination register.
-bool
-SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
-                                                     MachineBasicBlock *CopyMBB,
-                                                     LiveInterval &DstInt,
-                                                     LiveInterval &SrcInt) {
-  // If the virtual register live interval is long but it has low use density,
-  // do not join them, instead mark the physical register as its allocation
-  // preference.
-  const TargetRegisterClass *RC = mri_->getRegClass(SrcInt.reg);
-  unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-  unsigned Length = li_->getApproximateInstructionCount(SrcInt);
-  if (Length > Threshold &&
-      std::distance(mri_->use_nodbg_begin(SrcInt.reg),
-                    mri_->use_nodbg_end()) * Threshold < Length)
-    return false;
-
-  if (SrcInt.empty())
-    // Must be implicit_def.
-    return false;
-
-  // If the virtual register live interval is defined or cross a loop, turn
-  // down aggressiveness.
-  SlotIndex CopyIdx =
-    li_->getInstructionIndex(CopyMI).getDefIndex();
-  SlotIndex UseIdx = CopyIdx.getUseIndex();
-  LiveInterval::iterator SLR = SrcInt.FindLiveRangeContaining(UseIdx);
-  assert(SLR != SrcInt.end() && "Live range not found!");
-  SLR = SrcInt.FindLiveRangeContaining(SLR->start.getPrevSlot());
-  if (SLR == SrcInt.end())
-    return true;
-  MachineBasicBlock *SMBB = li_->getMBBFromIndex(SLR->start);
-  const MachineLoop *L = loopInfo->getLoopFor(SMBB);
-
-  if (!L || Length <= Threshold)
-    return true;
-
-  if (loopInfo->getLoopFor(CopyMBB) != L) {
-    if (SMBB != L->getLoopLatch())
-      return false;
-    // If vr's live interval is extended from before the loop latch, do not
-    // join.
-    for (MachineBasicBlock::pred_iterator PI = SMBB->pred_begin(),
-           PE = SMBB->pred_end(); PI != PE; ++PI) {
-      MachineBasicBlock *PredMBB = *PI;
-      if (PredMBB == SMBB)
-        continue;
-      if (SrcInt.overlaps(li_->getMBBStartIdx(PredMBB),
-                          li_->getMBBEndIdx(PredMBB)))
-        return false;
-    }
-  }
-  return true;
-}
-
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
 bool
@@ -1921,236 +1808,6 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
-static bool InVector(VNInfo *Val, const SmallVector<VNInfo*, 8> &V) {
-  return std::find(V.begin(), V.end(), Val) != V.end();
-}
-
-/// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
-/// the specified live interval is defined by a copy from the specified
-/// register.
-bool SimpleRegisterCoalescing::RangeIsDefinedByCopy(LiveInterval &li,
-                                                    LiveRange *LR,
-                                                    CoalescerPair &CP) {
-  if (CP.isCoalescable(LR->valno->getCopy()))
-    return true;
-  // FIXME: Do isPHIDef and isDefAccurate both need to be tested?
-  if ((LR->valno->isPHIDef() || !LR->valno->isDefAccurate()) &&
-      TargetRegisterInfo::isPhysicalRegister(li.reg) &&
-      *tri_->getSuperRegisters(li.reg)) {
-    // It's a sub-register live interval, we may not have precise information.
-    // Re-compute it.
-    MachineInstr *DefMI = li_->getInstructionFromIndex(LR->start);
-    if (CP.isCoalescable(DefMI)) {
-      // Cache computed info.
-      LR->valno->def = LR->start;
-      LR->valno->setCopy(DefMI);
-      return true;
-    }
-  }
-  return false;
-}
-
-
-/// ValueLiveAt - Return true if the LiveRange pointed to by the given
-/// iterator, or any subsequent range with the same value number,
-/// is live at the given point.
-bool SimpleRegisterCoalescing::ValueLiveAt(LiveInterval::iterator LRItr,
-                                           LiveInterval::iterator LREnd,
-                                           SlotIndex defPoint) const {
-  for (const VNInfo *valno = LRItr->valno;
-       (LRItr != LREnd) && (LRItr->valno == valno); ++LRItr) {
-    if (LRItr->contains(defPoint))
-      return true;
-  }
-
-  return false;
-}
-
-
-/// SimpleJoin - Attempt to joint the specified interval into this one. The
-/// caller of this method must guarantee that the RHS only contains a single
-/// value number and that the RHS is not defined by a copy from this
-/// interval.  This returns false if the intervals are not joinable, or it
-/// joins them and returns true.
-bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS,
-                                          CoalescerPair &CP) {
-  assert(RHS.containsOneValue());
-
-  // Some number (potentially more than one) value numbers in the current
-  // interval may be defined as copies from the RHS.  Scan the overlapping
-  // portions of the LHS and RHS, keeping track of this and looking for
-  // overlapping live ranges that are NOT defined as copies.  If these exist, we
-  // cannot coalesce.
-
-  LiveInterval::iterator LHSIt = LHS.begin(), LHSEnd = LHS.end();
-  LiveInterval::iterator RHSIt = RHS.begin(), RHSEnd = RHS.end();
-
-  if (LHSIt->start < RHSIt->start) {
-    LHSIt = std::upper_bound(LHSIt, LHSEnd, RHSIt->start);
-    if (LHSIt != LHS.begin()) --LHSIt;
-  } else if (RHSIt->start < LHSIt->start) {
-    RHSIt = std::upper_bound(RHSIt, RHSEnd, LHSIt->start);
-    if (RHSIt != RHS.begin()) --RHSIt;
-  }
-
-  SmallVector<VNInfo*, 8> EliminatedLHSVals;
-
-  while (1) {
-    // Determine if these live intervals overlap.
-    bool Overlaps = false;
-    if (LHSIt->start <= RHSIt->start)
-      Overlaps = LHSIt->end > RHSIt->start;
-    else
-      Overlaps = RHSIt->end > LHSIt->start;
-
-    // If the live intervals overlap, there are two interesting cases: if the
-    // LHS interval is defined by a copy from the RHS, it's ok and we record
-    // that the LHS value # is the same as the RHS.  If it's not, then we cannot
-    // coalesce these live ranges and we bail out.
-    if (Overlaps) {
-      // If we haven't already recorded that this value # is safe, check it.
-      if (!InVector(LHSIt->valno, EliminatedLHSVals)) {
-        // If it's re-defined by an early clobber somewhere in the live range,
-        // then conservatively abort coalescing.
-        if (LHSIt->valno->hasRedefByEC())
-          return false;
-        // Copy from the RHS?
-        if (!RangeIsDefinedByCopy(LHS, LHSIt, CP))
-          return false;    // Nope, bail out.
-
-        if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
-          // Here is an interesting situation:
-          // BB1:
-          //   vr1025 = copy vr1024
-          //   ..
-          // BB2:
-          //   vr1024 = op
-          //          = vr1025
-          // Even though vr1025 is copied from vr1024, it's not safe to
-          // coalesce them since the live range of vr1025 intersects the
-          // def of vr1024. This happens because vr1025 is assigned the
-          // value of the previous iteration of vr1024.
-          return false;
-        EliminatedLHSVals.push_back(LHSIt->valno);
-      }
-
-      // We know this entire LHS live range is okay, so skip it now.
-      if (++LHSIt == LHSEnd) break;
-      continue;
-    }
-
-    if (LHSIt->end < RHSIt->end) {
-      if (++LHSIt == LHSEnd) break;
-    } else {
-      // One interesting case to check here.  It's possible that we have
-      // something like "X3 = Y" which defines a new value number in the LHS,
-      // and is the last use of this liverange of the RHS.  In this case, we
-      // want to notice this copy (so that it gets coalesced away) even though
-      // the live ranges don't actually overlap.
-      if (LHSIt->start == RHSIt->end) {
-        if (InVector(LHSIt->valno, EliminatedLHSVals)) {
-          // We already know that this value number is going to be merged in
-          // if coalescing succeeds.  Just skip the liverange.
-          if (++LHSIt == LHSEnd) break;
-        } else {
-          // If it's re-defined by an early clobber somewhere in the live range,
-          // then conservatively abort coalescing.
-          if (LHSIt->valno->hasRedefByEC())
-            return false;
-          // Otherwise, if this is a copy from the RHS, mark it as being merged
-          // in.
-          if (RangeIsDefinedByCopy(LHS, LHSIt, CP)) {
-            if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
-              // Here is an interesting situation:
-              // BB1:
-              //   vr1025 = copy vr1024
-              //   ..
-              // BB2:
-              //   vr1024 = op
-              //          = vr1025
-              // Even though vr1025 is copied from vr1024, it's not safe to
-              // coalesced them since live range of vr1025 intersects the
-              // def of vr1024. This happens because vr1025 is assigned the
-              // value of the previous iteration of vr1024.
-              return false;
-            EliminatedLHSVals.push_back(LHSIt->valno);
-
-            // We know this entire LHS live range is okay, so skip it now.
-            if (++LHSIt == LHSEnd) break;
-          }
-        }
-      }
-
-      if (++RHSIt == RHSEnd) break;
-    }
-  }
-
-  // If we got here, we know that the coalescing will be successful and that
-  // the value numbers in EliminatedLHSVals will all be merged together.  Since
-  // the most common case is that EliminatedLHSVals has a single number, we
-  // optimize for it: if there is more than one value, we merge them all into
-  // the lowest numbered one, then handle the interval as if we were merging
-  // with one value number.
-  VNInfo *LHSValNo = NULL;
-  if (EliminatedLHSVals.size() > 1) {
-    // Loop through all the equal value numbers merging them into the smallest
-    // one.
-    VNInfo *Smallest = EliminatedLHSVals[0];
-    for (unsigned i = 1, e = EliminatedLHSVals.size(); i != e; ++i) {
-      if (EliminatedLHSVals[i]->id < Smallest->id) {
-        // Merge the current notion of the smallest into the smaller one.
-        LHS.MergeValueNumberInto(Smallest, EliminatedLHSVals[i]);
-        Smallest = EliminatedLHSVals[i];
-      } else {
-        // Merge into the smallest.
-        LHS.MergeValueNumberInto(EliminatedLHSVals[i], Smallest);
-      }
-    }
-    LHSValNo = Smallest;
-  } else if (EliminatedLHSVals.empty()) {
-    if (TargetRegisterInfo::isPhysicalRegister(LHS.reg) &&
-        *tri_->getSuperRegisters(LHS.reg))
-      // Imprecise sub-register information. Can't handle it.
-      return false;
-    llvm_unreachable("No copies from the RHS?");
-  } else {
-    LHSValNo = EliminatedLHSVals[0];
-  }
-
-  // Okay, now that there is a single LHS value number that we're merging the
-  // RHS into, update the value number info for the LHS to indicate that the
-  // value number is defined where the RHS value number was.
-  const VNInfo *VNI = RHS.getValNumInfo(0);
-  LHSValNo->def  = VNI->def;
-  LHSValNo->setCopy(VNI->getCopy());
-
-  // Okay, the final step is to loop over the RHS live intervals, adding them to
-  // the LHS.
-  if (VNI->hasPHIKill())
-    LHSValNo->setHasPHIKill(true);
-  LHS.addKills(LHSValNo, VNI->kills);
-  LHS.MergeRangesInAsValue(RHS, LHSValNo);
-
-  LHS.ComputeJoinedWeight(RHS);
-
-  // Update regalloc hint if both are virtual registers.
-  if (TargetRegisterInfo::isVirtualRegister(LHS.reg) &&
-      TargetRegisterInfo::isVirtualRegister(RHS.reg)) {
-    std::pair<unsigned, unsigned> RHSPref = mri_->getRegAllocationHint(RHS.reg);
-    std::pair<unsigned, unsigned> LHSPref = mri_->getRegAllocationHint(LHS.reg);
-    if (RHSPref != LHSPref)
-      mri_->setRegAllocationHint(LHS.reg, RHSPref.first, RHSPref.second);
-  }
-
-  // Update the liveintervals of sub-registers.
-  if (TargetRegisterInfo::isPhysicalRegister(LHS.reg))
-    for (const unsigned *AS = tri_->getSubRegisters(LHS.reg); *AS; ++AS)
-      li_->getOrCreateInterval(*AS).MergeInClobberRanges(*li_, LHS,
-                                                    li_->getVNInfoAllocator());
-
-  return true;
-}
-
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.  Otherwise, if one of the intervals being joined is a
 /// physreg, this method always canonicalizes LHS to be it.  The output
@@ -2222,150 +1879,84 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     }
   }
 
-  // Compute ultimate value numbers for the LHS and RHS values.
-  if (RHS.containsOneValue()) {
-    // Copies from a liveinterval with a single value are simple to handle and
-    // very common, handle the special case here.  This is important, because
-    // often RHS is small and LHS is large (e.g. a physreg).
+  // Loop over the value numbers of the LHS, seeing if any are defined from
+  // the RHS.
+  for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
+      continue;
 
-    // Find out if the RHS is defined as a copy from some value in the LHS.
-    int RHSVal0DefinedFromLHS = -1;
-    int RHSValID = -1;
-    VNInfo *RHSValNoInfo = NULL;
-    VNInfo *RHSValNoInfo0 = RHS.getValNumInfo(0);
-    unsigned RHSSrcReg = li_->getVNInfoSourceReg(RHSValNoInfo0);
-    if (RHSSrcReg == 0 || RHSSrcReg != LHS.reg) {
-      // If RHS is not defined as a copy from the LHS, we can use simpler and
-      // faster checks to see if the live ranges are coalescable.  This joiner
-      // can't swap the LHS/RHS intervals though.
-      if (!TargetRegisterInfo::isPhysicalRegister(RHS.reg)) {
-        return SimpleJoin(LHS, RHS, CP);
-      } else {
-        RHSValNoInfo = RHSValNoInfo0;
-      }
-    } else {
-      // It was defined as a copy from the LHS, find out what value # it is.
-      RHSValNoInfo =
-        LHS.getLiveRangeContaining(RHSValNoInfo0->def.getPrevSlot())->valno;
-      RHSValID = RHSValNoInfo->id;
-      RHSVal0DefinedFromLHS = RHSValID;
+    // Never join with a register that has EarlyClobber redefs.
+    if (VNI->hasRedefByEC())
+      return false;
+
+    // DstReg is known to be a register in the LHS interval.  If the src is
+    // from the RHS interval, we can use its value #.
+    if (!CP.isCoalescable(VNI->getCopy()))
+      continue;
+
+    // Figure out the value # from the RHS.
+    LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    // The copy could be to an aliased physreg.
+    if (!lr) continue;
+    LHSValsDefinedFromRHS[VNI] = lr->valno;
+  }
+
+  // Loop over the value numbers of the RHS, seeing if any are defined from
+  // the LHS.
+  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
+      continue;
+
+    // Never join with a register that has EarlyClobber redefs.
+    if (VNI->hasRedefByEC())
+      return false;
+
+    // DstReg is known to be a register in the RHS interval.  If the src is
+    // from the LHS interval, we can use its value #.
+    if (!CP.isCoalescable(VNI->getCopy()))
+      continue;
+
+    // Figure out the value # from the LHS.
+    LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    // The copy could be to an aliased physreg.
+    if (!lr) continue;
+    RHSValsDefinedFromLHS[VNI] = lr->valno;
+  }
+
+  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
+  NewVNInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
+
+  for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    if (LHSValNoAssignments[VN] >= 0 || VNI->isUnused())
+      continue;
+    ComputeUltimateVN(VNI, NewVNInfo,
+                      LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
+                      LHSValNoAssignments, RHSValNoAssignments);
+  }
+  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    if (RHSValNoAssignments[VN] >= 0 || VNI->isUnused())
+      continue;
+    // If this value number isn't a copy from the LHS, it's a new number.
+    if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
+      NewVNInfo.push_back(VNI);
+      RHSValNoAssignments[VN] = NewVNInfo.size()-1;
+      continue;
     }
 
-    LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
-    RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-    NewVNInfo.resize(LHS.getNumValNums(), NULL);
-
-    // Okay, *all* of the values in LHS that are defined as a copy from RHS
-    // should now get updated.
-    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
-         i != e; ++i) {
-      VNInfo *VNI = *i;
-      unsigned VN = VNI->id;
-      if (unsigned LHSSrcReg = li_->getVNInfoSourceReg(VNI)) {
-        if (LHSSrcReg != RHS.reg) {
-          // If this is not a copy from the RHS, its value number will be
-          // unmodified by the coalescing.
-          NewVNInfo[VN] = VNI;
-          LHSValNoAssignments[VN] = VN;
-        } else if (RHSValID == -1) {
-          // Otherwise, it is a copy from the RHS, and we don't already have a
-          // value# for it.  Keep the current value number, but remember it.
-          LHSValNoAssignments[VN] = RHSValID = VN;
-          NewVNInfo[VN] = RHSValNoInfo;
-          LHSValsDefinedFromRHS[VNI] = RHSValNoInfo0;
-        } else {
-          // Otherwise, use the specified value #.
-          LHSValNoAssignments[VN] = RHSValID;
-          if (VN == (unsigned)RHSValID) {  // Else this val# is dead.
-            NewVNInfo[VN] = RHSValNoInfo;
-            LHSValsDefinedFromRHS[VNI] = RHSValNoInfo0;
-          }
-        }
-      } else {
-        NewVNInfo[VN] = VNI;
-        LHSValNoAssignments[VN] = VN;
-      }
-    }
-
-    assert(RHSValID != -1 && "Didn't find value #?");
-    RHSValNoAssignments[0] = RHSValID;
-    if (RHSVal0DefinedFromLHS != -1) {
-      // This path doesn't go through ComputeUltimateVN so just set
-      // it to anything.
-      RHSValsDefinedFromLHS[RHSValNoInfo0] = (VNInfo*)1;
-    }
-  } else {
-    // Loop over the value numbers of the LHS, seeing if any are defined from
-    // the RHS.
-    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
-         i != e; ++i) {
-      VNInfo *VNI = *i;
-      if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
-        continue;
-
-      // DstReg is known to be a register in the LHS interval.  If the src is
-      // from the RHS interval, we can use its value #.
-      if (!CP.isCoalescable(VNI->getCopy()))
-        continue;
-
-      // Figure out the value # from the RHS.
-      LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
-      // The copy could be to an aliased physreg.
-      if (!lr) continue;
-      LHSValsDefinedFromRHS[VNI] = lr->valno;
-    }
-
-    // Loop over the value numbers of the RHS, seeing if any are defined from
-    // the LHS.
-    for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
-         i != e; ++i) {
-      VNInfo *VNI = *i;
-      if (VNI->isUnused() || VNI->getCopy() == 0)  // Src not defined by a copy?
-        continue;
-
-      // DstReg is known to be a register in the RHS interval.  If the src is
-      // from the LHS interval, we can use its value #.
-      if (!CP.isCoalescable(VNI->getCopy()))
-        continue;
-
-      // Figure out the value # from the LHS.
-      LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
-      // The copy could be to an aliased physreg.
-      if (!lr) continue;
-      RHSValsDefinedFromLHS[VNI] = lr->valno;
-    }
-
-    LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
-    RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-    NewVNInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
-
-    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
-         i != e; ++i) {
-      VNInfo *VNI = *i;
-      unsigned VN = VNI->id;
-      if (LHSValNoAssignments[VN] >= 0 || VNI->isUnused())
-        continue;
-      ComputeUltimateVN(VNI, NewVNInfo,
-                        LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
-                        LHSValNoAssignments, RHSValNoAssignments);
-    }
-    for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
-         i != e; ++i) {
-      VNInfo *VNI = *i;
-      unsigned VN = VNI->id;
-      if (RHSValNoAssignments[VN] >= 0 || VNI->isUnused())
-        continue;
-      // If this value number isn't a copy from the LHS, it's a new number.
-      if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
-        NewVNInfo.push_back(VNI);
-        RHSValNoAssignments[VN] = NewVNInfo.size()-1;
-        continue;
-      }
-
-      ComputeUltimateVN(VNI, NewVNInfo,
-                        RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
-                        RHSValNoAssignments, LHSValNoAssignments);
-    }
+    ComputeUltimateVN(VNI, NewVNInfo,
+                      RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
+                      RHSValNoAssignments, LHSValNoAssignments);
   }
 
   // Armed with the mappings of LHS/RHS values to ultimate values, walk the

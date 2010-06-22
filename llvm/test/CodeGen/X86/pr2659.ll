@@ -17,7 +17,7 @@ forcond.preheader:              ; preds = %entry
 ; CHECK: %forcond.preheader.forbody_crit_edge
 ; CHECK: movl $1
 ; CHECK-NOT: xorl
-; CHECK-NEXT: movl $1
+; CHECK-NEXT: movl
 
 ifthen:         ; preds = %entry
   ret i32 0
