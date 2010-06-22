@@ -1516,14 +1516,14 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     
     if (InTy->isIntegerType() || InTy->isPointerType())
       InputDomain = AD_Int;
-    else if (InTy->isFloatingType())
+    else if (InTy->isRealFloatingType())
       InputDomain = AD_FP;
     else
       InputDomain = AD_Other;
 
     if (OutTy->isIntegerType() || OutTy->isPointerType())
       OutputDomain = AD_Int;
-    else if (OutTy->isFloatingType())
+    else if (OutTy->isRealFloatingType())
       OutputDomain = AD_FP;
     else
       OutputDomain = AD_Other;

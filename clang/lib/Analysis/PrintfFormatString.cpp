@@ -757,7 +757,7 @@ bool FormatSpecifier::fixType(QualType QT) {
     HasPlusPrefix = 0;
   }
   // Test for Floating type first as LongDouble can pass isUnsignedIntegerType
-  else if (QT->isFloatingType()) {
+  else if (QT->isRealFloatingType()) {
     CS.setKind(ConversionSpecifier::fArg);
   }
   else if (QT->isPointerType()) {

@@ -1646,7 +1646,7 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
-  } else if (ResultType->isFloatingType()) {
+  } else if (ResultType->isRealFloatingType()) {
     if (ObjCABI == 2) {
       if (const BuiltinType *BT = ResultType->getAs<BuiltinType>()) {
         BuiltinType::Kind k = BT->getKind();
@@ -5200,7 +5200,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
         Fn = ObjCTypes.getMessageSendStretFixupFn();
         Name += "objc_msgSend_stret_fixup";
       }
-  } else if (!IsSuper && ResultType->isFloatingType()) {
+  } else if (!IsSuper && ResultType->isRealFloatingType()) {
     if (ResultType->isSpecificBuiltinType(BuiltinType::LongDouble)) {
       Fn = ObjCTypes.getMessageSendFpretFixupFn();
       Name += "objc_msgSend_fpret_fixup";

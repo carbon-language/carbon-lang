@@ -576,8 +576,6 @@ bool Type::hasFloatingRepresentation() const {
 bool Type::isRealFloatingType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->isFloatingPoint();
-  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
-    return VT->getElementType()->isRealFloatingType();
   return false;
 }
 

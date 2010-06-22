@@ -43,3 +43,5 @@ static void test() {
     ivec4 |= ivec4;
     ivec4 += ptr; // expected-error {{can't convert between vector values of different size ('int4' and 'int *')}}
 }
+
+typedef __attribute__(( ext_vector_type(2) )) float2 vecfloat2; // expected-error{{invalid vector type 'float2'}}
