@@ -122,17 +122,6 @@ Module *llvm::CloneModule(const Module *M,
     if (const Constant* C = I->getAliasee())
       GA->setAliasee(cast<Constant>(MapValue(C, ValueMap)));
   }
-
-  // And named metadata....
-  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-         E = M->named_metadata_end(); I != E; ++I) {
-    const NamedMDNode &NMD = *I;
-    SmallVector<MDNode*, 4> MDs;
-    for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      MDs.push_back(cast<MDNode>(MapValue(NMD.getOperand(i), ValueMap)));
-    NamedMDNode::Create(New->getContext(), NMD.getName(),
-                        MDs.data(), MDs.size(), New);
-  }
   
   return New;
 }
