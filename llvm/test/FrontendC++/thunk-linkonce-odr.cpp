@@ -1,5 +1,5 @@
 // RUN: %llvmgxx %s -S -o - | FileCheck %s
-// <rdar://problem/7929157>
+// <rdar://problem/7929157> & <rdar://problem/8104369>
 
 struct A {
   virtual int f() { return 1; }
@@ -27,7 +27,7 @@ int g() {
   return f(&d);
 }
 
-// Thunks should be marked as "weak ODR", not just "weak".
+// Thunks should be marked as "linkonce ODR" not "weak".
 //
-// CHECK: define weak_odr i32 @_ZThn{{[48]}}_N1C1fEv
-// CHECK: define weak_odr i32 @_ZThn{{[48]}}_N1D1fEv
+// CHECK: define linkonce_odr i32 @_ZThn{{[48]}}_N1C1fEv
+// CHECK: define linkonce_odr i32 @_ZThn{{[48]}}_N1D1fEv
