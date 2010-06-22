@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class Pass;
 class BasicBlock;
 class MachineFunction;
 class MCSymbol;
@@ -280,6 +281,14 @@ public:
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
   iterator getFirstTerminator();
+
+  /// SplitCriticalEdge - Split the critical edge from this block to the
+  /// given successor block, and return the newly created block, or null
+  /// if splitting is not possible.
+  ///
+  /// This function updates LiveVariables, MachineDominatorTree, and
+  /// MachineLoopInfo, as applicable.
+  MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P);
 
   void pop_front() { Insts.pop_front(); }
   void pop_back() { Insts.pop_back(); }

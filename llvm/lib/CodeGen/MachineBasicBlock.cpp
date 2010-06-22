@@ -13,7 +13,10 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -394,6 +397,82 @@ bool MachineBasicBlock::canFallThrough() {
   // Otherwise, if it is conditional and has no explicit false block, it falls
   // through.
   return FBB == 0;
+}
+
+MachineBasicBlock *
+MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
+  MachineFunction *MF = getParent();
+  DebugLoc dl;  // FIXME: this is nowhere
+
+  // We may need to update this's terminator, but we can't do that if AnalyzeBranch
+  // fails. If this uses a jump table, we won't touch it.
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  if (TII->AnalyzeBranch(*this, TBB, FBB, Cond))
+    return NULL;
+
+  MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
+  MF->insert(llvm::next(MachineFunction::iterator(this)), NMBB);
+  DEBUG(dbgs() << "PHIElimination splitting critical edge:"
+        " BB#" << getNumber()
+        << " -- BB#" << NMBB->getNumber()
+        << " -- BB#" << Succ->getNumber() << '\n');
+
+  ReplaceUsesOfBlockWith(Succ, NMBB);
+  updateTerminator();
+
+  // Insert unconditional "jump Succ" instruction in NMBB if necessary.
+  NMBB->addSuccessor(Succ);
+  if (!NMBB->isLayoutSuccessor(Succ)) {
+    Cond.clear();
+    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, Succ, NULL, Cond, dl);
+  }
+
+  // Fix PHI nodes in Succ so they refer to NMBB instead of this
+  for (MachineBasicBlock::iterator i = Succ->begin(), e = Succ->end();
+       i != e && i->isPHI(); ++i)
+    for (unsigned ni = 1, ne = i->getNumOperands(); ni != ne; ni += 2)
+      if (i->getOperand(ni+1).getMBB() == this)
+        i->getOperand(ni+1).setMBB(NMBB);
+
+  if (LiveVariables *LV =
+        P->getAnalysisIfAvailable<LiveVariables>())
+    LV->addNewBlock(NMBB, this, Succ);
+
+  if (MachineDominatorTree *MDT =
+        P->getAnalysisIfAvailable<MachineDominatorTree>())
+    MDT->addNewBlock(NMBB, this);
+
+  if (MachineLoopInfo *MLI =
+        P->getAnalysisIfAvailable<MachineLoopInfo>())
+    if (MachineLoop *TIL = MLI->getLoopFor(this)) {
+      // If one or the other blocks were not in a loop, the new block is not
+      // either, and thus LI doesn't need to be updated.
+      if (MachineLoop *DestLoop = MLI->getLoopFor(Succ)) {
+        if (TIL == DestLoop) {
+          // Both in the same loop, the NMBB joins loop.
+          DestLoop->addBasicBlockToLoop(NMBB, MLI->getBase());
+        } else if (TIL->contains(DestLoop)) {
+          // Edge from an outer loop to an inner loop.  Add to the outer loop.
+          TIL->addBasicBlockToLoop(NMBB, MLI->getBase());
+        } else if (DestLoop->contains(TIL)) {
+          // Edge from an inner loop to an outer loop.  Add to the outer loop.
+          DestLoop->addBasicBlockToLoop(NMBB, MLI->getBase());
+        } else {
+          // Edge from two loops with no containment relation.  Because these
+          // are natural loops, we know that the destination block must be the
+          // header of its loop (adding a branch into a loop elsewhere would
+          // create an irreducible loop).
+          assert(DestLoop->getHeader() == Succ &&
+                 "Should not create irreducible loops!");
+          if (MachineLoop *P = DestLoop->getParentLoop())
+            P->addBasicBlockToLoop(NMBB, MLI->getBase());
+        }
+      }
+    }
+
+  return NMBB;
 }
 
 /// removeFromParent - This method unlinks 'this' from the containing function,
