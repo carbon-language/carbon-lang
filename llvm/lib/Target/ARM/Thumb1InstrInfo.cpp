@@ -175,10 +175,10 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
         isKill = false;
     }
 
-    if (isKill) {
+    if (isKill)
       MBB.addLiveIn(Reg);
-      MIB.addReg(Reg, RegState::Kill);
-    }
+
+    MIB.addReg(Reg, getKillRegState(isKill));
   }
   return true;
 }
