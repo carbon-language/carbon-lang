@@ -496,33 +496,48 @@ def COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
 // SSE 1 & 2 - Move Instructions
 //===----------------------------------------------------------------------===//
 
+class sse12_move_rr<RegisterClass RC, ValueType vt, string asm> :
+      SI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, RC:$src2), asm,
+      [(set (vt VR128:$dst), (movl VR128:$src1, (scalar_to_vector RC:$src2)))]>;
+
+// Loading from memory automatically zeroing upper bits.
+class sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
+                    PatFrag mem_pat, string OpcodeStr> :
+      SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                        [(set RC:$dst, (mem_pat addr:$src))]>;
+
 // Move Instructions. Register-to-register movss/movsd is not used for FR32/64
 // register copies because it's a partial register update; FsMOVAPSrr/FsMOVAPDrr
 // is used instead. Register-to-register movss/movsd is not modeled as an
 // INSERT_SUBREG because INSERT_SUBREG requires that the insert be implementable
 // in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
-let Constraints = "$src1 = $dst" in {
-def MOVSSrr : SSI<0x10, MRMSrcReg,
-                  (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
-                  "movss\t{$src2, $dst|$dst, $src2}",
-                  [(set (v4f32 VR128:$dst),
-                        (movl VR128:$src1, (scalar_to_vector FR32:$src2)))]>;
-def MOVSDrr : SDI<0x10, MRMSrcReg,
-                  (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
-                  "movsd\t{$src2, $dst|$dst, $src2}",
-                  [(set (v2f64 VR128:$dst),
-                        (movl VR128:$src1, (scalar_to_vector FR64:$src2)))]>;
+let isAsmParserOnly = 1 in {
+  def VMOVSSrr : sse12_move_rr<FR32, v4f32,
+                  "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XS, VEX_4V;
+  def VMOVSDrr : sse12_move_rr<FR64, v2f64,
+                  "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XD, VEX_4V;
+
+  let canFoldAsLoad = 1, isReMaterializable = 1 in {
+    def VMOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS, VEX;
+
+    let AddedComplexity = 20 in
+      def VMOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD, VEX;
+  }
 }
 
-// Loading from memory automatically zeroing upper bits.
+let Constraints = "$src1 = $dst" in {
+  def MOVSSrr : sse12_move_rr<FR32, v4f32,
+                          "movss\t{$src2, $dst|$dst, $src2}">, XS;
+  def MOVSDrr : sse12_move_rr<FR64, v2f64,
+                          "movsd\t{$src2, $dst|$dst, $src2}">, XD;
+}
+
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
-                  "movss\t{$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (loadf32 addr:$src))]>;
-let AddedComplexity = 20 in
-def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
-                  "movsd\t{$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (loadf64 addr:$src))]>;
+  def MOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS;
+
+  let AddedComplexity = 20 in
+    def MOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD;
 }
 
 let AddedComplexity = 15 in {
@@ -573,6 +588,15 @@ def MOVSSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
 def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(store FR64:$src, addr:$dst)]>;
+
+let isAsmParserOnly = 1 in {
+def VMOVSSmr : SI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
+                  "movss\t{$src, $dst|$dst, $src}",
+                  [(store FR32:$src, addr:$dst)]>, XS, VEX_4V;
+def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
+                  "movsd\t{$src, $dst|$dst, $src}",
+                  [(store FR64:$src, addr:$dst)]>, XD, VEX_4V;
+}
 
 // Extract and store.
 def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),

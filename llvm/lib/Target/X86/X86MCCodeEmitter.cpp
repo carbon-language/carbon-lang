@@ -714,15 +714,21 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // Keep track of the current byte being emitted.
   unsigned CurByte = 0;
   
-  // Is this instruction encoded in AVX form?
-  bool IsAVXForm = false;
+  // Is this instruction encoded using the AVX VEX prefix?
+  bool HasVEXPrefix = false;
+
+  // It uses the VEX.VVVV field?
+  bool HasVEX_4V = false;
+
+  if ((TSFlags >> 32) & X86II::VEX)
+    HasVEXPrefix = true;
   if ((TSFlags >> 32) & X86II::VEX_4V)
-    IsAVXForm = true;
+    HasVEX_4V = true;
 
   // FIXME: We should emit the prefixes in exactly the same order as GAS does,
   // in order to provide diffability.
 
-  if (!IsAVXForm)
+  if (!HasVEXPrefix)
     EmitOpcodePrefix(TSFlags, CurByte, MI, Desc, OS);
   else
     EmitVEXOpcodePrefix(TSFlags, CurByte, MI, Desc, OS);
@@ -772,7 +778,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     SrcRegNum = CurOp + 1;
 
-    if (IsAVXForm) // Skip 1st src (which is encoded in VEX_VVVV)
+    if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
@@ -783,7 +789,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRMSrcMem: {
     int AddrOperands = X86AddrNumOperands;
     unsigned FirstMemOp = CurOp+1;
-    if (IsAVXForm) {
+    if (HasVEX_4V) {
       ++AddrOperands;
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
     }

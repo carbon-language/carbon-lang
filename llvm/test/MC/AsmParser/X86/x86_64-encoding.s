@@ -360,6 +360,22 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0x19,0x55,0x54,0xcb,0xfc]
           vandnpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
 
+// CHECK: vmovss  -4(%rbx,%rcx,8), %xmm10
+// CHECK: encoding: [0xc5,0x7a,0x10,0x54,0xcb,0xfc]
+          vmovss  -4(%rbx,%rcx,8), %xmm10
+
+// CHECK: vmovss  %xmm14, %xmm10, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x2a,0x10,0xfe]
+          vmovss  %xmm14, %xmm10, %xmm15
+
+// CHECK: vmovsd  -4(%rbx,%rcx,8), %xmm10
+// CHECK: encoding: [0xc5,0x7b,0x10,0x54,0xcb,0xfc]
+          vmovsd  -4(%rbx,%rcx,8), %xmm10
+
+// CHECK: vmovsd  %xmm14, %xmm10, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x2b,0x10,0xfe]
+          vmovsd  %xmm14, %xmm10, %xmm15
+
 // rdar://7840289
 // CHECK: pshufb	CPI1_0(%rip), %xmm1
 // CHECK:  encoding: [0x66,0x0f,0x38,0x00,0x0d,A,A,A,A]

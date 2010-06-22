@@ -10302,3 +10302,19 @@
 // CHECK: encoding: [0xc5,0xe9,0x55,0x6c,0xcb,0xfc]
           vandnpd  -4(%ebx,%ecx,8), %xmm2, %xmm5
 
+// CHECK: vmovss  -4(%ebx,%ecx,8), %xmm5
+// CHECK: encoding: [0xc5,0xfa,0x10,0x6c,0xcb,0xfc]
+          vmovss  -4(%ebx,%ecx,8), %xmm5
+
+// CHECK: vmovss  %xmm4, %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xea,0x10,0xec]
+          vmovss  %xmm4, %xmm2, %xmm5
+
+// CHECK: vmovsd  -4(%ebx,%ecx,8), %xmm5
+// CHECK: encoding: [0xc5,0xfb,0x10,0x6c,0xcb,0xfc]
+          vmovsd  -4(%ebx,%ecx,8), %xmm5
+
+// CHECK: vmovsd  %xmm4, %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xeb,0x10,0xec]
+          vmovsd  %xmm4, %xmm2, %xmm5
+
