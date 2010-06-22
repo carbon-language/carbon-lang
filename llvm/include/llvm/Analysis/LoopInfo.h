@@ -256,6 +256,27 @@ public:
   ///
   BlockT *getLoopPreheader() const {
     // Keep track of nodes outside the loop branching to the header...
+    BlockT *Out = getLoopPredecessor();
+    if (!Out) return 0;
+
+    // Make sure there is only one exit out of the preheader.
+    typedef GraphTraits<BlockT*> BlockTraits;
+    typename BlockTraits::ChildIteratorType SI = BlockTraits::child_begin(Out);
+    ++SI;
+    if (SI != BlockTraits::child_end(Out))
+      return 0;  // Multiple exits from the block, must not be a preheader.
+
+    // The predecessor has exactly one successor, so it is a preheader.
+    return Out;
+  }
+
+  /// getLoopPredecessor - If the given loop's header has exactly one unique
+  /// predecessor outside the loop, return it. Otherwise return null.
+  /// This is less strict that the loop "preheader" concept, which requires
+  /// the predecessor to have exactly one successor.
+  ///
+  BlockT *getLoopPredecessor() const {
+    // Keep track of nodes outside the loop branching to the header...
     BlockT *Out = 0;
 
     // Loop over the predecessors of the header node...
@@ -273,13 +294,6 @@ public:
 
     // Make sure there is only one exit out of the preheader.
     assert(Out && "Header of loop has no predecessors from outside loop?");
-    typename BlockTraits::ChildIteratorType SI = BlockTraits::child_begin(Out);
-    ++SI;
-    if (SI != BlockTraits::child_end(Out))
-      return 0;  // Multiple exits from the block, must not be a preheader.
-
-    // If there is exactly one preheader, return it.  If there was zero, then
-    // Out is still null.
     return Out;
   }
 
