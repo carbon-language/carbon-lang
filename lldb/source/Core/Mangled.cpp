@@ -141,7 +141,6 @@ namespace
             return status;
         }
         const char *GetBuffer () const { return m_demangle_buf; }
-        size_t GetLength () const { return m_demangle_buf_len; }
     };
 }
 
@@ -197,11 +196,9 @@ Mangled::GetDemangledName () const
                 ::pthread_setspecific (g_demangle_key, buf);
             }
 
-            int status = buf->Demangle (mangled);
-            if (status == 0)
+            if (buf->Demangle (mangled) == 0)
             {
-                m_demangled.SetCStringWithLength(buf->GetBuffer(),
-                                                 buf->GetLength());
+                m_demangled.SetCString(buf->GetBuffer());
             }
             else
             {
