@@ -39,7 +39,8 @@ for.end:                                          ; preds = %for.body, %entry
 ;      CHECK: _Z18GenerateStatusPagei:
 
 ;      CHECK:         jle
-; CHECK-NEXT:         xorl    %edi, %edi
+;  CHECK-NOT:         cmov
+;      CHECK:         xorl    %edi, %edi
 ; CHECK-NEXT:         align
 ; CHECK-NEXT: BB1_2:
 ; CHECK-NEXT:         callq
