@@ -747,7 +747,6 @@ public:
            !Is64Bit &&
            "Should only be called with a 32-bit TLVP relocation!");
 
-    // If this is a subtraction then we're pcrel.
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
     uint32_t Value = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     unsigned IsPCRel = 0;
@@ -761,7 +760,14 @@ public:
     // between the picbase and the next address.  For 32-bit static the addend
     // is zero.
     if (Target.getSymB()) {
+      // If this is a subtraction then we're pcrel.
+      uint32_t FixupAddress =
+      Layout.getFragmentAddress(Fragment) + Fixup.getOffset();
+      MCSymbolData *SD_B = &Asm.getSymbolData(Target.getSymB()->getSymbol());
       IsPCRel = 1;
+      FixedValue = (FixupAddress - Layout.getSymbolAddress(SD_B) +
+                    Target.getConstant());
+      FixedValue += 1 << Log2Size;
     } else {
       FixedValue = 0;
     }
