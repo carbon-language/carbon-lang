@@ -240,6 +240,18 @@ class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
 }
 
+// PIi8 - SSE 1 & 2 packed instructions with immediate
+class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, Domain d>
+      : Ii8<o, F, outs, ins, asm, pattern, d> {
+  let Predicates = !if(hasVEX_4VPrefix /* VEX_4V */,
+        !if(hasOpSizePrefix /* OpSize */, [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
+        !if(hasOpSizePrefix /* OpSize */, [HasSSE2], [HasSSE1]));
+
+  // AVX instructions have a 'v' prefix in the mnemonic
+  let AsmString = !if(hasVEX_4VPrefix, !strconcat("v", asm), asm);
+}
+
 // SSE1 Instruction Templates:
 // 
 //   SSI   - SSE1 instructions with XS prefix.
