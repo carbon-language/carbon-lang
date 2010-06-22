@@ -2636,6 +2636,8 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   LexicalDC->addDecl(ToProperty);
 
   ToProperty->setPropertyAttributes(D->getPropertyAttributes());
+  ToProperty->setPropertyAttributesAsWritten(
+                                      D->getPropertyAttributesAsWritten());
   ToProperty->setGetterName(Importer.Import(D->getGetterName()));
   ToProperty->setSetterName(Importer.Import(D->getSetterName()));
   ToProperty->setGetterMethodDecl(

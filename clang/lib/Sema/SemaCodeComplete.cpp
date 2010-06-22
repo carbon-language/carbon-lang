@@ -3929,14 +3929,11 @@ static void FindImplementableMethods(ASTContext &Context,
 
     // Add methods from any class extensions (but not from categories;
     // those should go into category implementations).
-    for (ObjCCategoryDecl *Cat = IFace->getCategoryList(); Cat;
-         Cat = Cat->getNextClassCategory()) {
-      if (!Cat->IsClassExtension())
-        continue;
-
-      FindImplementableMethods(Context, Cat, WantInstanceMethods, ReturnType,
+    for (const ObjCCategoryDecl *Cat = IFace->getFirstClassExtension(); Cat;
+         Cat = Cat->getNextClassExtension())
+      FindImplementableMethods(Context, const_cast<ObjCCategoryDecl*>(Cat), 
+                               WantInstanceMethods, ReturnType,
                                IsInImplementation, KnownMethods);      
-    }
   }
 
   if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {

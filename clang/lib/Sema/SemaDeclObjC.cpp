@@ -414,7 +414,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             unsigned NumProtoRefs,
                             const SourceLocation *ProtoLocs,
                             SourceLocation EndProtoLoc) {
-  ObjCCategoryDecl *CDecl = 0;
+  ObjCCategoryDecl *CDecl;
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc, true);
 
   /// Check that class of this category is already completely declared.
@@ -429,28 +429,21 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     return DeclPtrTy::make(CDecl);
   }
 
-  if (!CategoryName) {
-    // Class extensions require a special treatment. Use an existing one.
-    // Note that 'getClassExtension()' can return NULL.
-    CDecl = IDecl->getClassExtension();
-    if (IDecl->getImplementation()) {
-      Diag(ClassLoc, diag::err_class_extension_after_impl) << ClassName;
-      Diag(IDecl->getImplementation()->getLocation(), 
-           diag::note_implementation_declared);
-    }
+  if (!CategoryName && IDecl->getImplementation()) {
+    Diag(ClassLoc, diag::err_class_extension_after_impl) << ClassName;
+    Diag(IDecl->getImplementation()->getLocation(), 
+          diag::note_implementation_declared);
   }
 
-  if (!CDecl) {
-    CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                     ClassLoc, CategoryLoc, CategoryName);
-    // FIXME: PushOnScopeChains?
-    CurContext->addDecl(CDecl);
+  CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                   ClassLoc, CategoryLoc, CategoryName);
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(CDecl);
 
-    CDecl->setClassInterface(IDecl);
-    // Insert first use of class extension to the list of class's categories.
-    if (!CategoryName)
-      CDecl->insertNextClassCategory();
-  }
+  CDecl->setClassInterface(IDecl);
+  // Insert class extension to the list of class's categories.
+  if (!CategoryName)
+    CDecl->insertNextClassCategory();
 
   // If the interface is deprecated, warn about it.
   (void)DiagnoseUseOfDecl(IDecl, ClassLoc);
@@ -969,13 +962,11 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
       CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
                               InsMap, ClsMap, I);
     // Check class extensions (unnamed categories)
-    for (ObjCCategoryDecl *Categories = I->getCategoryList();
-         Categories; Categories = Categories->getNextClassCategory()) {
-      if (Categories->IsClassExtension()) {
-        ImplMethodsVsClassMethods(S, IMPDecl, Categories, IncompleteImpl);
-        break;
-      }
-    }
+    for (const ObjCCategoryDecl *Categories = I->getFirstClassExtension();
+         Categories; Categories = Categories->getNextClassExtension())
+      ImplMethodsVsClassMethods(S, IMPDecl, 
+                                const_cast<ObjCCategoryDecl*>(Categories), 
+                                IncompleteImpl);
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     // For extended class, unimplemented methods in its protocols will
     // be reported in the primary class.
@@ -1821,7 +1812,8 @@ void Sema::CollectIvarsToConstructOrDestruct(const ObjCInterfaceDecl *OI,
   }
   
   // Find ivars to construct/destruct in class extension.
-  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension()) {
+  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
+      CDecl = CDecl->getNextClassExtension()) {
     for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
          E = CDecl->ivar_end(); I != E; ++I) {
       ObjCIvarDecl *Iv = (*I);

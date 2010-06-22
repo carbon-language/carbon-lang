@@ -123,6 +123,10 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
       CreatePropertyDecl(S, CCPrimary, AtLoc,
                          FD, GetterSel, SetterSel, isAssign, isReadWrite,
                          Attributes, T, MethodImplKind, DC);
+    // Mark written attribute as having no attribute because
+    // this is not a user-written property declaration in primary
+    // class.
+    PDecl->setPropertyAttributesAsWritten(ObjCPropertyDecl::OBJC_PR_noattr);
 
     // A case of continuation class adding a new property in the class. This
     // is not what it was meant for. However, gcc supports it and so should we.
@@ -134,7 +138,7 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
 
   // The property 'PIDecl's readonly attribute will be over-ridden
   // with continuation class's readwrite property attribute!
-  unsigned PIkind = PIDecl->getPropertyAttributes();
+  unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
     unsigned retainCopyNonatomic =
     (ObjCPropertyDecl::OBJC_PR_retain |
@@ -266,6 +270,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
 
+  PDecl->setPropertyAttributesAsWritten(PDecl->getPropertyAttributes());
+  
   if (MethodImplKind == tok::objc_required)
     PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
   else if (MethodImplKind == tok::objc_optional)

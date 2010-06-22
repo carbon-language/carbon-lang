@@ -550,8 +550,8 @@ public:
   void setCategoryList(ObjCCategoryDecl *category) {
     CategoryList = category;
   }
-
-  ObjCCategoryDecl* getClassExtension() const;
+  
+  ObjCCategoryDecl* getFirstClassExtension() const;
 
   ObjCPropertyDecl
     *FindPropertyVisibleInPrimaryClass(IdentifierInfo *PropertyId) const;
@@ -983,6 +983,7 @@ public:
   }
 
   bool IsClassExtension() const { return getIdentifier() == 0; }
+  const ObjCCategoryDecl *getNextClassExtension() const;
   
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
   ivar_iterator ivar_begin() const {
@@ -1308,7 +1309,7 @@ private:
   SourceLocation AtLoc;   // location of @property
   TypeSourceInfo *DeclType;
   unsigned PropertyAttributes : 8;
-
+  unsigned PropertyAttributesAsWritten : 8;
   // @required/@optional
   unsigned PropertyImplementation : 2;
 
@@ -1322,7 +1323,9 @@ private:
   ObjCPropertyDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                    SourceLocation AtLocation, TypeSourceInfo *T)
     : NamedDecl(ObjCProperty, DC, L, Id), AtLoc(AtLocation), DeclType(T),
-      PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
+      PropertyAttributes(OBJC_PR_noattr), 
+      PropertyAttributesAsWritten(OBJC_PR_noattr),
+      PropertyImplementation(None),
       GetterName(Selector()),
       SetterName(Selector()),
       GetterMethodDecl(0), SetterMethodDecl(0) , PropertyIvarDecl(0) {}
@@ -1346,6 +1349,14 @@ public:
     PropertyAttributes |= PRVal;
   }
 
+  PropertyAttributeKind getPropertyAttributesAsWritten() const {
+    return PropertyAttributeKind(PropertyAttributesAsWritten);
+  }
+  
+  void setPropertyAttributesAsWritten(PropertyAttributeKind PRVal) {
+    PropertyAttributesAsWritten = PRVal;
+  }
+  
  void makeitReadWriteAttribute(void) {
     PropertyAttributes &= ~OBJC_PR_readonly;
     PropertyAttributes |= OBJC_PR_readwrite;

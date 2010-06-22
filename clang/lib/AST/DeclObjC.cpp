@@ -223,12 +223,19 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   setProtocolList(ProtocolRefs.data(), NumProtoRefs, ProtocolLocs.data(), C);
 }
 
-/// getClassExtension - Find class extension of the given class.
-// FIXME. can speed it up, if need be.
-ObjCCategoryDecl* ObjCInterfaceDecl::getClassExtension() const {
-  const ObjCInterfaceDecl* ClassDecl = this;
-  for (ObjCCategoryDecl *CDecl = ClassDecl->getCategoryList(); CDecl;
+/// getFirstClassExtension - Find first class extension of the given class.
+ObjCCategoryDecl* ObjCInterfaceDecl::getFirstClassExtension() const {
+  for (ObjCCategoryDecl *CDecl = getCategoryList(); CDecl;
        CDecl = CDecl->getNextClassCategory())
+    if (CDecl->IsClassExtension())
+      return CDecl;
+  return 0;
+}
+
+/// getNextClassCategory - Find next class extension in list of categories.
+const ObjCCategoryDecl* ObjCCategoryDecl::getNextClassExtension() const {
+  for (const ObjCCategoryDecl *CDecl = getNextClassCategory(); CDecl; 
+        CDecl = CDecl->getNextClassCategory())
     if (CDecl->IsClassExtension())
       return CDecl;
   return 0;
@@ -242,11 +249,13 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
       clsDeclared = ClassDecl;
       return I;
     }
-    if (const ObjCCategoryDecl *CDecl = ClassDecl->getClassExtension())
+    for (const ObjCCategoryDecl *CDecl = ClassDecl->getFirstClassExtension();
+         CDecl; CDecl = CDecl->getNextClassExtension()) {
       if (ObjCIvarDecl *I = CDecl->getIvarDecl(ID)) {
         clsDeclared = ClassDecl;
         return I;
       }
+    }
       
     ClassDecl = ClassDecl->getSuperClass();
   }

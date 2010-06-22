@@ -425,6 +425,7 @@ void PCHDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
   // FIXME: stable encoding
   Record.push_back((unsigned)D->getPropertyAttributes());
+  Record.push_back((unsigned)D->getPropertyAttributesAsWritten());
   // FIXME: stable encoding
   Record.push_back((unsigned)D->getPropertyImplementation());
   Writer.AddDeclarationName(D->getGetterName(), Record);

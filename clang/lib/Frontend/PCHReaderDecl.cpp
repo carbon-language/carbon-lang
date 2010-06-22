@@ -444,6 +444,8 @@ void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   // FIXME: stable encoding
   D->setPropertyAttributes(
                       (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
+  D->setPropertyAttributesAsWritten(
+                      (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
   // FIXME: stable encoding
   D->setPropertyImplementation(
                             (ObjCPropertyDecl::PropertyControl)Record[Idx++]);

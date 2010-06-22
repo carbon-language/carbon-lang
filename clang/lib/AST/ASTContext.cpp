@@ -868,7 +868,8 @@ void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
 void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   // Find ivars declared in class extension.
-  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension()) {
+  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
+       CDecl = CDecl->getNextClassExtension()) {
     for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
          E = CDecl->ivar_end(); I != E; ++I) {
       Ivars.push_back(*I);
@@ -933,7 +934,8 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
 unsigned ASTContext::CountNonClassIvars(const ObjCInterfaceDecl *OI) {
   unsigned count = 0;  
   // Count ivars declared in class extension.
-  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension())
+  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
+       CDecl = CDecl->getNextClassExtension())
     count += CDecl->ivar_size();
 
   // Count ivar defined in this class's implementation.  This
