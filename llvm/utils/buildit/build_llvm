@@ -197,6 +197,7 @@ make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$HOSTS" \
     UNIVERSAL_SDK_PATH=$SDKROOT \
     NO_RUNTIME_LIBS=1 \
     DISABLE_EDIS=1 \
+    DEBUG_SYMBOLS=1 \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
     LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
     CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'" \
@@ -222,6 +223,7 @@ cd $DIR/obj-llvm || exit 1
 make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$HOSTS" \
     NO_RUNTIME_LIBS=1 \
     DISABLE_EDIS=1 \
+    DEBUG_SYMBOLS=1 \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
     LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
     OPTIMIZE_OPTION='-O3' VERBOSE=1 install
@@ -268,16 +270,8 @@ else
         -exec lipo -extract ppc7400 -extract i386 -extract x86_64 {} -output {} \;
 fi
 
-cd $DEST_DIR$DEST_ROOT
-if [ "$INSTALL_LIBLTO" == yes ]; then
-  mkdir -p $DT_HOME/lib
-  mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
-  strip -S $DT_HOME/lib/libLTO.dylib
-fi
-rm -f lib/libLTO.a lib/libLTO.la
-
 # The Hello dylib is an example of how to build a pass. No need to install it.
-rm lib/libLLVMHello.dylib
+rm $DEST_DIR$DEST_ROOT/lib/libLLVMHello.dylib
 
 # Compress manpages
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
@@ -323,8 +317,20 @@ find obj-* -name \*.\[chy\] -o -name \*.cpp -print \
     | cpio -pdml $SYM_DIR/src || exit 1
 
 ################################################################################
+# Install and strip libLTO.dylib
+
+cd $DEST_DIR$DEST_ROOT
+if [ "$INSTALL_LIBLTO" = "yes" ]; then
+  mkdir -p $DT_HOME/lib
+  mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
+  strip -S $DT_HOME/lib/libLTO.dylib
+fi
+rm -f lib/libLTO.a lib/libLTO.la
+
+################################################################################
 # Remove debugging information from DEST_DIR.
 
+cd $DIR || exit 1
 find $DEST_DIR -name \*.a -print | xargs ranlib || exit 1
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 chgrp -h -R wheel $DEST_DIR
@@ -338,7 +344,7 @@ find $DEST_DIR -name html.tar.gz -exec rm {} \;
 ################################################################################
 # symlinks so that B&I can find things
 
-if [ "$INSTALL_LIBLTO" == yes ]; then
+if [ "$INSTALL_LIBLTO" = "yes" ]; then
   mkdir -p $DEST_DIR/usr/lib/
   cd $DEST_DIR/usr/lib && \
     ln -s ../../$DEVELOPER_DIR/usr/lib/libLTO.dylib ./libLTO.dylib
