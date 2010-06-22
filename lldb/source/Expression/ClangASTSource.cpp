@@ -97,3 +97,50 @@ clang::NamedDecl *NameSearchContext::AddVarDecl(void *type) {
     
     return Decl;
 }
+
+clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
+    clang::FunctionDecl *Decl = FunctionDecl::Create(ASTSource.Context,
+                                                     const_cast<DeclContext*>(DC),
+                                                     SourceLocation(),
+                                                     Name.getAsIdentifierInfo(),
+                                                     QualType::getFromOpaquePtr(type),
+                                                     NULL,
+                                                     FunctionDecl::Static,
+                                                     FunctionDecl::Static,
+                                                     false,
+                                                     true);
+    
+    QualType QT = QualType::getFromOpaquePtr(type);
+    clang::Type *T = QT.getTypePtr();
+    
+    if (T->isFunctionProtoType())
+    {
+        FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(T);
+        
+        unsigned NumArgs = FPT->getNumArgs();
+        unsigned ArgIndex;
+        
+        ParmVarDecl *ParmVarDecls[NumArgs];
+        
+        for (ArgIndex = 0; ArgIndex < NumArgs; ++ArgIndex)
+        {
+            QualType ArgQT = FPT->getArgType(ArgIndex);
+            
+            ParmVarDecls[ArgIndex] = ParmVarDecl::Create(ASTSource.Context,
+                                                         const_cast<DeclContext*>(DC),
+                                                         SourceLocation(),
+                                                         NULL,
+                                                         ArgQT,
+                                                         NULL,
+                                                         ParmVarDecl::Static,
+                                                         ParmVarDecl::Static,
+                                                         NULL);
+        }
+        
+        Decl->setParams(ParmVarDecls, NumArgs);
+    }
+    
+    Decls.push_back(Decl);
+    
+    return Decl;
+}

@@ -29,6 +29,7 @@ namespace clang {
 
 namespace lldb_private {
 
+class Function;
 class NameSearchContext;
 class Variable;
     
@@ -63,7 +64,8 @@ private:
     ExecutionContext   *m_exe_ctx;
     SymbolContext      *m_sym_ctx; /* owned by ClangExpressionDeclMap */
     
-    void AddOneVariable(NameSearchContext &context, Variable* var);
+    void AddOneVariable(NameSearchContext &context, Variable *var);
+    void AddOneFunction(NameSearchContext &context, Function *fun);
 };
     
 } // namespace lldb_private

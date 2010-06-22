@@ -115,6 +115,13 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     
     ConstString name_cs(name);
     
+    Function *fn = m_sym_ctx->FindFunctionByName(name_cs.GetCString());
+    
+    if (fn)
+    {
+        AddOneFunction(context, fn);
+    }
+    
     for (current_block_id = block->GetID();
          current_block_id != Block::InvalidID;
          current_block_id = blocks.GetParent(current_block_id))
@@ -167,7 +174,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!var_type) 
     {
-        DEBUG_PRINTF("Skipped a definition for %s because it has no type\n", name);
+        DEBUG_PRINTF("Skipped a definition because it has no type\n");
         return;
     }
     
@@ -175,7 +182,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!var_opaque_type)
     {
-        DEBUG_PRINTF("Skipped a definition for %s because it has no Clang type\n", name);
+        DEBUG_PRINTF("Skipped a definition because it has no Clang type\n");
         return;
     }
     
@@ -185,7 +192,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!type_list)
     {
-        DEBUG_PRINTF("Skipped a definition for %s because the type has no associated type list\n", name);
+        DEBUG_PRINTF("Skipped a definition because the type has no associated type list\n");
         return;
     }
     
@@ -203,7 +210,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!var_location_expr.Evaluate(m_exe_ctx, exe_ast_ctx, NULL, *var_location.get(), &err))
     {
-        DEBUG_PRINTF("Error evaluating the location of %s: %s\n", name, err.AsCString());
+        DEBUG_PRINTF("Error evaluating location: %s\n", err.AsCString());
         return;
     }
     
@@ -242,5 +249,47 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     m_tuples.push_back(tuple);
     
-    DEBUG_PRINTF("Found for a definition for %s\n", name);    
+    DEBUG_PRINTF("Found variable\n");    
+}
+
+void
+ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
+                                       Function* fun)
+{
+    Type *fun_type = fun->GetType();
+    
+    if (!fun_type) 
+    {
+        DEBUG_PRINTF("Skipped a function because it has no type\n");
+        return;
+    }
+    
+    void *fun_opaque_type = fun_type->GetOpaqueClangQualType();
+    
+    if (!fun_opaque_type)
+    {
+        DEBUG_PRINTF("Skipped a function because it has no Clang type\n");
+        return;
+    }
+    
+    std::auto_ptr<Value> fun_location(new Value);
+    
+    const Address &fun_address = fun->GetAddressRange().GetBaseAddress();
+    lldb::addr_t load_addr = fun_address.GetLoadAddress(m_exe_ctx->process);
+    fun_location->SetValueType(Value::eValueTypeLoadAddress);
+    fun_location->GetScalar() = load_addr;
+    
+    TypeList *type_list = fun_type->GetTypeList();
+    void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), type_list->GetClangASTContext().getASTContext(), fun_opaque_type);
+    
+    NamedDecl *fun_decl = context.AddFunDecl(copied_type);
+    
+    Tuple tuple;
+    
+    tuple.m_decl  = fun_decl;
+    tuple.m_value = fun_location.release();
+    
+    m_tuples.push_back(tuple);
+    
+    DEBUG_PRINTF("Found function\n");    
 }
