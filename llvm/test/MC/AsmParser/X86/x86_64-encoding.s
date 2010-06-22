@@ -382,3 +382,35 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK:  fixup A - offset: 5, value: CPI1_0-4
 pshufb	CPI1_0(%rip), %xmm1
 
+// CHECK: vunpckhps  %xmm15, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0x15,0xef]
+          vunpckhps  %xmm15, %xmm12, %xmm13
+
+// CHECK: vunpckhpd  %xmm15, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x15,0xef]
+          vunpckhpd  %xmm15, %xmm12, %xmm13
+
+// CHECK: vunpcklps  %xmm15, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0x14,0xef]
+          vunpcklps  %xmm15, %xmm12, %xmm13
+
+// CHECK: vunpcklpd  %xmm15, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x14,0xef]
+          vunpcklpd  %xmm15, %xmm12, %xmm13
+
+// CHECK: vunpckhps  -4(%rbx,%rcx,8), %xmm12, %xmm15
+// CHECK: encoding: [0xc5,0x18,0x15,0x7c,0xcb,0xfc]
+          vunpckhps  -4(%rbx,%rcx,8), %xmm12, %xmm15
+
+// CHECK: vunpckhpd  -4(%rbx,%rcx,8), %xmm12, %xmm15
+// CHECK: encoding: [0xc5,0x19,0x15,0x7c,0xcb,0xfc]
+          vunpckhpd  -4(%rbx,%rcx,8), %xmm12, %xmm15
+
+// CHECK: vunpcklps  -4(%rbx,%rcx,8), %xmm12, %xmm15
+// CHECK: encoding: [0xc5,0x18,0x14,0x7c,0xcb,0xfc]
+          vunpcklps  -4(%rbx,%rcx,8), %xmm12, %xmm15
+
+// CHECK: vunpcklpd  -4(%rbx,%rcx,8), %xmm12, %xmm15
+// CHECK: encoding: [0xc5,0x19,0x14,0x7c,0xcb,0xfc]
+          vunpcklpd  -4(%rbx,%rcx,8), %xmm12, %xmm15
+
