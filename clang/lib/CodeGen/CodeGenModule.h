@@ -151,6 +151,10 @@ class CodeGenModule : public BlockModule {
   /// priorities to be emitted when the translation unit is complete.
   CtorList GlobalDtors;
 
+  /// MangledDeclNames - A map of canonical GlobalDecls to their mangled names.
+  llvm::DenseMap<GlobalDecl, llvm::StringRef> MangledDeclNames;
+  llvm::BumpPtrAllocator MangledNamesAllocator;
+  
   std::vector<llvm::Constant*> Annotations;
 
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
@@ -460,6 +464,7 @@ public:
                               AttributeListType &PAL,
                               unsigned &CallingConv);
 
+  llvm::StringRef getMangledName(GlobalDecl GD);
   void getMangledName(MangleBuffer &Buffer, GlobalDecl D);
   void getMangledName(MangleBuffer &Buffer, const BlockDecl *BD);
 

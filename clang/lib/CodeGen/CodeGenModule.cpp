@@ -210,6 +210,41 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
   }
 }
 
+llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
+  const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
+
+  llvm::StringRef &Str = MangledDeclNames[GD.getCanonicalDecl()];
+  if (!Str.empty())
+    return Str;
+
+  if (!getMangleContext().shouldMangleDeclName(ND)) {
+    IdentifierInfo *II = ND->getIdentifier();
+    assert(II && "Attempt to mangle unnamed decl.");
+
+    Str = II->getName();
+    return Str;
+  }
+  
+  llvm::SmallString<256> Buffer;
+  if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
+    getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Buffer);
+  else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
+    getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
+  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(ND))
+    getMangleContext().mangleBlock(BD, Buffer);
+  else
+    getMangleContext().mangleName(ND, Buffer);
+
+  // Allocate space for the mangled name.
+  size_t Length = Buffer.size();
+  char *Name = MangledNamesAllocator.Allocate<char>(Length);
+  std::copy(Buffer.begin(), Buffer.end(), Name);
+  
+  Str = llvm::StringRef(Name, Length);
+  
+  return Str;
+}
+
 void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
