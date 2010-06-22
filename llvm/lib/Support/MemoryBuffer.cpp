@@ -170,7 +170,7 @@ public:
 class FileCloser {
   int FD;
 public:
-  FileCloser(int FD) : FD(FD) {}
+  explicit FileCloser(int FD) : FD(FD) {}
   ~FileCloser() { ::close(FD); }
 };
 }
