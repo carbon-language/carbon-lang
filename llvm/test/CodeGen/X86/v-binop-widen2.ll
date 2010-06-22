@@ -1,7 +1,9 @@
-; RUN: llvm-as < %s | lli
+; RUN: llc -march=x86 < %s | FileCheck %s
 
 %vec = type <6 x float>
-
+; CHECK: divss
+; CHECK: divss
+; CHECK: divps
 define %vec @vecdiv( %vec %p1, %vec %p2)
 {
   %result = fdiv %vec %p1, %p2
@@ -13,6 +15,7 @@ define %vec @vecdiv( %vec %p1, %vec %p2)
 
 ; Expected result: < 1.0, 2.0, 4.0, ..., 2.0^(n-1) >
 ; main() returns 0 if the result is expected and 1 otherwise
+; to execute, use llvm-as < %s | lli
 define i32 @main() nounwind {
 entry:
   %avec = load %vec* @a
