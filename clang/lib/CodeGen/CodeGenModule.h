@@ -80,6 +80,20 @@ namespace CodeGen {
     unsigned int lex_order;
     OrderGlobalInits(unsigned int p, unsigned int l) 
     : priority(p), lex_order(l) {}
+    friend bool operator==(const OrderGlobalInits &LHS,
+                    const OrderGlobalInits &RHS) {
+      return LHS.priority == RHS.priority &&
+             LHS.lex_order == RHS.lex_order;
+    }
+    
+    friend bool operator<(const OrderGlobalInits &LHS,
+                   const OrderGlobalInits &RHS) {
+      if (LHS.priority < RHS.priority)
+        return true;
+      
+      return LHS.priority == RHS.priority &&
+            LHS.lex_order < RHS.lex_order;
+    }
   } OrderGlobalInitsType;
   
 /// CodeGenModule - This class organizes the cross-function state that is used
