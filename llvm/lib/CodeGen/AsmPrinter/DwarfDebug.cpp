@@ -2257,9 +2257,10 @@ void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
   }
 
   // Collect info for variables that were optimized out.
-  const Twine FnLVName = Twine("llvm.dbg.lv.", MF->getFunction()->getName());
-  if (NamedMDNode *NMD =
-      MF->getFunction()->getParent()->getNamedMetadataUsingTwine(FnLVName)) {
+  const Function *F = MF->getFunction();
+  const Module *M = F->getParent();
+  if (NamedMDNode *NMD = 
+      M->getNamedMetadataUsingTwine(Twine("llvm.dbg.lv.", F->getName()))) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
       if (!DV || !Processed.insert(DV))

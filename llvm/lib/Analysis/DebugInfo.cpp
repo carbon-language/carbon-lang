@@ -1059,14 +1059,14 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     StringRef FName = "fn";
     if (Fn.getFunction())
       FName = Fn.getFunction()->getName();
-    const Twine FnLVName = Twine("llvm.dbg.lv.", FName);
     char One = '\1';
     if (FName.startswith(StringRef(&One, 1)))
       FName = FName.substr(1);
-
-    NamedMDNode *FnLocals = M.getNamedMetadataUsingTwine(FnLVName);
+    NamedMDNode *FnLocals = 
+      M.getNamedMetadataUsingTwine(Twine("llvm.dbg.lv.", FName));
     if (!FnLocals)
-      FnLocals = NamedMDNode::Create(VMContext, FnLVName, NULL, 0, &M);
+      FnLocals = NamedMDNode::Create(VMContext, Twine("llvm.dbg.lv.", FName),
+                                     NULL, 0, &M);
     FnLocals->addOperand(Node);
   }
   return DIVariable(Node);
