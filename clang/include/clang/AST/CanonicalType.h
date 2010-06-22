@@ -272,6 +272,7 @@ public:
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isOverloadableType)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, hasPointerRepresentation)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, hasObjCPointerRepresentation)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, hasFloatingRepresentation)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isPromotableIntegerType)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isSignedIntegerType)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isUnsignedIntegerType)

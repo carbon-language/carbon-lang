@@ -563,9 +563,14 @@ bool Type::isFloatingType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isFloatingType();
+  return false;
+}
+
+bool Type::hasFloatingRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isFloatingType();
-  return false;
+  else
+    return isFloatingType();
 }
 
 bool Type::isRealFloatingType() const {

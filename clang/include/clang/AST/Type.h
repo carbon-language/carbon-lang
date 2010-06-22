@@ -929,6 +929,10 @@ public:
   /// an objective pointer type for the purpose of GC'ability
   bool hasObjCPointerRepresentation() const;
 
+  /// \brief Determine whether this type has a floating-point representation
+  /// of some sort, e.g., it is a floating-point type or a vector thereof.
+  bool hasFloatingRepresentation() const;
+  
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.

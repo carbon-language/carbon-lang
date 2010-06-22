@@ -5267,8 +5267,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
-  if (!lType->isFloatingType()
-      && !(lType->isBlockPointerType() && isRelational)) {
+  if (!lType->hasFloatingRepresentation() &&
+      !(lType->isBlockPointerType() && isRelational)) {
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
@@ -5368,7 +5368,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return ResultTy;
   } else {
     // Check for comparisons of floating point operands using != and ==.
-    if (lType->isFloatingType() && rType->isFloatingType())
+    if (lType->hasFloatingRepresentation())
       CheckFloatComparison(Loc,lex,rex);
 
     if (lType->isArithmeticType() && rType->isArithmeticType())
@@ -5634,7 +5634,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   // For non-floating point types, check for self-comparisons of the form
   // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
   // often indicate logic errors in the program.
-  if (!lType->isFloatingType()) {
+  if (!lType->hasFloatingRepresentation()) {
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
@@ -5646,8 +5646,8 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   }
 
   // Check for comparisons of floating point operands using != and ==.
-  if (!isRelational && lType->isFloatingType()) {
-    assert (rType->isFloatingType());
+  if (!isRelational && lType->hasFloatingRepresentation()) {
+    assert (rType->hasFloatingRepresentation());
     CheckFloatComparison(Loc,lex,rex);
   }
 
