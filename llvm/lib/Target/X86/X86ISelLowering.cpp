@@ -9843,7 +9843,7 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
 
 // On X86 and X86-64, atomic operations are lowered to locked instructions.
 // Locked instructions, in turn, have implicit fence semantics (all memory
-// operations are flushed before issuing the locked instruction, and the
+// operations are flushed before issuing the locked instruction, and they
 // are not buffered), so we can fold away the common pattern of
 // fence-atomic-fence.
 static SDValue PerformMEMBARRIERCombine(SDNode* N, SelectionDAG &DAG) {
