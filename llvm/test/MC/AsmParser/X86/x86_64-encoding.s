@@ -360,3 +360,9 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0x19,0x55,0x54,0xcb,0xfc]
           vandnpd  -4(%rbx,%rcx,8), %xmm12, %xmm10
 
+// rdar://7840289
+// CHECK: pshufb	CPI1_0(%rip), %xmm1
+// CHECK:  encoding: [0x66,0x0f,0x38,0x00,0x0d,A,A,A,A]
+// CHECK:  fixup A - offset: 5, value: CPI1_0-4
+pshufb	CPI1_0(%rip), %xmm1
+

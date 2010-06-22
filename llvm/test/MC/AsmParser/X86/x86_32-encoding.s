@@ -9967,12 +9967,6 @@
 // CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0x14,0x82,0x80]
 		aeskeygenassist $128, %xmm1, %xmm2
 
-// rdar://7840289
-// CHECK: pshufb	CPI1_0(%rip), %xmm1
-// CHECK:  encoding: [0x66,0x0f,0x38,0x00,0x0d,A,A,A,A]
-// CHECK:  fixup A - offset: 5, value: CPI1_0-4
-pshufb	CPI1_0(%rip), %xmm1
-
 // rdar://7910087
 // CHECK: bsfw	%bx, %bx
 // CHECK:  encoding: [0x66,0x0f,0xbc,0xdb]
