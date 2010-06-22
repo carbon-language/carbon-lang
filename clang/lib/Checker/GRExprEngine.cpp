@@ -629,10 +629,14 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
       break;
 
+    case Stmt::GNUNullExprClass: {
+      MakeNode(Dst, S, Pred, GetState(Pred)->BindExpr(S, ValMgr.makeNull()));
+      break;
+    }
+
     // Cases not handled yet; but will handle some day.
     case Stmt::DesignatedInitExprClass:
     case Stmt::ExtVectorElementExprClass:
-    case Stmt::GNUNullExprClass:
     case Stmt::ImaginaryLiteralClass:
     case Stmt::ImplicitValueInitExprClass:
     case Stmt::ObjCAtCatchStmtClass:
@@ -2383,7 +2387,7 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
   case CastExpr::CK_AnyPointerToObjCPointerCast:
   case CastExpr::CK_AnyPointerToBlockPointerCast:
   case CastExpr::CK_DerivedToBase:
-  case CastExpr::CK_UncheckedDerivedToBase:
+  case CastExpr::CK_UncheckedDerivedToBase: {
     // Delegate to SValuator to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       ExplodedNode* N = *I;
@@ -2394,10 +2398,24 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
       MakeNode(Dst, CastE, N, state);
     }
     return;
-
-  default:
-    llvm::errs() << "Cast kind " << CastE->getCastKind() << " not handled.\n";
-    assert(0);
+  }
+  
+  // Various C++ casts that are not handled yet.
+  case CastExpr::CK_Dynamic:  
+  case CastExpr::CK_ToUnion:
+  case CastExpr::CK_BaseToDerived:
+  case CastExpr::CK_NullToMemberPointer:
+  case CastExpr::CK_BaseToDerivedMemberPointer:
+  case CastExpr::CK_DerivedToBaseMemberPointer:
+  case CastExpr::CK_UserDefinedConversion:
+  case CastExpr::CK_ConstructorConversion:
+  case CastExpr::CK_VectorSplat:
+  case CastExpr::CK_MemberPointerToBoolean: {
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+    Builder->BuildSinks = true;
+    MakeNode(Dst, CastE, Pred, GetState(Pred));
+    return;
+  }
   }
 }
 
