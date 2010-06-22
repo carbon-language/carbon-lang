@@ -17,18 +17,20 @@
 static inline int
 xdigit_to_sint (char ch)
 {
-    ch = tolower(ch);
     if (ch >= 'a' && ch <= 'f')
         return 10 + ch - 'a';
+    if (ch >= 'A' && ch <= 'F')
+        return 10 + ch - 'A';
     return ch - '0';
 }
 
 static inline unsigned int
 xdigit_to_uint (uint8_t ch)
 {
-    ch = tolower(ch);
     if (ch >= 'a' && ch <= 'f')
         return 10u + ch - 'a';
+    if (ch >= 'A' && ch <= 'F')
+        return 10u + ch - 'A';
     return ch - '0';
 }
 
