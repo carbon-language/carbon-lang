@@ -245,25 +245,6 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   return Str;
 }
 
-void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
-  const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
-
-  if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
-    return getMangleContext().mangleCXXCtor(D, GD.getCtorType(), 
-                                            Buffer.getBuffer());
-  if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
-    return getMangleContext().mangleCXXDtor(D, GD.getDtorType(), 
-                                            Buffer.getBuffer());
-
-  if (!getMangleContext().shouldMangleDeclName(ND)) {
-    assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
-    Buffer.setString(ND->getNameAsCString());
-    return;
-  }
-  
-  getMangleContext().mangleName(ND, Buffer.getBuffer());
-}
-
 void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
   getMangleContext().mangleBlock(BD, Buffer.getBuffer());
 }
@@ -585,8 +566,7 @@ void CodeGenModule::EmitDeferred() {
     // ignore these cases.
     //
     // TODO: That said, looking this up multiple times is very wasteful.
-    MangleBuffer Name;
-    getMangledName(Name, D);
+    llvm::StringRef Name = getMangledName(D);
     llvm::GlobalValue *CGRef = GetGlobalValue(Name);
     assert(CGRef && "Deferred decl wasn't referenced?");
 
@@ -807,8 +787,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   
   // If the value has already been used, add it directly to the
   // DeferredDeclsToEmit list.
-  MangleBuffer MangledName;
-  getMangledName(MangledName, GD);
+  llvm::StringRef MangledName = getMangledName(GD);
   if (GetGlobalValue(MangledName))
     DeferredDeclsToEmit.push_back(GD);
   else {
@@ -948,8 +927,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
-  MangleBuffer MangledName;
-  getMangledName(MangledName, GD);
+  llvm::StringRef MangledName = getMangledName(GD);
   return GetOrCreateLLVMFunction(MangledName, Ty, GD);
 }
 
@@ -1052,8 +1030,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   const llvm::PointerType *PTy =
     llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
 
-  MangleBuffer MangledName;
-  getMangledName(MangledName, D);
+  llvm::StringRef MangledName = getMangledName(D);
   return GetOrCreateLLVMGlobal(MangledName, PTy, D);
 }
 
@@ -1072,8 +1049,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
     // If we have not seen a reference to this variable yet, place it
     // into the deferred declarations table to be emitted if needed
     // later.
-    MangleBuffer MangledName;
-    getMangledName(MangledName, D);
+    llvm::StringRef MangledName = getMangledName(D);
     if (!GetGlobalValue(MangledName)) {
       DeferredDecls[MangledName] = D;
       return;
@@ -1417,8 +1393,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   const AliasAttr *AA = D->getAttr<AliasAttr>();
   assert(AA && "Not an alias?");
 
-  MangleBuffer MangledName;
-  getMangledName(MangledName, GD);
+  llvm::StringRef MangledName = getMangledName(GD);
 
   // If there is a definition in the module, then it wins over the alias.
   // This is dubious, but allow it to be safe.  Just ignore the alias.
@@ -1459,7 +1434,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
                                                           Entry->getType()));
     Entry->eraseFromParent();
   } else {
-    GA->setName(MangledName.getString());
+    GA->setName(MangledName);
   }
 
   // Set attributes which are particular to an alias; this is a

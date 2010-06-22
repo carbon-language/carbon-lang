@@ -166,8 +166,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
 
   // Switch any previous uses to the alias.
-  MangleBuffer MangledName;
-  getMangledName(MangledName, AliasDecl);
+  llvm::StringRef MangledName = getMangledName(AliasDecl);
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     assert(Entry->isDeclaration() && "definition already exists for alias");
@@ -177,7 +176,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     Entry->replaceAllUsesWith(Alias);
     Entry->eraseFromParent();
   } else {
-    Alias->setName(MangledName.getString());
+    Alias->setName(MangledName);
   }
 
   // Finally, set up the alias with its proper name and attributes.
@@ -220,8 +219,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
   GlobalDecl GD(D, Type);
   
-  MangleBuffer Name;
-  getMangledName(Name, GD);
+  llvm::StringRef Name = getMangledName(GD);
   if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 
@@ -279,8 +277,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
   GlobalDecl GD(D, Type);
 
-  MangleBuffer Name;
-  getMangledName(Name, GD);
+  llvm::StringRef Name = getMangledName(GD);
   if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 

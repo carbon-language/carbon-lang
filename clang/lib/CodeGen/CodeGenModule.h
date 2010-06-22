@@ -465,7 +465,6 @@ public:
                               unsigned &CallingConv);
 
   llvm::StringRef getMangledName(GlobalDecl GD);
-  void getMangledName(MangleBuffer &Buffer, GlobalDecl D);
   void getMangledName(MangleBuffer &Buffer, const BlockDecl *BD);
 
   void EmitTentativeDefinition(const VarDecl *D);

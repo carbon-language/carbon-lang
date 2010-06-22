@@ -139,16 +139,14 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
                                      const char *Separator) {
   CodeGenModule &CGM = CGF.CGM;
   if (CGF.getContext().getLangOptions().CPlusPlus) {
-    MangleBuffer Name;
-    CGM.getMangledName(Name, &D);
-    return Name.getString().str();
+    llvm::StringRef Name = CGM.getMangledName(&D);
+    return Name.str();
   }
   
   std::string ContextName;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CGF.CurFuncDecl)) {
-    MangleBuffer Name;
-    CGM.getMangledName(Name, FD);
-    ContextName = Name.getString().str();
+    llvm::StringRef Name = CGM.getMangledName(FD);
+    ContextName = Name.str();
   } else if (isa<ObjCMethodDecl>(CGF.CurFuncDecl))
     ContextName = CGF.CurFn->getName();
   else
