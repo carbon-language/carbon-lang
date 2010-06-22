@@ -845,7 +845,7 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
       return false;
    
     // Vector splat from any arithmetic type to a vector.
-    if (!FromType->isVectorType() && FromType->isArithmeticType()) {
+    if (FromType->isArithmeticType()) {
       ICK = ICK_Vector_Splat;
       return true;
     }
@@ -1041,8 +1041,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
               FromType->isAnyPointerType() ||
               FromType->isBlockPointerType() ||
               FromType->isMemberPointerType() ||
-              FromType->isNullPtrType()) &&
-             /*FIXME*/!FromType->isVectorType()) {
+              FromType->isNullPtrType())) {
     // Boolean conversions (C++ 4.12).
     SCS.Second = ICK_Boolean_Conversion;
     FromType = Context.BoolTy;

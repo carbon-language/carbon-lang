@@ -48,4 +48,5 @@ typedef __attribute__(( ext_vector_type(2) )) float2 vecfloat2; // expected-erro
 
 void inc(float2 f2) {
   f2++; // expected-error{{cannot increment value of type 'float2'}}
+  __real f2; // expected-error{{invalid type 'float2' to __real operator}}
 }

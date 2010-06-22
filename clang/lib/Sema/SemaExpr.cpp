@@ -4626,7 +4626,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (lhsType->isExtVectorType()) {
     if (rhsType->isExtVectorType())
       return lhsType == rhsType ? Compatible : Incompatible;
-    if (!rhsType->isVectorType() && rhsType->isArithmeticType())
+    if (rhsType->isArithmeticType())
       return Compatible;
   }
 
@@ -6511,7 +6511,8 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = Input->getType();
     if (resultType->isDependentType())
       break;
-    if (resultType->isArithmeticType()) // C99 6.5.3.3p1
+    if (resultType->isArithmeticType() || // C99 6.5.3.3p1
+        resultType->isVectorType()) 
       break;
     else if (getLangOptions().CPlusPlus && // C++ [expr.unary.op]p6-7
              resultType->isEnumeralType())

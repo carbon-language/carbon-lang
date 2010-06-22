@@ -596,7 +596,7 @@ bool Type::isArithmeticType() const {
     // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
     // If a body isn't seen by the time we get here, return false.
     return ET->getDecl()->isDefinition();
-  return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
+  return isa<ComplexType>(CanonicalType);
 }
 
 bool Type::isScalarType() const {
