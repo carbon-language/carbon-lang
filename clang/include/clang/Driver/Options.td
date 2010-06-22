@@ -434,6 +434,7 @@ def mfloat_abi_EQ : Joined<"-mfloat-abi=">, Group<m_Group>;
 def mfpu_EQ : Joined<"-mfpu=">, Group<m_Group>;
 def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>, Flags<[DriverOption]>;
+def mios_version_min_EQ : Joined<"-mios-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mkernel : Flag<"-mkernel">, Group<m_Group>;
 def mllvm : Separate<"-mllvm">;
 def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>, Flags<[DriverOption]>;
