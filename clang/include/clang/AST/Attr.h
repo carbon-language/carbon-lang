@@ -300,6 +300,7 @@ DEF_SIMPLE_ATTR(Deprecated);
 DEF_SIMPLE_ATTR(GNUInline);
 DEF_SIMPLE_ATTR(Malloc);
 DEF_SIMPLE_ATTR(NoReturn);
+DEF_SIMPLE_ATTR(NoInstrumentFunction);
 
 class SectionAttr : public AttrWithString {
 public:

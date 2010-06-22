@@ -261,6 +261,11 @@ def NoReturn : Attr {
   let Namespaces = ["", "std"];
 }
 
+def NoInstrumentFunction : Attr {
+  let Spellings = ["no_instrument_function"];
+  let Subjects = [Function];
+}
+
 def NoThrow : Attr {
   let Spellings = ["nothrow"];
 }

@@ -1698,6 +1698,23 @@ static void HandleNoInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) NoInlineAttr());
 }
 
+static void HandleNoInstrumentFunctionAttr(Decl *d, const AttributeList &Attr,
+                                           Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << Attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) NoInstrumentFunctionAttr());
+}
+
 static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -2030,8 +2047,10 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_noinline:    HandleNoInlineAttr    (D, Attr, S); break;
   case AttributeList::AT_regparm:     HandleRegparmAttr     (D, Attr, S); break;
   case AttributeList::IgnoredAttribute:
-  case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
     // Just ignore
+    break;
+  case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
+    HandleNoInstrumentFunctionAttr(D, Attr, S);
     break;
   case AttributeList::AT_stdcall:
   case AttributeList::AT_cdecl:

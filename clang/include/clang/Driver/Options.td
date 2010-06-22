@@ -278,6 +278,7 @@ def filelist : Separate<"-filelist">, Flags<[LinkerInput]>;
 def findirect_virtual_calls : Flag<"-findirect-virtual-calls">, Group<f_Group>;
 def finline_functions : Flag<"-finline-functions">, Group<clang_ignored_f_Group>;
 def finline : Flag<"-finline">, Group<clang_ignored_f_Group>;
+def finstrument_functions : Flag<"-finstrument-functions">, Group<f_Group>;
 def fkeep_inline_functions : Flag<"-fkeep-inline-functions">, Group<clang_ignored_f_Group>;
 def flat__namespace : Flag<"-flat_namespace">;
 def flax_vector_conversions : Flag<"-flax-vector-conversions">, Group<f_Group>;

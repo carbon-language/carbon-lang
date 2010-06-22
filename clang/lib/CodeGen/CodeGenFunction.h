@@ -566,6 +566,15 @@ public:
   void EmitDtorEpilogue(const CXXDestructorDecl *Dtor,
                         CXXDtorType Type);
 
+  /// ShouldInstrumentFunction - Return true if the current function should be
+  /// instrumented with __cyg_profile_func_* calls
+  bool ShouldInstrumentFunction();
+
+  /// EmitFunctionInstrumentation - Emit LLVM code to call the specified
+  /// instrumentation function with the current function and the call site, if
+  /// function instrumentation is enabled.
+  void EmitFunctionInstrumentation(const char *Fn);
+
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the
   /// LLVM function arguments.

@@ -20,7 +20,9 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -127,6 +129,8 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Emit function epilog (to return).
   EmitReturnBlock();
 
+  EmitFunctionInstrumentation("__cyg_profile_func_exit");
+
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(EndLoc);
@@ -157,6 +161,41 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
       PN->eraseFromParent();
     }
   }
+}
+
+/// ShouldInstrumentFunction - Return true if the current function should be
+/// instrumented with __cyg_profile_func_* calls
+bool CodeGenFunction::ShouldInstrumentFunction() {
+  if (!CGM.getCodeGenOpts().InstrumentFunctions)
+    return false;
+  if (CurFuncDecl->hasAttr<NoInstrumentFunctionAttr>())
+    return false;
+  return true;
+}
+
+/// EmitFunctionInstrumentation - Emit LLVM code to call the specified
+/// instrumentation function with the current function and the call site, if
+/// function instrumentation is enabled.
+void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
+  if (!ShouldInstrumentFunction())
+    return;
+
+  const llvm::FunctionType *FunctionTy;
+  std::vector<const llvm::Type*> ProfileFuncArgs;
+
+  ProfileFuncArgs.push_back(CurFn->getType());
+  ProfileFuncArgs.push_back(llvm::Type::getInt8PtrTy(VMContext));
+  FunctionTy = llvm::FunctionType::get(
+    llvm::Type::getVoidTy(VMContext),
+    ProfileFuncArgs, false);
+
+  llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
+  llvm::CallInst *CallSite = Builder.CreateCall(
+    CGM.getIntrinsic(llvm::Intrinsic::returnaddress, 0, 0),
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0),
+    "callsite");
+
+  Builder.CreateCall2(F, CurFn, CallSite);
 }
 
 void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
@@ -207,6 +246,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
   }
+
+  EmitFunctionInstrumentation("__cyg_profile_func_enter");
 
   // FIXME: Leaked.
   // CC info is ignored, hopefully?

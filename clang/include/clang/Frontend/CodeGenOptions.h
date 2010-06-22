@@ -47,6 +47,7 @@ public:
                                   /// done.
   unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
   unsigned FunctionSections  : 1; /// Set when -ffunction-sections is enabled
+  unsigned InstrumentFunctions : 1; /// Set when -finstrument-functions is enabled
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
