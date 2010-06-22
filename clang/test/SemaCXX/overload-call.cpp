@@ -54,6 +54,7 @@ double* k(bool);
 
 void test_k() {
   int* ip1 = k("foo"); // expected-warning{{conversion from string literal to 'char *' is deprecated}}
+  int* ip2 = k(("foo")); // expected-warning{{conversion from string literal to 'char *' is deprecated}}
   double* dp1 = k(L"foo");
 }
 
