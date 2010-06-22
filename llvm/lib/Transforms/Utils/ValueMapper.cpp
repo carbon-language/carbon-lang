@@ -21,17 +21,15 @@
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
-  Value *&VMSlot = VM[V];
-  if (VMSlot) return VMSlot;      // Does it exist in the map yet?
+  ValueToValueMapTy::iterator VMI = VM.find(V);
+  if (VMI != VM.end())
+    return VMI->second;
   
-  // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the
-  // DenseMap.  This includes any recursive calls to MapValue.
-
   // Global values and non-function-local metadata do not need to be seeded into
   // the ValueMap if they are using the identity mapping.
   if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
       (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
-    return VMSlot = const_cast<Value*>(V);
+    return VM[V] = const_cast<Value*>(V);
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
     SmallVector<Value*, 4> Elts;
@@ -46,7 +44,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
       isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
       isa<UndefValue>(C) || isa<MDString>(C))
-    return VMSlot = C;           // Primitive constants map directly
+    return VM[V] = C;           // Primitive constants map directly
   
   if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
     for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
