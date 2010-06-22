@@ -961,8 +961,14 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
           if (LV) {
             for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
               MachineOperand &MO = mi->getOperand(i);
-              if (MO.isReg() && MO.isUse() && MO.isKill())
-                LV->replaceKillInstruction(Reg, mi, NewMIs[0]);
+              if (MO.isReg() && MO.getReg() != 0 &&
+                  TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
+                if (MO.isUse()) {
+                  if (MO.isKill())
+                    LV->replaceKillInstruction(MO.getReg(), mi, NewMIs[0]);
+                } else if (LV->removeVirtualRegisterDead(MO.getReg(), mi))
+                  LV->addVirtualRegisterDead(MO.getReg(), NewMIs[1]);
+              }
             }
             LV->addVirtualRegisterKilled(Reg, NewMIs[1]);
           }
