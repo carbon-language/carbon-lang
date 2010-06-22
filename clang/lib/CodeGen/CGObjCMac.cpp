@@ -1931,10 +1931,18 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(llvm::Twine Name,
     Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
                                                    Prop));
   }
-  if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(OCD))
+  if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(OCD)) {
     for (ObjCInterfaceDecl::protocol_iterator P = OID->protocol_begin(),
          E = OID->protocol_end(); P != E; ++P)
-      PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
+      PushProtocolProperties(PropertySet, Properties, Container, (*P), 
+                             ObjCTypes);
+  }
+  else if (const ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(OCD)) {
+    for (ObjCCategoryDecl::protocol_iterator P = CD->protocol_begin(),
+         E = CD->protocol_end(); P != E; ++P)
+      PushProtocolProperties(PropertySet, Properties, Container, (*P), 
+                             ObjCTypes);
+  }
 
   // Return null for empty list.
   if (Properties.empty())
