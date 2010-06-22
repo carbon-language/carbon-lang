@@ -834,6 +834,10 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
 }
 
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Logical Instructions
+//===----------------------------------------------------------------------===//
+
 /// sse12_fp_alias_pack_logical - SSE 1 & 2 aliased packed FP logical ops
 ///
 multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
@@ -868,6 +872,82 @@ defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor>;
 let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
   defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef, 1>;
 
+/// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
+///
+multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
+                                 SDNode OpNode, int HasPat = 0,
+                                 list<list<dag>> Pattern = []> {
+  let isAsmParserOnly = 1 in {
+    defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
+         !strconcat(OpcodeStr, "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+         f128mem,
+         !if(HasPat, Pattern[0], // rr
+                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
+                                                      VR128:$src2)))]),
+         !if(HasPat, Pattern[2], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                               VEX_4V;
+
+    defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
+         !strconcat(OpcodeStr, "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+         f128mem,
+         !if(HasPat, Pattern[1], // rr
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (bc_v2i64 (v2f64
+                                               VR128:$src2))))]),
+         !if(HasPat, Pattern[3], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                                               OpSize, VEX_4V;
+  }
+  let Constraints = "$src1 = $dst" in {
+    defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
+         !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !if(HasPat, Pattern[0], // rr
+                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
+                                                      VR128:$src2)))]),
+         !if(HasPat, Pattern[2], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>, TB;
+
+    defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
+         !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !if(HasPat, Pattern[1], // rr
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (bc_v2i64 (v2f64
+                                               VR128:$src2))))]),
+         !if(HasPat, Pattern[3], // rm
+                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                               (memopv2i64 addr:$src2)))])>,
+                                                                    TB, OpSize;
+  }
+}
+
+defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
+defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
+defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
+let isCommutable = 0 in
+  defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
+    // single r+r
+    [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
+                                       (bc_v2i64 (v4i32 immAllOnesV))),
+                                   VR128:$src2)))],
+    // double r+r
+    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
+                                 (bc_v2i64 (v2f64 VR128:$src2))))],
+    // single r+m
+    [(set VR128:$dst, (v2i64 (and (xor (bc_v2i64 (v4f32 VR128:$src1)),
+                                       (bc_v2i64 (v4i32 immAllOnesV))),
+                                  (memopv2i64 addr:$src2))))],
+    // double r+m
+    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
+                           (memopv2i64 addr:$src2)))]]>;
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Arithmetic Instructions
+//===----------------------------------------------------------------------===//
+
 /// basic_sse12_fp_binop_rm - SSE 1 & 2 binops come in both scalar and
 /// vector forms.
 ///
@@ -876,8 +956,7 @@ let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
 /// plain scalar form, in that it takes an entire vector (instead of a scalar)
 /// and leaves the top elements unmodified (therefore these cannot be commuted).
 ///
-/// These three forms can each be reg+reg or reg+mem, so there are a total of
-/// six "instructions".
+/// These three forms can each be reg+reg or reg+mem.
 ///
 multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                    SDNode OpNode> {
@@ -952,8 +1031,6 @@ let isCommutable = 0 in {
 /// instructions for a full-vector intrinsic form.  Operations that map
 /// onto C operators don't use this form since they just use the plain
 /// vector form instead of having a separate vector intrinsic form.
-///
-/// This provides a total of eight "instructions".
 ///
 multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                              SDNode OpNode> {
@@ -1209,79 +1286,6 @@ defm RSQRT : sse1_fp_unop_rm<0x52, "rsqrt", X86frsqrt,
                              int_x86_sse_rsqrt_ss, int_x86_sse_rsqrt_ps>;
 defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
                              int_x86_sse_rcp_ss, int_x86_sse_rcp_ps>;
-
-/// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
-///
-multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
-                                 SDNode OpNode, int HasPat = 0,
-                                 list<list<dag>> Pattern = []> {
-  let isAsmParserOnly = 1 in {
-    defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-         f128mem,
-         !if(HasPat, Pattern[0], // rr
-                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
-                                                      VR128:$src2)))]),
-         !if(HasPat, Pattern[2], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
-                                               VEX_4V;
-
-    defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-         f128mem,
-         !if(HasPat, Pattern[1], // rr
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (bc_v2i64 (v2f64
-                                               VR128:$src2))))]),
-         !if(HasPat, Pattern[3], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
-                                                               OpSize, VEX_4V;
-  }
-  let Constraints = "$src1 = $dst" in {
-    defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"), f128mem,
-         !if(HasPat, Pattern[0], // rr
-                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
-                                                      VR128:$src2)))]),
-         !if(HasPat, Pattern[2], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>, TB;
-
-    defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"), f128mem,
-         !if(HasPat, Pattern[1], // rr
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (bc_v2i64 (v2f64
-                                               VR128:$src2))))]),
-         !if(HasPat, Pattern[3], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
-                                                                    TB, OpSize;
-  }
-}
-
-// Logical
-defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
-defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
-defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
-let isCommutable = 0 in
-  defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
-    // single r+r
-    [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
-                                       (bc_v2i64 (v4i32 immAllOnesV))),
-                                   VR128:$src2)))],
-    // double r+r
-    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                                 (bc_v2i64 (v2f64 VR128:$src2))))],
-    // single r+m
-    [(set VR128:$dst, (v2i64 (and (xor (bc_v2i64 (v4f32 VR128:$src1)),
-                                       (bc_v2i64 (v4i32 immAllOnesV))),
-                                  (memopv2i64 addr:$src2))))],
-    // double r+m
-    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                           (memopv2i64 addr:$src2)))]]>;
 
 let Constraints = "$src1 = $dst" in {
   def CMPPSrri : PSIi8<0xC2, MRMSrcReg,
