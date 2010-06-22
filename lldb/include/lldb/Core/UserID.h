@@ -35,7 +35,7 @@ struct UserID
     //------------------------------------------------------------------
     /// Construct with optional user ID.
     //------------------------------------------------------------------
-    UserID (lldb::user_id_t uid = LLDB_INVALID_UID);
+    UserID (lldb::user_id_t uid = LLDB_INVALID_UID) : m_uid(uid) {}
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -51,7 +51,7 @@ struct UserID
     /// Clears the object contents back to a default invalid state.
     //------------------------------------------------------------------
     void
-    Clear ();
+    Clear () { m_uid = LLDB_INVALID_UID; }
 
     //------------------------------------------------------------------
     /// Get accessor for the user ID.
@@ -60,7 +60,7 @@ struct UserID
     ///     The user ID.
     //------------------------------------------------------------------
     lldb::user_id_t
-    GetID () const;
+    GetID () const { return m_uid; }
 
     //------------------------------------------------------------------
     /// Set accessor for the user ID.
@@ -69,7 +69,7 @@ struct UserID
     ///     The new user ID.
     //------------------------------------------------------------------
     void
-    SetID (lldb::user_id_t uid);
+    SetID (lldb::user_id_t uid) { m_uid = uid; }
 
     //------------------------------------------------------------------
     /// Unary predicate function object that can search for a matching
@@ -88,13 +88,13 @@ struct UserID
         //--------------------------------------------------------------
         /// Construct with the user ID to look for.
         //--------------------------------------------------------------
-        IDMatches (lldb::user_id_t uid);
+        IDMatches (lldb::user_id_t uid) : m_uid(uid) {}
 
         //--------------------------------------------------------------
         /// Unary predicate function object callback.
         //--------------------------------------------------------------
         bool
-        operator () (const UserID& rhs) const;
+        operator () (const UserID& rhs) const { return m_uid == rhs.GetID(); }
 
     private:
         //--------------------------------------------------------------
@@ -114,8 +114,16 @@ protected:
 //--------------------------------------------------------------
 /// Stream the UserID object to a Stream.
 //--------------------------------------------------------------
-bool operator== (const UserID& lhs, const UserID& rhs);
-bool operator!= (const UserID& lhs, const UserID& rhs);
+inline bool operator== (const UserID& lhs, const UserID& rhs)
+{
+  return lhs.GetID() == rhs.GetID();
+}
+
+inline bool operator!= (const UserID& lhs, const UserID& rhs)
+{
+  return lhs.GetID() != rhs.GetID();
+}
+
 Stream& operator << (Stream& strm, const UserID& uid);
 
 } // namespace lldb_private
