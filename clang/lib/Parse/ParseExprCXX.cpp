@@ -278,12 +278,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         HasScopeSpecifier = true;
       }
 
-      if (SS.isInvalid())
-        continue;
-
-      SS.setScopeRep(
-        Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
-                                            ObjectType, EnteringContext));
+      if (!SS.isInvalid())
+        SS.setScopeRep(
+            Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
+                                                ObjectType, EnteringContext));
       SS.setEndLoc(CCLoc);
       continue;
     }
