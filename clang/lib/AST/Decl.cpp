@@ -1228,6 +1228,23 @@ const IdentifierInfo *FunctionDecl::getLiteralIdentifier() const {
     return 0;
 }
 
+FunctionDecl::TemplatedKind FunctionDecl::getTemplatedKind() const {
+  if (TemplateOrSpecialization.isNull())
+    return TK_NonTemplate;
+  if (TemplateOrSpecialization.is<FunctionTemplateDecl *>())
+    return TK_FunctionTemplate;
+  if (TemplateOrSpecialization.is<MemberSpecializationInfo *>())
+    return TK_MemberSpecialization;
+  if (TemplateOrSpecialization.is<FunctionTemplateSpecializationInfo *>())
+    return TK_FunctionTemplateSpecialization;
+  if (TemplateOrSpecialization.is
+                               <DependentFunctionTemplateSpecializationInfo*>())
+    return TK_DependentFunctionTemplateSpecialization;
+
+  assert(false && "Did we miss a TemplateOrSpecialization type?");
+  return TK_NonTemplate;
+}
+
 FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {
   if (MemberSpecializationInfo *Info = getMemberSpecializationInfo())
     return cast<FunctionDecl>(Info->getInstantiatedFrom());
@@ -1364,6 +1381,27 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
       Template->getSpecializations().GetOrInsertNode(Info);
     }
   }
+}
+
+void
+FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
+                                                unsigned NumTemplateArgs,
+                                           const TemplateArgument *TemplateArgs,
+                                                 TemplateSpecializationKind TSK,
+                                              unsigned NumTemplateArgsAsWritten,
+                                   TemplateArgumentLoc *TemplateArgsAsWritten,
+                                                SourceLocation LAngleLoc,
+                                                SourceLocation RAngleLoc) {
+  ASTContext &Ctx = getASTContext();
+  TemplateArgumentList *TemplArgs
+    = new (Ctx) TemplateArgumentList(Ctx, NumTemplateArgs, TemplateArgs);
+  TemplateArgumentListInfo *TemplArgsInfo
+    = new (Ctx) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
+  for (unsigned i=0; i != NumTemplateArgsAsWritten; ++i)
+    TemplArgsInfo->addArgument(TemplateArgsAsWritten[i]);
+
+  setFunctionTemplateSpecialization(Template, TemplArgs, /*InsertPos=*/0, TSK,
+                                    TemplArgsInfo);
 }
 
 void

@@ -1106,6 +1106,15 @@ public:
     None, Extern, Static, PrivateExtern
   };
 
+  /// \brief The kind of templated function a FunctionDecl can be.
+  enum TemplatedKind {
+    TK_NonTemplate,
+    TK_FunctionTemplate,
+    TK_MemberSpecialization,
+    TK_FunctionTemplateSpecialization,
+    TK_DependentFunctionTemplateSpecialization
+  };
+
 private:
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
@@ -1398,6 +1407,9 @@ public:
   /// X<int>::A is required, it will be instantiated from the
   /// declaration returned by getInstantiatedFromMemberFunction().
   FunctionDecl *getInstantiatedFromMemberFunction() const;
+  
+  /// \brief What kind of templated function this is.
+  TemplatedKind getTemplatedKind() const;
 
   /// \brief If this function is an instantiation of a member function of a
   /// class template specialization, retrieves the member specialization
@@ -1480,8 +1492,6 @@ public:
   /// \brief Specify that this function declaration is actually a function
   /// template specialization.
   ///
-  /// \param Context the AST context in which this function resides.
-  ///
   /// \param Template the function template that this function template
   /// specialization specializes.
   ///
@@ -1493,11 +1503,45 @@ public:
   /// be inserted.
   ///
   /// \param TSK the kind of template specialization this is.
+  ///
+  /// \param TemplateArgsAsWritten location info of template arguments.
   void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos,
                     TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
                     const TemplateArgumentListInfo *TemplateArgsAsWritten = 0);
+
+  /// \brief Specify that this function declaration is actually a function
+  /// template specialization.
+  ///
+  /// \param Template the function template that this function template
+  /// specialization specializes.
+  ///
+  /// \param NumTemplateArgs number of template arguments that produced this
+  /// function template specialization from the template.
+  ///
+  /// \param TemplateArgs array of template arguments that produced this
+  /// function template specialization from the template.
+  ///
+  /// \param TSK the kind of template specialization this is.
+  ///
+  /// \param NumTemplateArgsAsWritten number of template arguments that produced
+  /// this function template specialization from the template.
+  ///
+  /// \param TemplateArgsAsWritten array of location info for the template
+  /// arguments.
+  ///
+  /// \param LAngleLoc location of left angle token.
+  ///
+  /// \param RAngleLoc location of right angle token.
+  void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
+                                         unsigned NumTemplateArgs,
+                                         const TemplateArgument *TemplateArgs,
+                                         TemplateSpecializationKind TSK,
+                                         unsigned NumTemplateArgsAsWritten,
+                                     TemplateArgumentLoc *TemplateArgsAsWritten,
+                                          SourceLocation LAngleLoc,
+                                          SourceLocation RAngleLoc);
 
   /// \brief Specifies that this function declaration is actually a
   /// dependent function template specialization.

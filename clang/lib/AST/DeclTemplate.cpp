@@ -391,6 +391,22 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
   }
 }
 
+TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
+                                           unsigned NumArgs,
+                                           const TemplateArgument *Args)
+  : NumFlatArguments(NumArgs),
+    NumStructuredArguments(NumArgs) {
+
+  TemplateArgument *NewArgs = new (Context) TemplateArgument[NumArgs];
+  std::copy(Args, Args+NumArgs, NewArgs);
+  FlatArguments.setPointer(NewArgs);
+  FlatArguments.setInt(1); // Owns the pointer.
+      
+  // Just reuse the flat arguments array.
+  StructuredArguments.setPointer(NewArgs);    
+  StructuredArguments.setInt(0); // Doesn't own the pointer.
+}
+
 /// Produces a shallow copy of the given template argument list.  This
 /// assumes that the input argument list outlives it.  This takes the list as
 /// a pointer to avoid looking like a copy constructor, since this really
