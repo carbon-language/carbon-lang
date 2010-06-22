@@ -3007,16 +3007,16 @@ bool X86InstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
 
   EVT VT = Load1->getValueType(0);
   switch (VT.getSimpleVT().SimpleTy) {
-  default: {
+  default:
     // XMM registers. In 64-bit mode we can be a bit more aggressive since we
     // have 16 of them to play with.
     if (TM.getSubtargetImpl()->is64Bit()) {
       if (NumLoads >= 3)
         return false;
-    } else if (NumLoads)
+    } else if (NumLoads) {
       return false;
+    }
     break;
-  }
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
@@ -3025,6 +3025,7 @@ bool X86InstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
   case MVT::f64:
     if (NumLoads)
       return false;
+    break;
   }
 
   return true;
