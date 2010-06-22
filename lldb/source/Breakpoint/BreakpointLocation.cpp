@@ -140,7 +140,7 @@ BreakpointLocation::ClearCallback ()
 int32_t
 BreakpointLocation::GetIgnoreCount ()
 {
-    return GetOptionsNoCopy()->GetIgnoreCount();
+    return GetOptionsNoCreate()->GetIgnoreCount();
 }
 
 void
@@ -150,7 +150,7 @@ BreakpointLocation::SetIgnoreCount (int32_t n)
 }
 
 const BreakpointOptions *
-BreakpointLocation::GetOptionsNoCopy () const
+BreakpointLocation::GetOptionsNoCreate () const
 {
     if (m_options_ap.get() != NULL)
         return m_options_ap.get();
@@ -173,7 +173,7 @@ BreakpointLocation::GetLocationOptions ()
 bool
 BreakpointLocation::ValidForThisThread (Thread *thread)
 {
-    return thread->MatchesSpec(GetOptionsNoCopy()->GetThreadSpec());
+    return thread->MatchesSpec(GetOptionsNoCreate()->GetThreadSpecNoCreate());
 }
 
 // RETURNS - true if we should stop at this breakpoint, false if we
@@ -383,7 +383,7 @@ BreakpointLocation::Dump(Stream *s) const
     s->Printf("BreakpointLocation %u: tid = %4.4x  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
               "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
             GetID(),
-            GetOptionsNoCopy()->GetThreadSpec()->GetTID(),
+            GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),
             (uint64_t) m_address.GetLoadAddress(m_owner.GetTarget().GetProcessSP().get()),
             (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
             IsHardware() ? "hardware" : "software",

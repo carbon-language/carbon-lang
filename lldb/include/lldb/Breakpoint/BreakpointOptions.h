@@ -125,13 +125,14 @@ public:
     //------------------------------------------------------------------
 
     //------------------------------------------------------------------
-    /// Return the current thread spec.  This is used to pass to Thread::MatchesSpec.
+    /// Return the current thread spec for this option.  This will return NULL if the no thread
+    /// specifications have been set for this Option yet.     
     /// @return
     ///     The thread specification pointer for this option, or NULL if none has
     ///     been set yet.
     //------------------------------------------------------------------
     const ThreadSpec *
-    GetThreadSpec () const;
+    GetThreadSpecNoCreate () const;
 
     //------------------------------------------------------------------
     /// Returns a pointer to the ThreadSpec for this option, creating it.

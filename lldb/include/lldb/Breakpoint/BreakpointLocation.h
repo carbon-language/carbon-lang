@@ -251,14 +251,16 @@ public:
     GetLocationOptions ();
 
     //------------------------------------------------------------------
-    /// Use this to access location specific breakpoint options.
+    /// Use this to access breakpoint options from this breakpoint location.
+    /// This will point to the owning breakpoint's options unless options have
+    /// been set specifically on this location.
     ///
     /// @return
     ///     A pointer to the containing breakpoint's options if this
     ///     location doesn't have its own copy.
     //------------------------------------------------------------------
     const BreakpointOptions *
-    GetOptionsNoCopy () const;
+    GetOptionsNoCreate () const;
     
     bool
     ValidForThisThread (Thread *thread);

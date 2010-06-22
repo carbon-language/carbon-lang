@@ -536,7 +536,7 @@ CommandObjectBreakpointCommandList::Execute (Args& command,
                     {
                         BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
                         if (bp_loc_sp)
-                            bp_options = bp_loc_sp->GetOptionsNoCopy();
+                            bp_options = bp_loc_sp->GetOptionsNoCreate();
                         else
                         {
                             result.AppendErrorWithFormat("Invalid breakpoint ID: %u.%u.\n", 

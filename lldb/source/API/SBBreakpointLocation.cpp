@@ -104,7 +104,7 @@ SBBreakpointLocation::GetThreadID ()
 {
     tid_t sb_thread_id = (lldb::tid_t) LLDB_INVALID_THREAD_ID;
     if (m_break_loc_sp)
-        sb_thread_id = m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->GetTID();
+        sb_thread_id = m_break_loc_sp->GetLocationOptions()->GetThreadSpecNoCreate()->GetTID();
 
     return sb_thread_id;
 }
@@ -121,7 +121,7 @@ SBBreakpointLocation::GetThreadIndex() const
 {
     if (m_break_loc_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return 0;
         else
@@ -143,7 +143,7 @@ SBBreakpointLocation::GetThreadName () const
 {
     if (m_break_loc_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return NULL;
         else
@@ -164,7 +164,7 @@ SBBreakpointLocation::GetQueueName () const
 {
     if (m_break_loc_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCopy()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return NULL;
         else

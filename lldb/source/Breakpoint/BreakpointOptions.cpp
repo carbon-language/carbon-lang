@@ -173,7 +173,7 @@ BreakpointOptions::SetIgnoreCount (int32_t n)
 }
 
 const ThreadSpec *
-BreakpointOptions::GetThreadSpec () const
+BreakpointOptions::GetThreadSpecNoCreate () const
 {
     return m_thread_spec_ap.get();
 }
@@ -200,7 +200,7 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
     // Figure out if there are any options not at their default value, and only print 
     // anything if there are:
     
-    if (m_ignore_count != 0 || !m_enabled || (GetThreadSpec() != NULL && GetThreadSpec()->HasSpecification ()))
+    if (m_ignore_count != 0 || !m_enabled || (GetThreadSpecNoCreate() != NULL && GetThreadSpecNoCreate()->HasSpecification ()))
     {
         if (level == lldb::eDescriptionLevelVerbose)
         {
