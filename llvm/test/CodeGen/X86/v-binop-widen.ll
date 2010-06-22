@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 < %s | FileCheck %s
+; RUN: llc -march=x86 -mattr=+sse < %s | FileCheck %s
 ; CHECK: divss
 ; CHECK: divps
 ; CHECK: divps
