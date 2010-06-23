@@ -1408,28 +1408,25 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // FIXME: Completely disable sibcal for Thumb1 since Thumb1RegisterInfo::
+  // FIXME: Completely disable sibcall for Thumb1 since Thumb1RegisterInfo::
   // emitEpilogue is not ready for them.
   if (Subtarget->isThumb1Only())
     return false;
 
+  // For the moment, we can only do this to functions defined in this
+  // compilation, or to indirect calls.  A Thumb B to an ARM function,
+  // or vice versa, is not easily fixed up in the linker unlike BL.
+  // (We could do this by loading the address of the callee into a register;
+  // that is an extra instruction over the direct call and burns a register
+  // as well, so is not likely to be a win.)
   if (isa<ExternalSymbolSDNode>(Callee))
       return false;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    if (Subtarget->isThumb1Only())
+    const GlobalValue *GV = G->getGlobal();
+    if (GV->isDeclaration() || GV->isWeakForLinker())
       return false;
-
-    // On Thumb, for the moment, we can only do this to functions defined in this
-    // compilation, or to indirect calls.  A Thumb B to an ARM function is not
-    // easily fixed up in the linker, unlike BL.
-    if (Subtarget->isThumb()) {
-      const GlobalValue *GV = G->getGlobal();
-      if (GV->isDeclaration() || GV->isWeakForLinker())
-        return false;
-    }
   }
-
 
   // If the calling conventions do not match, then we'd better make sure the
   // results are returned in the same way as what the caller expects.
