@@ -3864,12 +3864,12 @@ def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
 
 // For i386, the address of the thunk is passed on the stack, on return the 
 // address of the variable is in %eax.  %ecx is trashed during the function 
-// call.  %edx is preserved.
-let Defs = [EAX],
-    Uses = [ESP, ECX],
+// call.  All other registers are preserved.
+let Defs = [EAX, ECX],
+    Uses = [ESP],
     usesCustomInserter = 1 in
 def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
-                "# Fixme into a call",
+                "# TLSCall_32",
                 [(X86TLSCall addr:$sym)]>,
                 Requires<[In32BitMode]>;
                 

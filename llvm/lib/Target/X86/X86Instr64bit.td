@@ -1711,7 +1711,7 @@ let Defs = [RAX],
     Uses = [RDI],
     usesCustomInserter = 1 in
 def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
-                  "# Fixme into a call",
+                  "# TLSCall_64",
                   [(X86TLSCall addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
