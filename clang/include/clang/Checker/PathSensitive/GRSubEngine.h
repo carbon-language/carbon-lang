@@ -41,27 +41,27 @@ public:
 
   virtual GRStateManager& getStateManager() = 0;
 
-  /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
-  ///  nodes by processing the 'effects' of a block-level statement.
+  /// Called by GRCoreEngine. Used to generate new successor
+  /// nodes by processing the 'effects' of a block-level statement.
   virtual void ProcessStmt(CFGElement E, GRStmtNodeBuilder& builder) = 0;
 
-  /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
-  ///  a CFGBlock.  This method returns true if the analysis should continue
-  ///  exploring the given path, and false otherwise.
+  /// Called by GRCoreEngine when start processing
+  /// a CFGBlock.  This method returns true if the analysis should continue
+  /// exploring the given path, and false otherwise.
   virtual bool ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
                                     GRBlockCounter BC) = 0;
 
-  /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
+  /// Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   virtual void ProcessBranch(Stmt* Condition, Stmt* Term,
                              GRBranchNodeBuilder& builder) = 0;
 
-  /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
-  ///  nodes by processing the 'effects' of a computed goto jump.
+  /// Called by GRCoreEngine.  Used to generate successor
+  /// nodes by processing the 'effects' of a computed goto jump.
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) = 0;
 
-  /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
-  ///  nodes by processing the 'effects' of a switch statement.
+  /// Called by GRCoreEngine.  Used to generate successor
+  /// nodes by processing the 'effects' of a switch statement.
   virtual void ProcessSwitch(GRSwitchNodeBuilder& builder) = 0;
 
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
@@ -74,10 +74,14 @@ public:
   // Generate the first post callsite node.
   virtual void ProcessCallExit(GRCallExitNodeBuilder &builder) = 0;
   
-  /// EvalAssume - Called by ConstraintManager. Used to call checker-specific
-  ///  logic for handling assumptions on symbolic values.
+  /// Called by ConstraintManager. Used to call checker-specific
+  /// logic for handling assumptions on symbolic values.
   virtual const GRState* ProcessAssume(const GRState *state,
                                        SVal cond, bool assumption) = 0;
+  
+  /// Called by GRCoreEngine when the analysis worklist is either empty or the
+  //  maximum number of analysis steps have been reached.
+  virtual void ProcessEndWorklist(bool hasWorkRemaining) = 0;
 };
 }
 

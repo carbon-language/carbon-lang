@@ -221,6 +221,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
     }
   }
 
+  SubEngine.ProcessEndWorklist(WList->hasWork());
   return WList->hasWork();
 }
 

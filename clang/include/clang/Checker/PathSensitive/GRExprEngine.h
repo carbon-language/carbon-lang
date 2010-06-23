@@ -178,11 +178,14 @@ public:
   ///  nodes when the control reaches the end of a function.
   void ProcessEndPath(GREndPathNodeBuilder& builder);
 
-  // Generate the entry node of the callee.
+  /// Generate the entry node of the callee.
   void ProcessCallEnter(GRCallEnterNodeBuilder &builder);
 
-  // Generate the first post callsite node.
+  /// Generate the first post callsite node.
   void ProcessCallExit(GRCallExitNodeBuilder &builder);
+
+  /// Called by GRCoreEngine when the analysis worklist has terminated.
+  void ProcessEndWorklist(bool hasWorkRemaining);
 
   /// EvalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.

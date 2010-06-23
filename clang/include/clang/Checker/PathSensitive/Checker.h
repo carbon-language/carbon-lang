@@ -279,6 +279,9 @@ public:
                                     bool Assumption) {
     return state;
   }
+
+  virtual void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
+                                bool hasWorkRemaining) {}
 };
 } // end clang namespace
 
