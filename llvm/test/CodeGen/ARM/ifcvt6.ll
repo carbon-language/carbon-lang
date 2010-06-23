@@ -1,9 +1,7 @@
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep cmpne | count 1
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
-; RUN:   grep bls | count 1
-; Here, tail call wins over eliminating branches.  It is 1 fewer instruction
-; and removes all stack accesses, so seems like a win.
+; RUN:   grep ldmiahi | count 1
 
 define void @foo(i32 %X, i32 %Y) {
 entry:
@@ -13,7 +11,7 @@ entry:
 	br i1 %tmp7, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:		; preds = %entry
-	%tmp10 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp10 = call i32 (...)* @bar( )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %entry
