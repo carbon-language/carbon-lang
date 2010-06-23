@@ -452,8 +452,8 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       }
 
       // Only char/int are valid with vector bool. (PIM 2.1)
-      if ((TypeSpecType != TST_unspecified) && (TypeSpecType != TST_char) &&
-          (TypeSpecType != TST_int) || TypeAltiVecPixel) {
+      if (((TypeSpecType != TST_unspecified) && (TypeSpecType != TST_char) &&
+           (TypeSpecType != TST_int)) || TypeAltiVecPixel) {
         Diag(D, TSTLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
           << (TypeAltiVecPixel ? "__pixel" :
                                  getSpecifierName((TST)TypeSpecType));
