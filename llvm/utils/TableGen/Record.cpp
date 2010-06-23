@@ -1262,7 +1262,7 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
   Init *Op = Val->resolveReferences(R, RV);
 
   if (Args != NewArgs || Op != Val)
-    return new DagInit(Op, "", NewArgs, ArgNames);
+    return new DagInit(Op, ValName, NewArgs, ArgNames);
 
   return this;
 }
