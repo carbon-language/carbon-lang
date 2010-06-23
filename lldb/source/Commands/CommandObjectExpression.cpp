@@ -69,6 +69,10 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
     case 'f':
         error = Args::StringToFormat(option_arg, format);
         break;
+    
+    case 'i':
+        use_ir = true;
+        break;
 
     default:
         error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
@@ -87,6 +91,7 @@ CommandObjectExpression::CommandOptions::ResetOptionValues ()
     format = eFormatDefault;
     show_types = true;
     show_summary = true;
+    use_ir = false;
 }
 
 const lldb::OptionDefinition*
@@ -198,7 +203,6 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     if (!target_triple)
         target_triple = Host::GetTargetTriple ();
 
-
     if (target_triple)
     {
         const bool show_types = m_options.show_types;
@@ -221,9 +225,19 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
             dwarf_opcodes.SetByteOrder(eByteOrderHost);
             dwarf_opcodes.GetFlags().Set(Stream::eBinary);
             ClangExpressionVariableList expr_local_vars;
-            clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes);
-
-            success = true;
+        
+            bool success;
+            
+            if (m_options.use_ir)
+                success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+            else
+                success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+            
+            if (!success)
+            {
+                output_stream << "Expression couldn't be translated to DWARF\n";
+                return false;
+            }
 
             DataExtractor dwarf_opcodes_data(dwarf_opcodes.GetData(), dwarf_opcodes.GetSize(), eByteOrderHost, 8);
             DWARFExpression expr(dwarf_opcodes_data, 0, dwarf_opcodes_data.GetByteSize(), NULL);
@@ -431,7 +445,14 @@ CommandObjectExpression::ExecuteRawCommandString
             dwarf_opcodes.SetByteOrder(eByteOrderHost);
             dwarf_opcodes.GetFlags().Set(Stream::eBinary);
             ClangExpressionVariableList expr_local_vars;
-            clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes);
+            
+            bool success = true;
+            
+            if (m_options.use_ir)
+                success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+            else
+                success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+            
 
             result.SetStatus (eReturnStatusSuccessFinishResult);
 
@@ -439,6 +460,7 @@ CommandObjectExpression::ExecuteRawCommandString
             DWARFExpression expr(dwarf_opcodes_data, 0, dwarf_opcodes_data.GetByteSize(), NULL);
             expr.SetExpressionLocalVariableList(&expr_local_vars);
             expr.SetExpressionDeclMap(&expr_decl_map);
+            
             if (debug)
             {
                 output_stream << "Expression parsed ok, dwarf opcodes:";
@@ -541,9 +563,10 @@ CommandObjectExpression::ExecuteRawCommandString
 lldb::OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, true,  "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
-{ LLDB_OPT_SET_2, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
-{ LLDB_OPT_SET_3, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
+{ LLDB_OPT_SET_ALL, true,  "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
+{ LLDB_OPT_SET_ALL, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
+{ LLDB_OPT_SET_ALL, false, "debug",      'g', no_argument,       NULL, 0, NULL,                           "Enable verbose debug logging of the expression parsing and evaluation."},
+{ LLDB_OPT_SET_ALL, false, "use-ir",     'i', no_argument,       NULL, 0, NULL,                           "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
 { 0, false, NULL, 0, 0, NULL, NULL, NULL, NULL }
 };
 

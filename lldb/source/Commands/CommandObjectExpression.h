@@ -52,6 +52,7 @@ public:
         bool        debug;
         bool        show_types;
         bool        show_summary;
+        bool        use_ir;
     };
 
     CommandObjectExpression ();

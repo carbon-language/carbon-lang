@@ -57,6 +57,10 @@ public:
     unsigned
     ConvertExpressionToDWARF (ClangExpressionVariableList &expr_local_variable_list, 
                               StreamString &dwarf_opcode_strm);
+    
+    unsigned
+    ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_variable_list,
+                      StreamString &dwarf_opcode_strm);
 
     bool
     JITFunction (const ExecutionContext &exc_context, const char *func_name);

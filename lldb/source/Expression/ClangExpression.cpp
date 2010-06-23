@@ -50,6 +50,7 @@
 #include "llvm/Target/TargetSelect.h"
 
 // Project includes
+#include "lldb/Core/Log.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangStmtVisitor.h"
@@ -354,7 +355,7 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text, Stream &stream)
     // - Call clang::ParseAST (in lib/Sema/ParseAST.cpp) to parse the buffer. The CodeGenerator will generate code for __dbg_expr.
     // - Once ParseAST completes, you can grab the llvm::Module from the CodeGenerator, which will have an llvm::Function you can hand off to the JIT.
     ParseAST(m_clang_ap->getPreprocessor(), m_code_generator_ptr, m_clang_ap->getASTContext());
-
+    
     text_diagnostic_buffer.EndSourceFile();
 
     //compiler_instance->getASTContext().getTranslationUnitDecl()->dump();
@@ -451,6 +452,58 @@ ClangExpression::ConvertExpressionToDWARF (ClangExpressionVariableList& expr_loc
             visitor.Visit (decl_stmt);
         }
     }
+    return 0;
+}
+
+unsigned
+ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_variable_list,
+                                   StreamString &dwarf_opcode_strm)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    llvm::Module *module = m_code_generator_ptr->GetModule();
+        
+    if (!module)
+    {
+        if (log)
+            log->Printf("IR doesn't contain a module");
+        
+        return 1;
+    }
+    
+    llvm::Module::iterator fi;
+            
+    for (fi = module->begin();
+         fi != module->end();
+         ++fi)
+    {
+        llvm::Function &function = *fi;
+                
+        if (log)
+            log->Printf("IR for %s:", function.getName().str().c_str());
+                
+        llvm::Function::iterator bbi;
+                
+        for (bbi = function.begin();
+             bbi != function.end();
+             ++bbi)
+        {
+            llvm::BasicBlock &bb = *bbi;
+                    
+            llvm::BasicBlock::iterator ii;
+                    
+            for (ii = bb.begin();
+                 ii != bb.end();
+                 ++ii)
+            {
+                llvm::Instruction &inst = *ii;
+                
+                if (log)
+                    log->Printf("  %s", inst.getOpcodeName());
+            }
+        }
+    }   
+    
     return 0;
 }
 
