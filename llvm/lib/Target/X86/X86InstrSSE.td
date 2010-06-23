@@ -1394,33 +1394,37 @@ def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
           (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
+multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
+                         ValueType vt, string asm, PatFrag mem_frag,
+                         Domain d, bit IsConvertibleToThreeAddress = 0> {
+  def rmi : PIi8<0xC6, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, f128mem:$src2, i8imm:$src3), asm,
+                   [(set VR128:$dst, (vt (shufp:$src3
+                            VR128:$src1, (mem_frag addr:$src2))))], d>;
+  let isConvertibleToThreeAddress = IsConvertibleToThreeAddress in
+    def rri : PIi8<0xC6, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, VR128:$src2, i8imm:$src3), asm,
+                   [(set VR128:$dst,
+                            (vt (shufp:$src3 VR128:$src1, VR128:$src2)))], d>;
+}
+
 let Constraints = "$src1 = $dst" in {
-  let isConvertibleToThreeAddress = 1 in // Convert to pshufd
-    def SHUFPSrri : PSIi8<0xC6, MRMSrcReg,
-                          (outs VR128:$dst), (ins VR128:$src1,
-                           VR128:$src2, i8imm:$src3),
-                          "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                          [(set VR128:$dst,
-                            (v4f32 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
-  def SHUFPSrmi : PSIi8<0xC6, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1,
-                         f128mem:$src2, i8imm:$src3),
-                        "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                        [(set VR128:$dst,
-                          (v4f32 (shufp:$src3
-                                  VR128:$src1, (memopv4f32 addr:$src2))))]>;
-  def SHUFPDrri : PDIi8<0xC6, MRMSrcReg,
-                 (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-                 "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                 [(set VR128:$dst,
-                   (v2f64 (shufp:$src3 VR128:$src1, VR128:$src2)))]>;
-  def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1,
-                         f128mem:$src2, i8imm:$src3),
-                        "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                        [(set VR128:$dst,
-                          (v2f64 (shufp:$src3
-                                  VR128:$src1, (memopv2f64 addr:$src2))))]>;
+  defm SHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
+                    "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                    memopv4f32, SSEPackedSingle, 1 /* cvt to pshufd */>,
+                    TB;
+  defm SHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
+                    "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                    memopv2f64, SSEPackedDouble>, TB, OpSize;
+
+  let Constraints = "", isAsmParserOnly = 1 in {
+    defm VSHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
+              "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+              memopv4f32, SSEPackedSingle>, VEX_4V;
+    defm VSHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
+              "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src2, $src2, $src3}",
+              memopv2f64, SSEPackedDouble>, OpSize, VEX_4V;
+  }
 
   let AddedComplexity = 10 in {
     let Constraints = "", isAsmParserOnly = 1 in {

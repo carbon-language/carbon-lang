@@ -438,3 +438,19 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x41,0x19,0xc2,0xfa,0x07]
           vcmppd  $7, %xmm10, %xmm12, %xmm15
 
+// CHECK: vshufps  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x18,0xc6,0xeb,0x08]
+          vshufps  $8, %xmm11, %xmm12, %xmm13
+
+// CHECK: vshufps  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x18,0xc6,0x6c,0xcb,0xfc,0x08]
+          vshufps  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+
+// CHECK: vshufpd  $8, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xc6,0xeb,0x08]
+          vshufpd  $8, %xmm11, %xmm12, %xmm13
+
+// CHECK: vshufpd  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc6,0x6c,0xcb,0xfc,0x08]
+          vshufpd  $8, -4(%rbx,%rcx,8), %xmm12, %xmm13
+

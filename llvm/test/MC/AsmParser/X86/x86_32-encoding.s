@@ -10374,3 +10374,19 @@
 // CHECK: encoding: [0xc5,0xc9,0xc2,0xc8,0x07]
           vcmppd  $7, %xmm0, %xmm6, %xmm1
 
+// CHECK: vshufps  $8, %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe8,0xc6,0xd9,0x08]
+          vshufps  $8, %xmm1, %xmm2, %xmm3
+
+// CHECK: vshufps  $8, -4(%ebx,%ecx,8), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe8,0xc6,0x5c,0xcb,0xfc,0x08]
+          vshufps  $8, -4(%ebx,%ecx,8), %xmm2, %xmm3
+
+// CHECK: vshufpd  $8, %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0xc6,0xd9,0x08]
+          vshufpd  $8, %xmm1, %xmm2, %xmm3
+
+// CHECK: vshufpd  $8, -4(%ebx,%ecx,8), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0xc6,0x5c,0xcb,0xfc,0x08]
+          vshufpd  $8, -4(%ebx,%ecx,8), %xmm2, %xmm3
+
