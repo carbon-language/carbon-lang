@@ -27,6 +27,7 @@
 #include "lldb/Core/Timer.h"
 
 #include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
 #include "lldb/Symbol/LineTable.h"
@@ -94,16 +95,7 @@ public:
 
             if (m_options.log_file.empty())
             {
-                std::string log_file("<lldb.debugger>");
-                LogStreamMap::iterator pos = m_log_streams.find(log_file);
-                if (pos == m_log_streams.end())
-                {
-                    log_stream_sp = Log::GetStreamForSTDOUT ();
-                    if (log_stream_sp)
-                        m_log_streams[log_file] = log_stream_sp;
-                }
-                else
-                    log_stream_sp = pos->second;
+                log_stream_sp.reset(new StreamFile(interpreter.GetDebugger().GetOutputFileHandle()));
             }
             else
             {

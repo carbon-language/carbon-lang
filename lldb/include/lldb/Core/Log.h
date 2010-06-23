@@ -101,30 +101,6 @@ public:
     ListAllLogChannels (Stream *strm);
 
     //------------------------------------------------------------------
-    // Static accessors to STDOUT logging facilities.
-    //------------------------------------------------------------------
-    static void
-    STDOUT (const char *format, ...);
-
-    static lldb::StreamSP
-    GetStreamForSTDOUT ();
-
-    static void
-    SetStreamForSTDOUT (lldb::StreamSP &stream_sp);
-
-    //------------------------------------------------------------------
-    // Static accessors to STDERR logging facilities.
-    //------------------------------------------------------------------
-    static void
-    STDERR (const char *format, ...);
-
-    static lldb::StreamSP
-    GetStreamForSTDERR ();
-
-    static void
-    SetStreamForSTDERR (lldb::StreamSP &stream_sp);
-
-    //------------------------------------------------------------------
     // Member functions
     //------------------------------------------------------------------
     Log ();
