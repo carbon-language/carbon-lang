@@ -101,9 +101,9 @@ static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
   if (const StructType *ST = dyn_cast<StructType>(T))
     ElementSize = TD->getStructLayout(ST)->getSizeInBytes();
 
-  // If malloc calls' arg can be determined to be a multiple of ElementSize,
+  // If malloc call's arg can be determined to be a multiple of ElementSize,
   // return the multiple.  Otherwise, return NULL.
-  Value *MallocArg = CI->getOperand(1);
+  Value *MallocArg = CI->getArgOperand(0);
   Value *Multiple = NULL;
   if (ComputeMultiple(MallocArg, ElementSize, Multiple,
                       LookThroughSExt))
@@ -120,7 +120,7 @@ const CallInst *llvm::isArrayMalloc(const Value *I, const TargetData *TD) {
   Value *ArraySize = computeArraySize(CI, TD);
 
   if (ArraySize &&
-      ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
+      ArraySize != ConstantInt::get(CI->getArgOperand(0)->getType(), 1))
     return CI;
 
   // CI is a non-array malloc or we can't figure out that it is an array malloc.
