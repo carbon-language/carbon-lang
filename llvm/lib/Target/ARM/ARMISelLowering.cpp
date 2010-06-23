@@ -441,6 +441,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i8,  Expand);
     setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i32, Expand);
+    // Since the libcalls include locking, fold in the fences
+    setShouldFoldAtomicFences(true);
   }
   // 64-bit versions are always libcalls (for now)
   setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i64, Expand);
