@@ -183,20 +183,26 @@ public:
   /// TemplateArgumentList - It copies the template arguments into a locally
   /// new[]'d array.
   TemplateArgumentList(ASTContext &Context,
-                       unsigned NumArgs, const TemplateArgument *Args);
+                       const TemplateArgument *Args, unsigned NumArgs);
 
   /// Produces a shallow copy of the given template argument list.  This
   /// assumes that the input argument list outlives it.  This takes the list as
   /// a pointer to avoid looking like a copy constructor, since this really
   /// really isn't safe to use that way.
   explicit TemplateArgumentList(const TemplateArgumentList *Other);
-  
+
+  TemplateArgumentList() : NumFlatArguments(0), NumStructuredArguments(0) { }
+
   /// Used to release the memory associated with a TemplateArgumentList
   ///  object.  FIXME: This is currently not called anywhere, but the
   ///  memory will still be freed when using a BumpPtrAllocator.
   void Destroy(ASTContext &C);
 
   ~TemplateArgumentList();
+  
+  /// \brief Copies the template arguments into a locally new[]'d array.
+  void init(ASTContext &Context,
+            const TemplateArgument *Args, unsigned NumArgs);
 
   /// \brief Retrieve the template argument at a given index.
   const TemplateArgument &get(unsigned Idx) const {
@@ -962,12 +968,16 @@ protected:
                                   TemplateArgumentListBuilder &Builder,
                                   ClassTemplateSpecializationDecl *PrevDecl);
 
+  explicit ClassTemplateSpecializationDecl(Kind DK);
+
 public:
   static ClassTemplateSpecializationDecl *
   Create(ASTContext &Context, TagKind TK, DeclContext *DC, SourceLocation L,
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
          ClassTemplateSpecializationDecl *PrevDecl);
+
+  static ClassTemplateSpecializationDecl *CreateEmpty(ASTContext &Context);
 
   virtual void Destroy(ASTContext& C);
 
@@ -982,6 +992,14 @@ public:
   /// specialization.
   const TemplateArgumentList &getTemplateArgs() const {
     return TemplateArgs;
+  }
+
+  /// \brief Initialize the template arguments of the class template
+  /// specialization.
+  void initTemplateArgs(TemplateArgument *Args, unsigned NumArgs) {
+    assert(TemplateArgs.flat_size() == 0 &&
+           "Template arguments already initialized!");
+    TemplateArgs.init(getASTContext(), Args, NumArgs);
   }
 
   /// \brief Determine the kind of specialization that this
@@ -1024,6 +1042,19 @@ public:
                              SpecializedTemplate.get<ClassTemplateDecl*>());
   }
 
+  /// \brief Retrieve the class template or class template partial
+  /// specialization which was specialized by this.
+  llvm::PointerUnion<ClassTemplateDecl *,
+                     ClassTemplatePartialSpecializationDecl *>
+  getSpecializedTemplateOrPartial() const {
+    if (SpecializedPartialSpecialization *PartialSpec
+          = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
+      return PartialSpec->PartialSpecialization;
+
+    return const_cast<ClassTemplateDecl*>(
+                             SpecializedTemplate.get<ClassTemplateDecl*>());
+  }
+
   /// \brief Retrieve the set of template arguments that should be used
   /// to instantiate members of the class template or class template partial
   /// specialization from which this class template specialization was
@@ -1048,11 +1079,33 @@ public:
   /// template arguments have been deduced.
   void setInstantiationOf(ClassTemplatePartialSpecializationDecl *PartialSpec,
                           TemplateArgumentList *TemplateArgs) {
+    assert(!SpecializedTemplate.is<SpecializedPartialSpecialization*>() &&
+           "Already set to a class template partial specialization!");
     SpecializedPartialSpecialization *PS
       = new (getASTContext()) SpecializedPartialSpecialization();
     PS->PartialSpecialization = PartialSpec;
     PS->TemplateArgs = TemplateArgs;
     SpecializedTemplate = PS;
+  }
+
+  /// \brief Note that this class template specialization is actually an
+  /// instantiation of the given class template partial specialization whose
+  /// template arguments have been deduced.
+  void setInstantiationOf(ClassTemplatePartialSpecializationDecl *PartialSpec,
+                          TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs) {
+    ASTContext &Ctx = getASTContext();
+    setInstantiationOf(PartialSpec,
+                       new (Ctx) TemplateArgumentList(Ctx, TemplateArgs,
+                                                      NumTemplateArgs));
+  }
+
+  /// \brief Note that this class template specialization is an instantiation
+  /// of the given class template.
+  void setInstantiationOf(ClassTemplateDecl *TemplDecl) {
+    assert(!SpecializedTemplate.is<SpecializedPartialSpecialization*>() &&
+           "Previously set to a class template partial specialization!");
+    SpecializedTemplate = TemplDecl;
   }
 
   /// \brief Sets the type of this specialization as it was written by
@@ -1154,6 +1207,12 @@ class ClassTemplatePartialSpecializationDecl
       TemplateParams(Params), ArgsAsWritten(ArgInfos),
       NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
       InstantiatedFromMember(0, false) { }
+  
+  ClassTemplatePartialSpecializationDecl()
+    : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
+      TemplateParams(0), ArgsAsWritten(0),
+      NumArgsAsWritten(0), SequenceNumber(0),
+      InstantiatedFromMember(0, false) { }
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -1166,15 +1225,25 @@ public:
          ClassTemplatePartialSpecializationDecl *PrevDecl,
          unsigned SequenceNumber);
 
+  static ClassTemplatePartialSpecializationDecl *
+  CreateEmpty(ASTContext &Context);
+
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {
     return TemplateParams;
+  }
+
+  void initTemplateParameters(TemplateParameterList *Params) {
+    assert(TemplateParams == 0 && "TemplateParams already set");
+    TemplateParams = Params;
   }
 
   /// Get the template arguments as written.
   TemplateArgumentLoc *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
   }
+
+  void initTemplateArgsAsWritten(const TemplateArgumentListInfo &ArgInfos);
 
   /// Get the number of template arguments as written.
   unsigned getNumTemplateArgsAsWritten() const {
@@ -1184,6 +1253,7 @@ public:
   /// \brief Get the sequence number for this class template partial
   /// specialization.
   unsigned getSequenceNumber() const { return SequenceNumber; }
+  void setSequenceNumber(unsigned N) { SequenceNumber = N; }
     
   /// \brief Retrieve the member class template partial specialization from
   /// which this particular class template partial specialization was

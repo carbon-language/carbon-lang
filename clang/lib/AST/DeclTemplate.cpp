@@ -392,19 +392,9 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
 }
 
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
-                                           unsigned NumArgs,
-                                           const TemplateArgument *Args)
-  : NumFlatArguments(NumArgs),
-    NumStructuredArguments(NumArgs) {
-
-  TemplateArgument *NewArgs = new (Context) TemplateArgument[NumArgs];
-  std::copy(Args, Args+NumArgs, NewArgs);
-  FlatArguments.setPointer(NewArgs);
-  FlatArguments.setInt(1); // Owns the pointer.
-      
-  // Just reuse the flat arguments array.
-  StructuredArguments.setPointer(NewArgs);    
-  StructuredArguments.setInt(0); // Doesn't own the pointer.
+                                           const TemplateArgument *Args,
+                                           unsigned NumArgs) {
+  init(Context, Args, NumArgs);
 }
 
 /// Produces a shallow copy of the given template argument list.  This
@@ -416,6 +406,23 @@ TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList *Other)
     NumFlatArguments(Other->flat_size()),
     StructuredArguments(Other->StructuredArguments.getPointer(), false),
     NumStructuredArguments(Other->NumStructuredArguments) { }
+
+void TemplateArgumentList::init(ASTContext &Context,
+                           const TemplateArgument *Args,
+                           unsigned NumArgs) {
+assert(NumFlatArguments == 0 && NumStructuredArguments == 0 &&
+       "Already initialized!");
+
+NumFlatArguments = NumStructuredArguments = NumArgs;
+TemplateArgument *NewArgs = new (Context) TemplateArgument[NumArgs];
+std::copy(Args, Args+NumArgs, NewArgs);
+FlatArguments.setPointer(NewArgs);
+FlatArguments.setInt(1); // Owns the pointer.
+
+// Just reuse the flat arguments array.
+StructuredArguments.setPointer(NewArgs);    
+StructuredArguments.setInt(0); // Doesn't own the pointer.
+}
 
 void TemplateArgumentList::Destroy(ASTContext &C) {
   if (FlatArguments.getInt())
@@ -444,6 +451,12 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
     SpecializationKind(TSK_Undeclared) {
 }
 
+ClassTemplateSpecializationDecl::ClassTemplateSpecializationDecl(Kind DK)
+  : CXXRecordDecl(DK, TTK_Struct, 0, SourceLocation(), 0, 0),
+    ExplicitInfo(0),
+    SpecializationKind(TSK_Undeclared) {
+}
+
 ClassTemplateSpecializationDecl *
 ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
                                         DeclContext *DC, SourceLocation L,
@@ -459,6 +472,12 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
                                                    PrevDecl);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
+}
+
+ClassTemplateSpecializationDecl *
+ClassTemplateSpecializationDecl::CreateEmpty(ASTContext &Context) {
+  return
+    new (Context)ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
 }
 
 void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
@@ -522,6 +541,24 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
 
   Context.getInjectedClassNameType(Result, CanonInjectedType);
   return Result;
+}
+
+ClassTemplatePartialSpecializationDecl *
+ClassTemplatePartialSpecializationDecl::CreateEmpty(ASTContext &Context) {
+  return new (Context)ClassTemplatePartialSpecializationDecl();
+}
+
+void ClassTemplatePartialSpecializationDecl::
+initTemplateArgsAsWritten(const TemplateArgumentListInfo &ArgInfos) {
+  assert(ArgsAsWritten == 0 && "ArgsAsWritten already set");
+  unsigned N = ArgInfos.size();
+  TemplateArgumentLoc *ClonedArgs
+    = new (getASTContext()) TemplateArgumentLoc[N];
+  for (unsigned I = 0; I != N; ++I)
+    ClonedArgs[I] = ArgInfos[I];
+  
+  ArgsAsWritten = ClonedArgs;
+  NumArgsAsWritten = N;
 }
 
 //===----------------------------------------------------------------------===//

@@ -1394,7 +1394,7 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                                 SourceLocation RAngleLoc) {
   ASTContext &Ctx = getASTContext();
   TemplateArgumentList *TemplArgs
-    = new (Ctx) TemplateArgumentList(Ctx, NumTemplateArgs, TemplateArgs);
+    = new (Ctx) TemplateArgumentList(Ctx, TemplateArgs, NumTemplateArgs);
   TemplateArgumentListInfo *TemplArgsInfo
     = new (Ctx) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
   for (unsigned i=0; i != NumTemplateArgsAsWritten; ++i)
