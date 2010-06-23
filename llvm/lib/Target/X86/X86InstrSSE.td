@@ -1456,13 +1456,26 @@ let Constraints = "$src1 = $dst" in {
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
 
+multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
+                                Domain d> {
+  def rr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins RC:$src),
+              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
+                     [(set GR32:$dst, (Int RC:$src))], d>;
+}
+
 // Mask creation
-def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
-                     "movmskps\t{$src, $dst|$dst, $src}",
-                     [(set GR32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
-def MOVMSKPDrr : PDI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
-                     "movmskpd\t{$src, $dst|$dst, $src}",
-                     [(set GR32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
+defm MOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps, "movmskps",
+                                     SSEPackedSingle>, TB;
+defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
+                                     SSEPackedDouble>, TB, OpSize;
+
+let isAsmParserOnly = 1 in {
+  defm VMOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps,
+                                        "movmskps", SSEPackedSingle>, VEX;
+  defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
+                                        "movmskpd", SSEPackedDouble>, OpSize,
+                                        VEX;
+}
 
 // Prefetch intrinsic.
 def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),

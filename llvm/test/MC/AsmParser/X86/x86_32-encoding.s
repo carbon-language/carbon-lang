@@ -10517,3 +10517,12 @@
 // CHECK: vcmppd  $3, -4(%ebx,%ecx,8), %xmm2, %xmm3
 // CHECK: encoding: [0xc5,0xe9,0xc2,0x5c,0xcb,0xfc,0x03]
           vcmpunordpd   -4(%ebx,%ecx,8), %xmm2, %xmm3
+
+// CHECK: vmovmskps  %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf8,0x50,0xc2]
+          vmovmskps  %xmm2, %eax
+
+// CHECK: vmovmskpd  %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf9,0x50,0xc2]
+          vmovmskpd  %xmm2, %eax
+
