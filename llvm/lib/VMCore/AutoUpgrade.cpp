@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/IRBuilder.h"
 #include <cstring>
@@ -314,7 +315,8 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
   LLVMContext &C = CI->getContext();
-  
+  ImmutableCallSite CS(CI);
+
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
@@ -583,9 +585,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::ctlz:
   case Intrinsic::ctpop:
   case Intrinsic::cttz: {
-    //  Build a small vector of the 1..(N-1) operands, which are the 
-    //  parameters.
-    SmallVector<Value*, 8> Operands(CI->op_begin()+1, CI->op_end());
+    //  Build a small vector of the original arguments.
+    SmallVector<Value*, 8> Operands(CS.arg_begin(), CS.arg_end());
 
     //  Construct a new CallInst
     CallInst *NewCI = CallInst::Create(NewFn, Operands.begin(), Operands.end(),
@@ -620,7 +621,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::eh_selector:
   case Intrinsic::eh_typeid_for: {
     // Only the return type changed.
-    SmallVector<Value*, 8> Operands(CI->op_begin() + 1, CI->op_end());
+    SmallVector<Value*, 8> Operands(CS.arg_begin(), CS.arg_end());
     CallInst *NewCI = CallInst::Create(NewFn, Operands.begin(), Operands.end(),
                                        "upgraded." + CI->getName(), CI);
     NewCI->setTailCall(CI->isTailCall());
