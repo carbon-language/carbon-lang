@@ -116,8 +116,8 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
       Pointer = V->getOperand(0);
       PointerSize = AA->getTypeStoreSize(V->getType());
-    } else if (isFreeCall(Inst)) {
-      Pointer = Inst->getOperand(1);
+    } else if (const CallInst *CI = isFreeCall(Inst)) {
+      Pointer = CI->getArgOperand(0);
       // calls to free() erase the entire structure
       PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
@@ -197,9 +197,9 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R = 
-          AA->alias(II->getOperand(3), ~0U, MemPtr, ~0U);
+          AA->alias(II->getArgOperand(2), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias) {
-          InvariantTag = II->getOperand(1);
+          InvariantTag = II->getArgOperand(0);
           continue;
         }
       
@@ -210,7 +210,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R =
-          AA->alias(II->getOperand(2), ~0U, MemPtr, ~0U);
+          AA->alias(II->getArgOperand(1), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
       }
@@ -365,25 +365,26 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemPtr = LI->getPointerOperand();
       MemSize = AA->getTypeStoreSize(LI->getType());
     }
-  } else if (isFreeCall(QueryInst)) {
-    MemPtr = QueryInst->getOperand(1);
+  } else if (const CallInst *CI = isFreeCall(QueryInst)) {
+    MemPtr = CI->getArgOperand(0);
     // calls to free() erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
     int IntrinsicID = 0;  // Intrinsic IDs start at 1.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(QueryInst))
+    IntrinsicInst *II = dyn_cast<IntrinsicInst>(QueryInst);
+    if (II)
       IntrinsicID = II->getIntrinsicID();
 
     switch (IntrinsicID) {
     case Intrinsic::lifetime_start:
     case Intrinsic::lifetime_end:
     case Intrinsic::invariant_start:
-      MemPtr = QueryInst->getOperand(2);
-      MemSize = cast<ConstantInt>(QueryInst->getOperand(1))->getZExtValue();
+      MemPtr = II->getArgOperand(1);
+      MemSize = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
       break;
     case Intrinsic::invariant_end:
-      MemPtr = QueryInst->getOperand(3);
-      MemSize = cast<ConstantInt>(QueryInst->getOperand(2))->getZExtValue();
+      MemPtr = II->getArgOperand(2);
+      MemSize = cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
       break;
     default:
       CallSite QueryCS = CallSite::get(QueryInst);
