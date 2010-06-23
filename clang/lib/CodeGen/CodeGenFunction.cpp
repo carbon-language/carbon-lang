@@ -180,11 +180,14 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   if (!ShouldInstrumentFunction())
     return;
 
+  const llvm::PointerType *PointerTy;
   const llvm::FunctionType *FunctionTy;
   std::vector<const llvm::Type*> ProfileFuncArgs;
 
-  ProfileFuncArgs.push_back(CurFn->getType());
-  ProfileFuncArgs.push_back(llvm::Type::getInt8PtrTy(VMContext));
+  // void __cyg_profile_func_{enter,exit} (void *this_fn, void *call_site);
+  PointerTy = llvm::Type::getInt8PtrTy(VMContext);
+  ProfileFuncArgs.push_back(PointerTy);
+  ProfileFuncArgs.push_back(PointerTy);
   FunctionTy = llvm::FunctionType::get(
     llvm::Type::getVoidTy(VMContext),
     ProfileFuncArgs, false);
@@ -195,7 +198,9 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0),
     "callsite");
 
-  Builder.CreateCall2(F, CurFn, CallSite);
+  Builder.CreateCall2(F,
+                      llvm::ConstantExpr::getBitCast(CurFn, PointerTy),
+                      CallSite);
 }
 
 void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
