@@ -292,6 +292,7 @@ private:
   MachineBasicBlock *CodeGenAndEmitDAG(MachineBasicBlock *BB);
   void LowerArguments(const BasicBlock *BB);
   
+  void ShrinkDemandedOps();
   void ComputeLiveOutVRegInfo();
 
   /// Create the scheduler. If a specific scheduler was specified
