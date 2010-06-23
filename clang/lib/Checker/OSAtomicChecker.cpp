@@ -100,7 +100,9 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
   const GRState *state = C.getState();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
-  // Here we should use the value type of the region as the load type.
+  // Here we should use the value type of the region as the load type, because
+  // we are simulating the semantics of the function, not the semantics of 
+  // passing argument.
   QualType LoadTy;
   if (const TypedRegion *TR =
       dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
