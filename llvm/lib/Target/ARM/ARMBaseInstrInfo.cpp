@@ -1306,6 +1306,107 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
   return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
 }
 
+/// areLoadsFromSameBasePtr - This is used by the pre-regalloc scheduler to
+/// determine if two loads are loading from the same base address. It should
+/// only return true if the base pointers are the same and the only differences
+/// between the two addresses is the offset. It also returns the offsets by
+/// reference.
+bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
+                                               int64_t &Offset1,
+                                               int64_t &Offset2) const {
+  // Don't worry about Thumb: just ARM and Thumb2.
+  if (Subtarget.isThumb1Only()) return false;
+
+  if (!Load1->isMachineOpcode() || !Load2->isMachineOpcode())
+    return false;
+
+  switch (Load1->getMachineOpcode()) {
+  default:
+    return false;
+  case ARM::LDR:
+  case ARM::LDRB:
+  case ARM::LDRD:
+  case ARM::LDRH:
+  case ARM::LDRSB:
+  case ARM::LDRSH:
+  case ARM::VLDRD:
+  case ARM::VLDRS:
+  case ARM::t2LDRi8:
+  case ARM::t2LDRDi8:
+  case ARM::t2LDRSHi8:
+  case ARM::t2LDRi12:
+  case ARM::t2LDRSHi12:
+    break;
+  }
+
+  switch (Load2->getMachineOpcode()) {
+  default:
+    return false;
+  case ARM::LDR:
+  case ARM::LDRB:
+  case ARM::LDRD:
+  case ARM::LDRH:
+  case ARM::LDRSB:
+  case ARM::LDRSH:
+  case ARM::VLDRD:
+  case ARM::VLDRS:
+  case ARM::t2LDRi8:
+  case ARM::t2LDRDi8:
+  case ARM::t2LDRSHi8:
+  case ARM::t2LDRi12:
+  case ARM::t2LDRSHi12:
+    break;
+  }
+
+  // Check if base addresses and chain operands match.
+  if (Load1->getOperand(0) != Load2->getOperand(0) ||
+      Load1->getOperand(4) != Load2->getOperand(4))
+    return false;
+
+  // Index should be Reg0.
+  if (Load1->getOperand(3) != Load2->getOperand(3))
+    return false;
+
+  // Determine the offsets.
+  if (isa<ConstantSDNode>(Load1->getOperand(1)) &&
+      isa<ConstantSDNode>(Load2->getOperand(1))) {
+    Offset1 = cast<ConstantSDNode>(Load1->getOperand(1))->getSExtValue();
+    Offset2 = cast<ConstantSDNode>(Load2->getOperand(1))->getSExtValue();
+    return true;
+  }
+
+  return false;
+}
+
+/// shouldScheduleLoadsNear - This is a used by the pre-regalloc scheduler to
+/// determine (in conjuction with areLoadsFromSameBasePtr) if two loads should
+/// be scheduled togther. On some targets if two loads are loading from
+/// addresses in the same cache line, it's better if they are scheduled
+/// together. This function takes two integers that represent the load offsets
+/// from the common base address. It returns true if it decides it's desirable
+/// to schedule the two loads together. "NumLoads" is the number of loads that
+/// have already been scheduled after Load1.
+bool ARMBaseInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
+                                               int64_t Offset1, int64_t Offset2,
+                                               unsigned NumLoads) const {
+  // Don't worry about Thumb: just ARM and Thumb2.
+  if (Subtarget.isThumb1Only()) return false;
+
+  assert(Offset2 > Offset1);
+
+  if ((Offset2 - Offset1) / 8 > 64)
+    return false;
+
+  if (Load1->getMachineOpcode() != Load2->getMachineOpcode())
+    return false;  // FIXME: overly conservative?
+
+  // Four loads in a row should be sufficient.
+  if (NumLoads >= 3)
+    return false;
+
+  return true;
+}
+
 bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
                                             const MachineBasicBlock *MBB,
                                             const MachineFunction &MF) const {

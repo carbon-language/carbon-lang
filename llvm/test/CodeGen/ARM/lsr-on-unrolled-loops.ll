@@ -626,9 +626,11 @@ bb24:                                             ; preds = %bb23
 ; LSR should use count-down iteration to avoid requiring the trip count
 ; in a register, and it shouldn't require any reloads here.
 
-; CHECK:      subs  r3, #1
-; CHECK-NEXT: cmp   r3, #0
-; CHECK-NEXT: bne.w   
+;      CHECK: @ %bb24
+; CHECK-NEXT: @   in Loop: Header=BB1_1 Depth=1
+; CHECK-NEXT: sub{{.*}} [[REGISTER:r[0-9]+]], #1
+; CHECK-NEXT: cmp{{.*}} [[REGISTER]], #0
+; CHECK-NEXT: bne.w
 
   %92 = icmp eq i32 %tmp81, %indvar78             ; <i1> [#uses=1]
   %indvar.next79 = add i32 %indvar78, 1           ; <i32> [#uses=1]
