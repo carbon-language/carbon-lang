@@ -244,10 +244,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     Record.push_back(FTSInfo->getTemplateSpecializationKind());
     
     // Template arguments.
-    assert(FTSInfo->TemplateArguments && "No template args!");
-    Record.push_back(FTSInfo->TemplateArguments->flat_size());
-    for (int i=0, e = FTSInfo->TemplateArguments->flat_size(); i != e; ++i)
-      Writer.AddTemplateArgument(FTSInfo->TemplateArguments->get(i), Record);
+    Writer.AddTemplateArgumentList(FTSInfo->TemplateArguments, Record);
     
     // Template args as written.
     if (FTSInfo->TemplateArgumentsAsWritten) {
@@ -705,18 +702,7 @@ void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
   VisitNamedDecl(D);
 
   Writer.AddDeclRef(D->getTemplatedDecl(), Record);
-  {
-    // TemplateParams.
-    TemplateParameterList *TPL = D->getTemplateParameters();
-    assert(TPL && "No TemplateParameters!");
-    Writer.AddSourceLocation(TPL->getTemplateLoc(), Record);
-    Writer.AddSourceLocation(TPL->getLAngleLoc(), Record);
-    Writer.AddSourceLocation(TPL->getRAngleLoc(), Record);
-    Record.push_back(TPL->size());
-    for (TemplateParameterList::iterator P = TPL->begin(), PEnd = TPL->end();
-           P != PEnd; ++P)
-      Writer.AddDeclRef(*P, Record);
-  }
+  Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
 }
 
 void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
@@ -749,12 +735,52 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
 void PCHDeclWriter::VisitClassTemplateSpecializationDecl(
                                            ClassTemplateSpecializationDecl *D) {
-  assert(false && "cannot write ClassTemplateSpecializationDecl");
+  VisitCXXRecordDecl(D);
+
+  llvm::PointerUnion<ClassTemplateDecl *,
+                     ClassTemplatePartialSpecializationDecl *> InstFrom
+    = D->getSpecializedTemplateOrPartial();
+  if (InstFrom.is<ClassTemplateDecl *>()) {
+    Writer.AddDeclRef(InstFrom.get<ClassTemplateDecl *>(), Record);
+  } else {
+    Writer.AddDeclRef(InstFrom.get<ClassTemplatePartialSpecializationDecl *>(),
+                      Record);
+    Writer.AddTemplateArgumentList(&D->getTemplateInstantiationArgs(), Record);
+  }
+
+  // Explicit info.
+  Writer.AddTypeSourceInfo(D->getTypeAsWritten(), Record);
+  if (D->getTypeAsWritten()) {
+    Writer.AddSourceLocation(D->getExternLoc(), Record);
+    Writer.AddSourceLocation(D->getTemplateKeywordLoc(), Record);
+  }
+
+  Writer.AddTemplateArgumentList(&D->getTemplateArgs(), Record);
+  Writer.AddSourceLocation(D->getPointOfInstantiation(), Record);
+  Record.push_back(D->getSpecializationKind());
+
+  Code = pch::DECL_CLASS_TEMPLATE_SPECIALIZATION;
 }
 
 void PCHDeclWriter::VisitClassTemplatePartialSpecializationDecl(
                                     ClassTemplatePartialSpecializationDecl *D) {
-  assert(false && "cannot write ClassTemplatePartialSpecializationDecl");
+  VisitClassTemplateSpecializationDecl(D);
+
+  Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
+
+  Record.push_back(D->getNumTemplateArgsAsWritten());
+  for (int i = 0, e = D->getNumTemplateArgsAsWritten(); i != e; ++i)
+    Writer.AddTemplateArgumentLoc(D->getTemplateArgsAsWritten()[i], Record);
+
+  Record.push_back(D->getSequenceNumber());
+
+  // These are read/set from/to the first declaration.
+  if (D->getPreviousDeclaration() == 0) {
+    Writer.AddDeclRef(D->getInstantiatedFromMember(), Record);
+    Record.push_back(D->isMemberSpecialization());
+  }
+
+  Code = pch::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION;
 }
 
 void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {

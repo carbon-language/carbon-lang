@@ -2220,13 +2220,11 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   case pch::TYPE_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
     TemplateName Name = ReadTemplateName(Record, Idx);
-    unsigned NumArgs = Record[Idx++];
     llvm::SmallVector<TemplateArgument, 8> Args;
-    Args.reserve(NumArgs);
-    while (NumArgs--)
-      Args.push_back(ReadTemplateArgument(Record, Idx));
+    ReadTemplateArgumentList(Args, Record, Idx);
+    QualType Canon = GetType(Record[Idx++]);
     return Context->getTemplateSpecializationType(Name, Args.data(),Args.size(),
-                                                  QualType());
+                                                  Canon);
   }
   }
   // Suppress a GCC warning
@@ -3018,6 +3016,34 @@ PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
   
   assert(0 && "Unhandled template argument kind!");
   return TemplateArgument();
+}
+
+TemplateParameterList *
+PCHReader::ReadTemplateParameterList(const RecordData &Record, unsigned &Idx) {
+  SourceLocation TemplateLoc = ReadSourceLocation(Record, Idx);
+  SourceLocation LAngleLoc = ReadSourceLocation(Record, Idx);
+  SourceLocation RAngleLoc = ReadSourceLocation(Record, Idx);
+
+  unsigned NumParams = Record[Idx++];
+  llvm::SmallVector<NamedDecl *, 16> Params;
+  Params.reserve(NumParams);
+  while (NumParams--)
+    Params.push_back(cast<NamedDecl>(GetDecl(Record[Idx++])));
+    
+  TemplateParameterList* TemplateParams = 
+    TemplateParameterList::Create(*Context, TemplateLoc, LAngleLoc,
+                                  Params.data(), Params.size(), RAngleLoc);
+  return TemplateParams;
+}
+
+void
+PCHReader::
+ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
+                         const RecordData &Record, unsigned &Idx) {
+  unsigned NumTemplateArgs = Record[Idx++];
+  TemplArgs.reserve(NumTemplateArgs);
+  while (NumTemplateArgs--)
+    TemplArgs.push_back(ReadTemplateArgument(Record, Idx));
 }
 
 NestedNameSpecifier *

@@ -223,6 +223,8 @@ PCHTypeWriter::VisitTemplateSpecializationType(
   for (TemplateSpecializationType::iterator ArgI = T->begin(), ArgE = T->end();
          ArgI != ArgE; ++ArgI)
     Writer.AddTemplateArgument(*ArgI, Record);
+  QualType Canon = T->getCanonicalTypeInternal();
+  Writer.AddTypeRef(Canon.getTypePtr() != T ? Canon : QualType(), Record);
   Code = pch::TYPE_TEMPLATE_SPECIALIZATION;
 }
 
@@ -2571,4 +2573,28 @@ void PCHWriter::AddTemplateArgument(const TemplateArgument &Arg,
       AddTemplateArgument(*I, Record);
     break;
   }
+}
+
+void
+PCHWriter::AddTemplateParameterList(const TemplateParameterList *TemplateParams,
+                                    RecordData &Record) {
+  assert(TemplateParams && "No TemplateParams!");
+  AddSourceLocation(TemplateParams->getTemplateLoc(), Record);
+  AddSourceLocation(TemplateParams->getLAngleLoc(), Record);
+  AddSourceLocation(TemplateParams->getRAngleLoc(), Record);
+  Record.push_back(TemplateParams->size());
+  for (TemplateParameterList::const_iterator
+         P = TemplateParams->begin(), PEnd = TemplateParams->end();
+         P != PEnd; ++P)
+    AddDeclRef(*P, Record);
+}
+
+/// \brief Emit a template argument list.
+void
+PCHWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
+                                   RecordData &Record) {
+  assert(TemplateArgs && "No TemplateArgs!");
+  Record.push_back(TemplateArgs->flat_size());
+  for (int i=0, e = TemplateArgs->flat_size(); i != e; ++i)
+    AddTemplateArgument(TemplateArgs->get(i), Record);
 }

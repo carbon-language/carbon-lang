@@ -702,6 +702,15 @@ public:
 
   /// \brief Read a template argument.
   TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx);
+  
+  /// \brief Read a template parameter list.
+  TemplateParameterList *ReadTemplateParameterList(const RecordData &Record,
+                                                   unsigned &Idx);
+  
+  /// \brief Read a template argument array.
+  void
+  ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
+                           const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a source location.
   SourceLocation ReadSourceLocation(const RecordData &Record, unsigned& Idx) {

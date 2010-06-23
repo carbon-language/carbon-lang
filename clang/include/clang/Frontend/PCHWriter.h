@@ -328,6 +328,14 @@ public:
   /// \brief Emit a template argument.
   void AddTemplateArgument(const TemplateArgument &Arg, RecordData &Record);
 
+  /// \brief Emit a template parameter list.
+  void AddTemplateParameterList(const TemplateParameterList *TemplateParams,
+                                RecordData &Record);
+
+  /// \brief Emit a template argument list.
+  void AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
+                                RecordData &Record);
+
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
 
