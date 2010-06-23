@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -29,12 +30,9 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/ExecutionContext.h"
 
-//#define DEBUG_CEDM
-#ifdef DEBUG_CEDM
-#define DEBUG_PRINTF(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define DEBUG_PRINTF(...)
-#endif
+#define DEBUG_PRINTF(...)           \
+    if (log)                        \
+        log->Printf(__VA_ARGS__)
 
 using namespace lldb_private;
 using namespace clang;
@@ -94,7 +92,9 @@ void
 ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
                                  const char *name)
 {
-    DEBUG_PRINTF("Hunting for a definition for %s\n", name);
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    DEBUG_PRINTF("Hunting for a definition for %s", name);
     
     // Back out in all cases where we're not fully initialized
     if (!m_exe_ctx || !m_exe_ctx->frame || !m_sym_ctx)
@@ -105,7 +105,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
     
     if (!function || !block)
     {
-        DEBUG_PRINTF("function = %p, block = %p\n", function, block);
+        DEBUG_PRINTF("function = %p, block = %p", function, block);
         return;
     }
     
@@ -147,7 +147,7 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         
         if (!compile_unit)
         {
-            DEBUG_PRINTF("compile_unit = %p\n", compile_unit);
+            DEBUG_PRINTF("compile_unit = %p", compile_unit);
             return;
         }
         
@@ -170,11 +170,13 @@ void
 ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                        Variable* var)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
     Type *var_type = var->GetType();
     
     if (!var_type) 
     {
-        DEBUG_PRINTF("Skipped a definition because it has no type\n");
+        DEBUG_PRINTF("Skipped a definition because it has no type");
         return;
     }
     
@@ -182,7 +184,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!var_opaque_type)
     {
-        DEBUG_PRINTF("Skipped a definition because it has no Clang type\n");
+        DEBUG_PRINTF("Skipped a definition because it has no Clang type");
         return;
     }
     
@@ -192,7 +194,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!type_list)
     {
-        DEBUG_PRINTF("Skipped a definition because the type has no associated type list\n");
+        DEBUG_PRINTF("Skipped a definition because the type has no associated type list");
         return;
     }
     
@@ -200,7 +202,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!exe_ast_ctx)
     {
-        DEBUG_PRINTF("There is no AST context for the current execution context\n");
+        DEBUG_PRINTF("There is no AST context for the current execution context");
         return;
     }
     
@@ -210,7 +212,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     if (!var_location_expr.Evaluate(m_exe_ctx, exe_ast_ctx, NULL, *var_location.get(), &err))
     {
-        DEBUG_PRINTF("Error evaluating location: %s\n", err.AsCString());
+        DEBUG_PRINTF("Error evaluating location: %s", err.AsCString());
         return;
     }
     
@@ -249,18 +251,20 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     
     m_tuples.push_back(tuple);
     
-    DEBUG_PRINTF("Found variable\n");    
+    DEBUG_PRINTF("Found variable");    
 }
 
 void
 ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
                                        Function* fun)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
     Type *fun_type = fun->GetType();
     
     if (!fun_type) 
     {
-        DEBUG_PRINTF("Skipped a function because it has no type\n");
+        DEBUG_PRINTF("Skipped a function because it has no type");
         return;
     }
     
@@ -268,7 +272,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     
     if (!fun_opaque_type)
     {
-        DEBUG_PRINTF("Skipped a function because it has no Clang type\n");
+        DEBUG_PRINTF("Skipped a function because it has no Clang type");
         return;
     }
     
@@ -291,5 +295,5 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     
     m_tuples.push_back(tuple);
     
-    DEBUG_PRINTF("Found function\n");    
+    DEBUG_PRINTF("Found function");    
 }

@@ -840,14 +840,14 @@ DWARFExpression::Evaluate
 
         if (log)
         {
-            log->Printf("\n");
             size_t count = stack.size();
+            log->Printf("Stack before operation has %d values:", count);
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
                 new_value.Printf("[%zu]", i);
                 stack[i].Dump(&new_value);
-                log->Printf("%s", new_value.GetData());
+                log->Printf("  %s", new_value.GetData());
             }
             log->Printf("0x%8.8x: %s", op_offset, DW_OP_value_to_name(op));
         }
@@ -2572,14 +2572,14 @@ DWARFExpression::Evaluate
     }
     else if (log)
     {
-        log->Printf("\n");
         size_t count = stack.size();
+        log->Printf("Stack after operation has %d values:", count);
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;
             new_value.Printf("[%zu]", i);
             stack[i].Dump(&new_value);
-            log->Printf("%s", new_value.GetData());
+            log->Printf("  %s", new_value.GetData());
         }
     }
 
