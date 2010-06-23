@@ -112,11 +112,11 @@ protected:
 #endif
 
 private:
-
-    lldb_private::ExecutionContext
-    GetCurrentExecutionContext ();
-
-    lldb::ValueObjectSP m_lldb_object_sp;
+//
+//    lldb_private::ExecutionContext
+//    GetCurrentExecutionContext ();
+//
+    lldb::ValueObjectSP m_opaque_sp;
 };
 
 } // namespace lldb

@@ -160,7 +160,6 @@
 		26D5B0C711B07550009A862E /* CFCMutableDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF310F1B8AD00F91463 /* CFCMutableDictionary.cpp */; };
 		26D5B0C811B07550009A862E /* CFCMutableSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF510F1B8AD00F91463 /* CFCMutableSet.cpp */; };
 		26D5B0C911B07550009A862E /* CFCString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF810F1B8AD00F91463 /* CFCString.cpp */; };
-		26D5B0CA11B07550009A862E /* CommandContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0710F1B8DD00F91463 /* CommandContext.cpp */; };
 		26D5B0CB11B07550009A862E /* CommandInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */; };
 		26D5B0CC11B07550009A862E /* CommandObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0910F1B8DD00F91463 /* CommandObject.cpp */; };
 		26D5B0CD11B07550009A862E /* CommandReturnObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */; };
@@ -336,7 +335,6 @@
 		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
 		4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C08CDEB11C81F1E001610A8 /* ThreadSpec.h */; };
 		4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
-		4CA9637C11B6E99A00780E28 /* CommandObjectApropos.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A357582116CFDEE00E8ED2F /* SBValueList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -590,7 +588,6 @@
 		26BC7CFA10F1B71400F91463 /* Stoppoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Stoppoint.h; path = include/lldb/Breakpoint/Stoppoint.h; sourceTree = "<group>"; };
 		26BC7CFB10F1B71400F91463 /* StoppointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StoppointLocation.h; path = include/lldb/Breakpoint/StoppointLocation.h; sourceTree = "<group>"; };
 		26BC7CFC10F1B71400F91463 /* WatchpointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WatchpointLocation.h; path = include/lldb/Breakpoint/WatchpointLocation.h; sourceTree = "<group>"; };
-		26BC7D1010F1B76300F91463 /* CommandObjectAdd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectAdd.h; path = source/Commands/CommandObjectAdd.h; sourceTree = "<group>"; };
 		26BC7D1110F1B76300F91463 /* CommandObjectAlias.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectAlias.h; path = source/Commands/CommandObjectAlias.h; sourceTree = "<group>"; };
 		26BC7D1210F1B76300F91463 /* CommandObjectAppend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectAppend.h; path = source/Commands/CommandObjectAppend.h; sourceTree = "<group>"; };
 		26BC7D1410F1B76300F91463 /* CommandObjectBreakpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectBreakpoint.h; path = source/Commands/CommandObjectBreakpoint.h; sourceTree = "<group>"; };
@@ -605,7 +602,6 @@
 		26BC7D1F10F1B76300F91463 /* CommandObjectProcess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectProcess.h; path = source/Commands/CommandObjectProcess.h; sourceTree = "<group>"; };
 		26BC7D2010F1B76300F91463 /* CommandObjectQuit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectQuit.h; path = source/Commands/CommandObjectQuit.h; sourceTree = "<group>"; };
 		26BC7D2210F1B76300F91463 /* CommandObjectRegister.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectRegister.h; path = source/Commands/CommandObjectRegister.h; sourceTree = "<group>"; };
-		26BC7D2310F1B76300F91463 /* CommandObjectRemove.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectRemove.h; path = source/Commands/CommandObjectRemove.h; sourceTree = "<group>"; };
 		26BC7D2410F1B76300F91463 /* CommandObjectScript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectScript.h; path = source/Interpreter/CommandObjectScript.h; sourceTree = "<group>"; };
 		26BC7D2510F1B76300F91463 /* CommandObjectSelect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSelect.h; path = source/Commands/CommandObjectSelect.h; sourceTree = "<group>"; };
 		26BC7D2610F1B76300F91463 /* CommandObjectSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSet.h; path = source/Commands/CommandObjectSet.h; sourceTree = "<group>"; };
@@ -615,7 +611,6 @@
 		26BC7D2A10F1B76300F91463 /* CommandObjectSourceFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSourceFile.h; path = source/Commands/CommandObjectSourceFile.h; sourceTree = "<group>"; };
 		26BC7D2C10F1B76300F91463 /* CommandObjectSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectSyntax.h; path = source/Commands/CommandObjectSyntax.h; sourceTree = "<group>"; };
 		26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectThread.h; path = source/Commands/CommandObjectThread.h; sourceTree = "<group>"; };
-		26BC7D2E10F1B76300F91463 /* CommandObjectTranslate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTranslate.h; path = source/Commands/CommandObjectTranslate.h; sourceTree = "<group>"; };
 		26BC7D2F10F1B76300F91463 /* CommandObjectVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVariable.h; path = source/Commands/CommandObjectVariable.h; sourceTree = "<group>"; };
 		26BC7D5010F1B77400F91463 /* Address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Address.h; path = include/lldb/Core/Address.h; sourceTree = "<group>"; };
 		26BC7D5110F1B77400F91463 /* AddressRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AddressRange.h; path = include/lldb/Core/AddressRange.h; sourceTree = "<group>"; };
@@ -677,7 +672,6 @@
 		26BC7DD410F1B7D500F91463 /* Host.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Host.h; path = include/lldb/Host/Host.h; sourceTree = "<group>"; };
 		26BC7DD510F1B7D500F91463 /* Mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Mutex.h; path = include/lldb/Host/Mutex.h; sourceTree = "<group>"; };
 		26BC7DD610F1B7D500F91463 /* Predicate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Predicate.h; path = include/lldb/Host/Predicate.h; sourceTree = "<group>"; };
-		26BC7DE110F1B7F900F91463 /* CommandContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandContext.h; path = include/lldb/Interpreter/CommandContext.h; sourceTree = "<group>"; };
 		26BC7DE210F1B7F900F91463 /* CommandInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandInterpreter.h; path = include/lldb/Interpreter/CommandInterpreter.h; sourceTree = "<group>"; };
 		26BC7DE310F1B7F900F91463 /* CommandObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObject.h; path = include/lldb/Interpreter/CommandObject.h; sourceTree = "<group>"; };
 		26BC7DE410F1B7F900F91463 /* CommandReturnObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandReturnObject.h; path = include/lldb/Interpreter/CommandReturnObject.h; sourceTree = "<group>"; };
@@ -712,7 +706,6 @@
 		26BC7E1610F1B83100F91463 /* Stoppoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Stoppoint.cpp; path = source/Breakpoint/Stoppoint.cpp; sourceTree = "<group>"; };
 		26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StoppointLocation.cpp; path = source/Breakpoint/StoppointLocation.cpp; sourceTree = "<group>"; };
 		26BC7E1810F1B83100F91463 /* WatchpointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointLocation.cpp; path = source/Breakpoint/WatchpointLocation.cpp; sourceTree = "<group>"; };
-		26BC7E2910F1B84700F91463 /* CommandObjectAdd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectAdd.cpp; path = source/Commands/CommandObjectAdd.cpp; sourceTree = "<group>"; };
 		26BC7E2A10F1B84700F91463 /* CommandObjectAlias.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectAlias.cpp; path = source/Commands/CommandObjectAlias.cpp; sourceTree = "<group>"; };
 		26BC7E2B10F1B84700F91463 /* CommandObjectAppend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectAppend.cpp; path = source/Commands/CommandObjectAppend.cpp; sourceTree = "<group>"; };
 		26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectBreakpoint.cpp; path = source/Commands/CommandObjectBreakpoint.cpp; sourceTree = "<group>"; };
@@ -727,7 +720,6 @@
 		26BC7E3810F1B84700F91463 /* CommandObjectProcess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectProcess.cpp; path = source/Commands/CommandObjectProcess.cpp; sourceTree = "<group>"; };
 		26BC7E3910F1B84700F91463 /* CommandObjectQuit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectQuit.cpp; path = source/Commands/CommandObjectQuit.cpp; sourceTree = "<group>"; };
 		26BC7E3B10F1B84700F91463 /* CommandObjectRegister.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectRegister.cpp; path = source/Commands/CommandObjectRegister.cpp; sourceTree = "<group>"; };
-		26BC7E3C10F1B84700F91463 /* CommandObjectRemove.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectRemove.cpp; path = source/Commands/CommandObjectRemove.cpp; sourceTree = "<group>"; };
 		26BC7E3D10F1B84700F91463 /* CommandObjectScript.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectScript.cpp; path = source/Interpreter/CommandObjectScript.cpp; sourceTree = "<group>"; };
 		26BC7E3E10F1B84700F91463 /* CommandObjectSelect.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSelect.cpp; path = source/Commands/CommandObjectSelect.cpp; sourceTree = "<group>"; };
 		26BC7E3F10F1B84700F91463 /* CommandObjectSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSet.cpp; path = source/Commands/CommandObjectSet.cpp; sourceTree = "<group>"; };
@@ -737,7 +729,6 @@
 		26BC7E4310F1B84700F91463 /* CommandObjectSourceFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSourceFile.cpp; path = source/Commands/CommandObjectSourceFile.cpp; sourceTree = "<group>"; };
 		26BC7E4510F1B84700F91463 /* CommandObjectSyntax.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectSyntax.cpp; path = source/Commands/CommandObjectSyntax.cpp; sourceTree = "<group>"; };
 		26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectThread.cpp; path = source/Commands/CommandObjectThread.cpp; sourceTree = "<group>"; };
-		26BC7E4710F1B84700F91463 /* CommandObjectTranslate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTranslate.cpp; path = source/Commands/CommandObjectTranslate.cpp; sourceTree = "<group>"; };
 		26BC7E4810F1B84700F91463 /* CommandObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVariable.cpp; path = source/Commands/CommandObjectVariable.cpp; sourceTree = "<group>"; };
 		26BC7E6910F1B85900F91463 /* Address.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Address.cpp; path = source/Core/Address.cpp; sourceTree = "<group>"; };
 		26BC7E6A10F1B85900F91463 /* AddressRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AddressRange.cpp; path = source/Core/AddressRange.cpp; sourceTree = "<group>"; };
@@ -806,7 +797,6 @@
 		26BC7EF710F1B8AD00F91463 /* CFCReleaser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFCReleaser.h; path = source/Host/macosx/cfcpp/CFCReleaser.h; sourceTree = "<group>"; };
 		26BC7EF810F1B8AD00F91463 /* CFCString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFCString.cpp; path = source/Host/macosx/cfcpp/CFCString.cpp; sourceTree = "<group>"; };
 		26BC7EF910F1B8AD00F91463 /* CFCString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFCString.h; path = source/Host/macosx/cfcpp/CFCString.h; sourceTree = "<group>"; };
-		26BC7F0710F1B8DD00F91463 /* CommandContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandContext.cpp; path = source/Interpreter/CommandContext.cpp; sourceTree = "<group>"; };
 		26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandInterpreter.cpp; path = source/Interpreter/CommandInterpreter.cpp; sourceTree = "<group>"; };
 		26BC7F0910F1B8DD00F91463 /* CommandObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObject.cpp; path = source/Interpreter/CommandObject.cpp; sourceTree = "<group>"; };
 		26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandReturnObject.cpp; path = source/Interpreter/CommandReturnObject.cpp; sourceTree = "<group>"; };
@@ -1751,8 +1741,6 @@
 		26BC7D0D10F1B71D00F91463 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
-				26BC7D1010F1B76300F91463 /* CommandObjectAdd.h */,
-				26BC7E2910F1B84700F91463 /* CommandObjectAdd.cpp */,
 				26BC7D1110F1B76300F91463 /* CommandObjectAlias.h */,
 				26BC7E2A10F1B84700F91463 /* CommandObjectAlias.cpp */,
 				26BC7D1210F1B76300F91463 /* CommandObjectAppend.h */,
@@ -1793,8 +1781,6 @@
 				26BC7E3910F1B84700F91463 /* CommandObjectQuit.cpp */,
 				26BC7D2210F1B76300F91463 /* CommandObjectRegister.h */,
 				26BC7E3B10F1B84700F91463 /* CommandObjectRegister.cpp */,
-				26BC7D2310F1B76300F91463 /* CommandObjectRemove.h */,
-				26BC7E3C10F1B84700F91463 /* CommandObjectRemove.cpp */,
 				26BC7D2410F1B76300F91463 /* CommandObjectScript.h */,
 				26BC7E3D10F1B84700F91463 /* CommandObjectScript.cpp */,
 				26BC7D2510F1B76300F91463 /* CommandObjectSelect.h */,
@@ -1815,8 +1801,6 @@
 				269416AD119A024800FF2715 /* CommandObjectTarget.cpp */,
 				26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */,
 				26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */,
-				26BC7D2E10F1B76300F91463 /* CommandObjectTranslate.h */,
-				26BC7E4710F1B84700F91463 /* CommandObjectTranslate.cpp */,
 				9A8B4EA210FD515000C68FF2 /* CommandObjectUnalias.h */,
 				9A8B4EA310FD516400C68FF2 /* CommandObjectUnalias.cpp */,
 				26BC7D2F10F1B76300F91463 /* CommandObjectVariable.h */,
@@ -1872,8 +1856,6 @@
 				26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */,
 				4C09CB73116BD98B00C7A725 /* CommandCompletions.h */,
 				4C09CB74116BD98B00C7A725 /* CommandCompletions.cpp */,
-				26BC7DE110F1B7F900F91463 /* CommandContext.h */,
-				26BC7F0710F1B8DD00F91463 /* CommandContext.cpp */,
 				26BC7DE210F1B7F900F91463 /* CommandInterpreter.h */,
 				26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */,
 				26BC7DE310F1B7F900F91463 /* CommandObject.h */,
@@ -2193,7 +2175,6 @@
 				9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */,
 				49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */,
 				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
-				4CA9637C11B6E99A00780E28 /* CommandObjectApropos.h in Headers */,
 				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
 				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
 			);
@@ -2462,7 +2443,6 @@
 				26D5B0C711B07550009A862E /* CFCMutableDictionary.cpp in Sources */,
 				26D5B0C811B07550009A862E /* CFCMutableSet.cpp in Sources */,
 				26D5B0C911B07550009A862E /* CFCString.cpp in Sources */,
-				26D5B0CA11B07550009A862E /* CommandContext.cpp in Sources */,
 				26D5B0CB11B07550009A862E /* CommandInterpreter.cpp in Sources */,
 				26D5B0CC11B07550009A862E /* CommandObject.cpp in Sources */,
 				26D5B0CD11B07550009A862E /* CommandReturnObject.cpp in Sources */,

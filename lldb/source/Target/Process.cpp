@@ -347,7 +347,7 @@ Process::SetProcessExitStatus
 {
     if (signo == 0 || exit_status)
     {
-        TargetSP target_sp(Debugger::GetSharedInstance().GetTargetList().FindTargetWithProcessID (pid));
+        TargetSP target_sp(Debugger::FindTargetWithProcessID (pid));
         if (target_sp)
         {
             ProcessSP process_sp (target_sp->GetProcessSP());

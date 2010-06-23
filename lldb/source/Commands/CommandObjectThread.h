@@ -18,27 +18,11 @@
 
 namespace lldb_private {
 
-class CommandObjectThreadList : public CommandObject
-{
-public:
-
-    CommandObjectThreadList ();
-
-    ~CommandObjectThreadList ();
-
-    virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result);
-};
-
-
 class CommandObjectMultiwordThread : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectMultiwordThread (CommandInterpreter *interpreter);
+    CommandObjectMultiwordThread (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectMultiwordThread ();
@@ -47,14 +31,14 @@ public:
 
 
 bool
-DisplayThreadInfo (CommandInterpreter *interpreter,
+DisplayThreadInfo (CommandInterpreter &interpreter,
                    Stream &strm,
                    Thread *thread,
                    bool only_threads_with_stop_reason,
                    bool show_source);
 
 size_t
-DisplayThreadsInfo (CommandInterpreter *interpreter,
+DisplayThreadsInfo (CommandInterpreter &interpreter,
                     ExecutionContext *exe_ctx,
                     CommandReturnObject &result,
                     bool only_threads_with_stop_reason,
@@ -62,7 +46,7 @@ DisplayThreadsInfo (CommandInterpreter *interpreter,
 
 size_t
 DisplayFramesForExecutionContext (Thread *thread,
-                                  CommandInterpreter *interpreter,
+                                  CommandInterpreter &interpreter,
                                   Stream& strm,
                                   bool ascending,
                                   uint32_t first_frame,
@@ -75,7 +59,7 @@ DisplayFramesForExecutionContext (Thread *thread,
 bool
 DisplayFrameForExecutionContext (Thread *thread,
                                  StackFrame *frame,
-                                 CommandInterpreter *interpreter,
+                                 CommandInterpreter &interpreter,
                                  Stream& strm,
                                  bool show_frame_info,
                                  bool show_source,

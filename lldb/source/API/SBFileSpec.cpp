@@ -16,19 +16,19 @@ using namespace lldb_private;
 
 
 SBFileSpec::SBFileSpec () :
-    m_lldb_object_ap()
+    m_opaque_ap()
 {
 }
 
 SBFileSpec::SBFileSpec (const SBFileSpec &rhs) :
-    m_lldb_object_ap()
+    m_opaque_ap()
 {
-    if (rhs.m_lldb_object_ap.get())
-        m_lldb_object_ap.reset (new FileSpec (*m_lldb_object_ap));
+    if (rhs.m_opaque_ap.get())
+        m_opaque_ap.reset (new FileSpec (*m_opaque_ap));
 }
 
 SBFileSpec::SBFileSpec (const char *path) :
-    m_lldb_object_ap(new FileSpec (path))
+    m_opaque_ap(new FileSpec (path))
 {
 }
 
@@ -42,7 +42,7 @@ SBFileSpec::operator = (const SBFileSpec &rhs)
     if (this != &rhs)
     {
         if (rhs.IsValid())
-            m_lldb_object_ap.reset (new lldb_private::FileSpec(*rhs.m_lldb_object_ap.get()));
+            m_opaque_ap.reset (new lldb_private::FileSpec(*rhs.m_opaque_ap.get()));
     }
     return *this;
 }
@@ -50,14 +50,14 @@ SBFileSpec::operator = (const SBFileSpec &rhs)
 bool
 SBFileSpec::IsValid() const
 {
-    return m_lldb_object_ap.get() != NULL;
+    return m_opaque_ap.get() != NULL;
 }
 
 bool
 SBFileSpec::Exists () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->Exists();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->Exists();
     return false;
 }
 
@@ -71,24 +71,24 @@ SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)
 const char *
 SBFileSpec::GetFileName() const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetFilename().AsCString();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetFilename().AsCString();
     return NULL;
 }
 
 const char *
 SBFileSpec::GetDirectory() const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetDirectory().AsCString();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetDirectory().AsCString();
     return NULL;
 }
 
 uint32_t
 SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetPath (dst_path, dst_len);
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetPath (dst_path, dst_len);
 
     if (dst_path && dst_len)
         *dst_path = '\0';
@@ -99,35 +99,35 @@ SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 const lldb_private::FileSpec *
 SBFileSpec::operator->() const
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 const lldb_private::FileSpec *
 SBFileSpec::get() const
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 
 const lldb_private::FileSpec &
 SBFileSpec::operator*() const
 {
-    return *m_lldb_object_ap.get();
+    return *m_opaque_ap.get();
 }
 
 const lldb_private::FileSpec &
 SBFileSpec::ref() const
 {
-    return *m_lldb_object_ap.get();
+    return *m_opaque_ap.get();
 }
 
 
 void
 SBFileSpec::SetFileSpec (const lldb_private::FileSpec& fs)
 {
-    if (m_lldb_object_ap.get())
-        *m_lldb_object_ap = fs;
+    if (m_opaque_ap.get())
+        *m_opaque_ap = fs;
     else
-        m_lldb_object_ap.reset (new FileSpec (fs));
+        m_opaque_ap.reset (new FileSpec (fs));
 }
 

@@ -28,7 +28,8 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectImage(CommandInterpreter *interpreter);
+    CommandObjectImage(CommandInterpreter &interpreter);
+
     virtual
     ~CommandObjectImage();
 

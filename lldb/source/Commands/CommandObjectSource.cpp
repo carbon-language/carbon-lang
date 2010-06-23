@@ -14,7 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
@@ -43,9 +43,8 @@ CommandObjectSource::~CommandObjectSource ()
 bool
 CommandObjectSource::Execute
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -88,8 +87,8 @@ CommandObjectSource::Execute
                 size_t i;
                 for (i = 0; i<num_commands; ++i)
                 {
-                    result.GetOutputStream().Printf("%s %s\n", interpreter->GetPrompt(), commands[i].c_str());
-                    if (!interpreter->HandleCommand(commands[i].c_str(), false, result))
+                    result.GetOutputStream().Printf("%s %s\n", interpreter.GetPrompt(), commands[i].c_str());
+                    if (!interpreter.HandleCommand(commands[i].c_str(), false, result))
                         break;
                 }
 

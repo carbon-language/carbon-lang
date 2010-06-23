@@ -13,21 +13,22 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/CommandContext.h"
-#include "lldb/Interpreter/Options.h"
-#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileSpec.h"
-#include "lldb/Symbol/LineTable.h"
-#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Symbol/LineTable.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Core/Module.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Interpreter/CommandCompletions.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -56,7 +57,7 @@ DumpModuleUUID (Stream &strm, Module *module)
 static uint32_t
 DumpCompileUnitLineTable
 (
-    CommandContext *context,
+    CommandInterpreter &interpreter,
     Stream &strm,
     Module *module,
     const FileSpec &file_spec,
@@ -85,7 +86,9 @@ DumpCompileUnitLineTable
                      << module->GetFileSpec().GetFilename() << "\n";
                 LineTable *line_table = sc.comp_unit->GetLineTable();
                 if (line_table)
-                    line_table->GetDescription (&strm, context->GetExecutionContext().process, lldb::eDescriptionLevelBrief);
+                    line_table->GetDescription (&strm, 
+                                                interpreter.GetDebugger().GetExecutionContext().process, 
+                                                lldb::eDescriptionLevelBrief);
                 else
                     strm << "No line table";
             }
@@ -153,7 +156,7 @@ DumpBasename (Stream &strm, const FileSpec *file_spec_ptr, uint32_t width)
 
 
 static void
-DumpModuleSymtab (CommandContext *context, Stream &strm, Module *module)
+DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module)
 {
     if (module)
     {
@@ -162,13 +165,13 @@ DumpModuleSymtab (CommandContext *context, Stream &strm, Module *module)
         {
             Symtab *symtab = objfile->GetSymtab();
             if (symtab)
-                symtab->Dump(&strm, context->GetExecutionContext().process);
+                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().process);
         }
     }
 }
 
 static void
-DumpModuleSections (CommandContext *context, Stream &strm, Module *module)
+DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *module)
 {
     if (module)
     {
@@ -177,7 +180,7 @@ DumpModuleSections (CommandContext *context, Stream &strm, Module *module)
         {
             SectionList *section_list = objfile->GetSectionList();
             if (section_list)
-                section_list->Dump(&strm, context->GetExecutionContext().process, true);
+                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().process, true);
         }
     }
 }
@@ -198,14 +201,14 @@ DumpModuleSymbolVendor (Stream &strm, Module *module)
 }
 
 static bool
-LookupAddressInModule (CommandContext *context, Stream &strm, Module *module, uint32_t resolve_mask, lldb::addr_t raw_addr, lldb::addr_t offset)
+LookupAddressInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, uint32_t resolve_mask, lldb::addr_t raw_addr, lldb::addr_t offset)
 {
     if (module)
     {
         lldb::addr_t addr = raw_addr - offset;
         Address so_addr;
         SymbolContext sc;
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process && process->IsAlive())
         {
             if (!process->ResolveLoadAddress (addr, so_addr))
@@ -223,7 +226,7 @@ LookupAddressInModule (CommandContext *context, Stream &strm, Module *module, ui
         if (offset)
             strm.Printf("0x%llx: ", addr);
 
-        ExecutionContextScope *exe_scope = context->GetExecutionContext().GetBestExecutionContextScope();
+        ExecutionContextScope *exe_scope = interpreter.GetDebugger().GetExecutionContext().GetBestExecutionContextScope();
         if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset))
             strm.PutCString(": ");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
@@ -234,7 +237,7 @@ LookupAddressInModule (CommandContext *context, Stream &strm, Module *module, ui
 }
 
 static uint32_t
-LookupSymbolInModule (CommandContext *context, Stream &strm, Module *module, const char *name, bool name_is_regex)
+LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex)
 {
     if (module)
     {
@@ -275,7 +278,7 @@ LookupSymbolInModule (CommandContext *context, Stream &strm, Module *module, con
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
                         strm.Indent ();
-                        symbol->Dump (&strm, context->GetExecutionContext().process, i);
+                        symbol->Dump (&strm, interpreter.GetDebugger().GetExecutionContext().process, i);
                     }
                     strm.IndentLess ();
                     return num_matches;
@@ -288,7 +291,7 @@ LookupSymbolInModule (CommandContext *context, Stream &strm, Module *module, con
 
 
 static void
-DumpSymbolContextList (CommandContext *context, Stream &strm, SymbolContextList &sc_list, bool prepend_addr)
+DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolContextList &sc_list, bool prepend_addr)
 {
     strm.IndentMore ();
     uint32_t i;
@@ -305,9 +308,9 @@ DumpSymbolContextList (CommandContext *context, Stream &strm, SymbolContextList 
                 if (sc.line_entry.range.GetBaseAddress().IsValid())
                 {
                     lldb::addr_t vm_addr =
-                                      sc.line_entry.range.GetBaseAddress().GetLoadAddress(context->GetExecutionContext().process);
+                                      sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().process);
                     int addr_size = sizeof (addr_t);
-                    Process *process = context->GetExecutionContext().process;
+                    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
                     if (process)
                         addr_size = process->GetAddressByteSize();
                     if (vm_addr != LLDB_INVALID_ADDRESS)
@@ -318,14 +321,14 @@ DumpSymbolContextList (CommandContext *context, Stream &strm, SymbolContextList 
                     strm.PutCString(" in ");
                 }
             }
-            sc.DumpStopContext(&strm, context->GetExecutionContext().process, sc.line_entry.range.GetBaseAddress());
+            sc.DumpStopContext(&strm, interpreter.GetDebugger().GetExecutionContext().process, sc.line_entry.range.GetBaseAddress());
         }
     }
     strm.IndentLess ();
 }
 
 static uint32_t
-LookupFunctionInModule (CommandContext *context, Stream &strm, Module *module, const char *name, bool name_is_regex)
+LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex)
 {
     if (module && name && name[0])
     {
@@ -353,7 +356,7 @@ LookupFunctionInModule (CommandContext *context, Stream &strm, Module *module, c
                 strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
                 DumpFullpath (strm, &module->GetFileSpec(), 0);
                 strm.PutCString(":\n");
-                DumpSymbolContextList (context, strm, sc_list, true);
+                DumpSymbolContextList (interpreter, strm, sc_list, true);
             }
             return num_matches;
         }
@@ -362,7 +365,7 @@ LookupFunctionInModule (CommandContext *context, Stream &strm, Module *module, c
 }
 
 static uint32_t
-LookupFileAndLineInModule (CommandContext *context, Stream &strm, Module *module, const FileSpec &file_spec, uint32_t line, bool check_inlines)
+LookupFileAndLineInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const FileSpec &file_spec, uint32_t line, bool check_inlines)
 {
     if (module && file_spec)
     {
@@ -379,7 +382,7 @@ LookupFileAndLineInModule (CommandContext *context, Stream &strm, Module *module
             strm << " in ";
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            DumpSymbolContextList (context, strm, sc_list, true);
+            DumpSymbolContextList (interpreter, strm, sc_list, true);
             return num_matches;
         }
     }
@@ -397,8 +400,8 @@ class CommandObjectImageDumpModuleList : public CommandObject
 public:
 
     CommandObjectImageDumpModuleList (const char *name,
-                   const char *help,
-                   const char *syntax) :
+                                      const char *help,
+                                      const char *syntax) :
         CommandObject (name, help, syntax)
     {
     }
@@ -409,26 +412,26 @@ public:
     }
 
     virtual int
-    HandleArgumentCompletion (Args &input,
-                      int &cursor_index,
-                      int &cursor_char_position,
-                      OptionElementVector &opt_element_vector,
-                      int match_start_point,
-                      int max_return_elements,
-                      CommandInterpreter *interpreter,
-                      StringList &matches)
+    HandleArgumentCompletion (CommandInterpreter &interpreter,
+                              Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              StringList &matches)
     {
         // Arguments are the standard module completer.
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
 
-        CommandCompletions::InvokeCommonCompletionCallbacks (CommandCompletions::eModuleCompletion,
-                                         completion_str.c_str(),
-                                         match_start_point,
-                                         max_return_elements,
-                                         interpreter,
-                                         NULL,
-                                         matches);
+        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+                                                             CommandCompletions::eModuleCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             matches);
         return matches.GetSize();
     }
 };
@@ -438,8 +441,8 @@ class CommandObjectImageDumpSourceFileList : public CommandObject
 public:
 
     CommandObjectImageDumpSourceFileList (const char *name,
-                   const char *help,
-                   const char *syntax) :
+                                          const char *help,
+                                          const char *syntax) :
         CommandObject (name, help, syntax)
     {
     }
@@ -450,26 +453,26 @@ public:
     }
 
     virtual int
-    HandleArgumentCompletion (Args &input,
-                      int &cursor_index,
-                      int &cursor_char_position,
-                      OptionElementVector &opt_element_vector,
-                      int match_start_point,
-                      int max_return_elements,
-                      CommandInterpreter *interpreter,
-                      StringList &matches)
+    HandleArgumentCompletion (CommandInterpreter &interpreter,
+                              Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              StringList &matches)
     {
         // Arguments are the standard source file completer.
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
 
-        CommandCompletions::InvokeCommonCompletionCallbacks (CommandCompletions::eSourceFileCompletion,
-                                         completion_str.c_str(),
-                                         match_start_point,
-                                         max_return_elements,
-                                         interpreter,
-                                         NULL,
-                                         matches);
+        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter, 
+                                                             CommandCompletions::eSourceFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             matches);
         return matches.GetSize();
     }
 };
@@ -491,12 +494,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -521,7 +523,7 @@ public:
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
-                        DumpModuleSymtab (context, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
+                        DumpModuleSymtab (interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
                     }
                 }
                 else
@@ -549,7 +551,7 @@ public:
                             if (image_module)
                             {
                                 num_dumped++;
-                                DumpModuleSymtab (context, result.GetOutputStream(), image_module);
+                                DumpModuleSymtab (interpreter, result.GetOutputStream(), image_module);
                             }
                         }
                     }
@@ -578,10 +580,9 @@ class CommandObjectImageDumpSections : public CommandObjectImageDumpModuleList
 {
 public:
     CommandObjectImageDumpSections () :
-        CommandObjectImageDumpModuleList (
-                "image dump sections",
-                "Dump the sections from one or more executable images.",
-                "image dump sections [<file1> ...]")
+        CommandObjectImageDumpModuleList ("image dump sections",
+                                          "Dump the sections from one or more executable images.",
+                                          "image dump sections [<file1> ...]")
     {
     }
 
@@ -591,12 +592,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -621,7 +621,7 @@ public:
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
-                        DumpModuleSections (context, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
+                        DumpModuleSections (interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
                     }
                 }
                 else
@@ -649,7 +649,7 @@ public:
                             if (image_module)
                             {
                                 num_dumped++;
-                                DumpModuleSections (context, result.GetOutputStream(), image_module);
+                                DumpModuleSections (interpreter, result.GetOutputStream(), image_module);
                             }
                         }
                     }
@@ -689,12 +689,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -787,12 +786,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -801,7 +799,7 @@ public:
         }
         else
         {
-            ExecutionContext exe_ctx(context->GetExecutionContext());
+            ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
             uint32_t total_num_dumped = 0;
 
             uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
@@ -826,7 +824,7 @@ public:
                         uint32_t num_dumped = 0;
                         for (uint32_t i = 0; i<num_modules; ++i)
                         {
-                            if (DumpCompileUnitLineTable (context,
+                            if (DumpCompileUnitLineTable (interpreter,
                                                           result.GetOutputStream(),
                                                           target->GetImages().GetModulePointerAtIndex(i),
                                                           file_spec,
@@ -863,15 +861,15 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectImageDump(CommandInterpreter *interpreter) :
+    CommandObjectImageDump(CommandInterpreter &interpreter) :
         CommandObjectMultiword ("image dump",
-                                  "Dumps information in one or more executable images; 'line-table' expects a source file name",
-                                  "image dump [symtab|sections|symfile|line-table] [<file1> <file2> ...]")
+                                "Dumps information in one or more executable images; 'line-table' expects a source file name",
+                                "image dump [symtab|sections|symfile|line-table] [<file1> <file2> ...]")
     {
-        LoadSubCommand (CommandObjectSP (new CommandObjectImageDumpSymtab ()), "symtab", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectImageDumpSections ()), "sections", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectImageDumpSymfile ()), "symfile", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectImageDumpLineTable ()), "line-table", interpreter);
+        LoadSubCommand (interpreter, "symtab",      CommandObjectSP (new CommandObjectImageDumpSymtab ()));
+        LoadSubCommand (interpreter, "sections",    CommandObjectSP (new CommandObjectImageDumpSections ()));
+        LoadSubCommand (interpreter, "symfile",     CommandObjectSP (new CommandObjectImageDumpSymfile ()));
+        LoadSubCommand (interpreter, "line-table",  CommandObjectSP (new CommandObjectImageDumpLineTable ()));
     }
 
     virtual
@@ -957,12 +955,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1223,14 +1220,14 @@ public:
 
 
     bool
-    LookupInModule (CommandContext *context, Module *module, CommandReturnObject &result, bool &syntax_error)
+    LookupInModule (CommandInterpreter &interpreter, Module *module, CommandReturnObject &result, bool &syntax_error)
     {
         switch (m_options.m_type)
         {
         case eLookupTypeAddress:
             if (m_options.m_addr != LLDB_INVALID_ADDRESS)
             {
-                if (LookupAddressInModule (context, result.GetOutputStream(), module, eSymbolContextEverything, m_options.m_addr, m_options.m_offset))
+                if (LookupAddressInModule (interpreter, result.GetOutputStream(), module, eSymbolContextEverything, m_options.m_addr, m_options.m_offset))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1241,7 +1238,7 @@ public:
         case eLookupTypeSymbol:
             if (!m_options.m_str.empty())
             {
-                if (LookupSymbolInModule (context, result.GetOutputStream(), module, m_options.m_str.c_str(), m_options.m_use_regex))
+                if (LookupSymbolInModule (interpreter, result.GetOutputStream(), module, m_options.m_str.c_str(), m_options.m_use_regex))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1253,7 +1250,7 @@ public:
             if (m_options.m_file)
             {
 
-                if (LookupFileAndLineInModule (context,
+                if (LookupFileAndLineInModule (interpreter,
                                                result.GetOutputStream(),
                                                module,
                                                m_options.m_file,
@@ -1269,7 +1266,7 @@ public:
         case eLookupTypeFunction:
             if (!m_options.m_str.empty())
             {
-                if (LookupFunctionInModule (context,
+                if (LookupFunctionInModule (interpreter,
                                             result.GetOutputStream(),
                                             module,
                                             m_options.m_str.c_str(),
@@ -1292,12 +1289,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -1322,7 +1318,7 @@ public:
                 {
                     for (i = 0; i<num_modules && syntax_error == false; ++i)
                     {
-                        if (LookupInModule (context, target->GetImages().GetModulePointerAtIndex(i), result, syntax_error))
+                        if (LookupInModule (interpreter, target->GetImages().GetModulePointerAtIndex(i), result, syntax_error))
                         {
                             result.GetOutputStream().EOL();
                             num_successful_lookups++;
@@ -1353,7 +1349,7 @@ public:
                             Module * image_module = matching_modules.GetModulePointerAtIndex(i);
                             if (image_module)
                             {
-                                if (LookupInModule (context, image_module, result, syntax_error))
+                                if (LookupInModule (interpreter, image_module, result, syntax_error))
                                 {
                                     result.GetOutputStream().EOL();
                                     num_successful_lookups++;
@@ -1399,14 +1395,14 @@ CommandObjectImageLookup::CommandOptions::g_option_table[] =
 //----------------------------------------------------------------------
 // CommandObjectImage constructor
 //----------------------------------------------------------------------
-CommandObjectImage::CommandObjectImage(CommandInterpreter *interpreter) :
+CommandObjectImage::CommandObjectImage(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("image",
-                              "Access information for one or more executable images.",
-                              "image [dump|list] ...")
+                            "Access information for one or more executable images.",
+                            "image [dump|list] ...")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectImageDump (interpreter)), "dump", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectImageList ()), "list", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectImageLookup ()), "lookup", interpreter);
+    LoadSubCommand (interpreter, "dump",    CommandObjectSP (new CommandObjectImageDump (interpreter)));
+    LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectImageList ()));
+    LoadSubCommand (interpreter, "lookup",  CommandObjectSP (new CommandObjectImageLookup ()));
 }
 
 //----------------------------------------------------------------------

@@ -62,17 +62,27 @@ protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;
 
+
+#ifndef SWIG
+
     lldb_private::CommandReturnObject *
-    GetLLDBObjectPtr();
+    operator->() const;
+
+    lldb_private::CommandReturnObject *
+    get() const;
 
     lldb_private::CommandReturnObject &
-    GetLLDBObjectRef();
+    operator*() const;
 
+    lldb_private::CommandReturnObject &
+    ref() const;
+
+#endif
     void
     SetLLDBObjectPtr (lldb_private::CommandReturnObject *ptr);
 
  private:
-    std::auto_ptr<lldb_private::CommandReturnObject> m_return_object_ap;
+    std::auto_ptr<lldb_private::CommandReturnObject> m_opaque_ap;
 };
 
 } // namespace lldb

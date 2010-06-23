@@ -64,7 +64,7 @@ private:
     ///
     /// @see TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
     //------------------------------------------------------------------
-    Target();
+    Target(Debugger &debugger);
 
 public:
     ~Target();
@@ -253,6 +253,12 @@ public:
     ArchSpec
     GetArchitecture () const;
 
+    Debugger &
+    GetDebugger ()
+    {
+        return m_debugger;
+    }
+
     bool
     GetTargetTriple (ConstString &target_triple);
 
@@ -294,6 +300,7 @@ protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
+    Debugger &      m_debugger;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
     BreakpointList  m_breakpoint_list;
     BreakpointList  m_internal_breakpoint_list;

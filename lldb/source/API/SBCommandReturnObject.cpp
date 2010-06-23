@@ -12,53 +12,54 @@
 #include "lldb/API/SBCommandReturnObject.h"
 
 using namespace lldb;
+using namespace lldb_private;
 
 SBCommandReturnObject::SBCommandReturnObject () :
-    m_return_object_ap (new lldb_private::CommandReturnObject ())
+    m_opaque_ap (new CommandReturnObject ())
 {
 }
 
 SBCommandReturnObject::~SBCommandReturnObject ()
 {
-    // m_return_object_ap will automatically delete any pointer it owns
+    // m_opaque_ap will automatically delete any pointer it owns
 }
 
 bool
 SBCommandReturnObject::IsValid() const
 {
-    return m_return_object_ap.get() != NULL;
+    return m_opaque_ap.get() != NULL;
 }
 
 
 const char *
 SBCommandReturnObject::GetOutput ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->GetOutputStream().GetData();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetOutputStream().GetData();
     return NULL;
 }
 
 const char *
 SBCommandReturnObject::GetError ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->GetErrorStream().GetData();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetErrorStream().GetData();
     return NULL;
 }
 
 size_t
 SBCommandReturnObject::GetOutputSize ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->GetOutputStream().GetSize();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetOutputStream().GetSize();
     return 0;
 }
 
 size_t
 SBCommandReturnObject::GetErrorSize ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->GetErrorStream().GetSize();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetErrorStream().GetSize();
     return 0;
 }
 
@@ -89,60 +90,73 @@ SBCommandReturnObject::PutError (FILE *fh)
 void
 SBCommandReturnObject::Clear()
 {
-    if (m_return_object_ap.get())
-        m_return_object_ap->Clear();
+    if (m_opaque_ap.get())
+        m_opaque_ap->Clear();
 }
 
 lldb::ReturnStatus
 SBCommandReturnObject::GetStatus()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->GetStatus();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetStatus();
     return lldb::eReturnStatusInvalid;
 }
 
 bool
 SBCommandReturnObject::Succeeded ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->Succeeded();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->Succeeded();
     return false;
 }
 
 bool
 SBCommandReturnObject::HasResult ()
 {
-    if (m_return_object_ap.get())
-        return m_return_object_ap->HasResult();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->HasResult();
     return false;
 }
 
 void
 SBCommandReturnObject::AppendMessage (const char *message)
 {
-    if (m_return_object_ap.get())
-        m_return_object_ap->AppendMessage (message);
+    if (m_opaque_ap.get())
+        m_opaque_ap->AppendMessage (message);
 }
 
-lldb_private::CommandReturnObject *
-SBCommandReturnObject::GetLLDBObjectPtr()
+CommandReturnObject *
+SBCommandReturnObject::operator ->() const
 {
-    return m_return_object_ap.get();
+    return m_opaque_ap.get();
+}
+
+CommandReturnObject *
+SBCommandReturnObject::get() const
+{
+    return m_opaque_ap.get();
+}
+
+CommandReturnObject &
+SBCommandReturnObject::operator *() const
+{
+    assert(m_opaque_ap.get());
+    return *(m_opaque_ap.get());
 }
 
 
-lldb_private::CommandReturnObject &
-SBCommandReturnObject::GetLLDBObjectRef()
+CommandReturnObject &
+SBCommandReturnObject::ref() const
 {
-    assert(m_return_object_ap.get());
-    return *(m_return_object_ap.get());
+    assert(m_opaque_ap.get());
+    return *(m_opaque_ap.get());
 }
 
 
 void
-SBCommandReturnObject::SetLLDBObjectPtr (lldb_private::CommandReturnObject *ptr)
+SBCommandReturnObject::SetLLDBObjectPtr (CommandReturnObject *ptr)
 {
-    if (m_return_object_ap.get())
-        m_return_object_ap.reset (ptr);
+    if (m_opaque_ap.get())
+        m_opaque_ap.reset (ptr);
 }
 

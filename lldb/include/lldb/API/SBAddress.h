@@ -66,7 +66,7 @@ protected:
 
 private:
 
-    std::auto_ptr<lldb_private::Address> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::Address> m_opaque_ap;
 };
 
 

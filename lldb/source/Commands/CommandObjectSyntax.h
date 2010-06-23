@@ -33,13 +33,13 @@ public:
 
     bool
     OldExecute (Args& command,
-             CommandContext *context,
+             Debugger *context,
              CommandInterpreter *interpreter,
              CommandReturnObject &result);
     
     virtual bool
     Execute (Args& command,
-             CommandContext *context,
+             Debugger *context,
              CommandInterpreter *interpreter,
              CommandReturnObject &result);
 

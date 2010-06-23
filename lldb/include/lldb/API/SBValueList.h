@@ -68,7 +68,7 @@ private:
     void
     CreateIfNeeded ();
 
-    std::auto_ptr<lldb_private::ValueObjectList> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::ValueObjectList> m_opaque_ap;
 };
 
 

@@ -67,25 +67,22 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 protected:
     CommandOptions m_options;
 
     void
-    Disassemble (CommandContext *context,
-                 CommandInterpreter *interpreter,
+    Disassemble (CommandInterpreter &interpreter,
                  CommandReturnObject &result,
                  Disassembler *disassembler,
                  lldb::addr_t addr,
                  lldb::addr_t end_addr);
 
     void
-    Disassemble (CommandContext *context,
-                 CommandInterpreter *interpreter,
+    Disassemble (CommandInterpreter &interpreter,
                  CommandReturnObject &result,
                  Disassembler *disassembler,
                  const SymbolContextList &sc_list);

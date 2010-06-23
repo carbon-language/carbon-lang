@@ -20,7 +20,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
@@ -128,23 +128,21 @@ CommandObjectCall::GetOptions ()
 bool
 CommandObjectCall::Execute
 (
+    CommandInterpreter &interpreter,
     Args &command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
     ConstString target_triple;
     int num_args = command.GetArgumentCount();
 
-    Target *target = context->GetTarget ();
-    if (target)
-        target->GetTargetTriple(target_triple);
+    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+    if (exe_ctx.target)
+        exe_ctx.target->GetTargetTriple(target_triple);
 
     if (!target_triple)
         target_triple = Host::GetTargetTriple ();
 
-    ExecutionContext exe_ctx(context->GetExecutionContext());
     if (exe_ctx.thread == NULL || exe_ctx.frame == NULL)
     {
         result.AppendError ("No currently selected thread and frame.");
@@ -215,7 +213,7 @@ CommandObjectCall::Execute
                 val.SetValueType (Value::eValueTypeHostAddress);
                 
                 
-                void *cstr_type = target->GetScratchClangASTContext()->GetCStringType(true);
+                void *cstr_type = exe_ctx.target->GetScratchClangASTContext()->GetCStringType(true);
                 val.SetContext (Value::eContextTypeOpaqueClangQualType, cstr_type);
                 value_list.PushValue(val);
                 
@@ -233,7 +231,7 @@ CommandObjectCall::Execute
         // run it:
 
         StreamString errors;
-        ClangFunction clang_fun (target_triple.GetCString(), *target_fn, target->GetScratchClangASTContext(), value_list);
+        ClangFunction clang_fun (target_triple.GetCString(), *target_fn, exe_ctx.target->GetScratchClangASTContext(), value_list);
         if (m_options.noexecute)
         {
             // Now write down the argument values for this call.

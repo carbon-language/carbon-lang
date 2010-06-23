@@ -82,9 +82,6 @@ public:
     void
     RunToAddress (lldb::addr_t addr);
 
-    void
-    Backtrace (uint32_t num_frames = 0);
-
     uint32_t
     GetNumFrames ();
 
@@ -146,7 +143,7 @@ private:
     // Classes that inherit from Thread can see and modify these
     //------------------------------------------------------------------
 
-    lldb::ThreadSP m_lldb_object_sp;
+    lldb::ThreadSP m_opaque_sp;
 };
 
 } // namespace lldb

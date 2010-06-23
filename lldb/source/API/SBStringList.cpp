@@ -15,22 +15,22 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBStringList::SBStringList () :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
 }
 
 SBStringList::SBStringList (const lldb_private::StringList *lldb_strings_ptr) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (lldb_strings_ptr)
-        m_lldb_object_ap.reset (new lldb_private::StringList (*lldb_strings_ptr));
+        m_opaque_ap.reset (new lldb_private::StringList (*lldb_strings_ptr));
 }
 
 SBStringList::SBStringList (const SBStringList  &rhs) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (rhs.IsValid())
-        m_lldb_object_ap.reset (new lldb_private::StringList(*rhs));
+        m_opaque_ap.reset (new lldb_private::StringList(*rhs));
 }
 
 
@@ -44,7 +44,7 @@ const SBStringList &
 SBStringList::operator = (const SBStringList &rhs)
 {
     if (rhs.IsValid())
-        m_lldb_object_ap.reset (new lldb_private::StringList(*rhs));
+        m_opaque_ap.reset (new lldb_private::StringList(*rhs));
 
     return *this;
 }
@@ -52,19 +52,19 @@ SBStringList::operator = (const SBStringList &rhs)
 const lldb_private::StringList *
 SBStringList::operator->() const
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 const lldb_private::StringList &
 SBStringList::operator*() const
 {
-    return *m_lldb_object_ap;
+    return *m_opaque_ap;
 }
 
 bool
 SBStringList::IsValid() const
 {
-    return (m_lldb_object_ap.get() != NULL);
+    return (m_opaque_ap.get() != NULL);
 }
 
 void
@@ -73,9 +73,9 @@ SBStringList::AppendString (const char *str)
     if (str != NULL)
     {
         if (IsValid())
-            m_lldb_object_ap->AppendString (str);
+            m_opaque_ap->AppendString (str);
         else
-            m_lldb_object_ap.reset (new lldb_private::StringList (str));
+            m_opaque_ap.reset (new lldb_private::StringList (str));
     }
 
 }
@@ -87,9 +87,9 @@ SBStringList::AppendList (const char **strv, int strc)
         && (strc > 0))
     {
         if (IsValid())
-            m_lldb_object_ap->AppendList (strv, strc);
+            m_opaque_ap->AppendList (strv, strc);
         else
-            m_lldb_object_ap.reset (new lldb_private::StringList (strv, strc));
+            m_opaque_ap.reset (new lldb_private::StringList (strv, strc));
     }
 }
 
@@ -99,8 +99,8 @@ SBStringList::AppendList (SBStringList strings)
     if (strings.IsValid())
     {
         if (! IsValid())
-            m_lldb_object_ap.reset (new lldb_private::StringList());
-        m_lldb_object_ap->AppendList (*(strings.m_lldb_object_ap));
+            m_opaque_ap.reset (new lldb_private::StringList());
+        m_opaque_ap->AppendList (*(strings.m_opaque_ap));
     }
 }
 
@@ -109,7 +109,7 @@ SBStringList::GetSize () const
 {
     if (IsValid())
     {
-        return m_lldb_object_ap->GetSize();
+        return m_opaque_ap->GetSize();
     }
     return 0;
 }
@@ -119,7 +119,7 @@ SBStringList::GetStringAtIndex (size_t idx)
 {
     if (IsValid())
     {
-        return m_lldb_object_ap->GetStringAtIndex (idx);
+        return m_opaque_ap->GetStringAtIndex (idx);
     }
     return NULL;
 }
@@ -129,6 +129,6 @@ SBStringList::Clear ()
 {
     if (IsValid())
     {
-        m_lldb_object_ap->Clear();
+        m_opaque_ap->Clear();
     }
 }

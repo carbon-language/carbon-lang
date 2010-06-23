@@ -140,7 +140,7 @@ private:
                                   lldb::user_id_t break_id, 
                                   lldb::user_id_t break_loc_id);
     
-    lldb::BreakpointSP m_break_sp;
+    lldb::BreakpointSP m_opaque_sp;
 };
 
 } // namespace lldb

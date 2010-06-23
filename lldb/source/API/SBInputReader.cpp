@@ -10,8 +10,9 @@
 
 #include "lldb/lldb-enumerations.h"
 
-#include "lldb/API/SBInputReader.h"
+#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
+#include "lldb/API/SBInputReader.h"
 #include "lldb/API/SBStringList.h"
 #include "lldb/Core/InputReader.h"
 
@@ -20,7 +21,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBInputReader::SBInputReader ()  :
-    m_reader_sp (),
+    m_opaque_sp (),
     m_callback_function (NULL),
     m_callback_baton (NULL)
 
@@ -28,12 +29,12 @@ SBInputReader::SBInputReader ()  :
 }
 
 SBInputReader::SBInputReader (const lldb::InputReaderSP &reader_sp) :
-    m_reader_sp (reader_sp)
+    m_opaque_sp (reader_sp)
 {
 }
 
 SBInputReader::SBInputReader (const SBInputReader &rhs) :
-    m_reader_sp (rhs.m_reader_sp)
+    m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
@@ -45,7 +46,7 @@ size_t
 SBInputReader::PrivateCallback 
 (
     void *baton, 
-    InputReader *reader, 
+    InputReader &reader, 
     lldb::InputReaderAction notification,
     const char *bytes, 
     size_t bytes_len
@@ -62,6 +63,7 @@ SBInputReader::PrivateCallback
 SBError
 SBInputReader::Initialize 
 (
+    SBDebugger &debugger,
     Callback callback_function,
     void *callback_baton,
     lldb::InputReaderGranularity granularity,
@@ -71,14 +73,14 @@ SBInputReader::Initialize
 )
 {
     SBError sb_error;
-    m_reader_sp.reset (new InputReader ());
+    m_opaque_sp.reset (new InputReader (debugger.ref()));
     
     m_callback_function = callback_function;
     m_callback_baton = callback_baton;
 
-    if (m_reader_sp)
+    if (m_opaque_sp)
     {
-        sb_error.SetError (m_reader_sp->Initialize (SBInputReader::PrivateCallback,
+        sb_error.SetError (m_opaque_sp->Initialize (SBInputReader::PrivateCallback,
                                                     this,
                                                     granularity,
                                                     end_token,
@@ -88,7 +90,7 @@ SBInputReader::Initialize
 
     if (sb_error.Fail())
     {
-        m_reader_sp.reset ();
+        m_opaque_sp.reset ();
         m_callback_function = NULL;
         m_callback_baton = NULL;
     }
@@ -99,46 +101,53 @@ SBInputReader::Initialize
 bool
 SBInputReader::IsValid () const
 {
-    return (m_reader_sp.get() != NULL);
+    return (m_opaque_sp.get() != NULL);
 }
 
 const SBInputReader &
 SBInputReader::operator = (const SBInputReader &rhs)
 {
     if (this != &rhs)
-        m_reader_sp = rhs.m_reader_sp;
+        m_opaque_sp = rhs.m_opaque_sp;
     return *this;
 }
 
-lldb_private::InputReader *
+InputReader *
 SBInputReader::operator->() const
 {
-    return m_reader_sp.get();
+    return m_opaque_sp.get();
 }
 
 lldb::InputReaderSP &
 SBInputReader::operator *()
 {
-    return m_reader_sp;
+    return m_opaque_sp;
 }
 
 const lldb::InputReaderSP &
 SBInputReader::operator *() const
 {
-    return m_reader_sp;
+    return m_opaque_sp;
 }
 
-lldb_private::InputReader *
+InputReader *
 SBInputReader::get() const
 {
-    return m_reader_sp.get();
+    return m_opaque_sp.get();
+}
+
+InputReader &
+SBInputReader::ref() const
+{
+    assert (m_opaque_sp.get());
+    return *m_opaque_sp;
 }
 
 bool
 SBInputReader::IsDone () const
 {
-    if (m_reader_sp)
-        return m_reader_sp->IsDone();
+    if (m_opaque_sp)
+        return m_opaque_sp->IsDone();
     else
         return true;
 }
@@ -146,15 +155,15 @@ SBInputReader::IsDone () const
 void
 SBInputReader::SetIsDone (bool value)
 {
-    if (m_reader_sp)
-        m_reader_sp->SetIsDone (value);
+    if (m_opaque_sp)
+        m_opaque_sp->SetIsDone (value);
 }
 
 bool
 SBInputReader::IsActive () const
 {
-    if (m_reader_sp)
-        return m_reader_sp->IsActive();
+    if (m_opaque_sp)
+        return m_opaque_sp->IsActive();
     else
         return false;
 }
@@ -162,8 +171,8 @@ SBInputReader::IsActive () const
 InputReaderGranularity
 SBInputReader::GetGranularity ()
 {
-    if (m_reader_sp)
-        return m_reader_sp->GetGranularity();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetGranularity();
     else
         return eInputReaderGranularityInvalid;
 }

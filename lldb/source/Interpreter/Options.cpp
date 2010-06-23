@@ -532,13 +532,13 @@ Options::VerifyPartialOptions (CommandReturnObject &result)
 bool
 Options::HandleOptionCompletion
 (
+    CommandInterpreter &interpreter,
     Args &input,
     OptionElementVector &opt_element_vector,
     int cursor_index,
     int char_pos,
     int match_start_point,
     int max_return_elements,
-    lldb_private::CommandInterpreter *interpreter,
     lldb_private::StringList &matches
 )
 {
@@ -625,15 +625,15 @@ Options::HandleOptionCompletion
 
             if (opt_defs_index != -1)
             {
-                HandleOptionArgumentCompletion (input,
-                                                 cursor_index,
-                                                 strlen (input.GetArgumentAtIndex(cursor_index)),
-                                                 opt_element_vector,
-                                                 i,
-                                                 match_start_point,
-                                                 max_return_elements,
-                                                 interpreter,
-                                                 matches);
+                HandleOptionArgumentCompletion (interpreter, 
+                                                input,
+                                                cursor_index,
+                                                strlen (input.GetArgumentAtIndex(cursor_index)),
+                                                opt_element_vector,
+                                                i,
+                                                match_start_point,
+                                                max_return_elements,
+                                                matches);
                 return true;
             }
             else
@@ -655,6 +655,7 @@ Options::HandleOptionCompletion
 bool
 Options::HandleOptionArgumentCompletion
 (
+    CommandInterpreter &interpreter,
     Args &input,
     int cursor_index,
     int char_pos,
@@ -662,7 +663,6 @@ Options::HandleOptionArgumentCompletion
     int opt_element_index,
     int match_start_point,
     int max_return_elements,
-    lldb_private::CommandInterpreter *interpreter,
     lldb_private::StringList &matches
 )
 {
@@ -713,7 +713,7 @@ Options::HandleOptionArgumentCompletion
                 if (module_name)
                 {
                     FileSpec module_spec(module_name);
-                    lldb::TargetSP target_sp = interpreter->Context()->GetTarget()->GetSP();
+                    lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
                     // Search filters require a target...
                     if (target_sp != NULL)
                         filter_ap.reset (new SearchFilterByModule (target_sp, module_spec));
@@ -723,12 +723,12 @@ Options::HandleOptionArgumentCompletion
         }
     }
 
-    return CommandCompletions::InvokeCommonCompletionCallbacks (completion_mask,
-                                                                 input.GetArgumentAtIndex (opt_arg_pos),
-                                                                 match_start_point,
-                                                                 max_return_elements,
-                                                                 interpreter,
-                                                                 filter_ap.get(),
-                                                                 matches);
-
+    return CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+                                                                completion_mask,
+                                                                input.GetArgumentAtIndex (opt_arg_pos),
+                                                                match_start_point,
+                                                                max_return_elements,
+                                                                filter_ap.get(),
+                                                                matches);
+    
 }

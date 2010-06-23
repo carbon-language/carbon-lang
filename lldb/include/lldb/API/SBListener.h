@@ -106,12 +106,15 @@ private:
     const lldb_private::Listener &
     operator *() const;
 
+    void
+    reset(lldb_private::Listener *listener, bool transfer_ownership);
+
 #endif
 
 
 
-    lldb_private::Listener *m_lldb_object_ptr;
-    bool m_lldb_object_ptr_owned;
+    lldb_private::Listener *m_opaque_ptr;
+    bool m_opaque_ptr_owned;
 };
 
 } // namespace lldb

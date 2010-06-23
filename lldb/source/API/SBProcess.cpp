@@ -19,8 +19,9 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/Thread.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 // Project includes
 
@@ -37,7 +38,7 @@ using namespace lldb_private;
 
 
 SBProcess::SBProcess () :
-    m_lldb_object_sp()
+    m_opaque_sp()
 {
 }
 
@@ -47,13 +48,13 @@ SBProcess::SBProcess () :
 //----------------------------------------------------------------------
 
 SBProcess::SBProcess (const SBProcess& rhs) :
-    m_lldb_object_sp (rhs.m_lldb_object_sp)
+    m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
 
 SBProcess::SBProcess (const lldb::ProcessSP &process_sp) :
-    m_lldb_object_sp (process_sp)
+    m_opaque_sp (process_sp)
 {
 }
 
@@ -67,30 +68,30 @@ SBProcess::~SBProcess()
 void
 SBProcess::SetProcess (const ProcessSP &process_sp)
 {
-    m_lldb_object_sp = process_sp;
+    m_opaque_sp = process_sp;
 }
 
 void
 SBProcess::Clear ()
 {
-    m_lldb_object_sp.reset();
+    m_opaque_sp.reset();
 }
 
 
 bool
 SBProcess::IsValid() const
 {
-    return m_lldb_object_sp.get() != NULL;
+    return m_opaque_sp.get() != NULL;
 }
 
 
 uint32_t
 SBProcess::GetNumThreads ()
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         const bool can_update = true;
-        return m_lldb_object_sp->GetThreadList().GetSize(can_update);
+        return m_opaque_sp->GetThreadList().GetSize(can_update);
     }
     return 0;
 }
@@ -99,8 +100,8 @@ SBThread
 SBProcess::GetCurrentThread () const
 {
     SBThread sb_thread;
-    if (m_lldb_object_sp)
-        sb_thread.SetThread (m_lldb_object_sp->GetThreadList().GetCurrentThread());
+    if (m_opaque_sp)
+        sb_thread.SetThread (m_opaque_sp->GetThreadList().GetCurrentThread());
     return sb_thread;
 }
 
@@ -108,8 +109,8 @@ SBTarget
 SBProcess::GetTarget() const
 {
     SBTarget sb_target;
-    if (m_lldb_object_sp)
-        sb_target = SBDebugger::FindTargetWithLLDBProcess (m_lldb_object_sp);
+    if (m_opaque_sp)
+        sb_target = m_opaque_sp->GetTarget().GetSP();
     return sb_target;
 }
 
@@ -117,10 +118,10 @@ SBProcess::GetTarget() const
 size_t
 SBProcess::PutSTDIN (const char *src, size_t src_len)
 {
-    if (m_lldb_object_sp != NULL)
+    if (m_opaque_sp != NULL)
     {
         Error error;
-        return m_lldb_object_sp->PutSTDIN (src, src_len, error);
+        return m_opaque_sp->PutSTDIN (src, src_len, error);
     }
     else
         return 0;
@@ -129,10 +130,10 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
 size_t
 SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
 {
-    if (m_lldb_object_sp != NULL)
+    if (m_opaque_sp != NULL)
     {
         Error error;
-        return m_lldb_object_sp->GetSTDOUT (dst, dst_len, error);
+        return m_opaque_sp->GetSTDOUT (dst, dst_len, error);
     }
     else
         return 0;
@@ -141,10 +142,10 @@ SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
 size_t
 SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 {
-    if (m_lldb_object_sp != NULL)
+    if (m_opaque_sp != NULL)
     {
         Error error;
-        return m_lldb_object_sp->GetSTDERR (dst, dst_len, error);
+        return m_opaque_sp->GetSTDERR (dst, dst_len, error);
     }
     else
         return 0;
@@ -156,14 +157,14 @@ SBProcess::ReportCurrentState (const SBEvent &event, FILE *out) const
     if (out == NULL)
         return;
 
-    if (m_lldb_object_sp != NULL)
+    if (m_opaque_sp != NULL)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
         int message_len = ::snprintf (message,
                                       sizeof (message),
                                       "Process %d %s\n",
-                                      m_lldb_object_sp->GetID(),
+                                      m_opaque_sp->GetID(),
                                       SBDebugger::StateAsCString (event_state));
 
         if (message_len > 0)
@@ -174,14 +175,14 @@ SBProcess::ReportCurrentState (const SBEvent &event, FILE *out) const
 void
 SBProcess::AppendCurrentStateReport (const SBEvent &event, SBCommandReturnObject &result)
 {
-    if (m_lldb_object_sp != NULL)
+    if (m_opaque_sp != NULL)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
         ::snprintf (message,
                     sizeof (message),
                     "Process %d %s\n",
-                    m_lldb_object_sp->GetID(),
+                    m_opaque_sp->GetID(),
                     SBDebugger::StateAsCString (event_state));
 
         result.AppendMessage (message);
@@ -191,16 +192,16 @@ SBProcess::AppendCurrentStateReport (const SBEvent &event, SBCommandReturnObject
 bool
 SBProcess::SetCurrentThread (const SBThread &thread)
 {
-    if (m_lldb_object_sp != NULL)
-        return m_lldb_object_sp->GetThreadList().SetCurrentThreadByID (thread.GetThreadID());
+    if (m_opaque_sp != NULL)
+        return m_opaque_sp->GetThreadList().SetCurrentThreadByID (thread.GetThreadID());
     return false;
 }
 
 bool
 SBProcess::SetCurrentThreadByID (uint32_t tid)
 {
-    if (m_lldb_object_sp != NULL)
-        return m_lldb_object_sp->GetThreadList().SetCurrentThreadByID (tid);
+    if (m_opaque_sp != NULL)
+        return m_opaque_sp->GetThreadList().SetCurrentThreadByID (tid);
     return false;
 }
 
@@ -208,16 +209,16 @@ SBThread
 SBProcess::GetThreadAtIndex (size_t index)
 {
     SBThread thread;
-    if (m_lldb_object_sp)
-        thread.SetThread (m_lldb_object_sp->GetThreadList().GetThreadAtIndex(index));
+    if (m_opaque_sp)
+        thread.SetThread (m_opaque_sp->GetThreadList().GetThreadAtIndex(index));
     return thread;
 }
 
 StateType
 SBProcess::GetState ()
 {
-    if (m_lldb_object_sp != NULL)
-        return m_lldb_object_sp->GetState();
+    if (m_opaque_sp != NULL)
+        return m_opaque_sp->GetState();
     else
         return eStateInvalid;
 }
@@ -226,8 +227,8 @@ SBProcess::GetState ()
 int
 SBProcess::GetExitStatus ()
 {
-    if (m_lldb_object_sp != NULL)
-        return m_lldb_object_sp->GetExitStatus ();
+    if (m_opaque_sp != NULL)
+        return m_opaque_sp->GetExitStatus ();
     else
         return 0;
 }
@@ -235,8 +236,8 @@ SBProcess::GetExitStatus ()
 const char *
 SBProcess::GetExitDescription ()
 {
-    if (m_lldb_object_sp != NULL)
-        return m_lldb_object_sp->GetExitDescription ();
+    if (m_opaque_sp != NULL)
+        return m_opaque_sp->GetExitDescription ();
     else
         return NULL;
 }
@@ -244,8 +245,8 @@ SBProcess::GetExitDescription ()
 lldb::pid_t
 SBProcess::GetProcessID ()
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetID();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
     else
         return LLDB_INVALID_PROCESS_ID;
 }
@@ -253,85 +254,12 @@ SBProcess::GetProcessID ()
 uint32_t
 SBProcess::GetAddressByteSize () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetAddressByteSize();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetAddressByteSize();
     else
         return 0;
 }
 
-
-void
-SBProcess::DisplayThreadsInfo (FILE *out, FILE *err, bool only_threads_with_stop_reason)
-{
-    if (m_lldb_object_sp != NULL)
-    {
-        size_t num_thread_infos_dumped = 0;
-        size_t num_threads = GetNumThreads();
-
-        if (out == NULL)
-            out = SBDebugger::GetOutputFileHandle();
-
-        if (err == NULL)
-            err = SBDebugger::GetErrorFileHandle();
-
-        if ((out == NULL) ||(err == NULL))
-            return;
-
-        if (num_threads > 0)
-        {
-            Thread::StopInfo thread_stop_info;
-            SBThread curr_thread (m_lldb_object_sp->GetThreadList().GetCurrentThread());
-            for (int i = 0; i < num_threads; ++i)
-            {
-                SBThread thread (m_lldb_object_sp->GetThreadList().GetThreadAtIndex(i));
-                if (thread.IsValid())
-                {
-                    bool is_current_thread = false;
-                    StreamFile str (out);
-                    if (thread == curr_thread)
-                        is_current_thread = true;
-                    StopReason thread_stop_reason = eStopReasonNone;
-                    if (thread->GetStopInfo (&thread_stop_info))
-                    {
-                        thread_stop_reason = thread_stop_info.GetStopReason();
-                        if (thread_stop_reason == eStopReasonNone)
-                        {
-                            if (only_threads_with_stop_reason && !is_current_thread)
-                                continue;
-                        }
-                    }
-                    ++num_thread_infos_dumped;
-                    fprintf (out, "  %c thread #%u: tid = 0x%4.4x, pc = 0x%16.16llx",
-                             (is_current_thread ? '*' : ' '),
-                             thread->GetIndexID(), thread->GetID(), thread->GetRegisterContext()->GetPC());
-
-                    StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
-                    if (frame_sp)
-                    {
-                        SymbolContext sc (frame_sp->GetSymbolContext (eSymbolContextEverything));
-                        fprintf (out, ", where = ");
-                        sc.DumpStopContext (&str, m_lldb_object_sp.get(), frame_sp->GetPC ());
-                    }
-
-                    if (thread_stop_reason != eStopReasonNone)
-                    {
-                        fprintf (out, ", stop reason = ");
-                        thread_stop_info.Dump (&str);
-                    }
-
-                    const char *thread_name = thread->GetName();
-                    if (thread_name && thread_name[0])
-                        fprintf (out, ", thread_name = '%s'", thread_name);
-
-                    fprintf (out, "\n");
-
-                    SBThread sb_thread (thread);
-                    sb_thread.DisplayFramesForCurrentContext (out, err, 0, 1, false, 1);
-                }
-            }
-        }
-    }
-}
 bool
 SBProcess::WaitUntilProcessHasStopped (SBCommandReturnObject &result)
 {
@@ -340,11 +268,11 @@ SBProcess::WaitUntilProcessHasStopped (SBCommandReturnObject &result)
     if (IsValid())
     {
         EventSP event_sp;
-        StateType state = m_lldb_object_sp->WaitForStateChangedEvents (NULL, event_sp);
+        StateType state = m_opaque_sp->WaitForStateChangedEvents (NULL, event_sp);
 
         while (StateIsStoppedState (state))
         {
-            state = m_lldb_object_sp->WaitForStateChangedEvents (NULL, event_sp);
+            state = m_opaque_sp->WaitForStateChangedEvents (NULL, event_sp);
             SBEvent event (event_sp);
             AppendCurrentStateReport (event, result);
             state_changed = true;
@@ -358,7 +286,7 @@ SBProcess::Continue ()
 {
     SBError sb_error;
     if (IsValid())
-        sb_error.SetError(m_lldb_object_sp->Resume());
+        sb_error.SetError(m_opaque_sp->Resume());
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
@@ -370,8 +298,8 @@ SBError
 SBProcess::Destroy ()
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError(m_lldb_object_sp->Destroy());
+    if (m_opaque_sp)
+        sb_error.SetError(m_opaque_sp->Destroy());
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
@@ -384,7 +312,7 @@ SBProcess::Stop ()
 {
     SBError sb_error;
     if (IsValid())
-        sb_error.SetError (m_lldb_object_sp->Halt());
+        sb_error.SetError (m_opaque_sp->Halt());
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     return sb_error;
@@ -394,8 +322,8 @@ SBError
 SBProcess::Kill ()
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError (m_lldb_object_sp->Destroy());
+    if (m_opaque_sp)
+        sb_error.SetError (m_opaque_sp->Destroy());
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     return sb_error;
@@ -406,8 +334,8 @@ SBError
 SBProcess::AttachByName (const char *name, bool wait_for_launch)
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError (m_lldb_object_sp->Attach (name, wait_for_launch));
+    if (m_opaque_sp)
+        sb_error.SetError (m_opaque_sp->Attach (name, wait_for_launch));
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     return sb_error;
@@ -425,8 +353,8 @@ SBError
 SBProcess::Attach (lldb::pid_t attach_pid)
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError  (m_lldb_object_sp->Attach (attach_pid));
+    if (m_opaque_sp)
+        sb_error.SetError  (m_opaque_sp->Attach (attach_pid));
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     return sb_error;
@@ -436,8 +364,8 @@ SBError
 SBProcess::Detach ()
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError (m_lldb_object_sp->Detach());
+    if (m_opaque_sp)
+        sb_error.SetError (m_opaque_sp->Detach());
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
 
@@ -448,102 +376,38 @@ SBError
 SBProcess::Signal (int signal)
 {
     SBError sb_error;
-    if (m_lldb_object_sp)
-        sb_error.SetError (m_lldb_object_sp->Signal (signal));
+    if (m_opaque_sp)
+        sb_error.SetError (m_opaque_sp->Signal (signal));
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
     return sb_error;
-}
-
-void
-SBProcess::ListThreads ()
-{    
-    FILE *out = SBDebugger::GetOutputFileHandle();
-    if (out == NULL)
-        return;
-
-    if (m_lldb_object_sp)
-    {
-        size_t num_threads = GetNumThreads ();
-        if (num_threads > 0)
-        {
-            Thread *cur_thread = m_lldb_object_sp->GetThreadList().GetCurrentThread().get();
-            for (int i = 0; i < num_threads; ++i)
-            {
-                Thread *thread = m_lldb_object_sp->GetThreadList().GetThreadAtIndex(i).get();
-                if (thread)
-                {
-                    bool is_current_thread = false;
-                    if (thread == cur_thread)
-                        is_current_thread = true;
-                    fprintf (out, "  [%u] %c tid = 0x%4.4x, pc = 0x%16.16llx",
-                             i,
-                             (is_current_thread ? '*' : ' '),
-                             thread->GetID(),
-                             thread->GetRegisterContext()->GetPC());
-                    const char *thread_name = thread->GetName();
-                    if (thread_name && thread_name[0])
-                        fprintf (out, ", name = %s", thread_name);
-                    const char *queue_name = thread->GetQueueName();
-                    if (queue_name && queue_name[0])
-                        fprintf (out, ", queue = %s", queue_name);
-                    fprintf (out, "\n");
-                }
-            }
-        }
-    }
 }
 
 SBThread
 SBProcess::GetThreadByID (tid_t sb_thread_id)
 {
     SBThread thread;
-    if (m_lldb_object_sp)
-        thread.SetThread (m_lldb_object_sp->GetThreadList().FindThreadByID ((tid_t) sb_thread_id));
+    if (m_opaque_sp)
+        thread.SetThread (m_opaque_sp->GetThreadList().FindThreadByID ((tid_t) sb_thread_id));
     return thread;
-}
-
-void
-SBProcess::Backtrace (bool all_threads, uint32_t num_frames)
-{
-    if (m_lldb_object_sp)
-    {
-        if (!all_threads)
-        {
-            SBDebugger::UpdateCurrentThread (*this);
-            SBThread cur_thread = GetCurrentThread();
-            if (cur_thread.IsValid())
-              cur_thread.Backtrace (num_frames);
-        }
-        else
-        {
-            int num_threads = GetNumThreads ();
-            for (int i = 0; i < num_threads; ++i)
-            {
-                SBThread sb_thread = GetThreadAtIndex (i);
-                sb_thread.Backtrace (num_frames);
-            }
-        }
-    }
 }
 
 StateType
 SBProcess::GetStateFromEvent (const SBEvent &event)
 {
-    return Process::ProcessEventData::GetStateFromEvent (event.GetLLDBObjectPtr());
+    return Process::ProcessEventData::GetStateFromEvent (event.get());
 }
-
 
 bool
 SBProcess::GetRestartedFromEvent (const SBEvent &event)
 {
-    return Process::ProcessEventData::GetRestartedFromEvent (event.GetLLDBObjectPtr());
+    return Process::ProcessEventData::GetRestartedFromEvent (event.get());
 }
 
 SBProcess
 SBProcess::GetProcessFromEvent (const SBEvent &event)
 {
-    SBProcess process(Process::ProcessEventData::GetProcessFromEvent (event.GetLLDBObjectPtr()));
+    SBProcess process(Process::ProcessEventData::GetProcessFromEvent (event.get()));
     return process;
 }
 
@@ -551,14 +415,14 @@ SBProcess::GetProcessFromEvent (const SBEvent &event)
 SBBroadcaster
 SBProcess::GetBroadcaster () const
 {
-    SBBroadcaster broadcaster(m_lldb_object_sp.get(), false);
+    SBBroadcaster broadcaster(m_opaque_sp.get(), false);
     return broadcaster;
 }
 
 lldb_private::Process *
 SBProcess::operator->() const
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 size_t
@@ -569,7 +433,7 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
     if (IsValid())
     {
         Error error;
-        bytes_read = m_lldb_object_sp->ReadMemory (addr, dst, dst_len, error);
+        bytes_read = m_opaque_sp->ReadMemory (addr, dst, dst_len, error);
         sb_error.SetError (error);
     }
     else
@@ -588,7 +452,7 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     if (IsValid())
     {
         Error error;
-        bytes_written = m_lldb_object_sp->WriteMemory (addr, src, src_len, error);
+        bytes_written = m_opaque_sp->WriteMemory (addr, src, src_len, error);
         sb_error.SetError (error);
     }
 
@@ -599,6 +463,6 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
 lldb_private::Process *
 SBProcess::get() const
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 

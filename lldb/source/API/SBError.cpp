@@ -16,15 +16,15 @@ using namespace lldb_private;
 
 
 SBError::SBError () :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
 }
 
 SBError::SBError (const SBError &rhs) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (rhs.IsValid())
-        m_lldb_object_ap.reset (new Error(*rhs));
+        m_opaque_ap.reset (new Error(*rhs));
 }
 
 
@@ -37,14 +37,14 @@ SBError::operator = (const SBError &rhs)
 {
     if (rhs.IsValid())
     {
-        if (m_lldb_object_ap.get())
-            *m_lldb_object_ap = *rhs;
+        if (m_opaque_ap.get())
+            *m_opaque_ap = *rhs;
         else
-            m_lldb_object_ap.reset (new Error(*rhs));
+            m_opaque_ap.reset (new Error(*rhs));
     }
     else
     {
-        m_lldb_object_ap.reset();
+        m_opaque_ap.reset();
     }
     return *this;
 }
@@ -53,47 +53,47 @@ SBError::operator = (const SBError &rhs)
 const char *
 SBError::GetCString () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->AsCString();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->AsCString();
     return NULL;
 }
 
 void
 SBError::Clear ()
 {
-    if (m_lldb_object_ap.get())
-        m_lldb_object_ap->Clear();
+    if (m_opaque_ap.get())
+        m_opaque_ap->Clear();
 }
 
 bool
 SBError::Fail () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->Fail();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->Fail();
     return false;
 }
 
 bool
 SBError::Success () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->Success();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->Success();
     return false;
 }
 
 uint32_t
 SBError::GetError () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetError();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetError();
     return true;
 }
 
 ErrorType
 SBError::GetType () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetType();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetType();
     return eErrorTypeInvalid;
 }
 
@@ -101,14 +101,14 @@ void
 SBError::SetError (uint32_t err, ErrorType type)
 {
     CreateIfNeeded ();
-    m_lldb_object_ap->SetError (err, type);
+    m_opaque_ap->SetError (err, type);
 }
 
 void
 SBError::SetError (const Error &lldb_error)
 {
     CreateIfNeeded ();
-    *m_lldb_object_ap = lldb_error;
+    *m_opaque_ap = lldb_error;
 }
 
 
@@ -116,21 +116,21 @@ void
 SBError::SetErrorToErrno ()
 {
     CreateIfNeeded ();
-    m_lldb_object_ap->SetErrorToErrno ();
+    m_opaque_ap->SetErrorToErrno ();
 }
 
 void
 SBError::SetErrorToGenericError ()
 {
     CreateIfNeeded ();
-    m_lldb_object_ap->SetErrorToErrno ();
+    m_opaque_ap->SetErrorToErrno ();
 }
 
 void
 SBError::SetErrorString (const char *err_str)
 {
     CreateIfNeeded ();
-    m_lldb_object_ap->SetErrorString (err_str);
+    m_opaque_ap->SetErrorString (err_str);
 }
 
 int
@@ -139,7 +139,7 @@ SBError::SetErrorStringWithFormat (const char *format, ...)
     CreateIfNeeded ();
     va_list args;
     va_start (args, format);
-    int num_chars = m_lldb_object_ap->SetErrorStringWithVarArg (format, args);
+    int num_chars = m_opaque_ap->SetErrorStringWithVarArg (format, args);
     va_end (args);
     return num_chars;
 }
@@ -147,27 +147,27 @@ SBError::SetErrorStringWithFormat (const char *format, ...)
 bool
 SBError::IsValid () const
 {
-    return m_lldb_object_ap.get() != NULL;
+    return m_opaque_ap.get() != NULL;
 }
 
 void
 SBError::CreateIfNeeded ()
 {
-    if (m_lldb_object_ap.get() == NULL)
-        m_lldb_object_ap.reset(new Error ());
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset(new Error ());
 }
 
 
 lldb_private::Error *
 SBError::operator->()
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 lldb_private::Error *
 SBError::get()
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 
@@ -175,6 +175,6 @@ const lldb_private::Error &
 SBError::operator*() const
 {
     // Be sure to call "IsValid()" before calling this function or it will crash
-    return *m_lldb_object_ap;
+    return *m_opaque_ap;
 }
 

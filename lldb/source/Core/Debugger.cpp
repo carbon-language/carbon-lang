@@ -13,7 +13,7 @@
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
-
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -22,115 +22,137 @@
 using namespace lldb;
 using namespace lldb_private;
 
-int Debugger::g_shared_debugger_refcount = 0;
-bool Debugger::g_in_terminate = false;
-
-Debugger::DebuggerSP &
-Debugger::GetDebuggerSP ()
-{
-    static DebuggerSP g_shared_debugger_sp;
-    return g_shared_debugger_sp;
-}
+static uint32_t g_shared_debugger_refcount = 0;
 
 void
 Debugger::Initialize ()
 {
-    g_shared_debugger_refcount++;
-    if (GetDebuggerSP().get() == NULL)
-    {
-        GetDebuggerSP().reset (new Debugger());
+    if (g_shared_debugger_refcount == 0)
         lldb_private::Initialize();
-        GetDebuggerSP()->GetCommandInterpreter().Initialize();
-    }
+    g_shared_debugger_refcount++;
 }
 
 void
 Debugger::Terminate ()
 {
-    g_shared_debugger_refcount--;
-    if (g_shared_debugger_refcount == 0)
+    if (g_shared_debugger_refcount > 0)
     {
-        // Because Terminate is called also in the destructor, we need to make sure
-        // that none of the calls to GetSharedInstance leads to a call to Initialize,
-        // thus bumping the refcount back to 1 & causing Debugger::~Debugger to try to 
-        // re-terminate.  So we use g_in_terminate to indicate this condition.
-        // When we can require at least Initialize to be called, we won't have to do
-        // this since then the GetSharedInstance won't have to auto-call Initialize...
-        
-        g_in_terminate = true;
-        int num_targets = GetDebuggerSP()->GetTargetList().GetNumTargets();
-        for (int i = 0; i < num_targets; i++)
+        g_shared_debugger_refcount--;
+        if (g_shared_debugger_refcount == 0)
         {
-            ProcessSP process_sp(GetDebuggerSP()->GetTargetList().GetTargetAtIndex (i)->GetProcessSP());
-            if (process_sp)
-                process_sp->Destroy();
+            lldb_private::WillTerminate();
+            lldb_private::Terminate();
         }
-        GetDebuggerSP()->DisconnectInput();
-        lldb_private::WillTerminate();
-        GetDebuggerSP().reset();
     }
 }
 
-Debugger &
-Debugger::GetSharedInstance()
+typedef std::vector<DebuggerSP> DebuggerList;
+
+static Mutex &
+GetDebuggerListMutex ()
 {
-    // Don't worry about thread race conditions with the code below as
-    // lldb_private::Initialize(); does this in a thread safe way. I just
-    // want to avoid having to lock and unlock a mutex in
-    // lldb_private::Initialize(); every time we want to access the
-    // Debugger shared instance.
-    
-    // FIXME: We intend to require clients to call Initialize by hand (since they
-    // will also have to call Terminate by hand.)  But for now it is not clear where
-    // we can reliably call these in JH.  So the present version initializes on first use
-    // here, and terminates in the destructor.
-    if (g_shared_debugger_refcount == 0 && !g_in_terminate)
-        Initialize();
-        
-    assert(GetDebuggerSP().get()!= NULL);
-    return *(GetDebuggerSP().get());
+    static Mutex g_mutex(Mutex::eMutexTypeRecursive);
+    return g_mutex;
 }
+
+static DebuggerList &
+GetDebuggerList()
+{
+    // hide the static debugger list inside a singleton accessor to avoid
+    // global init contructors
+    static DebuggerList g_list;
+    return g_list;
+}
+
+
+DebuggerSP
+Debugger::CreateInstance ()
+{
+    DebuggerSP debugger_sp (new Debugger);
+    // Scope for locker
+    {
+        Mutex::Locker locker (GetDebuggerListMutex ());
+        GetDebuggerList().push_back(debugger_sp);
+    }
+    return debugger_sp;
+}
+
+lldb::DebuggerSP
+Debugger::GetSP ()
+{
+    lldb::DebuggerSP debugger_sp;
+    
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    DebuggerList::iterator pos, end = debugger_list.end();
+    for (pos = debugger_list.begin(); pos != end; ++pos)
+    {
+        if ((*pos).get() == this)
+        {
+            debugger_sp = *pos;
+            break;
+        }
+    }
+    return debugger_sp;
+}
+
+
+TargetSP
+Debugger::FindTargetWithProcessID (lldb::pid_t pid)
+{
+    lldb::TargetSP target_sp;
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    DebuggerList::iterator pos, end = debugger_list.end();
+    for (pos = debugger_list.begin(); pos != end; ++pos)
+    {
+        target_sp = (*pos)->GetTargetList().FindTargetWithProcessID (pid);
+        if (target_sp)
+            break;
+    }
+    return target_sp;
+}
+
 
 Debugger::Debugger () :
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
     m_error_file (),
-    m_async_execution (true),
     m_target_list (),
     m_listener ("lldb.Debugger"),
     m_source_manager (),
-    m_command_interpreter (eScriptLanguageDefault, false, &m_listener, m_source_manager),
+    m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
+    m_exe_ctx (),
     m_input_readers (),
     m_input_reader_data ()
 {
+    m_command_interpreter_ap->Initialize ();
 }
 
 Debugger::~Debugger ()
 {
-    // FIXME:
-    // Remove this once this version of lldb has made its way through a build.
-    Terminate();
+    int num_targets = m_target_list.GetNumTargets();
+    for (int i = 0; i < num_targets; i++)
+    {
+        ProcessSP process_sp (m_target_list.GetTargetAtIndex (i)->GetProcessSP());
+        if (process_sp)
+            process_sp->Destroy();
+    }
+    DisconnectInput();
 }
 
 
 bool
 Debugger::GetAsyncExecution ()
 {
-    return m_async_execution;
+    return !m_command_interpreter_ap->GetSynchronous();
 }
 
 void
 Debugger::SetAsyncExecution (bool async_execution)
 {
-    static bool value_has_been_set = false;
-
-    if (!value_has_been_set)
-    {
-        value_has_been_set = true;
-        m_async_execution = async_execution;
-        m_command_interpreter.SetSynchronous (!async_execution);
-    }
+    m_command_interpreter_ap->SetSynchronous (!async_execution);
 }
 
 void
@@ -203,7 +225,8 @@ Debugger::GetErrorFileHandle ()
 CommandInterpreter &
 Debugger::GetCommandInterpreter ()
 {
-    return m_command_interpreter;
+    assert (m_command_interpreter_ap.get());
+    return *m_command_interpreter_ap;
 }
 
 Listener &
@@ -432,3 +455,39 @@ Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
         }
     }
 }
+
+void
+Debugger::UpdateExecutionContext (ExecutionContext *override_context)
+{
+    m_exe_ctx.Clear();
+
+    if (override_context != NULL)
+    {
+        m_exe_ctx.target = override_context->target;
+        m_exe_ctx.process = override_context->process;
+        m_exe_ctx.thread = override_context->thread;
+        m_exe_ctx.frame = override_context->frame;
+    }
+    else
+    {
+        TargetSP target_sp (GetCurrentTarget());
+        if (target_sp)
+        {
+            m_exe_ctx.target = target_sp.get();
+            m_exe_ctx.process = target_sp->GetProcessSP().get();
+            if (m_exe_ctx.process && m_exe_ctx.process->IsRunning() == false)
+            {
+                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetCurrentThread().get();
+                if (m_exe_ctx.thread == NULL)
+                    m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
+                if (m_exe_ctx.thread)
+                {
+                    m_exe_ctx.frame = m_exe_ctx.thread->GetCurrentFrame().get();
+                    if (m_exe_ctx.frame == NULL)
+                        m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
+                }
+            }
+        }
+    }
+}
+

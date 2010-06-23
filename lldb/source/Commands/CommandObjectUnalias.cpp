@@ -25,8 +25,8 @@ using namespace lldb_private;
 
 CommandObjectUnalias::CommandObjectUnalias () :
     CommandObject ("unalias",
-                     "Allows the user to remove/delete a user-defined command abbreviation.",
-                     "unalias <alias-name-to-be-removed>")
+                   "Allows the user to remove/delete a user-defined command abbreviation.",
+                   "unalias <alias-name-to-be-removed>")
 {
 }
 
@@ -36,8 +36,12 @@ CommandObjectUnalias::~CommandObjectUnalias()
 
 
 bool
-CommandObjectUnalias::Execute (Args& args, CommandContext *context, CommandInterpreter *interpreter,
-                               CommandReturnObject &result)
+CommandObjectUnalias::Execute
+(
+    CommandInterpreter &interpreter,
+    Args& args,
+    CommandReturnObject &result
+)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;
@@ -45,10 +49,10 @@ CommandObjectUnalias::Execute (Args& args, CommandContext *context, CommandInter
     if (args.GetArgumentCount() != 0)
     {
         const char *command_name = args.GetArgumentAtIndex(0);
-        cmd_obj = interpreter->GetCommandObject(command_name);
+        cmd_obj = interpreter.GetCommandObject(command_name);
         if (cmd_obj)
         {
-            if (interpreter->CommandExists (command_name))
+            if (interpreter.CommandExists (command_name))
             {
                 result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be removed.\n",
                                               command_name);
@@ -57,9 +61,9 @@ CommandObjectUnalias::Execute (Args& args, CommandContext *context, CommandInter
             else
             {
 
-                if (interpreter->RemoveAlias (command_name) == false)
+                if (interpreter.RemoveAlias (command_name) == false)
                 {
-                    if (interpreter->AliasExists (command_name))
+                    if (interpreter.AliasExists (command_name))
                         result.AppendErrorWithFormat ("Error occurred while attempting to unalias '%s'.\n", command_name);
                     else
                         result.AppendErrorWithFormat ("'%s' is not an existing alias.\n", command_name);

@@ -43,18 +43,8 @@ StreamForSTDOUTAccess (bool set, StreamSP &stream_sp)
     if (set)
         g_stream_sp = stream_sp;
     else
-    {
-        if (g_stream_sp)
-            stream_sp = g_stream_sp;
-        else
-        {
-            FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-            if (out_fh)
-                stream_sp.reset(new StreamFile(out_fh));
-            else
-                stream_sp.reset();
-        }
-    }
+        stream_sp = g_stream_sp;
+
     return stream_sp.get();
 }
 
@@ -91,7 +81,7 @@ StreamForSTDERRAccess (bool set, StreamSP &stream_sp)
     // Since we are in a shared library and we can't have global
     // constructors, we need to control access to this static variable
     // through an accessor function to get and set the value.
-    static StreamSP g_stream_sp(new StreamFile(Debugger::GetSharedInstance().GetErrorFileHandle()));
+    static StreamSP g_stream_sp;
 
     if (set)
         g_stream_sp = stream_sp;

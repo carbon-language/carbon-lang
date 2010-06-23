@@ -17,11 +17,11 @@
 
 #include <stack>
 
-#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/TargetList.h"
 
 namespace lldb_private {
@@ -36,16 +36,22 @@ class Debugger
 {
 public:
 
+    static lldb::DebuggerSP
+    CreateInstance ();
+
+    static lldb::TargetSP
+    FindTargetWithProcessID (lldb::pid_t pid);
+
     static void
     Initialize ();
     
     static void 
     Terminate ();
 
-    static Debugger &
-    GetSharedInstance ();
-    
     ~Debugger ();
+
+    lldb::DebuggerSP
+    GetSP ();
 
     bool
     GetAsyncExecution ();
@@ -123,6 +129,16 @@ public:
     bool
     PopInputReader (const lldb::InputReaderSP& reader_sp);
 
+    ExecutionContext &
+    GetExecutionContext()
+    {
+        return m_exe_ctx;
+    }
+
+
+    void
+    UpdateExecutionContext (ExecutionContext *override_context);
+
 protected:
 
     static void
@@ -137,7 +153,6 @@ protected:
     void
     DisconnectInput();
 
-    bool m_async_execution;
     Communication m_input_comm;
     StreamFile m_input_file;
     StreamFile m_output_file;
@@ -145,21 +160,19 @@ protected:
     TargetList m_target_list;
     Listener m_listener;
     SourceManager m_source_manager;
-    CommandInterpreter m_command_interpreter;
+    std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
+    ExecutionContext m_exe_ctx;
 
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
     
-    typedef lldb::SharedPtr<Debugger>::Type DebuggerSP;
-
-    static DebuggerSP &
-    GetDebuggerSP();
-    
-    static int g_shared_debugger_refcount;
-    static bool g_in_terminate;
-
 private:
-    Debugger ();    // Access the single global instance of this class using Debugger::GetSharedInstance();
+
+    // Use Debugger::CreateInstance() to get a shared pointer to a new
+    // debugger object
+    Debugger ();
+
+
 
     DISALLOW_COPY_AND_ASSIGN (Debugger);
 };

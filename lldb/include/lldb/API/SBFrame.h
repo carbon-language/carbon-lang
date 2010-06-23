@@ -122,7 +122,7 @@ private:
     void
     SetFrame (const lldb::StackFrameSP &lldb_object_sp);
 
-    lldb::StackFrameSP m_lldb_object_sp;
+    lldb::StackFrameSP m_opaque_sp;
 };
 
 } // namespace lldb

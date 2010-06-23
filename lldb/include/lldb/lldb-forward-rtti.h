@@ -33,6 +33,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Communication>::Type CommunicationSP;
     typedef SharedPtr<lldb_private::CompileUnit>::Type CompUnitSP;
     typedef SharedPtr<lldb_private::DataBuffer>::Type DataBufferSP;
+    typedef SharedPtr<lldb_private::Debugger>::Type DebuggerSP;
     typedef SharedPtr<lldb_private::DynamicLoader>::Type DynamicLoaderSP;
     typedef SharedPtr<lldb_private::Event>::Type EventSP;
     typedef SharedPtr<lldb_private::Function>::Type FunctionSP;

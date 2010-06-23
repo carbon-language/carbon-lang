@@ -62,18 +62,18 @@ public:
 
 
 SBBreakpoint::SBBreakpoint () :
-    m_break_sp ()
+    m_opaque_sp ()
 {
 }
 
 SBBreakpoint::SBBreakpoint (const SBBreakpoint& rhs) :
-    m_break_sp (rhs.m_break_sp)
+    m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
 
 SBBreakpoint::SBBreakpoint (const lldb::BreakpointSP &bp_sp) :
-    m_break_sp (bp_sp)
+    m_opaque_sp (bp_sp)
 {
 }
 
@@ -86,7 +86,7 @@ SBBreakpoint::operator = (const SBBreakpoint& rhs)
 {
     if (this != &rhs)
     {
-        m_break_sp = rhs.m_break_sp;
+        m_opaque_sp = rhs.m_opaque_sp;
     }
     return *this;
 }
@@ -94,8 +94,8 @@ SBBreakpoint::operator = (const SBBreakpoint& rhs)
 break_id_t
 SBBreakpoint::GetID () const
 {
-    if (m_break_sp)
-        return m_break_sp->GetID();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
     return LLDB_INVALID_BREAK_ID;
 }
 
@@ -103,28 +103,24 @@ SBBreakpoint::GetID () const
 bool
 SBBreakpoint::IsValid() const
 {
-    return m_break_sp;
+    return m_opaque_sp;
 }
 
 void
 SBBreakpoint::Dump (FILE *f)
 {
-    if (m_break_sp)
+    if (m_opaque_sp && f)
     {
-        if (f == NULL)
-            f = SBDebugger::GetOutputFileHandle();
-        if (f == NULL)
-            return;
         lldb_private::StreamFile str (f);
-        m_break_sp->Dump (&str);
+        m_opaque_sp->Dump (&str);
     }
 }
 
 void
 SBBreakpoint::ClearAllBreakpointSites ()
 {
-    if (m_break_sp)
-        m_break_sp->ClearAllBreakpointSites ();
+    if (m_opaque_sp)
+        m_opaque_sp->ClearAllBreakpointSites ();
 }
 
 SBBreakpointLocation
@@ -132,18 +128,18 @@ SBBreakpoint::FindLocationByAddress (addr_t vm_addr)
 {
     SBBreakpointLocation sb_bp_location;
 
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
         if (vm_addr != LLDB_INVALID_ADDRESS)
         {
             Address address;
-            Process *sb_process = m_break_sp->GetTarget().GetProcessSP().get();
+            Process *sb_process = m_opaque_sp->GetTarget().GetProcessSP().get();
             if (sb_process == NULL || sb_process->ResolveLoadAddress (vm_addr, address) == false)
             {
                 address.SetSection (NULL);
                 address.SetOffset (vm_addr);
             }
-            sb_bp_location.SetLocation (m_break_sp->FindLocationByAddress (address));
+            sb_bp_location.SetLocation (m_opaque_sp->FindLocationByAddress (address));
         }
     }
     return sb_bp_location;
@@ -154,18 +150,18 @@ SBBreakpoint::FindLocationIDByAddress (addr_t vm_addr)
 {
     break_id_t lldb_id = (break_id_t) 0;
 
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
         if (vm_addr != LLDB_INVALID_ADDRESS)
         {
             Address address;
-            Process *sb_process = m_break_sp->GetTarget().GetProcessSP().get();
+            Process *sb_process = m_opaque_sp->GetTarget().GetProcessSP().get();
             if (sb_process == NULL || sb_process->ResolveLoadAddress (vm_addr, address) == false)
             {
                 address.SetSection (NULL);
                 address.SetOffset (vm_addr);
             }
-            lldb_id = m_break_sp->FindLocationIDByAddress (address);
+            lldb_id = m_opaque_sp->FindLocationIDByAddress (address);
         }
     }
 
@@ -177,8 +173,8 @@ SBBreakpoint::FindLocationByID (break_id_t bp_loc_id)
 {
     SBBreakpointLocation sb_bp_location;
 
-    if (m_break_sp)
-        sb_bp_location.SetLocation (m_break_sp->FindLocationByID (bp_loc_id));
+    if (m_opaque_sp)
+        sb_bp_location.SetLocation (m_opaque_sp->FindLocationByID (bp_loc_id));
 
     return sb_bp_location;
 }
@@ -188,8 +184,8 @@ SBBreakpoint::GetLocationAtIndex (uint32_t index)
 {
     SBBreakpointLocation sb_bp_location;
 
-    if (m_break_sp)
-        sb_bp_location.SetLocation (m_break_sp->GetLocationAtIndex (index));
+    if (m_opaque_sp)
+        sb_bp_location.SetLocation (m_opaque_sp->GetLocationAtIndex (index));
 
     return sb_bp_location;
 }
@@ -197,13 +193,7 @@ SBBreakpoint::GetLocationAtIndex (uint32_t index)
 void
 SBBreakpoint::ListLocations (FILE* f, const char *description_level)
 {
-   if (f == NULL)
-       f = SBDebugger::GetOutputFileHandle();
-
-   if (f == NULL)
-       return;
-
-    if (m_break_sp)
+    if (m_opaque_sp && f)
     {
         DescriptionLevel level;
         if (strcmp (description_level, "brief") == 0)
@@ -218,10 +208,10 @@ SBBreakpoint::ListLocations (FILE* f, const char *description_level)
         StreamFile str (f);
 
         str.IndentMore();
-        int num_locs = m_break_sp->GetNumLocations();
+        int num_locs = m_opaque_sp->GetNumLocations();
         for (int i = 0; i < num_locs; ++i)
         {
-            BreakpointLocation *loc = m_break_sp->GetLocationAtIndex (i).get();
+            BreakpointLocation *loc = m_opaque_sp->GetLocationAtIndex (i).get();
             loc->GetDescription (&str, level);
             str.EOL();
         }
@@ -231,15 +221,15 @@ SBBreakpoint::ListLocations (FILE* f, const char *description_level)
 void
 SBBreakpoint::SetEnabled (bool enable)
 {
-    if (m_break_sp)
-        m_break_sp->SetEnabled (enable);
+    if (m_opaque_sp)
+        m_opaque_sp->SetEnabled (enable);
 }
 
 bool
 SBBreakpoint::IsEnabled ()
 {
-    if (m_break_sp)
-        return m_break_sp->IsEnabled();
+    if (m_opaque_sp)
+        return m_opaque_sp->IsEnabled();
     else
         return false;
 }
@@ -247,15 +237,15 @@ SBBreakpoint::IsEnabled ()
 void
 SBBreakpoint::SetIgnoreCount (int32_t count)
 {
-    if (m_break_sp)
-        m_break_sp->SetIgnoreCount (count);
+    if (m_opaque_sp)
+        m_opaque_sp->SetIgnoreCount (count);
 }
 
 int32_t
 SBBreakpoint::GetIgnoreCount () const
 {
-    if (m_break_sp)
-        return m_break_sp->GetIgnoreCount();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetIgnoreCount();
     else
         return 0;
 }
@@ -263,16 +253,16 @@ SBBreakpoint::GetIgnoreCount () const
 void
 SBBreakpoint::SetThreadID (tid_t sb_thread_id)
 {
-    if (m_break_sp)
-        m_break_sp->SetThreadID (sb_thread_id);
+    if (m_opaque_sp)
+        m_opaque_sp->SetThreadID (sb_thread_id);
 }
 
 tid_t
 SBBreakpoint::GetThreadID ()
 {
     tid_t lldb_thread_id = LLDB_INVALID_THREAD_ID;
-    if (m_break_sp)
-        lldb_thread_id = m_break_sp->GetThreadID();
+    if (m_opaque_sp)
+        lldb_thread_id = m_opaque_sp->GetThreadID();
 
     return lldb_thread_id;
 }
@@ -280,16 +270,16 @@ SBBreakpoint::GetThreadID ()
 void
 SBBreakpoint::SetThreadIndex (uint32_t index)
 {
-    if (m_break_sp)
-        m_break_sp->GetOptions()->GetThreadSpec()->SetIndex (index);
+    if (m_opaque_sp)
+        m_opaque_sp->GetOptions()->GetThreadSpec()->SetIndex (index);
 }
 
 uint32_t
 SBBreakpoint::GetThreadIndex() const
 {
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
         if (thread_spec == NULL)
             return 0;
         else
@@ -302,16 +292,16 @@ SBBreakpoint::GetThreadIndex() const
 void
 SBBreakpoint::SetThreadName (const char *thread_name)
 {
-    if (m_break_sp)
-        m_break_sp->GetOptions()->GetThreadSpec()->SetName (thread_name);
+    if (m_opaque_sp)
+        m_opaque_sp->GetOptions()->GetThreadSpec()->SetName (thread_name);
 }
 
 const char *
 SBBreakpoint::GetThreadName () const
 {
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
         if (thread_spec == NULL)
             return NULL;
         else
@@ -323,16 +313,16 @@ SBBreakpoint::GetThreadName () const
 void
 SBBreakpoint::SetQueueName (const char *queue_name)
 {
-    if (m_break_sp)
-        m_break_sp->GetOptions()->GetThreadSpec()->SetQueueName (queue_name);
+    if (m_opaque_sp)
+        m_opaque_sp->GetOptions()->GetThreadSpec()->SetQueueName (queue_name);
 }
 
 const char *
 SBBreakpoint::GetQueueName () const
 {
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_sp->GetOptions()->GetThreadSpec();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
         if (thread_spec == NULL)
             return NULL;
         else
@@ -344,8 +334,8 @@ SBBreakpoint::GetQueueName () const
 size_t
 SBBreakpoint::GetNumResolvedLocations() const
 {
-    if (m_break_sp)
-        return m_break_sp->GetNumResolvedLocations();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetNumResolvedLocations();
     else
         return 0;
 }
@@ -353,8 +343,8 @@ SBBreakpoint::GetNumResolvedLocations() const
 size_t
 SBBreakpoint::GetNumLocations() const
 {
-    if (m_break_sp)
-        return m_break_sp->GetNumLocations();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetNumLocations();
     else
         return 0;
 }
@@ -365,7 +355,7 @@ SBBreakpoint::GetDescription (FILE *f, const char *description_level, bool descr
     if (f == NULL)
         return;
 
-    if (m_break_sp)
+    if (m_opaque_sp)
     {
         DescriptionLevel level;
         if (strcmp (description_level, "brief") == 0)
@@ -379,15 +369,15 @@ SBBreakpoint::GetDescription (FILE *f, const char *description_level, bool descr
 
         StreamFile str (f);
 
-        m_break_sp->GetDescription (&str, level);
+        m_opaque_sp->GetDescription (&str, level);
         str.EOL();
         if (describe_locations)
         {
           //str.IndentMore();
-          // int num_locs = m_break_sp->GetNumLocations();
+          // int num_locs = m_opaque_sp->GetNumLocations();
           //  for (int i = 0; i < num_locs; ++i)
           //  {
-          //      BreakpointLocation *loc = m_break_sp->FindLocationByIndex (i);
+          //      BreakpointLocation *loc = m_opaque_sp->FindLocationByIndex (i);
           //      loc->GetDescription (&str, level);
           //      str.EOL();
           //  }
@@ -405,22 +395,22 @@ SBBreakpoint::PrivateBreakpointHitCallback
     lldb::user_id_t break_loc_id
 )
 {
-    BreakpointSP bp_sp(ctx->context.target->GetBreakpointList().FindBreakpointByID(break_id));
+    BreakpointSP bp_sp(ctx->exe_ctx.target->GetBreakpointList().FindBreakpointByID(break_id));
     if (baton && bp_sp)
     {
         CallbackData *data = (CallbackData *)baton;
         lldb_private::Breakpoint *bp = bp_sp.get();
         if (bp && data->callback)
         {
-            if (ctx->context.process)
+            if (ctx->exe_ctx.process)
             {
-                SBProcess sb_process (ctx->context.process->GetSP());
+                SBProcess sb_process (ctx->exe_ctx.process->GetSP());
                 SBThread sb_thread;
                 SBBreakpointLocation sb_location;
                 assert (bp_sp);
                 sb_location.SetLocation (bp_sp->FindLocationByID (break_loc_id));
-                if (ctx->context.thread)
-                    sb_thread.SetThread(ctx->context.thread->GetSP());
+                if (ctx->exe_ctx.thread)
+                    sb_thread.SetThread(ctx->exe_ctx.thread->GetSP());
 
                 return data->callback (data->callback_baton, 
                                           sb_process, 
@@ -435,10 +425,10 @@ SBBreakpoint::PrivateBreakpointHitCallback
 void
 SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
 {
-    if (m_break_sp.get())
+    if (m_opaque_sp.get())
     {
         BatonSP baton_sp(new SBBreakpointCallbackBaton (callback, baton));
-        m_break_sp->SetCallback (SBBreakpoint::PrivateBreakpointHitCallback, baton_sp, false);
+        m_opaque_sp->SetCallback (SBBreakpoint::PrivateBreakpointHitCallback, baton_sp, false);
     }
 }
 
@@ -446,24 +436,24 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
 lldb_private::Breakpoint *
 SBBreakpoint::operator->() const
 {
-    return m_break_sp.get();
+    return m_opaque_sp.get();
 }
 
 lldb_private::Breakpoint *
 SBBreakpoint::get() const
 {
-    return m_break_sp.get();
+    return m_opaque_sp.get();
 }
 
 lldb::BreakpointSP &
 SBBreakpoint::operator *()
 {
-    return m_break_sp;
+    return m_opaque_sp;
 }
 
 const lldb::BreakpointSP &
 SBBreakpoint::operator *() const
 {
-    return m_break_sp;
+    return m_opaque_sp;
 }
 

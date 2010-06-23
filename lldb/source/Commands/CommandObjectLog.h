@@ -31,7 +31,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectLog(CommandInterpreter *interpreter);
+    CommandObjectLog(CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectLog();

@@ -30,8 +30,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter &interpreter) :
-    m_interpreter (interpreter)
+SBCommandInterpreter::SBCommandInterpreter (CommandInterpreter *interpreter) :
+    m_opaque_ptr (interpreter)
 {
 }
 
@@ -40,28 +40,49 @@ SBCommandInterpreter::~SBCommandInterpreter ()
 }
 
 bool
+SBCommandInterpreter::IsValid() const
+{
+    return m_opaque_ptr != NULL;
+}
+
+
+bool
 SBCommandInterpreter::CommandExists (const char *cmd)
 {
-    return m_interpreter.CommandExists (cmd);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->CommandExists (cmd);
+    return false;
 }
 
 bool
 SBCommandInterpreter::AliasExists (const char *cmd)
 {
-    return m_interpreter.AliasExists (cmd);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->AliasExists (cmd);
+    return false;
 }
 
 bool
 SBCommandInterpreter::UserCommandExists (const char *cmd)
 {
-    return m_interpreter.UserCommandExists (cmd);
+    if (m_opaque_ptr)
+        return m_opaque_ptr->UserCommandExists (cmd);
+    return false;
 }
 
 lldb::ReturnStatus
 SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnObject &result, bool add_to_history)
 {
     result.Clear();
-    m_interpreter.HandleCommand (command_line, add_to_history, result.GetLLDBObjectRef());
+    if (m_opaque_ptr)
+    {
+        m_opaque_ptr->HandleCommand (command_line, add_to_history, result.ref());
+    }
+    else
+    {
+        result->AppendError ("SBCommandInterpreter is not valid");
+        result->SetStatus (eReturnStatusFailed);
+    }
     return result.GetStatus();
 }
 
@@ -73,64 +94,79 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
                                         int max_return_elements,
                                         SBStringList &matches)
 {
-    int num_completions;
-    lldb_private::StringList lldb_matches;
-    num_completions =  m_interpreter.HandleCompletion (current_line, cursor, last_char, match_start_point,
-                                                       max_return_elements, lldb_matches);
+    int num_completions = 0;
+    if (m_opaque_ptr)
+    {
+        lldb_private::StringList lldb_matches;
+        num_completions =  m_opaque_ptr->HandleCompletion (current_line, cursor, last_char, match_start_point,
+                                                           max_return_elements, lldb_matches);
 
-    SBStringList temp_list (&lldb_matches);
-    matches.AppendList (temp_list);
-
+        SBStringList temp_list (&lldb_matches);
+        matches.AppendList (temp_list);
+    }
     return num_completions;
 }
 
 const char **
 SBCommandInterpreter::GetEnvironmentVariables ()
 {
-    const Args *env_vars =  m_interpreter.GetEnvironmentVariables();
-    if (env_vars)
-        return env_vars->GetConstArgumentVector ();
+    if (m_opaque_ptr)
+    {
+        const Args *env_vars =  m_opaque_ptr->GetEnvironmentVariables();
+        if (env_vars)
+            return env_vars->GetConstArgumentVector ();
+    }
     return NULL;
 }
 
 bool
 SBCommandInterpreter::HasCommands ()
 {
-    return m_interpreter.HasCommands();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->HasCommands();
+    return false;
 }
 
 bool
 SBCommandInterpreter::HasAliases ()
 {
-    return m_interpreter.HasAliases();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->HasAliases();
+    return false;
 }
 
 bool
 SBCommandInterpreter::HasUserCommands ()
 {
-    return m_interpreter.HasUserCommands ();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->HasUserCommands ();
+    return false;
 }
 
 bool
 SBCommandInterpreter::HasAliasOptions ()
 {
-    return m_interpreter.HasAliasOptions ();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->HasAliasOptions ();
+    return false;
 }
 
 bool
 SBCommandInterpreter::HasInterpreterVariables ()
 {
-    return m_interpreter.HasInterpreterVariables ();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->HasInterpreterVariables ();
+    return false;
 }
 
 SBProcess
 SBCommandInterpreter::GetProcess ()
 {
     SBProcess process;
-    CommandContext *context = m_interpreter.Context();
-    if (context)
+    if (m_opaque_ptr)
     {
-        Target *target = context->GetTarget();
+        Debugger &debugger = m_opaque_ptr->GetDebugger();
+        Target *target = debugger.GetCurrentTarget().get();
         if (target)
             process.SetProcess(target->GetProcessSP());
     }
@@ -140,7 +176,7 @@ SBCommandInterpreter::GetProcess ()
 ssize_t
 SBCommandInterpreter::WriteToScriptInterpreter (const char *src)
 {
-    if (src)
+    if (m_opaque_ptr && src && src[0])
         return WriteToScriptInterpreter (src, strlen(src));
     return 0;
 }
@@ -148,9 +184,9 @@ SBCommandInterpreter::WriteToScriptInterpreter (const char *src)
 ssize_t
 SBCommandInterpreter::WriteToScriptInterpreter (const char *src, size_t src_len)
 {
-    if (src && src[0])
+    if (m_opaque_ptr && src && src[0])
     {
-        ScriptInterpreter *script_interpreter = m_interpreter.GetScriptInterpreter();
+        ScriptInterpreter *script_interpreter = m_opaque_ptr->GetScriptInterpreter();
         if (script_interpreter)
             return ::write (script_interpreter->GetMasterFileDescriptor(), src, src_len);
     }
@@ -159,35 +195,58 @@ SBCommandInterpreter::WriteToScriptInterpreter (const char *src, size_t src_len)
 
 
 CommandInterpreter *
-SBCommandInterpreter::GetLLDBObjectPtr ()
+SBCommandInterpreter::get ()
 {
-    return &m_interpreter;
+    return m_opaque_ptr;
 }
 
 CommandInterpreter &
-SBCommandInterpreter::GetLLDBObjectRef ()
+SBCommandInterpreter::ref ()
 {
-    return m_interpreter;
+    assert (m_opaque_ptr);
+    return *m_opaque_ptr;
+}
+
+void
+SBCommandInterpreter::reset (lldb_private::CommandInterpreter *interpreter)
+{
+    m_opaque_ptr = interpreter;
 }
 
 void
 SBCommandInterpreter::SourceInitFileInHomeDirectory (SBCommandReturnObject &result)
 {
     result.Clear();
-    m_interpreter.SourceInitFile (false, result.GetLLDBObjectRef());
+    if (m_opaque_ptr)
+    {
+        m_opaque_ptr->SourceInitFile (false, result.ref());
+    }
+    else
+    {
+        result->AppendError ("SBCommandInterpreter is not valid");
+        result->SetStatus (eReturnStatusFailed);
+    }
 }
 
 void
 SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnObject &result)
 {
     result.Clear();
-    m_interpreter.SourceInitFile (true, result.GetLLDBObjectRef());
+    if (m_opaque_ptr)
+    {
+        m_opaque_ptr->SourceInitFile (true, result.ref());
+    }
+    else
+    {
+        result->AppendError ("SBCommandInterpreter is not valid");
+        result->SetStatus (eReturnStatusFailed);
+    }
 }
 
 SBBroadcaster
 SBCommandInterpreter::GetBroadcaster ()
 {
-    SBBroadcaster broadcaster (&m_interpreter, false);
+    SBBroadcaster broadcaster (m_opaque_ptr, false);
     return broadcaster;
 }
 

@@ -40,9 +40,8 @@ CommandObjectCrossref::~CommandObjectCrossref ()
 bool
 CommandObjectCrossref::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {

@@ -89,8 +89,12 @@ CommandObjectAlias::~CommandObjectAlias ()
 
 
 bool
-CommandObjectAlias::Execute (Args& args, CommandContext *context, CommandInterpreter *interpreter,
-                               CommandReturnObject &result)
+CommandObjectAlias::Execute
+(
+    CommandInterpreter &interpreter,
+    Args& args,
+    CommandReturnObject &result
+)
 {
     const int argc = args.GetArgumentCount();
 
@@ -109,7 +113,7 @@ CommandObjectAlias::Execute (Args& args, CommandContext *context, CommandInterpr
 
     // Verify that the command is alias'able, and get the appropriate command object.
 
-    if (interpreter->CommandExists (alias_command.c_str()))
+    if (interpreter.CommandExists (alias_command.c_str()))
     {
         result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be redefined.\n",
                                      alias_command.c_str());
@@ -117,7 +121,7 @@ CommandObjectAlias::Execute (Args& args, CommandContext *context, CommandInterpr
     }
     else
     {
-         CommandObjectSP command_obj_sp(interpreter->GetCommandSP (actual_command.c_str()));
+         CommandObjectSP command_obj_sp(interpreter.GetCommandSP (actual_command.c_str()));
          CommandObjectSP subcommand_obj_sp;
          bool use_subcommand = false;
          if (command_obj_sp.get())
@@ -193,24 +197,24 @@ CommandObjectAlias::Execute (Args& args, CommandContext *context, CommandInterpr
 
              // Create the alias.
 
-             if (interpreter->AliasExists (alias_command.c_str())
-                 || interpreter->UserCommandExists (alias_command.c_str()))
+             if (interpreter.AliasExists (alias_command.c_str())
+                 || interpreter.UserCommandExists (alias_command.c_str()))
              {
-                 OptionArgVectorSP tmp_option_arg_sp (interpreter->GetAliasOptions (alias_command.c_str()));
+                 OptionArgVectorSP tmp_option_arg_sp (interpreter.GetAliasOptions (alias_command.c_str()));
                  if (tmp_option_arg_sp.get())
                  {
                      if (option_arg_vector->size() == 0)
-                         interpreter->RemoveAliasOptions (alias_command.c_str());
+                         interpreter.RemoveAliasOptions (alias_command.c_str());
                  }
                  result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n", alias_command.c_str());
              }
 
              if (use_subcommand)
-                 interpreter->AddAlias (alias_command.c_str(), subcommand_obj_sp);
+                 interpreter.AddAlias (alias_command.c_str(), subcommand_obj_sp);
              else
-                 interpreter->AddAlias (alias_command.c_str(), command_obj_sp);
+                 interpreter.AddAlias (alias_command.c_str(), command_obj_sp);
              if (option_arg_vector->size() > 0)
-                 interpreter->AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+                 interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
              result.SetStatus (eReturnStatusSuccessFinishNoResult);
          }
          else

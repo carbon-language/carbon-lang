@@ -43,7 +43,7 @@ bool
 CommandObjectSyntax::OldExecute
 (
     Args& command,
-    CommandContext *context,
+    Debugger *context,
     CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
@@ -86,7 +86,7 @@ CommandObjectSyntax::OldExecute
 }
 
 bool
-CommandObjectSyntax::Execute (Args &command, CommandContext *context, CommandInterpreter *interpreter, 
+CommandObjectSyntax::Execute (Args &command, Debugger *context, CommandInterpreter *interpreter, 
                               CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;

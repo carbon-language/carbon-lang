@@ -465,12 +465,14 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result)
+    Execute
+    (
+        CommandInterpreter &interpreter,
+        Args& command,
+        CommandReturnObject &result
+    )
     {
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame == NULL)
         {
             result.AppendError ("invalid frame");
@@ -492,14 +494,13 @@ public:
             if (!m_options.globals.empty())
             {
                 uint32_t fail_count = 0;
-                Target *target = context->GetTarget();
-                if (target)
+                if (exe_ctx.target)
                 {
                     const size_t num_globals = m_options.globals.size();
                     for (idx = 0; idx < num_globals; ++idx)
                     {
                         VariableList global_var_list;
-                        const uint32_t num_matching_globals = target->GetImages().FindGlobalVariables (m_options.globals[idx], true, UINT32_MAX, global_var_list);
+                        const uint32_t num_matching_globals = exe_ctx.target->GetImages().FindGlobalVariables (m_options.globals[idx], true, UINT32_MAX, global_var_list);
 
                         if (num_matching_globals == 0)
                         {
@@ -781,12 +782,12 @@ CommandObjectVariableList::CommandOptions::g_option_table[] =
 //----------------------------------------------------------------------
 // CommandObjectVariable constructor
 //----------------------------------------------------------------------
-CommandObjectVariable::CommandObjectVariable(CommandInterpreter *interpreter) :
+CommandObjectVariable::CommandObjectVariable(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("variable",
-                              "Access program arguments, locals, static and global variables.",
-                              "variable [list] ...")
+                            "Access program arguments, locals, static and global variables.",
+                            "variable [list] ...")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectVariableList ()), "list", interpreter);
+    LoadSubCommand (interpreter, "list", CommandObjectSP (new CommandObjectVariableList ()));
 }
 
 //----------------------------------------------------------------------

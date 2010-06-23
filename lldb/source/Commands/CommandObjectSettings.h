@@ -32,9 +32,8 @@ public:
     ~CommandObjectSettings ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 };

@@ -33,13 +33,16 @@ CommandCompletions::g_common_completions[] =
 };
 
 bool
-CommandCompletions::InvokeCommonCompletionCallbacks (uint32_t completion_mask,
-                                                const char *completion_str,
-                                                int match_start_point,
-                                                int max_return_elements,
-                                                lldb_private::CommandInterpreter *interpreter,
-                                                SearchFilter *searcher,
-                                                lldb_private::StringList &matches)
+CommandCompletions::InvokeCommonCompletionCallbacks 
+(
+    CommandInterpreter &interpreter,
+    uint32_t completion_mask,
+    const char *completion_str,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    StringList &matches
+)
 {
     bool handled = false;
 
@@ -54,10 +57,10 @@ CommandCompletions::InvokeCommonCompletionCallbacks (uint32_t completion_mask,
                    && g_common_completions[i].callback != NULL)
          {
             handled = true;
-            g_common_completions[i].callback (completion_str,
+            g_common_completions[i].callback (interpreter,
+                                              completion_str,
                                               match_start_point,
                                               max_return_elements,
-                                              interpreter,
                                               searcher,
                                               matches);
         }
@@ -66,20 +69,27 @@ CommandCompletions::InvokeCommonCompletionCallbacks (uint32_t completion_mask,
 }
 
 int
-CommandCompletions::SourceFiles (const char *partial_file_name,
-                    int match_start_point,
-                    int max_return_elements,
-                    lldb_private::CommandInterpreter *interpreter,
-                    SearchFilter *searcher,
-                    lldb_private::StringList &matches)
+CommandCompletions::SourceFiles 
+(
+    CommandInterpreter &interpreter,
+    const char *partial_file_name,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    StringList &matches
+)
 {
     // Find some way to switch "include support files..."
-    SourceFileCompleter completer (false, partial_file_name, match_start_point, max_return_elements, interpreter,
+    SourceFileCompleter completer (interpreter,
+                                   false, 
+                                   partial_file_name, 
+                                   match_start_point, 
+                                   max_return_elements,
                                    matches);
 
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter->Context()->GetTarget()->GetSP();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
@@ -91,18 +101,25 @@ CommandCompletions::SourceFiles (const char *partial_file_name,
 }
 
 int
-CommandCompletions::Modules (const char *partial_file_name,
-                    int match_start_point,
-                    int max_return_elements,
-                    lldb_private::CommandInterpreter *interpreter,
-                    SearchFilter *searcher,
-                    lldb_private::StringList &matches)
+CommandCompletions::Modules 
+(
+    CommandInterpreter &interpreter,
+    const char *partial_file_name,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    StringList &matches
+)
 {
-    ModuleCompleter completer(partial_file_name, match_start_point, max_return_elements, interpreter, matches);
-
+    ModuleCompleter completer (interpreter,
+                               partial_file_name, 
+                               match_start_point, 
+                               max_return_elements, 
+                               matches);
+    
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter->Context()->GetTarget()->GetSP();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
@@ -114,18 +131,24 @@ CommandCompletions::Modules (const char *partial_file_name,
 }
 
 int
-CommandCompletions::Symbols (const char *partial_file_name,
-                    int match_start_point,
-                    int max_return_elements,
-                    lldb_private::CommandInterpreter *interpreter,
-                    SearchFilter *searcher,
-                    lldb_private::StringList &matches)
+CommandCompletions::Symbols 
+(
+    CommandInterpreter &interpreter,
+    const char *partial_file_name,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    StringList &matches)
 {
-    SymbolCompleter completer(partial_file_name, match_start_point, max_return_elements, interpreter, matches);
+    SymbolCompleter completer (interpreter,
+                               partial_file_name, 
+                               match_start_point, 
+                               max_return_elements, 
+                               matches);
 
     if (searcher == NULL)
     {
-        lldb::TargetSP target_sp = interpreter->Context()->GetTarget()->GetSP();
+        lldb::TargetSP target_sp = interpreter.GetDebugger().GetCurrentTarget();
         SearchFilter null_searcher (target_sp);
         completer.DoCompletion (&null_searcher);
     }
@@ -136,17 +159,18 @@ CommandCompletions::Symbols (const char *partial_file_name,
     return matches.GetSize();
 }
 
-CommandCompletions::Completer::Completer (
+CommandCompletions::Completer::Completer 
+(
+    CommandInterpreter &interpreter,
     const char *completion_str,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 ) :
+    m_interpreter (interpreter),
     m_completion_str (completion_str),
     m_match_start_point (match_start_point),
     m_max_return_elements (max_return_elements),
-    m_interpreter (interpreter),
     m_matches (matches)
 {
 }
@@ -160,15 +184,16 @@ CommandCompletions::Completer::~Completer ()
 // SourceFileCompleter
 //----------------------------------------------------------------------
 
-CommandCompletions::SourceFileCompleter::SourceFileCompleter (
+CommandCompletions::SourceFileCompleter::SourceFileCompleter 
+(
+    CommandInterpreter &interpreter,
     bool include_support_files,
     const char *completion_str,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 ) :
-    CommandCompletions::Completer (completion_str, match_start_point, max_return_elements, interpreter, matches),
+    CommandCompletions::Completer (interpreter, completion_str, match_start_point, max_return_elements, matches),
     m_include_support_files (include_support_files),
     m_matching_files()
 {
@@ -264,14 +289,15 @@ regex_chars (const char comp)
     else
         return false;
 }
-CommandCompletions::SymbolCompleter::SymbolCompleter (
+CommandCompletions::SymbolCompleter::SymbolCompleter 
+(
+    CommandInterpreter &interpreter,
     const char *completion_str,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 ) :
-    CommandCompletions::Completer (completion_str, match_start_point, max_return_elements, interpreter, matches)
+    CommandCompletions::Completer (interpreter, completion_str, match_start_point, max_return_elements, matches)
 {
     std::string regex_str ("^");
     regex_str.append(completion_str);
@@ -353,14 +379,15 @@ CommandCompletions::SymbolCompleter::DoCompletion (SearchFilter *filter)
 //----------------------------------------------------------------------
 // ModuleCompleter
 //----------------------------------------------------------------------
-CommandCompletions::ModuleCompleter::ModuleCompleter (
+CommandCompletions::ModuleCompleter::ModuleCompleter 
+(
+    CommandInterpreter &interpreter,
     const char *completion_str,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 ) :
-    CommandCompletions::Completer (completion_str, match_start_point, max_return_elements, interpreter, matches)
+    CommandCompletions::Completer (interpreter, completion_str, match_start_point, max_return_elements, matches)
 {
     FileSpec partial_spec (m_completion_str.c_str());
     m_file_name = partial_spec.GetFilename().GetCString();

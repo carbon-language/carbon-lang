@@ -120,13 +120,12 @@ public:
     }
 
     bool
-    Execute (Args& launch_args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& launch_args,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
-        bool synchronous_execution = interpreter->GetSynchronous ();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+        bool synchronous_execution = interpreter.GetSynchronous ();
     //    bool launched = false;
     //    bool stopped_after_launch = false;
 
@@ -138,19 +137,11 @@ public:
         }
 
         // If our listener is NULL, users aren't allows to launch
-        Listener *listener = interpreter->GetListener();
-        if (listener == NULL)
-        {
-            result.AppendError ("operation not allowed through the command interpreter");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
         char filename[PATH_MAX];
         Module *exe_module = target->GetExecutableModule().get();
         exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
 
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process)
         {
             if (process->IsAlive())
@@ -168,10 +159,10 @@ public:
         else
             plugin_name = NULL;
 
-        process = target->CreateProcess (*listener, plugin_name).get();
+        process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
 
-        const Args *environment = interpreter->GetEnvironmentVariables();
-        const Args *run_args = interpreter->GetProgramArguments();
+        const Args *environment = interpreter.GetEnvironmentVariables();
+        const Args *run_args = interpreter.GetProgramArguments();
 
         // There are two possible sources of args to be passed to the process upon launching:  Those the user
         // typed at the run command (launch_args); or those the user pre-set in the run-args variable (run_args).
@@ -185,7 +176,7 @@ public:
         else
         {
             // launch-args was not empty; use that, AND re-set run-args to contains launch-args values.
-            StateVariable *run_args_var = interpreter->GetStateVariable ("run-args");
+            StateVariable *run_args_var = interpreter.GetStateVariable ("run-args");
             if (run_args_var != NULL)
             {
                 run_args_var->ArrayClearValues();
@@ -229,7 +220,7 @@ public:
                     {
                         // Call continue_command.
                         CommandReturnObject continue_result;
-                        interpreter->HandleCommand("process continue", false, continue_result);
+                        interpreter.HandleCommand("process continue", false, continue_result);
                     }
 
                     if (synchronous_execution)
@@ -296,12 +287,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -310,14 +300,8 @@ public:
         }
 
         // If our listener is NULL, users aren't allows to launch
-        Listener *listener = interpreter->GetListener();
-        if (listener == NULL)
-        {
-            result.AppendError ("operation not allowed through the command interpreter");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-        Process *process = context->GetExecutionContext().process;
+
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process)
         {
             if (process->IsAlive())
@@ -340,7 +324,7 @@ public:
             if (!m_options.plugin_name.empty())
                 plugin_name = m_options.plugin_name.c_str();
 
-            process = target->CreateProcess (*listener, plugin_name).get();
+            process = target->CreateProcess (interpreter.GetDebugger().GetListener(), plugin_name).get();
 
             if (process)
             {
@@ -508,13 +492,12 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
-        bool synchronous_execution = interpreter->GetSynchronous ();
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+        bool synchronous_execution = interpreter.GetSynchronous ();
 
         if (process == NULL)
         {
@@ -595,12 +578,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to detach");
@@ -643,12 +625,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to signal");
@@ -711,12 +692,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to halt");
@@ -773,12 +753,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to kill");
@@ -832,15 +811,14 @@ public:
     bool
     Execute
     (
+        CommandInterpreter &interpreter,
         Args& command,
-        CommandContext *context,
-        CommandInterpreter *interpreter,
         CommandReturnObject &result
     )
     {
         StreamString &output_stream = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.process)
         {
             const StateType state = exe_ctx.process->GetState();
@@ -891,19 +869,19 @@ public:
 // CommandObjectMultiwordProcess
 //-------------------------------------------------------------------------
 
-CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter *interpreter) :
+CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("process",
                               "A set of commands for operating on a process.",
                               "process <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessAttach ()), "attach", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessLaunch ()), "launch", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessContinue ()), "continue", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessDetach ()), "detach", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessSignal ()), "signal", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessStatus ()), "status", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessInterrupt ()), "interrupt", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectProcessKill ()), "kill", interpreter);
+    LoadSubCommand (interpreter, "attach",      CommandObjectSP (new CommandObjectProcessAttach ()));
+    LoadSubCommand (interpreter, "launch",      CommandObjectSP (new CommandObjectProcessLaunch ()));
+    LoadSubCommand (interpreter, "continue",    CommandObjectSP (new CommandObjectProcessContinue ()));
+    LoadSubCommand (interpreter, "detach",      CommandObjectSP (new CommandObjectProcessDetach ()));
+    LoadSubCommand (interpreter, "signal",      CommandObjectSP (new CommandObjectProcessSignal ()));
+    LoadSubCommand (interpreter, "status",      CommandObjectSP (new CommandObjectProcessStatus ()));
+    LoadSubCommand (interpreter, "interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt ()));
+    LoadSubCommand (interpreter, "kill",        CommandObjectSP (new CommandObjectProcessKill ()));
 }
 
 CommandObjectMultiwordProcess::~CommandObjectMultiwordProcess ()

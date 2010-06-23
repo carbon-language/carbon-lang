@@ -46,9 +46,8 @@ CommandObjectRegexCommand::~CommandObjectRegexCommand()
 bool
 CommandObjectRegexCommand::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -59,9 +58,8 @@ CommandObjectRegexCommand::Execute
 bool
 CommandObjectRegexCommand::ExecuteRawCommandString
 (
+    CommandInterpreter &interpreter,
     const char *command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -92,7 +90,7 @@ CommandObjectRegexCommand::ExecuteRawCommandString
                 // Interpret the new command and return this as the result!
 //                if (m_options.verbose)
 //                    result.GetOutputStream().Printf("%s\n", new_command.c_str());
-                return interpreter->HandleCommand(new_command.c_str(), true, result);
+                return interpreter.HandleCommand(new_command.c_str(), true, result);
             }
         }
         result.SetStatus(eReturnStatusFailed);

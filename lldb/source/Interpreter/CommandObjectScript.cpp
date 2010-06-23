@@ -43,15 +43,12 @@ CommandObjectScript::~CommandObjectScript ()
 bool
 CommandObjectScript::ExecuteRawCommandString
 (
+    CommandInterpreter &interpreter,
     const char *command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    std::string arg_str (command);
-
-    ScriptInterpreter *script_interpreter = GetInterpreter ();
+    ScriptInterpreter *script_interpreter = GetInterpreter (interpreter);
 
     if (script_interpreter == NULL)
     {
@@ -59,23 +56,11 @@ CommandObjectScript::ExecuteRawCommandString
         result.SetStatus (eReturnStatusFailed);
     }
 
-    FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-    FILE *err_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-    if (out_fh && err_fh)
-    {
-        if (arg_str.empty())
-            script_interpreter->ExecuteInterpreterLoop (out_fh, err_fh);
-        else
-            script_interpreter->ExecuteOneLine (arg_str, out_fh, err_fh); 
-        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-    }
+    if (command == NULL || command[0] == '\0')
+        script_interpreter->ExecuteInterpreterLoop (interpreter);
     else
-    {
-        if (out_fh == NULL)
-            result.AppendError("invalid output file handle");
-        else
-            result.AppendError("invalid error file handle");
-    }
+        script_interpreter->ExecuteOneLine (interpreter, command); 
+    result.SetStatus (eReturnStatusSuccessFinishNoResult);
     return result.Succeeded();
 }
 
@@ -88,60 +73,29 @@ CommandObjectScript::WantsRawCommandString()
 bool
 CommandObjectScript::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    std::string arg_str;
-    ScriptInterpreter *script_interpreter = GetInterpreter ();
-
-    if (script_interpreter == NULL)
-    {
-        result.AppendError("no script interpeter");
-        result.SetStatus (eReturnStatusFailed);
-    }
-
-    const int argc = command.GetArgumentCount();
-    for (int i = 0; i < argc; ++i)
-        arg_str.append(command.GetArgumentAtIndex(i));
-
-
-    FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-    FILE *err_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-    if (out_fh && err_fh)
-    {
-        if (arg_str.empty())
-            script_interpreter->ExecuteInterpreterLoop (out_fh, err_fh);
-        else
-            script_interpreter->ExecuteOneLine (arg_str, out_fh, err_fh); 
-        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-    }
-    else
-    {
-        if (out_fh == NULL)
-            result.AppendError("invalid output file handle");
-        else
-            result.AppendError("invalid error file handle");
-    }
-    return result.Succeeded();
+    // everything should be handled in ExecuteRawCommandString
+    return false;
 }
 
 
 ScriptInterpreter *
-CommandObjectScript::GetInterpreter ()
+CommandObjectScript::GetInterpreter (CommandInterpreter &interpreter)
 {
     if (m_interpreter_ap.get() == NULL)
     {
         switch (m_script_lang)
         {
         case eScriptLanguagePython:
-            m_interpreter_ap.reset (new ScriptInterpreterPython ());
+            m_interpreter_ap.reset (new ScriptInterpreterPython (interpreter));
             break;
 
         case eScriptLanguageNone:
-            m_interpreter_ap.reset (new ScriptInterpreterNone ());
+            m_interpreter_ap.reset (new ScriptInterpreterNone (interpreter));
             break;
         }
     }

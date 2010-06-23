@@ -31,7 +31,7 @@ SBBreakpointLocation::SBBreakpointLocation ()
 }
 
 SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp) :
-    m_break_loc_sp (break_loc_sp)
+    m_opaque_sp (break_loc_sp)
 {
 }
 
@@ -42,7 +42,7 @@ SBBreakpointLocation::~SBBreakpointLocation ()
 bool
 SBBreakpointLocation::IsValid() const
 {
-    return m_break_loc_sp.get() != NULL;
+    return m_opaque_sp.get() != NULL;
 }
 
 addr_t
@@ -50,9 +50,9 @@ SBBreakpointLocation::GetLoadAddress ()
 {
     addr_t ret_addr = LLDB_INVALID_ADDRESS;
 
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
-        ret_addr = m_break_loc_sp->GetLoadAddress();
+        ret_addr = m_opaque_sp->GetLoadAddress();
     }
 
     return ret_addr;
@@ -61,17 +61,17 @@ SBBreakpointLocation::GetLoadAddress ()
 void
 SBBreakpointLocation::SetEnabled (bool enabled)
 {
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
-        m_break_loc_sp->SetEnabled (enabled);
+        m_opaque_sp->SetEnabled (enabled);
     }
 }
 
 bool
 SBBreakpointLocation::IsEnabled ()
 {
-    if (m_break_loc_sp)
-        return m_break_loc_sp->IsEnabled();
+    if (m_opaque_sp)
+        return m_opaque_sp->IsEnabled();
     else
         return false;
 }
@@ -79,8 +79,8 @@ SBBreakpointLocation::IsEnabled ()
 int32_t
 SBBreakpointLocation::GetIgnoreCount ()
 {
-    if (m_break_loc_sp)
-        return m_break_loc_sp->GetIgnoreCount();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetIgnoreCount();
     else
         return 0;
 }
@@ -88,40 +88,39 @@ SBBreakpointLocation::GetIgnoreCount ()
 void
 SBBreakpointLocation::SetIgnoreCount (int32_t n)
 {
-    if (m_break_loc_sp)
-        m_break_loc_sp->SetIgnoreCount (n);
+    if (m_opaque_sp)
+        m_opaque_sp->SetIgnoreCount (n);
 }
 
 void
 SBBreakpointLocation::SetThreadID (tid_t thread_id)
 {
-    if (m_break_loc_sp)
-        m_break_loc_sp->SetThreadID (thread_id);
+    if (m_opaque_sp)
+        m_opaque_sp->SetThreadID (thread_id);
 }
 
 tid_t
 SBBreakpointLocation::GetThreadID ()
 {
     tid_t sb_thread_id = (lldb::tid_t) LLDB_INVALID_THREAD_ID;
-    if (m_break_loc_sp)
-        sb_thread_id = m_break_loc_sp->GetLocationOptions()->GetThreadSpecNoCreate()->GetTID();
-
+    if (m_opaque_sp)
+        sb_thread_id = m_opaque_sp->GetLocationOptions()->GetThreadSpecNoCreate()->GetTID();
     return sb_thread_id;
 }
 
 void
 SBBreakpointLocation::SetThreadIndex (uint32_t index)
 {
-    if (m_break_loc_sp)
-        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetIndex (index);
+    if (m_opaque_sp)
+        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetIndex (index);
 }
 
 uint32_t
 SBBreakpointLocation::GetThreadIndex() const
 {
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return 0;
         else
@@ -134,16 +133,16 @@ SBBreakpointLocation::GetThreadIndex() const
 void
 SBBreakpointLocation::SetThreadName (const char *thread_name)
 {
-    if (m_break_loc_sp)
-        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetName (thread_name);
+    if (m_opaque_sp)
+        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetName (thread_name);
 }
 
 const char *
 SBBreakpointLocation::GetThreadName () const
 {
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return NULL;
         else
@@ -155,16 +154,16 @@ SBBreakpointLocation::GetThreadName () const
 void
 SBBreakpointLocation::SetQueueName (const char *queue_name)
 {
-    if (m_break_loc_sp)
-        m_break_loc_sp->GetLocationOptions()->GetThreadSpec()->SetQueueName (queue_name);
+    if (m_opaque_sp)
+        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetQueueName (queue_name);
 }
 
 const char *
 SBBreakpointLocation::GetQueueName () const
 {
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_break_loc_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
         if (thread_spec == NULL)
             return NULL;
         else
@@ -176,8 +175,8 @@ SBBreakpointLocation::GetQueueName () const
 bool
 SBBreakpointLocation::IsResolved ()
 {
-    if (m_break_loc_sp)
-        return m_break_loc_sp->IsResolved();
+    if (m_opaque_sp)
+        return m_opaque_sp->IsResolved();
     else
         return false;
 }
@@ -185,11 +184,11 @@ SBBreakpointLocation::IsResolved ()
 void
 SBBreakpointLocation::SetLocation (const lldb::BreakpointLocationSP &break_loc_sp)
 {
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
         // Uninstall the callbacks?
     }
-    m_break_loc_sp = break_loc_sp;
+    m_opaque_sp = break_loc_sp;
 }
 
 void
@@ -198,7 +197,7 @@ SBBreakpointLocation::GetDescription (FILE *f, const char *description_level)
     if (f == NULL)
         return;
 
-    if (m_break_loc_sp)
+    if (m_opaque_sp)
     {
         DescriptionLevel level;
         if (strcmp (description_level, "brief") == 0)
@@ -212,7 +211,7 @@ SBBreakpointLocation::GetDescription (FILE *f, const char *description_level)
 
         StreamFile str (f);
 
-        m_break_loc_sp->GetDescription (&str, level);
+        m_opaque_sp->GetDescription (&str, level);
         str.EOL();
     }
 }
@@ -221,8 +220,8 @@ SBBreakpoint
 SBBreakpointLocation::GetBreakpoint ()
 {
     SBBreakpoint sb_bp;
-    if (m_break_loc_sp)
-        *sb_bp = m_break_loc_sp->GetBreakpoint ().GetSP();    
+    if (m_opaque_sp)
+        *sb_bp = m_opaque_sp->GetBreakpoint ().GetSP();    
     return sb_bp;
 }
 

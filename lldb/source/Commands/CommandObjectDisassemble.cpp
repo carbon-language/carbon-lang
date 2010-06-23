@@ -155,8 +155,7 @@ CommandObjectDisassemble::~CommandObjectDisassemble()
 void
 CommandObjectDisassemble::Disassemble
 (
-    CommandContext *context,
-    CommandInterpreter *interpreter,
+    CommandInterpreter &interpreter,
     CommandReturnObject &result,
     Disassembler *disassembler,
     const SymbolContextList &sc_list
@@ -171,11 +170,11 @@ CommandObjectDisassemble::Disassemble
             break;
         if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
         {
-            lldb::addr_t addr = range.GetBaseAddress().GetLoadAddress(context->GetExecutionContext().process);
+            lldb::addr_t addr = range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().process);
             if (addr != LLDB_INVALID_ADDRESS)
             {
                 lldb::addr_t end_addr = addr + range.GetByteSize();
-                Disassemble (context, interpreter, result, disassembler, addr, end_addr);
+                Disassemble (interpreter, result, disassembler, addr, end_addr);
             }
         }
     }
@@ -184,8 +183,7 @@ CommandObjectDisassemble::Disassemble
 void
 CommandObjectDisassemble::Disassemble
 (
-    CommandContext *context,
-    CommandInterpreter *interpreter,
+    CommandInterpreter &interpreter,
     CommandReturnObject &result,
     Disassembler *disassembler,
     lldb::addr_t addr,
@@ -198,7 +196,7 @@ CommandObjectDisassemble::Disassemble
     if (end_addr == LLDB_INVALID_ADDRESS || addr >= end_addr)
         end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
 
-    ExecutionContext exe_ctx (context->GetExecutionContext());
+    ExecutionContext exe_ctx (interpreter.GetDebugger().GetExecutionContext());
     DataExtractor data;
     size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, eAddressTypeLoad, addr, end_addr - addr, data);
     if (bytes_disassembled == 0)
@@ -225,7 +223,7 @@ CommandObjectDisassemble::Disassemble
                 lldb::addr_t curr_addr = addr + offset;
                 if (m_options.show_mixed)
                 {
-                    Process *process = context->GetExecutionContext().process;
+                    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
                     if (!sc_range.ContainsLoadAddress (curr_addr, process))
                     {
                         prev_sc = sc;
@@ -248,7 +246,7 @@ CommandObjectDisassemble::Disassemble
                                         output_stream.EOL();
                                         if (sc.comp_unit && sc.line_entry.IsValid())
                                         {
-                                            interpreter->GetSourceManager().DisplaySourceLinesWithLineNumbers (
+                                            interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
                                                     sc.line_entry.file,
                                                     sc.line_entry.line,
                                                     m_options.num_lines_context,
@@ -286,13 +284,12 @@ CommandObjectDisassemble::Disassemble
 bool
 CommandObjectDisassemble::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("invalid target, set executable file using 'file' command");
@@ -353,7 +350,7 @@ CommandObjectDisassemble::Execute
     } 
     else
     {
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame)
         {
             SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
@@ -394,11 +391,11 @@ CommandObjectDisassemble::Execute
 
         if (target->GetImages().FindFunctions(name, sc_list))
         {
-            Disassemble (context, interpreter, result, disassembler, sc_list);
+            Disassemble (interpreter, result, disassembler, sc_list);
         }
         else if (target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list))
         {
-            Disassemble (context, interpreter, result, disassembler, sc_list);
+            Disassemble (interpreter, result, disassembler, sc_list);
         }
         else
         {
@@ -409,7 +406,7 @@ CommandObjectDisassemble::Execute
     }
     else
     {
-        Disassemble (context, interpreter, result, disassembler, addr, end_addr);
+        Disassemble (interpreter, result, disassembler, addr, end_addr);
     }
 
     return result.Succeeded();

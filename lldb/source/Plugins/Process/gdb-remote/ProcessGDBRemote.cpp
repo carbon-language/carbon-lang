@@ -1922,7 +1922,7 @@ ProcessGDBRemote::MonitorDebugserverProcess
     // debugserver that we are tracking...
 
     lldb::pid_t gdb_remote_pid = (lldb::pid_t)(intptr_t)callback_baton;
-    TargetSP target_sp(Debugger::GetSharedInstance().GetTargetList().FindTargetWithProcessID (gdb_remote_pid));
+    TargetSP target_sp(Debugger::FindTargetWithProcessID (gdb_remote_pid));
     if (target_sp)
     {
         ProcessSP process_sp (target_sp->GetProcessSP());

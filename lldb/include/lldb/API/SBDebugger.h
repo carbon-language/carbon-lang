@@ -25,95 +25,90 @@ public:
     static void
     Terminate();
     
-    static void
+    static SBDebugger
+    Create();
+
+    ~SBDebugger();
+
+    bool
+    IsValid() const;
+
+    void
     SetAsync (bool b);
 
-    static void
-    SetInputFile (const char *tty_name);    // DEPRECATED: will be removed in next submission
-
-    static void
-    SetOutputFile (const char *tty_name);   // DEPRECATED: will be removed in next submission
-
-    static void
-    SetErrorFile (const char *tty_name);    // DEPRECATED: will be removed in next submission
-
-    static void
+    void
     SetInputFileHandle (FILE *f, bool transfer_ownership);
 
-    static void
+    void
     SetOutputFileHandle (FILE *f, bool transfer_ownership);
 
-    static void
+    void
     SetErrorFileHandle (FILE *f, bool transfer_ownership);
 
-    static FILE *
+    FILE *
     GetInputFileHandle ();
 
-    static FILE *
+    FILE *
     GetOutputFileHandle ();
 
-    static FILE *
+    FILE *
     GetErrorFileHandle ();
 
-    static lldb::SBCommandInterpreter
+    lldb::SBCommandInterpreter
     GetCommandInterpreter ();
 
-    static void
+    void
     HandleCommand (const char *command);
 
-    static lldb::SBListener
+    lldb::SBListener
     GetListener ();
 
-    static void
+    void
     HandleProcessEvent (const lldb::SBProcess &process,
                         const lldb::SBEvent &event,
                         FILE *out,
                         FILE *err);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     CreateTargetWithFileAndTargetTriple (const char *filename,
                                          const char *target_triple);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     CreateTargetWithFileAndArch (const char *filename,
                                  const char *archname);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     CreateTarget (const char *filename);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     GetTargetAtIndex (uint32_t idx);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     FindTargetWithProcessID (pid_t pid);
 
-    static lldb::SBTarget
+    lldb::SBTarget
     FindTargetWithFileAndArch (const char *filename,
                                const char *arch);
 
-    static uint32_t
+    uint32_t
     GetNumTargets ();
 
-    static lldb::SBTarget
+    lldb::SBTarget
     GetCurrentTarget ();
 
-    static void
+    void
     UpdateCurrentThread (lldb::SBProcess &process);
 
-    static void
-    ReportCurrentLocation (FILE *out = stdout,
-                           FILE *err = stderr);
-
-    static lldb::SBSourceManager &
+    lldb::SBSourceManager &
     GetSourceManager ();
 
-    static bool
+    bool
     GetDefaultArchitecture (char *arch_name, size_t arch_name_len);
 
-    static bool
+    bool
     SetDefaultArchitecture (const char *arch_name);
 
-    static lldb::ScriptLanguage
+    lldb::ScriptLanguage
     GetScriptingLanguage (const char *script_language_name);
 
     static const char *
@@ -128,19 +123,39 @@ public:
     static bool
     StateIsStoppedState (lldb::StateType state);
 
-    static void
+    void
     DispatchInput (void *baton, const void *data, size_t data_len);
 
-    static void
+    void
     PushInputReader (lldb::SBInputReader &reader);
 
 private:
-#ifndef SWIG
-    friend class SBProcess;
 
-    static lldb::SBTarget
+    // Use the static function: SBDebugger::Create();
+    SBDebugger();
+
+#ifndef SWIG
+
+    friend class SBInputReader;
+    friend class SBProcess;
+    friend class SBTarget;
+    
+    lldb::SBTarget
     FindTargetWithLLDBProcess (const lldb::ProcessSP &processSP);
+
+    void
+    reset (const lldb::DebuggerSP &debugger_sp);
+
+    lldb_private::Debugger *
+    get () const;
+
+    lldb_private::Debugger &
+    ref () const;
+
 #endif
+    
+    lldb::DebuggerSP m_opaque_sp;
+
 }; // class SBDebugger
 
 

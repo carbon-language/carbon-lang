@@ -18,7 +18,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
@@ -46,12 +46,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target * target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target)
         {
             uint32_t argc = command.GetArgumentCount();
@@ -70,9 +69,9 @@ public:
                     if (from[0] && to[0])
                     {
                         bool last_pair = ((argc - i) == 2);
-                        target->GetImageSearchPathList().Append(ConstString(from),
-                                                                ConstString(to),
-                                                                last_pair); // Notify if this is the last pair
+                        target->GetImageSearchPathList().Append (ConstString(from),
+                                                                 ConstString(to),
+                                                                 last_pair); // Notify if this is the last pair
                     }
                     else
                     {
@@ -110,12 +109,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target * target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target)
         {
             bool notify = true;
@@ -146,12 +144,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target * target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target)
         {
             uint32_t argc = command.GetArgumentCount();
@@ -230,12 +227,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target * target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target)
         {
             if (command.GetArgumentCount() != 0)
@@ -272,12 +268,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Target * target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target)
         {
             if (command.GetArgumentCount() != 1)
@@ -327,8 +322,8 @@ public:
 //
 //    bool
 //    Execute (Args& command,
-//             CommandContext *context,
-//             CommandInterpreter *interpreter,
+//             Debugger *context,
+//             CommandInterpreter &interpreter,
 //             CommandReturnObject &result)
 //    {
 //        ExecutionContext exe_ctx (context->GetExecutionContext());
@@ -392,16 +387,16 @@ class CommandObjectMultiwordImageSearchPaths : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectMultiwordImageSearchPaths (CommandInterpreter *interpreter) :
+    CommandObjectMultiwordImageSearchPaths (CommandInterpreter &interpreter) :
         CommandObjectMultiword ("target image-search-paths",
                                 "A set of commands for operating on debugger target image search paths.",
                                 "target image-search-paths <subcommand> [<subcommand-options>]")
     {
-        LoadSubCommand (CommandObjectSP (new CommandObjectTargetImageSearchPathsAdd ()), "add", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectTargetImageSearchPathsClear ()), "clear", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectTargetImageSearchPathsInsert ()), "insert", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectTargetImageSearchPathsList ()), "list", interpreter);
-        LoadSubCommand (CommandObjectSP (new CommandObjectTargetImageSearchPathsQuery ()), "query", interpreter);
+        LoadSubCommand (interpreter, "add",     CommandObjectSP (new CommandObjectTargetImageSearchPathsAdd ()));
+        LoadSubCommand (interpreter, "clear",   CommandObjectSP (new CommandObjectTargetImageSearchPathsClear ()));
+        LoadSubCommand (interpreter, "insert",  CommandObjectSP (new CommandObjectTargetImageSearchPathsInsert ()));
+        LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectTargetImageSearchPathsList ()));
+        LoadSubCommand (interpreter, "query",   CommandObjectSP (new CommandObjectTargetImageSearchPathsQuery ()));
     }
 
     ~CommandObjectMultiwordImageSearchPaths()
@@ -416,12 +411,12 @@ public:
 // CommandObjectMultiwordTarget
 //-------------------------------------------------------------------------
 
-CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter *interpreter) :
+CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("target",
                             "A set of commands for operating on debugger targets.",
                             "target <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)), "image-search-paths", interpreter);
+    LoadSubCommand (interpreter, "image-search-paths", CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)));
 }
 
 CommandObjectMultiwordTarget::~CommandObjectMultiwordTarget ()

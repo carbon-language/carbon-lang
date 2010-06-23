@@ -18,13 +18,13 @@ using namespace lldb_private;
 
 StoppointCallbackContext::StoppointCallbackContext() :
     event (NULL),
-    context()
+    exe_ctx()
 {
 }
 
 StoppointCallbackContext::StoppointCallbackContext(Event *e, Process* p, Thread *t, StackFrame *f, bool synchronously) :
     event (e),
-    context (p, t, f),
+    exe_ctx (p, t, f),
     is_synchronous(synchronously)
 {
 }
@@ -33,6 +33,6 @@ void
 StoppointCallbackContext::Clear()
 {
     event = NULL;
-    context.Clear();
+    exe_ctx.Clear();
     is_synchronous = false;
 }

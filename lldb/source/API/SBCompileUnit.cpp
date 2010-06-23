@@ -18,35 +18,35 @@ using namespace lldb_private;
 
 
 SBCompileUnit::SBCompileUnit () :
-    m_lldb_object_ptr (NULL)
+    m_opaque_ptr (NULL)
 {
 }
 
 SBCompileUnit::SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr) :
-    m_lldb_object_ptr (lldb_object_ptr)
+    m_opaque_ptr (lldb_object_ptr)
 {
 }
 
 SBCompileUnit::~SBCompileUnit ()
 {
-    m_lldb_object_ptr = NULL;
+    m_opaque_ptr = NULL;
 }
 
 SBFileSpec
 SBCompileUnit::GetFileSpec () const
 {
     SBFileSpec file_spec;
-    if (m_lldb_object_ptr)
-        file_spec.SetFileSpec(*m_lldb_object_ptr);
+    if (m_opaque_ptr)
+        file_spec.SetFileSpec(*m_opaque_ptr);
     return file_spec;
 }
 
 uint32_t
 SBCompileUnit::GetNumLineEntries () const
 {
-    if (m_lldb_object_ptr)
+    if (m_opaque_ptr)
     {
-        LineTable *line_table = m_lldb_object_ptr->GetLineTable ();
+        LineTable *line_table = m_opaque_ptr->GetLineTable ();
         if (line_table)
             return line_table->GetSize();
     }
@@ -57,9 +57,9 @@ SBLineEntry
 SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
 {
     SBLineEntry sb_line_entry;
-    if (m_lldb_object_ptr)
+    if (m_opaque_ptr)
     {
-        LineTable *line_table = m_lldb_object_ptr->GetLineTable ();
+        LineTable *line_table = m_opaque_ptr->GetLineTable ();
         if (line_table)
         {
             LineEntry line_entry;
@@ -73,15 +73,15 @@ SBCompileUnit::GetLineEntryAtIndex (uint32_t idx) const
 uint32_t
 SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec *inline_file_spec) const
 {
-    if (m_lldb_object_ptr)
+    if (m_opaque_ptr)
     {
         FileSpec file_spec;
         if (inline_file_spec && inline_file_spec->IsValid())
             file_spec = inline_file_spec->ref();
         else
-            file_spec = *m_lldb_object_ptr;
+            file_spec = *m_opaque_ptr;
 
-        return m_lldb_object_ptr->FindLineEntry (start_idx,
+        return m_opaque_ptr->FindLineEntry (start_idx,
                                                  line,
                                                  inline_file_spec ? inline_file_spec->get() : NULL,
                                                  NULL);
@@ -92,29 +92,29 @@ SBCompileUnit::FindLineEntryIndex (uint32_t start_idx, uint32_t line, SBFileSpec
 bool
 SBCompileUnit::IsValid () const
 {
-    return m_lldb_object_ptr != NULL;
+    return m_opaque_ptr != NULL;
 }
 
 bool
 SBCompileUnit::operator == (const SBCompileUnit &rhs) const
 {
-    return m_lldb_object_ptr == rhs.m_lldb_object_ptr;
+    return m_opaque_ptr == rhs.m_opaque_ptr;
 }
 
 bool
 SBCompileUnit::operator != (const SBCompileUnit &rhs) const
 {
-    return m_lldb_object_ptr != rhs.m_lldb_object_ptr;
+    return m_opaque_ptr != rhs.m_opaque_ptr;
 }
 
 const lldb_private::CompileUnit *
 SBCompileUnit::operator->() const
 {
-    return m_lldb_object_ptr;
+    return m_opaque_ptr;
 }
 
 const lldb_private::CompileUnit &
 SBCompileUnit::operator*() const
 {
-    return *m_lldb_object_ptr;
+    return *m_opaque_ptr;
 }

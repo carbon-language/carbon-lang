@@ -12,7 +12,6 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-#include "../Commands/CommandObjectAdd.h"
 #include "../Commands/CommandObjectAlias.h"
 #include "../Commands/CommandObjectAppend.h"
 #include "../Commands/CommandObjectApropos.h"
@@ -33,7 +32,6 @@
 #include "../Commands/CommandObjectQuit.h"
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "../Commands/CommandObjectRegister.h"
-#include "../Commands/CommandObjectRemove.h"
 #include "CommandObjectScript.h"
 #include "../Commands/CommandObjectSelect.h"
 #include "../Commands/CommandObjectSet.h"
@@ -44,7 +42,6 @@
 #include "../Commands/CommandObjectSyntax.h"
 #include "../Commands/CommandObjectTarget.h"
 #include "../Commands/CommandObjectThread.h"
-#include "../Commands/CommandObjectTranslate.h"
 #include "../Commands/CommandObjectUnalias.h"
 #include "../Commands/CommandObjectVariable.h"
 
@@ -64,16 +61,14 @@ using namespace lldb_private;
 
 CommandInterpreter::CommandInterpreter
 (
+    Debugger &debugger,
     ScriptLanguage script_language,
-    bool synchronous_execution,
-    Listener *listener,
-    SourceManager& source_manager
+    bool synchronous_execution
 ) :
     Broadcaster ("CommandInterpreter"),
+    m_debugger (debugger),
     m_script_language (script_language),
-    m_synchronous_execution (synchronous_execution),
-    m_listener (listener),
-    m_source_manager (source_manager)
+    m_synchronous_execution (synchronous_execution)
 {
 }
 
@@ -204,43 +199,38 @@ CommandInterpreter::LoadCommandDictionary ()
     // the crossref object exists and is ready to take the cross reference. Put the cross referencing command
     // objects into the CommandDictionary now, so they are ready for use when the other commands get created.
 
-    m_command_dict["select"] = CommandObjectSP (new CommandObjectSelect ());
-    m_command_dict["info"] = CommandObjectSP (new CommandObjectInfo ());
-    m_command_dict["delete"] = CommandObjectSP (new CommandObjectDelete ());
+    m_command_dict["select"]    = CommandObjectSP (new CommandObjectSelect ());
+    m_command_dict["info"]      = CommandObjectSP (new CommandObjectInfo ());
+    m_command_dict["delete"]    = CommandObjectSP (new CommandObjectDelete ());
 
     // Non-CommandObjectCrossref commands can now be created.
 
-    //m_command_dict["add"]       = CommandObjectSP (new CommandObjectAdd ());
     m_command_dict["alias"]     = CommandObjectSP (new CommandObjectAlias ());
     m_command_dict["append"]    = CommandObjectSP (new CommandObjectAppend ());
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos ());
-    //m_command_dict["args"]      = CommandObjectSP (new CommandObjectArgs ());
-    m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (this));
+    m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
     m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall ());
     m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble ());
     m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression ());
     m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile ());
-    m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (this));
+    m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (*this));
     m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp ());
-    m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (this));
-    m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (this));
-    m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (this));
-    m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (this));
+    m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
+    m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
+    m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
+    m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (*this));
     m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit ());
-    m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (this));
-    //m_command_dict["remove"]    = CommandObjectSP (new CommandObjectRemove ());
+    m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (*this));
     m_command_dict["script"]    = CommandObjectSP (new CommandObjectScript (m_script_language));
     m_command_dict["set"]       = CommandObjectSP (new CommandObjectSet ());
     m_command_dict["settings"]  = CommandObjectSP (new CommandObjectSettings ());
     m_command_dict["show"]      = CommandObjectSP (new CommandObjectShow ());
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectSource ());
     m_command_dict["source-file"] = CommandObjectSP (new CommandObjectSourceFile ());
-    //m_command_dict["syntax"]    = CommandObjectSP (new CommandObjectSyntax ());
-    m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (this));
-    m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (this));
-    //m_command_dict["translate"] = CommandObjectSP (new CommandObjectTranslate ());
+    m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
+    m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
     m_command_dict["unalias"]   = CommandObjectSP (new CommandObjectUnalias ());
-    m_command_dict["variable"]  = CommandObjectSP (new CommandObjectVariable (this));
+    m_command_dict["variable"]  = CommandObjectSP (new CommandObjectVariable (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand ("regexp-break",
@@ -568,8 +558,13 @@ CommandInterpreter::ShowVariableHelp (CommandReturnObject &result)
 // parses the line and takes the appropriate actions.
 
 bool
-CommandInterpreter::HandleCommand (const char *command_line, bool add_to_history, CommandReturnObject &result,
-                                   ExecutionContext *override_context)
+CommandInterpreter::HandleCommand 
+(
+    const char *command_line, 
+    bool add_to_history,
+    CommandReturnObject &result,
+    ExecutionContext *override_context
+)
 {
     // FIXME: there should probably be a mutex to make sure only one thread can
     // run the interpreter at a time.
@@ -580,7 +575,7 @@ CommandInterpreter::HandleCommand (const char *command_line, bool add_to_history
 //        result.AppendMessageWithFormat ("Processing command: %s\n", command_line);
 //    }
 
-    m_current_context.Update (override_context);
+    m_debugger.UpdateExecutionContext (override_context);
 
     if (command_line == NULL || command_line[0] == '\0')
     {
@@ -639,7 +634,7 @@ CommandInterpreter::HandleCommand (const char *command_line, bool add_to_history
                         stripped_command += strlen(command_cstr);
                         while (isspace(*stripped_command))
                             ++stripped_command;
-                        command_obj->ExecuteRawCommandString(stripped_command, Context(), this, result);
+                        command_obj->ExecuteRawCommandString (*this, stripped_command, result);
                     }
                 }
                 else
@@ -649,7 +644,7 @@ CommandInterpreter::HandleCommand (const char *command_line, bool add_to_history
 
                     // Remove the command from the args.
                     command_args.Shift();
-                    command_obj->ExecuteWithOptions (command_args, Context(), this, result);
+                    command_obj->ExecuteWithOptions (*this, command_args, result);
                 }
             }
             else
@@ -658,9 +653,12 @@ CommandInterpreter::HandleCommand (const char *command_line, bool add_to_history
                 int num_matches;
                 int cursor_index = command_args.GetArgumentCount() - 1;
                 int cursor_char_position = strlen (command_args.GetArgumentAtIndex(command_args.GetArgumentCount() - 1));
-                num_matches = HandleCompletionMatches (command_args, cursor_index,
-                                                        cursor_char_position,
-                                                       0, -1, matches);
+                num_matches = HandleCompletionMatches (command_args, 
+                                                       cursor_index,
+                                                       cursor_char_position,
+                                                       0, 
+                                                       -1, 
+                                                       matches);
 
                 if (num_matches > 0)
                 {
@@ -740,8 +738,12 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
         {
             parsed_line.Shift();
             cursor_index--;
-            num_command_matches = command_object->HandleCompletion (parsed_line, cursor_index, cursor_char_position,
-                                                                    match_start_point, max_return_elements, this,
+            num_command_matches = command_object->HandleCompletion (*this,
+                                                                    parsed_line, 
+                                                                    cursor_index, 
+                                                                    cursor_char_position,
+                                                                    match_start_point, 
+                                                                    max_return_elements, 
                                                                     matches);
         }
     }
@@ -779,8 +781,12 @@ CommandInterpreter::HandleCompletion (const char *current_line,
 
     // Only max_return_elements == -1 is supported at present:
     assert (max_return_elements == -1);
-    num_command_matches = HandleCompletionMatches (parsed_line, cursor_index, cursor_char_position, match_start_point,
-                                                   max_return_elements, matches);
+    num_command_matches = HandleCompletionMatches (parsed_line, 
+                                                   cursor_index, 
+                                                   cursor_char_position, 
+                                                   match_start_point,
+                                                   max_return_elements, 
+                                                   matches);
 
     if (num_command_matches <= 0)
             return num_command_matches;
@@ -815,12 +821,6 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         matches.InsertStringAtIndex(0, common_prefix.c_str());
     }
     return num_command_matches;
-}
-
-CommandContext *
-CommandInterpreter::Context ()
-{
-    return &m_current_context;
 }
 
 const Args *
@@ -915,20 +915,6 @@ CommandInterpreter::SetScriptLanguage (ScriptLanguage lang)
 {
     m_script_language = lang;
 }
-
-Listener *
-CommandInterpreter::GetListener ()
-{
-    return m_listener;
-}
-
-SourceManager &
-CommandInterpreter::GetSourceManager ()
-{
-    return m_source_manager;
-}
-
-
 
 OptionArgVectorSP
 CommandInterpreter::GetAliasOptions (const char *alias_name)
@@ -1132,16 +1118,15 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 ScriptInterpreter *
 CommandInterpreter::GetScriptInterpreter ()
 {
-  CommandObject::CommandMap::iterator pos;
-
-  pos = m_command_dict.find ("script");
-  if (pos != m_command_dict.end())
+    CommandObject::CommandMap::iterator pos;
+    
+    pos = m_command_dict.find ("script");
+    if (pos != m_command_dict.end())
     {
-      CommandObject *script_cmd_obj = pos->second.get();
-      return ((CommandObjectScript *) script_cmd_obj)->GetInterpreter ();
+        CommandObject *script_cmd_obj = pos->second.get();
+        return ((CommandObjectScript *) script_cmd_obj)->GetInterpreter (*this);
     }
-  else
-      return NULL;
+    return NULL;
 }
 
 

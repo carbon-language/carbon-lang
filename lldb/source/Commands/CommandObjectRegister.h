@@ -28,7 +28,8 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    CommandObjectRegister(CommandInterpreter *interpreter);
+    CommandObjectRegister(CommandInterpreter &interpreter);
+
     virtual
     ~CommandObjectRegister();
 

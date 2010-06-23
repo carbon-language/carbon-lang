@@ -62,7 +62,7 @@ public:
 
 private:
 
-    std::auto_ptr<lldb_private::StringList> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::StringList> m_opaque_ap;
 
 };
 

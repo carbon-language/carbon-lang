@@ -86,7 +86,8 @@ public:
     FindPlugin (const ArchSpec &arch);
 
     static bool
-    Disassemble (const ArchSpec &arch,
+    Disassemble (Debugger &debugger,
+                 const ArchSpec &arch,
                  const ExecutionContext &exe_ctx,
                  uint32_t mixed_context_lines,
                  Stream &strm);

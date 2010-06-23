@@ -15,50 +15,50 @@ using namespace lldb;
 
 
 SBFunction::SBFunction () :
-    m_lldb_object_ptr (NULL)
+    m_opaque_ptr (NULL)
 {
 }
 
 SBFunction::SBFunction (lldb_private::Function *lldb_object_ptr) :
-    m_lldb_object_ptr (lldb_object_ptr)
+    m_opaque_ptr (lldb_object_ptr)
 {
 }
 
 SBFunction::~SBFunction ()
 {
-    m_lldb_object_ptr = NULL;
+    m_opaque_ptr = NULL;
 }
 
 bool
 SBFunction::IsValid () const
 {
-    return m_lldb_object_ptr != NULL;
+    return m_opaque_ptr != NULL;
 }
 
 const char *
 SBFunction::GetName() const
 {
-    if (m_lldb_object_ptr)
-        return m_lldb_object_ptr->GetMangled().GetName().AsCString();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetMangled().GetName().AsCString();
     return NULL;
 }
 
 const char *
 SBFunction::GetMangledName () const
 {
-    if (m_lldb_object_ptr)
-        return m_lldb_object_ptr->GetMangled().GetMangledName().AsCString();
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetMangled().GetMangledName().AsCString();
     return NULL;
 }
 
 bool
 SBFunction::operator == (const SBFunction &rhs) const
 {
-    return m_lldb_object_ptr == rhs.m_lldb_object_ptr;
+    return m_opaque_ptr == rhs.m_opaque_ptr;
 }
 
 bool
 SBFunction::operator != (const SBFunction &rhs) const
 {
-    return m_lldb_object_ptr != rhs.m_lldb_object_ptr;
+    return m_opaque_ptr != rhs.m_opaque_ptr;
 }

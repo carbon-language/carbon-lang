@@ -41,12 +41,12 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBFrame::SBFrame () :
-    m_lldb_object_sp ()
+    m_opaque_sp ()
 {
 }
 
 SBFrame::SBFrame (const lldb::StackFrameSP &lldb_object_sp) :
-    m_lldb_object_sp (lldb_object_sp)
+    m_opaque_sp (lldb_object_sp)
 {
 }
 
@@ -58,65 +58,65 @@ SBFrame::~SBFrame()
 void
 SBFrame::SetFrame (const lldb::StackFrameSP &lldb_object_sp)
 {
-    m_lldb_object_sp = lldb_object_sp;
+    m_opaque_sp = lldb_object_sp;
 }
 
 
 bool
 SBFrame::IsValid() const
 {
-    return (m_lldb_object_sp.get() != NULL);
+    return (m_opaque_sp.get() != NULL);
 }
 
 SBSymbolContext
 SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
     SBSymbolContext sb_sym_ctx;
-    if (m_lldb_object_sp)
-        sb_sym_ctx.SetSymbolContext(&m_lldb_object_sp->GetSymbolContext (resolve_scope));
+    if (m_opaque_sp)
+        sb_sym_ctx.SetSymbolContext(&m_opaque_sp->GetSymbolContext (resolve_scope));
     return sb_sym_ctx;
 }
 
 SBModule
 SBFrame::GetModule () const
 {
-    SBModule sb_module (m_lldb_object_sp->GetSymbolContext (eSymbolContextModule).module_sp);
+    SBModule sb_module (m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp);
     return sb_module;
 }
 
 SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
-    SBCompileUnit sb_comp_unit(m_lldb_object_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
+    SBCompileUnit sb_comp_unit(m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
     return sb_comp_unit;
 }
 
 SBFunction
 SBFrame::GetFunction () const
 {
-    SBFunction sb_function(m_lldb_object_sp->GetSymbolContext (eSymbolContextFunction).function);
+    SBFunction sb_function(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
     return sb_function;
 }
 
 SBBlock
 SBFrame::GetBlock () const
 {
-    SBBlock sb_block(m_lldb_object_sp->GetSymbolContext (eSymbolContextBlock).block);
+    SBBlock sb_block(m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
     return sb_block;
 }
 
 SBLineEntry
 SBFrame::GetLineEntry () const
 {
-    SBLineEntry sb_line_entry(&m_lldb_object_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+    SBLineEntry sb_line_entry(&m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
     return sb_line_entry;
 }
 
 uint32_t
 SBFrame::GetFrameID () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetID();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
     else
         return UINT32_MAX;
 }
@@ -125,24 +125,24 @@ SBFrame::GetFrameID () const
 lldb::addr_t
 SBFrame::GetPC () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetPC().GetLoadAddress (&m_lldb_object_sp->GetThread().GetProcess());
+    if (m_opaque_sp)
+        return m_opaque_sp->GetPC().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess());
     return LLDB_INVALID_ADDRESS;
 }
 
 bool
 SBFrame::SetPC (lldb::addr_t new_pc)
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetRegisterContext()->SetPC (new_pc);
+    if (m_opaque_sp)
+        return m_opaque_sp->GetRegisterContext()->SetPC (new_pc);
     return false;
 }
 
 lldb::addr_t
 SBFrame::GetSP () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetRegisterContext()->GetSP();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetRegisterContext()->GetSP();
     return LLDB_INVALID_ADDRESS;
 }
 
@@ -150,8 +150,8 @@ SBFrame::GetSP () const
 lldb::addr_t
 SBFrame::GetFP () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetRegisterContext()->GetFP();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetRegisterContext()->GetFP();
     return LLDB_INVALID_ADDRESS;
 }
 
@@ -160,15 +160,15 @@ SBAddress
 SBFrame::GetPCAddress () const
 {
     SBAddress sb_addr;
-    if (m_lldb_object_sp)
-        sb_addr.SetAddress (&m_lldb_object_sp->GetPC());
+    if (m_opaque_sp)
+        sb_addr.SetAddress (&m_opaque_sp->GetPC());
     return sb_addr;
 }
 
 void
 SBFrame::Clear()
 {
-    m_lldb_object_sp.reset();
+    m_opaque_sp.reset();
 }
 
 SBValue
@@ -250,40 +250,40 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
 bool
 SBFrame::operator == (const SBFrame &rhs) const
 {
-    return m_lldb_object_sp.get() == rhs.m_lldb_object_sp.get();
+    return m_opaque_sp.get() == rhs.m_opaque_sp.get();
 }
 
 bool
 SBFrame::operator != (const SBFrame &rhs) const
 {
-    return m_lldb_object_sp.get() != rhs.m_lldb_object_sp.get();
+    return m_opaque_sp.get() != rhs.m_opaque_sp.get();
 }
 
 lldb_private::StackFrame *
 SBFrame::operator->() const
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 lldb_private::StackFrame *
 SBFrame::get() const
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 
 SBThread
 SBFrame::GetThread () const
 {
-    SBThread sb_thread (m_lldb_object_sp->GetThread().GetSP());
+    SBThread sb_thread (m_opaque_sp->GetThread().GetSP());
     return sb_thread;
 }
 
 const char *
 SBFrame::Disassemble () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->Disassemble();
+    if (m_opaque_sp)
+        return m_opaque_sp->Disassemble();
     return NULL;
 }
 
@@ -292,7 +292,7 @@ SBFrame::Disassemble () const
 lldb_private::StackFrame *
 SBFrame::GetLLDBObjectPtr ()
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 SBValueList
@@ -302,10 +302,10 @@ SBFrame::GetVariables (bool arguments,
                        bool in_scope_only)
 {
     SBValueList value_list;
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         size_t i;
-        VariableList *variable_list = m_lldb_object_sp->GetVariableList();
+        VariableList *variable_list = m_opaque_sp->GetVariableList();
         if (variable_list)
         {
             const size_t num_variables = variable_list->GetSize();
@@ -334,7 +334,7 @@ SBFrame::GetVariables (bool arguments,
                         }
                         if (add_variable)
                         {
-                            if (in_scope_only && !variable_sp->IsInScope(m_lldb_object_sp.get()))
+                            if (in_scope_only && !variable_sp->IsInScope(m_opaque_sp.get()))
                                 continue;
 
                             value_list.Append(ValueObjectSP (new ValueObjectVariable (variable_sp)));
@@ -346,7 +346,7 @@ SBFrame::GetVariables (bool arguments,
         
         if (statics)
         {
-            CompileUnit *frame_comp_unit = m_lldb_object_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit;
+            CompileUnit *frame_comp_unit = m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit;
             
             if (frame_comp_unit)
             {
@@ -377,9 +377,9 @@ lldb::SBValueList
 SBFrame::GetRegisters ()
 {
     SBValueList value_list;
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
-        RegisterContext *reg_ctx = m_lldb_object_sp->GetRegisterContext();
+        RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
         if (reg_ctx)
         {
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();

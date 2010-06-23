@@ -176,7 +176,9 @@ StackFrame::Disassemble ()
     {
         ExecutionContext exe_ctx;
         Calculate(exe_ctx);
-        Disassembler::Disassemble (m_thread.GetProcess().GetTarget().GetArchitecture(),
+        Target &target = m_thread.GetProcess().GetTarget();
+        Disassembler::Disassemble (target.GetDebugger(),
+                                   target.GetArchitecture(),
                                    exe_ctx,
                                    0,
                                    m_disassembly);

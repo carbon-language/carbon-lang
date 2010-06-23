@@ -46,7 +46,7 @@ private:
 
     SBSymbol (lldb_private::Symbol *lldb_object_ptr);
 
-    lldb_private::Symbol *m_lldb_object_ptr;
+    lldb_private::Symbol *m_opaque_ptr;
 };
 
 

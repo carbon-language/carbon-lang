@@ -79,7 +79,7 @@ private:
     void
     SetLineEntry (const lldb_private::LineEntry &lldb_object_ref);
 
-    std::auto_ptr<lldb_private::LineEntry> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::LineEntry> m_opaque_ap;
 };
 
 

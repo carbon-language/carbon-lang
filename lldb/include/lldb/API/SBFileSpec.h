@@ -54,6 +54,7 @@ private:
     friend class SBHostOS;
     friend class SBModule;
     friend class SBSourceManager;
+    friend class SBThread;
     friend class SBTarget;
 
     void
@@ -74,7 +75,7 @@ private:
 
 #endif
 
-    std::auto_ptr <lldb_private::FileSpec> m_lldb_object_ap;
+    std::auto_ptr <lldb_private::FileSpec> m_opaque_ap;
 };
 
 

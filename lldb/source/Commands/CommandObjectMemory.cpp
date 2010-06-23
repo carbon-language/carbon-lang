@@ -13,13 +13,14 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Interpreter/Options.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Target/Process.h"
 
 using namespace lldb;
@@ -195,12 +196,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -441,12 +441,11 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        Process *process = context->GetExecutionContext().process;
+        Process *process = interpreter.GetDebugger().GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -666,13 +665,13 @@ CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 // CommandObjectMemory
 //-------------------------------------------------------------------------
 
-CommandObjectMemory::CommandObjectMemory (CommandInterpreter *interpreter) :
+CommandObjectMemory::CommandObjectMemory (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("memory",
                             "A set of commands for operating on a memory.",
                             "memory <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectMemoryRead ()), "read", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectMemoryWrite ()), "write", interpreter);
+    LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectMemoryRead ()));
+    LoadSubCommand (interpreter, "write", CommandObjectSP (new CommandObjectMemoryWrite ()));
 }
 
 CommandObjectMemory::~CommandObjectMemory ()

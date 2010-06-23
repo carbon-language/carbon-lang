@@ -48,7 +48,7 @@ public:
 
 private:
 
-    //lldb_private::Disassembler::Instruction::SharedPtr  m_lldb_object_sp;
+    //lldb_private::Disassembler::Instruction::SharedPtr  m_opaque_sp;
 
 
 };

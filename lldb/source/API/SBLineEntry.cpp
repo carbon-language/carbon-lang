@@ -14,26 +14,26 @@ using namespace lldb;
 
 
 SBLineEntry::SBLineEntry () :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
 }
 
 SBLineEntry::SBLineEntry (const SBLineEntry &rhs) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (rhs.IsValid())
     {
-        m_lldb_object_ap.reset (new lldb_private::LineEntry (*rhs));
+        m_opaque_ap.reset (new lldb_private::LineEntry (*rhs));
     }
 }
 
 
 
 SBLineEntry::SBLineEntry (const lldb_private::LineEntry *lldb_object_ptr) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (lldb_object_ptr)
-        m_lldb_object_ap.reset (new lldb_private::LineEntry(*lldb_object_ptr));
+        m_opaque_ap.reset (new lldb_private::LineEntry(*lldb_object_ptr));
 }
 
 const SBLineEntry &
@@ -42,7 +42,7 @@ SBLineEntry::operator = (const SBLineEntry &rhs)
     if (this != &rhs)
     {
         if (rhs.IsValid())
-            m_lldb_object_ap.reset (new lldb_private::LineEntry(*rhs));
+            m_opaque_ap.reset (new lldb_private::LineEntry(*rhs));
     }
     return *this;
 }
@@ -50,10 +50,10 @@ SBLineEntry::operator = (const SBLineEntry &rhs)
 void
 SBLineEntry::SetLineEntry (const lldb_private::LineEntry &lldb_object_ref)
 {
-    if (m_lldb_object_ap.get())
-        (*m_lldb_object_ap.get()) = lldb_object_ref;
+    if (m_opaque_ap.get())
+        (*m_opaque_ap.get()) = lldb_object_ref;
     else
-        m_lldb_object_ap.reset (new lldb_private::LineEntry (lldb_object_ref));
+        m_opaque_ap.reset (new lldb_private::LineEntry (lldb_object_ref));
 }
 
 
@@ -66,8 +66,8 @@ SBAddress
 SBLineEntry::GetStartAddress () const
 {
     SBAddress sb_address;
-    if (m_lldb_object_ap.get())
-        sb_address.SetAddress(&m_lldb_object_ap->range.GetBaseAddress());
+    if (m_opaque_ap.get())
+        sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
     return sb_address;
 }
 
@@ -75,10 +75,10 @@ SBAddress
 SBLineEntry::GetEndAddress () const
 {
     SBAddress sb_address;
-    if (m_lldb_object_ap.get())
+    if (m_opaque_ap.get())
     {
-        sb_address.SetAddress(&m_lldb_object_ap->range.GetBaseAddress());
-        sb_address.OffsetAddress(m_lldb_object_ap->range.GetByteSize());
+        sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
+        sb_address.OffsetAddress(m_opaque_ap->range.GetByteSize());
     }
     return sb_address;
 }
@@ -86,7 +86,7 @@ SBLineEntry::GetEndAddress () const
 bool
 SBLineEntry::IsValid () const
 {
-    return m_lldb_object_ap.get() != NULL;
+    return m_opaque_ap.get() != NULL;
 }
 
 
@@ -94,16 +94,16 @@ SBFileSpec
 SBLineEntry::GetFileSpec () const
 {
     SBFileSpec sb_file_spec;
-    if (m_lldb_object_ap.get() && m_lldb_object_ap->file)
-        sb_file_spec.SetFileSpec(m_lldb_object_ap->file);
+    if (m_opaque_ap.get() && m_opaque_ap->file)
+        sb_file_spec.SetFileSpec(m_opaque_ap->file);
     return sb_file_spec;
 }
 
 uint32_t
 SBLineEntry::GetLine () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->line;
+    if (m_opaque_ap.get())
+        return m_opaque_ap->line;
     return 0;
 }
 
@@ -111,16 +111,16 @@ SBLineEntry::GetLine () const
 uint32_t
 SBLineEntry::GetColumn () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->column;
+    if (m_opaque_ap.get())
+        return m_opaque_ap->column;
     return 0;
 }
 
 bool
 SBLineEntry::operator == (const SBLineEntry &rhs) const
 {
-    lldb_private::LineEntry *lhs_ptr = m_lldb_object_ap.get();
-    lldb_private::LineEntry *rhs_ptr = rhs.m_lldb_object_ap.get();
+    lldb_private::LineEntry *lhs_ptr = m_opaque_ap.get();
+    lldb_private::LineEntry *rhs_ptr = rhs.m_opaque_ap.get();
 
     if (lhs_ptr && rhs_ptr)
         return lldb_private::LineEntry::Compare (*lhs_ptr, *rhs_ptr) == 0;
@@ -131,8 +131,8 @@ SBLineEntry::operator == (const SBLineEntry &rhs) const
 bool
 SBLineEntry::operator != (const SBLineEntry &rhs) const
 {
-    lldb_private::LineEntry *lhs_ptr = m_lldb_object_ap.get();
-    lldb_private::LineEntry *rhs_ptr = rhs.m_lldb_object_ap.get();
+    lldb_private::LineEntry *lhs_ptr = m_opaque_ap.get();
+    lldb_private::LineEntry *rhs_ptr = rhs.m_opaque_ap.get();
 
     if (lhs_ptr && rhs_ptr)
         return lldb_private::LineEntry::Compare (*lhs_ptr, *rhs_ptr) != 0;
@@ -143,13 +143,13 @@ SBLineEntry::operator != (const SBLineEntry &rhs) const
 const lldb_private::LineEntry *
 SBLineEntry::operator->() const
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 const lldb_private::LineEntry &
 SBLineEntry::operator*() const
 {
-    return *m_lldb_object_ap;
+    return *m_opaque_ap;
 }
 
 

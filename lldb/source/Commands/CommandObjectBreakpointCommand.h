@@ -34,7 +34,7 @@ namespace lldb_private {
 class CommandObjectBreakpointCommand : public CommandObjectMultiword
 {
 public:
-    CommandObjectBreakpointCommand (CommandInterpreter *interpreter);
+    CommandObjectBreakpointCommand (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectBreakpointCommand ();
@@ -62,21 +62,21 @@ public:
     ~CommandObjectBreakpointCommandAdd ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual Options *
     GetOptions ();
 
     void
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options, 
+    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                             BreakpointOptions *bp_options, 
                                              CommandReturnObject &result);
 
     static size_t
     GenerateBreakpointCommandCallback (void *baton, 
-                                       InputReader *reader, 
+                                       InputReader &reader, 
                                        lldb::InputReaderAction notification,
                                        const char *bytes, 
                                        size_t bytes_len);
@@ -134,9 +134,8 @@ public:
     ~CommandObjectBreakpointCommandRemove ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 private:
@@ -155,9 +154,8 @@ public:
     ~CommandObjectBreakpointCommandList ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 private:

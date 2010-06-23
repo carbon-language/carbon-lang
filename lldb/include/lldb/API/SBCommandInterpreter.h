@@ -28,6 +28,9 @@ public:
     ~SBCommandInterpreter ();
 
     bool
+    IsValid() const;
+
+    bool
     CommandExists (const char *cmd);
 
     bool
@@ -86,17 +89,20 @@ public:
 protected:
 
     lldb_private::CommandInterpreter &
-    GetLLDBObjectRef ();
+    ref ();
 
     lldb_private::CommandInterpreter *
-    GetLLDBObjectPtr ();
+    get ();
 
+    void
+    reset (lldb_private::CommandInterpreter *);
 private:
     friend class SBDebugger;
 
-    SBCommandInterpreter (lldb_private::CommandInterpreter &interpreter_ptr);   // Access using SBDebugger::GetSharedInstance().GetCommandInterpreter();
+    SBCommandInterpreter (lldb_private::CommandInterpreter *interpreter_ptr = NULL);   // Access using SBDebugger::GetCommandInterpreter();
 
-    lldb_private::CommandInterpreter &m_interpreter;
+    
+    lldb_private::CommandInterpreter *m_opaque_ptr;
 };
 
 

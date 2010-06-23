@@ -208,13 +208,12 @@ CommandObjectBreakpointCommandAdd::~CommandObjectBreakpointCommandAdd ()
 bool
 CommandObjectBreakpointCommandAdd::Execute 
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
 
     if (target == NULL)
     {
@@ -258,12 +257,12 @@ CommandObjectBreakpointCommandAdd::Execute
                     {
                         if (m_options.m_use_script_language)
                         {
-                            interpreter->GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_loc_sp->GetLocationOptions(),
+                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_loc_sp->GetLocationOptions(),
                                                                                                           result);
                         }
                         else
                         {
-                            CollectDataForBreakpointCommandCallback (bp_loc_sp->GetLocationOptions(), result);
+                            CollectDataForBreakpointCommandCallback (interpreter, bp_loc_sp->GetLocationOptions(), result);
                         }
                     }
                 }
@@ -271,12 +270,12 @@ CommandObjectBreakpointCommandAdd::Execute
                 {
                     if (m_options.m_use_script_language)
                     {
-                        interpreter->GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp->GetOptions(),
+                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp->GetOptions(),
                                                                                                       result);
                     }
                     else
                     {
-                        CollectDataForBreakpointCommandCallback (bp->GetOptions(), result);
+                        CollectDataForBreakpointCommandCallback (interpreter, bp->GetOptions(), result);
                     }
                 }
             }
@@ -297,11 +296,12 @@ const char *g_reader_instructions = "Enter your debugger command(s).  Type 'DONE
 void
 CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
 (
+    CommandInterpreter &interpreter,
     BreakpointOptions *bp_options,
     CommandReturnObject &result
 )
 {
-    InputReaderSP reader_sp (new InputReader());
+    InputReaderSP reader_sp (new InputReader(interpreter.GetDebugger()));
     std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
     if (reader_sp && data_ap.get())
     {
@@ -316,7 +316,7 @@ CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
                                           true));                       // echo input
         if (err.Success())
         {
-            Debugger::GetSharedInstance().PushInputReader (reader_sp);
+            interpreter.GetDebugger().PushInputReader (reader_sp);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -337,13 +337,13 @@ size_t
 CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
 (
     void *baton, 
-    InputReader *reader, 
+    InputReader &reader, 
     lldb::InputReaderAction notification,
     const char *bytes, 
     size_t bytes_len
 )
 {
-    FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
+    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
 
     switch (notification)
     {
@@ -351,8 +351,8 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
         if (out_fh)
         {
             ::fprintf (out_fh, "%s\n", g_reader_instructions);
-            if (reader->GetPrompt())
-                ::fprintf (out_fh, "%s", reader->GetPrompt());
+            if (reader.GetPrompt())
+                ::fprintf (out_fh, "%s", reader.GetPrompt());
         }
         break;
 
@@ -360,8 +360,8 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
         break;
 
     case eInputReaderReactivate:
-        if (out_fh && reader->GetPrompt())
-            ::fprintf (out_fh, "%s", reader->GetPrompt());
+        if (out_fh && reader.GetPrompt())
+            ::fprintf (out_fh, "%s", reader.GetPrompt());
         break;
 
     case eInputReaderGotToken:
@@ -375,8 +375,8 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                     ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
             }
         }
-        if (out_fh && !reader->IsDone() && reader->GetPrompt())
-            ::fprintf (out_fh, "%s", reader->GetPrompt());
+        if (out_fh && !reader.IsDone() && reader.GetPrompt())
+            ::fprintf (out_fh, "%s", reader.GetPrompt());
         break;
         
     case eInputReaderDone:
@@ -403,12 +403,14 @@ CommandObjectBreakpointCommandRemove::~CommandObjectBreakpointCommandRemove ()
 }
 
 bool
-CommandObjectBreakpointCommandRemove::Execute (Args& command,
-                                               CommandContext *context,
-                                               CommandInterpreter *interpreter,
-                                               CommandReturnObject &result)
+CommandObjectBreakpointCommandRemove::Execute 
+(
+    CommandInterpreter &interpreter,
+    Args& command,
+    CommandReturnObject &result
+)
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
 
     if (target == NULL)
     {
@@ -486,12 +488,14 @@ CommandObjectBreakpointCommandList::~CommandObjectBreakpointCommandList ()
 }
 
 bool
-CommandObjectBreakpointCommandList::Execute (Args& command,
-                                             CommandContext *context,
-                                             CommandInterpreter *interpreter,
-                                             CommandReturnObject &result)
+CommandObjectBreakpointCommandList::Execute 
+(
+    CommandInterpreter &interpreter,
+    Args& command,
+    CommandReturnObject &result
+)
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
 
     if (target == NULL)
     {
@@ -587,7 +591,7 @@ CommandObjectBreakpointCommandList::Execute (Args& command,
 // CommandObjectBreakpointCommand
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpreter *interpreter) :
+CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("command",
                             "A set of commands for adding, removing and examining bits of code to be executed when the breakpoint is hit (breakpoint 'commmands').",
                             "command <sub-command> [<sub-command-options>] <breakpoint-id>")
@@ -601,9 +605,9 @@ CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpret
     remove_command_object->SetCommandName ("breakpoint command remove");
     list_command_object->SetCommandName ("breakpoint command list");
 
-    status = LoadSubCommand (add_command_object, "add", interpreter);
-    status = LoadSubCommand (remove_command_object, "remove", interpreter);
-    status = LoadSubCommand (list_command_object, "list", interpreter);
+    status = LoadSubCommand (interpreter, "add",    add_command_object);
+    status = LoadSubCommand (interpreter, "remove", remove_command_object);
+    status = LoadSubCommand (interpreter, "list",   list_command_object);
 }
 
 
@@ -631,63 +635,61 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
     if (commands.GetSize() > 0)
     {
         uint32_t num_commands = commands.GetSize();
-        CommandInterpreter &interpreter = Debugger::GetSharedInstance().GetCommandInterpreter();
         CommandReturnObject result;
-        ExecutionContext exe_ctx = context->context;
-        
-        FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
-        FILE *err_fh = Debugger::GetSharedInstance().GetErrorFileHandle();
-            
-
-        uint32_t i;
-        for (i = 0; i < num_commands; ++i)
+        if (context->exe_ctx.target)
         {
-            
-            // First time through we use the context from the stoppoint, after that we use whatever
-            // has been set by the previous command.
-            
-            if (!interpreter.HandleCommand (commands.GetStringAtIndex(i), false, result, &exe_ctx))
-                break;
+        
+            Debugger &debugger = context->exe_ctx.target->GetDebugger();
+            CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
+        
+            FILE *out_fh = debugger.GetOutputFileHandle();
+            FILE *err_fh = debugger.GetErrorFileHandle();
                 
-            // FIXME: This isn't really the right way to do this.  We should be able to peek at the public 
-            // to see if there is any new events, but that is racey, since the internal process thread has to run and
-            // deliver the event to the public queue before a run will show up.  So for now we check
-            // the internal thread state.
-            
-            lldb::StateType internal_state = exe_ctx.process->GetPrivateState();
-            if (internal_state != eStateStopped)
+            uint32_t i;
+            for (i = 0; i < num_commands; ++i)
             {
-                if (i < num_commands - 1)
+                
+                // First time through we use the context from the stoppoint, after that we use whatever
+                // has been set by the previous command.
+                
+                if (!interpreter.HandleCommand (commands.GetStringAtIndex(i), false, result, &context->exe_ctx))
+                    break;
+                    
+                // FIXME: This isn't really the right way to do this.  We should be able to peek at the public 
+                // to see if there is any new events, but that is racey, since the internal process thread has to run and
+                // deliver the event to the public queue before a run will show up.  So for now we check
+                // the internal thread state.
+                
+                lldb::StateType internal_state = context->exe_ctx.process->GetPrivateState();
+                if (internal_state != eStateStopped)
                 {
-                    if (out_fh)
-                        ::fprintf (out_fh, "Short-circuiting command execution because target state changed to %s."
-                                           " last command: \"%s\"\n", StateAsCString(internal_state),
-                                           commands.GetStringAtIndex(i));
+                    if (i < num_commands - 1)
+                    {
+                        if (out_fh)
+                            ::fprintf (out_fh, "Short-circuiting command execution because target state changed to %s."
+                                               " last command: \"%s\"\n", StateAsCString(internal_state),
+                                               commands.GetStringAtIndex(i));
+                    }
+                    break;
                 }
-                break;
+                
+                if (out_fh)
+                    ::fprintf (out_fh, "%s", result.GetErrorStream().GetData());
+                if (err_fh)
+                    ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());
+                result.Clear();
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
-            
-            // First time through we use the context from the stoppoint, after that we use whatever
-            // has been set by the previous command.
-            exe_ctx = Debugger::GetSharedInstance().GetCurrentExecutionContext();
 
-            
+            if (err_fh && !result.Succeeded() && i < num_commands)
+                ::fprintf (err_fh, "Attempt to execute '%s' failed.\n", commands.GetStringAtIndex(i));
+
             if (out_fh)
                 ::fprintf (out_fh, "%s", result.GetErrorStream().GetData());
+
             if (err_fh)
-                ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());
-            result.Clear();
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());        
         }
-
-        if (err_fh && !result.Succeeded() && i < num_commands)
-            ::fprintf (err_fh, "Attempt to execute '%s' failed.\n", commands.GetStringAtIndex(i));
-
-        if (out_fh)
-            ::fprintf (out_fh, "%s", result.GetErrorStream().GetData());
-
-        if (err_fh)
-            ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());        
     }
     return ret_value;
 }

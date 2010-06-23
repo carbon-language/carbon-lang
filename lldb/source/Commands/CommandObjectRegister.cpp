@@ -13,10 +13,11 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Scalar.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/RegisterContext.h"
@@ -44,14 +45,16 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result)
+    Execute 
+    (
+        CommandInterpreter &interpreter,
+        Args& command,
+        CommandReturnObject &result
+    )
     {
         StreamString &output_stream = result.GetOutputStream();
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)
@@ -150,13 +153,15 @@ public:
     }
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result)
+    Execute 
+    (
+        CommandInterpreter &interpreter,
+        Args& command,
+        CommandReturnObject &result
+    )
     {
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)
@@ -213,13 +218,13 @@ public:
 //----------------------------------------------------------------------
 // CommandObjectRegister constructor
 //----------------------------------------------------------------------
-CommandObjectRegister::CommandObjectRegister(CommandInterpreter *interpreter) :
+CommandObjectRegister::CommandObjectRegister(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("register",
                             "Access thread registers.",
                             "register [read|write] ...")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectRegisterRead ()), "read", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectRegisterWrite ()), "write", interpreter);
+    LoadSubCommand (interpreter, "read",  CommandObjectSP (new CommandObjectRegisterRead ()));
+    LoadSubCommand (interpreter, "write", CommandObjectSP (new CommandObjectRegisterWrite ()));
 }
 
 

@@ -79,6 +79,7 @@ static lldb::OptionDefinition g_options[] =
 
 Driver::Driver () :
     SBBroadcaster ("Driver"),
+    m_debugger (SBDebugger::Create()),
     m_editline_pty (),
     m_editline_slave_fh (NULL),
     m_editline_reader (),
@@ -323,9 +324,93 @@ BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option *
 
 }
 
-SBError
-ParseOptions (Driver::OptionData &data, int argc, const char **argv)
+Driver::OptionData::OptionData () :
+    m_filename(),
+    m_script_lang (lldb::eScriptLanguageDefault),
+    m_source_command_files (),
+    m_debug_mode (false),
+    m_print_help (false),
+    m_print_version (false)
+
 {
+}
+
+Driver::OptionData::~OptionData ()
+{
+}
+
+void
+Driver::OptionData::Clear ()
+{
+    m_filename.clear ();
+    m_script_lang = lldb::eScriptLanguageDefault;
+    m_source_command_files.clear ();
+    m_debug_mode = false;
+    m_print_help = false;
+    m_print_version = false;
+}
+
+void
+Driver::ResetOptionValues ()
+{
+    m_option_data.Clear ();
+}
+
+const char *
+Driver::GetFilename() const
+{
+    if (m_option_data.m_filename.empty())
+        return NULL;
+    return m_option_data.m_filename.c_str();
+}
+
+const char *
+Driver::GetCrashLogFilename() const
+{
+    if (m_option_data.m_crash_log.empty())
+        return NULL;
+    return m_option_data.m_crash_log.c_str();
+}
+
+lldb::ScriptLanguage
+Driver::GetScriptLanguage() const
+{
+    return m_option_data.m_script_lang;
+}
+
+size_t
+Driver::GetNumSourceCommandFiles () const
+{
+    return m_option_data.m_source_command_files.size();
+}
+
+const char *
+Driver::GetSourceCommandFileAtIndex (uint32_t idx) const
+{
+    if (idx < m_option_data.m_source_command_files.size())
+        return m_option_data.m_source_command_files[idx].c_str();
+    return NULL;
+}
+
+bool
+Driver::GetDebugMode() const
+{
+    return m_option_data.m_debug_mode;
+}
+
+
+// Check the arguments that were passed to this program to make sure they are valid and to get their
+// argument values (if any).  Return a boolean value indicating whether or not to start up the full
+// debugger (i.e. the Command Interpreter) or not.  Return FALSE if the arguments were invalid OR
+// if the user only wanted help or version information.
+
+SBError
+Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
+{
+    ResetOptionValues ();
+
+    SBCommandReturnObject result;
+
     SBError error;
     std::string option_string;
     struct option *long_options = NULL;
@@ -389,7 +474,7 @@ ParseOptions (Driver::OptionData &data, int argc, const char **argv)
             break;
         else if (val == '?')
         {
-            data.m_print_help = true;
+            m_option_data.m_print_help = true;
             error.SetErrorStringWithFormat ("unknown or ambiguous option");
             break;
         }
@@ -397,7 +482,7 @@ ParseOptions (Driver::OptionData &data, int argc, const char **argv)
             continue;
         else
         {
-            data.m_seen_options.insert ((char) val);
+            m_option_data.m_seen_options.insert ((char) val);
             if (long_options_index == -1)
             {
                 for (int i = 0;
@@ -414,180 +499,68 @@ ParseOptions (Driver::OptionData &data, int argc, const char **argv)
 
             if (long_options_index >= 0)
             {
-                error = Driver::SetOptionValue (long_options_index,
-                                                long_options[long_options_index].has_arg == no_argument ? NULL : optarg,
-                                                data);
+                const char short_option = (char) g_options[long_options_index].short_option;
+
+                switch (short_option)
+                {
+                    case 'h':
+                        m_option_data.m_print_help = true;
+                        break;
+
+                    case 'v':
+                        m_option_data.m_print_version = true;
+                        break;
+
+                    case 'c':
+                        m_option_data.m_crash_log = optarg;
+                        break;
+
+                    case 'f':
+                        {
+                            SBFileSpec file(optarg);
+                            if (file.Exists())
+                                m_option_data.m_filename = optarg;
+                            else
+                                error.SetErrorStringWithFormat("file specified in --file (-f) option doesn't exist: '%s'", optarg);
+                        }
+                        break;
+
+                    case 'a':
+                        if (!m_debugger.SetDefaultArchitecture (optarg))
+                            error.SetErrorStringWithFormat("invalid architecture in the -a or --arch option: '%s'", optarg);
+                        break;
+
+                    case 'l':
+                        m_option_data.m_script_lang = m_debugger.GetScriptingLanguage (optarg);
+                        break;
+
+                    case 'd':
+                        m_option_data.m_debug_mode = true;
+                        break;
+
+                    case 's':
+                        {
+                            SBFileSpec file(optarg);
+                            if (file.Exists())
+                                m_option_data.m_source_command_files.push_back (optarg);
+                            else
+                                error.SetErrorStringWithFormat("file specified in --source (-s) option doesn't exist: '%s'", optarg);
+                        }
+                        break;
+
+                    default:
+                        m_option_data.m_print_help = true;
+                        error.SetErrorStringWithFormat ("unrecognized option %c", short_option);
+                        break;
+                }
             }
             else
             {
                 error.SetErrorStringWithFormat ("invalid option with value %i", val);
             }
             if (error.Fail())
-                break;
+                return error;
         }
-    }
-
-    return error;
-}
-
-Driver::OptionData::OptionData () :
-    m_filename(),
-    m_script_lang (lldb::eScriptLanguageDefault),
-    m_source_command_files (),
-    m_debug_mode (false),
-    m_print_help (false),
-    m_print_version (false)
-
-{
-}
-
-Driver::OptionData::~OptionData ()
-{
-}
-
-void
-Driver::OptionData::Clear ()
-{
-    m_filename.clear ();
-    m_script_lang = lldb::eScriptLanguageDefault;
-    m_source_command_files.clear ();
-    m_debug_mode = false;
-    m_print_help = false;
-    m_print_version = false;
-}
-
-SBError
-Driver::SetOptionValue (int option_idx, const char *option_arg, Driver::OptionData &option_data)
-{
-    SBError error;
-    const char short_option = (char) g_options[option_idx].short_option;
-
-    switch (short_option)
-    {
-        case 'h':
-            option_data.m_print_help = true;
-            break;
-
-        case 'v':
-            option_data.m_print_version = true;
-            break;
-
-        case 'c':
-            option_data.m_crash_log = option_arg;
-            break;
-
-        case 'f':
-            {
-                SBFileSpec file(option_arg);
-                if (file.Exists())
-                    option_data.m_filename = option_arg;
-                else
-                    error.SetErrorStringWithFormat("file specified in --file (-f) option doesn't exist: '%s'", option_arg);
-            }
-            break;
-
-        case 'a':
-            if (!SBDebugger::SetDefaultArchitecture (option_arg))
-                error.SetErrorStringWithFormat("invalid architecture in the -a or --arch option: '%s'", option_arg);
-            break;
-
-        case 'l':
-            option_data.m_script_lang = SBDebugger::GetScriptingLanguage (option_arg);
-            break;
-
-        case 'd':
-            option_data.m_debug_mode = true;
-            break;
-
-        case 's':
-            {
-                SBFileSpec file(option_arg);
-                if (file.Exists())
-                    option_data.m_source_command_files.push_back (option_arg);
-                else
-                    error.SetErrorStringWithFormat("file specified in --source (-s) option doesn't exist: '%s'", option_arg);
-            }
-            break;
-
-        default:
-            option_data.m_print_help = true;
-            error.SetErrorStringWithFormat ("unrecognized option %c", short_option);
-            break;
-    }
-
-    return error;
-}
-
-void
-Driver::ResetOptionValues ()
-{
-    m_option_data.Clear ();
-}
-
-const char *
-Driver::GetFilename() const
-{
-    if (m_option_data.m_filename.empty())
-        return NULL;
-    return m_option_data.m_filename.c_str();
-}
-
-const char *
-Driver::GetCrashLogFilename() const
-{
-    if (m_option_data.m_crash_log.empty())
-        return NULL;
-    return m_option_data.m_crash_log.c_str();
-}
-
-lldb::ScriptLanguage
-Driver::GetScriptLanguage() const
-{
-    return m_option_data.m_script_lang;
-}
-
-size_t
-Driver::GetNumSourceCommandFiles () const
-{
-    return m_option_data.m_source_command_files.size();
-}
-
-const char *
-Driver::GetSourceCommandFileAtIndex (uint32_t idx) const
-{
-    if (idx < m_option_data.m_source_command_files.size())
-        return m_option_data.m_source_command_files[idx].c_str();
-    return NULL;
-}
-
-bool
-Driver::GetDebugMode() const
-{
-    return m_option_data.m_debug_mode;
-}
-
-
-// Check the arguments that were passed to this program to make sure they are valid and to get their
-// argument values (if any).  Return a boolean value indicating whether or not to start up the full
-// debugger (i.e. the Command Interpreter) or not.  Return FALSE if the arguments were invalid OR
-// if the user only wanted help or version information.
-
-bool
-Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, FILE *err_fh)
-{
-    bool valid = true;
-
-    ResetOptionValues ();
-
-    SBCommandReturnObject result;
-
-    SBError error = ParseOptions (m_option_data, argc, argv);
-    if (error.Fail())
-    {
-        const char *error_cstr = error.GetCString ();
-        if (error_cstr)
-            ::fprintf (err_fh, "error: %s\n", error_cstr);
-        valid = false;
     }
     
     // If there is a trailing argument, it is the filename.
@@ -599,28 +572,24 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, FILE *err_fh)
         }
         else
         {
-            ::fprintf (err_fh, "error: don't provide a file both on in the -f option and as an argument.");
-            valid = false;
+            error.SetErrorStringWithFormat ("error: don't provide a file both on in the -f option and as an argument.");
         }
 
     }
     else if (optind < argc - 1)
     {
         // Trailing extra arguments...
-        ::fprintf (err_fh, "error: trailing extra arguments - only one the filename is allowed.");
-        valid = false;
-        
+        error.SetErrorStringWithFormat ("error: trailing extra arguments - only one the filename is allowed.");
     }
     
-    if (!valid || m_option_data.m_print_help)
+    if (error.Fail() || m_option_data.m_print_help)
     {
         ShowUsage (out_fh, g_options, m_option_data);
-        valid = false;
     }
     else if (m_option_data.m_print_version)
     {
-        ::fprintf (out_fh, "%s\n", SBDebugger::GetVersionString());
-        valid = false;
+        ::fprintf (out_fh, "%s\n", m_debugger.GetVersionString());
+        exit = true;
     }
     else if (! m_option_data.m_crash_log.empty())
     {
@@ -631,7 +600,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, FILE *err_fh)
         // All other combinations are valid; do nothing more here.
     }
 
-    return valid;
+    return error;
 }
 
 void
@@ -640,7 +609,7 @@ Driver::GetProcessSTDOUT ()
     //  The process has stuff waiting for stdout; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
-    while ((len = SBDebugger::GetCurrentTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    while ((len = m_debugger.GetCurrentTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
         m_io_channel_ap->OutWrite (stdio_buffer, len);
 }
 
@@ -650,7 +619,7 @@ Driver::GetProcessSTDERR ()
     //  The process has stuff waiting for stderr; get it and write it out to the appropriate place.
     char stdio_buffer[1024];
     size_t len;
-    while ((len = SBDebugger::GetCurrentTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
+    while ((len = m_debugger.GetCurrentTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
         m_io_channel_ap->ErrWrite (stdio_buffer, len);
 }
 
@@ -658,7 +627,7 @@ void
 Driver::UpdateCurrentThread ()
 {
     using namespace lldb;
-    SBProcess process(SBDebugger::GetCurrentTarget().GetProcess());
+    SBProcess process(m_debugger.GetCurrentTarget().GetProcess());
     if (process.IsValid())
     {
         SBThread curr_thread (process.GetCurrentThread());
@@ -765,7 +734,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             {
                 char message[1024];
                 int message_len = ::snprintf (message, sizeof(message), "Process %d %s\n", process.GetProcessID(),
-                                              SBDebugger::StateAsCString (event_state));
+                                              m_debugger.StateAsCString (event_state));
                 m_io_channel_ap->OutWrite(message, message_len);
             }
             break;
@@ -775,7 +744,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             break;
 
         case eStateExited:
-            SBDebugger::HandleCommand("process status");
+            m_debugger.HandleCommand("process status");
             m_io_channel_ap->RefreshPrompt();
             break;
 
@@ -794,7 +763,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
             else
             {
                 UpdateCurrentThread ();
-                SBDebugger::HandleCommand("process status");
+                m_debugger.HandleCommand("process status");
                 m_io_channel_ap->RefreshPrompt();
             }
             break;
@@ -820,7 +789,7 @@ Driver::HandleIOEvent (const SBEvent &event)
         if (command_string == NULL)
             command_string == "";
         SBCommandReturnObject result;
-        if (SBDebugger::GetCommandInterpreter().HandleCommand (command_string, result, true) != lldb::eReturnStatusQuit)
+        if (m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true) != lldb::eReturnStatusQuit)
         {
             m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
             m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
@@ -971,7 +940,7 @@ Driver::HandleIOEvent (const SBEvent &event)
 //
 //        if (crash_infos.size())
 //        {
-//            SBTarget target (SBDebugger::CreateTarget (crash_infos.front().path.c_str(),
+//            SBTarget target (m_debugger.CreateTarget (crash_infos.front().path.c_str(),
 //                                                      lldb::GetDefaultArchitecture().AsCString (),
 //                                                      false));
 //            if (target.IsValid())
@@ -995,7 +964,7 @@ Driver::GetFromMaster (const char *src, size_t src_len)
 {
     // Echo the characters back to the Debugger's stdout, that way if you
     // type characters while a command is running, you'll see what you've typed.
-    FILE *out_fh = SBDebugger::GetOutputFileHandle();
+    FILE *out_fh = m_debugger.GetOutputFileHandle();
     if (out_fh)
         ::fwrite (src, 1, src_len, out_fh);
 }
@@ -1076,9 +1045,9 @@ Driver::MainLoop ()
     ::setbuf (stdin, NULL);
     ::setbuf (stdout, NULL);
 
-    SBDebugger::SetErrorFileHandle (stderr, false);
-    SBDebugger::SetOutputFileHandle (stdout, false);
-    SBDebugger::SetInputFileHandle (stdin, true);
+    m_debugger.SetErrorFileHandle (stderr, false);
+    m_debugger.SetOutputFileHandle (stdout, false);
+    m_debugger.SetInputFileHandle (stdin, true);
 
     // You have to drain anything that comes to the master side of the PTY.  master_out_comm is
     // for that purpose.  The reason you need to do this is a curious reason...  editline will echo
@@ -1104,7 +1073,7 @@ Driver::MainLoop ()
 //        ParseCrashLog (crash_log);
 //    }
 //
-    SBCommandInterpreter sb_interpreter = SBDebugger::GetCommandInterpreter();
+    SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
 
     m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, stdout, stderr, this));
 
@@ -1115,13 +1084,14 @@ Driver::MainLoop ()
         char buffer[25];
 
         sprintf (buffer, "set term-width %d", window_size.ws_col);
-        SBDebugger::HandleCommand ((const char *) buffer);
+        m_debugger.HandleCommand ((const char *) buffer);
     }
 
     // Since input can be redirected by the debugger, we must insert our editline
     // input reader in the queue so we know when our reader should be active
     // and so we can receive bytes only when we are supposed to.
-    SBError err (m_editline_reader.Initialize (Driver::EditLineInputReaderCallback, // callback
+    SBError err (m_editline_reader.Initialize (m_debugger, 
+                                               Driver::EditLineInputReaderCallback, // callback
                                                this,                              // baton
                                                eInputReaderGranularityByte,       // token_size
                                                NULL,                              // end token - NULL means never done
@@ -1135,9 +1105,9 @@ Driver::MainLoop ()
         exit (6);
     }
     
-    SBDebugger::PushInputReader (m_editline_reader);
+    m_debugger.PushInputReader (m_editline_reader);
 
-    SBListener listener(SBDebugger::GetListener());
+    SBListener listener(m_debugger.GetListener());
     if (listener.IsValid())
     {
 
@@ -1161,8 +1131,8 @@ Driver::MainLoop ()
             sb_interpreter.SourceInitFileInHomeDirectory(result);
             if (GetDebugMode())
             {
-                result.PutError (SBDebugger::GetErrorFileHandle());
-                result.PutOutput (SBDebugger::GetOutputFileHandle());
+                result.PutError (m_debugger.GetErrorFileHandle());
+                result.PutOutput (m_debugger.GetOutputFileHandle());
             }
 
             // Now we handle options we got from the command line
@@ -1174,11 +1144,11 @@ Driver::MainLoop ()
                 {
                     const char *command_file = GetSourceCommandFileAtIndex(i);
                     ::snprintf (command_string, sizeof(command_string), "source '%s'", command_file);
-                    SBDebugger::GetCommandInterpreter().HandleCommand (command_string, result, false);
+                    m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, false);
                     if (GetDebugMode())
                     {
-                        result.PutError (SBDebugger::GetErrorFileHandle());
-                        result.PutOutput (SBDebugger::GetOutputFileHandle());
+                        result.PutError (m_debugger.GetErrorFileHandle());
+                        result.PutOutput (m_debugger.GetOutputFileHandle());
                     }
                 }
             }
@@ -1186,13 +1156,13 @@ Driver::MainLoop ()
             if (!m_option_data.m_filename.empty())
             {
                 char arch_name[64];
-                if (SBDebugger::GetDefaultArchitecture (arch_name, sizeof (arch_name)))
+                if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
                     ::snprintf (command_string, sizeof (command_string), "file --arch=%s '%s'", arch_name,
                                 m_option_data.m_filename.c_str());
                 else
                     ::snprintf (command_string, sizeof(command_string), "file '%s'", m_option_data.m_filename.c_str());
 
-                SBDebugger::HandleCommand (command_string);
+                m_debugger.HandleCommand (command_string);
             }
 
             // Now that all option parsing is done, we try and parse the .lldbinit
@@ -1200,8 +1170,8 @@ Driver::MainLoop ()
             sb_interpreter.SourceInitFileInCurrentWorkingDirectory (result);
             if (GetDebugMode())
             {
-                result.PutError(SBDebugger::GetErrorFileHandle());
-                result.PutOutput(SBDebugger::GetOutputFileHandle());
+                result.PutError(m_debugger.GetErrorFileHandle());
+                result.PutOutput(m_debugger.GetOutputFileHandle());
             }
 
             SBEvent event;
@@ -1237,7 +1207,7 @@ Driver::MainLoop ()
                             else
                                 done = HandleIOEvent (event);
                         }
-                        else if (event.BroadcasterMatchesRef (SBDebugger::GetCurrentTarget().GetProcess().GetBroadcaster()))
+                        else if (event.BroadcasterMatchesRef (m_debugger.GetCurrentTarget().GetProcess().GetBroadcaster()))
                         {
                             HandleProcessEvent (event);
                         }
@@ -1267,7 +1237,7 @@ Driver::MainLoop ()
                 }
             }
 
-            SBProcess process = SBDebugger::GetCurrentTarget().GetProcess();
+            SBProcess process = m_debugger.GetCurrentTarget().GetProcess();
             if (process.IsValid())
                 process.Destroy();
         }
@@ -1289,19 +1259,27 @@ Driver::ReadyForCommand ()
 int
 main (int argc, char const *argv[])
 {
-
     SBDebugger::Initialize();
     
     SBHostOS::ThreadCreated ("[main]");
 
-    // Do a little setup on the debugger before we get going
-    SBDebugger::SetAsync(true);
-    Driver driver;
-
-    bool valid_args = driver.ParseArgs (argc, argv, stdout, stderr);
-    if (valid_args)
+    // Create a scope for driver so that the driver object will destroy itself
+    // before SBDebugger::Terminate() is called.
     {
-        driver.MainLoop ();
+        Driver driver;
+
+        bool exit = false;
+        SBError error (driver.ParseArgs (argc, argv, stdout, exit));
+        if (error.Fail())
+        {
+            const char *error_cstr = error.GetCString ();
+            if (error_cstr)
+                ::fprintf (stderr, "error: %s\n", error_cstr);
+        }
+        else if (!exit)
+        {
+            driver.MainLoop ();
+        }
     }
 
     SBDebugger::Terminate();

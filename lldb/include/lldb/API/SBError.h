@@ -90,7 +90,7 @@ protected:
     SetError (const lldb_private::Error &lldb_error);
 
 private:
-    std::auto_ptr<lldb_private::Error> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::Error> m_opaque_ap;
 
     void
     CreateIfNeeded ();

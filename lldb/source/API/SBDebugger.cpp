@@ -43,112 +43,121 @@ SBDebugger::Terminate ()
     Debugger::Terminate();
 }
 
+SBDebugger
+SBDebugger::Create()
+{
+    SBDebugger debugger;
+    debugger.reset(Debugger::CreateInstance());
+    return debugger;
+}
+
+
+SBDebugger::SBDebugger () :
+    m_opaque_sp ()
+{
+}
+
+SBDebugger::~SBDebugger ()
+{
+}
+
+bool
+SBDebugger::IsValid() const
+{
+    return m_opaque_sp.get() != NULL;
+}
+
+
 void
 SBDebugger::SetAsync (bool b)
 {
-    static bool value_set_once = false;
-
-    if (!value_set_once)
-    {
-        value_set_once = true;
-        Debugger::GetSharedInstance().SetAsyncExecution(b);
-    }
+    if (m_opaque_sp)
+        m_opaque_sp->SetAsyncExecution(b);
 }
-
-void
-SBDebugger::SetInputFile (const char *tty_name)
-{
-    // DEPRECATED: will be removed in next submission
-    FILE *fh = ::fopen (tty_name, "r");
-    SetInputFileHandle  (fh, true);
-}
-
-void
-SBDebugger::SetOutputFile (const char *tty_name)
-{
-    // DEPRECATED: will be removed in next submission
-    FILE *fh = ::fopen (tty_name, "w");
-    SetOutputFileHandle (fh, true);
-    SetErrorFileHandle  (fh, false);
-}
-
-void
-SBDebugger::SetErrorFile (const char *tty_name)
-{
-    // DEPRECATED: will be removed in next submission
-}
-
 
 // Shouldn't really be settable after initialization as this could cause lots of problems; don't want users
 // trying to switch modes in the middle of a debugging session.
 void
 SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    Debugger::GetSharedInstance().SetInputFileHandle (fh, transfer_ownership);
+    if (m_opaque_sp)
+        m_opaque_sp->SetInputFileHandle (fh, transfer_ownership);
 }
 
 void
 SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    Debugger::GetSharedInstance().SetOutputFileHandle (fh, transfer_ownership);
+    if (m_opaque_sp)
+        m_opaque_sp->SetOutputFileHandle (fh, transfer_ownership);
 }
 
 void
 SBDebugger::SetErrorFileHandle (FILE *fh, bool transfer_ownership)
 {
-    Debugger::GetSharedInstance().SetErrorFileHandle (fh, transfer_ownership);
+    if (m_opaque_sp)
+        m_opaque_sp->SetErrorFileHandle (fh, transfer_ownership);
 }
 
 FILE *
 SBDebugger::GetInputFileHandle ()
 {
-    return Debugger::GetSharedInstance().GetInputFileHandle();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetInputFileHandle();
+    return NULL;
 }
 
 FILE *
 SBDebugger::GetOutputFileHandle ()
 {
-    return Debugger::GetSharedInstance().GetOutputFileHandle();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetOutputFileHandle();
+    return NULL;
 }
 
 FILE *
 SBDebugger::GetErrorFileHandle ()
 {
-    return Debugger::GetSharedInstance().GetErrorFileHandle();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetErrorFileHandle();
+    return NULL;
 }
 
 SBCommandInterpreter
 SBDebugger::GetCommandInterpreter ()
 {
-    SBCommandInterpreter sb_interpreter(Debugger::GetSharedInstance().GetCommandInterpreter());
+    SBCommandInterpreter sb_interpreter;
+    if (m_opaque_sp)
+        sb_interpreter.reset (&m_opaque_sp->GetCommandInterpreter());
     return sb_interpreter;
 }
 
 void
 SBDebugger::HandleCommand (const char *command)
 {
-    SBProcess process;
-    SBCommandInterpreter sb_interpreter(Debugger::GetSharedInstance().GetCommandInterpreter());
-    SBCommandReturnObject result;
-
-    sb_interpreter.HandleCommand (command, result, false);
-
-    if (GetErrorFileHandle() != NULL)
-        result.PutError (GetErrorFileHandle());
-    if (GetOutputFileHandle() != NULL)
-        result.PutOutput (GetOutputFileHandle());
-
-    if (Debugger::GetSharedInstance().GetAsyncExecution() == false)
+    if (m_opaque_sp)
     {
-        process = GetCommandInterpreter().GetProcess ();
-        if (process.IsValid())
+        SBCommandInterpreter sb_interpreter(GetCommandInterpreter ());
+        SBCommandReturnObject result;
+
+        sb_interpreter.HandleCommand (command, result, false);
+
+        if (GetErrorFileHandle() != NULL)
+            result.PutError (GetErrorFileHandle());
+        if (GetOutputFileHandle() != NULL)
+            result.PutOutput (GetOutputFileHandle());
+
+        if (m_opaque_sp->GetAsyncExecution() == false)
         {
-            EventSP event_sp;
-            Listener &lldb_listener = Debugger::GetSharedInstance().GetListener();
-            while (lldb_listener.GetNextEventForBroadcaster (process.get(), event_sp))
+            SBProcess process(GetCommandInterpreter().GetProcess ());
+            if (process.IsValid())
             {
-                SBEvent event(event_sp);
-                HandleProcessEvent (process, event, GetOutputFileHandle(), GetErrorFileHandle());
+                EventSP event_sp;
+                Listener &lldb_listener = m_opaque_sp->GetListener();
+                while (lldb_listener.GetNextEventForBroadcaster (process.get(), event_sp))
+                {
+                    SBEvent event(event_sp);
+                    HandleProcessEvent (process, event, GetOutputFileHandle(), GetErrorFileHandle());
+                }
             }
         }
     }
@@ -157,7 +166,9 @@ SBDebugger::HandleCommand (const char *command)
 SBListener
 SBDebugger::GetListener ()
 {
-    SBListener sb_listener(Debugger::GetSharedInstance().GetListener());
+    SBListener sb_listener;
+    if (m_opaque_sp)
+        sb_listener.reset(&m_opaque_sp->GetListener(), false);
     return sb_listener;
 }
 
@@ -271,53 +282,6 @@ SBDebugger::UpdateCurrentThread (SBProcess &process)
     }
 }
 
-void
-SBDebugger::ReportCurrentLocation (FILE *out, FILE *err)
-{
-    if ((out == NULL) || (err == NULL))
-        return;
-
-    SBTarget sb_target (GetCurrentTarget());
-    if (!sb_target.IsValid())
-    {
-        fprintf (out, "no target\n");
-        return;
-    }
-
-    SBProcess process = sb_target.GetProcess ();
-    if (process.IsValid())
-    {
-        StateType state = process.GetState();
-
-        if (StateIsStoppedState (state))
-        {
-            if (state == eStateExited)
-            {
-                int exit_status = process.GetExitStatus();
-                const char *exit_description = process.GetExitDescription();
-                ::fprintf (out, "Process %d exited with status = %i (0x%8.8x) %s\n",
-                           process.GetProcessID(),
-                           exit_status,
-                           exit_status,
-                           exit_description ? exit_description : "");
-            }
-            else
-            {
-                fprintf (out, "Process %d %s\n", process.GetProcessID(), StateAsCString (state));
-                SBThread current_thread = process.GetThreadAtIndex (0);
-                if (current_thread.IsValid())
-                {
-                    process.DisplayThreadsInfo (out, err, true);
-                }
-                else
-                    fprintf (out, "No valid thread found in current process\n");
-            }
-        }
-        else
-            fprintf (out, "No current location or status available\n");
-    }
-}
-
 SBSourceManager &
 SBDebugger::GetSourceManager ()
 {
@@ -367,38 +331,6 @@ SBDebugger::GetScriptingLanguage (const char *script_language_name)
                                          eScriptLanguageDefault,
                                          NULL);
 }
-//pid_t
-/*
-SBDebugger::AttachByName (const char *process_name, const char *filename)
-{
-    SBTarget *temp_target = GetCurrentTarget();
-    SBTarget sb_target;
-    pid_t return_pid = (pid_t) LLDB_INVALID_PROCESS_ID;
-
-    if (temp_target == NULL)
-    {
-        if (filename != NULL)
-        {
-            sb_target = CreateWithFile (filename);
-            sb_target.SetArch (LLDB_ARCH_DEFAULT);
-        }
-    }
-    else
-    {
-          sb_target = *temp_target;
-    }
-
-    if (sb_target.IsValid())
-    {
-        SBProcess process = sb_target.GetProcess ();
-        if (process.IsValid())
-        {
-            return_pid = process.AttachByName (process_name);
-        }
-    }
-    return return_pid;
-}
-*/
 
 const char *
 SBDebugger::GetVersionString ()
@@ -429,34 +361,77 @@ SBTarget
 SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
                                                  const char *target_triple)
 {
-    ArchSpec arch;
-    FileSpec file_spec (filename);
-    arch.SetArchFromTargetTriple(target_triple);
-    TargetSP target_sp;
-    Error error (Debugger::GetSharedInstance().GetTargetList().CreateTarget (file_spec, arch, NULL, true, target_sp));
-    SBTarget target(target_sp);
+    SBTarget target;
+    if (m_opaque_sp)
+    {
+        ArchSpec arch;
+        FileSpec file_spec (filename);
+        arch.SetArchFromTargetTriple(target_triple);
+        TargetSP target_sp;
+        Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, NULL, true, target_sp));
+        target.reset (target_sp);
+    }
     return target;
 }
 
 SBTarget
 SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archname)
 {
-    FileSpec file (filename);
-    ArchSpec arch = lldb_private::GetDefaultArchitecture();
-    TargetSP target_sp;
-    Error error;
+    SBTarget target;
+    if (m_opaque_sp)
+    {
+        FileSpec file (filename);
+        ArchSpec arch = lldb_private::GetDefaultArchitecture();
+        TargetSP target_sp;
+        Error error;
 
-    if (archname != NULL)
-    {
-        ArchSpec arch2 (archname);
-        error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file, arch2, NULL, true, target_sp);
+        if (archname != NULL)
+        {
+            ArchSpec arch2 (archname);
+            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch2, NULL, true, target_sp);
+        }
+        else
+        {
+            if (!arch.IsValid())
+                arch = LLDB_ARCH_DEFAULT;
+
+            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
+
+            if (error.Fail())
+            {
+                if (arch == LLDB_ARCH_DEFAULT_32BIT)
+                    arch = LLDB_ARCH_DEFAULT_64BIT;
+                else
+                    arch = LLDB_ARCH_DEFAULT_32BIT;
+
+                error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
+            }
+        }
+
+        if (error.Success())
+        {
+            m_opaque_sp->GetTargetList().SetCurrentTarget (target_sp.get());
+            target.reset(target_sp);
+        }
     }
-    else
+    return target;
+}
+
+SBTarget
+SBDebugger::CreateTarget (const char *filename)
+{
+    SBTarget target;
+    if (m_opaque_sp)
     {
+        FileSpec file (filename);
+        ArchSpec arch = lldb_private::GetDefaultArchitecture();
+        TargetSP target_sp;
+        Error error;
+
         if (!arch.IsValid())
             arch = LLDB_ARCH_DEFAULT;
 
-        error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file, arch, NULL, true, target_sp);
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
 
         if (error.Fail())
         {
@@ -465,77 +440,57 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
             else
                 arch = LLDB_ARCH_DEFAULT_32BIT;
 
-            error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file, arch, NULL, true, target_sp);
+            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
+        }
+
+        if (error.Success())
+        {
+            m_opaque_sp->GetTargetList().SetCurrentTarget (target_sp.get());
+            target.reset (target_sp);
         }
     }
-
-    if (error.Success())
-        Debugger::GetSharedInstance().GetTargetList().SetCurrentTarget (target_sp.get());
-    else
-        target_sp.reset();
-
-    SBTarget sb_target (target_sp);
-    return sb_target;
-}
-
-SBTarget
-SBDebugger::CreateTarget (const char *filename)
-{
-    FileSpec file (filename);
-    ArchSpec arch = lldb_private::GetDefaultArchitecture();
-    TargetSP target_sp;
-    Error error;
-
-    if (!arch.IsValid())
-        arch = LLDB_ARCH_DEFAULT;
-
-    error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file, arch, NULL, true, target_sp);
-
-    if (error.Fail())
-    {
-        if (arch == LLDB_ARCH_DEFAULT_32BIT)
-            arch = LLDB_ARCH_DEFAULT_64BIT;
-        else
-            arch = LLDB_ARCH_DEFAULT_32BIT;
-
-        error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file, arch, NULL, true, target_sp);
-    }
-
-    if (!error.Fail())
-        Debugger::GetSharedInstance().GetTargetList().SetCurrentTarget (target_sp.get());
-
-    SBTarget sb_target (target_sp);
-    return sb_target;
+    return target;
 }
 
 SBTarget
 SBDebugger::GetTargetAtIndex (uint32_t idx)
 {
-    SBTarget sb_target (Debugger::GetSharedInstance().GetTargetList().GetTargetAtIndex (idx));
+    SBTarget sb_target;
+    if (m_opaque_sp)
+        sb_target.reset(m_opaque_sp->GetTargetList().GetTargetAtIndex (idx));
     return sb_target;
 }
 
 SBTarget
 SBDebugger::FindTargetWithProcessID (pid_t pid)
 {
-    SBTarget sb_target(Debugger::GetSharedInstance().GetTargetList().FindTargetWithProcessID (pid));
+    SBTarget sb_target;
+    if (m_opaque_sp)
+        sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcessID (pid));
     return sb_target;
 }
 
 SBTarget
 SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_name)
 {
-    ArchSpec arch;
-    if (arch_name)
-        arch.SetArch(arch_name);
-    return SBTarget (Debugger::GetSharedInstance().GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename),
-                                                                                                            arch_name ? &arch : NULL));
+    SBTarget sb_target;
+    if (m_opaque_sp && filename && filename[0])
+    {
+        ArchSpec arch;
+        if (arch_name)
+            arch.SetArch(arch_name);
+        TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename), arch_name ? &arch : NULL));
+        sb_target.reset(target_sp);
+    }
+    return sb_target;
 }
 
 SBTarget
 SBDebugger::FindTargetWithLLDBProcess (const lldb::ProcessSP &process_sp)
 {
-    SBTarget sb_target(Debugger::GetSharedInstance().GetTargetList().FindTargetWithProcess (process_sp.get()));
+    SBTarget sb_target;
+    if (m_opaque_sp)
+        sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcess (process_sp.get()));
     return sb_target;
 }
 
@@ -543,27 +498,54 @@ SBDebugger::FindTargetWithLLDBProcess (const lldb::ProcessSP &process_sp)
 uint32_t
 SBDebugger::GetNumTargets ()
 {
-    return Debugger::GetSharedInstance().GetTargetList().GetNumTargets ();}
+    if (m_opaque_sp)
+        return m_opaque_sp->GetTargetList().GetNumTargets ();
+    return 0;
+}
 
 SBTarget
 SBDebugger::GetCurrentTarget ()
 {
-    SBTarget sb_target(Debugger::GetSharedInstance().GetTargetList().GetCurrentTarget ());
+    SBTarget sb_target;
+    if (m_opaque_sp)
+        sb_target.reset(m_opaque_sp->GetTargetList().GetCurrentTarget ());
     return sb_target;
 }
 
 void
 SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
 {
-    Debugger::GetSharedInstance().DispatchInput ((const char *) data, data_len);
+    if (m_opaque_sp)
+        m_opaque_sp->DispatchInput ((const char *) data, data_len);
 }
 
 void
 SBDebugger::PushInputReader (SBInputReader &reader)
 {
-    if (reader.IsValid())
+    if (m_opaque_sp && reader.IsValid())
     {
         InputReaderSP reader_sp(*reader);
-        Debugger::GetSharedInstance().PushInputReader (reader_sp);
+        m_opaque_sp->PushInputReader (reader_sp);
     }
 }
+
+void
+SBDebugger::reset (const lldb::DebuggerSP &debugger_sp)
+{
+    m_opaque_sp = debugger_sp;
+}
+
+Debugger *
+SBDebugger::get () const
+{
+    return m_opaque_sp.get();
+}
+
+Debugger &
+SBDebugger::ref () const
+{
+    assert (m_opaque_sp.get());
+    return *m_opaque_sp;
+}
+
+

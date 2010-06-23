@@ -26,7 +26,7 @@ class CommandObjectVariable : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectVariable (CommandInterpreter *iterpreter);
+    CommandObjectVariable (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectVariable ();

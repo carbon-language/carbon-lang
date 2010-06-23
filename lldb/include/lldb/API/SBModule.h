@@ -70,7 +70,7 @@ private:
 
 #endif
 
-    lldb::ModuleSP m_lldb_object_sp;
+    lldb::ModuleSP m_opaque_sp;
 };
 
 

@@ -24,19 +24,19 @@ using namespace lldb_private;
 
 SBEvent::SBEvent () :
     m_event_sp (),
-    m_lldb_object (NULL)
+    m_opaque (NULL)
 {
 }
 
 SBEvent::SBEvent (uint32_t event_type, const char *cstr, uint32_t cstr_len) :
     m_event_sp (new Event (event_type, new EventDataBytes (cstr, cstr_len))),
-    m_lldb_object (m_event_sp.get())
+    m_opaque (m_event_sp.get())
 {
 }
 
 SBEvent::SBEvent (EventSP &event_sp) :
     m_event_sp (event_sp),
-    m_lldb_object (event_sp.get())
+    m_opaque (event_sp.get())
 {
 }
 
@@ -47,7 +47,7 @@ SBEvent::~SBEvent()
 void
 SBEvent::Dump (FILE *f) const
 {
-    const Event *lldb_event = GetLLDBObjectPtr();
+    const Event *lldb_event = get();
     if (lldb_event)
     {
         StreamFile str(f);
@@ -58,7 +58,7 @@ SBEvent::Dump (FILE *f) const
 const char *
 SBEvent::GetDataFlavor ()
 {
-    Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+    Event *lldb_event = get();
     if (lldb_event)
         return lldb_event->GetData()->GetFlavor().AsCString();
     return NULL;
@@ -67,7 +67,7 @@ SBEvent::GetDataFlavor ()
 uint32_t
 SBEvent::GetType () const
 {
-    const Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+    const Event *lldb_event = get();
     if (lldb_event)
         return lldb_event->GetType();
     return 0;
@@ -77,9 +77,9 @@ SBBroadcaster
 SBEvent::GetBroadcaster () const
 {
     SBBroadcaster broadcaster;
-    const Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+    const Event *lldb_event = get();
     if (lldb_event)
-        broadcaster.SetLLDBObjectPtr (lldb_event->GetBroadcaster(), false);
+        broadcaster.reset (lldb_event->GetBroadcaster(), false);
     return broadcaster;
 }
 
@@ -88,9 +88,9 @@ SBEvent::BroadcasterMatchesPtr (const SBBroadcaster *broadcaster)
 {
     if (broadcaster)
     {
-        Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+        Event *lldb_event = get();
         if (lldb_event)
-            return lldb_event->BroadcasterIs (broadcaster->GetLLDBObjectPtr ());
+            return lldb_event->BroadcasterIs (broadcaster->get());
     }
     return false;
 }
@@ -98,79 +98,66 @@ SBEvent::BroadcasterMatchesPtr (const SBBroadcaster *broadcaster)
 bool
 SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
 {
-    Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+    Event *lldb_event = get();
     if (lldb_event)
-        return lldb_event->BroadcasterIs (broadcaster.GetLLDBObjectPtr ());
+        return lldb_event->BroadcasterIs (broadcaster.get());
     return false;
 }
 
 void
 SBEvent::Clear()
 {
-    Event *lldb_event = SBEvent::GetLLDBObjectPtr();
+    Event *lldb_event = get();
     if (lldb_event)
         lldb_event->Clear();
 }
 
 EventSP &
-SBEvent::GetSharedPtr () const
+SBEvent::GetSP () const
 {
     return m_event_sp;
 }
 
 Event *
-SBEvent::GetLLDBObjectPtr ()
+SBEvent::get() const
 {
     // There is a dangerous accessor call GetSharedPtr which can be used, so if
     // we have anything valid in m_event_sp, we must use that since if it gets
     // used by a function that puts something in there, then it won't update
-    // m_lldb_object...
+    // m_opaque...
     if (m_event_sp)
-        m_lldb_object = m_event_sp.get();
+        m_opaque = m_event_sp.get();
 
-    return m_lldb_object;
-}
-
-const Event *
-SBEvent::GetLLDBObjectPtr () const
-{
-    // There is a dangerous accessor call GetSharedPtr which can be used, so if
-    // we have anything valid in m_event_sp, we must use that since if it gets
-    // used by a function that puts something in there, then it won't update
-    // m_lldb_object...
-    if (m_event_sp)
-        m_lldb_object = m_event_sp.get();
-
-    return m_lldb_object;
+    return m_opaque;
 }
 
 void
-SBEvent::SetEventSP (EventSP &event_sp)
+SBEvent::reset (EventSP &event_sp)
 {
     m_event_sp = event_sp;
-    m_lldb_object = m_event_sp.get();
+    m_opaque = m_event_sp.get();
 }
 
 void
-SBEvent::SetLLDBObjectPtr (Event* event_ptr)
+SBEvent::reset (Event* event_ptr)
 {
-    m_lldb_object = event_ptr;
+    m_opaque = event_ptr;
     m_event_sp.reset();
 }
 
 bool
 SBEvent::IsValid() const
 {
-    // Do NOT use m_lldb_object directly!!! Must use the SBEvent::GetLLDBObjectPtr()
-    // accessor. See comments in SBEvent::GetLLDBObjectPtr()....
-    return SBEvent::GetLLDBObjectPtr() != NULL;
+    // Do NOT use m_opaque directly!!! Must use the SBEvent::get()
+    // accessor. See comments in SBEvent::get()....
+    return SBEvent::get() != NULL;
 
 }
 
 const char *
 SBEvent::GetCStringFromEvent (const SBEvent &event)
 {
-    return reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.GetLLDBObjectPtr()));
+    return reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get()));
 }
 
 

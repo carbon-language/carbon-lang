@@ -21,7 +21,7 @@ namespace lldb_private {
 class CommandObjectMemory : public CommandObjectMultiword
 {
 public:
-    CommandObjectMemory (CommandInterpreter *interpreter);
+    CommandObjectMemory (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectMemory ();

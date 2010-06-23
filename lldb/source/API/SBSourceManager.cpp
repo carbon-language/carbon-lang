@@ -21,7 +21,7 @@ using namespace lldb_private;
 
 
 SBSourceManager::SBSourceManager (SourceManager& source_manager) :
-    m_source_manager (source_manager)
+    m_opaque_ref (source_manager)
 {
 }
 
@@ -48,12 +48,12 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
         StreamFile str (f);
 
 
-        return m_source_manager.DisplaySourceLinesWithLineNumbers (*file,
-                                                                   line,
-                                                                   context_before,
-                                                                   context_after,
-                                                                   current_line_cstr,
-                                                                   &str);
+        return m_opaque_ref.DisplaySourceLinesWithLineNumbers (*file,
+                                                               line,
+                                                               context_before,
+                                                               context_after,
+                                                               current_line_cstr,
+                                                               &str);
     }
     return 0;
 }
@@ -61,5 +61,5 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
 SourceManager &
 SBSourceManager::GetLLDBManager ()
 {
-    return m_source_manager;
+    return m_opaque_ref;
 }

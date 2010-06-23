@@ -36,7 +36,8 @@ public:
 
 
     SBError
-    Initialize (Callback callback,
+    Initialize (SBDebugger &debugger,
+                Callback callback,
                 void *callback_baton,
                 lldb::InputReaderGranularity granularity,
                 const char *end_token,
@@ -76,21 +77,26 @@ protected:
 
     const lldb::InputReaderSP &
     operator *() const;
-#endif
 
     lldb_private::InputReader *
     get() const;
+
+    lldb_private::InputReader &
+    ref() const;
+
+#endif
+
 
 private:
 
     static size_t
     PrivateCallback (void *baton, 
-                     lldb_private::InputReader *reader, 
+                     lldb_private::InputReader &reader, 
                      lldb::InputReaderAction notification,
                      const char *bytes, 
                      size_t bytes_len);
 
-    lldb::InputReaderSP m_reader_sp;
+    lldb::InputReaderSP m_opaque_sp;
     Callback m_callback_function;
     void *m_callback_baton;
 };

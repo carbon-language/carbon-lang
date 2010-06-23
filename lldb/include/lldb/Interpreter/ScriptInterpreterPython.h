@@ -20,15 +20,15 @@ class ScriptInterpreterPython : public ScriptInterpreter
 {
 public:
 
-    ScriptInterpreterPython ();
+    ScriptInterpreterPython (CommandInterpreter &interpreter);
 
     ~ScriptInterpreterPython ();
 
     void
-    ExecuteOneLine (const std::string &line, FILE *out, FILE *err);
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command);
 
     void
-    ExecuteInterpreterLoop (FILE *out, FILE *err);
+    ExecuteInterpreterLoop (CommandInterpreter &interpreter);
 
     bool
     ExecuteOneLineWithReturn (const char *in_string, 
@@ -46,7 +46,7 @@ public:
 
     static size_t
     GenerateBreakpointOptionsCommandCallback (void *baton, 
-                                              InputReader *reader, 
+                                              InputReader &reader, 
                                               lldb::InputReaderAction notification,
                                               const char *bytes, 
                                               size_t bytes_len);
@@ -58,7 +58,8 @@ public:
                                 lldb::user_id_t break_loc_id);
 
     void
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
+    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                             BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
 
     StringList
@@ -68,7 +69,7 @@ private:
 
     static size_t
     InputReaderCallback (void *baton, 
-                         InputReader *reader, 
+                         InputReader &reader, 
                          lldb::InputReaderAction notification,
                          const char *bytes, 
                          size_t bytes_len);

@@ -14,24 +14,24 @@ using namespace lldb;
 
 
 SBBlock::SBBlock () :
-    m_lldb_object_ptr (NULL)
+    m_opaque_ptr (NULL)
 {
 }
 
 SBBlock::SBBlock (lldb_private::Block *lldb_object_ptr) :
-    m_lldb_object_ptr (lldb_object_ptr)
+    m_opaque_ptr (lldb_object_ptr)
 {
 }
 
 SBBlock::~SBBlock ()
 {
-    m_lldb_object_ptr = NULL;
+    m_opaque_ptr = NULL;
 }
 
 bool
 SBBlock::IsValid () const
 {
-    return m_lldb_object_ptr != NULL;
+    return m_opaque_ptr != NULL;
 }
 
 void
@@ -39,7 +39,7 @@ SBBlock::AppendVariables (bool can_create, bool get_parent_variables, lldb_priva
 {
     if (IsValid())
     {
-        m_lldb_object_ptr->AppendVariables (can_create, get_parent_variables, var_list);
+        m_opaque_ptr->AppendVariables (can_create, get_parent_variables, var_list);
     }
 }
 

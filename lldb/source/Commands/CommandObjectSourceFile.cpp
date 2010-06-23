@@ -14,7 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
@@ -119,9 +119,8 @@ CommandObjectSourceFile::GetOptions ()
 bool
 CommandObjectSourceFile::Execute
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -133,7 +132,7 @@ CommandObjectSourceFile::Execute
         result.SetStatus (eReturnStatusFailed);
     }
 
-    ExecutionContext exe_ctx(context->GetExecutionContext());
+    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
     if (m_options.file_name.empty())
     {
         // Last valid source manager context, or the current frame if no
@@ -142,14 +141,14 @@ CommandObjectSourceFile::Execute
         // more likely because you typed it once, then typed it again
         if (m_options.start_line == 0)
         {
-            if (interpreter->GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
+            if (interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
             }
         }
         else
         {
-            if (interpreter->GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
+            if (interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
                         m_options.start_line,   // Line to display
                         0,                      // Lines before line to display
                         m_options.num_lines,    // Lines after line to display
@@ -164,7 +163,7 @@ CommandObjectSourceFile::Execute
     else
     {
         const char *filename = m_options.file_name.c_str();
-        Target *target = context->GetTarget();
+        Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
         if (target == NULL)
         {
             result.AppendError ("invalid target, set executable file using 'file' command");
@@ -187,13 +186,13 @@ CommandObjectSourceFile::Execute
             {
                 if (sc.comp_unit)
                 {
-                    interpreter->GetSourceManager ().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
-                                                                                        m_options.start_line,   // Line to display
-                                                                                        0,                      // Lines before line to display
-                                                                                        m_options.num_lines,    // Lines after line to display
-                                                                                        "",                     // Don't mark "line"
-                                                                                        &result.GetOutputStream());
-
+                    interpreter.GetDebugger().GetSourceManager ().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
+                                                                                                     m_options.start_line,   // Line to display
+                                                                                                     0,                      // Lines before line to display
+                                                                                                     m_options.num_lines,    // Lines after line to display
+                                                                                                     "",                     // Don't mark "line"
+                                                                                                     &result.GetOutputStream());
+                    
                     result.SetStatus (eReturnStatusSuccessFinishResult);
 
                 }

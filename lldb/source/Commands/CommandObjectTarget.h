@@ -28,7 +28,7 @@ class CommandObjectMultiwordTarget : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectMultiwordTarget (CommandInterpreter *interpreter);
+    CommandObjectMultiwordTarget (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectMultiwordTarget ();

@@ -41,7 +41,7 @@ protected:
 
 private:
 
-    lldb_private::SourceManager &m_source_manager;
+    lldb_private::SourceManager &m_opaque_ref;
 };
 
 } // namespace lldb

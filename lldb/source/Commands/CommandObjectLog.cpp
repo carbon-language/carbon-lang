@@ -26,7 +26,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"
 
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
 #include "lldb/Symbol/LineTable.h"
@@ -76,9 +76,8 @@ public:
     }
 
     virtual bool
-    Execute (Args& args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter, 
+             Args& args,
              CommandReturnObject &result)
     {
         if (args.GetArgumentCount() < 1)
@@ -256,9 +255,8 @@ public:
     }
 
     virtual bool
-    Execute (Args& args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter, 
+             Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -318,9 +316,8 @@ public:
     }
 
     virtual bool
-    Execute (Args& args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter, 
+             Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -382,9 +379,8 @@ public:
     }
 
     virtual bool
-    Execute (Args& args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter, 
+             Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -429,15 +425,15 @@ public:
 //----------------------------------------------------------------------
 // CommandObjectLog constructor
 //----------------------------------------------------------------------
-CommandObjectLog::CommandObjectLog(CommandInterpreter *interpreter) :
+CommandObjectLog::CommandObjectLog(CommandInterpreter &interpreter) :
     CommandObjectMultiword ("log",
                             "A set of commands for operating on logs.",
                             "log <command> [<command-options>]")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectLogEnable), "enable", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectLogDisable), "disable", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectLogList), "list", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectLogTimer), "timers", interpreter);
+    LoadSubCommand (interpreter, "enable",  CommandObjectSP (new CommandObjectLogEnable));
+    LoadSubCommand (interpreter, "disable", CommandObjectSP (new CommandObjectLogDisable));
+    LoadSubCommand (interpreter, "list",    CommandObjectSP (new CommandObjectLogList));
+    LoadSubCommand (interpreter, "timers",  CommandObjectSP (new CommandObjectLogTimer));
 }
 
 //----------------------------------------------------------------------

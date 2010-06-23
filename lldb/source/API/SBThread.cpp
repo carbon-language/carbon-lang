@@ -11,8 +11,10 @@
 
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -35,7 +37,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBThread::SBThread () :
-    m_lldb_object_sp ()
+    m_opaque_sp ()
 {
 }
 
@@ -43,13 +45,13 @@ SBThread::SBThread () :
 // Thread constructor
 //----------------------------------------------------------------------
 SBThread::SBThread (const ThreadSP& lldb_object_sp) :
-    m_lldb_object_sp (lldb_object_sp)
+    m_opaque_sp (lldb_object_sp)
 {
 }
 
 SBThread::SBThread (const SBThread &rhs)
 {
-    m_lldb_object_sp = rhs.m_lldb_object_sp;
+    m_opaque_sp = rhs.m_opaque_sp;
 }
 
 //----------------------------------------------------------------------
@@ -62,16 +64,16 @@ SBThread::~SBThread()
 bool
 SBThread::IsValid() const
 {
-    return m_lldb_object_sp != NULL;
+    return m_opaque_sp != NULL;
 }
 
 StopReason
 SBThread::GetStopReason()
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         lldb_private::Thread::StopInfo thread_stop_info;
-        if (m_lldb_object_sp->GetStopInfo(&thread_stop_info))
+        if (m_opaque_sp->GetStopInfo(&thread_stop_info))
             return thread_stop_info.GetStopReason();
     }
     return eStopReasonInvalid;
@@ -80,10 +82,10 @@ SBThread::GetStopReason()
 size_t
 SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         lldb_private::Thread::StopInfo thread_stop_info;
-        if (m_lldb_object_sp->GetStopInfo(&thread_stop_info))
+        if (m_opaque_sp->GetStopInfo(&thread_stop_info))
         {
             const char *stop_desc = thread_stop_info.GetStopDescription();
             if (stop_desc)
@@ -129,7 +131,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 
                 case eStopReasonSignal:
                     {
-                        stop_desc = m_lldb_object_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (thread_stop_info.GetSignal());
+                        stop_desc = m_opaque_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (thread_stop_info.GetSignal());
                         if (stop_desc == NULL || stop_desc[0] == '\0')
                         {
                             static char signal_desc[] = "signal";
@@ -169,15 +171,15 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 void
 SBThread::SetThread (const ThreadSP& lldb_object_sp)
 {
-    m_lldb_object_sp = lldb_object_sp;
+    m_opaque_sp = lldb_object_sp;
 }
 
 
 lldb::tid_t
 SBThread::GetThreadID () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetID();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
     else
         return LLDB_INVALID_THREAD_ID;
 }
@@ -185,23 +187,23 @@ SBThread::GetThreadID () const
 uint32_t
 SBThread::GetIndexID () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetIndexID();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetIndexID();
     return LLDB_INVALID_INDEX32;
 }
 const char *
 SBThread::GetName () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetName();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetName();
     return NULL;
 }
 
 const char *
 SBThread::GetQueueName () const
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetQueueName();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetQueueName();
     return NULL;
 }
 
@@ -219,9 +221,9 @@ SBThread::DisplayFramesForCurrentContext (FILE *out,
     if ((out == NULL) || (err == NULL))
         return;
 
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
-        uint32_t num_stack_frames = m_lldb_object_sp->GetStackFrameCount ();
+        uint32_t num_stack_frames = m_opaque_sp->GetStackFrameCount ();
         StackFrameSP frame_sp;
         int frame_idx = 0;
 
@@ -230,7 +232,7 @@ SBThread::DisplayFramesForCurrentContext (FILE *out,
             if (frame_idx >= num_stack_frames)
                 break;
 
-            frame_sp = m_lldb_object_sp->GetStackFrameAtIndex (frame_idx);
+            frame_sp = m_opaque_sp->GetStackFrameAtIndex (frame_idx);
             if (!frame_sp)
                 break;
 
@@ -257,17 +259,16 @@ SBThread::DisplaySingleFrameForCurrentContext (FILE *out,
                                                uint32_t source_lines_before)
 {
     bool success = false;
-
-     if ((out == NULL) || (err == NULL))
+    
+    if ((out == NULL) || (err == NULL))
         return false;
-
-   if (m_lldb_object_sp && frame.IsValid())
+    
+    if (m_opaque_sp && frame.IsValid())
     {
-
         StreamFile str (out);
-
+        
         SBSymbolContext sc(frame.GetSymbolContext(eSymbolContextEverything));
-
+        
         if (show_frame_info && sc.IsValid())
         {
             user_id_t frame_idx = (user_id_t) frame.GetFrameID();
@@ -277,28 +278,28 @@ SBThread::DisplaySingleFrameForCurrentContext (FILE *out,
                        frame_idx,
                        GetThreadID(),
                        pc);
-            sc->DumpStopContext (&str, &m_lldb_object_sp->GetProcess(), *frame.GetPCAddress());
+            sc->DumpStopContext (&str, &m_opaque_sp->GetProcess(), *frame.GetPCAddress());
             fprintf (out, "\n");
             success = true;
         }
-
+        
         SBCompileUnit comp_unit(sc.GetCompileUnit());
         if (show_source && comp_unit.IsValid())
         {
-          success = false;
+            success = false;
             SBLineEntry line_entry;
             if (line_entry.IsValid())
             {
-                SBSourceManager& source_manager = SBDebugger::GetSourceManager();
-                SBFileSpec line_entry_file_spec = line_entry.GetFileSpec();
-
+                SourceManager& source_manager = m_opaque_sp->GetProcess().GetTarget().GetDebugger().GetSourceManager();
+                SBFileSpec line_entry_file_spec (line_entry.GetFileSpec());
+                
                 if (line_entry_file_spec.IsValid())
                 {
-                    source_manager.DisplaySourceLinesWithLineNumbers (line_entry_file_spec,
+                    source_manager.DisplaySourceLinesWithLineNumbers (line_entry_file_spec.ref(),
                                                                       line_entry.GetLine(),
                                                                       source_lines_after,
                                                                       source_lines_before, "->",
-                                                                      out);
+                                                                      &str);
                     success = true;
                 }
             }
@@ -310,17 +311,17 @@ SBThread::DisplaySingleFrameForCurrentContext (FILE *out,
 void
 SBThread::StepOver (lldb::RunMode stop_other_threads)
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         bool abort_other_plans = true;
-        StackFrameSP frame_sp(m_lldb_object_sp->GetStackFrameAtIndex (0));
+        StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
 
         if (frame_sp)
         {
             if (frame_sp->HasDebugInformation ())
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-                m_lldb_object_sp->QueueThreadPlanForStepRange (abort_other_plans, 
+                m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
                                                                eStepTypeOver,
                                                                sc.line_entry.range, 
                                                                sc,
@@ -330,15 +331,15 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
             }
             else
             {
-                m_lldb_object_sp->QueueThreadPlanForStepSingleInstruction (true, 
+                m_opaque_sp->QueueThreadPlanForStepSingleInstruction (true, 
                                                                            abort_other_plans, 
                                                                            stop_other_threads);
             }
         }
 
-        Process &process = m_lldb_object_sp->GetProcess();
+        Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetCurrentThreadByID (m_lldb_object_sp->GetID());
+        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -346,17 +347,17 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 void
 SBThread::StepInto (lldb::RunMode stop_other_threads)
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         bool abort_other_plans = true;
 
-        StackFrameSP frame_sp(m_lldb_object_sp->GetStackFrameAtIndex (0));
+        StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            m_lldb_object_sp->QueueThreadPlanForStepRange (abort_other_plans, 
+            m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
                                                            eStepTypeInto, 
                                                            sc.line_entry.range, 
                                                            sc, 
@@ -365,14 +366,14 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
         }
         else
         {
-            m_lldb_object_sp->QueueThreadPlanForStepSingleInstruction (false, 
+            m_opaque_sp->QueueThreadPlanForStepSingleInstruction (false, 
                                                                        abort_other_plans, 
                                                                        stop_other_threads);
         }
 
-        Process &process = m_lldb_object_sp->GetProcess();
+        Process &process = m_opaque_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetCurrentThreadByID (m_lldb_object_sp->GetID());
+        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
         process.Resume();
 
     }
@@ -381,15 +382,15 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 void
 SBThread::StepOut ()
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
-        m_lldb_object_sp->QueueThreadPlanForStepOut (abort_other_plans, NULL, false, stop_other_threads, eVoteYes, eVoteNoOpinion);
+        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, NULL, false, stop_other_threads, eVoteYes, eVoteNoOpinion);
 
-        Process &process = m_lldb_object_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_lldb_object_sp->GetID());
+        Process &process = m_opaque_sp->GetProcess();
+        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -397,11 +398,11 @@ SBThread::StepOut ()
 void
 SBThread::StepInstruction (bool step_over)
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
-        m_lldb_object_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
-        Process &process = m_lldb_object_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_lldb_object_sp->GetID());
+        m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
+        Process &process = m_opaque_sp->GetProcess();
+        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 }
@@ -409,67 +410,29 @@ SBThread::StepInstruction (bool step_over)
 void
 SBThread::RunToAddress (lldb::addr_t addr)
 {
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
         Address target_addr (NULL, addr);
 
-        m_lldb_object_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
-        Process &process = m_lldb_object_sp->GetProcess();
-        process.GetThreadList().SetCurrentThreadByID (m_lldb_object_sp->GetID());
+        m_opaque_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
+        Process &process = m_opaque_sp->GetProcess();
+        process.GetThreadList().SetCurrentThreadByID (m_opaque_sp->GetID());
         process.Resume();
     }
 
-}
-
-void
-SBThread::Backtrace (uint32_t num_frames)
-{
-    bool all_frames = false;
-    if (num_frames < 1)
-        all_frames = true;
-
-    FILE *out = SBDebugger::GetOutputFileHandle();
-    FILE *err = SBDebugger::GetErrorFileHandle();
-    
-    if ((out == NULL) || (err == NULL))
-        return;
-
-    if (m_lldb_object_sp)
-    {
-        if (out && err)
-        {
-            int max_num_frames = m_lldb_object_sp->GetStackFrameCount();
-            int last_frame = max_num_frames;
-
-            if (!all_frames && (num_frames < last_frame))
-                last_frame = num_frames;
-
-            StackFrameSP frame_sp;
-            for (int i = 0; i < last_frame; ++i)
-            {
-                frame_sp = m_lldb_object_sp->GetStackFrameAtIndex (i);
-                if (!frame_sp)
-                    break;
-
-                SBFrame sb_frame (frame_sp);
-                if (DisplaySingleFrameForCurrentContext ((FILE *) out, (FILE *) err, sb_frame, true, false, 0, 0) == false)
-                    break;
-            }
-        }
-    }
 }
 
 SBProcess
 SBThread::GetProcess ()
 {
     SBProcess process;
-    if (m_lldb_object_sp)
+    if (m_opaque_sp)
     {
         // Have to go up to the target so we can get a shared pointer to our process...
-        process.SetProcess(m_lldb_object_sp->GetProcess().GetTarget().GetProcessSP());
+        process.SetProcess(m_opaque_sp->GetProcess().GetTarget().GetProcessSP());
     }
     return process;
 }
@@ -477,8 +440,8 @@ SBThread::GetProcess ()
 uint32_t
 SBThread::GetNumFrames ()
 {
-    if (m_lldb_object_sp)
-        return m_lldb_object_sp->GetStackFrameCount();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetStackFrameCount();
     return 0;
 }
 
@@ -486,56 +449,56 @@ SBFrame
 SBThread::GetFrameAtIndex (uint32_t idx)
 {
     SBFrame sb_frame;
-    if (m_lldb_object_sp)
-        sb_frame.SetFrame (m_lldb_object_sp->GetStackFrameAtIndex (idx));
+    if (m_opaque_sp)
+        sb_frame.SetFrame (m_opaque_sp->GetStackFrameAtIndex (idx));
     return sb_frame;
 }
 
 const lldb::SBThread &
 SBThread::operator = (const lldb::SBThread &rhs)
 {
-    m_lldb_object_sp = rhs.m_lldb_object_sp;
+    m_opaque_sp = rhs.m_opaque_sp;
     return *this;
 }
 
 bool
 SBThread::operator == (const SBThread &rhs) const
 {
-    return m_lldb_object_sp.get() == rhs.m_lldb_object_sp.get();
+    return m_opaque_sp.get() == rhs.m_opaque_sp.get();
 }
 
 bool
 SBThread::operator != (const SBThread &rhs) const
 {
-    return m_lldb_object_sp.get() != rhs.m_lldb_object_sp.get();
+    return m_opaque_sp.get() != rhs.m_opaque_sp.get();
 }
 
 lldb_private::Thread *
 SBThread::GetLLDBObjectPtr ()
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 const lldb_private::Thread *
 SBThread::operator->() const
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 const lldb_private::Thread &
 SBThread::operator*() const
 {
-    return *m_lldb_object_sp;
+    return *m_opaque_sp;
 }
 
 lldb_private::Thread *
 SBThread::operator->()
 {
-    return m_lldb_object_sp.get();
+    return m_opaque_sp.get();
 }
 
 lldb_private::Thread &
 SBThread::operator*()
 {
-    return *m_lldb_object_sp;
+    return *m_opaque_sp;
 }

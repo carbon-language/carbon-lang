@@ -21,7 +21,8 @@
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
@@ -124,9 +125,8 @@ CommandObjectExpression::GetOptions ()
 bool
 CommandObjectExpression::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -138,24 +138,22 @@ size_t
 CommandObjectExpression::MultiLineExpressionCallback
 (
     void *baton, 
-    InputReader *reader, 
+    InputReader &reader, 
     lldb::InputReaderAction notification,
     const char *bytes, 
     size_t bytes_len
 )
 {
-    FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
     CommandObjectExpression *cmd_object_expr = (CommandObjectExpression *) baton;
 
     switch (notification)
     {
     case eInputReaderActivate:
-        if (out_fh)
-            ::fprintf (out_fh, "%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
+        reader.GetDebugger().GetOutputStream().Printf("%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
         // Fall through
     case eInputReaderReactivate:
         //if (out_fh)
-        //    ::fprintf (out_fh, "%3u: ", cmd_object_expr->m_expr_line_count);
+        //    reader.GetDebugger().GetOutputStream().Printf ("%3u: ", cmd_object_expr->m_expr_line_count);
         break;
 
     case eInputReaderDeactivate:
@@ -169,20 +167,18 @@ CommandObjectExpression::MultiLineExpressionCallback
         }
 
         if (bytes_len == 0)
-            reader->SetIsDone(true);
+            reader.SetIsDone(true);
         //else if (out_fh && !reader->IsDone())
         //    ::fprintf (out_fh, "%3u: ", cmd_object_expr->m_expr_line_count);
         break;
         
     case eInputReaderDone:
         {
-            StreamFile out_stream(Debugger::GetSharedInstance().GetOutputFileHandle());
-            StreamFile err_stream(Debugger::GetSharedInstance().GetErrorFileHandle());
             bool bare = false;
             cmd_object_expr->EvaluateExpression (cmd_object_expr->m_expr_lines.c_str(), 
                                                  bare, 
-                                                 out_stream, 
-                                                 err_stream);
+                                                 reader.GetDebugger().GetOutputStream(), 
+                                                 reader.GetDebugger().GetErrorStream());
         }
         break;
     }
@@ -329,21 +325,20 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
 bool
 CommandObjectExpression::ExecuteRawCommandString
 (
+    CommandInterpreter &interpreter,
     const char *command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
     ConstString target_triple;
-    Target *target = context->GetTarget ();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target)
         target->GetTargetTriple(target_triple);
 
     if (!target_triple)
         target_triple = Host::GetTargetTriple ();
 
-    ExecutionContext exe_ctx(context->GetExecutionContext());
+    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
 
     Stream &output_stream = result.GetOutputStream();
 
@@ -356,18 +351,18 @@ CommandObjectExpression::ExecuteRawCommandString
         m_expr_lines.clear();
         m_expr_line_count = 0;
         
-        InputReaderSP reader_sp (new InputReader());
+        InputReaderSP reader_sp (new InputReader(interpreter.GetDebugger()));
         if (reader_sp)
         {
             Error err (reader_sp->Initialize (CommandObjectExpression::MultiLineExpressionCallback,
                                               this,                         // baton
                                               eInputReaderGranularityLine,  // token size, to pass to callback function
-                                              NULL,                       // end token
+                                              NULL,                         // end token
                                               NULL,                         // prompt
                                               true));                       // echo input
             if (err.Success())
             {
-                Debugger::GetSharedInstance().PushInputReader (reader_sp);
+                interpreter.GetDebugger().PushInputReader (reader_sp);
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
             else
@@ -408,8 +403,8 @@ CommandObjectExpression::ExecuteRawCommandString
 
         if (end_options)
         {
-            Args args(command, end_options - command);
-            if (!ParseOptions(args, interpreter, result))
+            Args args (command, end_options - command);
+            if (!ParseOptions (interpreter, args, result))
                 return false;
         }
     }

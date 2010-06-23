@@ -19,124 +19,124 @@ using namespace lldb_private;
 
 
 SBBroadcaster::SBBroadcaster () :
-    m_lldb_object (NULL),
-    m_lldb_object_owned (false)
+    m_opaque (NULL),
+    m_opaque_owned (false)
 {
 }
 
 
 SBBroadcaster::SBBroadcaster (const char *name) :
-    m_lldb_object (new Broadcaster (name)),
-    m_lldb_object_owned (true)
+    m_opaque (new Broadcaster (name)),
+    m_opaque_owned (true)
 {
 }
 
 SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) :
-    m_lldb_object (broadcaster),
-    m_lldb_object_owned (owns)
+    m_opaque (broadcaster),
+    m_opaque_owned (owns)
 {
 }
 
 SBBroadcaster::~SBBroadcaster()
 {
-    SetLLDBObjectPtr (NULL, false);
+    reset (NULL, false);
 }
 
 void
 SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
 {
-    if (m_lldb_object == NULL)
+    if (m_opaque == NULL)
         return;
 
     if (unique)
-        m_lldb_object->BroadcastEventIfUnique (event_type);
+        m_opaque->BroadcastEventIfUnique (event_type);
     else
-        m_lldb_object->BroadcastEvent (event_type);
+        m_opaque->BroadcastEvent (event_type);
 }
 
 void
 SBBroadcaster::BroadcastEvent (const SBEvent &event, bool unique)
 {
-    if (m_lldb_object == NULL)
+    if (m_opaque == NULL)
         return;
 
-    EventSP event_sp = event.GetSharedPtr ();
+    EventSP event_sp = event.GetSP ();
     if (unique)
-        m_lldb_object->BroadcastEventIfUnique (event_sp);
+        m_opaque->BroadcastEventIfUnique (event_sp);
     else
-        m_lldb_object->BroadcastEvent (event_sp);
+        m_opaque->BroadcastEvent (event_sp);
 }
 
 void
 SBBroadcaster::AddInitialEventsToListener (const SBListener &listener, uint32_t requested_events)
 {
-    if (m_lldb_object)
-        m_lldb_object->AddInitialEventsToListener (listener.get(), requested_events);
+    if (m_opaque)
+        m_opaque->AddInitialEventsToListener (listener.get(), requested_events);
 }
 
 uint32_t
 SBBroadcaster::AddListener (const SBListener &listener, uint32_t event_mask)
 {
-    if (m_lldb_object)
-        return m_lldb_object->AddListener (listener.get(), event_mask);
+    if (m_opaque)
+        return m_opaque->AddListener (listener.get(), event_mask);
     return 0;
 }
 
 const char *
 SBBroadcaster::GetName ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->GetBroadcasterName().AsCString();
+    if (m_opaque)
+        return m_opaque->GetBroadcasterName().AsCString();
     return NULL;
 }
 
 bool
 SBBroadcaster::EventTypeHasListeners (uint32_t event_type)
 {
-    if (m_lldb_object)
-        return m_lldb_object->EventTypeHasListeners (event_type);
+    if (m_opaque)
+        return m_opaque->EventTypeHasListeners (event_type);
     return false;
 }
 
 bool
 SBBroadcaster::RemoveListener (const SBListener &listener, uint32_t event_mask)
 {
-    if (m_lldb_object)
-        return m_lldb_object->RemoveListener (listener.get(), event_mask);
+    if (m_opaque)
+        return m_opaque->RemoveListener (listener.get(), event_mask);
     return false;
 }
 
 Broadcaster *
-SBBroadcaster::GetLLDBObjectPtr () const
+SBBroadcaster::get () const
 {
-    return m_lldb_object;
+    return m_opaque;
 }
 
 void
-SBBroadcaster::SetLLDBObjectPtr (Broadcaster *broadcaster, bool owns)
+SBBroadcaster::reset (Broadcaster *broadcaster, bool owns)
 {
-    if (m_lldb_object && m_lldb_object_owned)
-        delete m_lldb_object;
-    m_lldb_object = broadcaster;
-    m_lldb_object_owned = owns;
+    if (m_opaque && m_opaque_owned)
+        delete m_opaque;
+    m_opaque = broadcaster;
+    m_opaque_owned = owns;
 }
 
 
 bool
 SBBroadcaster::IsValid () const
 {
-    return m_lldb_object != NULL;
+    return m_opaque != NULL;
 }
 
 bool
 SBBroadcaster::operator == (const SBBroadcaster &rhs) const
 {
-    return m_lldb_object == rhs.m_lldb_object;
+    return m_opaque == rhs.m_opaque;
     
 }
 
 bool
 SBBroadcaster::operator != (const SBBroadcaster &rhs) const
 {
-    return m_lldb_object != rhs.m_lldb_object;
+    return m_opaque != rhs.m_opaque;
 }

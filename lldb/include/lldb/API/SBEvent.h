@@ -64,25 +64,26 @@ protected:
 
     SBEvent (lldb::EventSP &event_sp);
 
+#ifndef SWIG
+
     lldb::EventSP &
-    GetSharedPtr () const;
+    GetSP () const;
 
     void
-    SetEventSP (lldb::EventSP &event_sp);
+    reset (lldb::EventSP &event_sp);
 
     void
-    SetLLDBObjectPtr (lldb_private::Event* event);
+    reset (lldb_private::Event* event);
 
     lldb_private::Event *
-    GetLLDBObjectPtr ();
+    get () const;
 
-    const lldb_private::Event *
-    GetLLDBObjectPtr () const;
+#endif
 
 private:
 
     mutable lldb::EventSP m_event_sp;
-    mutable lldb_private::Event *m_lldb_object;
+    mutable lldb_private::Event *m_opaque;
 };
 
 } // namespace lldb

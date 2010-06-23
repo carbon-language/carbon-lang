@@ -106,12 +106,6 @@ public:
     SBError
     Destroy ();
 
-    void
-    DisplayThreadsInfo (FILE *out = NULL, FILE *err = NULL, bool only_threads_with_stop_reason = true);
-
-    void
-    ListThreads ();
-
     bool
     WaitUntilProcessHasStopped (lldb::SBCommandReturnObject &result);
 
@@ -138,9 +132,6 @@ public:
 
     SBError
     Signal (int signal);
-
-    void
-    Backtrace (bool all_threads = false, uint32_t num_frames = 0);
 
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, SBError &error);
@@ -188,7 +179,7 @@ protected:
     void
     SetProcess (const lldb::ProcessSP &process_sp);
 
-    lldb::ProcessSP m_lldb_object_sp;
+    lldb::ProcessSP m_opaque_sp;
 };
 
 }  // namespace lldb

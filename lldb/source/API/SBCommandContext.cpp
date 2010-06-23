@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
 #include "lldb/API/SBCommandContext.h"
@@ -17,8 +17,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-SBCommandContext::SBCommandContext (CommandContext *lldb_object) :
-    m_lldb_object (lldb_object)
+SBCommandContext::SBCommandContext (Debugger *lldb_object) :
+    m_opaque (lldb_object)
 {
 }
 
@@ -29,6 +29,6 @@ SBCommandContext::~SBCommandContext ()
 bool
 SBCommandContext::IsValid () const
 {
-    return m_lldb_object != NULL;
+    return m_opaque != NULL;
 }
 

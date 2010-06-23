@@ -38,9 +38,8 @@ CommandObjectSet::~CommandObjectSet()
 bool
 CommandObjectSet::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -66,7 +65,7 @@ CommandObjectSet::Execute
     else if (var_value == NULL || var_value[0] == '\0')
     {
         // No value given:  Check to see if we're trying to clear an array.
-        StateVariable *var = interpreter->GetStateVariable (var_name);
+        StateVariable *var = interpreter.GetStateVariable (var_name);
         if (var != NULL
             && var->GetType() == StateVariable::eTypeStringArray)
         {
@@ -81,7 +80,7 @@ CommandObjectSet::Execute
     }
     else
     {
-        StateVariable *var = interpreter->GetStateVariable(var_name);
+        StateVariable *var = interpreter.GetStateVariable(var_name);
         if (var == NULL)
         {
             result.AppendErrorWithFormat ("'%s' is not a settable internal variable.\n", var_name);
@@ -98,7 +97,7 @@ CommandObjectSet::Execute
                 if (success)
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
-                    if (!var->HasVerifyFunction() || var->VerifyValue (interpreter, (void *) &new_value, result))
+                    if (!var->HasVerifyFunction() || var->VerifyValue (&interpreter, (void *) &new_value, result))
                         var->SetBoolValue (new_value);
                 }
                 else
@@ -115,7 +114,7 @@ CommandObjectSet::Execute
                 if (success)
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
-                    if (!var->HasVerifyFunction() || var->VerifyValue (interpreter, (void *) &new_value, result))
+                    if (!var->HasVerifyFunction() || var->VerifyValue (&interpreter, (void *) &new_value, result))
                         var->SetIntValue (new_value);
                 }
                 else
@@ -126,7 +125,7 @@ CommandObjectSet::Execute
             }
             else if (var->GetType() == StateVariable::eTypeString)
             {
-                if (!var->HasVerifyFunction() || var->VerifyValue (interpreter, (void *) var_value, result))
+                if (!var->HasVerifyFunction() || var->VerifyValue (&interpreter, (void *) var_value, result))
                     var->SetStringValue (var_value);
             }
             else if (var->GetType() == StateVariable::eTypeStringArray)

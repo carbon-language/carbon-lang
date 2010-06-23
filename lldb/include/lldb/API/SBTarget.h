@@ -70,6 +70,9 @@ public:
     lldb::SBModule
     GetModuleAtIndex (uint32_t idx);
 
+    lldb::SBDebugger
+    GetDebugger() const;
+
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
@@ -146,20 +149,20 @@ protected:
     SBTarget (const lldb::TargetSP& target_sp);
 
     void
-    SetLLBDTarget (const lldb::TargetSP& target_sp);
+    reset (const lldb::TargetSP& target_sp);
 
     lldb_private::Target *
-    GetLLDBObjectPtr();
+    operator ->() const;
 
-    const lldb_private::Target *
-    GetLLDBObjectPtr() const;
+    lldb_private::Target *
+    get() const;
 
 private:
     //------------------------------------------------------------------
     // For Target only
     //------------------------------------------------------------------
 
-    lldb::TargetSP m_target_sp;
+    lldb::TargetSP m_opaque_sp;
 };
 
 } // namespace lldb

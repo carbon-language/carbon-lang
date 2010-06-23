@@ -20,7 +20,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
@@ -95,14 +95,17 @@ CommandObjectArgs::GetOptions ()
 }
 
 bool
-CommandObjectArgs::Execute(Args &command,
-                           CommandContext *context,
-                           CommandInterpreter *interpreter,
-                           CommandReturnObject &result)
+CommandObjectArgs::Execute
+(
+    CommandInterpreter &interpreter,
+    Args& args,
+    CommandReturnObject &result
+)
 {
     ConstString target_triple;
     
-    Process *process = context->GetExecutionContext().process;
+    
+    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
     if (!process)
     {
         result.AppendError ("Args found no process.");
@@ -118,7 +121,7 @@ CommandObjectArgs::Execute(Args &command,
         return false;
     }
     
-    int num_args = command.GetArgumentCount ();
+    int num_args = args.GetArgumentCount ();
     int arg_index;
     
     if (!num_args)
@@ -128,7 +131,7 @@ CommandObjectArgs::Execute(Args &command,
         return false;
     }
     
-    Thread *thread = context->GetExecutionContext ().thread;
+    Thread *thread = interpreter.GetDebugger().GetExecutionContext ().thread;
     
     if (!thread)
     {
@@ -167,7 +170,7 @@ CommandObjectArgs::Execute(Args &command,
     
     for (arg_index = 0; arg_index < num_args; ++arg_index)
     {
-        const char *arg_type_cstr = command.GetArgumentAtIndex(arg_index);
+        const char *arg_type_cstr = args.GetArgumentAtIndex(arg_index);
         Value value;
         value.SetValueType(Value::eValueTypeScalar);
         void *type;
@@ -262,7 +265,7 @@ CommandObjectArgs::Execute(Args &command,
 
     for (arg_index = 0; arg_index < num_args; ++arg_index)
     {
-        result.GetOutputStream ().Printf ("%d (%s): ", arg_index, command.GetArgumentAtIndex (arg_index));
+        result.GetOutputStream ().Printf ("%d (%s): ", arg_index, args.GetArgumentAtIndex (arg_index));
         value_list.GetValueAtIndex (arg_index)->Dump (&result.GetOutputStream ());
         result.GetOutputStream ().Printf("\n");
     }

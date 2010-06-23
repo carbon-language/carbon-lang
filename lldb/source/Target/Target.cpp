@@ -33,8 +33,9 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Target constructor
 //----------------------------------------------------------------------
-Target::Target() :
+Target::Target(Debugger &debugger) :
     Broadcaster("Target"),
+    m_debugger (debugger),
     m_images(),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
@@ -111,7 +112,7 @@ Target::GetProcessSP () const
 lldb::TargetSP
 Target::GetSP()
 {
-    return Debugger::GetSharedInstance().GetTargetList().GetTargetSP(this);
+    return m_debugger.GetTargetList().GetTargetSP(this);
 }
 
 BreakpointList &

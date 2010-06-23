@@ -82,7 +82,7 @@ private:
     void
     SetLocation (const lldb::BreakpointLocationSP &break_loc_sp);
 
-    lldb::BreakpointLocationSP m_break_loc_sp;
+    lldb::BreakpointLocationSP m_opaque_sp;
 
 };
 

@@ -43,10 +43,10 @@ public:
     virtual ~ScriptInterpreter ();
 
     virtual void
-    ExecuteOneLine (const std::string&, FILE *, FILE *) = 0;
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command) = 0;
 
     virtual void
-    ExecuteInterpreterLoop (FILE *, FILE *) = 0;
+    ExecuteInterpreterLoop (CommandInterpreter &interpreter) = 0;
 
     virtual bool
     ExecuteOneLineWithReturn (const char *in_string, ReturnType return_type, void *ret_value)

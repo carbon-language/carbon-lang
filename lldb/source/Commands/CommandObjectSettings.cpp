@@ -38,9 +38,8 @@ CommandObjectSettings::~CommandObjectSettings()
 bool
 CommandObjectSettings::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -53,7 +52,7 @@ CommandObjectSettings::Execute
     }
     else
     {
-        interpreter->ShowVariableHelp (result);
+        interpreter.ShowVariableHelp (result);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
 

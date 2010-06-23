@@ -10,11 +10,13 @@
 #include "lldb/Interpreter/ScriptInterpreterNone.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-ScriptInterpreterNone::ScriptInterpreterNone () :
+ScriptInterpreterNone::ScriptInterpreterNone (CommandInterpreter &interpreter) :
     ScriptInterpreter (eScriptLanguageNone)
 {
 }
@@ -24,15 +26,15 @@ ScriptInterpreterNone::~ScriptInterpreterNone ()
 }
 
 void
-ScriptInterpreterNone::ExecuteOneLine (const std::string &line, FILE *out, FILE *err)
+ScriptInterpreterNone::ExecuteOneLine (CommandInterpreter &interpreter, const char *command)
 {
-    ::fprintf (err, "error: there is no embedded script interpreter in this mode.\n");
+    interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
 }
 
 void
-ScriptInterpreterNone::ExecuteInterpreterLoop (FILE *out, FILE *err)
+ScriptInterpreterNone::ExecuteInterpreterLoop (CommandInterpreter &interpreter)
 {
-    fprintf (err, "error: there is no embedded script interpreter in this mode.\n");
+    interpreter.GetDebugger().GetErrorStream().PutCString ("error: there is no embedded script interpreter in this mode.\n");
 }
 
 

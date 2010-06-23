@@ -38,9 +38,8 @@ CommandObjectShow::~CommandObjectShow()
 bool
 CommandObjectShow::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -51,7 +50,7 @@ CommandObjectShow::Execute
         // The user requested to see the value of a particular variable.
 
         const char *var_name = command.GetArgumentAtIndex(0);
-        StateVariable *var = interpreter->GetStateVariable(var_name);
+        StateVariable *var = interpreter.GetStateVariable(var_name);
         if (var)
         {
             var->AppendVariableInformation (result);
@@ -66,7 +65,7 @@ CommandObjectShow::Execute
     else
     {
         // The user didn't specify a particular variable, so show the values of all of them.
-        interpreter->ShowVariableValues(result);
+        interpreter.ShowVariableValues(result);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
 

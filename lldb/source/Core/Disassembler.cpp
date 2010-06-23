@@ -55,6 +55,7 @@ Disassembler::FindPlugin (const ArchSpec &arch)
 bool
 Disassembler::Disassemble
 (
+    Debugger &debugger,
     const ArchSpec &arch,
     const ExecutionContext &exe_ctx,
     uint32_t mixed_context_lines,
@@ -144,7 +145,7 @@ Disassembler::Disassemble
 
                                                 if (sc.comp_unit && sc.line_entry.IsValid())
                                                 {
-                                                    Debugger::GetSharedInstance().GetSourceManager().DisplaySourceLinesWithLineNumbers (
+                                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (
                                                             sc.line_entry.file,
                                                             sc.line_entry.line,
                                                             mixed_context_lines,

@@ -39,9 +39,8 @@ public:
     ~CommandObjectQuit ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter, 
+             Args& args,
              CommandReturnObject &result);
 
 };

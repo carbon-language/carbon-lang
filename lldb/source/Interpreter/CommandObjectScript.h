@@ -34,19 +34,17 @@ public:
     bool WantsRawCommandString();
 
     virtual bool
-    ExecuteRawCommandString (const char *command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result);
+    ExecuteRawCommandString (CommandInterpreter &interpreter,
+                             const char *command,
+                             CommandReturnObject &result);
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     ScriptInterpreter *
-    GetInterpreter ();
+    GetInterpreter (CommandInterpreter &interpreter);
 
 private:
     lldb::ScriptLanguage m_script_lang;

@@ -42,7 +42,7 @@ class   ClangASTContext;
 class   ClangExpression;
 class   ClangExpressionDeclMap;
 class   ClangExpressionVariableList;
-class   CommandContext;
+class   Debugger;
 class   CommandInterpreter;
 class   CommandObject;
 class   CommandReturnObject;

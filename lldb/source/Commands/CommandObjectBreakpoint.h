@@ -32,7 +32,7 @@ namespace lldb_private {
 class CommandObjectMultiwordBreakpoint : public CommandObjectMultiword
 {
 public:
-    CommandObjectMultiwordBreakpoint (CommandInterpreter *interpreter);
+    CommandObjectMultiwordBreakpoint (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectMultiwordBreakpoint ();
@@ -66,9 +66,8 @@ public:
     ~CommandObjectBreakpointSet ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -133,9 +132,8 @@ public:
     ~CommandObjectBreakpointModify ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -194,9 +192,8 @@ public:
     ~CommandObjectBreakpointEnable ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 private:
@@ -215,9 +212,8 @@ public:
     ~CommandObjectBreakpointDisable ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 private:
@@ -236,9 +232,8 @@ public:
     ~CommandObjectBreakpointList ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual Options *
@@ -290,9 +285,8 @@ public:
     ~CommandObjectBreakpointDelete ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 private:

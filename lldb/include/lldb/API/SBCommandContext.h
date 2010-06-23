@@ -19,7 +19,7 @@ class SBCommandContext
 {
 public:
 
-    SBCommandContext (lldb_private::CommandContext *lldb_object);
+    SBCommandContext (lldb_private::Debugger *lldb_object);
 
     ~SBCommandContext ();
 
@@ -28,7 +28,7 @@ public:
 
 private:
 
-    lldb_private::CommandContext *m_lldb_object;
+    lldb_private::Debugger *m_opaque;
 };
 
 } // namespace lldb

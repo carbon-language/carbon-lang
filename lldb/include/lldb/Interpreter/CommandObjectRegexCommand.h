@@ -35,18 +35,16 @@ public:
     ~CommandObjectRegexCommand ();
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual bool
     WantsRawCommandString() { return true; }
 
     virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandContext *context,
-                             CommandInterpreter *interpreter,
+    ExecuteRawCommandString (CommandInterpreter &interpreter,
+                             const char *command,
                              CommandReturnObject &result);
 
 

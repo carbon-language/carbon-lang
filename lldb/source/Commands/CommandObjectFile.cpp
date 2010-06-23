@@ -16,7 +16,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
@@ -104,9 +104,8 @@ CommandObjectFile::GetOptions ()
 bool
 CommandObjectFile::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -135,8 +134,8 @@ CommandObjectFile::Execute
             if (!arch.IsValid())
                 arch = LLDB_ARCH_DEFAULT;
         }
-
-        Error error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file_spec, arch, NULL, true, target_sp);
+        Debugger &debugger = interpreter.GetDebugger();
+        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, arch, NULL, true, target_sp);
 
         if (error.Fail() && !m_options.m_arch.IsValid())
         {
@@ -144,12 +143,12 @@ CommandObjectFile::Execute
                 arch = LLDB_ARCH_DEFAULT_64BIT;
             else
                 arch = LLDB_ARCH_DEFAULT_32BIT;
-            error = Debugger::GetSharedInstance().GetTargetList().CreateTarget (file_spec, arch, NULL, true, target_sp);
+            error = debugger.GetTargetList().CreateTarget (debugger, file_spec, arch, NULL, true, target_sp);
         }
 
         if (target_sp)
         {
-            Debugger::GetSharedInstance().GetTargetList().SetCurrentTarget(target_sp.get());
+            debugger.GetTargetList().SetCurrentTarget(target_sp.get());
             result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, arch.AsCString());
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }

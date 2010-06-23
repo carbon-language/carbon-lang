@@ -70,13 +70,12 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
     SBStringList completions;
     size_t page_size = 40;
 
-    int num_completions
-        = SBDebugger::GetCommandInterpreter().HandleCompletion (line_info->buffer,
-                                                                line_info->cursor,
-                                                                line_info->lastchar,
-                                                                0,
-                                                                -1,
-                                                                completions);
+    int num_completions = m_driver->GetDebugger().GetCommandInterpreter().HandleCompletion (line_info->buffer,
+                                                                                            line_info->cursor,
+                                                                                            line_info->lastchar,
+                                                                                            0,
+                                                                                            -1,
+                                                                                            completions);
     
     if (num_completions == -1)
     {
@@ -269,7 +268,7 @@ IOChannel::Run ()
     SBListener listener("IOChannel::Run");
     std::string new_line;
 
-    SBBroadcaster interpreter_broadcaster (SBDebugger::GetCommandInterpreter().GetBroadcaster());
+    SBBroadcaster interpreter_broadcaster (m_driver->GetDebugger().GetCommandInterpreter().GetBroadcaster());
     listener.StartListeningForEvents (interpreter_broadcaster,
                                       SBCommandInterpreter::eBroadcastBitResetPrompt |
                                       SBCommandInterpreter::eBroadcastBitThreadShouldExit |

@@ -66,7 +66,7 @@ private:
 
 #endif
 
-    lldb_private::CompileUnit *m_lldb_object_ptr;
+    lldb_private::CompileUnit *m_opaque_ptr;
 };
 
 

@@ -32,9 +32,8 @@ public:
     ~CommandObjectUnalias ();
 
     virtual bool
-    Execute (Args& args,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& args,
              CommandReturnObject &result);
 
 };

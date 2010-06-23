@@ -15,22 +15,22 @@ using namespace lldb;
 
 
 SBAddress::SBAddress () :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
 }
 
 SBAddress::SBAddress (const lldb_private::Address *lldb_object_ptr) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (lldb_object_ptr)
-        m_lldb_object_ap.reset (new lldb_private::Address(*lldb_object_ptr));
+        m_opaque_ap.reset (new lldb_private::Address(*lldb_object_ptr));
 }
 
 SBAddress::SBAddress (const SBAddress &rhs) :
-    m_lldb_object_ap ()
+    m_opaque_ap ()
 {
     if (rhs.IsValid())
-        m_lldb_object_ap.reset (new lldb_private::Address(*rhs.m_lldb_object_ap.get()));
+        m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
 }
 
 SBAddress::~SBAddress ()
@@ -43,7 +43,7 @@ SBAddress::operator = (const SBAddress &rhs)
     if (this != &rhs)
     {
         if (rhs.IsValid())
-            m_lldb_object_ap.reset (new lldb_private::Address(*rhs.m_lldb_object_ap.get()));
+            m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
     }
     return *this;
 }
@@ -51,7 +51,7 @@ SBAddress::operator = (const SBAddress &rhs)
 bool
 SBAddress::IsValid () const
 {
-    return m_lldb_object_ap.get() != NULL && m_lldb_object_ap->IsValid();
+    return m_opaque_ap.get() != NULL && m_opaque_ap->IsValid();
 }
 
 void
@@ -59,21 +59,21 @@ SBAddress::SetAddress (const lldb_private::Address *lldb_object_ptr)
 {
     if (lldb_object_ptr)
     {
-        if (m_lldb_object_ap.get())
-            *m_lldb_object_ap = *lldb_object_ptr;
+        if (m_opaque_ap.get())
+            *m_opaque_ap = *lldb_object_ptr;
         else
-            m_lldb_object_ap.reset (new lldb_private::Address(*lldb_object_ptr));
+            m_opaque_ap.reset (new lldb_private::Address(*lldb_object_ptr));
         return;
     }
-    if (m_lldb_object_ap.get())
-        m_lldb_object_ap->Clear();
+    if (m_opaque_ap.get())
+        m_opaque_ap->Clear();
 }
 
 lldb::addr_t
 SBAddress::GetFileAddress () const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetFileAddress();
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetFileAddress();
     else
         return LLDB_INVALID_ADDRESS;
 }
@@ -81,8 +81,8 @@ SBAddress::GetFileAddress () const
 lldb::addr_t
 SBAddress::GetLoadAddress (const SBProcess &process) const
 {
-    if (m_lldb_object_ap.get())
-        return m_lldb_object_ap->GetLoadAddress(process.get());
+    if (m_opaque_ap.get())
+        return m_opaque_ap->GetLoadAddress(process.get());
     else
         return LLDB_INVALID_ADDRESS;
 }
@@ -90,12 +90,12 @@ SBAddress::GetLoadAddress (const SBProcess &process) const
 bool
 SBAddress::OffsetAddress (addr_t offset)
 {
-    if (m_lldb_object_ap.get())
+    if (m_opaque_ap.get())
     {
-        addr_t addr_offset = m_lldb_object_ap->GetOffset();
+        addr_t addr_offset = m_opaque_ap->GetOffset();
         if (addr_offset != LLDB_INVALID_ADDRESS)
         {
-            m_lldb_object_ap->SetOffset(addr_offset + offset);
+            m_opaque_ap->SetOffset(addr_offset + offset);
             return true;
         }
     }
@@ -106,13 +106,13 @@ SBAddress::OffsetAddress (addr_t offset)
 const lldb_private::Address *
 SBAddress::operator->() const
 {
-    return m_lldb_object_ap.get();
+    return m_opaque_ap.get();
 }
 
 const lldb_private::Address &
 SBAddress::operator*() const
 {
-    return *m_lldb_object_ap;
+    return *m_opaque_ap;
 }
 
 

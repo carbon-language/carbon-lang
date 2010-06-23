@@ -79,7 +79,8 @@ public:
     ///     A shared pointer to a target object.
     //------------------------------------------------------------------
     Error
-    CreateTarget (const FileSpec& file_spec,
+    CreateTarget (Debugger &debugger,
+                  const FileSpec& file_spec,
                   const ArchSpec& arch,
                   const UUID *uuid_ptr,
                   bool get_dependent_files,

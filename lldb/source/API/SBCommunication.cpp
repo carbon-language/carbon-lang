@@ -18,57 +18,57 @@ using namespace lldb_private;
 
 
 SBCommunication::SBCommunication() :
-    m_lldb_object (NULL),
-    m_lldb_object_owned (false)
+    m_opaque (NULL),
+    m_opaque_owned (false)
 {
 }
 
 SBCommunication::SBCommunication(const char * broadcaster_name) :
-    m_lldb_object (new Communication (broadcaster_name)),
-    m_lldb_object_owned (true)
+    m_opaque (new Communication (broadcaster_name)),
+    m_opaque_owned (true)
 {
 }
 
 SBCommunication::~SBCommunication()
 {
-    if (m_lldb_object && m_lldb_object_owned)
-        delete m_lldb_object;
-    m_lldb_object = NULL;
-    m_lldb_object_owned = false;
+    if (m_opaque && m_opaque_owned)
+        delete m_opaque;
+    m_opaque = NULL;
+    m_opaque_owned = false;
 }
 
 ConnectionStatus
 SBCommunication::CheckIfBytesAvailable ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->BytesAvailable (0, NULL);
+    if (m_opaque)
+        return m_opaque->BytesAvailable (0, NULL);
     return eConnectionStatusNoConnection;
 }
 
 ConnectionStatus
 SBCommunication::WaitForBytesAvailableInfinite ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->BytesAvailable (UINT32_MAX, NULL);
+    if (m_opaque)
+        return m_opaque->BytesAvailable (UINT32_MAX, NULL);
     return eConnectionStatusNoConnection;
 }
 
 ConnectionStatus
 SBCommunication::WaitForBytesAvailableWithTimeout (uint32_t timeout_usec)
 {
-    if (m_lldb_object)
-        return m_lldb_object->BytesAvailable (timeout_usec, NULL);
+    if (m_opaque)
+        return m_opaque->BytesAvailable (timeout_usec, NULL);
     return eConnectionStatusNoConnection;
 }
 
 ConnectionStatus
 SBCommunication::Connect (const char *url)
 {
-    if (m_lldb_object)
+    if (m_opaque)
     {
-        if (!m_lldb_object->HasConnection ())
-            m_lldb_object->SetConnection (new ConnectionFileDescriptor());
-        return m_lldb_object->Connect (url, NULL);
+        if (!m_opaque->HasConnection ())
+            m_opaque->SetConnection (new ConnectionFileDescriptor());
+        return m_opaque->Connect (url, NULL);
     }
     return eConnectionStatusNoConnection;
 }
@@ -76,15 +76,15 @@ SBCommunication::Connect (const char *url)
 ConnectionStatus
 SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
 {
-    if (m_lldb_object)
+    if (m_opaque)
     {
-        if (m_lldb_object->HasConnection ())
+        if (m_opaque->HasConnection ())
         {
-            if (m_lldb_object->IsConnected())
-                m_lldb_object->Disconnect ();
+            if (m_opaque->IsConnected())
+                m_opaque->Disconnect ();
         }
-        m_lldb_object->SetConnection (new ConnectionFileDescriptor (fd, owns_fd));
-        if (m_lldb_object->IsConnected())
+        m_opaque->SetConnection (new ConnectionFileDescriptor (fd, owns_fd));
+        if (m_opaque->IsConnected())
             return eConnectionStatusSuccess;
         else
             return eConnectionStatusLostConnection;
@@ -96,24 +96,24 @@ SBCommunication::AdoptFileDesriptor (int fd, bool owns_fd)
 ConnectionStatus
 SBCommunication::Disconnect ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->Disconnect ();
+    if (m_opaque)
+        return m_opaque->Disconnect ();
     return eConnectionStatusNoConnection;
 }
 
 bool
 SBCommunication::IsConnected () const
 {
-    if (m_lldb_object)
-        return m_lldb_object->IsConnected ();
+    if (m_opaque)
+        return m_opaque->IsConnected ();
     return false;
 }
 
 size_t
 SBCommunication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status)
 {
-    if (m_lldb_object)
-        return m_lldb_object->Read (dst, dst_len, timeout_usec, status, NULL);
+    if (m_opaque)
+        return m_opaque->Read (dst, dst_len, timeout_usec, status, NULL);
     status = eConnectionStatusNoConnection;
     return 0;
 }
@@ -122,8 +122,8 @@ SBCommunication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connect
 size_t
 SBCommunication::Write (const void *src, size_t src_len, ConnectionStatus &status)
 {
-    if (m_lldb_object)
-        return m_lldb_object->Write (src, src_len, status, NULL);
+    if (m_opaque)
+        return m_opaque->Write (src, src_len, status, NULL);
     status = eConnectionStatusNoConnection;
     return 0;
 }
@@ -131,8 +131,8 @@ SBCommunication::Write (const void *src, size_t src_len, ConnectionStatus &statu
 bool
 SBCommunication::ReadThreadStart ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->StartReadThread ();
+    if (m_opaque)
+        return m_opaque->StartReadThread ();
     return false;
 }
 
@@ -140,16 +140,16 @@ SBCommunication::ReadThreadStart ()
 bool
 SBCommunication::ReadThreadStop ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->StopReadThread ();
+    if (m_opaque)
+        return m_opaque->StopReadThread ();
     return false;
 }
 
 bool
 SBCommunication::ReadThreadIsRunning ()
 {
-    if (m_lldb_object)
-        return m_lldb_object->ReadThreadIsRunning ();
+    if (m_opaque)
+        return m_opaque->ReadThreadIsRunning ();
     return false;
 }
 
@@ -160,9 +160,9 @@ SBCommunication::SetReadThreadBytesReceivedCallback
     void *callback_baton
 )
 {
-    if (m_lldb_object)
+    if (m_opaque)
     {
-        m_lldb_object->SetReadThreadBytesReceivedCallback (callback, callback_baton);
+        m_opaque->SetReadThreadBytesReceivedCallback (callback, callback_baton);
         return true;
     }
     return false;
@@ -171,7 +171,7 @@ SBCommunication::SetReadThreadBytesReceivedCallback
 SBBroadcaster
 SBCommunication::GetBroadcaster ()
 {
-    SBBroadcaster broadcaster (m_lldb_object, false);
+    SBBroadcaster broadcaster (m_opaque, false);
     return broadcaster;
 }
 
@@ -180,15 +180,15 @@ SBCommunication::GetBroadcaster ()
 //void
 //SBCommunication::CreateIfNeeded ()
 //{
-//    if (m_lldb_object == NULL)
+//    if (m_opaque == NULL)
 //    {
 //        static uint32_t g_broadcaster_num;
 //        char broadcaster_name[256];
 //        ::snprintf (name, broadcaster_name, "%p SBCommunication", this);
-//        m_lldb_object = new Communication (broadcaster_name);
-//        m_lldb_object_owned = true;
+//        m_opaque = new Communication (broadcaster_name);
+//        m_opaque_owned = true;
 //    }
-//    assert (m_lldb_object);
+//    assert (m_opaque);
 //}
 //
 //

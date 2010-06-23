@@ -12,7 +12,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -80,8 +80,12 @@ CommandObjectMultiword::GetSubcommandObject (const char *sub_cmd, StringList *ma
 }
 
 bool
-CommandObjectMultiword::LoadSubCommand (CommandObjectSP cmd_obj, const char *name,
-                                          CommandInterpreter *interpreter)
+CommandObjectMultiword::LoadSubCommand 
+(
+    CommandInterpreter &interpreter, 
+    const char *name,
+    const CommandObjectSP& cmd_obj
+)
 {
     CommandMap::iterator pos;
     bool success = true;
@@ -90,7 +94,7 @@ CommandObjectMultiword::LoadSubCommand (CommandObjectSP cmd_obj, const char *nam
     if (pos == m_subcommand_dict.end())
     {
         m_subcommand_dict[name] = cmd_obj;
-        interpreter->CrossRegisterCommand (name, GetCommandName());
+        interpreter.CrossRegisterCommand (name, GetCommandName());
     }
     else
         success = false;
@@ -101,16 +105,15 @@ CommandObjectMultiword::LoadSubCommand (CommandObjectSP cmd_obj, const char *nam
 bool
 CommandObjectMultiword::Execute
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
     const size_t argc = args.GetArgumentCount();
     if (argc == 0)
     {
-        GenerateHelpText (result, interpreter);
+        GenerateHelpText (interpreter, result);
     }
     else
     {
@@ -120,7 +123,7 @@ CommandObjectMultiword::Execute
         {
             if (::strcasecmp (sub_command, "help") == 0)
             {
-                GenerateHelpText (result, interpreter);
+                GenerateHelpText (interpreter, result);
             }
             else if (!m_subcommand_dict.empty())
             {
@@ -133,7 +136,7 @@ CommandObjectMultiword::Execute
 
                     args.Shift();
 
-                    sub_cmd_obj->ExecuteWithOptions (args, context, interpreter, result);
+                    sub_cmd_obj->ExecuteWithOptions (interpreter, args, result);
                 }
                 else
                 {
@@ -176,7 +179,7 @@ CommandObjectMultiword::Execute
 }
 
 void
-CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result, CommandInterpreter *interpreter)
+CommandObjectMultiword::GenerateHelpText (CommandInterpreter &interpreter, CommandReturnObject &result)
 {
     // First time through here, generate the help text for the object and
     // push it to the return result object as well
@@ -185,7 +188,7 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result, CommandIn
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;
-    std::string longest_word = interpreter->FindLongestCommandWord (m_subcommand_dict);
+    std::string longest_word = interpreter.FindLongestCommandWord (m_subcommand_dict);
     uint32_t max_len = 0;
 
     if (! longest_word.empty())
@@ -195,8 +198,11 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result, CommandIn
     {
         std::string indented_command ("    ");
         indented_command.append (pos->first);
-        interpreter->OutputFormattedHelpText (result.GetOutputStream(), indented_command.c_str(), "--", 
-                                              pos->second->GetHelp(), max_len);
+        interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+                                             indented_command.c_str(),
+                                             "--", 
+                                             pos->second->GetHelp(), 
+                                             max_len);
     }
 
     output_stream.PutCString ("\nFor more help on any particular subcommand, type 'help <command> <subcommand>'.\n");
@@ -207,33 +213,40 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result, CommandIn
 int
 CommandObjectMultiword::HandleCompletion
 (
+    CommandInterpreter &interpreter,
     Args &input,
     int &cursor_index,
     int &cursor_char_position,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 )
 {
     if (cursor_index == 0)
     {
-        CommandObject::AddNamesMatchingPartialString (m_subcommand_dict, input.GetArgumentAtIndex(0), matches);
+        CommandObject::AddNamesMatchingPartialString (m_subcommand_dict, 
+                                                      input.GetArgumentAtIndex(0), 
+                                                      matches);
 
         if (matches.GetSize() == 1
             && matches.GetStringAtIndex(0) != NULL
             && strcmp (input.GetArgumentAtIndex(0), matches.GetStringAtIndex(0)) == 0)
         {
             StringList temp_matches;
-            CommandObject *cmd_obj = GetSubcommandObject (input.GetArgumentAtIndex(0), &temp_matches);
+            CommandObject *cmd_obj = GetSubcommandObject (input.GetArgumentAtIndex(0), 
+                                                          &temp_matches);
             if (cmd_obj != NULL)
             {
                 matches.DeleteStringAtIndex (0);
                 input.Shift();
                 cursor_char_position = 0;
                 input.AppendArgument ("");
-                return cmd_obj->HandleCompletion (input, cursor_index, cursor_char_position, match_start_point,
-                                                  max_return_elements, interpreter, matches);
+                return cmd_obj->HandleCompletion (interpreter, 
+                                                  input, cursor_index, 
+                                                  cursor_char_position, 
+                                                  match_start_point,
+                                                  max_return_elements, 
+                                                  matches);
             }
             else
                 return matches.GetSize();
@@ -243,7 +256,8 @@ CommandObjectMultiword::HandleCompletion
     }
     else
     {
-        CommandObject *sub_command_object = GetSubcommandObject (input.GetArgumentAtIndex(0), &matches);
+        CommandObject *sub_command_object = GetSubcommandObject (input.GetArgumentAtIndex(0), 
+                                                                 &matches);
         if (sub_command_object == NULL)
         {
             return matches.GetSize();
@@ -254,8 +268,13 @@ CommandObjectMultiword::HandleCompletion
             matches.DeleteStringAtIndex(0);
             input.Shift();
             cursor_index--;
-            return sub_command_object->HandleCompletion (input, cursor_index, cursor_char_position, match_start_point,
-                                                         max_return_elements, interpreter, matches);
+            return sub_command_object->HandleCompletion (interpreter, 
+                                                         input, 
+                                                         cursor_index, 
+                                                         cursor_char_position, 
+                                                         match_start_point,
+                                                         max_return_elements, 
+                                                         matches);
         }
 
     }

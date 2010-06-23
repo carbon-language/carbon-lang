@@ -83,26 +83,23 @@ public:
 
     // Do not override this
     bool
-    ExecuteCommandString (const char *command,
-                          CommandContext *context,
-                          CommandInterpreter *interpreter,
+    ExecuteCommandString (CommandInterpreter &interpreter,
+                          const char *command,
                           CommandReturnObject &result);
 
     bool
-    ParseOptions(Args& args,
-                 CommandInterpreter *interpreter,
-                 CommandReturnObject &result);
+    ParseOptions (CommandInterpreter &interpreter,
+                  Args& args,
+                  CommandReturnObject &result);
 
     bool
-    ExecuteWithOptions (Args& command,
-                        CommandContext *context,
-                        CommandInterpreter *interpreter,
+    ExecuteWithOptions (CommandInterpreter &interpreter,
+                        Args& command,
                         CommandReturnObject &result);
 
     virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandContext *context,
-                             CommandInterpreter *interpreter,
+    ExecuteRawCommandString (CommandInterpreter &interpreter,
+                             const char *command,
                              CommandReturnObject &result)
     {
         return false;
@@ -110,9 +107,8 @@ public:
 
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result) = 0;
 
     void
@@ -134,12 +130,12 @@ public:
     // Don't override this method, override HandleArgumentCompletion instead unless
     // you have special reasons.
     virtual int
-    HandleCompletion (Args &input,
+    HandleCompletion (CommandInterpreter &interpreter,
+                      Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
-                      CommandInterpreter *interpreter,
                       StringList &matches);
 
     // The input array contains a parsed version of the line.  The insertion
@@ -149,16 +145,18 @@ public:
     // helpful for the completion.
 
     virtual int
-    HandleArgumentCompletion (Args &input,
-                      int &cursor_index,
-                      int &cursor_char_position,
-                      OptionElementVector &opt_element_vector,
-                      int match_start_point,
-                      int max_return_elements,
-                      CommandInterpreter *interpreter,
-                      StringList &matches);
-
-
+    HandleArgumentCompletion (CommandInterpreter &interpreter,
+                              Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              StringList &matches)
+    {
+        return 0;
+    }
+    
     bool
     HelpTextContainsWord (const char *search_word);
 

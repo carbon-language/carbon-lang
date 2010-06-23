@@ -218,13 +218,13 @@ public:
     ///     \btrue if we were in an option, \bfalse otherwise.
     //------------------------------------------------------------------
     bool
-    HandleOptionCompletion (Args &input,
+    HandleOptionCompletion (CommandInterpreter &interpreter,
+                            Args &input,
                             OptionElementVector &option_map,
                             int cursor_index,
                             int char_pos,
                             int match_start_point,
                             int max_return_elements,
-                            lldb_private::CommandInterpreter *interpreter,
                             lldb_private::StringList &matches);
 
     //------------------------------------------------------------------
@@ -263,16 +263,16 @@ public:
     ///     \btrue if we were in an option, \bfalse otherwise.
     //------------------------------------------------------------------
     virtual bool
-    HandleOptionArgumentCompletion (Args &input,
-                                            int cursor_index,
-                                            int char_pos,
-                                            OptionElementVector &opt_element_vector,
-                                            int opt_element_index,
-                                            int match_start_point,
-                                            int max_return_elements,
-                                            CommandInterpreter *interpreter,
-                                            StringList &matches);
-
+    HandleOptionArgumentCompletion (CommandInterpreter &interpreter,
+                                    Args &input,
+                                    int cursor_index,
+                                    int char_pos,
+                                    OptionElementVector &opt_element_vector,
+                                    int opt_element_index,
+                                    int match_start_point,
+                                    int max_return_elements,
+                                    StringList &matches);
+    
 protected:
     // This is a set of options expressed as indexes into the options table for this Option.
     typedef std::set<char> OptionSet;

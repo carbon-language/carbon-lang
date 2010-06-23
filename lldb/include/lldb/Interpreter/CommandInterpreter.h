@@ -16,8 +16,8 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Interpreter/CommandContext.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Interpreter/StateVariable.h"
@@ -43,10 +43,9 @@ public:
     void
     SourceInitFile (bool in_cwd, CommandReturnObject &result);
 
-    CommandInterpreter (lldb::ScriptLanguage script_language,
-                        bool synchronous_execution,
-                        Listener *listener, // In case this is asked to create or attach to a process
-                        SourceManager& source_manager);
+    CommandInterpreter (Debugger &debugger,
+                        lldb::ScriptLanguage script_language,
+                        bool synchronous_execution);
 
     virtual
     ~CommandInterpreter ();
@@ -88,7 +87,9 @@ public:
     AddOrReplaceAliasOptions (const char *alias_name, OptionArgVectorSP &option_arg_vector_sp);
 
     bool
-    HandleCommand (const char *command_line, bool add_to_history, CommandReturnObject &result, 
+    HandleCommand (const char *command_line, 
+                   bool add_to_history, 
+                   CommandReturnObject &result, 
                    ExecutionContext *override_context = NULL);
 
     // This handles command line completion.  You are given a pointer to the command string buffer, to the current cursor,
@@ -147,8 +148,11 @@ public:
     void
     ShowVariableHelp (CommandReturnObject &result);
 
-    CommandContext *
-    Context();
+    Debugger &
+    GetDebugger ()
+    {
+        return m_debugger;
+    }
 
     const Args *
     GetProgramArguments ();
@@ -158,12 +162,6 @@ public:
 
     const char *
     ProcessEmbeddedScriptCommands (const char *arg);
-
-    Listener *
-    GetListener ();
-
-    SourceManager &
-    GetSourceManager ();
 
     const char *
     GetPrompt ();
@@ -244,12 +242,9 @@ protected:
 
 private:
 
+    Debugger &m_debugger;   // The debugger session that this interpreter is associated with
     lldb::ScriptLanguage m_script_language;
-    CommandContext m_current_context;
     bool m_synchronous_execution;
-    Listener *m_listener;
-    SourceManager& m_source_manager;
-
     CommandObject::CommandMap m_command_dict; // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
     CommandObject::CommandMap m_alias_dict;   // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;    // Stores user-defined commands

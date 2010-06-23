@@ -64,7 +64,7 @@ protected:
     SetSymbolContext (const lldb_private::SymbolContext *sc_ptr);
 
 private:
-    std::auto_ptr<lldb_private::SymbolContext> m_lldb_object_ap;
+    std::auto_ptr<lldb_private::SymbolContext> m_opaque_ap;
 };
 
 

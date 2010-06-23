@@ -66,16 +66,20 @@ protected:
 
     SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns);
 
+#ifndef SWIG
+
     lldb_private::Broadcaster *
-    GetLLDBObjectPtr () const;
+    get () const;
 
     void
-    SetLLDBObjectPtr (lldb_private::Broadcaster *broadcaster, bool owns);
+    reset (lldb_private::Broadcaster *broadcaster, bool owns);
+
+#endif
 
 private:
 
-    lldb_private::Broadcaster *m_lldb_object;
-    bool m_lldb_object_owned;
+    lldb_private::Broadcaster *m_opaque;
+    bool m_opaque_owned;
 };
 
 } // namespace lldb

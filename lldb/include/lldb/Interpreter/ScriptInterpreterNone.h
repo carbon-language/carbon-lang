@@ -18,15 +18,15 @@ class ScriptInterpreterNone : public ScriptInterpreter
 {
 public:
 
-    ScriptInterpreterNone ();
+    ScriptInterpreterNone (CommandInterpreter &interpreter);
 
     ~ScriptInterpreterNone ();
 
     virtual void
-    ExecuteOneLine (const std::string &line, FILE *out, FILE *err);
+    ExecuteOneLine (CommandInterpreter &interpreter, const char *command);
 
     virtual void
-    ExecuteInterpreterLoop (FILE *out, FILE *err);
+    ExecuteInterpreterLoop (CommandInterpreter &interpreter);
 
 };
 

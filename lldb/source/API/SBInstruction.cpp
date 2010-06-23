@@ -15,7 +15,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 //SBInstruction::SBInstruction (lldb_private::Disassembler::Instruction *lldb_insn) :
-//    m_lldb_object_sp (lldb_insn);
+//    m_opaque_sp (lldb_insn);
 //{
 //}
 
@@ -30,7 +30,7 @@ SBInstruction::~SBInstruction ()
 //bool
 //SBInstruction::IsValid()
 //{
-//    return (m_lldb_object_sp.get() != NULL);
+//    return (m_opaque_sp.get() != NULL);
 //}
 
 //size_t
@@ -38,7 +38,7 @@ SBInstruction::~SBInstruction ()
 //{
 //    if (IsValid())
 //    {
-//        return m_lldb_object_sp->GetByteSize();
+//        return m_opaque_sp->GetByteSize();
 //    }
 //    return 0;
 //}
@@ -48,7 +48,7 @@ SBInstruction::~SBInstruction ()
 //{
 //    if (IsValid ())
 //    {
-//        m_lldb_object_sp->SetByteSize (byte_size);
+//        m_opaque_sp->SetByteSize (byte_size);
 //    }
 //}
 
@@ -57,7 +57,7 @@ SBInstruction::~SBInstruction ()
 //{
 //    if (IsValid ())
 //    {
-//        return m_lldb_object_sp->DoesBranch ();
+//        return m_opaque_sp->DoesBranch ();
 //    }
 //    return false;
 //}
@@ -70,5 +70,5 @@ SBInstruction::Print (FILE *out)
 
     //StreamFile out_strem (out);
 
-    //m_lldb_object_sp->Dump (out, LLDB_INVALID_ADDRESS, NULL, 0);
+    //m_opaque_sp->Dump (out, LLDB_INVALID_ADDRESS, NULL, 0);
 }

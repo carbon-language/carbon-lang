@@ -24,6 +24,7 @@
 
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/InputReader.h"
@@ -33,6 +34,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Target/Process.h"
 
 extern "C" void init_lldb (void);
@@ -139,7 +141,7 @@ _check_and_flush (FILE *stream)
   return fflush (stream) || prev_fail ? EOF : 0;
 }
 
-ScriptInterpreterPython::ScriptInterpreterPython () :
+ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (eScriptLanguagePython),
     m_compiled_module (NULL),
     m_termios_valid (false)
@@ -194,7 +196,7 @@ ScriptInterpreterPython::ScriptInterpreterPython () :
     }
 
     const char *pty_slave_name = GetScriptInterpreterPtyName ();
-    FILE *out_fh = Debugger::GetSharedInstance().GetOutputFileHandle();
+    FILE *out_fh = interpreter.GetDebugger().GetOutputFileHandle();
     
     PyObject *pmod = PyImport_ExecCodeModule(
                          const_cast<char*>("embedded_interpreter"),
@@ -249,14 +251,15 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
 }
 
 void
-ScriptInterpreterPython::ExecuteOneLine (const std::string& line, FILE *out, FILE *err)
+ScriptInterpreterPython::ExecuteOneLine (CommandInterpreter &interpreter, const char *command)
 {
-    int success;
-
-    success = PyRun_SimpleString (line.c_str());
-    if (success != 0)
+    if (command)
     {
-        fprintf (err, "error: python failed attempting to evaluate '%s'\n", line.c_str());
+        int success;
+
+        success = PyRun_SimpleString (command);
+        if (success != 0)
+            interpreter.GetDebugger().GetErrorStream().Printf ("error: python failed attempting to evaluate '%s'\n", command);
     }
 }
 
@@ -266,7 +269,7 @@ size_t
 ScriptInterpreterPython::InputReaderCallback
 (
     void *baton, 
-    InputReader *reader, 
+    InputReader &reader, 
     lldb::InputReaderAction notification,
     const char *bytes, 
     size_t bytes_len
@@ -275,19 +278,20 @@ ScriptInterpreterPython::InputReaderCallback
     if (baton == NULL)
         return 0;
 
-    ScriptInterpreterPython *interpreter = (ScriptInterpreterPython *) baton;            
+    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;            
     switch (notification)
     {
     case eInputReaderActivate:
         {
             // Save terminal settings if we can
-            interpreter->m_termios_valid = ::tcgetattr (::fileno (reader->GetInputFileHandle()), 
-                                                        &interpreter->m_termios) == 0;
+            FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
+            int input_fd = ::fileno (input_fh);
+            script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
             struct termios tmp_termios;
-            if (::tcgetattr (::fileno (reader->GetInputFileHandle()), &tmp_termios) == 0)
+            if (::tcgetattr (input_fd, &tmp_termios) == 0)
             {
                 tmp_termios.c_cc[VEOF] = _POSIX_VDISABLE;
-                ::tcsetattr (::fileno (reader->GetInputFileHandle()), TCSANOW, &tmp_termios);
+                ::tcsetattr (input_fd, TCSANOW, &tmp_termios);
             }
         }
         break;
@@ -302,11 +306,11 @@ ScriptInterpreterPython::InputReaderCallback
         if (bytes && bytes_len)
         {
             if ((int) bytes[0] == 4)
-                ::write (interpreter->GetMasterFileDescriptor(), "quit()", 6);
+                ::write (script_interpreter->GetMasterFileDescriptor(), "quit()", 6);
             else
-                ::write (interpreter->GetMasterFileDescriptor(), bytes, bytes_len);
+                ::write (script_interpreter->GetMasterFileDescriptor(), bytes, bytes_len);
         }
-        ::write (interpreter->GetMasterFileDescriptor(), "\n", 1);
+        ::write (script_interpreter->GetMasterFileDescriptor(), "\n", 1);
         break;
         
     case eInputReaderDone:
@@ -315,11 +319,11 @@ ScriptInterpreterPython::InputReaderCallback
         // Write a newline out to the reader output
         //::fwrite ("\n", 1, 1, out_fh);
         // Restore terminal settings if they were validly saved
-        if (interpreter->m_termios_valid)
+        if (script_interpreter->m_termios_valid)
         {
-            ::tcsetattr (::fileno (reader->GetInputFileHandle()), 
+            ::tcsetattr (::fileno (reader.GetDebugger().GetInputFileHandle()), 
                          TCSANOW,
-                         &interpreter->m_termios);
+                         &script_interpreter->m_termios);
         }
         break;
     }
@@ -329,11 +333,12 @@ ScriptInterpreterPython::InputReaderCallback
 
 
 void
-ScriptInterpreterPython::ExecuteInterpreterLoop (FILE *out, FILE *err)
+ScriptInterpreterPython::ExecuteInterpreterLoop (CommandInterpreter &interpreter)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    InputReaderSP reader_sp (new InputReader());
+    Debugger &debugger = interpreter.GetDebugger();
+    InputReaderSP reader_sp (new InputReader(debugger));
     if (reader_sp)
     {
         Error error (reader_sp->Initialize (ScriptInterpreterPython::InputReaderCallback,
@@ -345,9 +350,9 @@ ScriptInterpreterPython::ExecuteInterpreterLoop (FILE *out, FILE *err)
      
         if (error.Success())
         {
-            Debugger::GetSharedInstance().PushInputReader (reader_sp);
-            ExecuteOneLine ("run_python_interpreter(ConsoleDict)", out, err);
-            Debugger::GetSharedInstance().PopInputReader (reader_sp);
+            debugger.PushInputReader (reader_sp);
+            ExecuteOneLine (interpreter, "run_python_interpreter(ConsoleDict)");
+            debugger.PopInputReader (reader_sp);
         }
     }
 }
@@ -528,7 +533,7 @@ size_t
 ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 (
     void *baton, 
-    InputReader *reader, 
+    InputReader &reader, 
     lldb::InputReaderAction notification,
     const char *bytes, 
     size_t bytes_len
@@ -536,7 +541,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 {
   static StringList commands_in_progress;
 
-    FILE *out_fh = reader->GetOutputFileHandle();
+    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
     switch (notification)
     {
     case eInputReaderActivate:
@@ -545,8 +550,8 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
             if (out_fh)
             {
                 ::fprintf (out_fh, "%s\n", g_reader_instructions);
-                if (reader->GetPrompt())
-                    ::fprintf (out_fh, "%s", reader->GetPrompt());
+                if (reader.GetPrompt())
+                    ::fprintf (out_fh, "%s", reader.GetPrompt());
             }
         }
         break;
@@ -555,16 +560,16 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         break;
 
     case eInputReaderReactivate:
-        if (reader->GetPrompt() && out_fh)
-            ::fprintf (out_fh, "%s", reader->GetPrompt());
+        if (reader.GetPrompt() && out_fh)
+            ::fprintf (out_fh, "%s", reader.GetPrompt());
         break;
 
     case eInputReaderGotToken:
         {
             std::string temp_string (bytes, bytes_len);
             commands_in_progress.AppendString (temp_string.c_str());
-            if (out_fh && !reader->IsDone() && reader->GetPrompt())
-                ::fprintf (out_fh, "%s", reader->GetPrompt());
+            if (out_fh && !reader.IsDone() && reader.GetPrompt())
+                ::fprintf (out_fh, "%s", reader.GetPrompt());
         }
         break;
 
@@ -575,7 +580,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
             data_ap->user_source.AppendList (commands_in_progress);
             if (data_ap.get())
             {
-                ScriptInterpreter *interpreter = Debugger::GetSharedInstance().GetCommandInterpreter().GetScriptInterpreter();
+                ScriptInterpreter *interpreter = reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
                 if (interpreter)
                 {
                     if (interpreter->GenerateBreakpointCommandCallbackData (data_ap->user_source, 
@@ -602,10 +607,12 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 }
 
 void
-ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
+ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                                                  BreakpointOptions *bp_options,
                                                                   CommandReturnObject &result)
 {
-    InputReaderSP reader_sp (new InputReader ());
+    Debugger &debugger = interpreter.GetDebugger();
+    InputReaderSP reader_sp (new InputReader (debugger));
 
     if (reader_sp)
     {
@@ -618,7 +625,7 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOpti
                 true);                      // echo input
     
         if (err.Success())
-            Debugger::GetSharedInstance().PushInputReader (reader_sp);
+            debugger.PushInputReader (reader_sp);
         else
         {
             result.AppendError (err.AsCString());
@@ -819,11 +826,11 @@ ScriptInterpreterPython::BreakpointCallbackFunction
 
     if (python_string != NULL)
     {
-        bool success =
-          Debugger::GetSharedInstance().GetCommandInterpreter().GetScriptInterpreter()->ExecuteOneLineWithReturn
-                                                                                            (python_string,
-                                                                                             ScriptInterpreter::eBool,
-                                                                                             (void *) &temp_bool);
+        bool success = context->exe_ctx.target->GetDebugger().
+                                                GetCommandInterpreter().
+                                                GetScriptInterpreter()->ExecuteOneLineWithReturn (python_string,
+                                                                                                  ScriptInterpreter::eBool,
+                                                                                                  (void *) &temp_bool);
         if (success)
           ret_value = temp_bool;
     }

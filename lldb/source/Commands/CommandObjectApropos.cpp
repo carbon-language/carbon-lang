@@ -40,14 +40,18 @@ CommandObjectApropos::~CommandObjectApropos()
 
 
 bool
-CommandObjectApropos::Execute (Args &command, CommandContext *context, CommandInterpreter *interpreter, 
-                              CommandReturnObject &result)
+CommandObjectApropos::Execute
+(
+    CommandInterpreter &interpreter,
+    Args& args,
+    CommandReturnObject &result
+)
 {
-    const int argc = command.GetArgumentCount ();
+    const int argc = args.GetArgumentCount ();
 
     if (argc == 1)
     {
-        const char *search_word = command.GetArgumentAtIndex(0);
+        const char *search_word = args.GetArgumentAtIndex(0);
         if ((search_word != NULL)
             && (strlen (search_word) > 0))
         {
@@ -55,7 +59,7 @@ CommandObjectApropos::Execute (Args &command, CommandContext *context, CommandIn
             // is private.
             StringList commands_found;
             StringList commands_help;
-            interpreter->FindCommandsForApropos (search_word, commands_found, commands_help);
+            interpreter.FindCommandsForApropos (search_word, commands_found, commands_help);
             if (commands_found.GetSize() == 0)
             {
                 result.AppendMessageWithFormat ("No commands found pertaining to '%s'.", search_word);
@@ -74,8 +78,11 @@ CommandObjectApropos::Execute (Args &command, CommandContext *context, CommandIn
                 }
 
                 for (int i = 0; i < commands_found.GetSize(); ++i)
-                    interpreter->OutputFormattedHelpText (result.GetOutputStream(), commands_found.GetStringAtIndex(i),
-                                                         "--", commands_help.GetStringAtIndex(i), max_len);
+                    interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+                                                         commands_found.GetStringAtIndex(i),
+                                                         "--", commands_help.
+                                                         GetStringAtIndex(i), 
+                                                         max_len);
 
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);

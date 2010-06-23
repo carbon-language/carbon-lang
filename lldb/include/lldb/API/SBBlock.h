@@ -35,7 +35,7 @@ private:
     SBBlock (lldb_private::Block *lldb_object_ptr);
 
 
-    lldb_private::Block *m_lldb_object_ptr;
+    lldb_private::Block *m_opaque_ptr;
 };
 
 

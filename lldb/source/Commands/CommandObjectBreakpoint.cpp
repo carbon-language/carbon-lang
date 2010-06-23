@@ -32,7 +32,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 static void
-AddBreakpointDescription (CommandContext *context, StreamString *s, Breakpoint *bp, lldb::DescriptionLevel level)
+AddBreakpointDescription (StreamString *s, Breakpoint *bp, lldb::DescriptionLevel level)
 {
     s->IndentMore();
     bp->GetDescription (s, level, true);
@@ -240,13 +240,12 @@ CommandObjectBreakpointSet::GetOptions ()
 bool
 CommandObjectBreakpointSet::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -287,7 +286,7 @@ CommandObjectBreakpointSet::Execute
             FileSpec file;
             if (m_options.m_filename.empty())
             {
-                StackFrame *cur_frame = context->GetExecutionContext().frame;
+                StackFrame *cur_frame = interpreter.GetDebugger().GetExecutionContext().frame;
                 if (cur_frame == NULL)
                 {
                     result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
@@ -458,7 +457,7 @@ CommandObjectBreakpointSet::Execute
 //-------------------------------------------------------------------------
 #pragma mark MultiwordBreakpoint
 
-CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInterpreter *interpreter) :
+CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("breakpoint",
                               "A set of commands for operating on breakpoints.",
                               "breakpoint <command> [<command-options>]")
@@ -480,13 +479,13 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     modify_command_object->SetCommandName ("breakpoint modify");
     set_command_object->SetCommandName("breakpoint set");
 
-    status = LoadSubCommand (list_command_object, "list", interpreter);
-    status = LoadSubCommand (enable_command_object, "enable", interpreter);
-    status = LoadSubCommand (disable_command_object, "disable", interpreter);
-    status = LoadSubCommand (delete_command_object, "delete", interpreter);
-    status = LoadSubCommand (set_command_object, "set", interpreter);
-    status = LoadSubCommand (command_command_object, "command", interpreter);
-    status = LoadSubCommand (modify_command_object, "modify", interpreter);
+    status = LoadSubCommand (interpreter, "list",       list_command_object);
+    status = LoadSubCommand (interpreter, "enable",     enable_command_object);
+    status = LoadSubCommand (interpreter, "disable",    disable_command_object);
+    status = LoadSubCommand (interpreter, "delete",     delete_command_object);
+    status = LoadSubCommand (interpreter, "set",        set_command_object);
+    status = LoadSubCommand (interpreter, "command",    command_command_object);
+    status = LoadSubCommand (interpreter, "modify",     modify_command_object);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()
@@ -653,13 +652,12 @@ CommandObjectBreakpointList::GetOptions ()
 bool
 CommandObjectBreakpointList::Execute
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -689,7 +687,7 @@ CommandObjectBreakpointList::Execute
         for (int i = 0; i < num_breakpoints; ++i)
         {
             Breakpoint *breakpoint = breakpoints.GetBreakpointByIndex (i).get();
-            AddBreakpointDescription (context, &output_stream, breakpoint, m_options.m_level);
+            AddBreakpointDescription (&output_stream, breakpoint, m_options.m_level);
         }
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
@@ -705,7 +703,7 @@ CommandObjectBreakpointList::Execute
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
                 Breakpoint *breakpoint = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
-                AddBreakpointDescription (context, &output_stream, breakpoint, m_options.m_level);
+                AddBreakpointDescription (&output_stream, breakpoint, m_options.m_level);
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
@@ -743,10 +741,14 @@ CommandObjectBreakpointEnable::~CommandObjectBreakpointEnable ()
 
 
 bool
-CommandObjectBreakpointEnable::Execute (Args& args, CommandContext *context,
-                                          CommandInterpreter *interpreter, CommandReturnObject &result)
+CommandObjectBreakpointEnable::Execute 
+(
+    CommandInterpreter &interpreter,
+    Args& args, 
+    CommandReturnObject &result
+)
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -838,10 +840,14 @@ CommandObjectBreakpointDisable::~CommandObjectBreakpointDisable ()
 }
 
 bool
-CommandObjectBreakpointDisable::Execute (Args& args, CommandContext *context,
-                                           CommandInterpreter *interpreter, CommandReturnObject &result)
+CommandObjectBreakpointDisable::Execute
+(
+    CommandInterpreter &interpreter,
+    Args& args, 
+    CommandReturnObject &result
+)
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -929,10 +935,14 @@ CommandObjectBreakpointDelete::~CommandObjectBreakpointDelete ()
 }
 
 bool
-CommandObjectBreakpointDelete::Execute (Args& args, CommandContext *context,
-                                          CommandInterpreter *interpreter, CommandReturnObject &result)
+CommandObjectBreakpointDelete::Execute 
+(
+    CommandInterpreter &interpreter,
+    Args& args, 
+    CommandReturnObject &result
+)
 {
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");
@@ -1163,9 +1173,8 @@ CommandObjectBreakpointModify::GetOptions ()
 bool
 CommandObjectBreakpointModify::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -1176,7 +1185,7 @@ CommandObjectBreakpointModify::Execute
         return false;
     }
 
-    Target *target = context->GetTarget();
+    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
     if (target == NULL)
     {
         result.AppendError ("Invalid target, set executable file using 'file' command.");

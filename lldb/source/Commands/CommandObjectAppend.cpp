@@ -37,9 +37,8 @@ CommandObjectAppend::~CommandObjectAppend ()
 bool
 CommandObjectAppend::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -64,7 +63,7 @@ CommandObjectAppend::Execute
     }
     else
     {
-        StateVariable *var = interpreter->GetStateVariable(var_name);
+        StateVariable *var = interpreter.GetStateVariable(var_name);
         if (var == NULL)
         {
             result.AppendErrorWithFormat ("'%s' is not a settable internal variable.\n", var_name);

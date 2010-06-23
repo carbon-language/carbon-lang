@@ -24,12 +24,12 @@ class InputReader
 public:
 
     typedef size_t (*Callback) (void *baton, 
-                                InputReader *reader, 
+                                InputReader &reader, 
                                 lldb::InputReaderAction notification,
                                 const char *bytes, 
                                 size_t bytes_len);
 
-    InputReader ();
+    InputReader (Debugger &debugger);
 
     virtual
     ~InputReader ();
@@ -71,11 +71,11 @@ public:
     virtual size_t
     HandleRawBytes (const char *bytes, size_t bytes_len);
 
-    FILE *
-    GetInputFileHandle ();
-
-    FILE *
-    GetOutputFileHandle ();
+    Debugger &
+    GetDebugger()
+    {
+        return m_debugger;
+    }
 
     bool 
     IsActive () const
@@ -95,6 +95,7 @@ protected:
     void
     Notify (lldb::InputReaderAction notification);
 
+    Debugger &m_debugger;
     Callback m_callback;
     void *m_callback_baton;
     std::string m_end_token;

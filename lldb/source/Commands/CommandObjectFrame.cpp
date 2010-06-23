@@ -16,7 +16,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Interpreter/CommandContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
@@ -51,12 +51,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(context->GetExecutionContext());
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.frame)
         {
             exe_ctx.frame->Dump (&result.GetOutputStream(), true);
@@ -95,12 +94,11 @@ public:
     }
 
     bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (context->GetExecutionContext());
+        ExecutionContext exe_ctx (interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.thread)
         {
             if (command.GetArgumentCount() == 1)
@@ -156,13 +154,13 @@ public:
 // CommandObjectMultiwordFrame
 //-------------------------------------------------------------------------
 
-CommandObjectMultiwordFrame::CommandObjectMultiwordFrame (CommandInterpreter *interpreter) :
+CommandObjectMultiwordFrame::CommandObjectMultiwordFrame (CommandInterpreter &interpreter) :
     CommandObjectMultiword ("frame",
                             "A set of commands for operating on the current thread's frames.",
                             "frame <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand (CommandObjectSP (new CommandObjectFrameInfo ()), "info", interpreter);
-    LoadSubCommand (CommandObjectSP (new CommandObjectFrameSelect ()), "select", interpreter);
+    LoadSubCommand (interpreter, "info",   CommandObjectSP (new CommandObjectFrameInfo ()));
+    LoadSubCommand (interpreter, "select", CommandObjectSP (new CommandObjectFrameSelect ()));
 }
 
 CommandObjectMultiwordFrame::~CommandObjectMultiwordFrame ()

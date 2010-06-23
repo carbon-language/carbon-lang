@@ -31,25 +31,18 @@ public:
     virtual
     ~CommandObjectHelp ();
 
-    bool
-    OldExecute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result);
-    
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleCompletion (Args &input,
+    HandleCompletion (CommandInterpreter &interpreter,
+                      Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
-                      CommandInterpreter *interpreter,
                       StringList &matches);
 
 };

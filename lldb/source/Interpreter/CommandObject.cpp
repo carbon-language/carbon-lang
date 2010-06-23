@@ -133,21 +133,20 @@ CommandObject::GetFlags() const
 bool
 CommandObject::ExecuteCommandString
 (
+    CommandInterpreter &interpreter,
     const char *command_line,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
     Args command_args(command_line);
-    return ExecuteWithOptions (command_args, context, interpreter, result);
+    return ExecuteWithOptions (interpreter, command_args, result);
 }
 
 bool
 CommandObject::ParseOptions
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -189,9 +188,8 @@ CommandObject::ParseOptions
 bool
 CommandObject::ExecuteWithOptions
 (
+    CommandInterpreter &interpreter,
     Args& args,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
 {
@@ -199,10 +197,10 @@ CommandObject::ExecuteWithOptions
     {
         const char *tmp_str = args.GetArgumentAtIndex (i);
         if (tmp_str[0] == '`')  // back-quote
-            args.ReplaceArgumentAtIndex (i, interpreter->ProcessEmbeddedScriptCommands (tmp_str));
+            args.ReplaceArgumentAtIndex (i, interpreter.ProcessEmbeddedScriptCommands (tmp_str));
     }
 
-    Process *process = context->GetExecutionContext().process;
+    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
     if (process == NULL)
     {
         if (GetFlags().IsSet(CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
@@ -248,11 +246,11 @@ CommandObject::ExecuteWithOptions
         }
     }
     
-    if (!ParseOptions (args, interpreter, result))
+    if (!ParseOptions (interpreter, args, result))
         return false;
 
     // Call the command-specific version of 'Execute', passing it the already processed arguments.
-    return Execute (args, context, interpreter, result);
+    return Execute (interpreter, args, result);
 }
 
 class CommandDictCommandPartialMatch
@@ -300,12 +298,12 @@ CommandObject::AddNamesMatchingPartialString (CommandObject::CommandMap &in_map,
 int
 CommandObject::HandleCompletion
 (
+    CommandInterpreter &interpreter,
     Args &input,
     int &cursor_index,
     int &cursor_char_position,
     int match_start_point,
     int max_return_elements,
-    CommandInterpreter *interpreter,
     StringList &matches
 )
 {
@@ -340,44 +338,28 @@ CommandObject::HandleCompletion
             input.DeleteArgumentAtIndex(input.GetArgumentCount() - 1);
 
             bool handled_by_options;
-            handled_by_options = cur_options->HandleOptionCompletion(input,
-                                                                     opt_element_vector,
-                                                                     cursor_index,
-                                                                     cursor_char_position,
-                                                                     match_start_point,
-                                                                     max_return_elements,
-                                                                     interpreter,
-                                                                     matches);
+            handled_by_options = cur_options->HandleOptionCompletion (interpreter, 
+                                                                      input,
+                                                                      opt_element_vector,
+                                                                      cursor_index,
+                                                                      cursor_char_position,
+                                                                      match_start_point,
+                                                                      max_return_elements,
+                                                                      matches);
             if (handled_by_options)
                 return matches.GetSize();
         }
 
         // If we got here, the last word is not an option or an option argument.
-        return HandleArgumentCompletion(input,
-                                        cursor_index,
-                                        cursor_char_position,
-                                        opt_element_vector,
-                                        match_start_point,
-                                        max_return_elements,
-                                        interpreter,
-                                        matches);
+        return HandleArgumentCompletion (interpreter, 
+                                         input,
+                                         cursor_index,
+                                         cursor_char_position,
+                                         opt_element_vector,
+                                         match_start_point,
+                                         max_return_elements,
+                                         matches);
     }
-}
-
-int
-CommandObject::HandleArgumentCompletion
-(
-    Args &input,
-    int &cursor_index,
-    int &cursor_char_position,
-    OptionElementVector &opt_element_vector,
-    int match_start_point,
-    int max_return_elements,
-    CommandInterpreter *interpreter,
-    StringList &matches
-)
-{
-    return 0;
 }
 
 // Case insensitive version of ::strstr()

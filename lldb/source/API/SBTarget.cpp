@@ -53,12 +53,12 @@ SBTarget::SBTarget ()
 }
 
 SBTarget::SBTarget (const SBTarget& rhs) :
-    m_target_sp (rhs.m_target_sp)
+    m_opaque_sp (rhs.m_opaque_sp)
 {
 }
 
 SBTarget::SBTarget(const TargetSP& target_sp) :
-    m_target_sp (target_sp)
+    m_opaque_sp (target_sp)
 {
 }
 
@@ -67,7 +67,7 @@ SBTarget::Assign (const SBTarget& rhs)
 {
     if (this != &rhs)
     {
-        m_target_sp = rhs.m_target_sp;
+        m_opaque_sp = rhs.m_opaque_sp;
     }
     return *this;
 }
@@ -83,16 +83,25 @@ SBTarget::~SBTarget()
 bool
 SBTarget::IsValid () const
 {
-    return m_target_sp.get() != NULL;
+    return m_opaque_sp.get() != NULL;
 }
 
 SBProcess
 SBTarget::GetProcess ()
 {
     SBProcess sb_process;
-    if (IsValid())
-        sb_process.SetProcess (m_target_sp->GetProcessSP());
+    if (m_opaque_sp)
+        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
     return sb_process;
+}
+
+SBDebugger
+SBTarget::GetDebugger () const
+{
+    SBDebugger debugger;
+    if (m_opaque_sp)
+        debugger.reset (m_opaque_sp->GetDebugger().GetSP());
+    return debugger;
 }
 
 SBProcess
@@ -100,11 +109,11 @@ SBTarget::CreateProcess ()
 {
     SBProcess sb_process;
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
-        SBListener sb_listener = SBDebugger::GetListener();
+        SBListener sb_listener (m_opaque_sp->GetDebugger().GetListener());
         if (sb_listener.IsValid())
-            sb_process.SetProcess (m_target_sp->CreateProcess (*sb_listener));
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (*sb_listener));
     }
     return sb_process;
 }
@@ -141,9 +150,9 @@ SBFileSpec
 SBTarget::GetExecutable ()
 {
     SBFileSpec exe_file_spec;
-    if (IsValid())
+    if (m_opaque_sp)
     {
-        ModuleSP exe_module_sp (m_target_sp->GetExecutableModule ());
+        ModuleSP exe_module_sp (m_opaque_sp->GetExecutableModule ());
         if (exe_module_sp)
             exe_file_spec.SetFileSpec (exe_module_sp->GetFileSpec());
     }
@@ -154,8 +163,8 @@ SBTarget::GetExecutable ()
 bool
 SBTarget::DeleteTargetFromList (TargetList *list)
 {
-    if (IsValid())
-        return list->DeleteTarget (m_target_sp);
+    if (m_opaque_sp)
+        return list->DeleteTarget (m_opaque_sp);
     else
         return false;
 }
@@ -163,9 +172,9 @@ SBTarget::DeleteTargetFromList (TargetList *list)
 bool
 SBTarget::MakeCurrentTarget ()
 {
-    if (IsValid())
+    if (m_opaque_sp)
     {
-        Debugger::GetSharedInstance().GetTargetList().SetCurrentTarget (m_target_sp.get());
+        m_opaque_sp->GetDebugger().GetTargetList().SetCurrentTarget (m_opaque_sp.get());
         return true;
     }
     return false;
@@ -174,24 +183,31 @@ SBTarget::MakeCurrentTarget ()
 bool
 SBTarget::operator == (const SBTarget &rhs) const
 {
-    return m_target_sp.get() == rhs.m_target_sp.get();
+    return m_opaque_sp.get() == rhs.m_opaque_sp.get();
 }
 
 bool
 SBTarget::operator != (const SBTarget &rhs) const
 {
-    return m_target_sp.get() != rhs.m_target_sp.get();
+    return m_opaque_sp.get() != rhs.m_opaque_sp.get();
 }
 
 lldb_private::Target *
-SBTarget::GetLLDBObjectPtr()
+SBTarget::operator ->() const
 {
-    return m_target_sp.get();
+    return m_opaque_sp.get();
 }
-const lldb_private::Target *
-SBTarget::GetLLDBObjectPtr() const
+
+lldb_private::Target *
+SBTarget::get() const
 {
-    return m_target_sp.get();
+    return m_opaque_sp.get();
+}
+
+void
+SBTarget::reset (const lldb::TargetSP& target_sp)
+{
+    m_opaque_sp = target_sp;
 }
 
 SBBreakpoint
@@ -207,8 +223,8 @@ SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t line)
 {
     SBBreakpoint sb_bp;
-    if (m_target_sp.get() && line != 0)
-        *sb_bp = m_target_sp->CreateBreakpoint (NULL, *sb_file_spec, line, true, false);
+    if (m_opaque_sp.get() && line != 0)
+        *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, *sb_file_spec, line, true, false);
     return sb_bp;
 }
 
@@ -216,16 +232,16 @@ SBBreakpoint
 SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_name)
 {
     SBBreakpoint sb_bp;
-    if (m_target_sp.get() && symbol_name && symbol_name[0])
+    if (m_opaque_sp.get() && symbol_name && symbol_name[0])
     {
         if (module_name && module_name[0])
         {
             FileSpec module_file_spec(module_name);
-            *sb_bp = m_target_sp->CreateBreakpoint (&module_file_spec, symbol_name, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, symbol_name, false);
         }
         else
         {
-            *sb_bp = m_target_sp->CreateBreakpoint (NULL, symbol_name, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, symbol_name, false);
         }
     }
     return sb_bp;
@@ -235,7 +251,7 @@ SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
 {
     SBBreakpoint sb_bp;
-    if (m_target_sp.get() && symbol_name_regex && symbol_name_regex[0])
+    if (m_opaque_sp.get() && symbol_name_regex && symbol_name_regex[0])
     {
         RegularExpression regexp(symbol_name_regex);
         
@@ -243,11 +259,11 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
         {
             FileSpec module_file_spec(module_name);
             
-            *sb_bp = m_target_sp->CreateBreakpoint (&module_file_spec, regexp, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_file_spec, regexp, false);
         }
         else
         {
-            *sb_bp = m_target_sp->CreateBreakpoint (NULL, regexp, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, regexp, false);
         }
     }
     return sb_bp;
@@ -259,22 +275,22 @@ SBBreakpoint
 SBTarget::BreakpointCreateByAddress (addr_t address)
 {
     SBBreakpoint sb_bp;
-    if (m_target_sp.get())
-        *sb_bp = m_target_sp->CreateBreakpoint (address, false);
+    if (m_opaque_sp.get())
+        *sb_bp = m_opaque_sp->CreateBreakpoint (address, false);
     return sb_bp;
 }
 
 void
 SBTarget::ListAllBreakpoints ()
 {
-    FILE *out_file = SBDebugger::GetOutputFileHandle();
+    FILE *out_file = m_opaque_sp->GetDebugger().GetOutputFileHandle();
     
     if (out_file == NULL)
         return;
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
-        const BreakpointList &bp_list = m_target_sp->GetBreakpointList();
+        const BreakpointList &bp_list = m_opaque_sp->GetBreakpointList();
         size_t num_bps = bp_list.GetSize();
         for (int i = 0; i < num_bps; ++i)
         {
@@ -288,8 +304,8 @@ SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)
 {
     SBBreakpoint sb_breakpoint;
-    if (m_target_sp && bp_id != LLDB_INVALID_BREAK_ID)
-        *sb_breakpoint = m_target_sp->GetBreakpointByID (bp_id);
+    if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
+        *sb_breakpoint = m_opaque_sp->GetBreakpointByID (bp_id);
     return sb_breakpoint;
 }
 
@@ -297,17 +313,17 @@ SBTarget::FindBreakpointByID (break_id_t bp_id)
 bool
 SBTarget::BreakpointDelete (break_id_t bp_id)
 {
-    if (m_target_sp)
-        return m_target_sp->RemoveBreakpointByID (bp_id);
+    if (m_opaque_sp)
+        return m_opaque_sp->RemoveBreakpointByID (bp_id);
     return false;
 }
 
 bool
 SBTarget::EnableAllBreakpoints ()
 {
-    if (m_target_sp)
+    if (m_opaque_sp)
     {
-        m_target_sp->EnableAllBreakpoints ();
+        m_opaque_sp->EnableAllBreakpoints ();
         return true;
     }
     return false;
@@ -316,9 +332,9 @@ SBTarget::EnableAllBreakpoints ()
 bool
 SBTarget::DisableAllBreakpoints ()
 {
-    if (m_target_sp)
+    if (m_opaque_sp)
     {
-        m_target_sp->DisableAllBreakpoints ();
+        m_opaque_sp->DisableAllBreakpoints ();
         return true;
     }
     return false;
@@ -327,9 +343,9 @@ SBTarget::DisableAllBreakpoints ()
 bool
 SBTarget::DeleteAllBreakpoints ()
 {
-    if (m_target_sp)
+    if (m_opaque_sp)
     {
-        m_target_sp->RemoveAllBreakpoints ();
+        m_opaque_sp->RemoveAllBreakpoints ();
         return true;
     }
     return false;
@@ -339,8 +355,8 @@ SBTarget::DeleteAllBreakpoints ()
 uint32_t
 SBTarget::GetNumModules () const
 {
-    if (m_target_sp)
-        return m_target_sp->GetImages().GetSize();
+    if (m_opaque_sp)
+        return m_opaque_sp->GetImages().GetSize();
     return 0;
 }
 
@@ -348,8 +364,8 @@ SBModule
 SBTarget::FindModule (const SBFileSpec &sb_file_spec)
 {
     SBModule sb_module;
-    if (m_target_sp && sb_file_spec.IsValid())
-        sb_module.SetModule (m_target_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL));
+    if (m_opaque_sp && sb_file_spec.IsValid())
+        sb_module.SetModule (m_opaque_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL));
     return sb_module;
 }
 
@@ -357,8 +373,8 @@ SBModule
 SBTarget::GetModuleAtIndex (uint32_t idx)
 {
     SBModule sb_module;
-    if (m_target_sp)
-        sb_module.SetModule(m_target_sp->GetImages().GetModuleAtIndex(idx));
+    if (m_opaque_sp)
+        sb_module.SetModule(m_opaque_sp->GetImages().GetModuleAtIndex(idx));
     return sb_module;
 }
 
@@ -366,7 +382,7 @@ SBTarget::GetModuleAtIndex (uint32_t idx)
 SBBroadcaster
 SBTarget::GetBroadcaster () const
 {
-    SBBroadcaster broadcaster(m_target_sp.get(), false);
+    SBBroadcaster broadcaster(m_opaque_sp.get(), false);
     return broadcaster;
 }
 
@@ -376,11 +392,11 @@ SBTarget::Disassemble (lldb::addr_t file_address_start, lldb::addr_t file_addres
     if (file_address_start == LLDB_INVALID_ADDRESS)
         return;
 
-    FILE *out = SBDebugger::GetOutputFileHandle();
+    FILE *out = m_opaque_sp->GetDebugger().GetOutputFileHandle();
     if (out == NULL)
         return;
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         SBModule module;
         if (module_name != NULL)
@@ -388,7 +404,7 @@ SBTarget::Disassemble (lldb::addr_t file_address_start, lldb::addr_t file_addres
             SBFileSpec file_spec (module_name);
             module = FindModule (file_spec);
         }
-        ArchSpec arch (m_target_sp->GetArchitecture());
+        ArchSpec arch (m_opaque_sp->GetArchitecture());
         if (!arch.IsValid())
           return;
         Disassembler *disassembler = Disassembler::FindPlugin (arch);
@@ -446,11 +462,11 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
     if (function_name == NULL)
         return;
     
-    FILE *out = SBDebugger::GetOutputFileHandle();
+    FILE *out = m_opaque_sp->GetDebugger().GetOutputFileHandle();
     if (out == NULL)
         return;
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         SBModule module;
 
@@ -460,7 +476,7 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
             module = FindModule (file_spec);
         }
 
-        ArchSpec arch (m_target_sp->GetArchitecture());
+        ArchSpec arch (m_opaque_sp->GetArchitecture());
         if (!arch.IsValid())
           return;
 
@@ -486,7 +502,7 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
         if (module_name != NULL)
             containing_module = new FileSpec (module_name);
 
-        SearchFilterSP filter_sp (m_target_sp->GetSearchFilterForModule (containing_module));
+        SearchFilterSP filter_sp (m_opaque_sp->GetSearchFilterForModule (containing_module));
         AddressResolverSP resolver_sp (new AddressResolverName (function_name));
 
         resolver_sp->ResolveAddress (*filter_sp);

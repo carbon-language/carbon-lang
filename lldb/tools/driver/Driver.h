@@ -19,6 +19,7 @@
 
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBInputReader.h"
 
@@ -59,8 +60,8 @@ public:
     void
     HandleProcessEvent (const lldb::SBEvent &event);
 
-    bool
-    ParseArgs (int argc, const char *argv[], FILE *out_fh, FILE *err_fh);
+    lldb::SBError
+    ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &do_exit);
 
     const char *
     GetFilename() const;
@@ -113,7 +114,14 @@ public:
                     Driver::OptionData &data);
 
 
+    lldb::SBDebugger &
+    GetDebugger()
+    {
+        return m_debugger;
+    }
+
 private:
+    lldb::SBDebugger m_debugger;
     lldb_utility::PseudoTerminal m_editline_pty;
     FILE *m_editline_slave_fh;
     lldb::SBInputReader m_editline_reader;

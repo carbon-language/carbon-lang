@@ -28,7 +28,7 @@ class CommandObjectMultiwordFrame : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectMultiwordFrame (CommandInterpreter *interpreter);
+    CommandObjectMultiwordFrame (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectMultiwordFrame ();

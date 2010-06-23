@@ -28,10 +28,10 @@ class CommandObjectMultiword : public CommandObject
 {
 public:
     CommandObjectMultiword (const char *name,
-                              const char *help = NULL,
-                              const char *syntax = NULL,
-                              uint32_t flags = 0);
-
+                            const char *help = NULL,
+                            const char *syntax = NULL,
+                            uint32_t flags = 0);
+    
     virtual
     ~CommandObjectMultiword ();
 
@@ -39,10 +39,12 @@ public:
     IsMultiwordObject () { return true; }
 
     bool
-    LoadSubCommand (lldb::CommandObjectSP command_obj, const char *cmd_name, CommandInterpreter *interpreter);
+    LoadSubCommand (CommandInterpreter &interpreter, 
+                    const char *cmd_name, 
+                    const lldb::CommandObjectSP& command_obj);
 
     void
-    GenerateHelpText (CommandReturnObject &result, CommandInterpreter *interpreter);
+    GenerateHelpText (CommandInterpreter &interpreter, CommandReturnObject &result);
 
     lldb::CommandObjectSP
     GetSubcommandSP (const char *sub_cmd, StringList *matches = NULL);
@@ -51,18 +53,17 @@ public:
     GetSubcommandObject (const char *sub_cmd, StringList *matches = NULL);
 
     virtual bool
-    Execute (Args& command,
-             CommandContext *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
     virtual int
-    HandleCompletion (Args &input,
+    HandleCompletion (CommandInterpreter &interpreter,
+                      Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
-                      CommandInterpreter *interpreter,
                       StringList &matches);
 
     CommandObject::CommandMap m_subcommand_dict;

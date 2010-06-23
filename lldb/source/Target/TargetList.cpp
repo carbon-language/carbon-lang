@@ -46,6 +46,7 @@ TargetList::~TargetList()
 Error
 TargetList::CreateTarget
 (
+    Debugger &debugger,
     const FileSpec& file,
     const ArchSpec& arch,
     const UUID *uuid_ptr,
@@ -74,7 +75,7 @@ TargetList::CreateTarget
                                               NULL);
     if (exe_module_sp)
     {
-        target_sp.reset(new Target);
+        target_sp.reset(new Target(debugger));
         target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
 
         if (target_sp.get())

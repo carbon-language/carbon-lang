@@ -87,8 +87,8 @@ private:
 //    void
 //    CreateIfNeeded ();
 
-    lldb_private::Communication *m_lldb_object;
-    bool m_lldb_object_owned;
+    lldb_private::Communication *m_opaque;
+    bool m_opaque_owned;
 };
 
 

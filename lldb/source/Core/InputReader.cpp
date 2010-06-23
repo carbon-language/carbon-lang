@@ -15,7 +15,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-InputReader::InputReader () :
+InputReader::InputReader (Debugger &debugger) :
+    m_debugger (debugger),
     m_callback (NULL),
     m_callback_baton (NULL),
     m_end_token (),
@@ -126,7 +127,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
                 break;
             }
 
-            if (m_callback (m_callback_baton, this, eInputReaderGotToken, p, 1) == 0)
+            if (m_callback (m_callback_baton, *this, eInputReaderGotToken, p, 1) == 0)
                 break;
             ++p;
             if (IsDone())
@@ -175,7 +176,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
                 {
                     const size_t word_len = p - word_start;
                     size_t bytes_handled = m_callback (m_callback_baton, 
-                                                       this, 
+                                                       *this, 
                                                        eInputReaderGotToken, 
                                                        word_start,
                                                        word_len);
@@ -212,7 +213,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
                     {
                         SetIsDone(true);
                         m_callback (m_callback_baton, 
-                                    this, 
+                                    *this, 
                                     eInputReaderGotToken, 
                                     line_start, 
                                     end_token - line_start);
@@ -221,7 +222,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
                     }
 
                     size_t bytes_handled = m_callback (m_callback_baton, 
-                                                       this, 
+                                                       *this, 
                                                        eInputReaderGotToken, 
                                                        line_start, 
                                                        line_length);
@@ -259,7 +260,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
             {
                 size_t length = end_token - bytes;
                 size_t bytes_handled = m_callback (m_callback_baton, 
-                                                   this, 
+                                                   *this, 
                                                    eInputReaderGotToken, 
                                                    bytes, 
                                                    length);
@@ -287,19 +288,6 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
     return 0;
 }
 
-
-FILE *
-InputReader::GetInputFileHandle ()
-{
-    return Debugger::GetSharedInstance().GetInputFileHandle ();
-}
-
-FILE *
-InputReader::GetOutputFileHandle ()
-{
-    return Debugger::GetSharedInstance().GetOutputFileHandle ();
-}
-
 const char *
 InputReader::GetPrompt () const
 {
@@ -314,7 +302,7 @@ InputReader::RefreshPrompt ()
 {
     if (!m_prompt.empty())
     {
-        FILE *out_fh = GetOutputFileHandle();
+        FILE *out_fh = m_debugger.GetOutputFileHandle();
         if (out_fh)
             ::fprintf (out_fh, "%s", m_prompt.c_str());
     }
@@ -339,5 +327,5 @@ InputReader::Notify (InputReaderAction notification)
         return; // We don't notify the tokens here, it is done in HandleRawBytes
     }
     if (m_callback)
-        m_callback (m_callback_baton, this, notification, NULL, 0);
+        m_callback (m_callback_baton, *this, notification, NULL, 0);
 }

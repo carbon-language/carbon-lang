@@ -35,13 +35,12 @@ CommandObjectQuit::~CommandObjectQuit ()
 bool
 CommandObjectQuit::Execute
 (
-    Args& command,
-    CommandContext *context,
-    CommandInterpreter *interpreter,
+    CommandInterpreter &interpreter, 
+    Args& args,
     CommandReturnObject &result
 )
 {
-    interpreter->BroadcastEvent (CommandInterpreter::eBroadcastBitQuitCommandReceived);
+    interpreter.BroadcastEvent (CommandInterpreter::eBroadcastBitQuitCommandReceived);
     result.SetStatus (eReturnStatusQuit);
     return true;
 }
