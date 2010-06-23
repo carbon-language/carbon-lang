@@ -48,6 +48,15 @@ int z;
 
 static int local_func(int x) { return x; }
 
+@interface CWithExt
+@end
+@interface CWithExt ()
+@end
+@interface CWithExt ()
+@end
+@implementation CWithExt
+@end
+
 // CHECK: usrs.m c:usrs.m@3:19@F@my_helper Extent=[3:19 - 3:60]
 // CHECK: usrs.m c:usrs.m@3:29@F@my_helper@x Extent=[3:29 - 3:34]
 // CHECK: usrs.m c:usrs.m@3:36@F@my_helper@y Extent=[3:36 - 3:41]
@@ -84,4 +93,9 @@ static int local_func(int x) { return x; }
 // CHECK: usrs.m c:@z Extent=[47:1 - 47:6]
 // CHECK: usrs.m c:usrs.m@49:12@F@local_func Extent=[49:12 - 49:43]
 // CHECK: usrs.m c:usrs.m@49:23@F@local_func@x Extent=[49:23 - 49:28]
+// CHECK: usrs.m c:objc(cs)CWithExt Extent=[51:1 - 52:5]
+// CHECK: usrs.m c:objc(cy)CWithExt@ Extent=[53:1 - 54:5]
+// CHECK: usrs.m c:objc(cy)CWithExt@ Extent=[55:1 - 56:5]
+// CHECK: usrs.m c:objc(cs)CWithExt Extent=[57:1 - 58:2]
+
 
