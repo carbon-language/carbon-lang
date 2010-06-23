@@ -110,17 +110,35 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
                      SelectionDAG *DAG) {
   SmallVector<EVT, 4> VTs;
+
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
     VTs.push_back(N->getValueType(i));
+
   if (AddFlag)
     VTs.push_back(MVT::Flag);
+
   SmallVector<SDValue, 4> Ops;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     Ops.push_back(N->getOperand(i));
+
   if (Flag.getNode())
     Ops.push_back(Flag);
+
   SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
+  MachineSDNode::mmo_iterator Begin = 0, End = 0;
+  MachineSDNode *MN = dyn_cast<MachineSDNode>(N);
+
+  // Store memory references.
+  if (MN) {
+    Begin = MN->memoperands_begin();
+    End = MN->memoperands_end();
+  }
+
   DAG->MorphNodeTo(N, N->getOpcode(), VTList, &Ops[0], Ops.size());
+
+  // Reset the memory references
+  if (MN)
+    MN->setMemRefs(Begin, End);
 }
 
 /// ClusterNeighboringLoads - Force nearby loads together by "flagging" them.
@@ -196,13 +214,16 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   // ensure they are scheduled in order of increasing addresses.
   SDNode *Lead = Loads[0];
   AddFlags(Lead, SDValue(0,0), true, DAG);
+
   SDValue InFlag = SDValue(Lead, Lead->getNumValues()-1);
   for (unsigned i = 1, e = Loads.size(); i != e; ++i) {
     bool OutFlag = i < e-1;
     SDNode *Load = Loads[i];
     AddFlags(Load, InFlag, OutFlag, DAG);
+
     if (OutFlag)
       InFlag = SDValue(Load, Load->getNumValues()-1);
+
     ++LoadsClustered;
   }
 }

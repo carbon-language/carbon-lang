@@ -9,11 +9,11 @@
 ; lowering of arguments potentially overwrites the value.
 ;
 ; Move return address (76(%esp)) to a temporary register (%ebp)
-; CHECK: movl 76(%esp), %ebp
+; CHECK: movl 76(%esp), [[REGISTER:%[a-z]+]]
 ; Overwrite return addresss
-; CHECK: movl %ecx, 76(%esp)
+; CHECK: movl %ebx, 76(%esp)
 ; Move return address from temporary register (%ebp) to new stack location (60(%esp))
-; CHECK: movl %ebp, 60(%esp)
+; CHECK: movl [[REGISTER]], 60(%esp)
 
 %tupl_p = type [9 x i32]*
 
