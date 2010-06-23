@@ -112,15 +112,14 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
     
     QualType QT = QualType::getFromOpaquePtr(type);
     clang::Type *T = QT.getTypePtr();
+    const FunctionProtoType *FPT = T->getAs<FunctionProtoType>();
     
-    if (T->isFunctionProtoType())
-    {
-        FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(T);
-        
+    if (FPT)
+    {        
         unsigned NumArgs = FPT->getNumArgs();
         unsigned ArgIndex;
         
-        ParmVarDecl *ParmVarDecls[NumArgs];
+        ParmVarDecl **ParmVarDecls = new ParmVarDecl*[NumArgs];
         
         for (ArgIndex = 0; ArgIndex < NumArgs; ++ArgIndex)
         {
@@ -138,6 +137,8 @@ clang::NamedDecl *NameSearchContext::AddFunDecl(void *type) {
         }
         
         Decl->setParams(ParmVarDecls, NumArgs);
+        
+        delete [] ParmVarDecls;
     }
     
     Decls.push_back(Decl);
