@@ -664,11 +664,13 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
 
   // FIXME: Hack to recognize cmp<comparison code>{ss,sd,ps,pd}.
   const MCExpr *ExtraImmOp = 0;
-  if (PatchedName.startswith("cmp") &&
+  if ((PatchedName.startswith("cmp") || PatchedName.startswith("vcmp")) &&
       (PatchedName.endswith("ss") || PatchedName.endswith("sd") ||
        PatchedName.endswith("ps") || PatchedName.endswith("pd"))) {
+    bool IsVCMP = PatchedName.startswith("vcmp");
+    unsigned SSECCIdx = IsVCMP ? 4 : 3;
     unsigned SSEComparisonCode = StringSwitch<unsigned>(
-      PatchedName.slice(3, PatchedName.size() - 2))
+      PatchedName.slice(SSECCIdx, PatchedName.size() - 2))
       .Case("eq", 0)
       .Case("lt", 1)
       .Case("le", 2)
@@ -682,14 +684,14 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
       ExtraImmOp = MCConstantExpr::Create(SSEComparisonCode,
                                           getParser().getContext());
       if (PatchedName.endswith("ss")) {
-        PatchedName = "cmpss";
+        PatchedName = IsVCMP ? "vcmpss" : "cmpss";
       } else if (PatchedName.endswith("sd")) {
-        PatchedName = "cmpsd";
+        PatchedName = IsVCMP ? "vcmpsd" : "cmpsd";
       } else if (PatchedName.endswith("ps")) {
-        PatchedName = "cmpps";
+        PatchedName = IsVCMP ? "vcmpps" : "cmpps";
       } else {
         assert(PatchedName.endswith("pd") && "Unexpected mnemonic!");
-        PatchedName = "cmppd";
+        PatchedName = IsVCMP ? "vcmppd" : "cmppd";
       }
     }
   }
