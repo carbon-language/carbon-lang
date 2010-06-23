@@ -4,7 +4,7 @@ include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckCXXSourceCompiles)
 
-if( UNIX )
+if( UNIX AND NOT BEOS )
   # Used by check_symbol_exists:
   set(CMAKE_REQUIRED_LIBRARIES m)
 endif()

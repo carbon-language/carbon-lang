@@ -80,6 +80,7 @@
 // the given platform; otherwise undefined):
 //   GTEST_OS_AIX      - IBM AIX
 //   GTEST_OS_CYGWIN   - Cygwin
+//   GTEST_OS_HAIKU    - Haiku
 //   GTEST_OS_LINUX    - Linux
 //   GTEST_OS_MAC      - Mac OS X
 //   GTEST_OS_SOLARIS  - Sun Solaris
@@ -220,11 +221,11 @@
 #elif defined(_AIX)
 #define GTEST_OS_AIX 1
 #elif defined(__HAIKU__)
-#define GTEST_OS_HAIKU
+#define GTEST_OS_HAIKU 1
 #endif  // __CYGWIN__
 
-#if GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC || GTEST_OS_SYMBIAN || \
-    GTEST_OS_SOLARIS || GTEST_OS_AIX
+#if GTEST_OS_CYGWIN || GTEST_OS_HAIKU || GTEST_OS_LINUX || GTEST_OS_MAC || \
+    GTEST_OS_SYMBIAN || GTEST_OS_SOLARIS || GTEST_OS_AIX
 
 // On some platforms, <regex.h> needs someone to define size_t, and
 // won't compile otherwise.  We can #include it here as we already
