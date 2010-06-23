@@ -1322,12 +1322,20 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 }
 
 // GNU extension: vector types
-// <type>        ::= <vector-type>
-// <vector-type> ::= Dv <positive dimension number> _ <element type>
-//               ::= Dv [<dimension expression>] _ <element type>
+// <type>                  ::= <vector-type>
+// <vector-type>           ::= Dv <positive dimension number> _
+//                                    <extended element type>
+//                         ::= Dv [<dimension expression>] _ <element type>
+// <extended element type> ::= <element type>
+//                         ::= p # AltiVec vector pixel
 void CXXNameMangler::mangleType(const VectorType *T) {
   Out << "Dv" << T->getNumElements() << '_';
-  mangleType(T->getElementType());
+  if (T->getAltiVecSpecific() == VectorType::Pixel)
+    Out << 'p';
+  else if (T->getAltiVecSpecific() == VectorType::Bool)
+    Out << 'b';
+  else
+    mangleType(T->getElementType());
 }
 void CXXNameMangler::mangleType(const ExtVectorType *T) {
   mangleType(static_cast<const VectorType*>(T));

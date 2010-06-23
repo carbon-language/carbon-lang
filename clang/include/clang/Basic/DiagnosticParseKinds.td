@@ -171,11 +171,15 @@ def err_typename_invalid_functionspec : Error<
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
 def err_invalid_vector_decl_spec_combination : Error<
-  "cannot combine with previous '%0' declaration specifier. '__vector' must be first">;
+  "cannot combine with previous '%0' declaration specifier. "
+  "'__vector' must be first">;
 def err_invalid_pixel_decl_spec_combination : Error<
-  "'__pixel' must be preceded by '__vector'.  '%0' declaration specifier not allowed here">;
-def err_invalid_vector_double_decl_spec_combination : Error<
-  "cannot use 'double' with '__vector'">;
+  "'__pixel' must be preceded by '__vector'.  "
+  "'%0' declaration specifier not allowed here">;
+def err_invalid_vector_decl_spec : Error<
+  "cannot use '%0' with '__vector'">;
+def err_invalid_vector_bool_decl_spec : Error<
+  "cannot use '%0' with '__vector bool'">;
 def warn_vector_long_decl_spec_combination : Warning<
   "Use of 'long' with '__vector' is deprecated">, InGroup<Deprecated>;
 def err_friend_invalid_in_context : Error<

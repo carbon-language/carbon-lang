@@ -563,7 +563,7 @@ public:
   /// getVectorType - Return the unique reference to a vector type of
   /// the specified element type and size. VectorType must be a built-in type.
   QualType getVectorType(QualType VectorType, unsigned NumElts,
-                         bool AltiVec, bool IsPixel);
+                         VectorType::AltiVecSpecific AltiVecSpec);
 
   /// getExtVectorType - Return the unique reference to an extended vector type
   /// of the specified element type and size.  VectorType must be a built-in

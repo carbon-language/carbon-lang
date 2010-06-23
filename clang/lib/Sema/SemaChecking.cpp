@@ -782,7 +782,8 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       return ExprError();
     } else if (numElements != numResElements) {
       QualType eltType = LHSType->getAs<VectorType>()->getElementType();
-      resType = Context.getVectorType(eltType, numResElements, false, false);
+      resType = Context.getVectorType(eltType, numResElements,
+                                      VectorType::NotAltiVec);
     }
   }
 

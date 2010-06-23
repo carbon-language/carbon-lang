@@ -442,7 +442,7 @@ public:
   /// By default, performs semantic analysis when building the vector type.
   /// Subclasses may override this routine to provide different behavior.
   QualType RebuildVectorType(QualType ElementType, unsigned NumElements,
-    bool IsAltiVec, bool IsPixel);
+    VectorType::AltiVecSpecific AltiVecSpec);
 
   /// \brief Build a new extended vector type given the element type and
   /// number of elements.
@@ -2811,7 +2811,7 @@ QualType TreeTransform<Derived>::TransformVectorType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       ElementType != T->getElementType()) {
     Result = getDerived().RebuildVectorType(ElementType, T->getNumElements(),
-      T->isAltiVec(), T->isPixel());
+      T->getAltiVecSpecific());
     if (Result.isNull())
       return QualType();
   }
@@ -6345,11 +6345,10 @@ TreeTransform<Derived>::RebuildDependentSizedArrayType(QualType ElementType,
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildVectorType(QualType ElementType,
-                                       unsigned NumElements,
-                                       bool IsAltiVec, bool IsPixel) {
+                                     unsigned NumElements,
+                                     VectorType::AltiVecSpecific AltiVecSpec) {
   // FIXME: semantic checking!
-  return SemaRef.Context.getVectorType(ElementType, NumElements,
-                                       IsAltiVec, IsPixel);
+  return SemaRef.Context.getVectorType(ElementType, NumElements, AltiVecSpec);
 }
 
 template<typename Derived>

@@ -383,8 +383,12 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
   } else if (DS.isTypeAltiVecVector()) {
     unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(Result));
     assert(typeSize > 0 && "type size for vector must be greater than 0 bits");
-    Result = Context.getVectorType(Result, 128/typeSize, true,
-      DS.isTypeAltiVecPixel());
+    VectorType::AltiVecSpecific AltiVecSpec = VectorType::AltiVec;
+    if (DS.isTypeAltiVecPixel())
+      AltiVecSpec = VectorType::Pixel;
+    else if (DS.isTypeAltiVecBool())
+      AltiVecSpec = VectorType::Bool;
+    Result = Context.getVectorType(Result, 128/typeSize, AltiVecSpec);
   }
 
   assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
@@ -1162,7 +1166,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         }
 
         if (FTI.NumArgs && FTI.ArgInfo[0].Param == 0) {
-          // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function definition.
+          // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function
+          // definition.
           Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);
           D.setInvalidType(true);
           break;
@@ -1880,7 +1885,8 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
 /// The raw attribute should contain precisely 1 argument, the vector size for
 /// the variable, measured in bytes. If curType and rawAttr are well formed,
 /// this routine will return a new vector type.
-static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, Sema &S) {
+static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
+                                 Sema &S) {
   // Check the attribute arugments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
@@ -1923,7 +1929,8 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
 
   // Success! Instantiate the vector type, the number of elements is > 0, and
   // not required to be a power of 2, unlike GCC.
-  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize, false, false);
+  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize,
+                                    VectorType::NotAltiVec);
 }
 
 void ProcessTypeAttributeList(Sema &S, QualType &Result,

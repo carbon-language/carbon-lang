@@ -440,9 +440,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     if (Vec1->getNumElements() != Vec2->getNumElements())
       return false;
-    if (Vec1->isAltiVec() != Vec2->isAltiVec())
-      return false;
-    if (Vec1->isPixel() != Vec2->isPixel())
+    if (Vec1->getAltiVecSpecific() != Vec2->getAltiVecSpecific())
       return false;
     break;
   }
@@ -1191,8 +1189,7 @@ QualType ASTNodeImporter::VisitVectorType(VectorType *T) {
   
   return Importer.getToContext().getVectorType(ToElementType, 
                                                T->getNumElements(),
-                                               T->isAltiVec(),
-                                               T->isPixel());
+                                               T->getAltiVecSpecific());
 }
 
 QualType ASTNodeImporter::VisitExtVectorType(ExtVectorType *T) {

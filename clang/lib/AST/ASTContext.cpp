@@ -1514,7 +1514,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
 /// getVectorType - Return the unique reference to a vector type of
 /// the specified element type and size. VectorType must be a built-in type.
 QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
-                                   bool IsAltiVec, bool IsPixel) {
+    VectorType::AltiVecSpecific AltiVecSpec) {
   BuiltinType *baseType;
 
   baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
@@ -1522,8 +1522,8 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
-  VectorType::Profile(ID, vecType, NumElts, Type::Vector,
-    IsAltiVec, IsPixel);
+  VectorType::Profile(ID, vecType, NumElts, Type::Vector, AltiVecSpec);
+
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
@@ -1531,16 +1531,19 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!vecType.isCanonical() || IsAltiVec || IsPixel) {
-    Canonical = getVectorType(getCanonicalType(vecType),
-      NumElts, false, false);
+  if (!vecType.isCanonical() || (AltiVecSpec == VectorType::AltiVec)) {
+    // pass VectorType::NotAltiVec for AltiVecSpec to make AltiVec canonical
+    // vector type (except 'vector bool ...' and 'vector Pixel') the same as
+    // the equivalent GCC vector types
+    Canonical = getVectorType(getCanonicalType(vecType), NumElts,
+      VectorType::NotAltiVec);
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   VectorType *New = new (*this, TypeAlignment)
-    VectorType(vecType, NumElts, Canonical, IsAltiVec, IsPixel);
+    VectorType(vecType, NumElts, Canonical, AltiVecSpec);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -1556,7 +1559,8 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
 
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
-  VectorType::Profile(ID, vecType, NumElts, Type::ExtVector, false, false);
+  VectorType::Profile(ID, vecType, NumElts, Type::ExtVector,
+                      VectorType::NotAltiVec);
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
@@ -4933,7 +4937,7 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
   // Turn <4 x signed int> -> <4 x unsigned int>
   if (const VectorType *VTy = T->getAs<VectorType>())
     return getVectorType(getCorrespondingUnsignedType(VTy->getElementType()),
-             VTy->getNumElements(), VTy->isAltiVec(), VTy->isPixel());
+             VTy->getNumElements(), VTy->getAltiVecSpecific());
 
   // For enums, we return the unsigned version of the base type.
   if (const EnumType *ETy = T->getAs<EnumType>())
@@ -5091,7 +5095,8 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
 
     QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
     // FIXME: Don't know what to do about AltiVec.
-    Type = Context.getVectorType(ElementType, NumElements, false, false);
+    Type = Context.getVectorType(ElementType, NumElements,
+                                 VectorType::NotAltiVec);
     break;
   }
   case 'X': {

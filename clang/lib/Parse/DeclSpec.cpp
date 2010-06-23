@@ -253,7 +253,8 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
     return BadSpecifier(W, (TSW)TypeSpecWidth, PrevSpec, DiagID);
   TypeSpecWidth = W;
   TSWLoc = Loc;
-  if (TypeAltiVecVector && ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
+  if (TypeAltiVecVector && !TypeAltiVecBool &&
+      ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
     DiagID = diag::warn_vector_long_decl_spec_combination;
     return true;
@@ -290,13 +291,18 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
+  if (TypeAltiVecVector && (T == TST_bool) && !TypeAltiVecBool) {
+    TypeAltiVecBool = true;
+    TSTLoc = Loc;
+    return false;
+  }
   TypeSpecType = T;
   TypeRep = Rep;
   TSTLoc = Loc;
   TypeSpecOwned = Owned;
-  if (TypeAltiVecVector && (TypeSpecType == TST_double)) {
+  if (TypeAltiVecVector && !TypeAltiVecBool && (TypeSpecType == TST_double)) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
-    DiagID = diag::err_invalid_vector_double_decl_spec_combination;
+    DiagID = diag::err_invalid_vector_decl_spec;
     return true;
   }
   return false;
@@ -316,14 +322,12 @@ bool DeclSpec::SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
 
 bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
                           const char *&PrevSpec, unsigned &DiagID) {
-  if (!TypeAltiVecVector || (TypeSpecType != TST_unspecified)) {
+  if (!TypeAltiVecVector || TypeAltiVecPixel ||
+      (TypeSpecType != TST_unspecified)) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
     DiagID = diag::err_invalid_pixel_decl_spec_combination;
     return true;
   }
-  TypeSpecType = TST_int;
-  TypeSpecSign = TSS_unsigned;
-  TypeSpecWidth = TSW_short;
   TypeAltiVecPixel = isAltiVecPixel;
   TSTLoc = Loc;
   return false;
@@ -438,6 +442,42 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   // Check the type specifier components first.
   SourceManager &SrcMgr = PP.getSourceManager();
 
+  // Validate and finalize AltiVec vector declspec.
+  if (TypeAltiVecVector) {
+    if (TypeAltiVecBool) {
+      // Sign specifiers are not allowed with vector bool. (PIM 2.1)
+      if (TypeSpecSign != TSS_unspecified) {
+        Diag(D, TSSLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+          << getSpecifierName((TSS)TypeSpecSign);
+      }
+
+      // Only char/int are valid with vector bool. (PIM 2.1)
+      if ((TypeSpecType != TST_unspecified) && (TypeSpecType != TST_char) &&
+          (TypeSpecType != TST_int) || TypeAltiVecPixel) {
+        Diag(D, TSTLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+          << (TypeAltiVecPixel ? "__pixel" :
+                                 getSpecifierName((TST)TypeSpecType));
+      }
+
+      // Only 'short' is valid with vector bool. (PIM 2.1)
+      if ((TypeSpecWidth != TSW_unspecified) && (TypeSpecWidth != TSW_short))
+        Diag(D, TSWLoc, SrcMgr, diag::err_invalid_vector_bool_decl_spec)
+          << getSpecifierName((TSW)TypeSpecWidth);
+
+      // Elements of vector bool are interpreted as unsigned. (PIM 2.1)
+      if ((TypeSpecType == TST_char) || (TypeSpecType == TST_int) ||
+          (TypeSpecWidth != TSW_unspecified))
+        TypeSpecSign = TSS_unsigned;
+    }
+
+    if (TypeAltiVecPixel) {
+      //TODO: perform validation
+      TypeSpecType = TST_int;
+      TypeSpecSign = TSS_unsigned;
+      TypeSpecWidth = TSW_short;
+    }
+  }
+
   // signed/unsigned are only valid with int/char/wchar_t.
   if (TypeSpecSign != TSS_unspecified) {
     if (TypeSpecType == TST_unspecified)
@@ -512,7 +552,6 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
 
     ClearStorageClassSpecs();
   }
-
 
   // Okay, now we can infer the real type.
 

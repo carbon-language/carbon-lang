@@ -227,12 +227,13 @@ void TypePrinter::PrintDependentSizedExtVector(
 }
 
 void TypePrinter::PrintVector(const VectorType *T, std::string &S) { 
-  if (T->isAltiVec()) {
-    if (T->isPixel())
+  if (T->getAltiVecSpecific() != VectorType::NotAltiVec) {
+    if (T->getAltiVecSpecific() == VectorType::Pixel)
       S = "__vector __pixel " + S;
     else {
       Print(T->getElementType(), S);
-      S = "__vector " + S;
+      S = ((T->getAltiVecSpecific() == VectorType::Bool)
+           ? "__vector __bool " : "__vector ") + S;
     }
   } else {
     // FIXME: We prefer to print the size directly here, but have no way
