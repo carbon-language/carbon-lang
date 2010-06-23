@@ -28,12 +28,12 @@ using namespace llvm;
 Module *llvm::CloneModule(const Module *M) {
   // Create the value map that maps things from the old module over to the new
   // module.
-  DenseMap<const Value*, Value*> ValueMap;
-  return CloneModule(M, ValueMap);
+  DenseMap<const Value*, Value*> VMap;
+  return CloneModule(M, VMap);
 }
 
 Module *llvm::CloneModule(const Module *M,
-                          DenseMap<const Value*, Value*> &ValueMap) {
+                          DenseMap<const Value*, Value*> &VMap) {
   // First off, we need to create the new module...
   Module *New = new Module(M->getModuleIdentifier(), M->getContext());
   New->setDataLayout(M->getDataLayout());
@@ -51,7 +51,7 @@ Module *llvm::CloneModule(const Module *M,
     New->addLibrary(*I);
 
   // Loop over all of the global variables, making corresponding globals in the
-  // new module.  Here we add them to the ValueMap and to the new Module.  We
+  // new module.  Here we add them to the VMap and to the new Module.  We
   // don't worry about attributes or initializers, they will come later.
   //
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
@@ -62,7 +62,7 @@ Module *llvm::CloneModule(const Module *M,
                                             GlobalValue::ExternalLinkage, 0,
                                             I->getName());
     GV->setAlignment(I->getAlignment());
-    ValueMap[I] = GV;
+    VMap[I] = GV;
   }
 
   // Loop over the functions in the module, making external functions as before
@@ -71,13 +71,13 @@ Module *llvm::CloneModule(const Module *M,
       Function::Create(cast<FunctionType>(I->getType()->getElementType()),
                        GlobalValue::ExternalLinkage, I->getName(), New);
     NF->copyAttributesFrom(I);
-    ValueMap[I] = NF;
+    VMap[I] = NF;
   }
 
   // Loop over the aliases in the module
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I)
-    ValueMap[I] = new GlobalAlias(I->getType(), GlobalAlias::ExternalLinkage,
+    VMap[I] = new GlobalAlias(I->getType(), GlobalAlias::ExternalLinkage,
                                   I->getName(), NULL, New);
   
   // Now that all of the things that global variable initializer can refer to
@@ -86,10 +86,10 @@ Module *llvm::CloneModule(const Module *M,
   //
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I) {
-    GlobalVariable *GV = cast<GlobalVariable>(ValueMap[I]);
+    GlobalVariable *GV = cast<GlobalVariable>(VMap[I]);
     if (I->hasInitializer())
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
-                                                 ValueMap)));
+                                                 VMap)));
     GV->setLinkage(I->getLinkage());
     GV->setThreadLocal(I->isThreadLocal());
     GV->setConstant(I->isConstant());
@@ -98,17 +98,17 @@ Module *llvm::CloneModule(const Module *M,
   // Similarly, copy over function bodies now...
   //
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    Function *F = cast<Function>(ValueMap[I]);
+    Function *F = cast<Function>(VMap[I]);
     if (!I->isDeclaration()) {
       Function::arg_iterator DestI = F->arg_begin();
       for (Function::const_arg_iterator J = I->arg_begin(); J != I->arg_end();
            ++J) {
         DestI->setName(J->getName());
-        ValueMap[J] = DestI++;
+        VMap[J] = DestI++;
       }
 
       SmallVector<ReturnInst*, 8> Returns;  // Ignore returns cloned.
-      CloneFunctionInto(F, I, ValueMap, Returns);
+      CloneFunctionInto(F, I, VMap, Returns);
     }
 
     F->setLinkage(I->getLinkage());
@@ -117,10 +117,10 @@ Module *llvm::CloneModule(const Module *M,
   // And aliases
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I) {
-    GlobalAlias *GA = cast<GlobalAlias>(ValueMap[I]);
+    GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
     GA->setLinkage(I->getLinkage());
     if (const Constant* C = I->getAliasee())
-      GA->setAliasee(cast<Constant>(MapValue(C, ValueMap)));
+      GA->setAliasee(cast<Constant>(MapValue(C, VMap)));
   }
 
   // And named metadata....
@@ -129,7 +129,7 @@ Module *llvm::CloneModule(const Module *M,
     const NamedMDNode &NMD = *I;
     SmallVector<MDNode*, 4> MDs;
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      MDs.push_back(cast<MDNode>(MapValue(NMD.getOperand(i), ValueMap)));
+      MDs.push_back(cast<MDNode>(MapValue(NMD.getOperand(i), VMap)));
     NamedMDNode::Create(New->getContext(), NMD.getName(),
                         MDs.data(), MDs.size(), New);
   }
@@ -144,7 +144,7 @@ Module *llvm::CloneModule(const Module *M,
         BI->getAllMetadata(MDs);
         for (SmallVector<std::pair<unsigned, MDNode *>, 4>::iterator 
                MDI = MDs.begin(), MDE = MDs.end(); MDI != MDE; ++MDI) {
-          Value *MappedValue = MapValue(MDI->second, ValueMap);
+          Value *MappedValue = MapValue(MDI->second, VMap);
           if (MDI->second != MappedValue && MappedValue)
             BI->setMetadata(MDI->first, cast<MDNode>(MappedValue));
         }

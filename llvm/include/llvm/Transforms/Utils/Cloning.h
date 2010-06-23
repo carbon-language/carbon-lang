@@ -46,7 +46,7 @@ class AllocaInst;
 /// CloneModule - Return an exact copy of the specified module
 ///
 Module *CloneModule(const Module *M);
-Module *CloneModule(const Module *M, DenseMap<const Value*, Value*> &ValueMap);
+Module *CloneModule(const Module *M, DenseMap<const Value*, Value*> &VMap);
 
 /// ClonedCodeInfo - This struct can be used to capture information about code
 /// being cloned, while it is being cloned.
@@ -89,7 +89,7 @@ struct ClonedCodeInfo {
 /// incoming edges.
 ///
 /// The correlation between instructions in the source and result basic blocks
-/// is recorded in the ValueMap map.
+/// is recorded in the VMap map.
 ///
 /// If you have a particular suffix you'd like to use to add to any cloned
 /// names, specify it as the optional third parameter.
@@ -102,34 +102,34 @@ struct ClonedCodeInfo {
 /// parameter.
 ///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
-                            DenseMap<const Value*, Value*> &ValueMap,
+                            DenseMap<const Value*, Value*> &VMap,
                             const Twine &NameSuffix = "", Function *F = 0,
                             ClonedCodeInfo *CodeInfo = 0);
 
 
 /// CloneLoop - Clone Loop. Clone dominator info for loop insiders. Populate
-/// ValueMap using old blocks to new blocks mapping.
+/// VMap using old blocks to new blocks mapping.
 Loop *CloneLoop(Loop *L, LPPassManager *LPM, LoopInfo *LI, 
-                DenseMap<const Value *, Value *> &ValueMap, Pass *P);
+                DenseMap<const Value *, Value *> &VMap, Pass *P);
 
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
-/// in the ValueMap are changed to refer to their mapped value instead of the
-/// original one.  If any of the arguments to the function are in the ValueMap,
-/// the arguments are deleted from the resultant function.  The ValueMap is
+/// in the VMap are changed to refer to their mapped value instead of the
+/// original one.  If any of the arguments to the function are in the VMap,
+/// the arguments are deleted from the resultant function.  The VMap is
 /// updated to include mappings from all of the instructions and basicblocks in
 /// the function from their old to new values.  The final argument captures
 /// information about the cloned code if non-null.
 ///
 Function *CloneFunction(const Function *F,
-                        DenseMap<const Value*, Value*> &ValueMap,
+                        DenseMap<const Value*, Value*> &VMap,
                         ClonedCodeInfo *CodeInfo = 0);
 
-/// CloneFunction - Version of the function that doesn't need the ValueMap.
+/// CloneFunction - Version of the function that doesn't need the VMap.
 ///
 inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
-  DenseMap<const Value*, Value*> ValueMap;
-  return CloneFunction(F, ValueMap, CodeInfo);
+  DenseMap<const Value*, Value*> VMap;
+  return CloneFunction(F, VMap, CodeInfo);
 }
 
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
@@ -139,7 +139,7 @@ inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
 /// specified suffix to all values cloned.
 ///
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       DenseMap<const Value*, Value*> &ValueMap,
+                       DenseMap<const Value*, Value*> &VMap,
                        SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
                        ClonedCodeInfo *CodeInfo = 0);
@@ -152,7 +152,7 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// dead.  Since this doesn't produce an exactly copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
 void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                               DenseMap<const Value*, Value*> &ValueMap,
+                               DenseMap<const Value*, Value*> &VMap,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,

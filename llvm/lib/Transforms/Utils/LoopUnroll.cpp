@@ -37,13 +37,13 @@ STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
 STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 
 /// RemapInstruction - Convert the instruction operands from referencing the
-/// current values into those specified by ValueMap.
+/// current values into those specified by VMap.
 static inline void RemapInstruction(Instruction *I,
-                                    DenseMap<const Value *, Value*> &ValueMap) {
+                                    DenseMap<const Value *, Value*> &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    DenseMap<const Value *, Value*>::iterator It = ValueMap.find(Op);
-    if (It != ValueMap.end())
+    DenseMap<const Value *, Value*>::iterator It = VMap.find(Op);
+    if (It != VMap.end())
       I->setOperand(op, It->second);
   }
 }
@@ -205,26 +205,26 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
     
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
-      ValueToValueMapTy ValueMap;
-      BasicBlock *New = CloneBasicBlock(*BB, ValueMap, "." + Twine(It));
+      ValueToValueMapTy VMap;
+      BasicBlock *New = CloneBasicBlock(*BB, VMap, "." + Twine(It));
       Header->getParent()->getBasicBlockList().push_back(New);
 
       // Loop over all of the PHI nodes in the block, changing them to use the
       // incoming values from the previous block.
       if (*BB == Header)
         for (unsigned i = 0, e = OrigPHINode.size(); i != e; ++i) {
-          PHINode *NewPHI = cast<PHINode>(ValueMap[OrigPHINode[i]]);
+          PHINode *NewPHI = cast<PHINode>(VMap[OrigPHINode[i]]);
           Value *InVal = NewPHI->getIncomingValueForBlock(LatchBlock);
           if (Instruction *InValI = dyn_cast<Instruction>(InVal))
             if (It > 1 && L->contains(InValI))
               InVal = LastValueMap[InValI];
-          ValueMap[OrigPHINode[i]] = InVal;
+          VMap[OrigPHINode[i]] = InVal;
           New->getInstList().erase(NewPHI);
         }
 
       // Update our running map of newest clones
       LastValueMap[*BB] = New;
-      for (ValueToValueMapTy::iterator VI = ValueMap.begin(), VE = ValueMap.end();
+      for (ValueToValueMapTy::iterator VI = VMap.begin(), VE = VMap.end();
            VI != VE; ++VI)
         LastValueMap[VI->first] = VI->second;
 

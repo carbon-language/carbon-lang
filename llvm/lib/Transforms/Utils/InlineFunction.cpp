@@ -169,7 +169,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 /// some edges of the callgraph may remain.
 static void UpdateCallGraphAfterInlining(CallSite CS,
                                          Function::iterator FirstNewBlock,
-                                       DenseMap<const Value*, Value*> &ValueMap,
+                                       DenseMap<const Value*, Value*> &VMap,
                                          InlineFunctionInfo &IFI) {
   CallGraph &CG = *IFI.CG;
   const Function *Caller = CS.getInstruction()->getParent()->getParent();
@@ -192,9 +192,9 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   for (; I != E; ++I) {
     const Value *OrigCall = I->first;
 
-    DenseMap<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
+    DenseMap<const Value*, Value*>::iterator VMI = VMap.find(OrigCall);
     // Only copy the edge if the call was inlined!
-    if (VMI == ValueMap.end() || VMI->second == 0)
+    if (VMI == VMap.end() || VMI->second == 0)
       continue;
     
     // If the call was inlined, but then constant folded, there is no edge to
@@ -285,8 +285,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   ClonedCodeInfo InlinedFunctionInfo;
   Function::iterator FirstNewBlock;
 
-  { // Scope to destroy ValueMap after cloning.
-    DenseMap<const Value*, Value*> ValueMap;
+  { // Scope to destroy VMap after cloning.
+    DenseMap<const Value*, Value*> VMap;
 
     assert(CalledFunc->arg_size() == CS.arg_size() &&
            "No varargs calls can be inlined!");
@@ -357,14 +357,14 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         MustClearTailCallFlags = true;
       }
 
-      ValueMap[I] = ActualArg;
+      VMap[I] = ActualArg;
     }
 
     // We want the inliner to prune the code as it copies.  We would LOVE to
     // have no dead or constant instructions leftover after inlining occurs
     // (which can happen, e.g., because an argument was constant), but we'll be
     // happy with whatever the cloner can do.
-    CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
+    CloneAndPruneFunctionInto(Caller, CalledFunc, VMap, Returns, ".i",
                               &InlinedFunctionInfo, IFI.TD, TheCall);
 
     // Remember the first block that is newly cloned over.
@@ -372,7 +372,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
     // Update the callgraph if requested.
     if (IFI.CG)
-      UpdateCallGraphAfterInlining(CS, FirstNewBlock, ValueMap, IFI);
+      UpdateCallGraphAfterInlining(CS, FirstNewBlock, VMap, IFI);
   }
 
   // If there are any alloca instructions in the block that used to be the entry

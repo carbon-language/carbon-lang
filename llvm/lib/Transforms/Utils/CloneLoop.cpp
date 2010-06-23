@@ -23,13 +23,13 @@ using namespace llvm;
 /// CloneDominatorInfo - Clone basicblock's dominator tree and, if available,
 /// dominance info. It is expected that basic block is already cloned.
 static void CloneDominatorInfo(BasicBlock *BB, 
-                               DenseMap<const Value *, Value *> &ValueMap,
+                               DenseMap<const Value *, Value *> &VMap,
                                DominatorTree *DT,
                                DominanceFrontier *DF) {
 
   assert (DT && "DominatorTree is not available");
-  DenseMap<const Value *, Value*>::iterator BI = ValueMap.find(BB);
-  assert (BI != ValueMap.end() && "BasicBlock clone is missing");
+  DenseMap<const Value *, Value*>::iterator BI = VMap.find(BB);
+  assert (BI != VMap.end() && "BasicBlock clone is missing");
   BasicBlock *NewBB = cast<BasicBlock>(BI->second);
 
   // NewBB already got dominator info.
@@ -43,11 +43,11 @@ static void CloneDominatorInfo(BasicBlock *BB,
 
   // NewBB's dominator is either BB's dominator or BB's dominator's clone.
   BasicBlock *NewBBDom = BBDom;
-  DenseMap<const Value *, Value*>::iterator BBDomI = ValueMap.find(BBDom);
-  if (BBDomI != ValueMap.end()) {
+  DenseMap<const Value *, Value*>::iterator BBDomI = VMap.find(BBDom);
+  if (BBDomI != VMap.end()) {
     NewBBDom = cast<BasicBlock>(BBDomI->second);
     if (!DT->getNode(NewBBDom))
-      CloneDominatorInfo(BBDom, ValueMap, DT, DF);
+      CloneDominatorInfo(BBDom, VMap, DT, DF);
   }
   DT->addNewBlock(NewBB, NewBBDom);
 
@@ -60,8 +60,8 @@ static void CloneDominatorInfo(BasicBlock *BB,
         for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
              I != E; ++I) {
           BasicBlock *DB = *I;
-          DenseMap<const Value*, Value*>::iterator IDM = ValueMap.find(DB);
-          if (IDM != ValueMap.end())
+          DenseMap<const Value*, Value*>::iterator IDM = VMap.find(DB);
+          if (IDM != VMap.end())
             NewDFSet.insert(cast<BasicBlock>(IDM->second));
           else
             NewDFSet.insert(DB);
@@ -71,10 +71,10 @@ static void CloneDominatorInfo(BasicBlock *BB,
   }
 }
 
-/// CloneLoop - Clone Loop. Clone dominator info. Populate ValueMap
+/// CloneLoop - Clone Loop. Clone dominator info. Populate VMap
 /// using old blocks to new blocks mapping.
 Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
-                      DenseMap<const Value *, Value *> &ValueMap, Pass *P) {
+                      DenseMap<const Value *, Value *> &VMap, Pass *P) {
   
   DominatorTree *DT = NULL;
   DominanceFrontier *DF = NULL;
@@ -104,8 +104,8 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
     for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
          I != E; ++I) {
       BasicBlock *BB = *I;
-      BasicBlock *NewBB = CloneBasicBlock(BB, ValueMap, ".clone");
-      ValueMap[BB] = NewBB;
+      BasicBlock *NewBB = CloneBasicBlock(BB, VMap, ".clone");
+      VMap[BB] = NewBB;
       if (P)
         LPM->cloneBasicBlockSimpleAnalysis(BB, NewBB, L);
       NewLoop->addBasicBlockToLoop(NewBB, LI->getBase());
@@ -117,7 +117,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
            I != E; ++I) {
         BasicBlock *BB = *I;
-        CloneDominatorInfo(BB, ValueMap, DT, DF);
+        CloneDominatorInfo(BB, VMap, DT, DF);
       }
 
     // Process sub loops
@@ -125,7 +125,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       LoopNest.push_back(*I);
   } while (!LoopNest.empty());
 
-  // Remap instructions to reference operands from ValueMap.
+  // Remap instructions to reference operands from VMap.
   for(SmallVector<BasicBlock *, 16>::iterator NBItr = NewBlocks.begin(), 
         NBE = NewBlocks.end();  NBItr != NBE; ++NBItr) {
     BasicBlock *NB = *NBItr;
@@ -135,8 +135,8 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       for (unsigned index = 0, num_ops = Insn->getNumOperands(); 
            index != num_ops; ++index) {
         Value *Op = Insn->getOperand(index);
-        DenseMap<const Value *, Value *>::iterator OpItr = ValueMap.find(Op);
-        if (OpItr != ValueMap.end())
+        DenseMap<const Value *, Value *>::iterator OpItr = VMap.find(Op);
+        if (OpItr != VMap.end())
           Insn->setOperand(index, OpItr->second);
       }
     }
