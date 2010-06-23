@@ -500,6 +500,8 @@ static void X86ExtractSemantics(
       // TODO add support for fixed operands
     } else if (name.find("F") != name.npos) {
       // ignore (this pushes onto the FP stack)
+    } else if (name.find("A") != name.npos) {
+      // ignore (pushes all GP registoers onto the stack)
     } else if (name[name.length() - 1] == 'm') {
       PUSH("src");
     } else if (name.find("i") != name.npos) {
@@ -518,6 +520,8 @@ static void X86ExtractSemantics(
       // TODO add support for fixed operands
     } else if (name.find("F") != name.npos) {
       // ignore (this pops from the FP stack)
+    } else if (name.find("A") != name.npos) {
+      // ignore (pushes all GP registoers onto the stack)
     } else if (name[name.length() - 1] == 'm') {
       POP("dst");
     } else {

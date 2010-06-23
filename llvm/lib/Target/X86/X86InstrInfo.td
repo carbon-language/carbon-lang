@@ -820,6 +820,17 @@ def PUSHF32  : I<0x9C, RawFrm, (outs), (ins), "pushf{l|d}", []>,
                Requires<[In32BitMode]>;
 }
 
+let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
+    mayLoad=1, neverHasSideEffects=1 in {
+def POPA32   : I<0x61, RawFrm, (outs), (ins), "popa{l}", []>,
+               Requires<[In32BitMode]>;
+}
+let Defs = [ESP], Uses = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP],
+    mayStore=1, neverHasSideEffects=1 in {
+def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", []>,
+               Requires<[In32BitMode]>;
+}
+
 let Uses = [EFLAGS], Constraints = "$src = $dst" in     // GR32 = bswap GR32
   def BSWAP32r : I<0xC8, AddRegFrm,
                    (outs GR32:$dst), (ins GR32:$src),
