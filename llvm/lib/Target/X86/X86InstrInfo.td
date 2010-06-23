@@ -3851,12 +3851,11 @@ def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
                   [(X86tlsaddr tls32addr:$sym)]>,
                   Requires<[In32BitMode]>;
 
-// FIXME: Not true for darwin
-let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-            MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-            XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-            XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [ESP],
+// For i386, the address of the thunk is passed on the stack, on return the 
+// address of the variable is in %eax.  %ecx is trashed during the function 
+// call.  %edx is preserved.
+let Defs = [EAX],
+    Uses = [ESP, ECX],
     usesCustomInserter = 1 in
 def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
                 "# Fixme into a call",
