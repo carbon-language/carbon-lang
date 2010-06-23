@@ -581,6 +581,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   IfCvtBlockSizeLimit = 2;
   IfCvtDupBlockSizeLimit = 0;
   PrefLoopAlignment = 0;
+  ShouldFoldAtomicFences = false;
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);

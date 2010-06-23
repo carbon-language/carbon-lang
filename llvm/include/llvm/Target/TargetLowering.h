@@ -702,6 +702,13 @@ public:
     return PrefLoopAlignment;
   }
 
+  /// getShouldFoldAtomicFences - return whether the combiner should fold
+  /// fence MEMBARRIER instructions into the atomic intrinsic instructions.
+  ///
+  bool getShouldFoldAtomicFences() const {
+    return ShouldFoldAtomicFences;
+  }
+
   /// getPreIndexedAddressParts - returns true by value, base pointer and
   /// offset pointer and addressing mode by reference if the node's address
   /// can be legally represented as pre-indexed load / store address.
@@ -1088,6 +1095,12 @@ protected:
   /// alignment is zero, it means the target does not care about loop alignment.
   void setPrefLoopAlignment(unsigned Align) {
     PrefLoopAlignment = Align;
+  }
+
+  /// setShouldFoldAtomicFences - Set if the target's implementation of the
+  /// atomic operation intrinsics includes locking. Default is false.
+  void setShouldFoldAtomicFences(bool fold) {
+    ShouldFoldAtomicFences = fold;
   }
 
 public:
@@ -1541,6 +1554,11 @@ private:
   /// PrefLoopAlignment - The perferred loop alignment.
   ///
   unsigned PrefLoopAlignment;
+
+  /// ShouldFoldAtomicFences - Whether fencing MEMBARRIER instructions should
+  /// be folded into the enclosed atomic intrinsic instruction by the
+  /// combiner.
+  bool ShouldFoldAtomicFences;
 
   /// StackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save
