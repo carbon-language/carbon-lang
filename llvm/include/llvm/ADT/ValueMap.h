@@ -59,16 +59,16 @@ struct ValueMapConfig {
   struct ExtraData {};
 
   template<typename ExtraDataT>
-  static void onRAUW(const ExtraDataT &Data, KeyT Old, KeyT New) {}
+  static void onRAUW(const ExtraDataT & /*Data*/, KeyT /*Old*/, KeyT /*New*/) {}
   template<typename ExtraDataT>
-  static void onDelete(const ExtraDataT &Data, KeyT Old) {}
+  static void onDelete(const ExtraDataT &/*Data*/, KeyT /*Old*/) {}
 
   /// Returns a mutex that should be acquired around any changes to the map.
   /// This is only acquired from the CallbackVH (and held around calls to onRAUW
   /// and onDelete) and not inside other ValueMap methods.  NULL means that no
   /// mutex is necessary.
   template<typename ExtraDataT>
-  static sys::Mutex *getMutex(const ExtraDataT &Data) { return NULL; }
+  static sys::Mutex *getMutex(const ExtraDataT &/*Data*/) { return NULL; }
 };
 
 /// See the file comment.
