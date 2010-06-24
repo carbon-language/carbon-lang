@@ -137,6 +137,9 @@ namespace {
     unsigned VisitCXXDeleteExpr(CXXDeleteExpr *E);
     
     unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+    
+    unsigned VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
+    unsigned VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   };
 }
 
@@ -1114,6 +1117,50 @@ unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   return 1;
 }
 
+unsigned
+PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
+  VisitExpr(E);
+  
+  unsigned NumTemplateArgs = Record[Idx++];
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
+         "Read wrong record during creation ?");
+  if (E->hasExplicitTemplateArgs()) {
+    TemplateArgumentListInfo ArgInfo;
+    ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+    ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+    for (unsigned i = 0; i != NumTemplateArgs; ++i)
+      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    E->initializeTemplateArgumentsFrom(ArgInfo);
+  }
+
+  E->setBase(cast_or_null<Expr>(StmtStack.back()));
+  E->setBaseType(Reader.GetType(Record[Idx++]));
+  E->setArrow(Record[Idx++]);
+  E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
+  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  E->setFirstQualifierFoundInScope(
+                        cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setMember(Reader.ReadDeclarationName(Record, Idx));
+  E->setMemberLoc(Reader.ReadSourceLocation(Record, Idx));
+  
+  return 1;
+}
+
+unsigned
+PCHStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
+  VisitExpr(E);
+  assert(Record[Idx] == E->arg_size() && "Read wrong record during creation ?");
+  ++Idx; // NumArgs;
+  for (unsigned I = 0, N = E->arg_size(); I != N; ++I)
+    E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
+  E->setTypeBeginLoc(Reader.ReadSourceLocation(Record, Idx));
+  E->setTypeAsWritten(Reader.GetType(Record[Idx++]));
+  E->setLParenLoc(Reader.ReadSourceLocation(Record, Idx));
+  E->setRParenLoc(Reader.ReadSourceLocation(Record, Idx));
+  return E->arg_size();
+}
+
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1493,9 +1540,18 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) CXXDeleteExpr(Empty);
       break;
         
-        
     case pch::EXPR_CXX_EXPR_WITH_TEMPORARIES:
       S = new (Context) CXXExprWithTemporaries(Empty);
+      break;
+      
+    case pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER:
+      S = CXXDependentScopeMemberExpr::CreateEmpty(*Context,
+                                          Record[PCHStmtReader::NumExprFields]);
+      break;
+      
+    case pch::EXPR_CXX_UNRESOLVED_CONSTRUCT:
+      S = CXXUnresolvedConstructExpr::CreateEmpty(*Context,
+                                          Record[PCHStmtReader::NumExprFields]);
       break;
     }
 

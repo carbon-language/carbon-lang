@@ -127,12 +127,14 @@ namespace {
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
-    
+
     void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
-    
+
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+    void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
+    void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
   };
 }
 
@@ -1019,6 +1021,50 @@ void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   Code = pch::EXPR_CXX_EXPR_WITH_TEMPORARIES;
 }
 
+void
+PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
+  VisitExpr(E);
+
+  if (E->hasExplicitTemplateArgs()) {
+    assert(E->getNumTemplateArgs() &&
+           "Num of template args was zero! PCH reading will mess up!");
+    Record.push_back(E->getNumTemplateArgs());
+    Writer.AddSourceLocation(E->getLAngleLoc(), Record);
+    Writer.AddSourceLocation(E->getRAngleLoc(), Record);
+    for (int i=0, e = E->getNumTemplateArgs(); i != e; ++i)
+      Writer.AddTemplateArgumentLoc(E->getTemplateArgs()[i], Record);
+  } else {
+    Record.push_back(0);
+  }
+  
+  if (!E->isImplicitAccess())
+    Writer.WriteSubStmt(E->getBase());
+  else
+    Writer.WriteSubStmt(0);
+  Writer.AddTypeRef(E->getBaseType(), Record);
+  Record.push_back(E->isArrow());
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddDeclRef(E->getFirstQualifierFoundInScope(), Record);
+  Writer.AddDeclarationName(E->getMember(), Record);
+  Writer.AddSourceLocation(E->getMemberLoc(), Record);
+  Code = pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER;
+}
+
+void
+PCHStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->arg_size());
+  for (CXXUnresolvedConstructExpr::arg_iterator
+         ArgI = E->arg_begin(), ArgE = E->arg_end(); ArgI != ArgE; ++ArgI)
+    Writer.WriteSubStmt(*ArgI);
+  Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
+  Writer.AddTypeRef(E->getTypeAsWritten(), Record);
+  Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_CXX_UNRESOLVED_CONSTRUCT;
+}
 
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation

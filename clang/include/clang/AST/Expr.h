@@ -414,6 +414,7 @@ struct ExplicitTemplateArgumentList {
 
   void initializeFrom(const TemplateArgumentListInfo &List);
   void copyInto(TemplateArgumentListInfo &List) const;
+  static std::size_t sizeFor(unsigned NumTemplateArgs);
   static std::size_t sizeFor(const TemplateArgumentListInfo &List);
 };
   

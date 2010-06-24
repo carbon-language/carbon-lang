@@ -421,7 +421,9 @@ namespace clang {
       /// \brief An TemplateTypeParmType record.
       TYPE_TEMPLATE_TYPE_PARM       = 29,
       /// \brief An TemplateSpecializationType record.
-      TYPE_TEMPLATE_SPECIALIZATION  = 30
+      TYPE_TEMPLATE_SPECIALIZATION  = 30,
+      /// \brief An DependentNameType record.
+      TYPE_DEPENDENT_NAME           = 31
     };
 
     /// \brief The type IDs for special types constructed by semantic
@@ -765,7 +767,10 @@ namespace clang {
       EXPR_CXX_NEW,               // CXXNewExpr
       EXPR_CXX_DELETE,            // CXXDeleteExpr
       
-      EXPR_CXX_EXPR_WITH_TEMPORARIES // CXXExprWithTemporaries
+      EXPR_CXX_EXPR_WITH_TEMPORARIES, // CXXExprWithTemporaries
+      
+      EXPR_CXX_DEPENDENT_SCOPE_MEMBER, // CXXDependentScopeMemberExpr
+      EXPR_CXX_UNRESOLVED_CONSTRUCT // CXXUnresolvedConstructExpr
     };
 
     /// \brief The kinds of designators that can occur in a

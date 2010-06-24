@@ -252,8 +252,10 @@ PCHTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
 
 void
 PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
-  // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize dependent name types");
+  Record.push_back(T->getKeyword());
+  Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
+  Writer.AddIdentifierRef(T->getIdentifier(), Record);
+  Code = pch::TYPE_DEPENDENT_NAME;
 }
 
 void

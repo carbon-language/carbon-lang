@@ -113,10 +113,14 @@ void ExplicitTemplateArgumentList::copyInto(
     Info.addArgument(getTemplateArgs()[I]);
 }
 
+std::size_t ExplicitTemplateArgumentList::sizeFor(unsigned NumTemplateArgs) {
+  return sizeof(ExplicitTemplateArgumentList) +
+         sizeof(TemplateArgumentLoc) * NumTemplateArgs;
+}
+
 std::size_t ExplicitTemplateArgumentList::sizeFor(
                                       const TemplateArgumentListInfo &Info) {
-  return sizeof(ExplicitTemplateArgumentList) +
-         sizeof(TemplateArgumentLoc) * Info.size();
+  return sizeFor(Info.size());
 }
 
 void DeclRefExpr::computeDependence() {

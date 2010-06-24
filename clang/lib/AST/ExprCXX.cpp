@@ -656,6 +656,14 @@ CXXUnresolvedConstructExpr::Create(ASTContext &C,
                                               Args, NumArgs, RParenLoc);
 }
 
+CXXUnresolvedConstructExpr *
+CXXUnresolvedConstructExpr::CreateEmpty(ASTContext &C, unsigned NumArgs) {
+  Stmt::EmptyShell Empty;
+  void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
+                         sizeof(Expr *) * NumArgs);
+  return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
+}
+
 Stmt::child_iterator CXXUnresolvedConstructExpr::child_begin() {
   return child_iterator(reinterpret_cast<Stmt **>(this + 1));
 }
@@ -712,6 +720,29 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                                Qualifier, QualifierRange,
                                                FirstQualifierFoundInScope,
                                                Member, MemberLoc, TemplateArgs);
+}
+
+CXXDependentScopeMemberExpr *
+CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
+                                         unsigned NumTemplateArgs) {
+  if (NumTemplateArgs == 0)
+    return new (C) CXXDependentScopeMemberExpr(C, 0, QualType(),
+                                               0, SourceLocation(), 0,
+                                               SourceRange(), 0,
+                                               DeclarationName(),
+                                               SourceLocation());
+
+  std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
+                     ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+  void *Mem = C.Allocate(size, llvm::alignof<CXXDependentScopeMemberExpr>());
+  CXXDependentScopeMemberExpr *E
+    =  new (Mem) CXXDependentScopeMemberExpr(C, 0, QualType(),
+                                             0, SourceLocation(), 0,
+                                             SourceRange(), 0,
+                                             DeclarationName(),
+                                             SourceLocation(), 0);
+  E->HasExplicitTemplateArgs = true;
+  return E;
 }
 
 Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {

@@ -1800,6 +1800,9 @@ class CXXUnresolvedConstructExpr : public Expr {
                              unsigned NumArgs,
                              SourceLocation RParenLoc);
 
+  CXXUnresolvedConstructExpr(EmptyShell Empty, unsigned NumArgs)
+    : Expr(CXXUnresolvedConstructExprClass, Empty), NumArgs(NumArgs) { }
+
 public:
   static CXXUnresolvedConstructExpr *Create(ASTContext &C,
                                             SourceLocation TyBegin,
@@ -1808,6 +1811,9 @@ public:
                                             Expr **Args,
                                             unsigned NumArgs,
                                             SourceLocation RParenLoc);
+
+  static CXXUnresolvedConstructExpr *CreateEmpty(ASTContext &C,
+                                                 unsigned NumArgs);
 
   /// \brief Retrieve the source location where the type begins.
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
@@ -1851,6 +1857,11 @@ public:
   const Expr *getArg(unsigned I) const {
     assert(I < NumArgs && "Argument index out-of-range");
     return *(arg_begin() + I);
+  }
+
+  void setArg(unsigned I, Expr *E) {
+    assert(I < NumArgs && "Argument index out-of-range");
+    *(arg_begin() + I) = E;
   }
 
   virtual SourceRange getSourceRange() const {
@@ -1968,6 +1979,9 @@ public:
          SourceLocation MemberLoc,
          const TemplateArgumentListInfo *TemplateArgs);
 
+  static CXXDependentScopeMemberExpr *
+  CreateEmpty(ASTContext &C, unsigned NumTemplateArgs);
+
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source
   /// location of the operator is invalid in this case.
@@ -1982,6 +1996,7 @@ public:
   void setBase(Expr *E) { Base = E; }
 
   QualType getBaseType() const { return BaseType; }
+  void setBaseType(QualType T) { BaseType = T; }
 
   /// \brief Determine whether this member expression used the '->'
   /// operator; otherwise, it used the '.' operator.
@@ -1995,10 +2010,12 @@ public:
   /// \brief Retrieve the nested-name-specifier that qualifies the member
   /// name.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   /// \brief Retrieve the source range covering the nested-name-specifier
   /// that qualifies the member name.
   SourceRange getQualifierRange() const { return QualifierRange; }
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
 
   /// \brief Retrieve the first part of the nested-name-specifier that was
   /// found in the scope of the member access expression when the member access
@@ -2013,6 +2030,9 @@ public:
   /// expression itself (the class type of x).
   NamedDecl *getFirstQualifierFoundInScope() const {
     return FirstQualifierFoundInScope;
+  }
+  void setFirstQualifierFoundInScope(NamedDecl *D) {
+    FirstQualifierFoundInScope = D;
   }
 
   /// \brief Retrieve the name of the member that this expression
@@ -2036,6 +2056,12 @@ public:
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     assert(HasExplicitTemplateArgs);
     getExplicitTemplateArgumentList()->copyInto(List);
+  }
+
+  /// \brief Initializes the template arguments using the given structure.
+  void initializeTemplateArgumentsFrom(const TemplateArgumentListInfo &List) {
+    assert(HasExplicitTemplateArgs);
+    getExplicitTemplateArgumentList()->initializeFrom(List);
   }
 
   /// \brief Retrieve the location of the left angle bracket following the
