@@ -10222,6 +10222,13 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       break;
     }
 
+    // In any sort of PIC mode addresses need to be computed at runtime by
+    // adding in a register or some sort of table lookup.  These can't
+    // be used as immediates.
+    if (Subtarget->isPICStyleGOT() || Subtarget->isPICStyleStubPIC() ||
+        Subtarget->isPICStyleRIPRel())
+      return;
+
     // If we are in non-pic codegen mode, we allow the address of a global (with
     // an optional displacement) to be used with 'i'.
     GlobalAddressSDNode *GA = 0;
