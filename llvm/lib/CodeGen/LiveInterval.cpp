@@ -484,6 +484,8 @@ void LiveInterval::join(LiveInterval &Other,
     I->valno = NewVNInfo[OtherAssignments[RangeNo]];
     assert(I->valno && "Adding a dead range?");
     InsertPos = addRangeFrom(*I, InsertPos);
+    InsertPos->valno->removeKills(InsertPos->start,
+                                  InsertPos->end.getPrevSlot());
   }
 
   ComputeJoinedWeight(Other);
