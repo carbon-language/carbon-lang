@@ -20,33 +20,40 @@ make_error_type_string(regex_constants::error_type ecode)
     switch (ecode)
     {
     case regex_constants::error_collate:
-        return "error_collate";
+        return "The expression contained an invalid collating element name.";
     case regex_constants::error_ctype:
-        return "error_ctype";
+        return "The expression contained an invalid character class name.";
     case regex_constants::error_escape:
-        return "error_escape";
+        return "The expression contained an invalid escaped character, or a "
+               "trailing escape.";
     case regex_constants::error_backref:
-        return "error_backref";
+        return "The expression contained an invalid back reference.";
     case regex_constants::error_brack:
-        return "error_brack";
+        return "The expression contained mismatched [ and ].";
     case regex_constants::error_paren:
-        return "error_paren";
+        return "The expression contained mismatched ( and ).";
     case regex_constants::error_brace:
-        return "error_brace";
+        return "The expression contained mismatched { and }.";
     case regex_constants::error_badbrace:
-        return "error_badbrace";
+        return "The expression contained an invalid range in a {} expression.";
     case regex_constants::error_range:
-        return "error_range";
+        return "The expression contained an invalid character range, "
+               "such as [b-a] in most encodings.";
     case regex_constants::error_space:
-        return "error_space";
+        return "There was insufficient memory to convert the expression into "
+               "a finite state machine.";
     case regex_constants::error_badrepeat:
-        return "error_badrepeat";
+        return "One of *?+{ was not preceded by a valid regular expression.";
     case regex_constants::error_complexity:
-        return "error_complexity";
+        return "The complexity of an attempted match against a regular "
+               "expression exceeded a pre-set level.";
     case regex_constants::error_stack:
-        return "error_stack";
+        return "There was insufficient memory to determine whether the regular "
+               "expression could match the specified character sequence.";
+    default:
+        break;
     }
-    return "unknown error_type";
+    return "Unknown error type";
 }
 
 regex_error::regex_error(regex_constants::error_type ecode)

@@ -720,6 +720,7 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 #include <__config>
 #include <stdexcept>
 #include <__locale>
+#include <initializer_list>
 
 #pragma GCC system_header
 
@@ -895,7 +896,8 @@ enum error_type
     error_space,
     error_badrepeat,
     error_complexity,
-    error_stack
+    error_stack,
+    error_temp
 };
 
 }  // regex_constants
@@ -1193,7 +1195,7 @@ regex_traits<_CharT>::__value(unsigned char __ch, int __radix)
         {
             __ch |= 0x20;  // tolower
             if ('a' <= __ch && __ch <= 'f')
-                return __ch - 'a' + 10;
+                return __ch - ('a' - 10);
         }
     }
     return -1;
@@ -1206,6 +1208,510 @@ regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
 {
     return __value(static_cast<unsigned char>(__ct_->narrow(__ch, char_type())), __radix);
 }
+
+template <class _CharT, class _Traits = regex_traits<_CharT> >
+class basic_regex
+{
+public:
+    // types:
+    typedef _CharT                              value_type;
+    typedef regex_constants::syntax_option_type flag_type;
+    typedef typename _Traits::locale_type       locale_type;
+
+private:
+    _Traits   __traits_;
+    flag_type __flags_;
+    unsigned __marked_count_;
+
+public:
+    // constants:
+    static const/*expr*/ regex_constants::syntax_option_type icase = regex_constants::icase;
+    static const/*expr*/ regex_constants::syntax_option_type nosubs = regex_constants::nosubs;
+    static const/*expr*/ regex_constants::syntax_option_type optimize = regex_constants::optimize;
+    static const/*expr*/ regex_constants::syntax_option_type collate = regex_constants::collate;
+    static const/*expr*/ regex_constants::syntax_option_type ECMAScript = regex_constants::ECMAScript;
+    static const/*expr*/ regex_constants::syntax_option_type basic = regex_constants::basic;
+    static const/*expr*/ regex_constants::syntax_option_type extended = regex_constants::extended;
+    static const/*expr*/ regex_constants::syntax_option_type awk = regex_constants::awk;
+    static const/*expr*/ regex_constants::syntax_option_type grep = regex_constants::grep;
+    static const/*expr*/ regex_constants::syntax_option_type egrep = regex_constants::egrep;
+
+    // construct/copy/destroy:
+    basic_regex();
+    explicit basic_regex(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
+        : __flags_(__f), __marked_count_(0)
+        {__parse(__p, __p + __traits_.length(__p));}
+    basic_regex(const value_type* __p, size_t __len, flag_type __f)
+        : __flags_(__f), __marked_count_(0)
+        {__parse(__p, __p + __len);}
+    basic_regex(const basic_regex&);
+#ifdef _LIBCPP_MOVE
+    basic_regex(basic_regex&&);
+#endif
+    template <class _ST, class _SA>
+        explicit basic_regex(const basic_string<value_type, _ST, _SA>& __p,
+                             flag_type __f = regex_constants::ECMAScript)
+        : __flags_(__f), __marked_count_(0)
+        {__parse(__p.begin(), __p.end());}
+    template <class _ForwardIterator>
+        basic_regex(_ForwardIterator __first, _ForwardIterator __last,
+                    flag_type __f = regex_constants::ECMAScript)
+        : __flags_(__f), __marked_count_(0)
+        {__parse(__first, __last);}
+    basic_regex(initializer_list<value_type> __il,
+                flag_type __f = regex_constants::ECMAScript)
+        : __flags_(__f), __marked_count_(0)
+        {__parse(__il.begin(), __il.end());}
+
+    ~basic_regex();
+
+    basic_regex& operator=(const basic_regex&);
+#ifdef _LIBCPP_MOVE
+    basic_regex& operator=(basic_regex&&);
+#endif
+    basic_regex& operator=(const value_type* __p);
+    basic_regex& operator=(initializer_list<value_type> __il);
+    template <class _ST, class _SA>
+        basic_regex& operator=(const basic_string<value_type, _ST, _SA>& __p);
+
+    // assign:
+    basic_regex& assign(const basic_regex& __that);
+#ifdef _LIBCPP_MOVE
+    basic_regex& assign(basic_regex&& __that);
+#endif
+    basic_regex& assign(const value_type* __p, flag_type __f = regex_constants::ECMAScript);
+    basic_regex& assign(const value_type* __p, size_t __len, flag_type __f);
+    template <class _ST, class _SA>
+        basic_regex& assign(const basic_string<value_type, _ST, _SA>& __s,
+                            flag_type __f = regex_constants::ECMAScript);
+    template <class _InputIterator>
+        basic_regex& assign(_InputIterator __first, _InputIterator __last,
+                            flag_type __f = regex_constants::ECMAScript);
+    basic_regex& assign(initializer_list<value_type> __il,
+                        flag_type = regex_constants::ECMAScript);
+
+    // const operations:
+    unsigned mark_count() const {return __marked_count_;}
+    flag_type flags() const {return __flags_;}
+
+    // locale:
+    locale_type imbue(locale_type __loc) {return __traits_.imbue(__loc);}
+    locale_type getloc() const {return __traits_.getloc();}
+
+    // swap:
+    void swap(basic_regex&);
+
+private:
+    template <class _ForwardIterator>
+        void __parse(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_basic_reg_exp(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_RE_expression(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_simple_RE(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_nondupl_RE(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_one_char_or_coll_elem_RE(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_Back_open_paren(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_Back_close_paren(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_Back_open_brace(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_Back_close_brace(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_BACKREF(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_ORD_CHAR(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_QUOTED_CHAR(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_RE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last);
+
+    void __push_l_anchor();
+    void __push_r_anchor();
+    void __push_match_any();
+    void __push_greedy_inf_repeat(int __min);
+    void __push_exact_repeat(int __count);
+    void __push_repeat(int __min, int __max);
+};
+
+template <class _CharT, class _Traits>
+inline
+basic_regex<_CharT, _Traits>::basic_regex()
+    : __traits_(), __flags_(), __marked_count_(0)
+{
+}
+
+template <class _CharT, class _Traits>
+basic_regex<_CharT, _Traits>::~basic_regex()
+{
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+void
+basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
+                                      _ForwardIterator __last)
+{
+    switch (__flags_ & 0x3F0)
+    {
+    case ECMAScript:
+        break;
+    case basic:
+        __parse_basic_reg_exp(__first, __last);
+        break;
+    case extended:
+        break;
+    case awk:
+        break;
+    case grep:
+        break;
+    case egrep:
+        break;
+    default:
+        throw regex_error(regex_constants::error_temp);
+    }
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_basic_reg_exp(_ForwardIterator __first,
+                                                    _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        if (*__first == '^')
+        {
+            __push_l_anchor();
+            ++__first;
+        }
+        if (__first != __last)
+        {
+            __first = __parse_RE_expression(__first, __last);
+            if (__first != __last)
+            {
+                _ForwardIterator __temp = next(__first);
+                if (__temp == __last && *__first == '$')
+                {
+                    __push_r_anchor();
+                    ++__first;
+                }
+            }
+        }
+        if (__first != __last)
+            throw regex_error(regex_constants::error_temp);
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_RE_expression(_ForwardIterator __first,
+                                                    _ForwardIterator __last)
+{
+    while (true)
+    {
+        _ForwardIterator __temp = __parse_simple_RE(__first, __last);
+        if (__temp == __first)
+            break;
+        __first = __temp;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_simple_RE(_ForwardIterator __first,
+                                                _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = __parse_nondupl_RE(__first, __last);
+        if (__temp != __first)
+        {
+            __first = __temp;
+            __first = __parse_RE_dupl_symbol(__first, __last);
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_nondupl_RE(_ForwardIterator __first,
+                                                 _ForwardIterator __last)
+{
+    _ForwardIterator __temp = __first;
+    __first = __parse_one_char_or_coll_elem_RE(__first, __last);
+    if (__temp == __first)
+    {
+        __temp = __parse_Back_open_paren(__first, __last);
+        if (__temp != __first)
+        {
+            __first = __parse_RE_expression(__temp, __last);
+            __temp = __parse_Back_close_paren(__first, __last);
+            if (__temp == __first)
+                throw regex_error(regex_constants::error_paren);
+            __first = __temp;
+            ++__marked_count_;
+        }
+        else
+            __first = __parse_BACKREF(__first, __last);
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_one_char_or_coll_elem_RE(
+                                                       _ForwardIterator __first,
+                                                       _ForwardIterator __last)
+{
+    _ForwardIterator __temp = __first;
+    __first = __parse_ORD_CHAR(__first, __last);
+    if (__temp == __first)
+    {
+        __first = __parse_QUOTED_CHAR(__first, __last);
+        if (__temp == __first)
+        {
+            if (__first != __last && *__first == '.')
+            {
+                __push_match_any();
+                ++__first;
+            }
+            else
+                __first = __parse_bracket_expression(__first, __last);
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_Back_open_paren(_ForwardIterator __first,
+                                                      _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\' && *__temp == '(')
+                __first = ++__temp;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_Back_close_paren(_ForwardIterator __first,
+                                                       _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\' && *__temp == ')')
+                __first = ++__temp;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_Back_open_brace(_ForwardIterator __first,
+                                                      _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\' && *__temp == '{')
+                __first = ++__temp;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_Back_close_brace(_ForwardIterator __first,
+                                                       _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\' && *__temp == '}')
+                __first = ++__temp;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_BACKREF(_ForwardIterator __first,
+                                              _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\' && '1' <= *__temp && *__temp <= '9')
+            {
+                __push_back_ref(*__temp - '0');
+                __first = ++__temp;
+            }
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_ORD_CHAR(_ForwardIterator __first,
+                                               _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp == __last && *__first == '$')
+            return __first;
+        // Not called inside a bracket
+        if (*__first == '.' || *__first == '\\' || *__first == '[')
+            return __first;
+        __push_ord_char(*__first);
+        ++__first;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_QUOTED_CHAR(_ForwardIterator __first,
+                                                  _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last)
+        {
+            if (*__first == '\\')
+            {
+                switch (*__temp)
+                {
+                case '^':
+                case '.':
+                case '*':
+                case '[':
+                case '$':
+                case '\\':
+                    __push_ord_char(*__temp);
+                    __first = ++__temp;
+                    break;
+                }
+            }
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
+                                                     _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        if (__first == '*')
+        {
+            __push_greedy_inf_repeat(0);
+            ++__first;
+        }
+        else
+        {
+            _ForwardIterator __temp = __parse_Back_open_brace(__first, __last);
+            if (__temp != __first)
+            {
+                int __min = 0;
+                __first = __temp;
+                __temp = __parse_DUP_COUNT(__first, __last, __min);
+                if (__temp == __first)
+                    throw regex_error(regex_constants::error_badbrace);
+                __first = __temp;
+                if (__first == __last)
+                    throw regex_error(regex_constants::error_brace);
+                if (*__first != ',')
+                {
+                    __temp = __parse_Back_close_brace(__first, __last);
+                    if (__temp == __first)
+                        throw regex_error(regex_constants::error_brace);
+                    __push_exact_repeat(__min);
+                    __first = __temp;
+                }
+                else
+                {
+                    ++__first;  // consume ','
+                    int __max = -1;
+                    __first = __parse_DUP_COUNT(__first, __last, __max);
+                    __temp = __parse_Back_close_brace(__first, __last);
+                    if (__temp == __first)
+                        throw regex_error(regex_constants::error_brace);
+                    if (__max == -1)
+                        __push_greedy_inf_repeat(__min);
+                    else
+                    {
+                        if (__max < __min)
+                            throw regex_error(regex_constants::error_badbrace);
+                        __push_repeat(__min, __max);
+                    }
+                    __first = __temp;
+                }
+            }
+        }
+    }
+    return __first;
+}
+
+typedef basic_regex<char>    regex;
+typedef basic_regex<wchar_t> wregex;
 
 _LIBCPP_END_NAMESPACE_STD
 
