@@ -110,18 +110,25 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
                      SelectionDAG *DAG) {
   SmallVector<EVT, 4> VTs;
+  SDNode *FlagDestNode = Flag.getNode();
 
-  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
-    VTs.push_back(N->getValueType(i));
+  // Don't add a flag from a node to itself.
+  if (FlagDestNode == N) return;
+
+  // Don't add a flag to something which already has a flag.
+  if (N->getValueType(N->getNumValues() - 1) == MVT::Flag) return;
+
+  for (unsigned I = 0, E = N->getNumValues(); I != E; ++I)
+    VTs.push_back(N->getValueType(I));
 
   if (AddFlag)
     VTs.push_back(MVT::Flag);
 
   SmallVector<SDValue, 4> Ops;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    Ops.push_back(N->getOperand(i));
+  for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
+    Ops.push_back(N->getOperand(I));
 
-  if (Flag.getNode())
+  if (FlagDestNode)
     Ops.push_back(Flag);
 
   SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
@@ -213,16 +220,17 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   // Cluster loads by adding MVT::Flag outputs and inputs. This also
   // ensure they are scheduled in order of increasing addresses.
   SDNode *Lead = Loads[0];
-  AddFlags(Lead, SDValue(0,0), true, DAG);
+  AddFlags(Lead, SDValue(0, 0), true, DAG);
 
-  SDValue InFlag = SDValue(Lead, Lead->getNumValues()-1);
-  for (unsigned i = 1, e = Loads.size(); i != e; ++i) {
-    bool OutFlag = i < e-1;
-    SDNode *Load = Loads[i];
+  SDValue InFlag = SDValue(Lead, Lead->getNumValues() - 1);
+  for (unsigned I = 1, E = Loads.size(); I != E; ++I) {
+    bool OutFlag = I < E - 1;
+    SDNode *Load = Loads[I];
+
     AddFlags(Load, InFlag, OutFlag, DAG);
 
     if (OutFlag)
-      InFlag = SDValue(Load, Load->getNumValues()-1);
+      InFlag = SDValue(Load, Load->getNumValues() - 1);
 
     ++LoadsClustered;
   }
