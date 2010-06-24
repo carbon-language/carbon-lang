@@ -732,10 +732,10 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
           // the right place.
           Instruction *NewVal;
           if (InputBit > ResultBit)
-            NewVal = BinaryOperator::CreateLShr(I->getOperand(1),
+            NewVal = BinaryOperator::CreateLShr(II->getArgOperand(0),
                     ConstantInt::get(I->getType(), InputBit-ResultBit));
           else
-            NewVal = BinaryOperator::CreateShl(I->getOperand(1),
+            NewVal = BinaryOperator::CreateShl(II->getArgOperand(0),
                     ConstantInt::get(I->getType(), ResultBit-InputBit));
           NewVal->takeName(I);
           return InsertNewInstBefore(NewVal, *I);
@@ -1069,8 +1069,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
         case Intrinsic::x86_sse2_sub_sd:
         case Intrinsic::x86_sse2_mul_sd:
           // TODO: Lower MIN/MAX/ABS/etc
-          Value *LHS = II->getOperand(1);
-          Value *RHS = II->getOperand(2);
+          Value *LHS = II->getArgOperand(0);
+          Value *RHS = II->getArgOperand(1);
           // Extract the element as scalars.
           LHS = InsertNewInstBefore(ExtractElementInst::Create(LHS, 
             ConstantInt::get(Type::getInt32Ty(I->getContext()), 0U)), *II);
