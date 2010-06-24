@@ -3015,7 +3015,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
                               SDValue N1, SDValue N2, SDValue N3) {
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
   case ISD::CONCAT_VECTORS:
     // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
@@ -3044,12 +3043,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     }
 
     if (N2 == N3) return N2;   // select C, X, X -> X
-    break;
-  case ISD::BRCOND:
-    if (N2C) {
-      if (!N2C->getZExtValue()) // Unconditional branch
-        return N1;         // Never-taken branch
-    }
     break;
   case ISD::VECTOR_SHUFFLE:
     llvm_unreachable("should use getVectorShuffle constructor!");

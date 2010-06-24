@@ -19,7 +19,7 @@ bb33:		; preds = %entry
 	br i1 %tmp35, label %bb38, label %bb87.preheader
 bb38:		; preds = %bb33
 	%tmp53 = add i32 %tmp19, %delta		; <i32> [#uses=2]
-	br i1 false, label %bb50, label %bb43
+	br label %bb43
 bb43:		; preds = %bb38
 	store i32 %tmp53, i32* null, align 4
 	ret void

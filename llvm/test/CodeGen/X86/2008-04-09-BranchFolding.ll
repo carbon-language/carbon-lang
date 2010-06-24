@@ -10,7 +10,7 @@
 define fastcc %struct.tree_node* @pushdecl(%struct.tree_node* %x) nounwind  {
 entry:
 	%tmp3.i40 = icmp eq %struct.binding_level* null, null		; <i1> [#uses=2]
-	br i1 false, label %bb143, label %bb140
+	br label %bb140
 bb140:		; preds = %entry
 	br i1 %tmp3.i40, label %bb160, label %bb17.i
 bb17.i:		; preds = %bb140

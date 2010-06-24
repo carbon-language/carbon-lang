@@ -2,22 +2,22 @@
 
 define fastcc i32 @decodeMP3(i32 %isize, i32* %done) nounwind {
 entry:
-	br i1 false, label %cond_next191, label %cond_true189
+	br label %cond_true189
 
 cond_true189:		; preds = %entry
 	ret i32 0
 
 cond_next191:		; preds = %entry
-	br i1 false, label %cond_next37.i, label %cond_false.i9
+	br label %cond_false.i9
 
 cond_false.i9:		; preds = %cond_next191
 	ret i32 0
 
 cond_next37.i:		; preds = %cond_next191
-	br i1 false, label %cond_false50.i, label %cond_true44.i
+	br label %cond_true44.i
 
 cond_true44.i:		; preds = %cond_next37.i
-	br i1 false, label %cond_true11.i.i, label %bb414.preheader.i
+	br label %bb414.preheader.i
 
 cond_true11.i.i:		; preds = %cond_true44.i
 	ret i32 0
@@ -26,19 +26,19 @@ cond_false50.i:		; preds = %cond_next37.i
 	ret i32 0
 
 bb414.preheader.i:		; preds = %cond_true44.i
-	br i1 false, label %bb.i18, label %do_layer3.exit
+	br label %do_layer3.exit
 
 bb.i18:		; preds = %bb414.preheader.i
-	br i1 false, label %bb358.i, label %cond_true79.i
+	br label %cond_true79.i
 
 cond_true79.i:		; preds = %bb.i18
 	ret i32 0
 
 bb331.i:		; preds = %bb358.i, %cond_true.i149.i
-	br i1 false, label %cond_true.i149.i, label %cond_false.i151.i
+	br label %cond_false.i151.i
 
 cond_true.i149.i:		; preds = %bb331.i
-	br i1 false, label %bb178.preheader.i.i, label %bb331.i
+	br label %bb331.i
 
 cond_false.i151.i:		; preds = %bb331.i
 	ret i32 0
@@ -56,7 +56,7 @@ bb178.preheader.i.i:		; preds = %bb163.i.i, %cond_true.i149.i
 	br label %bb163.i.i
 
 bb358.i:		; preds = %bb.i18
-	br i1 false, label %bb331.i, label %bb406.i
+	br label %bb406.i
 
 bb406.i:		; preds = %bb358.i
 	ret i32 0

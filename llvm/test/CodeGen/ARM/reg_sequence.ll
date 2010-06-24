@@ -250,13 +250,13 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
   br label %8
 
 ; <label>:6                                       ; preds = %8
-  br i1 undef, label %7, label %10
+  br label %7
 
 ; <label>:7                                       ; preds = %6
   br label %8
 
 ; <label>:8                                       ; preds = %7, %2
-  br i1 undef, label %6, label %9
+  br label %6
 
 ; <label>:9                                       ; preds = %8
   ret float undef

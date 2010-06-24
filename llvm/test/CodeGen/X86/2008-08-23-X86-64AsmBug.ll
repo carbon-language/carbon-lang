@@ -7,7 +7,7 @@
 
 define double @_Z7qstrtodPKcPS0_Pb(i8* %s00, i8** %se, i8* %ok) nounwind {
 entry:
-	br i1 false, label %bb151, label %bb163
+	br label %bb163
 
 bb151:		; preds = %entry
 	br label %bb163
@@ -19,13 +19,13 @@ bb163:		; preds = %bb151, %entry
 	br label %bb5.i
 
 bb5.i:		; preds = %bb5.i57.i, %bb163
-	%b.0.i = phi %struct.Bigint* [ null, %bb163 ], [ %tmp9.i.i41.i, %bb5.i57.i ]		; <%struct.Bigint*> [#uses=1]
+	%b.0.i = phi %struct.Bigint* [ null, %bb163 ]		; <%struct.Bigint*> [#uses=1]
 	%tmp3.i7.i728 = load i32* null, align 4		; <i32> [#uses=1]
 	br label %bb.i27.i
 
 bb.i27.i:		; preds = %bb.i27.i, %bb5.i
 	%tmp23.i20.i = lshr i32 0, 16		; <i32> [#uses=1]
-	br i1 false, label %bb.i27.i, label %bb5.i57.i
+	br label %bb5.i57.i
 
 bb5.i57.i:		; preds = %bb.i27.i
 	%tmp50.i35.i = load i32* null, align 4		; <i32> [#uses=1]
@@ -41,7 +41,7 @@ bb5.i57.i:		; preds = %bb.i27.i
 	store i32 %tmp23.i20.i, i32* null, align 4
 	%tmp74.i61.i = add i32 %tmp3.i7.i728, 1		; <i32> [#uses=1]
 	store i32 %tmp74.i61.i, i32* null, align 4
-	br i1 false, label %bb5.i, label %bb7.i
+	br label %bb7.i
 
 bb7.i:		; preds = %bb5.i57.i
 	%tmp514 = load i32* null, align 4		; <i32> [#uses=1]
