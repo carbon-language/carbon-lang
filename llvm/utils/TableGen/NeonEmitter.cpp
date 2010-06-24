@@ -187,7 +187,7 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
 
 /// TypeString - for a modifier and type, generate the name of the typedef for
 /// that type.  If generic is true, emit the generic vector type rather than
-/// the public NEON type. QUc -> uint8x8t_t / __neon_uint8x8_t.
+/// the public NEON type. QUc -> uint8x8_t / __neon_uint8x8_t.
 static std::string TypeString(const char mod, StringRef typestr,
                               bool generic = false) {
   bool quad = false;
@@ -277,9 +277,9 @@ static std::string TypeString(const char mod, StringRef typestr,
   return s.str();
 }
 
-/// TypeString - for a modifier and type, generate the clang BuiltinsARM.def 
-/// prototype code for the function.  See the top of clang's Builtins.def for
-/// a description of the type strings.
+/// BuiltinTypeString - for a modifier and type, generate the clang
+/// BuiltinsARM.def prototype code for the function.  See the top of clang's
+/// Builtins.def for a description of the type strings.
 static std::string BuiltinTypeString(const char mod, StringRef typestr,
                                      ClassKind ck, bool ret) {
   bool quad = false;
