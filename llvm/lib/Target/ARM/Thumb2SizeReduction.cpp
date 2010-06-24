@@ -451,11 +451,18 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   if (ReduceLimit2Addr != -1 && ((int)Num2Addrs >= ReduceLimit2Addr))
     return false;
 
-  const TargetInstrDesc &TID = MI->getDesc();
   unsigned Reg0 = MI->getOperand(0).getReg();
   unsigned Reg1 = MI->getOperand(1).getReg();
-  if (Reg0 != Reg1)
-    return false;
+  if (Reg0 != Reg1) {
+    // Try to commute the operands to make it a 2-address instruction.
+    unsigned CommOpIdx1, CommOpIdx2;
+    if (!TII->findCommutedOpIndices(MI, CommOpIdx1, CommOpIdx2) ||
+        CommOpIdx1 != 1 || MI->getOperand(CommOpIdx2).getReg() != Reg0)
+      return false;
+    MachineInstr *CommutedMI = TII->commuteInstruction(MI);
+    if (!CommutedMI)
+      return false;
+  }
   if (Entry.LowRegs2 && !isARMLowRegister(Reg0))
     return false;
   if (Entry.Imm2Limit) {
@@ -484,6 +491,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
 
   bool HasCC = false;
   bool CCDead = false;
+  const TargetInstrDesc &TID = MI->getDesc();
   if (TID.hasOptionalDef()) {
     unsigned NumOps = TID.getNumOperands();
     HasCC = (MI->getOperand(NumOps-1).getReg() == ARM::CPSR);

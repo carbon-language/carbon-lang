@@ -87,7 +87,7 @@ define i32 @test10(i32 %p0) {
 ; CHECK: and.w r0, r1, r0, lsr #7
 ; CHECK: lsrs  r1, r0, #5
 ; CHECK: uxtb16  r1, r1
-; CHECK: orr.w r0, r1, r0
+; CHECK: orrs r0, r1
 
 	%tmp1 = lshr i32 %p0, 7		; <i32> [#uses=1]
 	%tmp2 = and i32 %tmp1, 16253176		; <i32> [#uses=2]

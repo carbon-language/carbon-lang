@@ -9,8 +9,15 @@ define i32 @f1(i32 %a, i32 %b) {
 
 define i32 @f2(i32 %a, i32 %b) {
 ; CHECK: f2:
-; CHECK: eor.w r0, r1, r0
+; CHECK: eors r0, r1
     %tmp = xor i32 %b, %a
+    ret i32 %tmp
+}
+
+define i32 @f2b(i32 %a, i32 %b, i32 %c) {
+; CHECK: f2b:
+; CHECK: eor.w r0, r1, r2
+    %tmp = xor i32 %b, %c
     ret i32 %tmp
 }
 
