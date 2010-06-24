@@ -498,11 +498,16 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_vari
             {
                 llvm::Instruction &inst = *ii;
                 
+                std::string s;
+                llvm::raw_string_ostream os(s);
+                
+                inst.print(os);
+                
                 if (log)
-                    log->Printf("  %s", inst.getOpcodeName());
+                    log->Printf("  %s", s.c_str());
             }
         }
-    }   
+    }
     
     return 0;
 }
