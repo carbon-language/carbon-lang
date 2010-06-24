@@ -21,3 +21,8 @@ define i32* @test3(i32* %P, i32 %X) {
         ret i32* %P2
 }
 
+define fastcc i32 @test4(i32* %d) nounwind {
+  %tmp4 = load i32* %d
+  %tmp512 = lshr i32 %tmp4, 24
+  ret i32 %tmp512
+}
