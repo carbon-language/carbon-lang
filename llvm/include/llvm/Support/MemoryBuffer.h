@@ -67,6 +67,10 @@ public:
                                std::string *ErrStr = 0,
                                int64_t FileSize = -1,
                                struct stat *FileInfo = 0);
+  static MemoryBuffer *getFile(const char *Filename,
+                               std::string *ErrStr = 0,
+                               int64_t FileSize = -1,
+                               struct stat *FileInfo = 0);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that EndPtr[0] must be a null byte and be accessible!
@@ -102,6 +106,10 @@ public:
   /// if the Filename is "-".  If an error occurs, this returns null and fills
   /// in *ErrStr with a reason.
   static MemoryBuffer *getFileOrSTDIN(StringRef Filename,
+                                      std::string *ErrStr = 0,
+                                      int64_t FileSize = -1,
+                                      struct stat *FileInfo = 0);
+  static MemoryBuffer *getFileOrSTDIN(const char *Filename,
                                       std::string *ErrStr = 0,
                                       int64_t FileSize = -1,
                                       struct stat *FileInfo = 0);

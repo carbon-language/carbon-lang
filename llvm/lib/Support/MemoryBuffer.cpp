@@ -141,6 +141,15 @@ MemoryBuffer *MemoryBuffer::getFileOrSTDIN(StringRef Filename,
   return getFile(Filename, ErrStr, FileSize, FileInfo);
 }
 
+MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
+                                           std::string *ErrStr,
+                                           int64_t FileSize,
+                                           struct stat *FileInfo) {
+  if (strcmp(Filename, "-") == 0)
+    return getSTDIN(ErrStr);
+  return getFile(Filename, ErrStr, FileSize, FileInfo);
+}
+
 //===----------------------------------------------------------------------===//
 // MemoryBuffer::getFile implementation.
 //===----------------------------------------------------------------------===//
@@ -177,12 +186,17 @@ public:
 
 MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
                                     int64_t FileSize, struct stat *FileInfo) {
-  int OpenFlags = 0;
+  SmallString<256> PathBuf(Filename.begin(), Filename.end());
+  return MemoryBuffer::getFile(PathBuf.c_str(), ErrStr, FileSize, FileInfo);
+}
+
+MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
+                                    int64_t FileSize, struct stat *FileInfo) {
+  int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-  SmallString<256> PathBuf(Filename.begin(), Filename.end());
-  int FD = ::open(PathBuf.c_str(), O_RDONLY|OpenFlags);
+  int FD = ::open(Filename, OpenFlags);
   if (FD == -1) {
     if (ErrStr) *ErrStr = sys::StrError();
     return 0;
