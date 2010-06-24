@@ -33,6 +33,12 @@ typedef lldb::SharedPtr<OptionArgVector>::Type OptionArgVectorSP;
 
 struct OptionArgElement
 {
+    enum {
+        eUnrecognizedArg = -1,
+        eBareDash = -2,
+        eBareDoubleDash = -3
+    };
+    
     OptionArgElement (int defs_index, int pos, int arg_pos) :
         opt_defs_index(defs_index),
         opt_pos (pos),
@@ -303,7 +309,7 @@ public:
     ParseAliasOptions (Options &options, CommandReturnObject &result, OptionArgVector *option_arg_vector);
 
     void
-    ParseArgsForCompletion (Options &options, OptionElementVector &option_element_vector);
+    ParseArgsForCompletion (Options &options, OptionElementVector &option_element_vector, uint32_t cursor_index);
 
     //------------------------------------------------------------------
     // Clear the arguments.

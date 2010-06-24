@@ -945,7 +945,8 @@ void
 Args::ParseArgsForCompletion
 (
     Options &options,
-    OptionElementVector &option_element_vector
+    OptionElementVector &option_element_vector,
+    uint32_t cursor_index
 )
 {
     StreamString sstr;
@@ -993,26 +994,61 @@ Args::ParseArgsForCompletion
     int val;
     const OptionDefinition *opt_defs = options.GetDefinitions();
 
-    // Fooey... getopt_long permutes the GetArgumentVector for no apparent reason.
+    // Fooey... getopt_long permutes the GetArgumentVector to move the options to the front.
     // So we have to build another Arg and pass that to getopt_long so it doesn't
-    // screw up the one we have.
+    // change the one we have.
 
     std::vector<const char *> dummy_vec(GetArgumentVector(), GetArgumentVector() + GetArgumentCount() + 1);
 
+    bool failed_once = false;
+    uint32_t dash_dash_pos = -1;
+        
     while (1)
     {
         bool missing_argument = false;
         int parse_start = optind;
         int long_options_index = -1;
+        
         val = ::getopt_long (dummy_vec.size() - 1,(char *const *) dummy_vec.data(), sstr.GetData(), long_options,
                              &long_options_index);
 
         if (val == -1)
-            break;
+        {
+            // When we're completing a "--" which is the last option on line, 
+            if (failed_once)
+                break;
+                
+            failed_once = true;
+            
+            // If this is a bare  "--" we mark it as such so we can complete it successfully later.
+            // Handling the "--" is a little tricky, since that may mean end of options or arguments, or the
+            // user might want to complete options by long name.  I make this work by checking whether the
+            // cursor is in the "--" argument, and if so I assume we're completing the long option, otherwise
+            // I let it pass to getopt_long which will terminate the option parsing.
+            // Note, in either case we continue parsing the line so we can figure out what other options
+            // were passed.  This will be useful when we come to restricting completions based on what other
+            // options we've seen on the line.
 
+            if (optind < dummy_vec.size() - 1 
+                && (strcmp (dummy_vec[optind-1], "--") == 0))
+            {
+                dash_dash_pos = optind - 1;
+                if (optind - 1 == cursor_index)
+                {
+                    option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDoubleDash, optind - 1, 
+                                                                   OptionArgElement::eBareDoubleDash));
+                    continue;
+                }
+                else
+                    break;
+            }
+            else
+                break;
+        }
         else if (val == '?')
         {
-            option_element_vector.push_back (OptionArgElement (-1, parse_start, -1));
+            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+                                                               OptionArgElement::eUnrecognizedArg));
             continue;
         }
         else if (val == 0)
@@ -1070,34 +1106,48 @@ Args::ParseArgsForCompletion
                     if (missing_argument)
                         arg_index = -1;
                     else
-                        arg_index = parse_start + 1;
+                        arg_index = optind - 1;
 
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, parse_start, arg_index));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, arg_index));
                 }
                 else
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, parse_start, -1));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 1, -1));
                 }
                 break;
             case optional_argument:
                 if (optarg != NULL)
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, parse_start, 0));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, optind - 1));
                 }
                 else
                 {
-                    option_element_vector.push_back (OptionArgElement (opt_defs_index, parse_start, parse_start + 1));
+                    option_element_vector.push_back (OptionArgElement (opt_defs_index, optind - 2, optind - 1));
                 }
                 break;
             default:
                 // The options table is messed up.  Here we'll just continue
-                option_element_vector.push_back (OptionArgElement (-1, parse_start, -1));
+                option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+                                                                   OptionArgElement::eUnrecognizedArg));
                 break;
             }
         }
         else
         {
-            option_element_vector.push_back (OptionArgElement (-1, parse_start, -1));
+            option_element_vector.push_back (OptionArgElement (OptionArgElement::eUnrecognizedArg, optind - 1, 
+                                                               OptionArgElement::eUnrecognizedArg));
         }
+    }
+    
+    // Finally we have to handle the case where the cursor index points at a single "-".  We want to mark that in
+    // the option_element_vector, but only if it is not after the "--".  But it turns out that getopt_long just ignores
+    // an isolated "-".  So we have to look it up by hand here.  We only care if it is AT the cursor position.
+    
+    if ((dash_dash_pos == -1 || cursor_index < dash_dash_pos)
+         && strcmp (GetArgumentAtIndex(cursor_index), "-") == 0)
+    {
+        option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDash, cursor_index, 
+                                                           OptionArgElement::eBareDash));
+        
     }
 }

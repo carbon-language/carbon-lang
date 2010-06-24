@@ -333,7 +333,7 @@ CommandObject::HandleCompletion
 
             input.AppendArgument ("<FAKE-VALUE>");
 
-            input.ParseArgsForCompletion (*cur_options, opt_element_vector);
+            input.ParseArgsForCompletion (*cur_options, opt_element_vector, cursor_index);
 
             input.DeleteArgumentAtIndex(input.GetArgumentCount() - 1);
 
