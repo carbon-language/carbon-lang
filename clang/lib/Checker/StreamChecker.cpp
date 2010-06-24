@@ -267,7 +267,7 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
                                     CheckerContext &C) {
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
   if (!DV)
-    return false;
+    return 0;
 
   ConstraintManager &CM = C.getConstraintManager();
   const GRState *stateNotNull, *stateNull;
