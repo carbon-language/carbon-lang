@@ -738,6 +738,35 @@ let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
                     "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}">, XD;
 }
 
+multiclass sse12_cmp_scalar_int<RegisterClass RC, X86MemOperand x86memop,
+                         Intrinsic Int, string asm> {
+  def rr : SIi8<0xC2, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src, SSECC:$cc), asm,
+                        [(set VR128:$dst, (Int VR128:$src1,
+                                               VR128:$src, imm:$cc))]>;
+  def rm : SIi8<0xC2, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, f32mem:$src, SSECC:$cc), asm,
+                        [(set VR128:$dst, (Int VR128:$src1,
+                                               (load addr:$src), imm:$cc))]>;
+}
+
+// Aliases to match intrinsics which expect XMM operand(s).
+let isAsmParserOnly = 1 in {
+  defm Int_VCMPSS  : sse12_cmp_scalar_int<VR128, f32mem, int_x86_sse_cmp_ss,
+                       "cmp${cc}ss\t{$src, $src1, $dst|$dst, $src1, $src}">,
+                       XS, VEX_4V;
+  defm Int_VCMPSD  : sse12_cmp_scalar_int<VR128, f64mem, int_x86_sse2_cmp_sd,
+                       "cmp${cc}sd\t{$src, $src1, $dst|$dst, $src1, $src}">,
+                       XD, VEX_4V;
+}
+let Constraints = "$src1 = $dst" in {
+  defm Int_CMPSS  : sse12_cmp_scalar_int<VR128, f32mem, int_x86_sse_cmp_ss,
+                       "cmp${cc}ss\t{$src, $dst|$dst, $src}">, XS;
+  defm Int_CMPSD  : sse12_cmp_scalar_int<VR128, f64mem, int_x86_sse2_cmp_sd,
+                       "cmp${cc}sd\t{$src, $dst|$dst, $src}">, XD;
+}
+
+
 // sse12_ord_cmp - Unordered/Ordered scalar fp compare and set EFLAGS
 multiclass sse12_ord_cmp<bits<8> opc, RegisterClass RC, SDNode OpNode,
                             ValueType vt, X86MemOperand x86memop,
@@ -796,36 +825,6 @@ let Defs = [EFLAGS] in {
   defm Int_COMISD  : sse12_ord_cmp<0x2F, VR128, X86comi, v2f64, f128mem, load,
                                   "comisd", SSEPackedDouble>, TB, OpSize;
 } // Defs = [EFLAGS]
-
-// Aliases to match intrinsics which expect XMM operand(s).
-let Constraints = "$src1 = $dst" in {
-  def Int_CMPSSrr : SSIi8<0xC2, MRMSrcReg,
-                        (outs VR128:$dst),
-                        (ins VR128:$src1, VR128:$src, SSECC:$cc),
-                        "cmp${cc}ss\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse_cmp_ss
-                                             VR128:$src1,
-                                             VR128:$src, imm:$cc))]>;
-  def Int_CMPSSrm : SSIi8<0xC2, MRMSrcMem,
-                        (outs VR128:$dst),
-                        (ins VR128:$src1, f32mem:$src, SSECC:$cc),
-                        "cmp${cc}ss\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
-                                           (load addr:$src), imm:$cc))]>;
-
-  def Int_CMPSDrr : SDIi8<0xC2, MRMSrcReg,
-                        (outs VR128:$dst),
-                        (ins VR128:$src1, VR128:$src, SSECC:$cc),
-                        "cmp${cc}sd\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
-                                           VR128:$src, imm:$cc))]>;
-  def Int_CMPSDrm : SDIi8<0xC2, MRMSrcMem,
-                        (outs VR128:$dst),
-                        (ins VR128:$src1, f64mem:$src, SSECC:$cc),
-                        "cmp${cc}sd\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
-                                           (load addr:$src), imm:$cc))]>;
-}
 
 // sse12_cmp_packed - sse 1 & 2 compared packed instructions
 multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
