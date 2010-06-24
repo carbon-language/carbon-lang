@@ -112,8 +112,8 @@ unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
 }
 
 Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
-  unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1));
-  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2));
+  unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getArgOperand(0));
+  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getArgOperand(1));
   unsigned MinAlign = std::min(DstAlign, SrcAlign);
   unsigned CopyAlign = MI->getAlignment();
 
@@ -125,7 +125,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
   // load/store.
-  ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getOperand(3));
+  ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getArgOperand(2));
   if (MemOpLength == 0) return 0;
   
   // Source and destination pointer types are always "i8*" for intrinsic.  See
@@ -140,9 +140,9 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   // Use an integer load+store unless we can find something better.
   unsigned SrcAddrSp =
-    cast<PointerType>(MI->getOperand(2)->getType())->getAddressSpace();
+    cast<PointerType>(MI->getArgOperand(1)->getType())->getAddressSpace();
   unsigned DstAddrSp =
-    cast<PointerType>(MI->getOperand(1)->getType())->getAddressSpace();
+    cast<PointerType>(MI->getArgOperand(0)->getType())->getAddressSpace();
 
   const IntegerType* IntType = IntegerType::get(MI->getContext(), Size<<3);
   Type *NewSrcPtrTy = PointerType::get(IntType, SrcAddrSp);
