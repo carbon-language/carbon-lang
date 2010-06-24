@@ -105,8 +105,7 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass(true));
 
-  if (OptLevel != CodeGenOpt::None && Subtarget.isThumb2() &&
-      EarlyITBlockFormation)
+  if (Subtarget.isThumb2() && EarlyITBlockFormation)
     PM.add(createThumb2ITBlockPass(true));
   return true;
 }
@@ -128,9 +127,9 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None) {
     if (!Subtarget.isThumb1Only())
       PM.add(createIfConverterPass());
-    if (Subtarget.isThumb2())
-      PM.add(createThumb2ITBlockPass());
   }
+  if (Subtarget.isThumb2())
+    PM.add(createThumb2ITBlockPass());
 
   return true;
 }
