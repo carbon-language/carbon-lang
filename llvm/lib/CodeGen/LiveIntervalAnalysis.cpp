@@ -218,10 +218,7 @@ bool LiveIntervals::conflictsWithPhysReg(const LiveInterval &li,
   return false;
 }
 
-/// conflictsWithSubPhysRegRef - Similar to conflictsWithPhysRegRef except
-/// it checks for sub-register reference and it can check use as well.
-bool LiveIntervals::conflictsWithSubPhysRegRef(LiveInterval &li,
-                                            unsigned Reg, bool CheckUse,
+bool LiveIntervals::conflictsWithAliasRef(LiveInterval &li, unsigned Reg,
                                   SmallPtrSet<MachineInstr*,32> &JoinedCopies) {
   for (LiveInterval::Ranges::const_iterator
          I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
@@ -239,12 +236,11 @@ bool LiveIntervals::conflictsWithSubPhysRegRef(LiveInterval &li,
         MachineOperand& MO = MI->getOperand(i);
         if (!MO.isReg())
           continue;
-        if (MO.isUse() && !CheckUse)
-          continue;
         unsigned PhysReg = MO.getReg();
-        if (PhysReg == 0 || TargetRegisterInfo::isVirtualRegister(PhysReg))
+        if (PhysReg == 0 || PhysReg == Reg ||
+            TargetRegisterInfo::isVirtualRegister(PhysReg))
           continue;
-        if (tri_->isSubRegister(Reg, PhysReg))
+        if (tri_->regsOverlap(Reg, PhysReg))
           return true;
       }
     }
@@ -1284,6 +1280,7 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
       continue;
 
     SlotIndex KillIdx = VNI->kills[j];
+    assert(getInstructionFromIndex(KillIdx) && "Dangling kill");
     if (KillIdx > Idx && KillIdx <= End)
       return true;
   }
