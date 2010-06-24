@@ -783,37 +783,6 @@ LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
   return NewLI;
 }
 
-/// getVNInfoSourceReg - Helper function that parses the specified VNInfo
-/// copy field and returns the source register that defines it.
-unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
-  if (!VNI->getCopy())
-    return 0;
-
-  if (VNI->getCopy()->isExtractSubreg()) {
-    // If it's extracting out of a physical register, return the sub-register.
-    unsigned Reg = VNI->getCopy()->getOperand(1).getReg();
-    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      unsigned SrcSubReg = VNI->getCopy()->getOperand(2).getImm();
-      unsigned DstSubReg = VNI->getCopy()->getOperand(0).getSubReg();
-      if (SrcSubReg == DstSubReg)
-        // %reg1034:3<def> = EXTRACT_SUBREG %EDX, 3
-        // reg1034 can still be coalesced to EDX.
-        return Reg;
-      assert(DstSubReg == 0);
-      Reg = tri_->getSubReg(Reg, VNI->getCopy()->getOperand(2).getImm());
-    }
-    return Reg;
-  } else if (VNI->getCopy()->isInsertSubreg() ||
-             VNI->getCopy()->isSubregToReg())
-    return VNI->getCopy()->getOperand(2).getReg();
-
-  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-  if (tii_->isMoveInstr(*VNI->getCopy(), SrcReg, DstReg, SrcSubReg, DstSubReg))
-    return SrcReg;
-  llvm_unreachable("Unrecognized copy instruction!");
-  return 0;
-}
-
 //===----------------------------------------------------------------------===//
 // Register allocator hooks.
 //
