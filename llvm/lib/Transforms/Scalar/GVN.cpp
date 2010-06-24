@@ -454,9 +454,9 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
         return nextValueNumber++;
       }
 
-      for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-        uint32_t c_vn = lookup_or_add(C->getOperand(i));
-        uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
+      for (unsigned i = 0, e = C->getNumArgOperands(); i < e; ++i) {
+        uint32_t c_vn = lookup_or_add(C->getArgOperand(i));
+        uint32_t cd_vn = lookup_or_add(local_cdep->getArgOperand(i));
         if (c_vn != cd_vn) {
           valueNumbering[C] = nextValueNumber;
           return nextValueNumber++;
@@ -510,9 +510,9 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
       valueNumbering[C] = nextValueNumber;
       return nextValueNumber++;
     }
-    for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-      uint32_t c_vn = lookup_or_add(C->getOperand(i));
-      uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
+    for (unsigned i = 0, e = C->getNumArgOperands(); i < e; ++i) {
+      uint32_t c_vn = lookup_or_add(C->getArgOperand(i));
+      uint32_t cd_vn = lookup_or_add(cdep->getArgOperand(i));
       if (c_vn != cd_vn) {
         valueNumbering[C] = nextValueNumber;
         return nextValueNumber++;
