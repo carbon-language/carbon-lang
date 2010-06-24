@@ -276,13 +276,24 @@ public:
 protected:
     // This is a set of options expressed as indexes into the options table for this Option.
     typedef std::set<char> OptionSet;
+    typedef std::vector<OptionSet> OptionSetVector;
 
     std::vector<struct option> m_getopt_table;
     OptionSet m_seen_options;
-    std::vector<OptionSet> m_required_options;
-    std::vector<OptionSet> m_optional_options;
+    OptionSetVector m_required_options;
+    OptionSetVector m_optional_options;
 
-
+    OptionSetVector &GetRequiredOptions ()
+    {
+        BuildValidOptionSets();
+        return m_required_options;
+    }
+    
+    OptionSetVector &GetOptionalOptions ()
+    {
+        BuildValidOptionSets();
+        return m_optional_options;
+    }
 
     bool
     IsASubset (const OptionSet& set_a, const OptionSet& set_b);

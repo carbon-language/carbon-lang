@@ -121,7 +121,7 @@ Options::VerifyOptions (CommandReturnObject &result)
 {
     bool options_are_valid = false;
 
-    int num_levels = m_required_options.size();
+    int num_levels = GetRequiredOptions().size();
     if (num_levels)
     {
         for (int i = 0; i < num_levels && !options_are_valid; ++i)
@@ -132,13 +132,13 @@ Options::VerifyOptions (CommandReturnObject &result)
             // m_seen_options are in the set of optional options at this level.
 
             // Check to see if all of m_required_options[i] are a subset of m_seen_options
-            if (IsASubset (m_required_options[i], m_seen_options))
+            if (IsASubset (GetRequiredOptions()[i], m_seen_options))
             {
                 // Construct the set difference: remaining_options = {m_seen_options} - {m_required_options[i]}
                 OptionSet remaining_options;
-                OptionsSetDiff (m_seen_options, m_required_options[i], remaining_options);
+                OptionsSetDiff (m_seen_options, GetRequiredOptions()[i], remaining_options);
                 // Check to see if remaining_options is a subset of m_optional_options[i]
-                if (IsASubset (remaining_options, m_optional_options[i]))
+                if (IsASubset (remaining_options, GetOptionalOptions()[i]))
                     options_are_valid = true;
             }
         }
@@ -196,7 +196,7 @@ Options::BuildValidOptionSets ()
         {
             for (int j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
             {
-                if (this_usage_mask & 1 << j)
+                if (this_usage_mask & (1 << j))
                 {
                     if (num_option_sets <= j)
                         num_option_sets = j + 1;
@@ -383,8 +383,7 @@ Options::GenerateOptionUsage
     if (num_options == 0)
         return;
         
-    BuildValidOptionSets ();
-    int num_option_sets = m_required_options.size();
+    int num_option_sets = GetRequiredOptions().size();
     
     uint32_t i;
     
@@ -511,7 +510,7 @@ Options::VerifyPartialOptions (CommandReturnObject &result)
 {
     bool options_are_valid = false;
 
-    int num_levels = m_required_options.size();
+    int num_levels = GetRequiredOptions().size();
     if (num_levels)
       {
         for (int i = 0; i < num_levels && !options_are_valid; ++i)
@@ -520,7 +519,7 @@ Options::VerifyPartialOptions (CommandReturnObject &result)
             // Therefore a set of options is correct if m_seen_options is a subset of the
             // union of m_required_options and m_optional_options.
             OptionSet union_set;
-            OptionsSetUnion (m_required_options[i], m_optional_options[i], union_set);
+            OptionsSetUnion (GetRequiredOptions()[i], GetOptionalOptions()[i], union_set);
             if (IsASubset (m_seen_options, union_set))
                 options_are_valid = true;
           }
@@ -560,7 +559,33 @@ Options::HandleOptionCompletion
         if (opt_pos == cursor_index)
         {
             // We're completing the option itself.
-            if (opt_defs_index != -1)
+
+            if (opt_defs_index == OptionArgElement::eBareDash)
+            {
+                // We're completing a bare dash.  That means all options are open.
+                // FIXME: We should scan the other options provided and only complete options
+                // within the option group they belong to.
+                char opt_str[3] = {'-', 'a', '\0'};
+                
+                for (int i = 0 ; opt_defs[i].short_option != 0 ; i++)
+                {   
+                    opt_str[1] = opt_defs[i].short_option;
+                    matches.AppendString (opt_str);
+                }
+                return true;
+            }
+            else if (opt_defs_index == OptionArgElement::eBareDoubleDash)
+            {
+                std::string full_name ("--");
+                for (int i = 0 ; opt_defs[i].short_option != 0 ; i++)
+                {   
+                    full_name.erase(full_name.begin() + 2, full_name.end());
+                    full_name.append (opt_defs[i].long_option);
+                    matches.AppendString (full_name.c_str());
+                }
+                return true;
+            }
+            else if (opt_defs_index != OptionArgElement::eUnrecognizedArg)
             {
                 // We recognized it, if it an incomplete long option, complete it anyway (getopt_long is
                 // happy with shortest unique string, but it's still a nice thing to do.)  Otherwise return
