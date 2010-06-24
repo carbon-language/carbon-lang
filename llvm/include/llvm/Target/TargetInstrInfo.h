@@ -237,23 +237,19 @@ public:
     return 0;
   }
 
-  /// commuteInstruction - If a target has any instructions that are commutable,
-  /// but require converting to a different instruction or making non-trivial
-  /// changes to commute them, this method can overloaded to do this.  The
-  /// default implementation of this method simply swaps the first two operands
-  /// of MI and returns it.
-  ///
-  /// If a target wants to make more aggressive changes, they can construct and
-  /// return a new machine instruction.  If an instruction cannot commute, it
-  /// can also return null.
-  ///
-  /// If NewMI is true, then a new machine instruction must be created.
-  ///
+  /// commuteInstruction - If a target has any instructions that are
+  /// commutable but require converting to different instructions or making
+  /// non-trivial changes to commute them, this method can overloaded to do
+  /// that.  The default implementation simply swaps the commutable operands.
+  /// If NewMI is false, MI is modified in place and returned; otherwise, a
+  /// new machine instruction is created and returned.  Do not call this
+  /// method for a non-commutable instruction, but there may be some cases
+  /// where this method fails and returns null.
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI = false) const = 0;
 
   /// findCommutedOpIndices - If specified MI is commutable, return the two
-  /// operand indices that would swap value. Return true if the instruction
+  /// operand indices that would swap value. Return false if the instruction
   /// is not in a form which this routine understands.
   virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                      unsigned &SrcOpIdx2) const = 0;
