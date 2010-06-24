@@ -99,9 +99,12 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
 ///
 /// This returns true if an interval was modified.
 ///
-bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
-                                                    LiveInterval &IntB,
+bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
                                                     MachineInstr *CopyMI) {
+  LiveInterval &IntA =
+    li_->getInterval(CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg());
+  LiveInterval &IntB =
+    li_->getInterval(CP.isFlipped() ? CP.getSrcReg() : CP.getDstReg());
   SlotIndex CopyIdx = li_->getInstructionIndex(CopyMI).getDefIndex();
 
   // BValNo is a value number in B that is defined by a copy from A.  'B3' in
@@ -145,26 +148,21 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
 
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   // Get the instruction that defines this value number.
-  unsigned SrcReg = li_->getVNInfoSourceReg(AValNo);
-  if (!SrcReg) return false;  // Not defined by a copy.
-
-  // If the value number is not defined by a copy instruction, ignore it.
-
-  // If the source register comes from an interval other than IntB, we can't
-  // handle this.
-  if (SrcReg != IntB.reg) return false;
+  if (!CP.isCoalescable(AValNo->getCopy()))
+    return false;
 
   // Get the LiveRange in IntB that this value number starts with.
   LiveInterval::iterator ValLR =
     IntB.FindLiveRangeContaining(AValNo->def.getPrevSlot());
-  assert(ValLR != IntB.end() && "Live range not found!");
+  if (ValLR == IntB.end())
+    return false;
 
   // Make sure that the end of the live range is inside the same block as
   // CopyMI.
   MachineInstr *ValLREndInst =
     li_->getInstructionFromIndex(ValLR->end.getPrevSlot());
-  if (!ValLREndInst ||
-      ValLREndInst->getParent() != CopyMI->getParent()) return false;
+  if (!ValLREndInst || ValLREndInst->getParent() != CopyMI->getParent())
+    return false;
 
   // Okay, we now know that ValLR ends in the same block that the CopyMI
   // live-range starts.  If there are no intervening live ranges between them in
@@ -1183,7 +1181,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       LiveInterval *DefInt = &li_->getInterval(CP.getDstReg());
       if (CP.isFlipped())
         std::swap(UseInt, DefInt);
-      if (AdjustCopiesBackFrom(*UseInt, *DefInt, CopyMI) ||
+      if (AdjustCopiesBackFrom(CP, CopyMI) ||
           RemoveCopyByCommutingDef(*UseInt, *DefInt, CopyMI)) {
         JoinedCopies.insert(CopyMI);
         DEBUG(dbgs() << "\tTrivial!\n");

@@ -119,8 +119,7 @@ namespace llvm {
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
     /// value number, eliminating a copy.
-    bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
-                              MachineInstr *CopyMI);
+    bool AdjustCopiesBackFrom(const CoalescerPair &CP, MachineInstr *CopyMI);
 
     /// HasOtherReachingDefs - Return true if there are definitions of IntB
     /// other than BValNo val# that can reach uses of AValno val# of IntA.
