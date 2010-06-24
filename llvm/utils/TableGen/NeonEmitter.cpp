@@ -804,7 +804,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     // argument to the __builtin.
     if (structTypes && (proto[i] == '2' || proto[i] == '3' || proto[i] == '4')){
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
-        s += args + ".val[" + utostr(vi) + "]";
+        s += args + ".val[" + utostr(vi) + "].val";
         if ((vi + 1) < ve)
           s += ", ";
       }
