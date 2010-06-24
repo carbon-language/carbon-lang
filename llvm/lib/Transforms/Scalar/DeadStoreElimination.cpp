@@ -123,14 +123,15 @@ static Value *getPointerOperand(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
-    return MI->getOperand(1);
-  
-  switch (cast<IntrinsicInst>(I)->getIntrinsicID()) {
+    return MI->getArgOperand(0);
+
+  IntrinsicInst *II = cast<IntrinsicInst>(I);
+  switch (II->getIntrinsicID()) {
   default: assert(false && "Unexpected intrinsic!");
   case Intrinsic::init_trampoline:
-    return I->getOperand(1);
+    return II->getArgOperand(0);
   case Intrinsic::lifetime_end:
-    return I->getOperand(2);
+    return II->getArgOperand(1);
   }
 }
 
@@ -147,12 +148,13 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I)) {
     Len = MI->getLength();
   } else {
-    switch (cast<IntrinsicInst>(I)->getIntrinsicID()) {
+    IntrinsicInst *II = cast<IntrinsicInst>(I);
+    switch (II->getIntrinsicID()) {
     default: assert(false && "Unexpected intrinsic!");
     case Intrinsic::init_trampoline:
       return -1u;
     case Intrinsic::lifetime_end:
-      Len = I->getOperand(1);
+      Len = II->getArgOperand(0);
       break;
     }
   }
