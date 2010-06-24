@@ -330,6 +330,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createOptimizePHIsPass());
 
   // Delete dead machine instructions regardless of optimization level.
+  //
+  // At -O0, fast-isel frequently creates dead instructions.
+  //
+  // With optimization, dead code should already be eliminated. However
+  // there is one known exception: lowered code for arguments that are only
+  // used by tail calls, where the tail calls reuse the incoming stack
+  // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
   PM.add(createDeadMachineInstructionElimPass());
   printAndVerify(PM, "After codegen DCE pass",
                  /* allowDoubleDefs= */ true);
