@@ -10654,3 +10654,35 @@
 // CHECK: encoding: [0xc5,0xeb,0xc2,0x5c,0xcb,0xfc,0x03]
           vcmpunordsd   -4(%ebx,%ecx,8), %xmm2, %xmm3
 
+// CHECK: vucomiss  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x2e,0xd1]
+          vucomiss  %xmm1, %xmm2
+
+// CHECK: vucomiss  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x2e,0x10]
+          vucomiss  (%eax), %xmm2
+
+// CHECK: vcomiss  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x2f,0xd1]
+          vcomiss  %xmm1, %xmm2
+
+// CHECK: vcomiss  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x2f,0x10]
+          vcomiss  (%eax), %xmm2
+
+// CHECK: vucomisd  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x2e,0xd1]
+          vucomisd  %xmm1, %xmm2
+
+// CHECK: vucomisd  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x2e,0x10]
+          vucomisd  (%eax), %xmm2
+
+// CHECK: vcomisd  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x2f,0xd1]
+          vcomisd  %xmm1, %xmm2
+
+// CHECK: vcomisd  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x2f,0x10]
+          vcomisd  (%eax), %xmm2
+

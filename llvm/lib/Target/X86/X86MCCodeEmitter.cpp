@@ -364,6 +364,10 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
     return;
 
+  bool HasVEX_4V = false;
+  if ((TSFlags >> 32) & X86II::VEX_4V)
+    HasVEX_4V = true;
+
   // VEX_R: opcode externsion equivalent to REX.R in
   // 1's complement (inverted) form
   //
@@ -447,8 +451,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
   unsigned NumOps = MI.getNumOperands();
-  unsigned i = 0;
-  unsigned SrcReg = 0, SrcRegNum = 0;
+  unsigned i = 0, CurOp = 0;
   bool IsSrcMem = false;
 
   switch (TSFlags & X86II::FormMask) {
@@ -456,9 +459,10 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::MRMSrcMem:
     IsSrcMem = true;
   case X86II::MRMSrcReg:
-    if (MI.getOperand(0).isReg() &&
-        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+    if (MI.getOperand(CurOp).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
+    CurOp++;
 
     // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the
     // range 0-7 and the difference between the 2 groups is given by the
@@ -469,17 +473,20 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  VEX.VVVV    => XMM9 => ~9
     //
     // See table 4-35 of Intel AVX Programming Reference for details.
-    SrcReg = MI.getOperand(1).getReg();
-    SrcRegNum = GetX86RegNum(MI.getOperand(1));
-    if (SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15)
-      SrcRegNum += 8;
+    if (HasVEX_4V) {
+      unsigned SrcReg = MI.getOperand(CurOp).getReg();
+      unsigned SrcRegNum = GetX86RegNum(MI.getOperand(1));
+      if (SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15)
+        SrcRegNum += 8;
 
-    // The registers represented through VEX_VVVV should
-    // be encoded in 1's complement form.
-    if ((TSFlags >> 32) & X86II::VEX_4V)
+      // The registers represented through VEX_VVVV should
+      // be encoded in 1's complement form.
       VEX_4V = (~SrcRegNum) & 0xf;
 
-    i = 2; // Skip the VEX.VVVV operand.
+      CurOp++;
+    }
+
+    i = CurOp;
     for (; i != NumOps; ++i) {
       const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))

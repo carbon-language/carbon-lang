@@ -710,3 +710,36 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x1b,0xc2,0x6c,0xcb,0xfc,0x03]
           vcmpunordsd   -4(%rbx,%rcx,8), %xmm12, %xmm13
 
+// CHECK: vucomiss  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x2e,0xe3]
+          vucomiss  %xmm11, %xmm12
+
+// CHECK: vucomiss  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x2e,0x20]
+          vucomiss  (%rax), %xmm12
+
+// CHECK: vcomiss  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x2f,0xe3]
+          vcomiss  %xmm11, %xmm12
+
+// CHECK: vcomiss  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x2f,0x20]
+          vcomiss  (%rax), %xmm12
+
+// CHECK: vucomisd  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x79,0x2e,0xe3]
+          vucomisd  %xmm11, %xmm12
+
+// CHECK: vucomisd  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x79,0x2e,0x20]
+          vucomisd  (%rax), %xmm12
+
+// CHECK: vcomisd  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x79,0x2f,0xe3]
+          vcomisd  %xmm11, %xmm12
+
+// CHECK: vcomisd  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x79,0x2f,0x20]
+          vcomisd  (%rax), %xmm12
+
+
