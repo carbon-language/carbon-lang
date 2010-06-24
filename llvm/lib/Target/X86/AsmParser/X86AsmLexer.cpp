@@ -33,13 +33,11 @@ class X86AsmLexer : public TargetAsmLexer {
   }
   
   const AsmToken &lexDefinite() {
-    if(tentativeIsValid) {
+    if (tentativeIsValid) {
       tentativeIsValid = false;
       return tentativeToken;
     }
-    else {
-      return getLexer()->Lex();
-    }
+    return getLexer()->Lex();
   }
   
   AsmToken LexTokenATT();
@@ -72,18 +70,19 @@ public:
 static unsigned MatchRegisterName(StringRef Name);
 
 AsmToken X86AsmLexer::LexTokenATT() {
-  const AsmToken lexedToken = lexDefinite();
+  AsmToken lexedToken = lexDefinite();
   
   switch (lexedToken.getKind()) {
   default:
-    return AsmToken(lexedToken);
+    return lexedToken;
   case AsmToken::Error:
     SetError(Lexer->getErrLoc(), Lexer->getErr());
-    return AsmToken(lexedToken);
-  case AsmToken::Percent:   {
+    return lexedToken;
+      
+  case AsmToken::Percent: {
     const AsmToken &nextToken = lexTentative();
     if (nextToken.getKind() != AsmToken::Identifier)
-      return AsmToken(lexedToken);
+      return lexedToken;
 
       
     if (unsigned regID = MatchRegisterName(nextToken.getString())) {
@@ -93,12 +92,11 @@ AsmToken X86AsmLexer::LexTokenATT() {
                        lexedToken.getString().size() + 
                        nextToken.getString().size());
       
-      return AsmToken(AsmToken::Register, 
-                      regStr, 
+      return AsmToken(AsmToken::Register, regStr, 
                       static_cast<int64_t>(regID));
     }
     
-    return AsmToken(lexedToken);
+    return lexedToken;
   }    
   }
 }
@@ -108,26 +106,22 @@ AsmToken X86AsmLexer::LexTokenIntel() {
   
   switch(lexedToken.getKind()) {
   default:
-    return AsmToken(lexedToken);
+    return lexedToken;
   case AsmToken::Error:
     SetError(Lexer->getErrLoc(), Lexer->getErr());
-    return AsmToken(lexedToken);
-  case AsmToken::Identifier:
-  {
+    return lexedToken;
+  case AsmToken::Identifier: {
     std::string upperCase = lexedToken.getString().str();
     std::string lowerCase = LowercaseString(upperCase);
     StringRef lowerRef(lowerCase);
     
     unsigned regID = MatchRegisterName(lowerRef);
     
-    if (regID) {
+    if (regID)
       return AsmToken(AsmToken::Register,
                       lexedToken.getString(),
                       static_cast<int64_t>(regID));
-    }
-    else {
-      return AsmToken(lexedToken);
-    }
+    return lexedToken;
   }
   }
 }
