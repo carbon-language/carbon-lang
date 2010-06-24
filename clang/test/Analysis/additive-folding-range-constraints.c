@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -verify -analyzer-constraints=range %s
-#include <limits.h>
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 #define NULL ((void*)0)
+#define UINT_MAX (__INT_MAX__  *2U +1U)
 
 // Each of these adjusted ranges has an adjustment small enough to split the
 // solution range across an overflow boundary (Min for <, Max for >).

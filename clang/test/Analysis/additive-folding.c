@@ -1,12 +1,12 @@
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -verify -analyzer-constraints=basic %s
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -verify -analyzer-constraints=range %s
-#include <limits.h>
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 #define NULL ((void*)0)
+#define UINT_MAX -1U
 
 //---------------
 //  Plus/minus
