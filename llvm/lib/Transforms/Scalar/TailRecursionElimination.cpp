@@ -454,7 +454,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // Ok, now that we know we have a pseudo-entry block WITH all of the
   // required PHI nodes, add entries into the PHI node for the actual
   // parameters passed into the tail-recursive call.
-  for (unsigned i = 0, e = CI->getNumOperands()-1; i != e; ++i)
+  for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
     ArgumentPHIs[i]->addIncoming(CI->getArgOperand(i), BB);
 
   // If we are introducing an accumulator variable to eliminate the recursion,
