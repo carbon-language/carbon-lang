@@ -182,21 +182,32 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
                                       const TargetRegisterInfo &TRI,
                                       const TargetInstrInfo &TII) {
   // Emit the copies into the top of the block.
-  for (MachineRegisterInfo::livein_iterator LI = livein_begin(),
-         E = livein_end(); LI != E; ++LI)
-    if (LI->second) {
-      const TargetRegisterClass *RC = getRegClass(LI->second);
-      bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
-                                      LI->second, LI->first, RC, RC,
-                                      DebugLoc());
-      assert(Emitted && "Unable to issue a live-in copy instruction!\n");
-      (void) Emitted;
-    }
+  for (unsigned i = 0, e = LiveIns.size(); i != e; ++i)
+    if (LiveIns[i].second) {
+      if (use_empty(LiveIns[i].second)) {
+        // The livein has no uses. Drop it.
+        //
+        // It would be preferable to have isel avoid creating live-in
+        // records for unused arguments in the first place, but it's
+        // complicated by the debug info code for arguments.
+        LiveIns.erase(LiveIns.begin() + i);
+        --i; --e;
+      } else {
+        // Emit a copy.
+        const TargetRegisterClass *RC = getRegClass(LiveIns[i].second);
+        bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
+                                        LiveIns[i].second, LiveIns[i].first,
+                                        RC, RC, DebugLoc());
+        assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+        (void) Emitted;
 
-  // Add function live-ins to entry block live-in set.
-  for (MachineRegisterInfo::livein_iterator I = livein_begin(),
-         E = livein_end(); I != E; ++I)
-    EntryMBB->addLiveIn(I->first);
+        // Add the register to the entry block live-in set.
+        EntryMBB->addLiveIn(LiveIns[i].first);
+      }
+    } else {
+      // Add the register to the entry block live-in set.
+      EntryMBB->addLiveIn(LiveIns[i].first);
+    }
 }
 
 void MachineRegisterInfo::closePhysRegsUsed(const TargetRegisterInfo &TRI) {
