@@ -725,42 +725,61 @@ multiclass sse12_cmp_alt<RegisterClass RC, string asm, Domain d,
             [], d>;
 }
 
-// Comparison instructions
-let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
-  def CMPSSrr : SSIi8<0xC2, MRMSrcReg,
-                    (outs FR32:$dst), (ins FR32:$src1, FR32:$src, SSECC:$cc),
-                    "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
+multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
+                            Operand sse_imm_op, string asm> {
+  def rr : SIi8<0xC2, MRMSrcReg,
+                    (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$cc),
+                    asm, []>;
   let mayLoad = 1 in
-  def CMPSSrm : SSIi8<0xC2, MRMSrcMem,
-                    (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, SSECC:$cc),
-                    "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
-
-  def CMPSDrr : SDIi8<0xC2, MRMSrcReg,
-                    (outs FR64:$dst), (ins FR64:$src1, FR64:$src, SSECC:$cc),
-                    "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
-  let mayLoad = 1 in
-  def CMPSDrm : SDIi8<0xC2, MRMSrcMem,
-                    (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, SSECC:$cc),
-                    "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
-
-// Accept explicit immediate argument form instead of comparison code.
-let isAsmParserOnly = 1 in {
-  def CMPSSrr_alt : SSIi8<0xC2, MRMSrcReg,
-                    (outs FR32:$dst), (ins FR32:$src1, FR32:$src, i8imm:$src2),
-                    "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
-  let mayLoad = 1 in
-  def CMPSSrm_alt : SSIi8<0xC2, MRMSrcMem,
-                    (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, i8imm:$src2),
-                    "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
-
-  def CMPSDrr_alt : SDIi8<0xC2, MRMSrcReg,
-                    (outs FR64:$dst), (ins FR64:$src1, FR64:$src, i8imm:$src2),
-                    "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
-  let mayLoad = 1 in
-  def CMPSDrm_alt : SDIi8<0xC2, MRMSrcMem,
-                    (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, i8imm:$src2),
-                    "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>;
+  def rm : SIi8<0xC2, MRMSrcMem,
+                    (outs RC:$dst), (ins RC:$src1, x86memop:$src, sse_imm_op:$cc),
+                    asm, []>;
 }
+
+// FIXME: rename instructions to only use the class above
+multiclass sse12_cmp_scalar_alt<RegisterClass RC, X86MemOperand x86memop,
+                            Operand sse_imm_op, string asm> {
+  def rr_alt : SIi8<0xC2, MRMSrcReg,
+                    (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$src2),
+                    asm, []>;
+  let mayLoad = 1 in
+  def rm_alt : SIi8<0xC2, MRMSrcMem,
+                    (outs RC:$dst), (ins RC:$src1, x86memop:$src, sse_imm_op:$src2),
+                    asm, []>;
+}
+
+let neverHasSideEffects = 1, isAsmParserOnly = 1 in {
+  defm VCMPSS  : sse12_cmp_scalar<FR32, f32mem, SSECC,
+                    "cmp${cc}ss\t{$src, $src1, $dst|$dst, $src1, $src}">,
+                    XS, VEX_4V;
+  defm VCMPSD  : sse12_cmp_scalar<FR64, f64mem, SSECC,
+                    "cmp${cc}sd\t{$src, $src1, $dst|$dst, $src1, $src}">,
+                    XD, VEX_4V;
+
+  // Accept explicit immediate argument form instead of comparison code.
+  let isAsmParserOnly = 1 in {
+    defm VCMPSS  : sse12_cmp_scalar_alt<FR32, f32mem, i8imm,
+                      "cmpss\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}">,
+                      XS, VEX_4V;
+    defm VCMPSD  : sse12_cmp_scalar_alt<FR64, f32mem, i8imm,
+                      "cmpsd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}">,
+                      XD, VEX_4V;
+  }
+}
+
+let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
+  defm CMPSS  : sse12_cmp_scalar<FR32, f32mem, SSECC,
+                    "cmp${cc}ss\t{$src, $dst|$dst, $src}">, XS;
+  defm CMPSD  : sse12_cmp_scalar<FR64, f64mem, SSECC,
+                    "cmp${cc}sd\t{$src, $dst|$dst, $src}">, XD;
+
+  // Accept explicit immediate argument form instead of comparison code.
+  let isAsmParserOnly = 1 in {
+    defm CMPSS  : sse12_cmp_scalar_alt<FR32, f32mem, i8imm,
+                      "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}">, XS;
+    defm CMPSD  : sse12_cmp_scalar_alt<FR64, f32mem, i8imm,
+                      "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}">, XD;
+  }
 }
 
 let Defs = [EFLAGS] in {
