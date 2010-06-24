@@ -228,7 +228,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // block literal.
     // __invoke
     llvm::Function *Fn
-      = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, CurFuncDecl,
+      = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, BE, Info, CurFuncDecl,
                                                    LocalDeclMap);
     BlockHasCopyDispose |= Info.BlockHasCopyDispose;
     Elts[3] = Fn;
@@ -723,7 +723,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   CGBlockInfo Info(n);
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
   llvm::Function *Fn
-    = CodeGenFunction(CGM).GenerateBlockFunction(BE, Info, 0, LocalDeclMap);
+    = CodeGenFunction(CGM).GenerateBlockFunction(GlobalDecl(), BE, Info, 0, LocalDeclMap);
   assert(Info.BlockSize == BlockLiteralSize
          && "no imports allowed for global block");
 
@@ -762,7 +762,7 @@ llvm::Value *CodeGenFunction::LoadBlockStruct() {
 }
 
 llvm::Function *
-CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
+CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                                        CGBlockInfo &Info,
                                        const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm) {
@@ -835,7 +835,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
 
   MangleBuffer Name;
-  CGM.getMangledName(Name, BD);
+  CGM.getMangledName(GD, Name, BD);
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage, 
                            Name.getString(), &CGM.getModule());

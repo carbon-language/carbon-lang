@@ -500,7 +500,8 @@ public:
                                            const llvm::StructType *,
                                            std::vector<HelperInfo> *);
 
-  llvm::Function *GenerateBlockFunction(const BlockExpr *BExpr,
+  llvm::Function *GenerateBlockFunction(GlobalDecl GD,
+                                        const BlockExpr *BExpr,
                                         CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm);

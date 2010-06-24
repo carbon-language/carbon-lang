@@ -231,7 +231,7 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
     getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(ND))
-    getMangleContext().mangleBlock(BD, Buffer);
+    getMangleContext().mangleBlock(GD, BD, Buffer);
   else
     getMangleContext().mangleName(ND, Buffer);
 
@@ -245,8 +245,9 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   return Str;
 }
 
-void CodeGenModule::getMangledName(MangleBuffer &Buffer, const BlockDecl *BD) {
-  getMangleContext().mangleBlock(BD, Buffer.getBuffer());
+void CodeGenModule::getMangledName(GlobalDecl GD, MangleBuffer &Buffer,
+                                   const BlockDecl *BD) {
+  getMangleContext().mangleBlock(GD, BD, Buffer.getBuffer());
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {

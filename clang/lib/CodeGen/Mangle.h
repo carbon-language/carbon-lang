@@ -19,6 +19,7 @@
 #define LLVM_CLANG_CODEGEN_MANGLE_H
 
 #include "CGCXX.h"
+#include "GlobalDecl.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -133,7 +134,8 @@ public:
                              llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::SmallVectorImpl<char> &);
-  void mangleBlock(const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
+  void mangleBlock(GlobalDecl GD,
+                   const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
 
   void mangleInitDiscriminator() {
     Discriminator = 0;
@@ -163,7 +165,7 @@ public:
 
   llvm::raw_svector_ostream &getStream() { return Out; }
   
-  void mangleBlock(const BlockDecl *BD);
+  void mangleBlock(GlobalDecl GD, const BlockDecl *BD);
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
 };
 

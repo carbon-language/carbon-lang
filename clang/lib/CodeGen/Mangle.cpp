@@ -40,7 +40,7 @@ MiscNameMangler::MiscNameMangler(MangleContext &C,
                                  llvm::SmallVectorImpl<char> &Res)
   : Context(C), Out(Res) { }
 
-void MiscNameMangler::mangleBlock(const BlockDecl *BD) {
+void MiscNameMangler::mangleBlock(GlobalDecl GD, const BlockDecl *BD) {
   // Mangle the context of the block.
   // FIXME: We currently mimic GCC's mangling scheme, which leaves much to be
   // desired. Come up with a better mangling scheme.
@@ -55,6 +55,16 @@ void MiscNameMangler::mangleBlock(const BlockDecl *BD) {
       const NamedDecl *ND = cast<NamedDecl>(DC);
       if (IdentifierInfo *II = ND->getIdentifier())
         Out << II->getName();
+      else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND)) {
+        llvm::SmallString<64> Buffer;
+        Context.mangleCXXDtor(D, GD.getDtorType(), Buffer);
+        Out << Buffer;
+      }
+      else if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND)) {
+        llvm::SmallString<64> Buffer;
+        Context.mangleCXXCtor(D, GD.getCtorType(), Buffer);
+        Out << Buffer;
+      }
       else {
         // FIXME: We were doing a mangleUnqualifiedName() before, but that's
         // a private member of a class that will soon itself be private to the
@@ -857,7 +867,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
     manglePrefix(DC->getParent(), NoFunction);    
     llvm::SmallString<64> Name;
-    Context.mangleBlock(Block, Name);
+    Context.mangleBlock(GlobalDecl(), Block, Name);
     Out << Name.size() << Name;
     return;
   }
@@ -2180,10 +2190,10 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
   Mangler.mangle(D);
 }
 
-void MangleContext::mangleBlock(const BlockDecl *BD,
+void MangleContext::mangleBlock(GlobalDecl GD, const BlockDecl *BD,
                                 llvm::SmallVectorImpl<char> &Res) {
   MiscNameMangler Mangler(*this, Res);
-  Mangler.mangleBlock(BD);
+  Mangler.mangleBlock(GD, BD);
 }
 
 void MangleContext::mangleThunk(const CXXMethodDecl *MD,

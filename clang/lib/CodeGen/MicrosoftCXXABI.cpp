@@ -402,7 +402,7 @@ void MicrosoftCXXNameMangler::manglePostfix(const DeclContext *DC,
 
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC)) {
     llvm::SmallString<64> Name;
-    Context.mangleBlock(BD, Name);
+    Context.mangleBlock(GlobalDecl(), BD, Name);
     Out << Name << '@';
     return manglePostfix(DC->getParent(), NoFunction);
   }
