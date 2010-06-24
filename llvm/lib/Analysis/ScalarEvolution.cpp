@@ -822,7 +822,8 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   // Fold if the operand is constant.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return getConstant(
-      cast<ConstantInt>(ConstantExpr::getTrunc(SC->getValue(), Ty)));
+      cast<ConstantInt>(ConstantExpr::getTrunc(SC->getValue(),
+                                               getEffectiveSCEVType(Ty))));
 
   // trunc(trunc(x)) --> trunc(x)
   if (const SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op))
