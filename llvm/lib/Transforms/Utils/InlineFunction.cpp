@@ -63,7 +63,8 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     
     // Next, create the new invoke instruction, inserting it at the end
     // of the old basic block.
-    SmallVector<Value*, 8> InvokeArgs(CI->op_begin()+1, CI->op_end());
+    ImmutableCallSite CS(CI);
+    SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
     InvokeInst *II =
       InvokeInst::Create(CI->getCalledValue(), Split, InvokeDest,
                          InvokeArgs.begin(), InvokeArgs.end(),
