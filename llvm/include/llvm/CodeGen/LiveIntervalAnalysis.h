@@ -248,12 +248,6 @@ namespace llvm {
     addIntervalsForSpills(const LiveInterval& i,
                           SmallVectorImpl<LiveInterval*> &SpillIs,
                           const MachineLoopInfo *loopInfo, VirtRegMap& vrm);
-    
-    /// addIntervalsForSpillsFast - Quickly create new intervals for spilled
-    /// defs / uses without remat or splitting.
-    std::vector<LiveInterval*>
-    addIntervalsForSpillsFast(const LiveInterval &li,
-                              const MachineLoopInfo *loopInfo, VirtRegMap &vrm);
 
     /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
     /// around all defs and uses of the specified interval. Return true if it

@@ -50,9 +50,6 @@ using namespace llvm;
 static cl::opt<bool> DisableReMat("disable-rematerialization", 
                                   cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EnableFastSpilling("fast-spill",
-                                        cl::init(false), cl::Hidden);
-
 STATISTIC(numIntervals , "Number of original intervals");
 STATISTIC(numFolds     , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits    , "Number of intervals split");
@@ -1624,93 +1621,9 @@ LiveIntervals::normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
 }
 
 std::vector<LiveInterval*> LiveIntervals::
-addIntervalsForSpillsFast(const LiveInterval &li,
-                          const MachineLoopInfo *loopInfo,
-                          VirtRegMap &vrm) {
-  unsigned slot = vrm.assignVirt2StackSlot(li.reg);
-
-  std::vector<LiveInterval*> added;
-
-  assert(li.isSpillable() && "attempt to spill already spilled interval!");
-
-  DEBUG({
-      dbgs() << "\t\t\t\tadding intervals for spills for interval: ";
-      li.dump();
-      dbgs() << '\n';
-    });
-
-  const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
-
-  MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg);
-  while (RI != mri_->reg_end()) {
-    MachineInstr* MI = &*RI;
-    
-    SmallVector<unsigned, 2> Indices;
-    bool HasUse, HasDef;
-    tie(HasUse, HasDef) = MI->readsWritesVirtualRegister(li.reg, &Indices);
-
-    if (!tryFoldMemoryOperand(MI, vrm, NULL, getInstructionIndex(MI),
-                              Indices, true, slot, li.reg)) {
-      unsigned NewVReg = mri_->createVirtualRegister(rc);
-      vrm.grow();
-      vrm.assignVirt2StackSlot(NewVReg, slot);
-      
-      // create a new register for this spill
-      LiveInterval &nI = getOrCreateInterval(NewVReg);
-      nI.markNotSpillable();
-      
-      // Rewrite register operands to use the new vreg.
-      for (SmallVectorImpl<unsigned>::iterator I = Indices.begin(),
-           E = Indices.end(); I != E; ++I) {
-        MI->getOperand(*I).setReg(NewVReg);
-        
-        if (MI->getOperand(*I).isUse())
-          MI->getOperand(*I).setIsKill(true);
-      }
-      
-      // Fill in  the new live interval.
-      SlotIndex index = getInstructionIndex(MI);
-      if (HasUse) {
-        LiveRange LR(index.getLoadIndex(), index.getUseIndex(),
-                     nI.getNextValue(SlotIndex(), 0, false,
-                                     getVNInfoAllocator()));
-        DEBUG(dbgs() << " +" << LR);
-        nI.addRange(LR);
-        vrm.addRestorePoint(NewVReg, MI);
-      }
-      if (HasDef) {
-        LiveRange LR(index.getDefIndex(), index.getStoreIndex(),
-                     nI.getNextValue(SlotIndex(), 0, false,
-                                     getVNInfoAllocator()));
-        DEBUG(dbgs() << " +" << LR);
-        nI.addRange(LR);
-        vrm.addSpillPoint(NewVReg, true, MI);
-      }
-      
-      added.push_back(&nI);
-        
-      DEBUG({
-          dbgs() << "\t\t\t\tadded new interval: ";
-          nI.dump();
-          dbgs() << '\n';
-        });
-    }
-    
-    
-    RI = mri_->reg_begin(li.reg);
-  }
-
-  return added;
-}
-
-std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
                       SmallVectorImpl<LiveInterval*> &SpillIs,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm) {
-  
-  if (EnableFastSpilling)
-    return addIntervalsForSpillsFast(li, loopInfo, vrm);
-  
   assert(li.isSpillable() && "attempt to spill already spilled interval!");
 
   DEBUG({
