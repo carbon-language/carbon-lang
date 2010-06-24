@@ -31,6 +31,7 @@
     <li><a href="#chaining"><tt>AliasAnalysis</tt> chaining behavior</a></li>
     <li><a href="#updating">Updating analysis results for transformations</a></li>
     <li><a href="#implefficiency">Efficiency Issues</a></li>
+    <li><a href="#passmanager">Pass Manager Issues</a></li>
     </ul>
   </li>
 
@@ -499,6 +500,45 @@ serviced quickly.  The actual calculation of the alias analysis results (the
 "run" method) is only performed once, but many (perhaps duplicate) queries may
 be performed.  Because of this, try to move as much computation to the run
 method as possible (within reason).</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="passmanager">Pass Manager Issues</a>
+</div>
+
+<div class="doc_text">
+
+<p>PassManager support for alternative AliasAnalysis implementation
+has some issues.</p>
+
+<p>There is no way to override the default alias analysis. It would
+be very useful to be able to do something like "opt -my-aa -O2" and
+have it use -my-aa for all passes which need AliasAnalysis, but there
+is currently no support for that, short of changing the source code
+and recompiling. Similarly, there is also no way of setting a chain
+of analyses as the default.</p>
+
+<p>There is no way for transform passes to declare that they preserve
+<tt>AliasAnalysis</tt> implementations. The <tt>AliasAnalysis</tt>
+interface includes <tt>deleteValue</tt> and <tt>copyValue</tt> methods
+which are intended to allow a pass to keep an AliasAnalysis consistent,
+however there's no way for a pass to declare in its
+<tt>getAnalysisUsage</tt> that it does so. Some passes attempt to use
+<tt>AU.addPreserved&lt;AliasAnalysis&gt;</tt>, however this doesn't
+actually have any effect.</tt>
+
+<p><tt>AliasAnalysisCounter</tt> (<tt>-count-aa</tt>) and <tt>AliasDebugger</tt>
+(<tt>-debug-aa</tt>) are implemented as <tt>ModulePass</tt> classes, so if your
+alias analysis uses <tt>FunctionPass</tt>, it won't be able to use
+these utilities. If you try to use them, the pass manager will
+silently route alias analysis queries directly to
+<tt>BasicAliasAnalysis</tt> instead.</p>
+
+<p>Similarly, the <tt>opt -p</tt> option introduces <tt>ModulePass</tt>
+passes between each pass, which prevents the use of <tt>FunctionPass</tt>
+alias analysis passes.</p>
 
 </div>
 
