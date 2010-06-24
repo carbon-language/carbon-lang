@@ -42,6 +42,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -262,8 +263,8 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   // char*. It returns "void", so it doesn't need to replace any of
   // Inst's uses and doesn't get a name.
   CastInst* CI = 
-    new BitCastInst(Inst->getOperand(1), SBPTy, "LJBuf", Inst);
-  Value *Args[] = { CI, Inst->getOperand(2) };
+    new BitCastInst(Inst->getArgOperand(0), SBPTy, "LJBuf", Inst);
+  Value *Args[] = { CI, Inst->getArgOperand(1) };
   CallInst::Create(ThrowLongJmp, Args, Args + 2, "", Inst);
 
   SwitchValuePair& SVP = SwitchValMap[Inst->getParent()->getParent()];
@@ -378,7 +379,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   const Type* SBPTy =
           Type::getInt8PtrTy(Inst->getContext());
   CastInst* BufPtr = 
-    new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
+    new BitCastInst(Inst->getArgOperand(0), SBPTy, "SBJmpBuf", Inst);
   Value *Args[] = {
     GetSetJmpMap(Func), BufPtr,
     ConstantInt::get(Type::getInt32Ty(Inst->getContext()), SetJmpIDMap[Func]++)
@@ -473,7 +474,8 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
 
   // Construct the new "invoke" instruction.
   TerminatorInst* Term = OldBB->getTerminator();
-  std::vector<Value*> Params(CI.op_begin() + 1, CI.op_end());
+  CallSite CS(&CI);
+  std::vector<Value*> Params(CS.arg_begin(), CS.arg_end());
   InvokeInst* II =
     InvokeInst::Create(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
                        Params.begin(), Params.end(), CI.getName(), Term);
