@@ -1424,18 +1424,10 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
                                MVT::Other, getControlRoot(), Cond,
                                DAG.getBasicBlock(CB.TrueBB));
 
-  // If the branch was constant folded, fix up the CFG.
-  if (BrCond.getOpcode() == ISD::BR) {
-    SwitchBB->removeSuccessor(CB.FalseBB);
-  } else {
-    // Otherwise, go ahead and insert the false branch.
-    if (BrCond == getControlRoot())
-      SwitchBB->removeSuccessor(CB.TrueBB);
-
-    if (CB.FalseBB != NextBlock)
-      BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
-                           DAG.getBasicBlock(CB.FalseBB));
-  }
+  // Insert the false branch.
+  if (CB.FalseBB != NextBlock)
+    BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
+                         DAG.getBasicBlock(CB.FalseBB));
 
   DAG.setRoot(BrCond);
 }
