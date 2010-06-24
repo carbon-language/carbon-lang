@@ -105,11 +105,14 @@ namespace llvm {
     /// possible to coalesce this interval, but it may be possible if other
     /// things get coalesced, then it returns true by reference in 'Again'.
     bool JoinCopy(CopyRec &TheCopy, bool &Again);
-
+    
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
-    /// returns false.  The output "SrcInt" will not have been modified, so we can
-    /// use this information below to update aliases.
-    bool JoinIntervals(CoalescerPair &CP);
+    /// returns false.  Otherwise, if one of the intervals being joined is a
+    /// physreg, this method always canonicalizes DestInt to be it.  The output
+    /// "SrcInt" will not have been modified, so we can use this information
+    /// below to update aliases.
+    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped,
+                       CoalescerPair &CP);
 
     /// Return true if the two specified registers belong to different register
     /// classes.  The registers may be either phys or virt regs.
@@ -146,6 +149,11 @@ namespace llvm {
     bool ReMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
                                  unsigned DstSubIdx, MachineInstr *CopyMI);
 
+    /// CanCoalesceWithImpDef - Returns true if the specified copy instruction
+    /// from an implicit def to another register can be coalesced away.
+    bool CanCoalesceWithImpDef(MachineInstr *CopyMI,
+                               LiveInterval &li, LiveInterval &ImpLi) const;
+
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
     bool isWinToJoinCrossClass(unsigned SrcReg,
@@ -178,7 +186,7 @@ namespace llvm {
     /// physical register and the existing subregister number of the def / use
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
-    void UpdateRegDefsUses(const CoalescerPair &CP);
+    void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
     /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
     /// Return true if live interval is removed.

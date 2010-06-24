@@ -133,9 +133,10 @@ namespace llvm {
     bool conflictsWithPhysReg(const LiveInterval &li, VirtRegMap &vrm,
                               unsigned reg);
 
-    /// conflictsWithAliasRef - Similar to conflictsWithPhysRegRef except
-    /// it checks for alias uses and defs.
-    bool conflictsWithAliasRef(LiveInterval &li, unsigned Reg,
+    /// conflictsWithSubPhysRegRef - Similar to conflictsWithPhysRegRef except
+    /// it checks for sub-register reference and it can check use as well.
+    bool conflictsWithSubPhysRegRef(LiveInterval &li, unsigned Reg,
+                                    bool CheckUse,
                                    SmallPtrSet<MachineInstr*,32> &JoinedCopies);
 
     // Interval creation

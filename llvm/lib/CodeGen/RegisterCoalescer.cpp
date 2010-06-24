@@ -63,7 +63,7 @@ bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
 bool CoalescerPair::setRegisters(const MachineInstr *MI) {
   srcReg_ = dstReg_ = subIdx_ = 0;
   newRC_ = 0;
-  flipped_ = crossClass_ = false;
+  flipped_ = false;
 
   unsigned Src, Dst, SrcSub, DstSub;
   if (!isMoveInstr(MI, Src, Dst, SrcSub, DstSub))
@@ -78,7 +78,6 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     std::swap(SrcSub, DstSub);
     flipped_ = true;
   }
-  origDstReg_ = Dst;
 
   const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
 
@@ -101,19 +100,11 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
   } else {
     // Both registers are virtual.
 
-    // Both registers have subreg indices.
-    if (SrcSub && DstSub) {
-      // For now we only handle the case of identical indices in commensurate
-      // registers: Dreg:ssub_1 + Dreg:ssub_1 -> Dreg
-      // FIXME: Handle Qreg:ssub_3 + Dreg:ssub_1 as QReg:dsub_1 + Dreg.
-      if (SrcSub != DstSub)
-        return false;
-      const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
-      const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
-      if (!getCommonSubClass(DstRC, SrcRC))
-        return false;
+    // Identical sub to sub.
+    if (SrcSub == DstSub)
       SrcSub = DstSub = 0;
-    }
+    else if (SrcSub && DstSub)
+      return false; // FIXME: Qreg:ssub_3 + Dreg:ssub_1 => QReg:dsub_1 + Dreg.
 
     // There can be no SrcSub.
     if (SrcSub) {
@@ -133,7 +124,6 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
       newRC_ = getCommonSubClass(DstRC, SrcRC);
     if (!newRC_)
       return false;
-    crossClass_ = newRC_ != DstRC || newRC_ != SrcRC;
   }
   // Check our invariants
   assert(TargetRegisterInfo::isVirtualRegister(Src) && "Src must be virtual");
