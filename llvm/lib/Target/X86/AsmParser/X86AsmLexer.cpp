@@ -88,6 +88,8 @@ AsmToken X86AsmLexer::LexTokenATT() {
     if (unsigned regID = MatchRegisterName(nextToken.getString())) {
       lexDefinite();
         
+      // FIXME: This is completely wrong when there is a space or other
+      // punctuation between the % and the register name.
       StringRef regStr(lexedToken.getString().data(),
                        lexedToken.getString().size() + 
                        nextToken.getString().size());
@@ -96,6 +98,36 @@ AsmToken X86AsmLexer::LexTokenATT() {
                       static_cast<int64_t>(regID));
     }
     
+    // Match register name failed.  If this is "db[0-7]", match it as an alias
+    // for dr[0-7].
+    if (nextToken.getString().size() == 3 &&
+        nextToken.getString().startswith("db")) {
+      int RegNo = -1;
+      switch (nextToken.getString()[2]) {
+      case '0': RegNo = X86::DR0; break;
+      case '1': RegNo = X86::DR1; break;
+      case '2': RegNo = X86::DR2; break;
+      case '3': RegNo = X86::DR3; break;
+      case '4': RegNo = X86::DR4; break;
+      case '5': RegNo = X86::DR5; break;
+      case '6': RegNo = X86::DR6; break;
+      case '7': RegNo = X86::DR7; break;
+      }
+      
+      if (RegNo != -1) {
+        lexDefinite();
+
+        // FIXME: This is completely wrong when there is a space or other
+        // punctuation between the % and the register name.
+        StringRef regStr(lexedToken.getString().data(),
+                         lexedToken.getString().size() + 
+                         nextToken.getString().size());
+        return AsmToken(AsmToken::Register, regStr, 
+                        static_cast<int64_t>(RegNo));
+      }
+    }
+      
+   
     return lexedToken;
   }    
   }

@@ -412,6 +412,28 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
     return false;
   }
   
+  // If this is "db[0-7]", match it as an alias
+  // for dr[0-7].
+  if (RegNo == 0 && Tok.getString().size() == 3 &&
+      Tok.getString().startswith("db")) {
+    switch (Tok.getString()[2]) {
+    case '0': RegNo = X86::DR0; break;
+    case '1': RegNo = X86::DR1; break;
+    case '2': RegNo = X86::DR2; break;
+    case '3': RegNo = X86::DR3; break;
+    case '4': RegNo = X86::DR4; break;
+    case '5': RegNo = X86::DR5; break;
+    case '6': RegNo = X86::DR6; break;
+    case '7': RegNo = X86::DR7; break;
+    }
+    
+    if (RegNo != 0) {
+      EndLoc = Tok.getLoc();
+      Parser.Lex(); // Eat it.
+      return false;
+    }
+  }
+  
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
