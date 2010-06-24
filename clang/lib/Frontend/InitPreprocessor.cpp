@@ -460,6 +460,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (FEOpts.ProgramAction == frontend::RunAnalysis)
     Builder.defineMacro("__clang_analyzer__");
 
+  // Define __HAS_TLS__ if the target supports it.
+  if (TI.isTLSSupported())
+    Builder.defineMacro("__HAS_TLS__");
+  
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }

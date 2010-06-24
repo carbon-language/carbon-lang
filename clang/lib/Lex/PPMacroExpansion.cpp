@@ -17,6 +17,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
@@ -510,6 +511,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
          //.Case("cxx_nullptr", false)
          //.Case("cxx_rvalue_references", false)
          //.Case("cxx_variadic_templates", false)
+           .Case("tls", PP.getTargetInfo().isTLSSupported())
            .Default(false);
 }
 
