@@ -58,7 +58,8 @@ private:
   void Fileno(CheckerContext &C, const CallExpr *CE);
   
   // Return true indicates the stream pointer is NULL.
-  bool CheckNullStream(SVal SV, const GRState *state, CheckerContext &C);
+  const GRState *CheckNullStream(SVal SV, const GRState *state, 
+                                 CheckerContext &C);
 };
 
 } // end anonymous namespace
@@ -173,71 +174,71 @@ void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) {
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
 void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
 void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-bool StreamChecker::CheckNullStream(SVal SV, const GRState *state,
+const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
                                     CheckerContext &C) {
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
   if (!DV)
@@ -255,7 +256,7 @@ bool StreamChecker::CheckNullStream(SVal SV, const GRState *state,
       BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
       C.EmitReport(R);
     }
-    return true;
+    return 0;
   }
-  return false;
+  return stateNull;
 }
