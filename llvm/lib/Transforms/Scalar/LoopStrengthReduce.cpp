@@ -392,12 +392,13 @@ static bool isAddSExtable(const SCEVAddExpr *A, ScalarEvolution &SE) {
   return isa<SCEVAddExpr>(SE.getSignExtendExpr(A, WideTy));
 }
 
-/// isMulSExtable - Return true if the given add can be sign-extended
+/// isMulSExtable - Return true if the given mul can be sign-extended
 /// without changing its value.
-static bool isMulSExtable(const SCEVMulExpr *A, ScalarEvolution &SE) {
+static bool isMulSExtable(const SCEVMulExpr *M, ScalarEvolution &SE) {
   const Type *WideTy =
-    IntegerType::get(SE.getContext(), SE.getTypeSizeInBits(A->getType()) + 1);
-  return isa<SCEVMulExpr>(SE.getSignExtendExpr(A, WideTy));
+    IntegerType::get(SE.getContext(),
+                     SE.getTypeSizeInBits(M->getType()) * M->getNumOperands());
+  return isa<SCEVMulExpr>(SE.getSignExtendExpr(M, WideTy));
 }
 
 /// getExactSDiv - Return an expression for LHS /s RHS, if it can be determined
