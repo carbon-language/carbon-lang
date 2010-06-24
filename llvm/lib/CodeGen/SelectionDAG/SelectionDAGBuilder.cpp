@@ -1557,29 +1557,41 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
                                            unsigned Reg,
                                            BitTestCase &B,
                                            MachineBasicBlock *SwitchBB) {
-  // Make desired shift
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(), Reg,
                                        TLI.getPointerTy());
-  SDValue SwitchVal = DAG.getNode(ISD::SHL, getCurDebugLoc(),
-                                  TLI.getPointerTy(),
-                                  DAG.getConstant(1, TLI.getPointerTy()),
-                                  ShiftOp);
+  SDValue Cmp;
+  if (CountPopulation_64(B.Mask) == 1) {
+    // Testing for a single bit; just compare the shift count with what it
+    // would need to be to shift a 1 bit in that position.
+    Cmp = DAG.getSetCC(getCurDebugLoc(),
+                       TLI.getSetCCResultType(ShiftOp.getValueType()),
+                       ShiftOp,
+                       DAG.getConstant(CountTrailingZeros_64(B.Mask),
+                                       TLI.getPointerTy()),
+                       ISD::SETEQ);
+  } else {
+    // Make desired shift
+    SDValue SwitchVal = DAG.getNode(ISD::SHL, getCurDebugLoc(),
+                                    TLI.getPointerTy(),
+                                    DAG.getConstant(1, TLI.getPointerTy()),
+                                    ShiftOp);
 
-  // Emit bit tests and jumps
-  SDValue AndOp = DAG.getNode(ISD::AND, getCurDebugLoc(),
-                              TLI.getPointerTy(), SwitchVal,
-                              DAG.getConstant(B.Mask, TLI.getPointerTy()));
-  SDValue AndCmp = DAG.getSetCC(getCurDebugLoc(),
-                                TLI.getSetCCResultType(AndOp.getValueType()),
-                                AndOp, DAG.getConstant(0, TLI.getPointerTy()),
-                                ISD::SETNE);
+    // Emit bit tests and jumps
+    SDValue AndOp = DAG.getNode(ISD::AND, getCurDebugLoc(),
+                                TLI.getPointerTy(), SwitchVal,
+                                DAG.getConstant(B.Mask, TLI.getPointerTy()));
+    Cmp = DAG.getSetCC(getCurDebugLoc(),
+                       TLI.getSetCCResultType(AndOp.getValueType()),
+                       AndOp, DAG.getConstant(0, TLI.getPointerTy()),
+                       ISD::SETNE);
+  }
 
   SwitchBB->addSuccessor(B.TargetBB);
   SwitchBB->addSuccessor(NextMBB);
 
   SDValue BrAnd = DAG.getNode(ISD::BRCOND, getCurDebugLoc(),
                               MVT::Other, getControlRoot(),
-                              AndCmp, DAG.getBasicBlock(B.TargetBB));
+                              Cmp, DAG.getBasicBlock(B.TargetBB));
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
