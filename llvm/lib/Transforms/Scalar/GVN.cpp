@@ -272,7 +272,8 @@ Expression ValueTable::create_expression(CallInst* C) {
   e.function = C->getCalledFunction();
   e.opcode = Expression::CALL;
 
-  for (CallInst::op_iterator I = C->op_begin()+1, E = C->op_end();
+  CallSite CS(C);
+  for (CallInst::op_iterator I = CS.arg_begin(), E = CS.arg_end();
        I != E; ++I)
     e.varargs.push_back(lookup_or_add(*I));
 
