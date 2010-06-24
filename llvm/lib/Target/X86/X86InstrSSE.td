@@ -444,43 +444,6 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
                          RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
-/// sse12_unpack_interleave - SSE 1 & 2 unpack and interleave
-multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
-                                   PatFrag mem_frag, RegisterClass RC,
-                                   X86MemOperand x86memop, string asm,
-                                   Domain d> {
-    def rr : PI<opc, MRMSrcReg,
-                (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                asm, [(set RC:$dst,
-                           (vt (OpNode RC:$src1, RC:$src2)))], d>;
-    def rm : PI<opc, MRMSrcMem,
-                (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-                asm, [(set RC:$dst,
-                           (vt (OpNode RC:$src1,
-                                       (mem_frag addr:$src2))))], d>;
-}
-
-multiclass sse12_cmp<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int,
-                     string asm, Domain d, Operand sse_imm_op> {
-  def rri : PIi8<0xC2, MRMSrcReg,
-             (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$cc), asm,
-             [(set RC:$dst, (Int RC:$src1, RC:$src, imm:$cc))], d>;
-  def rmi : PIi8<0xC2, MRMSrcMem,
-             (outs RC:$dst), (ins RC:$src1, f128mem:$src, sse_imm_op:$cc), asm,
-             [(set RC:$dst, (Int RC:$src1, (memop addr:$src), imm:$cc))], d>;
-}
-
-// FIXME: rename instructions to only use the class above
-multiclass sse12_cmp_alt<RegisterClass RC, string asm, Domain d,
-                         Operand sse_imm_op> {
-  def rri_alt : PIi8<0xC2, MRMSrcReg,
-            (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$src2), asm,
-            [], d>;
-  def rmi_alt : PIi8<0xC2, MRMSrcMem,
-            (outs RC:$dst), (ins RC:$src1, f128mem:$src, sse_imm_op:$src2), asm,
-            [], d>;
-}
-
 //===----------------------------------------------------------------------===//
 // SSE1 Instructions
 //===----------------------------------------------------------------------===//
@@ -741,6 +704,27 @@ let Constraints = "$src1 = $dst" in {
 // SSE 1 & 2 - Compare Instructions
 //===----------------------------------------------------------------------===//
 
+multiclass sse12_cmp<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int,
+                     string asm, Domain d, Operand sse_imm_op> {
+  def rri : PIi8<0xC2, MRMSrcReg,
+             (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$cc), asm,
+             [(set RC:$dst, (Int RC:$src1, RC:$src, imm:$cc))], d>;
+  def rmi : PIi8<0xC2, MRMSrcMem,
+             (outs RC:$dst), (ins RC:$src1, f128mem:$src, sse_imm_op:$cc), asm,
+             [(set RC:$dst, (Int RC:$src1, (memop addr:$src), imm:$cc))], d>;
+}
+
+// FIXME: rename instructions to only use the class above
+multiclass sse12_cmp_alt<RegisterClass RC, string asm, Domain d,
+                         Operand sse_imm_op> {
+  def rri_alt : PIi8<0xC2, MRMSrcReg,
+            (outs RC:$dst), (ins RC:$src1, RC:$src, sse_imm_op:$src2), asm,
+            [], d>;
+  def rmi_alt : PIi8<0xC2, MRMSrcMem,
+            (outs RC:$dst), (ins RC:$src1, f128mem:$src, sse_imm_op:$src2), asm,
+            [], d>;
+}
+
 // Comparison instructions
 let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
   def CMPSSrr : SSIi8<0xC2, MRMSrcReg,
@@ -859,6 +843,170 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
                       [(set EFLAGS, (X86comi (v2f64 VR128:$src1),
                                              (load addr:$src2)))]>;
 } // Defs = [EFLAGS]
+
+let Constraints = "$src1 = $dst" in {
+  defm CMPPS : sse12_cmp<VR128, f128mem, int_x86_sse_cmp_ps,
+                 "cmp${cc}ps\t{$src, $dst|$dst, $src}", SSEPackedSingle, SSECC>,
+                 TB;
+  defm CMPPD : sse12_cmp<VR128, f128mem, int_x86_sse2_cmp_pd,
+                 "cmp${cc}pd\t{$src, $dst|$dst, $src}", SSEPackedDouble, SSECC>,
+                 TB, OpSize;
+}
+let isAsmParserOnly = 1 in {
+  defm VCMPPS : sse12_cmp<VR128, f128mem, int_x86_sse_cmp_ps,
+                 "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
+                 SSEPackedSingle, SSECC>, VEX_4V;
+  defm VCMPPD : sse12_cmp<VR128, f128mem, int_x86_sse2_cmp_pd,
+                 "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
+                 SSEPackedSingle, SSECC>, OpSize, VEX_4V;
+}
+
+let isAsmParserOnly = 1, Pattern = []<dag> in {
+  // Accept explicit immediate argument form instead of comparison code.
+  let Constraints = "$src1 = $dst" in {
+    defm CMPPS : sse12_cmp_alt<VR128,
+                   "cmpps\t{$src2, $src, $dst|$dst, $src, $src2}",
+                   SSEPackedSingle, i8imm>, TB;
+    defm CMPPD : sse12_cmp_alt<VR128,
+                   "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}",
+                   SSEPackedDouble, i8imm>, TB, OpSize;
+  }
+  defm VCMPPS : sse12_cmp_alt<VR128,
+                 "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src}",
+                 SSEPackedSingle, i8imm>, VEX_4V;
+  defm VCMPPD : sse12_cmp_alt<VR128,
+                 "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+                 SSEPackedSingle, i8imm>, OpSize, VEX_4V;
+}
+
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
+          (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (CMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
+          (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Shuffle Instructions
+//===----------------------------------------------------------------------===//
+
+/// sse12_shuffle - sse 1 & 2 shuffle instructions
+multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
+                         ValueType vt, string asm, PatFrag mem_frag,
+                         Domain d, bit IsConvertibleToThreeAddress = 0> {
+  def rmi : PIi8<0xC6, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, f128mem:$src2, i8imm:$src3), asm,
+                   [(set VR128:$dst, (vt (shufp:$src3
+                            VR128:$src1, (mem_frag addr:$src2))))], d>;
+  let isConvertibleToThreeAddress = IsConvertibleToThreeAddress in
+    def rri : PIi8<0xC6, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, VR128:$src2, i8imm:$src3), asm,
+                   [(set VR128:$dst,
+                            (vt (shufp:$src3 VR128:$src1, VR128:$src2)))], d>;
+}
+
+let isAsmParserOnly = 1 in {
+  defm VSHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
+            "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+            memopv4f32, SSEPackedSingle>, VEX_4V;
+  defm VSHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
+            "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src2, $src2, $src3}",
+            memopv2f64, SSEPackedDouble>, OpSize, VEX_4V;
+}
+
+let Constraints = "$src1 = $dst" in {
+  defm SHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
+                    "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                    memopv4f32, SSEPackedSingle, 1 /* cvt to pshufd */>,
+                    TB;
+  defm SHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
+                    "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                    memopv2f64, SSEPackedDouble>, TB, OpSize;
+}
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Unpack Instructions
+//===----------------------------------------------------------------------===//
+
+/// sse12_unpack_interleave - sse 1 & 2 unpack and interleave
+multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
+                                   PatFrag mem_frag, RegisterClass RC,
+                                   X86MemOperand x86memop, string asm,
+                                   Domain d> {
+    def rr : PI<opc, MRMSrcReg,
+                (outs RC:$dst), (ins RC:$src1, RC:$src2),
+                asm, [(set RC:$dst,
+                           (vt (OpNode RC:$src1, RC:$src2)))], d>;
+    def rm : PI<opc, MRMSrcMem,
+                (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
+                asm, [(set RC:$dst,
+                           (vt (OpNode RC:$src1,
+                                       (mem_frag addr:$src2))))], d>;
+}
+
+let AddedComplexity = 10 in {
+  let isAsmParserOnly = 1 in {
+    defm VUNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
+          VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
+          VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+    defm VUNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
+          VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
+          VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+  }
+
+  let Constraints = "$src1 = $dst" in {
+    defm UNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
+          VR128, f128mem, "unpckhps\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedSingle>, TB;
+    defm UNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
+          VR128, f128mem, "unpckhpd\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedDouble>, TB, OpSize;
+    defm UNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
+          VR128, f128mem, "unpcklps\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedSingle>, TB;
+    defm UNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
+          VR128, f128mem, "unpcklpd\t{$src2, $dst|$dst, $src2}",
+                         SSEPackedDouble>, TB, OpSize;
+  } // Constraints = "$src1 = $dst"
+} // AddedComplexity
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Extract Floating-Point Sign mask
+//===----------------------------------------------------------------------===//
+
+/// sse12_extr_sign_mask - sse 1 & 2 unpack and interleave
+multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
+                                Domain d> {
+  def rr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins RC:$src),
+              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
+                     [(set GR32:$dst, (Int RC:$src))], d>;
+}
+
+// Mask creation
+defm MOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps, "movmskps",
+                                     SSEPackedSingle>, TB;
+defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
+                                     SSEPackedDouble>, TB, OpSize;
+
+let isAsmParserOnly = 1 in {
+  defm VMOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps,
+                                        "movmskps", SSEPackedSingle>, VEX;
+  defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
+                                        "movmskpd", SSEPackedDouble>, OpSize,
+                                        VEX;
+}
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Misc aliasing of packed SSE 1 & 2 instructions
+//===----------------------------------------------------------------------===//
 
 // Aliases of packed SSE1 & SSE2 instructions for scalar use. These all have
 // names that start with 'Fs'.
@@ -1347,135 +1495,6 @@ defm RSQRT : sse1_fp_unop_rm<0x52, "rsqrt", X86frsqrt,
                              int_x86_sse_rsqrt_ss, int_x86_sse_rsqrt_ps>;
 defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
                              int_x86_sse_rcp_ss, int_x86_sse_rcp_ps>;
-
-// Compare
-let Constraints = "$src1 = $dst" in {
-  defm CMPPS : sse12_cmp<VR128, f128mem, int_x86_sse_cmp_ps,
-                 "cmp${cc}ps\t{$src, $dst|$dst, $src}", SSEPackedSingle, SSECC>,
-                 TB;
-  defm CMPPD : sse12_cmp<VR128, f128mem, int_x86_sse2_cmp_pd,
-                 "cmp${cc}pd\t{$src, $dst|$dst, $src}", SSEPackedDouble, SSECC>,
-                 TB, OpSize;
-}
-let isAsmParserOnly = 1 in {
-  defm VCMPPS : sse12_cmp<VR128, f128mem, int_x86_sse_cmp_ps,
-                 "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
-                 SSEPackedSingle, SSECC>, VEX_4V;
-  defm VCMPPD : sse12_cmp<VR128, f128mem, int_x86_sse2_cmp_pd,
-                 "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                 SSEPackedSingle, SSECC>, OpSize, VEX_4V;
-}
-
-let isAsmParserOnly = 1, Pattern = []<dag> in {
-  // Accept explicit immediate argument form instead of comparison code.
-  let Constraints = "$src1 = $dst" in {
-    defm CMPPS : sse12_cmp_alt<VR128,
-                   "cmpps\t{$src2, $src, $dst|$dst, $src, $src2}",
-                   SSEPackedSingle, i8imm>, TB;
-    defm CMPPD : sse12_cmp_alt<VR128,
-                   "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}",
-                   SSEPackedDouble, i8imm>, TB, OpSize;
-  }
-  defm VCMPPS : sse12_cmp_alt<VR128,
-                 "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src}",
-                 SSEPackedSingle, i8imm>, VEX_4V;
-  defm VCMPPD : sse12_cmp_alt<VR128,
-                 "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-                 SSEPackedSingle, i8imm>, OpSize, VEX_4V;
-}
-
-def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
-          (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
-def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
-          (CMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
-def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
-          (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
-def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
-          (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
-
-// Shuffle and unpack instructions
-multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
-                         ValueType vt, string asm, PatFrag mem_frag,
-                         Domain d, bit IsConvertibleToThreeAddress = 0> {
-  def rmi : PIi8<0xC6, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, f128mem:$src2, i8imm:$src3), asm,
-                   [(set VR128:$dst, (vt (shufp:$src3
-                            VR128:$src1, (mem_frag addr:$src2))))], d>;
-  let isConvertibleToThreeAddress = IsConvertibleToThreeAddress in
-    def rri : PIi8<0xC6, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, VR128:$src2, i8imm:$src3), asm,
-                   [(set VR128:$dst,
-                            (vt (shufp:$src3 VR128:$src1, VR128:$src2)))], d>;
-}
-
-let Constraints = "$src1 = $dst" in {
-  defm SHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
-                    "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                    memopv4f32, SSEPackedSingle, 1 /* cvt to pshufd */>,
-                    TB;
-  defm SHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
-                    "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                    memopv2f64, SSEPackedDouble>, TB, OpSize;
-
-  let Constraints = "", isAsmParserOnly = 1 in {
-    defm VSHUFPS : sse12_shuffle<VR128, f128mem, v4f32,
-              "shufps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-              memopv4f32, SSEPackedSingle>, VEX_4V;
-    defm VSHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
-              "shufpd\t{$src3, $src2, $src1, $dst|$dst, $src2, $src2, $src3}",
-              memopv2f64, SSEPackedDouble>, OpSize, VEX_4V;
-  }
-
-  let AddedComplexity = 10 in {
-    let Constraints = "", isAsmParserOnly = 1 in {
-    defm VUNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
-          VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                         SSEPackedSingle>, VEX_4V;
-    defm VUNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
-          VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                         SSEPackedDouble>, OpSize, VEX_4V;
-    defm VUNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
-          VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                         SSEPackedSingle>, VEX_4V;
-    defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
-          VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                         SSEPackedDouble>, OpSize, VEX_4V;
-    }
-    defm UNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
-          VR128, f128mem, "unpckhps\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedSingle>, TB;
-    defm UNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
-          VR128, f128mem, "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedDouble>, TB, OpSize;
-    defm UNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
-          VR128, f128mem, "unpcklps\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedSingle>, TB;
-    defm UNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
-          VR128, f128mem, "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedDouble>, TB, OpSize;
-  } // AddedComplexity
-} // Constraints = "$src1 = $dst"
-
-multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
-                                Domain d> {
-  def rr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins RC:$src),
-              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-                     [(set GR32:$dst, (Int RC:$src))], d>;
-}
-
-// Mask creation
-defm MOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps, "movmskps",
-                                     SSEPackedSingle>, TB;
-defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
-                                     SSEPackedDouble>, TB, OpSize;
-
-let isAsmParserOnly = 1 in {
-  defm VMOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps,
-                                        "movmskps", SSEPackedSingle>, VEX;
-  defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
-                                        "movmskpd", SSEPackedDouble>, OpSize,
-                                        VEX;
-}
 
 // Prefetch intrinsic.
 def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),
