@@ -213,9 +213,11 @@ void SlotIndexes::dump() const {
 
 // Print a SlotIndex to a raw_ostream.
 void SlotIndex::print(raw_ostream &os) const {
-  os << getIndex();
+  os << entry().getIndex();
   if (isPHI())
     os << "*";
+  else
+    os << "LudS"[getSlot()];
 }
 
 // Dump a SlotIndex to stderr.
