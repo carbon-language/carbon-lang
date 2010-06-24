@@ -67,7 +67,8 @@ protected:
   /// Add spill ranges for every use/def of the live interval, inserting loads
   /// immediately before each use, and stores after each def. No folding or
   /// remat is attempted.
-  std::vector<LiveInterval*> trivialSpillEverywhere(LiveInterval *li) {
+  void trivialSpillEverywhere(LiveInterval *li,
+                              std::vector<LiveInterval*> &newIntervals) {
     DEBUG(dbgs() << "Spilling everywhere " << *li << "\n");
 
     assert(li->weight != HUGE_VALF &&
@@ -78,8 +79,6 @@ protected:
 
     DEBUG(dbgs() << "Trivial spill everywhere of reg" << li->reg << "\n");
 
-    std::vector<LiveInterval*> added;
-    
     const TargetRegisterClass *trc = mri->getRegClass(li->reg);
     unsigned ss = vrm->assignVirt2StackSlot(li->reg);
 
@@ -157,10 +156,8 @@ protected:
         newLI->addRange(LiveRange(beginIndex, storeIndex, storeVNI));
       }
 
-      added.push_back(newLI);
+      newIntervals.push_back(newLI);
     }
-
-    return added;
   }
 };
 
@@ -176,11 +173,12 @@ public:
   TrivialSpiller(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
     : SpillerBase(mf, lis, vrm) {}
 
-  std::vector<LiveInterval*> spill(LiveInterval *li,
-                                   SmallVectorImpl<LiveInterval*> &spillIs,
-                                   SlotIndex*) {
+  void spill(LiveInterval *li,
+             std::vector<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &,
+             SlotIndex*) {
     // Ignore spillIs - we don't use it.
-    return trivialSpillEverywhere(li);
+    trivialSpillEverywhere(li, newIntervals);
   }
 };
 
@@ -200,10 +198,13 @@ public:
     : lis(lis), loopInfo(loopInfo), vrm(vrm) {}
 
   /// Falls back on LiveIntervals::addIntervalsForSpills.
-  std::vector<LiveInterval*> spill(LiveInterval *li,
-                                   SmallVectorImpl<LiveInterval*> &spillIs,
-                                   SlotIndex*) {
-    return lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
+  void spill(LiveInterval *li,
+             std::vector<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &spillIs,
+             SlotIndex*) {
+    std::vector<LiveInterval*> added =
+      lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
+    newIntervals.insert(newIntervals.end(), added.begin(), added.end());
   }
 };
 
@@ -226,15 +227,14 @@ public:
     tri = mf->getTarget().getRegisterInfo();
   }
 
-  std::vector<LiveInterval*> spill(LiveInterval *li,
-                                   SmallVectorImpl<LiveInterval*> &spillIs,
-                                   SlotIndex *earliestStart) {
-    
-    if (worthTryingToSplit(li)) {
-      return tryVNISplit(li, earliestStart);
-    }
-    // else
-    return StandardSpiller::spill(li, spillIs, earliestStart);
+  void spill(LiveInterval *li,
+             std::vector<LiveInterval*> &newIntervals,
+             SmallVectorImpl<LiveInterval*> &spillIs,
+             SlotIndex *earliestStart) {
+    if (worthTryingToSplit(li))
+      tryVNISplit(li, earliestStart);
+    else
+      StandardSpiller::spill(li, newIntervals, spillIs, earliestStart);
   }
 
 private:

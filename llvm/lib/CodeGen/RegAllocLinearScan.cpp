@@ -1206,8 +1206,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     DEBUG(dbgs() << "\t\t\tspilling(c): " << *cur << '\n');
     SmallVector<LiveInterval*, 8> spillIs;
     std::vector<LiveInterval*> added;
-    
-    added = spiller_->spill(cur, spillIs); 
+    spiller_->spill(cur, added, spillIs);
 
     std::sort(added.begin(), added.end(), LISorter());
     addStackInterval(cur, ls_, li_, mri_, *vrm_);
@@ -1285,10 +1284,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     if (sli->beginIndex() < earliestStart)
       earliestStart = sli->beginIndex();
        
-    std::vector<LiveInterval*> newIs;
-    newIs = spiller_->spill(sli, spillIs, &earliestStart);
+    spiller_->spill(sli, added, spillIs, &earliestStart);
     addStackInterval(sli, ls_, li_, mri_, *vrm_);
-    std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
   }
 
