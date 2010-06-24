@@ -194,146 +194,180 @@ CommandObjectExpression::MultiLineExpressionCallback
 bool
 CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream &output_stream, Stream &error_stream)
 {
-    bool success = false;
-    ConstString target_triple;
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    ////////////////////////////////////
+    // Set up the target and compiler
+    //
+        
     Target *target = m_exe_ctx.target;
-    if (target)
-        target->GetTargetTriple(target_triple);
+    
+    if (!target)
+    {
+        error_stream.PutCString ("error: invalid target\n");
+        return false;
+    }
+    
+    ConstString target_triple;
+
+    target->GetTargetTriple (target_triple);
 
     if (!target_triple)
         target_triple = Host::GetTargetTriple ();
-
-    if (target_triple)
+    
+    if (!target_triple)
     {
-        const bool show_types = m_options.show_types;
-        const bool show_summary = m_options.show_summary;
-        const bool debug = m_options.debug;
+        error_stream.PutCString ("error: invalid target triple\n");
+        return false;
+    }
+    
+    ClangExpressionDeclMap expr_decl_map (&m_exe_ctx);
+    ClangExpression clang_expr (target_triple.AsCString (), &expr_decl_map);
+    
+    //////////////////////////
+    // Parse the expression
+    //
+    
+    unsigned num_errors;
+    
+    if (bare)
+        num_errors = clang_expr.ParseBareExpression (llvm::StringRef (expr), error_stream);
+    else
+        num_errors = clang_expr.ParseExpression (expr, error_stream);
+
+    if (num_errors)
+    {
+        error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
+        return false;
+    }
+    
+    ///////////////////////////////////////////////
+    // Convert the output of the parser to DWARF
+    //
+    
+    StreamString dwarf_opcodes;
+    dwarf_opcodes.SetByteOrder (eByteOrderHost);
+    dwarf_opcodes.GetFlags ().Set (Stream::eBinary);
+    
+    ClangExpressionVariableList expr_local_vars;
+
+    bool success;
+    
+    if (m_options.use_ir)
+        success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+    else
+        success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+    
+    if (!success)
+    {
+        error_stream.PutCString ("error: expression couldn't be translated to DWARF\n");
+        return false;
+    }
+    
+    //////////////////////////////////////////
+    // Evaluate the generated DWARF opcodes
+    //
+
+    DataExtractor dwarf_opcodes_data (dwarf_opcodes.GetData (), dwarf_opcodes.GetSize (), eByteOrderHost, 8);
+    DWARFExpression dwarf_expr (dwarf_opcodes_data, 0, dwarf_opcodes_data.GetByteSize (), NULL);
+    
+    dwarf_expr.SetExpressionLocalVariableList(&expr_local_vars);
+    
+    if (log)
+    {
+        StreamString stream_string;
         
-        ClangExpressionDeclMap expr_decl_map(&m_exe_ctx);
-        ClangExpression clang_expr(target_triple.AsCString(), &expr_decl_map);
+        log->PutCString ("Expression parsed ok, dwarf opcodes:");
         
-        unsigned num_errors = 0;
+        stream_string.PutCString ("\n");
+        stream_string.IndentMore ();
+        dwarf_expr.GetDescription (&stream_string, lldb::eDescriptionLevelVerbose);
+        stream_string.IndentLess ();
+        stream_string.EOL ();
         
-        if (bare)
-            num_errors = clang_expr.ParseBareExpression (llvm::StringRef(expr), error_stream);
-        else
-            num_errors = clang_expr.ParseExpression (expr, error_stream);
+        log->PutCString (stream_string.GetString ().c_str ());
+    }
 
-        if (num_errors == 0)
-        {
-            StreamString dwarf_opcodes;
-            dwarf_opcodes.SetByteOrder(eByteOrderHost);
-            dwarf_opcodes.GetFlags().Set(Stream::eBinary);
-            ClangExpressionVariableList expr_local_vars;
-        
-            bool success;
-            
-            if (m_options.use_ir)
-                success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
-            else
-                success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
-            
-            if (!success)
-            {
-                output_stream << "Expression couldn't be translated to DWARF\n";
-                return false;
-            }
+    clang::ASTContext *ast_context = clang_expr.GetASTContext ();
+    Value expr_result;
+    Error expr_error;
+    success = dwarf_expr.Evaluate (&m_exe_ctx, ast_context, NULL, expr_result, &expr_error);
+    
+    if (!success)
+    {
+        error_stream.Printf ("error: couldn't evaluate DWARF expression: %s\n", expr_error.AsCString ());
+        return false;
+    }
+    
+    ///////////////////////////////////////
+    // Interpret the result and print it
+    //
+    
+    lldb::Format format = m_options.format;
 
-            DataExtractor dwarf_opcodes_data(dwarf_opcodes.GetData(), dwarf_opcodes.GetSize(), eByteOrderHost, 8);
-            DWARFExpression expr(dwarf_opcodes_data, 0, dwarf_opcodes_data.GetByteSize(), NULL);
-            expr.SetExpressionLocalVariableList(&expr_local_vars);
-            if (debug)
-            {
-                output_stream << "Expression parsed ok, dwarf opcodes:";
-                output_stream.IndentMore();
-                expr.GetDescription(&output_stream, lldb::eDescriptionLevelVerbose);
-                output_stream.IndentLess();
-                output_stream.EOL();
-            }
+    // Resolve any values that are possible
+    expr_result.ResolveValue (&m_exe_ctx, ast_context);
 
-            clang::ASTContext *ast_context = clang_expr.GetASTContext();
-            Value expr_result;
-            Error expr_error;
-            bool expr_success = expr.Evaluate (&m_exe_ctx, ast_context, NULL, expr_result, &expr_error);
-            if (expr_success)
-            {
-                lldb::Format format = m_options.format;
+    if (expr_result.GetContextType () == Value::eContextTypeInvalid &&
+        expr_result.GetValueType () == Value::eValueTypeScalar &&
+        format == eFormatDefault)
+    {
+        // The expression result is just a scalar with no special formatting
+        expr_result.GetScalar ().GetValue (&output_stream, m_options.show_types);
+        output_stream.EOL ();
+        return true;
+    }
+    
+    // The expression result is more complext and requires special handling
+    DataExtractor data;
+    expr_error = expr_result.GetValueAsData (&m_exe_ctx, ast_context, data, 0);
+    
+    if (!expr_error.Success ())
+    {
+        error_stream.Printf ("error: couldn't resolve result value: %s\n", expr_error.AsCString ());
+        return false;
+    }
 
-                // Resolve any values that are possible
-                expr_result.ResolveValue(&m_exe_ctx, ast_context);
+    if (format == eFormatDefault)
+        format = expr_result.GetValueDefaultFormat ();
 
-                if (expr_result.GetContextType() == Value::eContextTypeInvalid &&
-                    expr_result.GetValueType() == Value::eValueTypeScalar &&
-                    format == eFormatDefault)
-                {
-                    // The expression result is just a scalar with no special formatting
-                    expr_result.GetScalar().GetValue (&output_stream, show_types);
-                    output_stream.EOL();
-                }
-                else
-                {
-                    DataExtractor data;
-                    expr_error = expr_result.GetValueAsData (&m_exe_ctx, ast_context, data, 0);
-                    if (expr_error.Success())
-                    {
-                        if (format == eFormatDefault)
-                            format = expr_result.GetValueDefaultFormat ();
+    void *clang_type = expr_result.GetValueOpaqueClangQualType ();
+    
+    if (clang_type)
+    {
+        if (m_options.show_types)
+            Type::DumpClangTypeName (&output_stream, clang_type);
 
-                        void *clang_type = expr_result.GetValueOpaqueClangQualType();
-                        if (clang_type)
-                        {
-                            if (show_types)
-                                Type::DumpClangTypeName(&output_stream, clang_type);
-
-                            Type::DumpValue (
-                                &m_exe_ctx,                 // The execution context for memory and variable access
-                                ast_context,                // The ASTContext that the clang type belongs to
-                                clang_type,                 // The opaque clang type we want to dump that value of
-                                &output_stream,             // Stream to dump to
-                                format,                     // Format to use when dumping
-                                data,                       // A buffer containing the bytes for the clang type
-                                0,                          // Byte offset within "data" where value is
-                                data.GetByteSize(),         // Size in bytes of the value we are dumping
-                                0,                          // Bitfield bit size
-                                0,                          // Bitfield bit offset
-                                show_types,                 // Show types?
-                                show_summary,               // Show summary?
-                                debug,                      // Debug logging output?
-                                UINT32_MAX);                // Depth to dump in case this is an aggregate type
-                        }
-                        else
-                        {
-                            data.Dump(&output_stream,       // Stream to dump to
-                                      0,                    // Byte offset within "data"
-                                      format,               // Format to use when dumping
-                                      data.GetByteSize(),   // Size in bytes of each item we are dumping
-                                      1,                    // Number of items to dump
-                                      UINT32_MAX,           // Number of items per line
-                                      LLDB_INVALID_ADDRESS,   // Invalid address, don't show any offset/address context
-                                      0,                    // Bitfield bit size
-                                      0);                   // Bitfield bit offset
-                        }
-                        output_stream.EOL();
-                    }
-                    else
-                    {
-                        error_stream.Printf ("error: %s\n", expr_error.AsCString());
-                        success = false;
-                    }
-                }
-            }
-            else
-            {
-                error_stream.Printf ("error: %s\n", expr_error.AsCString());
-            }
-        }
+        Type::DumpValue (&m_exe_ctx,                // The execution context for memory and variable access
+                         ast_context,               // The ASTContext that the clang type belongs to
+                         clang_type,                // The opaque clang type we want to dump that value of
+                         &output_stream,            // Stream to dump to
+                         format,                    // Format to use when dumping
+                         data,                      // A buffer containing the bytes for the clang type
+                         0,                         // Byte offset within "data" where value is
+                         data.GetByteSize (),       // Size in bytes of the value we are dumping
+                         0,                         // Bitfield bit size
+                         0,                         // Bitfield bit offset
+                         m_options.show_types,      // Show types?
+                         m_options.show_summary,    // Show summary?
+                         m_options.debug,           // Debug logging output?
+                         UINT32_MAX);               // Depth to dump in case this is an aggregate type
     }
     else
     {
-        error_stream.PutCString ("error: invalid target triple\n");
+        data.Dump (&output_stream,          // Stream to dump to
+                   0,                       // Byte offset within "data"
+                   format,                  // Format to use when dumping
+                   data.GetByteSize (),     // Size in bytes of each item we are dumping
+                   1,                       // Number of items to dump
+                   UINT32_MAX,              // Number of items per line
+                   LLDB_INVALID_ADDRESS,    // Invalid address, don't show any offset/address context
+                   0,                       // Bitfield bit size
+                   0);                      // Bitfield bit offset
     }
-
-    return success;
+    output_stream.EOL();
+    
+    return true;
 }
 
 bool
@@ -344,17 +378,7 @@ CommandObjectExpression::ExecuteRawCommandString
     CommandReturnObject &result
 )
 {
-    ConstString target_triple;
-    Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
-    if (target)
-        target->GetTargetTriple(target_triple);
-
-    if (!target_triple)
-        target_triple = Host::GetTargetTriple ();
-
-    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
-
-    Stream &output_stream = result.GetOutputStream();
+    m_exe_ctx = interpreter.GetDebugger().GetExecutionContext();
 
     m_options.ResetOptionValues();
 
@@ -423,141 +447,10 @@ CommandObjectExpression::ExecuteRawCommandString
         }
     }
 
-    const bool show_types = m_options.show_types;
-    const bool show_summary = m_options.show_summary;
-    const bool debug = m_options.debug;
-
-
     if (expr == NULL)
         expr = command;
-
-    if (target_triple)
-    {
-        ClangExpressionDeclMap expr_decl_map(&exe_ctx);
-
-        ClangExpression clang_expr(target_triple.AsCString(), &expr_decl_map);        
-        
-        unsigned num_errors = clang_expr.ParseExpression (expr, result.GetErrorStream());
-
-        if (num_errors == 0)
-        {
-            StreamString dwarf_opcodes;
-            dwarf_opcodes.SetByteOrder(eByteOrderHost);
-            dwarf_opcodes.GetFlags().Set(Stream::eBinary);
-            ClangExpressionVariableList expr_local_vars;
-            
-            bool success = true;
-            
-            if (m_options.use_ir)
-                success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
-            else
-                success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
-            
-
-            result.SetStatus (eReturnStatusSuccessFinishResult);
-
-            DataExtractor dwarf_opcodes_data(dwarf_opcodes.GetData(), dwarf_opcodes.GetSize(), eByteOrderHost, 8);
-            DWARFExpression expr(dwarf_opcodes_data, 0, dwarf_opcodes_data.GetByteSize(), NULL);
-            expr.SetExpressionLocalVariableList(&expr_local_vars);
-            expr.SetExpressionDeclMap(&expr_decl_map);
-            
-            if (debug)
-            {
-                output_stream << "Expression parsed ok, dwarf opcodes:";
-                output_stream.IndentMore();
-                expr.GetDescription(&output_stream, lldb::eDescriptionLevelVerbose);
-                output_stream.IndentLess();
-                output_stream.EOL();
-            }
-
-            clang::ASTContext *ast_context = clang_expr.GetASTContext();
-            Value expr_result;
-            Error expr_error;
-            bool expr_success = expr.Evaluate (&exe_ctx, ast_context, NULL, expr_result, &expr_error);
-            if (expr_success)
-            {
-                lldb::Format format = m_options.format;
-
-                // Resolve any values that are possible
-                expr_result.ResolveValue(&exe_ctx, ast_context);
-
-                if (expr_result.GetContextType() == Value::eContextTypeInvalid &&
-                    expr_result.GetValueType() == Value::eValueTypeScalar &&
-                    format == eFormatDefault)
-                {
-                    // The expression result is just a scalar with no special formatting
-                    expr_result.GetScalar().GetValue (&output_stream, show_types);
-                    output_stream.EOL();
-                }
-                else
-                {
-                    DataExtractor data;
-                    expr_error = expr_result.GetValueAsData (&exe_ctx, ast_context, data, 0);
-                    if (expr_error.Success())
-                    {
-                        if (format == eFormatDefault)
-                            format = expr_result.GetValueDefaultFormat ();
-
-                        void *clang_type = expr_result.GetValueOpaqueClangQualType();
-                        if (clang_type)
-                        {
-                            if (show_types)
-                                Type::DumpClangTypeName(&output_stream, clang_type);
-
-                            Type::DumpValue (
-                                &exe_ctx,                   // The execution context for memory and variable access
-                                ast_context,                // The ASTContext that the clang type belongs to
-                                clang_type,                 // The opaque clang type we want to dump that value of
-                                &output_stream,             // Stream to dump to
-                                format,                     // Format to use when dumping
-                                data,                       // A buffer containing the bytes for the clang type
-                                0,                          // Byte offset within "data" where value is
-                                data.GetByteSize(),         // Size in bytes of the value we are dumping
-                                0,                          // Bitfield bit size
-                                0,                          // Bitfield bit offset
-                                show_types,                 // Show types?
-                                show_summary,               // Show summary?
-                                debug,                      // Debug logging output?
-                                UINT32_MAX);                // Depth to dump in case this is an aggregate type
-                        }
-                        else
-                        {
-                            data.Dump(&output_stream,       // Stream to dump to
-                                      0,                    // Byte offset within "data"
-                                      format,               // Format to use when dumping
-                                      data.GetByteSize(),   // Size in bytes of each item we are dumping
-                                      1,                    // Number of items to dump
-                                      UINT32_MAX,           // Number of items per line
-                                      LLDB_INVALID_ADDRESS,   // Invalid address, don't show any offset/address context
-                                      0,                    // Bitfield bit size
-                                      0);                   // Bitfield bit offset
-                        }
-                        output_stream.EOL();
-                    }
-                    else
-                    {
-                        result.AppendError(expr_error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
-            else
-            {
-                result.AppendError (expr_error.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-        }
-        else
-        {
-            result.SetStatus (eReturnStatusFailed);
-        }
-    }
-    else
-    {
-        result.AppendError ("invalid target triple");
-        result.SetStatus (eReturnStatusFailed);
-    }
-    return result.Succeeded();
+    
+    return EvaluateExpression (expr, false, result.GetOutputStream(), result.GetErrorStream());
 }
 
 lldb::OptionDefinition
