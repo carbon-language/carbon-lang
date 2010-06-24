@@ -289,11 +289,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
           Intrinsic::ID MemCpyID = Intrinsic::memcpy;
-          const Type *Tys[3] = { CI.getOperand(1)->getType(),
-                                 CI.getOperand(2)->getType(),
-                                 CI.getOperand(3)->getType() };
-          CI.setCalledFunction( 
-                        Intrinsic::getDeclaration(M, MemCpyID, Tys, 3));
+          const Type *Tys[3] = { CI.getArgOperand(0)->getType(),
+                                 CI.getArgOperand(1)->getType(),
+                                 CI.getArgOperand(2)->getType() };
+          CI.setCalledFunction(Intrinsic::getDeclaration(M, MemCpyID, Tys, 3));
           Changed = true;
         }
     }
@@ -313,7 +312,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Instruction *I = SimplifyMemSet(MSI))
         return I;
     }
-          
+
     if (Changed) return II;
   }
   
