@@ -32,7 +32,7 @@ using namespace llvm;
 
 // CloneBasicBlock - See comments in Cloning.h
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
-                                  DenseMap<const Value*, Value*> &VMap,
+                                  ValueToValueMapTy &VMap,
                                   const Twine &NameSuffix, Function *F,
                                   ClonedCodeInfo *CodeInfo) {
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "", F);
@@ -72,7 +72,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
 // ArgMap values.
 //
 void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                             DenseMap<const Value*, Value*> &VMap,
+                             ValueToValueMapTy &VMap,
                              SmallVectorImpl<ReturnInst*> &Returns,
                              const char *NameSuffix, ClonedCodeInfo *CodeInfo) {
   assert(NameSuffix && "NameSuffix cannot be null!");
@@ -138,7 +138,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// the function from their old to new values.
 ///
 Function *llvm::CloneFunction(const Function *F,
-                              DenseMap<const Value*, Value*> &VMap,
+                              ValueToValueMapTy &VMap,
                               ClonedCodeInfo *CodeInfo) {
   std::vector<const Type*> ArgTypes;
 
@@ -179,14 +179,14 @@ namespace {
   struct PruningFunctionCloner {
     Function *NewFunc;
     const Function *OldFunc;
-    DenseMap<const Value*, Value*> &VMap;
+    ValueToValueMapTy &VMap;
     SmallVectorImpl<ReturnInst*> &Returns;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
     const TargetData *TD;
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
-                          DenseMap<const Value*, Value*> &valueMap,
+                          ValueToValueMapTy &valueMap,
                           SmallVectorImpl<ReturnInst*> &returns,
                           const char *nameSuffix, 
                           ClonedCodeInfo *codeInfo,
@@ -363,7 +363,7 @@ static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
 /// dead.  Since this doesn't produce an exact copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
 void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                                     DenseMap<const Value*, Value*> &VMap,
+                                     ValueToValueMapTy &VMap,
                                      SmallVectorImpl<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,
