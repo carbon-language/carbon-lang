@@ -1284,6 +1284,7 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
       continue;
 
     SlotIndex KillIdx = VNI->kills[j];
+    assert(getInstructionFromIndex(KillIdx) && "Dangling kill");
     if (KillIdx > Idx && KillIdx <= End)
       return true;
   }
