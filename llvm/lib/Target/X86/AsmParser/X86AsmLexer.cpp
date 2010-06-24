@@ -80,30 +80,25 @@ AsmToken X86AsmLexer::LexTokenATT() {
   case AsmToken::Error:
     SetError(Lexer->getErrLoc(), Lexer->getErr());
     return AsmToken(lexedToken);
-  case AsmToken::Percent:
-  {
+  case AsmToken::Percent:   {
     const AsmToken &nextToken = lexTentative();
-    if (nextToken.getKind() == AsmToken::Identifier) {
-      unsigned regID = MatchRegisterName(nextToken.getString());
-      
-      if (regID) {
-        lexDefinite();
-        
-        StringRef regStr(lexedToken.getString().data(),
-                         lexedToken.getString().size() + 
-                         nextToken.getString().size());
-        
-        return AsmToken(AsmToken::Register, 
-                        regStr, 
-                        static_cast<int64_t>(regID));
-      }
-      else {
-        return AsmToken(lexedToken);
-      }
-    }
-    else {
+    if (nextToken.getKind() != AsmToken::Identifier)
       return AsmToken(lexedToken);
+
+      
+    if (unsigned regID = MatchRegisterName(nextToken.getString())) {
+      lexDefinite();
+        
+      StringRef regStr(lexedToken.getString().data(),
+                       lexedToken.getString().size() + 
+                       nextToken.getString().size());
+      
+      return AsmToken(AsmToken::Register, 
+                      regStr, 
+                      static_cast<int64_t>(regID));
     }
+    
+    return AsmToken(lexedToken);
   }    
   }
 }
