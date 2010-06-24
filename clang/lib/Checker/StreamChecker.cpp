@@ -258,5 +258,5 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
     }
     return 0;
   }
-  return stateNull;
+  return stateNotNull;
 }
