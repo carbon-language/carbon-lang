@@ -49,7 +49,7 @@ def MSP430rla     : SDNode<"MSP430ISD::RLA", SDTIntUnaryOp, []>;
 def MSP430rrc     : SDNode<"MSP430ISD::RRC", SDTIntUnaryOp, []>;
 
 def MSP430call    : SDNode<"MSP430ISD::CALL", SDT_MSP430Call,
-                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag, SDNPVariadic]>;
 def MSP430callseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_MSP430CallSeqStart,
                         [SDNPHasChain, SDNPOutFlag]>;
