@@ -604,22 +604,22 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ppc_altivec_stvx:
   case Intrinsic::ppc_altivec_stvxl:
     // Turn stvx -> store if the pointer is known aligned.
-    if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
+    if (GetOrEnforceKnownAlignment(II->getArgOperand(1), 16) >= 16) {
       const Type *OpPtrTy = 
-        PointerType::getUnqual(II->getOperand(1)->getType());
-      Value *Ptr = Builder->CreateBitCast(II->getOperand(2), OpPtrTy);
-      return new StoreInst(II->getOperand(1), Ptr);
+        PointerType::getUnqual(II->getArgOperand(0)->getType());
+      Value *Ptr = Builder->CreateBitCast(II->getArgOperand(1), OpPtrTy);
+      return new StoreInst(II->getArgOperand(0), Ptr);
     }
     break;
   case Intrinsic::x86_sse_storeu_ps:
   case Intrinsic::x86_sse2_storeu_pd:
   case Intrinsic::x86_sse2_storeu_dq:
     // Turn X86 storeu -> store if the pointer is known aligned.
-    if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
+    if (GetOrEnforceKnownAlignment(II->getArgOperand(0), 16) >= 16) {
       const Type *OpPtrTy = 
-        PointerType::getUnqual(II->getOperand(2)->getType());
-      Value *Ptr = Builder->CreateBitCast(II->getOperand(1), OpPtrTy);
-      return new StoreInst(II->getOperand(2), Ptr);
+        PointerType::getUnqual(II->getArgOperand(1)->getType());
+      Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0), OpPtrTy);
+      return new StoreInst(II->getArgOperand(1), Ptr);
     }
     break;
     
