@@ -414,20 +414,28 @@ static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
   if (LHS == RHS)
     return SE.getConstant(LHS->getType(), 1);
 
-  // Handle x /s -1 as x * -1, to give ScalarEvolution a chance to do some
-  // folding.
-  if (RHS->isAllOnesValue())
-    return SE.getMulExpr(LHS, RHS);
+  // Handle a few RHS special cases.
+  const SCEVConstant *RC = dyn_cast<SCEVConstant>(RHS);
+  if (RC) {
+    const APInt &RA = RC->getValue()->getValue();
+    // Handle x /s -1 as x * -1, to give ScalarEvolution a chance to do
+    // some folding.
+    if (RA.isAllOnesValue())
+      return SE.getMulExpr(LHS, RC);
+    // Handle x /s 1 as x.
+    if (RA == 1)
+      return LHS;
+  }
 
   // Check for a division of a constant by a constant.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(LHS)) {
-    const SCEVConstant *RC = dyn_cast<SCEVConstant>(RHS);
     if (!RC)
       return 0;
-    if (C->getValue()->getValue().srem(RC->getValue()->getValue()) != 0)
+    const APInt &LA = C->getValue()->getValue();
+    const APInt &RA = RC->getValue()->getValue();
+    if (LA.srem(RA) != 0)
       return 0;
-    return SE.getConstant(C->getValue()->getValue()
-               .sdiv(RC->getValue()->getValue()));
+    return SE.getConstant(LA.sdiv(RA));
   }
 
   // Distribute the sdiv over addrec operands, if the addrec doesn't overflow.
