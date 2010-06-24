@@ -105,14 +105,11 @@ namespace llvm {
     /// possible to coalesce this interval, but it may be possible if other
     /// things get coalesced, then it returns true by reference in 'Again'.
     bool JoinCopy(CopyRec &TheCopy, bool &Again);
-    
+
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
-    /// returns false.  Otherwise, if one of the intervals being joined is a
-    /// physreg, this method always canonicalizes DestInt to be it.  The output
-    /// "SrcInt" will not have been modified, so we can use this information
-    /// below to update aliases.
-    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped,
-                       CoalescerPair &CP);
+    /// returns false.  The output "SrcInt" will not have been modified, so we can
+    /// use this information below to update aliases.
+    bool JoinIntervals(CoalescerPair &CP);
 
     /// Return true if the two specified registers belong to different register
     /// classes.  The registers may be either phys or virt regs.
@@ -149,11 +146,6 @@ namespace llvm {
     bool ReMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
                                  unsigned DstSubIdx, MachineInstr *CopyMI);
 
-    /// CanCoalesceWithImpDef - Returns true if the specified copy instruction
-    /// from an implicit def to another register can be coalesced away.
-    bool CanCoalesceWithImpDef(MachineInstr *CopyMI,
-                               LiveInterval &li, LiveInterval &ImpLi) const;
-
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
     bool isWinToJoinCrossClass(unsigned SrcReg,
@@ -162,31 +154,12 @@ namespace llvm {
                                const TargetRegisterClass *DstRC,
                                const TargetRegisterClass *NewRC);
 
-    /// HasIncompatibleSubRegDefUse - If we are trying to coalesce a virtual
-    /// register with a physical register, check if any of the virtual register
-    /// operand is a sub-register use or def. If so, make sure it won't result
-    /// in an illegal extract_subreg or insert_subreg instruction.
-    bool HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
-                                     unsigned VirtReg, unsigned PhysReg);
-
-    /// CanJoinExtractSubRegToPhysReg - Return true if it's possible to coalesce
-    /// an extract_subreg where dst is a physical register, e.g.
-    /// cl = EXTRACT_SUBREG reg1024, 1
-    bool CanJoinExtractSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
-                                       unsigned SubIdx, unsigned &RealDstReg);
-
-    /// CanJoinInsertSubRegToPhysReg - Return true if it's possible to coalesce
-    /// an insert_subreg where src is a physical register, e.g.
-    /// reg1024 = INSERT_SUBREG reg1024, c1, 0
-    bool CanJoinInsertSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
-                                      unsigned SubIdx, unsigned &RealDstReg);
-
     /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
     /// physical register and the existing subregister number of the def / use
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
-    void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
+    void UpdateRegDefsUses(const CoalescerPair &CP);
 
     /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
     /// Return true if live interval is removed.
@@ -202,6 +175,10 @@ namespace llvm {
     /// remove the val# it defines. If the live interval becomes empty, remove
     /// it as well.
     bool RemoveDeadDef(LiveInterval &li, MachineInstr *DefMI);
+
+    /// RemoveCopyFlag - If DstReg is no longer defined by CopyMI, clear the
+    /// VNInfo copy flag for DstReg and all aliases.
+    void RemoveCopyFlag(unsigned DstReg, const MachineInstr *CopyMI);
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
