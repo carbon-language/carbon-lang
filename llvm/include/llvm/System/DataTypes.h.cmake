@@ -109,41 +109,59 @@ typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 typedef signed int ssize_t;
-#define INT8_MAX 127
-#define INT8_MIN -128
-#define UINT8_MAX 255
-#define INT16_MAX 32767
-#define INT16_MIN -32768
-#define UINT16_MAX 65535
-#define INT32_MAX 2147483647
-#define INT32_MIN -2147483648
-#define UINT32_MAX 4294967295U
+#ifndef INT8_MAX
+# define INT8_MAX 127
+#endif
+#ifndef INT8_MIN
+# define INT8_MIN -128
+#endif
+#ifndef UINT8_MAX
+# define UINT8_MAX 255
+#endif
+#ifndef INT16_MAX
+# define INT16_MAX 32767
+#endif
+#ifndef INT16_MIN
+# define INT16_MIN -32768
+#endif
+#ifndef UINT16_MAX
+# define UINT16_MAX 65535
+#endif
+#ifndef INT32_MAX
+# define INT32_MAX 2147483647
+#endif
+#ifndef INT32_MIN
+# define INT32_MIN -2147483648
+#endif
+#ifndef UINT32_MAX
+# define UINT32_MAX 4294967295U
+#endif
 /* Certain compatibility updates to VC++ introduce the `cstdint'
  * header, which defines the INT*_C macros. On default installs they
  * are absent. */
 #ifndef INT8_C
-# define INT8_C(C)   C
+# define INT8_C(C)   C##i8
 #endif
 #ifndef UINT8_C
-# define UINT8_C(C)  C
+# define UINT8_C(C)  C##ui8
 #endif
 #ifndef INT16_C
-# define INT16_C(C)  C
+# define INT16_C(C)  C##i16
 #endif
 #ifndef UINT16_C
-# define UINT16_C(C) C
+# define UINT16_C(C) C##ui16
 #endif
 #ifndef INT32_C
-# define INT32_C(C)  C
+# define INT32_C(C)  C##i32
 #endif
 #ifndef UINT32_C
-# define UINT32_C(C) C ## U
+# define UINT32_C(C) C##ui32
 #endif
 #ifndef INT64_C
-# define INT64_C(C)  ((int64_t) C ## LL)
+# define INT64_C(C)  C##i64
 #endif
 #ifndef UINT64_C
-# define UINT64_C(C) ((uint64_t) C ## ULL)
+# define UINT64_C(C) C##ui64
 #endif
 #endif /* _MSC_VER */
 
