@@ -32,3 +32,10 @@ void f4(void) {
   rewind(p); // expected-warning {{Stream pointer might be NULL.}}
 }
 
+void f5(void) {
+  FILE *p = fopen("foo", "r");
+  if (!p)
+    return;
+  fseek(p, 1, SEEK_SET); // no-warning
+  fseek(p, 1, 3); // expected-warning {{The whence argument to fseek() should be SEEK_SET, SEEK_END, or SEEK_CUR.}}
+}

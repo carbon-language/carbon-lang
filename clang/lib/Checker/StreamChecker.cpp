@@ -27,14 +27,14 @@ class StreamChecker : public CheckerVisitor<StreamChecker> {
   IdentifierInfo *II_fopen, *II_fread, *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
-  BuiltinBug *BT_nullfp;
+  BuiltinBug *BT_nullfp, *BT_illegalwhence;
 
 public:
   StreamChecker() 
     : II_fopen(0), II_fread(0), II_fwrite(0), 
       II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
       II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
-      BT_nullfp(0) {}
+      BT_nullfp(0), BT_illegalwhence(0) {}
 
   static void *getTag() {
     static int x;
@@ -186,8 +186,33 @@ void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) {
 
 void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!(state = CheckNullStream(state->getSVal(CE->getArg(0)), state, C)))
     return;
+  // Check the legality of the 'whence' argument of 'fseek'.
+  SVal Whence = state->getSVal(CE->getArg(2));
+  bool WhenceIsLegal = true;
+  const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Whence);
+  if (!CI)
+    WhenceIsLegal = false;
+
+  int64_t x = CI->getValue().getSExtValue();
+  if (!(x == 0 || x == 1 || x == 2))
+    WhenceIsLegal = false;
+
+  if (!WhenceIsLegal) {
+    if (ExplodedNode *N = C.GenerateSink(state)) {
+      if (!BT_illegalwhence)
+        BT_illegalwhence = new BuiltinBug("Illegal whence argument",
+                                     "The whence argument to fseek() should be "
+                                          "SEEK_SET, SEEK_END, or SEEK_CUR.");
+      BugReport *R = new BugReport(*BT_illegalwhence, 
+                                   BT_illegalwhence->getDescription(), N);
+      C.EmitReport(R);
+    }
+    return;
+  }
+
+  C.addTransition(state);
 }
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) {
