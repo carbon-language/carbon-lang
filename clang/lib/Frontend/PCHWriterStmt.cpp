@@ -869,13 +869,13 @@ void PCHStmtWriter::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
 
 void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   VisitExpr(E);
+  Record.push_back(E->getNumArgs());
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
+    Writer.WriteSubStmt(E->getArg(I));
   Writer.AddDeclRef(E->getConstructor(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isElidable());
   Record.push_back(E->requiresZeroInitialization());
-  Record.push_back(E->getNumArgs());
-  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
-    Writer.WriteSubStmt(E->getArg(I));
   Record.push_back(E->getConstructionKind()); // FIXME: stable encoding
   Code = pch::EXPR_CXX_CONSTRUCT;
 }
