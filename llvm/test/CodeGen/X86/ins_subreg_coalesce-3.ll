@@ -39,8 +39,7 @@ bb650:		; preds = %bb650, %bb428
 	%tmp659 = icmp eq i8 %tmp658, 0		; <i1> [#uses=1]
 	br i1 %tmp659, label %bb650, label %bb662
 bb662:		; preds = %bb650
-	%tmp685 = icmp eq %struct.rec* null, null		; <i1> [#uses=1]
-	br i1 %tmp685, label %bb761, label %bb688
+	br label %bb761
 bb688:		; preds = %bb662
 	ret void
 bb761:		; preds = %bb662

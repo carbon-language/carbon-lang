@@ -3047,9 +3047,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     break;
   case ISD::BRCOND:
     if (N2C) {
-      if (N2C->getZExtValue()) // Unconditional branch
-        return getNode(ISD::BR, DL, MVT::Other, N1, N3);
-      else
+      if (!N2C->getZExtValue()) // Unconditional branch
         return N1;         // Never-taken branch
     }
     break;

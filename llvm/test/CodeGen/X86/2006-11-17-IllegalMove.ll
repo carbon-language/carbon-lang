@@ -15,14 +15,14 @@ bb77:		; preds = %entry, %entry
 	%tmp99 = udiv i64 0, 0		; <i64> [#uses=1]
 	%tmp = load i8* null		; <i8> [#uses=1]
 	%tmp114 = icmp eq i64 0, 0		; <i1> [#uses=1]
-	br i1 %tmp114, label %cond_true115, label %cond_next136
+	br label %cond_true115
 
 bb84:		; preds = %entry
 	ret void
 
 cond_true115:		; preds = %bb77
 	%tmp118 = load i8* null		; <i8> [#uses=1]
-	br i1 false, label %cond_next129, label %cond_true120
+	br label %cond_true120
 
 cond_true120:		; preds = %cond_true115
 	%tmp127 = udiv i8 %tmp, %tmp118		; <i8> [#uses=1]
@@ -30,7 +30,7 @@ cond_true120:		; preds = %cond_true115
 	br label %cond_next129
 
 cond_next129:		; preds = %cond_true120, %cond_true115
-	%iftmp.30.0 = phi i64 [ %tmp127.upgrd.1, %cond_true120 ], [ 0, %cond_true115 ]		; <i64> [#uses=1]
+	%iftmp.30.0 = phi i64 [ %tmp127.upgrd.1, %cond_true120 ]		; <i64> [#uses=1]
 	%tmp132 = icmp eq i64 %iftmp.30.0, %tmp99		; <i1> [#uses=1]
 	br i1 %tmp132, label %cond_false148, label %cond_next136
 

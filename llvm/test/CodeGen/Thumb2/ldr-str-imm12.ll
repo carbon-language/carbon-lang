@@ -25,10 +25,7 @@ entry:
 ; CHECK:       ldr.w	r9, [r7, #28]
   %xgaps.i = alloca [32 x %union.rec*], align 4   ; <[32 x %union.rec*]*> [#uses=0]
   %ycomp.i = alloca [32 x %union.rec*], align 4   ; <[32 x %union.rec*]*> [#uses=0]
-  br i1 false, label %bb, label %bb20
-
-bb:                                               ; preds = %entry
-  unreachable
+  br label %bb20
 
 bb20:                                             ; preds = %entry
   switch i32 undef, label %bb1287 [
