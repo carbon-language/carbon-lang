@@ -66,13 +66,13 @@ Function* PartialInliner::unswitchFunction(Function* F) {
     return 0;
   
   // Clone the function, so that we can hack away on it.
-  DenseMap<const Value*, Value*> ValueMap;
-  Function* duplicateFunction = CloneFunction(F, ValueMap);
+  ValueMap<const Value*, Value*> VMap;
+  Function* duplicateFunction = CloneFunction(F, VMap);
   duplicateFunction->setLinkage(GlobalValue::InternalLinkage);
   F->getParent()->getFunctionList().push_back(duplicateFunction);
-  BasicBlock* newEntryBlock = cast<BasicBlock>(ValueMap[entryBlock]);
-  BasicBlock* newReturnBlock = cast<BasicBlock>(ValueMap[returnBlock]);
-  BasicBlock* newNonReturnBlock = cast<BasicBlock>(ValueMap[nonReturnBlock]);
+  BasicBlock* newEntryBlock = cast<BasicBlock>(VMap[entryBlock]);
+  BasicBlock* newReturnBlock = cast<BasicBlock>(VMap[returnBlock]);
+  BasicBlock* newNonReturnBlock = cast<BasicBlock>(VMap[nonReturnBlock]);
   
   // Go ahead and update all uses to the duplicate, so that we can just
   // use the inliner functionality when we're done hacking.

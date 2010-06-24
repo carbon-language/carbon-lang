@@ -16,7 +16,7 @@
 #ifndef BUGDRIVER_H
 #define BUGDRIVER_H
 
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ValueMap.h"
 #include <vector>
 #include <string>
 
@@ -325,7 +325,7 @@ void DeleteFunctionBody(Function *F);
 /// module, split the functions OUT of the specified module, and place them in
 /// the new module.
 Module *SplitFunctionsOutOfModule(Module *M, const std::vector<Function*> &F,
-                                  DenseMap<const Value*, Value*> &ValueMap);
+                                  ValueMap<const Value*, Value*> &VMap);
 
 } // End llvm namespace
 

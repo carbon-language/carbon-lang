@@ -15,7 +15,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/ADT/DenseMap.h"
 
 
 using namespace llvm;
@@ -23,12 +22,12 @@ using namespace llvm;
 /// CloneDominatorInfo - Clone basicblock's dominator tree and, if available,
 /// dominance info. It is expected that basic block is already cloned.
 static void CloneDominatorInfo(BasicBlock *BB, 
-                               DenseMap<const Value *, Value *> &VMap,
+                               ValueMap<const Value *, Value *> &VMap,
                                DominatorTree *DT,
                                DominanceFrontier *DF) {
 
   assert (DT && "DominatorTree is not available");
-  DenseMap<const Value *, Value*>::iterator BI = VMap.find(BB);
+  ValueMap<const Value *, Value*>::iterator BI = VMap.find(BB);
   assert (BI != VMap.end() && "BasicBlock clone is missing");
   BasicBlock *NewBB = cast<BasicBlock>(BI->second);
 
@@ -43,7 +42,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
 
   // NewBB's dominator is either BB's dominator or BB's dominator's clone.
   BasicBlock *NewBBDom = BBDom;
-  DenseMap<const Value *, Value*>::iterator BBDomI = VMap.find(BBDom);
+  ValueMap<const Value *, Value*>::iterator BBDomI = VMap.find(BBDom);
   if (BBDomI != VMap.end()) {
     NewBBDom = cast<BasicBlock>(BBDomI->second);
     if (!DT->getNode(NewBBDom))
@@ -60,7 +59,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
         for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
              I != E; ++I) {
           BasicBlock *DB = *I;
-          DenseMap<const Value*, Value*>::iterator IDM = VMap.find(DB);
+          ValueMap<const Value*, Value*>::iterator IDM = VMap.find(DB);
           if (IDM != VMap.end())
             NewDFSet.insert(cast<BasicBlock>(IDM->second));
           else
@@ -74,7 +73,7 @@ static void CloneDominatorInfo(BasicBlock *BB,
 /// CloneLoop - Clone Loop. Clone dominator info. Populate VMap
 /// using old blocks to new blocks mapping.
 Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
-                      DenseMap<const Value *, Value *> &VMap, Pass *P) {
+                      ValueMap<const Value *, Value *> &VMap, Pass *P) {
   
   DominatorTree *DT = NULL;
   DominanceFrontier *DF = NULL;
@@ -135,7 +134,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       for (unsigned index = 0, num_ops = Insn->getNumOperands(); 
            index != num_ops; ++index) {
         Value *Op = Insn->getOperand(index);
-        DenseMap<const Value *, Value *>::iterator OpItr = VMap.find(Op);
+        ValueMap<const Value *, Value *>::iterator OpItr = VMap.find(Op);
         if (OpItr != VMap.end())
           Insn->setOperand(index, OpItr->second);
       }

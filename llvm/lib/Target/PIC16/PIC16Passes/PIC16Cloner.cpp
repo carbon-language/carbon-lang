@@ -150,8 +150,8 @@ void PIC16Cloner::markCallGraph(CallGraphNode *CGN, string StringMark) {
 
 
 // For PIC16, automatic variables of a function are emitted as globals.
-// Clone the auto variables of a function  and put them in ValueMap, 
-// this ValueMap will be used while
+// Clone the auto variables of a function  and put them in VMap, 
+// this VMap will be used while
 // Cloning the code of function itself.
 //
 void PIC16Cloner::CloneAutos(Function *F) {
@@ -160,11 +160,11 @@ void PIC16Cloner::CloneAutos(Function *F) {
   Module *M = F->getParent();
   Module::GlobalListType &Globals = M->getGlobalList();
 
-  // Clear the leftovers in ValueMap by any previous cloning.
-  ValueMap.clear();
+  // Clear the leftovers in VMap by any previous cloning.
+  VMap.clear();
 
   // Find the auto globls for this function and clone them, and put them
-  // in ValueMap.
+  // in VMap.
   std::string FnName = F->getName().str();
   std::string VarName, ClonedVarName;
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
@@ -182,8 +182,8 @@ void PIC16Cloner::CloneAutos(Function *F) {
       // Add these new globals to module's globals list.
       Globals.push_back(ClonedGV);
  
-      // Update ValueMap.
-      ValueMap[GV] = ClonedGV;
+      // Update VMap.
+      VMap[GV] = ClonedGV;
      }
   }
 }
@@ -236,10 +236,10 @@ void PIC16Cloner::cloneSharedFunctions(CallGraphNode *CGN) {
 }
 
 // Clone the given function and return it.
-// Note: it uses the ValueMap member of the class, which is already populated
+// Note: it uses the VMap member of the class, which is already populated
 // by cloneAutos by the time we reach here. 
-// FIXME: Should we just pass ValueMap's ref as a parameter here? rather
-// than keeping the ValueMap as a member.
+// FIXME: Should we just pass VMap's ref as a parameter here? rather
+// than keeping the VMap as a member.
 Function *
 PIC16Cloner::cloneFunction(Function *OrgF) {
    Function *ClonedF;
@@ -252,11 +252,11 @@ PIC16Cloner::cloneFunction(Function *OrgF) {
    }
 
    // Clone does not exist. 
-   // First clone the autos, and populate ValueMap.
+   // First clone the autos, and populate VMap.
    CloneAutos(OrgF);
 
    // Now create the clone.
-   ClonedF = CloneFunction(OrgF, ValueMap);
+   ClonedF = CloneFunction(OrgF, VMap);
 
    // The new function should be for interrupt line. Therefore should have 
    // the name suffixed with IL and section attribute marked with IL. 

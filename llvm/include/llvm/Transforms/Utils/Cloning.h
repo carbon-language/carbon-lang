@@ -18,7 +18,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_CLONING_H
 #define LLVM_TRANSFORMS_UTILS_CLONING_H
 
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ValueHandle.h"
@@ -46,7 +46,7 @@ class AllocaInst;
 /// CloneModule - Return an exact copy of the specified module
 ///
 Module *CloneModule(const Module *M);
-Module *CloneModule(const Module *M, DenseMap<const Value*, Value*> &VMap);
+Module *CloneModule(const Module *M, ValueMap<const Value*, Value*> &VMap);
 
 /// ClonedCodeInfo - This struct can be used to capture information about code
 /// being cloned, while it is being cloned.
@@ -102,7 +102,7 @@ struct ClonedCodeInfo {
 /// parameter.
 ///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
-                            DenseMap<const Value*, Value*> &VMap,
+                            ValueMap<const Value*, Value*> &VMap,
                             const Twine &NameSuffix = "", Function *F = 0,
                             ClonedCodeInfo *CodeInfo = 0);
 
@@ -110,7 +110,7 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
 /// CloneLoop - Clone Loop. Clone dominator info for loop insiders. Populate
 /// VMap using old blocks to new blocks mapping.
 Loop *CloneLoop(Loop *L, LPPassManager *LPM, LoopInfo *LI, 
-                DenseMap<const Value *, Value *> &VMap, Pass *P);
+                ValueMap<const Value *, Value *> &VMap, Pass *P);
 
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
@@ -122,13 +122,13 @@ Loop *CloneLoop(Loop *L, LPPassManager *LPM, LoopInfo *LI,
 /// information about the cloned code if non-null.
 ///
 Function *CloneFunction(const Function *F,
-                        DenseMap<const Value*, Value*> &VMap,
+                        ValueMap<const Value*, Value*> &VMap,
                         ClonedCodeInfo *CodeInfo = 0);
 
 /// CloneFunction - Version of the function that doesn't need the VMap.
 ///
 inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
-  DenseMap<const Value*, Value*> VMap;
+  ValueMap<const Value*, Value*> VMap;
   return CloneFunction(F, VMap, CodeInfo);
 }
 
@@ -139,7 +139,7 @@ inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
 /// specified suffix to all values cloned.
 ///
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       DenseMap<const Value*, Value*> &VMap,
+                       ValueMap<const Value*, Value*> &VMap,
                        SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
                        ClonedCodeInfo *CodeInfo = 0);
@@ -152,7 +152,7 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// dead.  Since this doesn't produce an exactly copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
 void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                               DenseMap<const Value*, Value*> &VMap,
+                               ValueMap<const Value*, Value*> &VMap,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,

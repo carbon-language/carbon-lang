@@ -15,7 +15,7 @@
 #ifndef PIC16CLONER_H
 #define PIC16CLONER_H
 
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ValueMap.h"
 
 using namespace llvm;
 using std::vector;
@@ -72,7 +72,7 @@ namespace llvm {
     // the corresponding cloned auto variable of the cloned function. 
     // This value map is passed during the function cloning so that all the
     // uses of auto variables be updated properly. 
-    DenseMap<const Value*, Value*> ValueMap;
+    ValueMap<const Value*, Value*> VMap;
 
     // Map of a already cloned functions. 
     map<Function *, Function *> ClonedFunctionMap;

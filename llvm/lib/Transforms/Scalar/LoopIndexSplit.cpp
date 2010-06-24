@@ -1016,13 +1016,13 @@ bool LoopIndexSplit::splitLoop() {
   BSV = getMax(BSV, IVStartValue, Sign, PHTerm);
 
   // [*] Clone Loop
-  DenseMap<const Value *, Value *> ValueMap;
-  Loop *BLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  ValueMap<const Value *, Value *> VMap;
+  Loop *BLoop = CloneLoop(L, LPM, LI, VMap, this);
   Loop *ALoop = L;
 
   // [*] ALoop's exiting edge enters BLoop's header.
   //    ALoop's original exit block becomes BLoop's exit block.
-  PHINode *B_IndVar = cast<PHINode>(ValueMap[IndVar]);
+  PHINode *B_IndVar = cast<PHINode>(VMap[IndVar]);
   BasicBlock *A_ExitingBlock = ExitCondition->getParent();
   BranchInst *A_ExitInsn =
     dyn_cast<BranchInst>(A_ExitingBlock->getTerminator());
@@ -1047,7 +1047,7 @@ bool LoopIndexSplit::splitLoop() {
   for (BasicBlock::iterator BI = ALoop->getHeader()->begin(), 
          BE = ALoop->getHeader()->end(); BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PHINode *PNClone = cast<PHINode>(ValueMap[PN]);
+      PHINode *PNClone = cast<PHINode>(VMap[PN]);
       InverseMap[PNClone] = PN;
     } else
       break;
@@ -1085,11 +1085,11 @@ bool LoopIndexSplit::splitLoop() {
   //     block. Remove incoming PHINode values from ALoop's exiting block.
   //     Add new incoming values from BLoop's incoming exiting value.
   //     Update BLoop exit block's dominator info..
-  BasicBlock *B_ExitingBlock = cast<BasicBlock>(ValueMap[A_ExitingBlock]);
+  BasicBlock *B_ExitingBlock = cast<BasicBlock>(VMap[A_ExitingBlock]);
   for (BasicBlock::iterator BI = B_ExitBlock->begin(), BE = B_ExitBlock->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(A_ExitingBlock)], 
+      PN->addIncoming(VMap[PN->getIncomingValueForBlock(A_ExitingBlock)], 
                                                             B_ExitingBlock);
       PN->removeIncomingValue(A_ExitingBlock);
     } else
@@ -1131,7 +1131,7 @@ bool LoopIndexSplit::splitLoop() {
   removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
 
   //[*] Eliminate split condition's inactive branch in from BLoop.
-  BasicBlock *B_SplitCondBlock = cast<BasicBlock>(ValueMap[A_SplitCondBlock]);
+  BasicBlock *B_SplitCondBlock = cast<BasicBlock>(VMap[A_SplitCondBlock]);
   BranchInst *B_BR = cast<BranchInst>(B_SplitCondBlock->getTerminator());
   BasicBlock *B_InactiveBranch = NULL;
   BasicBlock *B_ActiveBranch = NULL;
@@ -1146,9 +1146,9 @@ bool LoopIndexSplit::splitLoop() {
 
   //[*] Move exit condition into split condition block to avoid
   //    executing dead loop iteration.
-  ICmpInst *B_ExitCondition = cast<ICmpInst>(ValueMap[ExitCondition]);
-  Instruction *B_IndVarIncrement = cast<Instruction>(ValueMap[IVIncrement]);
-  ICmpInst *B_SplitCondition = cast<ICmpInst>(ValueMap[SplitCondition]);
+  ICmpInst *B_ExitCondition = cast<ICmpInst>(VMap[ExitCondition]);
+  Instruction *B_IndVarIncrement = cast<Instruction>(VMap[IVIncrement]);
+  ICmpInst *B_SplitCondition = cast<ICmpInst>(VMap[SplitCondition]);
 
   moveExitCondition(A_SplitCondBlock, A_ActiveBranch, A_ExitBlock, ExitCondition,
                     cast<ICmpInst>(SplitCondition), IndVar, IVIncrement, 

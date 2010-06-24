@@ -64,10 +64,10 @@ X("partialspecialization", "Partial Specialization");
 // a call to the specialized function.  Returns the specialized function
 static Function* 
 SpecializeFunction(Function* F, 
-                   DenseMap<const Value*, Value*>& replacements) {
+                   ValueMap<const Value*, Value*>& replacements) {
   // arg numbers of deleted arguments
   DenseMap<unsigned, const Argument*> deleted;
-  for (DenseMap<const Value*, Value*>::iterator 
+  for (ValueMap<const Value*, Value*>::iterator 
          repb = replacements.begin(), repe = replacements.end();
        repb != repe; ++repb) {
     Argument const *arg = cast<const Argument>(repb->first);
@@ -150,7 +150,7 @@ bool PartSpec::runOnModule(Module &M) {
                ee = distribution.end(); ii != ee; ++ii)
           if (total > ii->second && ii->first &&
                ii->second > total * ConstValPercent) {
-            DenseMap<const Value*, Value*> m;
+            ValueMap<const Value*, Value*> m;
             Function::arg_iterator arg = F.arg_begin();
             for (int y = 0; y < interestingArgs[x]; ++y)
               ++arg;

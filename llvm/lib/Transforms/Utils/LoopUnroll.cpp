@@ -39,10 +39,10 @@ STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 /// RemapInstruction - Convert the instruction operands from referencing the
 /// current values into those specified by VMap.
 static inline void RemapInstruction(Instruction *I,
-                                    DenseMap<const Value *, Value*> &VMap) {
+                                    ValueMap<const Value *, Value*> &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    DenseMap<const Value *, Value*>::iterator It = VMap.find(Op);
+    ValueMap<const Value *, Value*>::iterator It = VMap.find(Op);
     if (It != VMap.end())
       I->setOperand(op, It->second);
   }
@@ -183,7 +183,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
 
   // For the first iteration of the loop, we should use the precloned values for
   // PHI nodes.  Insert associations now.
-  typedef DenseMap<const Value*, Value*> ValueToValueMapTy;
+  typedef ValueMap<const Value*, Value*> ValueToValueMapTy;
   ValueToValueMapTy LastValueMap;
   std::vector<PHINode*> OrigPHINode;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
