@@ -316,13 +316,13 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
                 ret_val = pos->second;
         }
 
-        if (num_cmd_matches != 1 && include_aliases && HasAliases())
+        if (include_aliases && HasAliases())
         {
             num_alias_matches = CommandObject::AddNamesMatchingPartialString (m_alias_dict, cmd_cstr, *matches);
 
         }
 
-        if (num_alias_matches == 1)
+        if (num_alias_matches == 1 && num_cmd_matches == 0)
         {
             cmd.assign(matches->GetStringAtIndex (num_cmd_matches));
             pos = m_alias_dict.find(cmd);
@@ -335,12 +335,12 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             }
         }
 
-        if (num_cmd_matches != 1 && num_alias_matches != 1 && HasUserCommands())
+        if (HasUserCommands())
         {
             num_user_matches = CommandObject::AddNamesMatchingPartialString (m_user_dict, cmd_cstr, *matches);
         }
 
-        if (num_user_matches == 1)
+        if (num_user_matches == 1 && num_alias_matches == 0 && num_cmd_matches == 0)
         {
             cmd.assign (matches->GetStringAtIndex (num_cmd_matches + num_alias_matches));
 
