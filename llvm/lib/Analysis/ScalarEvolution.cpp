@@ -863,12 +863,10 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   Ty = getEffectiveSCEVType(Ty);
 
   // Fold if the operand is constant.
-  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
-    const Type *IntTy = getEffectiveSCEVType(Ty);
-    Constant *C = ConstantExpr::getZExt(SC->getValue(), IntTy);
-    if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
-    return getConstant(cast<ConstantInt>(C));
-  }
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
+    return getConstant(
+      cast<ConstantInt>(ConstantExpr::getZExt(SC->getValue(),
+                                              getEffectiveSCEVType(Ty))));
 
   // zext(zext(x)) --> zext(x)
   if (const SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
@@ -998,12 +996,10 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   Ty = getEffectiveSCEVType(Ty);
 
   // Fold if the operand is constant.
-  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op)) {
-    const Type *IntTy = getEffectiveSCEVType(Ty);
-    Constant *C = ConstantExpr::getSExt(SC->getValue(), IntTy);
-    if (IntTy != Ty) C = ConstantExpr::getIntToPtr(C, Ty);
-    return getConstant(cast<ConstantInt>(C));
-  }
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
+    return getConstant(
+      cast<ConstantInt>(ConstantExpr::getSExt(SC->getValue(),
+                                              getEffectiveSCEVType(Ty))));
 
   // sext(sext(x)) --> sext(x)
   if (const SCEVSignExtendExpr *SS = dyn_cast<SCEVSignExtendExpr>(Op))
