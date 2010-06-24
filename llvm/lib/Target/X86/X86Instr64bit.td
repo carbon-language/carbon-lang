@@ -1687,6 +1687,7 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
 // Thread Local Storage Instructions
 //===----------------------------------------------------------------------===//
 
+// ELF TLS Support
 // All calls clobber the non-callee saved registers. RSP is marked as
 // a use to prevent stack-pointer assignments that appear immediately
 // before calls from potentially appearing dead.
@@ -1705,6 +1706,7 @@ def TLS_addr64 : I<0, Pseudo, (outs), (ins lea64mem:$sym),
                   [(X86tlsaddr tls64addr:$sym)]>,
                   Requires<[In64BitMode]>;
 
+// Darwin TLS Support
 // For x86_64, the address of the thunk is passed in %rdi, on return 
 // the address of the variable is in %rax.  All other registers are preserved.
 let Defs = [RAX],

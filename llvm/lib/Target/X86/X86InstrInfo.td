@@ -3848,6 +3848,7 @@ def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
 // Thread Local Storage Instructions
 //
 
+// ELF TLS Support
 // All calls clobber the non-callee saved registers. ESP is marked as
 // a use to prevent stack-pointer assignments that appear immediately
 // before calls from potentially appearing dead.
@@ -3862,6 +3863,7 @@ def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
                   [(X86tlsaddr tls32addr:$sym)]>,
                   Requires<[In32BitMode]>;
 
+// Darwin TLS Support
 // For i386, the address of the thunk is passed on the stack, on return the 
 // address of the variable is in %eax.  %ecx is trashed during the function 
 // call.  All other registers are preserved.
