@@ -305,13 +305,20 @@ protected:
     Builder.defineMacro("__CELLOS_LV2__");
     Builder.defineMacro("__ELF__");
     Builder.defineMacro("__LP32__");
+    Builder.defineMacro("_ARCH_PPC64");
+    Builder.defineMacro("__powerpc64__");
   }
 public:
   PS3PPUTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
     this->LongWidth = this->LongAlign = this->PointerWidth = this->PointerAlign = 32;
+    this->IntMaxType = TargetInfo::SignedLongLong;
+    this->UIntMaxType = TargetInfo::UnsignedLongLong;
+    this->Int64Type = TargetInfo::SignedLongLong;
     this->SizeType = TargetInfo::UnsignedInt;
+    this->DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32";
   }
 };
 
@@ -419,12 +426,94 @@ public:
     switch (*Name) {
     default: return false;
     case 'O': // Zero
-      return true;
+      break;
     case 'b': // Base register
     case 'f': // Floating point register
       Info.setAllowsRegister();
-      return true;
+      break;
+    // FIXME: The following are added to allow parsing.
+    // I just took a guess at what the actions should be.
+    // Also, is more specific checking needed?  I.e. specific registers?
+    case 'd': // Floating point register (containing 64-bit value) 
+    case 'v': // Altivec vector register
+      Info.setAllowsRegister();
+      break;
+    case 'w':
+      switch (Name[1]) {
+        case 'd':// VSX vector register to hold vector double data 
+        case 'f':// VSX vector register to hold vector float data 
+        case 's':// VSX vector register to hold scalar float data 
+        case 'a':// Any VSX register 
+          break;
+        default:
+          return false;
+      }
+      Info.setAllowsRegister();
+      Name++; // Skip over 'w'.
+      break;
+    case 'h': // `MQ', `CTR', or `LINK' register 
+    case 'q': // `MQ' register 
+    case 'c': // `CTR' register 
+    case 'l': // `LINK' register 
+    case 'x': // `CR' register (condition register) number 0 
+    case 'y': // `CR' register (condition register) 
+    case 'z': // `XER[CA]' carry bit (part of the XER register) 
+      Info.setAllowsRegister();
+      break;
+    case 'I': // Signed 16-bit constant 
+    case 'J': // Unsigned 16-bit constant shifted left 16 bits
+              //  (use `L' instead for SImode constants) 
+    case 'K': // Unsigned 16-bit constant 
+    case 'L': // Signed 16-bit constant shifted left 16 bits 
+    case 'M': // Constant larger than 31 
+    case 'N': // Exact power of 2 
+    case 'P': // Constant whose negation is a signed 16-bit constant 
+    case 'G': // Floating point constant that can be loaded into a
+              // register with one instruction per word 
+    case 'H': // Integer/Floating point constant that can be loaded
+              // into a register using three instructions 
+      break;
+    case 'm': // Memory operand. Note that on PowerPC targets, m can
+              // include addresses that update the base register. It
+              // is therefore only safe to use `m' in an asm statement
+              // if that asm statement accesses the operand exactly once.
+              // The asm statement must also use `%U<opno>' as a
+              // placeholder for the “update” flag in the corresponding
+              // load or store instruction. For example: 
+              // asm ("st%U0 %1,%0" : "=m" (mem) : "r" (val));
+              // is correct but: 
+              // asm ("st %1,%0" : "=m" (mem) : "r" (val));
+              // is not. Use es rather than m if you don't want the base
+              // register to be updated. 
+    case 'es':// A “stable” memory operand; that is, one which does not
+              // include any automodification of the base register. Unlike
+              // `m', this constraint can be used in asm statements that
+              // might access the operand several times, or that might not
+              // access it at all. 
+      Info.setAllowsMemory();
+      break;
+    case 'Q': // Memory operand that is an offset from a register (it is
+              // usually better to use `m' or `es' in asm statements) 
+    case 'Z': // Memory operand that is an indexed or indirect from a
+              // register (it is usually better to use `m' or `es' in
+              // asm statements) 
+      Info.setAllowsMemory();
+      Info.setAllowsRegister();
+      break;
+    case 'R': // AIX TOC entry 
+    case 'a': // Address operand that is an indexed or indirect from a
+              // register (`p' is preferable for asm statements) 
+    case 'S': // Constant suitable as a 64-bit mask operand 
+    case 'T': // Constant suitable as a 32-bit mask operand 
+    case 'U': // System V Release 4 small data area reference 
+    case 't': // AND masks that can be performed by two rldic{l, r}
+              // instructions 
+    case 'W': // Vector constant that does not require memory 
+    case 'j': // Vector constant that is all zeros. 
+      break;
+    // End FIXME.
     }
+    return true;
   }
   virtual const char *getClobbers() const {
     return "";
