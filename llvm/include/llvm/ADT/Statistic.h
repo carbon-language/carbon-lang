@@ -56,6 +56,10 @@ public:
   }
   
   const Statistic &operator++() {
+    // FIXME: This function and all those that follow carefully use an
+    // atomic operation to update the value safely in the presence of
+    // concurrent accesses, but not to read the return value, so the
+    // return value is not thread safe.
     sys::AtomicIncrement(&Value);
     return init();
   }
