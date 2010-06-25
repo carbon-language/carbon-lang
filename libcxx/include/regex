@@ -1343,13 +1343,43 @@ private:
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_RE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_bracket_expression(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_follow_list(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_expression_term(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_equivalence_class(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_character_class(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_collating_symbol(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_DUP_COUNT(_ForwardIterator __first, _ForwardIterator __last, int& __c);
 
-    void __push_l_anchor();
-    void __push_r_anchor();
-    void __push_match_any();
-    void __push_greedy_inf_repeat(int __min);
-    void __push_exact_repeat(int __count);
-    void __push_repeat(int __min, int __max);
+    void __push_l_anchor() {}
+    void __push_r_anchor() {}
+    void __push_match_any() {}
+    void __push_greedy_inf_repeat(int __min) {}
+    void __push_exact_repeat(int __count) {}
+    void __push_repeat(int __min, int __max) {}
+    void __start_nonmatching_list() {}
+    void __start_matching_list() {}
+    void __end_nonmatching_list() {}
+    void __end_matching_list() {}
+    void __push_char(value_type __c) {}
+    void __push_char(const typename _Traits::string_type& __c) {}
+    void __push_range() {}
+    void __push_class_type(typename _Traits::char_class_type) {}
+    void __push_back_ref(int __i) {}
 };
 
 template <class _CharT, class _Traits>
@@ -1615,7 +1645,7 @@ basic_regex<_CharT, _Traits>::__parse_ORD_CHAR(_ForwardIterator __first,
         // Not called inside a bracket
         if (*__first == '.' || *__first == '\\' || *__first == '[')
             return __first;
-        __push_ord_char(*__first);
+        __push_char(*__first);
         ++__first;
     }
     return __first;
@@ -1642,7 +1672,7 @@ basic_regex<_CharT, _Traits>::__parse_QUOTED_CHAR(_ForwardIterator __first,
                 case '[':
                 case '$':
                 case '\\':
-                    __push_ord_char(*__temp);
+                    __push_char(*__temp);
                     __first = ++__temp;
                     break;
                 }
@@ -1660,7 +1690,7 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        if (__first == '*')
+        if (*__first == '*')
         {
             __push_greedy_inf_repeat(0);
             ++__first;
@@ -1705,6 +1735,217 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     __first = __temp;
                 }
             }
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_bracket_expression(_ForwardIterator __first,
+                                                         _ForwardIterator __last)
+{
+    if (__first != __last && *__first == '[')
+    {
+        if (++__first == __last)
+            throw regex_error(regex_constants::error_brack);
+        bool __non_matching = false;
+        if (*__first == '^')
+        {
+            ++__first;
+            __non_matching = true;
+            __start_nonmatching_list();
+        }
+        else
+            __start_matching_list();
+        if (__first == __last)
+            throw regex_error(regex_constants::error_brack);
+        if (*__first == ']')
+        {
+            __push_char(']');
+            ++__first;
+        }
+        __first = __parse_follow_list(__first, __last);
+        if (__first == __last)
+            throw regex_error(regex_constants::error_brack);
+        if (*__first == '-')
+        {
+            __push_char('-');
+            ++__first;
+        }
+        if (__first == __last || *__first != ']')
+            throw regex_error(regex_constants::error_brack);
+        if (__non_matching)
+            __end_nonmatching_list();
+        else
+            __end_matching_list();
+        ++__first;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_follow_list(_ForwardIterator __first,
+                                                  _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        while (true)
+        {
+            _ForwardIterator __temp = __parse_expression_term(__first, __last);
+            if (__temp == __first)
+                break;
+            __first = __temp;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
+                                                      _ForwardIterator __last)
+{
+    if (__first != __last && *__first != ']')
+    {
+        bool __parsed_one = false;
+        _ForwardIterator __temp = next(__first);
+        if (__temp != __last && *__first == '[')
+        {
+            if (*__temp == '=')
+                return __parse_equivalence_class(++__temp, __last);
+            else if (*__temp == ':')
+                return __parse_character_class(++__temp, __last);
+            else if (*__temp == '.')
+            {
+                __first = __parse_collating_symbol(++__temp, __last);
+                __parsed_one = true;
+            }
+        }
+        if (!__parsed_one)
+        {
+            __push_char(*__first);
+            ++__first;
+        }
+        if (__first != __last && *__first != ']')
+        {
+            __temp = next(__first);
+            if (__temp != __last && *__first == '-' && *__temp != ']')
+            {
+                // parse a range
+                __first = __temp;
+                ++__temp;
+                if (__temp != __last && *__first == '[' && *__temp == '.')
+                    __first = __parse_collating_symbol(++__temp, __last);
+                else
+                {
+                    __push_char(*__first);
+                    ++__first;
+                }
+                __push_range();
+            }
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first,
+                                                        _ForwardIterator __last)
+{
+    // Found [=
+    //   This means =] must exist
+    value_type _Equal_close[2] = {'=', ']'};
+    _ForwardIterator __temp = _STD::search(__first, __last, _Equal_close,
+                                                            _Equal_close+2);
+    if (__temp == __last)
+        throw regex_error(regex_constants::error_brack);
+    // [__first, __temp) contains all text in [= ... =]
+    typedef typename _Traits::string_type string_type;
+    string_type __collate_name =
+        __traits_.lookup_collatename(__first, __temp);
+    if (__collate_name.empty())
+        throw regex_error(regex_constants::error_brack);
+    string_type __equiv_name =
+        __traits_.transform_primary(__collate_name.begin(),
+                                    __collate_name.end());
+    if (!__equiv_name.empty())
+        __push_char(__equiv_name);
+    else
+        __push_char(__collate_name);
+    __first = next(__temp, 2);
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_character_class(_ForwardIterator __first,
+                                                      _ForwardIterator __last)
+{
+    // Found [:
+    //   This means :] must exist
+    value_type _Colon_close[2] = {':', ']'};
+    _ForwardIterator __temp = _STD::search(__first, __last, _Colon_close,
+                                                            _Colon_close+2);
+    if (__temp == __last)
+        throw regex_error(regex_constants::error_brack);
+    // [__first, __temp) contains all text in [: ... :]
+    typedef typename _Traits::char_class_type char_class_type;
+    char_class_type __class_type =
+        __traits_.lookup_classname(__first, __temp, __flags_ & icase);
+    if (__class_type == 0)
+        throw regex_error(regex_constants::error_brack);
+    __push_class_type(__class_type);
+    __first = next(__temp, 2);
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
+                                                       _ForwardIterator __last)
+{
+    // Found [.
+    //   This means .] must exist
+    value_type _Dot_close[2] = {'.', ']'};
+    _ForwardIterator __temp = _STD::search(__first, __last, _Dot_close,
+                                                            _Dot_close+2);
+    if (__temp == __last)
+        throw regex_error(regex_constants::error_brack);
+    // [__first, __temp) contains all text in [. ... .]
+    typedef typename _Traits::string_type string_type;
+    string_type __collate_name =
+        __traits_.lookup_collatename(__first, __temp);
+    if (__collate_name.empty())
+        throw regex_error(regex_constants::error_brack);
+    __push_char(__collate_name);
+    __first = next(__temp, 2);
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_DUP_COUNT(_ForwardIterator __first,
+                                                _ForwardIterator __last,
+                                                int& __c)
+{
+    if (__first != __last && '0' <= *__first && *__first <= '9')
+    {
+        __c = *__first - '0';
+        for (++__first; __first != __last && '0' <= *__first && *__first <= '9';
+                                                                      ++__first)
+        {
+            __c *= 10;
+            __c += *__first - '0';
         }
     }
     return __first;
