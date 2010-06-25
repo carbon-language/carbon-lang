@@ -1185,6 +1185,7 @@ void PCHWriter::FlushStmts() {
 
     if (!S) {
       Stream.EmitRecord(pch::STMT_NULL_PTR, Record);
+      Stream.EmitRecord(pch::STMT_STOP, Record);
       continue;
     }
 
