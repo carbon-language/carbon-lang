@@ -22,6 +22,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -193,8 +194,8 @@ FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm, bool fast) {
 bool DwarfEHPrepare::HasCatchAllInSelector(IntrinsicInst *II) {
   if (!EHCatchAllValue) return false;
 
-  unsigned OpIdx = II->getNumOperands() - 1;
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(II->getOperand(OpIdx));
+  unsigned ArgIdx = II->getNumArgOperands() - 1;
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(II->getArgOperand(ArgIdx));
   return GV == EHCatchAllValue;
 }
 
@@ -386,16 +387,20 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 
       // Use the exception object pointer and the personality function
       // from the original selector.
-      Args.push_back(II->getArgOperand(0)); // Exception object pointer.
-      Args.push_back(II->getArgOperand(1)); // Personality function.
+      CallSite CS(II);
+      IntrinsicInst::op_iterator I = CS.arg_begin();
+      Args.push_back(*I++); // Exception object pointer.
+      Args.push_back(*I++); // Personality function.
 
-      unsigned I = 3;
-      unsigned E = II->getNumOperands() -
-        (isa<ConstantInt>(II->getOperand(II->getNumOperands() - 1)) ? 1 : 0);
+      IntrinsicInst::op_iterator E = CS.arg_end();
+      IntrinsicInst::op_iterator B = prior(E);
+
+      // Exclude last argument if it is an integer.
+      if (isa<ConstantInt>(B)) E = B;
 
       // Add in any filter IDs.
-      for (; I < E; ++I)
-        Args.push_back(II->getOperand(I));
+      for (; I != E; ++I)
+        Args.push_back(*I);
 
       Args.push_back(EHCatchAllValue->getInitializer()); // Catch-all indicator.
 
