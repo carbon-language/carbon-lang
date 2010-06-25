@@ -259,6 +259,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     } else {
       Record.push_back(0);
     }
+    break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
     DependentFunctionTemplateSpecializationInfo *
@@ -273,6 +274,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     Record.push_back(DFTSInfo->getNumTemplateArgs());
     for (int i=0, e = DFTSInfo->getNumTemplateArgs(); i != e; ++i)
       Writer.AddTemplateArgumentLoc(DFTSInfo->getTemplateArg(i), Record);
+    break;
   }
   }
 
