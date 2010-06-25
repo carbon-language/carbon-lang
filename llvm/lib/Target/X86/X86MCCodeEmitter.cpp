@@ -431,6 +431,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   switch (TSFlags & X86II::Op0Mask) {
   default: assert(0 && "Invalid prefix!");
+  case 0: break;  // No prefix!
   case X86II::T8:  // 0F 38
     VEX_5M = 0x2;
     break;
@@ -447,29 +448,21 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::XD:  // F2 0F
     VEX_PP = 0x3;
     break;
-  case X86II::TB:  // Bypass: Not used by VEX
-  case 0:
-    break;  // No prefix!
   }
 
   unsigned NumOps = MI.getNumOperands();
-  unsigned CurOp = 0;
-
-  if ((TSFlags & X86II::FormMask) == X86II::MRMDestMem)
-    NumOps = CurOp = X86AddrNumOperands;
+  unsigned i = 0, CurOp = 0;
+  bool IsSrcMem = false;
 
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg: assert(0 && "FIXME: Remove this!");
   case X86II::MRMSrcMem:
-  case X86II::MRMDestMem:
+    IsSrcMem = true;
   case X86II::MRMSrcReg:
     if (MI.getOperand(CurOp).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
-
-    // If the memory destination has been checked first,
-    // go back to the first operand
-    CurOp = (CurOp == NumOps) ? 0 : CurOp+1;
+    CurOp++;
 
     // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the
     // range 0-7 and the difference between the 2 groups is given by the
@@ -493,12 +486,12 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       CurOp++;
     }
 
-    for (; CurOp != NumOps; ++CurOp) {
-      const MCOperand &MO = MI.getOperand(CurOp);
+    i = CurOp;
+    for (; i != NumOps; ++i) {
+      const MCOperand &MO = MI.getOperand(i);
       if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
         VEX_B = 0x0;
-      if (!VEX_B && MO.isReg() &&
-          ((TSFlags & X86II::FormMask) == X86II::MRMSrcMem) &&
+      if (!VEX_B && MO.isReg() && IsSrcMem &&
           X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
         VEX_X = 0x0;
     }

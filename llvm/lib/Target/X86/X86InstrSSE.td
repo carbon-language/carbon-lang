@@ -566,47 +566,25 @@ multiclass sse12_mov_packed<bits<8> opc, RegisterClass RC,
                             string asm, Domain d,
                             bit IsReMaterializable = 1> {
 let neverHasSideEffects = 1 in
-  def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
-              !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [], d>;
+  def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src), asm, [], d>;
 let canFoldAsLoad = 1, isReMaterializable = IsReMaterializable in
-  def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
-              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
+  def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src), asm,
                    [(set RC:$dst, (ld_frag addr:$src))], d>;
 }
 
-let isAsmParserOnly = 1 in {
-defm VMOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
-                              "movaps", SSEPackedSingle>, VEX;
-defm VMOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
-                              "movapd", SSEPackedDouble>, OpSize, VEX;
-defm VMOVUPS : sse12_mov_packed<0x10, VR128, f128mem, loadv4f32,
-                              "movups", SSEPackedSingle>, VEX;
-defm VMOVUPD : sse12_mov_packed<0x10, VR128, f128mem, loadv2f64,
-                              "movupd", SSEPackedDouble, 0>, OpSize, VEX;
-}
 defm MOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
-                              "movaps", SSEPackedSingle>, TB;
+                              "movaps\t{$src, $dst|$dst, $src}",
+                              SSEPackedSingle>, TB;
 defm MOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
-                              "movapd", SSEPackedDouble>, TB, OpSize;
+                              "movapd\t{$src, $dst|$dst, $src}",
+                              SSEPackedDouble>, TB, OpSize;
 defm MOVUPS : sse12_mov_packed<0x10, VR128, f128mem, loadv4f32,
-                              "movups", SSEPackedSingle>, TB;
+                              "movups\t{$src, $dst|$dst, $src}",
+                              SSEPackedSingle>, TB;
 defm MOVUPD : sse12_mov_packed<0x10, VR128, f128mem, loadv2f64,
-                              "movupd", SSEPackedDouble, 0>, TB, OpSize;
+                              "movupd\t{$src, $dst|$dst, $src}",
+                              SSEPackedDouble, 0>, TB, OpSize;
 
-let isAsmParserOnly = 1 in {
-def VMOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                   "vmovaps\t{$src, $dst|$dst, $src}",
-                   [(alignedstore (v4f32 VR128:$src), addr:$dst)]>, VEX;
-def VMOVAPDmr : PDI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                   "vmovapd\t{$src, $dst|$dst, $src}",
-                   [(alignedstore (v2f64 VR128:$src), addr:$dst)]>, VEX;
-def VMOVUPSmr : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                   "vmovups\t{$src, $dst|$dst, $src}",
-                   [(store (v4f32 VR128:$src), addr:$dst)]>, VEX;
-def VMOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                   "vmovupd\t{$src, $dst|$dst, $src}",
-                   [(store (v2f64 VR128:$src), addr:$dst)]>, VEX;
-}
 def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(alignedstore (v4f32 VR128:$src), addr:$dst)]>;
@@ -621,25 +599,6 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    [(store (v2f64 VR128:$src), addr:$dst)]>;
 
 // Intrinsic forms of MOVUPS/D load and store
-let isAsmParserOnly = 1 in {
-  let canFoldAsLoad = 1, isReMaterializable = 1 in
-  def VMOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst),
-             (ins f128mem:$src),
-             "vmovups\t{$src, $dst|$dst, $src}",
-             [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>, VEX;
-  def VMOVUPDrm_Int : PDI<0x10, MRMSrcMem, (outs VR128:$dst),
-             (ins f128mem:$src),
-             "vmovupd\t{$src, $dst|$dst, $src}",
-             [(set VR128:$dst, (int_x86_sse2_loadu_pd addr:$src))]>, VEX;
-  def VMOVUPSmr_Int : PSI<0x11, MRMDestMem, (outs),
-             (ins f128mem:$dst, VR128:$src),
-             "vmovups\t{$src, $dst|$dst, $src}",
-             [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>, VEX;
-  def VMOVUPDmr_Int : PDI<0x11, MRMDestMem, (outs),
-             (ins f128mem:$dst, VR128:$src),
-             "vmovupd\t{$src, $dst|$dst, $src}",
-             [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>, VEX;
-}
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "movups\t{$src, $dst|$dst, $src}",
@@ -675,12 +634,6 @@ multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
               SSEPackedDouble>, TB, OpSize;
 }
 
-let isAsmParserOnly = 1, AddedComplexity = 20 in {
-  defm VMOVL : sse12_mov_hilo_packed<0x12, VR128, movlp, "movlp",
-                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}">, VEX_4V;
-  defm VMOVH : sse12_mov_hilo_packed<0x16, VR128, movlhps, "movhp",
-                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}">, VEX_4V;
-}
 let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
   defm MOVL : sse12_mov_hilo_packed<0x12, VR128, movlp, "movlp",
                                    "\t{$src2, $dst|$dst, $src2}">;
@@ -688,16 +641,6 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
                                    "\t{$src2, $dst|$dst, $src2}">;
 }
 
-let isAsmParserOnly = 1 in {
-def VMOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
-                   "vmovlps\t{$src, $dst|$dst, $src}",
-                   [(store (f64 (vector_extract (bc_v2f64 (v4f32 VR128:$src)),
-                                 (iPTR 0))), addr:$dst)]>, VEX;
-def VMOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
-                   "vmovlpd\t{$src, $dst|$dst, $src}",
-                   [(store (f64 (vector_extract (v2f64 VR128:$src),
-                                 (iPTR 0))), addr:$dst)]>, VEX;
-}
 def MOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movlps\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract (bc_v2f64 (v4f32 VR128:$src)),
@@ -709,20 +652,6 @@ def MOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 
 // v2f64 extract element 1 is always custom lowered to unpack high to low
 // and extract element 0 so the non-store version isn't too horrible.
-let isAsmParserOnly = 1 in {
-def VMOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
-                   "vmovhps\t{$src, $dst|$dst, $src}",
-                   [(store (f64 (vector_extract
-                                 (unpckh (bc_v2f64 (v4f32 VR128:$src)),
-                                         (undef)), (iPTR 0))), addr:$dst)]>,
-                   VEX;
-def VMOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
-                   "vmovhpd\t{$src, $dst|$dst, $src}",
-                   [(store (f64 (vector_extract
-                                 (v2f64 (unpckh VR128:$src, (undef))),
-                                 (iPTR 0))), addr:$dst)]>,
-                   VEX;
-}
 def MOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhps\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
@@ -734,20 +663,6 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                                  (v2f64 (unpckh VR128:$src, (undef))),
                                  (iPTR 0))), addr:$dst)]>;
 
-let isAsmParserOnly = 1, AddedComplexity = 20 in {
-  def VMOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst),
-                                       (ins VR128:$src1, VR128:$src2),
-                      "vmovlhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set VR128:$dst,
-                        (v4f32 (movlhps VR128:$src1, VR128:$src2)))]>,
-                      VEX_4V;
-  def VMOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
-                                       (ins VR128:$src1, VR128:$src2),
-                      "vmovhlps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set VR128:$dst,
-                        (v4f32 (movhlps VR128:$src1, VR128:$src2)))]>,
-                      VEX_4V;
-}
 let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
   def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst),
                                        (ins VR128:$src1, VR128:$src2),
