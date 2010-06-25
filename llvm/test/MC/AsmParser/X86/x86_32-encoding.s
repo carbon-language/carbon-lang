@@ -10806,3 +10806,19 @@
 // CHECK: encoding: [0xc5,0xe8,0x12,0xd9]
           vmovhlps  %xmm1, %xmm2, %xmm3
 
+// CHECK: vcvtss2sil  %xmm1, %eax
+// CHECK: encoding: [0xc5,0xfa,0x2d,0xc1]
+          vcvtss2si  %xmm1, %eax
+
+// CHECK: vcvtss2sil  (%eax), %ebx
+// CHECK: encoding: [0xc5,0xfa,0x2d,0x18]
+          vcvtss2si  (%eax), %ebx
+
+// CHECK: vcvtdq2ps  %xmm5, %xmm6
+// CHECK: encoding: [0xc5,0xf8,0x5b,0xf5]
+          vcvtdq2ps  %xmm5, %xmm6
+
+// CHECK: vcvtdq2ps  (%eax), %xmm6
+// CHECK: encoding: [0xc5,0xf8,0x5b,0x30]
+          vcvtdq2ps  (%eax), %xmm6
+

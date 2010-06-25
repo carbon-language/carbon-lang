@@ -912,6 +912,14 @@ let Constraints = "$src1 = $dst" in {
 /// SSE 1 Only
 
 // Aliases for intrinsics
+let isAsmParserOnly = 1, Pattern = []<dag> in {
+defm Int_VCVTTSS2SI : sse12_cvt_sint_3addr<0x2C, VR128, GR32,
+                int_x86_sse_cvttss2si, f32mem, load,
+                "cvttss2si\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XS;
+defm Int_VCVTTSD2SI : sse12_cvt_sint_3addr<0x2C, VR128, GR32,
+                int_x86_sse2_cvttsd2si, f128mem, load,
+                "cvttss2si\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XD;
+}
 defm Int_CVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                           f32mem, load, "cvttss2si\t{$src, $dst|$dst, $src}">,
                           XS;
@@ -919,6 +927,13 @@ defm Int_CVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
                           f128mem, load, "cvttss2si\t{$src, $dst|$dst, $src}">,
                           XD;
 
+let isAsmParserOnly = 1, Pattern = []<dag> in {
+defm VCVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
+                          "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS, VEX;
+defm VCVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load,
+                            "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                            SSEPackedSingle>, TB, VEX;
+}
 let Pattern = []<dag> in {
 defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
                           "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS;

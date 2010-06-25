@@ -854,4 +854,19 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x41,0x18,0x12,0xeb]
           vmovhlps  %xmm11, %xmm12, %xmm13
 
+// CHECK: vcvtss2sil  %xmm11, %eax
+// CHECK: encoding: [0xc4,0xc1,0x7a,0x2d,0xc3]
+          vcvtss2si  %xmm11, %eax
+
+// CHECK: vcvtss2sil  (%rax), %ebx
+// CHECK: encoding: [0xc5,0xfa,0x2d,0x18]
+          vcvtss2si  (%rax), %ebx
+
+// CHECK: vcvtdq2ps  %xmm10, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x5b,0xe2]
+          vcvtdq2ps  %xmm10, %xmm12
+
+// CHECK: vcvtdq2ps  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x5b,0x20]
+          vcvtdq2ps  (%rax), %xmm12
 
