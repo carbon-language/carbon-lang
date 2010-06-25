@@ -34,7 +34,6 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
     OS << "class " << R.getName() << "Attr : public Attr {\n";
 
     std::vector<Record*> Args = R.getValueAsListOfDefs("Args");
-    std::vector<Record*>::iterator ai, ae = Args.end();
 
     // FIXME: Handle arguments
     assert(Args.empty() && "Can't yet handle arguments");
