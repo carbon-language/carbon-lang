@@ -1113,7 +1113,9 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
   
 #ifndef NDEBUG
   if (Writer.Code == pch::STMT_NULL_PTR) {
-    S->dump();
+    SourceManager &SrcMgr
+      = DeclIDs.begin()->first->getASTContext().getSourceManager();
+    S->dump(SrcMgr);
     assert(0 && "Unhandled sub statement writing PCH file");
   }
 #endif
