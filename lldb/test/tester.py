@@ -101,6 +101,7 @@ class LLDBTestCase(unittest.TestCase):
 class SanityCheckTestCase(LLDBTestCase):
   def runTest(self):
     ret = self.runCommand("show arch", "show-arch")
+    print ret
 
 suite = unittest.TestLoader().loadTestsFromTestCase(SanityCheckTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
