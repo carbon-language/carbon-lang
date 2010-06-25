@@ -286,12 +286,12 @@ class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasSSE1]>;
 class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
-      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XS, VEX_4V,
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XS,
         Requires<[HasAVX, HasSSE1]>;
 class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>,
-        VEX_4V, Requires<[HasAVX, HasSSE1]>;
+        Requires<[HasAVX, HasSSE1]>;
 
 // SSE2 Instruction Templates:
 // 
@@ -320,12 +320,12 @@ class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasSSE2]>;
 class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
-      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XD, VEX_4V,
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XD,
         Requires<[HasAVX, HasSSE2]>;
 class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedDouble>,
-        VEX_4V, OpSize, Requires<[HasAVX, HasSSE2]>;
+        OpSize, Requires<[HasAVX, HasSSE2]>;
 
 // SSE3 Instruction Templates:
 // 
