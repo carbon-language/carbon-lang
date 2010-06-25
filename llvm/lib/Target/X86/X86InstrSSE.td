@@ -842,6 +842,157 @@ defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load /*dummy*/,
                             SSEPackedSingle>, TB; /* PD SSE3 form is avaiable */
 }
 
+/// SSE 2 Only
+
+def CVTSD2SSrr  : SDI<0x5A, MRMSrcReg, (outs FR32:$dst), (ins FR64:$src),
+                      "cvtsd2ss\t{$src, $dst|$dst, $src}",
+                      [(set FR32:$dst, (fround FR64:$src))]>;
+def CVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst), (ins f64mem:$src),
+                      "cvtsd2ss\t{$src, $dst|$dst, $src}",
+                      [(set FR32:$dst, (fround (loadf64 addr:$src)))]>, XD,
+                  Requires<[HasSSE2, OptForSize]>;
+
+def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>;
+def CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>;
+
+// SSE2 instructions with XS prefix
+def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
+                   "cvtss2sd\t{$src, $dst|$dst, $src}",
+                   [(set FR64:$dst, (fextend FR32:$src))]>, XS,
+                 Requires<[HasSSE2]>;
+def CVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst), (ins f32mem:$src),
+                   "cvtss2sd\t{$src, $dst|$dst, $src}",
+                   [(set FR64:$dst, (extloadf32 addr:$src))]>, XS,
+                 Requires<[HasSSE2, OptForSize]>;
+
+def : Pat<(extloadf32 addr:$src),
+          (CVTSS2SDrr (MOVSSrm addr:$src))>,
+      Requires<[HasSSE2, OptForSpeed]>;
+
+// SSE2 instructions without OpSize prefix
+def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtdq2ps VR128:$src))]>,
+                     TB, Requires<[HasSSE2]>;
+def Int_CVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                      "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
+                                        (bitconvert (memopv2i64 addr:$src))))]>,
+                     TB, Requires<[HasSSE2]>;
+
+// SSE2 instructions with XS prefix
+def Int_CVTDQ2PDrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtdq2pd\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd VR128:$src))]>,
+                     XS, Requires<[HasSSE2]>;
+def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
+                     "cvtdq2pd\t{$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
+                                        (bitconvert (memopv2i64 addr:$src))))]>,
+                     XS, Requires<[HasSSE2]>;
+
+def Int_CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                        "cvtps2dq\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst, (int_x86_sse2_cvtps2dq VR128:$src))]>;
+def Int_CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                         "cvtps2dq\t{$src, $dst|$dst, $src}",
+                         [(set VR128:$dst, (int_x86_sse2_cvtps2dq
+                                            (memop addr:$src)))]>;
+// SSE2 packed instructions with XS prefix
+def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
+def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
+
+def Int_CVTTPS2DQrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                        "cvttps2dq\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst,
+                              (int_x86_sse2_cvttps2dq VR128:$src))]>,
+                      XS, Requires<[HasSSE2]>;
+def Int_CVTTPS2DQrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                        "cvttps2dq\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst, (int_x86_sse2_cvttps2dq
+                                           (memop addr:$src)))]>,
+                      XS, Requires<[HasSSE2]>;
+
+// SSE2 packed instructions with XD prefix
+def Int_CVTPD2DQrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq VR128:$src))]>,
+                     XD, Requires<[HasSSE2]>;
+def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
+                                          (memop addr:$src)))]>,
+                     XD, Requires<[HasSSE2]>;
+
+def Int_CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                          "cvttpd2dq\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))]>;
+def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
+                          "cvttpd2dq\t{$src, $dst|$dst, $src}",
+                          [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
+                                             (memop addr:$src)))]>;
+
+// SSE2 instructions without OpSize prefix
+def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
+def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
+
+def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))]>,
+                     TB, Requires<[HasSSE2]>;
+def Int_CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd
+                                          (load addr:$src)))]>,
+                     TB, Requires<[HasSSE2]>;
+
+def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
+def CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
+
+
+def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst, (int_x86_sse2_cvtpd2ps VR128:$src))]>;
+def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
+                         [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
+                                            (memop addr:$src)))]>;
+
+// Match intrinsics which expect XMM operand(s).
+// Aliases for intrinsics
+let Constraints = "$src1 = $dst" in {
+def Int_CVTSD2SSrr: SDI<0x5A, MRMSrcReg,
+                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                   "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_cvtsd2ss VR128:$src1,
+                                      VR128:$src2))]>;
+def Int_CVTSD2SSrm: SDI<0x5A, MRMSrcMem,
+                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
+                   "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_cvtsd2ss VR128:$src1,
+                                      (load addr:$src2)))]>;
+def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
+                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                    "cvtss2sd\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
+                                       VR128:$src2))]>, XS,
+                    Requires<[HasSSE2]>;
+def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
+                      (outs VR128:$dst), (ins VR128:$src1, f32mem:$src2),
+                    "cvtss2sd\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
+                                       (load addr:$src2)))]>, XS,
+                    Requires<[HasSSE2]>;
+}
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Compare Instructions
 //===----------------------------------------------------------------------===//
@@ -1610,156 +1761,6 @@ def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
 //===---------------------------------------------------------------------===//
 // SSE2 Instructions
 //===---------------------------------------------------------------------===//
-
-// Conversion instructions
-def CVTSD2SSrr  : SDI<0x5A, MRMSrcReg, (outs FR32:$dst), (ins FR64:$src),
-                      "cvtsd2ss\t{$src, $dst|$dst, $src}",
-                      [(set FR32:$dst, (fround FR64:$src))]>;
-def CVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst), (ins f64mem:$src),
-                      "cvtsd2ss\t{$src, $dst|$dst, $src}",
-                      [(set FR32:$dst, (fround (loadf64 addr:$src)))]>, XD,
-                  Requires<[HasSSE2, OptForSize]>;
-
-def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>;
-def CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>;
-
-// SSE2 instructions with XS prefix
-def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
-                   "cvtss2sd\t{$src, $dst|$dst, $src}",
-                   [(set FR64:$dst, (fextend FR32:$src))]>, XS,
-                 Requires<[HasSSE2]>;
-def CVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst), (ins f32mem:$src),
-                   "cvtss2sd\t{$src, $dst|$dst, $src}",
-                   [(set FR64:$dst, (extloadf32 addr:$src))]>, XS,
-                 Requires<[HasSSE2, OptForSize]>;
-
-def : Pat<(extloadf32 addr:$src),
-          (CVTSS2SDrr (MOVSSrm addr:$src))>,
-      Requires<[HasSSE2, OptForSpeed]>;
-
-// SSE2 instructions without OpSize prefix
-def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2ps VR128:$src))]>,
-                     TB, Requires<[HasSSE2]>;
-def Int_CVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                      "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
-                                        (bitconvert (memopv2i64 addr:$src))))]>,
-                     TB, Requires<[HasSSE2]>;
-
-// SSE2 instructions with XS prefix
-def Int_CVTDQ2PDrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtdq2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd VR128:$src))]>,
-                     XS, Requires<[HasSSE2]>;
-def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                     "cvtdq2pd\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
-                                        (bitconvert (memopv2i64 addr:$src))))]>,
-                     XS, Requires<[HasSSE2]>;
-
-def Int_CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                        "cvtps2dq\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvtps2dq VR128:$src))]>;
-def Int_CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                         "cvtps2dq\t{$src, $dst|$dst, $src}",
-                         [(set VR128:$dst, (int_x86_sse2_cvtps2dq
-                                            (memop addr:$src)))]>;
-// SSE2 packed instructions with XS prefix
-def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
-def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
-
-def Int_CVTTPS2DQrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                        "cvttps2dq\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst,
-                              (int_x86_sse2_cvttps2dq VR128:$src))]>,
-                      XS, Requires<[HasSSE2]>;
-def Int_CVTTPS2DQrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                        "cvttps2dq\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvttps2dq
-                                           (memop addr:$src)))]>,
-                      XS, Requires<[HasSSE2]>;
-
-// SSE2 packed instructions with XD prefix
-def Int_CVTPD2DQrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq VR128:$src))]>,
-                     XD, Requires<[HasSSE2]>;
-def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
-                                          (memop addr:$src)))]>,
-                     XD, Requires<[HasSSE2]>;
-
-def Int_CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                          "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))]>;
-def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
-                          "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                          [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                             (memop addr:$src)))]>;
-
-// SSE2 instructions without OpSize prefix
-def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
-def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
-
-def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))]>,
-                     TB, Requires<[HasSSE2]>;
-def Int_CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd
-                                          (load addr:$src)))]>,
-                     TB, Requires<[HasSSE2]>;
-
-def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
-def CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
-
-
-def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvtpd2ps VR128:$src))]>;
-def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                         [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
-                                            (memop addr:$src)))]>;
-
-// Match intrinsics which expect XMM operand(s).
-// Aliases for intrinsics
-let Constraints = "$src1 = $dst" in {
-def Int_CVTSD2SSrr: SDI<0x5A, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                   "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_cvtsd2ss VR128:$src1,
-                                      VR128:$src2))]>;
-def Int_CVTSD2SSrm: SDI<0x5A, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
-                   "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_cvtsd2ss VR128:$src1,
-                                      (load addr:$src2)))]>;
-def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
-                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                    "cvtss2sd\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       VR128:$src2))]>, XS,
-                    Requires<[HasSSE2]>;
-def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
-                      (outs VR128:$dst), (ins VR128:$src1, f32mem:$src2),
-                    "cvtss2sd\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       (load addr:$src2)))]>, XS,
-                    Requires<[HasSSE2]>;
-}
 
 // Arithmetic
 
