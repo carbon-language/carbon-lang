@@ -845,9 +845,9 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
-  // The cast wasn't folded; create an explicit cast node.
-  // Recompute the insert position, as it may have been invalidated.
-  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
+  // The cast wasn't folded; create an explicit cast node. We can reuse
+  // the existing insert position since if we get here, we won't have
+  // made any changes which would invalidate it.
   SCEV *S = new (SCEVAllocator) SCEVTruncateExpr(ID.Intern(SCEVAllocator),
                                                  Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
