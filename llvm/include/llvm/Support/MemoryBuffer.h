@@ -35,13 +35,11 @@ class MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
 
-  /// MustDeleteBuffer - True if we allocated this buffer.  If so, the
-  /// destructor must know the delete[] it.
-  bool MustDeleteBuffer;
+  MemoryBuffer(const MemoryBuffer &); // DO NOT IMPLEMENT
+  MemoryBuffer &operator=(const MemoryBuffer &); // DO NOT IMPLEMENT
 protected:
-  MemoryBuffer() : MustDeleteBuffer(false) {}
+  MemoryBuffer() {}
   void init(const char *BufStart, const char *BufEnd);
-  void initCopyOf(const char *BufStart, const char *BufEnd);
 public:
   virtual ~MemoryBuffer();
 
@@ -75,20 +73,19 @@ public:
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that EndPtr[0] must be a null byte and be accessible!
   static MemoryBuffer *getMemBuffer(StringRef InputData,
-                                    const char *BufferName = "");
+                                    StringRef BufferName = "");
 
   /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
   /// copying the contents and taking ownership of it.  This has no requirements
   /// on EndPtr[0].
   static MemoryBuffer *getMemBufferCopy(StringRef InputData,
-                                        const char *BufferName = "");
+                                        StringRef BufferName = "");
 
   /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
   /// is completely initialized to zeros.  Note that the caller should
   /// initialize the memory allocated by this method.  The memory is owned by
   /// the MemoryBuffer object.
-  static MemoryBuffer *getNewMemBuffer(size_t Size,
-                                       const char *BufferName = "");
+  static MemoryBuffer *getNewMemBuffer(size_t Size, StringRef BufferName = "");
 
   /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
   /// that is not initialized.  Note that the caller should initialize the

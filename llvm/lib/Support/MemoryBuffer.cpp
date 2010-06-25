@@ -14,6 +14,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/System/Errno.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
@@ -37,22 +38,7 @@ using namespace llvm;
 // MemoryBuffer implementation itself.
 //===----------------------------------------------------------------------===//
 
-MemoryBuffer::~MemoryBuffer() {
-  if (MustDeleteBuffer)
-    free((void*)BufferStart);
-}
-
-/// initCopyOf - Initialize this source buffer with a copy of the specified
-/// memory range.  We make the copy so that we can null terminate it
-/// successfully.
-void MemoryBuffer::initCopyOf(const char *BufStart, const char *BufEnd) {
-  size_t Size = BufEnd-BufStart;
-  BufferStart = (char *)malloc(Size+1);
-  BufferEnd = BufferStart+Size;
-  memcpy(const_cast<char*>(BufferStart), BufStart, Size);
-  *const_cast<char*>(BufferEnd) = 0;   // Null terminate buffer.
-  MustDeleteBuffer = true;
-}
+MemoryBuffer::~MemoryBuffer() { }
 
 /// init - Initialize this MemoryBuffer as a reference to externally allocated
 /// memory, memory that we know is already null terminated.
@@ -60,27 +46,38 @@ void MemoryBuffer::init(const char *BufStart, const char *BufEnd) {
   assert(BufEnd[0] == 0 && "Buffer is not null terminated!");
   BufferStart = BufStart;
   BufferEnd = BufEnd;
-  MustDeleteBuffer = false;
 }
 
 //===----------------------------------------------------------------------===//
 // MemoryBufferMem implementation.
 //===----------------------------------------------------------------------===//
 
+/// CopyStringRef - Copies contents of a StringRef into a block of memory and
+/// null-terminates it.
+static void CopyStringRef(char *Memory, StringRef Data) {
+  memcpy(Memory, Data.data(), Data.size());
+  Memory[Data.size()] = 0; // Null terminate string.
+}
+
+/// GetNamedBuffer - Allocates a new MemoryBuffer with Name copied after it.
+template <typename T>
+static T* GetNamedBuffer(StringRef Buffer, StringRef Name) {
+  char *Mem = static_cast<char*>(operator new(sizeof(T) + Name.size() + 1));
+  CopyStringRef(Mem + sizeof(T), Name);
+  return new (Mem) T(Buffer);
+}
+
 namespace {
+/// MemoryBufferMem - Named MemoryBuffer pointing to a block of memory.
 class MemoryBufferMem : public MemoryBuffer {
-  std::string FileID;
 public:
-  MemoryBufferMem(StringRef InputData, StringRef FID, bool Copy = false)
-  : FileID(FID) {
-    if (!Copy)
-      init(InputData.data(), InputData.data()+InputData.size());
-    else
-      initCopyOf(InputData.data(), InputData.data()+InputData.size());
+  MemoryBufferMem(StringRef InputData) {
+    init(InputData.begin(), InputData.end());
   }
-  
+
   virtual const char *getBufferIdentifier() const {
-    return FileID.c_str();
+     // The name is stored after the class itself.
+    return reinterpret_cast<const char*>(this + 1);
   }
 };
 }
@@ -88,42 +85,55 @@ public:
 /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
 /// that EndPtr[0] must be a null byte and be accessible!
 MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
-                                         const char *BufferName) {
-  return new MemoryBufferMem(InputData, BufferName);
+                                         StringRef BufferName) {
+  return GetNamedBuffer<MemoryBufferMem>(InputData, BufferName);
 }
 
 /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
 /// copying the contents and taking ownership of it.  This has no requirements
 /// on EndPtr[0].
 MemoryBuffer *MemoryBuffer::getMemBufferCopy(StringRef InputData,
-                                             const char *BufferName) {
-  return new MemoryBufferMem(InputData, BufferName, true);
+                                             StringRef BufferName) {
+  MemoryBuffer *Buf = getNewUninitMemBuffer(InputData.size(), BufferName);
+  if (!Buf) return 0;
+  memcpy(const_cast<char*>(Buf->getBufferStart()), InputData.data(),
+         InputData.size());
+  return Buf;
 }
 
 /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
-/// that is completely initialized to zeros.  Note that the caller should
-/// initialize the memory allocated by this method.  The memory is owned by
-/// the MemoryBuffer object.
+/// that is not initialized.  Note that the caller should initialize the
+/// memory allocated by this method.  The memory is owned by the MemoryBuffer
+/// object.
 MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
                                                   StringRef BufferName) {
-  char *Buf = (char *)malloc(Size+1);
-  if (!Buf) return 0;
-  Buf[Size] = 0;
-  MemoryBufferMem *SB = new MemoryBufferMem(StringRef(Buf, Size), BufferName);
-  // The memory for this buffer is owned by the MemoryBuffer.
-  SB->MustDeleteBuffer = true;
-  return SB;
+  // Allocate space for the MemoryBuffer, the data and the name. It is important
+  // that MemoryBuffer and data are aligned so PointerIntPair works with them.
+  size_t AlignedStringLen =
+    RoundUpToAlignment(sizeof(MemoryBufferMem) + BufferName.size() + 1,
+                       sizeof(void*)); // TODO: Is sizeof(void*) enough?
+  size_t RealLen = AlignedStringLen + Size + 1;
+  char *Mem = static_cast<char*>(operator new(RealLen, std::nothrow));
+  if (!Mem) return 0;
+
+  // The name is stored after the class itself.
+  CopyStringRef(Mem + sizeof(MemoryBufferMem), BufferName);
+
+  // The buffer begins after the name and must be aligned.
+  char *Buf = Mem + AlignedStringLen;
+  Buf[Size] = 0; // Null terminate buffer.
+
+  return new (Mem) MemoryBufferMem(StringRef(Buf, Size));
 }
 
 /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
 /// is completely initialized to zeros.  Note that the caller should
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the MemoryBuffer object.
-MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size,
-                                            const char *BufferName) {
+MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
   MemoryBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
   if (!SB) return 0;
-  memset(const_cast<char*>(SB->getBufferStart()), 0, Size+1);
+  memset(const_cast<char*>(SB->getBufferStart()), 0, Size);
   return SB;
 }
 
@@ -158,18 +168,11 @@ namespace {
 /// MemoryBufferMMapFile - This represents a file that was mapped in with the
 /// sys::Path::MapInFilePages method.  When destroyed, it calls the
 /// sys::Path::UnMapFilePages method.
-class MemoryBufferMMapFile : public MemoryBuffer {
-  std::string Filename;
+class MemoryBufferMMapFile : public MemoryBufferMem {
 public:
-  MemoryBufferMMapFile(StringRef filename, const char *Pages, uint64_t Size)
-    : Filename(filename) {
-    init(Pages, Pages+Size);
-  }
-  
-  virtual const char *getBufferIdentifier() const {
-    return Filename.c_str();
-  }
-    
+  MemoryBufferMMapFile(StringRef Buffer)
+    : MemoryBufferMem(Buffer) { }
+
   ~MemoryBufferMMapFile() {
     sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
   }
@@ -227,8 +230,8 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
   if (FileSize >= 4096*4 &&
       (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
     if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
-      // Close the file descriptor, now that the whole file is in memory.
-      return new MemoryBufferMMapFile(Filename, Pages, FileSize);
+      return GetNamedBuffer<MemoryBufferMMapFile>(StringRef(Pages, FileSize),
+                                                  Filename);
     }
   }
 
@@ -268,15 +271,6 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
 // MemoryBuffer::getSTDIN implementation.
 //===----------------------------------------------------------------------===//
 
-namespace {
-class STDINBufferFile : public MemoryBuffer {
-public:
-  virtual const char *getBufferIdentifier() const {
-    return "<stdin>";
-  }
-};
-}
-
 MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
   char Buffer[4096*4];
 
@@ -298,9 +292,5 @@ MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
     return 0;
   }
 
-  FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
-  size_t Size = FileData.size();
-  MemoryBuffer *B = new STDINBufferFile();
-  B->initCopyOf(&FileData[0], &FileData[Size-1]);
-  return B;
+  return getMemBufferCopy(StringRef(&FileData[0], FileData.size()), "<stdin>");
 }
