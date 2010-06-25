@@ -92,3 +92,11 @@ void test3_e(int &x) {
   int &y = x;
 }
 
+//===----------------------------------------------------------------------===//
+// Dead stores involving 'new'
+//===----------------------------------------------------------------------===//
+
+static void test_new(unsigned n) {
+  char **p = new char* [n]; // expected-warning{{never read}}
+}
+
