@@ -75,14 +75,25 @@ class GRExprEngine : public GRSubEngine {
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
 
   typedef llvm::DenseMap<void *, unsigned> CheckerMap;
-  CheckerMap CheckerM;
-  
   typedef std::vector<std::pair<void *, Checker*> > CheckersOrdered;
+  typedef llvm::DenseMap<std::pair<unsigned, unsigned>, CheckersOrdered *>
+          CheckersOrderedCache;
+  
+  /// A registration map from checker tag to the index into the
+  ///  ordered checkers vector.
+  CheckerMap CheckerM;
+
+  /// An ordered vector of checkers that are called when evaluating
+  ///  various expressions and statements.
   CheckersOrdered Checkers;
 
-  /// BR - The BugReporter associated with this engine.  It is important that
-  //   this object be placed at the very end of member variables so that its
-  //   destructor is called before the rest of the GRExprEngine is destroyed.
+  /// A map used for caching the checkers that respond to the callback for
+  ///  a particular statement and visitation order.
+  CheckersOrderedCache COCache;
+
+  /// The BugReporter associated with this engine.  It is important that
+  ///  this object be placed at the very end of member variables so that its
+  ///  destructor is called before the rest of the GRExprEngine is destroyed.
   GRBugReporter BR;
   
   llvm::OwningPtr<GRTransferFuncs> TF;

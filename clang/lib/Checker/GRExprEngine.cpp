@@ -172,13 +172,37 @@ public:
 void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, bool isPrevisit) {
 
-  if (Checkers.empty()) {
+  // Determine if we already have a cached 'CheckersOrdered' vector
+  // specifically tailored for the provided <Stmt kind, isPrevisit>.  This
+  // can reduce the number of checkers actually called.
+  CheckersOrdered *CO = &Checkers;
+  llvm::OwningPtr<CheckersOrdered> NewCO;
+  
+  const std::pair<unsigned, unsigned> &K =
+    std::make_pair((unsigned)S->getStmtClass(), isPrevisit ? 1U : 0U);
+
+  CheckersOrdered *& CO_Ref = COCache[K];
+  
+  if (!CO_Ref) {
+    // If we have no previously cached CheckersOrdered vector for this
+    // statement kind, then create one.
+    NewCO.reset(new CheckersOrdered);
+  }
+  else {
+    // Use the already cached set.
+    CO = CO_Ref;
+  }
+  
+  if (CO->empty()) {
+    // If there are no checkers, return early without doing any
+    // more work.
     Dst.insert(Src);
     return;
   }
 
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
+  unsigned checkersEvaluated = 0;
 
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
     ExplodedNodeSet *CurrSet = 0;
@@ -190,12 +214,30 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
     }
     void *tag = I->first;
     Checker *checker = I->second;
+    bool respondsToCallback = true;
 
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI)
-      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit);
+         NI != NE; ++NI) {
+
+      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit,
+                        respondsToCallback);
+      
+    }
+
     PrevSet = CurrSet;
+
+    if (NewCO.get()) {
+      ++checkersEvaluated;
+      if (respondsToCallback)
+        NewCO->push_back(*I);
+    }    
   }
+  
+  // If we built NewCO, check if we called all the checkers.  This is important
+  // so that we know that we accurately determined the entire set of checkers
+  // that responds to this callback.
+  if (NewCO.get() && checkersEvaluated == Checkers.size())
+    CO_Ref = NewCO.take();
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
@@ -361,7 +403,13 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
 GRExprEngine::~GRExprEngine() {
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
+  
+  // Delete the set of checkers.
   for (CheckersOrdered::iterator I=Checkers.begin(), E=Checkers.end(); I!=E;++I)
+    delete I->second;
+  
+  for (CheckersOrderedCache::iterator I=COCache.begin(), E=COCache.end();
+       I!=E;++I)
     delete I->second;
 }
 

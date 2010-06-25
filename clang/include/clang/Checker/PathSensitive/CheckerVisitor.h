@@ -79,8 +79,13 @@ break;
     }
   }
 
-  void PreVisitStmt(CheckerContext &C, const Stmt *S) {}
-  void PostVisitStmt(CheckerContext &C, const Stmt *S) {}
+  void PreVisitStmt(CheckerContext &C, const Stmt *S) {
+    *C.respondsToCallback = false;
+  }
+
+  void PostVisitStmt(CheckerContext &C, const Stmt *S) {
+    *C.respondsToCallback = false;
+  }
 
   void PreVisitCastExpr(CheckerContext &C, const CastExpr *E) {
     static_cast<ImplClass*>(this)->PreVisitStmt(C, E);
