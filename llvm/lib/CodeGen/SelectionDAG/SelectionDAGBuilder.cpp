@@ -4177,7 +4177,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     DAG.getMachineFunction().getMMI().setCallsUnwindInit(true);
     return 0;
   case Intrinsic::eh_dwarf_cfa: {
-    EVT VT = getValue(I.getArgOperand(0)).getValueType();
     SDValue CfaArg = DAG.getSExtOrTrunc(getValue(I.getArgOperand(0)), dl,
                                         TLI.getPointerTy());
     SDValue Offset = DAG.getNode(ISD::ADD, dl,

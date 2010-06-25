@@ -6108,7 +6108,6 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
    // Check if the result type doesn't match the inserted element type. A
    // SCALAR_TO_VECTOR may truncate the inserted element and the
    // EXTRACT_VECTOR_ELT may widen the extracted vector.
-   EVT EltVT = InVec.getValueType().getVectorElementType();
    SDValue InOp = InVec.getOperand(0);
    EVT NVT = N->getValueType(0);
    if (InOp.getValueType() != NVT) {

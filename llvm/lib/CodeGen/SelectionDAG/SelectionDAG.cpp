@@ -2286,7 +2286,6 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
 SDValue SelectionDAG::getShuffleScalarElt(const ShuffleVectorSDNode *N,
                                           unsigned i) {
   EVT VT = N->getValueType(0);
-  DebugLoc dl = N->getDebugLoc();
   if (N->getMaskElt(i) < 0)
     return getUNDEF(VT.getVectorElementType());
   unsigned Index = N->getMaskElt(i);

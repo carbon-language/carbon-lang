@@ -168,7 +168,6 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   DenseMap<long long, SDNode*> O2SMap;  // Map from offset to SDNode.
   bool Cluster = false;
   SDNode *Base = Node;
-  int64_t BaseOffset;
   for (SDNode::use_iterator I = Chain->use_begin(), E = Chain->use_end();
        I != E; ++I) {
     SDNode *User = *I;
@@ -184,12 +183,8 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
       Offsets.push_back(Offset1);
     O2SMap.insert(std::make_pair(Offset2, User));
     Offsets.push_back(Offset2);
-    if (Offset2 < Offset1) {
+    if (Offset2 < Offset1)
       Base = User;
-      BaseOffset = Offset2;
-    } else {
-      BaseOffset = Offset1;
-    }
     Cluster = true;
   }
 
@@ -625,7 +620,6 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     SDDbgInfo::DbgIterator DE = DAG->DbgEnd();
     // Now emit the rest according to source order.
     unsigned LastOrder = 0;
-    MachineInstr *LastMI = 0;
     for (unsigned i = 0, e = Orders.size(); i != e && DI != DE; ++i) {
       unsigned Order = Orders[i].first;
       MachineInstr *MI = Orders[i].second;
@@ -657,7 +651,6 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
         }
       }
       LastOrder = Order;
-      LastMI = MI;
     }
     // Add trailing DbgValue's before the terminator. FIXME: May want to add
     // some of them before one or more conditional branches?
