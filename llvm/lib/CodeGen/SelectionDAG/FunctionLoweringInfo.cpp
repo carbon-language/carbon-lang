@@ -206,7 +206,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
 void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
                         MachineBasicBlock *MBB) {
   // Inform the MachineModuleInfo of the personality for this landing pad.
-  const ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(2));
+  const ConstantExpr *CE = cast<ConstantExpr>(I.getArgOperand(1));
   assert(CE->getOpcode() == Instruction::BitCast &&
          isa<Function>(CE->getOperand(0)) &&
          "Personality should be a function");
