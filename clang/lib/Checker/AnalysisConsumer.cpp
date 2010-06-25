@@ -80,8 +80,6 @@ public:
   const Preprocessor &PP;
   const std::string OutDir;
   AnalyzerOptions Opts;
-  bool declDisplayed;
-
 
   // PD is owned by AnalysisManager.
   PathDiagnosticClient *PD;
@@ -95,7 +93,7 @@ public:
                    const std::string& outdir,
                    const AnalyzerOptions& opts)
     : Ctx(0), PP(pp), OutDir(outdir),
-      Opts(opts), declDisplayed(false), PD(0) {
+      Opts(opts), PD(0) {
     DigestAnalyzerOptions();
   }
 
@@ -138,10 +136,9 @@ public:
   }
 
   void DisplayFunction(const Decl *D) {
-    if (!Opts.AnalyzerDisplayProgress || declDisplayed)
+    if (!Opts.AnalyzerDisplayProgress)
       return;
 
-    declDisplayed = true;
     SourceManager &SM = Mgr->getASTContext().getSourceManager();
     PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
     llvm::errs() << "ANALYZE: " << Loc.getFilename();
@@ -210,6 +207,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
         if (!Opts.AnalyzeSpecificFunction.empty() &&
             FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
           break;
+        DisplayFunction(FD);
         HandleCode(FD, FD->getBody(), FunctionActions);
       }
       break;
@@ -222,6 +220,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
         if (!Opts.AnalyzeSpecificFunction.empty() &&
             Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
           break;
+        DisplayFunction(MD);
         HandleCode(MD, MD->getBody(), ObjCMethodActions);
       }
       break;
