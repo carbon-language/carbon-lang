@@ -1458,7 +1458,7 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) AnnotateAttr(S.Context, SE->getString()));
 }
 
-static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleAlignedAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
@@ -1469,30 +1469,36 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   //       than GNU's, and should error out when it is used to specify a
   //       weaker alignment, rather than being silently ignored.
 
-  unsigned Align = 0;
   if (Attr.getNumArgs() == 0) {
     // FIXME: This should be the target specific maximum alignment.
     // (For now we just use 128 bits which is the maximum on X86).
-    Align = 128;
-    d->addAttr(::new (S.Context) AlignedAttr(Align));
+    D->addAttr(::new (S.Context) AlignedAttr(128));
     return;
   }
 
-  Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
+  S.AddAlignedAttr(Attr.getLoc(), D, static_cast<Expr *>(Attr.getArg(0)));
+}
+
+void Sema::AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E) {
+  if (E->isTypeDependent() || E->isValueDependent()) {
+    // Save dependent expressions in the AST to be instantiated.
+    D->addAttr(::new (Context) AlignedAttr(E));
+    return;
+  }
+
   llvm::APSInt Alignment(32);
-  if (alignmentExpr->isTypeDependent() || alignmentExpr->isValueDependent() ||
-      !alignmentExpr->isIntegerConstantExpr(Alignment, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << "aligned" << alignmentExpr->getSourceRange();
+  if (!E->isIntegerConstantExpr(Alignment, Context)) {
+    Diag(AttrLoc, diag::err_attribute_argument_not_int)
+      << "aligned" << E->getSourceRange();
     return;
   }
   if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_aligned_not_power_of_two)
-      << alignmentExpr->getSourceRange();
+    Diag(AttrLoc, diag::err_attribute_aligned_not_power_of_two)
+      << E->getSourceRange();
     return;
   }
 
-  d->addAttr(::new (S.Context) AlignedAttr(Alignment.getZExtValue() * 8));
+  D->addAttr(::new (Context) AlignedAttr(Alignment.getZExtValue() * 8));
 }
 
 /// HandleModeAttr - This attribute modifies the width of a decl with primitive

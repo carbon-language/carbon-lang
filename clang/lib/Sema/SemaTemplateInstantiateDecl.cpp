@@ -143,14 +143,29 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
   return false;
 }
 
-// FIXME: Is this too simple?
+// FIXME: Is this still too simple?
 void TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
-  for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr; 
+  for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr;
        TmplAttr = TmplAttr->getNext()) {
-    
+    // FIXME: This should be generalized to more than just the AlignedAttr.
+    if (const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr)) {
+      if (Aligned->isDependent()) {
+        // The alignment expression is not potentially evaluated.
+        EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                                     Action::Unevaluated);
+
+        OwningExprResult Result = SemaRef.SubstExpr(Aligned->getAlignmentExpr(),
+                                                    TemplateArgs);
+        if (!Result.isInvalid())
+          // FIXME: Is this the correct source location?
+          SemaRef.AddAlignedAttr(Aligned->getAlignmentExpr()->getExprLoc(),
+                                 New, Result.takeAs<Expr>());
+        continue;
+      }
+    }
+
     // FIXME: Is cloning correct for all attributes?
     Attr *NewAttr = TmplAttr->clone(SemaRef.Context);
-    
     New->addAttr(NewAttr);
   }
 }

@@ -26,6 +26,7 @@ namespace clang {
   class ASTContext;
   class IdentifierInfo;
   class ObjCInterfaceDecl;
+  class Expr;
 }
 
 // Defined in ASTContext.h
@@ -147,22 +148,44 @@ public:
 
 DEF_SIMPLE_ATTR(AlignMac68k);
 
+/// \brief Atribute for specifying the alignment of a variable or type.
+///
+/// This node will either contain the precise Alignment (in bits, not bytes!)
+/// or will contain the expression for the alignment attribute in the case of
+/// a dependent expression within a class or function template. At template
+/// instantiation time these are transformed into concrete attributes.
 class AlignedAttr : public Attr {
   unsigned Alignment;
+  Expr *AlignmentExpr;
 public:
   AlignedAttr(unsigned alignment)
-    : Attr(attr::Aligned), Alignment(alignment) {}
+    : Attr(attr::Aligned), Alignment(alignment), AlignmentExpr(0) {}
+  AlignedAttr(Expr *E)
+    : Attr(attr::Aligned), Alignment(0), AlignmentExpr(E) {}
 
-  /// getAlignment - The specified alignment in bits.
-  unsigned getAlignment() const { return Alignment; }
-  
+  /// getAlignmentExpr - Get a dependent alignment expression if one is present.
+  Expr *getAlignmentExpr() const {
+    return AlignmentExpr;
+  }
+
+  /// isDependent - Is the alignment a dependent expression
+  bool isDependent() const {
+    return getAlignmentExpr();
+  }
+
+  /// getAlignment - The specified alignment in bits. Requires !isDependent().
+  unsigned getAlignment() const {
+    assert(!isDependent() && "Cannot get a value dependent alignment");
+    return Alignment;
+  }
+
   /// getMaxAlignment - Get the maximum alignment of attributes on this list.
   unsigned getMaxAlignment() const {
     const AlignedAttr *Next = getNext<AlignedAttr>();
     if (Next)
-      return std::max(Next->getMaxAlignment(), Alignment);
+      return std::max(Next->getMaxAlignment(), getAlignment());
     else
-      return Alignment;
+      return getAlignment();
   }
 
   virtual Attr* clone(ASTContext &C) const;

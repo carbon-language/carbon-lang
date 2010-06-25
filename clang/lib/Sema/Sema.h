@@ -4088,6 +4088,9 @@ public:
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();
 
+  /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
+  void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E);
+
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
