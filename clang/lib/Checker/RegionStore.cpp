@@ -797,23 +797,28 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
 
     case MemRegion::VarRegionKind: {
       const VarRegion* VR = cast<VarRegion>(R);
+      ASTContext& Ctx = getContext();
       // Get the type of the variable.
-      QualType T = VR->getDesugaredValueType(getContext());
+      QualType T = VR->getDesugaredValueType(Ctx);
 
       // FIXME: Handle variable-length arrays.
       if (isa<VariableArrayType>(T))
         return UnknownVal();
 
+      CharUnits EleSize = Ctx.getTypeSizeInChars(EleTy);
+
       if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T)) {
         // return the size as signed integer.
-        return ValMgr.makeIntVal(CAT->getSize(), false);
+        CharUnits RealEleSize = Ctx.getTypeSizeInChars(CAT->getElementType());
+        CharUnits::QuantityType EleRatio = RealEleSize / EleSize;
+        int64_t Length = CAT->getSize().getSExtValue();
+        return ValMgr.makeIntVal(Length * EleRatio, false);
       }
 
       // Clients can reinterpret ordinary variables as arrays, possibly of
       // another type. The width is rounded down to ensure that an access is
       // entirely within bounds.
-      CharUnits VarSize = getContext().getTypeSizeInChars(T);
-      CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
+      CharUnits VarSize = Ctx.getTypeSizeInChars(T);
       return ValMgr.makeIntVal(VarSize / EleSize, false);
     }
   }

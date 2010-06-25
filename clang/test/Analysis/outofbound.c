@@ -43,3 +43,9 @@ void f5() {
   p[3] = '.'; // no-warning
   p[4] = '!'; // expected-warning{{out-of-bound}}
 }
+
+void f6() {
+  char a[2];
+  int *b = (int*)a;
+  b[1] = 3; // expected-warning{{out-of-bound}}
+}

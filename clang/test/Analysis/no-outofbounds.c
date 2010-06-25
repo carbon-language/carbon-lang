@@ -12,3 +12,9 @@ void f() {
   short *z = (short*) &x;
   short s = z[0] + z[1]; // no-warning
 }
+
+void g() {
+  int a[2];
+  char *b = (char*)a;
+  b[3] = 'c'; // no-warning
+}
