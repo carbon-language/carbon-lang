@@ -386,8 +386,8 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 
       // Use the exception object pointer and the personality function
       // from the original selector.
-      Args.push_back(II->getOperand(1)); // Exception object pointer.
-      Args.push_back(II->getOperand(2)); // Personality function.
+      Args.push_back(II->getArgOperand(0)); // Exception object pointer.
+      Args.push_back(II->getArgOperand(1)); // Personality function.
 
       unsigned I = 3;
       unsigned E = II->getNumOperands() -
