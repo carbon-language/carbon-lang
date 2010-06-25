@@ -512,9 +512,6 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     LI->addRange(LiveRange(UseIndex, EndIndex, RetVNI));
     
     // FIXME: Need to set kills properly for inter-block stuff.
-    if (RetVNI->isKill(UseIndex)) RetVNI->removeKill(UseIndex);
-    if (IsIntraBlock)
-      RetVNI->addKill(EndIndex);
   } else if (ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
@@ -556,12 +553,6 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
                                       NewVNs, LiveOut, Phis, false, true);
 
     LI->addRange(LiveRange(StartIndex, EndIndex, RetVNI));
-    
-    if (foundUse && RetVNI->isKill(StartIndex))
-      RetVNI->removeKill(StartIndex);
-    if (IsIntraBlock) {
-      RetVNI->addKill(EndIndex);
-    }
   }
   
   // Memoize results so we don't have to recompute them.
@@ -636,9 +627,6 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
     for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
            IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
       I->second->setHasPHIKill(true);
-      SlotIndex KillIndex(LIs->getMBBEndIdx(I->first), true);
-      if (!I->second->isKill(KillIndex))
-        I->second->addKill(KillIndex);
     }
   }
       
@@ -648,8 +636,6 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
   } else
     EndIndex = LIs->getMBBEndIdx(MBB);
   LI->addRange(LiveRange(StartIndex, EndIndex, RetVNI));
-  if (IsIntraBlock)
-    RetVNI->addKill(EndIndex);
 
   // Memoize results so we don't have to recompute them.
   if (!IsIntraBlock)
@@ -725,25 +711,6 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     
     VNInfo* DeadVN = NewVNs[&*DI];
     LI->addRange(LiveRange(DefIdx, DefIdx.getNextSlot(), DeadVN));
-    DeadVN->addKill(DefIdx);
-  }
-
-  // Update kill markers.
-  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
-       VI != VE; ++VI) {
-    VNInfo* VNI = *VI;
-    for (unsigned i = 0, e = VNI->kills.size(); i != e; ++i) {
-      SlotIndex KillIdx = VNI->kills[i];
-      if (KillIdx.isPHI())
-        continue;
-      MachineInstr *KillMI = LIs->getInstructionFromIndex(KillIdx);
-      if (KillMI) {
-        MachineOperand *KillMO = KillMI->findRegisterUseOperand(CurrLI->reg);
-        if (KillMO)
-          // It could be a dead def.
-          KillMO->setIsKill();
-      }
-    }
   }
 }
 
@@ -773,19 +740,14 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     VNsToCopy.push_back(OldVN);
     
     // Locate two-address redefinitions
-    for (VNInfo::KillSet::iterator KI = OldVN->kills.begin(),
-         KE = OldVN->kills.end(); KI != KE; ++KI) {
-      assert(!KI->isPHI() &&
-             "VN previously reported having no PHI kills.");
-      MachineInstr* MI = LIs->getInstructionFromIndex(*KI);
-      unsigned DefIdx = MI->findRegisterDefOperandIdx(CurrLI->reg);
-      if (DefIdx == ~0U) continue;
-      if (MI->isRegTiedToUseOperand(DefIdx)) {
-        VNInfo* NextVN =
-          CurrLI->findDefinedVNInfoForRegInt(KI->getDefIndex());
-        if (NextVN == OldVN) continue;
+    for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(CurrLI->reg),
+         DE = MRI->def_end(); DI != DE; ++DI) {
+      if (!DI->isRegTiedToUseOperand(DI.getOperandNo())) continue;
+      SlotIndex DefIdx = LIs->getInstructionIndex(&*DI).getDefIndex();
+      VNInfo* NextVN = CurrLI->findDefinedVNInfoForRegInt(DefIdx);
+      if (std::find(VNsToCopy.begin(), VNsToCopy.end(), NextVN) !=
+          VNsToCopy.end())
         Stack.push_back(NextVN);
-      }
     }
   }
   

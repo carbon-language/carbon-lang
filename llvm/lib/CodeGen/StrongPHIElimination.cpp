@@ -830,9 +830,6 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
         LiveInterval& Int = LI.getInterval(I->getOperand(i).getReg());
         VNInfo* FirstVN = *Int.vni_begin();
         FirstVN->setHasPHIKill(false);
-        if (I->getOperand(i).isKill())
-          FirstVN->addKill(LI.getInstructionIndex(I).getUseIndex());
-        
         LiveRange LR (LI.getMBBStartIdx(I->getParent()),
                       LI.getInstructionIndex(I).getUseIndex().getNextSlot(),
                       FirstVN);

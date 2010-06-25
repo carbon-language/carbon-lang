@@ -53,7 +53,7 @@ namespace llvm {
   class VNInfo {
   private:
     enum {
-      HAS_PHI_KILL    = 1,                         
+      HAS_PHI_KILL    = 1,
       REDEF_BY_EC     = 1 << 1,
       IS_PHI_DEF      = 1 << 2,
       IS_UNUSED       = 1 << 3,
@@ -68,20 +68,12 @@ namespace llvm {
 
   public:
     typedef SpecificBumpPtrAllocator<VNInfo> Allocator;
-    typedef SmallVector<SlotIndex, 4> KillSet;
 
     /// The ID number of this value.
     unsigned id;
-    
+
     /// The index of the defining instruction (if isDefAccurate() returns true).
     SlotIndex def;
-
-    KillSet kills;
-
-    /*
-    VNInfo(LiveIntervals &li_)
-      : defflags(IS_UNUSED), id(~1U) { cr.copy = 0; }
-    */
 
     /// VNInfo constructor.
     /// d is presumed to point to the actual defining instr. If it doesn't
@@ -91,7 +83,7 @@ namespace llvm {
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : flags(orig.flags), cr(orig.cr), id(i), def(orig.def), kills(orig.kills)
+      : flags(orig.flags), cr(orig.cr), id(i), def(orig.def)
     { }
 
     /// Copy from the parameter into this VNInfo.
@@ -99,7 +91,6 @@ namespace llvm {
       flags = src.flags;
       cr = src.cr;
       def = src.def;
-      kills = src.kills;
     }
 
     /// Used for copying value number info.
@@ -114,7 +105,7 @@ namespace llvm {
     /// This method should not be called on stack intervals as it may lead to
     /// undefined behavior.
     void setCopy(MachineInstr *c) { cr.copy = c; }
-    
+
     /// For a stack interval, returns the reg which this stack interval was
     /// defined from.
     /// For a register interval the behaviour of this method is undefined. 
@@ -144,7 +135,7 @@ namespace llvm {
       else
         flags &= ~REDEF_BY_EC;
     }
-   
+
     /// Returns true if this value is defined by a PHI instruction (or was,
     /// PHI instrucions may have been eliminated).
     bool isPHIDef() const { return flags & IS_PHI_DEF; }
@@ -172,49 +163,9 @@ namespace llvm {
     void setIsDefAccurate(bool defAccurate) {
       if (defAccurate)
         flags |= IS_DEF_ACCURATE;
-      else 
+      else
         flags &= ~IS_DEF_ACCURATE;
     }
-
-    /// Returns true if the given index is a kill of this value.
-    bool isKill(SlotIndex k) const {
-      KillSet::const_iterator
-        i = std::lower_bound(kills.begin(), kills.end(), k);
-      return (i != kills.end() && *i == k);
-    }
-
-    /// addKill - Add a kill instruction index to the specified value
-    /// number.
-    void addKill(SlotIndex k) {
-      if (kills.empty()) {
-        kills.push_back(k);
-      } else {
-        KillSet::iterator
-          i = std::lower_bound(kills.begin(), kills.end(), k);
-        kills.insert(i, k);
-      }
-    }
-
-    /// Remove the specified kill index from this value's kills list.
-    /// Returns true if the value was present, otherwise returns false.
-    bool removeKill(SlotIndex k) {
-      KillSet::iterator i = std::lower_bound(kills.begin(), kills.end(), k);
-      if (i != kills.end() && *i == k) {
-        kills.erase(i);
-        return true;
-      }
-      return false;
-    }
-
-    /// Remove all kills in the range [s, e).
-    void removeKills(SlotIndex s, SlotIndex e) {
-      KillSet::iterator
-        si = std::lower_bound(kills.begin(), kills.end(), s),
-        se = std::upper_bound(kills.begin(), kills.end(), e);
-
-      kills.erase(si, se);
-    }
-
   };
 
   /// LiveRange structure - This represents a simple register range in the
@@ -385,17 +336,6 @@ namespace llvm {
       return VNI;
     }
 
-    /// addKills - Add a number of kills into the VNInfo kill vector. If this
-    /// interval is live at a kill point, then the kill is not added.
-    void addKills(VNInfo *VNI, const VNInfo::KillSet &kills) {
-      for (unsigned i = 0, e = static_cast<unsigned>(kills.size());
-           i != e; ++i) {
-        if (!liveBeforeAndAt(kills[i])) {
-          VNI->addKill(kills[i]);
-        }
-      }
-    }
-
     /// isOnlyLROfValNo - Return true if the specified live range is the only
     /// one defined by the its val#.
     bool isOnlyLROfValNo(const LiveRange *LR) {
@@ -473,6 +413,17 @@ namespace llvm {
     // index just before it. If index is liveAt, check if it starts a new live
     // range.If it does, then check if the previous live range ends at index-1.
     bool liveBeforeAndAt(SlotIndex index) const;
+
+    /// killedAt - Return true if a live range ends at index. Note that the kill
+    /// point is not contained in the half-open live range. It is usually the
+    /// getDefIndex() slot following its last use.
+    bool killedAt(SlotIndex index) const;
+
+    /// killedInRange - Return true if the interval has kills in [Start,End).
+    /// Note that the kill point is considered the end of a live range, so it is
+    /// not contained in the live range. If a live range ends at End, it won't
+    /// be counted as a kill by this method.
+    bool killedInRange(SlotIndex Start, SlotIndex End) const;
 
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.

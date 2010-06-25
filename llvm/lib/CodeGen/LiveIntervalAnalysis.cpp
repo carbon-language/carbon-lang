@@ -356,7 +356,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(defIndex, killIdx, ValNo);
         interval.addRange(LR);
         DEBUG(dbgs() << " +" << LR << "\n");
-        ValNo->addKill(killIdx);
         return;
       }
     }
@@ -376,7 +375,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // valno in the killing blocks.
       assert(vi.AliveBlocks.empty() && "Phi join can't pass through blocks");
       DEBUG(dbgs() << " phi-join");
-      ValNo->addKill(indexes_->getTerminatorGap(mbb));
       ValNo->setHasPHIKill(true);
     } else {
       // Iterate over all of the blocks that the variable is completely
@@ -407,7 +405,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       }
       LiveRange LR(Start, killIdx, ValNo);
       interval.addRange(LR);
-      ValNo->addKill(killIdx);
       DEBUG(dbgs() << " +" << LR);
     }
 
@@ -468,7 +465,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DEBUG(dbgs() << " replace range with " << LR);
       interval.addRange(LR);
-      ValNo->addKill(RedefIndex);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
@@ -500,7 +496,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       SlotIndex killIndex = getMBBEndIdx(mbb);
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      ValNo->addKill(indexes_->getTerminatorGap(mbb));
       ValNo->setHasPHIKill(true);
       DEBUG(dbgs() << " phi-join +" << LR);
     } else {
@@ -596,7 +591,6 @@ exit:
     ValNo->setHasRedefByEC(true);
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
-  LR.valno->addKill(end);
   DEBUG(dbgs() << " +" << LR << '\n');
 }
 
@@ -697,7 +691,6 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   LiveRange LR(start, end, vni);
 
   interval.addRange(LR);
-  LR.valno->addKill(end);
   DEBUG(dbgs() << " +" << LR << '\n');
 }
 
@@ -1240,17 +1233,7 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
                                    const VNInfo *VNI,
                                    MachineBasicBlock *MBB,
                                    SlotIndex Idx) const {
-  SlotIndex End = getMBBEndIdx(MBB);
-  for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
-    if (VNI->kills[j].isPHI())
-      continue;
-
-    SlotIndex KillIdx = VNI->kills[j];
-    assert(getInstructionFromIndex(KillIdx) && "Dangling kill");
-    if (KillIdx > Idx && KillIdx <= End)
-      return true;
-  }
-  return false;
+  return li.killedInRange(Idx.getNextSlot(), getMBBEndIdx(MBB));
 }
 
 /// RewriteInfo - Keep track of machine instrs that will be rewritten
@@ -2028,7 +2011,6 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
     SlotIndex(getInstructionIndex(startInst).getDefIndex()),
     startInst, true, getVNInfoAllocator());
   VN->setHasPHIKill(true);
-  VN->kills.push_back(indexes_->getTerminatorGap(startInst->getParent()));
   LiveRange LR(
      SlotIndex(getInstructionIndex(startInst).getDefIndex()),
      getMBBEndIdx(startInst->getParent()), VN);

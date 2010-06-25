@@ -214,7 +214,6 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
 
   // Okay, merge "B1" into the same value number as "B0".
   if (BValNo != ValLR->valno) {
-    IntB.addKills(ValLR->valno, BValNo->kills);
     IntB.MergeValueNumberInto(BValNo, ValLR->valno);
   }
   DEBUG({
@@ -228,13 +227,12 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   int UIdx = ValLREndInst->findRegisterUseOperandIdx(IntB.reg, true);
   if (UIdx != -1) {
     ValLREndInst->getOperand(UIdx).setIsKill(false);
-    ValLR->valno->removeKill(FillerStart);
   }
 
   // If the copy instruction was killing the destination register before the
   // merge, find the last use and trim the live range. That will also add the
   // isKill marker.
-  if (ALR->valno->isKill(CopyIdx))
+  if (ALR->end == CopyIdx)
     TrimLiveIntervalToLastUse(CopyUseIdx, CopyMI->getParent(), IntA, ALR);
 
   ++numExtends;
@@ -411,7 +409,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   bool BHasPHIKill = BValNo->hasPHIKill();
   SmallVector<VNInfo*, 4> BDeadValNos;
-  VNInfo::KillSet BKills;
   std::map<SlotIndex, SlotIndex> BExtend;
 
   // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
@@ -422,8 +419,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // C = A<kill>
   // ...
   //   = B
-  //
-  // then do not add kills of A to the newly created B interval.
   bool Extended = BLR->end > ALR->end && ALR->end != ALR->start;
   if (Extended)
     BExtend[ALR->end] = BLR->end;
@@ -452,8 +447,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     if (UseMO.isKill()) {
       if (Extended)
         UseMO.setIsKill(false);
-      else
-        BKills.push_back(UseIdx.getDefIndex());
     }
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
@@ -469,10 +462,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       BDeadValNos.push_back(DLR->valno);
       BExtend[DLR->start] = DLR->end;
       JoinedCopies.insert(UseMI);
-      // If this is a kill but it's going to be removed, the last use
-      // of the same val# is the new kill.
-      if (UseMO.isKill())
-        BKills.pop_back();
     }
   }
 
@@ -497,15 +486,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   }
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
-  // is updated. Kills are also updated.
+  // is updated.
   VNInfo *ValNo = BValNo;
   ValNo->def = AValNo->def;
   ValNo->setCopy(0);
-  for (unsigned j = 0, ee = ValNo->kills.size(); j != ee; ++j) {
-    if (ValNo->kills[j] != BLR->end)
-      BKills.push_back(ValNo->kills[j]);
-  }
-  ValNo->kills.clear();
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
@@ -526,7 +510,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       }
     }
   }
-  IntB.addKills(ValNo, BKills);
   ValNo->setHasPHIKill(BHasPHIKill);
 
   DEBUG({
@@ -619,7 +602,6 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
     // of last use.
     LastUse->setIsKill();
     removeRange(li, LastUseIdx.getDefIndex(), LR->end, li_, tri_);
-    LR->valno->addKill(LastUseIdx.getDefIndex());
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg && DstSubIdx == 0) {
@@ -706,7 +688,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   // kill.
   bool checkForDeadDef = false;
   MachineBasicBlock *MBB = CopyMI->getParent();
-  if (SrcLR->valno->isKill(CopyIdx.getDefIndex()))
+  if (SrcLR->end == CopyIdx.getDefIndex())
     if (!TrimLiveIntervalToLastUse(CopyIdx, MBB, SrcInt, SrcLR)) {
       checkForDeadDef = true;
     }
@@ -993,9 +975,6 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // val#, then propagate the dead marker.
     PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
     ++numDeadValNo;
-
-    if (LR->valno->isKill(RemoveEnd))
-      LR->valno->removeKill(RemoveEnd);
   }
 
   removeRange(li, RemoveStart, RemoveEnd, li_, tri_);
@@ -1211,7 +1190,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
                                                 false, // updated at *
                                                 li_->getVNInfoAllocator());
         NewValNo->setFlags(ValNo->getFlags()); // * updated here.
-        RealInt.addKills(NewValNo, ValNo->kills);
         RealInt.MergeValueInAsValue(*SavedLI, ValNo, NewValNo);
       }
       RealInt.weight += SavedLI->weight;
@@ -1523,10 +1501,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(CoalescerPair &CP) {
          E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
     VNInfo *VNI = I->first;
     unsigned LHSValID = LHSValNoAssignments[VNI->id];
-    NewVNInfo[LHSValID]->removeKill(VNI->def);
     if (VNI->hasPHIKill())
       NewVNInfo[LHSValID]->setHasPHIKill(true);
-    RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
   }
 
   // Update kill info. Some live ranges are extended due to copy coalescing.
@@ -1534,10 +1510,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(CoalescerPair &CP) {
          E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
     VNInfo *VNI = I->first;
     unsigned RHSValID = RHSValNoAssignments[VNI->id];
-    NewVNInfo[RHSValID]->removeKill(VNI->def);
     if (VNI->hasPHIKill())
       NewVNInfo[RHSValID]->setHasPHIKill(true);
-    LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
   }
 
   if (LHSValNoAssignments.empty())
@@ -1896,11 +1870,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           if (MI->allDefsAreDead()) {
             if (!ShortenDeadCopySrcLiveRange(RegInt, MI))
               ShortenDeadCopyLiveRange(RegInt, MI);
-          } else {
-            // If a value is killed here remove the marker.
-            SlotIndex UseIdx = li_->getInstructionIndex(MI).getUseIndex();
-            if (const LiveRange *LR = RegInt.getLiveRangeContaining(UseIdx))
-              LR->valno->removeKill(UseIdx.getDefIndex());
           }
         }
         li_->RemoveMachineInstrFromMaps(MI);
@@ -1913,17 +1882,13 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
       // Check for now unnecessary kill flags.
       if (li_->isNotInMIMap(MI)) continue;
-      SlotIndex UseIdx = li_->getInstructionIndex(MI).getUseIndex();
+      SlotIndex DefIdx = li_->getInstructionIndex(MI).getDefIndex();
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (!MO.isReg() || !MO.isKill()) continue;
         unsigned reg = MO.getReg();
         if (!reg || !li_->hasInterval(reg)) continue;
-        LiveInterval &LI = li_->getInterval(reg);
-        const LiveRange *LR = LI.getLiveRangeContaining(UseIdx);
-        if (!LR ||
-            (!LR->valno->isKill(UseIdx.getDefIndex()) &&
-             LR->valno->def != UseIdx.getDefIndex()))
+        if (!li_->getInterval(reg).killedAt(DefIdx))
           MO.setIsKill(false);
       }
     }
