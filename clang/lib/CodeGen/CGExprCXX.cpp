@@ -483,9 +483,6 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
 
 static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
                                     llvm::Value *NewPtr) {
-  // We have a POD type.
-  if (E->getNumConstructorArgs() == 0)
-    return;
   
   assert(E->getNumConstructorArgs() == 1 &&
          "Can only have one argument to initializer of POD type.");
@@ -507,6 +504,10 @@ void
 CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E, 
                                          llvm::Value *NewPtr,
                                          llvm::Value *NumElements) {
+  // We have a POD type.
+  if (E->getNumConstructorArgs() == 0)
+    return;
+  
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   
   // Create a temporary for the loop index and initialize it with 0.
@@ -577,7 +578,10 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
 
     return;
   }
-    
+  // We have a POD type.
+  if (E->getNumConstructorArgs() == 0)
+    return;
+  
   StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
