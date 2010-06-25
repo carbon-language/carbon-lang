@@ -2207,20 +2207,23 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
 /// separate registers. If C is non-null, multiply each subexpression by C.
 static void CollectSubexprs(const SCEV *S, const SCEVConstant *C,
                             SmallVectorImpl<const SCEV *> &Ops,
+                            SmallVectorImpl<const SCEV *> &UninterestingOps,
+                            const Loop *L,
                             ScalarEvolution &SE) {
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     // Break out add operands.
     for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
          I != E; ++I)
-      CollectSubexprs(*I, C, Ops, SE);
+      CollectSubexprs(*I, C, Ops, UninterestingOps, L, SE);
     return;
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Split a non-zero base out of an addrec.
     if (!AR->getStart()->isZero()) {
       CollectSubexprs(SE.getAddRecExpr(SE.getConstant(AR->getType(), 0),
                                        AR->getStepRecurrence(SE),
-                                       AR->getLoop()), C, Ops, SE);
-      CollectSubexprs(AR->getStart(), C, Ops, SE);
+                                       AR->getLoop()),
+                      C, Ops, UninterestingOps, L, SE);
+      CollectSubexprs(AR->getStart(), C, Ops, UninterestingOps, L, SE);
       return;
     }
   } else if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
@@ -2230,13 +2233,17 @@ static void CollectSubexprs(const SCEV *S, const SCEVConstant *C,
             dyn_cast<SCEVConstant>(Mul->getOperand(0))) {
         CollectSubexprs(Mul->getOperand(1),
                         C ? cast<SCEVConstant>(SE.getMulExpr(C, Op0)) : Op0,
-                        Ops, SE);
+                        Ops, UninterestingOps, L, SE);
         return;
       }
   }
 
-  // Otherwise use the value itself.
-  Ops.push_back(C ? SE.getMulExpr(C, S) : S);
+  // Otherwise use the value itself. Loop-variant "unknown" values are
+  // uninteresting; we won't be able to do anything meaningful with them.
+  if (!C && isa<SCEVUnknown>(S) && !S->isLoopInvariant(L))
+    UninterestingOps.push_back(S);
+  else
+    Ops.push_back(C ? SE.getMulExpr(C, S) : S);
 }
 
 /// GenerateReassociations - Split out subexpressions from adds and the bases of
@@ -2250,8 +2257,15 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
   for (size_t i = 0, e = Base.BaseRegs.size(); i != e; ++i) {
     const SCEV *BaseReg = Base.BaseRegs[i];
 
-    SmallVector<const SCEV *, 8> AddOps;
-    CollectSubexprs(BaseReg, 0, AddOps, SE);
+    SmallVector<const SCEV *, 8> AddOps, UninterestingAddOps;
+    CollectSubexprs(BaseReg, 0, AddOps, UninterestingAddOps, L, SE);
+
+    // Add any uninteresting values as one register, as we won't be able to
+    // form any interesting reassociation opportunities with them. They'll
+    // just have to be added inside the loop no matter what we do.
+    if (!UninterestingAddOps.empty())
+      AddOps.push_back(SE.getAddExpr(UninterestingAddOps));
+
     if (AddOps.size() == 1) continue;
 
     for (SmallVectorImpl<const SCEV *>::const_iterator J = AddOps.begin(),
