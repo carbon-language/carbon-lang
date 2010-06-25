@@ -64,6 +64,7 @@ public:
         DISPATCH_CASE(EnumConstant)
         DISPATCH_CASE(Typedef)
         DISPATCH_CASE(Record)    // FIXME: Refine.  VisitStructDecl?
+        DISPATCH_CASE(CXXRecord)
         DISPATCH_CASE(Enum)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");
@@ -84,6 +85,10 @@ public:
   DEFAULT_DISPATCH(ObjCMethod)
   DEFAULT_DISPATCH(ObjCProtocol)
   DEFAULT_DISPATCH(ObjCCategory)
+
+  void VisitCXXRecordDecl(CXXRecordDecl *D) {
+    static_cast<ImplClass*>(this)->VisitRecordDecl(D);
+  }
 };
 
 } // end namespace clang
