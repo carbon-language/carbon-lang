@@ -1410,6 +1410,15 @@ bool ARMBaseInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
 bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
                                             const MachineBasicBlock *MBB,
                                             const MachineFunction &MF) const {
+  // Debug info is never a scheduling boundary. It's necessary to be explicit
+  // due to the special treatment of IT instructions below, otherwise a
+  // dbg_value followed by an IT will result in the IT instruction being
+  // considered a scheduling hazard, which is wrong. It should be the actual
+  // instruction preceding the dbg_value instruction(s), just like it is
+  // when debug info is not present.
+  if (MI->isDebugValue())
+    return false;
+
   // Terminators and labels can't be scheduled around.
   if (MI->getDesc().isTerminator() || MI->isLabel())
     return true;
@@ -1421,7 +1430,10 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   // to the t2IT instruction. The added compile time and complexity does not
   // seem worth it.
   MachineBasicBlock::const_iterator I = MI;
-  if (++I != MBB->end() && I->getOpcode() == ARM::t2IT)
+  // Make sure to skip any dbg_value instructions
+  while (++I != MBB->end() && I->isDebugValue())
+    ;
+  if (I != MBB->end() && I->getOpcode() == ARM::t2IT)
     return true;
 
   // Don't attempt to schedule around any instruction that defines
