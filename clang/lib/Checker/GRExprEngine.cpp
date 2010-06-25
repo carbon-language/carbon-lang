@@ -1059,16 +1059,21 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       CreateCXXTemporaryObject(Ex, Pred, Dst);
       return;
 
-    default:
+    default: {
       // Arbitrary subexpressions can return aggregate temporaries that
       // can be used in a lvalue context.  We need to enhance our support
       // of such temporaries in both the environment and the store, so right
       // now we just do a regular visit.
-      assert ((Ex->getType()->isAggregateType()) &&
-              "Other kinds of expressions with non-aggregate/union types do"
-              " not have lvalues.");
+
+      // NOTE: Do not use 'isAggregateType()' here as CXXRecordDecls that
+      //  are non-pod are not aggregates.
+      assert ((isa<RecordType>(Ex->getType().getDesugaredType()) ||
+               isa<ArrayType>(Ex->getType().getDesugaredType())) &&
+              "Other kinds of expressions with non-aggregate/union/class types"
+              " do not have lvalues.");
 
       Visit(Ex, Pred, Dst);
+    }
   }
 }
 
