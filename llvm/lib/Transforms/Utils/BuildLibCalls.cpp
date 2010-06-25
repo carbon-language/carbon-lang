@@ -465,8 +465,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     if (isFoldable(4, 3, false)) {
       Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
                                    false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), false, B, TD);
-      replaceCall(CI->getOperand(1));
+      EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2), false, B, TD);
+      replaceCall(CI->getArgOperand(0));
       return true;
     }
     return false;
