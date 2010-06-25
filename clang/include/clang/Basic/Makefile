@@ -13,7 +13,11 @@ include $(CLANG_LEVEL)/Makefile
 
 INPUT_TDS = $(wildcard $(PROJ_SRC_DIR)/Diagnostic*.td)
 
-CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../../VER)
+# Compute the Clang version from the LLVM version, unless specified explicitly.
+ifndef CLANG_VERSION
+CLANG_VERSION := $(subst svn,,$(LLVMVersion))
+endif
+
 CLANG_VERSION_COMPONENTS := $(subst ., ,$(CLANG_VERSION))
 CLANG_VERSION_MAJOR := $(word 1,$(CLANG_VERSION_COMPONENTS))
 CLANG_VERSION_MINOR := $(word 2,$(CLANG_VERSION_COMPONENTS))
@@ -41,7 +45,7 @@ $(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.inc with tblgen"
 	$(Verb) $(TableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
 
-$(ObjDir)/Version.inc.tmp : Version.inc.in $(PROJ_SRC_DIR)/../../../VER $(ObjDir)/.dir
+$(ObjDir)/Version.inc.tmp : Version.inc.in Makefile $(LLVM_OBJ_ROOT)/Makefile.config $(ObjDir)/.dir
 	$(Echo) "Updating Clang version info."
 	$(Verb)sed -e "s#@CLANG_VERSION@#$(CLANG_VERSION)#g" \
 	           -e "s#@CLANG_VERSION_MAJOR@#$(CLANG_VERSION_MAJOR)#g" \

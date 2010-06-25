@@ -1,10 +1,5 @@
 # Clang version information
 
-# Make sure that CMake reconfigures when the version changes.
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/VER
-  ${CMAKE_CURRENT_BINARY_DIR}/VER)
-
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -28,10 +23,9 @@ if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
   endif()
 endif()
 
-# Compute the Clang version from the contents of VER
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/VER CLANG_VERSION_DATA)
+# Compute the Clang version from the LLVM version.
 string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION 
-  ${CLANG_VERSION_DATA})
+  ${PACKAGE_VERSION})
 message(STATUS "Clang version: ${CLANG_VERSION}")
 
 string(REGEX REPLACE "([0-9]+)\\.[0-9]+(\\.[0-9]+)?" "\\1" CLANG_VERSION_MAJOR
