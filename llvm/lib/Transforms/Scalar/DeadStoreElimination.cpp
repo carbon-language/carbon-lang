@@ -56,7 +56,8 @@ namespace {
     }
     
     bool runOnBasicBlock(BasicBlock &BB);
-    bool handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep);
+    bool handleFreeWithNonTrivialDependency(const CallInst *F,
+                                            MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
     bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
                               BasicBlock::iterator &BBI,
@@ -203,8 +204,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (InstDep.isNonLocal()) continue;
   
     // Handle frees whose dependencies are non-trivial.
-    if (isFreeCall(Inst)) {
-      MadeChange |= handleFreeWithNonTrivialDependency(Inst, InstDep);
+    if (const CallInst *F = isFreeCall(Inst)) {
+      MadeChange |= handleFreeWithNonTrivialDependency(F, InstDep);
       continue;
     }
     
@@ -289,7 +290,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure.
-bool DSE::handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep) {
+bool DSE::handleFreeWithNonTrivialDependency(const CallInst *F,
+                                             MemDepResult Dep) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   
   Instruction *Dependency = Dep.getInst();
@@ -299,7 +301,7 @@ bool DSE::handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep) {
   Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
 
   // Check for aliasing.
-  if (AA.alias(F->getOperand(1), 1, DepPointer, 1) !=
+  if (AA.alias(F->getArgOperand(0), 1, DepPointer, 1) !=
          AliasAnalysis::MustAlias)
     return false;
   
