@@ -5340,7 +5340,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     }
 
     // Compute the constraint code and ConstraintType to use.
-    TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, hasMemory, &DAG);
+    TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, &DAG);
 
     // If this is a memory input, and if the operand is not indirect, do what we
     // need to to provide an address for the memory input.
@@ -5542,7 +5542,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
         std::vector<SDValue> Ops;
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
-                                         hasMemory, Ops, DAG);
+                                         Ops, DAG);
         if (Ops.empty())
           report_fatal_error("Invalid operand for inline asm constraint '" +
                              Twine(OpInfo.ConstraintCode) + "'!");

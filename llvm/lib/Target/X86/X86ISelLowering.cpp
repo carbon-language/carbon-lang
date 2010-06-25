@@ -10168,7 +10168,6 @@ LowerXConstraint(EVT ConstraintVT) const {
 /// vector.  If it is invalid, don't add anything to Ops.
 void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      char Constraint,
-                                                     bool hasMemory,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
   SDValue Result(0, 0);
@@ -10284,11 +10283,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                         getTargetMachine())))
       return;
 
-    if (hasMemory)
-      Op = LowerGlobalAddress(GV, Op.getDebugLoc(), Offset, DAG);
-    else
-      Op = DAG.getTargetGlobalAddress(GV, GA->getValueType(0), Offset);
-    Result = Op;
+    Result = DAG.getTargetGlobalAddress(GV, GA->getValueType(0), Offset);
     break;
   }
   }
@@ -10297,8 +10292,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     Ops.push_back(Result);
     return;
   }
-  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, hasMemory,
-                                                      Ops, DAG);
+  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 std::vector<unsigned> X86TargetLowering::

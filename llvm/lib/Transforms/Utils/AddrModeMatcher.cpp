@@ -401,8 +401,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
     }
     
     // Compute the constraint code and ConstraintType to use.
-    TLI.ComputeConstraintToUse(OpInfo, SDValue(),
-                             OpInfo.ConstraintType == TargetLowering::C_Memory);
+    TLI.ComputeConstraintToUse(OpInfo, SDValue());
     
     // If this asm operand is our Value*, and if it isn't an indirect memory
     // operand, we can't fold it!

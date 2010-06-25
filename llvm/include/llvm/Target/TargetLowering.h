@@ -1310,11 +1310,9 @@ public:
   /// type to use for the specific AsmOperandInfo, setting
   /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
   /// being passed in is available, it can be passed in as Op, otherwise an
-  /// empty SDValue can be passed. If hasMemory is true it means one of the asm
-  /// constraint of the inline asm instruction being processed is 'm'.
+  /// empty SDValue can be passed. 
   virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
                                       SDValue Op,
-                                      bool hasMemory,
                                       SelectionDAG *DAG = 0) const;
 
   /// getConstraintType - Given a constraint, return the type of constraint it
@@ -1349,11 +1347,8 @@ public:
   virtual const char *LowerXConstraint(EVT ConstraintVT) const;
 
   /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-  /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is true
-  /// it means one of the asm constraint of the inline asm instruction being
-  /// processed is 'm'.
+  /// vector.  If it is invalid, don't add anything to Ops.
   virtual void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
-                                            bool hasMemory,
                                             std::vector<SDValue> &Ops,
                                             SelectionDAG &DAG) const;
 

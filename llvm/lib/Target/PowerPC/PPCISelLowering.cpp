@@ -5380,11 +5380,8 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-/// vector.  If it is invalid, don't add anything to Ops. If hasMemory is true
-/// it means one of the asm constraint of the inline asm instruction being
-/// processed is 'm'.
+/// vector.  If it is invalid, don't add anything to Ops.
 void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
-                                                     bool hasMemory,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
   SDValue Result(0,0);
@@ -5443,7 +5440,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
   }
 
   // Handle standard constraint letters.
-  TargetLowering::LowerAsmOperandForConstraint(Op, Letter, hasMemory, Ops, DAG);
+  TargetLowering::LowerAsmOperandForConstraint(Op, Letter, Ops, DAG);
 }
 
 // isLegalAddressingMode - Return true if the addressing mode represented

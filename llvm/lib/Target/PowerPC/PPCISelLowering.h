@@ -318,12 +318,9 @@ namespace llvm {
     unsigned getByValTypeAlignment(const Type *Ty) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-    /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
-    /// true it means one of the asm constraint of the inline asm instruction
-    /// being processed is 'm'.
+    /// vector.  If it is invalid, don't add anything to Ops.
     virtual void LowerAsmOperandForConstraint(SDValue Op,
                                               char ConstraintLetter,
-                                              bool hasMemory,
                                               std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
     
