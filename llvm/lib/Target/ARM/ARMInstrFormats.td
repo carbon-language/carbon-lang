@@ -50,15 +50,11 @@ def VFPLdStMulFrm : Format<22>;
 def VFPMiscFrm    : Format<23>;
 
 def ThumbFrm      : Format<24>;
+def MiscFrm       : Format<25>;
 
-def NEONFrm       : Format<25>;
 def NEONGetLnFrm  : Format<26>;
 def NEONSetLnFrm  : Format<27>;
 def NEONDupFrm    : Format<28>;
-
-def MiscFrm       : Format<29>;
-def ThumbMiscFrm  : Format<30>;
-
 def NLdStFrm       : Format<31>;
 def N1RegModImmFrm : Format<32>;
 def N2RegFrm       : Format<33>;
