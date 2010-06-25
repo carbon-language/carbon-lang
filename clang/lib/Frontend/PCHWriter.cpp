@@ -261,15 +261,20 @@ PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
 void
 PCHTypeWriter::VisitDependentTemplateSpecializationType(
                                 const DependentTemplateSpecializationType *T) {
-  // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize dependent template specialization types");
+  Record.push_back(T->getKeyword());
+  Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
+  Writer.AddIdentifierRef(T->getIdentifier(), Record);
+  Record.push_back(T->getNumArgs());
+  for (DependentTemplateSpecializationType::iterator
+         I = T->begin(), E = T->end(); I != E; ++I)
+    Writer.AddTemplateArgument(*I, Record);
+  Code = pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
 }
 
 void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
-  Writer.AddTypeRef(T->getNamedType(), Record);
   Record.push_back(T->getKeyword());
-  // FIXME: Serialize the qualifier (C++ only)
-  assert(T->getQualifier() == 0 && "Cannot serialize qualified name types");
+  Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
+  Writer.AddTypeRef(T->getNamedType(), Record);
   Code = pch::TYPE_ELABORATED;
 }
 

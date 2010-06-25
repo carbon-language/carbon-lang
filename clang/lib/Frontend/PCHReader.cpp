@@ -2160,15 +2160,11 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ELABORATED: {
-    if (Record.size() != 2) {
-      Error("incorrect encoding of elaborated type");
-      return QualType();
-    }
-    unsigned Tag = Record[1];
-    // FIXME: Deserialize the qualifier (C++ only)
-    return Context->getElaboratedType((ElaboratedTypeKeyword) Tag,
-                                      /* NNS */ 0,
-                                      GetType(Record[0]));
+    unsigned Idx = 0;
+    ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
+    QualType NamedType = GetType(Record[Idx++]);
+    return Context->getElaboratedType(Keyword, NNS, NamedType);
   }
 
   case pch::TYPE_OBJC_INTERFACE: {
@@ -2223,6 +2219,20 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
     const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
     return Context->getDependentNameType(Keyword, NNS, Name, QualType());
+  }
+  
+  case pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {
+    unsigned Idx = 0;
+    ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
+    const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
+    unsigned NumArgs = Record[Idx++];
+    llvm::SmallVector<TemplateArgument, 8> Args;
+    Args.reserve(NumArgs);
+    while (NumArgs--)
+      Args.push_back(ReadTemplateArgument(Record, Idx));
+    return Context->getDependentTemplateSpecializationType(Keyword, NNS, Name,
+                                                      Args.size(), Args.data());
   }
 
   case pch::TYPE_TEMPLATE_SPECIALIZATION: {

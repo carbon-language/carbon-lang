@@ -422,8 +422,10 @@ namespace clang {
       TYPE_TEMPLATE_TYPE_PARM       = 29,
       /// \brief An TemplateSpecializationType record.
       TYPE_TEMPLATE_SPECIALIZATION  = 30,
-      /// \brief An DependentNameType record.
-      TYPE_DEPENDENT_NAME           = 31
+      /// \brief A DependentNameType record.
+      TYPE_DEPENDENT_NAME           = 31,
+      /// \brief A DependentTemplateSpecializationType record.
+      TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION = 32
     };
 
     /// \brief The type IDs for special types constructed by semantic
