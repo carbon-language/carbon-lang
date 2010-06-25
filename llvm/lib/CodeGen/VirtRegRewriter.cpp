@@ -2033,6 +2033,21 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           CanReuse = !ReusedOperands.isClobbered(PhysReg) &&
             Spills.canClobberPhysReg(PhysReg);
         }
+        // If this is an asm, and PhysReg is used elsewhere as an earlyclobber
+        // operand, we can't also use it as an input.  (Outputs always come
+        // before inputs, so we can stop looking at i.)
+        if (MI.getOpcode()==TargetOpcode::INLINEASM) {
+          for (unsigned k=0; k<i; ++k) {
+            MachineOperand &MOk = MI.getOperand(k);
+            if (!MOk.isReg() || MOk.getReg()==0)
+              continue;
+            unsigned VirtRegk = MOk.getReg();
+            if (VirtRegk == PhysReg && MOk.isEarlyClobber()) {
+              CanReuse = false;
+              break;
+            }
+          }
+        }
 
         if (CanReuse) {
           // If this stack slot value is already available, reuse it!
@@ -2103,6 +2118,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         // To avoid this problem, and to avoid doing a load right after a store,
         // we emit a copy from PhysReg into the designated register for this
         // operand.
+        //
+        // This case also applies to an earlyclobber'd PhysReg.
         unsigned DesignatedReg = VRM->getPhys(VirtReg);
         assert(DesignatedReg && "Must map virtreg to physreg!");
 
