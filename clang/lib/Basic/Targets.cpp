@@ -485,12 +485,16 @@ public:
               // asm ("st %1,%0" : "=m" (mem) : "r" (val));
               // is not. Use es rather than m if you don't want the base
               // register to be updated. 
-    case 'es':// A “stable” memory operand; that is, one which does not
+    case 'e': 
+      if (Name[1] != 's')
+          return false;
+              // es: A “stable” memory operand; that is, one which does not
               // include any automodification of the base register. Unlike
               // `m', this constraint can be used in asm statements that
               // might access the operand several times, or that might not
-              // access it at all. 
+              // access it at all.
       Info.setAllowsMemory();
+      Name++; // Skip over 'e'.
       break;
     case 'Q': // Memory operand that is an offset from a register (it is
               // usually better to use `m' or `es' in asm statements) 
