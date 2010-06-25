@@ -189,8 +189,8 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   SrcAlign = std::max(SrcAlign, CopyAlign);
   DstAlign = std::max(DstAlign, CopyAlign);
   
-  Value *Src = Builder->CreateBitCast(MI->getOperand(2), NewSrcPtrTy);
-  Value *Dest = Builder->CreateBitCast(MI->getOperand(1), NewDstPtrTy);
+  Value *Src = Builder->CreateBitCast(MI->getArgOperand(1), NewSrcPtrTy);
+  Value *Dest = Builder->CreateBitCast(MI->getArgOperand(0), NewDstPtrTy);
   Instruction *L = new LoadInst(Src, "tmp", MI->isVolatile(), SrcAlign);
   InsertNewInstBefore(L, *MI);
   InsertNewInstBefore(new StoreInst(L, Dest, MI->isVolatile(), DstAlign),
@@ -522,10 +522,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
 
     // X + undef -> undef
-    if (isa<UndefValue>(II->getOperand(2)))
+    if (isa<UndefValue>(II->getArgOperand(1)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
       
-    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
@@ -541,19 +541,19 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ssub_with_overflow:
     // undef - X -> undef
     // X - undef -> undef
-    if (isa<UndefValue>(II->getOperand(1)) ||
-        isa<UndefValue>(II->getOperand(2)))
+    if (isa<UndefValue>(II->getArgOperand(0)) ||
+        isa<UndefValue>(II->getArgOperand(1)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
       
-    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
       // X - 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
-          UndefValue::get(II->getOperand(1)->getType()),
+          UndefValue::get(II->getArgOperand(0)->getType()),
           ConstantInt::getFalse(II->getContext())
         };
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
-        return InsertValueInst::Create(Struct, II->getOperand(1), 0);
+        return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
     }
     break;
@@ -569,10 +569,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
 
     // X * undef -> undef
-    if (isa<UndefValue>(II->getOperand(2)))
+    if (isa<UndefValue>(II->getArgOperand(1)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
       
-    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(II->getOperand(2))) {
+    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
       // X*0 -> {0, false}
       if (RHSI->isZero())
         return ReplaceInstUsesWith(CI, Constant::getNullValue(II->getType()));
@@ -627,10 +627,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // These intrinsics only demands the 0th element of its input vector.  If
     // we can simplify the input based on that, do so now.
     unsigned VWidth =
-      cast<VectorType>(II->getOperand(1)->getType())->getNumElements();
+      cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
     APInt DemandedElts(VWidth, 1);
     APInt UndefElts(VWidth, 0);
-    if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), DemandedElts,
+    if (Value *V = SimplifyDemandedVectorElts(II->getArgOperand(0), DemandedElts,
                                               UndefElts)) {
       II->setOperand(1, V);
       return II;

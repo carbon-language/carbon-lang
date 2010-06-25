@@ -450,7 +450,7 @@ static bool FindAllMemoryUses(Instruction *I,
     
     if (CallInst *CI = dyn_cast<CallInst>(U)) {
       InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
-      if (IA == 0) return true;
+      if (!IA) return true;
       
       // If this is a memory operand, we're cool, otherwise bail out.
       if (!IsOperandAMemoryOperand(CI, IA, I, TLI))
