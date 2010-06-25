@@ -40,7 +40,8 @@ else
 CLANG_LEVEL := ../..
 include $(CLANG_LEVEL)/Makefile
 
-CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
+CLANG_VERSION := $(word 3,$(shell grep "CLANG_VERSION " \
+	$(PROJ_OBJ_DIR)/$(CLANG_LEVEL)/include/clang/Basic/Version.inc))
 
 SRC_DOC_DIR=$(PROJ_SRC_DIR)/
 DST_HTML_DIR=$(PROJ_OBJ_DIR)/

@@ -14,7 +14,8 @@ TABLEGEN_INC_FILES_COMMON = 1
 
 include $(CLANG_LEVEL)/Makefile
 
-CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
+CLANG_VERSION := $(word 3,$(shell grep "CLANG_VERSION " \
+	$(PROJ_OBJ_DIR)/$(CLANG_LEVEL)/include/clang/Basic/Version.inc))
 
 HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/clang/$(CLANG_VERSION)/include
 
