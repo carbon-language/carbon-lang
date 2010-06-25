@@ -481,6 +481,78 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
   return V;
 }
 
+static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
+                                    llvm::Value *NewPtr) {
+  // We have a POD type.
+  if (E->getNumConstructorArgs() == 0)
+    return;
+  
+  assert(E->getNumConstructorArgs() == 1 &&
+         "Can only have one argument to initializer of POD type.");
+  
+  const Expr *Init = E->getConstructorArg(0);
+  QualType AllocType = E->getAllocatedType();
+  
+  if (!CGF.hasAggregateLLVMType(AllocType)) 
+    CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
+                          AllocType.isVolatileQualified(), AllocType);
+  else if (AllocType->isAnyComplexType())
+    CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
+                                AllocType.isVolatileQualified());
+  else
+    CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
+}
+
+void
+CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E, 
+                                         llvm::Value *NewPtr,
+                                         llvm::Value *NumElements) {
+  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+  
+  // Create a temporary for the loop index and initialize it with 0.
+  llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
+  llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
+  Builder.CreateStore(Zero, IndexPtr);
+  
+  // Start the loop with a block that tests the condition.
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
+  
+  EmitBlock(CondBlock);
+  
+  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
+  
+  // Generate: if (loop-index < number-of-elements fall to the loop body,
+  // otherwise, go to the block after the for-loop.
+  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElements, "isless");
+  // If the condition is true, execute the body.
+  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
+  
+  EmitBlock(ForBody);
+  
+  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
+  // Inside the loop body, emit the constructor call on the array element.
+  Counter = Builder.CreateLoad(IndexPtr);
+  llvm::Value *Address = Builder.CreateInBoundsGEP(NewPtr, Counter, 
+                                                   "arrayidx");
+  StoreAnyExprIntoOneUnit(*this, E, Address);
+  
+  EmitBlock(ContinueBlock);
+  
+  // Emit the increment of the loop counter.
+  llvm::Value *NextVal = llvm::ConstantInt::get(SizeTy, 1);
+  Counter = Builder.CreateLoad(IndexPtr);
+  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
+  Builder.CreateStore(NextVal, IndexPtr);
+  
+  // Finally, branch back up to the condition for the next iteration.
+  EmitBranch(CondBlock);
+  
+  // Emit the fall-through block.
+  EmitBlock(AfterFor, true);
+}
+
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                llvm::Value *NewPtr,
                                llvm::Value *NumElements) {
@@ -492,9 +564,11 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                        E->constructor_arg_end());
       return;
     }
+    else {
+      CGF.EmitNewArrayInitializer(E, NewPtr, NumElements);
+      return;
+    }
   }
-  
-  QualType AllocType = E->getAllocatedType();
 
   if (CXXConstructorDecl *Ctor = E->getConstructor()) {
     CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false, 
@@ -504,23 +578,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
     return;
   }
     
-  // We have a POD type.
-  if (E->getNumConstructorArgs() == 0)
-    return;
-
-  assert(E->getNumConstructorArgs() == 1 &&
-         "Can only have one argument to initializer of POD type.");
-      
-  const Expr *Init = E->getConstructorArg(0);
-    
-  if (!CGF.hasAggregateLLVMType(AllocType)) 
-    CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
-                          AllocType.isVolatileQualified(), AllocType);
-  else if (AllocType->isAnyComplexType())
-    CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
-                                AllocType.isVolatileQualified());
-  else
-    CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
+  StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
