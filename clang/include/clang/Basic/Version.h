@@ -17,15 +17,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
-/// \brief Clang major version
-#define CLANG_VERSION_MAJOR 2
-
-// FIXME: Updates to this file must also update CMakeLists.txt and VER.
-/// \brief Clang minor version
-#define CLANG_VERSION_MINOR 0
-
-/// \brief Clang patchlevel version
-// #define CLANG_VERSION_PATCHLEVEL 1
+#include "clang/Basic/Version.inc"
 
 /// \brief Helper macro for CLANG_VERSION_STRING.
 #define CLANG_MAKE_VERSION_STRING2(X) #X

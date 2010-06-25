@@ -34,6 +34,23 @@ string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
   ${CLANG_VERSION_DATA})
 message(STATUS "Clang version: ${CLANG_VERSION}")
 
+string(REGEX REPLACE "([0-9]+)\\.[0-9]+(\\.[0-9]+)?" "\\1" CLANG_VERSION_MAJOR
+  ${CLANG_VERSION})
+string(REGEX REPLACE "[0-9]+\\.([0-9]+)(\\.[0-9]+)?" "\\1" CLANG_VERSION_MINOR
+  ${CLANG_VERSION})
+if (${CLANG_VERSION} MATCHES "[0-9]+\\.[0-9]+\\.[0-9]+")
+  set(CLANG_HAS_VERSION_PATCHLEVEL 1)
+  string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" CLANG_VERSION_PATCHLEVEL
+    ${CLANG_VERSION})
+else()
+  set(CLANG_HAS_VERSION_PATCHLEVEL 0)
+endif()
+
+# Configure the Version.inc file.
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/clang/Basic/Version.inc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/include/clang/Basic/Version.inc)
+
 # Add appropriate flags for GCC
 if (CMAKE_COMPILER_IS_GNUCXX)
   # FIXME: Turn off exceptions, RTTI:

@@ -1,15 +1,28 @@
 CLANG_LEVEL := ../../..
-BUILT_SOURCES = DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
+BUILT_SOURCES = \
+	DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
-  DiagnosticGroups.inc AttrList.inc arm_neon.inc
+	DiagnosticGroups.inc AttrList.inc arm_neon.inc \
+	Version.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
 include $(CLANG_LEVEL)/Makefile
 
 INPUT_TDS = $(wildcard $(PROJ_SRC_DIR)/Diagnostic*.td)
+
+CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../../VER)
+CLANG_VERSION_COMPONENTS := $(subst ., ,$(CLANG_VERSION))
+CLANG_VERSION_MAJOR := $(word 1,$(CLANG_VERSION_COMPONENTS))
+CLANG_VERSION_MINOR := $(word 2,$(CLANG_VERSION_COMPONENTS))
+CLANG_VERSION_PATCHLEVEL := $(word 3,$(CLANG_VERSION_COMPONENTS))
+ifeq ($(CLANG_VERSION_PATCHLEVEL),)
+CLANG_HAS_VERSION_PATCHLEVEL := 0
+else
+CLANG_HAS_VERSION_PATCHLEVEL := 1
+endif
 
 $(ObjDir)/Diagnostic%Kinds.inc.tmp : Diagnostic.td Diagnostic%Kinds.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang $(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) diagnostic tables with tblgen"
@@ -27,3 +40,12 @@ $(ObjDir)/AttrList.inc.tmp : Attr.td $(TBLGEN) $(ObjDir)/.dir
 $(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.inc with tblgen"
 	$(Verb) $(TableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
+
+$(ObjDir)/Version.inc.tmp : Version.inc.in $(PROJ_SRC_DIR)/../../../VER $(ObjDir)/.dir
+	$(Echo) "Updating Clang version info."
+	$(Verb)sed -e "s#@CLANG_VERSION@#$(CLANG_VERSION)#g" \
+	           -e "s#@CLANG_VERSION_MAJOR@#$(CLANG_VERSION_MAJOR)#g" \
+	           -e "s#@CLANG_VERSION_MINOR@#$(CLANG_VERSION_MINOR)#g" \
+	           -e "s#@CLANG_VERSION_PATCHLEVEL@#$(CLANG_VERSION_PATCHLEVEL)#g" \
+	           -e "s#@CLANG_HAS_VERSION_PATCHLEVEL@#$(CLANG_HAS_VERSION_PATCHLEVEL)#g" \
+	           $< > $@
