@@ -82,8 +82,9 @@ import lldb
 
 class LLDBTestCase(unittest.TestCase):
   def setUp(self):
-    lldb.SBDebugger.SetAsync(True)
-    self.m_commandInterpreter = lldb.SBDebugger.GetCommandInterpreter()
+    debugger = lldb.SBDebugger.Create()
+    debugger.SetAsync(True)
+    self.m_commandInterpreter = debugger.GetCommandInterpreter()
     if not self.m_commandInterpreter:
       print "Couldn't get the command interpreter"
       sys.exit(-1)
@@ -101,7 +102,7 @@ class LLDBTestCase(unittest.TestCase):
 class SanityCheckTestCase(LLDBTestCase):
   def runTest(self):
     ret = self.runCommand("show arch", "show-arch")
-    print ret
+    #print ret
 
 suite = unittest.TestLoader().loadTestsFromTestCase(SanityCheckTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
