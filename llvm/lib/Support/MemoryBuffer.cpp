@@ -292,5 +292,6 @@ MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
     return 0;
   }
 
-  return getMemBufferCopy(StringRef(&FileData[0], FileData.size()), "<stdin>");
+  FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
+  return getMemBufferCopy(StringRef(&FileData[0],FileData.size()-1), "<stdin>");
 }
