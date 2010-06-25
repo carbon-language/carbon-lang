@@ -150,7 +150,7 @@ protected:
 public:
   DarwinTargetInfo(const std::string& triple) :
     OSTargetInfo<Target>(triple) {
-      this->TLSSupported = llvm::Triple(triple).getDarwinMajorNumber() > 6;
+      this->TLSSupported = llvm::Triple(triple).getDarwinMajorNumber() > 10;
     }
 
   virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
