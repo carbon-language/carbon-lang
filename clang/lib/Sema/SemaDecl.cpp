@@ -1454,7 +1454,13 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     New->setInvalidDecl();
     return;
   }
-
+  // c99 6.2.2 P4.
+  // For an identifier declared with the storage-class specifier extern in a
+  // scope in which a prior declaration of that identifier is visible, if 
+  // the prior declaration specifies internal or external linkage, the linkage 
+  // of the identifier at the later declaration is the same as the linkage 
+  // specified at the prior declaration.
+  // FIXME. revisit this code.
   if (New->hasExternalStorage() &&
       Old->getLinkage() == InternalLinkage &&
       New->getDeclContext() == Old->getDeclContext())
