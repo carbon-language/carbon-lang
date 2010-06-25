@@ -1369,15 +1369,19 @@ class OverloadExpr : public Expr {
   /// The location of the name.
   SourceLocation NameLoc;
 
+protected:
   /// True if the name was a template-id.
   bool HasExplicitTemplateArgs;
 
-protected:
   OverloadExpr(StmtClass K, ASTContext &C, QualType T, bool Dependent,
                NestedNameSpecifier *Qualifier, SourceRange QRange,
                DeclarationName Name, SourceLocation NameLoc,
                bool HasTemplateArgs,
                UnresolvedSetIterator Begin, UnresolvedSetIterator End);
+
+  OverloadExpr(StmtClass K, EmptyShell Empty)
+    : Expr(K, Empty), Results(0), NumResults(0),
+      Qualifier(0), HasExplicitTemplateArgs(false) { }
 
 public:
   /// Computes whether an unresolved lookup on the given declarations
@@ -1409,6 +1413,9 @@ public:
   decls_iterator decls_end() const { 
     return UnresolvedSetIterator(Results + NumResults);
   }
+  
+  void initializeResults(ASTContext &C,
+                         UnresolvedSetIterator Begin,UnresolvedSetIterator End);
 
   /// Gets the number of declarations in the unresolved set.
   unsigned getNumDecls() const { return NumResults; }
@@ -1423,9 +1430,11 @@ public:
 
   /// Fetches the nested-name qualifier, if one was given.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   /// Fetches the range of the nested-name qualifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
 
   /// \brief Determines whether this expression had an explicit
   /// template argument list, e.g. f<int>.
@@ -2161,6 +2170,10 @@ class UnresolvedMemberExpr : public OverloadExpr {
                        SourceLocation MemberLoc,
                        const TemplateArgumentListInfo *TemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End);
+  
+  UnresolvedMemberExpr(EmptyShell Empty)
+    : OverloadExpr(UnresolvedMemberExprClass, Empty), IsArrow(false),
+      HasUnresolvedUsing(false), Base(0) { }
 
 public:
   static UnresolvedMemberExpr *
@@ -2173,6 +2186,9 @@ public:
          SourceLocation MemberLoc,
          const TemplateArgumentListInfo *TemplateArgs,
          UnresolvedSetIterator Begin, UnresolvedSetIterator End);
+
+  static UnresolvedMemberExpr *
+  CreateEmpty(ASTContext &C, unsigned NumTemplateArgs);
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source
@@ -2192,6 +2208,12 @@ public:
   void setBase(Expr *E) { Base = E; }
 
   QualType getBaseType() const { return BaseType; }
+  void setBaseType(QualType T) { BaseType = T; }
+
+  /// \brief Determine whether the lookup results contain an unresolved using
+  /// declaration.
+  bool hasUnresolvedUsing() const { return HasUnresolvedUsing; }
+  void setHasUnresolvedUsing(bool V) { HasUnresolvedUsing = V; }
 
   /// \brief Determine whether this member expression used the '->'
   /// operator; otherwise, it used the '.' operator.

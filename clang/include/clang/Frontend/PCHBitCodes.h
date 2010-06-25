@@ -770,7 +770,8 @@ namespace clang {
       EXPR_CXX_EXPR_WITH_TEMPORARIES, // CXXExprWithTemporaries
       
       EXPR_CXX_DEPENDENT_SCOPE_MEMBER, // CXXDependentScopeMemberExpr
-      EXPR_CXX_UNRESOLVED_CONSTRUCT // CXXUnresolvedConstructExpr
+      EXPR_CXX_UNRESOLVED_CONSTRUCT, // CXXUnresolvedConstructExpr
+      EXPR_CXX_UNRESOLVED_MEMBER     // UnresolvedMemberExpr
     };
 
     /// \brief The kinds of designators that can occur in a

@@ -135,6 +135,9 @@ namespace {
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
     void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
+
+    void VisitOverloadExpr(OverloadExpr *E);
+    void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
   };
 }
 
@@ -1064,6 +1067,45 @@ PCHStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CXX_UNRESOLVED_CONSTRUCT;
+}
+
+void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
+  VisitExpr(E);
+
+  if (E->hasExplicitTemplateArgs()) {
+    const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
+    assert(Args.NumTemplateArgs &&
+           "Num of template args was zero! PCH reading will mess up!");
+    Record.push_back(Args.NumTemplateArgs);
+    Writer.AddSourceLocation(Args.LAngleLoc, Record);
+    Writer.AddSourceLocation(Args.RAngleLoc, Record);
+    for (unsigned i=0; i != Args.NumTemplateArgs; ++i)
+      Writer.AddTemplateArgumentLoc(Args.getTemplateArgs()[i], Record);
+  } else {
+    Record.push_back(0);
+  }
+
+  Record.push_back(E->getNumDecls());
+  for (OverloadExpr::decls_iterator
+         OvI = E->decls_begin(), OvE = E->decls_end(); OvI != OvE; ++OvI) {
+    Writer.AddDeclRef(OvI.getDecl(), Record);
+    Record.push_back(OvI.getAccess());
+  }
+
+  Writer.AddDeclarationName(E->getName(), Record);
+  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddSourceLocation(E->getNameLoc(), Record);
+}
+
+void PCHStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
+  VisitOverloadExpr(E);
+  Record.push_back(E->isArrow());
+  Record.push_back(E->hasUnresolvedUsing());
+  Writer.WriteSubStmt(!E->isImplicitAccess() ? E->getBase() : 0);
+  Writer.AddTypeRef(E->getBaseType(), Record);
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Code = pch::EXPR_CXX_UNRESOLVED_MEMBER;
 }
 
 //===----------------------------------------------------------------------===//

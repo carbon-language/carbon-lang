@@ -27,7 +27,11 @@ struct Dep {
     Ty x = Ty();
     T::my_f();
     int y = T::template my_templf<int>(0);
+    ovl(y);
   }
+  
+  void ovl(int);
+  void ovl(float);
 };
 
 template<typename T, typename A1>

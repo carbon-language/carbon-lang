@@ -197,18 +197,27 @@ OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T,
                            UnresolvedSetIterator Begin, 
                            UnresolvedSetIterator End)
   : Expr(K, T, Dependent, Dependent),
-  Results(0), NumResults(End - Begin), Name(Name), Qualifier(Qualifier), 
+  Results(0), NumResults(0), Name(Name), Qualifier(Qualifier), 
   QualifierRange(QRange), NameLoc(NameLoc), 
   HasExplicitTemplateArgs(HasTemplateArgs)
 {
+  initializeResults(C, Begin, End);
+}
+
+void OverloadExpr::initializeResults(ASTContext &C,
+                                     UnresolvedSetIterator Begin,
+                                     UnresolvedSetIterator End) {
+  assert(Results == 0 && "Results already initialized!");
+  NumResults = End - Begin;
   if (NumResults) {
     Results = static_cast<DeclAccessPair *>(
                                 C.Allocate(sizeof(DeclAccessPair) * NumResults, 
                                            llvm::alignof<DeclAccessPair>()));
     memcpy(Results, &*Begin.getIterator(), 
-           (End - Begin) * sizeof(DeclAccessPair));
+           NumResults * sizeof(DeclAccessPair));
   }
 }
+
 
 bool OverloadExpr::ComputeDependence(UnresolvedSetIterator Begin,
                                      UnresolvedSetIterator End,
@@ -799,6 +808,18 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
                              Dependent, HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, Qualifier, QualifierRange,
                              Member, MemberLoc, TemplateArgs, Begin, End);
+}
+
+UnresolvedMemberExpr *
+UnresolvedMemberExpr::CreateEmpty(ASTContext &C, unsigned NumTemplateArgs) {
+  std::size_t size = sizeof(UnresolvedMemberExpr);
+  if (NumTemplateArgs != 0)
+    size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+
+  void *Mem = C.Allocate(size, llvm::alignof<UnresolvedMemberExpr>());
+  UnresolvedMemberExpr *E = new (Mem) UnresolvedMemberExpr(EmptyShell());
+  E->HasExplicitTemplateArgs = NumTemplateArgs != 0;
+  return E;
 }
 
 CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {

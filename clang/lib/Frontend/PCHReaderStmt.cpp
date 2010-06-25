@@ -140,6 +140,9 @@ namespace {
     
     unsigned VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
     unsigned VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
+
+    unsigned VisitOverloadExpr(OverloadExpr *E);
+    unsigned VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
   };
 }
 
@@ -1161,6 +1164,47 @@ PCHStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   return E->arg_size();
 }
 
+unsigned PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
+  VisitExpr(E);
+  
+  unsigned NumTemplateArgs = Record[Idx++];
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
+         "Read wrong record during creation ?");
+  if (E->hasExplicitTemplateArgs()) {
+    TemplateArgumentListInfo ArgInfo;
+    ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+    ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+    for (unsigned i = 0; i != NumTemplateArgs; ++i)
+      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    E->getExplicitTemplateArgs().initializeFrom(ArgInfo);
+  }
+
+  unsigned NumDecls = Record[Idx++];
+  UnresolvedSet<8> Decls;
+  for (unsigned i = 0; i != NumDecls; ++i) {
+    NamedDecl *D = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+    AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
+    Decls.addDecl(D, AS);
+  }
+  E->initializeResults(*Reader.getContext(), Decls.begin(), Decls.end());
+
+  E->setName(Reader.ReadDeclarationName(Record, Idx));
+  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  E->setNameLoc(Reader.ReadSourceLocation(Record, Idx));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
+  VisitOverloadExpr(E);
+  E->setArrow(Record[Idx++]);
+  E->setHasUnresolvedUsing(Record[Idx++]);
+  E->setBase(cast_or_null<Expr>(StmtStack.back()));
+  E->setBaseType(Reader.GetType(Record[Idx++]));
+  E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
+  return 1;
+}
+
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1546,12 +1590,17 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       
     case pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER:
       S = CXXDependentScopeMemberExpr::CreateEmpty(*Context,
-                                          Record[PCHStmtReader::NumExprFields]);
+                      /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
       break;
       
     case pch::EXPR_CXX_UNRESOLVED_CONSTRUCT:
       S = CXXUnresolvedConstructExpr::CreateEmpty(*Context,
-                                          Record[PCHStmtReader::NumExprFields]);
+                              /*NumArgs=*/Record[PCHStmtReader::NumExprFields]);
+      break;
+      
+    case pch::EXPR_CXX_UNRESOLVED_MEMBER:
+      S = UnresolvedMemberExpr::CreateEmpty(*Context,
+                      /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
       break;
     }
 

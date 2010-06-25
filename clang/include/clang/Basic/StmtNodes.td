@@ -99,7 +99,6 @@ def CXXZeroInitValueExpr : DStmt<Expr>;
 def CXXNewExpr : DStmt<Expr>;
 def CXXDeleteExpr : DStmt<Expr>;
 def CXXPseudoDestructorExpr : DStmt<Expr>;
-def UnresolvedLookupExpr : DStmt<Expr>;
 def UnaryTypeTraitExpr : DStmt<Expr>;
 def DependentScopeDeclRefExpr : DStmt<Expr>;
 def CXXConstructExpr : DStmt<Expr>;
@@ -109,7 +108,9 @@ def CXXExprWithTemporaries : DStmt<Expr>;
 def CXXTemporaryObjectExpr : DStmt<CXXConstructExpr>;
 def CXXUnresolvedConstructExpr : DStmt<Expr>;
 def CXXDependentScopeMemberExpr : DStmt<Expr>;
-def UnresolvedMemberExpr : DStmt<Expr>;
+def OverloadExpr : DStmt<Expr, 1>;
+def UnresolvedLookupExpr : DStmt<OverloadExpr>;
+def UnresolvedMemberExpr : DStmt<OverloadExpr>;
 
 // Obj-C Expressions.
 def ObjCStringLiteral : DStmt<Expr>;
