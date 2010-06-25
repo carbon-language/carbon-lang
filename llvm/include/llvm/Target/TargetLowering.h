@@ -683,19 +683,6 @@ public:
     return JumpBufAlignment;
   }
 
-  /// getIfCvtBlockLimit - returns the target specific if-conversion block size
-  /// limit. Any block whose size is greater should not be predicated.
-  unsigned getIfCvtBlockSizeLimit() const {
-    return IfCvtBlockSizeLimit;
-  }
-
-  /// getIfCvtDupBlockLimit - returns the target specific size limit for a
-  /// block to be considered for duplication. Any block whose size is greater
-  /// should not be duplicated to facilitate its predication.
-  unsigned getIfCvtDupBlockSizeLimit() const {
-    return IfCvtDupBlockSizeLimit;
-  }
-
   /// getPrefLoopAlignment - return the preferred loop alignment.
   ///
   unsigned getPrefLoopAlignment() const {
@@ -1076,19 +1063,6 @@ protected:
   /// alignment (in bytes); default is 0
   void setJumpBufAlignment(unsigned Align) {
     JumpBufAlignment = Align;
-  }
-
-  /// setIfCvtBlockSizeLimit - Set the target's if-conversion block size
-  /// limit (in number of instructions); default is 2.
-  void setIfCvtBlockSizeLimit(unsigned Limit) {
-    IfCvtBlockSizeLimit = Limit;
-  }
-
-  /// setIfCvtDupBlockSizeLimit - Set the target's block size limit (in number
-  /// of instructions) to be considered for code duplication during
-  /// if-conversion; default is 2.
-  void setIfCvtDupBlockSizeLimit(unsigned Limit) {
-    IfCvtDupBlockSizeLimit = Limit;
   }
 
   /// setPrefLoopAlignment - Set the target's preferred loop alignment. Default
@@ -1537,14 +1511,6 @@ private:
   /// JumpBufAlignment - The alignment, in bytes, of the target's jmp_buf
   /// buffers
   unsigned JumpBufAlignment;
-
-  /// IfCvtBlockSizeLimit - The maximum allowed size for a block to be
-  /// if-converted.
-  unsigned IfCvtBlockSizeLimit;
-
-  /// IfCvtDupBlockSizeLimit - The maximum allowed size for a block to be
-  /// duplicated during if-conversion.
-  unsigned IfCvtDupBlockSizeLimit;
 
   /// PrefLoopAlignment - The perferred loop alignment.
   ///

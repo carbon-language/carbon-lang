@@ -578,8 +578,6 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   SchedPreferenceInfo = Sched::Latency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
-  IfCvtBlockSizeLimit = 2;
-  IfCvtDupBlockSizeLimit = 0;
   PrefLoopAlignment = 0;
   ShouldFoldAtomicFences = false;
 

@@ -531,23 +531,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   else
     setSchedulingPreference(Sched::Hybrid);
 
-  // FIXME: If-converter should use instruction latency to determine
-  // profitability rather than relying on fixed limits.
-  if (Subtarget->getCPUString() == "generic") {
-    // Generic (and overly aggressive) if-conversion limits.
-    setIfCvtBlockSizeLimit(10);
-    setIfCvtDupBlockSizeLimit(2);
-  } else if (Subtarget->hasV7Ops()) {
-    setIfCvtBlockSizeLimit(3);
-    setIfCvtDupBlockSizeLimit(1);
-  } else if (Subtarget->hasV6Ops()) {
-    setIfCvtBlockSizeLimit(2);
-    setIfCvtDupBlockSizeLimit(1);
-  } else {
-    setIfCvtBlockSizeLimit(3);
-    setIfCvtDupBlockSizeLimit(2);
-  }
-
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type
   // Do not enable CodePlacementOpt for now: it currently runs after the
   // ARMConstantIslandPass and messes up branch relaxation and placement

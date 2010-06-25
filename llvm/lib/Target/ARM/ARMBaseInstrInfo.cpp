@@ -1447,6 +1447,24 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   return false;
 }
 
+bool ARMBaseInstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs) const {
+  if (!NumInstrs)
+    return false;
+  if (Subtarget.getCPUString() == "generic")
+    // Generic (and overly aggressive) if-conversion limits for testing.
+    return NumInstrs <= 10;
+  else if (Subtarget.hasV7Ops())
+    return NumInstrs <= 3;
+  return NumInstrs <= 2;
+}
+  
+bool ARMBaseInstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
+                    MachineBasicBlock &FMBB, unsigned NumF) const {
+  return NumT && NumF && NumT <= 2 && NumF <= 2;
+}
+
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.

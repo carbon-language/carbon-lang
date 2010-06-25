@@ -188,8 +188,14 @@ namespace {
                                bool IgnoreBr = false);
     void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI);
 
-    bool MeetIfcvtSizeLimit(unsigned Size) const {
-      return Size > 0 && Size <= TLI->getIfCvtBlockSizeLimit();
+    bool MeetIfcvtSizeLimit(MachineBasicBlock &BB, unsigned Size) const {
+      return Size > 0 && TII->isProfitableToIfCvt(BB, Size);
+    }
+
+    bool MeetIfcvtSizeLimit(MachineBasicBlock &TBB, unsigned TSize,
+                            MachineBasicBlock &FBB, unsigned FSize) const {
+      return TSize > 0 && FSize > 0 &&
+        TII->isProfitableToIfCvt(TBB, TSize, FBB, FSize);
     }
 
     // blockAlwaysFallThrough - Block ends without a terminator.
@@ -436,7 +442,7 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups) const {
 
   if (TrueBBI.BB->pred_size() > 1) {
     if (TrueBBI.CannotBeCopied ||
-        TrueBBI.NonPredSize > TLI->getIfCvtDupBlockSizeLimit())
+        !TII->isProfitableToDupForIfCvt(*TrueBBI.BB, TrueBBI.NonPredSize))
       return false;
     Dups = TrueBBI.NonPredSize;
   }
@@ -473,7 +479,7 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
           ++Size;
       }
     }
-    if (Size > TLI->getIfCvtDupBlockSizeLimit())
+    if (!TII->isProfitableToDupForIfCvt(*TrueBBI.BB, Size))
       return false;
     Dups = Size;
   }
@@ -761,8 +767,8 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   bool FNeedSub = FalseBBI.Predicate.size() > 0;
   bool Enqueued = false;
   if (CanRevCond && ValidDiamond(TrueBBI, FalseBBI, Dups, Dups2) &&
-      MeetIfcvtSizeLimit(TrueBBI.NonPredSize - (Dups + Dups2)) &&
-      MeetIfcvtSizeLimit(FalseBBI.NonPredSize - (Dups + Dups2)) &&
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize - (Dups + Dups2),
+                         *FalseBBI.BB, FalseBBI.NonPredSize - (Dups + Dups2)) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond) &&
       FeasibilityAnalysis(FalseBBI, RevCond)) {
     // Diamond:
@@ -779,7 +785,7 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
 
   if (ValidTriangle(TrueBBI, FalseBBI, false, Dups) &&
-      MeetIfcvtSizeLimit(TrueBBI.NonPredSize) &&
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond, true)) {
     // Triangle:
     //   EBB
@@ -793,14 +799,14 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   }
 
   if (ValidTriangle(TrueBBI, FalseBBI, true, Dups) &&
-      MeetIfcvtSizeLimit(TrueBBI.NonPredSize) &&
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond, true, true)) {
     Tokens.push_back(new IfcvtToken(BBI, ICTriangleRev, TNeedSub, Dups));
     Enqueued = true;
   }
 
   if (ValidSimple(TrueBBI, Dups) &&
-      MeetIfcvtSizeLimit(TrueBBI.NonPredSize) &&
+      MeetIfcvtSizeLimit(*TrueBBI.BB, TrueBBI.NonPredSize) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond)) {
     // Simple (split, no rejoin):
     //   EBB
@@ -816,21 +822,21 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   if (CanRevCond) {
     // Try the other path...
     if (ValidTriangle(FalseBBI, TrueBBI, false, Dups) &&
-        MeetIfcvtSizeLimit(FalseBBI.NonPredSize) &&
+        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize) &&
         FeasibilityAnalysis(FalseBBI, RevCond, true)) {
       Tokens.push_back(new IfcvtToken(BBI, ICTriangleFalse, FNeedSub, Dups));
       Enqueued = true;
     }
 
     if (ValidTriangle(FalseBBI, TrueBBI, true, Dups) &&
-        MeetIfcvtSizeLimit(FalseBBI.NonPredSize) &&
+        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize) &&
         FeasibilityAnalysis(FalseBBI, RevCond, true, true)) {
       Tokens.push_back(new IfcvtToken(BBI, ICTriangleFRev, FNeedSub, Dups));
       Enqueued = true;
     }
 
     if (ValidSimple(FalseBBI, Dups) &&
-        MeetIfcvtSizeLimit(FalseBBI.NonPredSize) &&
+        MeetIfcvtSizeLimit(*FalseBBI.BB, FalseBBI.NonPredSize) &&
         FeasibilityAnalysis(FalseBBI, RevCond)) {
       Tokens.push_back(new IfcvtToken(BBI, ICSimpleFalse, FNeedSub, Dups));
       Enqueued = true;

@@ -24,8 +24,17 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
+
+static cl::opt<unsigned>
+IfCvtLimit("thumb2-ifcvt-limit (default 3)",
+           cl::Hidden, cl::init(3));
+
+static cl::opt<unsigned>
+IfCvtDiamondLimit("thumb2-ifcvt-diamond-limit (default 3)",
+                  cl::Hidden, cl::init(3));
 
 Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
@@ -94,6 +103,20 @@ Thumb2InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
   return llvm::getITInstrPredicate(MBBI, PredReg) == ARMCC::AL;
 }
 
+bool Thumb2InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                          unsigned NumInstrs) const {
+  return NumInstrs && NumInstrs <= IfCvtLimit;
+}
+  
+bool Thumb2InstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
+                    MachineBasicBlock &FMBB, unsigned NumF) const {
+  // FIXME: Catch optimization such as:
+  //        r0 = movne
+  //        r0 = moveq
+  return NumT && NumF &&
+    NumT <= (IfCvtDiamondLimit) && NumF <= (IfCvtDiamondLimit);
+}
 
 bool
 Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,

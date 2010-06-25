@@ -343,6 +343,17 @@ public:
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
+
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                   unsigned NumInstrs) const;
+
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,unsigned NumT,
+                                   MachineBasicBlock &FMBB,unsigned NumF) const;
+
+  virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
+                                         unsigned NumInstrs) const {
+    return NumInstrs && NumInstrs == 1;
+  }
 };
 
 static inline

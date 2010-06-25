@@ -331,6 +331,31 @@ public:
                                    MachineBasicBlock::iterator MBBI) const {
     return true;
   }
+
+  /// isProfitableToIfCvt - Return true if it's profitable to first "NumInstrs"
+  /// of the specified basic block.
+  virtual
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumInstrs) const {
+    return false;
+  }
+  
+  /// isProfitableToIfCvt - Second variant of isProfitableToIfCvt, this one
+  /// checks for the case where two basic blocks from true and false path
+  /// of a if-then-else (diamond) are predicated on mutally exclusive
+  /// predicates.
+  virtual bool
+  isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTInstrs,
+                      MachineBasicBlock &FMBB, unsigned NumFInstrs) const {
+    return false;
+  }
+
+  /// isProfitableToDupForIfCvt - Return true if it's profitable for
+  /// if-converter to duplicate a specific number of instructions in the
+  /// specified MBB to enable if-conversion.
+  virtual bool
+  isProfitableToDupForIfCvt(MachineBasicBlock &MBB,unsigned NumInstrs) const {
+    return false;
+  }
   
   /// copyRegToReg - Emit instructions to copy between a pair of registers. It
   /// returns false if the target does not how to copy between the specified
