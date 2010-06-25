@@ -660,9 +660,11 @@ protected:
 public:
   /// Get the nesting depth of the template parameter.
   unsigned getDepth() const { return Depth; }
+  void setDepth(unsigned D) { Depth = D; }
 
   /// Get the position of the template parameter within its parameter list.
   unsigned getPosition() const { return Position; }
+  void setPosition(unsigned P) { Position = P; }
 
   /// Get the index of the template parameter within its parameter list.
   unsigned getIndex() const { return Position; }
@@ -785,7 +787,9 @@ public:
          unsigned P, IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo);
 
   using TemplateParmPosition::getDepth;
+  using TemplateParmPosition::setDepth;
   using TemplateParmPosition::getPosition;
+  using TemplateParmPosition::setPosition;
   using TemplateParmPosition::getIndex;
 
   /// \brief Determine whether this template parameter has a default

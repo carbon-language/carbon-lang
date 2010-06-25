@@ -15,9 +15,9 @@ struct S<int, float> {
     static void explicit_special();
 };
 
-template <typename T>
+template <typename T, int y>
 T templ_f(T x) {
-  return x;
+  return x+y;
 }
 
 void govl(int);

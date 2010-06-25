@@ -851,7 +851,16 @@ void PCHDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 }
 
 void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
-  assert(false && "cannot read NonTypeTemplateParmDecl");
+  VisitVarDecl(D);
+  // TemplateParmPosition.
+  D->setDepth(Record[Idx++]);
+  D->setPosition(Record[Idx++]);
+  // Rest of NonTypeTemplateParmDecl.
+  if (Record[Idx++]) {
+    Expr *DefArg = Reader.ReadDeclExpr();
+    bool Inherited = Record[Idx++];
+    D->setDefaultArgument(DefArg, Inherited);
+ }
 }
 
 void PCHDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
@@ -1212,7 +1221,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = TemplateTypeParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,0,0);
     break;
   case pch::DECL_NON_TYPE_TEMPLATE_PARM:
-    assert(false && "cannot read NonTypeTemplateParmDecl");
+    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,
+                                        QualType(),0);
     break;
   case pch::DECL_TEMPLATE_TEMPLATE_PARM:
     assert(false && "cannot read TemplateTemplateParmDecl");

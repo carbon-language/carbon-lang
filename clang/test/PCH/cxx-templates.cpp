@@ -13,7 +13,7 @@ struct A {
 };
 
 void test() {
-  int x = templ_f(3);
+  int x = templ_f<int, 5>(3);
   
   S<char, float>::templ();
   S<int, char>::partial();
