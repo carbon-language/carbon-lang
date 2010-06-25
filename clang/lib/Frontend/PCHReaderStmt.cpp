@@ -143,6 +143,7 @@ namespace {
 
     unsigned VisitOverloadExpr(OverloadExpr *E);
     unsigned VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
+    unsigned VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
   };
 }
 
@@ -1205,6 +1206,14 @@ unsigned PCHStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   return 1;
 }
 
+unsigned PCHStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+  VisitOverloadExpr(E);
+  E->setRequiresADL(Record[Idx++]);
+  E->setOverloaded(Record[Idx++]);
+  E->setNamingClass(cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++])));
+  return 0;
+}
+
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1600,6 +1609,11 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       
     case pch::EXPR_CXX_UNRESOLVED_MEMBER:
       S = UnresolvedMemberExpr::CreateEmpty(*Context,
+                      /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
+      break;
+      
+    case pch::EXPR_CXX_UNRESOLVED_LOOKUP:
+      S = UnresolvedLookupExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
       break;
     }

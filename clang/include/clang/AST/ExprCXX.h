@@ -1497,6 +1497,11 @@ class UnresolvedLookupExpr : public OverloadExpr {
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
+  UnresolvedLookupExpr(EmptyShell Empty)
+    : OverloadExpr(UnresolvedLookupExprClass, Empty),
+      RequiresADL(false), Overloaded(false), NamingClass(0)
+  {}
+
 public:
   static UnresolvedLookupExpr *Create(ASTContext &C,
                                       bool Dependent,
@@ -1528,17 +1533,23 @@ public:
                                       UnresolvedSetIterator Begin, 
                                       UnresolvedSetIterator End);
 
+  static UnresolvedLookupExpr *CreateEmpty(ASTContext &C,
+                                           unsigned NumTemplateArgs);
+
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
+  void setRequiresADL(bool V) { RequiresADL = V; }
 
   /// True if this lookup is overloaded.
   bool isOverloaded() const { return Overloaded; }
+  void setOverloaded(bool V) { Overloaded = V; }
 
   /// Gets the 'naming class' (in the sense of C++0x
   /// [class.access.base]p5) of the lookup.  This is the scope
   /// that was looked in to find these results.
   CXXRecordDecl *getNamingClass() const { return NamingClass; }
+  void setNamingClass(CXXRecordDecl *D) { NamingClass = D; }
 
   // Note that, inconsistently with the explicit-template-argument AST
   // nodes, users are *forbidden* from calling these methods on objects

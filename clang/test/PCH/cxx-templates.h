@@ -20,6 +20,16 @@ T templ_f(T x) {
   return x;
 }
 
+void govl(int);
+void govl(char);
+
+template <typename T>
+struct Unresolv {
+  void f() {
+    govl(T());
+  }
+};
+
 template <typename T>
 struct Dep {
   typedef typename T::type Ty;

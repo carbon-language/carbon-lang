@@ -138,6 +138,7 @@ namespace {
 
     void VisitOverloadExpr(OverloadExpr *E);
     void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
+    void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
   };
 }
 
@@ -1106,6 +1107,14 @@ void PCHStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   Writer.AddTypeRef(E->getBaseType(), Record);
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
   Code = pch::EXPR_CXX_UNRESOLVED_MEMBER;
+}
+
+void PCHStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+  VisitOverloadExpr(E);
+  Record.push_back(E->requiresADL());
+  Record.push_back(E->isOverloaded());
+  Writer.AddDeclRef(E->getNamingClass(), Record);
+  Code = pch::EXPR_CXX_UNRESOLVED_LOOKUP;
 }
 
 //===----------------------------------------------------------------------===//

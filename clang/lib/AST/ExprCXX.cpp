@@ -190,6 +190,18 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
   return ULE;
 }
 
+UnresolvedLookupExpr *
+UnresolvedLookupExpr::CreateEmpty(ASTContext &C, unsigned NumTemplateArgs) {
+  std::size_t size = sizeof(UnresolvedLookupExpr);
+  if (NumTemplateArgs != 0)
+    size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+
+  void *Mem = C.Allocate(size, llvm::alignof<UnresolvedLookupExpr>());
+  UnresolvedLookupExpr *E = new (Mem) UnresolvedLookupExpr(EmptyShell());
+  E->HasExplicitTemplateArgs = NumTemplateArgs != 0;
+  return E;
+}
+
 OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T, 
                            bool Dependent, NestedNameSpecifier *Qualifier, 
                            SourceRange QRange, DeclarationName Name, 
