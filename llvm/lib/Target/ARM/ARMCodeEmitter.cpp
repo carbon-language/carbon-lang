@@ -141,6 +141,7 @@ namespace {
 
     void emitNEON1RegModImmInstruction(const MachineInstr &MI);
     void emitNEON2RegInstruction(const MachineInstr &MI);
+    void emitNEON3RegInstruction(const MachineInstr &MI);
 
     /// getMachineOpValue - Return binary encoding of operand. If the machine
     /// operand requires relocation, record the relocation and return zero.
@@ -417,6 +418,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   case ARMII::N2RegFrm:
     emitNEON2RegInstruction(MI);
+    break;
+  case ARMII::N3RegFrm:
+    emitNEON3RegInstruction(MI);
     break;
   }
   MCE.processDebugLoc(MI.getDebugLoc(), false);
@@ -1559,6 +1563,15 @@ static unsigned encodeNEONRd(const MachineInstr &MI, unsigned OpIdx) {
   return Binary;
 }
 
+static unsigned encodeNEONRn(const MachineInstr &MI, unsigned OpIdx) {
+  unsigned RegN = MI.getOperand(OpIdx).getReg();
+  unsigned Binary = 0;
+  RegN = ARMRegisterInfo::getRegisterNumbering(RegN);
+  Binary |= (RegN & 0xf) << ARMII::RegRnShift;
+  Binary |= ((RegN >> 4) & 1) << ARMII::N_BitShift;
+  return Binary;
+}
+
 static unsigned encodeNEONRm(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegM = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
@@ -1588,11 +1601,31 @@ void ARMCodeEmitter::emitNEON1RegModImmInstruction(const MachineInstr &MI) {
 }
 
 void ARMCodeEmitter::emitNEON2RegInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
   unsigned Binary = getBinaryCodeForInstr(MI);
-  // Destination register is encoded in Dd.
-  Binary |= encodeNEONRd(MI, 0);
-  Binary |= encodeNEONRm(MI, 1);
+  // Destination register is encoded in Dd; source register in Dm.
+  unsigned OpIdx = 0;
+  Binary |= encodeNEONRd(MI, OpIdx++);
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
+  Binary |= encodeNEONRm(MI, OpIdx);
   // FIXME: This does not handle VDUPfdf or VDUPfqf.
+  emitWordLE(Binary);
+}
+
+void ARMCodeEmitter::emitNEON3RegInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+  unsigned Binary = getBinaryCodeForInstr(MI);
+  // Destination register is encoded in Dd; source registers in Dn and Dm.
+  unsigned OpIdx = 0;
+  Binary |= encodeNEONRd(MI, OpIdx++);
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
+  Binary |= encodeNEONRn(MI, OpIdx++);
+  if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
+    ++OpIdx;
+  Binary |= encodeNEONRm(MI, OpIdx);
+  // FIXME: This does not handle VMOVDneon or VMOVQ.
   emitWordLE(Binary);
 }
 
