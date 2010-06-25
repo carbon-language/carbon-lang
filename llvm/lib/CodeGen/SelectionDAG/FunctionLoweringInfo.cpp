@@ -30,7 +30,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
