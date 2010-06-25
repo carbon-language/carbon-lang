@@ -742,4 +742,28 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x79,0x2f,0x20]
           vcomisd  (%rax), %xmm12
 
+// CHECK: vcvttss2si  (%rcx), %eax
+// CHECK: encoding: [0xc5,0xfa,0x2c,0x01]
+          vcvttss2si  (%rcx), %eax
+
+// CHECK: vcvtsi2ss  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x22,0x2a,0x20]
+          vcvtsi2ss  (%rax), %xmm11, %xmm12
+
+// CHECK: vcvtsi2ss  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x22,0x2a,0x20]
+          vcvtsi2ss  (%rax), %xmm11, %xmm12
+
+// CHECK: vcvttsd2si  (%rcx), %eax
+// CHECK: encoding: [0xc5,0xfb,0x2c,0x01]
+          vcvttsd2si  (%rcx), %eax
+
+// CHECK: vcvtsi2sd  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x23,0x2a,0x20]
+          vcvtsi2sd  (%rax), %xmm11, %xmm12
+
+// CHECK: vcvtsi2sd  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x23,0x2a,0x20]
+          vcvtsi2sd  (%rax), %xmm11, %xmm12
+
 

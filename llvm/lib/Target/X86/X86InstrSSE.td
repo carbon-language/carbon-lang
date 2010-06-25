@@ -613,12 +613,36 @@ multiclass sse12_cvt<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                         [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))]>;
 }
 
+multiclass sse12_cvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
+                     SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
+                     string asm> {
+  def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
+              asm, []>;
+  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst),
+              (ins DstRC:$src1, x86memop:$src), asm, []>;
+}
+
 // Conversion instructions
+let isAsmParserOnly = 1 in {
+defm VCVTTSS2SI : sse12_cvt<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
+                      "cvttss2si\t{$src, $dst|$dst, $src}">, XS, VEX;
+defm VCVTTSD2SI : sse12_cvt<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
+                      "cvttsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
+}
 defm CVTTSS2SI : sse12_cvt<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
                       "cvttss2si\t{$src, $dst|$dst, $src}">, XS;
 defm CVTTSD2SI : sse12_cvt<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
                       "cvttsd2si\t{$src, $dst|$dst, $src}">, XD;
 
+
+let isAsmParserOnly = 1 in {
+defm VCVTSI2SS  : sse12_cvt_avx<0x2A, GR32, FR32, sint_to_fp, i32mem, loadi32,
+                      "cvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}">, XS,
+                      VEX_4V;
+defm VCVTSI2SD  : sse12_cvt_avx<0x2A, GR32, FR64, sint_to_fp, i32mem, loadi32,
+                      "cvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}">, XD,
+                      VEX_4V;
+}
 defm CVTSI2SS  : sse12_cvt<0x2A, GR32, FR32, sint_to_fp, i32mem, loadi32,
                       "cvtsi2ss\t{$src, $dst|$dst, $src}">, XS;
 defm CVTSI2SD  : sse12_cvt<0x2A, GR32, FR64, sint_to_fp, i32mem, loadi32,
