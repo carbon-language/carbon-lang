@@ -671,7 +671,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   QualType AllocType = TInfo->getType();
   if (D.isInvalidType())
     return ExprError();
-    
+  
+  SourceRange R = TInfo->getTypeLoc().getSourceRange();    
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
                      move(PlacementArgs),
@@ -679,7 +680,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      ParenTypeId,
                      AllocType,
                      D.getSourceRange().getBegin(),
-                     D.getSourceRange(),
+                     R,
                      Owned(ArraySize),
                      ConstructorLParen,
                      move(ConstructorArgs),
@@ -851,13 +852,15 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   PlacementArgs.release();
   ConstructorArgs.release();
   ArraySizeE.release();
+  
+  // FIXME: The TypeSourceInfo should also be included in CXXNewExpr.
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         PlaceArgs, NumPlaceArgs, ParenTypeId,
                                         ArraySize, Constructor, Init,
                                         ConsArgs, NumConsArgs, OperatorDelete,
                                         ResultType, StartLoc,
                                         Init ? ConstructorRParen :
-                                               SourceLocation()));
+                                               TypeRange.getEnd()));
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type
