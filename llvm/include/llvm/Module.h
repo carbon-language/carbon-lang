@@ -197,11 +197,11 @@ public:
   /// Get any module-scope inline assembly blocks.
   /// @returns a string containing the module-scope inline assembly blocks.
   const std::string &getModuleInlineAsm() const { return GlobalScopeAsm; }
-  
+
 /// @}
 /// @name Module Level Mutators
 /// @{
-  
+
   /// Set the module identifier.
   void setModuleIdentifier(StringRef ID) { ModuleID = ID; }
 
@@ -235,12 +235,12 @@ public:
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
   /// This ID is uniqued across modules in the current LLVMContext.
   unsigned getMDKindID(StringRef Name) const;
-  
+
   /// getMDKindNames - Populate client supplied SmallVector with the name for
   /// custom metadata IDs registered in this LLVMContext.   ID #0 is not used,
   /// so it is filled in as an empty string.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
-  
+
 /// @}
 /// @name Function Accessors
 /// @{
@@ -277,7 +277,7 @@ public:
   Constant *getOrInsertTargetIntrinsic(StringRef Name,
                                        const FunctionType *Ty,
                                        AttrListPtr AttributeList);
-  
+
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   Function *getFunction(StringRef Name) const;
@@ -321,14 +321,14 @@ public:
 /// @}
 /// @name Named Metadata Accessors
 /// @{
-  
+
   /// getNamedMetadata - Return the first NamedMDNode in the module with the
-  /// specified name. This method returns null if a NamedMDNode with the 
+  /// specified name. This method returns null if a NamedMDNode with the
   /// specified name is not found.
   NamedMDNode *getNamedMetadata(const Twine &Name) const;
 
-  /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
-  /// with the specified name. This method returns a new NamedMDNode if a 
+  /// getOrInsertNamedMetadata - Return the first named MDNode in the module
+  /// with the specified name. This method returns a new NamedMDNode if a
   /// NamedMDNode with the specified name is not found.
   NamedMDNode *getOrInsertNamedMetadata(StringRef Name);
 
@@ -515,15 +515,16 @@ public:
   const_named_metadata_iterator named_metadata_begin() const {
     return NamedMDList.begin();
   }
-  
+
   /// Get an iterator to the last named metadata.
   named_metadata_iterator named_metadata_end() { return NamedMDList.end(); }
   /// Get a constant iterator to the last named metadata.
   const_named_metadata_iterator named_metadata_end() const {
     return NamedMDList.end();
   }
-  
-  /// Determine how many NamedMDNodes are in the Module's list of named metadata.
+
+  /// Determine how many NamedMDNodes are in the Module's list of named
+  /// metadata.
   size_t named_metadata_size() const { return NamedMDList.size();  }
   /// Determine if the list of named metadata is empty.
   bool named_metadata_empty() const { return NamedMDList.empty(); }
@@ -535,7 +536,7 @@ public:
 
   /// Print the module to an output stream with AssemblyAnnotationWriter.
   void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const;
-  
+
   /// Dump the module to stderr (for debugging).
   void dump() const;
   /// This function causes all the subinstructions to "let go" of all references
