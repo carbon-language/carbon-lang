@@ -2036,13 +2036,10 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         // If this is an asm, and PhysReg is used elsewhere as an earlyclobber
         // operand, we can't also use it as an input.  (Outputs always come
         // before inputs, so we can stop looking at i.)
-        if (MI.getOpcode()==TargetOpcode::INLINEASM) {
+        if (MI.isInlineAsm()) {
           for (unsigned k=0; k<i; ++k) {
             MachineOperand &MOk = MI.getOperand(k);
-            if (!MOk.isReg() || MOk.getReg()==0)
-              continue;
-            unsigned VirtRegk = MOk.getReg();
-            if (VirtRegk == PhysReg && MOk.isEarlyClobber()) {
+            if (MOk.isReg() && MOk.getReg()==PhysReg && MOk.isEarlyClobber()) {
               CanReuse = false;
               break;
             }
