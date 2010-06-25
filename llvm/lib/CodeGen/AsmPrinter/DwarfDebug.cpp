@@ -2159,8 +2159,9 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
 }
 
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
-void DwarfDebug::collectVariableInfo(const MachineFunction *MF) {
-  SmallPtrSet<const MDNode *, 16> Processed;
+void 
+DwarfDebug::collectVariableInfo(const MachineFunction *MF,
+                                SmallPtrSet<const MDNode *, 16> &Processed) {
   
   /// collection info from MMI table.
   collectVariableInfoFromMMITable(MF, Processed);
@@ -2367,6 +2368,7 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope, const MDNode *Inl
     return WScope;
   }
 
+  getOrCreateAbstractScope(Scope);
   DbgScope *WScope = DbgScopeMap.lookup(InlinedAt);
   if (WScope)
     return WScope;
@@ -2380,7 +2382,6 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope, const MDNode *Inl
   Parent->addScope(WScope);
 
   ConcreteScopes[InlinedAt] = WScope;
-  getOrCreateAbstractScope(Scope);
 
   return WScope;
 }
@@ -2693,7 +2694,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     // Assumes in correct section after the entry point.
     Asm->OutStreamer.EmitLabel(FunctionEndSym);
     
-    collectVariableInfo(MF);
+    SmallPtrSet<const MDNode *, 16> ProcessedVars;
+    collectVariableInfo(MF, ProcessedVars);
 
     // Get function line info.
     if (!Lines.empty()) {
@@ -2708,8 +2710,29 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     
     // Construct abstract scopes.
     for (SmallVector<DbgScope *, 4>::iterator AI = AbstractScopesList.begin(),
-           AE = AbstractScopesList.end(); AI != AE; ++AI)
+           AE = AbstractScopesList.end(); AI != AE; ++AI) {
       constructScopeDIE(*AI);
+      DISubprogram SP((*AI)->getScopeNode());
+      if (SP.Verify()) {
+        // Collect info for variables that were optimized out.
+        StringRef FName = SP.getLinkageName();
+        if (FName.empty())
+          FName = SP.getName();
+        const Module *M = MF->getFunction()->getParent();
+        if (NamedMDNode *NMD = 
+            M->getNamedMetadata(Twine("llvm.dbg.lv.", 
+                                      getRealLinkageName(FName)))) {
+          for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+          DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
+          if (!DV || !ProcessedVars.insert(DV))
+            continue;
+          DbgScope *Scope = DbgScopeMap.lookup(DV.getContext());
+          if (Scope)
+            Scope->addVariable(new DbgVariable(DV));
+          }
+        }
+      }
+    }
     
     DIE *CurFnDIE = constructScopeDIE(CurrentFnDbgScope);
     

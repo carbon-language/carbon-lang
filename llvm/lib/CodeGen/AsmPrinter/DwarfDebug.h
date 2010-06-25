@@ -590,7 +590,8 @@ private:
   bool extractScopeInformation();
   
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
-  void collectVariableInfo(const MachineFunction *);
+  void collectVariableInfo(const MachineFunction *,
+                           SmallPtrSet<const MDNode *, 16> &ProcessedVars);
   
   /// collectVariableInfoFromMMITable - Collect variable information from
   /// side table maintained by MMI.
