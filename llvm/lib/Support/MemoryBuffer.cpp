@@ -272,26 +272,26 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
 //===----------------------------------------------------------------------===//
 
 MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
-  char Buffer[4096*4];
-
-  std::vector<char> FileData;
-
   // Read in all of the data from stdin, we cannot mmap stdin.
   //
   // FIXME: That isn't necessarily true, we should try to mmap stdin and
   // fallback if it fails.
   sys::Program::ChangeStdinToBinary();
-  size_t ReadBytes;
+
+  const ssize_t ChunkSize = 4096*4;
+  SmallString<ChunkSize> Buffer;
+  ssize_t ReadBytes;
+  // Read into Buffer until we hit EOF.
   do {
-    ReadBytes = fread(Buffer, sizeof(char), sizeof(Buffer), stdin);
-    FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
-  } while (ReadBytes == sizeof(Buffer));
+    Buffer.reserve(Buffer.size() + ChunkSize);
+    ReadBytes = read(0, Buffer.end(), ChunkSize);
+    if (ReadBytes == -1) {
+      if (errno == EINTR) continue;
+      if (ErrStr) *ErrStr = sys::StrError();
+      return 0;
+    }
+    Buffer.set_size(Buffer.size() + ReadBytes);
+  } while (ReadBytes != 0);
 
-  if (!feof(stdin)) {
-    if (ErrStr) *ErrStr = "error reading from stdin";
-    return 0;
-  }
-
-  FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
-  return getMemBufferCopy(StringRef(&FileData[0],FileData.size()-1), "<stdin>");
+  return getMemBufferCopy(Buffer, "<stdin>");
 }
