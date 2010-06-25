@@ -52,21 +52,21 @@ def VFPMiscFrm    : Format<23>;
 def ThumbFrm      : Format<24>;
 def MiscFrm       : Format<25>;
 
-def NEONGetLnFrm  : Format<26>;
-def NEONSetLnFrm  : Format<27>;
-def NEONDupFrm    : Format<28>;
-def NLdStFrm       : Format<31>;
-def N1RegModImmFrm : Format<32>;
-def N2RegFrm       : Format<33>;
-def NVCVTFrm       : Format<34>;
-def NVDupLnFrm     : Format<35>;
-def N2RegVShLFrm   : Format<36>;
-def N2RegVShRFrm   : Format<37>;
-def N3RegFrm       : Format<38>;
-def N3RegVShFrm    : Format<39>;
-def NVExtFrm       : Format<40>;
-def NVMulSLFrm     : Format<41>;
-def NVTBLFrm       : Format<42>;
+def NGetLnFrm     : Format<26>;
+def NSetLnFrm     : Format<27>;
+def NDupFrm       : Format<28>;
+def NLdStFrm      : Format<31>;
+def N1RegModImmFrm: Format<32>;
+def N2RegFrm      : Format<33>;
+def NVCVTFrm      : Format<34>;
+def NVDupLnFrm    : Format<35>;
+def N2RegVShLFrm  : Format<36>;
+def N2RegVShRFrm  : Format<37>;
+def N3RegFrm      : Format<38>;
+def N3RegVShFrm   : Format<39>;
+def NVExtFrm      : Format<40>;
+def NVMulSLFrm    : Format<41>;
+def NVTBLFrm      : Format<42>;
 
 // Misc flags.
 
@@ -1649,17 +1649,17 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
 class NVGetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
                 dag oops, dag iops, InstrItinClass itin,
                 string opc, string dt, string asm, list<dag> pattern>
-  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONGetLnFrm, itin,
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NGetLnFrm, itin,
              opc, dt, asm, pattern>;
 class NVSetLane<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
                 dag oops, dag iops, InstrItinClass itin,
                 string opc, string dt, string asm, list<dag> pattern>
-  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONSetLnFrm, itin,
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NSetLnFrm, itin,
              opc, dt, asm, pattern>;
 class NVDup<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
             dag oops, dag iops, InstrItinClass itin,
             string opc, string dt, string asm, list<dag> pattern>
-  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONDupFrm, itin,
+  : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NDupFrm, itin,
              opc, dt, asm, pattern>;
 
 // Vector Duplicate Lane (from scalar to all elements)

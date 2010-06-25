@@ -120,9 +120,9 @@ namespace ARMII {
     MiscFrm       = 25 << FormShift,
 
     // NEON formats
-    NEONGetLnFrm  = 26 << FormShift,
-    NEONSetLnFrm  = 27 << FormShift,
-    NEONDupFrm    = 28 << FormShift,
+    NGetLnFrm     = 26 << FormShift,
+    NSetLnFrm     = 27 << FormShift,
+    NDupFrm       = 28 << FormShift,
     NLdStFrm      = 31 << FormShift,
     N1RegModImmFrm= 32 << FormShift,
     N2RegFrm      = 33 << FormShift,
