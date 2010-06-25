@@ -72,7 +72,6 @@ def setupSysPath():
         sys.exit(-1)
 
     sys.path.append(lldbPath)
-    #print 'sys.path =', sys.path
 
 
 def initTestdirs():
@@ -100,8 +99,6 @@ def initTestdirs():
         # Gather all the dirs passed on the command line.
         if len(sys.argv) > index:
             testdirs = map(os.path.abspath, sys.argv[index:])
-
-    #print "testdirs =", testdirs
 
 
 def visit(prefix, dir, names):
@@ -131,6 +128,4 @@ for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
 # Now that we have loaded all the test cases, run the whole test suite.
-#print "test suite =", suite
-#print "verbose =", verbose
 unittest.TextTestRunner(verbosity=verbose).run(suite)
