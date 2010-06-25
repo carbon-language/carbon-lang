@@ -951,7 +951,7 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
       if (AddImpUse)
         // Treat predicated update as read + write.
         MI->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
-                                                 true/*IsImp*/,false/*IsKill*/));
+                                                true/*IsImp*/,false/*IsKill*/));
     } else {
       Redefs.insert(Reg);
       for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
@@ -1205,7 +1205,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // Remove the conditional branch from entry to the blocks.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
 
-  // Initialize liveins to the first BB. These are potentiall redefined by
+  // Initialize liveins to the first BB. These are potentially redefined by
   // predicated instructions.
   SmallSet<unsigned, 4> Redefs;
   InitPredRedefs(BBI1->BB, Redefs, TRI);
