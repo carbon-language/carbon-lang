@@ -69,7 +69,7 @@ private:
 #include "clang/AST/TypeNodes.def"
   
   void mangleType(const TagType*);
-  void mangleType(const FunctionType *T, bool IsStructor);
+  void mangleType(const FunctionType *T, bool IsStructor, bool IsInstMethod);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T);
   void mangleThrowSpecification(const FunctionProtoType *T);
@@ -202,11 +202,13 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   
   // We should never ever see a FunctionNoProtoType at this point.
   // We don't even know how to mangle their types anyway :).
-  FunctionProtoType *OldType = cast<FunctionProtoType>(FD->getType());
+  const FunctionProtoType *FT = cast<FunctionProtoType>(FD->getType());
 
-  bool InStructor = false;
+  bool InStructor = false, InInstMethod = false;
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
   if (MD) {
+    if (MD->isInstance())
+      InInstMethod = true;
     if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
       InStructor = true;
   }
@@ -214,29 +216,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // First, the function class.
   mangleFunctionClass(FD);
 
-  // If this is a C++ instance method, mangle the CVR qualifiers for the
-  // this pointer.
-  if (MD && MD->isInstance())
-    mangleQualifiers(Qualifiers::fromCVRMask(OldType->getTypeQuals()), false);
-
-  // Do the canonicalization out here because parameter types can
-  // undergo additional canonicalization (e.g. array decay).
-  const FunctionProtoType *FT = cast<FunctionProtoType>(getASTContext()
-                                                    .getCanonicalType(OldType));
-  // If the function's type had a throw spec, canonicalization removed it.
-  // Get it back.
-  FT = cast<FunctionProtoType>(getASTContext().getFunctionType(
-                                                FT->getResultType(),
-                                                FT->arg_type_begin(),
-                                                FT->getNumArgs(),
-                                                FT->isVariadic(),
-                                                FT->getTypeQuals(),
-                                                OldType->hasExceptionSpec(),
-                                                OldType->hasAnyExceptionSpec(),
-                                                OldType->getNumExceptions(),
-                                                OldType->exception_begin(),
-                                                FT->getExtInfo()).getTypePtr());
-  mangleType(FT, InStructor);
+  mangleType(FT, InStructor, InInstMethod);
 }
 
 void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
@@ -263,9 +243,17 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     Out << '4';
   // Now mangle the type.
   // <variable-type> ::= <type> <cvr-qualifiers>
+  //                 ::= <type> A # pointers and references
+  // Pointers and references are odd. The type of 'int * const foo;' gets
+  // mangled as 'QAHA' instead of 'PAHB', for example.
   QualType Ty = VD->getType();
-  mangleType(Ty.getLocalUnqualifiedType());
-  mangleQualifiers(Ty.getLocalQualifiers(), false);
+  if (Ty->isPointerType() || Ty->isReferenceType()) {
+    mangleType(Ty);
+    Out << 'A';
+  } else {
+    mangleType(Ty.getLocalUnqualifiedType());
+    mangleQualifiers(Ty.getLocalQualifiers(), false);
+  }
 }
 
 void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
@@ -642,6 +630,32 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
   // Only operate on the canonical type!
   T = getASTContext().getCanonicalType(T);
   
+  Qualifiers Quals = T.getLocalQualifiers();
+  if (Quals) {
+    // We have to mangle these now, while we still have enough information.
+    // <pointer-cvr-qualifiers> ::= P # pointer
+    //                          ::= Q # const pointer
+    //                          ::= R # volatile pointer
+    //                          ::= S # const volatile pointer
+    if (T->isPointerType()) {
+      if (!Quals.hasVolatile()) {
+        Out << 'Q';
+      } else {
+        if (!Quals.hasConst())
+          Out << 'R';
+        else
+          Out << 'S';
+      }
+    } else
+      // Just emit qualifiers like normal.
+      // NB: When we mangle a pointer/reference type, and the pointee
+      // type has no qualifiers, the lack of qualifier gets mangled
+      // in there.
+      mangleQualifiers(Quals, false);
+  }
+  else if (T->isPointerType()) {
+    Out << 'P';
+  }
   switch (T->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT) \
@@ -658,6 +672,12 @@ return;
     break;
   case Type::Record:
     mangleType(static_cast<RecordType *>(T.getTypePtr()));
+    break;
+  case Type::Pointer:
+    mangleType(static_cast<PointerType *>(T.getTypePtr()));
+    break;
+  case Type::LValueReference:
+    mangleType(static_cast<LValueReferenceType *>(T.getTypePtr()));
     break;
   default:
     assert(false && "Don't know how to mangle this type!");
@@ -743,22 +763,29 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
 void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T) {
   // Structors only appear in decls, so at this point we know it's not a
   // structor type.
-  mangleType(T, false);
+  // I'll probably have mangleType(MemberPointerType) call 
+  mangleType(T, false, false);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T) {
   llvm_unreachable("Can't mangle K&R function prototypes");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
-                                         bool IsStructor) {
-  // <function-type> ::= <calling-convention> <return-type> <argument-list>
-  //                                                              <throw-spec>
-  mangleCallingConvention(T);
-
+                                         bool IsStructor,
+                                         bool IsInstMethod) {
+  // <function-type> ::= <this-cvr-qualifiers> <calling-convention>
+  //                     <return-type> <argument-list> <throw-spec>
   const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
 
-  // Structors always have a 'void' return type, but MSVC mangles them as an
-  // '@' (because they have no declared return type).
+  // If this is a C++ instance method, mangle the CVR qualifiers for the
+  // this pointer.
+  if (IsInstMethod)
+    mangleQualifiers(Qualifiers::fromCVRMask(Proto->getTypeQuals()), false);
+
+  mangleCallingConvention(T);
+
+  // <return-type> ::= <type>
+  //               ::= @ # structors (they have no declared return type)
   if (IsStructor)
     Out << '@';
   else
@@ -871,15 +898,10 @@ void MicrosoftCXXNameMangler::mangleThrowSpecification(
   // <throw-spec> ::= Z # throw(...) (default)
   //              ::= @ # throw() or __declspec/__attribute__((nothrow))
   //              ::= <type>+
-  if (!FT->hasExceptionSpec() || FT->hasAnyExceptionSpec())
-    Out << 'Z';
-  else {
-    for (unsigned Exception = 0, NumExceptions = FT->getNumExceptions();
-         Exception < NumExceptions;
-         ++Exception)
-      mangleType(FT->getExceptionType(Exception).getLocalUnqualifiedType());
-    Out << '@';
-  }
+  // NOTE: Since the Microsoft compiler ignores throw specifications, they are
+  // all actually mangled as 'Z'. (They're ignored because their associated
+  // functionality isn't implemented, and probably never will be.)
+  Out << 'Z';
 }
 
 // <type>        ::= <union-type> | <struct-type> | <class-type> | <enum-type>
@@ -911,6 +933,27 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
       break;
   }
   mangleName(T->getDecl());
+}
+
+// <type> ::= <pointer-type>
+// <pointer-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
+void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
+  QualType PointeeTy = T->getPointeeType();
+  if (!PointeeTy.hasLocalQualifiers())
+    // Lack of qualifiers is mangled as 'A'.
+    Out << 'A';
+  mangleType(PointeeTy);
+}
+
+// <type> ::= <reference-type>
+// <reference-type> ::= A <cvr-qualifiers> <type>
+void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T) {
+  Out << 'A';
+  QualType PointeeTy = T->getPointeeType();
+  if (!PointeeTy.hasLocalQualifiers())
+    // Lack of qualifiers is mangled as 'A'.
+    Out << 'A';
+  mangleType(PointeeTy);
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
