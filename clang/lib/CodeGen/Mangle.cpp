@@ -2253,6 +2253,15 @@ void MangleContext::mangleGuardVariable(const VarDecl *D,
   Mangler.mangleName(D);
 }
 
+void MangleContext::mangleReferenceTemporary(const VarDecl *D,
+                                             llvm::SmallVectorImpl<char> &Res) {
+  // We match the GCC mangling here.
+  //  <special-name> ::= GR <object name>
+  CXXNameMangler Mangler(*this, Res);
+  Mangler.getStream() << "_ZGR";
+  Mangler.mangleName(D);
+}
+
 void MangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                     llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TV <type>  # virtual table

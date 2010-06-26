@@ -121,6 +121,8 @@ public:
                                   llvm::SmallVectorImpl<char> &);
   virtual void mangleGuardVariable(const VarDecl *D,
                                    llvm::SmallVectorImpl<char> &);
+  virtual void mangleReferenceTemporary(const VarDecl *D,
+                                        llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
                                llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
