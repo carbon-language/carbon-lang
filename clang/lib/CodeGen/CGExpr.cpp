@@ -1335,19 +1335,15 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                                  E->getBase()->getType().getCVRQualifiers());
   }
 
-  // The base must be a pointer, which is not an aggregate.  Emit it.
-  llvm::Value *Base = EmitScalarExpr(E->getBase());
-
   // Extend or truncate the index type to 32 or 64-bits.
-  unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (IdxBitwidth != LLVMPointerWidth)
+  if (!Idx->getType()->isIntegerTy(LLVMPointerWidth))
     Idx = Builder.CreateIntCast(Idx,
-                            llvm::IntegerType::get(VMContext, LLVMPointerWidth),
+                                llvm::IntegerType::get(VMContext, LLVMPointerWidth),
                                 IdxSigned, "idxprom");
-
+  
   // FIXME: As llvm implements the object size checking, this can come out.
   if (CatchUndefined) {
-    if (const ImplicitCastExpr *ICE=dyn_cast<ImplicitCastExpr>(E->getBase())) {
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E->getBase())){
       if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
         if (ICE->getCastKind() == CastExpr::CK_ArrayToPointerDecay) {
           if (const ConstantArrayType *CAT
@@ -1364,6 +1360,9 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     }
   }
 
+  // The base must be a pointer, which is not an aggregate.  Emit it.
+  llvm::Value *Base = EmitScalarExpr(E->getBase());
+  
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA or Objective-C interface.
   llvm::Value *Address = 0;
