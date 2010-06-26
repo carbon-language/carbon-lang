@@ -30,6 +30,6 @@ for.end:                                          ; preds = %for.cond
 ; Should only end up with one phi.
 ; CHECK: for.body:
 ; CHECK-NEXT: %j.02 = phi i64
-; CHECK-NOT phi
+; CHECK-NOT: phi
 ; CHECK: ret void
 

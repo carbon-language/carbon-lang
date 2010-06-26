@@ -41,4 +41,4 @@ entry:
 
 ;CHECK:	        DEBUG_VALUE: bar:x <- EBX+0
 ;CHECK-NEXT:Ltmp
-;CHECK-NEXT	DEBUG_VALUE: foo:y <- 1+0
+;CHECK-NEXT:	DEBUG_VALUE: foo:y <- 1+0

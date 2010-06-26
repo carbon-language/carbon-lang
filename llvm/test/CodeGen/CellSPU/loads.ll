@@ -34,7 +34,7 @@ define <4 x i32> @func() {
 }
 
 define <4 x float> @load_undef(){
-	;CHECK lqd	$3, 0($3)
+	; CHECK: lqd	$3, 0($3)
 	%val = load <4 x float>* undef
 	ret <4 x float> %val
 }
