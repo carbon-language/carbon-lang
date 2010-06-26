@@ -2889,7 +2889,7 @@ void CWriter::visitCallInst(CallInst &I) {
   bool hasByVal = I.hasByValArgument();
   bool isStructRet = I.hasStructRetAttr();
   if (isStructRet) {
-    writeOperandDeref(I.getOperand(1));
+    writeOperandDeref(I.getArgOperand(0));
     Out << " = ";
   }
   
@@ -2944,8 +2944,8 @@ void CWriter::visitCallInst(CallInst &I) {
   }
 
   unsigned NumDeclaredParams = FTy->getNumParams();
-
-  CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
+  CallSite CS(&I);
+  CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
   unsigned ArgNo = 0;
   if (isStructRet) {   // Skip struct return argument.
     ++AI;
@@ -2999,7 +2999,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << "0; ";
       
     Out << "va_start(*(va_list*)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", ";
     // Output the last argument to the enclosing function.
     if (I.getParent()->getParent()->arg_empty())
@@ -3009,9 +3009,9 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << ')';
     return true;
   case Intrinsic::vaend:
-    if (!isa<ConstantPointerNull>(I.getOperand(1))) {
+    if (!isa<ConstantPointerNull>(I.getArgOperand(0))) {
       Out << "0; va_end(*(va_list*)";
-      writeOperand(I.getOperand(1));
+      writeOperand(I.getArgOperand(0));
       Out << ')';
     } else {
       Out << "va_end(*(va_list*)0)";
@@ -3020,47 +3020,47 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
   case Intrinsic::vacopy:
     Out << "0; ";
     Out << "va_copy(*(va_list*)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", *(va_list*)";
-    writeOperand(I.getOperand(2));
+    writeOperand(I.getArgOperand(1));
     Out << ')';
     return true;
   case Intrinsic::returnaddress:
     Out << "__builtin_return_address(";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ')';
     return true;
   case Intrinsic::frameaddress:
     Out << "__builtin_frame_address(";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ')';
     return true;
   case Intrinsic::powi:
     Out << "__builtin_powi(";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", ";
-    writeOperand(I.getOperand(2));
+    writeOperand(I.getArgOperand(1));
     Out << ')';
     return true;
   case Intrinsic::setjmp:
     Out << "setjmp(*(jmp_buf*)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ')';
     return true;
   case Intrinsic::longjmp:
     Out << "longjmp(*(jmp_buf*)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", ";
-    writeOperand(I.getOperand(2));
+    writeOperand(I.getArgOperand(1));
     Out << ')';
     return true;
   case Intrinsic::prefetch:
     Out << "LLVM_PREFETCH((const void *)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", ";
-    writeOperand(I.getOperand(2));
+    writeOperand(I.getArgOperand(1));
     Out << ", ";
-    writeOperand(I.getOperand(3));
+    writeOperand(I.getArgOperand(2));
     Out << ")";
     return true;
   case Intrinsic::stacksave:
@@ -3077,7 +3077,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     printType(Out, I.getType());
     Out << ')';  
     // Multiple GCC builtins multiplex onto this intrinsic.
-    switch (cast<ConstantInt>(I.getOperand(3))->getZExtValue()) {
+    switch (cast<ConstantInt>(I.getArgOperand(2))->getZExtValue()) {
     default: llvm_unreachable("Invalid llvm.x86.sse.cmp!");
     case 0: Out << "__builtin_ia32_cmpeq"; break;
     case 1: Out << "__builtin_ia32_cmplt"; break;
@@ -3098,9 +3098,9 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
       Out << 'd';
       
     Out << "(";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ", ";
-    writeOperand(I.getOperand(2));
+    writeOperand(I.getArgOperand(1));
     Out << ")";
     return true;
   case Intrinsic::ppc_altivec_lvsl:
@@ -3108,7 +3108,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     printType(Out, I.getType());
     Out << ')';  
     Out << "__builtin_altivec_lvsl(0, (void*)";
-    writeOperand(I.getOperand(1));
+    writeOperand(I.getArgOperand(0));
     Out << ")";
     return true;
   }
@@ -3221,7 +3221,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
       DestVal = ResultVals[ValueCount].first;
       DestValNo = ResultVals[ValueCount].second;
     } else
-      DestVal = CI.getOperand(ValueCount-ResultVals.size()+1);
+      DestVal = CI.getArgOperand(ValueCount-ResultVals.size());
 
     if (I->isEarlyClobber)
       C = "&"+C;
@@ -3255,7 +3255,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
     }
     
     assert(ValueCount >= ResultVals.size() && "Input can't refer to result");
-    Value *SrcVal = CI.getOperand(ValueCount-ResultVals.size()+1);
+    Value *SrcVal = CI.getArgOperand(ValueCount-ResultVals.size());
     
     Out << "\"" << C << "\"(";
     if (!I->isIndirect)
