@@ -270,16 +270,16 @@ static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
 }
 
 // getCommonReturnValue - Check to see if the function containing the specified
-// return instruction and tail call consistently returns the same
-// runtime-constant value at all exit points.  If so, return the returned value.
+// tail call consistently returns the same runtime-constant value at all exit
+// points except for IgnoreRI.  If so, return the returned value.
 //
-static Value *getCommonReturnValue(ReturnInst *TheRI, CallInst *CI) {
-  Function *F = TheRI->getParent()->getParent();
+static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
+  Function *F = CI->getParent()->getParent();
   Value *ReturnedValue = 0;
 
   for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator()))
-      if (RI != TheRI) {
+      if (RI != IgnoreRI) {
         Value *RetOp = RI->getOperand(0);
 
         // We can only perform this transformation if the value returned is
@@ -404,7 +404,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (Ret->getNumOperands() == 1 && Ret->getReturnValue() != CI &&
       !isa<UndefValue>(Ret->getReturnValue()) &&
       AccumulatorRecursionEliminationInitVal == 0 &&
-      !getCommonReturnValue(Ret, CI))
+      !getCommonReturnValue(0, CI))
     return false;
 
   // OK! We can transform this tail call.  If this is the first one found,
