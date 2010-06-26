@@ -40,7 +40,8 @@ struct BinOpInfo {
   Value *LHS;
   Value *RHS;
   QualType Ty;  // Computation Type.
-  const BinaryOperator *E;
+  BinaryOperator::Opcode Opcode; // Opcode of BinOp to perform
+  const Expr *E;      // Entire expr, for error unsupported.  May not be binop.
 };
 
 namespace {
@@ -1122,23 +1123,14 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
 
 Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreResultAssign();
-  Value *Op = Visit(E->getSubExpr());
-  if (Op->getType()->isFPOrFPVectorTy())
-    return Builder.CreateFNeg(Op, "neg");
-  
-  // Signed integer overflow is undefined behavior.
-  if (E->getType()->isSignedIntegerType()) {
-    switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
-    case LangOptions::SOB_Trapping:
-      // FIXME: Implement -ftrapv for negate.
-    case LangOptions::SOB_Undefined:
-      return Builder.CreateNSWNeg(Op, "neg");
-    case LangOptions::SOB_Defined:
-      return Builder.CreateNeg(Op, "neg");
-    }
-  }
-  
-  return Builder.CreateNeg(Op, "neg");
+  // Emit unary minus with EmitSub so we handle overflow cases etc.
+  BinOpInfo BinOp;
+  BinOp.RHS = Visit(E->getSubExpr());;
+  BinOp.LHS = llvm::Constant::getNullValue(BinOp.RHS->getType());
+  BinOp.Ty = E->getType();
+  BinOp.Opcode = BinaryOperator::Sub;
+  BinOp.E = E;
+  return EmitSub(BinOp);
 }
 
 Value *ScalarExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
@@ -1239,6 +1231,7 @@ BinOpInfo ScalarExprEmitter::EmitBinOps(const BinaryOperator *E) {
   Result.LHS = Visit(E->getLHS());
   Result.RHS = Visit(E->getRHS());
   Result.Ty  = E->getType();
+  Result.Opcode = E->getOpcode();
   Result.E = E;
   return Result;
 }
@@ -1265,6 +1258,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   // first, plus this should improve codegen a little.
   OpInfo.RHS = Visit(E->getRHS());
   OpInfo.Ty = E->getComputationResultType();
+  OpInfo.Opcode = E->getOpcode();
   OpInfo.E = E;
   // Load/convert the LHS.
   LValue LHSLV = EmitCheckedLValue(E->getLHS());
@@ -1330,7 +1324,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   unsigned IID;
   unsigned OpID = 0;
 
-  switch (Ops.E->getOpcode()) {
+  switch (Ops.Opcode) {
   case BinaryOperator::Add:
   case BinaryOperator::AddAssign:
     OpID = 1;
@@ -1430,27 +1424,32 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
 
+  // Must have binary (not unary) expr here.  Unary pointer increment doesn't
+  // use this path.
+  const BinaryOperator *BinOp = cast<BinaryOperator>(Ops.E);
+  
   if (Ops.Ty->isPointerType() &&
       Ops.Ty->getAs<PointerType>()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size
-    CGF.ErrorUnsupported(Ops.E, "VLA pointer addition");
+    CGF.ErrorUnsupported(BinOp, "VLA pointer addition");
   }
+  
   Value *Ptr, *Idx;
   Expr *IdxExp;
-  const PointerType *PT = Ops.E->getLHS()->getType()->getAs<PointerType>();
+  const PointerType *PT = BinOp->getLHS()->getType()->getAs<PointerType>();
   const ObjCObjectPointerType *OPT =
-    Ops.E->getLHS()->getType()->getAs<ObjCObjectPointerType>();
+    BinOp->getLHS()->getType()->getAs<ObjCObjectPointerType>();
   if (PT || OPT) {
     Ptr = Ops.LHS;
     Idx = Ops.RHS;
-    IdxExp = Ops.E->getRHS();
+    IdxExp = BinOp->getRHS();
   } else {  // int + pointer
-    PT = Ops.E->getRHS()->getType()->getAs<PointerType>();
-    OPT = Ops.E->getRHS()->getType()->getAs<ObjCObjectPointerType>();
+    PT = BinOp->getRHS()->getType()->getAs<PointerType>();
+    OPT = BinOp->getRHS()->getType()->getAs<ObjCObjectPointerType>();
     assert((PT || OPT) && "Invalid add expr");
     Ptr = Ops.RHS;
     Idx = Ops.LHS;
-    IdxExp = Ops.E->getLHS();
+    IdxExp = BinOp->getLHS();
   }
 
   unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
@@ -1509,16 +1508,20 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
 
-  if (Ops.E->getLHS()->getType()->isPointerType() &&
-      Ops.E->getLHS()->getType()->getAs<PointerType>()->isVariableArrayType()) {
+  // Must have binary (not unary) expr here.  Unary pointer increment doesn't
+  // use this path.
+  const BinaryOperator *BinOp = cast<BinaryOperator>(Ops.E);
+  
+  if (BinOp->getLHS()->getType()->isPointerType() &&
+      BinOp->getLHS()->getType()->getAs<PointerType>()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size for
     // ptr-int
     // The amount of the division needs to account for the VLA size for
     // ptr-ptr.
-    CGF.ErrorUnsupported(Ops.E, "VLA pointer subtraction");
+    CGF.ErrorUnsupported(BinOp, "VLA pointer subtraction");
   }
 
-  const QualType LHSType = Ops.E->getLHS()->getType();
+  const QualType LHSType = BinOp->getLHS()->getType();
   const QualType LHSElementType = LHSType->getPointeeType();
   if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
     // pointer - int
@@ -1529,7 +1532,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
       // signed or not.
       const llvm::Type *IdxType =
           llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
-      if (Ops.E->getRHS()->getType()->isSignedIntegerType())
+      if (BinOp->getRHS()->getType()->isSignedIntegerType())
         Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
       else
         Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");

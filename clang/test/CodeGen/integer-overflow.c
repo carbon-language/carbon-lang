@@ -23,7 +23,7 @@ void test1() {
   
   // DEFAULT: sub nsw i32 0, 
   // WRAPV: sub i32 0, 
-  // TRAPV: sub nsw i32 0, 
+  // TRAPV: llvm.ssub.with.overflow.i32
   f11G = -a;
   
   // DEFAULT: mul nsw i32
