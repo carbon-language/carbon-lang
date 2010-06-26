@@ -908,7 +908,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       llvm::Constant *C = llvm::ConstantInt::get(VMContext,
                                                  Result.Val.getInt());
 
-      if (C->getType() == llvm::Type::getInt1Ty(VMContext)) {
+      if (C->getType()->isIntegerTy(1)) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
         C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
@@ -955,7 +955,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   }
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
-  if (C && C->getType() == llvm::Type::getInt1Ty(VMContext)) {
+  if (C && C->getType()->isIntegerTy(1)) {
     const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }

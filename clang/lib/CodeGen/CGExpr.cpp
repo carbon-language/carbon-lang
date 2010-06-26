@@ -427,7 +427,7 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
       NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
     }
-  } else if (InVal->getType() == llvm::Type::getInt1Ty(VMContext) && isInc) {
+  } else if (InVal->getType()->isIntegerTy(1) && isInc) {
     // Bool++ is an interesting case, due to promotion rules, we get:
     // Bool++ -> Bool = Bool+1 -> Bool = (int)Bool+1 ->
     // Bool = ((int)Bool+1) != 0

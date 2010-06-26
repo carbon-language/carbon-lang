@@ -1076,7 +1076,7 @@ void X86_64ABIInfo::classify(QualType Ty,
 ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
                                           const llvm::Type *CoerceTo,
                                           ASTContext &Context) const {
-  if (CoerceTo == llvm::Type::getInt64Ty(CoerceTo->getContext())) {
+  if (CoerceTo->isIntegerTy(64)) {
     // Integer and pointer types will end up in a general purpose
     // register.
 
@@ -1087,7 +1087,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (Ty->isIntegralOrEnumerationType() || Ty->hasPointerRepresentation())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-  } else if (CoerceTo == llvm::Type::getDoubleTy(CoerceTo->getContext())) {
+  } else if (CoerceTo->isDoubleTy()) {
     assert(Ty.isCanonical() && "should always have a canonical type here");
     assert(!Ty.hasQualifiers() && "should never have a qualified type here");
 

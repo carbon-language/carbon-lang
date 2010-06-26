@@ -1424,7 +1424,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
 
-  // Must have binary (not unary) expr here.  Unary pointer increment doesn't
+  // Must have binary (not unary) expr here.  Unary pointer decrement doesn't
   // use this path.
   const BinaryOperator *BinOp = cast<BinaryOperator>(Ops.E);
   
