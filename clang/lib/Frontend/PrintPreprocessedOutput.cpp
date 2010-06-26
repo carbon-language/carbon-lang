@@ -23,6 +23,7 @@
 #include "clang/Lex/TokenConcatenation.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -117,7 +118,7 @@ public:
   virtual void Ident(SourceLocation Loc, const std::string &str);
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
-
+  virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str);
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc) {
@@ -301,6 +302,29 @@ void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
     }
     OS << '"';
   }
+
+  OS << ')';
+  EmittedTokensOnThisLine = true;
+}
+
+void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
+                                             llvm::StringRef Str) {
+  MoveToLine(Loc);
+  OS << "#pragma message(";
+
+  OS << '"';
+
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    unsigned char Char = Str[i];
+    if (isprint(Char) && Char != '\\' && Char != '"')
+      OS << (char)Char;
+    else  // Output anything hard as an octal escape.
+      OS << '\\'
+         << (char)('0'+ ((Char >> 6) & 7))
+         << (char)('0'+ ((Char >> 3) & 7))
+         << (char)('0'+ ((Char >> 0) & 7));
+  }
+  OS << '"';
 
   OS << ')';
   EmittedTokensOnThisLine = true;

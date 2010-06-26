@@ -225,6 +225,9 @@ def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
 def err_pragma_comment_malformed : Error<
   "pragma comment requires parenthesized identifier and optional string">;
+def err_pragma_message_malformed : Error<
+  "pragma message requires parenthesized string">;
+def warn_pragma_message : Warning<"%0">;
 def warn_pragma_ignored : Warning<"unknown pragma ignored">,
    InGroup<UnknownPragmas>, DefaultIgnore;
 def ext_stdc_pragma_ignored : ExtWarn<"unknown pragma in STDC namespace">,

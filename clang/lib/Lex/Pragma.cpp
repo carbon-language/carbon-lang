@@ -419,7 +419,68 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
+/// HandlePragmaMessage - Handle the microsoft #pragma message extension.  The
+/// syntax is:
+///   #pragma message(messagestring)
+/// messagestring is a string, which is fully macro expanded, and permits string
+/// concatenation, embedded escape characters etc.  See MSDN for more details.
+void Preprocessor::HandlePragmaMessage(Token &Tok) {
+  SourceLocation MessageLoc = Tok.getLocation();
+  Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(MessageLoc, diag::err_pragma_message_malformed);
+    return;
+  }
 
+  // Read the string.
+  Lex(Tok);
+  
+
+  // We need at least one string.
+  if (Tok.isNot(tok::string_literal)) {
+    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
+    return;
+  }
+
+  // String concatenation allows multiple strings, which can even come from
+  // macro expansion.
+  // "foo " "bar" "Baz"
+  llvm::SmallVector<Token, 4> StrToks;
+  while (Tok.is(tok::string_literal)) {
+    StrToks.push_back(Tok);
+    Lex(Tok);
+  }
+
+  // Concatenate and parse the strings.
+  StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
+  assert(!Literal.AnyWide && "Didn't allow wide strings in");
+  if (Literal.hadError)
+    return;
+  if (Literal.Pascal) {
+    Diag(StrToks[0].getLocation(), diag::err_pragma_message_malformed);
+    return;
+  }
+
+  llvm::StringRef MessageString(Literal.GetString(), Literal.GetStringLength());
+
+  if (Tok.isNot(tok::r_paren)) {
+    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
+    return;
+  }
+  Lex(Tok);  // eat the r_paren.
+
+  if (Tok.isNot(tok::eom)) {
+    Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
+    return;
+  }
+
+  // Output the message.
+  Diag(MessageLoc, diag::warn_pragma_message) << MessageString;
+
+  // If the pragma is lexically sound, notify any interested PPCallbacks.
+  if (Callbacks)
+    Callbacks->PragmaMessage(MessageLoc, MessageString);
+}
 
 
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
@@ -632,6 +693,14 @@ struct PragmaCommentHandler : public PragmaHandler {
   }
 };
 
+/// PragmaMessageHandler - "#pragma message("...")".
+struct PragmaMessageHandler : public PragmaHandler {
+  PragmaMessageHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
+    PP.HandlePragmaMessage(CommentTok);
+  }
+};
+
 // Pragma STDC implementations.
 
 enum STDCSetting {
@@ -743,6 +812,8 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("STDC", new PragmaSTDC_UnknownHandler());
 
   // MS extensions.
-  if (Features.Microsoft)
+  if (Features.Microsoft) {
     AddPragmaHandler(0, new PragmaCommentHandler(getIdentifierInfo("comment")));
+    AddPragmaHandler(0, new PragmaMessageHandler(getIdentifierInfo("message")));
+  }
 }

@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace clang {
@@ -68,6 +69,12 @@ public:
   ///
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str) {
+  }
+
+  /// PragmaMessage - This callback is invoked when a #pragma message directive
+  /// is read.
+  ///
+  virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
   }
 
   /// MacroExpands - This is called by
@@ -125,6 +132,11 @@ public:
                              const std::string &Str) {
     First->PragmaComment(Loc, Kind, Str);
     Second->PragmaComment(Loc, Kind, Str);
+  }
+
+  virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
+    First->PragmaMessage(Loc, Str);
+    Second->PragmaMessage(Loc, Str);
   }
 
   virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {

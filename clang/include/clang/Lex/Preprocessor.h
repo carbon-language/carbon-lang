@@ -918,6 +918,7 @@ public:
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
   void HandlePragmaDependency(Token &DependencyTok);
   void HandlePragmaComment(Token &CommentTok);
+  void HandlePragmaMessage(Token &MessageTok);
   // Return true and store the first token only if any CommentHandler
   // has inserted some tokens and getCommentRetentionState() is false.
   bool HandleComment(Token &Token, SourceRange Comment);
