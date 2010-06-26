@@ -87,8 +87,8 @@ void LiveIntervals::releaseMemory() {
   
   r2iMap_.clear();
 
-  // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
-  VNInfoAllocator.DestroyAll();
+  // Release VNInfo memory regions, VNInfo objects don't need to be dtor'd.
+  VNInfoAllocator.Reset();
   while (!CloneMIs.empty()) {
     MachineInstr *MI = CloneMIs.back();
     CloneMIs.pop_back();

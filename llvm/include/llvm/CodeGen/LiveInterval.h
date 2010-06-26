@@ -67,7 +67,7 @@ namespace llvm {
     } cr;
 
   public:
-    typedef SpecificBumpPtrAllocator<VNInfo> Allocator;
+    typedef BumpPtrAllocator Allocator;
 
     /// The ID number of this value.
     unsigned id;
@@ -319,8 +319,8 @@ namespace llvm {
     /// the instruction that defines the value number.
     VNInfo *getNextValue(SlotIndex def, MachineInstr *CopyMI,
                        bool isDefAccurate, VNInfo::Allocator &VNInfoAllocator) {
-      VNInfo *VNI = VNInfoAllocator.Allocate();
-      new (VNI) VNInfo((unsigned)valnos.size(), def, CopyMI);
+      VNInfo *VNI =
+        new (VNInfoAllocator) VNInfo((unsigned)valnos.size(), def, CopyMI);
       VNI->setIsDefAccurate(isDefAccurate);
       valnos.push_back(VNI);
       return VNI;
@@ -330,8 +330,8 @@ namespace llvm {
     /// for the Value number.
     VNInfo *createValueCopy(const VNInfo *orig,
                             VNInfo::Allocator &VNInfoAllocator) {
-      VNInfo *VNI = VNInfoAllocator.Allocate();
-      new (VNI) VNInfo((unsigned)valnos.size(), *orig);
+      VNInfo *VNI =
+        new (VNInfoAllocator) VNInfo((unsigned)valnos.size(), *orig);
       valnos.push_back(VNI);
       return VNI;
     }
