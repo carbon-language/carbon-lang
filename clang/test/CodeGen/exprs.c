@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - 
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // PR1895
 // sizeof function
@@ -119,3 +119,15 @@ void f9(struct S *x) {
 void f10() {
   __builtin_sin(0);
 }
+
+// rdar://7530813
+// CHECK: define i32 @f11
+int f11(long X) {
+  int A[100];
+  return A[X];
+
+// CHECK: load {{.*}}* %X.addr
+// CHECK-NEXT: getelementptr inbounds [100 x i32]* %A, i32 0, 
+// CHECK-NEXT: load i32*
+}
+

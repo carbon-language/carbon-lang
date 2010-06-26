@@ -1317,6 +1317,22 @@ llvm::BasicBlock *CodeGenFunction::getTrapBB() {
   return TrapBB;
 }
 
+/// isSimpleArrayDecayOperand - If the specified expr is a simple decay from an
+/// array to pointer, return the array subexpression.
+static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
+  // If this isn't just an array->pointer decay, bail out.
+  const CastExpr *CE = dyn_cast<CastExpr>(E);
+  if (CE == 0 || CE->getCastKind() != CastExpr::CK_ArrayToPointerDecay)
+    return 0;
+  
+  // If this is a decay from variable width array, bail out.
+  const Expr *SubExpr = CE->getSubExpr();
+  if (SubExpr->getType()->isVariableArrayType())
+    return 0;
+  
+  return SubExpr;
+}
+
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // The index must always be an integer, which is not an aggregate.  Emit it.
   llvm::Value *Idx = EmitScalarExpr(E->getIdx());
@@ -1360,9 +1376,6 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     }
   }
 
-  // The base must be a pointer, which is not an aggregate.  Emit it.
-  llvm::Value *Base = EmitScalarExpr(E->getBase());
-  
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA or Objective-C interface.
   llvm::Value *Address = 0;
@@ -1378,9 +1391,13 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateUDiv(Idx,
                              llvm::ConstantInt::get(Idx->getType(),
                                  BaseTypeSize.getQuantity()));
+    
+    // The base must be a pointer, which is not an aggregate.  Emit it.
+    llvm::Value *Base = EmitScalarExpr(E->getBase());
+    
     Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
-  } else if (const ObjCObjectType *OIT =
-               E->getType()->getAs<ObjCObjectType>()) {
+  } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
+    // Indexing over an interface, as in "NSString *P; P[4];"
     llvm::Value *InterfaceSize =
       llvm::ConstantInt::get(Idx->getType(),
           getContext().getTypeSizeInChars(OIT).getQuantity());
@@ -1388,10 +1405,28 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 
     const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
+    
+    // The base must be a pointer, which is not an aggregate.  Emit it.
+    llvm::Value *Base = EmitScalarExpr(E->getBase());
     Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy),
                                 Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
+  } else if (const Expr *Array = isSimpleArrayDecayOperand(E->getBase())) {
+    // If this is A[i] where A is an array, the frontend will have decayed the
+    // base to be a ArrayToPointerDecay implicit cast.  While correct, it is
+    // inefficient at -O0 to emit a "gep A, 0, 0" when codegen'ing it, then a
+    // "gep x, i" here.  Emit one "gep A, 0, i".
+    assert(Array->getType()->isArrayType() &&
+           "Array to pointer decay must have array source type!");
+    llvm::Value *ArrayPtr = EmitLValue(Array).getAddress();
+    const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+    llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
+    llvm::Value *Args[] = { Zero, Idx };
+    
+    Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, Args+2, "arrayidx");
   } else {
+    // The base must be a pointer, which is not an aggregate.  Emit it.
+    llvm::Value *Base = EmitScalarExpr(E->getBase());
     Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
   }
 
