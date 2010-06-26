@@ -624,8 +624,8 @@ public:
     return Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name);
   }
   template<typename InputIterator>
-  Value *CreateInBoundsGEP(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
-                           const Twine &Name = "") {
+  Value *CreateInBoundsGEP(Value *Ptr, InputIterator IdxBegin,
+                           InputIterator IdxEnd, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       InputIterator i;
