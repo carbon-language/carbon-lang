@@ -235,6 +235,9 @@ public:
 
   void setAlignment(unsigned Align);
 
+  Value *getValueOperand() { return getOperand(0); }
+  const Value *getValueOperand() const { return getOperand(0); }
+  
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
   static unsigned getPointerOperandIndex() { return 1U; }
