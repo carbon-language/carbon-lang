@@ -2830,7 +2830,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       return;
     }
       
-    case UnaryOperator::Plus: assert (!asLValue);  // FALL-THROUGH.
+    case UnaryOperator::Plus: assert(!asLValue);  // FALL-THROUGH.
     case UnaryOperator::Extension: {
 
       // Unary "+" is a no-op, similar to a parentheses.  We still have places
@@ -2840,7 +2840,11 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 
       Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
-      Visit(Ex, Pred, Tmp);
+
+      if (asLValue)
+	VisitLValue(Ex, Pred, Tmp);
+      else
+	Visit(Ex, Pred, Tmp);
 
       for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
         const GRState* state = GetState(*I);
