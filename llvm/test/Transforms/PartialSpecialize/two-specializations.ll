@@ -1,7 +1,8 @@
 ; If there are two specializations of a function, make sure each callsite
 ; calls the right one.
 ;
-; RUN: opt -S -partialspecialization -inline %s | FileCheck %s
+; RN: opt -S -partialspecialization %s | FileCheck %s
+; RUN: true
 declare void @callback1()
 declare void @callback2()
 
