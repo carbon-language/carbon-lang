@@ -1289,7 +1289,7 @@ void CppWriter::printInstruction(const Instruction *I,
           << allocaI->getAlignment() << ");";
     break;
   }
-  case Instruction::Load:{
+  case Instruction::Load: {
     const LoadInst* load = cast<LoadInst>(I);
     Out << "LoadInst* " << iName << " = new LoadInst("
         << opNames[0] << ", \"";
@@ -1384,7 +1384,7 @@ void CppWriter::printInstruction(const Instruction *I,
     Out << "\", " << bbname << ");";
     break;
   }
-  case Instruction::Call:{
+  case Instruction::Call: {
     const CallInst* call = cast<CallInst>(I);
     if (const InlineAsm* ila = dyn_cast<InlineAsm>(call->getCalledValue())) {
       Out << "InlineAsm* " << getCppName(ila) << " = InlineAsm::get("
@@ -1394,7 +1394,7 @@ void CppWriter::printInstruction(const Instruction *I,
           << (ila->hasSideEffects() ? "true" : "false") << ");";
       nl(Out);
     }
-    if (call->getNumOperands() > 2) {
+    if (call->getNumArgOperands() > 1) {
       Out << "std::vector<Value*> " << iName << "_params;";
       nl(Out);
       for (unsigned i = 1; i < call->getNumOperands(); ++i) {
@@ -1404,7 +1404,7 @@ void CppWriter::printInstruction(const Instruction *I,
       Out << "CallInst* " << iName << " = CallInst::Create("
           << opNames[0] << ", " << iName << "_params.begin(), "
           << iName << "_params.end(), \"";
-    } else if (call->getNumOperands() == 2) {
+    } else if (call->getNumArgOperands() == 1) {
       Out << "CallInst* " << iName << " = CallInst::Create("
           << opNames[0] << ", " << opNames[1] << ", \"";
     } else {
@@ -1417,7 +1417,7 @@ void CppWriter::printInstruction(const Instruction *I,
     printCallingConv(call->getCallingConv());
     Out << ");";
     nl(Out) << iName << "->setTailCall("
-        << (call->isTailCall() ? "true":"false");
+        << (call->isTailCall() ? "true" : "false");
     Out << ");";
     printAttributes(call->getAttributes(), iName);
     Out << iName << "->setAttributes(" << iName << "_PAL);";
