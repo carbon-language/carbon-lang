@@ -800,50 +800,51 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
 void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
                                          llvm::Value *ReturnValue) {
-  llvm::Value *RV = 0;
-
   // Functions with no result always return void.
-  if (ReturnValue) {
-    QualType RetTy = FI.getReturnType();
-    const ABIArgInfo &RetAI = FI.getReturnInfo();
-
-    switch (RetAI.getKind()) {
-    case ABIArgInfo::Indirect:
-      if (RetTy->isAnyComplexType()) {
-        ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
-        StoreComplexToAddr(RT, CurFn->arg_begin(), false);
-      } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-        // Do nothing; aggregrates get evaluated directly into the destination.
-      } else {
-        EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(),
-                          false, RetTy);
-      }
-      break;
-
-    case ABIArgInfo::Extend:
-    case ABIArgInfo::Direct:
-      // The internal return value temp always will have
-      // pointer-to-return-type type.
-      RV = Builder.CreateLoad(ReturnValue);
-      break;
-
-    case ABIArgInfo::Ignore:
-      break;
-
-    case ABIArgInfo::Coerce:
-      RV = CreateCoercedLoad(ReturnValue, RetAI.getCoerceToType(), *this);
-      break;
-
-    case ABIArgInfo::Expand:
-      assert(0 && "Invalid ABI kind for return argument");
-    }
-  }
-
-  if (RV) {
-    Builder.CreateRet(RV);
-  } else {
+  if (ReturnValue == 0) {
     Builder.CreateRetVoid();
+    return;
   }
+  
+  llvm::Value *RV = 0;
+  QualType RetTy = FI.getReturnType();
+  const ABIArgInfo &RetAI = FI.getReturnInfo();
+
+  switch (RetAI.getKind()) {
+  case ABIArgInfo::Indirect:
+    if (RetTy->isAnyComplexType()) {
+      ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
+      StoreComplexToAddr(RT, CurFn->arg_begin(), false);
+    } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+      // Do nothing; aggregrates get evaluated directly into the destination.
+    } else {
+      EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(),
+                        false, RetTy);
+    }
+    break;
+
+  case ABIArgInfo::Extend:
+  case ABIArgInfo::Direct:
+    // The internal return value temp always will have
+    // pointer-to-return-type type.
+    RV = Builder.CreateLoad(ReturnValue);
+    break;
+
+  case ABIArgInfo::Ignore:
+    break;
+
+  case ABIArgInfo::Coerce:
+    RV = CreateCoercedLoad(ReturnValue, RetAI.getCoerceToType(), *this);
+    break;
+
+  case ABIArgInfo::Expand:
+    assert(0 && "Invalid ABI kind for return argument");
+  }
+
+  if (RV)
+    Builder.CreateRet(RV);
+  else
+    Builder.CreateRetVoid();
 }
 
 RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
