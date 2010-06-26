@@ -21,13 +21,25 @@ void test1() {
   // TRAPV: llvm.ssub.with.overflow.i32
   f11G = a - b;
   
-  // DEFAULT: sub nsw i32 0, 
-  // WRAPV: sub i32 0, 
-  // TRAPV: llvm.ssub.with.overflow.i32
-  f11G = -a;
-  
   // DEFAULT: mul nsw i32
   // WRAPV: mul i32
   // TRAPV: llvm.smul.with.overflow.i32
   f11G = a * b;
+
+  // DEFAULT: sub nsw i32 0, 
+  // WRAPV: sub i32 0, 
+  // TRAPV: llvm.ssub.with.overflow.i32(i32 0
+  f11G = -a;
+  
+  // PR7426 - Overflow checking for increments.
+  
+  // DEFAULT: add nsw i32 {{.*}}, 1
+  // WRAPV: add i32 {{.*}}, 1
+  // TRAPV: llvm.sadd.with.overflow.i32({{.*}}, i32 1)
+  ++a;
+  
+  // DEFAULT: add nsw i32 {{.*}}, -1
+  // WRAPV: add i32 {{.*}}, -1
+  // TRAPV: llvm.sadd.with.overflow.i32({{.*}}, i32 -1)
+  --a;
 }

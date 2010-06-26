@@ -1179,11 +1179,27 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
   } else if (isa<llvm::IntegerType>(InVal->getType())) {
     NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
     
-    // Signed integer overflow is undefined behavior.
-    if (ValTy->isSignedIntegerType())
-      NextVal = Builder.CreateNSWAdd(InVal, NextVal, isInc ? "inc" : "dec");
-    else
+    if (!ValTy->isSignedIntegerType())
+      // Unsigned integer inc is always two's complement.
       NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    else {
+      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+      case LangOptions::SOB_Undefined:
+        NextVal = Builder.CreateNSWAdd(InVal, NextVal, isInc ? "inc" : "dec");
+        break;
+      case LangOptions::SOB_Defined:
+        NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+        break;
+      case LangOptions::SOB_Trapping:
+        BinOpInfo BinOp;
+        BinOp.LHS = InVal;
+        BinOp.RHS = NextVal;
+        BinOp.Ty = E->getType();
+        BinOp.Opcode = BinaryOperator::Add;
+        BinOp.E = E;
+        return EmitOverflowCheckedBinOp(BinOp);
+      }
+    }
   } else {
     // Add the inc/dec to the real part.
     if (InVal->getType()->isFloatTy())
