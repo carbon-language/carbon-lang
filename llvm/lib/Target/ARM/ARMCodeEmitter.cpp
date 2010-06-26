@@ -139,6 +139,7 @@ namespace {
 
     void emitMiscInstruction(const MachineInstr &MI);
 
+    void emitNEONGetLaneInstruction(const MachineInstr &MI);
     void emitNEON1RegModImmInstruction(const MachineInstr &MI);
     void emitNEON2RegInstruction(const MachineInstr &MI);
     void emitNEON3RegInstruction(const MachineInstr &MI);
@@ -413,6 +414,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     emitMiscInstruction(MI);
     break;
   // NEON instructions.
+  case ARMII::NGetLnFrm:
+    emitNEONGetLaneInstruction(MI);
+    break;
   case ARMII::N1RegModImmFrm:
     emitNEON1RegModImmInstruction(MI);
     break;
@@ -1579,6 +1583,35 @@ static unsigned encodeNEONRm(const MachineInstr &MI, unsigned OpIdx) {
   Binary |= (RegM & 0xf);
   Binary |= ((RegM >> 4) & 1) << ARMII::M_BitShift;
   return Binary;
+}
+
+void ARMCodeEmitter::emitNEONGetLaneInstruction(const MachineInstr &MI) {
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+
+  unsigned RegT = MI.getOperand(0).getReg();
+  RegT = ARMRegisterInfo::getRegisterNumbering(RegT);
+  Binary |= (RegT << ARMII::RegRdShift);
+  Binary |= encodeNEONRn(MI, 1);
+
+  unsigned LaneShift;
+  if ((Binary & (1 << 22)) != 0)
+    LaneShift = 0; // 8-bit elements
+  else if ((Binary & (1 << 5)) != 0)
+    LaneShift = 1; // 16-bit elements
+  else
+    LaneShift = 2; // 32-bit elements
+
+  unsigned Lane = MI.getOperand(2).getImm() << LaneShift;
+  unsigned Opc1 = Lane >> 2;
+  unsigned Opc2 = Lane & 3;
+  assert((Opc1 & 3) == 0 && "out-of-range lane number operand");
+  Binary |= (Opc1 << 21);
+  Binary |= (Opc2 << 5);
+
+  emitWordLE(Binary);
 }
 
 void ARMCodeEmitter::emitNEON1RegModImmInstruction(const MachineInstr &MI) {
