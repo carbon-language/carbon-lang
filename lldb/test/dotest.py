@@ -112,7 +112,8 @@ def visit(prefix, dir, names):
 
         if '.py' == os.path.splitext(name)[1] and name.startswith(prefix):
             # We found a pattern match for our test case.  Add it to the suite.
-            sys.path.append(dir)
+            if not sys.path.count(dir):
+                sys.path.append(dir)
             base = os.path.splitext(name)[0]
             suite.addTests(unittest.defaultTestLoader.loadTestsFromName(base))
 
