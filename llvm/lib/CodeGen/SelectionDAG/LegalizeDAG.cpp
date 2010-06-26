@@ -2642,15 +2642,29 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     EVT VT = Node->getValueType(0);
     Tmp1 = Node->getOperand(0);
     Tmp2 = Node->getOperand(1);
-    SDValue VAList = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2, V, 0,
-                                 false, false, 0);
+    unsigned Align = Node->getConstantOperandVal(3);
+
+    SDValue VAListLoad = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2, V, 0,
+                                     false, false, 0);
+    SDValue VAList = VAListLoad;
+
+    if (Align != 0 ) {
+      VAList = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
+                           DAG.getConstant(Align - 1,
+                                           TLI.getPointerTy()));
+
+      VAList = DAG.getNode(ISD::AND, dl, TLI.getPointerTy(), VAList,
+                           DAG.getConstant(-Align,
+                                           TLI.getPointerTy()));
+    }
+
     // Increment the pointer, VAList, to the next vaarg
     Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
                        DAG.getConstant(TLI.getTargetData()->
                           getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
                                        TLI.getPointerTy()));
     // Store the incremented VAList to the legalized pointer
-    Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0,
+    Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2, V, 0,
                         false, false, 0);
     // Load the actual argument out of the pointer VAList
     Results.push_back(DAG.getLoad(VT, dl, Tmp3, VAList, NULL, 0,

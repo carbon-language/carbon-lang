@@ -508,8 +508,9 @@ namespace ISD {
     CALLSEQ_START,  // Beginning of a call sequence
     CALLSEQ_END,    // End of a call sequence
 
-    // VAARG - VAARG has three operands: an input chain, a pointer, and a
-    // SRCVALUE.  It returns a pair of values: the vaarg value and a new chain.
+    // VAARG - VAARG has four operands: an input chain, a pointer, a SRCVALUE,
+    // and the alignment. It returns a pair of values: the vaarg value and a
+    // new chain.
     VAARG,
 
     // VACOPY - VACOPY has five operands: an input chain, a destination pointer,

@@ -582,7 +582,7 @@ public:
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
   SDValue getVAArg(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
-                   SDValue SV);
+                   SDValue SV, unsigned Align = 0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 3 operands
