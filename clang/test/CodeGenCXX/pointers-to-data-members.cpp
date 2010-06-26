@@ -68,11 +68,11 @@ void f() {
   // CHECK: store i64 -1, i64* @_ZN5Casts2paE
   pa = 0;
 
-  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add i64 {{.*}}, 4
+  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add nsw i64 {{.*}}, 4
   // CHECK: store i64 [[ADJ]], i64* @_ZN5Casts2pcE
   pc = pa;
 
-  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = sub i64 {{.*}}, 4
+  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = sub nsw i64 {{.*}}, 4
   // CHECK: store i64 [[ADJ]], i64* @_ZN5Casts2paE
   pa = static_cast<int A::*>(pc);
 }

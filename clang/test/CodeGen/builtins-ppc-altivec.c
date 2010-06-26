@@ -43,13 +43,13 @@ int main ()
   int res_i;
 
   /* vec_abs */
-  vsc = vec_abs(vsc);                           // CHECK: sub <16 x i8> zeroinitializer
+  vsc = vec_abs(vsc);                           // CHECK: sub nsw <16 x i8> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsb
 
-  vs = vec_abs(vs);                             // CHECK: sub <8 x i16> zeroinitializer
+  vs = vec_abs(vs);                             // CHECK: sub nsw <8 x i16> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsh
 
-  vi = vec_abs(vi);                             // CHECK: sub <4 x i32> zeroinitializer
+  vi = vec_abs(vi);                             // CHECK: sub nsw <4 x i32> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsw
 
   vf = vec_abs(vf);                             // CHECK: and <4 x i32>

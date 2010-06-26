@@ -997,13 +997,13 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
       std::swap(DerivedDecl, BaseDecl);
 
     if (llvm::Constant *Adj = 
-          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl, 
-                                               CE->getBasePath())) {
+          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl, CE->getBasePath())){
       if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
-        Src = Builder.CreateSub(Src, Adj, "adj");
+        Src = Builder.CreateNSWSub(Src, Adj, "adj");
       else
-        Src = Builder.CreateAdd(Src, Adj, "adj");
+        Src = Builder.CreateNSWAdd(Src, Adj, "adj");
     }
+    
     return Src;
   }
 
@@ -1117,6 +1117,11 @@ Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   Value *Op = Visit(E->getSubExpr());
   if (Op->getType()->isFPOrFPVectorTy())
     return Builder.CreateFNeg(Op, "neg");
+  
+  // Signed integer overflow is undefined behavior.
+  if (E->getType()->isSignedIntegerType())
+    return Builder.CreateNSWNeg(Op, "neg");
+    
   return Builder.CreateNeg(Op, "neg");
 }
 

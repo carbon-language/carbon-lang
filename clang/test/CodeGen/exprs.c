@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o -
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // PR1895
 // sizeof function
@@ -118,4 +118,17 @@ void f9(struct S *x) {
 
 void f10() {
   __builtin_sin(0);
+}
+
+// Tests for signed integer overflow stuff.
+// rdar://7432000
+void f11() {
+  // CHECK: define void @f11
+  extern volatile int f11G, a, b;
+  // CHECK: add nsw i32
+  f11G = a + b;
+  // CHECK: sub nsw i32
+  f11G = a - b;
+  // CHECK: sub nsw i32 0, 
+  f11G = -a;
 }
