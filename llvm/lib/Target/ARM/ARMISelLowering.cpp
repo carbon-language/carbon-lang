@@ -459,11 +459,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
   setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
-  // If the subtarget does not have extract instructions, sign_extend_inreg
-  // needs to be expanded. Extract is available in ARM mode on v6 and up,
-  // and on most Thumb2 implementations.
-  if (!Subtarget->hasV6Ops()
-      || (Subtarget->isThumb2() && !Subtarget->hasT2ExtractPack())) {
+  // Requires SXTB/SXTH, available on v6 and up in both ARM and Thumb modes.
+  if (!Subtarget->hasV6Ops()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
   }
