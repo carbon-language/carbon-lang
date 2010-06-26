@@ -10022,7 +10022,7 @@ static bool LowerToBSwap(CallInst *CI) {
 
   // Verify this is a simple bswap.
   if (CI->getNumOperands() != 2 ||
-      CI->getType() != CI->getOperand(1)->getType() ||
+      CI->getType() != CI->getArgOperand(0)->getType() ||
       !CI->getType()->isIntegerTy())
     return false;
 
@@ -10035,7 +10035,7 @@ static bool LowerToBSwap(CallInst *CI) {
   Module *M = CI->getParent()->getParent()->getParent();
   Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
 
-  Value *Op = CI->getOperand(1);
+  Value *Op = CI->getArgOperand(0);
   Op = CallInst::Create(Int, Op, CI->getName(), CI);
 
   CI->replaceAllUsesWith(Op);
