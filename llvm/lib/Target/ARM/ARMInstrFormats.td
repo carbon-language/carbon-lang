@@ -55,18 +55,18 @@ def MiscFrm       : Format<25>;
 def NGetLnFrm     : Format<26>;
 def NSetLnFrm     : Format<27>;
 def NDupFrm       : Format<28>;
-def NLdStFrm      : Format<31>;
-def N1RegModImmFrm: Format<32>;
-def N2RegFrm      : Format<33>;
-def NVCVTFrm      : Format<34>;
-def NVDupLnFrm    : Format<35>;
-def N2RegVShLFrm  : Format<36>;
-def N2RegVShRFrm  : Format<37>;
-def N3RegFrm      : Format<38>;
-def N3RegVShFrm   : Format<39>;
-def NVExtFrm      : Format<40>;
-def NVMulSLFrm    : Format<41>;
-def NVTBLFrm      : Format<42>;
+def NLdStFrm      : Format<29>;
+def N1RegModImmFrm: Format<30>;
+def N2RegFrm      : Format<31>;
+def NVCVTFrm      : Format<32>;
+def NVDupLnFrm    : Format<33>;
+def N2RegVShLFrm  : Format<34>;
+def N2RegVShRFrm  : Format<35>;
+def N3RegFrm      : Format<36>;
+def N3RegVShFrm   : Format<37>;
+def NVExtFrm      : Format<38>;
+def NVMulSLFrm    : Format<39>;
+def NVTBLFrm      : Format<40>;
 
 // Misc flags.
 

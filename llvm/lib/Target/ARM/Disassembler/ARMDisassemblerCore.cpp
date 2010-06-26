@@ -3089,8 +3089,6 @@ static const DisassembleFP FuncPtrs[] = {
   &DisassembleNGetLnFrm,
   &DisassembleNSetLnFrm,
   &DisassembleNDupFrm,
-  0,
-  0,
 
   // VLD and VST (including one lane) Instructions.
   &DisassembleNLdSt,
