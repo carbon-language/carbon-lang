@@ -428,13 +428,13 @@ int main ()
   res_vus = vec_mladd(vus, vus, vus);           // CHECK: mul <8 x i16>
                                                 // CHECK: add <8 x i16>
 
-  res_vs = vec_mladd(vus, vs, vs);              // CHECK: mul <8 x i16>
+  res_vs = vec_mladd(vus, vs, vs);              // CHECK: mul nsw <8 x i16>
                                                 // CHECK: add nsw <8 x i16>
 
-  res_vs = vec_mladd(vs, vus, vus);             // CHECK: mul <8 x i16>
+  res_vs = vec_mladd(vs, vus, vus);             // CHECK: mul nsw <8 x i16>
                                                 // CHECK: add nsw <8 x i16>
 
-  res_vs = vec_mladd(vs, vs, vs);               // CHECK: mul <8 x i16>
+  res_vs = vec_mladd(vs, vs, vs);               // CHECK: mul nsw <8 x i16>
                                                 // CHECK: add nsw <8 x i16>
 
   /* vec_mradds */

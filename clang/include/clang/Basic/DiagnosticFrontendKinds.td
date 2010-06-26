@@ -189,9 +189,6 @@ def warn_pch_math_errno : Error<
     "math functions %select{do not respect|respect}0 'errno' in PCH "
     "file but they are currently set to %select{not respect|respect}1 "
     "'errno'">;
-def warn_pch_overflow_checking : Error<
-    "signed integer overflow checking was %select{disabled|enabled}0 in PCH "
-    "file but is currently %select{disabled|enabled}1">;
 def warn_pch_optimize : Error<
     "the macro '__OPTIMIZE__' was %select{not defined|defined}0 in "
     "the PCH file but is currently %select{undefined|defined}1">;

@@ -66,9 +66,6 @@ public:
   unsigned MathErrno         : 1; // Math functions must respect errno
                                   // (modulo the platform support).
 
-  unsigned OverflowChecking  : 1; // Extension to call a handler function when
-                                  // signed integer arithmetic overflows.
-
   unsigned HeinousExtensions : 1; // Extensions that we really don't like and
                                   // may be ripped out at any time.
 
@@ -109,15 +106,12 @@ public:
   unsigned NoBitFieldTypeAlign : 1;
 
 private:
-  unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
-                                  // declare this enum as unsigned because MSVC
-                                  // insists on making enums signed.  Set/Query
-                                  // this value using accessors.
+  // We declare multibit enums as unsigned because MSVC insists on making enums
+  // signed.  Set/Query these values using accessors.
+  unsigned GC : 2;                // Objective-C Garbage Collection modes.
   unsigned SymbolVisibility  : 3; // Symbol's visibility.
-  unsigned StackProtector    : 2; // Whether stack protectors are on. We declare
-                                  // this enum as unsigned because MSVC insists
-                                  // on making enums signed.  Set/Query this
-                                  // value using accessors.
+  unsigned StackProtector    : 2; // Whether stack protectors are on.
+  unsigned SignedOverflowBehavior : 2; // How to handle signed integer overflow.
 
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
@@ -130,6 +124,12 @@ public:
     Default,
     Protected,
     Hidden
+  };
+  
+  enum SignedOverflowBehaviorTy {
+    SOB_Undefined,  // Default C standard behavior.
+    SOB_Defined,    // -fwrapv
+    SOB_Trapping    // -ftrapv
   };
 
   LangOptions() {
@@ -154,14 +154,15 @@ public:
     Blocks = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
-
+    SignedOverflowBehavior = SOB_Undefined;
+    
     AssumeSaneOperatorNew = 1;
 
     // FIXME: The default should be 1.
     AccessControl = 0;
     ElideConstructors = 1;
 
-    OverflowChecking = 0;
+    SignedOverflowBehavior = 0;
     ObjCGCBitmapPrint = 0;
 
     InstantiationDepth = 1024;
@@ -197,6 +198,13 @@ public:
     return (VisibilityMode) SymbolVisibility;
   }
   void setVisibilityMode(VisibilityMode v) { SymbolVisibility = (unsigned) v; }
+  
+  SignedOverflowBehaviorTy getSignedOverflowBehavior() const {
+    return (SignedOverflowBehaviorTy)SignedOverflowBehavior;
+  }
+  void setSignedOverflowBehavior(SignedOverflowBehaviorTy V) {
+    SignedOverflowBehavior = (unsigned)V;
+  }
 };
 
 }  // end namespace clang

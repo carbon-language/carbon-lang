@@ -426,6 +426,8 @@ def fobjc_nonfragile_abi2 : Flag<"-fobjc-nonfragile-abi2">,
   HelpText<"enable objective-c's enhanced nonfragile abi">;
 def ftrapv : Flag<"-ftrapv">,
   HelpText<"Trap on integer overflow">;
+def fwrapv : Flag<"-fwrapv">,
+  HelpText<"Treat signed integer overflow as two's complement">;
 def pic_level : Separate<"-pic-level">,
   HelpText<"Value for __PIC__">;
 def pthread : Flag<"-pthread">,

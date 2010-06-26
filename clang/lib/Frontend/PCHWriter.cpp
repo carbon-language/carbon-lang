@@ -833,11 +833,8 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.MathErrno); // Math functions must respect errno
                                   // (modulo the platform support).
 
-  Record.push_back(LangOpts.OverflowChecking); // Extension to call a handler function when
-                                  // signed integer arithmetic overflows.
-
-  Record.push_back(LangOpts.HeinousExtensions); // Extensions that we really don't like and
-                                  // may be ripped out at any time.
+  Record.push_back(LangOpts.getSignedOverflowBehavior());
+  Record.push_back(LangOpts.HeinousExtensions);
 
   Record.push_back(LangOpts.Optimize); // Whether __OPTIMIZE__ should be defined.
   Record.push_back(LangOpts.OptimizeSize); // Whether __OPTIMIZE_SIZE__ should be

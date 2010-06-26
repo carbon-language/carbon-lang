@@ -1182,6 +1182,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
   Args.AddLastArg(CmdArgs, options::OPT_ftime_report);
   Args.AddLastArg(CmdArgs, options::OPT_ftrapv);
+  Args.AddLastArg(CmdArgs, options::OPT_fwrapv);
   Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);

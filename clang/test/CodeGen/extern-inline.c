@@ -19,7 +19,7 @@ int g2(void) {return f2(0,1);}
 static int f2(int a, int b) {return a*b;}
 // CHECK: load i32* %{{.*}}
 // CHECK: load i32* %{{.*}}
-// CHECK: mul i32 %{{.*}}, %{{.*}}
+// CHECK: mul nsw i32 %{{.*}}, %{{.*}}
 int h2(void) {return f2(1,2);}
 // CHECK: call i32 @f2
 

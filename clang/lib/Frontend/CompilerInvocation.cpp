@@ -549,8 +549,11 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-femit-all-decls");
   if (Opts.MathErrno)
     Res.push_back("-fmath-errno");
-  if (Opts.OverflowChecking)
-    Res.push_back("-ftrapv");
+  switch (Opts.getSignedOverflowBehavior()) {
+  case LangOptions::SOB_Undefined: break;
+  case LangOptions::SOB_Defined:   Res.push_back("-fwrapv"); break;
+  case LangOptions::SOB_Trapping:  Res.push_back("-ftrapv"); break;
+  }
   if (Opts.HeinousExtensions)
     Res.push_back("-fheinous-gnu-extensions");
   // Optimize is implicit.
@@ -1257,8 +1260,11 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_fvisibility_inlines_hidden))
     Opts.InlineVisibilityHidden = 1;
-    
-  Opts.OverflowChecking = Args.hasArg(OPT_ftrapv);
+  
+  if (Args.hasArg(OPT_ftrapv))
+    Opts.setSignedOverflowBehavior(LangOptions::SOB_Trapping); 
+  else if (Args.hasArg(OPT_fwrapv))
+    Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined); 
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.

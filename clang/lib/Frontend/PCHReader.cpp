@@ -93,7 +93,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(Blocks, diag::warn_pch_blocks);
   PARSE_LANGOPT_BENIGN(EmitAllDecls);
   PARSE_LANGOPT_IMPORTANT(MathErrno, diag::warn_pch_math_errno);
-  PARSE_LANGOPT_IMPORTANT(OverflowChecking, diag::warn_pch_overflow_checking);
+  PARSE_LANGOPT_BENIGN(getSignedOverflowBehavior());
   PARSE_LANGOPT_IMPORTANT(HeinousExtensions,
                           diag::warn_pch_heinous_extensions);
   // FIXME: Most of the options below are benign if the macro wasn't
@@ -1915,7 +1915,8 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(Blocks);
     PARSE_LANGOPT(EmitAllDecls);
     PARSE_LANGOPT(MathErrno);
-    PARSE_LANGOPT(OverflowChecking);
+    LangOpts.setSignedOverflowBehavior((LangOptions::SignedOverflowBehaviorTy)
+                                       Record[Idx++]);
     PARSE_LANGOPT(HeinousExtensions);
     PARSE_LANGOPT(Optimize);
     PARSE_LANGOPT(OptimizeSize);
@@ -1926,13 +1927,10 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(AccessControl);
     PARSE_LANGOPT(CharIsSigned);
     PARSE_LANGOPT(ShortWChar);
-    LangOpts.setGCMode((LangOptions::GCMode)Record[Idx]);
-    ++Idx;
-    LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx]);
-    ++Idx;
+    LangOpts.setGCMode((LangOptions::GCMode)Record[Idx++]);
+    LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx++]);
     LangOpts.setStackProtectorMode((LangOptions::StackProtectorMode)
-                                   Record[Idx]);
-    ++Idx;
+                                   Record[Idx++]);
     PARSE_LANGOPT(InstantiationDepth);
     PARSE_LANGOPT(OpenCL);
     PARSE_LANGOPT(CatchUndefined);

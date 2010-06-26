@@ -291,9 +291,17 @@ public:
 
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
-    if (CGF.getContext().getLangOptions().OverflowChecking
-        && Ops.Ty->isSignedIntegerType())
-      return EmitOverflowCheckedBinOp(Ops);
+    if (Ops.Ty->isSignedIntegerType()) {
+      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+      case LangOptions::SOB_Undefined:
+        return Builder.CreateNSWMul(Ops.LHS, Ops.RHS, "mul");
+      case LangOptions::SOB_Defined:
+        return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
+      case LangOptions::SOB_Trapping:
+        return EmitOverflowCheckedBinOp(Ops);
+      }
+    }
+    
     if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
@@ -1119,9 +1127,17 @@ Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
     return Builder.CreateFNeg(Op, "neg");
   
   // Signed integer overflow is undefined behavior.
-  if (E->getType()->isSignedIntegerType())
-    return Builder.CreateNSWNeg(Op, "neg");
-    
+  if (E->getType()->isSignedIntegerType()) {
+    switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+    case LangOptions::SOB_Trapping:
+      // FIXME: Implement -ftrapv for negate.
+    case LangOptions::SOB_Undefined:
+      return Builder.CreateNSWNeg(Op, "neg");
+    case LangOptions::SOB_Defined:
+      return Builder.CreateNeg(Op, "neg");
+    }
+  }
+  
   return Builder.CreateNeg(Op, "neg");
 }
 
@@ -1397,16 +1413,19 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isAnyPointerType()) {
-    if (CGF.getContext().getLangOptions().OverflowChecking &&
-        Ops.Ty->isSignedIntegerType())
-      return EmitOverflowCheckedBinOp(Ops);
-
+    if (Ops.Ty->isSignedIntegerType()) {
+      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+      case LangOptions::SOB_Undefined:
+        return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
+      case LangOptions::SOB_Defined:
+        return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
+      case LangOptions::SOB_Trapping:
+        return EmitOverflowCheckedBinOp(Ops);
+      }
+    }
+    
     if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFAdd(Ops.LHS, Ops.RHS, "add");
-
-    // Signed integer overflow is undefined behavior.
-    if (Ops.Ty->isSignedIntegerType())
-      return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
 
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
@@ -1473,16 +1492,19 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (CGF.getContext().getLangOptions().OverflowChecking
-        && Ops.Ty->isSignedIntegerType())
-      return EmitOverflowCheckedBinOp(Ops);
-
+    if (Ops.Ty->isSignedIntegerType()) {
+      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+      case LangOptions::SOB_Undefined:
+        return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
+      case LangOptions::SOB_Defined:
+        return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
+      case LangOptions::SOB_Trapping:
+        return EmitOverflowCheckedBinOp(Ops);
+      }
+    }
+    
     if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFSub(Ops.LHS, Ops.RHS, "sub");
-
-    // Signed integer overflow is undefined behavior.
-    if (Ops.Ty->isSignedIntegerType())
-      return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
 
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
