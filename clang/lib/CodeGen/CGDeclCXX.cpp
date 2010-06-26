@@ -94,7 +94,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     return;
   }
   if (Init->isLvalue(getContext()) == Expr::LV_Valid) {
-    RValue RV = EmitReferenceBindingToExpr(Init, /*IsInitializer=*/true);
+    RValue RV = EmitReferenceBindingToExpr(Init, &D);
     EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, T);
     return;
   }
@@ -376,8 +376,9 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     QualType T = D.getType();
     // We don't want to pass true for IsInitializer here, because a static
     // reference to a temporary does not extend its lifetime.
+    // FIXME: This is incorrect.
     RValue RV = EmitReferenceBindingToExpr(D.getInit(),
-                                           /*IsInitializer=*/false);
+                                           /*InitializedDecl=*/0);
     EmitStoreOfScalar(RV.getScalarVal(), GV, /*Volatile=*/false, T);
 
   } else

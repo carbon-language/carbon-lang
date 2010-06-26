@@ -588,7 +588,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
   if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV, T);
   } else if (T->isReferenceType()) {
-    RValue RV = CGF.EmitReferenceBindingToExpr(E, /*IsInitializer=*/false);
+    RValue RV = CGF.EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
     CGF.EmitStoreThroughLValue(RV, LV, T);
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);

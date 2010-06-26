@@ -653,7 +653,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
                             Loc, SrcPtr, SizeVal, AlignVal, NotVolatile);
       }
     } else if (Ty->isReferenceType()) {
-      RValue RV = EmitReferenceBindingToExpr(Init, /*IsInitializer=*/true);
+      RValue RV = EmitReferenceBindingToExpr(Init, &D);
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);

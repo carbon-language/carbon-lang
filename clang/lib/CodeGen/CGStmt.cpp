@@ -631,7 +631,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (FnRetTy->isReferenceType()) {
     // If this function returns a reference, take the address of the expression
     // rather than the value.
-    RValue Result = EmitReferenceBindingToExpr(RV, false);
+    RValue Result = EmitReferenceBindingToExpr(RV, /*InitializedDecl=*/0);
     Builder.CreateStore(Result.getScalarVal(), ReturnValue);
   } else if (!hasAggregateLLVMType(RV->getType())) {
     Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);

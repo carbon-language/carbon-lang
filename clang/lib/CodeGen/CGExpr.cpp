@@ -168,8 +168,11 @@ struct SubobjectAdjustment {
   }
 };
 
-RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
-                                                   bool IsInitializer) {
+RValue
+CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
+                                            const NamedDecl *InitializedDecl) {
+  bool IsInitializer = InitializedDecl;
+
   bool ShouldDestroyTemporaries = false;
   unsigned OldNumLiveTemporaries = 0;
 

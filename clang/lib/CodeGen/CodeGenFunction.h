@@ -1185,7 +1185,8 @@ public:
 
   /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
   /// expression. Will emit a temporary variable if E is not an LValue.
-  RValue EmitReferenceBindingToExpr(const Expr* E, bool IsInitializer = false);
+  RValue EmitReferenceBindingToExpr(const Expr* E, 
+                                    const NamedDecl *InitializedDecl);
 
   //===--------------------------------------------------------------------===//
   //                           Expression Emission

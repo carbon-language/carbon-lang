@@ -878,7 +878,7 @@ RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
 
 RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
   if (ArgType->isReferenceType())
-    return EmitReferenceBindingToExpr(E);
+    return EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
 
   return EmitAnyExprToTemp(E);
 }
