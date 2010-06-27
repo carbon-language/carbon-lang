@@ -325,26 +325,23 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
         }
       }
       
-      const llvm::Type *ResultPtrTy
-        = llvm::PointerType::get(ConvertType(ResultTy), 0);
+      const llvm::Type *ResultPtrTy = ConvertType(ResultTy)->getPointerTo();
       Object = Builder.CreateBitCast(Object, ResultPtrTy, "temp");
       return RValue::get(Object);
     }
   }
 
-  if (Val.isAggregate()) {
-    Val = RValue::get(Val.getAggregateAddr());
-  } else {
-    // Create a temporary variable that we can bind the reference to.
-    llvm::Value *Temp = CreateMemTemp(E->getType(), "reftmp");
-    if (Val.isScalar())
-      EmitStoreOfScalar(Val.getScalarVal(), Temp, false, E->getType());
-    else
-      StoreComplexToAddr(Val.getComplexVal(), Temp, false);
-    Val = RValue::get(Temp);
-  }
+  if (Val.isAggregate())
+    return RValue::get(Val.getAggregateAddr());
+  
+  // Create a temporary variable that we can bind the reference to.
+  llvm::Value *Temp = CreateMemTemp(E->getType(), "reftmp");
+  if (Val.isScalar())
+    EmitStoreOfScalar(Val.getScalarVal(), Temp, false, E->getType());
+  else
+    StoreComplexToAddr(Val.getComplexVal(), Temp, false);
 
-  return Val;
+  return RValue::get(Temp);
 }
 
 
