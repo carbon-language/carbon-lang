@@ -168,52 +168,38 @@ struct SubobjectAdjustment {
   }
 };
 
-RValue
-CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
-                                            const NamedDecl *InitializedDecl) {
-  bool IsInitializer = InitializedDecl;
-
-  bool ShouldDestroyTemporaries = false;
-  unsigned OldNumLiveTemporaries = 0;
-
+static llvm::Value *
+EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
+                            llvm::Value *&ReferenceTemporary,
+                            const CXXDestructorDecl *&ReferenceTemporaryDtor,
+                            bool IsInitializer) {
   if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
     E = DAE->getExpr();
-
-  if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
-    ShouldDestroyTemporaries = true;
-    
-    // Keep track of the current cleanup stack depth.
-    OldNumLiveTemporaries = LiveTemporaries.size();
-    
-    E = TE->getSubExpr();
-  }
   
-  RValue Val;
-  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
-    // Emit the expr as an lvalue.
-    LValue LV = EmitLValue(E);
-    if (LV.isSimple()) {
-      if (ShouldDestroyTemporaries) {
-        // Pop temporaries.
-        while (LiveTemporaries.size() > OldNumLiveTemporaries)
-          PopCXXTemporary();
-      }
-      
-      return RValue::get(LV.getAddress());
-    }
+  if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
+    CodeGenFunction::CXXTemporariesCleanupScope Scope(CGF);
+
+    return EmitExprForReferenceBinding(CGF, TE->getSubExpr(), 
+                                       ReferenceTemporary, 
+                                       ReferenceTemporaryDtor,
+                                       IsInitializer);
+  }
+
+  RValue RV;
+  if (E->isLvalue(CGF.getContext()) == Expr::LV_Valid) {
+    // Emit the expression as an lvalue.
+    LValue LV = CGF.EmitLValue(E);
+
+    if (LV.isSimple())
+      return LV.getAddress();
     
-    Val = EmitLoadOfLValue(LV, E->getType());
-    
-    if (ShouldDestroyTemporaries) {
-      // Pop temporaries.
-      while (LiveTemporaries.size() > OldNumLiveTemporaries)
-        PopCXXTemporary();
-    }      
+    // We have to load the lvalue.
+    RV = CGF.EmitLoadOfLValue(LV, E->getType());
   } else {
     QualType ResultTy = E->getType();
-    
+
     llvm::SmallVector<SubobjectAdjustment, 2> Adjustments;
-    do {
+    while (true) {
       if (const ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
         E = PE->getSubExpr();
         continue;
@@ -236,7 +222,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
           continue;
         }
       } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        if (ME->getBase()->isLvalue(getContext()) != Expr::LV_Valid &&
+        if (ME->getBase()->isLvalue(CGF.getContext()) != Expr::LV_Valid &&
             ME->getBase()->getType()->isRecordType()) {
           if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
             E = ME->getBase();
@@ -249,63 +235,44 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
 
       // Nothing changed.
       break;
-    } while (true);
-      
-    Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
-                            IsInitializer);
-
-    if (ShouldDestroyTemporaries) {
-      // Pop temporaries.
-      while (LiveTemporaries.size() > OldNumLiveTemporaries)
-        PopCXXTemporary();
-    }      
-    
-    if (IsInitializer) {
-      // We might have to destroy the temporary variable.
-      if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
-        if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-          if (!ClassDecl->hasTrivialDestructor()) {
-            const CXXDestructorDecl *Dtor =
-              ClassDecl->getDestructor(getContext());
-
-            {
-              DelayedCleanupBlock Scope(*this);
-              EmitCXXDestructorCall(Dtor, Dtor_Complete,
-                                    /*ForVirtualBase=*/false,
-                                    Val.getAggregateAddr());
-              
-              // Make sure to jump to the exit block.
-              EmitBranch(Scope.getCleanupExitBlock());
-            }
-            if (Exceptions) {
-              EHCleanupBlock Cleanup(*this);
-              EmitCXXDestructorCall(Dtor, Dtor_Complete,
-                                    /*ForVirtualBase=*/false,
-                                    Val.getAggregateAddr());
-            }
-          }
-        }
-      }
     }
     
+    // Create a reference temporary if necessary.
+    if (CGF.hasAggregateLLVMType(E->getType()) &&
+        !E->getType()->isAnyComplexType())
+      ReferenceTemporary = CGF.CreateMemTemp(E->getType(), "ref.tmp");
+    RV = CGF.EmitAnyExpr(E, ReferenceTemporary, /*IsAggLocVolatile=*/false,
+                         /*IgnoreResult=*/false, IsInitializer);
+
+    if (IsInitializer) {
+      // Get the destructor for the reference temporary.
+      if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
+        CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+        if (!ClassDecl->hasTrivialDestructor())
+          ReferenceTemporaryDtor = ClassDecl->getDestructor(CGF.getContext());
+      }
+    }
+
     // Check if need to perform derived-to-base casts and/or field accesses, to
     // get from the temporary object we created (and, potentially, for which we
     // extended the lifetime) to the subobject we're binding the reference to.
     if (!Adjustments.empty()) {
-      llvm::Value *Object = Val.getAggregateAddr();
+      llvm::Value *Object = RV.getAggregateAddr();
       for (unsigned I = Adjustments.size(); I != 0; --I) {
         SubobjectAdjustment &Adjustment = Adjustments[I-1];
         switch (Adjustment.Kind) {
         case SubobjectAdjustment::DerivedToBaseAdjustment:
-          Object = GetAddressOfBaseClass(Object, 
-                                         Adjustment.DerivedToBase.DerivedClass, 
-                                         *Adjustment.DerivedToBase.BasePath, 
-                                         /*NullCheckValue=*/false);
+          Object = 
+              CGF.GetAddressOfBaseClass(Object, 
+                                        Adjustment.DerivedToBase.DerivedClass, 
+                                        *Adjustment.DerivedToBase.BasePath, 
+                                        /*NullCheckValue=*/false);
           break;
             
         case SubobjectAdjustment::FieldAdjustment: {
           unsigned CVR = Adjustment.Field.CVRQualifiers;
-          LValue LV = EmitLValueForField(Object, Adjustment.Field.Field, CVR);
+          LValue LV = 
+            CGF.EmitLValueForField(Object, Adjustment.Field.Field, CVR);
           if (LV.isSimple()) {
             Object = LV.getAddress();
             break;
@@ -315,33 +282,61 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
           // the object we're binding to.
           QualType T = Adjustment.Field.Field->getType().getNonReferenceType()
                                                         .getUnqualifiedType();
-          Object = CreateTempAlloca(ConvertType(T), "lv");
-          EmitStoreThroughLValue(EmitLoadOfLValue(LV, T), 
-                                 LValue::MakeAddr(Object, 
-                                                  Qualifiers::fromCVRMask(CVR)),
-                                 T);
+          Object = CGF.CreateTempAlloca(CGF.ConvertType(T), "lv");
+          LValue TempLV = 
+            LValue::MakeAddr(Object, Qualifiers::fromCVRMask(CVR));
+          CGF.EmitStoreThroughLValue(CGF.EmitLoadOfLValue(LV, T), TempLV, T);
           break;
         }
+
         }
       }
       
-      const llvm::Type *ResultPtrTy = ConvertType(ResultTy)->getPointerTo();
-      Object = Builder.CreateBitCast(Object, ResultPtrTy, "temp");
-      return RValue::get(Object);
+      const llvm::Type *ResultPtrTy = CGF.ConvertType(ResultTy)->getPointerTo();
+      return CGF.Builder.CreateBitCast(Object, ResultPtrTy, "temp");
     }
   }
 
-  if (Val.isAggregate())
-    return RValue::get(Val.getAggregateAddr());
-  
-  // Create a temporary variable that we can bind the reference to.
-  llvm::Value *Temp = CreateMemTemp(E->getType(), "reftmp");
-  if (Val.isScalar())
-    EmitStoreOfScalar(Val.getScalarVal(), Temp, false, E->getType());
-  else
-    StoreComplexToAddr(Val.getComplexVal(), Temp, false);
+  if (RV.isAggregate())
+    return RV.getAggregateAddr();
 
-  return RValue::get(Temp);
+  // Create a temporary variable that we can bind the reference to.
+  ReferenceTemporary = CGF.CreateMemTemp(E->getType(), "ref.tmp");
+  if (RV.isScalar())
+    CGF.EmitStoreOfScalar(RV.getScalarVal(), ReferenceTemporary,
+                          /*Volatile=*/false, E->getType());
+  else
+    CGF.StoreComplexToAddr(RV.getComplexVal(), ReferenceTemporary,
+                           /*Volatile=*/false);
+  return ReferenceTemporary;
+}
+
+RValue
+CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
+                                            const NamedDecl *InitializedDecl) {
+  llvm::Value *ReferenceTemporary = 0;
+  const CXXDestructorDecl *ReferenceTemporaryDtor = 0;
+  llvm::Value *Value = EmitExprForReferenceBinding(*this, E, ReferenceTemporary,
+                                                   ReferenceTemporaryDtor,
+                                                   InitializedDecl);
+
+  // Make sure to call the destructor for the reference temporary.
+  if (ReferenceTemporaryDtor) {
+    DelayedCleanupBlock Scope(*this);
+    EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
+                          /*ForVirtualBase=*/false, ReferenceTemporary);
+            
+    // Make sure to jump to the exit block.
+    EmitBranch(Scope.getCleanupExitBlock());
+
+    if (Exceptions) {
+      EHCleanupBlock Cleanup(*this);
+      EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
+                            /*ForVirtualBase=*/false, ReferenceTemporary);
+    }
+  }
+
+  return RValue::get(Value);
 }
 
 
