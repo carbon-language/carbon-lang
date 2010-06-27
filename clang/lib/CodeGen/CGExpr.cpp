@@ -169,10 +169,34 @@ struct SubobjectAdjustment {
 };
 
 static llvm::Value *
+CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
+                         const NamedDecl *InitializedDecl) {
+  if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(InitializedDecl)) {
+    if (VD->hasGlobalStorage()) {
+      llvm::SmallString<256> Name;
+      CGF.CGM.getMangleContext().mangleReferenceTemporary(VD, Name);
+      
+      const llvm::Type *RefTempTy = CGF.ConvertTypeForMem(Type);
+  
+      // Create the reference temporary.
+      llvm::GlobalValue *RefTemp =
+        new llvm::GlobalVariable(CGF.CGM.getModule(), 
+                                 RefTempTy, /*isConstant=*/false,
+                                 llvm::GlobalValue::InternalLinkage,
+                                 llvm::Constant::getNullValue(RefTempTy),
+                                 Name.str());
+      return RefTemp;
+    }
+  }
+
+  return CGF.CreateMemTemp(Type, "ref.tmp");
+}
+
+static llvm::Value *
 EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
                             llvm::Value *&ReferenceTemporary,
                             const CXXDestructorDecl *&ReferenceTemporaryDtor,
-                            bool IsInitializer) {
+                            const NamedDecl *InitializedDecl) {
   if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
     E = DAE->getExpr();
   
@@ -182,7 +206,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
     return EmitExprForReferenceBinding(CGF, TE->getSubExpr(), 
                                        ReferenceTemporary, 
                                        ReferenceTemporaryDtor,
-                                       IsInitializer);
+                                       InitializedDecl);
   }
 
   RValue RV;
@@ -240,11 +264,13 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
     // Create a reference temporary if necessary.
     if (CGF.hasAggregateLLVMType(E->getType()) &&
         !E->getType()->isAnyComplexType())
-      ReferenceTemporary = CGF.CreateMemTemp(E->getType(), "ref.tmp");
+      ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
+                                                    InitializedDecl);
+      
     RV = CGF.EmitAnyExpr(E, ReferenceTemporary, /*IsAggLocVolatile=*/false,
-                         /*IgnoreResult=*/false, IsInitializer);
+                         /*IgnoreResult=*/false, InitializedDecl);
 
-    if (IsInitializer) {
+    if (InitializedDecl) {
       // Get the destructor for the reference temporary.
       if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
         CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
@@ -301,7 +327,9 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
     return RV.getAggregateAddr();
 
   // Create a temporary variable that we can bind the reference to.
-  ReferenceTemporary = CGF.CreateMemTemp(E->getType(), "ref.tmp");
+  ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
+                                                InitializedDecl);
+
   if (RV.isScalar())
     CGF.EmitStoreOfScalar(RV.getScalarVal(), ReferenceTemporary,
                           /*Volatile=*/false, E->getType());
