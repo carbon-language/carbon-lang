@@ -539,10 +539,8 @@ void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   llvm::Value *Val = DestPtr;
 
-  if (!Val) {
-    // Create a temporary variable.
+  if (!Val) // Create a temporary variable.
     Val = CGF.CreateMemTemp(E->getType(), "tmp");
-  }
 
   if (E->requiresZeroInitialization())
     EmitNullInitializationToLValue(LValue::MakeAddr(Val, 
