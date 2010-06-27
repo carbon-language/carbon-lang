@@ -345,6 +345,41 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
   }
 }
 
+/// EnterStructPointerForCoercedLoad - Given a pointer to a struct where we are
+/// accessing some number of bytes out of it, try to gep into the struct to get
+/// at its inner goodness.  Dive as deep as possible without entering an element
+/// with an in-memory size smaller than DstSize.
+static llvm::Value *
+EnterStructPointerForCoercedLoad(llvm::Value *SrcPtr,
+                                 const llvm::StructType *SrcSTy,
+                                 uint64_t DstSize, CodeGenFunction &CGF) {
+  // We can't dive into a zero-element struct.
+  if (SrcSTy->getNumElements() == 0) return SrcPtr;
+  
+  const llvm::Type *FirstElt = SrcSTy->getElementType(0);
+  
+  // If the first elt is at least as large as what we're looking for, or if the
+  // first element is the same size as the whole struct, we can enter it.
+  uint64_t FirstEltSize = 
+    CGF.CGM.getTargetData().getTypeAllocSize(FirstElt);
+  if (FirstEltSize < DstSize && 
+      FirstEltSize < CGF.CGM.getTargetData().getTypeAllocSize(SrcSTy))
+    return SrcPtr;
+  
+  // GEP into the first element.
+  SrcPtr = CGF.Builder.CreateConstGEP2_32(SrcPtr, 0, 0, "coerce.dive");
+  
+  // If the first element is a struct, recurse.
+  const llvm::Type *SrcTy =
+    cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
+  if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy))
+    return EnterStructPointerForCoercedLoad(SrcPtr, SrcSTy, DstSize, CGF);
+
+  return SrcPtr;
+}
+
+
+
 /// CreateCoercedLoad - Create a load from \arg SrcPtr interpreted as
 /// a pointer to an object of type \arg Ty.
 ///
@@ -356,8 +391,14 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
                                       CodeGenFunction &CGF) {
   const llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
+  
+  if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
+    SrcPtr = EnterStructPointerForCoercedLoad(SrcPtr, SrcSTy, DstSize, CGF);
+    SrcTy = cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
+  }
+  
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
 
   // If load is legal, just bitcast the src pointer.
   if (SrcSize >= DstSize) {
