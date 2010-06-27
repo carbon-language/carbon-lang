@@ -997,7 +997,8 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
     DeclNode->getOperand(12), // VIndex
     DeclNode->getOperand(13), // Containting Type
     DeclNode->getOperand(14), // isArtificial
-    DeclNode->getOperand(15)  // isOptimized
+    DeclNode->getOperand(15), // isOptimized
+    SPDeclaration.getFunction()
   };
   return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
 }
