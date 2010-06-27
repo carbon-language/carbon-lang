@@ -1655,7 +1655,12 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
       SrcField = BinaryOperator::CreateShl(SrcField, ShiftVal, "", LI);
     }
 
-    ResultVal = BinaryOperator::CreateOr(SrcField, ResultVal, "", LI);
+    // Don't create an 'or x, 0' on the first iteration.
+    if (!isa<Constant>(ResultVal) ||
+        !cast<Constant>(ResultVal)->isNullValue())
+      ResultVal = BinaryOperator::CreateOr(SrcField, ResultVal, "", LI);
+    else
+      ResultVal = SrcField;
   }
 
   // Handle tail padding by truncating the result
