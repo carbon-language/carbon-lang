@@ -378,6 +378,38 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
   return SrcPtr;
 }
 
+/// CoerceIntOrPtrToIntOrPtr - Convert a value Val to the specific Ty where both
+/// are either integers or pointers.  This does a truncation of the value if it
+/// is too large or a zero extension if it is too small.
+static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
+                                             const llvm::Type *Ty,
+                                             CodeGenFunction &CGF) {
+  if (Val->getType() == Ty)
+    return Val;
+  
+  if (isa<llvm::PointerType>(Val->getType())) {
+    // If this is Pointer->Pointer avoid conversion to and from int.
+    if (isa<llvm::PointerType>(Ty))
+      return CGF.Builder.CreateBitCast(Val, Ty, "coerce.val");
+  
+    // Convert the pointer to an integer so we can play with its width.
+    const llvm::Type *IntPtrTy = llvm::IntegerType::get(Ty->getContext(),
+                                                        CGF.LLVMPointerWidth);
+    Val = CGF.Builder.CreatePtrToInt(Val, IntPtrTy, "coerce.val.pi");
+  }
+  
+  const llvm::Type *DestIntTy = Ty;
+  if (isa<llvm::PointerType>(DestIntTy))
+    DestIntTy = llvm::IntegerType::get(Ty->getContext(), CGF.LLVMPointerWidth);
+  
+  if (Val->getType() != DestIntTy)
+    Val = CGF.Builder.CreateIntCast(Val, DestIntTy, false, "coerce.val.ii");
+  
+  if (isa<llvm::PointerType>(Ty))
+    Val = CGF.Builder.CreateIntToPtr(Val, Ty, "coerce.val.ip");
+  return Val;
+}
+
 
 
 /// CreateCoercedLoad - Create a load from \arg SrcPtr interpreted as
@@ -400,6 +432,14 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   
   uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
 
+  // If the source and destination are integer or pointer types, just do an
+  // extension or truncation to the desired type.
+  if ((isa<llvm::IntegerType>(Ty) || isa<llvm::PointerType>(Ty)) &&
+      (isa<llvm::IntegerType>(SrcTy) || isa<llvm::PointerType>(SrcTy))) {
+    llvm::LoadInst *Load = CGF.Builder.CreateLoad(SrcPtr);
+    return CoerceIntOrPtrToIntOrPtr(Load, Ty, CGF);
+  }
+  
   // If load is legal, just bitcast the src pointer.
   if (SrcSize >= DstSize) {
     // Generally SrcSize is never greater than DstSize, since this means we are
@@ -446,6 +486,15 @@ static void CreateCoercedStore(llvm::Value *Src,
   if (const llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
     DstPtr = EnterStructPointerForCoercedAccess(DstPtr, DstSTy, SrcSize, CGF);
     DstTy = cast<llvm::PointerType>(DstPtr->getType())->getElementType();
+  }
+  
+  // If the source and destination are integer or pointer types, just do an
+  // extension or truncation to the desired type.
+  if ((isa<llvm::IntegerType>(SrcTy) || isa<llvm::PointerType>(SrcTy)) &&
+      (isa<llvm::IntegerType>(DstTy) || isa<llvm::PointerType>(DstTy))) {
+    Src = CoerceIntOrPtrToIntOrPtr(Src, DstTy, CGF);
+    CGF.Builder.CreateStore(Src, DstPtr, DstIsVolatile);
+    return;
   }
   
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
