@@ -174,9 +174,13 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
       return state;
 
     BinaryOperator::Opcode op = SE->getOpcode();
-    // FIXME: We should implicitly compare non-comparison expressions to 0.
-    if (!BinaryOperator::isComparisonOp(op))
-      return state;
+    // Implicitly compare non-comparison expressions to 0.
+    if (!BinaryOperator::isComparisonOp(op)) {
+      QualType T = SymMgr.getType(SE);
+      const llvm::APSInt &zero = BasicVals.getValue(0, T);
+      op = (Assumption ? BinaryOperator::NE : BinaryOperator::EQ);
+      return AssumeSymRel(state, SE, op, zero);
+    }
 
     // From here on out, op is the real comparison we'll be testing.
     if (!Assumption)

@@ -981,3 +981,21 @@ void r7979430(id x) {
 
 MAKE_TEST_FN() // expected-warning{{null pointer}}
 
+//===----------------------------------------------------------------------===
+// PR 7491 - Test that symbolic expressions can be used as conditions.
+//===----------------------------------------------------------------------===
+
+void pr7491 () {
+  extern int getint();
+  int a = getint()-1;
+  if (a) {
+    return;
+  }
+  if (!a) {
+    return;
+  } else {
+    // Should be unreachable
+    (void)*(char*)0; // no-warning
+  }
+}
+
