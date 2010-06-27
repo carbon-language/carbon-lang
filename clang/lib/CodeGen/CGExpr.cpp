@@ -308,9 +308,9 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
           // the object we're binding to.
           QualType T = Adjustment.Field.Field->getType().getNonReferenceType()
                                                         .getUnqualifiedType();
-          Object = CGF.CreateTempAlloca(CGF.ConvertType(T), "lv");
-          LValue TempLV = 
-            LValue::MakeAddr(Object, Qualifiers::fromCVRMask(CVR));
+          Object = CreateReferenceTemporary(CGF, T, InitializedDecl);
+          LValue TempLV = LValue::MakeAddr(Object, 
+                                           Qualifiers::fromCVRMask(CVR));
           CGF.EmitStoreThroughLValue(CGF.EmitLoadOfLValue(LV, T), TempLV, T);
           break;
         }
@@ -348,20 +348,34 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    ReferenceTemporaryDtor,
                                                    InitializedDecl);
 
+  if (!ReferenceTemporaryDtor)
+    return RValue::get(Value);
+  
   // Make sure to call the destructor for the reference temporary.
-  if (ReferenceTemporaryDtor) {
+  if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(InitializedDecl)) {
+    if (VD->hasGlobalStorage()) {
+      llvm::Constant *DtorFn = 
+        CGM.GetAddrOfCXXDestructor(ReferenceTemporaryDtor, Dtor_Complete);
+      CGF.EmitCXXGlobalDtorRegistration(DtorFn, 
+                                      cast<llvm::Constant>(ReferenceTemporary));
+      
+      return RValue::get(Value);
+    }
+  }
+  
+  {
     DelayedCleanupBlock Scope(*this);
     EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
                           /*ForVirtualBase=*/false, ReferenceTemporary);
             
     // Make sure to jump to the exit block.
     EmitBranch(Scope.getCleanupExitBlock());
+  }
 
-    if (Exceptions) {
-      EHCleanupBlock Cleanup(*this);
-      EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
-                            /*ForVirtualBase=*/false, ReferenceTemporary);
-    }
+  if (Exceptions) {
+    EHCleanupBlock Cleanup(*this);
+    EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
+                          /*ForVirtualBase=*/false, ReferenceTemporary);
   }
 
   return RValue::get(Value);

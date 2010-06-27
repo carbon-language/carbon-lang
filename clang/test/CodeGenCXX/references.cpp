@@ -160,7 +160,7 @@ const int &f2() { return 0; }
 namespace N1 {
   const int foo = 1;
   // CHECK: @_ZN2N14test
-  int test(const int& arg = foo) {
+  void test(const int& arg = foo) {
     // Ensure this array is on the stack where we can set values instead of
     // being a global constant.
     // CHECK: %args_array = alloca
@@ -224,3 +224,37 @@ namespace N2 {
     i = 19;    
   }
 }
+
+namespace N3 {
+
+// PR7326
+
+struct A {
+  explicit A(int);
+  ~A();
+};
+
+// CHECK: define internal void @__cxx_global_var_init
+// CHECK: call void @_ZN2N31AC1Ei(%"class.N2::X"* @_ZGRN2N35sA123E, i32 123)
+// CHECK: call i32 @__cxa_atexit
+// CHECK: ret void
+const A &sA123 = A(123);
+}
+
+namespace N4 {
+  
+struct A {
+  A();
+  ~A();
+};
+
+void f() {
+  // CHECK: define void @_ZN2N41fEv
+  // CHECK: call void @_ZN2N41AC1Ev(%"class.N2::X"* @_ZGRZN2N41fEvE2ar)
+  // CHECK: call i32 @__cxa_atexit
+  // CHECK: ret void
+  static const A& ar = A();
+  
+}
+}
+
