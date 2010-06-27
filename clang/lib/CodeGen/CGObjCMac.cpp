@@ -3024,12 +3024,14 @@ void CGObjCCommonMac::EmitImageInfo() {
   // We never allow @synthesize of a superclass property.
   flags |= eImageInfo_CorrectedSynthesize;
 
+  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+  
   // Emitted as int[2];
   llvm::Constant *values[2] = {
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), version),
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), flags)
+    llvm::ConstantInt::get(Int32Ty, version),
+    llvm::ConstantInt::get(Int32Ty, flags)
   };
-  llvm::ArrayType *AT = llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext), 2);
+  llvm::ArrayType *AT = llvm::ArrayType::get(Int32Ty, 2);
 
   const char *Section;
   if (ObjCABI == 1)
@@ -3985,8 +3987,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
     llvm::Type::getInt8PtrTy(VMContext), 4);
 
   ExceptionDataTy =
-    llvm::StructType::get(VMContext, llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext),
-                                                          SetJmpBufferSize),
+    llvm::StructType::get(VMContext,
+                        llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext),
+                                             SetJmpBufferSize),
                           StackPtrTy, NULL);
   CGM.getModule().addTypeName("struct._objc_exception_data",
                               ExceptionDataTy);
@@ -5743,8 +5746,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         // though we don't use the result.
         CGF.Builder.CreateCall3(llvm_eh_selector,
                                 Exc, ObjCTypes.getEHPersonalityPtr(),
-                                llvm::ConstantInt::get(
-                                  llvm::Type::getInt32Ty(VMContext), 0),
+                                llvm::ConstantInt::get(CGF.Int32Ty, 0),
                                "unused_eh_selector");
         CGF.Builder.CreateStore(Exc, RethrowPtr);
         CGF.EmitBranchThroughCleanup(FinallyRethrow);
@@ -5774,8 +5776,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // though we don't use the result.
       CGF.Builder.CreateCall3(llvm_eh_selector,
                               Exc, ObjCTypes.getEHPersonalityPtr(),
-                              llvm::ConstantInt::get(
-                                llvm::Type::getInt32Ty(VMContext), 0),
+                              llvm::ConstantInt::get(CGF.Int32Ty, 0),
                               "unused_eh_selector");
       CGF.Builder.CreateStore(Exc, RethrowPtr);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
@@ -5900,7 +5901,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                         llvm::GlobalValue::ExternalLinkage,
                                         0, VTableName);
 
-  llvm::Value *VTableIdx = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 2);
+  llvm::Value *VTableIdx =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 2);
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);

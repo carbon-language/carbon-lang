@@ -201,7 +201,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::ObjCSel:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
-      return llvm::IntegerType::get(getLLVMContext(), 8);
+      return llvm::Type::getInt8Ty(getLLVMContext());
 
     case BuiltinType::Bool:
       // Note that we always return bool as i1 for use as a scalar type.
@@ -233,7 +233,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
     case BuiltinType::NullPtr: {
       // Model std::nullptr_t as i8*
-      const llvm::Type *Ty = llvm::IntegerType::get(getLLVMContext(), 8);
+      const llvm::Type *Ty = llvm::Type::getInt8Ty(getLLVMContext());
       return llvm::PointerType::getUnqual(Ty);
     }
         

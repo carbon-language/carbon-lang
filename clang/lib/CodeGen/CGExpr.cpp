@@ -362,24 +362,23 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   if (!CatchUndefined)
     return;
 
-  const llvm::Type *Size_tTy
-    = llvm::IntegerType::get(VMContext, LLVMPointerWidth);
   Address = Builder.CreateBitCast(Address, PtrToInt8Ty);
 
-  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &Size_tTy, 1);
-  const llvm::IntegerType *Int1Ty = llvm::IntegerType::get(VMContext, 1);
+  const llvm::Type *IntPtrT = IntPtrTy;
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &IntPtrT, 1);
+  const llvm::IntegerType *Int1Ty = llvm::Type::getInt1Ty(VMContext);
 
   // In time, people may want to control this and use a 1 here.
   llvm::Value *Arg = llvm::ConstantInt::get(Int1Ty, 0);
   llvm::Value *C = Builder.CreateCall2(F, Address, Arg);
   llvm::BasicBlock *Cont = createBasicBlock();
   llvm::BasicBlock *Check = createBasicBlock();
-  llvm::Value *NegativeOne = llvm::ConstantInt::get(Size_tTy, -1ULL);
+  llvm::Value *NegativeOne = llvm::ConstantInt::get(IntPtrTy, -1ULL);
   Builder.CreateCondBr(Builder.CreateICmpEQ(C, NegativeOne), Cont, Check);
     
   EmitBlock(Check);
   Builder.CreateCondBr(Builder.CreateICmpUGE(C,
-                                        llvm::ConstantInt::get(Size_tTy, Size)),
+                                        llvm::ConstantInt::get(IntPtrTy, Size)),
                        Cont, getTrapBB());
   EmitBlock(Cont);
 }
@@ -732,8 +731,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   const VectorType *ExprVT = ExprType->getAs<VectorType>();
   if (!ExprVT) {
     unsigned InIdx = getAccessedFieldNo(0, Elts);
-    llvm::Value *Elt = llvm::ConstantInt::get(
-                                      llvm::Type::getInt32Ty(VMContext), InIdx);
+    llvm::Value *Elt = llvm::ConstantInt::get(Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
 
@@ -743,8 +741,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   llvm::SmallVector<llvm::Constant*, 4> Mask;
   for (unsigned i = 0; i != NumResultElts; ++i) {
     unsigned InIdx = getAccessedFieldNo(i, Elts);
-    Mask.push_back(llvm::ConstantInt::get(
-                                     llvm::Type::getInt32Ty(VMContext), InIdx));
+    Mask.push_back(llvm::ConstantInt::get(Int32Ty, InIdx));
   }
 
   llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
@@ -960,8 +957,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
       for (unsigned i = 0; i != NumSrcElts; ++i) {
         unsigned InIdx = getAccessedFieldNo(i, Elts);
-        Mask[InIdx] = llvm::ConstantInt::get(
-                                          llvm::Type::getInt32Ty(VMContext), i);
+        Mask[InIdx] = llvm::ConstantInt::get(Int32Ty, i);
       }
 
       llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
@@ -974,7 +970,6 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // FIXME: since we're shuffling with undef, can we just use the indices
       //        into that?  This could be simpler.
       llvm::SmallVector<llvm::Constant*, 4> ExtMask;
-      const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
       unsigned i;
       for (i = 0; i != NumSrcElts; ++i)
         ExtMask.push_back(llvm::ConstantInt::get(Int32Ty, i));
@@ -1005,7 +1000,6 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
     unsigned InIdx = getAccessedFieldNo(0, Elts);
-    const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
     llvm::Value *Elt = llvm::ConstantInt::get(Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
   }
@@ -1345,16 +1339,14 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     // Emit the vector as an lvalue to get its address.
     LValue LHS = EmitLValue(E->getBase());
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
-    Idx = Builder.CreateIntCast(Idx,
-                          llvm::Type::getInt32Ty(VMContext), IdxSigned, "vidx");
+    Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vidx");
     return LValue::MakeVectorElt(LHS.getAddress(), Idx,
                                  E->getBase()->getType().getCVRQualifiers());
   }
 
   // Extend or truncate the index type to 32 or 64-bits.
   if (!Idx->getType()->isIntegerTy(LLVMPointerWidth))
-    Idx = Builder.CreateIntCast(Idx,
-                                llvm::IntegerType::get(VMContext, LLVMPointerWidth),
+    Idx = Builder.CreateIntCast(Idx, IntPtrTy,
                                 IdxSigned, "idxprom");
   
   // FIXME: As llvm implements the object size checking, this can come out.
@@ -1419,7 +1411,6 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     assert(Array->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");
     llvm::Value *ArrayPtr = EmitLValue(Array).getAddress();
-    const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
     llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
     llvm::Value *Args[] = { Zero, Idx };
     
@@ -1451,17 +1442,15 @@ llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
                                        llvm::SmallVector<unsigned, 4> &Elts) {
   llvm::SmallVector<llvm::Constant*, 4> CElts;
 
+  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
-    CElts.push_back(llvm::ConstantInt::get(
-                                   llvm::Type::getInt32Ty(VMContext), Elts[i]));
+    CElts.push_back(llvm::ConstantInt::get(Int32Ty, Elts[i]));
 
   return llvm::ConstantVector::get(&CElts[0], CElts.size());
 }
 
 LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
-  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
-
   // Emit the base vector as an l-value.
   LValue Base;
 

@@ -121,13 +121,14 @@ public:
 
 class BlockFunction : public BlockBase {
   CodeGenModule &CGM;
-  CodeGenFunction &CGF;
   ASTContext &getContext() const;
 
 protected:
   llvm::LLVMContext &VMContext;
 
 public:
+  CodeGenFunction &CGF;
+
   const llvm::PointerType *PtrToInt8Ty;
   struct HelperInfo {
     int index;

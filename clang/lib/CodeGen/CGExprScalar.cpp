@@ -449,8 +449,6 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   if (DstType->isVoidType()) return 0;
 
-  llvm::LLVMContext &VMContext = CGF.getLLVMContext();
-
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (DstType->isBooleanType())
     return EmitConversionToBool(Src, SrcType);
@@ -472,8 +470,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
     // First, convert to the correct width so that we control the kind of
     // extension.
-    const llvm::Type *MiddleTy =
-          llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
+    const llvm::Type *MiddleTy = CGF.IntPtrTy;
     bool InputSigned = SrcType->isSignedIntegerType();
     llvm::Value* IntResult =
         Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
@@ -495,16 +492,14 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = llvm::UndefValue::get(DstTy);
-    llvm::Value *Idx =
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
+    llvm::Value *Idx = llvm::ConstantInt::get(CGF.Int32Ty, 0);
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
     // Splat the element across to all elements
     llvm::SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
     for (unsigned i = 0; i < NumElements; i++)
-      Args.push_back(llvm::ConstantInt::get(
-                                        llvm::Type::getInt32Ty(VMContext), 0));
+      Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 0));
 
     llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
@@ -595,11 +590,10 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   // Vector Mask Case
   if (E->getNumSubExprs() == 2 || 
       (E->getNumSubExprs() == 3 && E->getExpr(2)->getType()->isVectorType())) {
-    Value* LHS = CGF.EmitScalarExpr(E->getExpr(0));
-    Value* RHS = CGF.EmitScalarExpr(E->getExpr(1));
-    Value* Mask;
+    Value *LHS = CGF.EmitScalarExpr(E->getExpr(0));
+    Value *RHS = CGF.EmitScalarExpr(E->getExpr(1));
+    Value *Mask;
     
-    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(CGF.getLLVMContext());
     const llvm::VectorType *LTy = cast<llvm::VectorType>(LHS->getType());
     unsigned LHSElts = LTy->getNumElements();
 
@@ -609,8 +603,8 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
       // Shuffle LHS & RHS into one input vector.
       llvm::SmallVector<llvm::Constant*, 32> concat;
       for (unsigned i = 0; i != LHSElts; ++i) {
-        concat.push_back(llvm::ConstantInt::get(I32Ty, 2*i));
-        concat.push_back(llvm::ConstantInt::get(I32Ty, 2*i+1));
+        concat.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 2*i));
+        concat.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 2*i+1));
       }
       
       Value* CV = llvm::ConstantVector::get(concat.begin(), concat.size());
@@ -652,16 +646,17 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
                                                         MTy->getNumElements());
     Value* NewV = llvm::UndefValue::get(RTy);
     for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i) {
-      Value *Indx = llvm::ConstantInt::get(I32Ty, i);
+      Value *Indx = llvm::ConstantInt::get(CGF.Int32Ty, i);
       Indx = Builder.CreateExtractElement(Mask, Indx, "shuf_idx");
-      Indx = Builder.CreateZExt(Indx, I32Ty, "idx_zext");
+      Indx = Builder.CreateZExt(Indx, CGF.Int32Ty, "idx_zext");
       
       // Handle vec3 special since the index will be off by one for the RHS.
       if ((LHSElts == 6) && (E->getNumSubExprs() == 3)) {
         Value *cmpIndx, *newIndx;
-        cmpIndx = Builder.CreateICmpUGT(Indx, llvm::ConstantInt::get(I32Ty, 3),
+        cmpIndx = Builder.CreateICmpUGT(Indx,
+                                        llvm::ConstantInt::get(CGF.Int32Ty, 3),
                                         "cmp_shuf_idx");
-        newIndx = Builder.CreateSub(Indx, llvm::ConstantInt::get(I32Ty, 1),
+        newIndx = Builder.CreateSub(Indx, llvm::ConstantInt::get(CGF.Int32Ty,1),
                                     "shuf_idx_adj");
         Indx = Builder.CreateSelect(cmpIndx, newIndx, Indx, "sel_shuf_idx");
       }
@@ -720,10 +715,7 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   Value *Base = Visit(E->getBase());
   Value *Idx  = Visit(E->getIdx());
   bool IdxSigned = E->getIdx()->getType()->isSignedIntegerType();
-  Idx = Builder.CreateIntCast(Idx,
-                              llvm::Type::getInt32Ty(CGF.getLLVMContext()),
-                              IdxSigned,
-                              "vecidxcast");
+  Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
 
@@ -752,7 +744,6 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return Visit(E->getInit(0));
   
   unsigned ResElts = VType->getNumElements();
-  const llvm::Type *I32Ty = llvm::Type::getInt32Ty(CGF.getLLVMContext());
   
   // Loop over initializers collecting the Value for each, and remembering 
   // whether the source was swizzle (ExtVectorElementExpr).  This will allow
@@ -783,7 +774,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
             // insert into undef -> shuffle (src, undef)
             Args.push_back(C);
             for (unsigned j = 1; j != ResElts; ++j)
-              Args.push_back(llvm::UndefValue::get(I32Ty));
+              Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
 
             LHS = EI->getVectorOperand();
             RHS = V;
@@ -792,11 +783,11 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
             // insert into undefshuffle && size match -> shuffle (v, src)
             llvm::ShuffleVectorInst *SVV = cast<llvm::ShuffleVectorInst>(V);
             for (unsigned j = 0; j != CurIdx; ++j)
-              Args.push_back(getMaskElt(SVV, j, 0, I32Ty));
-            Args.push_back(llvm::ConstantInt::get(I32Ty, 
+              Args.push_back(getMaskElt(SVV, j, 0, CGF.Int32Ty));
+            Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 
                                                   ResElts + C->getZExtValue()));
             for (unsigned j = CurIdx + 1; j != ResElts; ++j)
-              Args.push_back(llvm::UndefValue::get(I32Ty));
+              Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
             
             LHS = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
             RHS = EI->getVectorOperand();
@@ -810,7 +801,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
           }
         }
       }
-      Value *Idx = llvm::ConstantInt::get(I32Ty, CurIdx);
+      Value *Idx = llvm::ConstantInt::get(CGF.Int32Ty, CurIdx);
       V = Builder.CreateInsertElement(V, Init, Idx, "vecinit");
       VIsUndefShuffle = false;
       ++CurIdx;
@@ -834,15 +825,15 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
           // this shuffle directly into it.
           if (VIsUndefShuffle) {
             Args.push_back(getMaskElt(cast<llvm::ShuffleVectorInst>(V), j, 0,
-                                      I32Ty));
+                                      CGF.Int32Ty));
           } else {
-            Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+            Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, j));
           }
         }
         for (unsigned j = 0, je = InitElts; j != je; ++j)
-          Args.push_back(getMaskElt(SVI, j, Offset, I32Ty));
+          Args.push_back(getMaskElt(SVI, j, Offset, CGF.Int32Ty));
         for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
-          Args.push_back(llvm::UndefValue::get(I32Ty));
+          Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
 
         if (VIsUndefShuffle)
           V = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
@@ -855,20 +846,20 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // to the vector initializer into V.
     if (Args.empty()) {
       for (unsigned j = 0; j != InitElts; ++j)
-        Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+        Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, j));
       for (unsigned j = InitElts; j != ResElts; ++j)
-        Args.push_back(llvm::UndefValue::get(I32Ty));
+        Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
       llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
       Init = Builder.CreateShuffleVector(Init, llvm::UndefValue::get(VVT),
                                          Mask, "vext");
 
       Args.clear();
       for (unsigned j = 0; j != CurIdx; ++j)
-        Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+        Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, j));
       for (unsigned j = 0; j != InitElts; ++j)
-        Args.push_back(llvm::ConstantInt::get(I32Ty, j+Offset));
+        Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, j+Offset));
       for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
-        Args.push_back(llvm::UndefValue::get(I32Ty));
+        Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
     }
 
     // If V is undef, make sure it ends up on the RHS of the shuffle to aid
@@ -887,7 +878,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
   
   // Emit remaining default initializers
   for (/* Do not initialize i*/; CurIdx < ResElts; ++CurIdx) {
-    Value *Idx = llvm::ConstantInt::get(I32Ty, CurIdx);
+    Value *Idx = llvm::ConstantInt::get(CGF.Int32Ty, CurIdx);
     llvm::Value *Init = llvm::Constant::getNullValue(EltTy);
     V = Builder.CreateInsertElement(V, Init, Idx, "vecinit");
   }
@@ -1030,8 +1021,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     
     // First, convert to the correct width so that we control the kind of
     // extension.
-    const llvm::Type *MiddleTy =
-      llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
+    const llvm::Type *MiddleTy = CGF.IntPtrTy;
     bool InputSigned = E->getType()->isSignedIntegerType();
     llvm::Value* IntResult =
       Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
@@ -1052,16 +1042,14 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = llvm::UndefValue::get(DstTy);
-    llvm::Value *Idx =
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
+    llvm::Value *Idx = llvm::ConstantInt::get(CGF.Int32Ty, 0);
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
     // Splat the element across to all elements
     llvm::SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
     for (unsigned i = 0; i < NumElements; i++)
-      Args.push_back(llvm::ConstantInt::get(
-                                        llvm::Type::getInt32Ty(VMContext), 0));
+      Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 0));
 
     llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
@@ -1144,8 +1132,7 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
   llvm::Value *NextVal;
   if (const llvm::PointerType *PT =
       dyn_cast<llvm::PointerType>(InVal->getType())) {
-    llvm::Constant *Inc =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), AmountVal);
+    llvm::Constant *Inc = llvm::ConstantInt::get(CGF.Int32Ty, AmountVal);
     if (!isa<llvm::FunctionType>(PT->getElementType())) {
       QualType PTEE = ValTy->getPointeeType();
       if (const ObjCObjectType *OIT = PTEE->getAs<ObjCObjectType>()) {
@@ -1484,20 +1471,20 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   // long long *__overflow_handler)(long long a, long long b, char op,
   // char width)
   std::vector<const llvm::Type*> handerArgTypes;
-  handerArgTypes.push_back(llvm::Type::getInt64Ty(VMContext));
-  handerArgTypes.push_back(llvm::Type::getInt64Ty(VMContext));
+  handerArgTypes.push_back(CGF.Int64Ty);
+  handerArgTypes.push_back(CGF.Int64Ty);
   handerArgTypes.push_back(llvm::Type::getInt8Ty(VMContext));
   handerArgTypes.push_back(llvm::Type::getInt8Ty(VMContext));
-  llvm::FunctionType *handlerTy = llvm::FunctionType::get(
-      llvm::Type::getInt64Ty(VMContext), handerArgTypes, false);
+  llvm::FunctionType *handlerTy =
+    llvm::FunctionType::get(CGF.Int64Ty, handerArgTypes, false);
   llvm::Value *handlerFunction =
     CGF.CGM.getModule().getOrInsertGlobal("__overflow_handler",
         llvm::PointerType::getUnqual(handlerTy));
   handlerFunction = Builder.CreateLoad(handlerFunction);
 
   llvm::Value *handlerResult = Builder.CreateCall4(handlerFunction,
-      Builder.CreateSExt(Ops.LHS, llvm::Type::getInt64Ty(VMContext)),
-      Builder.CreateSExt(Ops.RHS, llvm::Type::getInt64Ty(VMContext)),
+      Builder.CreateSExt(Ops.LHS, CGF.Int64Ty),
+      Builder.CreateSExt(Ops.RHS, CGF.Int64Ty),
       llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), OpID),
       llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext),
         cast<llvm::IntegerType>(opTy)->getBitWidth()));
@@ -1568,8 +1555,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (Width < CGF.LLVMPointerWidth) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
-    const llvm::Type *IdxType =
-        llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
+    const llvm::Type *IdxType = CGF.IntPtrTy;
     if (IdxExp->getType()->isSignedIntegerType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
@@ -1642,8 +1628,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     if (Width < CGF.LLVMPointerWidth) {
       // Zero or sign extend the pointer value based on whether the index is
       // signed or not.
-      const llvm::Type *IdxType =
-          llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
+      const llvm::Type *IdxType = CGF.IntPtrTy;
       if (BinOp->getRHS()->getType()->isSignedIntegerType())
         Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
       else

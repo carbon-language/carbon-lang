@@ -103,7 +103,8 @@ public:
   /// we prefer to insert allocas.
   llvm::AssertingVH<llvm::Instruction> AllocaInsertPt;
 
-  const llvm::Type *LLVMIntTy;
+  // intptr_t, i32, i64
+  const llvm::IntegerType *IntPtrTy, *Int32Ty, *Int64Ty;
   uint32_t LLVMPointerWidth;
 
   bool Exceptions;

@@ -34,8 +34,14 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
     ConditionalBranchLevel(0), TerminateHandler(0), TrapBB(0) {
-  LLVMIntTy = ConvertType(getContext().IntTy);
+      
+  // Get some frequently used types.
   LLVMPointerWidth = Target.getPointerWidth(0);
+  llvm::LLVMContext &LLVMContext = CGM.getLLVMContext();
+  IntPtrTy = llvm::IntegerType::get(LLVMContext, LLVMPointerWidth);
+  Int32Ty  = llvm::Type::getInt32Ty(LLVMContext);
+  Int64Ty  = llvm::Type::getInt64Ty(LLVMContext);
+      
   Exceptions = getContext().getLangOptions().Exceptions;
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
   CGM.getMangleContext().startNewFunction();
@@ -195,7 +201,7 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
   llvm::CallInst *CallSite = Builder.CreateCall(
     CGM.getIntrinsic(llvm::Intrinsic::returnaddress, 0, 0),
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0),
+    llvm::ConstantInt::get(Int32Ty, 0),
     "callsite");
 
   Builder.CreateCall2(F,
@@ -230,10 +236,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
   // folded.
-  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(VMContext));
-  AllocaInsertPt = new llvm::BitCastInst(Undef,
-                                         llvm::Type::getInt32Ty(VMContext), "",
-                                         EntryBB);
+  llvm::Value *Undef = llvm::UndefValue::get(Int32Ty);
+  AllocaInsertPt = new llvm::BitCastInst(Undef, Int32Ty, "", EntryBB);
   if (Builder.isNamePreserving())
     AllocaInsertPt->setName("allocapt");
 
@@ -558,15 +562,11 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     return;
 
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(VMContext,
-                                                    LLVMPointerWidth);
-
-  Builder.CreateCall5(CGM.getMemSetFn(BP, IntPtr), DestPtr,
+  Builder.CreateCall5(CGM.getMemSetFn(BP, IntPtrTy), DestPtr,
                  llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
                       // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                             TypeInfo.second/8),
+                      llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
+                      llvm::ConstantInt::get(Int32Ty, TypeInfo.second/8),
                       llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
                                              0));
 }
@@ -719,9 +719,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
     Builder.SetInsertPoint(SwitchBlock);
 
-    llvm::Value *DestCodePtr
-      = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext),
-                         "cleanup.dst");
+    llvm::Value *DestCodePtr = CreateTempAlloca(Int32Ty, "cleanup.dst");
     llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
 
     // Create a switch instruction to determine where to jump next.
@@ -734,7 +732,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
       // If we had a current basic block, we also need to emit an instruction
       // to initialize the cleanup destination.
-      Builder.CreateStore(llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext)),
+      Builder.CreateStore(llvm::Constant::getNullValue(Int32Ty),
                           DestCodePtr);
     } else
       Builder.ClearInsertionPoint();
@@ -751,14 +749,13 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
         // Check if we already have a destination for this block.
         if (Dest == SI->getDefaultDest())
-          ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0);
+          ID = llvm::ConstantInt::get(Int32Ty, 0);
         else {
           ID = SI->findCaseDest(Dest);
           if (!ID) {
             // No code found, get a new unique one by using the number of
             // switch successors.
-            ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                        SI->getNumSuccessors());
+            ID = llvm::ConstantInt::get(Int32Ty, SI->getNumSuccessors());
             SI->addCase(ID, Dest);
           }
         }
@@ -775,8 +772,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
         // Create a unique case ID.
         llvm::ConstantInt *ID
-          = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                   SI->getNumSuccessors());
+          = llvm::ConstantInt::get(Int32Ty, SI->getNumSuccessors());
 
         // Store the jump destination before the branch instruction.
         new llvm::StoreInst(ID, DestCodePtr, BI);

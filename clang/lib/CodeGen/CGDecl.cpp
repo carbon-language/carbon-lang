@@ -327,10 +327,10 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   Types.push_back(llvm::PointerType::getUnqual(ByRefTypeHolder));
   
   // int32_t __flags;
-  Types.push_back(llvm::Type::getInt32Ty(VMContext));
+  Types.push_back(Int32Ty);
     
   // int32_t __size;
-  Types.push_back(llvm::Type::getInt32Ty(VMContext));
+  Types.push_back(Int32Ty);
 
   bool HasCopyAndDispose = BlockRequiresCopying(Ty);
   if (HasCopyAndDispose) {
@@ -568,18 +568,18 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
-    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), isa);
+    V = llvm::ConstantInt::get(Int32Ty, isa);
     V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
     Builder.CreateStore(DeclPtr, forwarding_field);
 
-    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), flags);
+    V = llvm::ConstantInt::get(Int32Ty, flags);
     Builder.CreateStore(V, flags_field);
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+    V = llvm::ConstantInt::get(Int32Ty,
                                CGM.GetTargetTypeStoreSize(V1).getQuantity());
     Builder.CreateStore(V, size_field);
 
@@ -613,8 +613,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       assert(Init != 0 && "Wasn't a simple constant init?");
       
       llvm::Value *AlignVal = 
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
-                             Align.getQuantity());
+      llvm::ConstantInt::get(Int32Ty, Align.getQuantity());
       const llvm::Type *IntPtr =
       llvm::IntegerType::get(VMContext, LLVMPointerWidth);
       llvm::Value *SizeVal =

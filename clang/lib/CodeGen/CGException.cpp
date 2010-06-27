@@ -384,7 +384,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 
   SelectorArgs.push_back(Exc);
   SelectorArgs.push_back(Personality);
-  SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+  SelectorArgs.push_back(llvm::ConstantInt::get(Int32Ty,
                                                 Proto->getNumExceptions()+1));
 
   for (unsigned i = 0; i < Proto->getNumExceptions(); ++i) {
@@ -406,8 +406,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 
     Builder.CreateStore(Exc, RethrowPtr);
     Builder.CreateCondBr(Builder.CreateICmpSLT(Selector,
-                                               llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                                                      0)),
+                                           llvm::ConstantInt::get(Int32Ty, 0)),
                          Match, Unwind);
 
     EmitBlock(Match);
@@ -594,8 +593,7 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
     // We are required to emit this call to satisfy LLVM, even
     // though we don't use the result.
     llvm::Value *Args[] = {
-      Exc, Personality,
-      llvm::ConstantInt::getNullValue(llvm::Type::getInt32Ty(VMContext))
+      Exc, Personality, llvm::ConstantInt::getNullValue(Int32Ty)
     };
     Builder.CreateCall(llvm_eh_selector, &Args[0], llvm::array_endof(Args));
     Builder.CreateStore(Exc, RethrowPtr);
@@ -738,8 +736,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   // We are required to emit this call to satisfy LLVM, even
   // though we don't use the result.
   llvm::Value *Args[] = {
-    Exc, Personality,
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 1)
+    Exc, Personality, llvm::ConstantInt::get(Int32Ty, 1)
   };
   Builder.CreateCall(llvm_eh_selector, &Args[0], llvm::array_endof(Args));
   llvm::CallInst *TerminateCall =

@@ -818,8 +818,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
 
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr =
-          llvm::IntegerType::get(VMContext, LLVMPointerWidth);
 
   // FIXME: If we have a volatile struct, the optimizer can remove what might
   // appear to be `extra' memory ops:
@@ -835,7 +833,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // either the source or the destination is volatile.
   const llvm::Type *I1Ty = llvm::Type::getInt1Ty(VMContext);
   const llvm::Type *I8Ty = llvm::Type::getInt8Ty(VMContext);
-  const llvm::Type *I32Ty = llvm::Type::getInt32Ty(VMContext);
 
   const llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
   const llvm::Type *DBP = llvm::PointerType::get(I8Ty, DPT->getAddressSpace());
@@ -872,10 +869,10 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   }
   
   Builder.CreateCall5(CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(),
-                                      IntPtr),
+                                      IntPtrTy),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(I32Ty,  TypeInfo.second/8),
+                      llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
+                      llvm::ConstantInt::get(Int32Ty,  TypeInfo.second/8),
                       llvm::ConstantInt::get(I1Ty,  isVolatile));
 }

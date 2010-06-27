@@ -329,7 +329,6 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   CGM.getMangleContext().mangleGuardVariable(&D, GuardVName);
 
   // Create the guard variable.
-  const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(VMContext);
   llvm::GlobalValue *GuardVariable =
     new llvm::GlobalVariable(CGM.getModule(), Int64Ty,
                              false, GV->getLinkage(),
