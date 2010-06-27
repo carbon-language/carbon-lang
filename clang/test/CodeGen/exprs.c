@@ -131,3 +131,9 @@ int f11(long X) {
 // CHECK-NEXT: load i32*
 }
 
+int f12() {
+  // PR3150
+  // CHECK: define i32 @f12
+  // CHECK: ret i32 1
+  return 1||1;
+}
