@@ -93,9 +93,9 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
          long double X) {}
 
 // Check for valid coercion.
-// CHECK: [[f18_t0:%.*]] = bitcast i64* {{.*}} to %struct.f18_s0*
-// CHECK: [[f18_t1:%.*]] = load %struct.f18_s0* [[f18_t0]], align 1
-// CHECK: store %struct.f18_s0 [[f18_t1]], %struct.f18_s0* %f18_arg1
+// CHECK: [[f18_t0:%.*]] = bitcast i64* {{.*}} to i32*
+// CHECK: [[f18_t1:%.*]] = load i32* [[f18_t0]], align 1
+// CHECK: store i32 [[f18_t1]], i32* 
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 

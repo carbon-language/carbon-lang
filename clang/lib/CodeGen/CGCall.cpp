@@ -345,14 +345,14 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
   }
 }
 
-/// EnterStructPointerForCoercedLoad - Given a pointer to a struct where we are
+/// EnterStructPointerForCoercedAccess - Given a struct pointer that we are
 /// accessing some number of bytes out of it, try to gep into the struct to get
 /// at its inner goodness.  Dive as deep as possible without entering an element
 /// with an in-memory size smaller than DstSize.
 static llvm::Value *
-EnterStructPointerForCoercedLoad(llvm::Value *SrcPtr,
-                                 const llvm::StructType *SrcSTy,
-                                 uint64_t DstSize, CodeGenFunction &CGF) {
+EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
+                                   const llvm::StructType *SrcSTy,
+                                   uint64_t DstSize, CodeGenFunction &CGF) {
   // We can't dive into a zero-element struct.
   if (SrcSTy->getNumElements() == 0) return SrcPtr;
   
@@ -373,7 +373,7 @@ EnterStructPointerForCoercedLoad(llvm::Value *SrcPtr,
   const llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
   if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy))
-    return EnterStructPointerForCoercedLoad(SrcPtr, SrcSTy, DstSize, CGF);
+    return EnterStructPointerForCoercedAccess(SrcPtr, SrcSTy, DstSize, CGF);
 
   return SrcPtr;
 }
@@ -394,7 +394,7 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
   
   if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
-    SrcPtr = EnterStructPointerForCoercedLoad(SrcPtr, SrcSTy, DstSize, CGF);
+    SrcPtr = EnterStructPointerForCoercedAccess(SrcPtr, SrcSTy, DstSize, CGF);
     SrcTy = cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
   }
   
@@ -438,10 +438,16 @@ static void CreateCoercedStore(llvm::Value *Src,
                                bool DstIsVolatile,
                                CodeGenFunction &CGF) {
   const llvm::Type *SrcTy = Src->getType();
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  
   const llvm::Type *DstTy =
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
 
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  if (const llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
+    DstPtr = EnterStructPointerForCoercedAccess(DstPtr, DstSTy, SrcSize, CGF);
+    DstTy = cast<llvm::PointerType>(DstPtr->getType())->getElementType();
+  }
+  
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(DstTy);
 
   // If store is legal, just bitcast the src pointer.
