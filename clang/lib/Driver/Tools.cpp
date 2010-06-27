@@ -431,8 +431,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // If unspecified, choose the default based on the platform.
   if (FloatABI.empty()) {
-    // FIXME: This is wrong for non-Darwin, we don't have a mechanism yet for
-    // distinguishing things like linux-eabi vs linux-elf.
     switch (getToolChain().getTriple().getOS()) {
     case llvm::Triple::Darwin: {
       // Darwin defaults to "softfp" for v6 and v7.
@@ -445,6 +443,15 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
         FloatABI = "soft";
       break;
     }
+
+    case llvm::Triple::Linux: {
+      llvm::StringRef Env = getToolChain().getTriple().getEnvironmentName();
+      if (Env == "gnueabi") {
+        FloatABI = "softfp";
+        break;
+      }
+    }
+    // fall through
 
     default:
       // Assume "soft", but warn the user we are guessing.
