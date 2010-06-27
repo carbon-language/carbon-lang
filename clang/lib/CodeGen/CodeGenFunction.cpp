@@ -137,7 +137,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     DI->EmitRegionEnd(CurFn, Builder);
   }
 
-  EmitFunctionEpilog(*CurFnInfo, ReturnValue);
+  EmitFunctionEpilog(*CurFnInfo);
   EmitEndEHSpec(CurCodeDecl);
 
   // If someone did an indirect goto, emit the indirect goto block at the end of

@@ -150,10 +150,9 @@ void f0(s1 a) { s1 b = a; }
 
 // PR6024
 // CHECK: @_Z2f2v()
-// CHECK: alloca
-// CHECK: store
-// CHECK: load
-// CHECK: ret
+// CHECK: alloca i32,
+// CHECK-NEXT: store
+// CHECK-NEXT: ret
 const int &f2() { return 0; }
 
 // Don't constant fold const reference parameters with default arguments to

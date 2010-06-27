@@ -2,6 +2,6 @@
 
 // Checks folding of an unordered comparison
 int nan_ne_check() {
-  // CHECK: store i32 1
+  // CHECK: ret i32 1
   return (__builtin_nanf("") != __builtin_nanf("")) ? 1 : 0;
 }

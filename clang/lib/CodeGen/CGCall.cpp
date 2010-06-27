@@ -373,18 +373,18 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
     // FIXME: Use better alignment / avoid requiring aligned load.
     Load->setAlignment(1);
     return Load;
-  } else {
-    // Otherwise do coercion through memory. This is stupid, but
-    // simple.
-    llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
-    llvm::Value *Casted =
-      CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
-    llvm::StoreInst *Store =
-      CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
-    // FIXME: Use better alignment / avoid requiring aligned store.
-    Store->setAlignment(1);
-    return CGF.Builder.CreateLoad(Tmp);
   }
+  
+  // Otherwise do coercion through memory. This is stupid, but
+  // simple.
+  llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
+  llvm::Value *Casted =
+    CGF.Builder.CreateBitCast(Tmp, llvm::PointerType::getUnqual(SrcTy));
+  llvm::StoreInst *Store =
+    CGF.Builder.CreateStore(CGF.Builder.CreateLoad(SrcPtr), Casted);
+  // FIXME: Use better alignment / avoid requiring aligned store.
+  Store->setAlignment(1);
+  return CGF.Builder.CreateLoad(Tmp);
 }
 
 /// CreateCoercedStore - Create a store to \arg DstPtr from \arg Src,
@@ -798,8 +798,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   assert(AI == Fn->arg_end() && "Argument mismatch!");
 }
 
-void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
-                                         llvm::Value *ReturnValue) {
+void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
   // Functions with no result always return void.
   if (ReturnValue == 0) {
     Builder.CreateRetVoid();
@@ -824,12 +823,32 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     break;
 
   case ABIArgInfo::Extend:
-  case ABIArgInfo::Direct:
-    // The internal return value temp always will have
-    // pointer-to-return-type type.
-    RV = Builder.CreateLoad(ReturnValue);
+  case ABIArgInfo::Direct: {
+    // The internal return value temp always will have pointer-to-return-type
+    // type, just do a load.
+      
+    // If the instruction right before the insertion point is a store to the
+    // return value, we can elide the load, zap the store, and usually zap the
+    // alloca.
+    llvm::BasicBlock *InsertBB = Builder.GetInsertBlock();
+    llvm::StoreInst *SI = 0;
+    if (InsertBB->empty() || 
+        !(SI = dyn_cast<llvm::StoreInst>(&InsertBB->back())) ||
+        SI->getPointerOperand() != ReturnValue || SI->isVolatile()) {
+      RV = Builder.CreateLoad(ReturnValue);
+    } else {
+      // Get the stored value and nuke the now-dead store.
+      RV = SI->getValueOperand();
+      SI->eraseFromParent();
+      
+      // If that was the only use of the return value, nuke it as well now.
+      if (ReturnValue->use_empty() && isa<llvm::AllocaInst>(ReturnValue)) {
+        cast<llvm::AllocaInst>(ReturnValue)->eraseFromParent();
+        ReturnValue = 0;
+      }
+    }
     break;
-
+  }
   case ABIArgInfo::Ignore:
     break;
 
