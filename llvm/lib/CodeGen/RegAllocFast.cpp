@@ -140,6 +140,8 @@ namespace {
   private:
     bool runOnMachineFunction(MachineFunction &Fn);
     void AllocateBasicBlock();
+    void handleThroughOperands(MachineInstr *MI,
+                               SmallVectorImpl<unsigned> &VirtDead);
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
     bool isLastUseOfLocalReg(MachineOperand&);
 
@@ -612,6 +614,77 @@ bool RAFast::setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg) {
   return MO.isDead();
 }
 
+// Handle special instruction operand like early clobbers and tied ops when
+// there are additional physreg defines.
+void RAFast::handleThroughOperands(MachineInstr *MI,
+                                   SmallVectorImpl<unsigned> &VirtDead) {
+  DEBUG(dbgs() << "Scanning for through registers:");
+  SmallSet<unsigned, 8> ThroughRegs;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg()) continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    if (MO.isEarlyClobber() || MI->isRegTiedToDefOperand(i)) {
+      if (ThroughRegs.insert(Reg))
+        DEBUG(dbgs() << " %reg" << Reg);
+    }
+  }
+
+  // If any physreg defines collide with preallocated through registers,
+  // we must spill and reallocate.
+  DEBUG(dbgs() << "\nChecking for physdef collisions.\n");
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isDef()) continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    UsedInInstr.set(Reg);
+    if (ThroughRegs.count(PhysRegState[Reg]))
+      definePhysReg(MI, Reg, regFree);
+    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+      UsedInInstr.set(*AS);
+      if (ThroughRegs.count(PhysRegState[*AS]))
+        definePhysReg(MI, *AS, regFree);
+    }
+  }
+
+  DEBUG(dbgs() << "Allocating tied uses and early clobbers.\n");
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg()) continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    if (MO.isUse()) {
+      unsigned DefIdx = 0;
+      if (!MI->isRegTiedToDefOperand(i, &DefIdx)) continue;
+      DEBUG(dbgs() << "Operand " << i << "("<< MO << ") is tied to operand "
+        << DefIdx << ".\n");
+      LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, 0);
+      unsigned PhysReg = LRI->second.PhysReg;
+      setPhysReg(MI, i, PhysReg);
+    } else if (MO.isEarlyClobber()) {
+      // Note: defineVirtReg may invalidate MO.
+      LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
+      unsigned PhysReg = LRI->second.PhysReg;
+      if (setPhysReg(MI, i, PhysReg))
+        VirtDead.push_back(Reg);
+    }
+  }
+
+  // Restore UsedInInstr to a state usable for allocating normal virtual uses.
+  UsedInInstr.reset();
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || (MO.isDef() && !MO.isEarlyClobber())) continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    UsedInInstr.set(Reg);
+    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+      UsedInInstr.set(*AS);
+  }
+}
+
 void RAFast::AllocateBasicBlock() {
   DEBUG(dbgs() << "\nAllocating " << *MBB);
 
@@ -625,7 +698,7 @@ void RAFast::AllocateBasicBlock() {
          E = MBB->livein_end(); I != E; ++I)
     definePhysReg(MII, *I, regReserved);
 
-  SmallVector<unsigned, 8> PhysECs, VirtDead;
+  SmallVector<unsigned, 8> VirtDead;
   SmallVector<MachineInstr*, 32> Coalesced;
 
   // Otherwise, sequentially allocate each instruction in the MBB.
@@ -689,12 +762,12 @@ void RAFast::AllocateBasicBlock() {
 
     // Track registers used by instruction.
     UsedInInstr.reset();
-    PhysECs.clear();
 
     // First scan.
     // Mark physreg uses and early clobbers as used.
     // Find the end of the virtreg operands
     unsigned VirtOpEnd = 0;
+    bool hasTiedOps = false, hasEarlyClobbers = false, hasPhysDefs = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
@@ -702,6 +775,11 @@ void RAFast::AllocateBasicBlock() {
       if (!Reg) continue;
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         VirtOpEnd = i+1;
+        if (MO.isUse())
+          hasTiedOps = hasTiedOps ||
+                                TID.getOperandConstraint(i, TOI::TIED_TO) != -1;
+        else if (MO.isEarlyClobber())
+          hasEarlyClobbers = true;
         continue;
       }
       if (!Allocatable.test(Reg)) continue;
@@ -710,13 +788,26 @@ void RAFast::AllocateBasicBlock() {
       } else if (MO.isEarlyClobber()) {
         definePhysReg(MI, Reg, (MO.isImplicit() || MO.isDead()) ?
                                regFree : regReserved);
-        PhysECs.push_back(Reg);
-      }
+        hasEarlyClobbers = true;
+      } else
+        hasPhysDefs = true;
+    }
+
+    // The instruction may have virtual register operands that must be allocated
+    // the same register at use-time and def-time: early clobbers and tied
+    // operands. If there are also physical defs, these registers must avoid
+    // both physical defs and uses, making them more constrained than normal
+    // operands.
+    // We didn't detect inline asm tied operands above, so just make this extra
+    // pass for all inline asm.
+    if (MI->isInlineAsm() || hasEarlyClobbers || (hasTiedOps && hasPhysDefs)) {
+      handleThroughOperands(MI, VirtDead);
+      // Don't attempt coalescing when we have funny stuff going on.
+      CopyDst = 0;
     }
 
     // Second scan.
-    // Allocate virtreg uses and early clobbers.
-    // Collect VirtKills
+    // Allocate virtreg uses.
     for (unsigned i = 0; i != VirtOpEnd; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
@@ -728,15 +819,6 @@ void RAFast::AllocateBasicBlock() {
         CopySrc = (CopySrc == Reg || CopySrc == PhysReg) ? PhysReg : 0;
         if (setPhysReg(MI, i, PhysReg))
           killVirtReg(LRI);
-      } else if (MO.isEarlyClobber()) {
-        // Note: defineVirtReg may invalidate MO.
-        LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
-        unsigned PhysReg = LRI->second.PhysReg;
-        if (setPhysReg(MI, i, PhysReg))
-          VirtDead.push_back(Reg);
-        PhysECs.push_back(PhysReg);
-        // Don't attempt coalescing when earlyclobbers are present.
-        CopyDst = 0;
       }
     }
 
@@ -744,12 +826,16 @@ void RAFast::AllocateBasicBlock() {
 
     // Track registers defined by instruction - early clobbers at this point.
     UsedInInstr.reset();
-    for (unsigned i = 0, e = PhysECs.size(); i != e; ++i) {
-      unsigned PhysReg = PhysECs[i];
-      UsedInInstr.set(PhysReg);
-      for (const unsigned *AS = TRI->getAliasSet(PhysReg);
-            unsigned Alias = *AS; ++AS)
-        UsedInInstr.set(Alias);
+    if (hasEarlyClobbers) {
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg() || !MO.isDef()) continue;
+        unsigned Reg = MO.getReg();
+        if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+        UsedInInstr.set(Reg);
+        for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+          UsedInInstr.set(*AS);
+      }
     }
 
     unsigned DefOpEnd = MI->getNumOperands();
