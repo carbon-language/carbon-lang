@@ -290,6 +290,19 @@ DependentScopeDeclRefExpr::Create(ASTContext &C,
   return DRE;
 }
 
+DependentScopeDeclRefExpr *
+DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
+                                       unsigned NumTemplateArgs) {
+  std::size_t size = sizeof(DependentScopeDeclRefExpr);
+  if (NumTemplateArgs)
+    size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+  void *Mem = C.Allocate(size);
+
+  return new (Mem) DependentScopeDeclRefExpr(QualType(), 0, SourceRange(),
+                                             DeclarationName(),SourceLocation(),
+                                             NumTemplateArgs != 0);
+}
+
 StmtIterator DependentScopeDeclRefExpr::child_begin() {
   return child_iterator();
 }

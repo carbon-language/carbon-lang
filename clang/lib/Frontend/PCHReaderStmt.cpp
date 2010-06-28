@@ -147,6 +147,7 @@ namespace {
     unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     
     unsigned VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
+    unsigned VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
     unsigned VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
 
     unsigned VisitOverloadExpr(OverloadExpr *E);
@@ -1185,6 +1186,26 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
 }
 
 unsigned
+PCHStmtReader::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
+  VisitExpr(E);
+  unsigned NumExprs = 0;
+  
+  unsigned NumTemplateArgs = Record[Idx++];
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
+         "Read wrong record during creation ?");
+  if (E->hasExplicitTemplateArgs())
+    NumExprs
+      = ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
+                                         NumTemplateArgs, StmtStack.end());
+
+  E->setDeclName(Reader.ReadDeclarationName(Record, Idx));
+  E->setLocation(Reader.ReadSourceLocation(Record, Idx));
+  E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  return NumExprs;
+}
+
+unsigned
 PCHStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   VisitExpr(E);
   assert(Record[Idx] == E->arg_size() && "Read wrong record during creation ?");
@@ -1632,6 +1653,11 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       
     case pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER:
       S = CXXDependentScopeMemberExpr::CreateEmpty(*Context,
+                      /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
+      break;
+      
+    case pch::EXPR_CXX_DEPENDENT_SCOPE_DECL_REF:
+      S = DependentScopeDeclRefExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
       break;
       

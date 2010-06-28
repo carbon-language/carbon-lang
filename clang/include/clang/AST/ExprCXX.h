@@ -1656,18 +1656,25 @@ public:
                                            SourceLocation NameLoc,
                               const TemplateArgumentListInfo *TemplateArgs = 0);
 
+  static DependentScopeDeclRefExpr *CreateEmpty(ASTContext &C,
+                                                unsigned NumTemplateArgs);
+
   /// \brief Retrieve the name that this expression refers to.
   DeclarationName getDeclName() const { return Name; }
+  void setDeclName(DeclarationName N) { Name =  N; }
 
   /// \brief Retrieve the location of the name within the expression.
   SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
 
   /// \brief Retrieve the source range of the nested-name-specifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
 
   /// \brief Retrieve the nested-name-specifier that qualifies this
   /// declaration.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   /// Determines whether this lookup had explicit template arguments.
   bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
@@ -1675,6 +1682,11 @@ public:
   // Note that, inconsistently with the explicit-template-argument AST
   // nodes, users are *forbidden* from calling these methods on objects
   // without explicit template arguments.
+
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<ExplicitTemplateArgumentList*>(this + 1);
+  }
 
   /// Gets a reference to the explicit template argument list.
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {

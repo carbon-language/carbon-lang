@@ -137,6 +137,7 @@ namespace {
 
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
+    void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
     void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
 
     void VisitOverloadExpr(OverloadExpr *E);
@@ -1101,6 +1102,29 @@ PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   Writer.AddDeclarationName(E->getMember(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Code = pch::EXPR_CXX_DEPENDENT_SCOPE_MEMBER;
+}
+
+void
+PCHStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
+  VisitExpr(E);
+  
+  // Don't emit anything here, NumTemplateArgs must be emitted first.
+
+  if (E->hasExplicitTemplateArgs()) {
+    const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
+    assert(Args.NumTemplateArgs &&
+           "Num of template args was zero! PCH reading will mess up!");
+    Record.push_back(Args.NumTemplateArgs);
+    AddExplicitTemplateArgumentList(Args);
+  } else {
+    Record.push_back(0);
+  }
+
+  Writer.AddDeclarationName(E->getDeclName(), Record);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+  Code = pch::EXPR_CXX_DEPENDENT_SCOPE_DECL_REF;
 }
 
 void

@@ -51,5 +51,6 @@ struct Dep {
 
 template<typename T, typename A1>
 inline T make_a(const A1& a1) {
+  T::depend_declref();
   return T(a1);
 }
