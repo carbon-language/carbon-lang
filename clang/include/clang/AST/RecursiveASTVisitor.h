@@ -179,6 +179,14 @@ public:
   bool TraverseTemplateArguments(const TemplateArgument *Args,
                                  unsigned NumArgs);
 
+  /// \brief Recursively visit a constructor initializer.  This
+  /// automatically dispatches to another visitor for the initializer
+  /// expression, but not for the name of the initializer, so may
+  /// be overridden for clients that need access to the nam.e
+  ///
+  /// \returns false if the visitation was terminated early, true otherwise.
+  bool TraverseInitializer(clang::CXXBaseOrMemberInitializer* Init);
+
   // ---- Methods on Stmts ----
 
   // Declare Traverse*() for all concrete Stmt classes.
@@ -459,6 +467,16 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArguments(
 
   return true;
 }
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseInitializer(
+                                    clang::CXXBaseOrMemberInitializer* Init) {
+  // FIXME: recurse on TypeLoc of the base initializer if isBaseInitializer()?
+  if (Init->isWritten())
+    TRY_TO(TraverseStmt(Init->getInit()));
+  return true;
+}
+
 
 // ----------------- Type traversal -----------------
 
@@ -803,7 +821,6 @@ DEF_TRAVERSE_DECL(TemplateTypeParmDecl, {
   })
 
 DEF_TRAVERSE_DECL(TypedefDecl, {
-    // FIXME: I *think* this returns the right type (D's immediate typedef)
     TRY_TO(TraverseType(D->getUnderlyingType()));
     // We shouldn't traverse D->getTypeForDecl(); it's a result of
     // declaring the typedef, not something that was written in the
@@ -880,6 +897,8 @@ DEF_TRAVERSE_DECL(ClassTemplateSpecializationDecl, {
     for (unsigned I = 0; I < TAL.size(); ++I) {
       TRY_TO(TraverseTemplateArgument(TAL.get(I)));
     }
+    // FIXME: I think we only want to traverse this if it's an explicit
+    // specialization.
     TRY_TO(TraverseCXXRecordHelper(D));
   })
 
@@ -995,7 +1014,7 @@ DEF_TRAVERSE_DECL(CXXConstructorDecl, {
     for (CXXConstructorDecl::init_iterator I = D->init_begin(),
                                            E = D->init_end();
          I != E; ++I) {
-      // FIXME: figure out how to recurse on the initializers
+      TRY_TO(TraverseInitializer(*I));
     }
 
     // We skip decls_begin/decls_end, which are already covered by
