@@ -971,7 +971,12 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 17));
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], 17);
+
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.sp");
+  NMD->addOperand(Node);
+  return DISubprogram(Node);
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
@@ -1000,7 +1005,12 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
     DeclNode->getOperand(15), // isOptimized
     SPDeclaration.getFunction()
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 16));
+  MDNode *Node =MDNode::get(VMContext, &Elts[0], 16);
+
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.sp");
+  NMD->addOperand(Node);
+  return DISubprogram(Node);
 }
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
@@ -1230,17 +1240,19 @@ void DebugInfoFinder::processModule(Module &M) {
           processLocation(DILocation(IA));
       }
 
-  NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
-  if (!NMD)
-    return;
-
-  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-    DIGlobalVariable DIG(cast<MDNode>(NMD->getOperand(i)));
-    if (addGlobalVariable(DIG)) {
-      addCompileUnit(DIG.getCompileUnit());
-      processType(DIG.getType());
+  if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv")) {
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      DIGlobalVariable DIG(cast<MDNode>(NMD->getOperand(i)));
+      if (addGlobalVariable(DIG)) {
+        addCompileUnit(DIG.getCompileUnit());
+        processType(DIG.getType());
+      }
     }
   }
+
+  if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+      processSubprogram(DISubprogram(NMD->getOperand(i)));
 }
 
 /// processLocation - Process DILocation.
