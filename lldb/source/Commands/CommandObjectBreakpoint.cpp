@@ -52,6 +52,7 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
     m_column (0),
     m_ignore_inlines (false),
     m_func_name (),
+    m_func_name_type_mask (0),
     m_func_regexp (),
     m_modules (),
     m_load_addr(),
@@ -70,31 +71,28 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 lldb::OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "shlib",       's', required_argument, NULL, CommandCompletions::eModuleCompletion, "<shlib-name>",
+    { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, "<shlib-name>",
         "Set the breakpoint only in this shared library (can use this option multiple times for multiple shlibs)."},
 
-    { LLDB_OPT_SET_ALL, false, "ignore_inlines", 'i', no_argument,   NULL, 0, NULL,
-        "Ignore inlined subroutines when setting the breakppoint." },
-
-    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, NULL,
+    { LLDB_OPT_SET_ALL, false, "ignore_count", 'k', required_argument,   NULL, 0, "<n>",
         "Set the number of times this breakpoint is sKipped before stopping." },
 
-    { LLDB_OPT_SET_ALL, false, "thread_index",       'x', required_argument, NULL, NULL, "<thread_index>",
+    { LLDB_OPT_SET_ALL, false, "thread_index", 'x', required_argument, NULL, NULL, "<thread_index>",
         "The breakpoint stops only for the thread whose indeX matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread_id",       't', required_argument, NULL, NULL, "<thread_id>",
+    { LLDB_OPT_SET_ALL, false, "thread_id", 't', required_argument, NULL, NULL, "<thread_id>",
         "The breakpoint stops only for the thread whose TID matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "thread_name",       'T', required_argument, NULL, NULL, "<thread_name>",
+    { LLDB_OPT_SET_ALL, false, "thread_name", 'T', required_argument, NULL, NULL, "<thread_name>",
         "The breakpoint stops only for the thread whose thread name matches this argument."},
 
-    { LLDB_OPT_SET_ALL, false, "queue_name",       'q', required_argument, NULL, NULL, "<queue_name>",
+    { LLDB_OPT_SET_ALL, false, "queue_name", 'q', required_argument, NULL, NULL, "<queue_name>",
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
-    { LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<filename>",
+    { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<filename>",
         "Set the breakpoint by source location in this particular file."},
 
-    { LLDB_OPT_SET_1, true, "line",       'l', required_argument, NULL, 0, "<linenum>",
+    { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, "<linenum>",
         "Set the breakpoint by source location at this particular line."},
 
     // Comment out this option for the moment, as we don't actually use it, but will in the future.
@@ -102,11 +100,23 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     //    { 0, false, "column",     'c', required_argument, NULL, "<column>",
     //    "Set the breakpoint by source location at this particular column."},
 
-    { LLDB_OPT_SET_2, true, "address",    'a', required_argument, NULL, 0, "<address>",
+    { LLDB_OPT_SET_2, true, "address", 'a', required_argument, NULL, 0, "<address>",
         "Set the breakpoint by address, at the specified address."},
 
-    { LLDB_OPT_SET_3, true, "name",       'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<function-name>",
+    { LLDB_OPT_SET_3, true, "name", 'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, "<name>",
         "Set the breakpoint by function name." },
+
+    { LLDB_OPT_SET_3, false, "basename", 'b', no_argument, NULL, 0, NULL,
+        "Used in conjuction with --name <name> to search function basenames." },
+
+    { LLDB_OPT_SET_3, false, "fullname", 'F', no_argument, NULL, 0, NULL,
+        "Used in conjuction with --name <name> to search fully qualified function names. For C++ this means namespaces and all arguemnts, and for Objective C this means a full function prototype with class and selector." },
+
+    { LLDB_OPT_SET_3, false, "selector", 'S', no_argument, NULL, 0, NULL,
+        "Used in conjuction with --name <name> to search objective C selector names." },
+
+    { LLDB_OPT_SET_3, false, "method", 'm', no_argument, NULL, 0, NULL,
+        "Used in conjuction with --name <name> to search objective C selector C++ method names." },
 
     { LLDB_OPT_SET_4, true, "func_regex", 'r', required_argument, NULL, 0, "<regular-expression>",
         "Set the breakpoint by function name, evaluating a regular-expression to find the function name(s)." },
@@ -140,21 +150,39 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
         case 'c':
             m_column = Args::StringToUInt32 (option_arg, 0);
             break;
+
         case 'f':
             m_filename = option_arg;
             break;
-        case 'i':
-            m_ignore_inlines = true;
-            break;
+
         case 'l':
             m_line_num = Args::StringToUInt32 (option_arg, 0);
             break;
+
         case 'n':
             m_func_name = option_arg;
             break;
+
+        case 'b':
+            m_func_name_type_mask |= eFunctionNameTypeBase;
+            break;
+
+        case 'F':
+            m_func_name_type_mask |= eFunctionNameTypeFull;
+            break;
+
+        case 'S':
+            m_func_name_type_mask |= eFunctionNameTypeSelector;
+            break;
+
+        case 'm':
+            m_func_name_type_mask |= eFunctionNameTypeMethod;
+            break;
+
         case 'r':
             m_func_regexp = option_arg;
             break;
+
         case 's':
             {
                 m_modules.push_back (std::string (option_arg));
@@ -204,8 +232,8 @@ CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
     m_filename.clear();
     m_line_num = 0;
     m_column = 0;
-    m_ignore_inlines = false;
     m_func_name.clear();
+    m_func_name_type_mask = 0;
     m_func_regexp.clear();
     m_load_addr = LLDB_INVALID_ADDRESS;
     m_modules.clear();
@@ -357,32 +385,50 @@ CommandObjectBreakpointSet::Execute
         case eSetTypeAddress: // Breakpoint by address
             bp = target->CreateBreakpoint (m_options.m_load_addr, false).get();
             break;
+
         case eSetTypeFunctionName: // Breakpoint by function name
-            if (use_module)
             {
-                for (int i = 0; i < num_modules; ++i)
+                uint32_t name_type_mask = m_options.m_func_name_type_mask;
+                
+                if (name_type_mask == 0)
                 {
-                    module.SetFile(m_options.m_modules[i].c_str());
-                    bp = target->CreateBreakpoint (&module, m_options.m_func_name.c_str()).get();
-                    if (bp)
-                    {
-                        StreamString &output_stream = result.GetOutputStream();
-                        output_stream.Printf ("Breakpoint created: ");
-                        bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-                        output_stream.EOL();
-                        result.SetStatus (eReturnStatusSuccessFinishResult);
-                    }
+                
+                    if (m_options.m_func_name.find('(') != std::string::npos ||
+                        m_options.m_func_name.find("-[") == 0 ||
+                        m_options.m_func_name.find("+[") == 0)
+                        name_type_mask |= eFunctionNameTypeFull;
                     else
+                        name_type_mask |= eFunctionNameTypeBase;
+                }
+                    
+                
+                if (use_module)
+                {
+                    for (int i = 0; i < num_modules; ++i)
                     {
-                        result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
-                                                    m_options.m_modules[i].c_str());
-                        result.SetStatus (eReturnStatusFailed);
+                        module.SetFile(m_options.m_modules[i].c_str());
+                        bp = target->CreateBreakpoint (&module, m_options.m_func_name.c_str(), name_type_mask, Breakpoint::Exact).get();
+                        if (bp)
+                        {
+                            StreamString &output_stream = result.GetOutputStream();
+                            output_stream.Printf ("Breakpoint created: ");
+                            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
+                            output_stream.EOL();
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
+                                                        m_options.m_modules[i].c_str());
+                            result.SetStatus (eReturnStatusFailed);
+                        }
                     }
                 }
+                else
+                    bp = target->CreateBreakpoint (NULL, m_options.m_func_name.c_str(), name_type_mask, Breakpoint::Exact).get();
             }
-            else
-                bp = target->CreateBreakpoint (NULL, m_options.m_func_name.c_str()).get();
             break;
+
         case eSetTypeFunctionRegexp: // Breakpoint by regular expression function name
             {
                 RegularExpression regexp(m_options.m_func_regexp.c_str());
@@ -412,6 +458,7 @@ CommandObjectBreakpointSet::Execute
                     bp = target->CreateBreakpoint (NULL, regexp).get();
             }
             break;
+
         default:
             break;
     }

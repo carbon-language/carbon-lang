@@ -390,6 +390,20 @@ typedef enum ArchitectureType
     kNumArchTypes
 } ArchitectureType;
 
+typedef enum FunctionNameType 
+{
+    eFunctionNameTypeNone       = 0,
+    eFunctionNameTypeFull       = (1 << 1), // The function name.
+                                            // For C this is the same as just the name of the function
+                                            // For C++ this is the demangled version of the mangled name.
+                                            // For ObjC this is the full function signature with the + or
+                                            // - and the square brackets and the class and selector
+    eFunctionNameTypeBase       = (1 << 2), // The function name only, no namespaces or arguments and no class 
+                                            // methods or selectors will be searched.
+    eFunctionNameTypeMethod     = (1 << 3), // Find function by method name (C++) with no namespace or arguments
+    eFunctionNameTypeSelector   = (1 << 4)  // Find function by selector name (ObjC) names
+} FunctionNameType;
+
 } // namespace lldb
 
 

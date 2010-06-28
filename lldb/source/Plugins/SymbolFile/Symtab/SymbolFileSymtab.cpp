@@ -308,7 +308,7 @@ SymbolFileSymtab::FindGlobalVariables(const RegularExpression& regex, bool appen
 }
 
 uint32_t
-SymbolFileSymtab::FindFunctions(const ConstString &name, bool append, SymbolContextList& sc_list)
+SymbolFileSymtab::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (name = '%s')",

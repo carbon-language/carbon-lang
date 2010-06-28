@@ -389,7 +389,9 @@ CommandObjectDisassemble::Execute
     {
         SymbolContextList sc_list;
 
-        if (target->GetImages().FindFunctions(name, sc_list))
+        if (target->GetImages().FindFunctions(name, 
+                                              eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                              sc_list))
         {
             Disassemble (interpreter, result, disassembler, sc_list);
         }

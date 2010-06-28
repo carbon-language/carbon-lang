@@ -227,9 +227,12 @@ LookupAddressInModule (CommandInterpreter &interpreter, Stream &strm, Module *mo
             strm.Printf("0x%llx: ", addr);
 
         ExecutionContextScope *exe_scope = interpreter.GetDebugger().GetExecutionContext().GetBestExecutionContextScope();
-        if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset))
-            strm.PutCString(": ");
+        strm.IndentMore();
+        strm.Indent ("    Address: ");
+        so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
+        strm.EOL();
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
+        strm.IndentLess();
         return true;
     }
 
@@ -347,7 +350,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
             else
             {
                 ConstString function_name(name);
-                num_matches = symbol_vendor->FindFunctions(function_name, true, sc_list);
+                num_matches = symbol_vendor->FindFunctions(function_name, eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, true, sc_list);
             }
 
             if (num_matches)

@@ -168,6 +168,26 @@ Symbol::IsTrampoline () const
 }
 
 void
+Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Process *process) const
+{
+    *s << '"' << m_mangled.GetName() << "\", id = " << (const UserID&)*this;
+    const Section *section = m_addr_range.GetBaseAddress().GetSection();
+    if (section != NULL)
+    {
+        if (m_addr_range.GetByteSize() > 0)
+        {
+            s->PutCString(", range = ");
+            m_addr_range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+        }
+        else
+        {
+            s->PutCString(", address = ");
+            m_addr_range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+        }
+    }
+}
+
+void
 Symbol::Dump(Stream *s, Process *process, uint32_t index) const
 {
 //  s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);

@@ -451,6 +451,9 @@ public:
     const CompileUnit*
     GetCompileUnit() const;
 
+    void
+    GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process);
+
     //------------------------------------------------------------------
     /// Get accessor for the frame base location.
     ///

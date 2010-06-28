@@ -763,7 +763,7 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_i
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, bool append, SymbolContextList& sc_list)
+SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARFDebugMap::FindFunctions (name = %s)",
@@ -788,7 +788,7 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, bool append, Sym
             {
                 SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
                 if (oso_dwarf)
-                    oso_dwarf->FindFunctions(name, true, sc_list);
+                    oso_dwarf->FindFunctions(name, name_type_mask, true, sc_list);
             }
         }
 //      Stream s(stdout);

@@ -286,11 +286,11 @@ Module::FindGlobalVariables(const RegularExpression& regex, bool append, uint32_
 }
 
 uint32_t
-Module::FindFunctions(const ConstString &name, bool append, SymbolContextList& sc_list)
+Module::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        return symbols->FindFunctions(name, append, sc_list);
+        return symbols->FindFunctions(name, name_type_mask, append, sc_list);
     return 0;
 }
 

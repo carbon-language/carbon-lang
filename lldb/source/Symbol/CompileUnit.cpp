@@ -65,6 +65,13 @@ CompileUnit::DumpSymbolContext(Stream *s)
 }
 
 
+void
+CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
+{
+    *s << '"' << (const FileSpec&)*this << "\", id = " << (const UserID&)*this
+        << ", language = " << (const Language&)*this;
+}
+
 
 //----------------------------------------------------------------------
 // Dump the current contents of this object. No functions that cause on

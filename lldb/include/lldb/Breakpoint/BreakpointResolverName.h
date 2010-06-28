@@ -30,17 +30,18 @@ class BreakpointResolverName:
 public:
 
     BreakpointResolverName (Breakpoint *bkpt,
-                        const char *func_name,
-                        Breakpoint::MatchType type = Breakpoint::Exact);
+                            const char *name,
+                            uint32_t name_type_mask,
+                            Breakpoint::MatchType type);
 
     // Creates a function breakpoint by regular expression.  Takes over control of the lifespan of func_regex.
     BreakpointResolverName (Breakpoint *bkpt,
-                        RegularExpression &func_regex);
+                            RegularExpression &func_regex);
 
     BreakpointResolverName (Breakpoint *bkpt,
-                        const char *class_name,
-                        const char *method,
-                        Breakpoint::MatchType type);
+                            const char *class_name,
+                            const char *method,
+                            Breakpoint::MatchType type);
 
     virtual
     ~BreakpointResolverName ();
@@ -62,6 +63,7 @@ public:
 
 protected:
     ConstString m_func_name;
+    uint32_t m_func_name_type_mask;  // See FunctionNameType
     ConstString m_class_name;  // FIXME: Not used yet.  The idea would be to stop on methods of this class.
     RegularExpression m_regex;
     Breakpoint::MatchType m_match_type;

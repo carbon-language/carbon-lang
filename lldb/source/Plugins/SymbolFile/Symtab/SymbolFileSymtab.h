@@ -87,7 +87,7 @@ public:
     FindGlobalVariables(const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
 
     virtual uint32_t
-    FindFunctions(const lldb_private::ConstString &name, bool append, lldb_private::SymbolContextList& sc_list);
+    FindFunctions(const lldb_private::ConstString &name, uint32_t name_type_mask, bool append, lldb_private::SymbolContextList& sc_list);
 
     virtual uint32_t
     FindFunctions(const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);

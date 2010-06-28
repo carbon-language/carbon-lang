@@ -118,14 +118,12 @@ LineEntry::Dump
                                          fallback_style))
             return false;
     }
+    if (show_file)
+        *s << ", file = " << file;
     if (line)
         s->Printf(", line = %u", line);
     if (column)
         s->Printf(", column = %u", column);
-    if (show_file)
-    {
-        *s << ", file = " << file;
-    }
     if (is_start_of_statement)
         *s << ", is_start_of_statement = TRUE";
 
@@ -144,13 +142,22 @@ LineEntry::Dump
 }
 
 bool
-LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit* cu, Process *process) const
+LineEntry::GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit* cu, Process *process, bool show_address_only) const
 {
 
     if (level == lldb::eDescriptionLevelBrief || level == lldb::eDescriptionLevelFull)
     {
         // Show address only
-        range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+        if (show_address_only)
+        {
+            s->PutCString ("address = ");
+            range.GetBaseAddress().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+        }
+        else
+        {
+            s->PutCString ("range = ");
+            range.Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+        }
 
         if (file)
             *s << ' ' << file;

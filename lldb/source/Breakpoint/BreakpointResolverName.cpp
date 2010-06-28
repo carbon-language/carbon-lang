@@ -25,11 +25,13 @@ BreakpointResolverName::BreakpointResolverName
 (
     Breakpoint *bkpt,
     const char *func_name,
+    uint32_t func_name_type_mask,
     Breakpoint::MatchType type
 ) :
     BreakpointResolver (bkpt),
     m_func_name (func_name),
-    m_class_name (NULL),
+    m_func_name_type_mask (func_name_type_mask),
+    m_class_name (),
     m_regex (),
     m_match_type (type)
 {
@@ -94,45 +96,47 @@ BreakpointResolverName::SearchCallback
 {
     SymbolContextList func_list;
     SymbolContextList sym_list;
-
+    
     bool skip_prologue = true;
     uint32_t i;
     bool new_location;
     SymbolContext sc;
     Address break_addr;
     assert (m_breakpoint != NULL);
-
+    
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
-
+    
     if (m_class_name)
     {
         if (log)
             log->Warning ("Class/method function specification not supported yet.\n");
         return Searcher::eCallbackReturnStop;
     }
-
+    
     switch (m_match_type)
     {
-      case Breakpoint::Exact:
-        if (context.module_sp)
-        {
-            context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
-            context.module_sp->FindFunctions (m_func_name, false, func_list);
-        }
-        break;
-      case Breakpoint::Regexp:
-        if (context.module_sp)
-        {
-            context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
-            context.module_sp->FindFunctions (m_regex, true, func_list);
-        }
-        break;
-      case Breakpoint::Glob:
-        if (log)
-            log->Warning ("glob is not supported yet.");
-        break;
+        case Breakpoint::Exact:
+            if (context.module_sp)
+            {
+                if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
+                    context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
+                context.module_sp->FindFunctions (m_func_name, m_func_name_type_mask, false, func_list);
+            }
+            break;
+        case Breakpoint::Regexp:
+            if (context.module_sp)
+            {
+                if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
+                    context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
+                context.module_sp->FindFunctions (m_regex, true, func_list);
+            }
+            break;
+        case Breakpoint::Glob:
+            if (log)
+                log->Warning ("glob is not supported yet.");
+            break;
     }
-
+    
     // Remove any duplicates between the funcion list and the symbol list
     if (func_list.GetSize())
     {
@@ -140,7 +144,7 @@ BreakpointResolverName::SearchCallback
         {
             if (func_list.GetContextAtIndex(i, sc) == false)
                 continue;
-
+            
             if (sc.function == NULL)
                 continue;
             uint32_t j = 0;
@@ -158,11 +162,11 @@ BreakpointResolverName::SearchCallback
                         }
                     }
                 }
-
+                
                 j++;
             }
         }
-
+        
         for (i = 0; i < func_list.GetSize(); i++)
         {
             if (func_list.GetContextAtIndex(i, sc))
@@ -176,7 +180,7 @@ BreakpointResolverName::SearchCallback
                         if (prologue_byte_size)
                             break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
                     }
-
+                    
                     if (filter.AddressPasses(break_addr))
                     {
                         BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(break_addr, &new_location));
@@ -194,7 +198,7 @@ BreakpointResolverName::SearchCallback
             }
         }
     }
-
+    
     for (i = 0; i < sym_list.GetSize(); i++)
     {
         if (sym_list.GetContextAtIndex(i, sc))
@@ -202,14 +206,14 @@ BreakpointResolverName::SearchCallback
             if (sc.symbol && sc.symbol->GetAddressRangePtr())
             {
                 break_addr = sc.symbol->GetAddressRangePtr()->GetBaseAddress();
-
+                
                 if (skip_prologue)
                 {
                     const uint32_t prologue_byte_size = sc.symbol->GetPrologueByteSize();
                     if (prologue_byte_size)
                         break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
                 }
-
+                
                 if (filter.AddressPasses(break_addr))
                 {
                     BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(break_addr, &new_location));
@@ -236,12 +240,10 @@ BreakpointResolverName::GetDepth()
 void
 BreakpointResolverName::GetDescription (Stream *s)
 {
-    s->PutCString("Breakpoint by name: ");
-
     if (m_match_type == Breakpoint::Regexp)
-        s->Printf("'%s' (regular expression)", m_regex.GetText());
+        s->Printf("regex = '%s'", m_regex.GetText());
     else
-        s->Printf("'%s'", m_func_name.AsCString());
+        s->Printf("name = '%s'", m_func_name.AsCString());
 }
 
 void

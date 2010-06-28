@@ -135,6 +135,10 @@ public:
     virtual void
     DumpSymbolContext(Stream *s);
 
+
+    void
+    GetDescription(Stream *s, lldb::DescriptionLevel level) const;
+
     //------------------------------------------------------------------
     /// Get a shared pointer to a function in this compile unit by
     /// index.

@@ -234,10 +234,7 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
         if (level != eDescriptionLevelBrief)
             s->EOL();
         m_callback_baton_sp->GetDescription (s, level);
-    }
-    else if (level == eDescriptionLevelBrief)
-        s->PutCString ("commands: no ");
-    
+    }    
 }
 
 void
@@ -247,10 +244,7 @@ BreakpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLev
 
     if (level == eDescriptionLevelBrief)
     {
-        if (data && data->user_source.GetSize() > 0)
-            s->PutCString("commands: yes ");
-        else
-            s->PutCString("commands: no ");
+        s->Printf (", commands = %s", (data && data->user_source.GetSize() > 0) ? "yes" : "no");
         return;
     }
     

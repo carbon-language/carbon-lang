@@ -49,13 +49,13 @@ reset_stdin_termios ()
 
 static lldb::OptionDefinition g_options[] =
 {
-    { LLDB_OPT_SET_1,  true,  "help",            'h',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_1,  true, "help", 'h',  no_argument,        NULL,  NULL,  NULL,
         "Prints out the usage information for the LLDB debugger." },
 
-    { LLDB_OPT_SET_2,  true,  "version",         'v',  no_argument,        NULL,  NULL,  NULL,
+    { LLDB_OPT_SET_2,  true, "version", 'v',  no_argument,        NULL,  NULL,  NULL,
         "Prints out the current version number of the LLDB debugger." },
 
-    { LLDB_OPT_SET_3,  false,  "arch",           'a',  required_argument,  NULL,  NULL,  "<architecture>",
+    { LLDB_OPT_SET_3,  true, "arch", 'a',  required_argument,  NULL,  NULL,  "<architecture>",
         "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
 
     { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  "<scripting-language>",
@@ -67,11 +67,11 @@ static lldb::OptionDefinition g_options[] =
     { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "source",         's',  required_argument,  NULL,  NULL,  "<file>",
         "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
 
-    { LLDB_OPT_SET_3,  false,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
+    { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  "<filename>",
         "Tells the debugger to use the file <filename> as the program to be debugged." },
 
-    { LLDB_OPT_SET_4,  false,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
-        "Load executable images from a crash log for symbolication." },
+//    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  "<file>",
+//        "Load executable images from a crash log for symbolication." },
 
     { 0, false, NULL, 0, 0, NULL, NULL,  NULL, NULL }
 };

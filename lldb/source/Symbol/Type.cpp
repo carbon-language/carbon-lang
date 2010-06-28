@@ -97,6 +97,81 @@ lldb_private::Type::operator= (const Type& rhs)
 
 
 void
+lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
+{
+    if (show_name)
+    {
+        if (m_name)
+            *s << '\"' << m_name << "\", ";
+    }
+
+    *s << "id = " << (const UserID&)*this;
+
+    if (m_byte_size != 0)
+        s->Printf(", byte-size = %zu", m_byte_size);
+
+    m_decl.Dump(s);
+
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(m_clang_qual_type));
+
+    if (qual_type.getTypePtr())
+    {
+        *s << ", type = ";
+
+        clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+        clang::TagDecl *tag_decl = NULL;
+        if (tag_type)
+            tag_decl = tag_type->getDecl();
+
+        if (tag_decl)
+        {
+            s->EOL();
+            s->EOL();
+            tag_decl->print(llvm::fouts(), 0);
+            s->EOL();
+        }
+        else
+        {
+            const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
+            if (typedef_type)
+            {
+                const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
+                std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
+                if (!clang_typedef_name.empty())
+                    *s << ' ' << clang_typedef_name.c_str();
+            }
+            else
+            {
+                // We have a clang type, lets show it
+                clang::ASTContext *ast_context = GetClangAST();
+                if (ast_context)
+                {
+                    std::string clang_type_name(qual_type.getAsString());
+                    if (!clang_type_name.empty())
+                        *s << ' ' << clang_type_name.c_str();
+                }
+            }
+        }
+    }
+    else if (m_encoding_uid != LLDB_INVALID_UID)
+    {
+        *s << ", type_uid = " << m_encoding_uid;
+        switch (m_encoding_uid_type)
+        {
+        case eIsTypeWithUID: s->PutCString(" (unresolved type)"); break;
+        case eIsConstTypeWithUID: s->PutCString(" (unresolved const type)"); break;
+        case eIsRestrictTypeWithUID: s->PutCString(" (unresolved restrict type)"); break;
+        case eIsVolatileTypeWithUID: s->PutCString(" (unresolved volatile type)"); break;
+        case eTypedefToTypeWithUID: s->PutCString(" (unresolved typedef)"); break;
+        case ePointerToTypeWithUID: s->PutCString(" (unresolved pointer)"); break;
+        case eLValueReferenceToTypeWithUID: s->PutCString(" (unresolved L value reference)"); break;
+        case eRValueReferenceToTypeWithUID: s->PutCString(" (unresolved R value reference)"); break;
+        }
+    }
+}
+
+
+void
 lldb_private::Type::Dump (Stream *s, bool show_context)
 {
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
@@ -148,16 +223,12 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
             else
             {
                 // We have a clang type, lets show it
-                TypeList *type_list = GetTypeList();
-                if (type_list)
+                clang::ASTContext *ast_context = GetClangAST();
+                if (ast_context)
                 {
-                    clang::ASTContext *ast_context = GetClangAST();
-                    if (ast_context)
-                    {
-                        std::string clang_type_name(qual_type.getAsString());
-                        if (!clang_type_name.empty())
-                            *s << " (" << clang_type_name.c_str() << ')';
-                    }
+                    std::string clang_type_name(qual_type.getAsString());
+                    if (!clang_type_name.empty())
+                        *s << " (" << clang_type_name.c_str() << ')';
                 }
             }
         }

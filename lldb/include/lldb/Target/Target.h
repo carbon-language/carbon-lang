@@ -138,6 +138,7 @@ public:
     lldb::BreakpointSP
     CreateBreakpoint (FileSpec *containingModule,
                       const char *func_name,
+                      uint32_t func_name_type_mask, 
                       bool internal = false);
 
     // Use this to create a general breakpoint:

@@ -100,7 +100,7 @@ BreakpointResolverAddress::GetDepth()
 void
 BreakpointResolverAddress::GetDescription (Stream *s)
 {
-    s->PutCString ("Address breakpoint: ");
+    s->PutCString ("address = ");
     m_addr.Dump(s, m_breakpoint->GetTarget().GetProcessSP().get(), Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
 }
 

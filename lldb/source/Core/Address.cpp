@@ -629,7 +629,10 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         {
                             // We have a function or a symbol from the same
                             // sections as this address.
+                            s->Indent("    Summary: ");
                             sc.DumpStopContext(s, process, *this, false);
+                            s->EOL();
+                            sc.GetDescription(s, eDescriptionLevelBrief, process);
                         }
                         else
                         {

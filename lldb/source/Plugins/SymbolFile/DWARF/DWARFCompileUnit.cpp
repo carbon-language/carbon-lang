@@ -14,6 +14,7 @@
 
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
+#include "DWARFDebugInfo.h"
 #include "DWARFDIECollection.h"
 #include "DWARFFormValue.h"
 #include "LogChannelDWARF.h"
@@ -549,13 +550,14 @@ DWARFCompileUnit::AddGlobal (const DWARFDebugInfoEntry* die)
 void
 DWARFCompileUnit::Index 
 (
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_function_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_inlined_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
-    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die
+    lldb_private::UniqueCStringMap<dw_offset_t>& base_name_to_function_die,
+    lldb_private::UniqueCStringMap<dw_offset_t>& full_name_to_function_die,
+    lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
+    lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
+    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
+    lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die
 )
 {
-
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
     DWARFDebugInfoEntry::const_iterator pos;
@@ -597,6 +599,7 @@ DWARFCompileUnit::Index
         bool has_address = false;
         bool has_location = false;
         bool is_global_or_static_variable = false;
+        dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, attributes);
         if (num_attributes > 0)
         {
@@ -685,6 +688,11 @@ DWARFCompileUnit::Index
                         }
                     }
                     break;
+                    
+                case DW_AT_specification:
+                    if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+                        specification_die_offset = form_value.Reference(this);
+                    break;
                 }
             }
         }
@@ -694,7 +702,7 @@ DWARFCompileUnit::Index
         case DW_TAG_subprogram:
             if (has_address)
             {
-                if (name && name[0])
+                if (name)
                 {
                     if ((name[0] == '-' || name[0] == '+') && name[1] == '[')
                     {
@@ -716,24 +724,58 @@ DWARFCompileUnit::Index
                                 // accelerator tables
                                 size_t method_name_len = name_len - (method_name - name) - 1;
                                 ConstString method_const_str (method_name, method_name_len);
-                                name_to_function_die.Append(method_const_str.AsCString(), die.GetOffset());
+                                selector_name_to_function_die.Append(method_const_str.AsCString(), die.GetOffset());
                             }
                         }
                     }
-                    name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                    // If we have a mangled name, then the DW_AT_name attribute
+                    // is usually the method name without the class or any parameters
+                    const DWARFDebugInfoEntry *parent = die.GetParent();
+                    bool is_method = false;
+                    if (parent)
+                    {
+                        dw_tag_t tag = parent->Tag();
+                        if (tag == DW_TAG_class_type || tag == DW_TAG_structure_type)
+                        {
+                            is_method = true;
+                        }
+                        else
+                        {
+                            if (mangled && specification_die_offset != DW_INVALID_OFFSET)
+                            {
+                                const DWARFDebugInfoEntry *specification_die = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
+                                if (specification_die)
+                                {
+                                    parent = specification_die->GetParent();
+                                    if (parent)
+                                    {
+                                        tag = parent->Tag();
+                                    
+                                        if (tag == DW_TAG_class_type || tag == DW_TAG_structure_type)
+                                            is_method = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (is_method)
+                        method_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                    else
+                        base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
                 }
-                if (mangled && mangled[0])
-                    name_to_function_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
+                if (mangled)
+                    full_name_to_function_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
             }
             break;
 
         case DW_TAG_inlined_subroutine:
             if (has_address)
             {
-                if (name && name[0])
-                    name_to_inlined_die.Append(ConstString(name).AsCString(), die.GetOffset());
-                if (mangled && mangled[0])
-                    name_to_inlined_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
+                if (name)
+                    base_name_to_function_die.Append(ConstString(name).AsCString(), die.GetOffset());
+                if (mangled)
+                    full_name_to_function_die.Append(ConstString(mangled).AsCString(), die.GetOffset());
             }
             break;
         

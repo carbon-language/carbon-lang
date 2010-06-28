@@ -107,15 +107,24 @@ AddressResolverName::SearchCallback
       case AddressResolver::Exact:
         if (context.module_sp)
         {
-            context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
-            context.module_sp->FindFunctions (m_func_name, false, func_list);
+            context.module_sp->FindSymbolsWithNameAndType (m_func_name, 
+                                                           eSymbolTypeCode, 
+                                                           sym_list);
+            context.module_sp->FindFunctions (m_func_name, 
+                                              eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
+                                              false, 
+                                              func_list);
         }
         break;
       case AddressResolver::Regexp:
         if (context.module_sp)
         {
-            context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
-            context.module_sp->FindFunctions (m_regex, true, func_list);
+            context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, 
+                                                                eSymbolTypeCode, 
+                                                                sym_list);
+            context.module_sp->FindFunctions (m_regex, 
+                                              true, 
+                                              func_list);
         }
         break;
       case AddressResolver::Glob:

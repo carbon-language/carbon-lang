@@ -113,7 +113,6 @@ SearchFilter::CompUnitPasses (CompileUnit &compUnit)
 void
 SearchFilter::GetDescription (Stream *s)
 {
-    s->PutCString("No Filter");
 }
 
 void
@@ -415,7 +414,7 @@ SearchFilterByModule::Search (Searcher &searcher)
 void
 SearchFilterByModule::GetDescription (Stream *s)
 {
-    s->PutCString("In module ");
+    s->PutCString(", module = ");
     if (s->GetVerbose())
     {
         char buffer[2048];

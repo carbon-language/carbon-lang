@@ -98,10 +98,11 @@ public:
         // Instance variables to hold the values for command options.
 
         std::string m_filename;
-        unsigned int m_line_num;
-        unsigned int m_column;
+        uint32_t m_line_num;
+        uint32_t m_column;
         bool m_ignore_inlines;
         std::string m_func_name;
+        uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
         lldb::addr_t m_load_addr;
         STLStringArray m_modules;

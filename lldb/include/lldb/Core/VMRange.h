@@ -112,7 +112,7 @@ public:
     }
 
     void
-    Dump(Stream *s, lldb::addr_t base_addr = 0) const;
+    Dump (Stream *s, lldb::addr_t base_addr = 0, uint32_t addr_width = 8) const;
 
     class ValueInRangeUnaryPredicate
     {

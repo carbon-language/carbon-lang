@@ -75,7 +75,7 @@ public:
     virtual uint32_t        ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list) = 0;
     virtual uint32_t        FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variables) = 0;
     virtual uint32_t        FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables) = 0;
-    virtual uint32_t        FindFunctions (const ConstString &name, bool append, SymbolContextList& sc_list) = 0;
+    virtual uint32_t        FindFunctions (const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list) = 0;
     virtual uint32_t        FindFunctions (const RegularExpression& regex, bool append, SymbolContextList& sc_list) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types) = 0;

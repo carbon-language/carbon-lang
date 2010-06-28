@@ -324,7 +324,7 @@ LineTable::GetDescription (Stream *s, Process *process, DescriptionLevel level)
     for (size_t idx = 0; idx < count; ++idx)
     {
         ConvertEntryAtIndexToLineEntry (idx, line_entry);
-        line_entry.GetDescription (s, level, m_comp_unit, process);
+        line_entry.GetDescription (s, level, m_comp_unit, process, true);
         s->EOL();
     }
 }

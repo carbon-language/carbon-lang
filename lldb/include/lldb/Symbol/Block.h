@@ -213,6 +213,11 @@ public:
     virtual void
     DumpSymbolContext(Stream *s);
 
+    void
+    GetDescription (Stream *s, 
+                    lldb::DescriptionLevel level, 
+                    Process *process) const;
+    
     //------------------------------------------------------------------
     /// Get the parent block's UID.
     ///
@@ -242,6 +247,37 @@ public:
     //------------------------------------------------------------------
     lldb::user_id_t
     GetFirstChildUID () const;
+
+
+    //------------------------------------------------------------------
+    /// Get the parent block.
+    ///
+    /// @return
+    ///     The parent block pointer, or NULL if this block has no 
+    ///     parent.
+    //------------------------------------------------------------------
+    Block *
+    GetParent () const;
+
+    //------------------------------------------------------------------
+    /// Get the sibling block.
+    ///
+    /// @return
+    ///     The sibling block pointer, or NULL if this block has no 
+    ///     sibling.
+    //------------------------------------------------------------------
+    Block *
+    GetSibling () const;
+
+    //------------------------------------------------------------------
+    /// Get the first child block.
+    ///
+    /// @return
+    ///     The first child block pointer, or NULL if this block has no 
+    ///     children.
+    //------------------------------------------------------------------
+    Block *
+    GetFirstChild () const;
 
     //------------------------------------------------------------------
     /// Get the variable list for this block and optionally all child

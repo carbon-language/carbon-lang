@@ -42,9 +42,9 @@ VMRange::ContainsRange(const VMRange::collection& coll, const VMRange& range)
 
 
 void
-VMRange::Dump(Stream *s, lldb::addr_t offset) const
+VMRange::Dump(Stream *s, lldb::addr_t offset, uint32_t addr_width) const
 {
-    s->AddressRange(offset + GetBaseAddress(), offset + GetEndAddress(), sizeof (addr_t));
+    s->AddressRange(offset + GetBaseAddress(), offset + GetEndAddress(), addr_width);
 }
 
 bool

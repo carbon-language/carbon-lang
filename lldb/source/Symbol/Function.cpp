@@ -261,6 +261,16 @@ Function::GetCompileUnit() const
     return m_comp_unit;
 }
 
+
+void
+Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process)
+{
+    Type* func_type = GetType();
+    *s << '"' << func_type->GetName() << "\", id = " << (const UserID&)*this;
+    *s << ", range = ";
+    GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+}
+
 void
 Function::Dump(Stream *s, bool show_context) const
 {

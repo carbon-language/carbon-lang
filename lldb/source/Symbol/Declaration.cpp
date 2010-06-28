@@ -61,12 +61,11 @@ Declaration::Dump(Stream *s) const
 {
     if (m_file)
     {
-        *s << ", decl = '" << m_file;
+        *s << ", decl = " << m_file;
         if (m_line > 0)
             s->Printf(":%u", m_line);
         if (m_column > 0)
             s->Printf(":%u", m_column);
-        s->PutChar('\'');
     }
     else
     {

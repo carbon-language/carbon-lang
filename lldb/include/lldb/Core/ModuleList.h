@@ -144,6 +144,12 @@ public:
     /// @param[in] name
     ///     The name of the function we are looking for.
     ///
+    /// @param[in] name_type_mask
+    ///     A bit mask of bits that indicate what kind of names should
+    ///     be used when doing the lookup. Bits include fully qualified
+    ///     names, base names, C++ methods, or ObjC selectors. 
+    ///     See FunctionNameType for more details.
+    ///
     /// @param[out] sc_list
     ///     A symbol context list that gets filled in with all of the
     ///     matches.
@@ -153,6 +159,7 @@ public:
     //------------------------------------------------------------------
     size_t
     FindFunctions (const ConstString &name,
+                   uint32_t name_type_mask,
                    SymbolContextList &sc_list);
 
     //------------------------------------------------------------------

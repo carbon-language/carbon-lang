@@ -179,11 +179,16 @@ Target::CreateBreakpoint (Address &addr, bool internal)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (FileSpec *containingModule, const char *func_name, bool internal)
+Target::CreateBreakpoint (FileSpec *containingModule, const char *func_name, uint32_t func_name_type_mask, bool internal)
 {
-    SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
-    BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, func_name));
-    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+    BreakpointSP bp_sp;
+    if (func_name)
+    {
+        SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, func_name, func_name_type_mask, Breakpoint::Exact));
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+    }
+    return bp_sp;
 }
 
 

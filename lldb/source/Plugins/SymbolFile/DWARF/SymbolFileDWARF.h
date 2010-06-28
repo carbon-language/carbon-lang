@@ -97,7 +97,7 @@ public:
     virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindGlobalVariables(const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
     virtual uint32_t        FindGlobalVariables(const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
-    virtual uint32_t        FindFunctions(const lldb_private::ConstString &name, bool append, lldb_private::SymbolContextList& sc_list);
+    virtual uint32_t        FindFunctions(const lldb_private::ConstString &name, uint32_t name_type_mask, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindFunctions(const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);
 //  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
 //  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
@@ -277,6 +277,11 @@ protected:
                                 uint32_t& byte_stride,
                                 uint32_t& bit_stride);
 
+    void                    FindFunctions(
+                                const lldb_private::ConstString &name, 
+                                lldb_private::UniqueCStringMap<dw_offset_t> &name_to_die,
+                                lldb_private::SymbolContextList& sc_list);
+
     lldb_private::Type*     GetUniquedTypeForDIEOffset(dw_offset_t type_die_offset, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx, bool safe);
     lldb::TypeSP            GetTypeForDIE(DWARFCompileUnit *cu, const DWARFDebugInfoEntry* die, lldb::TypeSP& owning_type_sp, int32_t child_type, uint32_t idx);
 //  uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, Type::Encoding encoding, lldb::user_id_t udt_uid, TypeList& types);
@@ -303,8 +308,10 @@ protected:
     std::auto_ptr<DWARFDebugAranges>    m_aranges;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
-    lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_function_die; // All concrete functions
-    lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_inlined_die;  // All inlined functions
+    lldb_private::UniqueCStringMap<dw_offset_t> m_base_name_to_function_die; // All concrete functions
+    lldb_private::UniqueCStringMap<dw_offset_t> m_full_name_to_function_die; // All concrete functions
+    lldb_private::UniqueCStringMap<dw_offset_t> m_method_name_to_function_die;  // All inlined functions
+    lldb_private::UniqueCStringMap<dw_offset_t> m_selector_name_to_function_die;   // All method names for functions of classes
     lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_global_die;   // Global and static variables
     lldb_private::UniqueCStringMap<dw_offset_t> m_name_to_type_die;     // All type DIE offsets
     bool m_indexed;

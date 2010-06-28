@@ -126,14 +126,14 @@ ModuleList::GetModuleAtIndex(uint32_t idx)
 }
 
 size_t
-ModuleList::FindFunctions (const ConstString &name, SymbolContextList &sc_list)
+ModuleList::FindFunctions (const ConstString &name, uint32_t name_type_mask, SymbolContextList &sc_list)
 {
     sc_list.Clear();
     Mutex::Locker locker(m_modules_mutex);
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
-        (*pos)->FindFunctions (name, true, sc_list);
+        (*pos)->FindFunctions (name, name_type_mask, true, sc_list);
     }
     return sc_list.GetSize();
 }

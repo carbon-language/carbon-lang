@@ -234,11 +234,11 @@ SymbolVendor::FindGlobalVariables (const RegularExpression& regex, bool append, 
 }
 
 uint32_t
-SymbolVendor::FindFunctions(const ConstString &name, bool append, SymbolContextList& sc_list)
+SymbolVendor::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
 {
     Mutex::Locker locker(m_mutex);
     if (m_sym_file_ap.get())
-        return m_sym_file_ap->FindFunctions(name, append, sc_list);
+        return m_sym_file_ap->FindFunctions(name, name_type_mask, append, sc_list);
     return 0;
 }
 

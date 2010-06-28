@@ -142,10 +142,13 @@ public:
     }
 
     void
-    Index (lldb_private::UniqueCStringMap<dw_offset_t>& name_to_function_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_inlined_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die,
-           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die);
+    Index (lldb_private::UniqueCStringMap<dw_offset_t>& base_name_to_function_die,
+           lldb_private::UniqueCStringMap<dw_offset_t>& full_name_to_function_die,
+           lldb_private::UniqueCStringMap<dw_offset_t>& method_name_to_function_die,
+           lldb_private::UniqueCStringMap<dw_offset_t>& selector_name_to_function_die,
+           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_type_die,
+           lldb_private::UniqueCStringMap<dw_offset_t>& name_to_global_die);
+
 
 protected:
     SymbolFileDWARF*    m_dwarf2Data;

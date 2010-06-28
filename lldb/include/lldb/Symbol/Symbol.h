@@ -106,6 +106,9 @@ public:
     void
     SetFlags (uint32_t flags) { m_flags = flags; }
 
+    void
+    GetDescription (Stream *s, lldb::DescriptionLevel level, Process *process) const;
+
     Function *
     GetFunction ();
 

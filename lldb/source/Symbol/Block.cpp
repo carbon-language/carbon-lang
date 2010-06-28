@@ -57,6 +57,30 @@ Block::~Block ()
 }
 
 void
+Block::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process) const
+{
+    size_t num_ranges = m_ranges.size();
+    if (num_ranges)
+    {
+        
+        addr_t base_addr = LLDB_INVALID_ADDRESS;
+        if (process)
+            base_addr = m_block_list->GetAddressRange().GetBaseAddress().GetLoadAddress(process);
+        if (base_addr == LLDB_INVALID_ADDRESS)
+            base_addr = m_block_list->GetAddressRange().GetBaseAddress().GetFileAddress();
+
+        s->Printf("range%s = ", num_ranges > 1 ? "s" : "");
+        std::vector<VMRange>::const_iterator pos, end = m_ranges.end();
+        for (pos = m_ranges.begin(); pos != end; ++pos)
+            pos->Dump(s, base_addr, 4);
+    }
+    *s << ", id = " << ((const UserID&)*this);
+
+    if (m_inlineInfoSP.get() != NULL)
+        m_inlineInfoSP->Dump(s);
+}
+
+void
 Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
 {
     if (depth < 0)
@@ -69,12 +93,10 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
     *s << "Block" << ((const UserID&)*this);
-    user_id_t parentID = GetParentUID();
-    const Block* parent_block = NULL;
-    if (parentID != Block::InvalidID)
+    const Block* parent_block = GetParent();
+    if (parent_block)
     {
-        parent_block = m_block_list->GetBlockByID(parentID);
-        s->Printf(", parent = {0x%8.8x}", parentID);
+        s->Printf(", parent = {0x%8.8x}", parent_block->GetID());
     }
     if (m_inlineInfoSP.get() != NULL)
         m_inlineInfoSP->Dump(s);
@@ -128,10 +150,7 @@ Block::CalculateSymbolContext(SymbolContext* sc)
 void
 Block::DumpStopContext (Stream *s, const SymbolContext *sc)
 {
-    user_id_t parentID = GetParentUID();
-    Block* parent_block = NULL;
-    if (parentID != Block::InvalidID)
-        parent_block = m_block_list->GetBlockByID(parentID);
+    Block* parent_block = GetParent();
 
     InlineFunctionInfo* inline_info = InlinedFunctionInfo ();
     if (inline_info)
@@ -254,6 +273,24 @@ Block::MemorySize() const
         mem_size += m_variables->MemorySize();
     return mem_size;
 
+}
+
+Block *
+Block::GetParent () const
+{
+    return m_block_list->GetBlockByID (m_block_list->GetParent(GetID()));
+}
+
+Block *
+Block::GetSibling () const
+{
+    return m_block_list->GetBlockByID (m_block_list->GetSibling(GetID()));
+}
+
+Block *
+Block::GetFirstChild () const
+{
+    return m_block_list->GetBlockByID (m_block_list->GetFirstChild(GetID()));
 }
 
 user_id_t
@@ -455,7 +492,7 @@ BlockList::AddChild (user_id_t parentID, user_id_t childID)
 const Block *
 BlockList::GetBlockByID(user_id_t blockID) const
 {
-    if (m_blocks.empty())
+    if (m_blocks.empty() || blockID == Block::InvalidID)
         return NULL;
 
     if (blockID == Block::RootID)
@@ -471,7 +508,7 @@ BlockList::GetBlockByID(user_id_t blockID) const
 Block *
 BlockList::GetBlockByID(user_id_t blockID)
 {
-    if (m_blocks.empty())
+    if (m_blocks.empty() || blockID == Block::InvalidID)
         return NULL;
 
     if (blockID == Block::RootID)
@@ -584,16 +621,13 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
 
         if (get_child_variables)
         {
-            user_id_t block_id = GetFirstChildUID();
-            while (block_id != Block::InvalidID)
+            Block *child_block = GetFirstChild();
+            while (child_block)
             {
-                Block *child_block = m_block_list->GetBlockByID(block_id);
-                assert(child_block);
                 VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
                 if (child_block_variable_list.get())
                     variable_list_sp->AddVariables(child_block_variable_list.get());
-
-                block_id = child_block->GetSiblingUID();
+                child_block = child_block->GetSibling();
             }
         }
     }
@@ -615,13 +649,9 @@ Block::AppendVariables (bool can_create, bool get_parent_variables, VariableList
 
     if (get_parent_variables)
     {
-        user_id_t parentID = GetParentUID();
-        if (parentID != Block::InvalidID)
-        {
-            Block* parent_block = m_block_list->GetBlockByID(parentID);
-            if (parent_block)
-                num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, variable_list);
-        }
+        Block* parent_block = GetParent();
+        if (parent_block)
+            num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, variable_list);
     }
     return num_variables_added;
 }

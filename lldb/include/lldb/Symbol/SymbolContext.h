@@ -184,6 +184,12 @@ public:
     bool
     GetAddressRange (uint32_t scope, AddressRange &range) const;
 
+
+    void
+    GetDescription(Stream *s, 
+                   lldb::DescriptionLevel level, 
+                   Process *process) const;
+    
     //------------------------------------------------------------------
     /// Find a function matching the given name, working out from this
     /// symbol context.

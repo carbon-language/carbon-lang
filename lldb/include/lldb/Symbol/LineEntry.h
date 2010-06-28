@@ -87,8 +87,12 @@ struct LineEntry
     Dump (Stream *s, Process *process, bool show_file, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_range) const;
 
     bool
-    GetDescription (Stream *s, lldb::DescriptionLevel level, CompileUnit* cu, Process *process) const;
-
+    GetDescription (Stream *s, 
+                    lldb::DescriptionLevel level, 
+                    CompileUnit* cu, 
+                    Process *process, 
+                    bool show_address_only) const;
+    
     //------------------------------------------------------------------
     /// Dumps information specific to a process that stops at this
     /// line entry to the supplied stream \a s.

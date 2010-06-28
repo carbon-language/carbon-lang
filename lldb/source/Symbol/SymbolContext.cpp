@@ -8,12 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Symbol/CompileUnit.h"
+
 #include "lldb/Core/Module.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
-#include "lldb/Target/Target.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -169,6 +170,81 @@ SymbolContext::DumpStopContext
 }
 
 void
+SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Process *process) const
+{
+    if (module_sp)
+    {
+        s->Indent("     Module: \"");
+        module_sp->GetFileSpec().Dump(s);
+        s->PutChar('"');
+        s->EOL();
+    }
+
+    if (comp_unit != NULL)
+    {
+        s->Indent("CompileUnit: ");
+        comp_unit->GetDescription (s, level);
+        s->EOL();
+    }
+
+    if (function != NULL)
+    {
+        s->Indent("   Function: ");
+        function->GetDescription (s, level, process);
+        s->EOL();
+
+        Type *func_type = function->GetType();
+        if (func_type)
+        {
+            s->Indent("   FuncType: ");
+            func_type->GetDescription (s, level, false);
+            s->EOL();
+        }
+    }
+
+    if (block != NULL)
+    {
+        std::vector<Block *> blocks;
+        blocks.push_back (block);
+        Block *parent_block = block->GetParent();
+        
+        while (parent_block)
+        {
+            blocks.push_back (parent_block);
+            parent_block = parent_block->GetParent();
+        }
+        std::vector<Block *>::reverse_iterator pos;        
+        std::vector<Block *>::reverse_iterator begin = blocks.rbegin();
+        std::vector<Block *>::reverse_iterator end = blocks.rend();
+        for (pos = begin; pos != end; ++pos)
+        {
+            if (pos == begin)
+                s->Indent("     Blocks: ");
+            else
+                s->Indent("             ");
+            (*pos)->GetDescription(s, level, process);
+            s->EOL();
+        }
+    }
+
+    if (line_entry.IsValid())
+    {
+        s->Indent("  LineEntry: ");
+        line_entry.GetDescription (s, level, comp_unit, process, false);
+        s->EOL();
+    }
+
+    if (symbol != NULL)
+    {
+        s->Indent("     Symbol: ");
+        symbol->GetDescription(s, level, process);
+        s->EOL();
+    }
+}
+
+
+
+void
 SymbolContext::Dump(Stream *s, Process *process) const
 {
     *s << (void *)this << ": ";
@@ -178,48 +254,45 @@ SymbolContext::Dump(Stream *s, Process *process) const
     s->EOL();
     s->IndentMore();
     s->Indent();
-    *s << "Module    = " << (void *)module_sp.get() << ' ';
+    *s << "Module       = " << (void *)module_sp.get() << ' ';
     if (module_sp)
         module_sp->GetFileSpec().Dump(s);
     s->EOL();
     s->Indent();
     *s << "CompileUnit  = " << (void *)comp_unit;
     if (comp_unit != NULL)
-        *s << " {" << comp_unit->GetID() << "} " << *(dynamic_cast<FileSpec*> (comp_unit));
+        *s << " {0x" << comp_unit->GetID() << "} " << *(dynamic_cast<FileSpec*> (comp_unit));
     s->EOL();
     s->Indent();
-    *s << "Function  = " << (void *)function;
+    *s << "Function     = " << (void *)function;
     if (function != NULL)
     {
-        *s << " {" << function->GetID() << "} ";/// << function->GetType()->GetName();
-//      Type* func_type = function->Type();
-//      if (func_type)
-//      {
-//          s->EOL();
-//          const UserDefType* func_udt = func_type->GetUserDefinedType().get();
-//          if (func_udt)
-//          {
-//              s->IndentMore();
-//              func_udt->Dump(s, func_type);
-//              s->IndentLess();
-//          }
-//      }
+        *s << " {0x" << function->GetID() << "} " << function->GetType()->GetName() << ", address-range = ";
+        function->GetAddressRange().Dump(s, process, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
+        s->EOL();
+        s->Indent();
+        Type* func_type = function->GetType();
+        if (func_type)
+        {
+            *s << "        Type = ";
+            func_type->Dump (s, false);
+        }
     }
     s->EOL();
     s->Indent();
-    *s << "Block     = " << (void *)block;
+    *s << "Block        = " << (void *)block;
     if (block != NULL)
-        *s << " {" << block->GetID() << '}';
+        *s << " {0x" << block->GetID() << '}';
     // Dump the block and pass it a negative depth to we print all the parent blocks
     //if (block != NULL)
     //  block->Dump(s, function->GetFileAddress(), INT_MIN);
     s->EOL();
     s->Indent();
-    *s << "LineEntry = ";
+    *s << "LineEntry    = ";
     line_entry.Dump (s, process, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
     s->EOL();
     s->Indent();
-    *s << "Symbol    = " << (void *)symbol;
+    *s << "Symbol       = " << (void *)symbol;
     if (symbol != NULL && symbol->GetMangled())
         *s << ' ' << symbol->GetMangled().GetName().AsCString();
     s->EOL();
@@ -313,7 +386,7 @@ SymbolContext::FindFunctionByName (const char *name) const
     if (module_sp != NULL)
     {
         SymbolContextList sc_matches;
-        if (module_sp->FindFunctions (name_const_str, false, sc_matches) > 0)
+        if (module_sp->FindFunctions (name_const_str, eFunctionNameTypeBase | eFunctionNameTypeFull, false, sc_matches) > 0)
         {
             SymbolContext sc;
             sc_matches.GetContextAtIndex (0, sc);
@@ -324,7 +397,7 @@ SymbolContext::FindFunctionByName (const char *name) const
     if (target_sp)
     {
         SymbolContextList sc_matches;
-        if (target_sp->GetImages().FindFunctions (name_const_str, sc_matches) > 0)
+        if (target_sp->GetImages().FindFunctions (name_const_str, eFunctionNameTypeBase | eFunctionNameTypeFull, sc_matches) > 0)
         {
             SymbolContext sc;
             sc_matches.GetContextAtIndex (0, sc);

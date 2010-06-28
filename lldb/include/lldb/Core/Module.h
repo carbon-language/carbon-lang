@@ -157,6 +157,12 @@ public:
     /// @param[in] name
     ///     The name of the function we are looking for.
     ///
+    /// @param[in] name_type_mask
+    ///     A bit mask of bits that indicate what kind of names should
+    ///     be used when doing the lookup. Bits include fully qualified
+    ///     names, base names, C++ methods, or ObjC selectors. 
+    ///     See FunctionNameType for more details.
+    ///
     /// @param[in] append
     ///     If \b true, any matches will be appended to \a
     ///     variable_list, else matches replace the contents of
@@ -170,7 +176,7 @@ public:
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
     uint32_t
-    FindFunctions (const ConstString &name, bool append, SymbolContextList& sc_list);
+    FindFunctions (const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list);
 
     //------------------------------------------------------------------
     /// Find functions by name.

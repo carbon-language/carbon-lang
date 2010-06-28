@@ -349,17 +349,9 @@ void
 Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_locations)
 {
     assert (s != NULL);
-    StreamString filter_strm;
-
-
-    s->Printf("%i ", GetID());
+    s->Printf("%i: ", GetID());
     GetResolverDescription (s);
-    GetFilterDescription (&filter_strm);
-    if (filter_strm.GetString().compare ("No Filter") != 0)
-    {
-        s->Printf (", ");
-        GetFilterDescription (s);
-    }
+    GetFilterDescription (s);
 
     const uint32_t num_locations = GetNumLocations ();
     const uint32_t num_resolved_locations = GetNumResolvedLocations ();
@@ -370,14 +362,13 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     case lldb::eDescriptionLevelFull:
         if (num_locations > 0)
         {
-            s->Printf(" with %u location%s", num_locations, num_locations > 1 ? "s" : "");
+            s->Printf(", locations = %u", num_locations);
             if (num_resolved_locations > 0)
-                s->Printf(" (%u resolved)", num_resolved_locations);
-            s->PutChar(';');
+                s->Printf(", resolved = %u", num_resolved_locations);
         }
         else
         {
-            s->Printf(" with 0 locations (Pending Breakpoint).");
+            s->Printf(", locations = 0 (pending)");
         }
 
         GetOptions()->GetDescription(s, level);
@@ -400,7 +391,6 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
 
     if (show_locations)
     {
-        s->EOL();
         s->IndentMore();
         for (int i = 0; i < GetNumLocations(); ++i)
         {
@@ -409,7 +399,6 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
             s->EOL();
         }
         s->IndentLess();
-
     }
 }
 

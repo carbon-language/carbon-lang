@@ -58,6 +58,10 @@ public:
     void
     DumpTypeName(Stream *s);
 
+
+    void
+    GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name);
+
     SymbolFile *
     GetSymbolFile()
     {

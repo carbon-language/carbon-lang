@@ -229,8 +229,10 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* ofile) :
     m_aranges(),
     m_info(),
     m_line(),
-    m_name_to_function_die(),
-    m_name_to_inlined_die(),
+    m_base_name_to_function_die(),
+    m_full_name_to_function_die(),
+    m_method_name_to_function_die(),
+    m_selector_name_to_function_die(),
     m_name_to_global_die(),
     m_name_to_type_die(),
     m_indexed(false),
@@ -1778,8 +1780,10 @@ SymbolFileDWARF::Index ()
 
             bool clear_dies = cu->ExtractDIEsIfNeeded (false) > 1;
 
-            cu->Index (m_name_to_function_die,
-                       m_name_to_inlined_die,
+            cu->Index (m_base_name_to_function_die,
+                       m_full_name_to_function_die,
+                       m_method_name_to_function_die,
+                       m_selector_name_to_function_die,
                        m_name_to_global_die, 
                        m_name_to_type_die);  
             
@@ -1789,8 +1793,10 @@ SymbolFileDWARF::Index ()
                 cu->ClearDIEs (true);
         }
         
-        m_name_to_function_die.Sort();
-        m_name_to_inlined_die.Sort();
+        m_base_name_to_function_die.Sort();
+        m_full_name_to_function_die.Sort();
+        m_method_name_to_function_die.Sort();
+        m_selector_name_to_function_die.Sort();
         m_name_to_global_die.Sort(); 
         m_name_to_type_die.Sort();
     }
@@ -1893,33 +1899,20 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 }
 
 
-uint32_t
-SymbolFileDWARF::FindFunctions(const ConstString &name, bool append, SymbolContextList& sc_list)
+void
+SymbolFileDWARF::FindFunctions
+(
+    const ConstString &name, 
+    UniqueCStringMap<dw_offset_t> &name_to_die,
+    SymbolContextList& sc_list
+)
 {
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "SymbolFileDWARF::FindFunctions (name = '%s')",
-                        name.AsCString());
-
-    std::vector<dw_offset_t> die_offsets;
-
-    // If we aren't appending the results to this list, then clear the list
-    if (!append)
-        sc_list.Clear();
-
-    // Remember how many sc_list are in the list before we search in case
-    // we are appending the results to a variable list.
-    uint32_t original_size = sc_list.GetSize();
-
-    // Index the DWARF if we haven't already
-    if (!m_indexed)
-        Index ();
-
     const UniqueCStringMap<dw_offset_t>::Entry *entry;
     
     SymbolContext sc;
-    for (entry = m_name_to_function_die.FindFirstValueForName (name.AsCString());
+    for (entry = name_to_die.FindFirstValueForName (name.AsCString());
          entry != NULL;
-         entry = m_name_to_function_die.FindNextValueForName (name.AsCString(), entry))
+         entry = name_to_die.FindNextValueForName (name.AsCString(), entry))
     {
         DWARFCompileUnitSP cu_sp;
         const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr (entry->value, &cu_sp);
@@ -1942,6 +1935,47 @@ SymbolFileDWARF::FindFunctions(const ConstString &name, bool append, SymbolConte
             }
         }
     }
+
+}
+
+uint32_t
+SymbolFileDWARF::FindFunctions
+(
+    const ConstString &name, 
+    uint32_t name_type_mask, 
+    bool append, 
+    SymbolContextList& sc_list
+)
+{
+    Timer scoped_timer (__PRETTY_FUNCTION__,
+                        "SymbolFileDWARF::FindFunctions (name = '%s')",
+                        name.AsCString());
+
+    std::vector<dw_offset_t> die_offsets;
+
+    // If we aren't appending the results to this list, then clear the list
+    if (!append)
+        sc_list.Clear();
+
+    // Remember how many sc_list are in the list before we search in case
+    // we are appending the results to a variable list.
+    uint32_t original_size = sc_list.GetSize();
+
+    // Index the DWARF if we haven't already
+    if (!m_indexed)
+        Index ();
+
+    if (name_type_mask & eFunctionNameTypeBase)
+        FindFunctions (name, m_base_name_to_function_die, sc_list);
+
+    if (name_type_mask & eFunctionNameTypeFull)
+        FindFunctions (name, m_full_name_to_function_die, sc_list);
+
+    if (name_type_mask & eFunctionNameTypeMethod)
+        FindFunctions (name, m_method_name_to_function_die, sc_list);
+
+    if (name_type_mask & eFunctionNameTypeSelector)
+        FindFunctions (name, m_selector_name_to_function_die, sc_list);
 
     // Return the number of variable that were appended to the list
     return sc_list.GetSize() - original_size;
@@ -1971,14 +2005,14 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
 
     // Create the pubnames information so we can quickly lookup external symbols by name
     // Create the pubnames information so we can quickly lookup external symbols by name
-    const size_t num_entries = m_name_to_function_die.GetSize();
+    const size_t num_entries = m_full_name_to_function_die.GetSize();
     SymbolContext sc;
     for (size_t i=0; i<num_entries; i++)
     {
-        if (!regex.Execute(m_name_to_function_die.GetCStringAtIndex (i)))
+        if (!regex.Execute(m_full_name_to_function_die.GetCStringAtIndex (i)))
             continue;
 
-        const dw_offset_t die_offset = *m_name_to_function_die.GetValueAtIndex (i);
+        const dw_offset_t die_offset = *m_full_name_to_function_die.GetValueAtIndex (i);
 
         DWARFCompileUnitSP cu_sp;
         const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr (die_offset, &cu_sp);
