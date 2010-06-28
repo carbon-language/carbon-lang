@@ -263,3 +263,27 @@ template void h<unsigned>(unsigned);
 template void h<unsigned[10]>(unsigned); // expected-note {{in instantiation of function template specialization 'Test1::h<unsigned int [10]>' requested here}}
 
 }
+
+// Don't diagnose access for overload candidates that aren't selected.
+namespace PR7436 {
+struct S1 {
+  void* operator new(size_t);
+  void operator delete(void* p);
+
+private:
+  void* operator new(size_t, void*); // expected-note {{declared private here}}
+  void operator delete(void*, void*);
+};
+class S2 {
+  void* operator new(size_t); // expected-note {{declared private here}}
+  void operator delete(void* p); // expected-note {{declared private here}}
+};
+
+void test(S1* s1, S2* s2) { 
+  delete s1;
+  delete s2; // expected-error {{is a private member}}
+  (void)new S1();
+  (void)new (0L) S1(); // expected-error {{is a private member}}
+  (void)new S2(); // expected-error {{is a private member}}
+}
+}

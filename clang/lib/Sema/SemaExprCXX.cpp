@@ -1317,11 +1317,15 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   if (Found.isAmbiguous())
     return true;
 
+  Found.suppressDiagnostics();
+
   for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
        F != FEnd; ++F) {
     if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
       if (Delete->isUsualDeallocationFunction()) {
         Operator = Delete;
+        CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
+                              F.getPair());
         return false;
       }
   }
