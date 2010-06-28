@@ -841,7 +841,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
 
   QualType FnType(BlockFunctionType, 0);
-  bool HasPrototype = (dyn_cast<FunctionProtoType>(BlockFunctionType) != 0);
+  bool HasPrototype = isa<FunctionProtoType>(BlockFunctionType);
   
   IdentifierInfo *ID = &getContext().Idents.get(Name.getString());
   CurCodeDecl = FunctionDecl::Create(getContext(),
