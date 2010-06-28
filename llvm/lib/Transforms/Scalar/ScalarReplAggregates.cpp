@@ -965,7 +965,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       isSafeGEP(GEPI, AI, GEPOffset, Info);
       if (!Info.isUnsafe)
         isSafeForScalarRepl(GEPI, AI, GEPOffset, Info);
-    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length)
         isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
