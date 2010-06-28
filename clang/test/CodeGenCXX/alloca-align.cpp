@@ -18,7 +18,7 @@ extern "C" void f1() {
   (void) (struct s0) { 0, 0, 0, 0 };
 }
 
-// CHECK: define i64 @f2
+// CHECK: define i32 @f2
 // CHECK: alloca %struct.s1, align 2
 struct s1 { short x; short y; };
 extern "C" struct s1 f2(int a, struct s1 *x, struct s1 *y) {

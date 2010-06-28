@@ -92,9 +92,10 @@ void f16(float a, float b, float c, float d, float e, float f, float g, float h,
 void f17(float a, float b, float c, float d, float e, float f, float g, float h,
          long double X) {}
 
-// Check for valid coercion.
-// CHECK: [[f18_t1:%.*]] = trunc i64 {{.*}} to i32
-// CHECK: store i32 [[f18_t1]], i32* 
+// Check for valid coercion.  The struct should be passed/returned as i32, not
+// as i64 for better code quality.
+// rdar://8135035
+// CHECK: define void @f18(i32 %a, i32) 
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 

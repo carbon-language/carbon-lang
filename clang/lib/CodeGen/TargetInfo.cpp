@@ -1086,6 +1086,13 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (Ty->isIntegralOrEnumerationType() || Ty->hasPointerRepresentation())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+    
+    // If this is a 32-bit structure that is passed as an int64, then it will be
+    // passed in the low 32-bits of a 64-bit GPR, which is the same as how an
+    // i32 is passed.  Coerce to a i32 instead of a i64.
+    if (Context.getTypeSizeInChars(Ty).getQuantity() == 4)
+      CoerceTo = llvm::Type::getInt32Ty(CoerceTo->getContext());
+    
   } else if (CoerceTo->isDoubleTy()) {
     assert(Ty.isCanonical() && "should always have a canonical type here");
     assert(!Ty.hasQualifiers() && "should never have a qualified type here");
@@ -1094,6 +1101,11 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
     if (Ty == Context.FloatTy || Ty == Context.DoubleTy)
       return ABIArgInfo::getDirect();
 
+    // If this is a 32-bit structure that is passed as a double, then it will be
+    // passed in the low 32-bits of the XMM register, which is the same as how a
+    // float is passed.  Coerce to a float instead of a double.
+    if (Context.getTypeSizeInChars(Ty).getQuantity() == 4)
+      CoerceTo = llvm::Type::getFloatTy(CoerceTo->getContext());
   }
 
   return ABIArgInfo::getCoerce(CoerceTo);
