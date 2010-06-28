@@ -2056,8 +2056,8 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS),
-    NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
-    NumVisibleDeclContexts(0), EmittingStmts(false) { }
+    CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
+    NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const char *isysroot) {

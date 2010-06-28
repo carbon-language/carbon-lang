@@ -189,7 +189,11 @@ private:
 
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
-  llvm::SmallVector<Stmt *, 8> StmtsToEmit;
+  llvm::SmallVector<Stmt *, 16> StmtsToEmit;
+  
+  /// \brief Statements collection to use for PCHWriter::AddStmt().
+  /// It will point to StmtsToEmit unless it is overriden. 
+  llvm::SmallVector<Stmt *, 16> *CollectedStmts;
 
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
@@ -211,8 +215,8 @@ private:
   /// file.
   unsigned NumVisibleDeclContexts;
 
-  /// \brief True when we are in Stmts emitting mode.
-  bool EmittingStmts;
+  /// \brief Write the given subexpression to the bitstream.
+  void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
   void WriteMetadata(ASTContext &Context, const char *isysroot);
@@ -359,14 +363,8 @@ public:
   /// the corresponding statements just after the type or
   /// declaration.
   void AddStmt(Stmt *S) {
-    if (EmittingStmts)
-      WriteSubStmt(S);
-    else
-      StmtsToEmit.push_back(S);
+      CollectedStmts->push_back(S);
   }
-
-  /// \brief Write the given subexpression to the bitstream.
-  void WriteSubStmt(Stmt *S);
 
   /// \brief Flush all of the statements and expressions that have
   /// been added to the queue via AddStmt().

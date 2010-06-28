@@ -184,7 +184,7 @@ void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
 void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   VisitValueDecl(ECD);
   if (Record[Idx++])
-    ECD->setInitExpr(Reader.ReadDeclExpr());
+    ECD->setInitExpr(Reader.ReadExpr());
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
@@ -299,7 +299,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   if (Record[Idx++]) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
-    MD->setBody(Reader.ReadDeclStmt());
+    MD->setBody(Reader.ReadStmt());
     MD->setSelfDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
     MD->setCmdDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
   }
@@ -493,7 +493,7 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitDeclaratorDecl(FD);
   FD->setMutable(Record[Idx++]);
   if (Record[Idx++])
-    FD->setBitWidth(Reader.ReadDeclExpr());
+    FD->setBitWidth(Reader.ReadExpr());
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -508,7 +508,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   if (Record[Idx++])
-    VD->setInit(Reader.ReadDeclExpr());
+    VD->setInit(Reader.ReadExpr());
 }
 
 void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
@@ -523,12 +523,12 @@ void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
   VisitDecl(AD);
-  AD->setAsmString(cast<StringLiteral>(Reader.ReadDeclExpr()));
+  AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr()));
 }
 
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   VisitDecl(BD);
-  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadDeclStmt()));
+  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt()));
   BD->setSignatureAsWritten(Reader.GetTypeSourceInfo(Record, Idx));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
@@ -861,7 +861,7 @@ void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   D->setPosition(Record[Idx++]);
   // Rest of NonTypeTemplateParmDecl.
   if (Record[Idx++]) {
-    Expr *DefArg = Reader.ReadDeclExpr();
+    Expr *DefArg = Reader.ReadExpr();
     bool Inherited = Record[Idx++];
     D->setDefaultArgument(DefArg, Inherited);
  }
@@ -1105,6 +1105,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
   SavedStreamPosition SavedPosition(DeclsCursor);
+
+  ReadingKindTracker ReadingKind(Read_Decl, *this);
 
   // Note that we are loading a declaration record.
   LoadingTypeOrDecl Loading(*this);

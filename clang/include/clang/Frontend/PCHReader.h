@@ -449,6 +449,34 @@ private:
   /// Objective-C protocols.
   llvm::SmallVector<Decl *, 16> InterestingDecls;
 
+  /// \brief When reading a Stmt tree, Stmt operands are placed in this stack.
+  llvm::SmallVector<Stmt *, 16> StmtStack;
+
+  /// \brief What kind of records we are reading.
+  enum ReadingKind {
+    Read_Decl, Read_Type, Read_Stmt
+  };
+
+  /// \brief What kind of records we are reading. 
+  ReadingKind ReadingKind;
+
+  /// \brief RAII object to change the reading kind.
+  class ReadingKindTracker {
+    PCHReader &Reader;
+    enum ReadingKind PrevKind;
+
+    ReadingKindTracker(const ReadingKindTracker&); // do not implement
+    ReadingKindTracker &operator=(const ReadingKindTracker&);// do not implement
+
+  public:
+    ReadingKindTracker(enum ReadingKind newKind, PCHReader &reader)
+      : Reader(reader), PrevKind(Reader.ReadingKind) {
+      Reader.ReadingKind = newKind;
+    }
+
+    ~ReadingKindTracker() { Reader.ReadingKind = PrevKind; }
+  };
+
   /// \brief The file ID for the predefines buffer in the PCH file.
   FileID PCHPredefinesBufferID;
 
@@ -468,6 +496,9 @@ private:
   /// there are differences that the PCH reader can work around, this
   /// predefines buffer may contain additional definitions.
   std::string SuggestedPredefines;
+
+  /// \brief Reads a statement from the specified cursor.
+  Stmt *ReadStmtFromStream(llvm::BitstreamCursor &Cursor);
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
@@ -563,29 +594,11 @@ public:
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
 
-  /// \brief Abstract interface for reading expressions.
-  class ExprReader {
-  public:
-    virtual Expr *Read();
-  };
-
-  /// \brief Reads a TemplateArgumentLocInfo appropriate for the
-  /// given TemplateArgument kind.
-  TemplateArgumentLocInfo
-  GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
-                             const RecordData &Record, unsigned &Idx,
-                             ExprReader &ExprRdr);
-
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
   GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                              const RecordData &Record, unsigned &Idx);
-
-  /// \brief Reads a TemplateArgumentLoc.
-  TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
-                                              unsigned &Idx,
-                                              ExprReader &ExprRdr);
 
   /// \brief Reads a TemplateArgumentLoc.
   TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
@@ -719,10 +732,6 @@ public:
   TemplateName ReadTemplateName(const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a template argument.
-  TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx,
-                                        ExprReader &ExprRdr);
-
-  /// \brief Read a template argument.
   TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx);
   
   /// \brief Read a template parameter list.
@@ -759,19 +768,11 @@ public:
   /// \brief Reads attributes from the current stream position.
   Attr *ReadAttributes();
 
-  /// \brief ReadDeclExpr - Reads an expression from the current decl cursor.
-  Expr *ReadDeclExpr();
+  /// \brief Reads a statement.
+  Stmt *ReadStmt();
 
-  /// \brief ReadTypeExpr - Reads an expression from the current type cursor.
-  Expr *ReadTypeExpr();
-
-  /// \brief Reads a statement from the specified cursor.
-  Stmt *ReadStmt(llvm::BitstreamCursor &Cursor);
-
-  /// \brief Read a statement from the current DeclCursor.
-  Stmt *ReadDeclStmt() {
-    return ReadStmt(DeclsCursor);
-  }
+  /// \brief Reads an expression.
+  Expr *ReadExpr();
 
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(uint64_t Offset);

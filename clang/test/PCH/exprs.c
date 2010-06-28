@@ -59,6 +59,8 @@ add_result *int_ptr5 = &integer;
 // CompoundAssignOperator
 addeq_result *int_ptr6 = &integer;
 
+add_result_with_typeinfo *int_typeinfo_ptr6;
+
 // ConditionalOperator
 conditional_operator *double_ptr4 = &floating;
 
