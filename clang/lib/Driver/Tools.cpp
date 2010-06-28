@@ -252,54 +252,59 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
 //
 // FIXME: tblgen this.
-static const char *getARMTargetCPU(const ArgList &Args) {
+static const char *getARMTargetCPU(const ArgList &Args,
+                                   const llvm::Triple &Triple) {
   // FIXME: Warn on inconsistent use of -mcpu and -march.
 
   // If we have -mcpu=, use that.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
     return A->getValue(Args);
 
-  // Otherwise, if we have -march= choose the base CPU for that arch.
+  llvm::StringRef MArch;
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    llvm::StringRef MArch = A->getValue(Args);
-
-    if (MArch == "armv2" || MArch == "armv2a")
-      return "arm2";
-    if (MArch == "armv3")
-      return "arm6";
-    if (MArch == "armv3m")
-      return "arm7m";
-    if (MArch == "armv4" || MArch == "armv4t")
-      return "arm7tdmi";
-    if (MArch == "armv5" || MArch == "armv5t")
-      return "arm10tdmi";
-    if (MArch == "armv5e" || MArch == "armv5te")
-      return "arm1026ejs";
-    if (MArch == "armv5tej")
-      return "arm926ej-s";
-    if (MArch == "armv6" || MArch == "armv6k")
-      return "arm1136jf-s";
-    if (MArch == "armv6j")
-      return "arm1136j-s";
-    if (MArch == "armv6z" || MArch == "armv6zk")
-      return "arm1176jzf-s";
-    if (MArch == "armv6t2")
-      return "arm1156t2-s";
-    if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
-      return "cortex-a8";
-    if (MArch == "armv7r" || MArch == "armv7-r")
-      return "cortex-r4";
-    if (MArch == "armv7m" || MArch == "armv7-m")
-      return "cortex-m3";
-    if (MArch == "ep9312")
-      return "ep9312";
-    if (MArch == "iwmmxt")
-      return "iwmmxt";
-    if (MArch == "xscale")
-      return "xscale";
+    // Otherwise, if we have -march= choose the base CPU for that arch.
+    MArch = A->getValue(Args);
+  } else {
+    // Otherwise, use the Arch from the triple.
+    MArch = Triple.getArchName();
   }
 
-  // Otherwise return the most base CPU LLVM supports.
+  if (MArch == "armv2" || MArch == "armv2a")
+    return "arm2";
+  if (MArch == "armv3")
+    return "arm6";
+  if (MArch == "armv3m")
+    return "arm7m";
+  if (MArch == "armv4" || MArch == "armv4t")
+    return "arm7tdmi";
+  if (MArch == "armv5" || MArch == "armv5t")
+    return "arm10tdmi";
+  if (MArch == "armv5e" || MArch == "armv5te")
+    return "arm1026ejs";
+  if (MArch == "armv5tej")
+    return "arm926ej-s";
+  if (MArch == "armv6" || MArch == "armv6k")
+    return "arm1136jf-s";
+  if (MArch == "armv6j")
+    return "arm1136j-s";
+  if (MArch == "armv6z" || MArch == "armv6zk")
+    return "arm1176jzf-s";
+  if (MArch == "armv6t2")
+    return "arm1156t2-s";
+  if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
+    return "cortex-a8";
+  if (MArch == "armv7r" || MArch == "armv7-r")
+    return "cortex-r4";
+  if (MArch == "armv7m" || MArch == "armv7-m")
+    return "cortex-m3";
+  if (MArch == "ep9312")
+    return "ep9312";
+  if (MArch == "iwmmxt")
+    return "iwmmxt";
+  if (MArch == "xscale")
+    return "xscale";
+
+  // If all else failed, return the most base CPU LLVM supports.
   return "arm7tdmi";
 }
 
@@ -352,7 +357,8 @@ static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
-    llvm::StringRef Suffix = getLLVMArchSuffixForARM(getARMTargetCPU(Args));
+    llvm::StringRef Suffix =
+      getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
     bool ThumbDefault =
       (Suffix == "v7" && TC.getTriple().getOS() == llvm::Triple::Darwin);
     std::string ArchName = "arm";
@@ -385,6 +391,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
 void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
+  llvm::Triple Triple = getToolChain().getTriple();
 
   // Select the ABI to use.
   //
@@ -394,7 +401,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     ABIName = A->getValue(Args);
   } else {
     // Select the default based on the platform.
-    llvm::StringRef env = getToolChain().getTriple().getEnvironmentName();
+    llvm::StringRef env = Triple.getEnvironmentName();
     if (env == "gnueabi")
       ABIName = "aapcs-linux";
     else if (env == "eabi")
@@ -407,7 +414,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Set the CPU based on -march= and -mcpu=.
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(getARMTargetCPU(Args));
+  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
   // -mfloat-abi=.
@@ -431,12 +438,14 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // If unspecified, choose the default based on the platform.
   if (FloatABI.empty()) {
-    switch (getToolChain().getTriple().getOS()) {
+    const llvm::Triple &Triple = getToolChain().getTriple();
+    switch (Triple.getOS()) {
     case llvm::Triple::Darwin: {
       // Darwin defaults to "softfp" for v6 and v7.
       //
       // FIXME: Factor out an ARM class so we can cache the arch somewhere.
-      llvm::StringRef ArchName = getLLVMArchSuffixForARM(getARMTargetCPU(Args));
+      llvm::StringRef ArchName =
+        getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
       if (ArchName.startswith("v6") || ArchName.startswith("v7"))
         FloatABI = "softfp";
       else
