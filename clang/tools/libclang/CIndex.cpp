@@ -1417,9 +1417,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                         static_cast<const FileEntry *>(file),
                                               line, column);
 
-  return SLoc.isInvalid() ?
-           clang_getNullLocation() :
-           cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
+  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
 }
 
 CXSourceRange clang_getNullRange() {

@@ -29,6 +29,9 @@ namespace cxloc {
 static inline CXSourceLocation 
 translateSourceLocation(const SourceManager &SM, const LangOptions &LangOpts,
                         SourceLocation Loc) {
+  if (Loc.isInvalid())
+    clang_getNullLocation();
+
   CXSourceLocation Result = { { (void*) &SM, (void*) &LangOpts, },
                               Loc.getRawEncoding() };
   return Result;
