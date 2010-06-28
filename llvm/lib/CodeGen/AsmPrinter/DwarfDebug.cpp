@@ -1386,7 +1386,6 @@ static bool isSubprogramContext(const MDNode *Context) {
 /// If there are global variables in this scope then create and insert
 /// DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
-  ProcessedSPNodes.insert(SPNode);
   CompileUnit *SPCU = getCompileUnit(SPNode);
   DIE *SPDie = SPCU->getDIE(SPNode);
   assert(SPDie && "Unable to find subprogram DIE!");
@@ -1692,6 +1691,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   if (Scope->getInlinedAt())
     ScopeDIE = constructInlinedScopeDIE(Scope);
   else if (DS.isSubprogram()) {
+    ProcessedSPNodes.insert(DS);
     if (Scope->isAbstractScope())
       ScopeDIE = getCompileUnit(DS)->getDIE(DS);
     else
