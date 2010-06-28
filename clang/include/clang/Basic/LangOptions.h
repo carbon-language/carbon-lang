@@ -157,9 +157,7 @@ public:
     SignedOverflowBehavior = SOB_Undefined;
     
     AssumeSaneOperatorNew = 1;
-
-    // FIXME: The default should be 1.
-    AccessControl = 0;
+    AccessControl = 1;
     ElideConstructors = 1;
 
     SignedOverflowBehavior = 0;
