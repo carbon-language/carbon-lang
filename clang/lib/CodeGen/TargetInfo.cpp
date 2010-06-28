@@ -688,7 +688,7 @@ class X86_64ABIInfo : public ABIInfo {
   /// always be either NoClass or the result of a previous merge
   /// call. In addition, this should never be Memory (the caller
   /// should just return Memory for the aggregate).
-  Class merge(Class Accum, Class Field) const;
+  static Class merge(Class Accum, Class Field);
 
   /// classify - Determine the x86_64 register classes in which the
   /// given type T should be passed.
@@ -779,8 +779,7 @@ public:
 
 }
 
-X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum,
-                                          Class Field) const {
+X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum, Class Field) {
   // AMD64-ABI 3.2.3p2: Rule 4. Each field of an object is
   // classified recursively so that always two fields are
   // considered. The resulting class is calculated according to
@@ -808,17 +807,16 @@ X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum,
          "Invalid accumulated classification during merge.");
   if (Accum == Field || Field == NoClass)
     return Accum;
-  else if (Field == Memory)
+  if (Field == Memory)
     return Memory;
-  else if (Accum == NoClass)
+  if (Accum == NoClass)
     return Field;
-  else if (Accum == Integer || Field == Integer)
+  if (Accum == Integer || Field == Integer)
     return Integer;
-  else if (Field == X87 || Field == X87Up || Field == ComplexX87 ||
-           Accum == X87 || Accum == X87Up)
+  if (Field == X87 || Field == X87Up || Field == ComplexX87 ||
+      Accum == X87 || Accum == X87Up)
     return Memory;
-  else
-    return SSE;
+  return SSE;
 }
 
 void X86_64ABIInfo::classify(QualType Ty,
@@ -856,17 +854,29 @@ void X86_64ABIInfo::classify(QualType Ty,
     }
     // FIXME: _Decimal32 and _Decimal64 are SSE.
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
-  } else if (const EnumType *ET = Ty->getAs<EnumType>()) {
+    return;
+  }
+  
+  if (const EnumType *ET = Ty->getAs<EnumType>()) {
     // Classify the underlying integer type.
     classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);
-  } else if (Ty->hasPointerRepresentation()) {
+    return;
+  }
+  
+  if (Ty->hasPointerRepresentation()) {
     Current = Integer;
-  } else if (Ty->isMemberPointerType()) {
+    return;
+  }
+  
+  if (Ty->isMemberPointerType()) {
     if (Ty->isMemberFunctionPointerType())
       Lo = Hi = Integer;
     else
       Current = Integer;
-  } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+    return;
+  }
+  
+  if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 32) {
       // gcc passes all <4 x char>, <2 x short>, <1 x int>, <1 x
@@ -898,7 +908,10 @@ void X86_64ABIInfo::classify(QualType Ty,
       Lo = SSE;
       Hi = SSEUp;
     }
-  } else if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
+    return;
+  }
+  
+  if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
     QualType ET = Context.getCanonicalType(CT->getElementType());
 
     uint64_t Size = Context.getTypeSize(Ty);
@@ -920,7 +933,11 @@ void X86_64ABIInfo::classify(QualType Ty,
     uint64_t EB_Imag = (OffsetBase + Context.getTypeSize(ET)) / 64;
     if (Hi == NoClass && EB_Real != EB_Imag)
       Hi = Lo;
-  } else if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    
+    return;
+  }
+  
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
     // Arrays are treated like structures.
 
     uint64_t Size = Context.getTypeSize(Ty);
@@ -955,7 +972,10 @@ void X86_64ABIInfo::classify(QualType Ty,
     if (Hi == Memory)
       Lo = Memory;
     assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp array classification.");
-  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    return;
+  }
+  
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
     uint64_t Size = Context.getTypeSize(Ty);
 
     // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger
@@ -1161,9 +1181,9 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
   return ABIArgInfo::getIndirect(0);
 }
 
-ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,
-                                            ASTContext &Context,
-                                          llvm::LLVMContext &VMContext) const {
+ABIArgInfo X86_64ABIInfo::
+classifyReturnType(QualType RetTy, ASTContext &Context,
+                   llvm::LLVMContext &VMContext) const {
   // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
   // classification algorithm.
   X86_64ABIInfo::Class Lo, Hi;
@@ -1472,21 +1492,16 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   if (neededInt) {
     gp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "gp_offset_p");
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
-    InRegs =
-      CGF.Builder.CreateICmpULE(gp_offset,
-                                llvm::ConstantInt::get(CGF.Int32Ty,
-                                                       48 - neededInt * 8),
-                                "fits_in_gp");
+    InRegs = llvm::ConstantInt::get(CGF.Int32Ty, 48 - neededInt * 8);
+    InRegs = CGF.Builder.CreateICmpULE(gp_offset, InRegs, "fits_in_gp");
   }
 
   if (neededSSE) {
     fp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 1, "fp_offset_p");
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
     llvm::Value *FitsInFP =
-      CGF.Builder.CreateICmpULE(fp_offset,
-                                llvm::ConstantInt::get(CGF.Int32Ty,
-                                                       176 - neededSSE * 16),
-                                "fits_in_fp");
+      llvm::ConstantInt::get(CGF.Int32Ty, 176 - neededSSE * 16);
+    FitsInFP = CGF.Builder.CreateICmpULE(fp_offset, FitsInFP, "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
   }
 
@@ -1550,9 +1565,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     // SSE registers are spaced 16 bytes apart in the register save
     // area, we need to collect the two eightbytes together.
     llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
-    llvm::Value *RegAddrHi =
-    CGF.Builder.CreateGEP(RegAddrLo,
-                          llvm::ConstantInt::get(CGF.Int32Ty, 16));
+    llvm::Value *RegAddrHi = CGF.Builder.CreateConstGEP1_32(RegAddrLo, 16);
     const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
     const llvm::Type *DblPtrTy =
       llvm::PointerType::getUnqual(DoubleTy);
