@@ -383,24 +383,21 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
            SI = SelsToConvert.begin(), SE = SelsToConvert.end();
          SI != SE; ++SI) {
       IntrinsicInst *II = *SI;
-      SmallVector<Value*, 8> Args;
 
       // Use the exception object pointer and the personality function
       // from the original selector.
       CallSite CS(II);
       IntrinsicInst::op_iterator I = CS.arg_begin();
-      Args.push_back(*I++); // Exception object pointer.
-      Args.push_back(*I++); // Personality function.
-
       IntrinsicInst::op_iterator E = CS.arg_end();
       IntrinsicInst::op_iterator B = prior(E);
 
       // Exclude last argument if it is an integer.
       if (isa<ConstantInt>(B)) E = B;
 
-      // Add in any filter IDs.
-      for (; I != E; ++I)
-        Args.push_back(*I);
+      // Add exception object pointer (front).
+      // Add personality function (next).
+      // Add in any filter IDs (rest).
+      SmallVector<Value*, 8> Args(I, E);
 
       Args.push_back(EHCatchAllValue->getInitializer()); // Catch-all indicator.
 
