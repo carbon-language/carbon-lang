@@ -189,9 +189,9 @@ namespace {
     BasicAliasAnalysis() : NoAA(&ID) {}
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size) {
-      assert(VisitedPHIs.empty() && "VisitedPHIs must be cleared after use!");
+      assert(Visited.empty() && "Visited must be cleared after use!");
       AliasResult Alias = aliasCheck(V1, V1Size, V2, V2Size);
-      VisitedPHIs.clear();
+      Visited.clear();
       return Alias;
     }
 
@@ -213,8 +213,8 @@ namespace {
     }
     
   private:
-    // VisitedPHIs - Track PHI nodes visited by a aliasCheck() call.
-    SmallPtrSet<const Value*, 16> VisitedPHIs;
+    // Visited - Track instructions visited by a aliasPHI, aliasSelect(), and aliasGEP().
+    SmallPtrSet<const Value*, 16> Visited;
 
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
     // instruction against another.
@@ -440,6 +440,13 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
                              const Value *V2, unsigned V2Size,
                              const Value *UnderlyingV1,
                              const Value *UnderlyingV2) {
+  // If this GEP has been visited before, we're on a use-def cycle.
+  // Such cycles are only valid when PHI nodes are involved or in unreachable
+  // code. The visitPHI function catches cycles containing PHIs, but there
+  // could still be a cycle without PHIs in unreachable code.
+  if (!Visited.insert(GEP1))
+    return MayAlias;
+
   int64_t GEP1BaseOffset;
   SmallVector<std::pair<const Value*, int64_t>, 4> GEP1VariableIndices;
 
@@ -550,6 +557,13 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasSelect(const SelectInst *SI, unsigned SISize,
                                 const Value *V2, unsigned V2Size) {
+  // If this select has been visited before, we're on a use-def cycle.
+  // Such cycles are only valid when PHI nodes are involved or in unreachable
+  // code. The visitPHI function catches cycles containing PHIs, but there
+  // could still be a cycle without PHIs in unreachable code.
+  if (!Visited.insert(SI))
+    return MayAlias;
+
   // If the values are Selects with the same condition, we can do a more precise
   // check: just check for aliases between the values on corresponding arms.
   if (const SelectInst *SI2 = dyn_cast<SelectInst>(V2))
@@ -570,11 +584,17 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, unsigned SISize,
   // If both arms of the Select node NoAlias or MustAlias V2, then returns
   // NoAlias / MustAlias. Otherwise, returns MayAlias.
   AliasResult Alias =
-    aliasCheck(SI->getTrueValue(), SISize, V2, V2Size);
+    aliasCheck(V2, V2Size, SI->getTrueValue(), SISize);
   if (Alias == MayAlias)
     return MayAlias;
+
+  // If V2 is visited, the recursive case will have been caught in the
+  // above aliasCheck call, so these subsequent calls to aliasCheck
+  // don't need to assume that V2 is being visited recursively.
+  Visited.erase(V2);
+
   AliasResult ThisAlias =
-    aliasCheck(SI->getFalseValue(), SISize, V2, V2Size);
+    aliasCheck(V2, V2Size, SI->getFalseValue(), SISize);
   if (ThisAlias != Alias)
     return MayAlias;
   return Alias;
@@ -586,7 +606,7 @@ AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
                              const Value *V2, unsigned V2Size) {
   // The PHI node has already been visited, avoid recursion any further.
-  if (!VisitedPHIs.insert(PN))
+  if (!Visited.insert(PN))
     return MayAlias;
 
   // If the values are PHIs in the same block, we can do a more precise
@@ -636,10 +656,10 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
   for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
     Value *V = V1Srcs[i];
 
-    // If V2 is a PHI, the recursive case will have been caught in the
+    // If V2 is visited, the recursive case will have been caught in the
     // above aliasCheck call, so these subsequent calls to aliasCheck
     // don't need to assume that V2 is being visited recursively.
-    VisitedPHIs.erase(V2);
+    Visited.erase(V2);
 
     AliasResult ThisAlias = aliasCheck(V2, V2Size, V, PNSize);
     if (ThisAlias != Alias || ThisAlias == MayAlias)

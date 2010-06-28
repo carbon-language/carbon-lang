@@ -322,7 +322,13 @@ void Value::replaceAllUsesWith(Value *New) {
 Value *Value::stripPointerCasts() {
   if (!getType()->isPointerTy())
     return this;
+
+  // Even though we don't look through PHI nodes, we could be called on an
+  // instruction in an unreachable block, which may be on a cycle.
+  SmallPtrSet<Value *, 4> Visited;
+
   Value *V = this;
+  Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       if (!GEP->hasAllZeroIndices())
@@ -338,7 +344,9 @@ Value *Value::stripPointerCasts() {
       return V;
     }
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
-  } while (1);
+  } while (Visited.insert(V));
+
+  return V;
 }
 
 Value *Value::getUnderlyingObject(unsigned MaxLookup) {
