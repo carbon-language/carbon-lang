@@ -321,6 +321,18 @@ void PCHValidator::ReadCounter(unsigned Value) {
 // PCH reader implementation
 //===----------------------------------------------------------------------===//
 
+// Give ExprReader's VTable a home.
+Expr *PCHReader::ExprReader::Read() { return 0; }
+
+namespace {
+  class DeclExprReader : public PCHReader::ExprReader {
+    PCHReader &Reader;
+  public:
+    DeclExprReader(PCHReader &reader) : Reader(reader) { }
+    virtual Expr *Read() { return Reader.ReadDeclExpr(); }
+  };
+} // anonymous namespace
+
 PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
                      const char *isysroot)
   : Listener(new PCHValidator(PP, *this)), SourceMgr(PP.getSourceManager()),
@@ -2499,19 +2511,16 @@ QualType PCHReader::GetType(pch::TypeID ID) {
 TemplateArgumentLocInfo
 PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                       const RecordData &Record,
-                                      unsigned &Index) {
+                                      unsigned &Index, ExprReader &ExprRdr) {
   switch (Kind) {
   case TemplateArgument::Expression:
-    return ReadDeclExpr();
+    return ExprRdr.Read();
   case TemplateArgument::Type:
     return GetTypeSourceInfo(Record, Index);
   case TemplateArgument::Template: {
-    SourceLocation
-      QualStart = SourceLocation::getFromRawEncoding(Record[Index++]),
-      QualEnd = SourceLocation::getFromRawEncoding(Record[Index++]),
-      TemplateNameLoc = SourceLocation::getFromRawEncoding(Record[Index++]);
-    return TemplateArgumentLocInfo(SourceRange(QualStart, QualEnd),
-                                   TemplateNameLoc);
+    SourceRange QualifierRange = ReadSourceRange(Record, Index);
+    SourceLocation TemplateNameLoc = ReadSourceLocation(Record, Index);
+    return TemplateArgumentLocInfo(QualifierRange, TemplateNameLoc);
   }
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
@@ -2523,11 +2532,32 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   return TemplateArgumentLocInfo();
 }
 
+TemplateArgumentLocInfo
+PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                                      const RecordData &Record,
+                                      unsigned &Index) {
+  DeclExprReader DeclExprReader(*this);
+  return GetTemplateArgumentLocInfo(Kind, Record, Index, DeclExprReader);
+}
+
+TemplateArgumentLoc
+PCHReader::ReadTemplateArgumentLoc(const RecordData &Record, unsigned &Index,
+                                   ExprReader &ExprRdr) {
+  TemplateArgument Arg = ReadTemplateArgument(Record, Index, ExprRdr);
+
+  if (Arg.getKind() == TemplateArgument::Expression) {
+    if (Record[Index++]) // bool InfoHasSameExpr.
+      return TemplateArgumentLoc(Arg, TemplateArgumentLocInfo(Arg.getAsExpr()));
+  }
+  return TemplateArgumentLoc(Arg, GetTemplateArgumentLocInfo(Arg.getKind(),
+                                                             Record, Index,
+                                                             ExprRdr));
+}
+
 TemplateArgumentLoc
 PCHReader::ReadTemplateArgumentLoc(const RecordData &Record, unsigned &Index) {
-  TemplateArgument Arg = ReadTemplateArgument(Record, Index);
-  return TemplateArgumentLoc(Arg, GetTemplateArgumentLocInfo(Arg.getKind(),
-                                                             Record, Index));
+  DeclExprReader DeclExprReader(*this);
+  return ReadTemplateArgumentLoc(Record, Index, DeclExprReader);
 }
 
 Decl *PCHReader::GetExternalDecl(uint32_t ID) {
@@ -2995,7 +3025,7 @@ PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
       return Context->getDependentTemplateName(NNS,
                                                GetIdentifierInfo(Record, Idx));
     return Context->getDependentTemplateName(NNS,
-                                             (OverloadedOperatorKind)Record[Idx++]);
+                                         (OverloadedOperatorKind)Record[Idx++]);
   }
   }
   
@@ -3004,7 +3034,8 @@ PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
 }
 
 TemplateArgument
-PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
+PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx,
+                                ExprReader &ExprRdr) {
   switch ((TemplateArgument::ArgKind)Record[Idx++]) {
   case TemplateArgument::Null:
     return TemplateArgument();
@@ -3020,13 +3051,13 @@ PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
   case TemplateArgument::Template:
     return TemplateArgument(ReadTemplateName(Record, Idx));
   case TemplateArgument::Expression:
-    return TemplateArgument(ReadDeclExpr());
+    return TemplateArgument(ExprRdr.Read());
   case TemplateArgument::Pack: {
     unsigned NumArgs = Record[Idx++];
     llvm::SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
     while (NumArgs--)
-      Args.push_back(ReadTemplateArgument(Record, Idx));
+      Args.push_back(ReadTemplateArgument(Record, Idx, ExprRdr));
     TemplateArgument TemplArg;
     TemplArg.setArgumentPack(Args.data(), Args.size(), /*CopyArgs=*/true);
     return TemplArg;
@@ -3035,6 +3066,12 @@ PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
   
   assert(0 && "Unhandled template argument kind!");
   return TemplateArgument();
+}
+
+TemplateArgument
+PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
+  DeclExprReader DeclExprReader(*this);
+  return ReadTemplateArgument(Record, Idx, DeclExprReader);
 }
 
 TemplateParameterList *

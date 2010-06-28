@@ -1025,6 +1025,40 @@ void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   Code = pch::EXPR_CXX_EXPR_WITH_TEMPORARIES;
 }
 
+/// \brief Return the number of Exprs contained in the given TemplateArgument.
+static unsigned NumExprsContainedIn(const TemplateArgument Arg) {
+  switch (Arg.getKind()) {
+  default: break;
+  case TemplateArgument::Expression:
+    return 1;
+  case TemplateArgument::Pack: {
+    unsigned Count = 0;
+    for (TemplateArgument::pack_iterator I=Arg.pack_begin(), E=Arg.pack_end();
+           I != E; ++I)
+      Count += NumExprsContainedIn(*I);
+    return Count;
+  }
+  }
+  
+  return 0;
+}
+
+/// \brief Return the number of Exprs contained in the given
+/// TemplateArgumentLoc.
+static
+unsigned NumExprsContainedIn(const TemplateArgumentLoc *Args,unsigned NumArgs) {
+  unsigned Count = 0;
+  for (unsigned i=0; i != NumArgs; ++i) {
+    const TemplateArgument &TemplA = Args[i].getArgument();
+    Count += NumExprsContainedIn(TemplA);
+    if (TemplA.getKind() == TemplateArgument::Expression &&
+        TemplA.getAsExpr() != Args[i].getLocInfo().getAsExpr())
+      ++Count; // 1 in TemplateArgumentLocInfo.
+  }
+  
+  return Count;
+}
+
 void
 PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
@@ -1035,6 +1069,8 @@ PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
     Record.push_back(E->getNumTemplateArgs());
     Writer.AddSourceLocation(E->getLAngleLoc(), Record);
     Writer.AddSourceLocation(E->getRAngleLoc(), Record);
+    Record.push_back(NumExprsContainedIn(E->getTemplateArgs(),
+                                         E->getNumTemplateArgs()));
     for (int i=0, e = E->getNumTemplateArgs(); i != e; ++i)
       Writer.AddTemplateArgumentLoc(E->getTemplateArgs()[i], Record);
   } else {
@@ -1080,6 +1116,8 @@ void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
     Record.push_back(Args.NumTemplateArgs);
     Writer.AddSourceLocation(Args.LAngleLoc, Record);
     Writer.AddSourceLocation(Args.RAngleLoc, Record);
+    Record.push_back(NumExprsContainedIn(Args.getTemplateArgs(),
+                                         Args.NumTemplateArgs));
     for (unsigned i=0; i != Args.NumTemplateArgs; ++i)
       Writer.AddTemplateArgumentLoc(Args.getTemplateArgs()[i], Record);
   } else {
@@ -1178,6 +1216,8 @@ void PCHWriter::WriteSubStmt(Stmt *S) {
 void PCHWriter::FlushStmts() {
   RecordData Record;
   PCHStmtWriter Writer(*this, Record);
+  
+  EmittingStmts = true;
 
   for (unsigned I = 0, N = StmtsToEmit.size(); I != N; ++I) {
     ++NumStatements;
@@ -1208,6 +1248,8 @@ void PCHWriter::FlushStmts() {
     Record.clear();
     Stream.EmitRecord(pch::STMT_STOP, Record);
   }
+
+  EmittingStmts = false;
 
   StmtsToEmit.clear();
 }

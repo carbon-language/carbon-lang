@@ -15,9 +15,13 @@ struct S<int, float> {
     static void explicit_special();
 };
 
+template <int x>
+int tmpl_f2() { return x; }
+
 template <typename T, int y>
 T templ_f(T x) {
   int z = templ_f<int, 5>(3);
+  z = tmpl_f2<y+2>();
   return x+y;
 }
 

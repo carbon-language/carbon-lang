@@ -2057,7 +2057,7 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
-    NumVisibleDeclContexts(0) { }
+    NumVisibleDeclContexts(0), EmittingStmts(false) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const char *isysroot) {
@@ -2302,10 +2302,8 @@ void PCHWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
     AddTypeSourceInfo(Arg.getAsTypeSourceInfo(), Record);
     break;
   case TemplateArgument::Template:
-    Record.push_back(
-                   Arg.getTemplateQualifierRange().getBegin().getRawEncoding());
-    Record.push_back(Arg.getTemplateQualifierRange().getEnd().getRawEncoding());
-    Record.push_back(Arg.getTemplateNameLoc().getRawEncoding());
+    AddSourceRange(Arg.getTemplateQualifierRange(), Record);
+    AddSourceLocation(Arg.getTemplateNameLoc(), Record);
     break;
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
@@ -2318,6 +2316,14 @@ void PCHWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
 void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                                        RecordData &Record) {
   AddTemplateArgument(Arg.getArgument(), Record);
+
+  if (Arg.getArgument().getKind() == TemplateArgument::Expression) {
+    bool InfoHasSameExpr
+      = Arg.getArgument().getAsExpr() == Arg.getLocInfo().getAsExpr();
+    Record.push_back(InfoHasSameExpr);
+    if (InfoHasSameExpr)
+      return; // Avoid storing the same expr twice.
+  }
   AddTemplateArgumentLocInfo(Arg.getArgument().getKind(), Arg.getLocInfo(),
                              Record);
 }

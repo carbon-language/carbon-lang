@@ -211,6 +211,9 @@ private:
   /// file.
   unsigned NumVisibleDeclContexts;
 
+  /// \brief True when we are in Stmts emitting mode.
+  bool EmittingStmts;
+
   void WriteBlockInfoBlock();
   void WriteMetadata(ASTContext &Context, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
@@ -355,7 +358,12 @@ public:
   /// type or declaration has been written, call FlushStmts() to write
   /// the corresponding statements just after the type or
   /// declaration.
-  void AddStmt(Stmt *S) { StmtsToEmit.push_back(S); }
+  void AddStmt(Stmt *S) {
+    if (EmittingStmts)
+      WriteSubStmt(S);
+    else
+      StmtsToEmit.push_back(S);
+  }
 
   /// \brief Write the given subexpression to the bitstream.
   void WriteSubStmt(Stmt *S);

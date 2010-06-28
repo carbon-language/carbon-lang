@@ -18,6 +18,15 @@
 using namespace clang;
 
 namespace {
+
+  class StmtStackExprReader : public PCHReader::ExprReader {
+    llvm::SmallVectorImpl<Stmt *>::iterator StmtI;
+  public:
+    StmtStackExprReader(const llvm::SmallVectorImpl<Stmt *>::iterator &stmtI)
+      : StmtI(stmtI) { }
+    virtual Expr *Read() { return cast_or_null<Expr>(*StmtI++); }
+  };
+
   class PCHStmtReader : public StmtVisitor<PCHStmtReader, unsigned> {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
@@ -1124,6 +1133,7 @@ unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 unsigned
 PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
+  unsigned NumExprs = 0;
   
   unsigned NumTemplateArgs = Record[Idx++];
   assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
@@ -1132,8 +1142,17 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
     TemplateArgumentListInfo ArgInfo;
     ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
     ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+
+    NumExprs = Record[Idx++];
+    llvm::SmallVectorImpl<Stmt *>::iterator
+      StartOfExprs = StmtStack.end() - NumExprs;
+    if (isa<UnresolvedMemberExpr>(E))
+      --StartOfExprs; // UnresolvedMemberExpr contains an Expr;
+    StmtStackExprReader ExprReader(StartOfExprs);
     for (unsigned i = 0; i != NumTemplateArgs; ++i)
-      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx,
+                                                         ExprReader));
+
     E->initializeTemplateArgumentsFrom(ArgInfo);
   }
 
@@ -1148,7 +1167,7 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   E->setMember(Reader.ReadDeclarationName(Record, Idx));
   E->setMemberLoc(Reader.ReadSourceLocation(Record, Idx));
   
-  return 1;
+  return NumExprs + 1;
 }
 
 unsigned
@@ -1167,6 +1186,7 @@ PCHStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
 
 unsigned PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
+  unsigned NumExprs = 0;
   
   unsigned NumTemplateArgs = Record[Idx++];
   assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
@@ -1175,8 +1195,17 @@ unsigned PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
     TemplateArgumentListInfo ArgInfo;
     ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
     ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+
+    NumExprs = Record[Idx++];
+    llvm::SmallVectorImpl<Stmt *>::iterator
+      StartOfExprs = StmtStack.end() - NumExprs;
+    if (isa<UnresolvedMemberExpr>(E))
+      --StartOfExprs; // UnresolvedMemberExpr contains an Expr;
+    StmtStackExprReader ExprReader(StartOfExprs);
     for (unsigned i = 0; i != NumTemplateArgs; ++i)
-      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx,
+                                                         ExprReader));
+
     E->getExplicitTemplateArgs().initializeFrom(ArgInfo);
   }
 
@@ -1193,25 +1222,25 @@ unsigned PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
   E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
   E->setNameLoc(Reader.ReadSourceLocation(Record, Idx));
-  return 0;
+  return NumExprs;
 }
 
 unsigned PCHStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
-  VisitOverloadExpr(E);
+  unsigned NumExprs = VisitOverloadExpr(E);
   E->setArrow(Record[Idx++]);
   E->setHasUnresolvedUsing(Record[Idx++]);
   E->setBase(cast_or_null<Expr>(StmtStack.back()));
   E->setBaseType(Reader.GetType(Record[Idx++]));
   E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
-  return 1;
+  return NumExprs + 1;
 }
 
 unsigned PCHStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
-  VisitOverloadExpr(E);
+  unsigned NumExprs = VisitOverloadExpr(E);
   E->setRequiresADL(Record[Idx++]);
   E->setOverloaded(Record[Idx++]);
   E->setNamingClass(cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++])));
-  return 0;
+  return NumExprs;
 }
 
 

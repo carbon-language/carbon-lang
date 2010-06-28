@@ -563,11 +563,29 @@ public:
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
 
+  /// \brief Abstract interface for reading expressions.
+  class ExprReader {
+  public:
+    virtual Expr *Read();
+  };
+
+  /// \brief Reads a TemplateArgumentLocInfo appropriate for the
+  /// given TemplateArgument kind.
+  TemplateArgumentLocInfo
+  GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                             const RecordData &Record, unsigned &Idx,
+                             ExprReader &ExprRdr);
+
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
   GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                              const RecordData &Record, unsigned &Idx);
+
+  /// \brief Reads a TemplateArgumentLoc.
+  TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
+                                              unsigned &Idx,
+                                              ExprReader &ExprRdr);
 
   /// \brief Reads a TemplateArgumentLoc.
   TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
@@ -699,6 +717,10 @@ public:
 
   /// \brief Read a template name.
   TemplateName ReadTemplateName(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read a template argument.
+  TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx,
+                                        ExprReader &ExprRdr);
 
   /// \brief Read a template argument.
   TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx);
