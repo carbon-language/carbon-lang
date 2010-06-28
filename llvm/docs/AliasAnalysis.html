@@ -789,6 +789,19 @@ module, it is not part of the LLVM core.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="scev-aa">The <tt>-scev-aa</tt> pass</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>-scev-aa</tt> pass implements AliasAnalysis queries by
+translating them into ScalarEvolution queries. This gives it a
+more complete understanding of <tt>getelementptr</tt> instructions
+and loop induction variables than other alias analyses have.</p>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
