@@ -131,3 +131,26 @@ entry:
 ; CHECK: ret i1 false
 }
 
+define i1 @test14(i8 %X) nounwind readnone {
+entry:
+        %cmp = icmp slt i8 undef, -128
+        ret i1 %cmp
+; CHECK: @test14
+; CHECK: ret i1 false
+}
+
+define i1 @test15() nounwind readnone {
+entry:
+        %cmp = icmp eq i8 undef, -128
+        ret i1 %cmp
+; CHECK: @test15
+; CHECK: ret i1 undef
+}
+
+define i1 @test16() nounwind readnone {
+entry:
+        %cmp = icmp ne i8 undef, -128
+        ret i1 %cmp
+; CHECK: @test16
+; CHECK: ret i1 undef
+}
