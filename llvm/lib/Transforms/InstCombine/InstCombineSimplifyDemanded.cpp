@@ -1052,12 +1052,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     case Intrinsic::x86_sse2_mul_sd:
     case Intrinsic::x86_sse2_min_sd:
     case Intrinsic::x86_sse2_max_sd:
-      TmpV = SimplifyDemandedVectorElts(II->getOperand(1), DemandedElts,
+      TmpV = SimplifyDemandedVectorElts(II->getArgOperand(0), DemandedElts,
                                         UndefElts, Depth+1);
-      if (TmpV) { II->setOperand(1, TmpV); MadeChange = true; }
-      TmpV = SimplifyDemandedVectorElts(II->getOperand(2), DemandedElts,
+      if (TmpV) { II->setArgOperand(0, TmpV); MadeChange = true; }
+      TmpV = SimplifyDemandedVectorElts(II->getArgOperand(1), DemandedElts,
                                         UndefElts2, Depth+1);
-      if (TmpV) { II->setOperand(2, TmpV); MadeChange = true; }
+      if (TmpV) { II->setArgOperand(1, TmpV); MadeChange = true; }
 
       // If only the low elt is demanded and this is a scalarizable intrinsic,
       // scalarize it now.
