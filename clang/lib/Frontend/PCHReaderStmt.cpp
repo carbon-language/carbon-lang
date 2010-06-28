@@ -19,14 +19,6 @@ using namespace clang;
 
 namespace {
 
-  class StmtStackExprReader : public PCHReader::ExprReader {
-    llvm::SmallVectorImpl<Stmt *>::iterator StmtI;
-  public:
-    StmtStackExprReader(const llvm::SmallVectorImpl<Stmt *>::iterator &stmtI)
-      : StmtI(stmtI) { }
-    virtual Expr *Read() { return cast_or_null<Expr>(*StmtI++); }
-  };
-
   class PCHStmtReader : public StmtVisitor<PCHStmtReader, unsigned> {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
@@ -45,6 +37,13 @@ namespace {
     /// \brief The number of record fields required for the Expr class
     /// itself.
     static const unsigned NumExprFields = NumStmtFields + 3;
+    
+    /// \brief Read and initialize a ExplicitTemplateArgumentList structure.
+    /// \return the number of Exprs that were read.
+    unsigned
+    ReadExplicitTemplateArgumentList(ExplicitTemplateArgumentList &ArgList,
+                                     unsigned NumTemplateArgs,
+                            llvm::SmallVectorImpl<Stmt *>::iterator EndOfExprs);
 
     // Each of the Visit* functions reads in part of the expression
     // from the given record and the current expression stack, then
@@ -154,6 +153,34 @@ namespace {
     unsigned VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
     unsigned VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
   };
+}
+
+unsigned PCHStmtReader::
+ReadExplicitTemplateArgumentList(ExplicitTemplateArgumentList &ArgList,
+                                 unsigned NumTemplateArgs,
+                           llvm::SmallVectorImpl<Stmt *>::iterator EndOfExprs) {
+
+  class StmtStackExprReader : public PCHReader::ExprReader {
+    llvm::SmallVectorImpl<Stmt *>::iterator StmtI;
+  public:
+    StmtStackExprReader(const llvm::SmallVectorImpl<Stmt *>::iterator &stmtI)
+      : StmtI(stmtI) { }
+    virtual Expr *Read() { return cast_or_null<Expr>(*StmtI++); }
+  };
+
+  unsigned NumExprs = Record[Idx++];
+  
+  TemplateArgumentListInfo ArgInfo;
+  ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+  ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+  
+  StmtStackExprReader ExprReader(EndOfExprs - NumExprs);
+  for (unsigned i = 0; i != NumTemplateArgs; ++i)
+    ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx,
+                                                       ExprReader));
+  ArgList.initializeFrom(ArgInfo);
+
+  return NumExprs;
 }
 
 unsigned PCHStmtReader::VisitStmt(Stmt *S) {
@@ -1138,23 +1165,10 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   unsigned NumTemplateArgs = Record[Idx++];
   assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
          "Read wrong record during creation ?");
-  if (E->hasExplicitTemplateArgs()) {
-    TemplateArgumentListInfo ArgInfo;
-    ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
-    ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
-
-    NumExprs = Record[Idx++];
-    llvm::SmallVectorImpl<Stmt *>::iterator
-      StartOfExprs = StmtStack.end() - NumExprs;
-    if (isa<UnresolvedMemberExpr>(E))
-      --StartOfExprs; // UnresolvedMemberExpr contains an Expr;
-    StmtStackExprReader ExprReader(StartOfExprs);
-    for (unsigned i = 0; i != NumTemplateArgs; ++i)
-      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx,
-                                                         ExprReader));
-
-    E->initializeTemplateArgumentsFrom(ArgInfo);
-  }
+  if (E->hasExplicitTemplateArgs())
+    NumExprs
+      = ReadExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList(),
+                                         NumTemplateArgs, StmtStack.end());
 
   E->setBase(cast_or_null<Expr>(StmtStack.back()));
   E->setBaseType(Reader.GetType(Record[Idx++]));
@@ -1192,21 +1206,11 @@ unsigned PCHStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
          "Read wrong record during creation ?");
   if (E->hasExplicitTemplateArgs()) {
-    TemplateArgumentListInfo ArgInfo;
-    ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
-    ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
-
-    NumExprs = Record[Idx++];
-    llvm::SmallVectorImpl<Stmt *>::iterator
-      StartOfExprs = StmtStack.end() - NumExprs;
+    llvm::SmallVectorImpl<Stmt *>::iterator EndOfExprs = StmtStack.end();
     if (isa<UnresolvedMemberExpr>(E))
-      --StartOfExprs; // UnresolvedMemberExpr contains an Expr;
-    StmtStackExprReader ExprReader(StartOfExprs);
-    for (unsigned i = 0; i != NumTemplateArgs; ++i)
-      ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx,
-                                                         ExprReader));
-
-    E->getExplicitTemplateArgs().initializeFrom(ArgInfo);
+      --EndOfExprs; // UnresolvedMemberExpr contains an Expr.
+    NumExprs = ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
+                                                NumTemplateArgs, EndOfExprs);
   }
 
   unsigned NumDecls = Record[Idx++];

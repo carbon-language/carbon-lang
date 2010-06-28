@@ -32,6 +32,9 @@ namespace {
 
     PCHStmtWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
       : Writer(Writer), Record(Record) { }
+    
+    void
+    AddExplicitTemplateArgumentList(const ExplicitTemplateArgumentList &Args);
 
     void VisitStmt(Stmt *S);
     void VisitNullStmt(NullStmt *S);
@@ -140,6 +143,49 @@ namespace {
     void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
   };
+}
+
+/// \brief Return the number of Exprs contained in the given TemplateArgument.
+static unsigned NumExprsContainedIn(const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+  default: break;
+  case TemplateArgument::Expression:
+    return 1;
+  case TemplateArgument::Pack: {
+    unsigned Count = 0;
+    for (TemplateArgument::pack_iterator I=Arg.pack_begin(), E=Arg.pack_end();
+           I != E; ++I)
+      Count += NumExprsContainedIn(*I);
+    return Count;
+  }
+  }
+  
+  return 0;
+}
+
+/// \brief Return the number of Exprs contained in the given
+/// ExplicitTemplateArgumentList.
+static unsigned NumExprsContainedIn(const ExplicitTemplateArgumentList &Args) {
+  unsigned Count = 0;
+  for (unsigned i=0; i != Args.NumTemplateArgs; ++i) {
+    const TemplateArgumentLoc &ArgLoc = Args.getTemplateArgs()[i];
+    const TemplateArgument &TemplA = ArgLoc.getArgument();
+    Count += NumExprsContainedIn(TemplA);
+    if (TemplA.getKind() == TemplateArgument::Expression &&
+        TemplA.getAsExpr() != ArgLoc.getLocInfo().getAsExpr())
+      ++Count; // 1 in TemplateArgumentLocInfo.
+  }
+  
+  return Count;
+}
+
+void PCHStmtWriter::
+AddExplicitTemplateArgumentList(const ExplicitTemplateArgumentList &Args) {
+  Record.push_back(NumExprsContainedIn(Args));
+  Writer.AddSourceLocation(Args.LAngleLoc, Record);
+  Writer.AddSourceLocation(Args.RAngleLoc, Record);
+  for (unsigned i=0; i != Args.NumTemplateArgs; ++i)
+    Writer.AddTemplateArgumentLoc(Args.getTemplateArgs()[i], Record);
 }
 
 void PCHStmtWriter::VisitStmt(Stmt *S) {
@@ -1025,54 +1071,19 @@ void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   Code = pch::EXPR_CXX_EXPR_WITH_TEMPORARIES;
 }
 
-/// \brief Return the number of Exprs contained in the given TemplateArgument.
-static unsigned NumExprsContainedIn(const TemplateArgument Arg) {
-  switch (Arg.getKind()) {
-  default: break;
-  case TemplateArgument::Expression:
-    return 1;
-  case TemplateArgument::Pack: {
-    unsigned Count = 0;
-    for (TemplateArgument::pack_iterator I=Arg.pack_begin(), E=Arg.pack_end();
-           I != E; ++I)
-      Count += NumExprsContainedIn(*I);
-    return Count;
-  }
-  }
-  
-  return 0;
-}
-
-/// \brief Return the number of Exprs contained in the given
-/// TemplateArgumentLoc.
-static
-unsigned NumExprsContainedIn(const TemplateArgumentLoc *Args,unsigned NumArgs) {
-  unsigned Count = 0;
-  for (unsigned i=0; i != NumArgs; ++i) {
-    const TemplateArgument &TemplA = Args[i].getArgument();
-    Count += NumExprsContainedIn(TemplA);
-    if (TemplA.getKind() == TemplateArgument::Expression &&
-        TemplA.getAsExpr() != Args[i].getLocInfo().getAsExpr())
-      ++Count; // 1 in TemplateArgumentLocInfo.
-  }
-  
-  return Count;
-}
-
 void
 PCHStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
+  
+  // Don't emit anything here, NumTemplateArgs must be emitted first.
 
   if (E->hasExplicitTemplateArgs()) {
-    assert(E->getNumTemplateArgs() &&
+    const ExplicitTemplateArgumentList &Args
+      = *E->getExplicitTemplateArgumentList();
+    assert(Args.NumTemplateArgs &&
            "Num of template args was zero! PCH reading will mess up!");
-    Record.push_back(E->getNumTemplateArgs());
-    Writer.AddSourceLocation(E->getLAngleLoc(), Record);
-    Writer.AddSourceLocation(E->getRAngleLoc(), Record);
-    Record.push_back(NumExprsContainedIn(E->getTemplateArgs(),
-                                         E->getNumTemplateArgs()));
-    for (int i=0, e = E->getNumTemplateArgs(); i != e; ++i)
-      Writer.AddTemplateArgumentLoc(E->getTemplateArgs()[i], Record);
+    Record.push_back(Args.NumTemplateArgs);
+    AddExplicitTemplateArgumentList(Args);
   } else {
     Record.push_back(0);
   }
@@ -1108,18 +1119,15 @@ PCHStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
 
 void PCHStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
+  
+  // Don't emit anything here, NumTemplateArgs must be emitted first.
 
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
     assert(Args.NumTemplateArgs &&
            "Num of template args was zero! PCH reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
-    Writer.AddSourceLocation(Args.LAngleLoc, Record);
-    Writer.AddSourceLocation(Args.RAngleLoc, Record);
-    Record.push_back(NumExprsContainedIn(Args.getTemplateArgs(),
-                                         Args.NumTemplateArgs));
-    for (unsigned i=0; i != Args.NumTemplateArgs; ++i)
-      Writer.AddTemplateArgumentLoc(Args.getTemplateArgs()[i], Record);
+    AddExplicitTemplateArgumentList(Args);
   } else {
     Record.push_back(0);
   }

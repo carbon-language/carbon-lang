@@ -1947,20 +1947,6 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// \brief The location of the member name.
   SourceLocation MemberLoc;
 
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
-    assert(HasExplicitTemplateArgs);
-    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-  }
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
-    return const_cast<CXXDependentScopeMemberExpr *>(this)
-             ->getExplicitTemplateArgumentList();
-  }
-
   CXXDependentScopeMemberExpr(ASTContext &C,
                           Expr *Base, QualType BaseType, bool IsArrow,
                           SourceLocation OperatorLoc,
@@ -2069,6 +2055,20 @@ public:
   /// template argument list explicitly specified, e.g., x.f<int>.
   bool hasExplicitTemplateArgs() const {
     return HasExplicitTemplateArgs;
+  }
+
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
+    assert(HasExplicitTemplateArgs);
+    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+  }
+
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
+    return const_cast<CXXDependentScopeMemberExpr *>(this)
+             ->getExplicitTemplateArgumentList();
   }
 
   /// \brief Copies the template arguments (if present) into the given
