@@ -943,8 +943,10 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
+  enum { ArgOffset = 1 }; ///< temporary, do not use for new code!
   unsigned getNumArgOperands() const { return getNumOperands() - 1; }
-  Value *getArgOperand(unsigned i) const { return getOperand(i + 1); }
+  Value *getArgOperand(unsigned i) const { return getOperand(i + ArgOffset); }
+  void setArgOperand(unsigned i, Value *v) { setOperand(i + ArgOffset, v); }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
@@ -2440,6 +2442,7 @@ public:
 
   unsigned getNumArgOperands() const { return getNumOperands() - 3; }
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
+  void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
