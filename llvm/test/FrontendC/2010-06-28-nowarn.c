@@ -1,7 +1,7 @@
 // RUN: %llvmgcc %s -c -m32 -fasm-blocks -o /dev/null
 // This should not warn about unreferenced label. 7729514.
 // XFAIL: *
-// XTARGET: i386*darwin,i686*darwin,x86*darwin
+// XTARGET: i386-apple-darwin,x86_64-apple-darwin,i686-apple-darwin
 
 void quarterAsm(int array[], int len)
 {
