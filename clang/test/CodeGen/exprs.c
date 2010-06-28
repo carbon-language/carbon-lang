@@ -141,6 +141,6 @@ int f12() {
 // Make sure negate of fp uses -0.0 for proper -0 handling.
 double f13(double X) {
   // CHECK: define double @f13
-  // CHECK: fsub double -0.000000e+00, %tmp
+  // CHECK: fsub double -0.0
   return -X;
 }
