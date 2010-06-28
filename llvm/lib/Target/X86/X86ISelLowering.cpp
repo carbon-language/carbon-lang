@@ -6026,6 +6026,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   bool NeedCF = false;
   bool NeedOF = false;
   switch (X86CC) {
+  default: break;
   case X86::COND_A: case X86::COND_AE:
   case X86::COND_B: case X86::COND_BE:
     NeedCF = true;
@@ -6035,120 +6036,129 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   case X86::COND_O: case X86::COND_NO:
     NeedOF = true;
     break;
-  default: break;
   }
 
   // See if we can use the EFLAGS value from the operand instead of
   // doing a separate TEST. TEST always sets OF and CF to 0, so unless
   // we prove that the arithmetic won't overflow, we can't use OF or CF.
-  if (Op.getResNo() == 0 && !NeedOF && !NeedCF) {
-    unsigned Opcode = 0;
-    unsigned NumOperands = 0;
-    switch (Op.getNode()->getOpcode()) {
-    case ISD::ADD:
-      // Due to an isel shortcoming, be conservative if this add is
-      // likely to be selected as part of a load-modify-store
-      // instruction. When the root node in a match is a store, isel
-      // doesn't know how to remap non-chain non-flag uses of other
-      // nodes in the match, such as the ADD in this case. This leads
-      // to the ADD being left around and reselected, with the result
-      // being two adds in the output.  Alas, even if none our users
-      // are stores, that doesn't prove we're O.K.  Ergo, if we have
-      // any parents that aren't CopyToReg or SETCC, eschew INC/DEC.
-      // A better fix seems to require climbing the DAG back to the
-      // root, and it doesn't seem to be worth the effort.
-      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-             UE = Op.getNode()->use_end(); UI != UE; ++UI)
-        if (UI->getOpcode() != ISD::CopyToReg && UI->getOpcode() != ISD::SETCC)
-          goto default_case;
-      if (ConstantSDNode *C =
-            dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1))) {
-        // An add of one will be selected as an INC.
-        if (C->getAPIntValue() == 1) {
-          Opcode = X86ISD::INC;
-          NumOperands = 1;
-          break;
-        }
-        // An add of negative one (subtract of one) will be selected as a DEC.
-        if (C->getAPIntValue().isAllOnesValue()) {
-          Opcode = X86ISD::DEC;
-          NumOperands = 1;
-          break;
-        }
-      }
-      // Otherwise use a regular EFLAGS-setting add.
-      Opcode = X86ISD::ADD;
-      NumOperands = 2;
-      break;
-    case ISD::AND: {
-      // If the primary and result isn't used, don't bother using X86ISD::AND,
-      // because a TEST instruction will be better.
-      bool NonFlagUse = false;
-      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-             UE = Op.getNode()->use_end(); UI != UE; ++UI) {
-        SDNode *User = *UI;
-        unsigned UOpNo = UI.getOperandNo();
-        if (User->getOpcode() == ISD::TRUNCATE && User->hasOneUse()) {
-          // Look pass truncate.
-          UOpNo = User->use_begin().getOperandNo();
-          User = *User->use_begin();
-        }
-        if (User->getOpcode() != ISD::BRCOND &&
-            User->getOpcode() != ISD::SETCC &&
-            (User->getOpcode() != ISD::SELECT || UOpNo != 0)) {
-          NonFlagUse = true;
-          break;
-        }
-      }
-      if (!NonFlagUse)
-        break;
-    }
-    // FALL THROUGH
-    case ISD::SUB:
-    case ISD::OR:
-    case ISD::XOR:
-      // Due to the ISEL shortcoming noted above, be conservative if this op is
-      // likely to be selected as part of a load-modify-store instruction.
-      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+  if (Op.getResNo() != 0 || NeedOF || NeedCF)
+    // Emit a CMP with 0, which is the TEST pattern.
+    return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
+                       DAG.getConstant(0, Op.getValueType()));
+
+  unsigned Opcode = 0;
+  unsigned NumOperands = 0;
+  switch (Op.getNode()->getOpcode()) {
+  case ISD::ADD:
+    // Due to an isel shortcoming, be conservative if this add is likely to be
+    // selected as part of a load-modify-store instruction. When the root node
+    // in a match is a store, isel doesn't know how to remap non-chain non-flag
+    // uses of other nodes in the match, such as the ADD in this case. This
+    // leads to the ADD being left around and reselected, with the result being
+    // two adds in the output.  Alas, even if none our users are stores, that
+    // doesn't prove we're O.K.  Ergo, if we have any parents that aren't
+    // CopyToReg or SETCC, eschew INC/DEC.  A better fix seems to require
+    // climbing the DAG back to the root, and it doesn't seem to be worth the
+    // effort.
+    for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
            UE = Op.getNode()->use_end(); UI != UE; ++UI)
-        if (UI->getOpcode() == ISD::STORE)
-          goto default_case;
-      // Otherwise use a regular EFLAGS-setting instruction.
-      switch (Op.getNode()->getOpcode()) {
-      case ISD::SUB: Opcode = X86ISD::SUB; break;
-      case ISD::OR:  Opcode = X86ISD::OR;  break;
-      case ISD::XOR: Opcode = X86ISD::XOR; break;
-      case ISD::AND: Opcode = X86ISD::AND; break;
-      default: llvm_unreachable("unexpected operator!");
+      if (UI->getOpcode() != ISD::CopyToReg && UI->getOpcode() != ISD::SETCC)
+        goto default_case;
+
+    if (ConstantSDNode *C =
+        dyn_cast<ConstantSDNode>(Op.getNode()->getOperand(1))) {
+      // An add of one will be selected as an INC.
+      if (C->getAPIntValue() == 1) {
+        Opcode = X86ISD::INC;
+        NumOperands = 1;
+        break;
       }
-      NumOperands = 2;
-      break;
-    case X86ISD::ADD:
-    case X86ISD::SUB:
-    case X86ISD::INC:
-    case X86ISD::DEC:
-    case X86ISD::OR:
-    case X86ISD::XOR:
-    case X86ISD::AND:
-      return SDValue(Op.getNode(), 1);
-    default:
-    default_case:
-      break;
+
+      // An add of negative one (subtract of one) will be selected as a DEC.
+      if (C->getAPIntValue().isAllOnesValue()) {
+        Opcode = X86ISD::DEC;
+        NumOperands = 1;
+        break;
+      }
     }
-    if (Opcode != 0) {
-      SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
-      SmallVector<SDValue, 4> Ops;
-      for (unsigned i = 0; i != NumOperands; ++i)
-        Ops.push_back(Op.getOperand(i));
-      SDValue New = DAG.getNode(Opcode, dl, VTs, &Ops[0], NumOperands);
-      DAG.ReplaceAllUsesWith(Op, New);
-      return SDValue(New.getNode(), 1);
+
+    // Otherwise use a regular EFLAGS-setting add.
+    Opcode = X86ISD::ADD;
+    NumOperands = 2;
+    break;
+  case ISD::AND: {
+    // If the primary and result isn't used, don't bother using X86ISD::AND,
+    // because a TEST instruction will be better.
+    bool NonFlagUse = false;
+    for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+           UE = Op.getNode()->use_end(); UI != UE; ++UI) {
+      SDNode *User = *UI;
+      unsigned UOpNo = UI.getOperandNo();
+      if (User->getOpcode() == ISD::TRUNCATE && User->hasOneUse()) {
+        // Look pass truncate.
+        UOpNo = User->use_begin().getOperandNo();
+        User = *User->use_begin();
+      }
+
+      if (User->getOpcode() != ISD::BRCOND &&
+          User->getOpcode() != ISD::SETCC &&
+          (User->getOpcode() != ISD::SELECT || UOpNo != 0)) {
+        NonFlagUse = true;
+        break;
+      }
     }
+
+    if (!NonFlagUse)
+      break;
+  }
+    // FALL THROUGH
+  case ISD::SUB:
+  case ISD::OR:
+  case ISD::XOR:
+    // Due to the ISEL shortcoming noted above, be conservative if this op is
+    // likely to be selected as part of a load-modify-store instruction.
+    for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+           UE = Op.getNode()->use_end(); UI != UE; ++UI)
+      if (UI->getOpcode() == ISD::STORE)
+        goto default_case;
+
+    // Otherwise use a regular EFLAGS-setting instruction.
+    switch (Op.getNode()->getOpcode()) {
+    default: llvm_unreachable("unexpected operator!");
+    case ISD::SUB: Opcode = X86ISD::SUB; break;
+    case ISD::OR:  Opcode = X86ISD::OR;  break;
+    case ISD::XOR: Opcode = X86ISD::XOR; break;
+    case ISD::AND: Opcode = X86ISD::AND; break;
+    }
+
+    NumOperands = 2;
+    break;
+  case X86ISD::ADD:
+  case X86ISD::SUB:
+  case X86ISD::INC:
+  case X86ISD::DEC:
+  case X86ISD::OR:
+  case X86ISD::XOR:
+  case X86ISD::AND:
+    return SDValue(Op.getNode(), 1);
+  default:
+  default_case:
+    break;
   }
 
-  // Otherwise just emit a CMP with 0, which is the TEST pattern.
-  return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
-                     DAG.getConstant(0, Op.getValueType()));
+  if (Opcode == 0)
+    // Emit a CMP with 0, which is the TEST pattern.
+    return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
+                       DAG.getConstant(0, Op.getValueType()));
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+  SmallVector<SDValue, 4> Ops;
+  for (unsigned i = 0; i != NumOperands; ++i)
+    Ops.push_back(Op.getOperand(i));
+
+  SDValue New = DAG.getNode(Opcode, dl, VTs, &Ops[0], NumOperands);
+  DAG.ReplaceAllUsesWith(Op, New);
+  return SDValue(New.getNode(), 1);
 }
 
 /// Emit nodes that will be selected as "cmp Op0,Op1", or something
