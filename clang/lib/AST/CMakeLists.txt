@@ -18,6 +18,7 @@ add_clang_library(clangAST
   DeclPrinter.cpp
   DeclTemplate.cpp
   Expr.cpp
+  ExprClassification.cpp
   ExprConstant.cpp
   ExprCXX.cpp
   FullExpr.cpp
