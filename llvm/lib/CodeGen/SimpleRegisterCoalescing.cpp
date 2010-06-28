@@ -122,7 +122,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // AValNo is the value number in A that defines the copy, A3 in the example.
   SlotIndex CopyUseIdx = CopyIdx.getUseIndex();
   LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyUseIdx);
-  assert(ALR != IntA.end() && "Live range not found!");
+  // The live range might not exist after fun with physreg coalescing.
+  if (ALR == IntA.end()) return false;
   VNInfo *AValNo = ALR->valno;
   // If it's re-defined by an early clobber somewhere in the live range, then
   // it's not safe to eliminate the copy. FIXME: This is a temporary workaround.
