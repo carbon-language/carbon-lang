@@ -41,9 +41,10 @@ void Thumb2HazardRecognizer::EmitInstruction(SUnit *SU) {
     ITBlockSize = 4 - NumTZ;
     MachineBasicBlock::iterator I = MI;
     for (unsigned i = 0; i < ITBlockSize; ++i) {
-      ++I;
-      while (I->isDebugValue())
+      // Advance to the next instruction, skipping any dbg_value instructions.
+      do {
         ++I;
+      } while (I->isDebugValue());
       ITBlockMIs[ITBlockSize-1-i] = &*I;
     }
   }
