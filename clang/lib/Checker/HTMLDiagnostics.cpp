@@ -294,8 +294,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   llvm::raw_fd_ostream os(H.c_str(), ErrorMsg);
 
   if (!ErrorMsg.empty()) {
-    (llvm::errs() << "warning: could not create file '" << F.str()
-                  << "'\n").flush();
+    llvm::errs() << "warning: could not create file '" << F.str()
+                 << "'\n";
     return;
   }
 
