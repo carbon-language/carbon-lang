@@ -316,6 +316,10 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
+//===----------------------------------------------------------------------===//
+// X86-32 ABI Implementation
+//===----------------------------------------------------------------------===//
+  
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
   ASTContext &Context;
@@ -655,6 +659,11 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
 
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+// X86-64 ABI Implementation
+//===----------------------------------------------------------------------===//
+
 
 namespace {
 /// X86_64ABIInfo - The X86_64 ABI information.
@@ -1427,7 +1436,6 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
 llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   llvm::LLVMContext &VMContext = CGF.getLLVMContext();
-  const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
 
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
@@ -1533,33 +1541,32 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     RegAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
     RegAddr = CGF.Builder.CreateBitCast(RegAddr,
                                         llvm::PointerType::getUnqual(LTy));
+  } else if (neededSSE == 1) {
+    RegAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+    RegAddr = CGF.Builder.CreateBitCast(RegAddr,
+                                        llvm::PointerType::getUnqual(LTy));
   } else {
-    if (neededSSE == 1) {
-      RegAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
-      RegAddr = CGF.Builder.CreateBitCast(RegAddr,
-                                          llvm::PointerType::getUnqual(LTy));
-    } else {
-      assert(neededSSE == 2 && "Invalid number of needed registers!");
-      // SSE registers are spaced 16 bytes apart in the register save
-      // area, we need to collect the two eightbytes together.
-      llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
-      llvm::Value *RegAddrHi =
-        CGF.Builder.CreateGEP(RegAddrLo,
-                            llvm::ConstantInt::get(CGF.Int32Ty, 16));
-      const llvm::Type *DblPtrTy =
-        llvm::PointerType::getUnqual(DoubleTy);
-      const llvm::StructType *ST = llvm::StructType::get(VMContext, DoubleTy,
-                                                         DoubleTy, NULL);
-      llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
-      V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
-                                                           DblPtrTy));
-      CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 0));
-      V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrHi,
-                                                           DblPtrTy));
-      CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 1));
-      RegAddr = CGF.Builder.CreateBitCast(Tmp,
-                                          llvm::PointerType::getUnqual(LTy));
-    }
+    assert(neededSSE == 2 && "Invalid number of needed registers!");
+    // SSE registers are spaced 16 bytes apart in the register save
+    // area, we need to collect the two eightbytes together.
+    llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
+    llvm::Value *RegAddrHi =
+    CGF.Builder.CreateGEP(RegAddrLo,
+                          llvm::ConstantInt::get(CGF.Int32Ty, 16));
+    const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
+    const llvm::Type *DblPtrTy =
+      llvm::PointerType::getUnqual(DoubleTy);
+    const llvm::StructType *ST = llvm::StructType::get(VMContext, DoubleTy,
+                                                       DoubleTy, NULL);
+    llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
+    V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
+                                                         DblPtrTy));
+    CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 0));
+    V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrHi,
+                                                         DblPtrTy));
+    CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 1));
+    RegAddr = CGF.Builder.CreateBitCast(Tmp,
+                                        llvm::PointerType::getUnqual(LTy));
   }
 
   // AMD64-ABI 3.5.7p5: Step 5. Set:
@@ -1590,11 +1597,14 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   ResAddr->reserveOperandSpace(2);
   ResAddr->addIncoming(RegAddr, InRegBlock);
   ResAddr->addIncoming(MemAddr, InMemBlock);
-
   return ResAddr;
 }
 
+
+
+//===----------------------------------------------------------------------===//
 // PIC16 ABI Implementation
+//===----------------------------------------------------------------------===//
 
 namespace {
 
@@ -1727,7 +1737,9 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
 }
 
 
+//===----------------------------------------------------------------------===//
 // ARM ABI Implementation
+//===----------------------------------------------------------------------===//
 
 namespace {
 
@@ -2043,7 +2055,9 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   }
 }
 
+//===----------------------------------------------------------------------===//
 // SystemZ ABI Implementation
+//===----------------------------------------------------------------------===//
 
 namespace {
 
@@ -2127,7 +2141,9 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty,
   }
 }
 
+//===----------------------------------------------------------------------===//
 // MSP430 ABI Implementation
+//===----------------------------------------------------------------------===//
 
 namespace {
 
@@ -2164,8 +2180,11 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   }
 }
 
+//===----------------------------------------------------------------------===//
 // MIPS ABI Implementation.  This works for both little-endian and
 // big-endian variants.
+//===----------------------------------------------------------------------===//
+
 namespace {
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
