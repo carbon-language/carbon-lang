@@ -327,6 +327,13 @@ public:
                      lldb::ModuleSP *old_module_sp_ptr,
                      bool *did_create_ptr);
 
+    static size_t
+    FindSharedModules (const FileSpec& in_file_spec,
+                       const ArchSpec& arch,
+                       const UUID *uuid_ptr,
+                       const ConstString *object_name_ptr,
+                       ModuleList &matching_module_list);
+
 protected:
     //------------------------------------------------------------------
     // Class typedefs.

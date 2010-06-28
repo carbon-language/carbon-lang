@@ -45,32 +45,6 @@ Section::Section
 {
 }
 
-//Section::Section
-//(
-//    Section *parent,
-//    Module* module,
-//    user_id_t sect_id,
-//    const ConstString &name,
-//    const AddressRange *file_vm_range,
-//    uint64_t file_offset,
-//    uint64_t file_size,
-//    uint32_t flags
-//) :
-//    ModuleChild     (module),
-//    UserID          (sect_id),
-//    Flags           (flags),
-//    m_parent        (parent),
-//    m_name          (name),
-//    m_range (),
-//    m_file_offset   (file_offset),
-//    m_file_size     (file_size),
-//    m_children      (),
-//    m_fake          (false)
-//{
-//    if (file_vm_range)
-//        m_range = *file_vm_range;
-//}
-
 Section::~Section()
 {
 }
@@ -114,18 +88,6 @@ Section::GetName() const
     return m_name;
 }
 
-SectionList&
-Section::GetChildren()
-{
-    return m_children;
-}
-
-const SectionList&
-Section::GetChildren() const
-{
-    return m_children;
-}
-
 addr_t
 Section::GetFileAddress () const
 {
@@ -146,31 +108,6 @@ Section::GetLinkedFileAddress () const
     if (m_linked_section)
         return m_linked_section->GetFileAddress() + m_linked_offset;
     return LLDB_INVALID_ADDRESS;
-}
-
-addr_t
-Section::GetOffset () const
-{
-    if (m_parent)
-    {
-        // This section has a parent which means m_file_addr is an offset.
-        return m_file_addr;
-    }
-
-    // This section has no parent, so there is no offset to be had
-    return 0;
-}
-
-addr_t
-Section::GetByteSize () const
-{
-    return m_byte_size;
-}
-
-void
-Section::SetByteSize (addr_t byte_size)
-{
-    m_byte_size = byte_size;
 }
 
 
@@ -223,18 +160,6 @@ Section::ResolveContainedAddress (addr_t offset, Address &so_addr) const
         so_addr.SetSection(this);
     }
     return true;
-}
-
-uint64_t
-Section::GetFileOffset() const
-{
-    return m_file_offset;
-}
-
-uint64_t
-Section::GetFileSize() const
-{
-    return m_file_size;
 }
 
 bool
@@ -449,19 +374,6 @@ Section::MemoryMapSectionDataFromObjectFile(const ObjectFile* objfile, DataExtra
 }
 
 bool
-Section::IsFake() const
-{
-    return m_fake;
-}
-
-void
-Section::SetIsFake(bool fake)
-{
-    m_fake = fake;
-}
-
-
-bool
 Section::IsDescendant (const Section *section)
 {
     if (this == section)
@@ -496,18 +408,6 @@ Section::SetLinkedLocation (const Section *linked_section, uint64_t linked_offse
         m_module = linked_section->GetModule();
     m_linked_section = linked_section;
     m_linked_offset  = linked_offset;
-}
-
-const Section *
-Section::GetLinkedSection () const
-{
-    return m_linked_section;
-}
-
-uint64_t
-Section::GetLinkedOffset () const
-{
-    return m_linked_offset;
 }
 
 #pragma mark SectionList
@@ -579,12 +479,6 @@ SectionList::ReplaceSection (user_id_t sect_id, SectionSP& sect_sp, uint32_t dep
 
 
 size_t
-SectionList::GetSize () const
-{
-    return m_sections.size();
-}
-
-size_t
 SectionList::GetNumSections (uint32_t depth) const
 {
     size_t count = m_sections.size();
@@ -631,21 +525,6 @@ SectionList::FindSectionByName (const ConstString &section_dstr) const
     }
     return sect_sp;
 }
-//
-//SectionSP
-//SectionList::FindSectionByNames (const char *s, ...) const
-//{
-//    SectionSP sect_sp;
-//    va_list ap;
-//    va_start(ap, s);
-//    uint32_t idx = 0;
-//    for (const char *sect_name = s; sect_name != NULL; sect_name = va_arg(ap, const char *))
-//    {
-//        printf("[%u] %s\n", idx++, sect_name);
-//    }
-//    va_end(ap);
-//    return sect_sp;
-//}
 
 SectionSP
 SectionList::FindSectionByID (user_id_t sect_id) const

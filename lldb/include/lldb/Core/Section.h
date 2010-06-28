@@ -51,9 +51,6 @@ public:
     lldb::SectionSP
     FindSectionByName (const ConstString &section_dstr) const;
 
-//    lldb::SectionSP
-//    FindSectionByNames (const char *sect, ...) const;
-
     lldb::SectionSP
     FindSectionByID (lldb::user_id_t sect_id) const;
 
@@ -71,7 +68,10 @@ public:
 
     // Get the number of sections in this list only
     size_t
-    GetSize () const;
+    GetSize () const
+    {
+        return m_sections.size();
+    }
 
     // Get the number of sections in this list, and any contained child sections
     size_t
@@ -122,10 +122,16 @@ public:
     ContainsFileAddress (lldb::addr_t vm_addr) const;
 
     SectionList&
-    GetChildren ();
+    GetChildren ()
+    {
+        return m_children;
+    }
 
     const SectionList&
-    GetChildren () const;
+    GetChildren () const
+    {
+        return m_children;
+    }
 
     void
     Dump (Stream *s, Process *process) const;
@@ -140,31 +146,70 @@ public:
     ResolveContainedAddress (lldb::addr_t offset, Address &so_addr) const;
 
     uint64_t
-    GetFileOffset () const;
+    GetFileOffset () const
+    {
+        return m_file_offset;
+    }
+
+    void
+    SetFileOffset (uint64_t file_offset) 
+    {
+        m_file_offset = file_offset;
+    }
 
     uint64_t
-    GetFileSize () const;
+    GetFileSize () const
+    {
+        return m_file_size;
+    }
+
+    void
+    SetFileSize (uint64_t file_size)
+    {
+        m_file_size = file_size;
+    }
 
     lldb::addr_t
     GetFileAddress () const;
 
     lldb::addr_t
-    GetOffset () const;
+    GetOffset () const
+    {
+        // This section has a parent which means m_file_addr is an offset.
+        if (m_parent)
+            return m_file_addr;
+
+        // This section has no parent, so there is no offset to be had
+        return 0;
+    }
+
 
     lldb::addr_t
-    GetByteSize () const;
-
+    GetByteSize () const
+    {
+        return m_byte_size;
+    }
+    
     void
-    SetByteSize (lldb::addr_t byte_size);
-
+    SetByteSize (lldb::addr_t byte_size)
+    {
+        m_byte_size = byte_size;
+    }
+    
     size_t
     GetSectionDataFromImage (const DataExtractor& image_data, DataExtractor& section_data) const;
 
     bool
-    IsFake() const;
+    IsFake() const
+    {
+        return m_fake;
+    }
 
     void
-    SetIsFake(bool fake);
+    SetIsFake(bool fake)
+    {
+        m_fake = fake;
+    }
 
     bool
     IsDescendant (const Section *section);
@@ -191,10 +236,16 @@ public:
     ContainsLinkedFileAddress (lldb::addr_t vm_addr) const;
 
     const Section *
-    GetLinkedSection () const;
+    GetLinkedSection () const
+    {
+        return m_linked_section;
+    }
 
     uint64_t
-    GetLinkedOffset () const;
+    GetLinkedOffset () const
+    {
+        return m_linked_offset;
+    }
 
     lldb::addr_t
     GetLinkedFileAddress () const;

@@ -341,6 +341,20 @@ ObjectFileMachO::ParseSections ()
                                     segment->GetChildren().Slide (-slide_amount, false);
                                     segment->SetByteSize (curr_seg_max_addr - sect64_min_addr);
                                 }
+
+                                // Grow the section size as needed.
+                                if (sect64.offset)
+                                {
+                                    const lldb::addr_t segment_min_file_offset = segment->GetFileOffset();
+                                    const lldb::addr_t segment_max_file_offset = segment_min_file_offset + segment->GetFileSize();
+
+                                    const lldb::addr_t section_min_file_offset = sect64.offset;
+                                    const lldb::addr_t section_max_file_offset = section_min_file_offset + sect64.size;
+                                    const lldb::addr_t new_file_offset = std::min (section_min_file_offset, segment_min_file_offset);
+                                    const lldb::addr_t new_file_size = std::max (section_max_file_offset, segment_max_file_offset) - new_file_offset;
+                                    segment->SetFileOffset (new_file_offset);
+                                    segment->SetFileSize (new_file_size);
+                                }
                             }
                             else
                             {

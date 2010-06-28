@@ -544,8 +544,18 @@ public:
                 {
                     FileSpec image_file(arg_cstr);
                     ModuleList matching_modules;
-                    const size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
+                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
+                    // Not found in our module list for our target, check the main
+                    // shared module list in case it is a extra file used somewhere
+                    // else
+                    if (num_matching_modules == 0)
+                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
+                                                                              target->GetArchitecture(), 
+                                                                              NULL, 
+                                                                              NULL, 
+                                                                              matching_modules);
+                    
                     if (num_matching_modules > 0)
                     {
                         for (size_t i=0; i<num_matching_modules; ++i)
@@ -642,8 +652,18 @@ public:
                 {
                     FileSpec image_file(arg_cstr);
                     ModuleList matching_modules;
-                    const size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
+                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
+                    // Not found in our module list for our target, check the main
+                    // shared module list in case it is a extra file used somewhere
+                    // else
+                    if (num_matching_modules == 0)
+                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
+                                                                              target->GetArchitecture(), 
+                                                                              NULL, 
+                                                                              NULL, 
+                                                                              matching_modules);
+                    
                     if (num_matching_modules > 0)
                     {
                         for (size_t i=0; i<num_matching_modules; ++i)
@@ -739,8 +759,18 @@ public:
                 {
                     FileSpec image_file(arg_cstr);
                     ModuleList matching_modules;
-                    const size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
+                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
+                    // Not found in our module list for our target, check the main
+                    // shared module list in case it is a extra file used somewhere
+                    // else
+                    if (num_matching_modules == 0)
+                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
+                                                                              target->GetArchitecture(), 
+                                                                              NULL, 
+                                                                              NULL, 
+                                                                              matching_modules);
+                    
                     if (num_matching_modules > 0)
                     {
                         for (size_t i=0; i<num_matching_modules; ++i)
@@ -1343,8 +1373,18 @@ public:
                 {
                     FileSpec image_file(arg_cstr);
                     ModuleList matching_modules;
-                    const size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
+                    size_t num_matching_modules = target->GetImages().FindModules(&image_file, NULL, NULL, NULL, matching_modules);
 
+                    // Not found in our module list for our target, check the main
+                    // shared module list in case it is a extra file used somewhere
+                    // else
+                    if (num_matching_modules == 0)
+                        num_matching_modules = ModuleList::FindSharedModules (image_file, 
+                                                                              target->GetArchitecture(), 
+                                                                              NULL, 
+                                                                              NULL, 
+                                                                              matching_modules);
+                    
                     if (num_matching_modules > 0)
                     {
                         for (size_t i=0; i<num_matching_modules; ++i)

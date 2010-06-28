@@ -437,6 +437,20 @@ ModuleList::GetModuleSP (lldb_private::Module *module_ptr)
     return module_sp;
 }
 
+size_t
+ModuleList::FindSharedModules 
+(
+    const FileSpec& in_file_spec,
+    const ArchSpec& arch,
+    const UUID *uuid_ptr,
+    const ConstString *object_name_ptr,
+    ModuleList &matching_module_list
+)
+{
+    ModuleList &shared_module_list = GetSharedModuleList ();
+    Mutex::Locker locker(shared_module_list.m_modules_mutex);
+    return shared_module_list.FindModules (&in_file_spec, &arch, uuid_ptr, object_name_ptr, matching_module_list);
+}
 
 Error
 ModuleList::GetSharedModule
