@@ -30,8 +30,8 @@ public:
   virtual SVal EvalComplement(NonLoc val);
   virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy);
-  virtual SVal EvalBinOpLL(BinaryOperator::Opcode op, Loc lhs, Loc rhs,
-                           QualType resultTy);
+  virtual SVal EvalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
+                           Loc lhs, Loc rhs, QualType resultTy);
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
   
@@ -173,45 +173,18 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   }
 }
 
-// Equality operators for Locs.
-// FIXME: All this logic will be revamped when we have MemRegion::getLocation()
-// implemented.
-
-static SVal EvalEquality(ValueManager &ValMgr, Loc lhs, Loc rhs, bool isEqual,
-                         QualType resultTy) {
-
-  switch (lhs.getSubKind()) {
-    default:
-      assert(false && "EQ/NE not implemented for this Loc.");
-      return UnknownVal();
-
-    case loc::ConcreteIntKind: {
-      if (SymbolRef rSym = rhs.getAsSymbol())
-        return ValMgr.makeNonLoc(rSym,
-                                 isEqual ? BinaryOperator::EQ
-                                 : BinaryOperator::NE,
-                                 cast<loc::ConcreteInt>(lhs).getValue(),
-                                 resultTy);
-      break;
-    }
-    case loc::MemRegionKind: {
-      if (SymbolRef lSym = lhs.getAsLocSymbol()) {
-        if (isa<loc::ConcreteInt>(rhs)) {
-          return ValMgr.makeNonLoc(lSym,
-                                   isEqual ? BinaryOperator::EQ
-                                   : BinaryOperator::NE,
-                                   cast<loc::ConcreteInt>(rhs).getValue(),
-                                   resultTy);
-        }
-      }
-      break;
-    }
-
-    case loc::GotoLabelKind:
-      break;
+static BinaryOperator::Opcode ReverseComparison(BinaryOperator::Opcode op) {
+  switch (op) {
+  default:
+    assert(false && "Invalid opcode.");
+  case BinaryOperator::LT: return BinaryOperator::GT;
+  case BinaryOperator::GT: return BinaryOperator::LT;
+  case BinaryOperator::LE: return BinaryOperator::GE;
+  case BinaryOperator::GE: return BinaryOperator::LE;
+  case BinaryOperator::EQ:
+  case BinaryOperator::NE:
+    return op;
   }
-
-  return ValMgr.makeTruthVal(isEqual ? lhs == rhs : lhs != rhs, resultTy);
 }
 
 SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
@@ -322,7 +295,8 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
       Loc lhsL = cast<nonloc::LocAsInteger>(lhs).getLoc();
       switch (rhs.getSubKind()) {
         case nonloc::LocAsIntegerKind:
-          return EvalBinOpLL(op, lhsL, cast<nonloc::LocAsInteger>(rhs).getLoc(),
+          return EvalBinOpLL(state, op, lhsL,
+                             cast<nonloc::LocAsInteger>(rhs).getLoc(),
                              resultTy);
         case nonloc::ConcreteIntKind: {
           // Transform the integer into a location and compare.
@@ -330,7 +304,7 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
           llvm::APSInt i = cast<nonloc::ConcreteInt>(rhs).getValue();
           i.setIsUnsigned(true);
           i.extOrTrunc(Ctx.getTypeSize(Ctx.VoidPtrTy));
-          return EvalBinOpLL(op, lhsL, ValMgr.makeLoc(i), resultTy);
+          return EvalBinOpLL(state, op, lhsL, ValMgr.makeLoc(i), resultTy);
         }
         default:
           switch (op) {
@@ -451,10 +425,12 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
         lhs = tmp;
 
         switch (op) {
-          case BinaryOperator::LT: op = BinaryOperator::GT; continue;
-          case BinaryOperator::GT: op = BinaryOperator::LT; continue;
-          case BinaryOperator::LE: op = BinaryOperator::GE; continue;
-          case BinaryOperator::GE: op = BinaryOperator::LE; continue;
+          case BinaryOperator::LT:
+          case BinaryOperator::GT:
+          case BinaryOperator::LE:
+          case BinaryOperator::GE:
+            op = ReverseComparison(op);
+            continue;
           case BinaryOperator::EQ:
           case BinaryOperator::NE:
           case BinaryOperator::Add:
@@ -519,21 +495,296 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
   }
 }
 
-SVal SimpleSValuator::EvalBinOpLL(BinaryOperator::Opcode op, Loc lhs, Loc rhs,
+// FIXME: all this logic will change if/when we have MemRegion::getLocation().
+SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
+                                  BinaryOperator::Opcode op,
+                                  Loc lhs, Loc rhs,
                                   QualType resultTy) {
-  switch (op) {
+  // Only comparisons and subtractions are valid operations on two pointers.
+  // See [C99 6.5.5 through 6.5.14] or [C++0x 5.6 through 5.15].
+  assert(BinaryOperator::isComparisonOp(op) || op == BinaryOperator::Sub);
+
+  // Special cases for when both sides are identical.
+  if (lhs == rhs) {
+    switch (op) {
     default:
+      assert(false && "Unimplemented operation for two identical values");
       return UnknownVal();
+    case BinaryOperator::Sub:
+      return ValMgr.makeZeroVal(resultTy);
     case BinaryOperator::EQ:
+    case BinaryOperator::LE:
+    case BinaryOperator::GE:
+      return ValMgr.makeTruthVal(true, resultTy);
     case BinaryOperator::NE:
-      return EvalEquality(ValMgr, lhs, rhs, op == BinaryOperator::EQ, resultTy);
     case BinaryOperator::LT:
     case BinaryOperator::GT:
-      // FIXME: Generalize.  For now, just handle the trivial case where
-      //  the two locations are identical.
-      if (lhs == rhs)
+      return ValMgr.makeTruthVal(false, resultTy);
+    }
+  }
+
+  switch (lhs.getSubKind()) {
+  default:
+    assert(false && "Ordering not implemented for this Loc.");
+    return UnknownVal();
+
+  case loc::GotoLabelKind:
+    // The only thing we know about labels is that they're non-null.
+    if (rhs.isZeroConstant()) {
+      switch (op) {
+      default:
+        break;
+      case BinaryOperator::Sub:
+        return EvalCastL(lhs, resultTy);
+      case BinaryOperator::EQ:
+      case BinaryOperator::LE:
+      case BinaryOperator::LT:
         return ValMgr.makeTruthVal(false, resultTy);
+      case BinaryOperator::NE:
+      case BinaryOperator::GT:
+      case BinaryOperator::GE:
+        return ValMgr.makeTruthVal(true, resultTy);
+      }
+    }
+    // There may be two labels for the same location, and a function region may
+    // have the same address as a label at the start of the function (depending
+    // on the ABI).
+    // FIXME: we can probably do a comparison against other MemRegions, though.
+    // FIXME: is there a way to tell if two labels refer to the same location?
+    return UnknownVal(); 
+
+  case loc::ConcreteIntKind: {
+    // If one of the operands is a symbol and the other is a constant,
+    // build an expression for use by the constraint manager.
+    if (SymbolRef rSym = rhs.getAsLocSymbol()) {
+      // We can only build expressions with symbols on the left,
+      // so we need a reversible operator.
+      if (!BinaryOperator::isComparisonOp(op))
+        return UnknownVal();
+
+      const llvm::APSInt &lVal = cast<loc::ConcreteInt>(lhs).getValue();
+      return ValMgr.makeNonLoc(rSym, ReverseComparison(op), lVal, resultTy);
+    }
+
+    // If both operands are constants, just perform the operation.
+    if (loc::ConcreteInt *rInt = dyn_cast<loc::ConcreteInt>(&rhs)) {
+      BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+      SVal ResultVal = cast<loc::ConcreteInt>(lhs).EvalBinOp(BVF, op, *rInt);
+      if (Loc *Result = dyn_cast<Loc>(&ResultVal))
+        return EvalCastL(*Result, resultTy);
+      else
+        return UnknownVal();
+    }
+
+    // Special case comparisons against NULL.
+    // This must come after the test if the RHS is a symbol, which is used to
+    // build constraints. The address of any non-symbolic region is guaranteed
+    // to be non-NULL, as is any label.
+    assert(isa<loc::MemRegionVal>(rhs) || isa<loc::GotoLabel>(rhs));
+    if (lhs.isZeroConstant()) {
+      switch (op) {
+      default:
+        break;
+      case BinaryOperator::EQ:
+      case BinaryOperator::GT:
+      case BinaryOperator::GE:
+        return ValMgr.makeTruthVal(false, resultTy);
+      case BinaryOperator::NE:
+      case BinaryOperator::LT:
+      case BinaryOperator::LE:
+        return ValMgr.makeTruthVal(true, resultTy);
+      }
+    }
+
+    // Comparing an arbitrary integer to a region or label address is
+    // completely unknowable.
+    return UnknownVal();
+  }
+  case loc::MemRegionKind: {
+    if (loc::ConcreteInt *rInt = dyn_cast<loc::ConcreteInt>(&rhs)) {
+      // If one of the operands is a symbol and the other is a constant,
+      // build an expression for use by the constraint manager.
+      if (SymbolRef lSym = lhs.getAsLocSymbol())
+        return MakeSymIntVal(lSym, op, rInt->getValue(), resultTy);
+
+      // Special case comparisons to NULL.
+      // This must come after the test if the LHS is a symbol, which is used to
+      // build constraints. The address of any non-symbolic region is guaranteed
+      // to be non-NULL.
+      if (rInt->isZeroConstant()) {
+        switch (op) {
+        default:
+          break;
+        case BinaryOperator::Sub:
+          return EvalCastL(lhs, resultTy);
+        case BinaryOperator::EQ:
+        case BinaryOperator::LT:
+        case BinaryOperator::LE:
+          return ValMgr.makeTruthVal(false, resultTy);
+        case BinaryOperator::NE:
+        case BinaryOperator::GT:
+        case BinaryOperator::GE:
+          return ValMgr.makeTruthVal(true, resultTy);
+        }
+      }
+
+      // Comparing a region to an arbitrary integer is completely unknowable.
       return UnknownVal();
+    }
+
+    // Get both values as regions, if possible.
+    const MemRegion *LeftMR = lhs.getAsRegion();
+    assert(LeftMR && "MemRegionKind SVal doesn't have a region!");
+
+    const MemRegion *RightMR = rhs.getAsRegion();
+    if (!RightMR)
+      // The RHS is probably a label, which in theory could address a region.
+      // FIXME: we can probably make a more useful statement about non-code
+      // regions, though.
+      return UnknownVal();
+
+    // If both values wrap regions, see if they're from different base regions.
+    const MemRegion *LeftBase = LeftMR->getBaseRegion();
+    const MemRegion *RightBase = RightMR->getBaseRegion();
+    if (LeftBase != RightBase &&
+        !isa<SymbolicRegion>(LeftBase) && !isa<SymbolicRegion>(RightBase)) {
+      switch (op) {
+      default:
+        return UnknownVal();
+      case BinaryOperator::EQ:
+        return ValMgr.makeTruthVal(false, resultTy);
+      case BinaryOperator::NE:
+        return ValMgr.makeTruthVal(true, resultTy);
+      }
+    }
+
+    // The two regions are from the same base region. See if they're both a
+    // type of region we know how to compare.
+
+    // FIXME: If/when there is a getAsRawOffset() for FieldRegions, this
+    // ElementRegion path and the FieldRegion path below should be unified.
+    if (const ElementRegion *LeftER = dyn_cast<ElementRegion>(LeftMR)) {
+      // First see if the right region is also an ElementRegion.
+      const ElementRegion *RightER = dyn_cast<ElementRegion>(RightMR);
+      if (!RightER)
+        return UnknownVal();
+
+      // Next, see if the two ERs have the same super-region and matching types.
+      // FIXME: This should do something useful even if the types don't match,
+      // though if both indexes are constant the RegionRawOffset path will
+      // give the correct answer.
+      if (LeftER->getSuperRegion() == RightER->getSuperRegion() &&
+          LeftER->getElementType() == RightER->getElementType()) {
+        // Get the left index and cast it to the correct type.
+        // If the index is unknown or undefined, bail out here.
+        SVal LeftIndexVal = LeftER->getIndex();
+        NonLoc *LeftIndex = dyn_cast<NonLoc>(&LeftIndexVal);
+        if (!LeftIndex)
+          return UnknownVal();
+        LeftIndexVal = EvalCastNL(*LeftIndex, resultTy);
+        LeftIndex = dyn_cast<NonLoc>(&LeftIndexVal);
+        if (!LeftIndex)
+          return UnknownVal();
+
+        // Do the same for the right index.
+        SVal RightIndexVal = RightER->getIndex();
+        NonLoc *RightIndex = dyn_cast<NonLoc>(&RightIndexVal);
+        if (!RightIndex)
+          return UnknownVal();
+        RightIndexVal = EvalCastNL(*RightIndex, resultTy);
+        RightIndex = dyn_cast<NonLoc>(&RightIndexVal);
+        if (!RightIndex)
+          return UnknownVal();
+
+        // Actually perform the operation.
+        // EvalBinOpNN expects the two indexes to already be the right type.
+        return EvalBinOpNN(state, op, *LeftIndex, *RightIndex, resultTy);
+      }
+
+      // If the element indexes aren't comparable, see if the raw offsets are.
+      RegionRawOffset LeftOffset = LeftER->getAsRawOffset();
+      RegionRawOffset RightOffset = RightER->getAsRawOffset();
+
+      if (LeftOffset.getRegion() != NULL &&
+          LeftOffset.getRegion() == RightOffset.getRegion()) {
+        int64_t left = LeftOffset.getByteOffset();
+        int64_t right = RightOffset.getByteOffset();
+
+        switch (op) {
+        default:
+          return UnknownVal();
+        case BinaryOperator::LT:
+          return ValMgr.makeTruthVal(left < right, resultTy);
+        case BinaryOperator::GT:
+          return ValMgr.makeTruthVal(left > right, resultTy);
+        case BinaryOperator::LE:
+          return ValMgr.makeTruthVal(left <= right, resultTy);
+        case BinaryOperator::GE:
+          return ValMgr.makeTruthVal(left >= right, resultTy);
+        case BinaryOperator::EQ:
+          return ValMgr.makeTruthVal(left == right, resultTy);
+        case BinaryOperator::NE:
+          return ValMgr.makeTruthVal(left != right, resultTy);
+        }
+      }
+
+      // If we get here, we have no way of comparing the ElementRegions.
+      return UnknownVal();
+    }
+
+    // See if both regions are fields of the same structure.
+    // FIXME: This doesn't handle nesting, inheritance, or Objective-C ivars.
+    if (const FieldRegion *LeftFR = dyn_cast<FieldRegion>(LeftMR)) {
+      // Only comparisons are meaningful here!
+      if (!BinaryOperator::isComparisonOp(op))
+        return UnknownVal();
+
+      // First see if the right region is also a FieldRegion.
+      const FieldRegion *RightFR = dyn_cast<FieldRegion>(RightMR);
+      if (!RightFR)
+        return UnknownVal();
+
+      // Next, see if the two FRs have the same super-region.
+      // FIXME: This doesn't handle casts yet, and simply stripping the casts
+      // doesn't help.
+      if (LeftFR->getSuperRegion() != RightFR->getSuperRegion())
+        return UnknownVal();
+
+      const FieldDecl *LeftFD = LeftFR->getDecl();
+      const FieldDecl *RightFD = RightFR->getDecl();
+      const RecordDecl *RD = LeftFD->getParent();
+
+      // Make sure the two FRs are from the same kind of record. Just in case!
+      // FIXME: This is probably where inheritance would be a problem.
+      if (RD != RightFD->getParent())
+        return UnknownVal();
+
+      // We know for sure that the two fields are not the same, since that
+      // would have given us the same SVal.
+      if (op == BinaryOperator::EQ)
+        return ValMgr.makeTruthVal(false, resultTy);
+      if (op == BinaryOperator::NE)
+        return ValMgr.makeTruthVal(true, resultTy);
+
+      // Iterate through the fields and see which one comes first.
+      // [C99 6.7.2.1.13] "Within a structure object, the non-bit-field
+      // members and the units in which bit-fields reside have addresses that
+      // increase in the order in which they are declared."
+      bool leftFirst = (op == BinaryOperator::LT || op == BinaryOperator::LE);
+      for (RecordDecl::field_iterator I = RD->field_begin(),
+           E = RD->field_end(); I!=E; ++I) {
+        if (*I == LeftFD)
+          return ValMgr.makeTruthVal(leftFirst, resultTy);
+        if (*I == RightFD)
+          return ValMgr.makeTruthVal(!leftFirst, resultTy);
+      }
+
+      assert(false && "Fields not found in parent record's definition");
+    }
+
+    // If we get here, we have no way of comparing the regions.
+    return UnknownVal();
+  }
   }
 }
 
@@ -545,7 +796,7 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
   // triggered, but transfer functions like those for OSCommpareAndSwapBarrier32
   // can generate comparisons that trigger this code.
   // FIXME: Are all locations guaranteed to have pointer width?
-  if (BinaryOperator::isEqualityOp(op)) {
+  if (BinaryOperator::isComparisonOp(op)) {
     if (nonloc::ConcreteInt *rhsInt = dyn_cast<nonloc::ConcreteInt>(&rhs)) {
       const llvm::APSInt *x = &rhsInt->getValue();
       ASTContext &ctx = ValMgr.getContext();
@@ -554,7 +805,7 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
         if (x->isSigned())
           x = &ValMgr.getBasicValueFactory().getValue(*x, true);
 
-        return EvalBinOpLL(op, lhs, loc::ConcreteInt(*x), resultTy);
+        return EvalBinOpLL(state, op, lhs, loc::ConcreteInt(*x), resultTy);
       }
     }
   }

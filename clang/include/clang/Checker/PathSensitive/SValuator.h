@@ -47,8 +47,8 @@ public:
   virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode Op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
-  virtual SVal EvalBinOpLL(BinaryOperator::Opcode Op, Loc lhs, Loc rhs,
-                           QualType resultTy) = 0;
+  virtual SVal EvalBinOpLL(const GRState *state, BinaryOperator::Opcode Op,
+                           Loc lhs, Loc rhs, QualType resultTy) = 0;
 
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode Op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;

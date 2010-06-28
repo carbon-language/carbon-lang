@@ -59,3 +59,14 @@ void testAsymmetricIntSymOperations (int a) {
   if ((((unsigned)(~0)) >> ((unsigned) a)) != ((unsigned)(~0)))
     WARN; // expected-warning{{}}
 }
+
+void testLocations (char *a) {
+  char *b = a;
+  if (!(b==a)) WARN;
+  if (!(b>=a)) WARN;
+  if (!(b<=a)) WARN;
+  if (b!=a) WARN;
+  if (b>a) WARN;
+  if (b<a) WARN;
+  if (b-a) WARN;
+}

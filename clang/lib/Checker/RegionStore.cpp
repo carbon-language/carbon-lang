@@ -867,6 +867,19 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
   if (!isa<loc::MemRegionVal>(L))
     return UnknownVal();
 
+  // Special case for zero RHS.
+  if (R.isZeroConstant()) {
+    switch (Op) {
+    default:
+      // Handle it normally.
+      break;
+    case BinaryOperator::Add:
+    case BinaryOperator::Sub:
+      // FIXME: does this need to be casted to match resultTy?
+      return L;
+    }
+  }
+
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
   const ElementRegion *ER = 0;
 
