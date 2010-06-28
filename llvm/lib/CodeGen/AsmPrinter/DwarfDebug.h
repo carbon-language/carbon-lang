@@ -219,6 +219,10 @@ class DwarfDebug {
   DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<const MDNode *, 4> InlinedSPNodes;
 
+  // ProcessedSPNodes - This is a collection of subprogram MDNodes that
+  // are processed to create DIEs.
+  SmallPtrSet<const MDNode *, 16> ProcessedSPNodes;
+
   /// LabelsBeforeInsn - Maps instruction with label emitted before 
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> LabelsBeforeInsn;

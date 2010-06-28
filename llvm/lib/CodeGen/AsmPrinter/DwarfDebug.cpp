@@ -1386,6 +1386,7 @@ static bool isSubprogramContext(const MDNode *Context) {
 /// If there are global variables in this scope then create and insert
 /// DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
+  ProcessedSPNodes.insert(SPNode);
   CompileUnit *SPCU = getCompileUnit(SPNode);
   DIE *SPDie = SPCU->getDIE(SPNode);
   assert(SPDie && "Unable to find subprogram DIE!");
@@ -2005,6 +2006,40 @@ void DwarfDebug::beginModule(Module *M) {
 ///
 void DwarfDebug::endModule() {
   if (!FirstCU) return;
+  const Module *M = MMI->getModule();
+  if (NamedMDNode *AllSPs = M->getNamedMetadata("llvm.dbg.sp")) {
+    for (unsigned SI = 0, SE = AllSPs->getNumOperands(); SI != SE; ++SI) {
+      if (ProcessedSPNodes.count(AllSPs->getOperand(SI)) != 0) continue;
+      DISubprogram SP(AllSPs->getOperand(SI));
+      if (!SP.Verify()) continue;
+
+      // Collect info for variables that were optimized out.
+      StringRef FName = SP.getLinkageName();
+      if (FName.empty())
+        FName = SP.getName();
+      NamedMDNode *NMD = 
+        M->getNamedMetadata(Twine("llvm.dbg.lv.", getRealLinkageName(FName)));
+      if (!NMD) continue;
+      unsigned E = NMD->getNumOperands();
+      if (!E) continue;
+      DbgScope *Scope = new DbgScope(NULL, DIDescriptor(SP), NULL);
+      for (unsigned I = 0; I != E; ++I) {
+        DIVariable DV(NMD->getOperand(I));
+        if (!DV.Verify()) continue;
+        Scope->addVariable(new DbgVariable(DV));
+      }
+      
+      // Construct subprogram DIE and add variables DIEs.
+      constructSubprogramDIE(SP);
+      DIE *ScopeDIE = getCompileUnit(SP)->getDIE(SP);
+      const SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
+      for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
+        DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
+        if (VariableDIE)
+          ScopeDIE->addChild(VariableDIE);
+      }
+    }
+  }
 
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
