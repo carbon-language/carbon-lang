@@ -18,7 +18,18 @@ class TestHelpCommand(unittest.TestCase):
     def test_simplehelp(self):
         """A simple test of 'help' command and its output."""
         res = lldb.SBCommandReturnObject()
-        self.ci.HandleCommand("help", res, False)
+        self.ci.HandleCommand("help", res)
+        self.assertTrue(res.Succeeded())
+        self.assertTrue(res.GetOutput().startswith(
+            'The following is a list of built-in, permanent debugger commands'))
+        #print res.GetOutput()
+
+    def test_help_should_not_hang_emacsshell(self):
+        """'set term-width 0' should not hang the help command."""
+        res = lldb.SBCommandReturnObject()
+        self.ci.HandleCommand("set term-width 0", res)
+        self.assertTrue(res.Succeeded())
+        self.ci.HandleCommand("help", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             'The following is a list of built-in, permanent debugger commands'))
