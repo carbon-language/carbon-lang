@@ -1585,6 +1585,15 @@ static unsigned encodeNEONRm(const MachineInstr &MI, unsigned OpIdx) {
   return Binary;
 }
 
+/// convertNEONDataProcToThumb - Convert the ARM mode encoding for a NEON
+/// data-processing instruction to the corresponding Thumb encoding.
+static unsigned convertNEONDataProcToThumb(unsigned Binary) {
+  assert((Binary & 0xfe000000) == 0xf2000000 &&
+         "not an ARM NEON data-processing instruction");
+  unsigned UBit = (Binary >> 24) & 1;
+  return 0xef000000 | (UBit << 28) | (Binary & 0xffffff);
+}
+
 void ARMCodeEmitter::emitNEONGetLaneInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
@@ -1630,6 +1639,8 @@ void ARMCodeEmitter::emitNEON1RegModImmInstruction(const MachineInstr &MI) {
   Binary |= (Imm3 << 16);
   unsigned Imm4 = Imm & 0xf;
   Binary |= Imm4;
+  if (Subtarget->isThumb())
+    Binary = convertNEONDataProcToThumb(Binary);
   emitWordLE(Binary);
 }
 
@@ -1642,6 +1653,8 @@ void ARMCodeEmitter::emitNEON2RegInstruction(const MachineInstr &MI) {
   if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
     ++OpIdx;
   Binary |= encodeNEONRm(MI, OpIdx);
+  if (Subtarget->isThumb())
+    Binary = convertNEONDataProcToThumb(Binary);
   // FIXME: This does not handle VDUPfdf or VDUPfqf.
   emitWordLE(Binary);
 }
@@ -1658,6 +1671,8 @@ void ARMCodeEmitter::emitNEON3RegInstruction(const MachineInstr &MI) {
   if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1)
     ++OpIdx;
   Binary |= encodeNEONRm(MI, OpIdx);
+  if (Subtarget->isThumb())
+    Binary = convertNEONDataProcToThumb(Binary);
   // FIXME: This does not handle VMOVDneon or VMOVQ.
   emitWordLE(Binary);
 }
