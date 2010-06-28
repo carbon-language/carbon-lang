@@ -45,7 +45,7 @@ void f7(e7 a0) {
 // Test merging/passing of upper eightbyte with X87 class.
 //
 // CHECK: define %0 @f8_1()
-// CHECK: define void @f8_2(%0)
+// CHECK: define void @f8_2(i64, double)
 union u8 {
   long double a;
   int b;

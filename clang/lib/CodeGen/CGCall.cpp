@@ -240,7 +240,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     return *FI;
 
   // Construct the function info.
-  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy, ArgTys);
+  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy,
+                          ArgTys);
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
@@ -259,6 +260,8 @@ CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
     NoReturn(_NoReturn), RegParm(_RegParm)
 {
   NumArgs = ArgTys.size();
+  
+  // FIXME: Coallocate with the CGFunctionInfo object.
   Args = new ArgInfo[1 + NumArgs];
   Args[0].type = ResTy;
   for (unsigned i = 0; i < NumArgs; ++i)
@@ -593,9 +596,19 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
     case ABIArgInfo::Ignore:
       break;
 
-    case ABIArgInfo::Coerce:
-      ArgTys.push_back(AI.getCoerceToType());
+    case ABIArgInfo::Coerce: {
+      // If the coerce-to type is a first class aggregate, flatten it.  Either
+      // way is semantically identical, but fast-isel and the optimizer
+      // generally likes scalar values better than FCAs.
+      const llvm::Type *ArgTy = AI.getCoerceToType();
+      if (const llvm::StructType *STy = dyn_cast<llvm::StructType>(ArgTy)) {
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+          ArgTys.push_back(STy->getElementType(i));
+      } else {
+        ArgTys.push_back(ArgTy);
+      }
       break;
+    }
 
     case ABIArgInfo::Indirect: {
       // indirect arguments are always on the stack, which is addr space #0.
@@ -713,7 +726,12 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     switch (AI.getKind()) {
     case ABIArgInfo::Coerce:
-      break;
+      if (const llvm::StructType *STy =
+          dyn_cast<llvm::StructType>(AI.getCoerceToType()))
+        Index += STy->getNumElements();
+      else
+        ++Index;
+      continue;  // Skip index increment.
 
     case ABIArgInfo::Indirect:
       if (AI.getIndirectByVal())
@@ -806,7 +824,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::Indirect: {
-      llvm::Value* V = AI;
+      llvm::Value *V = AI;
       if (hasAggregateLLVMType(Ty)) {
         // Do nothing, aggregates and complex variables are accessed by
         // reference.
@@ -826,7 +844,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
       assert(AI != Fn->arg_end() && "Argument mismatch!");
-      llvm::Value* V = AI;
+      llvm::Value *V = AI;
       if (hasAggregateLLVMType(Ty)) {
         // Create a temporary alloca to hold the argument; the rest of
         // codegen expects to access aggregates & complex values by
@@ -876,12 +894,29 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       continue;
 
     case ABIArgInfo::Coerce: {
-      assert(AI != Fn->arg_end() && "Argument mismatch!");
+      // If the coerce-to type is a first class aggregate, we flatten it and
+      // pass the elements. Either way is semantically identical, but fast-isel
+      // and the optimizer generally likes scalar values better than FCAs.
+      llvm::Value *FormalArg;
+      if (const llvm::StructType *STy =
+            dyn_cast<llvm::StructType>(ArgI.getCoerceToType())) {
+        // Reconstruct the FCA here.
+        // FIXME: If we have a direct match, do nice gep/store series.
+        FormalArg = llvm::UndefValue::get(STy);
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+          assert(AI != Fn->arg_end() && "Argument mismatch!");
+          FormalArg = Builder.CreateInsertValue(FormalArg, AI++, i);
+        }
+      } else {
+        assert(AI != Fn->arg_end() && "Argument mismatch!");
+        FormalArg = AI++;
+      }
+      
       // FIXME: This is very wasteful; EmitParmDecl is just going to drop the
       // result in a new alloca anyway, so we could just store into that
       // directly if we broke the abstraction down more.
       llvm::Value *V = CreateMemTemp(Ty, "coerce");
-      CreateCoercedStore(AI, V, /*DestIsVolatile=*/false, *this);
+      CreateCoercedStore(FormalArg, V, /*DestIsVolatile=*/false, *this);
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
         V = EmitLoadOfScalar(V, false, Ty);
@@ -892,7 +927,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         }
       }
       EmitParmDecl(*Arg, V);
-      break;
+      continue;  // Skip ++AI increment, already done.
     }
     }
 
@@ -1080,8 +1115,22 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
       } else
         SrcPtr = RV.getAggregateAddr();
-      Args.push_back(CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(),
-                                       *this));
+      
+      llvm::Value *SrcVal = 
+        CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(), *this);
+      
+      // If the coerce-to type is a first class aggregate, we flatten it and
+      // pass the elements. Either way is semantically identical, but fast-isel
+      // and the optimizer generally likes scalar values better than FCAs.
+      if (const llvm::StructType *STy =
+            dyn_cast<llvm::StructType>(SrcVal->getType())) {
+        // Extract the elements of the value to pass in.
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+          Args.push_back(Builder.CreateExtractValue(SrcVal, i));
+      } else {
+        Args.push_back(SrcVal);
+      }
+      
       break;
     }
 

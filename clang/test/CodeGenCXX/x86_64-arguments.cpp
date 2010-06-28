@@ -6,19 +6,19 @@
 // Basic base class test.
 struct f0_s0 { unsigned a; };
 struct f0_s1 : public f0_s0 { void *b; };
-// CHECK: define void @_Z2f05f0_s1([[i64_i64_ty]])
+// CHECK: define void @_Z2f05f0_s1(i64, i64)
 void f0(f0_s1 a0) { }
 
 // Check with two eight-bytes in base class.
 struct f1_s0 { unsigned a; unsigned b; float c; };
 struct f1_s1 : public f1_s0 { float d;};
-// CHECK: define void @_Z2f15f1_s1([[i64_double_ty]])
+// CHECK: define void @_Z2f15f1_s1(i64, double)
 void f1(f1_s1 a0) { }
 
 // Check with two eight-bytes in base class and merge.
 struct f2_s0 { unsigned a; unsigned b; float c; };
 struct f2_s1 : public f2_s0 { char d;};
-// CHECK: define void @_Z2f25f2_s1([[i64_i64_ty]])
+// CHECK: define void @_Z2f25f2_s1(i64, i64)
 void f2(f2_s1 a0) { }
 
 // PR5831
@@ -27,7 +27,7 @@ struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
 
 // CHECK: define i64 @_Z4f4_0M2s4i(i64)
-// CHECK: define [[i64_i64_ty]] @_Z4f4_1M2s4FivE([[i64_i64_ty]])
+// CHECK: define [[i64_i64_ty]] @_Z4f4_1M2s4FivE(i64, i64)
 struct s4 {};
 typedef int s4::* s4_mdp;
 typedef int (s4::*s4_mfp)();
