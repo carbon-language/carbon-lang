@@ -840,11 +840,22 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
 
+  QualType FnType(BlockFunctionType, 0);
+  bool HasPrototype = (dyn_cast<FunctionProtoType>(BlockFunctionType) != 0);
+  
+  IdentifierInfo *ID = &getContext().Idents.get(Name.getString());
+  CurCodeDecl = FunctionDecl::Create(getContext(),
+                                     getContext().getTranslationUnitDecl(),
+                                     SourceLocation(), ID, FnType, 
+                                     0,
+                                     FunctionDecl::Static,
+                                     FunctionDecl::None,
+                                     false, HasPrototype);
+  
   StartFunction(BD, ResultType, Fn, Args,
                 BExpr->getBody()->getLocEnd());
 
   CurFuncDecl = OuterFuncDecl;
-  CurCodeDecl = BD;
 
   // If we have a C++ 'this' reference, go ahead and force it into
   // existence now.
