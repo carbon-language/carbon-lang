@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -O0 | FileCheck %s
 ; PR7509
+target triple = "i386-apple-darwin10"
 %asmtype = type { i32, i8*, i32, i32 }
 
 ; Arguments 1 and 4 must be the same. No other output arguments may be
