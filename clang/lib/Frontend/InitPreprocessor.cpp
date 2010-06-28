@@ -83,7 +83,6 @@ static void AddImplicitIncludeMacros(MacroBuilder &Builder,
 static void AddImplicitIncludePTH(MacroBuilder &Builder, Preprocessor &PP,
                                   llvm::StringRef ImplicitIncludePTH) {
   PTHManager *P = PP.getPTHManager();
-  assert(P && "No PTHManager.");
   // Null check 'P' in the corner case where it couldn't be created.
   const char *OriginalFile = P ? P->getOriginalSourceFile() : 0;
 
