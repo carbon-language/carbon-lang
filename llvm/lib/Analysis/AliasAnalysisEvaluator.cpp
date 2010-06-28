@@ -21,11 +21,11 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
@@ -45,20 +45,21 @@ static cl::opt<bool> PrintRef("print-ref", cl::ReallyHidden);
 static cl::opt<bool> PrintModRef("print-modref", cl::ReallyHidden);
 
 namespace {
-  class AAEval : public FunctionPass {
+  /// AAEval - Base class for exhaustive alias analysis evaluators.
+  class AAEval {
+  protected:
     unsigned NoAlias, MayAlias, MustAlias;
     unsigned NoModRef, Mod, Ref, ModRef;
 
-  public:
-    static char ID; // Pass identification, replacement for typeid
-    AAEval() : FunctionPass(&ID) {}
+    SetVector<Value *> Pointers;
+    SetVector<CallSite> CallSites;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
     }
 
-    bool doInitialization(Module &M) {
+    void doInitialization(Module &M) {
       NoAlias = MayAlias = MustAlias = 0;
       NoModRef = Mod = Ref = ModRef = 0;
 
@@ -66,19 +67,85 @@ namespace {
         PrintNoAlias = PrintMayAlias = PrintMustAlias = true;
         PrintNoModRef = PrintMod = PrintRef = PrintModRef = true;
       }
+    }
+
+    void runOnFunction(Function &F);
+    void evaluate(AliasAnalysis *AA, Module *M);
+    void doFinalization(Module &M);
+  };
+
+  class FunctionAAEval : public FunctionPass, AAEval {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    FunctionAAEval() : FunctionPass(&ID) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      return AAEval::getAnalysisUsage(AU);
+    }
+
+    virtual bool doInitialization(Module &M) {
+      AAEval::doInitialization(M);
       return false;
     }
 
-    bool runOnFunction(Function &F);
-    bool doFinalization(Module &M);
+    virtual bool runOnFunction(Function &F) {
+      AAEval::runOnFunction(F);
+
+      if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
+          PrintNoModRef || PrintMod || PrintRef || PrintModRef)
+        errs() << "Function: " << F.getName() << ": " << Pointers.size()
+               << " pointers, " << CallSites.size() << " call sites\n";
+
+      AAEval::evaluate(&getAnalysis<AliasAnalysis>(), F.getParent());
+      return false;
+    }
+
+    virtual bool doFinalization(Module &M) {
+      AAEval::doFinalization(M);
+      return false;
+    }
+  };
+
+  class InterproceduralAAEval : public ModulePass, AAEval {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    InterproceduralAAEval() : ModulePass(&ID) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      return AAEval::getAnalysisUsage(AU);
+    }
+
+    virtual bool runOnModule(Module &M) {
+      AAEval::doInitialization(M);
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        AAEval::runOnFunction(*I);
+
+      if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
+          PrintNoModRef || PrintMod || PrintRef || PrintModRef)
+        errs() << "Module: " << Pointers.size()
+               << " pointers, " << CallSites.size() << " call sites\n";
+
+      AAEval::evaluate(&getAnalysis<AliasAnalysis>(), &M);
+      AAEval::doFinalization(M);
+      return false;
+    }
   };
 }
 
-char AAEval::ID = 0;
-static RegisterPass<AAEval>
+char FunctionAAEval::ID = 0;
+static RegisterPass<FunctionAAEval>
 X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
 
-FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
+FunctionPass *llvm::createAAEvalPass() { return new FunctionAAEval(); }
+
+char InterproceduralAAEval::ID = 0;
+static RegisterPass<InterproceduralAAEval>
+Y("interprocedural-aa-eval",
+  "Exhaustive Interprocedural Alias Analysis Precision Evaluator", false, true);
+
+Pass *llvm::createInterproceduralAAEvalPass() {
+  return new InterproceduralAAEval();
+}
 
 static void PrintResults(const char *Msg, bool P, const Value *V1,
                          const Value *V2, const Module *M) {
@@ -113,12 +180,7 @@ static inline bool isInterestingPointer(Value *V) {
       && !isa<ConstantPointerNull>(V);
 }
 
-bool AAEval::runOnFunction(Function &F) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
-  SetVector<Value *> Pointers;
-  SetVector<CallSite> CallSites;
-
+void AAEval::runOnFunction(Function &F) {
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     if (I->getType()->isPointerTy())    // Add all pointer arguments.
       Pointers.insert(I);
@@ -148,33 +210,31 @@ bool AAEval::runOnFunction(Function &F) {
 
     if (CS.getInstruction()) CallSites.insert(CS);
   }
+}
 
-  if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
-      PrintNoModRef || PrintMod || PrintRef || PrintModRef)
-    errs() << "Function: " << F.getName() << ": " << Pointers.size()
-           << " pointers, " << CallSites.size() << " call sites\n";
+void AAEval::evaluate(AliasAnalysis *AA, Module *M) {
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (SetVector<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1) {
     unsigned I1Size = ~0u;
     const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
-    if (I1ElTy->isSized()) I1Size = AA.getTypeStoreSize(I1ElTy);
+    if (I1ElTy->isSized()) I1Size = AA->getTypeStoreSize(I1ElTy);
 
     for (SetVector<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
       unsigned I2Size = ~0u;
       const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
-      if (I2ElTy->isSized()) I2Size = AA.getTypeStoreSize(I2ElTy);
+      if (I2ElTy->isSized()) I2Size = AA->getTypeStoreSize(I2ElTy);
 
-      switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
+      switch (AA->alias(*I1, I1Size, *I2, I2Size)) {
       case AliasAnalysis::NoAlias:
-        PrintResults("NoAlias", PrintNoAlias, *I1, *I2, F.getParent());
+        PrintResults("NoAlias", PrintNoAlias, *I1, *I2, M);
         ++NoAlias; break;
       case AliasAnalysis::MayAlias:
-        PrintResults("MayAlias", PrintMayAlias, *I1, *I2, F.getParent());
+        PrintResults("MayAlias", PrintMayAlias, *I1, *I2, M);
         ++MayAlias; break;
       case AliasAnalysis::MustAlias:
-        PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
+        PrintResults("MustAlias", PrintMustAlias, *I1, *I2, M);
         ++MustAlias; break;
       default:
         errs() << "Unknown alias query result!\n";
@@ -191,20 +251,20 @@ bool AAEval::runOnFunction(Function &F) {
          V != Ve; ++V) {
       unsigned Size = ~0u;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
-      if (ElTy->isSized()) Size = AA.getTypeStoreSize(ElTy);
+      if (ElTy->isSized()) Size = AA->getTypeStoreSize(ElTy);
 
-      switch (AA.getModRefInfo(*C, *V, Size)) {
+      switch (AA->getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:
-        PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
+        PrintModRefResults("NoModRef", PrintNoModRef, I, *V, M);
         ++NoModRef; break;
       case AliasAnalysis::Mod:
-        PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
+        PrintModRefResults("     Mod", PrintMod, I, *V, M);
         ++Mod; break;
       case AliasAnalysis::Ref:
-        PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
+        PrintModRefResults("     Ref", PrintRef, I, *V, M);
         ++Ref; break;
       case AliasAnalysis::ModRef:
-        PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
+        PrintModRefResults("  ModRef", PrintModRef, I, *V, M);
         ++ModRef; break;
       default:
         errs() << "Unknown alias query result!\n";
@@ -212,7 +272,8 @@ bool AAEval::runOnFunction(Function &F) {
     }
   }
 
-  return false;
+  Pointers.clear();
+  CallSites.clear();
 }
 
 static void PrintPercent(unsigned Num, unsigned Sum) {
@@ -220,7 +281,7 @@ static void PrintPercent(unsigned Num, unsigned Sum) {
          << ((Num*1000ULL/Sum) % 10) << "%)\n";
 }
 
-bool AAEval::doFinalization(Module &M) {
+void AAEval::doFinalization(Module &M) {
   unsigned AliasSum = NoAlias + MayAlias + MustAlias;
   errs() << "===== Alias Analysis Evaluator Report =====\n";
   if (AliasSum == 0) {
@@ -256,6 +317,4 @@ bool AAEval::doFinalization(Module &M) {
            << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
            << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
   }
-
-  return false;
 }

@@ -53,6 +53,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createInterproceduralAAEvalPass - This pass implements a simple
+  // N^2 interprocedural alias analysis accuracy evaluator.
+  //
+  Pass *createInterproceduralAAEvalPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // createNoAAPass - This pass implements a "I don't know" alias analysis.
   //
   ImmutablePass *createNoAAPass();
