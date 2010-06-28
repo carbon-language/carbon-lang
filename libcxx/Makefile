@@ -7,7 +7,7 @@ DESTDIR = $(DSTROOT)
 
 OBJROOT=.
 SYMROOT=.
-TRIPLE=-apple-
+export TRIPLE=-apple-
 
 installsrc:: $(SRCROOT)
 
@@ -21,10 +21,12 @@ clean::
 installhdrs::
 
 	mkdir -p $(DSTROOT)/usr/include/c++/v1/ext
-	cp -r $(SRCDIRS)/include/* $(DSTROOT)/usr/include/c++/v1/
+	rsync -r --exclude=".*" $(SRCDIRS)/include/* $(DSTROOT)/usr/include/c++/v1/
 	chown -R root:wheel $(DSTROOT)/usr/include
 	chmod 755 $(DSTROOT)/usr/include/c++/v1
 	chmod 644 $(DSTROOT)/usr/include/c++/v1/*
+	chmod 755 $(DSTROOT)/usr/include/c++/v1/ext
+	chmod 644 $(DSTROOT)/usr/include/c++/v1/ext/*
 
 install:: installhdrs $(DESTDIR)
 
