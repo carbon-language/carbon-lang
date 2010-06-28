@@ -2547,12 +2547,12 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
   unsigned BestIdx = 0;
   TargetLowering::ConstraintType BestType = TargetLowering::C_Unknown;
   int BestGenerality = -1;
-  
+
   // Loop over the options, keeping track of the most general one.
   for (unsigned i = 0, e = OpInfo.Codes.size(); i != e; ++i) {
     TargetLowering::ConstraintType CType =
       TLI.getConstraintType(OpInfo.Codes[i]);
-    
+
     // If this is an 'other' constraint, see if the operand is valid for it.
     // For example, on X86 we might have an 'rI' constraint.  If the operand
     // is an integer in the range [0..31] we want to use I (saving a load
@@ -2569,6 +2569,11 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
         break;
       }
     }
+    
+    // Things with matching constraints can only be registers, per gcc
+    // documentation.  This mainly affects "g" constraints.
+    if (CType == TargetLowering::C_Memory && OpInfo.hasMatchingInput())
+      continue;
     
     // This constraint letter is more general than the previous one, use it.
     int Generality = getConstraintGenerality(CType);
