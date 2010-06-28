@@ -1,4 +1,4 @@
-; RUN: llc %s -disable-fp-elim -mtriple=i686-pc-mingw32
+; RUN: llc < %s -disable-fp-elim -mtriple=i686-pc-mingw32
 
 %struct.__SEH2Frame = type {}
 
