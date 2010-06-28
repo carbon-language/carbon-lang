@@ -1228,18 +1228,10 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     ++DI2;
   BBI1->NonPredSize -= NumDups1;
   BBI2->NonPredSize -= NumDups1;
-  
-  // Skip past the dups on each side separately since there may be
-  // differing dbg_value entries.
-  for (unsigned i = 0; i < NumDups1; ++i) {
-    ++DI1;
-    if (!DI1->isDebugValue())
-      ++i;
-  }
   while (NumDups1 != 0) {
+    ++DI1;
     ++DI2;
-    if (!DI2->isDebugValue())
-      --NumDups1;
+    --NumDups1;
   }
 
   UpdatePredRedefs(BBI1->BB->begin(), DI1, Redefs, TRI);
