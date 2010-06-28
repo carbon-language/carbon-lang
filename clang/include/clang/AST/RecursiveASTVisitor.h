@@ -890,16 +890,19 @@ DEF_TRAVERSE_DECL(CXXRecordDecl, {
   })
 
 DEF_TRAVERSE_DECL(ClassTemplateSpecializationDecl, {
-    // FIXME: we probably want to traverse the TemplateArgumentLoc for
-    // explicitly-written specializations and instantiations, rather
-    // than the computed template arguments.
-    const TemplateArgumentList &TAL = D->getTemplateArgs();
-    for (unsigned I = 0; I < TAL.size(); ++I) {
-      TRY_TO(TraverseTemplateArgument(TAL.get(I)));
-    }
-    // FIXME: I think we only want to traverse this if it's an explicit
-    // specialization.
-    TRY_TO(TraverseCXXRecordHelper(D));
+    // For implicit instantiations ("set<int> x;"), we don't want to
+    // recurse at all, since the instatiated class isn't written in
+    // the source code anywhere.  (Note the instatiated *type* --
+    // set<int> -- is written, and will still get a callback of
+    // TemplateSpecializationType).  For explicit instantiations
+    // ("template set<int>;"), we do need a callback, since this
+    // is the only callback that's made for this instantiation.
+    // We use getTypeAsWritten() to distinguish.
+    // FIXME: see how we want to handle template specializations.
+    TypeSourceInfo* TSI = D->getTypeAsWritten();
+    if (TSI)
+      TRY_TO(TraverseType(TSI->getType()));
+    return true;
   })
 
 template <typename Derived>
