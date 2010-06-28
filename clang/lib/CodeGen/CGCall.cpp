@@ -421,6 +421,11 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
                                       CodeGenFunction &CGF) {
   const llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
+  
+  // If SrcTy and Ty are the same, just do a load.
+  if (SrcTy == Ty)
+    return CGF.Builder.CreateLoad(SrcPtr);
+  
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
   
   if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
@@ -476,11 +481,15 @@ static void CreateCoercedStore(llvm::Value *Src,
                                bool DstIsVolatile,
                                CodeGenFunction &CGF) {
   const llvm::Type *SrcTy = Src->getType();
-  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
-  
   const llvm::Type *DstTy =
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
-
+  if (SrcTy == DstTy) {
+    CGF.Builder.CreateStore(Src, DstPtr, DstIsVolatile);
+    return;
+  }
+  
+  uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
+  
   if (const llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
     DstPtr = EnterStructPointerForCoercedAccess(DstPtr, DstSTy, SrcSize, CGF);
     DstTy = cast<llvm::PointerType>(DstPtr->getType())->getElementType();
