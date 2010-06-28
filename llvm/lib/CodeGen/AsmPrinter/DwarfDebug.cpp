@@ -1792,7 +1792,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   addString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
   // Use DW_AT_entry_pc instead of DW_AT_low_pc/DW_AT_high_pc pair. This
   // simplifies debug range entries.
-  addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_data4, 0);
+  addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_addr, 0);
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section. It is always zero when only one
   // compile unit is emitted in one object file.
