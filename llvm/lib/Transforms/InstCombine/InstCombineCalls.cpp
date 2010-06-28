@@ -197,7 +197,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
                       *MI);
 
   // Set the size of the copy to 0, it will be deleted on the next iteration.
-  MI->setOperand(3, Constant::getNullValue(MemOpLength->getType()));
+  MI->setArgOperand(2, Constant::getNullValue(MemOpLength->getType()));
   return MI;
 }
 
@@ -513,11 +513,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   // FALL THROUGH uadd into sadd
   case Intrinsic::sadd_with_overflow:
     // Canonicalize constants into the RHS.
-    if (isa<Constant>(II->getOperand(1)) &&
-        !isa<Constant>(II->getOperand(2))) {
-      Value *LHS = II->getOperand(1);
-      II->setOperand(1, II->getOperand(2));
-      II->setOperand(2, LHS);
+    if (isa<Constant>(II->getArgOperand(0)) &&
+        !isa<Constant>(II->getArgOperand(1))) {
+      Value *LHS = II->getArgOperand(0);
+      II->setArgOperand(0, II->getArgOperand(1));
+      II->setArgOperand(1, LHS);
       return II;
     }
 
@@ -560,11 +560,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::umul_with_overflow:
   case Intrinsic::smul_with_overflow:
     // Canonicalize constants into the RHS.
-    if (isa<Constant>(II->getOperand(1)) &&
-        !isa<Constant>(II->getOperand(2))) {
-      Value *LHS = II->getOperand(1);
-      II->setOperand(1, II->getOperand(2));
-      II->setOperand(2, LHS);
+    if (isa<Constant>(II->getArgOperand(0)) &&
+        !isa<Constant>(II->getArgOperand(1))) {
+      Value *LHS = II->getArgOperand(0);
+      II->setArgOperand(0, II->getArgOperand(1));
+      II->setArgOperand(1, LHS);
       return II;
     }
 
@@ -632,7 +632,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     APInt UndefElts(VWidth, 0);
     if (Value *V = SimplifyDemandedVectorElts(II->getArgOperand(0), DemandedElts,
                                               UndefElts)) {
-      II->setOperand(1, V);
+      II->setArgOperand(0, V);
       return II;
     }
     break;
