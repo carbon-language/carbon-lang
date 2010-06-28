@@ -1224,8 +1224,12 @@ Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreResultAssign();
   // Emit unary minus with EmitSub so we handle overflow cases etc.
   BinOpInfo BinOp;
-  BinOp.RHS = Visit(E->getSubExpr());;
-  BinOp.LHS = llvm::Constant::getNullValue(BinOp.RHS->getType());
+  BinOp.RHS = Visit(E->getSubExpr());
+  
+  if (BinOp.RHS->getType()->isFPOrFPVectorTy())
+    BinOp.LHS = llvm::ConstantFP::getZeroValueForNegation(BinOp.RHS->getType());
+  else 
+    BinOp.LHS = llvm::Constant::getNullValue(BinOp.RHS->getType());
   BinOp.Ty = E->getType();
   BinOp.Opcode = BinaryOperator::Sub;
   BinOp.E = E;
