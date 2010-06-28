@@ -54,8 +54,15 @@ static void PrintCurStackTrace(raw_ostream &OS) {
   OS.flush();
 }
 
-// Integrate with crash reporter.
-#if defined (__APPLE__) && !defined (HAVE_CRASHREPORTERCLIENT_H)
+// Integrate with crash reporter libraries.
+#if defined (__APPLE__) && defined (HAVE_CRASHREPORTERCLIENT_H)
+//  If any clients of llvm try to link to libCrashReporterClient.a themselves,
+//  only one crash info struct will be used.
+CRASH_REPORTER_CLIENT_HIDDEN 
+struct crashreporter_annotations_t gCRAnnotations 
+        __attribute__((section("__DATA," CRASHREPORTER_ANNOTATIONS_SECTION))) 
+        = { CRASHREPORTER_ANNOTATIONS_VERSION, 0, 0, 0 };
+#else if defined (__APPLE__)
 static const char *__crashreporter_info__ = 0;
 asm(".desc ___crashreporter_info__, 0x10");
 #endif

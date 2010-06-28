@@ -1248,10 +1248,6 @@ AC_ARG_WITH(oprofile,
 AC_DEFINE_UNQUOTED([USE_OPROFILE],$USE_OPROFILE,
                    [Define if we have the oprofile JIT-support library])
 
-dnl gCRAnnotations isn't the function we care about, but it's the only
-dnl thing exported.
-AC_CHECK_LIB(CrashReporterClient, gCRAnnotations)
-
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 6: Check for header files
