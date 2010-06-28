@@ -134,6 +134,7 @@ namespace {
     void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
+    void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
 
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
@@ -1060,6 +1061,28 @@ void PCHStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);
   
   Code = pch::EXPR_CXX_DELETE;
+}
+
+void PCHStmtWriter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+  VisitExpr(E);
+
+  Writer.AddStmt(E->getBase());
+  Record.push_back(E->isArrow());
+  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddTypeSourceInfo(E->getScopeTypeInfo(), Record);
+  Writer.AddSourceLocation(E->getColonColonLoc(), Record);
+  Writer.AddSourceLocation(E->getTildeLoc(), Record);
+
+  // PseudoDestructorTypeStorage.
+  Writer.AddIdentifierRef(E->getDestroyedTypeIdentifier(), Record);
+  if (E->getDestroyedTypeIdentifier())
+    Writer.AddSourceLocation(E->getDestroyedTypeLoc(), Record);
+  else
+    Writer.AddTypeSourceInfo(E->getDestroyedTypeInfo(), Record);
+
+  Code = pch::EXPR_CXX_PSEUDO_DESTRUCTOR;
 }
 
 void PCHStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {

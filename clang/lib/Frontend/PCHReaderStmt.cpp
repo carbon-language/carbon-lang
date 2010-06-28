@@ -143,6 +143,7 @@ namespace {
     unsigned VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     unsigned VisitCXXNewExpr(CXXNewExpr *E);
     unsigned VisitCXXDeleteExpr(CXXDeleteExpr *E);
+    unsigned VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
     
     unsigned VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
     
@@ -1146,6 +1147,28 @@ unsigned PCHStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   return 1;
 }
 
+unsigned
+PCHStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
+  VisitExpr(E);
+
+  E->setBase(cast_or_null<Expr>(StmtStack.back()));
+  E->setArrow(Record[Idx++]);
+  E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
+  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
+  E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
+  E->setScopeTypeInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setColonColonLoc(Reader.ReadSourceLocation(Record, Idx));
+  E->setTildeLoc(Reader.ReadSourceLocation(Record, Idx));
+  
+  IdentifierInfo *II = Reader.GetIdentifierInfo(Record, Idx);
+  if (II)
+    E->setDestroyedType(II, Reader.ReadSourceLocation(Record, Idx));
+  else
+    E->setDestroyedType(Reader.GetTypeSourceInfo(Record, Idx));
+  
+  return 1;
+}
+
 unsigned PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   VisitExpr(E);
   unsigned NumTemps = Record[Idx++];
@@ -1645,6 +1668,9 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_CXX_DELETE:
       S = new (Context) CXXDeleteExpr(Empty);
+      break;
+    case pch::EXPR_CXX_PSEUDO_DESTRUCTOR:
+      S = new (Context) CXXPseudoDestructorExpr(Empty);
       break;
         
     case pch::EXPR_CXX_EXPR_WITH_TEMPORARIES:

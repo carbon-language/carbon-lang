@@ -1223,6 +1223,10 @@ public:
       ScopeType(ScopeType), ColonColonLoc(ColonColonLoc), TildeLoc(TildeLoc),
       DestroyedType(DestroyedType) { }
 
+  explicit CXXPseudoDestructorExpr(EmptyShell Shell)
+    : Expr(CXXPseudoDestructorExprClass, Shell),
+      Base(0), IsArrow(false), Qualifier(0), ScopeType(0) { }
+
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
 
@@ -1235,11 +1239,13 @@ public:
   /// the nested-name-specifier that precedes the member name. Otherwise,
   /// returns an empty source range.
   SourceRange getQualifierRange() const { return QualifierRange; }
+  void setQualifierRange(SourceRange R) { QualifierRange = R; }
 
   /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name. Otherwise, returns
   /// NULL.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
 
   /// \brief Determine whether this pseudo-destructor expression was written
   /// using an '->' (otherwise, it used a '.').
@@ -1248,6 +1254,7 @@ public:
 
   /// \brief Retrieve the location of the '.' or '->' operator.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
+  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
 
   /// \brief Retrieve the scope type in a qualified pseudo-destructor 
   /// expression.
@@ -1259,13 +1266,16 @@ public:
   /// nested-name-specifier. It is stored as the "scope type" of the pseudo-
   /// destructor expression.
   TypeSourceInfo *getScopeTypeInfo() const { return ScopeType; }
+  void setScopeTypeInfo(TypeSourceInfo *Info) { ScopeType = Info; }
   
   /// \brief Retrieve the location of the '::' in a qualified pseudo-destructor
   /// expression.
   SourceLocation getColonColonLoc() const { return ColonColonLoc; }
+  void setColonColonLoc(SourceLocation L) { ColonColonLoc = L; }
   
   /// \brief Retrieve the location of the '~'.
   SourceLocation getTildeLoc() const { return TildeLoc; }
+  void setTildeLoc(SourceLocation L) { TildeLoc = L; }
   
   /// \brief Retrieve the source location information for the type
   /// being destroyed.
@@ -1291,6 +1301,17 @@ public:
   /// \brief Retrieve the starting location of the type being destroyed.
   SourceLocation getDestroyedTypeLoc() const { 
     return DestroyedType.getLocation(); 
+  }
+
+  /// \brief Set the name of destroyed type for a dependent pseudo-destructor
+  /// expression.
+  void setDestroyedType(IdentifierInfo *II, SourceLocation Loc) {
+    DestroyedType = PseudoDestructorTypeStorage(II, Loc);
+  }
+
+  /// \brief Set the destroyed type.
+  void setDestroyedType(TypeSourceInfo *Info) {
+    DestroyedType = PseudoDestructorTypeStorage(Info);
   }
 
   virtual SourceRange getSourceRange() const;
