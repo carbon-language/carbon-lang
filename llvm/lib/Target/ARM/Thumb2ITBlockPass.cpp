@@ -373,7 +373,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
         Mask |= (NCC & 1) << Pos;
         // Add implicit use of ITSTATE.
         NMI->addOperand(MachineOperand::CreateReg(ARM::ITSTATE, false/*ifDef*/,
-                                                true/*isImp*/, false/*isKill*/));
+                                               true/*isImp*/, false/*isKill*/));
         LastITMI = NMI;
       } else {
         if (NCC == ARMCC::AL &&

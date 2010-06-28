@@ -1,10 +1,10 @@
 //=- ARMScheduleA9.td - ARM Cortex-A9 Scheduling Definitions -*- tablegen -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the itinerary class data for the ARM Cortex A9 processors.
@@ -31,36 +31,36 @@ def CortexA9Itineraries : ProcessorItineraries<
   // FIXME: There are no operand latencies for these instructions at all!
   //
   // Move instructions, unconditional
-  InstrItinData<IIC_iMOVi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMOVr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsr   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
   //
   // No operand cycles
   InstrItinData<IIC_iALUx    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>]>,
   //
   // Binary Instructions that produce a result
-  InstrItinData<IIC_iALUi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iALUr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2, 2]>,
-  InstrItinData<IIC_iALUsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
-  InstrItinData<IIC_iALUsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
+  InstrItinData<IIC_iALUi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iALUr , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2, 2]>,
+  InstrItinData<IIC_iALUsi, [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iALUsr,[InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 2, 1, 1]>,
   //
   // Unary Instructions that produce a result
-  InstrItinData<IIC_iUNAr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iUNAsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iUNAsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iUNAr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iUNAsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iUNAsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
   //
   // Compare instructions
-  InstrItinData<IIC_iCMPi    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
-  InstrItinData<IIC_iCMPr    , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iCMPsi   , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMPsr   , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMPi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMPr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iCMPsi  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMPsr  , [InstrStage<3, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
   //
   // Move instructions, conditional
-  InstrItinData<IIC_iCMOVi   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
-  InstrItinData<IIC_iCMOVr   , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMOVsi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMOVsr  , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMOVi  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMOVr  , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsi , [InstrStage<1, [A9_Pipe0, A9_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsr , [InstrStage<2, [A9_Pipe0, A9_Pipe1]>], [2, 1, 1]>,
 
   // Integer multiply pipeline
   //
@@ -152,8 +152,8 @@ def CortexA9Itineraries : ProcessorItineraries<
   //    register file writeback!).
   // Every NEON instruction does the same but with FUs swapped.
   //
-  // Since the reserved FU cannot be acquired this models precisly "cross-domain"
-  // stalls.
+  // Since the reserved FU cannot be acquired, this models precisely
+  // "cross-domain" stalls.
 
   // VFP
   // Issue through integer pipeline, and execute in NEON unit.
@@ -373,7 +373,7 @@ def CortexA9Itineraries : ProcessorItineraries<
                                InstrStage<1, [A9_NPipe]>]>,
   // NEON
   // Issue through integer pipeline, and execute in NEON unit.
-  // FIXME: Neon pipeline and LdSt unit are multiplexed. 
+  // FIXME: Neon pipeline and LdSt unit are multiplexed.
   //        Add some syntactic sugar to model this!
   // VLD1
   // FIXME: We don't model this instruction properly
@@ -841,5 +841,5 @@ def CortexA9Itineraries : ProcessorItineraries<
                                // Extra latency cycles since wbck is 8 cycles
                                InstrStage<9, [A9_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [A9_Pipe1]>,
-                               InstrStage<2, [A9_NPipe]>], [4, 1, 2, 2, 3, 3, 1]>
+                              InstrStage<2, [A9_NPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;

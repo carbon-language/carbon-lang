@@ -1,10 +1,10 @@
 //=- ARMScheduleA8.td - ARM Cortex-A8 Scheduling Definitions -*- tablegen -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the itinerary class data for the ARM Cortex A8 processors.
@@ -32,50 +32,50 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iALUx    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>]>,
   //
   // Binary Instructions that produce a result
-  InstrItinData<IIC_iALUi    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iALUr    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 2]>,
-  InstrItinData<IIC_iALUsi   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1]>,
-  InstrItinData<IIC_iALUsr   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1, 1]>,
+  InstrItinData<IIC_iALUi ,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iALUr ,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 2]>,
+  InstrItinData<IIC_iALUsi,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1]>,
+  InstrItinData<IIC_iALUsr,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2, 1, 1]>,
   //
   // Unary Instructions that produce a result
-  InstrItinData<IIC_iUNAr    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iUNAsi   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iUNAsr   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iUNAr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iUNAsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iUNAsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
   //
   // Compare instructions
-  InstrItinData<IIC_iCMPi    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
-  InstrItinData<IIC_iCMPr    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
-  InstrItinData<IIC_iCMPsi   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMPsr   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMPi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMPr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 2]>,
+  InstrItinData<IIC_iCMPsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMPsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
   //
   // Move instructions, unconditional
-  InstrItinData<IIC_iMOVi    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
-  InstrItinData<IIC_iMOVr    , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsi   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
-  InstrItinData<IIC_iMOVsr   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
+  InstrItinData<IIC_iMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1]>,
+  InstrItinData<IIC_iMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1]>,
+  InstrItinData<IIC_iMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
   //
   // Move instructions, conditional
-  InstrItinData<IIC_iCMOVi   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
-  InstrItinData<IIC_iCMOVr   , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMOVsi  , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
-  InstrItinData<IIC_iCMOVsr  , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
+  InstrItinData<IIC_iCMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
+  InstrItinData<IIC_iCMOVr , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsi, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1]>,
+  InstrItinData<IIC_iCMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2, 1, 1]>,
 
   // Integer multiply pipeline
   // Result written in E5, but that is relative to the last cycle of multicycle,
   // so we use 6 for those cases
   //
   InstrItinData<IIC_iMUL16   , [InstrStage<1, [A8_Pipe0]>], [5, 1, 1]>,
-  InstrItinData<IIC_iMAC16   , [InstrStage<1, [A8_Pipe1], 0>, 
+  InstrItinData<IIC_iMAC16   , [InstrStage<1, [A8_Pipe1], 0>,
                                 InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
-  InstrItinData<IIC_iMUL32   , [InstrStage<1, [A8_Pipe1], 0>, 
+  InstrItinData<IIC_iMUL32   , [InstrStage<1, [A8_Pipe1], 0>,
                                 InstrStage<2, [A8_Pipe0]>], [6, 1, 1]>,
-  InstrItinData<IIC_iMAC32   , [InstrStage<1, [A8_Pipe1], 0>, 
+  InstrItinData<IIC_iMAC32   , [InstrStage<1, [A8_Pipe1], 0>,
                                 InstrStage<2, [A8_Pipe0]>], [6, 1, 1, 4]>,
-  InstrItinData<IIC_iMUL64   , [InstrStage<2, [A8_Pipe1], 0>, 
+  InstrItinData<IIC_iMUL64   , [InstrStage<2, [A8_Pipe1], 0>,
                                 InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
-  InstrItinData<IIC_iMAC64   , [InstrStage<2, [A8_Pipe1], 0>, 
+  InstrItinData<IIC_iMAC64   , [InstrStage<2, [A8_Pipe1], 0>,
                                 InstrStage<3, [A8_Pipe0]>], [6, 6, 1, 1]>,
-  
+
   // Integer load pipeline
   //
   // loads have an extra cycle of latency, but are fully pipelined
@@ -166,7 +166,7 @@ def CortexA8Itineraries : ProcessorItineraries<
                                 InstrStage<2, [A8_Pipe1]>,
                                 InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                 InstrStage<1, [A8_LdSt0]>]>,
-  
+
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant
@@ -276,14 +276,14 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // Single-precision FP Load
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpLoad32, [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpLoad32, [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>]>,
   //
   // Double-precision FP Load
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpLoad64, [InstrStage<2, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpLoad64, [InstrStage<2, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0], 0>,
                                InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -292,7 +292,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // FP Load Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpLoadm,  [InstrStage<3, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpLoadm,  [InstrStage<3, [A8_Issue], 0>,
                                InstrStage<2, [A8_Pipe0], 0>,
                                InstrStage<2, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -301,14 +301,14 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // Single-precision FP Store
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStore32,[InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpStore32,[InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>]>,
   //
   // Double-precision FP Store
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStore64,[InstrStage<2, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpStore64,[InstrStage<2, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0], 0>,
                                InstrStage<1, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -317,7 +317,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // FP Store Multiple
   // use A8_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStorem, [InstrStage<3, [A8_Issue], 0>, 
+  InstrItinData<IIC_fpStorem, [InstrStage<3, [A8_Issue], 0>,
                                InstrStage<2, [A8_Pipe0], 0>,
                                InstrStage<2, [A8_Pipe1]>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -329,35 +329,35 @@ def CortexA8Itineraries : ProcessorItineraries<
   //
   // VLD1
   // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VLD1,     [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_VLD1,     [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>]>,
   //
   // VLD2
   // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_VLD2,     [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>], [2, 2, 1]>,
   //
   // VLD3
   // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VLD3,     [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_VLD3,     [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>], [2, 2, 2, 1]>,
   //
   // VLD4
   // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VLD4,     [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_VLD4,     [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>], [2, 2, 2, 2, 1]>,
   //
   // VST
   // FIXME: We don't model this instruction properly
-  InstrItinData<IIC_VST,      [InstrStage<1, [A8_Issue], 0>, 
+  InstrItinData<IIC_VST,      [InstrStage<1, [A8_Issue], 0>,
                                InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_LdSt0], 0>,
                                InstrStage<1, [A8_NLSPipe]>]>,
@@ -600,7 +600,7 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VTB4,     [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NLSPipe]>,
                                InstrStage<1, [A8_NPipe], 0>,
-                               InstrStage<2, [A8_NLSPipe]>], [4, 2, 2, 3, 3, 1]>,
+                               InstrStage<2, [A8_NLSPipe]>],[4, 2, 2, 3, 3, 1]>,
   //
   // VTBX
   InstrItinData<IIC_VTBX1,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
@@ -610,9 +610,9 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VTBX3,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NLSPipe]>,
                                InstrStage<1, [A8_NPipe], 0>,
-                               InstrStage<2, [A8_NLSPipe]>], [4, 1, 2, 2, 3, 1]>,
+                               InstrStage<2, [A8_NLSPipe]>],[4, 1, 2, 2, 3, 1]>,
   InstrItinData<IIC_VTBX4,    [InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                                InstrStage<1, [A8_NLSPipe]>,
                                InstrStage<1, [A8_NPipe], 0>,
-                               InstrStage<2, [A8_NLSPipe]>], [4, 1, 2, 2, 3, 3, 1]>
+                            InstrStage<2, [A8_NLSPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;
