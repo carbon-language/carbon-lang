@@ -2797,6 +2797,12 @@ public:
 
   void HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx);
 
+  /// A flag to suppress access checking.
+  bool SuppressAccessChecking;
+
+  void ActOnStartSuppressingAccessChecks();
+  void ActOnStopSuppressingAccessChecks();
+
   enum AbstractDiagSelID {
     AbstractNone = -1,
     AbstractReturnType,

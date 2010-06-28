@@ -613,6 +613,20 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     ConsumeCodeCompletionToken();
   }
 
+  // C++03 [temp.explicit] 14.7.2/8:
+  //   The usual access checking rules do not apply to names used to specify
+  //   explicit instantiations.
+  //
+  // As an extension we do not perform access checking on the names used to
+  // specify explicit specializations either. This is important to allow
+  // specializing traits classes for private types.
+  bool SuppressingAccessChecks = false;
+  if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
+      TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization) {
+    Actions.ActOnStartSuppressingAccessChecks();
+    SuppressingAccessChecks = true;
+  }
+
   AttributeList *AttrList = 0;
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
@@ -732,9 +746,17 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       DS.SetTypeSpecError();
       SkipUntil(tok::semi, false, true);
       TemplateId->Destroy();
+      if (SuppressingAccessChecks)
+        Actions.ActOnStopSuppressingAccessChecks();
+
       return;
     }
   }
+
+  // As soon as we're finished parsing the class's template-id, turn access
+  // checking back on.
+  if (SuppressingAccessChecks)
+    Actions.ActOnStopSuppressingAccessChecks();
 
   // There are four options here.  If we have 'struct foo;', then this
   // is either a forward declaration or a friend declaration, which

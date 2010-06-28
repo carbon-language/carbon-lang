@@ -125,8 +125,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
-    NumSFINAEErrors(0), NonInstantiationEntries(0), 
-    CurrentInstantiationScope(0), TyposCorrected(0),
+    NumSFINAEErrors(0), SuppressAccessChecking(false),
+    NonInstantiationEntries(0), CurrentInstantiationScope(0), TyposCorrected(0),
     AnalysisWarnings(*this)
 {
   TUScope = 0;

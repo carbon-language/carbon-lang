@@ -2278,6 +2278,16 @@ public:
     return TypeResult();
   }
 
+  /// \brief Called when the parser begins parsing a construct which should not
+  /// have access control applied to it.
+  virtual void ActOnStartSuppressingAccessChecks() {
+  }
+
+  /// \brief Called when the parser finishes parsing a construct which should
+  /// not have access control applied to it.
+  virtual void ActOnStopSuppressingAccessChecks() {
+  }
+
   //===----------------------- Obj-C Declarations -------------------------===//
 
   // ActOnStartClassInterface - this action is called immediately after parsing

@@ -1024,6 +1024,9 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   if (Entity.getAccess() == AS_public)
     return Sema::AR_accessible;
 
+  if (S.SuppressAccessChecking)
+    return Sema::AR_accessible;
+
   // If we're currently parsing a top-level declaration, delay
   // diagnostics.  This is the only case where parsing a declaration
   // can actually change our effective context for the purposes of
@@ -1333,4 +1336,16 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
       CheckAccess(*this, R.getNameLoc(), Entity);
     }
   }
+}
+
+void Sema::ActOnStartSuppressingAccessChecks() {
+  assert(!SuppressAccessChecking &&
+         "Tried to start access check suppression when already started.");
+  SuppressAccessChecking = true;
+}
+
+void Sema::ActOnStopSuppressingAccessChecks() {
+  assert(SuppressAccessChecking &&
+         "Tried to stop access check suprression when already stopped.");
+  SuppressAccessChecking = false;
 }
