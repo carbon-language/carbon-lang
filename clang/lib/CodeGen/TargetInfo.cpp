@@ -1116,11 +1116,15 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
     
-    // If this is a 32-bit structure that is passed as an int64, then it will be
-    // passed in the low 32-bits of a 64-bit GPR, which is the same as how an
-    // i32 is passed.  Coerce to a i32 instead of a i64.
-    if (Context.getTypeSizeInChars(Ty).getQuantity() == 4)
-      CoerceTo = llvm::Type::getInt32Ty(CoerceTo->getContext());
+    // If this is a 8/16/32-bit structure that is passed as an int64, then it
+    // will be passed in the low 8/16/32-bits of a 64-bit GPR, which is the same
+    // as how an i8/i16/i32 is passed.  Coerce to a i8/i16/i32 instead of a i64.
+    switch (Context.getTypeSizeInChars(Ty).getQuantity()) {
+    default: break;
+    case 1: CoerceTo = llvm::Type::getInt8Ty(CoerceTo->getContext()); break;
+    case 2: CoerceTo = llvm::Type::getInt16Ty(CoerceTo->getContext()); break;
+    case 4: CoerceTo = llvm::Type::getInt32Ty(CoerceTo->getContext()); break;
+    }
     
   } else if (CoerceTo->isDoubleTy()) {
     assert(Ty.isCanonical() && "should always have a canonical type here");
