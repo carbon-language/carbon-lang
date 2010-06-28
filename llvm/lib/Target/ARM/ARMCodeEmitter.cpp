@@ -1630,15 +1630,11 @@ void ARMCodeEmitter::emitNEON1RegModImmInstruction(const MachineInstr &MI) {
   // Immediate fields: Op, Cmode, I, Imm3, Imm4
   unsigned Imm = MI.getOperand(1).getImm();
   unsigned Op = (Imm >> 12) & 1;
-  Binary |= (Op << 5);
   unsigned Cmode = (Imm >> 8) & 0xf;
-  Binary |= (Cmode << 8);
   unsigned I = (Imm >> 7) & 1;
-  Binary |= (I << 24);
   unsigned Imm3 = (Imm >> 4) & 0x7;
-  Binary |= (Imm3 << 16);
   unsigned Imm4 = Imm & 0xf;
-  Binary |= Imm4;
+  Binary |= (I << 24) | (Imm3 << 16) | (Cmode << 8) | (Op << 5) | Imm4;
   if (Subtarget->isThumb())
     Binary = convertNEONDataProcToThumb(Binary);
   emitWordLE(Binary);
