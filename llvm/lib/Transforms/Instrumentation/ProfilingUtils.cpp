@@ -61,8 +61,8 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   }
   Args[3] = ConstantInt::get(Type::getInt32Ty(Context), NumElements);
 
-  Instruction *InitCall = CallInst::Create(InitFn, Args.begin(), Args.end(),
-                                           "newargc", InsertPos);
+  CallInst *InitCall = CallInst::Create(InitFn, Args.begin(), Args.end(),
+                                        "newargc", InsertPos);
 
   // If argc or argv are not available in main, just pass null values in.
   Function::arg_iterator AI;
@@ -73,10 +73,10 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     if (AI->getType() != ArgVTy) {
       Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy, 
                                                             false);
-      InitCall->setOperand(2, 
+      InitCall->setArgOperand(1, 
           CastInst::Create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
-      InitCall->setOperand(2, AI);
+      InitCall->setArgOperand(1, AI);
     }
     /* FALL THROUGH */
 
@@ -93,12 +93,12 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       }
       opcode = CastInst::getCastOpcode(AI, true,
                                        Type::getInt32Ty(Context), true);
-      InitCall->setOperand(1, 
+      InitCall->setArgOperand(0, 
           CastInst::Create(opcode, AI, Type::getInt32Ty(Context),
                            "argc.cast", InitCall));
     } else {
       AI->replaceAllUsesWith(InitCall);
-      InitCall->setOperand(1, AI);
+      InitCall->setArgOperand(0, AI);
     }
 
   case 0: break;
