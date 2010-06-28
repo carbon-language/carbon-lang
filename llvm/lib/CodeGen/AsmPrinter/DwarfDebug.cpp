@@ -2589,7 +2589,6 @@ void DwarfDebug::identifyScopeMarkers() {
            RE = Ranges.end(); RI != RE; ++RI) {
       assert(RI->first && "DbgRange does not have first instruction!");      
       assert(RI->second && "DbgRange does not have second instruction!");      
-      InsnsBeginScopeSet.insert(RI->first);
       InsnsEndScopeSet.insert(RI->second);
     }
   }
@@ -2753,7 +2752,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DbgVariableToDbgInstMap.clear();
   DbgVariableLabelsMap.clear();
   DeleteContainerSeconds(DbgScopeMap);
-  InsnsBeginScopeSet.clear();
   InsnsEndScopeSet.clear();
   ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
