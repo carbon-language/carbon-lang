@@ -420,11 +420,11 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
         FT->getParamType(2) != TD->getIntPtrType(Context) ||
         FT->getParamType(3) != TD->getIntPtrType(Context))
       return false;
-    
-    if (isFoldable(4, 3, false)) {
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+
+    if (isFoldable(3 + CallInst::ArgOffset, 2 + CallInst::ArgOffset, false)) {
+      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
                  1, false, B, TD);
-      replaceCall(CI->getOperand(1));
+      replaceCall(CI->getArgOperand(0));
       return true;
     }
     return false;
@@ -443,11 +443,11 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
         FT->getParamType(2) != TD->getIntPtrType(Context) ||
         FT->getParamType(3) != TD->getIntPtrType(Context))
       return false;
-    
-    if (isFoldable(4, 3, false)) {
-      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+
+    if (isFoldable(3 + CallInst::ArgOffset, 2 + CallInst::ArgOffset, false)) {
+      EmitMemMove(CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
                   1, false, B, TD);
-      replaceCall(CI->getOperand(1));
+      replaceCall(CI->getArgOperand(0));
       return true;
     }
     return false;
@@ -461,9 +461,9 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
         FT->getParamType(2) != TD->getIntPtrType(Context) ||
         FT->getParamType(3) != TD->getIntPtrType(Context))
       return false;
-    
-    if (isFoldable(4, 3, false)) {
-      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
+
+    if (isFoldable(3 + CallInst::ArgOffset, 2 + CallInst::ArgOffset, false)) {
+      Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(),
                                    false);
       EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2), false, B, TD);
       replaceCall(CI->getArgOperand(0));
@@ -487,8 +487,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     // st[rp]cpy_chk call which may fail at runtime if the size is too long.
     // TODO: It might be nice to get a maximum length out of the possible
     // string lengths for varying.
-    if (isFoldable(3, 2, true)) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
+    if (isFoldable(2 + CallInst::ArgOffset, 1 + CallInst::ArgOffset, true)) {
+      Value *Ret = EmitStrCpy(CI->getArgOperand(0), CI->getArgOperand(1), B, TD,
                               Name.substr(2, 6));
       replaceCall(Ret);
       return true;
@@ -504,10 +504,10 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
         !FT->getParamType(2)->isIntegerTy() ||
         FT->getParamType(3) != TD->getIntPtrType(Context))
       return false;
-    
-    if (isFoldable(4, 3, false)) {
-      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
-                               CI->getOperand(3), B, TD, Name.substr(2, 7));
+
+    if (isFoldable(3 + CallInst::ArgOffset, 2 + CallInst::ArgOffset, false)) {
+      Value *Ret = EmitStrNCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                               CI->getArgOperand(2), B, TD, Name.substr(2, 7));
       replaceCall(Ret);
       return true;
     }
