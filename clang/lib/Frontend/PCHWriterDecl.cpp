@@ -225,6 +225,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
+  default: assert(false && "Unhandled TemplatedKind!");
+    break;
   case FunctionDecl::TK_NonTemplate:
     break;
   case FunctionDecl::TK_FunctionTemplate:

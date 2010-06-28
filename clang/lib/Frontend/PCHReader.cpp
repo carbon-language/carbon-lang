@@ -3012,8 +3012,11 @@ PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
     return TemplateArgument(GetType(Record[Idx++]));
   case TemplateArgument::Declaration:
     return TemplateArgument(GetDecl(Record[Idx++]));
-  case TemplateArgument::Integral:
-    return TemplateArgument(ReadAPSInt(Record, Idx), GetType(Record[Idx++]));
+  case TemplateArgument::Integral: {
+    llvm::APSInt Value = ReadAPSInt(Record, Idx);
+    QualType T = GetType(Record[Idx++]);
+    return TemplateArgument(Value, T);
+  }
   case TemplateArgument::Template:
     return TemplateArgument(ReadTemplateName(Record, Idx));
   case TemplateArgument::Expression:

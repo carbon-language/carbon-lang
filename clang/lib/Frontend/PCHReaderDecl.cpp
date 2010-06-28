@@ -216,6 +216,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
+  default: assert(false && "Unhandled TemplatedKind!");
+    break;
   case FunctionDecl::TK_NonTemplate:
     break;
   case FunctionDecl::TK_FunctionTemplate:
@@ -257,6 +259,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
                                           NumTemplateArgLocs,
                                   NumTemplateArgLocs ? TemplArgLocs.data() : 0,
                                           LAngleLoc, RAngleLoc);
+    break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
     // Templates.
@@ -273,6 +276,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     FD->setDependentTemplateSpecialization(*Reader.getContext(),
                                            TemplDecls, TemplArgs);
+    break;
   }
   }
   

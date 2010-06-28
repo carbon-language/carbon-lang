@@ -393,7 +393,8 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
 
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
                                            const TemplateArgument *Args,
-                                           unsigned NumArgs) {
+                                           unsigned NumArgs)
+  : NumFlatArguments(0), NumStructuredArguments(0) {
   init(Context, Args, NumArgs);
 }
 
