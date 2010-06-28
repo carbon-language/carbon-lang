@@ -14,6 +14,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
   class MCAsmInfo;
@@ -54,6 +55,17 @@ namespace llvm {
     /// for the LocalLabelVal and adds it to the map if needed.
     unsigned GetInstance(int64_t LocalLabelVal);
     
+    /// The file name of the log file from the enviromment variable
+    /// AS_SECURE_LOG_FILE.  Which must be set before the .secure_log_unique
+    /// directive is used or it is an error.
+    char *SecureLogFile;
+    /// The stream that gets written to for the .secure_log_unique directive.
+    raw_ostream *SecureLog;
+    /// Boolean toggled when .secure_log_unique / .secure_log_reset is seen to
+    /// catch errors if .secure_log_unique appears twice without
+    /// .secure_log_reset appearing between them.
+    bool SecureLogUsed;
+
     /// Allocator - Allocator object used for creating machine code objects.
     ///
     /// We use a bump pointer allocator to avoid the need to track all allocated
@@ -126,6 +138,16 @@ namespace llvm {
 
     
     /// @}
+
+    char *getSecureLogFile() { return SecureLogFile; }
+    raw_ostream *getSecureLog() { return SecureLog; }
+    bool getSecureLogUsed() { return SecureLogUsed; }
+    void setSecureLog(raw_ostream *Value) {
+      SecureLog = Value;
+    }
+    void setSecureLogUsed(bool Value) {
+      SecureLogUsed = Value;
+    }
 
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return Allocator.Allocate(Size, Align);
