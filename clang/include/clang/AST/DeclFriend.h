@@ -59,10 +59,13 @@ private:
       FriendLoc(FriendL) {
   }
 
+  FriendDecl(EmptyShell Empty) : Decl(Decl::Friend, Empty), NextFriend(0) { }
+
 public:
   static FriendDecl *Create(ASTContext &C, DeclContext *DC,
                             SourceLocation L, FriendUnion Friend_,
                             SourceLocation FriendL);
+  static FriendDecl *Create(ASTContext &C, EmptyShell Empty);
 
   /// If this friend declaration names an (untemplated but
   /// possibly dependent) type, return the type;  otherwise
@@ -87,6 +90,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FriendDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::Friend; }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// An iterator over the friend declarations of a class.

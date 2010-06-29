@@ -27,7 +27,7 @@ using namespace clang;
 // Declaration deserialization
 //===----------------------------------------------------------------------===//
 
-namespace {
+namespace clang {
   class PCHDeclReader : public DeclVisitor<PCHDeclReader, void> {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
@@ -81,6 +81,7 @@ namespace {
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
+    void VisitFriendDecl(FriendDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *BD);
@@ -673,6 +674,9 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Bases.push_back(ReadCXXBaseSpecifier());
     D->setBases(Bases.begin(), NumBases);
 
+    D->data().FirstFriend
+        = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+
     // FIXME: there's a lot of stuff we do here that's kindof sketchy
     // if we're leaving the context incomplete.
     D->completeDefinition();
@@ -702,6 +706,15 @@ void PCHDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
 void PCHDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
   VisitDecl(D);
   D->setColonLoc(Reader.ReadSourceLocation(Record, Idx));
+}
+
+void PCHDeclReader::VisitFriendDecl(FriendDecl *D) {
+  if (Record[Idx++])
+    D->Friend = Reader.GetTypeSourceInfo(Record, Idx);
+  else
+    D->Friend = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+  D->NextFriend = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+  D->FriendLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
@@ -1204,7 +1217,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                SourceLocation());
     break;
   case pch::DECL_FRIEND:
-    assert(false && "cannot read FriendDecl");
+    D = FriendDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_FRIEND_TEMPLATE:
     assert(false && "cannot read FriendTemplateDecl");

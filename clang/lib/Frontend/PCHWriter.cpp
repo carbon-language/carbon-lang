@@ -1444,11 +1444,16 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (DC->getPrimaryContext() != DC)
     return 0;
 
-  // Since there is no name lookup into functions or methods, and we
-  // perform name lookup for the translation unit via the
-  // IdentifierInfo chains, don't bother to build a
-  // visible-declarations table for these entities.
-  if (DC->isFunctionOrMethod() || DC->isTranslationUnit())
+  // Since there is no name lookup into functions or methods, don't bother to
+  // build a visible-declarations table for these entities.
+  if (DC->isFunctionOrMethod())
+    return 0;
+
+  // If not in C++, we perform name lookup for the translation unit via the
+  // IdentifierInfo chains, don't bother to build a visible-declarations table.
+  // FIXME: In C++ we need the visible declarations in order to "see" the
+  // friend declarations, is there a way to do this without writing the table ?
+  if (DC->isTranslationUnit() && !Context.getLangOptions().CPlusPlus)
     return 0;
 
   // Force the DeclContext to build a its name-lookup table.

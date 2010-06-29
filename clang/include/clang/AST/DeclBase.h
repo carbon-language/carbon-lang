@@ -248,6 +248,14 @@ protected:
     if (Decl::CollectingStats()) add(DK);
   }
 
+  Decl(Kind DK, EmptyShell Empty)
+    : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
+      HasAttrs(false), Implicit(false), Used(false),
+      Access(AS_none), PCHLevel(0),
+      IdentifierNamespace(getIdentifierNamespaceForKind(DK)) {
+    if (Decl::CollectingStats()) add(DK);
+  }
+
   virtual ~Decl();
 
 public:

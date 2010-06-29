@@ -25,7 +25,7 @@ using namespace clang;
 // Declaration serialization
 //===----------------------------------------------------------------------===//
 
-namespace {
+namespace clang {
   class PCHDeclWriter : public DeclVisitor<PCHDeclWriter, void> {
 
     PCHWriter &Writer;
@@ -82,6 +82,7 @@ namespace {
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
+    void VisitFriendDecl(FriendDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *D);
@@ -636,7 +637,6 @@ void PCHDeclWriter::WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base) {
 }
 
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  // assert(false && "cannot write CXXRecordDecl");
   VisitRecordDecl(D);
 
   enum {
@@ -664,6 +664,8 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
            E = D->bases_end(); I != E; ++I)
       WriteCXXBaseSpecifier(&*I);
+    
+    Writer.AddDeclRef(D->data().FirstFriend, Record);
   }
   Code = pch::DECL_CXX_RECORD;
 }
@@ -696,6 +698,17 @@ void PCHDeclWriter::VisitAccessSpecDecl(AccessSpecDecl *D) {
   VisitDecl(D);
   Writer.AddSourceLocation(D->getColonLoc(), Record);
   Code = pch::DECL_ACCESS_SPEC;
+}
+
+void PCHDeclWriter::VisitFriendDecl(FriendDecl *D) {
+  Record.push_back(D->Friend.is<TypeSourceInfo*>());
+  if (D->Friend.is<TypeSourceInfo*>())
+    Writer.AddTypeSourceInfo(D->Friend.get<TypeSourceInfo*>(), Record);
+  else
+    Writer.AddDeclRef(D->Friend.get<NamedDecl*>(), Record);
+  Writer.AddDeclRef(D->NextFriend, Record);
+  Writer.AddSourceLocation(D->FriendLoc, Record);
+  Code = pch::DECL_FRIEND;
 }
 
 void PCHDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {

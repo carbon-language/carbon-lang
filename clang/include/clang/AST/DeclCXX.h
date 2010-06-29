@@ -973,6 +973,9 @@ public:
   static bool classof(const ClassTemplateSpecializationDecl *D) {
     return true;
   }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// CXXMethodDecl - Represents a static or instance method of a
