@@ -486,11 +486,11 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   // be represented by the promoted type.  Therefore we need to find
   // the pre-promotion type of the switch condition.
   if (!CondExpr->isTypeDependent()) {
-    if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
-      Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
-          << CondType << CondExpr->getSourceRange();
+    // We have already converted the expression to an integral or enumeration
+    // type, when we started the switch statement. If we don't have an 
+    // appropriate type now, just return an error.
+    if (!CondType->isIntegralOrEnumerationType())
       return StmtError();
-    }
 
     if (CondExpr->isKnownToHaveBooleanValue()) {
       // switch(bool_expr) {...} is often a programmer error, e.g.

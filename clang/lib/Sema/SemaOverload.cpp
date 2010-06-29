@@ -3106,7 +3106,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
   if (!RecordTy || !getLangOptions().CPlusPlus) {
     Diag(Loc, NotIntDiag)
       << T << From->getSourceRange();
-    return ExprError();
+    return move(FromE);
   }
     
   // We must have a complete class type.
@@ -3190,14 +3190,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
       Diag(Conv->getLocation(), AmbigNote)
         << ConvTy->isEnumeralType() << ConvTy;
     }
-    return ExprError();
+    return move(FromE);
   }
   
-  if (!From->getType()->isIntegralOrEnumerationType()) {
+  if (!From->getType()->isIntegralOrEnumerationType())
     Diag(Loc, NotIntDiag)
       << From->getType() << From->getSourceRange();
-    return ExprError();
-  }
 
   return move(FromE);
 }
