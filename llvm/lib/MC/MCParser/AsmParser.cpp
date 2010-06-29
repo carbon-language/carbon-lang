@@ -844,7 +844,6 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
   SMLoc EqualLoc = Lexer.getLoc();
 
   const MCExpr *Value;
-  SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Value))
     return true;
   
@@ -1116,7 +1115,6 @@ bool AsmParser::ParseDirectiveSpace() {
     return true;
 
   int64_t FillExpr = 0;
-  bool HasFillExpr = false;
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     if (Lexer.isNot(AsmToken::Comma))
       return TokError("unexpected token in '.space' directive");
@@ -1124,8 +1122,6 @@ bool AsmParser::ParseDirectiveSpace() {
     
     if (ParseAbsoluteExpression(FillExpr))
       return true;
-
-    HasFillExpr = true;
 
     if (Lexer.isNot(AsmToken::EndOfStatement))
       return TokError("unexpected token in '.space' directive");
@@ -1183,7 +1179,6 @@ bool AsmParser::ParseDirectiveFill() {
 ///  ::= .org expression [ , expression ]
 bool AsmParser::ParseDirectiveOrg() {
   const MCExpr *Offset;
-  SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Offset))
     return true;
 
@@ -1387,7 +1382,6 @@ bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
     return TokError("unexpected token in '.desc' directive");
   Lex();
 
-  SMLoc DescLoc = Lexer.getLoc();
   int64_t DescValue;
   if (ParseAbsoluteExpression(DescValue))
     return true;
@@ -1673,7 +1667,6 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
   Lex();
 
   const MCExpr *Value;
-  SMLoc StartLoc = Lexer.getLoc();
   if (ParseExpression(Value))
     return true;
 
