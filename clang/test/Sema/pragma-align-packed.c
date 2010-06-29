@@ -1,4 +1,4 @@
-// RUN: %clang-cc1 -triple i386-apple-darwin9 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -verify %s
 
 #pragma pack(push, 1)
 struct s0 {
