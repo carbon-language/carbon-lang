@@ -1,4 +1,4 @@
-// RUN: %clang-cc1 -fsyntax-only -fmacro-backtrace-limit 5 %s > %t 2>&1 
+// RUN: %clang_cc1 -fsyntax-only -fmacro-backtrace-limit 5 %s > %t 2>&1 
 // RUN: FileCheck %s < %t
 
 #define M1(A, B) ((A) < (B))
