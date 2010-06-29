@@ -1211,6 +1211,28 @@ void MachineInstr::dump() const {
   dbgs() << "  " << *this;
 }
 
+static void printDebugLoc(DebugLoc DL, const MachineFunction *MF, 
+                         raw_ostream &CommentOS) {
+  const LLVMContext &Ctx = MF->getFunction()->getContext();
+  if (!DL.isUnknown()) {          // Print source line info.
+    DIScope Scope(DL.getScope(Ctx));
+    // Omit the directory, because it's likely to be long and uninteresting.
+    if (Scope.Verify())
+      CommentOS << Scope.getFilename();
+    else
+      CommentOS << "<unknown>";
+    CommentOS << ':' << DL.getLine();
+    if (DL.getCol() != 0)
+      CommentOS << ':' << DL.getCol();
+    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
+    if (!InlinedAtDL.isUnknown()) {
+      CommentOS << " @[ ";
+      printDebugLoc(InlinedAtDL, MF, CommentOS);
+      CommentOS << " ]";
+    }
+  }
+}
+
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   // We can be a bit tidier if we know the TargetMachine and/or MachineFunction.
   const MachineFunction *MF = 0;
@@ -1308,19 +1330,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
   if (!debugLoc.isUnknown() && MF) {
     if (!HaveSemi) OS << ";";
-
-    // TODO: print InlinedAtLoc information
-
-    DIScope Scope(debugLoc.getScope(MF->getFunction()->getContext()));
     OS << " dbg:";
-    // Omit the directory, since it's usually long and uninteresting.
-    if (Scope.Verify())
-      OS << Scope.getFilename();
-    else
-      OS << "<unknown>";
-    OS << ':' << debugLoc.getLine();
-    if (debugLoc.getCol() != 0)
-      OS << ':' << debugLoc.getCol();
+    printDebugLoc(debugLoc, MF, OS);
   }
 
   OS << "\n";
