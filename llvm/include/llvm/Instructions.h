@@ -1079,7 +1079,7 @@ CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                (unsigned)(ArgEnd - ArgBegin + 1), InsertAtEnd) {
+                unsigned(ArgEnd - ArgBegin + 1), InsertAtEnd) {
   init(Func, ArgBegin, ArgEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
