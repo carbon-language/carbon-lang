@@ -27,7 +27,7 @@ int main (int argc, char const *argv[])
     short short_4[4] = { 1,2,3,4 };
     short short_matrix[1][2] = { {1,2} };
     unsigned short ushort_4[4] = { 1,2,3,4 };
-    short ushort_matrix[2][3] = {
+    unsigned short ushort_matrix[2][3] = {
         { 1, 2, 3},
         {11,22,33}
     };

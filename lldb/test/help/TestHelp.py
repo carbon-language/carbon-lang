@@ -1,19 +1,26 @@
 """Test lldb help command."""
 
+import os
 import lldb
 import unittest
 
 class TestHelpCommand(unittest.TestCase):
 
     def setUp(self):
-        self.debugger = lldb.SBDebugger.Create()
-        self.debugger.SetAsync(False)
-        self.ci = self.debugger.GetCommandInterpreter()
+        # Save old working directory.
+        self.oldcwd = os.getcwd()
+        # Change current working directory if ${LLDB_TEST} is defined.
+        if ("LLDB_TEST" in os.environ):
+            os.chdir(os.path.join(os.environ["LLDB_TEST"], "help"));
+        self.dbg = lldb.SBDebugger.Create()
+        self.dbg.SetAsync(False)
+        self.ci = self.dbg.GetCommandInterpreter()
         if not self.ci:
             raise Exception('Could not get the command interpreter')
 
     def tearDown(self):
-        pass
+        # Restore old working directory.
+        os.chdir(self.oldcwd)
 
     def test_simplehelp(self):
         """A simple test of 'help' command and its output."""
@@ -22,7 +29,6 @@ class TestHelpCommand(unittest.TestCase):
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             'The following is a list of built-in, permanent debugger commands'))
-        #print res.GetOutput()
 
     def test_help_should_not_hang_emacsshell(self):
         """'set term-width 0' should not hang the help command."""
@@ -33,7 +39,6 @@ class TestHelpCommand(unittest.TestCase):
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
             'The following is a list of built-in, permanent debugger commands'))
-        #print res.GetOutput()
 
 
 if __name__ == '__main__':

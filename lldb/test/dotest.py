@@ -42,6 +42,9 @@ where options:
 and:
 args : specify a list of directory names to search for python Test*.py scripts
        if empty, search from the curret working directory, instead
+
+Running of this script also sets up the LLDB_TEST environment variable so that
+individual test cases can locate their supporting files correctly.
 """
 
 
@@ -53,6 +56,8 @@ def setupSysPath():
     if not testPath.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
+
+    os.environ["LLDB_TEST"] = testPath
 
     base = os.path.abspath(os.path.join(testPath, os.pardir))
     dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
