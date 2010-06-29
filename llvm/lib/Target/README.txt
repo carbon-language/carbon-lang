@@ -300,6 +300,14 @@ unsigned long reverse(unsigned v) {
     return v ^ (t >> 8);
 }
 
+Neither is this (very standard idiom):
+
+int f(int n)
+{
+  return (((n) << 24) | (((n) & 0xff00) << 8) 
+       | (((n) >> 8) & 0xff00) | ((n) >> 24));
+}
+
 //===---------------------------------------------------------------------===//
 
 [LOOP RECOGNITION]
