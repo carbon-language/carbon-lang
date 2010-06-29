@@ -439,10 +439,8 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
 SDValue MBlazeTargetLowering::
 LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
   SDValue ResNode;
-  EVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   const Constant *C = N->getConstVal();
-  SDValue Zero = DAG.getConstant(0, PtrVT);
   DebugLoc dl = Op.getDebugLoc();
 
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),

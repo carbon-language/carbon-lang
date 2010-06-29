@@ -1886,7 +1886,6 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
       DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
                   PseudoSourceValue::getConstantPool(), 0,
                   false, false, 0);
-    SDValue Chain = Result.getValue(1);
 
     if (RelocM == Reloc::PIC_) {
       SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);

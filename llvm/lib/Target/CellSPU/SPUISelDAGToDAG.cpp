@@ -275,7 +275,6 @@ namespace {
 
     SDNode *emitBuildVector(SDNode *bvNode) {
       EVT vecVT = bvNode->getValueType(0);
-      EVT eltVT = vecVT.getVectorElementType();
       DebugLoc dl = bvNode->getDebugLoc();
 
       // Check to see if this vector can be represented as a CellSPU immediate

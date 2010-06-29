@@ -1379,7 +1379,6 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     SDValue Mul0, Mul1, Addend0, Addend1;
     if (N->getValueType(0) == MVT::i32 &&
         isADDADDMUL(SDValue(N, 0), Mul0, Mul1, Addend0, Addend1, true)) {
-      SDValue Zero = DAG.getConstant(0, MVT::i32);
       SDValue Ignored = DAG.getNode(XCoreISD::LMUL, dl,
                                     DAG.getVTList(MVT::i32, MVT::i32), Mul0,
                                     Mul1, Addend0, Addend1);

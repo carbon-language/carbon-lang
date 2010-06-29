@@ -180,7 +180,6 @@ bool LiveInterval::overlaps(SlotIndex Start, SlotIndex End) const {
 void LiveInterval::extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd) {
   assert(I != ranges.end() && "Not a valid interval!");
   VNInfo *ValNo = I->valno;
-  SlotIndex OldEnd = I->end;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = next(I);

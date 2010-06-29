@@ -2737,7 +2737,6 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
   assert((CallConv == CallingConv::C ||
           CallConv == CallingConv::Fast) && "Unknown calling convention!");
 
-  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   unsigned PtrByteSize = 4;
 
   MachineFunction &MF = DAG.getMachineFunction();

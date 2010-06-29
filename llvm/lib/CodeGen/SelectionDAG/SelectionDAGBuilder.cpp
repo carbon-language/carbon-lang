@@ -2404,7 +2404,6 @@ void SelectionDAGBuilder::visitPtrToInt(const User &I) {
   // What to do depends on the size of the integer and the size of the pointer.
   // We can either truncate, zero extend, or no-op, accordingly.
   SDValue N = getValue(I.getOperand(0));
-  EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT));
 }
@@ -2413,7 +2412,6 @@ void SelectionDAGBuilder::visitIntToPtr(const User &I) {
   // What to do depends on the size of the integer and the size of the pointer.
   // We can either truncate, zero extend, or no-op, accordingly.
   SDValue N = getValue(I.getOperand(0));
-  EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT));
 }
