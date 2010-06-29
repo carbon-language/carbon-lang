@@ -774,6 +774,19 @@ public:
   /// \brief Reads an expression.
   Expr *ReadExpr();
 
+  /// \brief Reads a sub-statement operand during statement reading.
+  Stmt *ReadSubStmt() {
+    assert(ReadingKind == Read_Stmt &&
+           "Should be called only during statement reading!");
+    // Subexpressions are stored from last to first, so the next Stmt we need
+    // is at the back of the stack.
+    assert(!StmtStack.empty() && "Read too many sub statements!");
+    return StmtStack.pop_back_val();
+  }
+
+  /// \brief Reads a sub-expression operand during statement reading.
+  Expr *ReadSubExpr();
+
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(uint64_t Offset);
 

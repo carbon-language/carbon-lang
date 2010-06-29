@@ -173,7 +173,7 @@ void PCHStmtReader::VisitCompoundStmt(CompoundStmt *S) {
   llvm::SmallVector<Stmt *, 16> Stmts;
   unsigned NumStmts = Record[Idx++];
   while (NumStmts--)
-    Stmts.push_back(Reader.ReadStmt());
+    Stmts.push_back(Reader.ReadSubStmt());
   S->setStmts(*Reader.getContext(), Stmts.data(), Stmts.size());
   S->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -186,9 +186,9 @@ void PCHStmtReader::VisitSwitchCase(SwitchCase *S) {
 
 void PCHStmtReader::VisitCaseStmt(CaseStmt *S) {
   VisitSwitchCase(S);
-  S->setLHS(Reader.ReadExpr());
-  S->setRHS(Reader.ReadExpr());
-  S->setSubStmt(Reader.ReadStmt());
+  S->setLHS(Reader.ReadSubExpr());
+  S->setRHS(Reader.ReadSubExpr());
+  S->setSubStmt(Reader.ReadSubStmt());
   S->setCaseLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setEllipsisLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -196,7 +196,7 @@ void PCHStmtReader::VisitCaseStmt(CaseStmt *S) {
 
 void PCHStmtReader::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
-  S->setSubStmt(Reader.ReadStmt());
+  S->setSubStmt(Reader.ReadSubStmt());
   S->setDefaultLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -204,7 +204,7 @@ void PCHStmtReader::VisitDefaultStmt(DefaultStmt *S) {
 void PCHStmtReader::VisitLabelStmt(LabelStmt *S) {
   VisitStmt(S);
   S->setID(Reader.GetIdentifierInfo(Record, Idx));
-  S->setSubStmt(Reader.ReadStmt());
+  S->setSubStmt(Reader.ReadSubStmt());
   S->setIdentLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   Reader.RecordLabelStmt(S, Record[Idx++]);
 }
@@ -213,9 +213,9 @@ void PCHStmtReader::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
   S->setConditionVariable(*Reader.getContext(),
                           cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
-  S->setCond(Reader.ReadExpr());
-  S->setThen(Reader.ReadStmt());
-  S->setElse(Reader.ReadStmt());
+  S->setCond(Reader.ReadSubExpr());
+  S->setThen(Reader.ReadSubStmt());
+  S->setElse(Reader.ReadSubStmt());
   S->setIfLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setElseLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -224,8 +224,8 @@ void PCHStmtReader::VisitSwitchStmt(SwitchStmt *S) {
   VisitStmt(S);
   S->setConditionVariable(*Reader.getContext(),
                           cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
-  S->setCond(Reader.ReadExpr());
-  S->setBody(Reader.ReadStmt());
+  S->setCond(Reader.ReadSubExpr());
+  S->setBody(Reader.ReadSubStmt());
   S->setSwitchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   SwitchCase *PrevSC = 0;
   for (unsigned N = Record.size(); Idx != N; ++Idx) {
@@ -246,15 +246,15 @@ void PCHStmtReader::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
   S->setConditionVariable(*Reader.getContext(),
                           cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
-  S->setCond(Reader.ReadExpr());
-  S->setBody(Reader.ReadStmt());
+  S->setCond(Reader.ReadSubExpr());
+  S->setBody(Reader.ReadSubStmt());
   S->setWhileLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitDoStmt(DoStmt *S) {
   VisitStmt(S);
-  S->setCond(Reader.ReadExpr());
-  S->setBody(Reader.ReadStmt());
+  S->setCond(Reader.ReadSubExpr());
+  S->setBody(Reader.ReadSubStmt());
   S->setDoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setWhileLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -262,12 +262,12 @@ void PCHStmtReader::VisitDoStmt(DoStmt *S) {
 
 void PCHStmtReader::VisitForStmt(ForStmt *S) {
   VisitStmt(S);
-  S->setInit(Reader.ReadStmt());
-  S->setCond(Reader.ReadExpr());
+  S->setInit(Reader.ReadSubStmt());
+  S->setCond(Reader.ReadSubExpr());
   S->setConditionVariable(*Reader.getContext(),
                           cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
-  S->setInc(Reader.ReadExpr());
-  S->setBody(Reader.ReadStmt());
+  S->setInc(Reader.ReadSubExpr());
+  S->setBody(Reader.ReadSubStmt());
   S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -284,7 +284,7 @@ void PCHStmtReader::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
   VisitStmt(S);
   S->setGotoLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  S->setTarget(Reader.ReadExpr());
+  S->setTarget(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitContinueStmt(ContinueStmt *S) {
@@ -299,7 +299,7 @@ void PCHStmtReader::VisitBreakStmt(BreakStmt *S) {
 
 void PCHStmtReader::VisitReturnStmt(ReturnStmt *S) {
   VisitStmt(S);
-  S->setRetValue(Reader.ReadExpr());
+  S->setRetValue(Reader.ReadSubExpr());
   S->setReturnLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setNRVOCandidate(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
 }
@@ -334,7 +334,7 @@ void PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
   S->setSimple(Record[Idx++]);
   S->setMSAsm(Record[Idx++]);
 
-  S->setAsmString(cast_or_null<StringLiteral>(Reader.ReadStmt()));
+  S->setAsmString(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
 
   // Outputs and inputs
   llvm::SmallVector<IdentifierInfo *, 16> Names;
@@ -342,14 +342,14 @@ void PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
   llvm::SmallVector<Stmt*, 16> Exprs;
   for (unsigned I = 0, N = NumOutputs + NumInputs; I != N; ++I) {
     Names.push_back(Reader.GetIdentifierInfo(Record, Idx));
-    Constraints.push_back(cast_or_null<StringLiteral>(Reader.ReadStmt()));
-    Exprs.push_back(Reader.ReadStmt());
+    Constraints.push_back(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
+    Exprs.push_back(Reader.ReadSubStmt());
   }
 
   // Constraints
   llvm::SmallVector<StringLiteral*, 16> Clobbers;
   for (unsigned I = 0; I != NumClobbers; ++I)
-    Clobbers.push_back(cast_or_null<StringLiteral>(Reader.ReadStmt()));
+    Clobbers.push_back(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
 
   S->setOutputsAndInputsAndClobbers(*Reader.getContext(),
                                     Names.data(), Constraints.data(), 
@@ -394,7 +394,7 @@ void PCHStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
 
 void PCHStmtReader::VisitImaginaryLiteral(ImaginaryLiteral *E) {
   VisitExpr(E);
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
@@ -426,12 +426,12 @@ void PCHStmtReader::VisitParenExpr(ParenExpr *E) {
   VisitExpr(E);
   E->setLParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitUnaryOperator(UnaryOperator *E) {
   VisitExpr(E);
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
   E->setOpcode((UnaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -474,14 +474,14 @@ void PCHStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
   }
   
   for (unsigned I = 0, N = E->getNumExpressions(); I != N; ++I)
-    E->setIndexExpr(I, Reader.ReadExpr());
+    E->setIndexExpr(I, Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   VisitExpr(E);
   E->setSizeof(Record[Idx++]);
   if (Record[Idx] == 0) {
-    E->setArgument(Reader.ReadExpr());
+    E->setArgument(Reader.ReadSubExpr());
     ++Idx;
   } else {
     E->setArgument(Reader.GetTypeSourceInfo(Record, Idx));
@@ -492,8 +492,8 @@ void PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
 void PCHStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   VisitExpr(E);
-  E->setLHS(Reader.ReadExpr());
-  E->setRHS(Reader.ReadExpr());
+  E->setLHS(Reader.ReadSubExpr());
+  E->setRHS(Reader.ReadSubExpr());
   E->setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
@@ -501,14 +501,14 @@ void PCHStmtReader::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
   E->setNumArgs(*Reader.getContext(), Record[Idx++]);
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setCallee(Reader.ReadExpr());
+  E->setCallee(Reader.ReadSubExpr());
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
-    E->setArg(I, Reader.ReadExpr());
+    E->setArg(I, Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
   VisitExpr(E);
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setMemberDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
   E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setArrow(Record[Idx++]);
@@ -516,21 +516,21 @@ void PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
 
 void PCHStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
   VisitExpr(E);
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setIsaMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setArrow(Record[Idx++]);
 }
 
 void PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
   E->setCastKind((CastExpr::CastKind)Record[Idx++]);
 }
 
 void PCHStmtReader::VisitBinaryOperator(BinaryOperator *E) {
   VisitExpr(E);
-  E->setLHS(Reader.ReadExpr());
-  E->setRHS(Reader.ReadExpr());
+  E->setLHS(Reader.ReadSubExpr());
+  E->setRHS(Reader.ReadSubExpr());
   E->setOpcode((BinaryOperator::Opcode)Record[Idx++]);
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -543,9 +543,9 @@ void PCHStmtReader::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
 
 void PCHStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
   VisitExpr(E);
-  E->setCond(Reader.ReadExpr());
-  E->setLHS(Reader.ReadExpr());
-  E->setRHS(Reader.ReadExpr());
+  E->setCond(Reader.ReadSubExpr());
+  E->setLHS(Reader.ReadSubExpr());
+  E->setRHS(Reader.ReadSubExpr());
   E->setQuestionLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -570,13 +570,13 @@ void PCHStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
-  E->setInitializer(Reader.ReadExpr());
+  E->setInitializer(Reader.ReadSubExpr());
   E->setFileScope(Record[Idx++]);
 }
 
 void PCHStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   VisitExpr(E);
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setAccessor(Reader.GetIdentifierInfo(Record, Idx));
   E->setAccessorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -586,8 +586,8 @@ void PCHStmtReader::VisitInitListExpr(InitListExpr *E) {
   unsigned NumInits = Record[Idx++];
   E->reserveInits(*Reader.getContext(), NumInits);
   for (unsigned I = 0; I != NumInits; ++I)
-    E->updateInit(*Reader.getContext(), I, Reader.ReadExpr());
-  E->setSyntacticForm(cast_or_null<InitListExpr>(Reader.ReadStmt()));
+    E->updateInit(*Reader.getContext(), I, Reader.ReadSubExpr());
+  E->setSyntacticForm(cast_or_null<InitListExpr>(Reader.ReadSubStmt()));
   E->setLBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setInitializedFieldInUnion(
@@ -602,7 +602,7 @@ void PCHStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   unsigned NumSubExprs = Record[Idx++];
   assert(NumSubExprs == E->getNumSubExprs() && "Wrong number of subexprs");
   for (unsigned I = 0; I != NumSubExprs; ++I)
-    E->setSubExpr(I, Reader.ReadExpr());
+    E->setSubExpr(I, Reader.ReadSubExpr());
   E->setEqualOrColonLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setGNUSyntax(Record[Idx++]);
 
@@ -665,7 +665,7 @@ void PCHStmtReader::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
 void PCHStmtReader::VisitVAArgExpr(VAArgExpr *E) {
   VisitExpr(E);
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -681,7 +681,7 @@ void PCHStmtReader::VisitStmtExpr(StmtExpr *E) {
   VisitExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSubStmt(cast_or_null<CompoundStmt>(Reader.ReadStmt()));
+  E->setSubStmt(cast_or_null<CompoundStmt>(Reader.ReadSubStmt()));
 }
 
 void PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
@@ -694,9 +694,9 @@ void PCHStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
 
 void PCHStmtReader::VisitChooseExpr(ChooseExpr *E) {
   VisitExpr(E);
-  E->setCond(Reader.ReadExpr());
-  E->setLHS(Reader.ReadExpr());
-  E->setRHS(Reader.ReadExpr());
+  E->setCond(Reader.ReadSubExpr());
+  E->setLHS(Reader.ReadSubExpr());
+  E->setRHS(Reader.ReadSubExpr());
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -711,7 +711,7 @@ void PCHStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   llvm::SmallVector<Expr *, 16> Exprs;
   unsigned NumExprs = Record[Idx++];
   while (NumExprs--)
-    Exprs.push_back(Reader.ReadExpr());
+    Exprs.push_back(Reader.ReadSubExpr());
   E->setExprs(*Reader.getContext(), Exprs.data(), Exprs.size());
   E->setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -729,7 +729,7 @@ void PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setByRef(Record[Idx++]);
   E->setConstQualAdded(Record[Idx++]);
-  E->setCopyConstructorExpr(Reader.ReadExpr());
+  E->setCopyConstructorExpr(Reader.ReadSubExpr());
 }
 
 //===----------------------------------------------------------------------===//
@@ -737,7 +737,7 @@ void PCHStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
 
 void PCHStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
   VisitExpr(E);
-  E->setString(cast<StringLiteral>(Reader.ReadStmt()));
+  E->setString(cast<StringLiteral>(Reader.ReadSubStmt()));
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
@@ -766,7 +766,7 @@ void PCHStmtReader::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
   VisitExpr(E);
   E->setDecl(cast<ObjCIvarDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setIsArrow(Record[Idx++]);
   E->setIsFreeIvar(Record[Idx++]);
 }
@@ -775,7 +775,7 @@ void PCHStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
   E->setProperty(cast<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitObjCImplicitSetterGetterRefExpr(
@@ -787,7 +787,7 @@ void PCHStmtReader::VisitObjCImplicitSetterGetterRefExpr(
                  cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
   E->setInterfaceDecl(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -800,7 +800,7 @@ void PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     = static_cast<ObjCMessageExpr::ReceiverKind>(Record[Idx++]);
   switch (Kind) {
   case ObjCMessageExpr::Instance:
-    E->setInstanceReceiver(Reader.ReadExpr());
+    E->setInstanceReceiver(Reader.ReadSubExpr());
     break;
 
   case ObjCMessageExpr::Class:
@@ -827,7 +827,7 @@ void PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   E->setRightLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
-    E->setArg(I, Reader.ReadExpr());
+    E->setArg(I, Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
@@ -837,16 +837,16 @@ void PCHStmtReader::VisitObjCSuperExpr(ObjCSuperExpr *E) {
 
 void PCHStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
-  S->setElement(Reader.ReadStmt());
-  S->setCollection(Reader.ReadExpr());
-  S->setBody(Reader.ReadStmt());
+  S->setElement(Reader.ReadSubStmt());
+  S->setCollection(Reader.ReadSubExpr());
+  S->setBody(Reader.ReadSubStmt());
   S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
   VisitStmt(S);
-  S->setCatchBody(Reader.ReadStmt());
+  S->setCatchBody(Reader.ReadSubStmt());
   S->setCatchParamDecl(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setAtCatchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -854,7 +854,7 @@ void PCHStmtReader::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
 
 void PCHStmtReader::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   VisitStmt(S);
-  S->setFinallyBody(Reader.ReadStmt());
+  S->setFinallyBody(Reader.ReadSubStmt());
   S->setAtFinallyLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
@@ -863,25 +863,25 @@ void PCHStmtReader::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
   assert(Record[Idx] == S->getNumCatchStmts());
   ++Idx;
   bool HasFinally = Record[Idx++];
-  S->setTryBody(Reader.ReadStmt());
+  S->setTryBody(Reader.ReadSubStmt());
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I)
-    S->setCatchStmt(I, cast_or_null<ObjCAtCatchStmt>(Reader.ReadStmt()));
+    S->setCatchStmt(I, cast_or_null<ObjCAtCatchStmt>(Reader.ReadSubStmt()));
 
   if (HasFinally)
-    S->setFinallyStmt(Reader.ReadStmt());
+    S->setFinallyStmt(Reader.ReadSubStmt());
   S->setAtTryLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   VisitStmt(S);
-  S->setSynchExpr(Reader.ReadStmt());
-  S->setSynchBody(Reader.ReadStmt());
+  S->setSynchExpr(Reader.ReadSubStmt());
+  S->setSynchBody(Reader.ReadSubStmt());
   S->setAtSynchronizedLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   VisitStmt(S);
-  S->setThrowExpr(Reader.ReadStmt());
+  S->setThrowExpr(Reader.ReadSubStmt());
   S->setThrowLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
@@ -898,7 +898,7 @@ void PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   assert(Record[Idx] == E->getNumArgs() &&"Read wrong record during creation?");
   ++Idx; // NumArgs;
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
-    E->setArg(I, Reader.ReadExpr());
+    E->setArg(I, Reader.ReadSubExpr());
   E->setConstructor(cast<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setElidable(Record[Idx++]);  
@@ -953,7 +953,7 @@ void PCHStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   }
   
   // typeid(42+2)
-  E->setExprOperand(Reader.ReadExpr());
+  E->setExprOperand(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
@@ -965,7 +965,7 @@ void PCHStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
 void PCHStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
   VisitExpr(E);
   E->setThrowLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
@@ -973,13 +973,13 @@ void PCHStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   E->setUsedLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   bool HasStoredExpr = Record[Idx++];
   if (!HasStoredExpr) return;
-  E->setExpr(Reader.ReadExpr());
+  E->setExpr(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   E->setTemporary(Reader.ReadCXXTemporary(Record, Idx));
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
 }
 
 void PCHStmtReader::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
@@ -1010,7 +1010,7 @@ void PCHStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   // Install all the subexpressions.
   for (CXXNewExpr::raw_arg_iterator I = E->raw_arg_begin(),e = E->raw_arg_end();
        I != e; ++I)
-    *I = Reader.ReadStmt();
+    *I = Reader.ReadSubStmt();
 }
 
 void PCHStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
@@ -1019,14 +1019,14 @@ void PCHStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   E->setArrayForm(Record[Idx++]);
   E->setOperatorDelete(
                      cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setArgument(Reader.ReadExpr());
+  E->setArgument(Reader.ReadSubExpr());
   E->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   VisitExpr(E);
 
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setArrow(Record[Idx++]);
   E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
@@ -1050,7 +1050,7 @@ void PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
     for (unsigned i = 0; i != NumTemps; ++i)
       E->setTemporary(i, Reader.ReadCXXTemporary(Record, Idx));
   }
-  E->setSubExpr(Reader.ReadExpr());
+  E->setSubExpr(Reader.ReadSubExpr());
 }
 
 void
@@ -1064,7 +1064,7 @@ PCHStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
     ReadExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList(),
                                      NumTemplateArgs);
 
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setBaseType(Reader.GetType(Record[Idx++]));
   E->setArrow(Record[Idx++]);
   E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
@@ -1099,7 +1099,7 @@ PCHStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   assert(Record[Idx] == E->arg_size() && "Read wrong record during creation ?");
   ++Idx; // NumArgs;
   for (unsigned I = 0, N = E->arg_size(); I != N; ++I)
-    E->setArg(I, Reader.ReadExpr());
+    E->setArg(I, Reader.ReadSubExpr());
   E->setTypeBeginLoc(Reader.ReadSourceLocation(Record, Idx));
   E->setTypeAsWritten(Reader.GetType(Record[Idx++]));
   E->setLParenLoc(Reader.ReadSourceLocation(Record, Idx));
@@ -1135,7 +1135,7 @@ void PCHStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   VisitOverloadExpr(E);
   E->setArrow(Record[Idx++]);
   E->setHasUnresolvedUsing(Record[Idx++]);
-  E->setBase(Reader.ReadExpr());
+  E->setBase(Reader.ReadSubExpr());
   E->setBaseType(Reader.GetType(Record[Idx++]));
   E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
 }
@@ -1154,10 +1154,7 @@ Stmt *PCHReader::ReadStmt() {
     // Read a statement from the current DeclCursor.
     return ReadStmtFromStream(DeclsCursor);
   case Read_Stmt:
-    // Subexpressions are stored from last to first, so the next Stmt we need
-    // will be at the back of the stack.
-    assert(!StmtStack.empty() && "Read too many sub statements!");
-    return StmtStack.pop_back_val();
+    return ReadSubStmt();
   }
 
   llvm_unreachable("ReadingKind not set ?");
@@ -1166,6 +1163,10 @@ Stmt *PCHReader::ReadStmt() {
 
 Expr *PCHReader::ReadExpr() {
   return cast_or_null<Expr>(ReadStmt());
+}
+
+Expr *PCHReader::ReadSubExpr() {
+  return cast_or_null<Expr>(ReadSubStmt());
 }
 
 // Within the bitstream, expressions are stored in Reverse Polish
