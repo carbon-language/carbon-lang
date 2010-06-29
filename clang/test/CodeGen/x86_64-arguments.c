@@ -45,7 +45,7 @@ void f7(e7 a0) {
 // Test merging/passing of upper eightbyte with X87 class.
 //
 // CHECK: define %0 @f8_1()
-// CHECK: define void @f8_2(i64, double)
+// CHECK: define void @f8_2(i64 %a0.coerce0, double %a0.coerce1)
 union u8 {
   long double a;
   int b;
@@ -56,7 +56,7 @@ void f8_2(union u8 a0) {}
 // CHECK: define i64 @f9()
 struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 
-// CHECK: define void @f10(i64)
+// CHECK: define void @f10(i64 %a0.coerce)
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
@@ -64,7 +64,7 @@ void f10(struct s10 a0) {}
 union { long double a; float b; } f11() { while (1) {} }
 
 // CHECK: define i64 @f12_0()
-// CHECK: define void @f12_1(i64)
+// CHECK: define void @f12_1(i64 %a0.coerce)
 struct s12 { int a __attribute__((aligned(16))); };
 struct s12 f12_0(void) { while (1) {} }
 void f12_1(struct s12 a0) {}
@@ -95,7 +95,7 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
 // Check for valid coercion.  The struct should be passed/returned as i32, not
 // as i64 for better code quality.
 // rdar://8135035
-// CHECK: define void @f18(i32 %a, i32) 
+// CHECK: define void @f18(i32 %a, i32 %f18_arg1.coerce) 
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 

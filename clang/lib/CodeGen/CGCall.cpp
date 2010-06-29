@@ -910,6 +910,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (STy == cast<llvm::PointerType>(V->getType())->getElementType()) {
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
             assert(AI != Fn->arg_end() && "Argument mismatch!");
+            AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
             llvm::Value *EltPtr = Builder.CreateConstGEP2_32(V, 0, i);
             Builder.CreateStore(AI++, EltPtr);
           }
@@ -918,6 +919,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           llvm::Value *FormalArg = llvm::UndefValue::get(STy);
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
             assert(AI != Fn->arg_end() && "Argument mismatch!");
+            AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
             FormalArg = Builder.CreateInsertValue(FormalArg, AI++, i);
           }
           CreateCoercedStore(FormalArg, V, /*DestIsVolatile=*/false, *this);
@@ -925,6 +927,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       } else {
         // Simple case, just do a coerced store of the argument into the alloca.
         assert(AI != Fn->arg_end() && "Argument mismatch!");
+        AI->setName(Arg->getName() + ".coerce");
         CreateCoercedStore(AI++, V, /*DestIsVolatile=*/false, *this);
       }
       
