@@ -31,7 +31,7 @@ class TestHelpCommand(unittest.TestCase):
             'The following is a list of built-in, permanent debugger commands'))
 
     def test_help_should_not_hang_emacsshell(self):
-        """'set term-width 0' should not hang the help command."""
+        """Command 'set term-width 0' should not hang the help command."""
         res = lldb.SBCommandReturnObject()
         self.ci.HandleCommand("set term-width 0", res)
         self.assertTrue(res.Succeeded())

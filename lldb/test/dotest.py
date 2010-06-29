@@ -16,6 +16,7 @@ working directory is searched if nothing is specified on the command line.
 
 import os
 import sys
+import time
 import unittest
 
 #
@@ -142,4 +143,6 @@ lldb.SBDebugger.Initialize()
 
 unittest.TextTestRunner(verbosity=verbose).run(suite)
 
+# Add some delay before calling SBDebugger.Terminate().
+time.sleep(1)
 lldb.SBDebugger.Terminate()
