@@ -331,8 +331,15 @@ rm -f lib/libLTO.a lib/libLTO.la
 # Remove debugging information from DEST_DIR.
 
 cd $DIR || exit 1
+
 find $DEST_DIR -name \*.a -print | xargs ranlib || exit 1
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
+
+# Strip debugging information from files
+find $DEST_DIR -perm -0111 -type f \
+    ! \( -name '*.la' -o -name gccas -o -name gccld -o -name llvm-config \) \
+    -print | xargs -n 1 -P ${SYSCTL} strip -S
+
 chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
 
