@@ -1039,17 +1039,17 @@ public:
   /// indirect function invocation.
   ///
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(Op<0>());
+    return dyn_cast<Function>(Op<ArgOffset -1>());
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this
   /// instruction.
-  const Value *getCalledValue() const { return Op<0>(); }
-        Value *getCalledValue()       { return Op<0>(); }
+  const Value *getCalledValue() const { return Op<ArgOffset -1>(); }
+        Value *getCalledValue()       { return Op<ArgOffset -1>(); }
 
   /// setCalledFunction - Set the function called.
   void setCalledFunction(Value* Fn) {
-    Op<0>() = Fn;
+    Op<ArgOffset -1>() = Fn;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
