@@ -823,7 +823,6 @@ public:
 
     // See <reloc.h>.
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
-    uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
     unsigned Type = 0;
@@ -834,7 +833,6 @@ public:
       // FIXME: Currently, these are never generated (see code below). I cannot
       // find a case where they are actually emitted.
       Type = RIT_Vanilla;
-      Value = 0;
     } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
@@ -845,11 +843,9 @@ public:
         // undefined. This occurs with weak definitions, for example.
         if (!SD->Symbol->isUndefined())
           FixedValue -= Layout.getSymbolAddress(SD);
-        Value = 0;
       } else {
         // The index is the section ordinal (1-based).
         Index = SD->getFragment()->getParent()->getOrdinal() + 1;
-        Value = Layout.getSymbolAddress(SD);
       }
 
       Type = RIT_Vanilla;
