@@ -4223,8 +4223,30 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
 
   if (R.empty()) {
-    Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
-    return DeclPtrTy();
+    if (DeclarationName Corrected = CorrectTypo(R, S, &SS, 0, false, 
+                                                CTC_NoKeywords, 0)) {
+      if (R.getAsSingle<NamespaceDecl>() || 
+          R.getAsSingle<NamespaceAliasDecl>()) {
+        if (DeclContext *DC = computeDeclContext(SS, false))
+          Diag(IdentLoc, diag::err_using_directive_member_suggest)
+            << Ident << DC << Corrected << SS.getRange()
+            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());        
+        else
+          Diag(IdentLoc, diag::err_using_directive_suggest)
+            << Ident << Corrected
+            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());
+        
+        Diag(R.getFoundDecl()->getLocation(), diag::note_namespace_defined_here)
+          << Corrected;
+        
+        Ident = Corrected.getAsIdentifierInfo();
+      }
+    }
+    
+    if (R.empty()) {
+      Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
+      return DeclPtrTy();
+    }
   }
 
   NamespaceAliasDecl *AliasDecl =
