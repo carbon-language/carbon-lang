@@ -1188,6 +1188,15 @@ public:
   ImplicitConversionSequence TryContextuallyConvertToObjCId(Expr *From);
   bool PerformContextuallyConvertToObjCId(Expr *&From);
 
+  OwningExprResult 
+  ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
+                                     const PartialDiagnostic &NotIntDiag,
+                                     const PartialDiagnostic &IncompleteDiag,
+                                     const PartialDiagnostic &ExplicitConvDiag,
+                                     const PartialDiagnostic &ExplicitConvNote,
+                                     const PartialDiagnostic &AmbigDiag,
+                                     const PartialDiagnostic &AmbigNote);
+  
   bool PerformObjectMemberConversion(Expr *&From,
                                      NestedNameSpecifier *Qualifier,
                                      NamedDecl *FoundDecl,

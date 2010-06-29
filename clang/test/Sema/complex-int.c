@@ -16,9 +16,13 @@ result = arr*brr;
 result = xx*yy;
 
 switch (arr) { // expected-error{{statement requires expression of integer type ('_Complex int' invalid)}}
+ default: ;
+}
+
+ switch (ii) {
   case brr: ; // expected-error{{expression is not an integer constant expression}}
   case xx: ; // expected-error{{expression is not an integer constant expression}}
-}
+ }
 }
 
 void Tester() {

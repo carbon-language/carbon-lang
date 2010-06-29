@@ -722,6 +722,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   Expr *ArraySize = (Expr *)ArraySizeE.get();
   if (ArraySize && !ArraySize->isTypeDependent()) {
     QualType SizeType = ArraySize->getType();
+    
     if (!SizeType->isIntegralOrEnumerationType())
       return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
                             diag::err_array_size_not_integral)

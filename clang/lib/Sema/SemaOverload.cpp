@@ -3068,6 +3068,140 @@ bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
   return true;
 }
 
+/// \brief Attempt to convert the given expression to an integral or 
+/// enumeration type.
+///
+/// This routine will attempt to convert an expression of class type to an
+/// integral or enumeration type, if that class type only has a single
+/// conversion to an integral or enumeration type.
+///
+/// \param From The expression we're converting from.
+///
+/// \returns The expression converted to an integral or enumeration type,
+/// if successful, or an invalid expression.
+Sema::OwningExprResult 
+Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
+                                         const PartialDiagnostic &NotIntDiag,
+                                       const PartialDiagnostic &IncompleteDiag,
+                                     const PartialDiagnostic &ExplicitConvDiag,
+                                     const PartialDiagnostic &ExplicitConvNote,
+                                         const PartialDiagnostic &AmbigDiag,
+                                         const PartialDiagnostic &AmbigNote) {
+  Expr *From = static_cast<Expr *>(FromE.get());
+  
+  // We can't perform any more checking for type-dependent expressions.
+  if (From->isTypeDependent())
+    return move(FromE);
+  
+  // If the expression already has integral or enumeration type, we're golden.
+  QualType T = From->getType();
+  if (T->isIntegralOrEnumerationType())
+    return move(FromE);
+
+  // FIXME: Check for missing '()' if T is a function type?
+
+  // If we don't have a class type in C++, there's no way we can get an 
+  // expression of integral or enumeration type.
+  const RecordType *RecordTy = T->getAs<RecordType>();
+  if (!RecordTy || !getLangOptions().CPlusPlus) {
+    Diag(Loc, NotIntDiag)
+      << T << From->getSourceRange();
+    return ExprError();
+  }
+    
+  // We must have a complete class type.
+  if (RequireCompleteType(Loc, T, IncompleteDiag))
+    return ExprError();
+  
+  // Look for a conversion to an integral or enumeration type.
+  UnresolvedSet<4> ViableConversions;
+  UnresolvedSet<4> ExplicitConversions;
+  const UnresolvedSetImpl *Conversions
+    = cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
+  
+  for (UnresolvedSetImpl::iterator I = Conversions->begin(),
+                                   E = Conversions->end(); 
+       I != E; 
+       ++I) {
+    if (CXXConversionDecl *Conversion
+          = dyn_cast<CXXConversionDecl>((*I)->getUnderlyingDecl()))
+      if (Conversion->getConversionType().getNonReferenceType()
+            ->isIntegralOrEnumerationType()) {
+        if (Conversion->isExplicit())
+          ExplicitConversions.addDecl(I.getDecl(), I.getAccess());
+        else
+          ViableConversions.addDecl(I.getDecl(), I.getAccess());
+      }
+  }
+    
+  switch (ViableConversions.size()) {
+  case 0:
+    if (ExplicitConversions.size() == 1) {
+      DeclAccessPair Found = ExplicitConversions[0];
+      CXXConversionDecl *Conversion
+        = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
+      
+      // The user probably meant to invoke the given explicit
+      // conversion; use it.
+      QualType ConvTy
+        = Conversion->getConversionType().getNonReferenceType();
+      std::string TypeStr;
+      ConvTy.getAsStringInternal(TypeStr, Context.PrintingPolicy);
+      
+      Diag(Loc, ExplicitConvDiag)
+        << T << ConvTy
+        << FixItHint::CreateInsertion(From->getLocStart(),
+                                      "static_cast<" + TypeStr + ">(")
+        << FixItHint::CreateInsertion(PP.getLocForEndOfToken(From->getLocEnd()),
+                                      ")");
+      Diag(Conversion->getLocation(), ExplicitConvNote)
+        << ConvTy->isEnumeralType() << ConvTy;
+      
+      // If we aren't in a SFINAE context, build a call to the 
+      // explicit conversion function.
+      if (isSFINAEContext())
+        return ExprError();
+      
+      CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+      From = BuildCXXMemberCallExpr(FromE.takeAs<Expr>(), Found, Conversion);
+      FromE = Owned(From);
+    }
+    
+    // We'll complain below about a non-integral condition type.
+    break;
+      
+  case 1: {
+    // Apply this conversion.
+    DeclAccessPair Found = ViableConversions[0];
+    CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+    From = BuildCXXMemberCallExpr(FromE.takeAs<Expr>(), Found,
+                          cast<CXXConversionDecl>(Found->getUnderlyingDecl()));
+    FromE = Owned(From);
+    break;
+  }
+    
+  default:
+    Diag(Loc, AmbigDiag)
+      << T << From->getSourceRange();
+    for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
+      CXXConversionDecl *Conv
+        = cast<CXXConversionDecl>(ViableConversions[I]->getUnderlyingDecl());
+      QualType ConvTy = Conv->getConversionType().getNonReferenceType();
+      Diag(Conv->getLocation(), AmbigNote)
+        << ConvTy->isEnumeralType() << ConvTy;
+    }
+    return ExprError();
+  }
+  
+  if (!From->getType()->isIntegralOrEnumerationType()) {
+    Diag(Loc, NotIntDiag)
+      << From->getType() << From->getSourceRange();
+    return ExprError();
+  }
+
+  return move(FromE);
+}
+
 /// AddOverloadCandidate - Adds the given function to the set of
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
