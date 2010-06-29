@@ -141,6 +141,7 @@ namespace {
     void emitMiscInstruction(const MachineInstr &MI);
 
     void emitNEONLaneInstruction(const MachineInstr &MI);
+    void emitNEONDupInstruction(const MachineInstr &MI);
     void emitNEON1RegModImmInstruction(const MachineInstr &MI);
     void emitNEON2RegInstruction(const MachineInstr &MI);
     void emitNEON3RegInstruction(const MachineInstr &MI);
@@ -419,6 +420,9 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   case ARMII::NGetLnFrm:
   case ARMII::NSetLnFrm:
     emitNEONLaneInstruction(MI);
+    break;
+  case ARMII::NDupFrm:
+    emitNEONDupInstruction(MI);
     break;
   case ARMII::N1RegModImmFrm:
     emitNEON1RegModImmInstruction(MI);
@@ -1635,6 +1639,19 @@ void ARMCodeEmitter::emitNEONLaneInstruction(const MachineInstr &MI) {
   Binary |= (Opc1 << 21);
   Binary |= (Opc2 << 5);
 
+  emitWordLE(Binary);
+}
+
+void ARMCodeEmitter::emitNEONDupInstruction(const MachineInstr &MI) {
+  unsigned Binary = getBinaryCodeForInstr(MI);
+
+  // Set the conditional execution predicate
+  Binary |= (IsThumb ? ARMCC::AL : II->getPredicate(&MI)) << ARMII::CondShift;
+
+  unsigned RegT = MI.getOperand(1).getReg();
+  RegT = ARMRegisterInfo::getRegisterNumbering(RegT);
+  Binary |= (RegT << ARMII::RegRdShift);
+  Binary |= encodeNEONRn(MI, 0);
   emitWordLE(Binary);
 }
 
