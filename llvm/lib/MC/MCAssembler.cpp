@@ -684,12 +684,8 @@ void MCAssembler::Finish() {
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
-    if (it->getFragmentList().empty()) {
-      unsigned ValueSize = 1;
-      if (getBackend().isVirtualSection(it->getSection()))
-        ValueSize = 1;
+    if (it->getFragmentList().empty())
       new MCFillFragment(0, 1, 0, it);
-    }
 
     it->setOrdinal(SectionIndex++);
   }
