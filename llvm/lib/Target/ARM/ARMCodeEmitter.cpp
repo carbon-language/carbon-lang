@@ -140,7 +140,7 @@ namespace {
 
     void emitMiscInstruction(const MachineInstr &MI);
 
-    void emitNEONGetLaneInstruction(const MachineInstr &MI);
+    void emitNEONLaneInstruction(const MachineInstr &MI);
     void emitNEON1RegModImmInstruction(const MachineInstr &MI);
     void emitNEON2RegInstruction(const MachineInstr &MI);
     void emitNEON3RegInstruction(const MachineInstr &MI);
@@ -417,7 +417,8 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
     break;
   // NEON instructions.
   case ARMII::NGetLnFrm:
-    emitNEONGetLaneInstruction(MI);
+  case ARMII::NSetLnFrm:
+    emitNEONLaneInstruction(MI);
     break;
   case ARMII::N1RegModImmFrm:
     emitNEON1RegModImmInstruction(MI);
@@ -1596,16 +1597,28 @@ static unsigned convertNEONDataProcToThumb(unsigned Binary) {
   return 0xef000000 | (UBit << 28) | (Binary & 0xffffff);
 }
 
-void ARMCodeEmitter::emitNEONGetLaneInstruction(const MachineInstr &MI) {
+void ARMCodeEmitter::emitNEONLaneInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
+
+  unsigned RegTOpIdx, RegNOpIdx, LnOpIdx;
+  const TargetInstrDesc &TID = MI.getDesc();
+  if ((TID.TSFlags & ARMII::FormMask) == ARMII::NGetLnFrm) {
+    RegTOpIdx = 0;
+    RegNOpIdx = 1;
+    LnOpIdx = 2;
+  } else { // ARMII::NSetLnFrm
+    RegTOpIdx = 2;
+    RegNOpIdx = 0;
+    LnOpIdx = 3;
+  }
 
   // Set the conditional execution predicate
   Binary |= (IsThumb ? ARMCC::AL : II->getPredicate(&MI)) << ARMII::CondShift;
 
-  unsigned RegT = MI.getOperand(0).getReg();
+  unsigned RegT = MI.getOperand(RegTOpIdx).getReg();
   RegT = ARMRegisterInfo::getRegisterNumbering(RegT);
   Binary |= (RegT << ARMII::RegRdShift);
-  Binary |= encodeNEONRn(MI, 1);
+  Binary |= encodeNEONRn(MI, RegNOpIdx);
 
   unsigned LaneShift;
   if ((Binary & (1 << 22)) != 0)
@@ -1615,7 +1628,7 @@ void ARMCodeEmitter::emitNEONGetLaneInstruction(const MachineInstr &MI) {
   else
     LaneShift = 2; // 32-bit elements
 
-  unsigned Lane = MI.getOperand(2).getImm() << LaneShift;
+  unsigned Lane = MI.getOperand(LnOpIdx).getImm() << LaneShift;
   unsigned Opc1 = Lane >> 2;
   unsigned Opc2 = Lane & 3;
   assert((Opc1 & 3) == 0 && "out-of-range lane number operand");
