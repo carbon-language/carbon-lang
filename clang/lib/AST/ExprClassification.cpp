@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/ErrorHandling.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -432,7 +433,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   case Cl::CL_ClassTemporary: return LV_ClassTemporary;
   case Cl::CL_PRValue: return LV_InvalidExpression;
   }
-  assert(false && "Unhandled kind");
+  llvm_unreachable("Unhandled kind");
 }
 
 Expr::isModifiableLvalueResult
@@ -454,17 +455,17 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   }
   assert(VC.getKind() == Cl::CL_LValue && "Unhandled kind");
   switch (VC.getModifiable()) {
-  case Cl::CM_Untested: assert(false && "Did not test modifiability");
+  case Cl::CM_Untested: llvm_unreachable("Did not test modifiability");
   case Cl::CM_Modifiable: return MLV_Valid;
-  case Cl::CM_RValue: assert(false && "CM_RValue and CL_LValue don't match");
+  case Cl::CM_RValue: llvm_unreachable("CM_RValue and CL_LValue don't match");
   case Cl::CM_Function: return MLV_NotObjectType;
   case Cl::CM_LValueCast:
-    assert(false && "CM_LValueCast and CL_LValue don't match");
+    llvm_unreachable("CM_LValueCast and CL_LValue don't match");
   case Cl::CM_NotBlockQualified: return MLV_NotBlockQualified;
   case Cl::CM_NoSetterProperty: return MLV_NoSetterProperty;
   case Cl::CM_ConstQualified: return MLV_ConstQualified;
   case Cl::CM_ArrayType: return MLV_ArrayType;
   case Cl::CM_IncompleteType: return MLV_IncompleteType;
   }
-  assert(false && "Unhandled modifiable type");
+  llvm_unreachable("Unhandled modifiable type");
 }
