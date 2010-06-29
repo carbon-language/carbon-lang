@@ -20,3 +20,22 @@ void test3(int a) {  // expected-warning {{function could be attribute 'noreturn
       @throw (id)0;
   }
 }
+
+// <rdar://problem/4289832> - This code always returns, we should not
+//  issue a noreturn warning.
+@class NSException;
+@class NSString;
+NSString *rdar_4289832() {  // no-warning
+    @try
+    {
+        return @"a";
+    }
+    @catch(NSException *exception)
+    {
+        return @"b";
+    }
+    @finally
+    {
+    }
+}
+
