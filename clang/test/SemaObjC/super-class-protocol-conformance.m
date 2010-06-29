@@ -45,3 +45,19 @@
 @interface SubClass5 : SubClass4 <NewProtocol> @end
 @implementation SubClass5 @end   // expected-note {{implementation is here}}
 
+
+// Radar 8035776
+@protocol SuperProtocol
+@end
+
+@interface Super <SuperProtocol> 
+@end
+
+@protocol ProtocolWithProperty <SuperProtocol>
+@property (readonly, assign) id invalidationBacktrace; // expected-warning {{property 'invalidationBacktrace' requires method 'invalidationBacktrace' to be defined}}
+@end
+
+@interface INTF : Super <ProtocolWithProperty> 
+@end
+
+@implementation INTF @end // expected-note {{implementation is here}}

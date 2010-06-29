@@ -778,7 +778,8 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
 /// CollectImmediateProperties - This routine collects all properties in
 /// the class and its conforming protocols; but not those it its super class.
 void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
-                llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap) {
+            llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap,
+            llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& SuperPropMap) {
   if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
     for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
          E = IDecl->prop_end(); P != E; ++P) {
@@ -788,10 +789,7 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
     // scan through class's protocols.
     for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
          E = IDecl->protocol_end(); PI != E; ++PI)
-      // Exclude property for protocols which conform to class's super-class, 
-      // as super-class has to implement the property.
-      if (!ProtocolConformsToSuperClass(IDecl, (*PI)))
-        CollectImmediateProperties((*PI), PropMap);
+        CollectImmediateProperties((*PI), PropMap, SuperPropMap);
   }
   if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     if (!CATDecl->IsClassExtension())
@@ -803,20 +801,25 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
     // scan through class's protocols.
     for (ObjCInterfaceDecl::protocol_iterator PI = CATDecl->protocol_begin(),
          E = CATDecl->protocol_end(); PI != E; ++PI)
-      CollectImmediateProperties((*PI), PropMap);
+      CollectImmediateProperties((*PI), PropMap, SuperPropMap);
   }
   else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
     for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
          E = PDecl->prop_end(); P != E; ++P) {
       ObjCPropertyDecl *Prop = (*P);
-      ObjCPropertyDecl *&PropEntry = PropMap[Prop->getIdentifier()];
-      if (!PropEntry)
-        PropEntry = Prop;
+      ObjCPropertyDecl *PropertyFromSuper = SuperPropMap[Prop->getIdentifier()];
+      // Exclude property for protocols which conform to class's super-class, 
+      // as super-class has to implement the property.
+      if (!PropertyFromSuper || PropertyFromSuper != Prop) {
+        ObjCPropertyDecl *&PropEntry = PropMap[Prop->getIdentifier()];
+        if (!PropEntry)
+          PropEntry = Prop;
+      }
     }
     // scan through protocol's protocols.
     for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
          E = PDecl->protocol_end(); PI != E; ++PI)
-      CollectImmediateProperties((*PI), PropMap);
+      CollectImmediateProperties((*PI), PropMap, SuperPropMap);
   }
 }
 
@@ -859,33 +862,6 @@ static void CollectSuperClassPropertyImplementations(ObjCInterfaceDecl *CDecl,
       SDecl = SDecl->getSuperClass();
     }
   }
-}
-
-/// ProtocolConformsToSuperClass - Returns true if class's given protocol
-/// conforms to one of its super class's protocols.
-bool Sema::ProtocolConformsToSuperClass(const ObjCInterfaceDecl *IDecl,
-                                        const ObjCProtocolDecl *PDecl) {
-  if (const ObjCInterfaceDecl *CDecl = IDecl->getSuperClass()) {
-    for (ObjCInterfaceDecl::protocol_iterator PI = CDecl->protocol_begin(),
-         E = CDecl->protocol_end(); PI != E; ++PI) {
-      if (ProtocolConformsToProtocol((*PI), PDecl))
-        return true;
-      return ProtocolConformsToSuperClass(CDecl, PDecl);
-    }
-  }
-  return false;
-}
-
-bool Sema::ProtocolConformsToProtocol(const ObjCProtocolDecl *NestedProtocol,
-                                      const ObjCProtocolDecl *PDecl) {
-  if (PDecl->getIdentifier() == NestedProtocol->getIdentifier())
-    return true;
-  // scan through protocol's protocols.
-  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); PI != E; ++PI)
-    if (ProtocolConformsToProtocol(NestedProtocol, (*PI)))
-      return true;
-  return false;
 }
 
 /// LookupPropertyDecl - Looks up a property in the current class and all
@@ -959,8 +935,12 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
                                       const llvm::DenseSet<Selector>& InsMap) {
+  llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> SuperPropMap;
+  if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
+    CollectSuperClassPropertyImplementations(IDecl, SuperPropMap);
+  
   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
-  CollectImmediateProperties(CDecl, PropMap);
+  CollectImmediateProperties(CDecl, PropMap, SuperPropMap);
   if (PropMap.empty())
     return;
 
