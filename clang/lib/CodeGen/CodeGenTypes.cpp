@@ -300,7 +300,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::FunctionNoProto:
   case Type::FunctionProto: {
     // First, check whether we can build the full function type.
-    if (const TagType* TT = VerifyFuncTypeComplete(&Ty)) {
+    if (const TagType *TT = VerifyFuncTypeComplete(&Ty)) {
       // This function's type depends on an incomplete tag type; make sure
       // we have an opaque type corresponding to the tag type.
       ConvertTagDeclType(TT->getDecl());

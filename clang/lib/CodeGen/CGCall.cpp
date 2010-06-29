@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCall.h"
+#include "ABIInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
@@ -23,15 +24,10 @@
 #include "llvm/Attributes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
-
-#include "ABIInfo.h"
-
 using namespace clang;
 using namespace CodeGen;
 
 /***/
-
-// FIXME: Use iterator and sidestep silly type array creation.
 
 static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   switch (CC) {
@@ -80,8 +76,7 @@ static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
   CanQualType ResTy = FTP->getResultType().getUnqualifiedType();
-  return CGT.getFunctionInfo(ResTy, ArgTys,
-                             FTP->getExtInfo());
+  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
 }
 
 const CGFunctionInfo &
@@ -1222,9 +1217,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                               Args.data(), Args.data()+Args.size());
     EmitBlock(Cont);
   }
-  if (callOrInvoke) {
+  if (callOrInvoke)
     *callOrInvoke = CS.getInstruction();
-  }
 
   CS.setAttributes(Attrs);
   CS.setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
