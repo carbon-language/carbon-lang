@@ -69,8 +69,10 @@ namespace llvm {
                      const SmallSet<unsigned, 8> &LoopLiveIns) {
       unsigned Count = 0;
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-           I != E; ++I, ++Count) {
+           I != E; ++I) {
         const MachineInstr *MI = I;
+        if (MI->isDebugValue())
+          continue;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
           const MachineOperand &MO = MI->getOperand(i);
           if (!MO.isReg() || !MO.isUse())
@@ -79,6 +81,7 @@ namespace llvm {
           if (LoopLiveIns.count(MOReg))
             Deps.insert(std::make_pair(MOReg, std::make_pair(&MO, Count)));
         }
+        ++Count; // Not every iteration due to dbg_value above.
       }
 
       const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
