@@ -258,7 +258,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
     if (DeclarationName Corrected = CorrectTypo(Found, S, &SS, LookupCtx, 
-                                                 false, CTC_CXXCasts)) {
+                                                false, CTC_CXXCasts)) {
       FilterAcceptableTemplateNames(Context, Found);
       if (!Found.empty()) {
         if (LookupCtx)
@@ -277,6 +277,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
       }
     } else {
       Found.clear();
+      Found.setLookupName(Name);
     }
   }
 

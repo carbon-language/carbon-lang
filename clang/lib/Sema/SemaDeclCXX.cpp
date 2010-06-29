@@ -1139,6 +1139,7 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
             return true;
 
           R.clear();
+          R.setLookupName(MemberOrBase);
         }
       }
 
@@ -3516,6 +3517,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
           << Corrected;
         
         NamespcName = Corrected.getAsIdentifierInfo();
+      } else {
+        R.clear();
+        R.setLookupName(NamespcName);
       }
     }
   }
@@ -4240,6 +4244,9 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
           << Corrected;
         
         Ident = Corrected.getAsIdentifierInfo();
+      } else {
+        R.clear();
+        R.setLookupName(Ident);
       }
     }
     

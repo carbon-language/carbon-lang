@@ -2620,6 +2620,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     return false;
   } else {
     R.clear();
+    R.setLookupName(Name);
   }
 
   return false;
@@ -3080,6 +3081,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                                             IV->getNameAsString());
           Diag(IV->getLocation(), diag::note_previous_decl)
             << IV->getDeclName();
+        } else {
+          Res.clear();
+          Res.setLookupName(Member);
         }
       }
 

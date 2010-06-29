@@ -90,3 +90,14 @@ namespace test5 {
     x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer}}
   }
 }
+
+namespace PR7508 {
+  struct A {
+    struct CleanupScope {};
+    void PopCleanupBlock();
+  };
+
+  void foo(A &a) {
+    a.PopCleanupScope(); // expected-error{{no member named 'PopCleanupScope' in 'PR7508::A'}}
+  }
+}
