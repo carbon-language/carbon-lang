@@ -13,6 +13,8 @@
 
 // basic_regex(const charT* p, flag_type f = regex_constants::ECMAScript);
 
+#include <iostream>
+
 #include <regex>
 #include <cassert>
 
