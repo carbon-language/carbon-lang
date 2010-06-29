@@ -90,7 +90,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     for (std::vector<MachineRelocation>::iterator MRI = JTRelocations.begin(),
          MRE = JTRelocations.end(); MRI != MRE; ++MRI) {
       MachineRelocation &MR = *MRI;
-      unsigned MBBOffset = getMachineBasicBlockAddress(MR.getBasicBlock());
+      uintptr_t MBBOffset = getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setResultPointer((void*)MBBOffset);
       MR.setConstantVal(ES->SectionIdx);
       JTSection.addRelocation(MR);
