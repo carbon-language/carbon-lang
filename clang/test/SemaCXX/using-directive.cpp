@@ -121,3 +121,8 @@ extern "C++" {
 }
 
 void f4() { f2(1); }
+
+// PR7517
+using namespace std; // expected-warning{{using directive refers to implicitly-defined namespace 'std'}}
+using namespace ::std; // expected-warning{{using directive refers to implicitly-defined namespace 'std'}}
+

@@ -3452,6 +3452,21 @@ void Sema::ActOnFinishNamespaceDef(DeclPtrTy D, SourceLocation RBrace) {
   PopDeclContext();
 }
 
+/// \brief Retrieve the special "std" namespace, which may require us to 
+/// implicitly define the namespace.
+NamespaceDecl *Sema::getStdNamespace() {
+  if (!StdNamespace) {
+    // The "std" namespace has not yet been defined, so build one implicitly.
+    StdNamespace = NamespaceDecl::Create(Context, 
+                                         Context.getTranslationUnitDecl(),
+                                         SourceLocation(),
+                                         &PP.getIdentifierTable().get("std"));
+    StdNamespace->setImplicit(true);
+  }
+  
+  return StdNamespace;
+}
+
 Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
                                           SourceLocation UsingLoc,
                                           SourceLocation NamespcLoc,
@@ -3465,13 +3480,46 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
   UsingDirectiveDecl *UDir = 0;
-
+  NestedNameSpecifier *Qualifier = 0;
+  if (SS.isSet())
+    Qualifier = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  
   // Lookup namespace name.
   LookupResult R(*this, NamespcName, IdentLoc, LookupNamespaceName);
   LookupParsedName(R, S, &SS);
   if (R.isAmbiguous())
     return DeclPtrTy();
 
+  if (R.empty()) {
+    // Allow "using namespace std;" or "using namespace ::std;" even if 
+    // "std" hasn't been defined yet, for GCC compatibility.
+    if ((!Qualifier || Qualifier->getKind() == NestedNameSpecifier::Global) &&
+        NamespcName->isStr("std")) {
+      Diag(IdentLoc, diag::ext_using_undefined_std);
+      R.addDecl(getStdNamespace());
+      R.resolveKind();
+    } 
+    // Otherwise, attempt typo correction.
+    else if (DeclarationName Corrected = CorrectTypo(R, S, &SS, 0, false, 
+                                                       CTC_NoKeywords, 0)) {
+      if (R.getAsSingle<NamespaceDecl>() || 
+          R.getAsSingle<NamespaceAliasDecl>()) {
+        if (DeclContext *DC = computeDeclContext(SS, false))
+          Diag(IdentLoc, diag::err_using_directive_member_suggest)
+            << NamespcName << DC << Corrected << SS.getRange()
+            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());        
+        else
+          Diag(IdentLoc, diag::err_using_directive_suggest)
+            << NamespcName << Corrected
+            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());
+        Diag(R.getFoundDecl()->getLocation(), diag::note_namespace_defined_here)
+          << Corrected;
+        
+        NamespcName = Corrected.getAsIdentifierInfo();
+      }
+    }
+  }
+  
   if (!R.empty()) {
     NamedDecl *Named = R.getFoundDecl();
     assert((isa<NamespaceDecl>(Named) || isa<NamespaceAliasDecl>(Named))

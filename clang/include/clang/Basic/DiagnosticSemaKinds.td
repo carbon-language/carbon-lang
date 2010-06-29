@@ -459,6 +459,9 @@ def warn_weak_vtable : Warning<
   "emitted in every translation unit">,
   InGroup<DiagGroup<"weak-vtables">>, DefaultIgnore;
 
+def ext_using_undefined_std : ExtWarn<
+  "using directive refers to implicitly-defined namespace 'std'">;
+  
 // C++ exception specifications
 def err_exception_spec_in_typedef : Error<
   "exception specifications are not allowed in typedefs">;
@@ -3163,6 +3166,11 @@ def err_undeclared_protocol_suggest : Error<
   "cannot find protocol declaration for %0; did you mean %1?">;
 def note_base_class_specified_here : Note<
   "base class %0 specified here">;
+def err_using_directive_suggest : Error<
+  "no namespace named %0; did you mean %1?">;
+def err_using_directive_member_suggest : Error<
+  "no namespace named %0 in %1; did you mean %2?">;
+def note_namespace_defined_here : Note<"namespace %0 defined here">;
 
 } // end of sema category
 } // end of sema component.

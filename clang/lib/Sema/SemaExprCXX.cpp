@@ -1207,20 +1207,11 @@ void Sema::DeclareGlobalNewDelete() {
   // "std" or "bad_alloc" as necessary to form the exception specification.
   // However, we do not make these implicit declarations visible to name
   // lookup.
-  if (!StdNamespace) {
-    // The "std" namespace has not yet been defined, so build one implicitly.
-    StdNamespace = NamespaceDecl::Create(Context, 
-                                         Context.getTranslationUnitDecl(),
-                                         SourceLocation(),
-                                         &PP.getIdentifierTable().get("std"));
-    StdNamespace->setImplicit(true);
-  }
-  
   if (!StdBadAlloc) {
     // The "std::bad_alloc" class has not yet been declared, so build it
     // implicitly.
     StdBadAlloc = CXXRecordDecl::Create(Context, TTK_Class, 
-                                        StdNamespace, 
+                                        getStdNamespace(), 
                                         SourceLocation(), 
                                       &PP.getIdentifierTable().get("bad_alloc"), 
                                         SourceLocation(), 0);

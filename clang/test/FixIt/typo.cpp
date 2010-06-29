@@ -12,7 +12,8 @@ namespace std {
   typedef basic_string<char> string; // expected-note 2{{'string' declared here}}
 }
 
-namespace otherstd { // expected-note 2{{'otherstd' declared here}}
+namespace otherstd { // expected-note 2{{'otherstd' declared here}} \
+                     // expected-note{{namespace 'otherstd' defined here}}
   using namespace std;
 }
 
@@ -28,6 +29,10 @@ float area(float radius, // expected-note{{'radius' declared here}}
            float pi) {
   return radious * pi; // expected-error{{did you mean 'radius'?}}
 }
+
+using namespace othestd; // expected-error{{no namespace named 'othestd'; did you mean 'otherstd'?}}
+namespace blargh = otherstd; // expected-note{{namespace 'blargh' defined here}}
+using namespace ::blarg; // expected-error{{no namespace named 'blarg' in the global namespace; did you mean 'blargh'?}}
 
 bool test_string(std::string s) {
   basc_string<char> b1; // expected-error{{no template named 'basc_string'; did you mean 'basic_string'?}}
