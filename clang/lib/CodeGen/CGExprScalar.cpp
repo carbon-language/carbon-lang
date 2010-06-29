@@ -334,7 +334,7 @@ public:
   BinOpInfo EmitBinOps(const BinaryOperator *E);
   LValue EmitCompoundAssignLValue(const CompoundAssignOperator *E,
                             Value *(ScalarExprEmitter::*F)(const BinOpInfo &),
-                                  Value *&BitFieldResult);
+                                  Value *&Result);
 
   Value *EmitCompoundAssign(const CompoundAssignOperator *E,
                             Value *(ScalarExprEmitter::*F)(const BinOpInfo &));
@@ -1342,9 +1342,8 @@ BinOpInfo ScalarExprEmitter::EmitBinOps(const BinaryOperator *E) {
 LValue ScalarExprEmitter::EmitCompoundAssignLValue(
                                               const CompoundAssignOperator *E,
                         Value *(ScalarExprEmitter::*Func)(const BinOpInfo &),
-                                                   Value *&BitFieldResult) {
+                                                   Value *&Result) {
   QualType LHSTy = E->getLHS()->getType();
-  BitFieldResult = 0;
   BinOpInfo OpInfo;
   
   if (E->getComputationResultType()->isAnyComplexType()) {
@@ -1353,7 +1352,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
     // actually need the imaginary part of the RHS for multiplication and
     // division.)
     CGF.ErrorUnsupported(E, "complex compound assignment");
-    llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+    Result = llvm::UndefValue::get(CGF.ConvertType(E->getType()));
     return LValue();
   }
   
@@ -1370,7 +1369,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
                                     E->getComputationLHSType());
   
   // Expand the binary operator.
-  Value *Result = (this->*Func)(OpInfo);
+  Result = (this->*Func)(OpInfo);
   
   // Convert the result back to the LHS type.
   Result = EmitScalarConversion(Result, E->getComputationResultType(), LHSTy);
@@ -1379,30 +1378,35 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   // specially because the result is altered by the store, i.e., [C99 6.5.16p1]
   // 'An assignment expression has the value of the left operand after the
   // assignment...'.
-  if (LHSLV.isBitField()) {
-    if (!LHSLV.isVolatileQualified()) {
-      CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy,
-                                         &Result);
-      BitFieldResult = Result;
-      return LHSLV;
-    } else
-      CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy);
-  } else
+  if (LHSLV.isBitField())
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(Result), LHSLV, LHSTy,
+                                       &Result);
+  else
     CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, LHSTy);
+
   return LHSLV;
 }
 
 Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
                       Value *(ScalarExprEmitter::*Func)(const BinOpInfo &)) {
   bool Ignore = TestAndClearIgnoreResultAssign();
-  Value *BitFieldResult;
-  LValue LHSLV = EmitCompoundAssignLValue(E, Func, BitFieldResult);
-  if (BitFieldResult)
-    return BitFieldResult;
-  
+  Value *RHS;
+  LValue LHS = EmitCompoundAssignLValue(E, Func, RHS);
+
+  // If the result is clearly ignored, return now.
   if (Ignore)
     return 0;
-  return EmitLoadOfLValue(LHSLV, E->getType());
+
+  // Objective-C property assignment never reloads the value following a store.
+  if (LHS.isPropertyRef() || LHS.isKVCRef())
+    return RHS;
+
+  // If the lvalue is non-volatile, return the computed value of the assignment.
+  if (!LHS.isVolatileQualified())
+    return RHS;
+
+  // Otherwise, reload the value.
+  return EmitLoadOfLValue(LHS, E->getType());
 }
 
 
@@ -1838,17 +1842,25 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // because the result is altered by the store, i.e., [C99 6.5.16p1]
   // 'An assignment expression has the value of the left operand after
   // the assignment...'.
-  if (LHS.isBitField()) {
-    if (!LHS.isVolatileQualified()) {
-      CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
-                                         &RHS);
-      return RHS;
-    } else
-      CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType());
-  } else
+  if (LHS.isBitField())
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
+                                       &RHS);
+  else
     CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
+
+  // If the result is clearly ignored, return now.
   if (Ignore)
     return 0;
+
+  // Objective-C property assignment never reloads the value following a store.
+  if (LHS.isPropertyRef() || LHS.isKVCRef())
+    return RHS;
+
+  // If the lvalue is non-volatile, return the computed value of the assignment.
+  if (!LHS.isVolatileQualified())
+    return RHS;
+
+  // Otherwise, reload the value.
   return EmitLoadOfLValue(LHS, E->getType());
 }
 
@@ -2188,12 +2200,12 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
 LValue CodeGenFunction::EmitCompoundAssignOperatorLValue(
                                             const CompoundAssignOperator *E) {
   ScalarExprEmitter Scalar(*this);
-  Value *BitFieldResult = 0;
+  Value *Result = 0;
   switch (E->getOpcode()) {
 #define COMPOUND_OP(Op)                                                       \
     case BinaryOperator::Op##Assign:                                          \
       return Scalar.EmitCompoundAssignLValue(E, &ScalarExprEmitter::Emit##Op, \
-                                             BitFieldResult)
+                                             Result)
   COMPOUND_OP(Mul);
   COMPOUND_OP(Div);
   COMPOUND_OP(Rem);
