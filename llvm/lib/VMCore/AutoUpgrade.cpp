@@ -429,9 +429,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // Remove upgraded multiply.
       CI->eraseFromParent();
     } else if (F->getName() == "llvm.x86.ssse3.palign.r") {
-      Value *Op1 = CI->getOperand(1);
-      Value *Op2 = CI->getOperand(2);
-      Value *Op3 = CI->getOperand(3);
+      Value *Op1 = CI->getArgOperand(0);
+      Value *Op2 = CI->getArgOperand(1);
+      Value *Op3 = CI->getArgOperand(2);
       unsigned shiftVal = cast<ConstantInt>(Op3)->getZExtValue();
       Value *Rep;
       IRBuilder<> Builder(C);
@@ -485,9 +485,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       CI->eraseFromParent();
       
     } else if (F->getName() == "llvm.x86.ssse3.palign.r.128") {
-      Value *Op1 = CI->getOperand(1);
-      Value *Op2 = CI->getOperand(2);
-      Value *Op3 = CI->getOperand(3);
+      Value *Op1 = CI->getArgOperand(0);
+      Value *Op2 = CI->getArgOperand(1);
+      Value *Op3 = CI->getArgOperand(2);
       unsigned shiftVal = cast<ConstantInt>(Op3)->getZExtValue();
       Value *Rep;
       IRBuilder<> Builder(C);
