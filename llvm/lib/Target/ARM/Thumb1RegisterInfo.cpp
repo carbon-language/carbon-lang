@@ -410,6 +410,8 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // before that instead and adjust the UseMI.
   bool done = false;
   for (MachineBasicBlock::iterator II = I; !done && II != UseMI ; ++II) {
+    if (II->isDebugValue())
+      continue;
     // If this instruction affects R12, adjust our restore point.
     for (unsigned i = 0, e = II->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = II->getOperand(i);
