@@ -186,7 +186,7 @@ namespace {
                                SmallVectorImpl<MachineOperand> &Cond,
                                SmallSet<unsigned, 4> &Redefs,
                                bool IgnoreBr = false);
-    void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI);
+    void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges = true);
 
     bool MeetIfcvtSizeLimit(MachineBasicBlock &BB, unsigned Size) const {
       return Size > 0 && TII->isProfitableToIfCvt(BB, Size);
@@ -1098,8 +1098,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   InitPredRedefs(NextBBI->BB, Redefs, TRI);
 
   bool HasEarlyExit = CvtBBI->FalseBB != NULL;
-  bool DupBB = CvtBBI->BB->pred_size() > 1;
-  if (DupBB) {
+  if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
     // the entry block.
@@ -1111,7 +1110,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
 
     // Now merge the entry of the triangle with the true block.
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
-    MergeBlocks(BBI, *CvtBBI);
+    MergeBlocks(BBI, *CvtBBI, false);
   }
 
   // If 'true' block has a 'false' successor, add an exit branch to it.
@@ -1184,9 +1183,9 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     return false;
   }
 
-  // Merge the 'true' and 'false' blocks by copying the instructions
-  // from the 'false' block to the 'true' block. That is, unless the true
-  // block would clobber the predicate, in that case, do the opposite.
+  // Put the predicated instructions from the 'true' block before the
+  // instructions from the 'false' block, unless the true block would clobber
+  // the predicate, in which case, do the opposite.
   BBInfo *BBI1 = &TrueBBI;
   BBInfo *BBI2 = &FalseBBI;
   SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
@@ -1275,8 +1274,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   PredicateBlock(*BBI2, DI2, *Cond2, Redefs);
 
   // Merge the true block into the entry of the diamond.
-  MergeBlocks(BBI, *BBI1);
-  MergeBlocks(BBI, *BBI2);
+  MergeBlocks(BBI, *BBI1, TailBB == 0);
+  MergeBlocks(BBI, *BBI2, TailBB == 0);
 
   // If the if-converted block falls through or unconditionally branches into
   // the tail block, and the tail block does not have other predecessors, then
@@ -1284,16 +1283,32 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // tail, add a unconditional branch to it.
   if (TailBB) {
     BBInfo TailBBI = BBAnalysis[TailBB->getNumber()];
-    if (TailBB->pred_size() == 1 && !TailBBI.HasFallThrough) {
-      BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    bool CanMergeTail = !TailBBI.HasFallThrough;
+    // There may still be a fall-through edge from BBI1 or BBI2 to TailBB;
+    // check if there are any other predecessors besides those.
+    unsigned NumPreds = TailBB->pred_size();
+    if (NumPreds > 1)
+      CanMergeTail = false;
+    else if (NumPreds == 1 && CanMergeTail) {
+      MachineBasicBlock::pred_iterator PI = TailBB->pred_begin();
+      if (*PI != BBI1->BB && *PI != BBI2->BB)
+        CanMergeTail = false;
+    }
+    if (CanMergeTail) {
       MergeBlocks(BBI, TailBBI);
       TailBBI.IsDone = true;
     } else {
+      BBI.BB->addSuccessor(TailBB);
       InsertUncondBranch(BBI.BB, TailBB, TII);
       BBI.HasFallThrough = false;
     }
   }
 
+  // RemoveExtraEdges won't work if the block has an unanalyzable branch,
+  // which can happen here if TailBB is unanalyzable and is merged, so
+  // explicitly remove BBI1 and BBI2 as successors.
+  BBI.BB->removeSuccessor(BBI1->BB);
+  BBI.BB->removeSuccessor(BBI2->BB);
   RemoveExtraEdges(BBI);
 
   // Update block info.
@@ -1366,17 +1381,19 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     UpdatePredRedefs(MI, Redefs, TRI, true);
   }
 
-  std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
-                                         FromBBI.BB->succ_end());
-  MachineBasicBlock *NBB = getNextBlock(FromBBI.BB);
-  MachineBasicBlock *FallThrough = FromBBI.HasFallThrough ? NBB : NULL;
+  if (!IgnoreBr) {
+    std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
+                                           FromBBI.BB->succ_end());
+    MachineBasicBlock *NBB = getNextBlock(FromBBI.BB);
+    MachineBasicBlock *FallThrough = FromBBI.HasFallThrough ? NBB : NULL;
 
-  for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
-    MachineBasicBlock *Succ = Succs[i];
-    // Fallthrough edge can't be transferred.
-    if (Succ == FallThrough)
-      continue;
-    ToBBI.BB->addSuccessor(Succ);
+    for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
+      MachineBasicBlock *Succ = Succs[i];
+      // Fallthrough edge can't be transferred.
+      if (Succ == FallThrough)
+        continue;
+      ToBBI.BB->addSuccessor(Succ);
+    }
   }
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
@@ -1390,20 +1407,13 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 }
 
 /// MergeBlocks - Move all instructions from FromBB to the end of ToBB.
-///
-void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
+/// This will leave FromBB as an empty block, so remove all of its
+/// successor edges except for the fall-through edge.  If AddEdges is true,
+/// i.e., when FromBBI's branch is being moved, add those successor edges to
+/// ToBBI.
+void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
   ToBBI.BB->splice(ToBBI.BB->end(),
                    FromBBI.BB, FromBBI.BB->begin(), FromBBI.BB->end());
-
-  // Redirect all branches to FromBB to ToBB.
-  std::vector<MachineBasicBlock *> Preds(FromBBI.BB->pred_begin(),
-                                         FromBBI.BB->pred_end());
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-    MachineBasicBlock *Pred = Preds[i];
-    if (Pred == ToBBI.BB)
-      continue;
-    Pred->ReplaceUsesOfBlockWith(FromBBI.BB, ToBBI.BB);
-  }
 
   std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
                                          FromBBI.BB->succ_end());
@@ -1416,7 +1426,8 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
     if (Succ == FallThrough)
       continue;
     FromBBI.BB->removeSuccessor(Succ);
-    ToBBI.BB->addSuccessor(Succ);
+    if (AddEdges)
+      ToBBI.BB->addSuccessor(Succ);
   }
 
   // Now FromBBI always falls through to the next block!
