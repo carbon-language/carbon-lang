@@ -363,7 +363,18 @@ public:
     defusechain_iterator operator++(int) {        // Postincrement
       defusechain_iterator tmp = *this; ++*this; return tmp;
     }
-    
+
+    /// skipInstruction - move forward until reaching a different instruction.
+    /// Return the skipped instruction that is no longer pointed to, or NULL if
+    /// already pointing to end().
+    MachineInstr *skipInstruction() {
+      if (!Op) return 0;
+      MachineInstr *MI = Op->getParent();
+      do ++*this;
+      while (Op && Op->getParent() == MI);
+      return MI;
+    }
+
     MachineOperand &getOperand() const {
       assert(Op && "Cannot dereference end iterator!");
       return *Op;

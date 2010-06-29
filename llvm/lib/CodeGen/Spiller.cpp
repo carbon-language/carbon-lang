@@ -26,7 +26,7 @@
 using namespace llvm;
 
 namespace {
-  enum SpillerName { trivial, standard, splitting };
+  enum SpillerName { trivial, standard, splitting, inline_ };
 }
 
 static cl::opt<SpillerName>
@@ -36,6 +36,7 @@ spillerOpt("spiller",
            cl::values(clEnumVal(trivial,   "trivial spiller"),
                       clEnumVal(standard,  "default spiller"),
                       clEnumVal(splitting, "splitting spiller"),
+                      "inline", inline_,   "inline spiller",
                       clEnumValEnd),
            cl::init(standard));
 
@@ -506,6 +507,13 @@ private:
 } // end anonymous namespace
 
 
+namespace llvm {
+Spiller *createInlineSpiller(MachineFunction*,
+                             LiveIntervals*,
+                             const MachineLoopInfo*,
+                             VirtRegMap*);
+}
+
 llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
                                    const MachineLoopInfo *loopInfo,
                                    VirtRegMap *vrm) {
@@ -514,5 +522,6 @@ llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
   case trivial: return new TrivialSpiller(mf, lis, vrm);
   case standard: return new StandardSpiller(lis, loopInfo, vrm);
   case splitting: return new SplittingSpiller(mf, lis, loopInfo, vrm);
+  case inline_: return createInlineSpiller(mf, lis, loopInfo, vrm);
   }
 }

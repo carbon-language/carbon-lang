@@ -13,6 +13,7 @@ add_llvm_library(LLVMCodeGen
   GCMetadataPrinter.cpp
   GCStrategy.cpp
   IfConversion.cpp
+  InlineSpiller.cpp
   IntrinsicLowering.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp
