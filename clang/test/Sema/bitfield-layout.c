@@ -30,3 +30,13 @@ CHECK_ALIGN(struct, e, 1)
 struct f {__attribute((aligned(8))) int x : 30, y : 30, z : 30;};
 CHECK_SIZE(struct, f, 24)
 CHECK_ALIGN(struct, f, 8)
+
+// Large structure (overflows i32, in bits).
+struct s0 {
+  char a[0x32100000];
+  int x:30, y:30;
+};
+
+CHECK_SIZE(struct, s0, 0x32100008)
+CHECK_ALIGN(struct, s0, 4)
+

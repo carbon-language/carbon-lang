@@ -1296,7 +1296,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   // Check if we need to add padding to give the field the correct alignment.
   if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
-    FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
+    FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
   // Padding members don't affect overall alignment.
   if (!D->getIdentifier())
