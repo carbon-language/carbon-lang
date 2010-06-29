@@ -870,3 +870,55 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x78,0x5b,0x20]
           vcvtdq2ps  (%rax), %xmm12
 
+// CHECK: vcvtsd2ss  %xmm12, %xmm13, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x13,0x5a,0xd4]
+          vcvtsd2ss  %xmm12, %xmm13, %xmm10
+
+// CHECK: vcvtsd2ss  (%rax), %xmm13, %xmm10
+// CHECK: encoding: [0xc5,0x13,0x5a,0x10]
+          vcvtsd2ss  (%rax), %xmm13, %xmm10
+
+// CHECK: vcvtps2dq  %xmm12, %xmm11
+// CHECK: encoding: [0xc4,0x41,0x79,0x5b,0xdc]
+          vcvtps2dq  %xmm12, %xmm11
+
+// CHECK: vcvtps2dq  (%rax), %xmm11
+// CHECK: encoding: [0xc5,0x79,0x5b,0x18]
+          vcvtps2dq  (%rax), %xmm11
+
+// CHECK: vcvtss2sd  %xmm12, %xmm13, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x12,0x5a,0xd4]
+          vcvtss2sd  %xmm12, %xmm13, %xmm10
+
+// CHECK: vcvtss2sd  (%rax), %xmm13, %xmm10
+// CHECK: encoding: [0xc5,0x12,0x5a,0x10]
+          vcvtss2sd  (%rax), %xmm13, %xmm10
+
+// CHECK: vcvtdq2ps  %xmm13, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x78,0x5b,0xd5]
+          vcvtdq2ps  %xmm13, %xmm10
+
+// CHECK: vcvtdq2ps  (%ecx), %xmm13
+// CHECK: encoding: [0xc5,0x78,0x5b,0x29]
+          vcvtdq2ps  (%ecx), %xmm13
+
+// CHECK: vcvttps2dq  %xmm12, %xmm11
+// CHECK: encoding: [0xc4,0x41,0x7a,0x5b,0xdc]
+          vcvttps2dq  %xmm12, %xmm11
+
+// CHECK: vcvttps2dq  (%rax), %xmm11
+// CHECK: encoding: [0xc5,0x7a,0x5b,0x18]
+          vcvttps2dq  (%rax), %xmm11
+
+// CHECK: vcvtps2pd  %xmm12, %xmm11
+// CHECK: encoding: [0xc4,0x41,0x78,0x5a,0xdc]
+          vcvtps2pd  %xmm12, %xmm11
+
+// CHECK: vcvtps2pd  (%rax), %xmm11
+// CHECK: encoding: [0xc5,0x78,0x5a,0x18]
+          vcvtps2pd  (%rax), %xmm11
+
+// CHECK: vcvtpd2ps  %xmm12, %xmm11
+// CHECK: encoding: [0xc4,0x41,0x79,0x5a,0xdc]
+          vcvtpd2ps  %xmm12, %xmm11
+
