@@ -976,8 +976,9 @@ public:
   const ASTRecordLayout &
   getASTObjCImplementationLayout(const ObjCImplementationDecl *D);
 
-  /// getKeyFunction - Get the key function for the given record decl. 
-  /// The key function is, according to the Itanium C++ ABI section 5.2.3:
+  /// getKeyFunction - Get the key function for the given record decl, or NULL
+  /// if there isn't one.  The key function is, according to the Itanium C++ ABI
+  /// section 5.2.3:
   ///
   /// ...the first non-pure virtual function that is not inline at the point
   /// of class definition.

@@ -1415,8 +1415,6 @@ void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
 
 const CXXMethodDecl *
 RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
-  assert(RD->isDynamicClass() && "Class does not have any virtual methods!");
-
   // If a class isn't polymorphic it doesn't have a key function.
   if (!RD->isPolymorphic())
     return 0;
