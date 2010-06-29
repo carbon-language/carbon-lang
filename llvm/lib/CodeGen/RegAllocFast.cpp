@@ -515,7 +515,6 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
   bool New;
   tie(LRI, New) = LiveVirtRegs.insert(std::make_pair(VirtReg, LiveReg()));
   LiveReg &LR = LRI->second;
-  bool PartialRedef = MI->getOperand(OpNum).getSubReg();
   if (New) {
     // If there is no hint, peek at the only use of this register.
     if ((!Hint || !TargetRegisterInfo::isPhysicalRegister(Hint)) &&
@@ -527,15 +526,7 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
         Hint = DstReg;
     }
     allocVirtReg(MI, *LRI, Hint);
-    // If this is only a partial redefinition, we must reload the other parts.
-    if (PartialRedef && MI->readsVirtualRegister(VirtReg)) {
-      const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-      int FI = getStackSpaceFor(VirtReg, RC);
-      DEBUG(dbgs() << "Reloading for partial redef: %reg" << VirtReg << "\n");
-      TII->loadRegFromStackSlot(*MBB, MI, LR.PhysReg, FI, RC, TRI);
-      ++NumLoads;
-    }
-  } else if (LR.LastUse && !PartialRedef) {
+  } else if (LR.LastUse) {
     // Redefining a live register - kill at the last use, unless it is this
     // instruction defining VirtReg multiple times.
     if (LR.LastUse != MI || LR.LastUse->getOperand(LR.LastOpNum).isUse())
@@ -571,10 +562,16 @@ RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
   } else if (LR.Dirty) {
     if (isLastUseOfLocalReg(MO)) {
       DEBUG(dbgs() << "Killing last use: " << MO << "\n");
-      MO.setIsKill();
+      if (MO.isUse())
+        MO.setIsKill();
+      else
+        MO.setIsDead();
     } else if (MO.isKill()) {
       DEBUG(dbgs() << "Clearing dubious kill: " << MO << "\n");
       MO.setIsKill(false);
+    } else if (MO.isDead()) {
+      DEBUG(dbgs() << "Clearing dubious dead: " << MO << "\n");
+      MO.setIsDead(false);
     }
   } else if (MO.isKill()) {
     // We must remove kill flags from uses of reloaded registers because the
@@ -583,6 +580,9 @@ RAFast::reloadVirtReg(MachineInstr *MI, unsigned OpNum,
     // This would cause a second reload of %x into a different register.
     DEBUG(dbgs() << "Clearing clean kill: " << MO << "\n");
     MO.setIsKill(false);
+  } else if (MO.isDead()) {
+    DEBUG(dbgs() << "Clearing clean dead: " << MO << "\n");
+    MO.setIsDead(false);
   }
   assert(LR.PhysReg && "Register not assigned");
   LR.LastUse = MI;
@@ -625,7 +625,8 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
     if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-    if (MO.isEarlyClobber() || MI->isRegTiedToDefOperand(i)) {
+    if (MO.isEarlyClobber() || MI->isRegTiedToDefOperand(i) ||
+        (MO.getSubReg() && MI->readsVirtualRegister(Reg))) {
       if (ThroughRegs.insert(Reg))
         DEBUG(dbgs() << " %reg" << Reg);
     }
@@ -649,6 +650,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     }
   }
 
+  SmallVector<unsigned, 8> PartialDefs;
   DEBUG(dbgs() << "Allocating tied uses and early clobbers.\n");
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -663,6 +665,14 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
       LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, 0);
       unsigned PhysReg = LRI->second.PhysReg;
       setPhysReg(MI, i, PhysReg);
+      // Note: we don't update the def operand yet. That would cause the normal
+      // def-scan to attempt spilling.
+    } else if (MO.getSubReg() && MI->readsVirtualRegister(Reg)) {
+      DEBUG(dbgs() << "Partial redefine: " << MO << "\n");
+      // Reload the register, but don't assign to the operand just yet.
+      // That would confuse the later phys-def processing pass.
+      LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, 0);
+      PartialDefs.push_back(LRI->second.PhysReg);
     } else if (MO.isEarlyClobber()) {
       // Note: defineVirtReg may invalidate MO.
       LiveRegMap::iterator LRI = defineVirtReg(MI, i, Reg, 0);
@@ -683,6 +693,10 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
       UsedInInstr.set(*AS);
   }
+
+  // Also mark PartialDefs as used to avoid reallocation.
+  for (unsigned i = 0, e = PartialDefs.size(); i != e; ++i)
+    UsedInInstr.set(PartialDefs[i]);
 }
 
 void RAFast::AllocateBasicBlock() {
@@ -767,7 +781,10 @@ void RAFast::AllocateBasicBlock() {
     // Mark physreg uses and early clobbers as used.
     // Find the end of the virtreg operands
     unsigned VirtOpEnd = 0;
-    bool hasTiedOps = false, hasEarlyClobbers = false, hasPhysDefs = false;
+    bool hasTiedOps = false;
+    bool hasEarlyClobbers = false;
+    bool hasPartialRedefs = false;
+    bool hasPhysDefs = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
@@ -775,11 +792,15 @@ void RAFast::AllocateBasicBlock() {
       if (!Reg) continue;
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         VirtOpEnd = i+1;
-        if (MO.isUse())
+        if (MO.isUse()) {
           hasTiedOps = hasTiedOps ||
                                 TID.getOperandConstraint(i, TOI::TIED_TO) != -1;
-        else if (MO.isEarlyClobber())
-          hasEarlyClobbers = true;
+        } else {
+          if (MO.isEarlyClobber())
+            hasEarlyClobbers = true;
+          if (MO.getSubReg() && MI->readsVirtualRegister(Reg))
+            hasPartialRedefs = true;
+        }
         continue;
       }
       if (!Allocatable.test(Reg)) continue;
@@ -800,7 +821,8 @@ void RAFast::AllocateBasicBlock() {
     // operands.
     // We didn't detect inline asm tied operands above, so just make this extra
     // pass for all inline asm.
-    if (MI->isInlineAsm() || hasEarlyClobbers || (hasTiedOps && hasPhysDefs)) {
+    if (MI->isInlineAsm() || hasEarlyClobbers || hasPartialRedefs ||
+        (hasTiedOps && hasPhysDefs)) {
       handleThroughOperands(MI, VirtDead);
       // Don't attempt coalescing when we have funny stuff going on.
       CopyDst = 0;
