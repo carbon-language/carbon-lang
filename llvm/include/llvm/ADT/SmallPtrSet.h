@@ -233,7 +233,7 @@ template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
   enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
-  void *SmallArray[SmallSizePowTwo];
+  void *SmallArray[SmallSizePowTwo+1];
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 public:
   SmallPtrSet() : SmallPtrSetImpl(SmallSizePowTwo) {}
