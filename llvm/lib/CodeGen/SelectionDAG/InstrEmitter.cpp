@@ -123,7 +123,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
 
   EVT VT = Node->getValueType(ResNo);
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
-  SrcRC = TRI->getPhysicalRegisterRegClass(SrcReg, VT);
+  SrcRC = TRI->getMinimalPhysRegClass(SrcReg, VT);
   
   // Figure out the register class to create for the destreg.
   if (VRBase) {
@@ -794,13 +794,13 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     if (TargetRegisterInfo::isVirtualRegister(SrcReg))
       SrcTRC = MRI->getRegClass(SrcReg);
     else
-      SrcTRC = TRI->getPhysicalRegisterRegClass(SrcReg,SrcVal.getValueType());
+      SrcTRC = TRI->getMinimalPhysRegClass(SrcReg,SrcVal.getValueType());
 
     if (TargetRegisterInfo::isVirtualRegister(DestReg))
       DstTRC = MRI->getRegClass(DestReg);
     else
-      DstTRC = TRI->getPhysicalRegisterRegClass(DestReg,
-                                            Node->getOperand(1).getValueType());
+      DstTRC = TRI->getMinimalPhysRegClass(DestReg,
+                                           Node->getOperand(1).getValueType());
 
     bool Emitted = TII->copyRegToReg(*MBB, InsertPos, DestReg, SrcReg,
                                      DstTRC, SrcTRC, Node->getDebugLoc());

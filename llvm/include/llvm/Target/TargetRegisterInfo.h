@@ -321,7 +321,8 @@ public:
 
   /// getMinimalPhysRegClass - Returns the Register Class of a physical
   /// register of the given type.
-  const TargetRegisterClass * getMinimalPhysRegClass(unsigned Reg) const;
+  const TargetRegisterClass *
+    getMinimalPhysRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is

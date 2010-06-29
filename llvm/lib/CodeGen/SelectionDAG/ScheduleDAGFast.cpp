@@ -535,7 +535,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         SUnit *LRDef = LiveRegDefs[Reg];
         EVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
         const TargetRegisterClass *RC =
-          TRI->getPhysicalRegisterRegClass(Reg, VT);
+          TRI->getMinimalPhysRegClass(Reg, VT);
         const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
 
         // If cross copy register class is null, then it must be possible copy

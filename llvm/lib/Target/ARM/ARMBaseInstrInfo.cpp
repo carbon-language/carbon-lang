@@ -707,6 +707,11 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (SrcRC == ARM::tGPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass)
     SrcRC = ARM::GPRRegisterClass;
 
+  if (DestRC == ARM::SPR_8RegisterClass)
+    DestRC = ARM::SPRRegisterClass;
+  if (SrcRC == ARM::SPR_8RegisterClass)
+    SrcRC = ARM::SPRRegisterClass;
+
   // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
   if (DestRC == ARM::DPR_8RegisterClass)
     DestRC = ARM::DPR_VFP2RegisterClass;
