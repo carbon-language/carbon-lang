@@ -2168,38 +2168,79 @@ def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
 def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
                   "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
-//===---------------------------------------------------------------------===//
-// SSE2 Instructions
-//===---------------------------------------------------------------------===//
+let ExeDomain = SSEPackedInt in { // SSE integer instructions
 
 //===---------------------------------------------------------------------===//
-// SSE integer instructions
-let ExeDomain = SSEPackedInt in {
+// SSE2 - Move Aligned/Unaligned Packed Integers
+//===---------------------------------------------------------------------===//
 
-// Move Instructions
+let isAsmParserOnly = 1 in {
+  let neverHasSideEffects = 1 in
+  def VMOVDQArr : VPDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "movdqa\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVDQUrr : VPDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "movdqu\t{$src, $dst|$dst, $src}", []>, XS, VEX;
+
+  let canFoldAsLoad = 1, mayLoad = 1 in {
+  def VMOVDQArm : VPDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                     "movdqa\t{$src, $dst|$dst, $src}",
+                     [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/]>,
+                     VEX;
+  def VMOVDQUrm :  I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                     "vmovdqu\t{$src, $dst|$dst, $src}",
+                     [/*(set VR128:$dst, (loadv2i64 addr:$src))*/]>,
+                   XS, VEX, Requires<[HasAVX, HasSSE2]>;
+  }
+
+  let mayStore = 1 in {
+  def VMOVDQAmr : VPDI<0x7F, MRMDestMem, (outs),
+                     (ins i128mem:$dst, VR128:$src),
+                     "movdqa\t{$src, $dst|$dst, $src}",
+                     [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>, VEX;
+  def VMOVDQUmr :  I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+                     "vmovdqu\t{$src, $dst|$dst, $src}",
+                     [/*(store (v2i64 VR128:$src), addr:$dst)*/]>,
+                   XS, VEX, Requires<[HasAVX, HasSSE2]>;
+  }
+}
+
 let neverHasSideEffects = 1 in
 def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, mayLoad = 1 in
+
+let canFoldAsLoad = 1, mayLoad = 1 in {
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/]>;
-let mayStore = 1 in
-def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                   "movdqa\t{$src, $dst|$dst, $src}",
-                   [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>;
-let canFoldAsLoad = 1, mayLoad = 1 in
 def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (loadv2i64 addr:$src))*/]>,
                  XS, Requires<[HasSSE2]>;
-let mayStore = 1 in
+}
+
+let mayStore = 1 in {
+def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+                   "movdqa\t{$src, $dst|$dst, $src}",
+                   [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>;
 def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    [/*(store (v2i64 VR128:$src), addr:$dst)*/]>,
                  XS, Requires<[HasSSE2]>;
+}
 
 // Intrinsic forms of MOVDQU load and store
+let isAsmParserOnly = 1 in {
+let canFoldAsLoad = 1 in
+def VMOVDQUrm_Int : I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                       "vmovdqu\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_loadu_dq addr:$src))]>,
+                     XS, VEX, Requires<[HasAVX, HasSSE2]>;
+def VMOVDQUmr_Int : I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+                       "vmovdqu\t{$src, $dst|$dst, $src}",
+                       [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,
+                     XS, VEX, Requires<[HasAVX, HasSSE2]>;
+}
+
 let canFoldAsLoad = 1 in
 def MOVDQUrm_Int :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movdqu\t{$src, $dst|$dst, $src}",
