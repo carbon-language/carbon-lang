@@ -4337,54 +4337,51 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
       // the arguments into constants, and if so, try to constant propagate the
       // result.  This is particularly useful for computing loop exit values.
       if (CanConstantFold(I)) {
-        std::vector<Constant*> Operands;
-        Operands.reserve(I->getNumOperands());
+        SmallVector<Constant *, 4> Operands;
+        bool MadeImprovement = false;
         for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
           Value *Op = I->getOperand(i);
           if (Constant *C = dyn_cast<Constant>(Op)) {
             Operands.push_back(C);
-          } else {
-            // If any of the operands is non-constant and if they are
-            // non-integer and non-pointer, don't even try to analyze them
-            // with scev techniques.
-            if (!isSCEVable(Op->getType()))
-              return V;
-
-            const SCEV *OpV = getSCEVAtScope(Op, L);
-            if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV)) {
-              Constant *C = SC->getValue();
-              if (C->getType() != Op->getType())
-                C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
-                                                                  Op->getType(),
-                                                                  false),
-                                          C, Op->getType());
-              Operands.push_back(C);
-            } else if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV)) {
-              if (Constant *C = dyn_cast<Constant>(SU->getValue())) {
-                if (C->getType() != Op->getType())
-                  C =
-                    ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
-                                                                  Op->getType(),
-                                                                  false),
-                                          C, Op->getType());
-                Operands.push_back(C);
-              } else
-                return V;
-            } else {
-              return V;
-            }
+            continue;
           }
+
+          // If any of the operands is non-constant and if they are
+          // non-integer and non-pointer, don't even try to analyze them
+          // with scev techniques.
+          if (!isSCEVable(Op->getType()))
+            return V;
+
+          const SCEV *OrigV = getSCEV(Op);
+          const SCEV *OpV = getSCEVAtScope(OrigV, L);
+          MadeImprovement |= OrigV != OpV;
+
+          Constant *C = 0;
+          if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
+            C = SC->getValue();
+          if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV))
+            C = dyn_cast<Constant>(SU->getValue());
+          if (!C) return V;
+          if (C->getType() != Op->getType())
+            C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                              Op->getType(),
+                                                              false),
+                                      C, Op->getType());
+          Operands.push_back(C);
         }
 
-        Constant *C = 0;
-        if (const CmpInst *CI = dyn_cast<CmpInst>(I))
-          C = ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                              Operands[0], Operands[1], TD);
-        else
-          C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                       &Operands[0], Operands.size(), TD);
-        if (C)
+        // Check to see if getSCEVAtScope actually made an improvement.
+        if (MadeImprovement) {
+          Constant *C = 0;
+          if (const CmpInst *CI = dyn_cast<CmpInst>(I))
+            C = ConstantFoldCompareInstOperands(CI->getPredicate(),
+                                                Operands[0], Operands[1], TD);
+          else
+            C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
+                                         &Operands[0], Operands.size(), TD);
+          if (!C) return V;
           return getSCEV(C);
+        }
       }
     }
 
@@ -4434,7 +4431,29 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   // If this is a loop recurrence for a loop that does not contain L, then we
   // are dealing with the final value computed by the loop.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(V)) {
-    if (!L || !AddRec->getLoop()->contains(L)) {
+    // First, attempt to evaluate each operand.
+    // Avoid performing the look-up in the common case where the specified
+    // expression has no loop-variant portions.
+    for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i) {
+      const SCEV *OpAtScope = getSCEVAtScope(AddRec->getOperand(i), L);
+      if (OpAtScope == AddRec->getOperand(i))
+        continue;
+
+      // Okay, at least one of these operands is loop variant but might be
+      // foldable.  Build a new instance of the folded commutative expression.
+      SmallVector<const SCEV *, 8> NewOps(AddRec->op_begin(),
+                                          AddRec->op_begin()+i);
+      NewOps.push_back(OpAtScope);
+      for (++i; i != e; ++i)
+        NewOps.push_back(getSCEVAtScope(AddRec->getOperand(i), L));
+
+      AddRec = cast<SCEVAddRecExpr>(getAddRecExpr(NewOps, AddRec->getLoop()));
+      break;
+    }
+
+    // If the scope is outside the addrec's loop, evaluate it by using the
+    // loop exit value of the addrec.
+    if (!AddRec->getLoop()->contains(L)) {
       // To evaluate this recurrence, we need to know how many times the AddRec
       // loop iterates.  Compute this now.
       const SCEV *BackedgeTakenCount = getBackedgeTakenCount(AddRec->getLoop());
@@ -4443,6 +4462,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
       // Then, evaluate the AddRec.
       return AddRec->evaluateAtIteration(BackedgeTakenCount, *this);
     }
+
     return AddRec;
   }
 
