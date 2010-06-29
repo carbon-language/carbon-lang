@@ -113,3 +113,13 @@ struct __attribute__((aligned(32))) s20 {
   int y;
 };
 void f20(struct s20 x) {}
+
+struct StringRef {
+  long x;
+  const char *Ptr;
+};
+
+// rdar://7375902
+// CHECK: define i8* @f21(i64 %S.coerce0, i8* %S.coerce1) 
+const char *f21(struct StringRef S) { return S.x+S.Ptr; }
+

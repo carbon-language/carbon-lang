@@ -1,12 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: [[i64_i64_ty:%.*]] = type { i64, i64 }
-// CHECK: [[i64_double_ty:%.*]] = type { i64, double }
-
 // Basic base class test.
 struct f0_s0 { unsigned a; };
 struct f0_s1 : public f0_s0 { void *b; };
-// CHECK: define void @_Z2f05f0_s1(i64 %a0.coerce0, i64 %a0.coerce1)
+// CHECK: define void @_Z2f05f0_s1(i64 %a0.coerce0, i8* %a0.coerce1)
 void f0(f0_s1 a0) { }
 
 // Check with two eight-bytes in base class.
@@ -27,7 +24,7 @@ struct s3_1 { struct s3_0 a; long b; };
 void f3(struct s3_1 x) {}
 
 // CHECK: define i64 @_Z4f4_0M2s4i(i64 %a.coerce)
-// CHECK: define [[i64_i64_ty]] @_Z4f4_1M2s4FivE(i64 %a.coerce0, i64 %a.coerce1)
+// CHECK: define {{.*}} @_Z4f4_1M2s4FivE(i64 %a.coerce0, i64 %a.coerce1)
 struct s4 {};
 typedef int s4::* s4_mdp;
 typedef int (s4::*s4_mfp)();

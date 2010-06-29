@@ -17,6 +17,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
@@ -672,6 +673,9 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
 namespace {
 /// X86_64ABIInfo - The X86_64 ABI information.
 class X86_64ABIInfo : public ABIInfo {
+  ASTContext &Context;
+  const llvm::TargetData &TD;
+  
   enum Class {
     Integer = 0,
     SSE,
@@ -715,8 +719,7 @@ class X86_64ABIInfo : public ABIInfo {
   ///
   /// If the \arg Lo class is ComplexX87, then the \arg Hi class will
   /// also be ComplexX87.
-  void classify(QualType T, ASTContext &Context, uint64_t OffsetBase,
-                Class &Lo, Class &Hi) const;
+  void classify(QualType T, uint64_t OffsetBase, Class &Lo, Class &Hi) const;
 
   /// getCoerceResult - Given a source type \arg Ty and an LLVM type
   /// to coerce to, chose the best way to pass Ty in the same place
@@ -728,29 +731,29 @@ class X86_64ABIInfo : public ABIInfo {
   /// type. This makes this code more explicit, and it makes it clearer that we
   /// are also doing this for correctness in the case of passing scalar types.
   ABIArgInfo getCoerceResult(QualType Ty,
-                             const llvm::Type *CoerceTo,
-                             ASTContext &Context) const;
+                             const llvm::Type *CoerceTo) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be returned in memory.
-  ABIArgInfo getIndirectReturnResult(QualType Ty, ASTContext &Context) const;
+  ABIArgInfo getIndirectReturnResult(QualType Ty) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
-  ABIArgInfo getIndirectResult(QualType Ty, ASTContext &Context) const;
+  ABIArgInfo getIndirectResult(QualType Ty) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy,
-                                ASTContext &Context,
                                 llvm::LLVMContext &VMContext) const;
 
   ABIArgInfo classifyArgumentType(QualType Ty,
-                                  ASTContext &Context,
                                   llvm::LLVMContext &VMContext,
                                   unsigned &neededInt,
                                   unsigned &neededSSE,
                                   const llvm::Type *PrefType) const;
 
 public:
+  X86_64ABIInfo(ASTContext &Ctx, const llvm::TargetData &td)
+    : Context(Ctx), TD(td) {}
+
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
                            llvm::LLVMContext &VMContext,
                            const llvm::Type *const *PrefTypes,
@@ -762,7 +765,8 @@ public:
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_64TargetCodeGenInfo():TargetCodeGenInfo(new X86_64ABIInfo()) {}
+  X86_64TargetCodeGenInfo(ASTContext &Ctx, const llvm::TargetData &TD)
+    : TargetCodeGenInfo(new X86_64ABIInfo(Ctx, TD)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 7;
@@ -827,7 +831,6 @@ X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum, Class Field) {
 }
 
 void X86_64ABIInfo::classify(QualType Ty,
-                             ASTContext &Context,
                              uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
   // FIXME: This code can be simplified by introducing a simple value class for
@@ -866,7 +869,7 @@ void X86_64ABIInfo::classify(QualType Ty,
   
   if (const EnumType *ET = Ty->getAs<EnumType>()) {
     // Classify the underlying integer type.
-    classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);
+    classify(ET->getDecl()->getIntegerType(), OffsetBase, Lo, Hi);
     return;
   }
   
@@ -968,7 +971,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     uint64_t ArraySize = AT->getSize().getZExtValue();
     for (uint64_t i=0, Offset=OffsetBase; i<ArraySize; ++i, Offset += EltSize) {
       Class FieldLo, FieldHi;
-      classify(AT->getElementType(), Context, Offset, FieldLo, FieldHi);
+      classify(AT->getElementType(), Offset, FieldLo, FieldHi);
       Lo = merge(Lo, FieldLo);
       Hi = merge(Hi, FieldHi);
       if (Lo == Memory || Hi == Memory)
@@ -1023,7 +1026,7 @@ void X86_64ABIInfo::classify(QualType Ty,
         // initialized to class NO_CLASS.
         Class FieldLo, FieldHi;
         uint64_t Offset = OffsetBase + Layout.getBaseClassOffset(Base);
-        classify(i->getType(), Context, Offset, FieldLo, FieldHi);
+        classify(i->getType(), Offset, FieldLo, FieldHi);
         Lo = merge(Lo, FieldLo);
         Hi = merge(Hi, FieldHi);
         if (Lo == Memory || Hi == Memory)
@@ -1082,7 +1085,7 @@ void X86_64ABIInfo::classify(QualType Ty,
           FieldHi = EB_Hi ? Integer : NoClass;
         }
       } else
-        classify(i->getType(), Context, Offset, FieldLo, FieldHi);
+        classify(i->getType(), Offset, FieldLo, FieldHi);
       Lo = merge(Lo, FieldLo);
       Hi = merge(Hi, FieldHi);
       if (Lo == Memory || Hi == Memory)
@@ -1109,9 +1112,8 @@ void X86_64ABIInfo::classify(QualType Ty,
 }
 
 ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
-                                          const llvm::Type *CoerceTo,
-                                          ASTContext &Context) const {
-  if (CoerceTo->isIntegerTy(64)) {
+                                          const llvm::Type *CoerceTo) const {
+  if (CoerceTo->isIntegerTy(64) || isa<llvm::PointerType>(CoerceTo)) {
     // Integer and pointer types will end up in a general purpose
     // register.
 
@@ -1151,8 +1153,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   return ABIArgInfo::getCoerce(CoerceTo);
 }
 
-ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty,
-                                                  ASTContext &Context) const {
+ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
   if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
@@ -1167,8 +1168,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty,
   return ABIArgInfo::getIndirect(0);
 }
 
-ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
-                                            ASTContext &Context) const {
+ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
   if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
@@ -1193,12 +1193,11 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
 }
 
 ABIArgInfo X86_64ABIInfo::
-classifyReturnType(QualType RetTy, ASTContext &Context,
-                   llvm::LLVMContext &VMContext) const {
+classifyReturnType(QualType RetTy, llvm::LLVMContext &VMContext) const {
   // AMD64-ABI 3.2.3p4: Rule 1. Classify the return type with the
   // classification algorithm.
   X86_64ABIInfo::Class Lo, Hi;
-  classify(RetTy, Context, 0, Lo, Hi);
+  classify(RetTy, 0, Lo, Hi);
 
   // Check some invariants.
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
@@ -1217,7 +1216,7 @@ classifyReturnType(QualType RetTy, ASTContext &Context,
     // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
     // hidden argument.
   case Memory:
-    return getIndirectReturnResult(RetTy, Context);
+    return getIndirectReturnResult(RetTy);
 
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
@@ -1287,16 +1286,40 @@ classifyReturnType(QualType RetTy, ASTContext &Context,
     break;
   }
 
-  return getCoerceResult(RetTy, ResType, Context);
+  return getCoerceResult(RetTy, ResType);
 }
 
-ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
+static const llvm::Type *Get8ByteTypeAtOffset(const llvm::Type *PrefType,
+                                              unsigned Offset,
+                                              const llvm::TargetData &TD) {
+  if (PrefType == 0) return 0;
+  
+  // Pointers are always 8-bytes at offset 0.
+  if (Offset == 0 && isa<llvm::PointerType>(PrefType))
+    return PrefType;
+  
+  // TODO: 1/2/4/8 byte integers are also interesting, but we have to know that
+  // the "hole" is not used in the containing struct (just undef padding).
+  const llvm::StructType *STy = dyn_cast<llvm::StructType>(PrefType);
+  if (STy == 0) return 0;
+ 
+  // If this is a struct, recurse into the field at the specified offset.
+  const llvm::StructLayout *SL = TD.getStructLayout(STy);
+  if (Offset >= SL->getSizeInBytes()) return 0;
+  
+  unsigned FieldIdx = SL->getElementContainingOffset(Offset);
+  Offset -= SL->getElementOffset(FieldIdx);
+  
+  return Get8ByteTypeAtOffset(STy->getElementType(FieldIdx), Offset, TD);
+}
+
+ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty,
                                                llvm::LLVMContext &VMContext,
                                                unsigned &neededInt,
                                                unsigned &neededSSE,
                                                const llvm::Type *PrefType)const{
   X86_64ABIInfo::Class Lo, Hi;
-  classify(Ty, Context, 0, Lo, Hi);
+  classify(Ty, 0, Lo, Hi);
 
   // Check some invariants.
   // FIXME: Enforce these by construction.
@@ -1319,7 +1342,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // COMPLEX_X87, it is passed in memory.
   case X87:
   case ComplexX87:
-    return getIndirectResult(Ty, Context);
+    return getIndirectResult(Ty);
 
   case SSEUp:
   case X87Up:
@@ -1329,8 +1352,16 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     // available register of the sequence %rdi, %rsi, %rdx, %rcx, %r8
     // and %r9 is used.
   case Integer:
-    ++neededInt;
+    // It is always safe to classify this as an i64 argument.
     ResType = llvm::Type::getInt64Ty(VMContext);
+    ++neededInt;
+      
+    // If we can choose a better 8-byte type based on the preferred type, and if
+    // that type is still passed in a GPR, use it.
+    if (const llvm::Type *PrefTypeLo = Get8ByteTypeAtOffset(PrefType, 0, TD))
+      if (isa<llvm::IntegerType>(PrefTypeLo) ||
+          isa<llvm::PointerType>(PrefTypeLo))
+        ResType = PrefTypeLo;
     break;
 
     // AMD64-ABI 3.2.3p3: Rule 3. If the class is SSE, the next
@@ -1353,11 +1384,22 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     break;
 
   case NoClass: break;
-  case Integer:
-    ResType = llvm::StructType::get(VMContext, ResType,
-                                    llvm::Type::getInt64Ty(VMContext), NULL);
+      
+  case Integer: {
+    // It is always safe to classify this as an i64 argument.
+    const llvm::Type *HiType = llvm::Type::getInt64Ty(VMContext);
     ++neededInt;
+
+    // If we can choose a better 8-byte type based on the preferred type, and if
+    // that type is still passed in a GPR, use it.
+    if (const llvm::Type *PrefTypeHi = Get8ByteTypeAtOffset(PrefType, 8, TD))
+      if (isa<llvm::IntegerType>(PrefTypeHi) ||
+          isa<llvm::PointerType>(PrefTypeHi))
+        HiType = PrefTypeHi;
+      
+    ResType = llvm::StructType::get(VMContext, ResType, HiType, NULL);
     break;
+  }
 
     // X87Up generally doesn't occur here (long double is passed in
     // memory), except in situations involving unions.
@@ -1377,15 +1419,14 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
     break;
   }
 
-  return getCoerceResult(Ty, ResType, Context);
+  return getCoerceResult(Ty, ResType);
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
                                 llvm::LLVMContext &VMContext,
                                 const llvm::Type *const *PrefTypes,
                                 unsigned NumPrefTypes) const {
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
-                                          Context, VMContext);
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), VMContext);
 
   // Keep track of the number of assigned registers.
   unsigned freeIntRegs = 6, freeSSERegs = 8;
@@ -1408,7 +1449,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
     }
       
     unsigned neededInt, neededSSE;
-    it->info = classifyArgumentType(it->type, Context, VMContext,
+    it->info = classifyArgumentType(it->type, VMContext,
                                     neededInt, neededSSE, PrefType);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
@@ -1419,7 +1460,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
       freeIntRegs -= neededInt;
       freeSSERegs -= neededSSE;
     } else {
-      it->info = getIndirectResult(it->type, Context);
+      it->info = getIndirectResult(it->type);
     }
   }
 }
@@ -1489,8 +1530,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   unsigned neededInt, neededSSE;
   
   Ty = CGF.getContext().getCanonicalType(Ty);
-  ABIArgInfo AI = classifyArgumentType(Ty, CGF.getContext(), VMContext,
-                                       neededInt, neededSSE, 0);
+  ABIArgInfo AI = classifyArgumentType(Ty, VMContext, neededInt, neededSSE, 0);
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
@@ -2283,10 +2323,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
   // For now we just cache the TargetCodeGenInfo in CodeGenModule and don't
   // free it.
 
-  const llvm::Triple &Triple(getContext().Target.getTriple());
+  const llvm::Triple &Triple = getContext().Target.getTriple();
   switch (Triple.getArch()) {
   default:
-    return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo);
+    return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo());
 
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
@@ -2335,6 +2375,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
     }
 
   case llvm::Triple::x86_64:
-    return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo());
+    return *(TheTargetCodeGenInfo =
+               new X86_64TargetCodeGenInfo(Context, TheTargetData));
   }
 }
