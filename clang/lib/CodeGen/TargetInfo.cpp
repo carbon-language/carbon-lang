@@ -747,7 +747,8 @@ class X86_64ABIInfo : public ABIInfo {
                                   ASTContext &Context,
                                   llvm::LLVMContext &VMContext,
                                   unsigned &neededInt,
-                                  unsigned &neededSSE) const;
+                                  unsigned &neededSSE,
+                                  const llvm::Type *PrefType) const;
 
 public:
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
@@ -1292,7 +1293,8 @@ classifyReturnType(QualType RetTy, ASTContext &Context,
 ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
                                                llvm::LLVMContext &VMContext,
                                                unsigned &neededInt,
-                                               unsigned &neededSSE) const {
+                                               unsigned &neededSSE,
+                                               const llvm::Type *PrefType)const{
   X86_64ABIInfo::Class Lo, Hi;
   classify(Ty, Context, 0, Lo, Hi);
 
@@ -1397,9 +1399,17 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
   // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
+    // If the client specified a preferred IR type to use, pass it down to
+    // classifyArgumentType.
+    const llvm::Type *PrefType = 0;
+    if (NumPrefTypes) {
+      PrefType = *PrefTypes++;
+      --NumPrefTypes;
+    }
+      
     unsigned neededInt, neededSSE;
     it->info = classifyArgumentType(it->type, Context, VMContext,
-                                    neededInt, neededSSE);
+                                    neededInt, neededSSE, PrefType);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
     // eightbyte of an argument, the whole argument is passed on the
@@ -1480,7 +1490,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   
   Ty = CGF.getContext().getCanonicalType(Ty);
   ABIArgInfo AI = classifyArgumentType(Ty, CGF.getContext(), VMContext,
-                                       neededInt, neededSSE);
+                                       neededInt, neededSSE, 0);
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
