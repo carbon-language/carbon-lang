@@ -153,7 +153,7 @@ namespace {
         Changed = true;
       }
 
-      return false;
+      return Changed;
     }
 
   public:
