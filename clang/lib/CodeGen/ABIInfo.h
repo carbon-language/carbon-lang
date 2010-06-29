@@ -11,11 +11,9 @@
 #define CLANG_CODEGEN_ABIINFO_H
 
 #include "clang/AST/Type.h"
-
-#include <cassert>
+#include "llvm/Type.h"
 
 namespace llvm {
-  class Type;
   class Value;
   class LLVMContext;
 }
@@ -70,7 +68,7 @@ namespace clang {
 
   private:
     Kind TheKind;
-    const llvm::Type *TypeData;
+    llvm::PATypeHolder TypeData;
     unsigned UIntData;
     bool BoolData;
 
