@@ -246,10 +246,10 @@ bool DwarfEHPrepare::CleanupSelectors() {
     if (!Sel || Sel->getParent()->getParent() != F) continue;
 
     // Index of the ".llvm.eh.catch.all.value" variable.
-    unsigned OpIdx = Sel->getNumOperands() - 1;
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getOperand(OpIdx));
+    unsigned OpIdx = Sel->getNumArgOperands() - 1;
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getArgOperand(OpIdx));
     if (GV != EHCatchAllValue) continue;
-    Sel->setOperand(OpIdx, EHCatchAllValue->getInitializer());
+    Sel->setArgOperand(OpIdx, EHCatchAllValue->getInitializer());
     Changed = true;
   }
 
