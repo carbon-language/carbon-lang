@@ -57,6 +57,10 @@ class GRCoreEngine {
   ///   These are used to record for key nodes in the ExplodedGraph the
   ///   number of times different CFGBlocks have been visited along a path.
   GRBlockCounter::Factory BCounterFactory;
+  
+  /// A flag that indicates whether paths were halted because 
+  ///  ProcessBlockEntrace returned false. 
+  bool BlockAborted;
 
   void GenerateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
@@ -108,14 +112,16 @@ public:
   GRCoreEngine(ASTContext& ctx, GRSubEngine& subengine)
     : SubEngine(subengine), G(new ExplodedGraph(ctx)),
       WList(GRWorkList::MakeBFS()),
-      BCounterFactory(G->getAllocator()) {}
+      BCounterFactory(G->getAllocator()),
+      BlockAborted(false) {}
 
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
   GRCoreEngine(ASTContext& ctx, GRWorkList* wlist, GRSubEngine& subengine)
     : SubEngine(subengine), G(new ExplodedGraph(ctx)), WList(wlist),
-      BCounterFactory(G->getAllocator()) {}
+      BCounterFactory(G->getAllocator()),
+      BlockAborted(false) {}
 
   ~GRCoreEngine() {
     delete WList;

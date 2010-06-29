@@ -221,7 +221,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
     }
   }
 
-  SubEngine.ProcessEndWorklist(WList->hasWork());
+  SubEngine.ProcessEndWorklist(WList->hasWork() || BlockAborted);
   return WList->hasWork();
 }
 
@@ -258,7 +258,10 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
 
   if (ProcessBlockEntrance(Blk, Pred, WList->getBlockCounter()))
-    GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()), Pred->State, Pred);
+    GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()),
+                 Pred->State, Pred);
+  else
+    BlockAborted = true;
 }
 
 void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
