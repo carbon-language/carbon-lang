@@ -39,9 +39,6 @@
 using namespace clang::driver;
 using namespace clang;
 
-// Used to set values for "production" clang, for releases.
-// #define USE_PRODUCTION_CLANG
-
 Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
                llvm::StringRef _DefaultHostTriple,
                llvm::StringRef _DefaultImageName,
@@ -510,6 +507,19 @@ void Driver::PrintActions(const Compilation &C) const {
     PrintActions1(C, *it, Ids);
 }
 
+/// \brief Check whether the given input tree contains any compilation (or
+/// assembly) actions.
+static bool ContainsCompileAction(const Action *A) {
+  if (isa<CompileJobAction>(A) || isa<AssembleJobAction>(A))
+    return true;
+
+  for (Action::const_iterator it = A->begin(), ie = A->end(); it != ie; ++it)
+    if (ContainsCompileAction(*it))
+      return true;
+
+  return false;
+}
+
 void Driver::BuildUniversalActions(const ArgList &Args,
                                    ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building universal build actions");
@@ -586,11 +596,15 @@ void Driver::BuildUniversalActions(const ArgList &Args,
     else
       Actions.push_back(new LipoJobAction(Inputs, Act->getType()));
 
-    // Add a 'dsymutil' step if necessary.
+    // Add a 'dsymutil' step if necessary, when debug info is enabled and we
+    // have a compile input. We need to run 'dsymutil' ourselves in such cases
+    // because the debug info will refer to a temporary object file which is
+    // will be removed at the end of the compilation process.
     if (Act->getType() == types::TY_Image) {
       Arg *A = Args.getLastArg(options::OPT_g_Group);
       if (A && !A->getOption().matches(options::OPT_g0) &&
-          !A->getOption().matches(options::OPT_gstabs)) {
+          !A->getOption().matches(options::OPT_gstabs) &&
+          ContainsCompileAction(Actions.back())) {
         ActionList Inputs;
         Inputs.push_back(Actions.back());
         Actions.pop_back();

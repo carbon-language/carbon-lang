@@ -29,3 +29,10 @@
 //
 // CHECK-OUTPUT-NAME: "x86_64-apple-darwin10" - "darwin::Link", inputs: [{{.*}}], output: "foo"
 // CHECK-OUTPUT-NAME: "x86_64-apple-darwin10" - "darwin::Dsymutil", inputs: ["foo"], output: "foo.dSYM"
+
+// Check that we only use dsymutil when needed.
+//
+// RUN: touch %t.o
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN:   -o foo %t.o -g 2> %t
+// RUN: grep "Dsymutil" %t | count 0
