@@ -2019,6 +2019,8 @@ defm RSQRT : sse1_fp_unop_s<0x52, "rsqrt", X86frsqrt, int_x86_sse_rsqrt_ss>,
 defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss>,
              sse1_fp_unop_p<0x53, "rcp", X86frcp, int_x86_sse_rcp_ps>;
 
+// There is no f64 version of the reciprocal approximation instructions.
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Non-temporal stores
 //===----------------------------------------------------------------------===//
@@ -2111,7 +2113,7 @@ def MOVNTImr_Int  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                   TB, Requires<[HasSSE2]>;
 
 //===----------------------------------------------------------------------===//
-// SSE 1 & 2 - Misc Instructions
+// SSE 1 & 2 - Misc Instructions (No AVX form)
 //===----------------------------------------------------------------------===//
 
 // Prefetch intrinsic.
@@ -2127,12 +2129,6 @@ def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
 // Load, store, and memory fence
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,
              TB, Requires<[HasSSE1]>;
-
-// MXCSR register
-def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
-                  "ldmxcsr\t$src", [(int_x86_sse_ldmxcsr addr:$src)]>;
-def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
-                  "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // We set canFoldAsLoad because this can be converted to a constant-pool
@@ -2156,12 +2152,25 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
 def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
           (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
 
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Load/Store XCSR register
+//===----------------------------------------------------------------------===//
+
+let isAsmParserOnly = 1 in {
+  def VLDMXCSR : VPSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
+                    "ldmxcsr\t$src", [(int_x86_sse_ldmxcsr addr:$src)]>, VEX;
+  def VSTMXCSR : VPSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
+                    "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>, VEX;
+}
+
+def LDMXCSR : PSI<0xAE, MRM2m, (outs), (ins i32mem:$src),
+                  "ldmxcsr\t$src", [(int_x86_sse_ldmxcsr addr:$src)]>;
+def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
+                  "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
+
 //===---------------------------------------------------------------------===//
 // SSE2 Instructions
 //===---------------------------------------------------------------------===//
-
-
-// There is no f64 version of the reciprocal approximation instructions.
 
 //===---------------------------------------------------------------------===//
 // SSE integer instructions

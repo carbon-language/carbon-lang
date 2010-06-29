@@ -455,15 +455,17 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   unsigned NumOps = MI.getNumOperands();
   unsigned CurOp = 0;
 
-  if ((TSFlags & X86II::FormMask) == X86II::MRMDestMem)
-    NumOps = CurOp = X86AddrNumOperands;
-
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg: assert(0 && "FIXME: Remove this!");
-  case X86II::MRMSrcMem:
+  case X86II::MRM0m: case X86II::MRM1m:
+  case X86II::MRM2m: case X86II::MRM3m:
+  case X86II::MRM4m: case X86II::MRM5m:
+  case X86II::MRM6m: case X86II::MRM7m:
   case X86II::MRMDestMem:
+    NumOps = CurOp = X86AddrNumOperands;
+  case X86II::MRMSrcMem:
   case X86II::MRMSrcReg:
-    if (MI.getOperand(CurOp).isReg() &&
+    if (MI.getNumOperands() > CurOp && MI.getOperand(CurOp).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
 

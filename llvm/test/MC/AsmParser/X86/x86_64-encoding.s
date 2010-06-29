@@ -998,3 +998,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x78,0x2b,0x18]
           vmovntps  %xmm11, (%rax)
 
+// CHECK: vldmxcsr  -4(%rip)
+// CHECK: encoding: [0xc5,0xf8,0xae,0x15,0xfc,0xff,0xff,0xff]
+          vldmxcsr  -4(%rip)
+
+// CHECK: vstmxcsr  -4(%rsp)
+// CHECK: encoding: [0xc5,0xf8,0xae,0x5c,0x24,0xfc]
+          vstmxcsr  -4(%rsp)
+
