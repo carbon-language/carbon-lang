@@ -1600,7 +1600,7 @@ void ARMCodeEmitter::emitNEONGetLaneInstruction(const MachineInstr &MI) {
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
-  Binary |= II->getPredicate(&MI) << ARMII::CondShift;
+  Binary |= (IsThumb ? ARMCC::AL : II->getPredicate(&MI)) << ARMII::CondShift;
 
   unsigned RegT = MI.getOperand(0).getReg();
   RegT = ARMRegisterInfo::getRegisterNumbering(RegT);
