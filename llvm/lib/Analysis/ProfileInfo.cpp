@@ -577,8 +577,6 @@ static void readEdge(ProfileInfo *PI, ProfileInfo::Edge e, double &calcw, std::s
 
 template<>
 bool ProfileInfoT<Function,BasicBlock>::EstimateMissingEdges(const BasicBlock *BB) {
-  bool hasNoSuccessors = false;
-
   double inWeight = 0;
   std::set<Edge> inMissing;
   std::set<const BasicBlock*> ProcessedPreds;
@@ -596,10 +594,8 @@ bool ProfileInfoT<Function,BasicBlock>::EstimateMissingEdges(const BasicBlock *B
   std::set<Edge> outMissing;
   std::set<const BasicBlock*> ProcessedSuccs;
   succ_const_iterator sbbi = succ_begin(BB), sbbe = succ_end(BB);
-  if (sbbi == sbbe) {
+  if (sbbi == sbbe)
     readEdge(this,getEdge(BB,0),outWeight,outMissing);
-    hasNoSuccessors = true;
-  }
   for ( ; sbbi != sbbe; ++sbbi ) {
     if (ProcessedSuccs.insert(*sbbi).second) {
       readEdge(this,getEdge(BB,*sbbi),outWeight,outMissing);
