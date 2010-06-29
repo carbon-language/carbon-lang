@@ -146,6 +146,7 @@ class PATypeHolder {
   mutable const Type *Ty;
   void destroy();
 public:
+  PATypeHolder() : Ty(0) {}
   PATypeHolder(const Type *ty) : Ty(ty) {
     addRef();
   }
@@ -153,7 +154,7 @@ public:
     addRef();
   }
 
-  ~PATypeHolder() { if (Ty) dropRef(); }
+  ~PATypeHolder() { dropRef(); }
 
   operator Type *() const { return get(); }
   Type *get() const;

@@ -504,19 +504,19 @@ inline void PATypeHandle::removeUser() {
 /// reference to the type.
 ///
 inline Type* PATypeHolder::get() const {
+  if (Ty == 0) return 0;
   const Type *NewTy = Ty->getForwardedType();
   if (!NewTy) return const_cast<Type*>(Ty);
   return *const_cast<PATypeHolder*>(this) = NewTy;
 }
 
 inline void PATypeHolder::addRef() {
-  assert(Ty && "Type Holder has a null type!");
-  if (Ty->isAbstract())
+  if (Ty && Ty->isAbstract())
     Ty->addRef();
 }
 
 inline void PATypeHolder::dropRef() {
-  if (Ty->isAbstract())
+  if (Ty && Ty->isAbstract())
     Ty->dropRef();
 }
 
