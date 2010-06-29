@@ -7,7 +7,7 @@ class TestHelpCommand(unittest.TestCase):
 
     def setUp(self):
         self.debugger = lldb.SBDebugger.Create()
-        self.debugger.SetAsync(True)
+        self.debugger.SetAsync(False)
         self.ci = self.debugger.GetCommandInterpreter()
         if not self.ci:
             raise Exception('Could not get the command interpreter')
@@ -37,4 +37,6 @@ class TestHelpCommand(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    lldb.SBDebugger.Initialize()
     unittest.main()
+    lldb.SBDebugger.Terminate()

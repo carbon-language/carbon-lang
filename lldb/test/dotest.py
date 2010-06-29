@@ -129,4 +129,12 @@ for testdir in testdirs:
     os.path.walk(testdir, visit, 'Test')
 
 # Now that we have loaded all the test cases, run the whole test suite.
+
+# For the time being, let's bracket the test runner within the
+# lldb.SBDebugger.Initialize()/Terminate() pair.
+import lldb
+lldb.SBDebugger.Initialize()
+
 unittest.TextTestRunner(verbosity=verbose).run(suite)
+
+lldb.SBDebugger.Terminate()
