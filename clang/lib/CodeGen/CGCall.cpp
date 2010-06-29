@@ -61,28 +61,31 @@ static CanQualType GetReturnType(QualType RetTy) {
 }
 
 const CGFunctionInfo &
-CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP) {
+CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP,
+                              bool IsRecursive) {
   return getFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
                          llvm::SmallVector<CanQualType, 16>(),
-                         FTNP->getExtInfo());
+                         FTNP->getExtInfo(), IsRecursive);
 }
 
 /// \param Args - contains any initial parameters besides those
 ///   in the formal type
 static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
                                   llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                             CanQual<FunctionProtoType> FTP) {
+                                             CanQual<FunctionProtoType> FTP,
+                                             bool IsRecursive = false) {
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
   CanQualType ResTy = FTP->getResultType().getUnqualifiedType();
-  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
+  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo(), IsRecursive);
 }
 
 const CGFunctionInfo &
-CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP) {
+CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP,
+                              bool IsRecursive) {
   llvm::SmallVector<CanQualType, 16> ArgTys;
-  return ::getFunctionInfo(*this, ArgTys, FTP);
+  return ::getFunctionInfo(*this, ArgTys, FTP, IsRecursive);
 }
 
 static CallingConv getCallingConventionForDecl(const Decl *D) {
@@ -215,7 +218,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                            const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                            const FunctionType::ExtInfo &Info) {
+                                            const FunctionType::ExtInfo &Info,
+                                                    bool IsRecursive) {
 #ifndef NDEBUG
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
          I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
@@ -243,8 +247,17 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
   // various situations, pass it in.
   llvm::SmallVector<const llvm::Type *, 8> PreferredArgTypes;
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
-       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
-    PreferredArgTypes.push_back(ConvertType(*I));
+       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I) {
+    // If this is being called from the guts of the ConvertType loop, make sure
+    // to call ConvertTypeRecursive so we don't get into issues with cyclic
+    // pointer type structures.
+    const llvm::Type *ArgType;
+    if (IsRecursive)
+      ArgType = ConvertTypeRecursive(*I);
+    else 
+      ArgType = ConvertType(*I);
+    PreferredArgTypes.push_back(ArgType);
+  }
 
   // Compute ABI information.
   getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext(),
