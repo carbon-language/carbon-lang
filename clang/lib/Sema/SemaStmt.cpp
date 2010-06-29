@@ -836,6 +836,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         llvm::APSInt Val = (*EDI)->getInitVal();
         if(Val.getBitWidth() < CondWidth)
           Val.extend(CondWidth);
+        else if (Val.getBitWidth() > CondWidth)
+          Val.trunc(CondWidth);
         Val.setIsSigned(CondIsSigned);
         EnumVals.push_back(std::make_pair(Val, (*EDI)));
       }
