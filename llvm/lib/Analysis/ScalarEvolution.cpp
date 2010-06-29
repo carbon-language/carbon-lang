@@ -2763,7 +2763,11 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 ///
 const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
 
-  bool InBounds = GEP->isInBounds();
+  // Don't transfer the inbounds flag from the GEP instruction to the
+  // Add expression, because the Instruction may be guarded by control
+  // flow and the no-overflow bits may not be valid for the expression in
+  // any context.
+
   const Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
@@ -2781,7 +2785,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       TotalOffset = getAddExpr(TotalOffset,
                                getOffsetOfExpr(STy, FieldNo),
-                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
+                               /*HasNUW=*/false, /*HasNSW=*/false);
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
@@ -2789,13 +2793,13 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
       LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
       // Lower "inbounds" GEPs to NSW arithmetic.
       LocalOffset = getMulExpr(LocalOffset, getSizeOfExpr(*GTI),
-                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
+                               /*HasNUW=*/false, /*HasNSW=*/false);
       TotalOffset = getAddExpr(TotalOffset, LocalOffset,
-                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
+                               /*HasNUW=*/false, /*HasNSW=*/false);
     }
   }
   return getAddExpr(getSCEV(Base), TotalOffset,
-                    /*HasNUW=*/false, /*HasNSW=*/InBounds);
+                    /*HasNUW=*/false, /*HasNSW=*/false);
 }
 
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
