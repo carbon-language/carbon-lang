@@ -224,14 +224,14 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
       // Use a movw to materialize the 16-bit constant.
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi16), DestReg)
         .addImm(NumBytes)
-        .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+        .addImm((unsigned)Pred).addReg(PredReg);
       Fits = true;
     } else if ((NumBytes & 0xffff) == 0) {
       // Use a movt to materialize the 32-bit constant.
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVTi16), DestReg)
         .addReg(DestReg)
         .addImm(NumBytes >> 16)
-        .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+        .addImm((unsigned)Pred).addReg(PredReg);
       Fits = true;
     }
 
