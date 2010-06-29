@@ -986,3 +986,15 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x1a,0x53,0x10]
           vrcpss  (%rax), %xmm12, %xmm10
 
+// CHECK: vmovntdq  %xmm11, (%rax)
+// CHECK: encoding: [0xc5,0x79,0xe7,0x18]
+          vmovntdq  %xmm11, (%rax)
+
+// CHECK: vmovntpd  %xmm11, (%rax)
+// CHECK: encoding: [0xc5,0x79,0x2b,0x18]
+          vmovntpd  %xmm11, (%rax)
+
+// CHECK: vmovntps  %xmm11, (%rax)
+// CHECK: encoding: [0xc5,0x78,0x2b,0x18]
+          vmovntps  %xmm11, (%rax)
+

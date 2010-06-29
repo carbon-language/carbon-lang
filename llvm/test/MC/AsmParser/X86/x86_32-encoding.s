@@ -10938,3 +10938,15 @@
 // CHECK: encoding: [0xc5,0xea,0x53,0x18]
           vrcpss  (%eax), %xmm2, %xmm3
 
+// CHECK: vmovntdq  %xmm1, (%eax)
+// CHECK: encoding: [0xc5,0xf9,0xe7,0x08]
+          vmovntdq  %xmm1, (%eax)
+
+// CHECK: vmovntpd  %xmm1, (%eax)
+// CHECK: encoding: [0xc5,0xf9,0x2b,0x08]
+          vmovntpd  %xmm1, (%eax)
+
+// CHECK: vmovntps  %xmm1, (%eax)
+// CHECK: encoding: [0xc5,0xf8,0x2b,0x08]
+          vmovntps  %xmm1, (%eax)
+
