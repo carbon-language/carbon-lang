@@ -523,20 +523,20 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   OpInfo.Ty = E->getComputationResultType();
   OpInfo.RHS = EmitCast(E->getRHS(), OpInfo.Ty);
   
-  LValue LHSLV = CGF.EmitLValue(E->getLHS());
+  LValue LHS = CGF.EmitLValue(E->getLHS());
   // We know the LHS is a complex lvalue.
   ComplexPairTy LHSComplexPair;
-  if (LHSLV.isPropertyRef())
-    LHSComplexPair = 
-      CGF.EmitObjCPropertyGet(LHSLV.getPropertyRefExpr()).getComplexVal();
-  else if (LHSLV.isKVCRef())
-    LHSComplexPair = 
-      CGF.EmitObjCPropertyGet(LHSLV.getKVCRefExpr()).getComplexVal();
+  if (LHS.isPropertyRef())
+    LHSComplexPair =
+      CGF.EmitObjCPropertyGet(LHS.getPropertyRefExpr()).getComplexVal();
+  else if (LHS.isKVCRef())
+    LHSComplexPair =
+      CGF.EmitObjCPropertyGet(LHS.getKVCRefExpr()).getComplexVal();
   else
-    LHSComplexPair = EmitLoadOfComplex(LHSLV.getAddress(), 
-                                       LHSLV.isVolatileQualified());
+    LHSComplexPair = EmitLoadOfComplex(LHS.getAddress(),
+                                       LHS.isVolatileQualified());
   
-  OpInfo.LHS=EmitComplexToComplexCast(LHSComplexPair, LHSTy, OpInfo.Ty);
+  OpInfo.LHS = EmitComplexToComplexCast(LHSComplexPair, LHSTy, OpInfo.Ty);
 
   // Expand the binary operator.
   ComplexPairTy Result = (this->*Func)(OpInfo);
@@ -545,23 +545,26 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   Result = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
 
   // Store the result value into the LHS lvalue.
-  if (LHSLV.isPropertyRef())
-    CGF.EmitObjCPropertySet(LHSLV.getPropertyRefExpr(), 
+  if (LHS.isPropertyRef())
+    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(),
                             RValue::getComplex(Result));
-  else if (LHSLV.isKVCRef())
-    CGF.EmitObjCPropertySet(LHSLV.getKVCRefExpr(), RValue::getComplex(Result));
+  else if (LHS.isKVCRef())
+    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), RValue::getComplex(Result));
   else
-    EmitStoreOfComplex(Result, LHSLV.getAddress(), LHSLV.isVolatileQualified());
-  // And now return the LHS
+    EmitStoreOfComplex(Result, LHS.getAddress(), LHS.isVolatileQualified());
+
+  // Restore the Ignore* flags.
   IgnoreReal = ignreal;
   IgnoreImag = ignimag;
   IgnoreRealAssign = ignreal;
   IgnoreImagAssign = ignimag;
-  if (LHSLV.isPropertyRef())
-    return CGF.EmitObjCPropertyGet(LHSLV.getPropertyRefExpr()).getComplexVal();
-  else if (LHSLV.isKVCRef())
-    return CGF.EmitObjCPropertyGet(LHSLV.getKVCRefExpr()).getComplexVal();
-  return EmitLoadOfComplex(LHSLV.getAddress(), LHSLV.isVolatileQualified());
+ 
+  // Objective-C property assignment never reloads the value following a store.
+  if (LHS.isPropertyRef() || LHS.isKVCRef())
+    return Result;
+
+  // Otherwise, reload the value.
+  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
@@ -578,31 +581,26 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // Compute the address to store into.
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
-  // Store into it, if simple.
-  if (LHS.isSimple()) {
-    EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
-
-    // And now return the LHS
-    IgnoreReal = ignreal;
-    IgnoreImag = ignimag;
-    IgnoreRealAssign = ignreal;
-    IgnoreImagAssign = ignimag;
-    return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
-  }
-
-  // Otherwise we must have a property setter (no complex vector/bitfields).
+  // Store the result value into the LHS lvalue.
   if (LHS.isPropertyRef())
     CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), RValue::getComplex(Val));
-  else
+  else if (LHS.isKVCRef())
     CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), RValue::getComplex(Val));
+  else
+    EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
 
-  // There is no reload after a store through a method, but we need to restore
-  // the Ignore* flags.
+  // Restore the Ignore* flags.
   IgnoreReal = ignreal;
   IgnoreImag = ignimag;
   IgnoreRealAssign = ignreal;
   IgnoreImagAssign = ignimag;
-  return Val;
+
+  // Objective-C property assignment never reloads the value following a store.
+  if (LHS.isPropertyRef() || LHS.isKVCRef())
+    return Val;
+
+  // Otherwise, reload the value.
+  return EmitLoadOfComplex(LHS.getAddress(), LHS.isVolatileQualified());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {

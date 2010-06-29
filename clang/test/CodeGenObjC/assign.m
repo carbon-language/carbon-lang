@@ -27,6 +27,10 @@ void f0(C0 *a) {
 // CHECK: objc_msgSend
   int l3 = (a.x0 += 1);
 
+// CHECK: objc_msgSend
+// CHECK: objc_msgSend
+  _Complex int l4 = (a.x1 += 1);
+
 // CHECK-NOT: objc_msgSend
 // CHECK: }
 }
