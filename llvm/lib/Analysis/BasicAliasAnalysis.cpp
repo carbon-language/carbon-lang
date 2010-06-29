@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 using namespace llvm;
@@ -206,6 +207,8 @@ static const Function *getParent(const Value *V) {
 
   return NULL;
 }
+
+static bool sameParent(const Value *O1, const Value *O2) ATTRIBUTE_UNUSED;
 
 static bool sameParent(const Value *O1, const Value *O2) {
 
