@@ -1873,7 +1873,7 @@ let isCommutable = 0 in {
 
 /// sse1_fp_unop_s - SSE1 unops in scalar form.
 multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr,
-                           SDNode OpNode, Intrinsic F32Int> {
+                          SDNode OpNode, Intrinsic F32Int> {
   def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                 !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
                 [(set FR32:$dst, (OpNode FR32:$src))]>;
@@ -1904,6 +1904,26 @@ multiclass sse1_fp_unop_p<bits<8> opc, string OpcodeStr,
   def PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                     !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V4F32Int (memopv4f32 addr:$src)))]>;
+}
+
+/// sse1_fp_unop_s_avx - AVX SSE1 unops in scalar form.
+multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr,
+                              SDNode OpNode, Intrinsic F32Int> {
+  def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
+                !strconcat(!strconcat("v", OpcodeStr),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def SSm : I<opc, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2),
+                !strconcat(!strconcat("v", OpcodeStr),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                []>, XS, Requires<[HasAVX, HasSSE1, OptForSize]>;
+  def SSr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
+                (ins VR128:$src1, VR128:$src2),
+                !strconcat(!strconcat("v", OpcodeStr),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
+                (ins VR128:$src1, ssmem:$src2),
+                !strconcat(!strconcat("v", OpcodeStr),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
 }
 
 /// sse2_fp_unop_s - SSE2 unops in scalar form.
@@ -1938,6 +1958,52 @@ multiclass sse2_fp_unop_p<bits<8> opc, string OpcodeStr,
   def PDm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                     !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V2F64Int (memopv2f64 addr:$src)))]>;
+}
+
+/// sse2_fp_unop_s_avx - AVX SSE2 unops in scalar form.
+multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr,
+                              SDNode OpNode, Intrinsic F64Int> {
+  def SDr : VSDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
+                !strconcat(OpcodeStr,
+                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def SDm : VSDI<opc, MRMSrcMem, (outs FR64:$dst),
+                (ins FR64:$src1, f64mem:$src2),
+                !strconcat(OpcodeStr,
+                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def SDr_Int : VSDI<opc, MRMSrcReg, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2),
+           !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>;
+  def SDm_Int : VSDI<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, sdmem:$src2),
+           !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>;
+}
+
+let isAsmParserOnly = 1 in {
+  // Square root.
+  let Predicates = [HasAVX, HasSSE2] in {
+  defm VSQRT  : sse2_fp_unop_s_avx<0x51, "sqrt", fsqrt, int_x86_sse2_sqrt_sd>,
+                  VEX_4V;
+
+  defm VSQRT  : sse2_fp_unop_p<0x51, "vsqrt", fsqrt, int_x86_sse2_sqrt_pd>, VEX;
+  }
+
+  let Predicates = [HasAVX, HasSSE1] in {
+  defm VSQRT  : sse1_fp_unop_s_avx<0x51, "sqrt", fsqrt, int_x86_sse_sqrt_ss>,
+                  VEX_4V;
+  defm VSQRT  : sse1_fp_unop_p<0x51, "vsqrt", fsqrt, int_x86_sse_sqrt_ps>, VEX;
+  // Reciprocal approximations. Note that these typically require refinement
+  // in order to obtain suitable precision.
+  defm VRSQRT : sse1_fp_unop_s_avx<0x52, "rsqrt", X86frsqrt,
+                                   int_x86_sse_rsqrt_ss>, VEX_4V;
+  defm VRSQRT : sse1_fp_unop_p<0x52, "vrsqrt", X86frsqrt, int_x86_sse_rsqrt_ps>,
+                                   VEX;
+  defm VRCP   : sse1_fp_unop_s_avx<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss>,
+                                   VEX_4V;
+  defm VRCP   : sse1_fp_unop_p<0x53, "vrcp", X86frcp, int_x86_sse_rcp_ps>,
+                                   VEX;
+  }
 }
 
 // Square root.

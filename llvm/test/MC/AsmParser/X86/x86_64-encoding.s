@@ -922,3 +922,67 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x41,0x79,0x5a,0xdc]
           vcvtpd2ps  %xmm12, %xmm11
 
+// CHECK: vsqrtpd  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x79,0x51,0xe3]
+          vsqrtpd  %xmm11, %xmm12
+
+// CHECK: vsqrtpd  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x79,0x51,0x20]
+          vsqrtpd  (%rax), %xmm12
+
+// CHECK: vsqrtps  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x51,0xe3]
+          vsqrtps  %xmm11, %xmm12
+
+// CHECK: vsqrtps  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x51,0x20]
+          vsqrtps  (%rax), %xmm12
+
+// CHECK: vsqrtsd  %xmm11, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x1b,0x51,0xd3]
+          vsqrtsd  %xmm11, %xmm12, %xmm10
+
+// CHECK: vsqrtsd  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x1b,0x51,0x10]
+          vsqrtsd  (%rax), %xmm12, %xmm10
+
+// CHECK: vsqrtss  %xmm11, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x1a,0x51,0xd3]
+          vsqrtss  %xmm11, %xmm12, %xmm10
+
+// CHECK: vsqrtss  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x1a,0x51,0x10]
+          vsqrtss  (%rax), %xmm12, %xmm10
+
+// CHECK: vrsqrtps  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x52,0xe3]
+          vrsqrtps  %xmm11, %xmm12
+
+// CHECK: vrsqrtps  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x52,0x20]
+          vrsqrtps  (%rax), %xmm12
+
+// CHECK: vrsqrtss  %xmm11, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x1a,0x52,0xd3]
+          vrsqrtss  %xmm11, %xmm12, %xmm10
+
+// CHECK: vrsqrtss  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x1a,0x52,0x10]
+          vrsqrtss  (%rax), %xmm12, %xmm10
+
+// CHECK: vrcpps  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x78,0x53,0xe3]
+          vrcpps  %xmm11, %xmm12
+
+// CHECK: vrcpps  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x78,0x53,0x20]
+          vrcpps  (%rax), %xmm12
+
+// CHECK: vrcpss  %xmm11, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x41,0x1a,0x53,0xd3]
+          vrcpss  %xmm11, %xmm12, %xmm10
+
+// CHECK: vrcpss  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x1a,0x53,0x10]
+          vrcpss  (%rax), %xmm12, %xmm10
+

@@ -10873,3 +10873,68 @@
 // CHECK: vcvtpd2ps  %xmm2, %xmm3
 // CHECK: encoding: [0xc5,0xf9,0x5a,0xda]
           vcvtpd2ps  %xmm2, %xmm3
+
+// CHECK: vsqrtpd  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x51,0xd1]
+          vsqrtpd  %xmm1, %xmm2
+
+// CHECK: vsqrtpd  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf9,0x51,0x10]
+          vsqrtpd  (%eax), %xmm2
+
+// CHECK: vsqrtps  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x51,0xd1]
+          vsqrtps  %xmm1, %xmm2
+
+// CHECK: vsqrtps  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x51,0x10]
+          vsqrtps  (%eax), %xmm2
+
+// CHECK: vsqrtsd  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x51,0xd9]
+          vsqrtsd  %xmm1, %xmm2, %xmm3
+
+// CHECK: vsqrtsd  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x51,0x18]
+          vsqrtsd  (%eax), %xmm2, %xmm3
+
+// CHECK: vsqrtss  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x51,0xd9]
+          vsqrtss  %xmm1, %xmm2, %xmm3
+
+// CHECK: vsqrtss  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x51,0x18]
+          vsqrtss  (%eax), %xmm2, %xmm3
+
+// CHECK: vrsqrtps  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x52,0xd1]
+          vrsqrtps  %xmm1, %xmm2
+
+// CHECK: vrsqrtps  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x52,0x10]
+          vrsqrtps  (%eax), %xmm2
+
+// CHECK: vrsqrtss  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x52,0xd9]
+          vrsqrtss  %xmm1, %xmm2, %xmm3
+
+// CHECK: vrsqrtss  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x52,0x18]
+          vrsqrtss  (%eax), %xmm2, %xmm3
+
+// CHECK: vrcpps  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x53,0xd1]
+          vrcpps  %xmm1, %xmm2
+
+// CHECK: vrcpps  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xf8,0x53,0x10]
+          vrcpps  (%eax), %xmm2
+
+// CHECK: vrcpss  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x53,0xd9]
+          vrcpss  %xmm1, %xmm2, %xmm3
+
+// CHECK: vrcpss  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xea,0x53,0x18]
+          vrcpss  (%eax), %xmm2, %xmm3
+
