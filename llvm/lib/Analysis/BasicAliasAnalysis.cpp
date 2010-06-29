@@ -29,7 +29,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 using namespace llvm;
@@ -198,6 +197,7 @@ ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 // BasicAliasAnalysis Pass
 //===----------------------------------------------------------------------===//
 
+#ifdef XDEBUG
 static const Function *getParent(const Value *V) {
   if(const Instruction *inst = dyn_cast<Instruction>(V))
     return inst->getParent()->getParent();
@@ -208,8 +208,6 @@ static const Function *getParent(const Value *V) {
   return NULL;
 }
 
-static bool sameParent(const Value *O1, const Value *O2) ATTRIBUTE_UNUSED;
-
 static bool sameParent(const Value *O1, const Value *O2) {
 
   const Function *F1 = getParent(O1);
@@ -217,6 +215,7 @@ static bool sameParent(const Value *O1, const Value *O2) {
 
   return !F1 || !F2 || F1 == F2;
 }
+#endif
 
 namespace {
   /// BasicAliasAnalysis - This is the default alias analysis implementation.
