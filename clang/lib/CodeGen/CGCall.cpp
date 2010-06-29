@@ -240,7 +240,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
 
   // Construct the function info.
   FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy,
-                          ArgTys);
+                          ArgTys.data(), ArgTys.size());
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // ABI lowering wants to know what our preferred type for the argument is in
@@ -267,20 +267,20 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
 }
 
 CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
-                               bool _NoReturn,
-                               unsigned _RegParm,
+                               bool _NoReturn, unsigned _RegParm,
                                CanQualType ResTy,
-                               const llvm::SmallVectorImpl<CanQualType> &ArgTys)
+                               const CanQualType *ArgTys,
+                               unsigned NumArgTys)
   : CallingConvention(_CallingConvention),
     EffectiveCallingConvention(_CallingConvention),
     NoReturn(_NoReturn), RegParm(_RegParm)
 {
-  NumArgs = ArgTys.size();
+  NumArgs = NumArgTys;
   
   // FIXME: Coallocate with the CGFunctionInfo object.
-  Args = new ArgInfo[1 + NumArgs];
+  Args = new ArgInfo[1 + NumArgTys];
   Args[0].type = ResTy;
-  for (unsigned i = 0; i < NumArgs; ++i)
+  for (unsigned i = 0; i != NumArgTys; ++i)
     Args[1 + i].type = ArgTys[i];
 }
 

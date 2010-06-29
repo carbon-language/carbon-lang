@@ -83,11 +83,9 @@ namespace CodeGen {
     typedef const ArgInfo *const_arg_iterator;
     typedef ArgInfo *arg_iterator;
 
-    CGFunctionInfo(unsigned CallingConvention,
-                   bool NoReturn,
-                   unsigned RegParm,
-                   CanQualType ResTy,
-                   const llvm::SmallVectorImpl<CanQualType> &ArgTys);
+    CGFunctionInfo(unsigned CallingConvention, bool NoReturn,
+                   unsigned RegParm, CanQualType ResTy,
+                   const CanQualType *ArgTys, unsigned NumArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
     const_arg_iterator arg_begin() const { return Args + 1; }
