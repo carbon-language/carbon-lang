@@ -199,10 +199,10 @@ ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
 #ifdef XDEBUG
 static const Function *getParent(const Value *V) {
-  if(const Instruction *inst = dyn_cast<Instruction>(V))
+  if (const Instruction *inst = dyn_cast<Instruction>(V))
     return inst->getParent()->getParent();
 
-  if(const Argument *arg = dyn_cast<Argument>(V))
+  if (const Argument *arg = dyn_cast<Argument>(V))
     return arg->getParent();
 
   return NULL;
