@@ -285,7 +285,7 @@ namespace llvm {
     MCSymbol *GetCPISymbol(unsigned CPID) const;
 
     /// GetJTISymbol - Return the symbol for the specified jump table entry.
-    MCSymbol *GetJTISymbol(unsigned JTID, bool PassToLinker = false) const;
+    MCSymbol *GetJTISymbol(unsigned JTID, bool isLinkerPrivate = false) const;
 
     /// GetJTSetSymbol - Return the symbol for the specified jump table .set
     /// FIXME: privatize to AsmPrinter.

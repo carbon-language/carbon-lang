@@ -1058,8 +1058,6 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMPrivateLinkage;
   case GlobalValue::LinkerPrivateLinkage:
     return LLVMLinkerPrivateLinkage;
-  case GlobalValue::LinkerWeakLinkage:
-    return LLVMLinkerWeakLinkage;
   case GlobalValue::DLLImportLinkage:
     return LLVMDLLImportLinkage;
   case GlobalValue::DLLExportLinkage:
@@ -1109,9 +1107,6 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
     break;
   case LLVMLinkerPrivateLinkage:
     GV->setLinkage(GlobalValue::LinkerPrivateLinkage);
-    break;
-  case LLVMLinkerWeakLinkage:
-    GV->setLinkage(GlobalValue::LinkerWeakLinkage);
     break;
   case LLVMDLLImportLinkage:
     GV->setLinkage(GlobalValue::DLLImportLinkage);

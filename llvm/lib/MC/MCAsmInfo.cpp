@@ -31,7 +31,6 @@ MCAsmInfo::MCAsmInfo() {
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";
-  LinkerWeakGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
   AssemblerDialect = 0;

@@ -118,9 +118,6 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     } else if (PrefixTy == Mangler::LinkerPrivate) {
       const char *Prefix = MAI.getLinkerPrivateGlobalPrefix();
       OutName.append(Prefix, Prefix+strlen(Prefix));
-    } else if (PrefixTy == Mangler::LinkerWeak) {
-      const char *Prefix = MAI.getLinkerWeakGlobalPrefix();
-      OutName.append(Prefix, Prefix+strlen(Prefix));
     }
 
     const char *Prefix = MAI.getGlobalPrefix();
@@ -185,8 +182,6 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     PrefixTy = Mangler::Private;
   else if (GV->hasLinkerPrivateLinkage())
     PrefixTy = Mangler::LinkerPrivate;
-  else if (GV->hasLinkerWeakLinkage())
-    PrefixTy = Mangler::LinkerWeak;
   
   // If this global has a name, handle it simply.
   if (GV->hasName()) {

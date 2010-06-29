@@ -199,7 +199,6 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-  case GlobalValue::LinkerWeakLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (MAI->getWeakDefDirective() != 0) {
       // .globl _foo
@@ -1625,8 +1624,8 @@ MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
 }
 
 /// GetJTISymbol - Return the symbol for the specified jump table entry.
-MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool PassToLinker) const {
-  return MF->getJTISymbol(JTID, OutContext, PassToLinker);
+MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
+  return MF->getJTISymbol(JTID, OutContext, isLinkerPrivate);
 }
 
 /// GetJTSetSymbol - Return the symbol for the specified jump table .set

@@ -316,8 +316,7 @@ package llvm is
       LLVMExternalWeakLinkage,
       LLVMGhostLinkage,
       LLVMCommonLinkage,
-      LLVMLinkerPrivateLinkage,
-      LLVMLinkerWeakLinkage);
+      LLVMLinkerPrivateLinkage);
 
    for LLVMLinkage use
      (LLVMExternalLinkage            => 0,
@@ -334,8 +333,7 @@ package llvm is
       LLVMExternalWeakLinkage        => 11,
       LLVMGhostLinkage               => 12,
       LLVMCommonLinkage              => 13,
-      LLVMLinkerPrivateLinkage       => 14,
-      LLVMLinkerWeakLinkage          => 15);
+      LLVMLinkerPrivateLinkage       => 14);
 
    pragma Convention (C, LLVMLinkage);
 

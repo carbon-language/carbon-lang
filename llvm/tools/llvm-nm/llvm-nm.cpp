@@ -89,8 +89,7 @@ static char TypeCharForSymbol(GlobalValue &GV) {
 static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
   // Private linkage and available_externally linkage don't exist in symtab.
   if (GV.hasPrivateLinkage() || GV.hasLinkerPrivateLinkage() ||
-      GV.hasLinkerWeakLinkage() || GV.hasAvailableExternallyLinkage())
-    return;
+      GV.hasAvailableExternallyLinkage()) return;
   
   const std::string SymbolAddrStr = "        "; // Not used yet...
   char TypeChar = TypeCharForSymbol(GV);

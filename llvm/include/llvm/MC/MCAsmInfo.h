@@ -85,11 +85,6 @@ namespace llvm {
     /// be passed through the assembler but be removed by the linker.  This
     /// is "l" on Darwin, currently used for some ObjC metadata.
     const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
-
-    /// LinkerWeakGlobalPrefix - This prefix is used for symbols that are marked
-    /// "weak" and should be passed through the assembler, but be removed by the
-    /// linker.  This is "l" on Darwin, currently used for some ObjC metadata.
-    const char *LinkerWeakGlobalPrefix;      // Defaults to ""
     
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
@@ -339,9 +334,6 @@ namespace llvm {
     }
     const char *getLinkerPrivateGlobalPrefix() const {
       return LinkerPrivateGlobalPrefix;
-    }
-    const char *getLinkerWeakGlobalPrefix() const {
-      return LinkerWeakGlobalPrefix;
     }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;

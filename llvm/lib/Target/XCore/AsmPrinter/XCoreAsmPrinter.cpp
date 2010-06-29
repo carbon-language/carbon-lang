@@ -129,7 +129,6 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::ExternalLinkage:
-  case GlobalValue::LinkerWeakLinkage:
     emitArrayBound(GVSym, GV);
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
