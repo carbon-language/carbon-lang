@@ -2,6 +2,7 @@
 // Use DW_FORM_addr for DW_AT_entry_pc.
 // Radar 8094785
 
+// XTARGET: x86,i386,i686
 // CHECK:	.byte	17                      ## DW_TAG_compile_unit
 // CHECK-NEXT:	.byte	1                       ## DW_CHILDREN_yes
 // CHECK-NEXT:	.byte	37                      ## DW_AT_producer
