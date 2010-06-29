@@ -62,6 +62,7 @@ namespace {
     void TransferKillFlag(MachineInstr *MI, unsigned SrcReg,
                           const TargetRegisterInfo *TRI,
                           bool AddIfNotFound = false);
+    void TransferImplicitDefs(MachineInstr *MI);
   };
 
   char LowerSubregsInstructionPass::ID = 0;
@@ -101,6 +102,22 @@ LowerSubregsInstructionPass::TransferKillFlag(MachineInstr *MI,
       break;
     assert(MII != MI->getParent()->begin() &&
            "copyRegToReg output doesn't reference source register!");
+  }
+}
+
+/// TransferImplicitDefs - MI is a pseudo-instruction, and the lowered
+/// replacement instructions immediately precede it.  Copy any implicit-def
+/// operands from MI to the replacement instruction.
+void
+LowerSubregsInstructionPass::TransferImplicitDefs(MachineInstr *MI) {
+  MachineBasicBlock::iterator CopyMI = MI;
+  --CopyMI;
+
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isImplicit() || MO.isUse())
+      continue;
+    CopyMI->addOperand(MachineOperand::CreateReg(MO.getReg(), true, true));
   }
 }
 
@@ -149,6 +166,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
       TransferDeadFlag(MI, DstReg, TRI);
     if (MI->getOperand(1).isKill())
       TransferKillFlag(MI, SuperReg, TRI, true);
+    TransferImplicitDefs(MI);
     DEBUG({
         MachineBasicBlock::iterator dMI = MI;
         dbgs() << "subreg: " << *(--dMI);
