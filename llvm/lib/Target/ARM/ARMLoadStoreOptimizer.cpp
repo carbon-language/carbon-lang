@@ -788,18 +788,21 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
 /// isMemoryOp - Returns true if instruction is a memory operations (that this
 /// pass is capable of operating on).
 static bool isMemoryOp(const MachineInstr *MI) {
-  if (MI->hasOneMemOperand()) {
-    const MachineMemOperand *MMO = *MI->memoperands_begin();
+  // When no memory operands are present, conservatively assume unaligned,
+  // volatile, unfoldable.
+  if (!MI->hasOneMemOperand())
+    return false;
 
-    // Don't touch volatile memory accesses - we may be changing their order.
-    if (MMO->isVolatile())
-      return false;
+  const MachineMemOperand *MMO = *MI->memoperands_begin();
 
-    // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is
-    // not.
-    if (MMO->getAlignment() < 4)
-      return false;
-  }
+  // Don't touch volatile memory accesses - we may be changing their order.
+  if (MMO->isVolatile())
+    return false;
+
+  // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is
+  // not.
+  if (MMO->getAlignment() < 4)
+    return false;
 
   // str <undef> could probably be eliminated entirely, but for now we just want
   // to avoid making a mess of it.
