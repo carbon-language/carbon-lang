@@ -13,7 +13,7 @@ namespace std {
 }
 
 namespace otherstd { // expected-note 2{{'otherstd' declared here}} \
-                     // expected-note 2{{namespace 'otherstd' defined here}}
+                     // expected-note{{namespace 'otherstd' defined here}}
   using namespace std;
 }
 
@@ -31,7 +31,7 @@ float area(float radius, // expected-note{{'radius' declared here}}
 }
 
 using namespace othestd; // expected-error{{no namespace named 'othestd'; did you mean 'otherstd'?}}
-namespace blargh = otherstd; // expected-note 2{{namespace 'blargh' defined here}}
+namespace blargh = otherstd; // expected-note 3{{namespace 'blargh' defined here}}
 using namespace ::blarg; // expected-error{{no namespace named 'blarg' in the global namespace; did you mean 'blargh'?}}
 
 namespace wibble = blarg; // expected-error{{no namespace named 'blarg'; did you mean 'blargh'?}}
