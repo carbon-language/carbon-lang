@@ -244,9 +244,12 @@ echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DES
 
 if [ "x$LLVM_DEBUG" != "x1" ]; then
     # Strip local symbols from llvm libraries.
-    strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
+    #
+    # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
+    # PPC objects!
+    strip -Sl $DEST_DIR$DEST_ROOT/lib/*.[oa]
     for f in `ls $DEST_DIR$DEST_ROOT/lib/*.so`; do
-        strip -Sx $f
+        strip -Sxl $f
     done
 fi
 
@@ -323,7 +326,10 @@ cd $DEST_DIR$DEST_ROOT
 if [ "$INSTALL_LIBLTO" = "yes" ]; then
   mkdir -p $DT_HOME/lib
   mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
-  strip -S $DT_HOME/lib/libLTO.dylib
+
+  # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
+  # PPC objects!
+  strip -arch all -Sl $DT_HOME/lib/libLTO.dylib
 fi
 rm -f lib/libLTO.a lib/libLTO.la
 
@@ -336,9 +342,12 @@ find $DEST_DIR -name \*.a -print | xargs ranlib || exit 1
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 
 # Strip debugging information from files
+#
+# Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
+# PPC objects!
 find $DEST_DIR -perm -0111 -type f \
     ! \( -name '*.la' -o -name gccas -o -name gccld -o -name llvm-config \) \
-    -print | xargs -n 1 -P ${SYSCTL} strip -S
+    -print | xargs -n 1 -P ${SYSCTL} strip -arch all -Sl
 
 chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
