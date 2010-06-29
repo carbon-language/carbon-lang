@@ -24,6 +24,7 @@
         <ol>
           <li><a href="#linkage_private">'<tt>private</tt>' Linkage</a></li>
           <li><a href="#linkage_linker_private">'<tt>linker_private</tt>' Linkage</a></li>
+          <li><a href="#linkage_linker_weak">'<tt>linker_weak</tt>' Linkage</a></li>
           <li><a href="#linkage_internal">'<tt>internal</tt>' Linkage</a></li>
           <li><a href="#linkage_available_externally">'<tt>available_externally</tt>' Linkage</a></li>
           <li><a href="#linkage_linkonce">'<tt>linkonce</tt>' Linkage</a></li>
@@ -546,23 +547,27 @@ define i32 @main() {                                        <i>; i32()* </i>
 
 <dl>
   <dt><tt><b><a name="linkage_private">private</a></b></tt></dt>
-  <dd>Global values with private linkage are only directly accessible by objects
-      in the current module.  In particular, linking code into a module with an
-      private global value may cause the private to be renamed as necessary to
-      avoid collisions.  Because the symbol is private to the module, all
-      references can be updated. This doesn't show up in any symbol table in the
-      object file.</dd>
+  <dd>Global values with "<tt>private</tt>" linkage are only directly accessible
+      by objects in the current module.  In particular, linking code into a
+      module with an private global value may cause the private to be renamed as
+      necessary to avoid collisions.  Because the symbol is private to the
+      module, all references can be updated. This doesn't show up in any symbol
+      table in the object file.</dd>
 
   <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt></dt>
-  <dd>Similar to private, but the symbol is passed through the assembler and
-      removed by the linker after evaluation.  Note that (unlike private
-      symbols) linker_private symbols are subject to coalescing by the linker:
-      weak symbols get merged and redefinitions are rejected.  However, unlike
-      normal strong symbols, they are removed by the linker from the final
-      linked image (executable or dynamic library).</dd>
+  <dd>Similar to <tt>private</tt>, but the symbol is passed through the
+      assembler and removed by the linker after evaluation.  Note that (unlike
+      <tt>private</tt> symbols) <tt>linker_private</tt> symbols are subject to
+      coalescing by the linker: weak symbols get merged and redefinitions are
+      rejected.  However, unlike normal strong symbols, they are removed by the
+      linker from the final linked image (executable or dynamic library).</dd>
+
+  <dt><tt><b><a name="linkage_linker_weak">linker_weak</a></b></tt></dt>
+  <dd>Global values with "<tt>linker_weak</tt>" linkage are given weak linkage,
+      but are removed by the linker after evaluation.</dd>
 
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt></dt>
-  <dd>Similar to private, but the value shows as a local symbol
+  <dd>Similar to <tt>private</tt>, but the value shows as a local symbol
       (<tt>STB_LOCAL</tt> in the case of ELF) in the object file. This
       corresponds to the notion of the '<tt>static</tt>' keyword in C.</dd>
 

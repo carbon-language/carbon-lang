@@ -410,17 +410,18 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 }
 
 /// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
-/// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
-/// normal 'L' label is returned.
-MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx, 
-                                        bool isLinkerPrivate) const {
+/// If isLinkerPrivate or isLinkerWeak is specified, an 'l' label is returned,
+/// otherwise a normal 'L' label is returned.
+MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
+                                        bool PassToLinker) const {
   assert(JumpTableInfo && "No jump tables");
   
   assert(JTI < JumpTableInfo->getJumpTables().size() && "Invalid JTI!");
   const MCAsmInfo &MAI = *getTarget().getMCAsmInfo();
   
-  const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
-                                         MAI.getPrivateGlobalPrefix();
+  const char *Prefix = PassToLinker ?
+    MAI.getLinkerPrivateGlobalPrefix() :
+    MAI.getPrivateGlobalPrefix();
   SmallString<60> Name;
   raw_svector_ostream(Name)
     << Prefix << "JTI" << getFunctionNumber() << '_' << JTI;

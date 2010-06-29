@@ -755,11 +755,12 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
   /// the directive emitted (this occurs in ObjC metadata).
   if (!GV) return false;
 
-  // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
+  // Check whether the mangled name has the "Private", "LinkerPrivate", or
+  // "LinkerWeak" prefix.
   if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
     // FIXME: ObjC metadata is currently emitted as internal symbols that have
-    // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
-    // this horrible hack can go away.
+    // \1L and \1l prefixes on them.  Fix them to be Private / LinkerPrivate /
+    // LinkerWeak and this horrible hack can go away.
     MCSymbol *Sym = Mang->getSymbol(GV);
     if (Sym->getName()[0] == 'L' || Sym->getName()[0] == 'l')
       return false;

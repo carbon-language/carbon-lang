@@ -32,7 +32,8 @@ public:
   enum ManglerPrefixTy {
     Default,               ///< Emit default string before each symbol.
     Private,               ///< Emit "private" prefix before each symbol.
-    LinkerPrivate          ///< Emit "linker private" prefix before each symbol.
+    LinkerPrivate,         ///< Emit "linker private" prefix before each symbol.
+    LinkerWeak             ///< Emit "linker weak" prefix before each symbol.
   };
 
 private:

@@ -226,7 +226,8 @@ typedef enum {
   LLVMExternalWeakLinkage,/**< ExternalWeak linkage description */
   LLVMGhostLinkage,       /**< Obsolete */
   LLVMCommonLinkage,      /**< Tentative definitions */
-  LLVMLinkerPrivateLinkage /**< Like Private, but linker removes. */
+  LLVMLinkerPrivateLinkage, /**< Like private, but linker removes. */
+  LLVMLinkerWeakLinkage   /**< Like linker private, but weak. */
 } LLVMLinkage;
 
 typedef enum {

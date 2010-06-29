@@ -39,7 +39,8 @@ public:
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
     InternalLinkage,    ///< Rename collisions when linking (static functions).
     PrivateLinkage,     ///< Like Internal, but omit from symbol table.
-    LinkerPrivateLinkage, ///< Like Private, but linker removes.
+    LinkerPrivateLinkage, ///< Like private, but linker removes.
+    LinkerWeakLinkage,  ///< Like linker private, but weak.
     DLLImportLinkage,   ///< Function to be imported from DLL
     DLLExportLinkage,   ///< Function to be accessible from DLL.
     ExternalWeakLinkage,///< ExternalWeak linkage description.
@@ -132,7 +133,10 @@ public:
     return Linkage == PrivateLinkage;
   }
   static bool isLinkerPrivateLinkage(LinkageTypes Linkage) {
-    return Linkage==LinkerPrivateLinkage;
+    return Linkage == LinkerPrivateLinkage;
+  }
+  static bool isLinkerWeakLinkage(LinkageTypes Linkage) {
+    return Linkage == LinkerWeakLinkage;
   }
   static bool isLocalLinkage(LinkageTypes Linkage) {
     return isInternalLinkage(Linkage) || isPrivateLinkage(Linkage) ||
@@ -187,6 +191,7 @@ public:
   bool hasInternalLinkage() const { return isInternalLinkage(Linkage); }
   bool hasPrivateLinkage() const { return isPrivateLinkage(Linkage); }
   bool hasLinkerPrivateLinkage() const { return isLinkerPrivateLinkage(Linkage); }
+  bool hasLinkerWeakLinkage() const { return isLinkerWeakLinkage(Linkage); }
   bool hasLocalLinkage() const { return isLocalLinkage(Linkage); }
   bool hasDLLImportLinkage() const { return isDLLImportLinkage(Linkage); }
   bool hasDLLExportLinkage() const { return isDLLExportLinkage(Linkage); }
