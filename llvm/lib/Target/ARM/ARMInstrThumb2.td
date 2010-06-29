@@ -1349,9 +1349,9 @@ defm t2UXTB16 : T2I_unary_rrot_uxtb16<0b011, "uxtb16",
                                UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
 def : T2Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
-            (t2UXTB16r_rot GPR:$Src, 24)>;
+            (t2UXTB16r_rot GPR:$Src, 24)>, Requires<[HasT2ExtractPack]>;
 def : T2Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
-            (t2UXTB16r_rot GPR:$Src, 8)>;
+            (t2UXTB16r_rot GPR:$Src, 8)>, Requires<[HasT2ExtractPack]>;
 
 defm t2UXTAB : T2I_bin_rrot<0b101, "uxtab",
                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
