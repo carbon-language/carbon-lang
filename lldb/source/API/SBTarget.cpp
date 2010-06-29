@@ -110,11 +110,8 @@ SBTarget::CreateProcess ()
     SBProcess sb_process;
 
     if (m_opaque_sp)
-    {
-        SBListener sb_listener (m_opaque_sp->GetDebugger().GetListener());
-        if (sb_listener.IsValid())
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (*sb_listener));
-    }
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+
     return sb_process;
 }
 
