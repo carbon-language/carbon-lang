@@ -129,8 +129,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   // for services.
 
   bool registeredClaimFile = false;
-  bool registeredAllSymbolsRead = false;
-  bool registeredCleanup = false;
 
   for (; tv->tv_tag != LDPT_NULL; ++tv) {
     switch (tv->tv_tag) {
@@ -178,8 +176,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 
         if ((*callback)(all_symbols_read_hook) != LDPS_OK)
           return LDPS_ERR;
-
-        registeredAllSymbolsRead = true;
       } break;
       case LDPT_REGISTER_CLEANUP_HOOK: {
         ld_plugin_register_cleanup callback;
@@ -187,8 +183,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 
         if ((*callback)(cleanup_hook) != LDPS_OK)
           return LDPS_ERR;
-
-        registeredCleanup = true;
       } break;
       case LDPT_ADD_SYMBOLS:
         add_symbols = tv->tv_u.tv_add_symbols;
