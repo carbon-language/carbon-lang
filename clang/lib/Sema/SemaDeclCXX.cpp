@@ -1580,8 +1580,9 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   if (Field->isInvalidDecl())
     return true;
 
+  SourceLocation Loc = Constructor->getLocation();
+
   if (ImplicitInitKind == IIK_Copy) {
-    SourceLocation Loc = Constructor->getLocation();
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
     
@@ -1689,7 +1690,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   if (FieldBaseElementType->isRecordType()) {
     InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
     InitializationKind InitKind = 
-      InitializationKind::CreateDefault(Constructor->getLocation());
+      InitializationKind::CreateDefault(Loc);
     
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
     Sema::OwningExprResult MemberInit = 
@@ -1701,10 +1702,9 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     
     CXXMemberInit =
       new (SemaRef.Context) CXXBaseOrMemberInitializer(SemaRef.Context,
-                                                       Field, SourceLocation(),
-                                                       SourceLocation(),
+                                                       Field, Loc, Loc,
                                                       MemberInit.takeAs<Expr>(),
-                                                       SourceLocation());
+                                                       Loc);
     return false;
   }
 
