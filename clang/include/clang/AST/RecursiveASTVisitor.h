@@ -182,10 +182,10 @@ public:
   /// \brief Recursively visit a constructor initializer.  This
   /// automatically dispatches to another visitor for the initializer
   /// expression, but not for the name of the initializer, so may
-  /// be overridden for clients that need access to the nam.e
+  /// be overridden for clients that need access to the name.
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
-  bool TraverseInitializer(clang::CXXBaseOrMemberInitializer* Init);
+  bool TraverseConstructorInitializer(CXXBaseOrMemberInitializer *Init);
 
   // ---- Methods on Stmts ----
 
@@ -310,7 +310,7 @@ private:
   bool TraverseRecordHelper(RecordDecl *D);
   bool TraverseCXXRecordHelper(CXXRecordDecl *D);
   bool TraverseDeclaratorHelper(DeclaratorDecl *D);
-  bool TraverseDeclContextHelper(DeclContext* DC);
+  bool TraverseDeclContextHelper(DeclContext *DC);
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
 };
@@ -469,8 +469,8 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArguments(
 }
 
 template<typename Derived>
-bool RecursiveASTVisitor<Derived>::TraverseInitializer(
-                                    clang::CXXBaseOrMemberInitializer* Init) {
+bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
+                                            CXXBaseOrMemberInitializer *Init) {
   // FIXME: recurse on TypeLoc of the base initializer if isBaseInitializer()?
   if (Init->isWritten())
     TRY_TO(TraverseStmt(Init->getInit()));
@@ -633,7 +633,7 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
 // than those.
 
 template<typename Derived>
-bool RecursiveASTVisitor<Derived>::TraverseDeclContextHelper(DeclContext* DC) {
+bool RecursiveASTVisitor<Derived>::TraverseDeclContextHelper(DeclContext *DC) {
   if (!DC)
     return true;
 
@@ -899,7 +899,7 @@ DEF_TRAVERSE_DECL(ClassTemplateSpecializationDecl, {
     // is the only callback that's made for this instantiation.
     // We use getTypeAsWritten() to distinguish.
     // FIXME: see how we want to handle template specializations.
-    TypeSourceInfo* TSI = D->getTypeAsWritten();
+    TypeSourceInfo *TSI = D->getTypeAsWritten();
     if (TSI)
       TRY_TO(TraverseType(TSI->getType()));
     return true;
@@ -1017,7 +1017,7 @@ DEF_TRAVERSE_DECL(CXXConstructorDecl, {
     for (CXXConstructorDecl::init_iterator I = D->init_begin(),
                                            E = D->init_end();
          I != E; ++I) {
-      TRY_TO(TraverseInitializer(*I));
+      TRY_TO(TraverseConstructorInitializer(*I));
     }
 
     // We skip decls_begin/decls_end, which are already covered by
