@@ -228,22 +228,24 @@ static bool StripDebugInfo(Module &M) {
     Changed = true;
     NMD->eraseFromParent();
   }
-  
+
   NMD = M.getNamedMetadata("llvm.dbg.lv");
   if (NMD) {
     Changed = true;
     NMD->eraseFromParent();
   }
-  
+
   unsigned MDDbgKind = M.getMDKindID("dbg");
-  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) 
+  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
          ++FI)
       for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
-           ++BI) 
+           ++BI) {
+        Changed = true; // FIXME: Only set if there was debug metadata.
         BI->setMetadata(MDDbgKind, 0);
+      }
 
-  return true;
+  return Changed;
 }
 
 bool StripSymbols::runOnModule(Module &M) {
