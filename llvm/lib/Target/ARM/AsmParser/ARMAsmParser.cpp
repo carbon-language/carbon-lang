@@ -665,7 +665,6 @@ bool ARMAsmParser::ParseInstruction(const StringRef &Name, SMLoc NameLoc,
   
   Operands.push_back(Op.take());
 
-  SMLoc Loc = Parser.getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
     // Read the first operand.
@@ -763,15 +762,10 @@ bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
   if (Tok.isNot(AsmToken::Identifier))
     return Error(L, "unexpected token in .syntax directive");
   const StringRef &Mode = Tok.getString();
-  bool unified_syntax;
-  if (Mode == "unified" || Mode == "UNIFIED") {
+  if (Mode == "unified" || Mode == "UNIFIED")
     Parser.Lex();
-    unified_syntax = true;
-  }
-  else if (Mode == "divided" || Mode == "DIVIDED") {
+  else if (Mode == "divided" || Mode == "DIVIDED")
     Parser.Lex();
-    unified_syntax = false;
-  }
   else
     return Error(L, "unrecognized syntax mode in .syntax directive");
 
@@ -791,15 +785,10 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
   if (Tok.isNot(AsmToken::Integer))
     return Error(L, "unexpected token in .code directive");
   int64_t Val = Parser.getTok().getIntVal();
-  bool thumb_mode;
-  if (Val == 16) {
+  if (Val == 16)
     Parser.Lex();
-    thumb_mode = true;
-  }
-  else if (Val == 32) {
+  else if (Val == 32)
     Parser.Lex();
-    thumb_mode = false;
-  }
   else
     return Error(L, "invalid operand to .code directive");
 
