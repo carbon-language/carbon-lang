@@ -2019,25 +2019,24 @@ defm RSQRT : sse1_fp_unop_s<0x52, "rsqrt", X86frsqrt, int_x86_sse_rsqrt_ss>,
 defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss>,
              sse1_fp_unop_p<0x53, "rcp", X86frcp, int_x86_sse_rcp_ps>;
 
-// Prefetch intrinsic.
-def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),
-    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3))]>;
-def PREFETCHT1   : PSI<0x18, MRM2m, (outs), (ins i8mem:$src),
-    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2))]>;
-def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src),
-    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1))]>;
-def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
-    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0))]>;
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Non-temporal stores
+//===----------------------------------------------------------------------===//
 
-// Non-temporal stores
 def MOVNTPSmr_Int : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
                     [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
+def MOVNTPDmr_Int : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+                        "movntpd\t{$src, $dst|$dst, $src}",
+                        [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
 
 let AddedComplexity = 400 in { // Prefer non-temporal versions
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
+def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntpd\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore(v2f64 VR128:$src), addr:$dst)]>;
 
 def MOVNTDQ_64mr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
@@ -2052,7 +2051,36 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                      "movnti\t{$src, $dst|$dst, $src}",
                      [(nontemporalstore (i64 GR64:$src), addr:$dst)]>,
                   TB, Requires<[HasSSE2]>;
+
+let ExeDomain = SSEPackedInt in
+def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntdq\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
 }
+
+let ExeDomain = SSEPackedInt in
+def MOVNTDQmr_Int : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                        "movntdq\t{$src, $dst|$dst, $src}",
+                        [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
+
+def MOVNTImr_Int  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
+                    "movnti\t{$src, $dst|$dst, $src}",
+                    [(int_x86_sse2_movnt_i addr:$dst, GR32:$src)]>,
+                  TB, Requires<[HasSSE2]>;
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Misc Instructions
+//===----------------------------------------------------------------------===//
+
+// Prefetch intrinsic.
+def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),
+    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3))]>;
+def PREFETCHT1   : PSI<0x18, MRM2m, (outs), (ins i8mem:$src),
+    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2))]>;
+def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src),
+    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1))]>;
+def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
+    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0))]>;
 
 // Load, store, and memory fence
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,
@@ -2495,30 +2523,6 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
 
 } // ExeDomain = SSEPackedInt
-
-// Non-temporal stores
-def MOVNTPDmr_Int : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                        "movntpd\t{$src, $dst|$dst, $src}",
-                        [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
-let ExeDomain = SSEPackedInt in
-def MOVNTDQmr_Int : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                        "movntdq\t{$src, $dst|$dst, $src}",
-                        [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
-def MOVNTImr_Int  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
-                    "movnti\t{$src, $dst|$dst, $src}",
-                    [(int_x86_sse2_movnt_i addr:$dst, GR32:$src)]>,
-                  TB, Requires<[HasSSE2]>;
-
-let AddedComplexity = 400 in { // Prefer non-temporal versions
-def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                    "movntpd\t{$src, $dst|$dst, $src}",
-                    [(alignednontemporalstore(v2f64 VR128:$src), addr:$dst)]>;
-
-let ExeDomain = SSEPackedInt in
-def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                    "movntdq\t{$src, $dst|$dst, $src}",
-                    [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
-}
 
 // Flush cache
 def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
