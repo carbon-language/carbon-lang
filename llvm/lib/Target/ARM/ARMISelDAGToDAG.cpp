@@ -533,7 +533,6 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDNode *Op, SDValue N,
 bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDNode *Op, SDValue N,
                                             SDValue &Base, SDValue &Offset){
   // FIXME dl should come from the parent load or store, not the address
-  DebugLoc dl = Op->getDebugLoc();
   if (N.getOpcode() != ISD::ADD) {
     ConstantSDNode *NC = dyn_cast<ConstantSDNode>(N);
     if (!NC || !NC->isNullValue())
@@ -1382,13 +1381,11 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
 
   // Quad registers are handled by load/store of subregs. Find the subreg info.
   unsigned NumElts = 0;
-  int SubregIdx = 0;
   bool Even = false;
   EVT RegVT = VT;
   if (!is64BitVector) {
     RegVT = GetNEONSubregVT(VT);
     NumElts = RegVT.getVectorNumElements();
-    SubregIdx = (Lane < NumElts) ? ARM::dsub_0 : ARM::dsub_1;
     Even = Lane < NumElts;
   }
 
