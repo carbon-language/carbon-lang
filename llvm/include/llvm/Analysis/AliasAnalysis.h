@@ -344,10 +344,10 @@ bool isNoAliasCall(const Value *V);
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions (but not Global Aliases)
 ///    Allocas and Mallocs
-///    ByVal and NoAlias Arguments
-///    NoAlias returns
+///    ByVal and NoAlias Arguments, if Interprocedural is false
+///    NoAlias returns, if Interprocedural is false
 ///
-bool isIdentifiedObject(const Value *V);
+bool isIdentifiedObject(const Value *V, bool Interprocedural = false);
 
 } // End llvm namespace
 

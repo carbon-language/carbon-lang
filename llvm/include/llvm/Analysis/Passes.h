@@ -73,6 +73,14 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createInterproceduralBasicAliasAnalysisPass - This pass is similar to
+  // baiscaa, except that it properly supports queries to values which live
+  // in different functions.
+  //
+  ImmutablePass *createInterproceduralBasicAliasAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   /// createLibCallAliasAnalysisPass - Create an alias analysis pass that knows
   /// about the semantics of a set of libcalls specified by LCI.  The newly
   /// constructed pass takes ownership of the pointer that is provided.

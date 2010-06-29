@@ -55,9 +55,10 @@ static bool isKnownNonNull(const Value *V) {
 
 /// isNonEscapingLocalObject - Return true if the pointer is to a function-local
 /// object that never escapes from the function.
-static bool isNonEscapingLocalObject(const Value *V) {
+static bool isNonEscapingLocalObject(const Value *V, bool Interprocedural) {
   // If this is a local allocation, check to see if it escapes.
-  if (isa<AllocaInst>(V) || isNoAliasCall(V))
+  if (isa<AllocaInst>(V) ||
+      (!Interprocedural && isNoAliasCall(V)))
     // Set StoreCaptures to True so that we can assume in our callers that the
     // pointer is not the result of a load instruction. Currently
     // PointerMayBeCaptured doesn't have any special analysis for the
@@ -68,16 +69,32 @@ static bool isNonEscapingLocalObject(const Value *V) {
   // If this is an argument that corresponds to a byval or noalias argument,
   // then it has not escaped before entering the function.  Check if it escapes
   // inside the function.
-  if (const Argument *A = dyn_cast<Argument>(V))
-    if (A->hasByValAttr() || A->hasNoAliasAttr()) {
-      // Don't bother analyzing arguments already known not to escape.
-      if (A->hasNoCaptureAttr())
-        return true;
-      return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
-    }
+  if (!Interprocedural)
+    if (const Argument *A = dyn_cast<Argument>(V))
+      if (A->hasByValAttr() || A->hasNoAliasAttr()) {
+        // Don't bother analyzing arguments already known not to escape.
+        if (A->hasNoCaptureAttr())
+          return true;
+        return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
+      }
   return false;
 }
 
+/// isEscapeSource - Return true if the pointer is one which would have
+/// been considered an escape by isNonEscapingLocalObject.
+static bool isEscapeSource(const Value *V, bool Interprocedural) {
+  if (!Interprocedural)
+    if (isa<CallInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V))
+      return true;
+
+  // The load case works because isNonEscapingLocalObject considers all
+  // stores to be escapes (it passes true for the StoreCaptures argument
+  // to PointerMayBeCaptured).
+  if (isa<LoadInst>(V))
+    return true;
+
+  return false;
+}
 
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
@@ -177,19 +194,51 @@ static RegisterAnalysisGroup<AliasAnalysis> V(U);
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
 //===----------------------------------------------------------------------===//
-// BasicAA Pass
+// BasicAliasAnalysis Pass
 //===----------------------------------------------------------------------===//
+
+static const Function *getParent(const Value *V) {
+  if(const Instruction *inst = dyn_cast<Instruction>(V))
+    return inst->getParent()->getParent();
+
+  if(const Argument *arg = dyn_cast<Argument>(V))
+    return arg->getParent();
+
+  return NULL;
+}
+
+static bool sameParent(const Value *O1, const Value *O2) {
+
+  const Function *F1 = getParent(O1);
+  const Function *F2 = getParent(O2);
+
+  return !F1 || !F2 || F1 == F2;
+}
 
 namespace {
   /// BasicAliasAnalysis - This is the default alias analysis implementation.
   /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
   /// derives from the NoAA class.
   struct BasicAliasAnalysis : public NoAA {
+    /// Interprocedural - Flag for "interprocedural" mode, where we must
+    /// support queries of values which live in different functions.
+    bool Interprocedural;
+
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : NoAA(&ID) {}
+    BasicAliasAnalysis()
+      : NoAA(&ID), Interprocedural(false) {}
+    BasicAliasAnalysis(void *PID, bool interprocedural)
+      : NoAA(PID), Interprocedural(interprocedural) {}
+
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size) {
       assert(Visited.empty() && "Visited must be cleared after use!");
+#ifdef XDEBUG
+      assert((Interprocedural || sameParent(V1, V2)) &&
+             "BasicAliasAnalysis (-basicaa) doesn't support interprocedural "
+             "queries; use InterproceduralAliasAnalysis "
+             "(-interprocedural-basic-aa) instead.");
+#endif
       AliasResult Alias = aliasCheck(V1, V1Size, V2, V2Size);
       Visited.clear();
       return Alias;
@@ -284,7 +333,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // then the call can not mod/ref the pointer unless the call takes the pointer
   // as an argument, and itself doesn't capture it.
   if (!isa<Constant>(Object) && CS.getInstruction() != Object &&
-      isNonEscapingLocalObject(Object)) {
+      isNonEscapingLocalObject(Object, Interprocedural)) {
     bool PassedAsArg = false;
     unsigned ArgNo = 0;
     for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
@@ -705,18 +754,25 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
 
   if (O1 != O2) {
     // If V1/V2 point to two different objects we know that we have no alias.
-    if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
+    if (isIdentifiedObject(O1, Interprocedural) &&
+        isIdentifiedObject(O2, Interprocedural))
       return NoAlias;
 
     // Constant pointers can't alias with non-const isIdentifiedObject objects.
-    if ((isa<Constant>(O1) && isIdentifiedObject(O2) && !isa<Constant>(O2)) ||
-        (isa<Constant>(O2) && isIdentifiedObject(O1) && !isa<Constant>(O1)))
+    if ((isa<Constant>(O1) &&
+         isIdentifiedObject(O2, Interprocedural) &&
+         !isa<Constant>(O2)) ||
+        (isa<Constant>(O2) &&
+         isIdentifiedObject(O1, Interprocedural) &&
+         !isa<Constant>(O1)))
       return NoAlias;
 
-    // Arguments can't alias with local allocations or noalias calls.
-    if ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
-        (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1))))
-      return NoAlias;
+    // Arguments can't alias with local allocations or noalias calls, unless
+    // we have to consider interprocedural aliasing.
+    if (!Interprocedural)
+      if ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
+          (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1))))
+        return NoAlias;
 
     // Most objects can't alias null.
     if ((isa<ConstantPointerNull>(V2) && isKnownNonNull(O1)) ||
@@ -733,17 +789,13 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   
   // If one pointer is the result of a call/invoke or load and the other is a
   // non-escaping local object, then we know the object couldn't escape to a
-  // point where the call could return it. The load case works because
-  // isNonEscapingLocalObject considers all stores to be escapes (it
-  // passes true for the StoreCaptures argument to PointerMayBeCaptured).
+  // point where the call could return it.
   if (O1 != O2) {
-    if ((isa<CallInst>(O1) || isa<InvokeInst>(O1) || isa<LoadInst>(O1) ||
-         isa<Argument>(O1)) &&
-        isNonEscapingLocalObject(O2))
+    if (isEscapeSource(O1, Interprocedural) &&
+        isNonEscapingLocalObject(O2, Interprocedural))
       return NoAlias;
-    if ((isa<CallInst>(O2) || isa<InvokeInst>(O2) || isa<LoadInst>(O2) ||
-         isa<Argument>(O2)) &&
-        isNonEscapingLocalObject(O1))
+    if (isEscapeSource(O2, Interprocedural) &&
+        isNonEscapingLocalObject(O1, Interprocedural))
       return NoAlias;
   }
 
@@ -776,3 +828,33 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
 
 // Make sure that anything that uses AliasAnalysis pulls in this file.
 DEFINING_FILE_FOR(BasicAliasAnalysis)
+
+//===----------------------------------------------------------------------===//
+// InterproceduralBasicAliasAnalysis Pass
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// InterproceduralBasicAliasAnalysis - This is similar to basicaa, except
+  /// that it properly supports queries to values which live in different
+  /// functions.
+  ///
+  /// Note that we don't currently take this to the extreme, analyzing all
+  /// call sites of a function to answer a query about an Argument.
+  ///
+  struct InterproceduralBasicAliasAnalysis : public BasicAliasAnalysis {
+    static char ID; // Class identification, replacement for typeinfo
+    InterproceduralBasicAliasAnalysis() : BasicAliasAnalysis(&ID, true) {}
+  };
+}
+
+// Register this pass...
+char InterproceduralBasicAliasAnalysis::ID = 0;
+static RegisterPass<InterproceduralBasicAliasAnalysis>
+W("interprocedural-basic-aa", "Interprocedural Basic Alias Analysis", false, true);
+
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis> Z(W);
+
+ImmutablePass *llvm::createInterproceduralBasicAliasAnalysisPass() {
+  return new InterproceduralBasicAliasAnalysis();
+}
