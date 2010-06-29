@@ -236,12 +236,11 @@ class SmallPtrSet : public SmallPtrSetImpl {
   void *SmallArray[SmallSizePowTwo];
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 public:
-  SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
+  SmallPtrSet() : SmallPtrSetImpl(SmallSizePowTwo) {}
   SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
 
   template<typename It>
-  SmallPtrSet(It I, It E)
-    : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {
+  SmallPtrSet(It I, It E) : SmallPtrSetImpl(SmallSizePowTwo) {
     insert(I, E);
   }
 
