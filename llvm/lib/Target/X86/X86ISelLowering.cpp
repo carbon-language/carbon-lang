@@ -2061,7 +2061,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      FPDiff, dl);
   }
 
-  bool WasGlobalOrExternal = false;
   if (getTargetMachine().getCodeModel() == CodeModel::Large) {
     assert(Is64Bit && "Large code model is only legal in 64-bit mode.");
     // In the 64-bit large code model, we have to make all calls
@@ -2069,7 +2068,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // pc-relative offset may not be large enough to hold the whole
     // address.
   } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    WasGlobalOrExternal = true;
     // If the callee is a GlobalAddress node (quite common, every direct call
     // is) turn it into a TargetGlobalAddress node so that legalize doesn't hack
     // it.
@@ -2101,7 +2099,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                           G->getOffset(), OpFlags);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    WasGlobalOrExternal = true;
     unsigned char OpFlags = 0;
 
     // On ELF targets, in either X86-64 or X86-32 mode, direct calls to external
@@ -2424,7 +2421,6 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
         ((X86TargetMachine&)getTargetMachine()).getInstrInfo();
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
-        EVT RegVT = VA.getLocVT();
         SDValue Arg = Outs[i].Val;
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
         if (VA.getLocInfo() == CCValAssign::Indirect)
@@ -4462,7 +4458,6 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   unsigned NumElems = VT.getVectorNumElements();
   unsigned NewWidth = (NumElems == 4) ? 2 : 4;
   EVT MaskVT = MVT::getIntVectorWithNumElements(NewWidth);
-  EVT MaskEltVT = MaskVT.getVectorElementType();
   EVT NewVT = MaskVT;
   switch (VT.getSimpleVT().SimpleTy) {
   default: assert(false && "Unexpected!");
@@ -6711,7 +6706,6 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
   SDValue Flag;
 
-  EVT IntPtr = getPointerTy();
   EVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
 
   Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Size, Flag);
@@ -6791,9 +6785,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   // X86-64 va_list is a struct { i32, i32, i8*, i8* }.
   assert(Subtarget->is64Bit() && "This code only handles 64-bit va_arg!");
-  SDValue Chain = Op.getOperand(0);
-  SDValue SrcPtr = Op.getOperand(1);
-  SDValue SrcSV = Op.getOperand(2);
 
   report_fatal_error("VAArgInst is not yet implemented for x86-64!");
   return SDValue();
