@@ -244,8 +244,16 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                           ArgTys);
   FunctionInfos.InsertNode(FI, InsertPos);
 
+  // ABI lowering wants to know what our preferred type for the argument is in
+  // various situations, pass it in.
+  llvm::SmallVector<const llvm::Type *, 8> PreferredArgTypes;
+  for (llvm::SmallVectorImpl<CanQualType>::const_iterator
+       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
+    PreferredArgTypes.push_back(ConvertType(*I));
+
   // Compute ABI information.
-  getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext());
+  getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext(),
+                           PreferredArgTypes.data(), PreferredArgTypes.size());
 
   return *FI;
 }

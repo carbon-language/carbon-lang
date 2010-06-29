@@ -280,7 +280,9 @@ class DefaultABIInfo : public ABIInfo {
                                   llvm::LLVMContext &VMContext) const;
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                           llvm::LLVMContext &VMContext) const {
+                           llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context,
                                             VMContext);
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
@@ -347,7 +349,9 @@ public:
                                   llvm::LLVMContext &VMContext) const;
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                           llvm::LLVMContext &VMContext) const {
+                           llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context,
                                             VMContext);
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
@@ -747,7 +751,9 @@ class X86_64ABIInfo : public ABIInfo {
 
 public:
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                           llvm::LLVMContext &VMContext) const;
+                           llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -1373,7 +1379,9 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, ASTContext &Context,
 }
 
 void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                                llvm::LLVMContext &VMContext) const {
+                                llvm::LLVMContext &VMContext,
+                                const llvm::Type *const *PrefTypes,
+                                unsigned NumPrefTypes) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
                                           Context, VMContext);
 
@@ -1635,7 +1643,9 @@ class PIC16ABIInfo : public ABIInfo {
                                   llvm::LLVMContext &VMContext) const;
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                           llvm::LLVMContext &VMContext) const {
+                           llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context,
                                             VMContext);
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
@@ -1786,7 +1796,9 @@ private:
                                   llvm::LLVMContext &VMContext) const;
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                           llvm::LLVMContext &VMContext) const;
+                           llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -1805,7 +1817,9 @@ public:
 }
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                             llvm::LLVMContext &VMContext) const {
+                             llvm::LLVMContext &VMContext,
+                             const llvm::Type *const *PrefTypes,
+                             unsigned NumPrefTypes) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context,
                                           VMContext);
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
@@ -2088,7 +2102,9 @@ class SystemZABIInfo : public ABIInfo {
                                   llvm::LLVMContext &VMContext) const;
 
   virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
-                          llvm::LLVMContext &VMContext) const {
+                          llvm::LLVMContext &VMContext,
+                           const llvm::Type *const *PrefTypes,
+                           unsigned NumPrefTypes) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
                                             Context, VMContext);
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();

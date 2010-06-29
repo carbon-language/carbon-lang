@@ -136,7 +136,11 @@ namespace clang {
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
                              ASTContext &Ctx,
-                             llvm::LLVMContext &VMContext) const = 0;
+                             llvm::LLVMContext &VMContext,
+                             // This is the preferred type for argument lowering
+                             // which can be used to generate better IR.
+                             const llvm::Type *const *PrefTypes = 0,
+                             unsigned NumPrefTypes = 0) const = 0;
 
     /// EmitVAArg - Emit the target dependent code to load a value of
     /// \arg Ty from the va_list pointed to by \arg VAListAddr.
