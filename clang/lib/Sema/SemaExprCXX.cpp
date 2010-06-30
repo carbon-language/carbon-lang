@@ -721,12 +721,29 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   //   or enumeration type with a non-negative value."
   Expr *ArraySize = (Expr *)ArraySizeE.get();
   if (ArraySize && !ArraySize->isTypeDependent()) {
+    
     QualType SizeType = ArraySize->getType();
     
+    OwningExprResult ConvertedSize
+      = ConvertToIntegralOrEnumerationType(StartLoc, move(ArraySizeE), 
+                                       PDiag(diag::err_array_size_not_integral),
+                                     PDiag(diag::err_array_size_incomplete_type)
+                                       << ArraySize->getSourceRange(),
+                               PDiag(diag::err_array_size_explicit_conversion),
+                                       PDiag(diag::note_array_size_conversion),
+                               PDiag(diag::err_array_size_ambiguous_conversion),
+                                       PDiag(diag::note_array_size_conversion),
+                          PDiag(getLangOptions().CPlusPlus0x? 0 
+                                            : diag::ext_array_size_conversion));
+    if (ConvertedSize.isInvalid())
+      return ExprError();
+    
+    ArraySize = ConvertedSize.takeAs<Expr>();
+    ArraySizeE = Owned(ArraySize);
+    SizeType = ArraySize->getType();
     if (!SizeType->isIntegralOrEnumerationType())
-      return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
-                            diag::err_array_size_not_integral)
-        << SizeType << ArraySize->getSourceRange());
+      return ExprError();
+    
     // Let's see if this is a constant < 0. If so, we reject it out of hand.
     // We don't care about special rules, so we tell the machinery it's not
     // evaluated - it gives us a result in more cases.

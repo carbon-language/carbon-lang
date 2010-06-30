@@ -2327,6 +2327,19 @@ def err_placement_new_non_placement_delete : Error<
   "'operator delete'">;
 def err_array_size_not_integral : Error<
   "array size expression must have integral or enumerated type, not %0">;
+def err_array_size_incomplete_type : Error<
+  "array size expression has incomplete class type %0">;
+def err_array_size_explicit_conversion : Error<
+  "array size expression of type %0 requires explicit conversion to type %1">;
+def note_array_size_conversion : Note<
+  "conversion to %select{integral|enumeration}0 type %1 declared here">;
+def err_array_size_ambiguous_conversion : Error<
+  "ambiguous conversion of array size expression of type %0 to an integral or "
+  "enumeration type">;
+def ext_array_size_conversion : Extension<
+  "implicit conversion from array size expression of type %0 to "
+  "%select{integral|enumeration}1 type %2 is a C++0x extension">;
+  
 def err_default_init_const : Error<
   "default initialization of an object of const type %0"
   "%select{| requires a user-provided default constructor}1">;

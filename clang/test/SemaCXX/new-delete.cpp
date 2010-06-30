@@ -287,3 +287,4 @@ void test(S1* s1, S2* s2) {
   (void)new S2(); // expected-error {{is a private member}}
 }
 }
+

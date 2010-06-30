@@ -1195,7 +1195,8 @@ public:
                                      const PartialDiagnostic &ExplicitConvDiag,
                                      const PartialDiagnostic &ExplicitConvNote,
                                      const PartialDiagnostic &AmbigDiag,
-                                     const PartialDiagnostic &AmbigNote);
+                                     const PartialDiagnostic &AmbigNote,
+                                     const PartialDiagnostic &ConvDiag);
   
   bool PerformObjectMemberConversion(Expr *&From,
                                      NestedNameSpecifier *Qualifier,

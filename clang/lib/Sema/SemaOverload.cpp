@@ -3075,10 +3075,35 @@ bool Sema::PerformContextuallyConvertToObjCId(Expr *&From) {
 /// integral or enumeration type, if that class type only has a single
 /// conversion to an integral or enumeration type.
 ///
-/// \param From The expression we're converting from.
+/// \param Loc The source location of the construct that requires the
+/// conversion.
 ///
-/// \returns The expression converted to an integral or enumeration type,
-/// if successful, or an invalid expression.
+/// \param FromE The expression we're converting from.
+///
+/// \param NotIntDiag The diagnostic to be emitted if the expression does not
+/// have integral or enumeration type.
+///
+/// \param IncompleteDiag The diagnostic to be emitted if the expression has
+/// incomplete class type.
+///
+/// \param ExplicitConvDiag The diagnostic to be emitted if we're calling an
+/// explicit conversion function (because no implicit conversion functions
+/// were available). This is a recovery mode.
+///
+/// \param ExplicitConvNote The note to be emitted with \p ExplicitConvDiag,
+/// showing which conversion was picked.
+///
+/// \param AmbigDiag The diagnostic to be emitted if there is more than one
+/// conversion function that could convert to integral or enumeration type.
+///
+/// \param AmbigNote The note to be emitted with \p AmbigDiag for each 
+/// usable conversion function.
+///
+/// \param ConvDiag The diagnostic to be emitted if we are calling a conversion
+/// function, which may be an extension in this case.
+///
+/// \returns The expression, converted to an integral or enumeration type if
+/// successful.
 Sema::OwningExprResult 
 Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
                                          const PartialDiagnostic &NotIntDiag,
@@ -3086,7 +3111,8 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
                                      const PartialDiagnostic &ExplicitConvDiag,
                                      const PartialDiagnostic &ExplicitConvNote,
                                          const PartialDiagnostic &AmbigDiag,
-                                         const PartialDiagnostic &AmbigNote) {
+                                         const PartialDiagnostic &AmbigNote,
+                                         const PartialDiagnostic &ConvDiag) {
   Expr *From = static_cast<Expr *>(FromE.get());
   
   // We can't perform any more checking for type-dependent expressions.
@@ -3111,7 +3137,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
     
   // We must have a complete class type.
   if (RequireCompleteType(Loc, T, IncompleteDiag))
-    return ExprError();
+    return move(FromE);
   
   // Look for a conversion to an integral or enumeration type.
   UnresolvedSet<4> ViableConversions;
@@ -3174,6 +3200,19 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, ExprArg FromE,
     // Apply this conversion.
     DeclAccessPair Found = ViableConversions[0];
     CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+    
+    CXXConversionDecl *Conversion
+      = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
+    QualType ConvTy
+      = Conversion->getConversionType().getNonReferenceType();    
+    if (ConvDiag.getDiagID()) {
+      if (isSFINAEContext())
+        return ExprError();
+      
+      Diag(Loc, ConvDiag)
+        << T << ConvTy->isEnumeralType() << ConvTy << From->getSourceRange();
+    }
+    
     From = BuildCXXMemberCallExpr(FromE.takeAs<Expr>(), Found,
                           cast<CXXConversionDecl>(Found->getUnderlyingDecl()));
     FromE = Owned(From);

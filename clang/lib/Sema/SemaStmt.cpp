@@ -435,7 +435,8 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, ExprArg Cond,
                                    PDiag(diag::err_switch_explicit_conversion),
                                          PDiag(diag::note_switch_conversion),
                                    PDiag(diag::err_switch_multiple_conversions),
-                                         PDiag(diag::note_switch_conversion));
+                                         PDiag(diag::note_switch_conversion),
+                                         PDiag(0));
   if (ConvertedCond.isInvalid())
     return StmtError();
   
