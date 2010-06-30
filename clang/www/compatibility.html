@@ -95,14 +95,14 @@ Undefined symbols:
 <p>There are several ways to fix this problem:</p>
 
 <ul>
-  <li>Provide an external (non-inline) definition of <code>add</code>
-  somewhere in your program.</li>
-  
   <li>Change <code>add</code> to a <code>static inline</code>
   function. Static inline functions are always resolved within the
   translation unit, so you won't have to add an external, non-inline
   definition of the function elsewhere in your program.</li>
   
+  <li>Provide an external (non-inline) definition of <code>add</code>
+  somewhere in your program.</li>
+   
   <li>Compile with the GNU89 dialect by adding
   <code>-std=gnu89</code> to the set of Clang options. This option is
   only recommended if the program source cannot be changed or if the
