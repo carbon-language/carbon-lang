@@ -166,10 +166,13 @@ void SmallPtrSetImpl::Grow() {
   }
 }
 
-SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
+SmallPtrSetImpl::SmallPtrSetImpl(const void **SmallStorage,
+                                 const SmallPtrSetImpl& that) {
+  SmallArray = SmallStorage;
+
   // If we're becoming small, prepare to insert into our stack space
   if (that.isSmall()) {
-    CurArray = &SmallArray[0];
+    CurArray = SmallArray;
   // Otherwise, allocate new heap space (unless we were the same size)
   } else {
     CurArray = (const void**)malloc(sizeof(void*) * (that.CurArraySize+1));
@@ -197,7 +200,7 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   if (RHS.isSmall()) {
     if (!isSmall())
       free(CurArray);
-    CurArray = &SmallArray[0];
+    CurArray = SmallArray;
   // Otherwise, allocate new heap space (unless we were the same size)
   } else if (CurArraySize != RHS.CurArraySize) {
     if (isSmall())

@@ -46,8 +46,10 @@ class SmallPtrSetIteratorImpl;
 class SmallPtrSetImpl {
   friend class SmallPtrSetIteratorImpl;
 protected:
-  /// CurArray - This is the current set of buckets.  If it points to
-  /// SmallArray, then the set is in 'small mode'.
+  /// SmallArray - Points to a fixed size set of buckets, used in 'small mode'.
+  const void **SmallArray;
+  /// CurArray - This is the current set of buckets.  If equal to SmallArray,
+  /// then the set is in 'small mode'.
   const void **CurArray;
   /// CurArraySize - The allocated size of CurArray, always a power of two.
   /// Note that CurArray points to an array that has CurArraySize+1 elements in
@@ -57,15 +59,13 @@ protected:
   // If small, this is # elts allocated consequtively
   unsigned NumElements;
   unsigned NumTombstones;
-  const void *SmallArray[1];  // Must be last ivar.
 
   // Helper to copy construct a SmallPtrSet.
-  SmallPtrSetImpl(const SmallPtrSetImpl& that);
-  explicit SmallPtrSetImpl(unsigned SmallSize) {
+  SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl& that);
+  explicit SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize) :
+    SmallArray(SmallStorage), CurArray(SmallStorage), CurArraySize(SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
            "Initial size must be a power of two!");
-    CurArray = &SmallArray[0];
-    CurArraySize = SmallSize;
     // The end pointer, always valid, is set to a valid element to help the
     // iterator.
     CurArray[SmallSize] = 0;
@@ -123,7 +123,7 @@ protected:
   }
 
 private:
-  bool isSmall() const { return CurArray == &SmallArray[0]; }
+  bool isSmall() const { return CurArray == SmallArray; }
 
   unsigned Hash(const void *Ptr) const {
     return static_cast<unsigned>(((uintptr_t)Ptr >> 4) & (CurArraySize-1));
@@ -233,14 +233,16 @@ template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
   enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
-  void *SmallArray[SmallSizePowTwo+1];
+  /// SmallStorage - Fixed size storage used in 'small mode'.  The extra element
+  /// ensures that the end iterator actually points to valid memory.
+  const void *SmallStorage[SmallSizePowTwo+1];
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 public:
-  SmallPtrSet() : SmallPtrSetImpl(SmallSizePowTwo) {}
-  SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
+  SmallPtrSet() : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {}
+  SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(SmallStorage, that) {}
 
   template<typename It>
-  SmallPtrSet(It I, It E) : SmallPtrSetImpl(SmallSizePowTwo) {
+  SmallPtrSet(It I, It E) : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {
     insert(I, E);
   }
 
