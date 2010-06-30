@@ -268,8 +268,8 @@ bool StripDebugDeclare::runOnModule(Module &M) {
   if (Declare) {
     while (!Declare->use_empty()) {
       CallInst *CI = cast<CallInst>(Declare->use_back());
-      Value *Arg1 = CI->getOperand(1);
-      Value *Arg2 = CI->getOperand(2);
+      Value *Arg1 = CI->getArgOperand(0);
+      Value *Arg2 = CI->getArgOperand(1);
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg1->use_empty()) {
