@@ -310,15 +310,15 @@ splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI) {
     const Type *Ty = AI->getType();
-    // StructType can't be cast, but is a legal argument type, so we have
+    // Aggregate types can't be cast, but are legal argument types, so we have
     // to handle them differently. We use an extract/insert pair as a
     // lightweight method to achieve the same goal.
-    if (isa<StructType>(Ty)) {
-      Instruction *EI = ExtractValueInst::Create(AI, 0, "", AfterAllocaInsertPt);
+    if (isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) {
+      Instruction *EI = ExtractValueInst::Create(AI, 0, "",AfterAllocaInsertPt);
       Instruction *NI = InsertValueInst::Create(AI, EI, 0);
       NI->insertAfter(EI);
       AI->replaceAllUsesWith(NI);
-      // Set the struct operand of the instructions back to the AllocaInst.
+      // Set the operand of the instructions back to the AllocaInst.
       EI->setOperand(0, AI);
       NI->setOperand(0, AI);
     } else {
