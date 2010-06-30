@@ -29,6 +29,7 @@ class TestClassTypes(unittest.TestCase):
         self.ci.HandleCommand("file " + exe, res)
         self.assertTrue(res.Succeeded())
 
+        # Break on the ctor function of class C.
         self.ci.HandleCommand("breakpoint set -f main.cpp -l 73", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
@@ -37,15 +38,18 @@ class TestClassTypes(unittest.TestCase):
         self.ci.HandleCommand("run", res)
         self.assertTrue(res.Succeeded())
 
+        # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().find('resolved, hit count = 1'))
 
+        # And the stop reason of the thread should be breakpoint.
         self.ci.HandleCommand("thread list", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().find('state is Stopped') and
                         res.GetOutput().find('stop reason = breakpoint'))
 
+        # We should be stopped on the ctor function of class C.
         self.ci.HandleCommand("variable list this", res);
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith('(class C *const) this = '))
