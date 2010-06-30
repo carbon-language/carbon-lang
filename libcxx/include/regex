@@ -724,6 +724,8 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 #include <utility>
 #include <iterator>
 #include <string>
+#include <memory>
+#include <vector>
 
 #pragma GCC system_header
 
@@ -2767,6 +2769,255 @@ basic_ostream<_CharT, _ST>&
 operator<<(basic_ostream<_CharT, _ST>& __os, const sub_match<_BiIter>& __m)
 {
     return __os << __m.str();
+}
+
+template <class _BidirectionalIterator,
+          class _Allocator = allocator<sub_match<_BidirectionalIterator> > >
+class match_results
+{
+public:
+    typedef _Allocator                                        allocator_type;
+    typedef sub_match<_BidirectionalIterator>                 value_type;
+private:
+    typedef vector<value_type, allocator_type>                __container_type;
+
+    __container_type  __matches_;
+    value_type __unmatched_;
+    value_type __prefix_;
+    value_type __suffix_;
+public:
+    typedef const value_type&                                 const_reference;
+    typedef const_reference                                   reference;
+    typedef typename __container_type::const_iterator         const_iterator;
+    typedef const_iterator                                    iterator;
+    typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
+    typedef typename allocator_traits<allocator_type>::size_type size_type;
+    typedef typename iterator_traits<_BidirectionalIterator>::value_type char_type;
+    typedef basic_string<char_type>                           string_type;
+
+    // construct/copy/destroy:
+    explicit match_results(const allocator_type& __a = allocator_type());
+//    match_results(const match_results&) = default;
+//    match_results& operator=(const match_results&) = default;
+#ifdef _LIBCPP_MOVE
+//    match_results(match_results&& __m) = default;
+//    match_results& operator=(match_results&& __m) = default;
+#endif
+//    ~match_results() = default;
+
+    // size:
+    size_type size() const {return __matches_.size();}
+    size_type max_size() const {return __matches_.max_size();}
+    bool empty() const {return size() == 0;}
+
+    // element access:
+    difference_type length(size_type __sub = 0) const
+        {return (*this)[__sub].length();}
+    difference_type position(size_type __sub = 0) const
+        {return _STD::distance(__prefix_.first, (*this)[__sub].first);}
+    string_type str(size_type __sub = 0) const
+        {return (*this)[__sub].str();}
+    const_reference operator[](size_type __n) const
+        {return __n < __matches_.size() ? __matches_[__n] : __unmatched_;}
+
+    const_reference prefix() const {return __prefix_;}
+    const_reference suffix() const {return __suffix_;}
+
+    const_iterator begin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    const_iterator end() const {return __matches_.end();}
+    const_iterator cbegin() const {return empty() ? __matches_.end() : __matches_.begin() + 1;}
+    const_iterator cend() const {return __matches_.end();}
+
+    // format:
+    template <class _OutputIter>
+        _OutputIter
+        format(_OutputIter __out, const char_type* __fmt_first,
+               const char_type* __fmt_last,
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+    template <class _OutputIter, class _ST, class _SA>
+        _OutputIter
+        format(_OutputIter __out, const basic_string<char_type, _ST, _SA>& __fmt,
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+    template <class _ST, class _SA>
+        basic_string<char_type, _ST, _SA>
+        format(const basic_string<char_type, _ST, _SA>& __fmt,
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+    string_type
+        format(const char_type* __fmt,
+               regex_constants::match_flag_type __flags = regex_constants::format_default) const;
+
+    // allocator:
+    allocator_type get_allocator() const {return __matches_.get_allocator();}
+
+    // swap:
+    void swap(match_results& __m);
+
+    template <class _B, class _A, class _C, class _T>
+    friend
+    bool
+    regex_match(_B, _B, match_results<_B, _A>&, const basic_regex<_C, _T>&,
+                regex_constants::match_flag_type);
+};
+
+template <class _BidirectionalIterator, class _Allocator>
+match_results<_BidirectionalIterator, _Allocator>::match_results(
+        const allocator_type& __a)
+    : __matches_(__a),
+      __unmatched_(),
+      __prefix_(),
+      __suffix_()
+{
+}
+
+typedef match_results<const char*>             cmatch;
+typedef match_results<const wchar_t*>          wcmatch;
+typedef match_results<string::const_iterator>  smatch;
+typedef match_results<wstring::const_iterator> wsmatch;
+
+template <class _BidirectionalIterator, class _Allocator>
+    bool
+    operator==(const match_results<_BidirectionalIterator, _Allocator>& __x,
+               const match_results<_BidirectionalIterator, _Allocator>& __y);
+
+template <class _BidirectionalIterator, class _Allocator>
+    bool
+    operator!=(const match_results<_BidirectionalIterator, _Allocator>& __x,
+               const match_results<_BidirectionalIterator, _Allocator>& __y);
+
+template <class _BidirectionalIterator, class _Allocator>
+    void
+    swap(match_results<_BidirectionalIterator, _Allocator>& __x,
+         match_results<_BidirectionalIterator, _Allocator>& __y);
+
+// regex_search
+
+template <class _BidirectionalIterator, class _Allocator, class _CharT, class _Traits>
+bool
+regex_search(_BidirectionalIterator __first, _BidirectionalIterator __last,
+             match_results<_BidirectionalIterator, _Allocator>& __m,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default);
+
+template <class _BidirectionalIterator, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(_BidirectionalIterator __first, _BidirectionalIterator __last,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    match_results<_BidirectionalIterator> __m;
+    return _STD::regex_search(__first, __last, __m, __e, __flags);
+}
+
+template <class _CharT, class _Allocator, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const _CharT* __str, match_results<const _CharT*, _Allocator>& __m,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_search(__str, __str + _Traits::length(__str), __m, __e, __flags);
+}
+
+template <class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const _CharT* __str, const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_search(__str, __str + _Traits::length(__str), __e, __flags);
+}
+
+template <class _ST, class _SA, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const basic_string<_CharT, _ST, _SA>& __s,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_search(__s.begin(), __s.end(), __e, __flags);
+}
+
+template <class _ST, class _SA, class _Allocator, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const basic_string<_CharT, _ST, _SA>& __s,
+             match_results<typename basic_string<_CharT, _ST, _SA>::const_iterator, _Allocator>& __m,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_search(__s.begin(), __s.end(), __m, __e, __flags);
+}
+
+// regex_match
+
+template <class _BidirectionalIterator, class _Allocator, class _CharT, class _Traits>
+bool
+regex_match(_BidirectionalIterator __first, _BidirectionalIterator __last,
+            match_results<_BidirectionalIterator, _Allocator>& __m,
+            const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    bool __r = _STD::regex_search(__first, __last, __m, __e,
+                            __flags | regex_constants::match_continuous);
+    if (__r)
+    {
+        __r = !__m.suffix().matched;
+        if (!__r)
+            __m.__matches_.clear();
+    }
+    return __r;
+}
+
+template <class _BidirectionalIterator, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_match(_BidirectionalIterator __first, _BidirectionalIterator __last,
+            const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    match_results<_BidirectionalIterator> __m;
+    return _STD::regex_match(__first, __last, __m, __e, __flags);
+}
+
+template <class _CharT, class _Allocator, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_match(const _CharT* __str, match_results<const _CharT*, _Allocator>& __m,
+            const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_match(__str, __str + _Traits::length(__str), __m, __e, __flags);
+}
+
+template <class _ST, class _SA, class _Allocator, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_match(const basic_string<_CharT, _ST, _SA>& __s,
+            match_results<typename basic_string<_CharT, _ST, _SA>::const_iterator, _Allocator>& __m,
+            const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_match(__s.begin(), __s.end(), __m, __e, __flags);
+}
+
+template <class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_match(const _CharT* __str, const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_match(__str, __str + _Traits::length(__str), __e, __flags);
+}
+
+template <class _ST, class _SA, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_match(const basic_string<_CharT, _ST, _SA>& __s,
+            const basic_regex<_CharT, _Traits>& __e,
+            regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    return _STD::regex_match(__s.begin(), __s.end(), __e, __flags);
 }
 
 _LIBCPP_END_NAMESPACE_STD
