@@ -36,7 +36,7 @@ spillerOpt("spiller",
            cl::values(clEnumVal(trivial,   "trivial spiller"),
                       clEnumVal(standard,  "default spiller"),
                       clEnumVal(splitting, "splitting spiller"),
-                      "inline", inline_,   "inline spiller",
+                      clEnumValN(inline_,  "inline", "inline spiller"),
                       clEnumValEnd),
            cl::init(standard));
 
