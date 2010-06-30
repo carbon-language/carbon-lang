@@ -381,28 +381,28 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
                                     const TargetLowering &TLI) {
   std::vector<InlineAsm::ConstraintInfo>
   Constraints = IA->ParseConstraints();
-  
-  unsigned ArgNo = CallInst::ArgOffset;   // ArgNo - The operand of the CallInst.
+
+  unsigned ArgNo = 0;   // The argument of the CallInst.
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo OpInfo(Constraints[i]);
-    
+
     // Compute the value type for each operand.
     switch (OpInfo.Type) {
       case InlineAsm::isOutput:
         if (OpInfo.isIndirect)
-          OpInfo.CallOperandVal = CI->getOperand(ArgNo++);
+          OpInfo.CallOperandVal = CI->getArgOperand(ArgNo++);
         break;
       case InlineAsm::isInput:
-        OpInfo.CallOperandVal = CI->getOperand(ArgNo++);
+        OpInfo.CallOperandVal = CI->getArgOperand(ArgNo++);
         break;
       case InlineAsm::isClobber:
         // Nothing to do.
         break;
     }
-    
+
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, SDValue());
-    
+
     // If this asm operand is our Value*, and if it isn't an indirect memory
     // operand, we can't fold it!
     if (OpInfo.CallOperandVal == OpVal &&
@@ -410,7 +410,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
          !OpInfo.isIndirect))
       return false;
   }
-  
+
   return true;
 }
 
