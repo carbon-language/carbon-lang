@@ -51,7 +51,6 @@ SBDebugger::Create()
     return debugger;
 }
 
-
 SBDebugger::SBDebugger () :
     m_opaque_sp ()
 {
@@ -549,3 +548,12 @@ SBDebugger::ref () const
 }
 
 
+SBDebugger
+SBDebugger::FindDebuggerWithID (int id)
+{
+    SBDebugger sb_debugger;
+    lldb::DebuggerSP debugger_sp = Debugger::FindDebuggerWithID (id);
+    if (debugger_sp)
+        sb_debugger.reset (debugger_sp);
+    return sb_debugger;
+}

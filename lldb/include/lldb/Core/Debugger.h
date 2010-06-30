@@ -21,6 +21,7 @@
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
+#include "lldb/Core/UserID.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/TargetList.h"
 
@@ -32,7 +33,8 @@ namespace lldb_private {
 ///
 /// Provides a global root objects for the debugger core.
 //----------------------------------------------------------------------
-class Debugger
+class Debugger :
+    public UserID
 {
 public:
 
@@ -139,6 +141,9 @@ public:
     void
     UpdateExecutionContext (ExecutionContext *override_context);
 
+    static lldb::DebuggerSP
+    FindDebuggerWithID (lldb::user_id_t id);
+
 protected:
 
     static void
@@ -165,7 +170,7 @@ protected:
 
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
-    
+
 private:
 
     // Use Debugger::CreateInstance() to get a shared pointer to a new

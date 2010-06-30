@@ -129,6 +129,9 @@ public:
     void
     PushInputReader (lldb::SBInputReader &reader);
 
+    static SBDebugger
+    FindDebuggerWithID (int id);
+
 private:
 
     // Use the static function: SBDebugger::Create();

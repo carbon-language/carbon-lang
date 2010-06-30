@@ -127,3 +127,10 @@ fi
 
 swig -c++ -shadow -python -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
+# Append global variable to lldb Python module.
+
+current_dir=`pwd`
+if [ -f "${current_dir}/append-debugger-id.py" ]
+then
+    python ${current_dir}/append-debugger-id.py ${CONFIG_BUILD_DIR}
+fi

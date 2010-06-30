@@ -24,6 +24,8 @@ using namespace lldb_private;
 
 static uint32_t g_shared_debugger_refcount = 0;
 
+static lldb::user_id_t g_unique_id = 1;
+
 void
 Debugger::Initialize ()
 {
@@ -115,6 +117,7 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 
 
 Debugger::Debugger () :
+    UserID (g_unique_id++),
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -491,3 +494,21 @@ Debugger::UpdateExecutionContext (ExecutionContext *override_context)
     }
 }
 
+DebuggerSP
+Debugger::FindDebuggerWithID (lldb::user_id_t id)
+{
+    lldb::DebuggerSP debugger_sp;
+
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    DebuggerList::iterator pos, end = debugger_list.end();
+    for (pos = debugger_list.begin(); pos != end; ++pos)
+    {
+        if ((*pos).get()->GetID() == id)
+        {
+            debugger_sp = *pos;
+            break;
+        }
+    }
+    return debugger_sp;
+}

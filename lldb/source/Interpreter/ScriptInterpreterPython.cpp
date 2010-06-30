@@ -238,6 +238,10 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         PyRun_SimpleString ("new_mode[3] = new_mode[3] | ECHO | ICANON");
         PyRun_SimpleString ("new_mode[6][VEOF] = 255");
         PyRun_SimpleString ("tcsetattr (new_stdin, TCSANOW, new_mode)");
+
+        run_string.Clear();
+        run_string.Printf ("debugger_unique_id = %d", interpreter.GetDebugger().GetID());
+        PyRun_SimpleString (run_string.GetData());
     }
 
 

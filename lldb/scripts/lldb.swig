@@ -43,6 +43,8 @@
       }
     }
     $1[i] = 0;
+  } else if ($input == Py_None) {
+    $1 =  NULL;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
