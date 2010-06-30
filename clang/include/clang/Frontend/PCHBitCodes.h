@@ -425,7 +425,9 @@ namespace clang {
       /// \brief A DependentNameType record.
       TYPE_DEPENDENT_NAME           = 31,
       /// \brief A DependentTemplateSpecializationType record.
-      TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION = 32
+      TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION = 32,
+      /// \brief A DependentSizedArrayType record.
+      TYPE_DEPENDENT_SIZED_ARRAY    = 33
     };
 
     /// \brief The type IDs for special types constructed by semantic

@@ -230,8 +230,10 @@ PCHTypeWriter::VisitTemplateSpecializationType(
 
 void
 PCHTypeWriter::VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
-  // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize dependent sized array types");
+  VisitArrayType(T);
+  Writer.AddStmt(T->getSizeExpr());
+  Writer.AddSourceRange(T->getBracketsRange(), Record);
+  Code = pch::TYPE_DEPENDENT_SIZED_ARRAY;
 }
 
 void

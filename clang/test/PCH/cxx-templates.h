@@ -22,6 +22,7 @@ template <typename T, int y>
 T templ_f(T x) {
   int z = templ_f<int, 5>(3);
   z = tmpl_f2<y+2>();
+  T data[y];
   return x+y;
 }
 

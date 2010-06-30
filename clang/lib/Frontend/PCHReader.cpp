@@ -2226,6 +2226,23 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getDependentTemplateSpecializationType(Keyword, NNS, Name,
                                                       Args.size(), Args.data());
   }
+  
+  case pch::TYPE_DEPENDENT_SIZED_ARRAY: {
+    unsigned Idx = 0;
+
+    // ArrayType
+    QualType ElementType = GetType(Record[Idx++]);
+    ArrayType::ArraySizeModifier ASM
+      = (ArrayType::ArraySizeModifier)Record[Idx++];
+    unsigned IndexTypeQuals = Record[Idx++];
+
+    // DependentSizedArrayType
+    Expr *NumElts = ReadExpr();
+    SourceRange Brackets = ReadSourceRange(Record, Idx);
+
+    return Context->getDependentSizedArrayType(ElementType, NumElts, ASM,
+                                               IndexTypeQuals, Brackets);
+  }
 
   case pch::TYPE_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
