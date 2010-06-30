@@ -4017,15 +4017,26 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                TypeSourceInfo *TInfo) {
   ParenListExpr *PE = (ParenListExpr *)Op.get();
   QualType Ty = TInfo->getType();
+  bool isAltiVecLiteral = false;
 
-  // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')'
-  // then handle it as such.
+  // Check for an altivec literal,
+  // i.e. all the elements are integer constants.
   if (getLangOptions().AltiVec && Ty->isVectorType()) {
     if (PE->getNumExprs() == 0) {
       Diag(PE->getExprLoc(), diag::err_altivec_empty_initializer);
       return ExprError();
     }
+    if (PE->getNumExprs() == 1) {
+      if (!PE->getExpr(0)->getType()->isVectorType())
+        isAltiVecLiteral = true;
+    }
+    else
+      isAltiVecLiteral = true;
+  }
 
+  // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')'
+  // then handle it as such.
+  if (isAltiVecLiteral) {
     llvm::SmallVector<Expr *, 8> initExprs;
     for (unsigned i = 0, e = PE->getNumExprs(); i != e; ++i)
       initExprs.push_back(PE->getExpr(i));

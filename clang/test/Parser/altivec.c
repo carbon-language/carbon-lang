@@ -101,3 +101,11 @@ void f() {
   gccv = v;
   gccvector unsigned int tgv = v;
 }
+
+// bug 6895 - Vectorl literal casting confusion.
+vector char v1 = (vector char)((vector int)(1, 2, 3, 4));
+vector char v2 = (vector char)((vector float)(1.0f, 2.0f, 3.0f, 4.0f));
+vector char v3 = (vector char)((vector int)('a', 'b', 'c', 'd'));
+vector int v4 = (vector int)(1, 2, 3, 4);
+vector float v5 = (vector float)(1.0f, 2.0f, 3.0f, 4.0f);
+vector char v6 = (vector char)((vector int)(1+2, -2, (int)(2.0 * 3), -(5-3)));
