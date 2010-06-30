@@ -8,6 +8,7 @@
 // CHECK: @"\01?f@foo@@2DD"
 // CHECK: @"\01?g@bar@@2HA"
 // CHECK: @"\01?h@@3QAHA"
+// CHECK: @"\01?i@@3PAY0BD@HA"
 
 int a;
 
@@ -42,6 +43,8 @@ enum quux {
   qthree
 };
 
+// NOTE: The calling convention is supposed to be __thiscall by default,
+// but that needs to be fixed in Sema/AST.
 int foo::operator+(int a) {return a;}
 // CHECK: @"\01??Hfoo@@QAAHH@Z"
 
@@ -52,6 +55,8 @@ const volatile char foo::f = 'C';
 int bar::g;
 
 extern int * const h = &a;
+
+int i[10][20];
 
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
@@ -71,3 +76,8 @@ void gamma(class foo, struct bar, union baz, enum quux) {}
 // Make sure pointer/reference-type mangling works.
 void delta(int * const a, const long &) {}
 // CHECK: @"\01?delta@@YAXQAHABJ@Z"
+
+// Array mangling. (It should be mangled as a const pointer, but that needs
+// to be fixed in Sema.)
+void epsilon(int a[][10][20]) {}
+// CHECK: @"\01?epsilon@@YAXPAY19BD@H@Z"

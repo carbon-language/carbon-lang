@@ -70,6 +70,8 @@ private:
   
   void mangleType(const TagType*);
   void mangleType(const FunctionType *T, bool IsStructor, bool IsInstMethod);
+  void mangleType(const ArrayType *T, bool IsGlobal);
+  void mangleExtraDimensions(QualType T);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T);
   void mangleThrowSpecification(const FunctionProtoType *T);
@@ -243,12 +245,16 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     Out << '4';
   // Now mangle the type.
   // <variable-type> ::= <type> <cvr-qualifiers>
-  //                 ::= <type> A # pointers and references
+  //                 ::= <type> A # pointers, references, arrays
   // Pointers and references are odd. The type of 'int * const foo;' gets
   // mangled as 'QAHA' instead of 'PAHB', for example.
   QualType Ty = VD->getType();
   if (Ty->isPointerType() || Ty->isReferenceType()) {
     mangleType(Ty);
+    Out << 'A';
+  } else if (Ty->isArrayType()) {
+    // Global arrays are funny, too.
+    mangleType(static_cast<ArrayType *>(Ty.getTypePtr()), true);
     Out << 'A';
   } else {
     mangleType(Ty.getLocalUnqualifiedType());
@@ -662,26 +668,11 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
 case Type::CLASS: \
 llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
 return;
-#define TYPE(CLASS, PARENT)
+#define TYPE(CLASS, PARENT) \
+case Type::CLASS: \
+mangleType(static_cast<const CLASS##Type*>(T.getTypePtr())); \
+break;
 #include "clang/AST/TypeNodes.def"
-  case Type::Builtin:
-    mangleType(static_cast<BuiltinType *>(T.getTypePtr()));
-    break;
-  case Type::Enum:
-    mangleType(static_cast<EnumType *>(T.getTypePtr()));
-    break;
-  case Type::Record:
-    mangleType(static_cast<RecordType *>(T.getTypePtr()));
-    break;
-  case Type::Pointer:
-    mangleType(static_cast<PointerType *>(T.getTypePtr()));
-    break;
-  case Type::LValueReference:
-    mangleType(static_cast<LValueReferenceType *>(T.getTypePtr()));
-    break;
-  default:
-    assert(false && "Don't know how to mangle this type!");
-    break;
   }
 }
 
@@ -763,7 +754,8 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
 void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T) {
   // Structors only appear in decls, so at this point we know it's not a
   // structor type.
-  // I'll probably have mangleType(MemberPointerType) call 
+  // I'll probably have mangleType(MemberPointerType) call the mangleType()
+  // method directly.
   mangleType(T, false, false);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T) {
@@ -801,7 +793,7 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
          ArgEnd = Proto->arg_type_end();
          Arg != ArgEnd; ++Arg)
       mangleType(*Arg);
-    
+
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
       Out << 'Z';
@@ -904,6 +896,10 @@ void MicrosoftCXXNameMangler::mangleThrowSpecification(
   Out << 'Z';
 }
 
+void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T) {
+  assert(false && "Don't know how to mangle UnresolvedUsingTypes yet!");
+}
+
 // <type>        ::= <union-type> | <struct-type> | <class-type> | <enum-type>
 // <union-type>  ::= T <name>
 // <struct-type> ::= U <name>
@@ -935,14 +931,88 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
   mangleName(T->getDecl());
 }
 
+// <type>       ::= <array-type>
+// <array-type> ::= P <cvr-qualifiers> [Y <dimension-count> <dimension>+]
+//                                                  <element-type> # as global
+//              ::= Q <cvr-qualifiers> [Y <dimension-count> <dimension>+]
+//                                                  <element-type> # as param
+// It's supposed to be the other way around, but for some strange reason, it
+// isn't. Today this behavior is retained for the sole purpose of backwards
+// compatibility.
+void MicrosoftCXXNameMangler::mangleType(const ArrayType *T, bool IsGlobal) {
+  // This isn't a recursive mangling, so now we have to do it all in this
+  // one call.
+  if (IsGlobal)
+    Out << 'P';
+  else
+    Out << 'Q';
+  mangleExtraDimensions(T->getElementType());
+}
+void MicrosoftCXXNameMangler::mangleType(const ConstantArrayType *T) {
+  mangleType(static_cast<const ArrayType *>(T), false);
+}
+void MicrosoftCXXNameMangler::mangleType(const VariableArrayType *T) {
+  mangleType(static_cast<const ArrayType *>(T), false);
+}
+void MicrosoftCXXNameMangler::mangleType(const DependentSizedArrayType *T) {
+  mangleType(static_cast<const ArrayType *>(T), false);
+}
+void MicrosoftCXXNameMangler::mangleType(const IncompleteArrayType *T) {
+  mangleType(static_cast<const ArrayType *>(T), false);
+}
+void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
+  llvm::SmallVector<llvm::APInt, 3> Dimensions;
+  for (;;) {
+    if (ElementTy->isConstantArrayType()) {
+      const ConstantArrayType *CAT =
+      static_cast<const ConstantArrayType *>(ElementTy.getTypePtr());
+      Dimensions.push_back(CAT->getSize()-1);
+      ElementTy = CAT->getElementType();
+    } else if (ElementTy->isVariableArrayType()) {
+      assert(false && "Don't know how to mangle VLAs!");
+    } else if (ElementTy->isDependentSizedArrayType()) {
+      // The dependent expression has to be folded into a constant (TODO).
+      assert(false && "Don't know how to mangle dependent-sized arrays!");
+    } else if (ElementTy->isIncompleteArrayType()) continue;
+    else break;
+  }
+  mangleQualifiers(ElementTy.getQualifiers(), false);
+  // If there are any additional dimensions, mangle them now.
+  if (Dimensions.size() > 0) {
+    Out << 'Y';
+    // <dimension-count> ::= <number> # number of extra dimensions minus 1
+    mangleNumber(Dimensions.size()-1);
+    for (unsigned Dim = 0; Dim < Dimensions.size(); ++Dim) {
+      mangleNumber(Dimensions[Dim].getLimitedValue());
+    }
+  }
+  mangleType(ElementTy.getLocalUnqualifiedType());
+}
+
+void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T) {
+  assert(false && "Don't know how to mangle MemberPointerTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const TemplateTypeParmType *T) {
+  assert(false && "Don't know how to mangle TemplateTypeParmTypes yet!");
+}
+
 // <type> ::= <pointer-type>
 // <pointer-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
 void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
   QualType PointeeTy = T->getPointeeType();
-  if (!PointeeTy.hasLocalQualifiers())
-    // Lack of qualifiers is mangled as 'A'.
-    Out << 'A';
-  mangleType(PointeeTy);
+  if (PointeeTy->isArrayType()) {
+    // Pointers to arrays are mangled like arrays.
+    mangleExtraDimensions(T->getPointeeType());
+  } else {
+    if (!PointeeTy.hasQualifiers())
+      // Lack of qualifiers is mangled as 'A'.
+      Out << 'A';
+    mangleType(PointeeTy);
+  }
+}
+void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T) {
+  assert(false && "Don't know how to mangle ObjCObjectPointerTypes yet!");
 }
 
 // <type> ::= <reference-type>
@@ -950,10 +1020,70 @@ void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
 void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T) {
   Out << 'A';
   QualType PointeeTy = T->getPointeeType();
-  if (!PointeeTy.hasLocalQualifiers())
+  if (!PointeeTy.hasQualifiers())
     // Lack of qualifiers is mangled as 'A'.
     Out << 'A';
   mangleType(PointeeTy);
+}
+
+void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T) {
+  assert(false && "Don't know how to mangle RValueReferenceTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const ComplexType *T) {
+  assert(false && "Don't know how to mangle ComplexTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const VectorType *T) {
+  assert(false && "Don't know how to mangle VectorTypes yet!");
+}
+void MicrosoftCXXNameMangler::mangleType(const ExtVectorType *T) {
+  assert(false && "Don't know how to mangle ExtVectorTypes yet!");
+}
+void MicrosoftCXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
+  assert(false && "Don't know how to mangle DependentSizedExtVectorTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const ObjCInterfaceType *T) {
+  assert(false && "Don't know how to mangle ObjCInterfaceTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const ObjCObjectType *T) {
+  assert(false && "Don't know how to mangle ObjCObjectTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T) {
+  assert(false && "Don't know how to mangle BlockPointerTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *T) {
+  assert(false && "Don't know how to mangle InjectedClassNameTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const TemplateSpecializationType *T) {
+  assert(false && "Don't know how to mangle TemplateSpecializationTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const DependentNameType *T) {
+  assert(false && "Don't know how to mangle DependentNameTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(
+                                 const DependentTemplateSpecializationType *T) {
+  assert(false &&
+         "Don't know how to mangle DependentTemplateSpecializationTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const TypeOfType *T) {
+  assert(false && "Don't know how to mangle TypeOfTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const TypeOfExprType *T) {
+  assert(false && "Don't know how to mangle TypeOfExprTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const DecltypeType *T) {
+  assert(false && "Don't know how to mangle DecltypeTypes yet!");
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
