@@ -992,6 +992,16 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
 
   TRY_TO(TraverseType(D->getResultType()));
   TRY_TO(TraverseDeclContextHelper(D));  // Parameters.
+
+  if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
+    // Constructor initializers.
+    for (CXXConstructorDecl::init_iterator I = Ctor->init_begin(),
+                                           E = Ctor->init_end();
+         I != E; ++I) {
+      TRY_TO(TraverseConstructorInitializer(*I));
+    }
+  }
+
   if (D->isThisDeclarationADefinition()) {
     TRY_TO(TraverseStmt(D->getBody()));  // Function body.
   }
@@ -1011,18 +1021,9 @@ DEF_TRAVERSE_DECL(CXXMethodDecl, {
   })
 
 DEF_TRAVERSE_DECL(CXXConstructorDecl, {
-    TRY_TO(TraverseFunctionHelper(D));
-    // FIXME: traverse the initializers before traversing the
-    // constructor body.
-    for (CXXConstructorDecl::init_iterator I = D->init_begin(),
-                                           E = D->init_end();
-         I != E; ++I) {
-      TRY_TO(TraverseConstructorInitializer(*I));
-    }
-
     // We skip decls_begin/decls_end, which are already covered by
     // TraverseFunctionHelper().
-    return true;
+    return TraverseFunctionHelper(D);
   })
 
 // CXXConversionDecl is the declaration of a type conversion operator.
