@@ -204,7 +204,7 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   ExplodedNodeSet *PrevSet = &Src;
   unsigned checkersEvaluated = 0;
 
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
+  for (CheckersOrdered::iterator I=CO->begin(), E=CO->end(); I!=E; ++I){
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
       CurrSet = &Dst;
