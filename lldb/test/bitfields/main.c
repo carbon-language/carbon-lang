@@ -38,7 +38,7 @@ int main (int argc, char const *argv[])
     for (i=0; i<(1<<7); i++)
         bits.b7 = i;        //// break $source:$line
     for (i=0; i<(1<<4); i++)
-        bits.b4 = i;        //// break $source:$line
+        bits.four = i;      //// break $source:$line
     return 0;               //// continue
 
 }
