@@ -36,4 +36,4 @@ _Decimal32 x;  // expected-error {{GNU decimal type extension not supported}}
 
 
 // rdar://6880951
-int __attribute__ ((vector_size (8), vector_size (8))) v;  // expected-error {{invalid vector type}}
+int __attribute__ ((vector_size (8), vector_size (8))) v;  // expected-error {{invalid vector element type}}
