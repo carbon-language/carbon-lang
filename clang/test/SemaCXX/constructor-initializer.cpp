@@ -204,3 +204,20 @@ C f(C c) {
 }
 
 }
+
+// Don't build implicit initializers for anonymous union fields when we already
+// have an explicit initializer for another field in the union.
+namespace PR7402 {
+  struct S {
+    union {
+      void* ptr_;
+      struct { int i_; };
+    };
+
+    template <typename T> S(T) : ptr_(0) { }
+  };
+
+  void f() {
+    MyStruct s(3);
+  }
+}
