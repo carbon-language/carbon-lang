@@ -379,35 +379,39 @@ llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   GVALinkage Linkage = GetLinkageForFunction(getContext(), D, Features);
 
-  if (Linkage == GVA_Internal) {
+  if (Linkage == GVA_Internal)
     return llvm::Function::InternalLinkage;
-  } else if (D->hasAttr<DLLExportAttr>()) {
+  
+  if (D->hasAttr<DLLExportAttr>())
     return llvm::Function::DLLExportLinkage;
-  } else if (D->hasAttr<WeakAttr>()) {
+  
+  if (D->hasAttr<WeakAttr>())
     return llvm::Function::WeakAnyLinkage;
-  } else if (Linkage == GVA_C99Inline) {
-    // In C99 mode, 'inline' functions are guaranteed to have a strong
-    // definition somewhere else, so we can use available_externally linkage.
+  
+  // In C99 mode, 'inline' functions are guaranteed to have a strong
+  // definition somewhere else, so we can use available_externally linkage.
+  if (Linkage == GVA_C99Inline)
     return llvm::Function::AvailableExternallyLinkage;
-  } else if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation) {
-    // In C++, the compiler has to emit a definition in every translation unit
-    // that references the function.  We should use linkonce_odr because
-    // a) if all references in this translation unit are optimized away, we
-    // don't need to codegen it.  b) if the function persists, it needs to be
-    // merged with other definitions. c) C++ has the ODR, so we know the
-    // definition is dependable.
+  
+  // In C++, the compiler has to emit a definition in every translation unit
+  // that references the function.  We should use linkonce_odr because
+  // a) if all references in this translation unit are optimized away, we
+  // don't need to codegen it.  b) if the function persists, it needs to be
+  // merged with other definitions. c) C++ has the ODR, so we know the
+  // definition is dependable.
+  if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
     return llvm::Function::LinkOnceODRLinkage;
-  } else if (Linkage == GVA_ExplicitTemplateInstantiation) {
-    // An explicit instantiation of a template has weak linkage, since
-    // explicit instantiations can occur in multiple translation units
-    // and must all be equivalent. However, we are not allowed to
-    // throw away these explicit instantiations.
+  
+  // An explicit instantiation of a template has weak linkage, since
+  // explicit instantiations can occur in multiple translation units
+  // and must all be equivalent. However, we are not allowed to
+  // throw away these explicit instantiations.
+  if (Linkage == GVA_ExplicitTemplateInstantiation)
     return llvm::Function::WeakODRLinkage;
-  } else {
-    assert(Linkage == GVA_StrongExternal);
-    // Otherwise, we have strong external linkage.
-    return llvm::Function::ExternalLinkage;
-  }
+  
+  // Otherwise, we have strong external linkage.
+  assert(Linkage == GVA_StrongExternal);
+  return llvm::Function::ExternalLinkage;
 }
 
 
