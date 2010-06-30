@@ -215,18 +215,18 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
   // Gather all the type infos for this landing pad and pass them along to
   // MachineModuleInfo.
   std::vector<const GlobalVariable *> TyInfo;
-  unsigned N = I.getNumOperands();
+  unsigned N = I.getNumArgOperands();
 
-  for (unsigned i = N - 1; i > 2; --i) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
+  for (unsigned i = N - 1; i > 1; --i) {
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(I.getArgOperand(i))) {
       unsigned FilterLength = CI->getZExtValue();
       unsigned FirstCatch = i + FilterLength + !FilterLength;
-      assert (FirstCatch <= N && "Invalid filter length");
+      assert(FirstCatch <= N && "Invalid filter length");
 
       if (FirstCatch < N) {
         TyInfo.reserve(N - FirstCatch);
         for (unsigned j = FirstCatch; j < N; ++j)
-          TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+          TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
         MMI->addCatchTypeInfo(MBB, TyInfo);
         TyInfo.clear();
       }
@@ -238,7 +238,7 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
         // Filter.
         TyInfo.reserve(FilterLength - 1);
         for (unsigned j = i + 1; j < FirstCatch; ++j)
-          TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+          TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
         MMI->addFilterTypeInfo(MBB, TyInfo);
         TyInfo.clear();
       }
@@ -247,10 +247,10 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
     }
   }
 
-  if (N > 3) {
-    TyInfo.reserve(N - 3);
-    for (unsigned j = 3; j < N; ++j)
-      TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+  if (N > 2) {
+    TyInfo.reserve(N - 2);
+    for (unsigned j = 2; j < N; ++j)
+      TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
     MMI->addCatchTypeInfo(MBB, TyInfo);
   }
 }
