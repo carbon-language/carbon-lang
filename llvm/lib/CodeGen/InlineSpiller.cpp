@@ -95,6 +95,7 @@ void InlineSpiller::spill(LiveInterval *li,
       tii_.loadRegFromStackSlot(*MI->getParent(), MII, NewVReg, SS, RC, &tri_);
       --MII; // Point to load instruction.
       SlotIndex LoadIdx = lis_.InsertMachineInstrInMaps(MII).getDefIndex();
+      vrm_.addSpillSlotUse(SS, MII);
       DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MII);
       VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0, true,
                                            lis_.getVNInfoAllocator());
@@ -124,6 +125,7 @@ void InlineSpiller::spill(LiveInterval *li,
                                &tri_);
       --MII; // Point to store instruction.
       SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MII).getDefIndex();
+      vrm_.addSpillSlotUse(SS, MII);
       DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MII);
       VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, true,
                                             lis_.getVNInfoAllocator());
