@@ -106,6 +106,12 @@ ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
 AliasAnalysis::AliasResult
 ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
                                     const Value *B, unsigned BSize) {
+  // If either of the memory references is empty, it doesn't matter what the
+  // pointer values are. This allows the code below to ignore this special
+  // case.
+  if (ASize == 0 || BSize == 0)
+    return NoAlias;
+
   // This is ScalarEvolutionAliasAnalysis. Get the SCEVs!
   const SCEV *AS = SE->getSCEV(const_cast<Value *>(A));
   const SCEV *BS = SE->getSCEV(const_cast<Value *>(B));
@@ -118,14 +124,32 @@ ScalarEvolutionAliasAnalysis::alias(const Value *A, unsigned ASize,
   if (SE->getEffectiveSCEVType(AS->getType()) ==
       SE->getEffectiveSCEVType(BS->getType())) {
     unsigned BitWidth = SE->getTypeSizeInBits(AS->getType());
-    APInt AI(BitWidth, ASize);
+    APInt ASizeInt(BitWidth, ASize);
+    APInt BSizeInt(BitWidth, BSize);
+
+    // Compute the difference between the two pointers.
     const SCEV *BA = SE->getMinusSCEV(BS, AS);
-    if (AI.ule(SE->getUnsignedRange(BA).getUnsignedMin())) {
-      APInt BI(BitWidth, BSize);
-      const SCEV *AB = SE->getMinusSCEV(AS, BS);
-      if (BI.ule(SE->getUnsignedRange(AB).getUnsignedMin()))
-        return NoAlias;
-    }
+
+    // Test whether the difference is known to be great enough that memory of
+    // the given sizes don't overlap. This assumes that ASizeInt and BSizeInt
+    // are non-zero, which is special-cased above.
+    if (ASizeInt.ule(SE->getUnsignedRange(BA).getUnsignedMin()) &&
+        (-BSizeInt).uge(SE->getUnsignedRange(BA).getUnsignedMax()))
+      return NoAlias;
+
+    // Folding the subtraction while preserving range information can be tricky
+    // (because of INT_MIN, etc.); if the prior test failed, swap AS and BS
+    // and try again to see if things fold better that way.
+
+    // Compute the difference between the two pointers.
+    const SCEV *AB = SE->getMinusSCEV(AS, BS);
+
+    // Test whether the difference is known to be great enough that memory of
+    // the given sizes don't overlap. This assumes that ASizeInt and BSizeInt
+    // are non-zero, which is special-cased above.
+    if (BSizeInt.ule(SE->getUnsignedRange(AB).getUnsignedMin()) &&
+        (-ASizeInt).uge(SE->getUnsignedRange(AB).getUnsignedMax()))
+      return NoAlias;
   }
 
   // If ScalarEvolution can find an underlying object, form a new query.
