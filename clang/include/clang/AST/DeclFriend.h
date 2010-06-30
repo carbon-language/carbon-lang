@@ -59,7 +59,8 @@ private:
       FriendLoc(FriendL) {
   }
 
-  FriendDecl(EmptyShell Empty) : Decl(Decl::Friend, Empty), NextFriend(0) { }
+  explicit FriendDecl(EmptyShell Empty)
+    : Decl(Decl::Friend, Empty), NextFriend(0) { }
 
 public:
   static FriendDecl *Create(ASTContext &C, DeclContext *DC,
