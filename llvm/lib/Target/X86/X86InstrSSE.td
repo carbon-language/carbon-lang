@@ -2672,6 +2672,20 @@ def mi : Ii8<0x70, MRMSrcMem,
 }
 } // ExeDomain = SSEPackedInt
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in {
+  let AddedComplexity = 5 in
+  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, pshufd, bc_v4i32>, OpSize,
+                               VEX;
+
+  // SSE2 with ImmT == Imm8 and XS prefix.
+  defm VPSHUFHW : sse2_pshuffle<"vpshufhw", v8i16, pshufhw, bc_v8i16>, XS,
+                               VEX;
+
+  // SSE2 with ImmT == Imm8 and XD prefix.
+  defm VPSHUFLW : sse2_pshuffle<"vpshuflw", v8i16, pshuflw, bc_v8i16>, XD,
+                               VEX;
+}
+
 let Predicates = [HasSSE2] in {
   let AddedComplexity = 5 in
   defm PSHUFD : sse2_pshuffle<"pshufd", v4i32, pshufd, bc_v4i32>, TB, OpSize;
