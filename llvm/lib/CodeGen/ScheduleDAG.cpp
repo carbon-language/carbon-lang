@@ -380,26 +380,26 @@ void ScheduleDAG::VerifySchedule(bool isBottomUp) {
 }
 #endif
 
-/// InitDAGTopologicalSorting - create the initial topological 
+/// InitDAGTopologicalSorting - create the initial topological
 /// ordering from the DAG to be scheduled.
 ///
-/// The idea of the algorithm is taken from 
+/// The idea of the algorithm is taken from
 /// "Online algorithms for managing the topological order of
 /// a directed acyclic graph" by David J. Pearce and Paul H.J. Kelly
-/// This is the MNR algorithm, which was first introduced by 
-/// A. Marchetti-Spaccamela, U. Nanni and H. Rohnert in  
+/// This is the MNR algorithm, which was first introduced by
+/// A. Marchetti-Spaccamela, U. Nanni and H. Rohnert in
 /// "Maintaining a topological order under edge insertions".
 ///
-/// Short description of the algorithm: 
+/// Short description of the algorithm:
 ///
 /// Topological ordering, ord, of a DAG maps each node to a topological
 /// index so that for all edges X->Y it is the case that ord(X) < ord(Y).
 ///
-/// This means that if there is a path from the node X to the node Z, 
+/// This means that if there is a path from the node X to the node Z,
 /// then ord(X) < ord(Z).
 ///
 /// This property can be used to check for reachability of nodes:
-/// if Z is reachable from X, then an insertion of the edge Z->X would 
+/// if Z is reachable from X, then an insertion of the edge Z->X would
 /// create a cycle.
 ///
 /// The algorithm first computes a topological ordering for the DAG by
@@ -431,7 +431,7 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
       // Collect leaf nodes.
       WorkList.push_back(SU);
     }
-  }  
+  }
 
   int Id = DAGSize;
   while (!WorkList.empty()) {
@@ -456,7 +456,7 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
     SUnit *SU = &SUnits[i];
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      assert(Node2Index[SU->NodeNum] > Node2Index[I->getSUnit()->NodeNum] && 
+      assert(Node2Index[SU->NodeNum] > Node2Index[I->getSUnit()->NodeNum] &&
       "Wrong topological sorting");
     }
   }
@@ -494,7 +494,7 @@ void ScheduleDAGTopologicalSort::RemovePred(SUnit *M, SUnit *N) {
 void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
                                      bool& HasLoop) {
   std::vector<const SUnit*> WorkList;
-  WorkList.reserve(SUnits.size()); 
+  WorkList.reserve(SUnits.size());
 
   WorkList.push_back(SU);
   do {
@@ -504,20 +504,20 @@ void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
     for (int I = SU->Succs.size()-1; I >= 0; --I) {
       int s = SU->Succs[I].getSUnit()->NodeNum;
       if (Node2Index[s] == UpperBound) {
-        HasLoop = true; 
+        HasLoop = true;
         return;
       }
       // Visit successors if not already and in affected region.
       if (!Visited.test(s) && Node2Index[s] < UpperBound) {
         WorkList.push_back(SU->Succs[I].getSUnit());
-      } 
-    } 
+      }
+    }
   } while (!WorkList.empty());
 }
 
-/// Shift - Renumber the nodes so that the topological ordering is 
+/// Shift - Renumber the nodes so that the topological ordering is
 /// preserved.
-void ScheduleDAGTopologicalSort::Shift(BitVector& Visited, int LowerBound, 
+void ScheduleDAGTopologicalSort::Shift(BitVector& Visited, int LowerBound,
                                        int UpperBound) {
   std::vector<int> L;
   int shift = 0;
@@ -568,7 +568,7 @@ bool ScheduleDAGTopologicalSort::IsReachable(const SUnit *SU,
   // Is Ord(TargetSU) < Ord(SU) ?
   if (LowerBound < UpperBound) {
     Visited.reset();
-    // There may be a path from TargetSU to SU. Check for it. 
+    // There may be a path from TargetSU to SU. Check for it.
     DFS(TargetSU, UpperBound, HasLoop);
   }
   return HasLoop;
@@ -580,8 +580,7 @@ void ScheduleDAGTopologicalSort::Allocate(int n, int index) {
   Index2Node[index] = n;
 }
 
-ScheduleDAGTopologicalSort::ScheduleDAGTopologicalSort(
-                                                     std::vector<SUnit> &sunits)
- : SUnits(sunits) {}
+ScheduleDAGTopologicalSort::
+ScheduleDAGTopologicalSort(std::vector<SUnit> &sunits) : SUnits(sunits) {}
 
 ScheduleHazardRecognizer::~ScheduleHazardRecognizer() {}
