@@ -1101,8 +1101,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   }
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
-  if (S->isAffine() &&
-      S->getOperand(1) == SE.getConstant(Ty, 1)) {
+  if (S->isAffine() && S->getOperand(1)->isOne()) {
     // If there's a canonical IV, just use it.
     if (CanonicalIV) {
       assert(Ty == SE.getEffectiveSCEVType(CanonicalIV->getType()) &&
