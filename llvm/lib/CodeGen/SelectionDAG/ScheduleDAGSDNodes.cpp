@@ -507,7 +507,7 @@ namespace {
 }
 
 // ProcessSourceNode - Process nodes with source order numbers. These are added
-// to a vector which EmitSchedule use to determine how to insert dbg_value
+// to a vector which EmitSchedule uses to determine how to insert dbg_value
 // instructions in the right order.
 static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
                            InstrEmitter &Emitter,
