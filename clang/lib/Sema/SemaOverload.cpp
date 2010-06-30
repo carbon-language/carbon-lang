@@ -2707,6 +2707,8 @@ FindConversionToLValue(Sema &S, ImplicitConversionSequence &ICS,
     // conversion; continue with other checks.
     return false;
   }
+  
+  return false;
 }
 
 /// \brief Compute an implicit conversion sequence for reference
