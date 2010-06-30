@@ -2654,53 +2654,34 @@ defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128>;
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
-
-// Shuffle and unpack instructions
-let AddedComplexity = 5 in {
-def PSHUFDri : PDIi8<0x70, MRMSrcReg,
-                     (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
-                     "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set VR128:$dst, (v4i32 (pshufd:$src2
-                                               VR128:$src1, (undef))))]>;
-def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
-                     (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
-                     "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set VR128:$dst, (v4i32 (pshufd:$src2
-                                             (bc_v4i32 (memopv2i64 addr:$src1)),
-                                             (undef))))]>;
+multiclass sse2_pshuffle<string OpcodeStr, ValueType vt, PatFrag pshuf_frag,
+                         PatFrag bc_frag> {
+def ri : Ii8<0x70, MRMSrcReg,
+              (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
+              !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+              [(set VR128:$dst, (vt (pshuf_frag:$src2 VR128:$src1,
+                                                      (undef))))]>;
+def mi : Ii8<0x70, MRMSrcMem,
+              (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
+              !strconcat(OpcodeStr,
+                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+              [(set VR128:$dst, (vt (pshuf_frag:$src2
+                                      (bc_frag (memopv2i64 addr:$src1)),
+                                      (undef))))]>;
 }
-
-// SSE2 with ImmT == Imm8 and XS prefix.
-def PSHUFHWri : Ii8<0x70, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
-                    "pshufhw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (pshufhw:$src2 VR128:$src1,
-                                                            (undef))))]>,
-                XS, Requires<[HasSSE2]>;
-def PSHUFHWmi : Ii8<0x70, MRMSrcMem,
-                    (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
-                    "pshufhw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (pshufhw:$src2
-                                            (bc_v8i16 (memopv2i64 addr:$src1)),
-                                            (undef))))]>,
-                XS, Requires<[HasSSE2]>;
-
-// SSE2 with ImmT == Imm8 and XD prefix.
-def PSHUFLWri : Ii8<0x70, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
-                    "pshuflw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (pshuflw:$src2 VR128:$src1,
-                                                            (undef))))]>,
-                XD, Requires<[HasSSE2]>;
-def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
-                    (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
-                    "pshuflw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v8i16 (pshuflw:$src2
-                                             (bc_v8i16 (memopv2i64 addr:$src1)),
-                                             (undef))))]>,
-                XD, Requires<[HasSSE2]>;
-
 } // ExeDomain = SSEPackedInt
+
+let Predicates = [HasSSE2] in {
+  let AddedComplexity = 5 in
+  defm PSHUFD : sse2_pshuffle<"pshufd", v4i32, pshufd, bc_v4i32>, TB, OpSize;
+
+  // SSE2 with ImmT == Imm8 and XS prefix.
+  defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, pshufhw, bc_v8i16>, XS;
+
+  // SSE2 with ImmT == Imm8 and XD prefix.
+  defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, pshuflw, bc_v8i16>, XD;
+}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Unpack Instructions
