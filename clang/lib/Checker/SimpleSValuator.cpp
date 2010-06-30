@@ -502,7 +502,12 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
                                   QualType resultTy) {
   // Only comparisons and subtractions are valid operations on two pointers.
   // See [C99 6.5.5 through 6.5.14] or [C++0x 5.6 through 5.15].
-  assert(BinaryOperator::isComparisonOp(op) || op == BinaryOperator::Sub);
+  // However, if a pointer is casted to an integer, EvalBinOpNN may end up
+  // calling this function with another operation (PR7527). We don't attempt to
+  // model this for now, but it could be useful, particularly when the
+  // "location" is actually an integer value that's been passed through a void*.
+  if (!(BinaryOperator::isComparisonOp(op) || op == BinaryOperator::Sub))
+    return UnknownVal();
 
   // Special cases for when both sides are identical.
   if (lhs == rhs) {

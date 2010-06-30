@@ -281,3 +281,8 @@ void symbolic_region(int *p) {
   if (&a <= p)
     WARN; // expected-warning{{}}
 }
+
+void PR7527 (int *p) {
+  if (((int) p) & 1) // not crash
+    return;
+}
