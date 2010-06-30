@@ -548,7 +548,8 @@ protected:
     CI->eraseFromParent();
   }
   bool isFoldable(unsigned SizeCIOp, unsigned, bool) const {
-    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(SizeCIOp)))
+      if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp
+                                                        - CallInst::ArgOffset)))
       return SizeCI->isAllOnesValue();
     return false;
   }
