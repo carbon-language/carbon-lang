@@ -3241,7 +3241,7 @@ public:
   ~ParenListExpr() {}
 
   /// \brief Build an empty paren list.
-  //explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }
+  explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }
 
   unsigned getNumExprs() const { return NumExprs; }
 
@@ -3271,6 +3271,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
+  friend class PCHStmtWriter;
 };
 
 

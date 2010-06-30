@@ -22,7 +22,7 @@ using namespace clang;
 // Statement/expression serialization
 //===----------------------------------------------------------------------===//
 
-namespace {
+namespace clang {
   class PCHStmtWriter : public StmtVisitor<PCHStmtWriter, void> {
     PCHWriter &Writer;
     PCHWriter::RecordData &Record;
@@ -64,6 +64,7 @@ namespace {
     void VisitStringLiteral(StringLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
+    void VisitParenListExpr(ParenListExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitOffsetOfExpr(OffsetOfExpr *E);
     void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -416,6 +417,16 @@ void PCHStmtWriter::VisitParenExpr(ParenExpr *E) {
   Writer.AddSourceLocation(E->getRParen(), Record);
   Writer.AddStmt(E->getSubExpr());
   Code = pch::EXPR_PAREN;
+}
+
+void PCHStmtWriter::VisitParenListExpr(ParenListExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->NumExprs);
+  for (unsigned i=0; i != E->NumExprs; ++i)
+    Writer.AddStmt(E->Exprs[i]);
+  Writer.AddSourceLocation(E->LParenLoc, Record);
+  Writer.AddSourceLocation(E->RParenLoc, Record);
+  Code = pch::EXPR_PAREN_LIST;
 }
 
 void PCHStmtWriter::VisitUnaryOperator(UnaryOperator *E) {

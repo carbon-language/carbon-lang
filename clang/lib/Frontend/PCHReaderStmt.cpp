@@ -17,7 +17,7 @@
 #include "clang/AST/StmtVisitor.h"
 using namespace clang;
 
-namespace {
+namespace clang {
 
   class PCHStmtReader : public StmtVisitor<PCHStmtReader> {
     PCHReader &Reader;
@@ -69,6 +69,7 @@ namespace {
     void VisitStringLiteral(StringLiteral *E);
     void VisitCharacterLiteral(CharacterLiteral *E);
     void VisitParenExpr(ParenExpr *E);
+    void VisitParenListExpr(ParenListExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitOffsetOfExpr(OffsetOfExpr *E);
     void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -427,6 +428,17 @@ void PCHStmtReader::VisitParenExpr(ParenExpr *E) {
   E->setLParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParen(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setSubExpr(Reader.ReadSubExpr());
+}
+
+void PCHStmtReader::VisitParenListExpr(ParenListExpr *E) {
+  VisitExpr(E);
+  unsigned NumExprs = Record[Idx++];
+  E->Exprs = new (*Reader.getContext()) Stmt*[NumExprs];
+  for (unsigned i = 0; i != NumExprs; ++i)
+    E->Exprs[i] = Reader.ReadSubStmt();
+  E->NumExprs = NumExprs;
+  E->LParenLoc = Reader.ReadSourceLocation(Record, Idx);
+  E->RParenLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void PCHStmtReader::VisitUnaryOperator(UnaryOperator *E) {
@@ -1326,6 +1338,10 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
 
     case pch::EXPR_PAREN:
       S = new (Context) ParenExpr(Empty);
+      break;
+
+    case pch::EXPR_PAREN_LIST:
+      S = new (Context) ParenListExpr(Empty);
       break;
 
     case pch::EXPR_UNARY_OPERATOR:

@@ -650,6 +650,8 @@ namespace clang {
       EXPR_CHARACTER_LITERAL,
       /// \brief A ParenExpr record.
       EXPR_PAREN,
+      /// \brief A ParenListExpr record.
+      EXPR_PAREN_LIST,
       /// \brief A UnaryOperator record.
       EXPR_UNARY_OPERATOR,
       /// \brief An OffsetOfExpr record.
