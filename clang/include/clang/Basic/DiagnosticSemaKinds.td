@@ -965,8 +965,8 @@ def warn_transparent_union_attribute_not_definition : Warning<
   "transparent_union attribute can only be applied to a union definition; "
   "attribute ignored">;
 def warn_transparent_union_attribute_floating : Warning<
-  "first field of a transparent union cannot have floating point or vector "
-  "type; transparent_union attribute ignored">;
+  "first field of a transparent union cannot have %select{floating point|"
+  "vector}0 type %1; transparent_union attribute ignored">;
 def warn_transparent_union_attribute_zero_fields : Warning<
   "transparent union definition must contain at least one field; "
   "transparent_union attribute ignored">;

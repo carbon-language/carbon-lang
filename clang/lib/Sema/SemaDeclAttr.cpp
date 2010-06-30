@@ -1410,9 +1410,10 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
 
   FieldDecl *FirstField = *Field;
   QualType FirstType = FirstField->getType();
-  if (FirstType->hasFloatingRepresentation()) {
+  if (FirstType->hasFloatingRepresentation() || FirstType->isVectorType()) {
     S.Diag(FirstField->getLocation(),
-           diag::warn_transparent_union_attribute_floating);
+           diag::warn_transparent_union_attribute_floating)
+      << FirstType->isVectorType() << FirstType;
     return;
   }
 

@@ -38,3 +38,10 @@ typedef union {
 } TU3 __attribute__((transparent_union));
 
 typedef union { } TU4 __attribute__((transparent_union)); // expected-warning{{field}} 
+
+typedef int int4 __attribute__((ext_vector_type(4)));
+typedef union {
+  int4 vec; // expected-warning{{first field of a transparent union cannot have vector type 'int4'; transparent_union attribute ignored}}
+} TU5 __attribute__((transparent_union));
+
+  
