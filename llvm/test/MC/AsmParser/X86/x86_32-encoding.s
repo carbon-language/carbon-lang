@@ -11370,3 +11370,27 @@
 // CHECK: encoding: [0xc5,0xe9,0x66,0x18]
           vpcmpgtd  (%eax), %xmm2, %xmm3
 
+// CHECK: vpacksswb  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x63,0xd9]
+          vpacksswb  %xmm1, %xmm2, %xmm3
+
+// CHECK: vpacksswb  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x63,0x18]
+          vpacksswb  (%eax), %xmm2, %xmm3
+
+// CHECK: vpackssdw  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x6b,0xd9]
+          vpackssdw  %xmm1, %xmm2, %xmm3
+
+// CHECK: vpackssdw  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x6b,0x18]
+          vpackssdw  (%eax), %xmm2, %xmm3
+
+// CHECK: vpackuswb  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x67,0xd9]
+          vpackuswb  %xmm1, %xmm2, %xmm3
+
+// CHECK: vpackuswb  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x67,0x18]
+          vpackuswb  (%eax), %xmm2, %xmm3
+

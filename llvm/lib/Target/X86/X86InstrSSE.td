@@ -2634,6 +2634,15 @@ def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
 // SSE2 - Packed Integer Pack Instructions
 //===---------------------------------------------------------------------===//
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in {
+defm VPACKSSWB : PDI_binop_rm_int<0x63, "vpacksswb", int_x86_sse2_packsswb_128,
+                                  0>, VEX_4V;
+defm VPACKSSDW : PDI_binop_rm_int<0x6B, "vpackssdw", int_x86_sse2_packssdw_128,
+                                  0>, VEX_4V;
+defm VPACKUSWB : PDI_binop_rm_int<0x67, "vpackuswb", int_x86_sse2_packuswb_128,
+                                  0>, VEX_4V;
+}
+
 let Constraints = "$src1 = $dst" in {
 defm PACKSSWB : PDI_binop_rm_int<0x63, "packsswb", int_x86_sse2_packsswb_128>;
 defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128>;

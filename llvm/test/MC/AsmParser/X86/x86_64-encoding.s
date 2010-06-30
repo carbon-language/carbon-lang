@@ -1410,3 +1410,27 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x19,0x66,0x28]
           vpcmpgtd  (%rax), %xmm12, %xmm13
 
+// CHECK: vpacksswb  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x63,0xeb]
+          vpacksswb  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpacksswb  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x63,0x28]
+          vpacksswb  (%rax), %xmm12, %xmm13
+
+// CHECK: vpackssdw  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x6b,0xeb]
+          vpackssdw  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpackssdw  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x6b,0x28]
+          vpackssdw  (%rax), %xmm12, %xmm13
+
+// CHECK: vpackuswb  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x67,0xeb]
+          vpackuswb  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpackuswb  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x67,0x28]
+          vpackuswb  (%rax), %xmm12, %xmm13
+
