@@ -291,6 +291,9 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   llvm::sys::Path ClangPath = CXXIdx->getClangPath();
   argv.push_back(ClangPath.c_str());
 
+  // Always use Clang C++ support.
+  argv.push_back("-ccc-clang-cxx");
+  
   // Add the '-fsyntax-only' argument so that we only perform a basic
   // syntax check of the code.
   argv.push_back("-fsyntax-only");
