@@ -2702,19 +2702,66 @@ let Predicates = [HasSSE2] in {
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
-
 multiclass sse2_unpack<bits<8> opc, string OpcodeStr, ValueType vt,
-                       PatFrag unp_frag, PatFrag bc_frag> {
+                       PatFrag unp_frag, PatFrag bc_frag, bit Is2Addr = 1> {
   def rr : PDI<opc, MRMSrcReg,
-               (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (vt (unp_frag VR128:$src1, VR128:$src2)))]>;
+      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+      !if(Is2Addr,
+          !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
+          !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+      [(set VR128:$dst, (vt (unp_frag VR128:$src1, VR128:$src2)))]>;
   def rm : PDI<opc, MRMSrcMem,
-               (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (unp_frag VR128:$src1,
-                                           (bc_frag (memopv2i64
-                                                        addr:$src2))))]>;
+      (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+      !if(Is2Addr,
+          !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
+          !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+      [(set VR128:$dst, (unp_frag VR128:$src1,
+                                  (bc_frag (memopv2i64
+                                               addr:$src2))))]>;
+}
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in {
+  defm VPUNPCKLBW  : sse2_unpack<0x60, "vpunpcklbw", v16i8, unpckl, bc_v16i8,
+                                 0>, VEX_4V;
+  defm VPUNPCKLWD  : sse2_unpack<0x61, "vpunpcklwd", v8i16, unpckl, bc_v8i16,
+                                 0>, VEX_4V;
+  defm VPUNPCKLDQ  : sse2_unpack<0x62, "vpunpckldq", v4i32, unpckl, bc_v4i32,
+                                 0>, VEX_4V;
+
+  /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
+  /// knew to collapse (bitconvert VT to VT) into its operand.
+  def VPUNPCKLQDQrr : PDI<0x6C, MRMSrcReg,
+                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                         "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set VR128:$dst,
+                          (v2i64 (unpckl VR128:$src1, VR128:$src2)))]>, VEX_4V;
+  def VPUNPCKLQDQrm : PDI<0x6C, MRMSrcMem,
+                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+                         "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set VR128:$dst,
+                          (v2i64 (unpckl VR128:$src1,
+                                         (memopv2i64 addr:$src2))))]>, VEX_4V;
+
+  defm VPUNPCKHBW  : sse2_unpack<0x68, "vpunpckhbw", v16i8, unpckh, bc_v16i8,
+                                 0>, VEX_4V;
+  defm VPUNPCKHWD  : sse2_unpack<0x69, "vpunpckhwd", v8i16, unpckh, bc_v8i16,
+                                 0>, VEX_4V;
+  defm VPUNPCKHDQ  : sse2_unpack<0x6A, "vpunpckhdq", v4i32, unpckh, bc_v4i32,
+                                 0>, VEX_4V;
+
+  /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
+  /// knew to collapse (bitconvert VT to VT) into its operand.
+  def VPUNPCKHQDQrr : PDI<0x6D, MRMSrcReg,
+                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                         "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set VR128:$dst,
+                          (v2i64 (unpckh VR128:$src1, VR128:$src2)))]>, VEX_4V;
+  def VPUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
+                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+                        "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                        [(set VR128:$dst,
+                          (v2i64 (unpckh VR128:$src1,
+                                         (memopv2i64 addr:$src2))))]>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {

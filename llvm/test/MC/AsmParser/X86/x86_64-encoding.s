@@ -1458,3 +1458,67 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x7b,0x70,0x28,0x04]
           vpshuflw  $4, (%rax), %xmm13
 
+// CHECK: vpunpcklbw  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x60,0xeb]
+          vpunpcklbw  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpcklbw  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x60,0x28]
+          vpunpcklbw  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpcklwd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x61,0xeb]
+          vpunpcklwd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpcklwd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x61,0x28]
+          vpunpcklwd  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpckldq  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x62,0xeb]
+          vpunpckldq  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpckldq  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x62,0x28]
+          vpunpckldq  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpcklqdq  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x6c,0xeb]
+          vpunpcklqdq  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpcklqdq  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x6c,0x28]
+          vpunpcklqdq  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpckhbw  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x68,0xeb]
+          vpunpckhbw  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpckhbw  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x68,0x28]
+          vpunpckhbw  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpckhwd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x69,0xeb]
+          vpunpckhwd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpckhwd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x69,0x28]
+          vpunpckhwd  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpckhdq  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x6a,0xeb]
+          vpunpckhdq  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpckhdq  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x6a,0x28]
+          vpunpckhdq  (%rax), %xmm12, %xmm13
+
+// CHECK: vpunpckhqdq  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x6d,0xeb]
+          vpunpckhqdq  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpunpckhqdq  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x6d,0x28]
+          vpunpckhqdq  (%rax), %xmm12, %xmm13
+
