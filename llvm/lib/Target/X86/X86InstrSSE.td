@@ -2885,40 +2885,8 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
 } // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
-// SSE2 - Packed Misc Integer Instructions
+// SSE2 - Move Doubleword
 //===---------------------------------------------------------------------===//
-
-// Flush cache
-def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
-               "clflush\t$src", [(int_x86_sse2_clflush addr:$src)]>,
-              TB, Requires<[HasSSE2]>;
-
-// Load, store, and memory fence
-def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
-               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
-def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
-               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
-
-// Pause. This "instruction" is encoded as "rep; nop", so even though it
-// was introduced with SSE2, it's backward compatible.
-def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
-
-//TODO: custom lower this so as to never even generate the noop
-def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
-           (i8 0)), (NOOP)>;
-def : Pat<(membarrier (i8 0), (i8 0), (i8 0), (i8 1), (i8 1)), (SFENCE)>;
-def : Pat<(membarrier (i8 1), (i8 0), (i8 0), (i8 0), (i8 1)), (LFENCE)>;
-def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
-           (i8 1)), (MFENCE)>;
-
-// Alias instructions that map zero vector to pxor / xorp* for sse.
-// We set canFoldAsLoad because this can be converted to a constant-pool
-// load of an all-ones value if folding it would be beneficial.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
-  // FIXME: Change encoding to pseudo.
-  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 def MOVDI2PDIrr : PDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
@@ -2937,20 +2905,6 @@ def MOVDI2SSrm  : PDI<0x6E, MRMSrcMem, (outs FR32:$dst), (ins i32mem:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set FR32:$dst, (bitconvert (loadi32 addr:$src)))]>;
 
-// SSE2 instructions with XS prefix
-def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                    "movq\t{$src, $dst|$dst, $src}",
-                    [(set VR128:$dst,
-                      (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>, XS,
-                  Requires<[HasSSE2]>;
-def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
-                      "movq\t{$src, $dst|$dst, $src}",
-                      [(store (i64 (vector_extract (v2i64 VR128:$src),
-                                    (iPTR 0))), addr:$dst)]>;
-
-def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
-          (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
-
 def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR128:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set GR32:$dst, (vector_extract (v4i32 VR128:$src),
@@ -2966,11 +2920,6 @@ def MOVSS2DIrr  : PDI<0x7E, MRMDestReg, (outs GR32:$dst), (ins FR32:$src),
 def MOVSS2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, FR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(store (i32 (bitconvert FR32:$src)), addr:$dst)]>;
-
-// Store / copy lower 64-bits of a XMM register.
-def MOVLQ128mr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
-                     "movq\t{$src, $dst|$dst, $src}",
-                     [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>;
 
 // movd / movq to XMM register zero-extends
 let AddedComplexity = 15 in {
@@ -2998,7 +2947,32 @@ def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
 def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
+}
 
+//===---------------------------------------------------------------------===//
+// SSE2 - Move Quadword
+//===---------------------------------------------------------------------===//
+
+// SSE2 instructions with XS prefix
+def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
+                    "movq\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst,
+                      (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>, XS,
+                  Requires<[HasSSE2]>;
+def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
+                      "movq\t{$src, $dst|$dst, $src}",
+                      [(store (i64 (vector_extract (v2i64 VR128:$src),
+                                    (iPTR 0))), addr:$dst)]>;
+
+def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+          (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
+
+// Store / copy lower 64-bits of a XMM register.
+def MOVLQ128mr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
+                     "movq\t{$src, $dst|$dst, $src}",
+                     [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>;
+
+let AddedComplexity = 20 in {
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst,
@@ -3038,6 +3012,42 @@ def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
 
 def MOVQxrxr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  "movq\t{$src, $dst|$dst, $src}", []>, XS;
+
+//===---------------------------------------------------------------------===//
+// SSE2 - Misc Instructions
+//===---------------------------------------------------------------------===//
+
+// Flush cache
+def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
+               "clflush\t$src", [(int_x86_sse2_clflush addr:$src)]>,
+              TB, Requires<[HasSSE2]>;
+
+// Load, store, and memory fence
+def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
+               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
+def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
+               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
+
+// Pause. This "instruction" is encoded as "rep; nop", so even though it
+// was introduced with SSE2, it's backward compatible.
+def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
+
+//TODO: custom lower this so as to never even generate the noop
+def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
+           (i8 0)), (NOOP)>;
+def : Pat<(membarrier (i8 0), (i8 0), (i8 0), (i8 1), (i8 1)), (SFENCE)>;
+def : Pat<(membarrier (i8 1), (i8 0), (i8 0), (i8 0), (i8 1)), (LFENCE)>;
+def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
+           (i8 1)), (MFENCE)>;
+
+// Alias instructions that map zero vector to pxor / xorp* for sse.
+// We set canFoldAsLoad because this can be converted to a constant-pool
+// load of an all-ones value if folding it would be beneficial.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
+  // FIXME: Change encoding to pseudo.
+  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
+                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 Instructions
