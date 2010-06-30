@@ -219,6 +219,12 @@ void test_derived(B* b, B const* bc, C* c, const C* cc, void* v, D* d) {
   char* d8 = derived3(d);
 }
 
+void derived4(C*); // expected-note{{candidate function not viable: cannot convert from base class pointer 'A *' to derived class pointer 'C *' for 1st argument}}
+
+void test_base(A* a) {
+  derived4(a); // expected-error{{no matching function for call to 'derived4}}
+}
+
 // Test overloading of references. 
 // (FIXME: tests binding to determine candidate sets, not overload 
 //  resolution per se).

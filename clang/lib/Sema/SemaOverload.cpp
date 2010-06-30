@@ -5485,6 +5485,38 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     return;
   }
 
+  // Diagnose base -> derived pointer conversions.
+  bool IsBaseToDerivedConversion = false;
+  if (const PointerType *FromPtrTy = FromTy->getAs<PointerType>()) {
+    if (const PointerType *ToPtrTy = ToTy->getAs<PointerType>()) {
+      if (ToPtrTy->getPointeeType().isAtLeastAsQualifiedAs(
+                                               FromPtrTy->getPointeeType()) &&
+          !FromPtrTy->getPointeeType()->isIncompleteType() &&
+          !ToPtrTy->getPointeeType()->isIncompleteType() &&
+          S.IsDerivedFrom(ToPtrTy->getPointeeType(), 
+                          FromPtrTy->getPointeeType()))
+        IsBaseToDerivedConversion = true;
+    }
+  } else if (const ObjCObjectPointerType *FromPtrTy
+                                    = FromTy->getAs<ObjCObjectPointerType>()) {
+    if (const ObjCObjectPointerType *ToPtrTy
+                                        = ToTy->getAs<ObjCObjectPointerType>())
+      if (const ObjCInterfaceDecl *FromIface = FromPtrTy->getInterfaceDecl())
+        if (const ObjCInterfaceDecl *ToIface = ToPtrTy->getInterfaceDecl())
+          if (ToPtrTy->getPointeeType().isAtLeastAsQualifiedAs(
+                                                FromPtrTy->getPointeeType()) &&
+              FromIface->isSuperClassOf(ToIface))
+            IsBaseToDerivedConversion = true;
+  }
+  if (IsBaseToDerivedConversion) {
+    S.Diag(Fn->getLocation(), 
+           diag::note_ovl_candidate_bad_base_to_derived_ptr_conv)
+      << (unsigned) FnKind << FnDesc
+      << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << FromTy << ToTy << I+1;    
+    return;
+  }
+      
   // TODO: specialize more based on the kind of mismatch
   S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv)
     << (unsigned) FnKind << FnDesc

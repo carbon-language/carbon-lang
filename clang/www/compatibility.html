@@ -590,8 +590,9 @@ void g(Base *base) {
 downcast.mm:6:3: error: no matching function for call to 'f'
   f(base);
   ^
-downcast.mm:4:6: note: candidate function not viable: no known conversion from
-      'Base *' to 'Derived *' for 1st argument
+downcast.mm:4:6: note: candidate function not viable: cannot convert from base
+      class pointer 'Base *' to derived class pointer 'Derived *' for 1st
+      argument
 void f(Derived *);
      ^
 </pre>
