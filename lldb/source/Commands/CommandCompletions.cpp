@@ -134,7 +134,7 @@ DiskFilesOrDirectories
     // the form the user originally typed.
     
     char partial_name_copy[PATH_MAX];
-    bcopy (partial_file_name, partial_name_copy, partial_name_len);
+    memcpy(partial_name_copy, partial_file_name, partial_name_len);
     partial_name_copy[partial_name_len] = '\0';
     
     // We'll need to save a copy of the remainder for comparision, which we do here.
@@ -167,7 +167,7 @@ DiskFilesOrDirectories
            partial_name_copy[partial_name_len+1] = '\0';
            matches.AppendString(partial_name_copy);
            globfree(&glob_buf);
-           saw_directory == true;
+           saw_directory = true;
            return matches.GetSize();
         }
         else
