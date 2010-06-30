@@ -294,7 +294,7 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
   if (!FD) {
     const DeclContext *DC = D->getDeclContext();
     // Check for extern variable declared locally.
-    if (isa<FunctionDecl>(DC) && D->hasLinkage())
+    if ((isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC) ) && D->hasLinkage())
       while (!DC->isNamespace() && !DC->isTranslationUnit())
         DC = DC->getParent();
     if (DC->isTranslationUnit() && D->getLinkage() != InternalLinkage)
