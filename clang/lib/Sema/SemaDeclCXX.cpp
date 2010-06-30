@@ -1753,64 +1753,38 @@ struct BaseAndFieldInfo {
 };
 }
 
-static void RecordFieldInitializer(BaseAndFieldInfo &Info,
-                                   FieldDecl *Top, FieldDecl *Field,
-                                   CXXBaseOrMemberInitializer *Init) {
-  // If the member doesn't need to be initialized, Init will still be null.
-  if (!Init)
-    return;
-
-  Info.AllToInit.push_back(Init);
-  if (Field != Top) {
-    Init->setMember(Top);
-    Init->setAnonUnionMember(Field);
-  }
-}
-
 static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
                                     FieldDecl *Top, FieldDecl *Field) {
 
-  // Overwhelmingly common case: we have a direct initializer for this field.
+  // Overwhelmingly common case:  we have a direct initializer for this field.
   if (CXXBaseOrMemberInitializer *Init = Info.AllBaseFields.lookup(Field)) {
-    RecordFieldInitializer(Info, Top, Field, Init);
+    Info.AllToInit.push_back(Init);
+
+    if (Field != Top) {
+      Init->setMember(Top);
+      Init->setAnonUnionMember(Field);
+    }
     return false;
   }
 
   if (Info.IIK == IIK_Default && Field->isAnonymousStructOrUnion()) {
     const RecordType *FieldClassType = Field->getType()->getAs<RecordType>();
     assert(FieldClassType && "anonymous struct/union without record type");
+
+    // Walk through the members, tying in any initializers for fields
+    // we find.  The earlier semantic checks should prevent redundant
+    // initialization of union members, given the requirement that
+    // union members never have non-trivial default constructors.
+
+    // TODO: in C++0x, it might be legal to have union members with
+    // non-trivial default constructors in unions.  Revise this
+    // implementation then with the appropriate semantics.
     CXXRecordDecl *FieldClassDecl
       = cast<CXXRecordDecl>(FieldClassType->getDecl());
-
-    // Even though union members never have non-trivial default
-    // constructions in C++03, we still build member initializers for aggregate
-    // record types which can be union members, and C++0x allows non-trivial
-    // default constructors for union members, so we ensure that only one
-    // member is initialized for these.
-    if (FieldClassDecl->isUnion()) {
-      // First check for an explicit initializer for one field.
-      for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
-           EA = FieldClassDecl->field_end(); FA != EA; FA++) {
-        if (CXXBaseOrMemberInitializer *Init = Info.AllBaseFields.lookup(*FA)) {
-          RecordFieldInitializer(Info, Top, *FA, Init);
-          break;
-        }
-      }
-
-      // Fallthrough and construct a default initializer for the union as
-      // a whole, which can call its default constructor if such a thing exists
-      // (C++0x perhaps). FIXME: It's not clear that this is the correct
-      // behavior going forward with C++0x, when anonymous unions there are
-      // finalized, we should revisit this.
-    } else {
-      // For structs, we simply descend through to initialize all members where
-      // necessary.
-      for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
-           EA = FieldClassDecl->field_end(); FA != EA; FA++) {
-        if (CollectFieldInitializer(Info, Top, *FA))
-          return true;
-      }
-    }
+    for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
+           EA = FieldClassDecl->field_end(); FA != EA; FA++)
+      if (CollectFieldInitializer(Info, Top, *FA))
+        return true;
   }
 
   // Don't try to build an implicit initializer if there were semantic
@@ -1822,8 +1796,15 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
   CXXBaseOrMemberInitializer *Init = 0;
   if (BuildImplicitMemberInitializer(Info.S, Info.Ctor, Info.IIK, Field, Init))
     return true;
+    
+  // If the member doesn't need to be initialized, Init will still be null.
+  if (!Init) return false;
 
-  RecordFieldInitializer(Info, Top, Field, Init);
+  Info.AllToInit.push_back(Init);
+  if (Top != Field) {
+    Init->setMember(Top);
+    Init->setAnonUnionMember(Field);
+  }
   return false;
 }
                                
