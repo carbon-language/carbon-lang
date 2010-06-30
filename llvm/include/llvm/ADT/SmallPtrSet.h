@@ -200,7 +200,7 @@ public:
 };
 
 /// NextPowerOfTwo - This is a helper template that rounds N up to the next
-/// power of two.
+/// power of two (which means N itself if N is already a power of two).
 template<unsigned N>
 struct NextPowerOfTwo;
 
