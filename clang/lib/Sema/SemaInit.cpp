@@ -2198,7 +2198,7 @@ static void TryListInitialization(Sema &S,
   // FIXME: We only perform rudimentary checking of list
   // initializations at this point, then assume that any list
   // initialization of an array, aggregate, or scalar will be
-  // well-formed. We we actually "perform" list initialization, we'll
+  // well-formed. When we actually "perform" list initialization, we'll
   // do all of the necessary checking.  C++0x initializer lists will
   // force us to perform more checking here.
   Sequence.setSequenceKind(InitializationSequence::ListInitialization);
