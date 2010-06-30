@@ -175,7 +175,7 @@ sizeof.m:4:14: error: invalid application of 'sizeof' to interface 'NSArray' in
 <p>Code that relies on the size of an Objective-C class is likely to
 be broken anyway, since that size is not actually constant. To address
 this problem, use the Objective-C runtime API function
-<code>clang_getInstanceSize()</code>:</p>
+<code>class_getInstanceSize()</code>:</p>
 
 <pre>
   class_getInstanceSize([NSArray class])
