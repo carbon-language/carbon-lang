@@ -348,7 +348,7 @@ struct StrNCmpOpt : public LibCallOptimization {
       return ConstantInt::get(CI->getType(), 0);
 
     if (TD && Length == 1) // strncmp(x,y,1) -> memcmp(x,y,1)
-      return EmitMemCmp(Str1P, Str2P, CI->getOperand(3), B, TD);
+      return EmitMemCmp(Str1P, Str2P, CI->getArgOperand(2), B, TD);
 
     std::string Str1, Str2;
     bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
@@ -526,9 +526,9 @@ struct StrStrOpt : public LibCallOptimization {
       return B.CreateBitCast(CI->getArgOperand(0), CI->getType());
 
     // fold strstr(a, b) == a -> strncmp(a, b, strlen(b)) == 0
-    if (TD && IsOnlyUsedInEqualityComparison(CI, CI->getOperand(1))) {
-      Value *StrLen = EmitStrLen(CI->getOperand(2), B, TD);
-      Value *StrNCmp = EmitStrNCmp(CI->getOperand(1), CI->getOperand(2),
+    if (TD && IsOnlyUsedInEqualityComparison(CI, CI->getArgOperand(0))) {
+      Value *StrLen = EmitStrLen(CI->getArgOperand(1), B, TD);
+      Value *StrNCmp = EmitStrNCmp(CI->getArgOperand(0), CI->getArgOperand(1),
                                    StrLen, B, TD);
       for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
            UI != UE; ) {
@@ -994,7 +994,7 @@ struct PrintFOpt : public LibCallOptimization {
 
     // Optimize specific format strings.
     // printf("%c", chr) --> putchar(chr)
-    if (FormatStr == "%c" && CI->getNumOperands() > 2 &&
+    if (FormatStr == "%c" && CI->getNumArgOperands() > 1 &&
         CI->getArgOperand(1)->getType()->isIntegerTy()) {
       Value *Res = EmitPutChar(CI->getArgOperand(1), B, TD);
 
@@ -1003,7 +1003,7 @@ struct PrintFOpt : public LibCallOptimization {
     }
 
     // printf("%s\n", str) --> puts(str)
-    if (FormatStr == "%s\n" && CI->getNumOperands() > 2 &&
+    if (FormatStr == "%s\n" && CI->getNumArgOperands() > 1 &&
         CI->getArgOperand(1)->getType()->isPointerTy() &&
         CI->use_empty()) {
       EmitPutS(CI->getArgOperand(1), B, TD);
@@ -1031,7 +1031,7 @@ struct SPrintFOpt : public LibCallOptimization {
       return 0;
 
     // If we just have a format string (nothing else crazy) transform it.
-    if (CI->getNumOperands() == 3) {
+    if (CI->getNumArgOperands() == 2) {
       // Make sure there's no % in the constant array.  We could try to handle
       // %% -> % in the future if we cared.
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
@@ -1050,7 +1050,8 @@ struct SPrintFOpt : public LibCallOptimization {
 
     // The remaining optimizations require the format string to be "%s" or "%c"
     // and have an extra operand.
-    if (FormatStr.size() != 2 || FormatStr[0] != '%' || CI->getNumOperands() <4)
+    if (FormatStr.size() != 2 || FormatStr[0] != '%' ||
+        CI->getNumArgOperands() < 3)
       return 0;
 
     // Decode the second character of the format string.
@@ -1166,7 +1167,7 @@ struct FPrintFOpt : public LibCallOptimization {
       return 0;
 
     // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
-    if (CI->getNumOperands() == 3) {
+    if (CI->getNumArgOperands() == 2) {
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
         if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
           return 0; // We found a format specifier.
@@ -1183,7 +1184,8 @@ struct FPrintFOpt : public LibCallOptimization {
 
     // The remaining optimizations require the format string to be "%s" or "%c"
     // and have an extra operand.
-    if (FormatStr.size() != 2 || FormatStr[0] != '%' || CI->getNumOperands() <4)
+    if (FormatStr.size() != 2 || FormatStr[0] != '%' ||
+        CI->getNumArgOperands() < 3)
       return 0;
 
     // Decode the second character of the format string.
