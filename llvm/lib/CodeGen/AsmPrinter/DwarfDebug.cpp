@@ -2766,7 +2766,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
           }
         }
       }
-      constructScopeDIE(*AI);
+      if (ProcessedSPNodes.count((*AI)->getScopeNode()) == 0)
+        constructScopeDIE(*AI);
     }
     
     DIE *CurFnDIE = constructScopeDIE(CurrentFnDbgScope);
