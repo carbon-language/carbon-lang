@@ -2,6 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D_Bool=bool -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 8143056
 
+typedef struct objc_class *Class;
 typedef unsigned NSPointerFunctionsOptions;
 extern "C" id NSClassFromObject(id object);
 void *sel_registerName(const char *);
@@ -28,3 +29,8 @@ struct NSSlice {
   }
 @end
 
+@implementation I1
++ (struct s1 *) f0 {
+  return 0;
+}
+@end

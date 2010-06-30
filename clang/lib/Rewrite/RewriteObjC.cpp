@@ -268,6 +268,8 @@ namespace {
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
     void RewriteProperty(ObjCPropertyDecl *prop);
     void RewriteFunctionDecl(FunctionDecl *FD);
+    void RewriteBlockPointerType(std::string& Str, QualType Type);
+    void RewriteBlockPointerTypeVariable(std::string& Str, ValueDecl *VD);
     void RewriteBlockLiteralFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteTypeOfDecl(VarDecl *VD);
@@ -835,11 +837,12 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
       Getr += ")"; // close the precedence "scope" for "*".
       
       // Now, emit the argument types (if any).
-      if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)) {
+      if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)){
         Getr += "(";
         for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
           if (i) Getr += ", ";
-          std::string ParamStr = FT->getArgType(i).getAsString();
+          std::string ParamStr = FT->getArgType(i).getAsString(
+            Context->PrintingPolicy);
           Getr += ParamStr;
         }
         if (FT->isVariadic()) {
@@ -1047,11 +1050,12 @@ void RewriteObjC::RewriteTypeIntoString(QualType T, std::string &ResultStr,
     else if (const BlockPointerType *BPT = retType->getAs<BlockPointerType>())
       PointeeTy = BPT->getPointeeType();
     if ((FPRetType = PointeeTy->getAs<FunctionType>())) {
-      ResultStr += FPRetType->getResultType().getAsString();
+      ResultStr += FPRetType->getResultType().getAsString(
+        Context->PrintingPolicy);
       ResultStr += "(*";
     }
   } else
-    ResultStr += T.getAsString();
+    ResultStr += T.getAsString(Context->PrintingPolicy);
 }
 
 void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
@@ -1107,10 +1111,11 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += " *";
   }
   else
-    ResultStr += Context->getObjCClassType().getAsString();
+    ResultStr += Context->getObjCClassType().getAsString(
+      Context->PrintingPolicy);
 
   ResultStr += " self, ";
-  ResultStr += Context->getObjCSelType().getAsString();
+  ResultStr += Context->getObjCSelType().getAsString(Context->PrintingPolicy);
   ResultStr += " _cmd";
 
   // Method arguments.
@@ -1144,7 +1149,8 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       ResultStr += "(";
       for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
         if (i) ResultStr += ", ";
-        std::string ParamStr = FT->getArgType(i).getAsString();
+        std::string ParamStr = FT->getArgType(i).getAsString(
+          Context->PrintingPolicy);
         ResultStr += ParamStr;
       }
       if (FT->isVariadic()) {
@@ -1560,7 +1566,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
       // Simply use 'id' for all qualified types.
       elementTypeAsString = "id";
     else
-      elementTypeAsString = ElementType.getAsString();
+      elementTypeAsString = ElementType.getAsString(Context->PrintingPolicy);
     buf += elementTypeAsString;
     buf += " ";
     elementName = D->getNameAsCString();
@@ -1576,7 +1582,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
       // Simply use 'id' for all qualified types.
       elementTypeAsString = "id";
     else
-      elementTypeAsString = VD->getType().getAsString();
+      elementTypeAsString = VD->getType().getAsString(Context->PrintingPolicy);
   }
 
   // struct __objcFastEnumerationState enumState = { 0 };
@@ -2275,7 +2281,7 @@ void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
   }
   // FIXME. This will not work for multiple declarators; as in:
   // __typeof__(a) b,c,d;
-  std::string TypeAsString(QT.getAsString());
+  std::string TypeAsString(QT.getAsString(Context->PrintingPolicy));
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   if (ND->getInit()) {
@@ -2326,8 +2332,8 @@ void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
   RewriteObjCQualifiedInterfaceTypes(FD);
 }
 
-static void RewriteBlockPointerType(std::string& Str, QualType Type) {
-  std::string TypeString(Type.getAsString());
+void RewriteObjC::RewriteBlockPointerType(std::string& Str, QualType Type) {
+  std::string TypeString(Type.getAsString(Context->PrintingPolicy));
   const char *argPtr = TypeString.c_str();
   if (!strchr(argPtr, '^')) {
     Str += TypeString;
@@ -2340,9 +2346,10 @@ static void RewriteBlockPointerType(std::string& Str, QualType Type) {
 }
 
 // FIXME. Consolidate this routine with RewriteBlockPointerType.
-static void RewriteBlockPointerTypeVariable(std::string& Str, ValueDecl *VD) {
+void RewriteObjC::RewriteBlockPointerTypeVariable(std::string& Str,
+                                                  ValueDecl *VD) {
   QualType Type = VD->getType();
-  std::string TypeString(Type.getAsString());
+  std::string TypeString(Type.getAsString(Context->PrintingPolicy));
   const char *argPtr = TypeString.c_str();
   int paren = 0;
   while (*argPtr) {
@@ -2376,7 +2383,7 @@ void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   if (!proto)
     return;
   QualType Type = proto->getResultType();
-  std::string FdStr = Type.getAsString();
+  std::string FdStr = Type.getAsString(Context->PrintingPolicy);
   FdStr += " ";
   FdStr += FD->getNameAsCString();
   FdStr +=  "(";
@@ -4099,7 +4106,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   const FunctionType *AFT = CE->getFunctionType();
   QualType RT = AFT->getResultType();
   std::string StructRef = "struct " + Tag;
-  std::string S = "static " + RT.getAsString() + " __" +
+  std::string S = "static " + RT.getAsString(Context->PrintingPolicy) + " __" +
                   funcName + "_" + "block_func_" + utostr(i);
 
   BlockDecl *BD = CE->getBlockDecl();
