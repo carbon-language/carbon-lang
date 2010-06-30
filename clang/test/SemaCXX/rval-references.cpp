@@ -21,6 +21,10 @@ struct conv_to_not_int_rvalue {
   operator not_int &&();
 };
 
+typedef void (fun_type)();
+void fun();
+fun_type &&make_fun();
+
 void f() {
   int &&virr1; // expected-error {{declaration of reference variable 'virr1' requires an initializer}}
   int &&virr2 = 0;
@@ -47,6 +51,9 @@ void f() {
   not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'not_int' cannot bind to a value of unrelated type 'conv_to_not_int_rvalue'}}
   not_int &&ni6 = conv_to_not_int_rvalue();
 
+  fun_type &&fun_ref = fun; // works because functions are special
+  fun_type &&fun_ref2 = make_fun(); // same
+  fun_type &fun_lref = make_fun(); // also special
 
   try {
   } catch(int&&) { // expected-error {{cannot catch exceptions by rvalue reference}}

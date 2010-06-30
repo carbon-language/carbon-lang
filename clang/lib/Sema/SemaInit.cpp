@@ -2239,8 +2239,6 @@ static void TryListInitialization(Sema &S,
 
 /// \brief Try a reference initialization that involves calling a conversion
 /// function.
-///
-/// FIXME: look intos DRs 656, 896
 static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
                                              const InitializedEntity &Entity,
                                              const InitializationKind &Kind,
@@ -2331,7 +2329,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       if (ConvTemplate)
         Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
       else
-        Conv = cast<CXXConversionDecl>(*I);
+        Conv = cast<CXXConversionDecl>(D);
       
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion unless we're allowed to
@@ -2401,14 +2399,14 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   return OR_Success;
 }
   
-/// \brief Attempt reference initialization (C++0x [dcl.init.list]) 
+/// \brief Attempt reference initialization (C++0x [dcl.init.ref]) 
 static void TryReferenceInitialization(Sema &S, 
                                        const InitializedEntity &Entity,
                                        const InitializationKind &Kind,
                                        Expr *Initializer,
                                        InitializationSequence &Sequence) {
   Sequence.setSequenceKind(InitializationSequence::ReferenceBinding);
-  
+
   QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
   Qualifiers T1Quals;
@@ -2417,7 +2415,7 @@ static void TryReferenceInitialization(Sema &S,
   Qualifiers T2Quals;
   QualType T2 = S.Context.getUnqualifiedArrayType(cv2T2, T2Quals);
   SourceLocation DeclLoc = Initializer->getLocStart();
-  
+
   // If the initializer is the address of an overloaded function, try
   // to resolve the overloaded function. If all goes well, T2 is the
   // type of the resulting function.
@@ -2431,29 +2429,33 @@ static void TryReferenceInitialization(Sema &S,
       Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
       return;
     }
-    
+
     Sequence.AddAddressOverloadResolutionStep(Fn, Found);
     cv2T2 = Fn->getType();
     T2 = cv2T2.getUnqualifiedType();
   }
-  
+
   // Compute some basic properties of the types and the initializer.
   bool isLValueRef = DestType->isLValueReferenceType();
   bool isRValueRef = !isLValueRef;
   bool DerivedToBase = false;
-  Expr::isLvalueResult InitLvalue = Initializer->isLvalue(S.Context);
+  Expr::Classification InitCategory = Initializer->Classify(S.Context);
   Sema::ReferenceCompareResult RefRelationship
     = S.CompareReferenceRelationship(DeclLoc, cv1T1, cv2T2, DerivedToBase);
-  
+
   // C++0x [dcl.init.ref]p5:
   //   A reference to type "cv1 T1" is initialized by an expression of type 
   //   "cv2 T2" as follows:
   //
   //     - If the reference is an lvalue reference and the initializer 
   //       expression
+  // Note the analogous bullet points for rvlaue refs to functions. Because
+  // there are no function rvalues in C++, rvalue refs to functions are treated
+  // like lvalue refs.
   OverloadingResult ConvOvlResult = OR_Success;
-  if (isLValueRef) {
-    if (InitLvalue == Expr::LV_Valid && 
+  bool T1Function = T1->isFunctionType();
+  if (isLValueRef || T1Function) {
+    if (InitCategory.isLValue() && 
         RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
       //   - is an lvalue (but is not a bit-field), and "cv1 T1" is 
       //     reference-compatible with "cv2 T2," or
@@ -2481,10 +2483,13 @@ static void TryReferenceInitialization(Sema &S,
     //       with "cv3 T3" (this conversion is selected by enumerating the 
     //       applicable conversion functions (13.3.1.6) and choosing the best
     //       one through overload resolution (13.3)),
-    if (RefRelationship == Sema::Ref_Incompatible && T2->isRecordType()) {
+    // If we have an rvalue ref to function type here, the rhs must be
+    // an rvalue.
+    if (RefRelationship == Sema::Ref_Incompatible && T2->isRecordType() &&
+        (isLValueRef || InitCategory.isRValue())) {
       ConvOvlResult = TryRefInitWithConversionFunction(S, Entity, Kind, 
                                                        Initializer,
-                                                       /*AllowRValues=*/false,
+                                                   /*AllowRValues=*/isRValueRef,
                                                        Sequence);
       if (ConvOvlResult == OR_Success)
         return;
@@ -2495,19 +2500,20 @@ static void TryReferenceInitialization(Sema &S,
       }
     }
   }
-  
+
   //     - Otherwise, the reference shall be an lvalue reference to a 
   //       non-volatile const type (i.e., cv1 shall be const), or the reference
   //       shall be an rvalue reference and the initializer expression shall 
-  //       be an rvalue.
+  //       be an rvalue or have a function type.
+  // We handled the function type stuff above.
   if (!((isLValueRef && T1Quals.hasConst() && !T1Quals.hasVolatile()) ||
-        (isRValueRef && InitLvalue != Expr::LV_Valid))) {
+        (isRValueRef && InitCategory.isRValue()))) {
     if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
       Sequence.SetOverloadFailure(
                         InitializationSequence::FK_ReferenceInitOverloadFailed,
                                   ConvOvlResult);
     else if (isLValueRef)
-      Sequence.SetFailed(InitLvalue == Expr::LV_Valid
+      Sequence.SetFailed(InitCategory.isLValue()
         ? (RefRelationship == Sema::Ref_Related
              ? InitializationSequence::FK_ReferenceInitDropsQualifiers
              : InitializationSequence::FK_NonConstLValueReferenceBindingToUnrelated)
@@ -2515,15 +2521,15 @@ static void TryReferenceInitialization(Sema &S,
     else
       Sequence.SetFailed(
                     InitializationSequence::FK_RValueReferenceBindingToLValue);
-    
+
     return;
   }
-  
-  //       - If T1 and T2 are class types and
-  if (T1->isRecordType() && T2->isRecordType()) {
+
+  //       - [If T1 is not a function type], if T2 is a class type and
+  if (!T1Function && T2->isRecordType()) {
     //       - the initializer expression is an rvalue and "cv1 T1" is 
     //         reference-compatible with "cv2 T2", or
-    if (InitLvalue != Expr::LV_Valid && 
+    if (InitCategory.isRValue() && 
         RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
       // The corresponding bullet in C++03 [dcl.init.ref]p5 gives the
       // compiler the freedom to perform a copy here or bind to the
@@ -2546,7 +2552,7 @@ static void TryReferenceInitialization(Sema &S,
       Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/true);
       return;
     }
-    
+
     //       - T1 is not reference-related to T2 and the initializer expression
     //         can be implicitly converted to an rvalue of type "cv3 T3" (this
     //         conversion is selected by enumerating the applicable conversion

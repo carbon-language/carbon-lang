@@ -2622,6 +2622,93 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
     return Ref_Related;
 }
 
+/// \brief Look for a user-defined conversion to an lvalue reference-compatible
+///        with DeclType. Return true if something definite is found.
+static bool
+FindConversionToLValue(Sema &S, ImplicitConversionSequence &ICS,
+                       QualType DeclType, SourceLocation DeclLoc,
+                       Expr *Init, QualType T2, bool AllowExplicit) {
+  assert(T2->isRecordType() && "Can only find conversions of record types.");
+  CXXRecordDecl *T2RecordDecl
+    = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
+
+  OverloadCandidateSet CandidateSet(DeclLoc);
+  const UnresolvedSetImpl *Conversions
+    = T2RecordDecl->getVisibleConversionFunctions();
+  for (UnresolvedSetImpl::iterator I = Conversions->begin(),
+         E = Conversions->end(); I != E; ++I) {
+    NamedDecl *D = *I;
+    CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
+    if (isa<UsingShadowDecl>(D))
+      D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
+    FunctionTemplateDecl *ConvTemplate
+      = dyn_cast<FunctionTemplateDecl>(D);
+    CXXConversionDecl *Conv;
+    if (ConvTemplate)
+      Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+    else
+      Conv = cast<CXXConversionDecl>(D);
+
+    // If the conversion function doesn't return a reference type,
+    // it can't be considered for this conversion. An rvalue reference
+    // is only acceptable if its referencee is a function type.
+    const ReferenceType *RefType =
+      Conv->getConversionType()->getAs<ReferenceType>();
+    if (RefType && (RefType->isLValueReferenceType() ||
+                    RefType->getPointeeType()->isFunctionType()) &&
+        (AllowExplicit || !Conv->isExplicit())) {
+      if (ConvTemplate)
+        S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(), ActingDC,
+                                       Init, DeclType, CandidateSet);
+      else
+        S.AddConversionCandidate(Conv, I.getPair(), ActingDC, Init,
+                               DeclType, CandidateSet);
+    }
+  }
+
+  OverloadCandidateSet::iterator Best;
+  switch (S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
+  case OR_Success:
+    // C++ [over.ics.ref]p1:
+    //
+    //   [...] If the parameter binds directly to the result of
+    //   applying a conversion function to the argument
+    //   expression, the implicit conversion sequence is a
+    //   user-defined conversion sequence (13.3.3.1.2), with the
+    //   second standard conversion sequence either an identity
+    //   conversion or, if the conversion function returns an
+    //   entity of a type that is a derived class of the parameter
+    //   type, a derived-to-base Conversion.
+    if (!Best->FinalConversion.DirectBinding)
+      return false;
+
+    ICS.setUserDefined();
+    ICS.UserDefined.Before = Best->Conversions[0].Standard;
+    ICS.UserDefined.After = Best->FinalConversion;
+    ICS.UserDefined.ConversionFunction = Best->Function;
+    ICS.UserDefined.EllipsisConversion = false;
+    assert(ICS.UserDefined.After.ReferenceBinding &&
+           ICS.UserDefined.After.DirectBinding &&
+           "Expected a direct reference binding!");
+    return true;
+
+  case OR_Ambiguous:
+    ICS.setAmbiguous();
+    for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
+         Cand != CandidateSet.end(); ++Cand)
+      if (Cand->Viable)
+        ICS.Ambiguous.addConversion(Cand->Function);
+    return true;
+
+  case OR_No_Viable_Function:
+  case OR_Deleted:
+    // There was no suitable conversion, or we found a deleted
+    // conversion; continue with other checks.
+    return false;
+  }
+}
+
 /// \brief Compute an implicit conversion sequence for reference
 /// initialization.
 static ImplicitConversionSequence
@@ -2651,149 +2738,72 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // Compute some basic properties of the types and the initializer.
   bool isRValRef = DeclType->isRValueReferenceType();
   bool DerivedToBase = false;
-  Expr::isLvalueResult InitLvalue = Init->isLvalue(S.Context);
+  Expr::Classification InitCategory = Init->Classify(S.Context);
   Sema::ReferenceCompareResult RefRelationship
     = S.CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
 
-  // C++ [over.ics.ref]p3:
-  //   Except for an implicit object parameter, for which see 13.3.1,
-  //   a standard conversion sequence cannot be formed if it requires
-  //   binding an lvalue reference to non-const to an rvalue or
-  //   binding an rvalue reference to an lvalue.
-  //
-  // FIXME: DPG doesn't trust this code. It seems far too early to
-  // abort because of a binding of an rvalue reference to an lvalue.
-  if (isRValRef && InitLvalue == Expr::LV_Valid)
-    return ICS;
-
-  // C++0x [dcl.init.ref]p16:
+  // C++0x [dcl.init.ref]p5:
   //   A reference to type "cv1 T1" is initialized by an expression
   //   of type "cv2 T2" as follows:
 
-  //     -- If the initializer expression
-  //       -- is an lvalue (but is not a bit-field), and "cv1 T1" is
-  //          reference-compatible with "cv2 T2," or
-  //
-  // Per C++ [over.ics.ref]p4, we don't check the bit-field property here.
-  if (InitLvalue == Expr::LV_Valid &&
-      RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
-    // C++ [over.ics.ref]p1:
-    //   When a parameter of reference type binds directly (8.5.3)
-    //   to an argument expression, the implicit conversion sequence
-    //   is the identity conversion, unless the argument expression
-    //   has a type that is a derived class of the parameter type,
-    //   in which case the implicit conversion sequence is a
-    //   derived-to-base Conversion (13.3.3.1).
-    ICS.setStandard();
-    ICS.Standard.First = ICK_Identity;
-    ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
-    ICS.Standard.Third = ICK_Identity;
-    ICS.Standard.FromTypePtr = T2.getAsOpaquePtr();
-    ICS.Standard.setToType(0, T2);
-    ICS.Standard.setToType(1, T1);
-    ICS.Standard.setToType(2, T1);
-    ICS.Standard.ReferenceBinding = true;
-    ICS.Standard.DirectBinding = true;
-    ICS.Standard.RRefBinding = false;
-    ICS.Standard.CopyConstructor = 0;
-
-    // Nothing more to do: the inaccessibility/ambiguity check for
-    // derived-to-base conversions is suppressed when we're
-    // computing the implicit conversion sequence (C++
-    // [over.best.ics]p2).
-    return ICS;
-  }
-
-  //       -- has a class type (i.e., T2 is a class type), where T1 is
-  //          not reference-related to T2, and can be implicitly
-  //          converted to an lvalue of type "cv3 T3," where "cv1 T1"
-  //          is reference-compatible with "cv3 T3" 92) (this
-  //          conversion is selected by enumerating the applicable
-  //          conversion functions (13.3.1.6) and choosing the best
-  //          one through overload resolution (13.3)),
-  if (!isRValRef && !SuppressUserConversions && T2->isRecordType() &&
-      !S.RequireCompleteType(DeclLoc, T2, 0) && 
-      RefRelationship == Sema::Ref_Incompatible) {
-    CXXRecordDecl *T2RecordDecl
-      = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
-
-    OverloadCandidateSet CandidateSet(DeclLoc);
-    const UnresolvedSetImpl *Conversions
-      = T2RecordDecl->getVisibleConversionFunctions();
-    for (UnresolvedSetImpl::iterator I = Conversions->begin(),
-           E = Conversions->end(); I != E; ++I) {
-      NamedDecl *D = *I;
-      CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
-      if (isa<UsingShadowDecl>(D))
-        D = cast<UsingShadowDecl>(D)->getTargetDecl();
-
-      FunctionTemplateDecl *ConvTemplate
-        = dyn_cast<FunctionTemplateDecl>(D);
-      CXXConversionDecl *Conv;
-      if (ConvTemplate)
-        Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
-      else
-        Conv = cast<CXXConversionDecl>(D);
-      
-      // If the conversion function doesn't return a reference type,
-      // it can't be considered for this conversion.
-      if (Conv->getConversionType()->isLValueReferenceType() &&
-          (AllowExplicit || !Conv->isExplicit())) {
-        if (ConvTemplate)
-          S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(), ActingDC,
-                                         Init, DeclType, CandidateSet);
-        else
-          S.AddConversionCandidate(Conv, I.getPair(), ActingDC, Init,
-                                 DeclType, CandidateSet);
-      }
-    }
-
-    OverloadCandidateSet::iterator Best;
-    switch (S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
-    case OR_Success:
+  //     -- If reference is an lvalue reference and the initializer expression
+  // The next bullet point (T1 is a function) is pretty much equivalent to this
+  // one, so it's handled here.
+  if (!isRValRef || T1->isFunctionType()) {
+    //     -- is an lvalue (but is not a bit-field), and "cv1 T1" is
+    //        reference-compatible with "cv2 T2," or
+    //
+    // Per C++ [over.ics.ref]p4, we don't check the bit-field property here.
+    if (InitCategory.isLValue() &&
+        RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
       // C++ [over.ics.ref]p1:
-      //
-      //   [...] If the parameter binds directly to the result of
-      //   applying a conversion function to the argument
-      //   expression, the implicit conversion sequence is a
-      //   user-defined conversion sequence (13.3.3.1.2), with the
-      //   second standard conversion sequence either an identity
-      //   conversion or, if the conversion function returns an
-      //   entity of a type that is a derived class of the parameter
-      //   type, a derived-to-base Conversion.
-      if (!Best->FinalConversion.DirectBinding)
-        break;
+      //   When a parameter of reference type binds directly (8.5.3)
+      //   to an argument expression, the implicit conversion sequence
+      //   is the identity conversion, unless the argument expression
+      //   has a type that is a derived class of the parameter type,
+      //   in which case the implicit conversion sequence is a
+      //   derived-to-base Conversion (13.3.3.1).
+      ICS.setStandard();
+      ICS.Standard.First = ICK_Identity;
+      ICS.Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
+      ICS.Standard.Third = ICK_Identity;
+      ICS.Standard.FromTypePtr = T2.getAsOpaquePtr();
+      ICS.Standard.setToType(0, T2);
+      ICS.Standard.setToType(1, T1);
+      ICS.Standard.setToType(2, T1);
+      ICS.Standard.ReferenceBinding = true;
+      ICS.Standard.DirectBinding = true;
+      ICS.Standard.RRefBinding = isRValRef;
+      ICS.Standard.CopyConstructor = 0;
 
-      ICS.setUserDefined();
-      ICS.UserDefined.Before = Best->Conversions[0].Standard;
-      ICS.UserDefined.After = Best->FinalConversion;
-      ICS.UserDefined.ConversionFunction = Best->Function;
-      ICS.UserDefined.EllipsisConversion = false;
-      assert(ICS.UserDefined.After.ReferenceBinding &&
-             ICS.UserDefined.After.DirectBinding &&
-             "Expected a direct reference binding!");
+      // Nothing more to do: the inaccessibility/ambiguity check for
+      // derived-to-base conversions is suppressed when we're
+      // computing the implicit conversion sequence (C++
+      // [over.best.ics]p2).
       return ICS;
+    }
 
-    case OR_Ambiguous:
-      ICS.setAmbiguous();
-      for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
-           Cand != CandidateSet.end(); ++Cand)
-        if (Cand->Viable)
-          ICS.Ambiguous.addConversion(Cand->Function);
-      return ICS;
-
-    case OR_No_Viable_Function:
-    case OR_Deleted:
-      // There was no suitable conversion, or we found a deleted
-      // conversion; continue with other checks.
-      break;
+    //       -- has a class type (i.e., T2 is a class type), where T1 is
+    //          not reference-related to T2, and can be implicitly
+    //          converted to an lvalue of type "cv3 T3," where "cv1 T1"
+    //          is reference-compatible with "cv3 T3" 92) (this
+    //          conversion is selected by enumerating the applicable
+    //          conversion functions (13.3.1.6) and choosing the best
+    //          one through overload resolution (13.3)),
+    if (!SuppressUserConversions && T2->isRecordType() &&
+        !S.RequireCompleteType(DeclLoc, T2, 0) && 
+        RefRelationship == Sema::Ref_Incompatible) {
+      if (FindConversionToLValue(S, ICS, DeclType, DeclLoc,
+                                 Init, T2, AllowExplicit))
+        return ICS;
     }
   }
 
-  //     -- Otherwise, the reference shall be to a non-volatile const
-  //        type (i.e., cv1 shall be const), or the reference shall be an
-  //        rvalue reference and the initializer expression shall be an rvalue.
+  //     -- Otherwise, the reference shall be an lvalue reference to a
+  //        non-volatile const type (i.e., cv1 shall be const), or the reference
+  //        shall be an rvalue reference and the initializer expression shall be
+  //        an rvalue or have a function type.
   // 
   // We actually handle one oddity of C++ [over.ics.ref] at this
   // point, which is that, due to p2 (which short-circuits reference
@@ -2802,10 +2812,26 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // reference to bind to an rvalue. Hence the check for the presence
   // of "const" rather than checking for "const" being the only
   // qualifier.
-  if (!isRValRef && !T1.isConstQualified())
+  // This is also the point where rvalue references and lvalue inits no longer
+  // go together.
+  if ((!isRValRef && !T1.isConstQualified()) ||
+      (isRValRef && InitCategory.isLValue()))
     return ICS;
 
-  //       -- if T2 is a class type and
+  //       -- If T1 is a function type, then
+  //          -- if T2 is the same type as T1, the reference is bound to the
+  //             initializer expression lvalue;
+  //          -- if T2 is a class type and the initializer expression can be
+  //             implicitly converted to an lvalue of type T1 [...], the
+  //             reference is bound to the function lvalue that is the result
+  //             of the conversion;
+  // This is the same as for the lvalue case above, so it was handled there.
+  //          -- otherwise, the program is ill-formed.
+  // This is the one difference to the lvalue case.
+  if (T1->isFunctionType())
+    return ICS;
+
+  //       -- Otherwise, if T2 is a class type and
   //          -- the initializer expression is an rvalue and "cv1 T1"
   //             is reference-compatible with "cv2 T2," or
   //
@@ -2824,7 +2850,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   //
   // We're only checking the first case here, which is a direct
   // binding in C++0x but not in C++03.
-  if (InitLvalue != Expr::LV_Valid && T2->isRecordType() &&
+  if (InitCategory.isRValue() && T2->isRecordType() &&
       RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
     ICS.setStandard();
     ICS.Standard.First = ICK_Identity;
