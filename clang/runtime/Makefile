@@ -50,6 +50,7 @@ BuildRuntimeLibraries:
 	$(Verb) $(MAKE) -C $(COMPILERRT_SRC_ROOT) \
 	  ProjSrcRoot=$(COMPILERRT_SRC_ROOT) \
 	  ProjObjRoot=$(PROJ_OBJ_DIR) \
+	  CC="$(ToolDir)/clang -no-integrated-as" \
 	  $(RuntimeDirs:%=clang_%)
 .PHONY: BuildRuntimeLibraries
 CleanRuntimeLibraries:
