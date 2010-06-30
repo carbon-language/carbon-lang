@@ -1240,7 +1240,8 @@ public:
         : __t1_(), __t2_(), __state_() {}
     ~__state();
 
-    __state* operator()(_CharT __c);
+    __state* __test(_CharT __c, bool& __consume, unsigned& __begin_sub,
+                                                 unsigned& __end_sub);
 
     void __add_one(__transition* __t) {__t1_ = __t;}
 
@@ -1256,14 +1257,15 @@ __state<_CharT>::~__state()
 
 template <class _CharT>
 __state<_CharT>*
-__state<_CharT>::operator()(_CharT __c)
+__state<_CharT>::__test(_CharT __c, bool& __consume, unsigned& __begin_sub,
+                                                     unsigned& __end_sub)
 {
     __state* __r = nullptr;
     if ((__state_ & 3) == 0)
     {
         if (__t1_)
         {
-            __r = (*__t1_)(__c);
+            __r = __t1_->__test(__c, __consume, __begin_sub, __end_sub);
             if (__r)
                 __state_ |= __1_succeded;
             else
@@ -1276,7 +1278,7 @@ __state<_CharT>::operator()(_CharT __c)
     {
         if (__t2_)
         {
-            __r = (*__t2_)(__c);
+            __r = __t2_->__test(__c, __consume, __begin_sub, __end_sub);
             if (__r)
                 __state_ |= __2_succeded;
             else
@@ -1305,24 +1307,33 @@ class __transition
     __transition(const __transition&);
     __transition& operator=(const __transition&);
 
+protected:
     typedef __state<_CharT> __state;
     typedef unique_ptr<__state, void(*)(__state*)> __sptr;
 
     static void __delete_state(__state* __p) {delete __p;}
     static void __ignore_state(__state*) {}
 
-protected:
     __sptr __sptr_;
 public:
     __transition(bool __owns, __state* __st)
         : __sptr_(__st, __owns ? &__delete_state : &__ignore_state) {}
     virtual ~__transition() {}
 
-    virtual __state* operator()(_CharT) const {return __sptr_.get();}
+    virtual __state* __test(_CharT, bool& __consume, unsigned& __begin_sub,
+                                                     unsigned& __end_sub);
 
     void __reset_state();
 };
 
+template <class _CharT>
+typename __transition<_CharT>::__state*
+__transition<_CharT>::__test(_CharT, bool& __consume, unsigned&, unsigned&)
+{
+    __consume = false;
+    return __sptr_.get();
+}
+ 
 template <class _CharT>
 void
 __transition<_CharT>::__reset_state()
@@ -1338,13 +1349,79 @@ class __match_char
     typedef __transition<_CharT> base;
     _CharT __c_;
 public:
-    __match_char(_CharT __c, bool __owns, __state<_CharT>* __st)
+    typedef typename base::__state __state;
+
+    __match_char(_CharT __c, bool __owns, __state* __st)
         : base(__owns, __st), __c_(__c) {}
 
-    virtual __state<_CharT>* operator()(_CharT __c) const
-        {return __c == __c_ ? base::__sptr_.get() : nullptr;}
+    virtual __state* __test(_CharT __c, bool& __consume, unsigned&, unsigned&);
 };
 
+template <class _CharT>
+typename __match_char<_CharT>::__state*
+__match_char<_CharT>::__test(_CharT __c, bool& __consume, unsigned&, unsigned&)
+{
+    if (__c == __c_)
+    {
+        __consume = true;
+        return base::__sptr_.get();
+    }
+    __consume = false;
+    return nullptr;
+}
+ 
+template <class _CharT>
+class __begin_marked_subexpression
+    : public __transition<_CharT>
+{
+    typedef __transition<_CharT> base;
+    unsigned __sub_;
+public:
+    typedef typename base::__state __state;
+
+    __begin_marked_subexpression(unsigned __sub, bool __owns, __state* __st)
+        : base(__owns, __st), __sub_(__sub) {}
+
+    virtual __state* __test(_CharT, bool& __consume, unsigned& __begin_sub,
+                                                     unsigned&);
+};
+
+template <class _CharT>
+typename __begin_marked_subexpression<_CharT>::__state*
+__begin_marked_subexpression<_CharT>::__test(_CharT, bool& __consume,
+                                             unsigned& __begin_sub, unsigned&)
+{
+    __consume = false;
+    __begin_sub = __sub_;
+    return base::__sptr_.get();
+}
+ 
+template <class _CharT>
+class __end_marked_subexpression
+    : public __transition<_CharT>
+{
+    typedef __transition<_CharT> base;
+    unsigned __sub_;
+public:
+    typedef typename base::__state __state;
+
+    __end_marked_subexpression(unsigned __sub, bool __owns, __state* __st)
+        : base(__owns, __st), __sub_(__sub) {}
+
+    virtual __state* __test(_CharT, bool& __consume, unsigned&,
+                                                     unsigned& __end_sub);
+};
+
+template <class _CharT>
+typename __end_marked_subexpression<_CharT>::__state*
+__end_marked_subexpression<_CharT>::__test(_CharT, bool& __consume,
+                                           unsigned&, unsigned& __end_sub)
+{
+    __consume = false;
+    __end_sub = __sub_;
+    return base::__sptr_.get();
+}
+ 
 template <class, class> class match_results;
 
 template <class _CharT, class _Traits = regex_traits<_CharT> >
@@ -1543,6 +1620,8 @@ private:
     void __push_class_type(typename _Traits::char_class_type) {}
     void __push_back_ref(int __i) {}
     void __push_alternation() {}
+    void __push_begin_marked_subexpression();
+    void __push_end_marked_subexpression(unsigned);
 
     template <class _BidirectionalIterator, class _Allocator>
         bool
@@ -1687,11 +1766,13 @@ basic_regex<_CharT, _Traits>::__parse_ERE_expression(_ForwardIterator __first,
             ++__temp;
             break;
         case '(':
-            ++__marked_count_;
+            __push_begin_marked_subexpression();
+            unsigned __temp_count = __marked_count_;
             ++__open_count_;
             __temp = __parse_extended_reg_exp(++__temp, __last);
             if (__temp == __last || *__temp != ')')
                 throw regex_error(regex_constants::error_paren);
+            __push_end_marked_subexpression(__temp_count);
             --__open_count_;
             ++__temp;
             break;
@@ -1750,11 +1831,13 @@ basic_regex<_CharT, _Traits>::__parse_nondupl_RE(_ForwardIterator __first,
         __temp = __parse_Back_open_paren(__first, __last);
         if (__temp != __first)
         {
-            ++__marked_count_;
+            __push_begin_marked_subexpression();
+            unsigned __temp_count = __marked_count_;
             __first = __parse_RE_expression(__temp, __last);
             __temp = __parse_Back_close_paren(__first, __last);
             if (__temp == __first)
                 throw regex_error(regex_constants::error_paren);
+            __push_end_marked_subexpression(__temp_count);
             __first = __temp;
         }
         else
@@ -2389,6 +2472,40 @@ basic_regex<_CharT, _Traits>::__push_char(value_type __c)
     __end_ = __e;
 }
 
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_begin_marked_subexpression()
+{
+    unique_ptr<__state<_CharT> > __new_end(new __state<_CharT>);
+    unique_ptr<__transition<_CharT> > __new_transition(
+        new __begin_marked_subexpression<_CharT>(++__marked_count_, true, __new_end.get()));
+    __state<_CharT>* __e = __new_end.release();
+    if (__end_ == nullptr)
+    {
+        __start_.reset(new __state<_CharT>);
+        __end_ = __start_.get();
+    }
+    __end_->__add_one(__new_transition.release());
+    __end_ = __e;
+}
+
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_end_marked_subexpression(unsigned __sub)
+{
+    unique_ptr<__state<_CharT> > __new_end(new __state<_CharT>);
+    unique_ptr<__transition<_CharT> > __new_transition(
+        new __end_marked_subexpression<_CharT>(__sub, true, __new_end.get()));
+    __state<_CharT>* __e = __new_end.release();
+    if (__end_ == nullptr)
+    {
+        __start_.reset(new __state<_CharT>);
+        __end_ = __start_.get();
+    }
+    __end_->__add_one(__new_transition.release());
+    __end_ = __e;
+}
+
 typedef basic_regex<char>    regex;
 typedef basic_regex<wchar_t> wregex;
 
@@ -2972,16 +3089,42 @@ basic_regex<_CharT, _Traits>::__search(
         for (; __first != __last; ++__first)
         {
             __start_->__reset_state();
-            __state<_CharT>* __st = (*__start_)(*__first);
+            unsigned __begin_sub = 0;
+            unsigned __end_sub = 0;
+            bool __consume;
+            __state<_CharT>* __st = __start_->__test(*__first, __consume,
+                                                     __begin_sub, __end_sub);
             if (__st)
             {
                 _BidirectionalIterator& __f = __m.__matches_[0].first;
                 _BidirectionalIterator& __l = __m.__matches_[0].second;
-                __m.__matches_[0].matched = false;
                 __f = __l = __first;
-                ++__l;
-                for (; __l != __last && __st != nullptr && __st != __end_; ++__l)
-                    __st = (*__st)(*__l);
+                if (__begin_sub != 0)
+                    __m.__matches_[__begin_sub].first = __l;
+                if (__end_sub != 0)
+                {
+                    __m.__matches_[__end_sub].second = __l;
+                    __m.__matches_[__end_sub].matched = true;
+                }
+                if (__consume)
+                    ++__l;
+                while (__l != __last && __st != __end_)
+                {
+                    __begin_sub = 0;
+                    __end_sub = 0;
+                    __st = __st->__test(*__l, __consume, __begin_sub, __end_sub);
+                    if (__st == nullptr)
+                        break;
+                    if (__begin_sub != 0)
+                        __m.__matches_[__begin_sub].first = __l;
+                    if (__end_sub != 0)
+                    {
+                        __m.__matches_[__end_sub].second = __l;
+                        __m.__matches_[__end_sub].matched = true;
+                    }
+                    if (__consume)
+                        ++__l;
+                }
                 if (__st == __end_)
                 {
                     __r = __m.__matches_[0].matched = true;
@@ -2989,7 +3132,9 @@ basic_regex<_CharT, _Traits>::__search(
                     __m.__prefix_.matched = __m.__prefix_.first != __m.__prefix_.second;
                     __m.__suffix_.first = __l;
                     __m.__suffix_.matched = __m.__suffix_.first != __m.__suffix_.second;
+                    break;
                 }
+                __m.__matches_.assign(__m.__matches_.size(), __m.__unmatched_);
             }
             if (__flags & regex_constants::match_continuous)
                 break;
