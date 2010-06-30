@@ -89,3 +89,16 @@ struct test7s { int a; int b; } test7[] = {
 struct test8s { int f0; char f1; } test8g = {};
 
 
+// PR7519
+
+struct S {
+  void (*x) (struct S *);
+};
+
+extern struct S *global_dc;
+void cp_diagnostic_starter(struct S *);
+
+void init_error(void) {
+  global_dc->x = cp_diagnostic_starter;
+}
+

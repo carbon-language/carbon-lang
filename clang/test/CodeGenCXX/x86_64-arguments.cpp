@@ -30,3 +30,18 @@ typedef int s4::* s4_mdp;
 typedef int (s4::*s4_mfp)();
 s4_mdp f4_0(s4_mdp a) { return a; }
 s4_mfp f4_1(s4_mfp a) { return a; }
+
+
+namespace PR7523 {
+struct StringRef {
+  char *a;
+};
+
+void AddKeyword(StringRef, int x);
+
+void foo() {
+  // CHECK: define void @_ZN6PR75233fooEv()
+  // CHECK: call void @_ZN6PR752310AddKeywordENS_9StringRefEi(i8* {{.*}}, i32 4)
+  AddKeyword(StringRef(), 4);
+}
+}

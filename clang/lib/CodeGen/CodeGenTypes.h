@@ -106,19 +106,22 @@ public:
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// ConvertType - Convert type T into a llvm::Type.
-  const llvm::Type *ConvertType(QualType T);
+  const llvm::Type *ConvertType(QualType T, bool IsRecursive = false);
   const llvm::Type *ConvertTypeRecursive(QualType T);
 
   /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
   /// ConvertType in that it is used to convert to the memory representation for
   /// a type.  For example, the scalar representation for _Bool is i1, but the
   /// memory representation is usually i8 or i32, depending on the target.
-  const llvm::Type *ConvertTypeForMem(QualType T);
-  const llvm::Type *ConvertTypeForMemRecursive(QualType T);
+  const llvm::Type *ConvertTypeForMem(QualType T, bool IsRecursive = false);
+  const llvm::Type *ConvertTypeForMemRecursive(QualType T) {
+    return ConvertTypeForMem(T, true);
+  }
 
   /// GetFunctionType - Get the LLVM function type for \arg Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
-                                            bool IsVariadic);
+                                            bool IsVariadic,
+                                            bool IsRecursive = false);
 
   const llvm::FunctionType *GetFunctionType(GlobalDecl GD);
 
@@ -154,8 +157,11 @@ public:
     return getFunctionInfo(Ty->getResultType(), Args,
                            Ty->getExtInfo());
   }
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty);
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty);
+
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty,
+                                        bool IsRecursive = false);
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty,
+                                        bool IsRecursive = false);
 
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
@@ -176,7 +182,8 @@ public:
   /// \param ArgTys - must all actually be canonical as params
   const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                        const FunctionType::ExtInfo &Info);
+                                        const FunctionType::ExtInfo &Info,
+                                        bool IsRecursive = false);
 
   /// \brief Compute a new LLVM record layout object for the given record.
   CGRecordLayout *ComputeRecordLayout(const RecordDecl *D);
@@ -189,7 +196,8 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// GetExpandedTypes - Expand the type \arg Ty into the LLVM
   /// argument types it would be passed as on the provided vector \arg
   /// ArgTys. See ABIArgInfo::Expand.
-  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys);
+  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys,
+                        bool IsRecursive);
   
   /// ContainsPointerToDataMember - Return whether the given type contains a
   /// pointer to a data member.

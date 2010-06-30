@@ -43,10 +43,15 @@ CodeGenTypes::~CodeGenTypes() {
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.
-const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
-  llvm::PATypeHolder Result = ConvertTypeRecursive(T);
+const llvm::Type *CodeGenTypes::ConvertType(QualType T, bool IsRecursive) {
+  const llvm::Type *RawResult = ConvertTypeRecursive(T);
+  
+  if (IsRecursive || PointersToResolve.empty())
+    return RawResult;
 
-  // Any pointers that were converted defered evaluation of their pointee type,
+  llvm::PATypeHolder Result = RawResult;
+  
+  // Any pointers that were converted deferred evaluation of their pointee type,
   // creating an opaque type instead.  This is in order to avoid problems with
   // circular types.  Loop through all these defered pointees, if any, and
   // resolve them now.
@@ -80,21 +85,12 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
   return ResultType;
 }
 
-const llvm::Type *CodeGenTypes::ConvertTypeForMemRecursive(QualType T) {
-  const llvm::Type *ResultType = ConvertTypeRecursive(T);
-  if (ResultType->isIntegerTy(1))
-    return llvm::IntegerType::get(getLLVMContext(),
-                                  (unsigned)Context.getTypeSize(T));
-  // FIXME: Should assert that the llvm type and AST type has the same size.
-  return ResultType;
-}
-
 /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
 /// ConvertType in that it is used to convert to the memory representation for
 /// a type.  For example, the scalar representation for _Bool is i1, but the
 /// memory representation is usually i8 or i32, depending on the target.
-const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
-  const llvm::Type *R = ConvertType(T);
+const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T, bool IsRecursive){
+  const llvm::Type *R = ConvertType(T, IsRecursive);
 
   // If this is a non-bool type, don't map it.
   if (!R->isIntegerTy(1))
@@ -284,7 +280,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     assert(A.getIndexTypeCVRQualifiers() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // int X[] -> [0 x int]
-    return llvm::ArrayType::get(ConvertTypeForMemRecursive(A.getElementType()), 0);
+    return llvm::ArrayType::get(ConvertTypeForMemRecursive(A.getElementType()),
+                                0);
   }
   case Type::ConstantArray: {
     const ConstantArrayType &A = cast<ConstantArrayType>(Ty);
@@ -299,7 +296,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   case Type::FunctionNoProto:
   case Type::FunctionProto: {
-    // First, check whether we can build the full function type.
+    // First, check whether we can build the full function type.  If the
+    // function type depends on an incomplete type (e.g. a struct or enum), we
+    // cannot lower the function type.  Instead, turn it into an Opaque pointer
+    // and have UpdateCompletedType revisit the function type when/if the opaque
+    // argument type is defined.
     if (const TagType *TT = VerifyFuncTypeComplete(&Ty)) {
       // This function's type depends on an incomplete tag type; make sure
       // we have an opaque type corresponding to the tag type.
@@ -309,17 +310,25 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       FunctionTypes.insert(std::make_pair(&Ty, ResultType));
       return ResultType;
     }
+    
     // The function type can be built; call the appropriate routines to
     // build it.
-    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty))
-      return GetFunctionType(getFunctionInfo(
-                CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT,0))),
-                             FPT->isVariadic());
+    const CGFunctionInfo *FI;
+    bool isVariadic;
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty)) {
+      FI = &getFunctionInfo(
+                   CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT, 0)),
+                            true /*Recursive*/);
+      isVariadic = FPT->isVariadic();
+    } else {
+      const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
+      FI = &getFunctionInfo(
+                CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT, 0)),
+                            true /*Recursive*/);
+      isVariadic = true;
+    }
 
-    const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
-    return GetFunctionType(getFunctionInfo(
-                CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT,0))),
-                           true);
+    return GetFunctionType(*FI, isVariadic, true);
   }
 
   case Type::ObjCObject:

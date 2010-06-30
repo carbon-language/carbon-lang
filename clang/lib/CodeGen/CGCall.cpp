@@ -61,28 +61,31 @@ static CanQualType GetReturnType(QualType RetTy) {
 }
 
 const CGFunctionInfo &
-CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP) {
+CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP,
+                              bool IsRecursive) {
   return getFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
                          llvm::SmallVector<CanQualType, 16>(),
-                         FTNP->getExtInfo());
+                         FTNP->getExtInfo(), IsRecursive);
 }
 
 /// \param Args - contains any initial parameters besides those
 ///   in the formal type
 static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
                                   llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                             CanQual<FunctionProtoType> FTP) {
+                                             CanQual<FunctionProtoType> FTP,
+                                             bool IsRecursive = false) {
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
   CanQualType ResTy = FTP->getResultType().getUnqualifiedType();
-  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
+  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo(), IsRecursive);
 }
 
 const CGFunctionInfo &
-CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP) {
+CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP,
+                              bool IsRecursive) {
   llvm::SmallVector<CanQualType, 16> ArgTys;
-  return ::getFunctionInfo(*this, ArgTys, FTP);
+  return ::getFunctionInfo(*this, ArgTys, FTP, IsRecursive);
 }
 
 static CallingConv getCallingConventionForDecl(const Decl *D) {
@@ -215,7 +218,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                            const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                            const FunctionType::ExtInfo &Info) {
+                                            const FunctionType::ExtInfo &Info,
+                                                    bool IsRecursive) {
 #ifndef NDEBUG
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
          I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
@@ -243,8 +247,17 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
   // various situations, pass it in.
   llvm::SmallVector<const llvm::Type *, 8> PreferredArgTypes;
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
-       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
-    PreferredArgTypes.push_back(ConvertType(*I));
+       I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I) {
+    // If this is being called from the guts of the ConvertType loop, make sure
+    // to call ConvertTypeRecursive so we don't get into issues with cyclic
+    // pointer type structures.
+    const llvm::Type *ArgType;
+    if (IsRecursive)
+      ArgType = ConvertTypeRecursive(*I);
+    else 
+      ArgType = ConvertType(*I);
+    PreferredArgTypes.push_back(ArgType);
+  }
 
   // Compute ABI information.
   getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext(),
@@ -274,7 +287,8 @@ CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
 /***/
 
 void CodeGenTypes::GetExpandedTypes(QualType Ty,
-                                    std::vector<const llvm::Type*> &ArgTys) {
+                                    std::vector<const llvm::Type*> &ArgTys,
+                                    bool IsRecursive) {
   const RecordType *RT = Ty->getAsStructureType();
   assert(RT && "Can only expand structure types.");
   const RecordDecl *RD = RT->getDecl();
@@ -289,9 +303,9 @@ void CodeGenTypes::GetExpandedTypes(QualType Ty,
 
     QualType FT = FD->getType();
     if (CodeGenFunction::hasAggregateLLVMType(FT)) {
-      GetExpandedTypes(FT, ArgTys);
+      GetExpandedTypes(FT, ArgTys, IsRecursive);
     } else {
-      ArgTys.push_back(ConvertType(FT));
+      ArgTys.push_back(ConvertType(FT, IsRecursive));
     }
   }
 }
@@ -554,11 +568,12 @@ const llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
         cast<FunctionDecl>(GD.getDecl())->getType()->getAs<FunctionProtoType>())
     Variadic = FPT->isVariadic();
 
-  return GetFunctionType(FI, Variadic);
+  return GetFunctionType(FI, Variadic, false);
 }
 
 const llvm::FunctionType *
-CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
+CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic,
+                              bool IsRecursive) {
   std::vector<const llvm::Type*> ArgTys;
 
   const llvm::Type *ResultType = 0;
@@ -571,13 +586,13 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
   case ABIArgInfo::Extend:
   case ABIArgInfo::Direct:
-    ResultType = ConvertType(RetTy);
+    ResultType = ConvertType(RetTy, IsRecursive);
     break;
 
   case ABIArgInfo::Indirect: {
     assert(!RetAI.getIndirectAlign() && "Align unused on indirect return.");
     ResultType = llvm::Type::getVoidTy(getLLVMContext());
-    const llvm::Type *STy = ConvertType(RetTy);
+    const llvm::Type *STy = ConvertType(RetTy, IsRecursive);
     ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
     break;
   }
@@ -615,18 +630,18 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
     case ABIArgInfo::Indirect: {
       // indirect arguments are always on the stack, which is addr space #0.
-      const llvm::Type *LTy = ConvertTypeForMem(it->type);
+      const llvm::Type *LTy = ConvertTypeForMem(it->type, IsRecursive);
       ArgTys.push_back(llvm::PointerType::getUnqual(LTy));
       break;
     }
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct:
-      ArgTys.push_back(ConvertType(it->type));
+      ArgTys.push_back(ConvertType(it->type, IsRecursive));
       break;
 
     case ABIArgInfo::Expand:
-      GetExpandedTypes(it->type, ArgTys);
+      GetExpandedTypes(it->type, ArgTys, IsRecursive);
       break;
     }
   }
@@ -639,7 +654,7 @@ CodeGenTypes::GetFunctionTypeForVTable(const CXXMethodDecl *MD) {
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   
   if (!VerifyFuncTypeComplete(FPT))
-    return GetFunctionType(getFunctionInfo(MD), FPT->isVariadic());
+    return GetFunctionType(getFunctionInfo(MD), FPT->isVariadic(), false);
 
   return llvm::OpaqueType::get(getLLVMContext());
 }
@@ -774,7 +789,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       // FIXME: This is rather inefficient. Do we ever actually need to do
       // anything here? The result should be just reconstructed on the other
       // side, so extension should be a non-issue.
-      getTypes().GetExpandedTypes(ParamType, Tys);
+      getTypes().GetExpandedTypes(ParamType, Tys, false);
       Index += Tys.size();
       continue;
     }

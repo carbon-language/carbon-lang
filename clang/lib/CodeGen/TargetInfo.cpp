@@ -830,8 +830,7 @@ X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum, Class Field) {
   return SSE;
 }
 
-void X86_64ABIInfo::classify(QualType Ty,
-                             uint64_t OffsetBase,
+void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
                              Class &Lo, Class &Hi) const {
   // FIXME: This code can be simplified by introducing a simple value class for
   // Class pairs with appropriate constructor methods for the various

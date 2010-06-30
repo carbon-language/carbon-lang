@@ -872,6 +872,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
                                   std::vector<const llvm::Type*>(), false);
     IsIncompleteFunction = true;
   }
+  
   llvm::Function *F = llvm::Function::Create(FTy,
                                              llvm::Function::ExternalLinkage,
                                              MangledName, &getModule());
@@ -932,6 +933,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
+  
   llvm::StringRef MangledName = getMangledName(GD);
   return GetOrCreateLLVMFunction(MangledName, Ty, GD);
 }
