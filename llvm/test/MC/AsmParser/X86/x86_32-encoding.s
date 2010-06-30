@@ -11482,3 +11482,15 @@
 // CHECK: encoding: [0xc5,0xe9,0x6d,0x18]
           vpunpckhqdq  (%eax), %xmm2, %xmm3
 
+// CHECK: vpinsrw  $7, %eax, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0xc4,0xd8,0x07]
+          vpinsrw  $7, %eax, %xmm2, %xmm3
+
+// CHECK: vpinsrw  $7, (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0xc4,0x18,0x07]
+          vpinsrw  $7, (%eax), %xmm2, %xmm3
+
+// CHECK: vpextrw  $7, %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf9,0xc5,0xc2,0x07]
+          vpextrw  $7, %xmm2, %eax
+

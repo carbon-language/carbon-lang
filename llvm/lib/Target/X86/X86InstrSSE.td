@@ -2805,32 +2805,57 @@ let Constraints = "$src1 = $dst" in {
 } // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
-// SSE2 - Packed Misc Integer Instructions
+// SSE2 - Packed Integer Extract and Insert
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
+multiclass sse2_pinsrw<bit Is2Addr = 1> {
+  def rri : Ii8<0xC4, MRMSrcReg,
+       (outs VR128:$dst), (ins VR128:$src1,
+        GR32:$src2, i32i8imm:$src3),
+       !if(Is2Addr,
+           "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+           "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+       [(set VR128:$dst,
+         (X86pinsrw VR128:$src1, GR32:$src2, imm:$src3))]>;
+  def rmi : Ii8<0xC4, MRMSrcMem,
+                       (outs VR128:$dst), (ins VR128:$src1,
+                        i16mem:$src2, i32i8imm:$src3),
+       !if(Is2Addr,
+           "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+           "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+       [(set VR128:$dst,
+         (X86pinsrw VR128:$src1, (extloadi16 addr:$src2),
+                    imm:$src3))]>;
+}
 
-// Extract / Insert
+// Extract
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in
+def VPEXTRWri : Ii8<0xC5, MRMSrcReg,
+                    (outs GR32:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    "vpextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
+                                                imm:$src2))]>, OpSize, VEX;
 def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     (outs GR32:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
                                                 imm:$src2))]>;
-let Constraints = "$src1 = $dst" in {
-  def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
-                       (outs VR128:$dst), (ins VR128:$src1,
-                        GR32:$src2, i32i8imm:$src3),
-                       "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                       [(set VR128:$dst,
-                         (X86pinsrw VR128:$src1, GR32:$src2, imm:$src3))]>;
-  def PINSRWrmi : PDIi8<0xC4, MRMSrcMem,
-                       (outs VR128:$dst), (ins VR128:$src1,
-                        i16mem:$src2, i32i8imm:$src3),
-                       "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                       [(set VR128:$dst,
-                         (X86pinsrw VR128:$src1, (extloadi16 addr:$src2),
-                                    imm:$src3))]>;
-}
+
+// Insert
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in
+  defm PINSRW : sse2_pinsrw<0>, OpSize, VEX_4V;
+
+let Constraints = "$src1 = $dst" in
+  defm VPINSRW : sse2_pinsrw, TB, OpSize;
+
+} // ExeDomain = SSEPackedInt
+
+//===---------------------------------------------------------------------===//
+// SSE2 - Packed Misc Integer Instructions
+//===---------------------------------------------------------------------===//
+
+let ExeDomain = SSEPackedInt in {
 
 // Mask creation
 def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),

@@ -1522,3 +1522,15 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x19,0x6d,0x28]
           vpunpckhqdq  (%rax), %xmm12, %xmm13
 
+// CHECK: vpinsrw  $7, %eax, %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc4,0xe8,0x07]
+          vpinsrw  $7, %eax, %xmm12, %xmm13
+
+// CHECK: vpinsrw  $7, (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0xc4,0x28,0x07]
+          vpinsrw  $7, (%rax), %xmm12, %xmm13
+
+// CHECK: vpextrw  $7, %xmm12, %eax
+// CHECK: encoding: [0xc4,0xc1,0x79,0xc5,0xc4,0x07]
+          vpextrw  $7, %xmm12, %eax
+
