@@ -2576,6 +2576,23 @@ let Predicates = [HasSSE2] in {
 // SSE2 - Packed Integer Comparison Instructions
 //===---------------------------------------------------------------------===//
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in {
+  let isCommutable = 1 in {
+  defm VPCMPEQB  : PDI_binop_rm_int<0x74, "vpcmpeqb", int_x86_sse2_pcmpeq_b, 0>,
+                                   VEX_4V;
+  defm VPCMPEQW  : PDI_binop_rm_int<0x75, "vpcmpeqw", int_x86_sse2_pcmpeq_w, 0>,
+                                   VEX_4V;
+  defm VPCMPEQD  : PDI_binop_rm_int<0x76, "vpcmpeqd", int_x86_sse2_pcmpeq_d, 0>,
+                                   VEX_4V;
+  }
+  defm VPCMPGTB  : PDI_binop_rm_int<0x64, "vpcmpgtb", int_x86_sse2_pcmpgt_b, 0>,
+                                   VEX_4V;
+  defm VPCMPGTW  : PDI_binop_rm_int<0x65, "vpcmpgtw", int_x86_sse2_pcmpgt_w, 0>,
+                                   VEX_4V;
+  defm VPCMPGTD  : PDI_binop_rm_int<0x66, "vpcmpgtd", int_x86_sse2_pcmpgt_d, 0>,
+                                   VEX_4V;
+}
+
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 1 in {
   defm PCMPEQB  : PDI_binop_rm_int<0x74, "pcmpeqb", int_x86_sse2_pcmpeq_b>;

@@ -1362,3 +1362,51 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x19,0xdf,0x28]
           vpandn  (%rax), %xmm12, %xmm13
 
+// CHECK: vpcmpeqb  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x74,0xeb]
+          vpcmpeqb  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpeqb  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x74,0x28]
+          vpcmpeqb  (%rax), %xmm12, %xmm13
+
+// CHECK: vpcmpeqw  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x75,0xeb]
+          vpcmpeqw  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpeqw  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x75,0x28]
+          vpcmpeqw  (%rax), %xmm12, %xmm13
+
+// CHECK: vpcmpeqd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x76,0xeb]
+          vpcmpeqd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpeqd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x76,0x28]
+          vpcmpeqd  (%rax), %xmm12, %xmm13
+
+// CHECK: vpcmpgtb  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x64,0xeb]
+          vpcmpgtb  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpgtb  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x64,0x28]
+          vpcmpgtb  (%rax), %xmm12, %xmm13
+
+// CHECK: vpcmpgtw  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x65,0xeb]
+          vpcmpgtw  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpgtw  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x65,0x28]
+          vpcmpgtw  (%rax), %xmm12, %xmm13
+
+// CHECK: vpcmpgtd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x66,0xeb]
+          vpcmpgtd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vpcmpgtd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x66,0x28]
+          vpcmpgtd  (%rax), %xmm12, %xmm13
+
