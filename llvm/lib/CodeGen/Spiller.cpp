@@ -137,7 +137,7 @@ protected:
         MachineInstr *loadInstr(prior(miItr));
         SlotIndex loadIndex =
           lis->InsertMachineInstrInMaps(loadInstr).getDefIndex();
-        vrm->addSpilSlotUse(ss, loadInstr);
+        vrm->addSpillSlotUse(ss, loadInstr);
         SlotIndex endIndex = loadIndex.getNextIndex();
         VNInfo *loadVNI =
           newLI->getNextValue(loadIndex, 0, true, lis->getVNInfoAllocator());
@@ -151,7 +151,7 @@ protected:
         MachineInstr *storeInstr(llvm::next(miItr));
         SlotIndex storeIndex =
           lis->InsertMachineInstrInMaps(storeInstr).getDefIndex();
-        vrm->addSpilSlotUse(ss, storeInstr);
+        vrm->addSpillSlotUse(ss, storeInstr);
         SlotIndex beginIndex = storeIndex.getPrevIndex();
         VNInfo *storeVNI =
           newLI->getNextValue(beginIndex, 0, true, lis->getVNInfoAllocator());
