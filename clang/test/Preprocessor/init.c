@@ -838,7 +838,7 @@
 // S390X:#define __INT16_TYPE__ short
 // S390X:#define __INT32_TYPE__ int
 // S390X:#define __INT64_C_SUFFIX__ L
-// S390X:#define __INT64_TYPE__ long int
+// S390X:#define __INT64_TYPE__ long long int
 // S390X:#define __INT8_TYPE__ char
 // S390X:#define __INTMAX_MAX__ 9223372036854775807LL
 // S390X:#define __INTMAX_TYPE__ long long int

@@ -204,6 +204,12 @@ static void DefineTypeSizeof(llvm::StringRef MacroName, unsigned BitWidth,
 static void DefineExactWidthIntType(TargetInfo::IntType Ty, 
                                const TargetInfo &TI, MacroBuilder &Builder) {
   int TypeWidth = TI.getTypeWidth(Ty);
+
+  // Use the target specified int64 type, when appropriate, so that [u]int64_t
+  // ends up being defined in terms of the correct type.
+  if (TypeWidth == 64)
+    Ty = TI.getInt64Type();
+
   DefineType("__INT" + llvm::Twine(TypeWidth) + "_TYPE__", Ty, Builder);
 
   llvm::StringRef ConstSuffix(TargetInfo::getTypeConstantSuffix(Ty));
