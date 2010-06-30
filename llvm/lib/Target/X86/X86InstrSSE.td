@@ -2839,28 +2839,54 @@ let Constraints = "$src1 = $dst" in
 } // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//
-// SSE2 - Packed Misc Integer Instructions
+// SSE2 - Packed Mask Creation
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
 
-// Mask creation
+let isAsmParserOnly = 1 in
+def VPMOVMSKBrr : VPDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
+           "pmovmskb\t{$src, $dst|$dst, $src}",
+           [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>, VEX;
 def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
-                     "pmovmskb\t{$src, $dst|$dst, $src}",
-                     [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
-
-// Conditional store
-let Uses = [EDI] in
-def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
-                     "maskmovdqu\t{$mask, $src|$src, $mask}",
-                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>;
-
-let Uses = [RDI] in
-def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
-                     "maskmovdqu\t{$mask, $src|$src, $mask}",
-                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
+           "pmovmskb\t{$src, $dst|$dst, $src}",
+           [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
 } // ExeDomain = SSEPackedInt
+
+//===---------------------------------------------------------------------===//
+// SSE2 - Conditional Store
+//===---------------------------------------------------------------------===//
+
+let ExeDomain = SSEPackedInt in {
+
+let isAsmParserOnly = 1 in {
+let Uses = [EDI] in
+def VMASKMOVDQU : VPDI<0xF7, MRMSrcReg, (outs),
+           (ins VR128:$src, VR128:$mask),
+           "maskmovdqu\t{$mask, $src|$src, $mask}",
+           [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>, VEX;
+let Uses = [RDI] in
+def VMASKMOVDQU64 : VPDI<0xF7, MRMSrcReg, (outs),
+           (ins VR128:$src, VR128:$mask),
+           "maskmovdqu\t{$mask, $src|$src, $mask}",
+           [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>, VEX;
+}
+
+let Uses = [EDI] in
+def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
+           "maskmovdqu\t{$mask, $src|$src, $mask}",
+           [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>;
+let Uses = [RDI] in
+def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
+           "maskmovdqu\t{$mask, $src|$src, $mask}",
+           [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
+
+} // ExeDomain = SSEPackedInt
+
+//===---------------------------------------------------------------------===//
+// SSE2 - Packed Misc Integer Instructions
+//===---------------------------------------------------------------------===//
 
 // Flush cache
 def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),

@@ -1534,3 +1534,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0xc1,0x79,0xc5,0xc4,0x07]
           vpextrw  $7, %xmm12, %eax
 
+// CHECK: vpmovmskb  %xmm12, %eax
+// CHECK: encoding: [0xc4,0xc1,0x79,0xd7,0xc4]
+          vpmovmskb  %xmm12, %eax
+
+// CHECK: vmaskmovdqu  %xmm14, %xmm15
+// CHECK: encoding: [0xc4,0x41,0x79,0xf7,0xfe]
+          vmaskmovdqu  %xmm14, %xmm15
+

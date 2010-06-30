@@ -11494,3 +11494,11 @@
 // CHECK: encoding: [0xc5,0xf9,0xc5,0xc2,0x07]
           vpextrw  $7, %xmm2, %eax
 
+// CHECK: vpmovmskb  %xmm1, %eax
+// CHECK: encoding: [0xc5,0xf9,0xd7,0xc1]
+          vpmovmskb  %xmm1, %eax
+
+// CHECK: vmaskmovdqu  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf9,0xf7,0xd1]
+          vmaskmovdqu  %xmm1, %xmm2
+
