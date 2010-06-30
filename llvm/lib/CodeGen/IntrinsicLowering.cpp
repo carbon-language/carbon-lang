@@ -375,7 +375,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
-    ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), 
+    ReplaceCallWith("abort", CI, CS.arg_end(), CS.arg_end(), 
                     Type::getVoidTy(Context));
     break;
   }
