@@ -5875,6 +5875,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 
 // C99 6.5.17
 QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
+  DiagnoseUnusedExprResult(LHS);
+
   // Comma performs lvalue conversion (C99 6.3.2.1), but not unary conversions.
   // C++ does not perform this conversion (C++ [expr.comma]p1).
   if (!getLangOptions().CPlusPlus)

@@ -18,9 +18,9 @@ void pr4806() {
   i,foo();          // expected-warning {{expression result unused}}
   foo(),i;          // expected-warning {{expression result unused}}
 
-  i,j,foo();        // expected-warning {{expression result unused}}
-  i,foo(),j;        // expected-warning {{expression result unused}}
-  foo(),i,j;        // expected-warning {{expression result unused}}
+  i,j,foo();        // expected-warning {{expression result unused}} expected-warning {{expression result unused}}
+  i,foo(),j;        // expected-warning {{expression result unused}} expected-warning {{expression result unused}}
+  foo(),i,j;        // expected-warning {{expression result unused}} expected-warning {{expression result unused}}
 
   i++;
 
@@ -63,6 +63,16 @@ int test_logical_bar() {
   (x = test_logical_foo1()) ||  // no-warning
   (x = test_logical_foo2()) ||  // no-warning
   (x = test_logical_foo3());    // no-warning
+
+  x || test_logical_foo1();     // no-warning
+
   return x;
 }
 
+struct s0 { int f0; };
+
+void f0(int a);
+void f1(struct s0 *a) {
+  // rdar://8139785
+  f0((int)(a->f0 + 1, 10)); // expected-warning {{expression result unused}}
+}

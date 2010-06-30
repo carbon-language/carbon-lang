@@ -974,7 +974,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     switch (BO->getOpcode()) {
       default:
         break;
-      // Consider ',', '||', '&&' to have side effects if the LHS or RHS does.
+      // Consider the RHS of comma for side effects. LHS was checked by
+      // Sema::CheckCommaOperands.
       case BinaryOperator::Comma:
         // ((foo = <blah>), 0) is an idiom for hiding the result (and
         // lvalue-ness) of an assignment written in a macro.
@@ -982,10 +983,14 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
               dyn_cast<IntegerLiteral>(BO->getRHS()->IgnoreParens()))
           if (IE->getValue() == 0)
             return false;
+        return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+      // Consider '||', '&&' to have side effects if the LHS or RHS does.
       case BinaryOperator::LAnd:
       case BinaryOperator::LOr:
-        return (BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
-                BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+        if (!BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
+            !BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx))
+          return false;
+        break;
     }
     if (BO->isAssignmentOp())
       return false;

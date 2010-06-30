@@ -74,5 +74,5 @@ const _Bool constbool = 0;
 EVAL_EXPR(35, constbool)
 EVAL_EXPR(36, constbool)
 
-EVAL_EXPR(37, (1,2.0) == 2.0)
+EVAL_EXPR(37, (1,2.0) == 2.0)  // expected-warning {{expression result unused}}
 EVAL_EXPR(38, __builtin_expect(1,1) == 1)

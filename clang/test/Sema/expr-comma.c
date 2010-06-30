@@ -11,7 +11,7 @@ int B[sizeof((a.c)) == 17 ? 1 : -1];
 
 
 // comma does not promote array/function in c90 unless they are lvalues.
-int W[sizeof(0, a.c) == sizeof(char*) ? 1 : -1];
-int X[sizeof(0, (foo().c)) == 17 ? 1 : -1];
-int Y[sizeof(0, (a,b).c) == 17 ? 1 : -1];
-int Z[sizeof(0, (a=b).c) == 17 ? 1 : -1];
+int W[sizeof(0, a.c) == sizeof(char*) ? 1 : -1];  // expected-warning {{expression result unused}}
+int X[sizeof(0, (foo().c)) == 17 ? 1 : -1];		  // expected-warning {{expression result unused}}
+int Y[sizeof(0, (a,b).c) == 17 ? 1 : -1];   // expected-warning {{expression result unused}} // expected-warning {{expression result unused}}
+int Z[sizeof(0, (a=b).c) == 17 ? 1 : -1];   // expected-warning {{expression result unused}}
