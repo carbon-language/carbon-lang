@@ -449,7 +449,7 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
     if (local_dep.isDef()) {
       CallInst* local_cdep = cast<CallInst>(local_dep.getInst());
 
-      if (local_cdep->getNumOperands() != C->getNumOperands()) {
+      if (local_cdep->getNumArgOperands() != C->getNumArgOperands()) {
         valueNumbering[C] = nextValueNumber;
         return nextValueNumber++;
       }
@@ -506,7 +506,7 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
       return nextValueNumber++;
     }
 
-    if (cdep->getNumOperands() != C->getNumOperands()) {
+    if (cdep->getNumArgOperands() != C->getNumArgOperands()) {
       valueNumbering[C] = nextValueNumber;
       return nextValueNumber++;
     }
