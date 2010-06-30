@@ -199,29 +199,29 @@ public:
   }
 };
 
-/// NextPowerOfTwo - This is a helper template that rounds N up to the next
+/// RoundUpToPowerOfTwo - This is a helper template that rounds N up to the next
 /// power of two (which means N itself if N is already a power of two).
 template<unsigned N>
-struct NextPowerOfTwo;
+struct RoundUpToPowerOfTwo;
 
-/// NextPowerOfTwoH - If N is not a power of two, increase it.  This is a helper
-/// template used to implement NextPowerOfTwo.
+/// RoundUpToPowerOfTwoH - If N is not a power of two, increase it.  This is a
+/// helper template used to implement RoundUpToPowerOfTwo.
 template<unsigned N, bool isPowerTwo>
-struct NextPowerOfTwoH {
+struct RoundUpToPowerOfTwoH {
   enum { Val = N };
 };
 template<unsigned N>
-struct NextPowerOfTwoH<N, false> {
+struct RoundUpToPowerOfTwoH<N, false> {
   enum {
     // We could just use NextVal = N+1, but this converges faster.  N|(N-1) sets
     // the right-most zero bits to one all at once, e.g. 0b0011000 -> 0b0011111.
-    Val = NextPowerOfTwo<(N|(N-1)) + 1>::Val
+    Val = RoundUpToPowerOfTwo<(N|(N-1)) + 1>::Val
   };
 };
 
 template<unsigned N>
-struct NextPowerOfTwo {
-  enum { Val = NextPowerOfTwoH<N, (N&(N-1)) == 0>::Val };
+struct RoundUpToPowerOfTwo {
+  enum { Val = RoundUpToPowerOfTwoH<N, (N&(N-1)) == 0>::Val };
 };
   
 
@@ -232,7 +232,7 @@ struct NextPowerOfTwo {
 template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.
-  enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
+  enum { SmallSizePowTwo = RoundUpToPowerOfTwo<SmallSize>::Val };
   /// SmallStorage - Fixed size storage used in 'small mode'.  The extra element
   /// ensures that the end iterator actually points to valid memory.
   const void *SmallStorage[SmallSizePowTwo+1];
