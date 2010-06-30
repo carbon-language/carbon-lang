@@ -4740,7 +4740,7 @@ static SDValue getMemCmpLoad(const Value *PtrVal, MVT LoadVT,
 /// lowered like a normal call.
 bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
   // Verify that the prototype makes sense.  int memcmp(void*,void*,size_t)
-  if (I.getNumOperands() != 4)
+  if (I.getNumArgOperands() != 3)
     return false;
 
   const Value *LHS = I.getArgOperand(0), *RHS = I.getArgOperand(1);
@@ -4839,7 +4839,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
     if (!F->hasLocalLinkage() && F->hasName()) {
       StringRef Name = F->getName();
       if (Name == "copysign" || Name == "copysignf" || Name == "copysignl") {
-        if (I.getNumOperands() == 3 &&   // Basic sanity checks.
+        if (I.getNumArgOperands() == 2 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
             I.getType() == I.getArgOperand(1)->getType()) {
@@ -4850,7 +4850,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
         }
       } else if (Name == "fabs" || Name == "fabsf" || Name == "fabsl") {
-        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+        if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType()) {
           SDValue Tmp = getValue(I.getArgOperand(0));
@@ -4859,7 +4859,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
         }
       } else if (Name == "sin" || Name == "sinf" || Name == "sinl") {
-        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+        if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
             I.onlyReadsMemory()) {
@@ -4869,7 +4869,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
         }
       } else if (Name == "cos" || Name == "cosf" || Name == "cosl") {
-        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+        if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
             I.onlyReadsMemory()) {
@@ -4879,7 +4879,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
         }
       } else if (Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl") {
-        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+        if (I.getNumArgOperands() == 1 &&   // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
             I.getType() == I.getArgOperand(0)->getType() &&
             I.onlyReadsMemory()) {
