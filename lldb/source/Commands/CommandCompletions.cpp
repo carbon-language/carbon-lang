@@ -9,6 +9,11 @@
 
 
 // C Includes
+#include <sys/stat.h>
+#include <dirent.h>
+#include <libgen.h>
+#include <glob.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -24,12 +29,13 @@ using namespace lldb_private;
 CommandCompletions::CommonCompletionElement
 CommandCompletions::g_common_completions[] =
 {
-    {eCustomCompletion,     NULL},
-    {eSourceFileCompletion, CommandCompletions::SourceFiles},
-    {eDiskFileCompletion,   NULL},
-    {eSymbolCompletion,     CommandCompletions::Symbols},
-    {eModuleCompletion,     CommandCompletions::Modules},
-    {eNoCompletion,         NULL}      // This one has to be last in the list.
+    {eCustomCompletion,          NULL},
+    {eSourceFileCompletion,      CommandCompletions::SourceFiles},
+    {eDiskFileCompletion,        CommandCompletions::DiskFiles},
+    {eDiskDirectoryCompletion,   CommandCompletions::DiskDirectories},
+    {eSymbolCompletion,          CommandCompletions::Symbols},
+    {eModuleCompletion,          CommandCompletions::Modules},
+    {eNoCompletion,              NULL}      // This one has to be last in the list.
 };
 
 bool
@@ -41,6 +47,7 @@ CommandCompletions::InvokeCommonCompletionCallbacks
     int match_start_point,
     int max_return_elements,
     SearchFilter *searcher,
+    bool &word_complete,
     StringList &matches
 )
 {
@@ -62,6 +69,7 @@ CommandCompletions::InvokeCommonCompletionCallbacks
                                               match_start_point,
                                               max_return_elements,
                                               searcher,
+                                              word_complete,
                                               matches);
         }
     }
@@ -76,9 +84,11 @@ CommandCompletions::SourceFiles
     int match_start_point,
     int max_return_elements,
     SearchFilter *searcher,
+    bool &word_complete,
     StringList &matches
 )
 {
+    word_complete = true;
     // Find some way to switch "include support files..."
     SourceFileCompleter completer (interpreter,
                                    false, 
@@ -100,6 +110,216 @@ CommandCompletions::SourceFiles
     return matches.GetSize();
 }
 
+static int
+DiskFilesOrDirectories 
+(
+    const char *partial_file_name,
+    bool only_directories,
+    bool &saw_directory,
+    StringList &matches
+)
+{
+    // I'm going to  use the "glob" function with GLOB_TILDE for user directory expansion.  
+    // If it is not defined on your host system, you'll need to implement it yourself...
+    
+    int partial_name_len = strlen(partial_file_name);
+    
+    if (partial_name_len >= PATH_MAX)
+        return matches.GetSize();
+    
+    // This copy of the string will be cut up into the directory part, and the remainder.  end_ptr
+    // below will point to the place of the remainder in this string.  Then when we've resolved the
+    // containing directory, and opened it, we'll read the directory contents and overwrite the
+    // partial_name_copy starting from end_ptr with each of the matches.  Thus we will preserve
+    // the form the user originally typed.
+    
+    char partial_name_copy[PATH_MAX];
+    bcopy (partial_file_name, partial_name_copy, partial_name_len);
+    partial_name_copy[partial_name_len] = '\0';
+    
+    // We'll need to save a copy of the remainder for comparision, which we do here.
+    char remainder[PATH_MAX];
+    
+    // end_ptr will point past the last / in partial_name_copy, or if there is no slash to the beginning of the string.
+    char *end_ptr;
+    
+    end_ptr = strrchr(partial_name_copy, '/');
+    
+    // This will store the resolved form of the containing directory
+    char containing_part[PATH_MAX];
+    
+    if (end_ptr == NULL)
+    {
+        // There's no directory.  If the thing begins with a "~" then this is a bare
+        // user name.
+        if (*partial_name_copy == '~')
+        {
+            // Nothing here but the user name.  We could just put a slash on the end, 
+            // but for completeness sake we'll glob the user name and only put a slash
+            // on the end if it exists.
+           glob_t glob_buf;
+           if (glob (partial_name_copy, GLOB_TILDE, NULL, &glob_buf) != 0)
+               return matches.GetSize();
+           
+           //The thing exists, put a '/' on the end, and return it...
+           // FIXME: complete user names here:
+           partial_name_copy[partial_name_len] = '/';
+           partial_name_copy[partial_name_len+1] = '\0';
+           matches.AppendString(partial_name_copy);
+           globfree(&glob_buf);
+           saw_directory == true;
+           return matches.GetSize();
+        }
+        else
+        {
+            // The containing part is the CWD, and the whole string is the remainder.
+            containing_part[0] = '.';
+            containing_part[1] = '\0';
+            strcpy(remainder, partial_name_copy);
+            end_ptr = partial_name_copy;
+        }
+    }
+    else
+    {
+        if (end_ptr == partial_name_copy)
+        {
+            // We're completing a file or directory in the root volume.
+            containing_part[0] = '/';
+            containing_part[1] = '\0';
+        }
+        else
+        {
+            size_t len = end_ptr - partial_name_copy;
+            memcpy(containing_part, partial_name_copy, len);
+            containing_part[len] = '\0';
+        }
+        // Push end_ptr past the final "/" and set remainder.
+        end_ptr++;
+        strcpy(remainder, end_ptr);
+    }
+    
+    // Look for a user name in the containing part, and if it's there, glob containing_part and stick the
+    // result back into the containing_part:
+    
+    if (*partial_name_copy == '~')
+    {
+        glob_t glob_buf;
+        
+        // User name doesn't exist, we're not getting any further...
+        if (glob (containing_part, GLOB_TILDE, NULL, &glob_buf) != 0)
+            return matches.GetSize();
+            
+        if (glob_buf.gl_pathc != 1)
+        {
+            // I'm not really sure how this would happen?
+            globfree(&glob_buf);
+            return matches.GetSize();
+        }
+        strcpy(containing_part, glob_buf.gl_pathv[0]);
+        globfree(&glob_buf);
+    }
+    
+    // Okay, containing_part is now the directory we want to open and look for files:
+    
+    DIR *dir_stream;
+    
+    dir_stream = opendir(containing_part);
+    if (dir_stream == NULL)
+        return matches.GetSize();
+        
+    struct dirent *dirent_buf;
+    
+    size_t baselen = end_ptr - partial_name_copy;
+    
+    while ((dirent_buf = readdir(dir_stream)) != NULL) 
+    {
+        char *name = dirent_buf->d_name;
+        
+        // Omit ".", ".." and any . files if the match string doesn't start with .
+        if (name[0] == '.')
+        {
+            if (name[1] == '\0')
+                continue;
+            else if (name[1] == '.' && name[2] == '\0')
+                continue;
+            else if (remainder[0] != '.')
+                continue;
+        }
+        
+        if (remainder[0] == '\0' || strstr(dirent_buf->d_name, remainder) == name)
+        {
+            if (strlen(name) + baselen >= PATH_MAX)
+                continue;
+                
+            strcpy(end_ptr, name);
+            
+            bool isa_directory = false;
+            if (dirent_buf->d_type & DT_DIR)
+                isa_directory = true;
+            else if (dirent_buf->d_type & DT_LNK)
+            { 
+                struct stat stat_buf;
+                if ((stat(partial_name_copy, &stat_buf) == 0) && (stat_buf.st_mode & S_IFDIR))
+                    isa_directory = true;
+            }
+            
+            if (isa_directory)
+            {
+                saw_directory = true;
+                size_t len = strlen(partial_name_copy);
+                partial_name_copy[len] = '/';
+                partial_name_copy[len + 1] = '\0';
+            }
+            if (only_directories && !isa_directory)
+                continue;
+            matches.AppendString(partial_name_copy);
+        }
+    }
+    
+    return matches.GetSize();
+}
+
+int
+CommandCompletions::DiskFiles 
+(
+    CommandInterpreter &interpreter,
+    const char *partial_file_name,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    bool &word_complete,
+    StringList &matches
+)
+{
+
+    int ret_val = DiskFilesOrDirectories (partial_file_name,
+                                          false,
+                                          word_complete,
+                                          matches);
+    word_complete = !word_complete;
+    return ret_val;
+}
+
+int
+CommandCompletions::DiskDirectories 
+(
+    CommandInterpreter &interpreter,
+    const char *partial_file_name,
+    int match_start_point,
+    int max_return_elements,
+    SearchFilter *searcher,
+    bool &word_complete,
+    StringList &matches
+)
+{
+    int ret_val =  DiskFilesOrDirectories (partial_file_name,
+                                           true,
+                                           word_complete,
+                                           matches); 
+    word_complete = false;
+    return ret_val;
+}
+
 int
 CommandCompletions::Modules 
 (
@@ -108,9 +328,11 @@ CommandCompletions::Modules
     int match_start_point,
     int max_return_elements,
     SearchFilter *searcher,
+    bool &word_complete,
     StringList &matches
 )
 {
+    word_complete = true;
     ModuleCompleter completer (interpreter,
                                partial_file_name, 
                                match_start_point, 
@@ -138,8 +360,10 @@ CommandCompletions::Symbols
     int match_start_point,
     int max_return_elements,
     SearchFilter *searcher,
+    bool &word_complete,
     StringList &matches)
 {
+    word_complete = true;
     SymbolCompleter completer (interpreter,
                                partial_file_name, 
                                match_start_point, 

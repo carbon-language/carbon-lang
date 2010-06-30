@@ -653,11 +653,13 @@ CommandInterpreter::HandleCommand
                 int num_matches;
                 int cursor_index = command_args.GetArgumentCount() - 1;
                 int cursor_char_position = strlen (command_args.GetArgumentAtIndex(command_args.GetArgumentCount() - 1));
+                bool word_complete;
                 num_matches = HandleCompletionMatches (command_args, 
                                                        cursor_index,
                                                        cursor_char_position,
                                                        0, 
                                                        -1, 
+                                                       word_complete,
                                                        matches);
 
                 if (num_matches > 0)
@@ -692,11 +694,15 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
                                              int &cursor_char_position,
                                              int match_start_point,
                                              int max_return_elements,
+                                             bool &word_complete,
                                              StringList &matches)
 {
     int num_command_matches = 0;
     bool include_aliases = true;
     bool look_for_subcommand = false;
+    
+    // For any of the command completions a unique match will be a complete word.
+    word_complete = true;
 
     if (cursor_index == -1)
     {
@@ -743,7 +749,8 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
                                                                     cursor_index, 
                                                                     cursor_char_position,
                                                                     match_start_point, 
-                                                                    max_return_elements, 
+                                                                    max_return_elements,
+                                                                    word_complete, 
                                                                     matches);
         }
     }
@@ -781,11 +788,13 @@ CommandInterpreter::HandleCompletion (const char *current_line,
 
     // Only max_return_elements == -1 is supported at present:
     assert (max_return_elements == -1);
+    bool word_complete;
     num_command_matches = HandleCompletionMatches (parsed_line, 
                                                    cursor_index, 
                                                    cursor_char_position, 
                                                    match_start_point,
-                                                   max_return_elements, 
+                                                   max_return_elements,
+                                                   word_complete,
                                                    matches);
 
     if (num_command_matches <= 0)
@@ -809,7 +818,8 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         int partial_name_len = command_partial_str.size();
 
         // If we matched a unique single command, add a space...
-        if (num_command_matches == 1)
+        // Only do this if the completer told us this was a complete word, however...
+        if (num_command_matches == 1 && word_complete)
         {
             char quote_char = parsed_line.GetArgumentQuoteCharAtIndex(cursor_index);
             if (quote_char != '\0')

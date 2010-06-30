@@ -64,6 +64,7 @@ public:
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
+                      bool &word_complete,
                       StringList &matches);
 
     CommandObject::CommandMap m_subcommand_dict;

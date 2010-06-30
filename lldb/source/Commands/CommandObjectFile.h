@@ -67,6 +67,18 @@ public:
 
         ArchSpec m_arch;
     };
+    
+    virtual int
+    HandleArgumentCompletion (CommandInterpreter &interpreter,
+                              Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches);
+    
 
 private:
     CommandOptions m_options;

@@ -208,6 +208,10 @@ public:
     /// @param[in] interpreter
     ///     The interpreter that's doing the completing.
     ///
+    /// @param[out] word_complete
+    ///     \btrue if this is a complete option value (a space will be inserted after the
+    ///     completion.)  \bfalse otherwise.
+    ///
     /// @param[out] matches
     ///     The array of matches returned.
     ///
@@ -225,11 +229,15 @@ public:
                             int char_pos,
                             int match_start_point,
                             int max_return_elements,
+                            bool &word_complete,
                             lldb_private::StringList &matches);
 
     //------------------------------------------------------------------
     ///  Handles the generic bits of figuring out whether we are in an option, and if so completing
     /// it.
+    ///
+    /// @param[in] interpreter
+    ///    The command interpreter doing the completion.
     ///
     /// @param[in] input
     ///    The command line parsed into words
@@ -250,8 +258,9 @@ public:
     /// @param[in] match_return_elements
     ///     See CommandObject::HandleCompletions for a description of how these work.
     ///
-    /// @param[in] interpreter
-    ///     The interpreter that's doing the completing.
+    /// @param[out] word_complete
+    ///     \btrue if this is a complete option value (a space will be inserted after the
+    ///     completion.)  \bfalse otherwise.
     ///
     /// @param[out] matches
     ///     The array of matches returned.
@@ -271,6 +280,7 @@ public:
                                     int opt_element_index,
                                     int match_start_point,
                                     int max_return_elements,
+                                    bool &word_complete,
                                     StringList &matches);
     
 protected:

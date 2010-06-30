@@ -144,19 +144,22 @@ CommandObjectHelp::HandleCompletion
     int &cursor_char_position,
     int match_start_point,
     int max_return_elements,
+    bool &word_complete,
     StringList &matches
 )
 {
     // Return the completions of the commands in the help system:
     if (cursor_index == 0)
     {
-        return interpreter.HandleCompletionMatches(input, cursor_index, cursor_char_position, match_start_point, max_return_elements, matches);
+        return interpreter.HandleCompletionMatches(input, cursor_index, cursor_char_position, match_start_point, 
+                                                   max_return_elements, word_complete, matches);
     }
     else
     {
         CommandObject *cmd_obj = interpreter.GetCommandObject (input.GetArgumentAtIndex(0), true, false);
         input.Shift();
         cursor_index--;
-        return cmd_obj->HandleCompletion (interpreter, input, cursor_index, cursor_char_position, match_start_point, max_return_elements, matches);
+        return cmd_obj->HandleCompletion (interpreter, input, cursor_index, cursor_char_position, match_start_point, 
+                                          max_return_elements, word_complete, matches);
     }
 }

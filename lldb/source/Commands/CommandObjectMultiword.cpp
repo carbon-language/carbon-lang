@@ -219,9 +219,14 @@ CommandObjectMultiword::HandleCompletion
     int &cursor_char_position,
     int match_start_point,
     int max_return_elements,
+    bool &word_complete,
     StringList &matches
 )
 {
+    // Any of the command matches will provide a complete word, otherwise the individual
+    // completers will override this.
+    word_complete = true;
+    
     if (cursor_index == 0)
     {
         CommandObject::AddNamesMatchingPartialString (m_subcommand_dict, 
@@ -245,7 +250,8 @@ CommandObjectMultiword::HandleCompletion
                                                   input, cursor_index, 
                                                   cursor_char_position, 
                                                   match_start_point,
-                                                  max_return_elements, 
+                                                  max_return_elements,
+                                                  word_complete, 
                                                   matches);
             }
             else
@@ -273,7 +279,8 @@ CommandObjectMultiword::HandleCompletion
                                                          cursor_index, 
                                                          cursor_char_position, 
                                                          match_start_point,
-                                                         max_return_elements, 
+                                                         max_return_elements,
+                                                         word_complete,
                                                          matches);
         }
 

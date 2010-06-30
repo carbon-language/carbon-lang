@@ -19,6 +19,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Target/Process.h"
 
 using namespace lldb;
@@ -165,4 +166,30 @@ CommandObjectFile::Execute
     }
     return result.Succeeded();
 
+}
+
+int
+CommandObjectFile::HandleArgumentCompletion (CommandInterpreter &interpreter,
+                              Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+{
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+
+        CommandCompletions::InvokeCommonCompletionCallbacks (interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    
 }

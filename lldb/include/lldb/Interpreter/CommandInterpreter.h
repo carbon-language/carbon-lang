@@ -116,6 +116,8 @@ public:
 
     // This version just returns matches, and doesn't compute the substring.  It is here so the
     // Help command can call it for the first argument.
+    // word_complete tells whether a the completions are considered a "complete" response (so the
+    // completer should complete the quote & put a space after the word.
 
     int
     HandleCompletionMatches (Args &input,
@@ -123,6 +125,7 @@ public:
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
+                      bool &word_complete,
                       StringList &matches);
 
 

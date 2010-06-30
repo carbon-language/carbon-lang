@@ -422,6 +422,7 @@ public:
                               OptionElementVector &opt_element_vector,
                               int match_start_point,
                               int max_return_elements,
+                              bool &word_complete,
                               StringList &matches)
     {
         // Arguments are the standard module completer.
@@ -434,6 +435,7 @@ public:
                                                              match_start_point,
                                                              max_return_elements,
                                                              NULL,
+                                                             word_complete,
                                                              matches);
         return matches.GetSize();
     }
@@ -463,6 +465,7 @@ public:
                               OptionElementVector &opt_element_vector,
                               int match_start_point,
                               int max_return_elements,
+                              bool word_complete,
                               StringList &matches)
     {
         // Arguments are the standard source file completer.
@@ -475,6 +478,7 @@ public:
                                                              match_start_point,
                                                              max_return_elements,
                                                              NULL,
+                                                             word_complete,
                                                              matches);
         return matches.GetSize();
     }

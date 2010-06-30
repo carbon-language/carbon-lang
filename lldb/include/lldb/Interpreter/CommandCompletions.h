@@ -34,15 +34,17 @@ public:
                                        int match_start_point,               // This is the point in the list of matches that you should start returning elements
                                        int max_return_elements,             // This is the number of matches requested.
                                        lldb_private::SearchFilter *searcher,// A search filter to limit the search...
+                                       bool &word_complete,
                                        lldb_private::StringList &matches);  // The array of matches we return.
     typedef enum
     {
-        eNoCompletion           = 0,
-        eSourceFileCompletion   = (1 << 0),
-        eDiskFileCompletion     = (1 << 1),
-        eSymbolCompletion       = (1 << 2),
-        eModuleCompletion       = (1 << 3),
-        eCustomCompletion       = (1 << 4)  // This item serves two purposes.  It is the last element in the enum,
+        eNoCompletion            = 0,
+        eSourceFileCompletion    = (1 << 0),
+        eDiskFileCompletion      = (1 << 1),
+        eDiskDirectoryCompletion = (1 << 2),
+        eSymbolCompletion        = (1 << 3),
+        eModuleCompletion        = (1 << 4),
+        eCustomCompletion        = (1 << 5)  // This item serves two purposes.  It is the last element in the enum,
                                             // so you can add custom enums starting from here in your Option class.
                                             // Also if you & in this bit the base code will not process the option.
 
@@ -60,17 +62,36 @@ public:
                                                  int match_start_point,
                                                  int max_return_elements,
                                                  SearchFilter *searcher,
+                                                 bool &word_complete,
                                                  StringList &matches);
     
     //----------------------------------------------------------------------
     // These are the generic completer functions:
     //----------------------------------------------------------------------
     static int
+    DiskFiles (CommandInterpreter &interpreter,
+                 const char *partial_file_name,
+                 int match_start_point,
+                 int max_return_elements,
+                 SearchFilter *searcher,
+                 bool &word_complete,
+                 StringList &matches);
+    static int
+    DiskDirectories (CommandInterpreter &interpreter,
+                 const char *partial_file_name,
+                 int match_start_point,
+                 int max_return_elements,
+                 SearchFilter *searcher,
+                 bool &word_complete,
+                 StringList &matches);
+    
+    static int
     SourceFiles (CommandInterpreter &interpreter,
                  const char *partial_file_name,
                  int match_start_point,
                  int max_return_elements,
                  SearchFilter *searcher,
+                 bool &word_complete,
                  StringList &matches);
     
     static int
@@ -79,6 +100,7 @@ public:
              int match_start_point,
              int max_return_elements,
              SearchFilter *searcher,
+             bool &word_complete,
              lldb_private::StringList &matches);
     
     static int
@@ -87,6 +109,7 @@ public:
              int match_start_point,
              int max_return_elements,
              SearchFilter *searcher,
+             bool &word_complete,
              lldb_private::StringList &matches);
     
     //----------------------------------------------------------------------

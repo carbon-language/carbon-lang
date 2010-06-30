@@ -304,6 +304,7 @@ CommandObject::HandleCompletion
     int &cursor_char_position,
     int match_start_point,
     int max_return_elements,
+    bool &word_complete,
     StringList &matches
 )
 {
@@ -345,6 +346,7 @@ CommandObject::HandleCompletion
                                                                       cursor_char_position,
                                                                       match_start_point,
                                                                       max_return_elements,
+                                                                      word_complete,
                                                                       matches);
             if (handled_by_options)
                 return matches.GetSize();
@@ -358,6 +360,7 @@ CommandObject::HandleCompletion
                                          opt_element_vector,
                                          match_start_point,
                                          max_return_elements,
+                                         word_complete,
                                          matches);
     }
 }

@@ -122,13 +122,46 @@ public:
     static int
     AddNamesMatchingPartialString (CommandMap &in_map, const char *cmd_str, StringList &matches);
 
-    // The input array contains a parsed version of the line.  The insertion
-    // point is given by cursor_index (the index in input of the word containing
-    // the cursor) and cursor_char_position (the position of the cursor in that word.)
-    // This default version handles calling option argument completions and then calls
-    // HandleArgumentCompletion if the cursor is on an argument, not an option.
-    // Don't override this method, override HandleArgumentCompletion instead unless
-    // you have special reasons.
+    //------------------------------------------------------------------
+    /// The input array contains a parsed version of the line.  The insertion
+    /// point is given by cursor_index (the index in input of the word containing
+    /// the cursor) and cursor_char_position (the position of the cursor in that word.)
+    /// This default version handles calling option argument completions and then calls
+    /// HandleArgumentCompletion if the cursor is on an argument, not an option.
+    /// Don't override this method, override HandleArgumentCompletion instead unless
+    /// you have special reasons.
+    ///
+    /// @param[in] interpreter
+    ///    The command interpreter doing the completion.
+    ///
+    /// @param[in] input
+    ///    The command line parsed into words
+    ///
+    /// @param[in] cursor_index
+    ///     The index in \ainput of the word in which the cursor lies.
+    ///
+    /// @param[in] cursor_char_pos
+    ///     The character position of the cursor in its argument word.
+    ///
+    /// @param[in] match_start_point
+    /// @param[in] match_return_elements
+    ///     FIXME: Not yet implemented...  If there is a match that is expensive to compute, these are
+    ///     here to allow you to compute the completions in batches.  Start the completion from \amatch_start_point,
+    ///     and return \amatch_return_elements elements.
+    ///
+    /// @param[out] word_complete
+    ///     \btrue if this is a complete option value (a space will be inserted after the
+    ///     completion.)  \bfalse otherwise.
+    ///
+    /// @param[out] matches
+    ///     The array of matches returned.
+    ///
+    /// FIXME: This is the wrong return value, since we also need to make a distinction between
+    /// total number of matches, and the window the user wants returned.
+    ///
+    /// @return
+    ///     \btrue if we were in an option, \bfalse otherwise.
+    //------------------------------------------------------------------
     virtual int
     HandleCompletion (CommandInterpreter &interpreter,
                       Args &input,
@@ -136,13 +169,48 @@ public:
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
+                      bool &word_complete,
                       StringList &matches);
 
-    // The input array contains a parsed version of the line.  The insertion
-    // point is given by cursor_index (the index in input of the word containing
-    // the cursor) and cursor_char_position (the position of the cursor in that word.)
-    // We've constructed the map of options and their arguments as well if that is
-    // helpful for the completion.
+    //------------------------------------------------------------------
+    /// The input array contains a parsed version of the line.  The insertion
+    /// point is given by cursor_index (the index in input of the word containing
+    /// the cursor) and cursor_char_position (the position of the cursor in that word.)
+    /// We've constructed the map of options and their arguments as well if that is
+    /// helpful for the completion.
+    ///
+    /// @param[in] interpreter
+    ///    The command interpreter doing the completion.
+    ///
+    /// @param[in] input
+    ///    The command line parsed into words
+    ///
+    /// @param[in] cursor_index
+    ///     The index in \ainput of the word in which the cursor lies.
+    ///
+    /// @param[in] cursor_char_pos
+    ///     The character position of the cursor in its argument word.
+    ///
+    /// @param[in] opt_element_vector
+    ///     The results of the options parse of \a input.
+    ///
+    /// @param[in] match_start_point
+    /// @param[in] match_return_elements
+    ///     See CommandObject::HandleCompletions for a description of how these work.
+    ///
+    /// @param[out] word_complete
+    ///     \btrue if this is a complete option value (a space will be inserted after the
+    ///     completion.)  \bfalse otherwise.
+    ///
+    /// @param[out] matches
+    ///     The array of matches returned.
+    ///
+    /// FIXME: This is the wrong return value, since we also need to make a distinction between
+    /// total number of matches, and the window the user wants returned.
+    ///
+    /// @return
+    ///     \btrue if we were in an option, \bfalse otherwise.
+    //------------------------------------------------------------------
 
     virtual int
     HandleArgumentCompletion (CommandInterpreter &interpreter,
@@ -152,6 +220,7 @@ public:
                               OptionElementVector &opt_element_vector,
                               int match_start_point,
                               int max_return_elements,
+                              bool &word_complete,
                               StringList &matches)
     {
         return 0;

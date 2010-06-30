@@ -538,9 +538,12 @@ Options::HandleOptionCompletion
     int char_pos,
     int match_start_point,
     int max_return_elements,
+    bool &word_complete,
     lldb_private::StringList &matches
 )
 {
+    word_complete = true;
+    
     // For now we just scan the completions to see if the cursor position is in
     // an option or its argument.  Otherwise we'll call HandleArgumentCompletion.
     // In the future we can use completion to validate options as well if we want.
@@ -658,6 +661,7 @@ Options::HandleOptionCompletion
                                                 i,
                                                 match_start_point,
                                                 max_return_elements,
+                                                word_complete,
                                                 matches);
                 return true;
             }
@@ -688,6 +692,7 @@ Options::HandleOptionArgumentCompletion
     int opt_element_index,
     int match_start_point,
     int max_return_elements,
+    bool &word_complete,
     lldb_private::StringList &matches
 )
 {
@@ -754,6 +759,7 @@ Options::HandleOptionArgumentCompletion
                                                                 match_start_point,
                                                                 max_return_elements,
                                                                 filter_ap.get(),
+                                                                word_complete,
                                                                 matches);
     
 }
