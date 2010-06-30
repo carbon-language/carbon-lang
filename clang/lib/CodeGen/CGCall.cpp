@@ -975,7 +975,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
     Builder.CreateRetVoid();
     return;
   }
-  
+
+  llvm::MDNode *RetDbgInfo = 0;
   llvm::Value *RV = 0;
   QualType RetTy = FI.getReturnType();
   const ABIArgInfo &RetAI = FI.getReturnInfo();
@@ -1009,6 +1010,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
       RV = Builder.CreateLoad(ReturnValue);
     } else {
       // Get the stored value and nuke the now-dead store.
+      RetDbgInfo = SI->getDbgMetadata();
       RV = SI->getValueOperand();
       SI->eraseFromParent();
       
@@ -1031,10 +1033,9 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
     assert(0 && "Invalid ABI kind for return argument");
   }
 
-  if (RV)
-    Builder.CreateRet(RV);
-  else
-    Builder.CreateRetVoid();
+  llvm::Instruction *Ret = RV ? Builder.CreateRet(RV) : Builder.CreateRetVoid();
+  if (RetDbgInfo)
+    Ret->setDbgMetadata(RetDbgInfo);
 }
 
 RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
