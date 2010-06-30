@@ -3657,6 +3657,26 @@ void ScalarEvolution::forgetValue(Value *V) {
         ConstantEvolutionLoopExitValue.erase(PN);
     }
 
+    // If there's a SCEVUnknown tying this value into the SCEV
+    // space, remove it from the folding set map. The SCEVUnknown
+    // object and any other SCEV objects which reference it
+    // (transitively) remain allocated, effectively leaked until
+    // the underlying BumpPtrAllocator is freed.
+    //
+    // This permits SCEV pointers to be used as keys in maps
+    // such as the ValuesAtScopes map.
+    FoldingSetNodeID ID;
+    ID.AddInteger(scUnknown);
+    ID.AddPointer(I);
+    void *IP;
+    if (SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
+      UniqueSCEVs.RemoveNode(S);
+
+      // This isn't necessary, but we might as well remove the
+      // value from the ValuesAtScopes map too.
+      ValuesAtScopes.erase(S);
+    }
+
     PushDefUseChildren(I, Worklist);
   }
 }
