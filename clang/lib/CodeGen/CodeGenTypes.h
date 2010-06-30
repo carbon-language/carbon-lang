@@ -154,11 +154,8 @@ public:
     return getFunctionInfo(Ty->getResultType(), Args,
                            Ty->getExtInfo());
   }
-
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty,
-                                        bool IsRecursive = false);
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty,
-                                        bool IsRecursive = false);
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty);
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty);
 
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
@@ -179,8 +176,7 @@ public:
   /// \param ArgTys - must all actually be canonical as params
   const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                        const FunctionType::ExtInfo &Info,
-                                        bool IsRecursive = false);
+                                        const FunctionType::ExtInfo &Info);
 
   /// \brief Compute a new LLVM record layout object for the given record.
   CGRecordLayout *ComputeRecordLayout(const RecordDecl *D);
