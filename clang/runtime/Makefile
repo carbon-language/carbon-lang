@@ -1,4 +1,4 @@
-##===- clang/lib/Runtime/Makefile --------------------------*- Makefile -*-===##
+##===- clang/runtime/Makefile ------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -13,7 +13,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
+CLANG_LEVEL := ..
 include $(CLANG_LEVEL)/Makefile
 
 CLANG_VERSION := $(word 3,$(shell grep "CLANG_VERSION " \

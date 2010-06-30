@@ -14,7 +14,7 @@ ifndef CLANG_LEVEL
 
 IS_TOP_LEVEL := 1
 CLANG_LEVEL := .
-DIRS := include lib tools docs
+DIRS := include lib tools runtime docs
 
 PARALLEL_DIRS :=
 
