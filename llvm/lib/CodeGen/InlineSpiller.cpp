@@ -35,6 +35,13 @@ class InlineSpiller : public Spiller {
   MachineRegisterInfo &mri_;
   const TargetInstrInfo &tii_;
   const TargetRegisterInfo &tri_;
+  const BitVector reserved_;
+
+  // Variables that are valid during spill(), but used by multiple methods.
+  LiveInterval *li_;
+  const TargetRegisterClass *rc_;
+  int stackSlot_;
+  const SmallVectorImpl<LiveInterval*> *spillIs_;
 
   ~InlineSpiller() {}
 
@@ -44,12 +51,16 @@ public:
       mfi_(*mf->getFrameInfo()),
       mri_(mf->getRegInfo()),
       tii_(*mf->getTarget().getInstrInfo()),
-      tri_(*mf->getTarget().getRegisterInfo()) {}
+      tri_(*mf->getTarget().getRegisterInfo()),
+      reserved_(tri_.getReservedRegs(mf_)) {}
 
   void spill(LiveInterval *li,
              std::vector<LiveInterval*> &newIntervals,
              SmallVectorImpl<LiveInterval*> &spillIs,
              SlotIndex *earliestIndex);
+  bool reMaterialize(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+  void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+  void insertSpill(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
 };
 }
 
@@ -62,6 +73,109 @@ Spiller *createInlineSpiller(MachineFunction *mf,
 }
 }
 
+/// reMaterialize - Attempt to rematerialize li_->reg before MI instead of
+/// reloading it.
+bool InlineSpiller::reMaterialize(LiveInterval &NewLI,
+                                  MachineBasicBlock::iterator MI) {
+  SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
+  LiveRange *LR = li_->getLiveRangeContaining(UseIdx);
+  if (!LR) {
+    DEBUG(dbgs() << "\tundef at " << UseIdx << ", adding <undef> flags.\n");
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isUse() && MO.getReg() == li_->reg)
+        MO.setIsUndef();
+    }
+    return true;
+  }
+
+  // Find the instruction that defined this value of li_->reg.
+  if (!LR->valno->isDefAccurate())
+    return false;
+  SlotIndex OrigDefIdx = LR->valno->def;
+  MachineInstr *OrigDefMI = lis_.getInstructionFromIndex(OrigDefIdx);
+  if (!OrigDefMI)
+    return false;
+
+  // FIXME: Provide AliasAnalysis argument.
+  if (!tii_.isTriviallyReMaterializable(OrigDefMI))
+    return false;
+
+  // A rematerializable instruction may be using other virtual registers.
+  // Make sure they are available at the new location.
+  for (unsigned i = 0, e = OrigDefMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = OrigDefMI->getOperand(i);
+    if (!MO.isReg() || !MO.getReg() || MO.getReg() == li_->reg)
+      continue;
+    // Reserved physregs are OK. Others are not (probably from coalescing).
+    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
+      if (reserved_.test(MO.getReg()))
+        continue;
+      else
+        return false;
+    }
+    // We don't want to move any virtual defs.
+    if (MO.isDef())
+      return false;
+    // We have a use of a virtual register other than li_->reg.
+    if (MO.isUndef())
+      continue;
+    // We cannot depend on virtual registers in spillIs_. They will be spilled.
+    for (unsigned si = 0, se = spillIs_->size(); si != se; ++si)
+      if ((*spillIs_)[si]->reg == MO.getReg())
+        return false;
+
+    // Is the register available here with the same value as at OrigDefMI?
+    LiveInterval &ULI = lis_.getInterval(MO.getReg());
+    LiveRange *HereLR = ULI.getLiveRangeContaining(UseIdx);
+    if (!HereLR)
+      return false;
+    LiveRange *DefLR = ULI.getLiveRangeContaining(OrigDefIdx.getUseIndex());
+    if (!DefLR || DefLR->valno != HereLR->valno)
+      return false;
+  }
+
+  // Finally we can rematerialize OrigDefMI before MI.
+  MachineBasicBlock &MBB = *MI->getParent();
+  tii_.reMaterialize(MBB, MI, NewLI.reg, 0, OrigDefMI, tri_);
+  SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(--MI).getDefIndex();
+  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t' << *MI);
+  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, true,
+                                       lis_.getVNInfoAllocator());
+  NewLI.addRange(LiveRange(DefIdx, UseIdx.getDefIndex(), DefVNI));
+  return true;
+}
+
+/// insertReload - Insert a reload of NewLI.reg before MI.
+void InlineSpiller::insertReload(LiveInterval &NewLI,
+                                 MachineBasicBlock::iterator MI) {
+  MachineBasicBlock &MBB = *MI->getParent();
+  SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
+  tii_.loadRegFromStackSlot(MBB, MI, NewLI.reg, stackSlot_, rc_, &tri_);
+  --MI; // Point to load instruction.
+  SlotIndex LoadIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
+  vrm_.addSpillSlotUse(stackSlot_, MI);
+  DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
+  VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0, true,
+                                       lis_.getVNInfoAllocator());
+  NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
+}
+
+/// insertSpill - Insert a spill of NewLI.reg after MI.
+void InlineSpiller::insertSpill(LiveInterval &NewLI,
+                                MachineBasicBlock::iterator MI) {
+  MachineBasicBlock &MBB = *MI->getParent();
+  SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
+  tii_.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, stackSlot_, rc_, &tri_);
+  --MI; // Point to store instruction.
+  SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
+  vrm_.addSpillSlotUse(stackSlot_, MI);
+  DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
+  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, true,
+                                        lis_.getVNInfoAllocator());
+  NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
+}
+
 void InlineSpiller::spill(LiveInterval *li,
                           std::vector<LiveInterval*> &newIntervals,
                           SmallVectorImpl<LiveInterval*> &spillIs,
@@ -70,12 +184,14 @@ void InlineSpiller::spill(LiveInterval *li,
   assert(li->isSpillable() && "Attempting to spill already spilled value.");
   assert(!li->isStackSlot() && "Trying to spill a stack slot.");
 
-  const TargetRegisterClass *RC = mri_.getRegClass(li->reg);
-  unsigned SS = vrm_.assignVirt2StackSlot(li->reg);
+  li_ = li;
+  rc_ = mri_.getRegClass(li->reg);
+  stackSlot_ = vrm_.assignVirt2StackSlot(li->reg);
+  spillIs_ = &spillIs;
 
+  // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(li->reg);
        MachineInstr *MI = RI.skipInstruction();) {
-    SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
 
     // Analyze instruction.
     bool Reads, Writes;
@@ -84,23 +200,16 @@ void InlineSpiller::spill(LiveInterval *li,
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    unsigned NewVReg = mri_.createVirtualRegister(RC);
+    unsigned NewVReg = mri_.createVirtualRegister(rc_);
     vrm_.grow();
     LiveInterval &NewLI = lis_.getOrCreateInterval(NewVReg);
     NewLI.markNotSpillable();
 
-    // Reload if instruction reads register.
-    if (Reads) {
-      MachineBasicBlock::iterator MII = MI;
-      tii_.loadRegFromStackSlot(*MI->getParent(), MII, NewVReg, SS, RC, &tri_);
-      --MII; // Point to load instruction.
-      SlotIndex LoadIdx = lis_.InsertMachineInstrInMaps(MII).getDefIndex();
-      vrm_.addSpillSlotUse(SS, MII);
-      DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MII);
-      VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0, true,
-                                           lis_.getVNInfoAllocator());
-      NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
-    }
+    // Attempt remat instead of reload.
+    bool NeedsReload = Reads && !reMaterialize(NewLI, MI);
+
+    if (NeedsReload)
+      insertReload(NewLI, MI);
 
     // Rewrite instruction operands.
     bool hasLiveDef = false;
@@ -115,22 +224,10 @@ void InlineSpiller::spill(LiveInterval *li,
           hasLiveDef = true;
       }
     }
-    DEBUG(dbgs() << "\trewrite: " << Idx << '\t' << *MI);
 
-    // Spill is instruction writes register.
     // FIXME: Use a second vreg if instruction has no tied ops.
-    if (Writes && hasLiveDef) {
-      MachineBasicBlock::iterator MII = MI;
-      tii_.storeRegToStackSlot(*MI->getParent(), ++MII, NewVReg, true, SS, RC,
-                               &tri_);
-      --MII; // Point to store instruction.
-      SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MII).getDefIndex();
-      vrm_.addSpillSlotUse(SS, MII);
-      DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MII);
-      VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, true,
-                                            lis_.getVNInfoAllocator());
-      NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
-    }
+    if (Writes && hasLiveDef)
+      insertSpill(NewLI, MI);
 
     DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
     newIntervals.push_back(&NewLI);

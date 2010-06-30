@@ -37,8 +37,8 @@ namespace llvm {
     /// the Spiller implementation selected.
     ///
     /// @param li            The live interval to be spilled.
-    /// @param spillIs       An essential hook into the register allocator guts
-    ///                      that perhaps serves a purpose(?!)
+    /// @param spillIs       A list of intervals that are about to be spilled,
+    ///                      and so cannot be used for remat etc.
     /// @param newIntervals  The newly created intervals will be appended here.
     /// @param earliestIndex The earliest point for splitting. (OK, it's another
     ///                      pointer to the allocator guts).
