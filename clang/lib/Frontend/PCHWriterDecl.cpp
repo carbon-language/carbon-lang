@@ -49,7 +49,7 @@ namespace clang {
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
-    void VisitUnresolvedUsingTypename(UnresolvedUsingTypenameDecl *D);
+    void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
     void VisitTagDecl(TagDecl *D);
     void VisitEnumDecl(EnumDecl *D);
     void VisitRecordDecl(RecordDecl *D);
@@ -61,7 +61,7 @@ namespace clang {
     void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     void VisitValueDecl(ValueDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
-    void VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D);
+    void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     void VisitDeclaratorDecl(DeclaratorDecl *D);
     void VisitFunctionDecl(FunctionDecl *D);
     void VisitCXXMethodDecl(CXXMethodDecl *D);
@@ -610,7 +610,7 @@ void PCHDeclWriter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   Code = pch::DECL_USING_DIRECTIVE;
 }
 
-void PCHDeclWriter::VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D) {
+void PCHDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   VisitValueDecl(D);
   Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
@@ -618,7 +618,7 @@ void PCHDeclWriter::VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D) {
   Code = pch::DECL_UNRESOLVED_USING_VALUE;
 }
 
-void PCHDeclWriter::VisitUnresolvedUsingTypename(
+void PCHDeclWriter::VisitUnresolvedUsingTypenameDecl(
                                                UnresolvedUsingTypenameDecl *D) {
   VisitTypeDecl(D);
   Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);

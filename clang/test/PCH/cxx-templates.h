@@ -55,3 +55,13 @@ inline T make_a(const A1& a1) {
   T::depend_declref();
   return T(a1);
 }
+
+template <class T> class UseBase {
+  void foo();
+  typedef int bar;
+};
+
+template <class T> class UseA : public UseBase<T> {
+  using UseBase<T>::foo;
+  using typename UseBase<T>::bar; 
+};

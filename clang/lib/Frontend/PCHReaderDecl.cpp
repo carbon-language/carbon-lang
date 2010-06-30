@@ -48,7 +48,7 @@ namespace clang {
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *TD);
     void VisitTypedefDecl(TypedefDecl *TD);
-    void VisitUnresolvedUsingTypename(UnresolvedUsingTypenameDecl *D);
+    void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
     void VisitTagDecl(TagDecl *TD);
     void VisitEnumDecl(EnumDecl *ED);
     void VisitRecordDecl(RecordDecl *RD);
@@ -60,7 +60,7 @@ namespace clang {
     void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     void VisitValueDecl(ValueDecl *VD);
     void VisitEnumConstantDecl(EnumConstantDecl *ECD);
-    void VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D);
+    void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     void VisitDeclaratorDecl(DeclaratorDecl *DD);
     void VisitFunctionDecl(FunctionDecl *FD);
     void VisitCXXMethodDecl(CXXMethodDecl *D);
@@ -605,14 +605,14 @@ void PCHDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
                                                 Reader.GetDecl(Record[Idx++])));
 }
 
-void PCHDeclReader::VisitUnresolvedUsingValue(UnresolvedUsingValueDecl *D) {
+void PCHDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   VisitValueDecl(D);
   D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
   D->setUsingLoc(Reader.ReadSourceLocation(Record, Idx));
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
 
-void PCHDeclReader::VisitUnresolvedUsingTypename(
+void PCHDeclReader::VisitUnresolvedUsingTypenameDecl(
                                                UnresolvedUsingTypenameDecl *D) {
   VisitTypeDecl(D);
   D->setTargetNestedNameRange(Reader.ReadSourceRange(Record, Idx));
