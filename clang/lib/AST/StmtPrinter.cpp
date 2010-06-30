@@ -682,7 +682,7 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
 bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
   if (isa<UnaryOperator>(E)) {
     // Base case, print the type and comma.
-    OS << E->getType().getAsString() << ", ";
+    OS << E->getType().getAsString(Policy) << ", ";
     return true;
   } else if (ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
     PrintOffsetOfDesignator(ASE->getLHS());
@@ -706,7 +706,7 @@ void StmtPrinter::VisitUnaryOffsetOf(UnaryOperator *Node) {
 
 void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
   OS << "__builtin_offsetof(";
-  OS << Node->getTypeSourceInfo()->getType().getAsString() << ", ";
+  OS << Node->getTypeSourceInfo()->getType().getAsString(Policy) << ", ";
   bool PrintedSomething = false;
   for (unsigned i = 0, n = Node->getNumComponents(); i < n; ++i) {
     OffsetOfExpr::OffsetOfNode ON = Node->getComponent(i);
@@ -740,7 +740,7 @@ void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
 void StmtPrinter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
   OS << (Node->isSizeOf() ? "sizeof" : "__alignof");
   if (Node->isArgumentType())
-    OS << "(" << Node->getArgumentType().getAsString() << ")";
+    OS << "(" << Node->getArgumentType().getAsString(Policy) << ")";
   else {
     OS << " ";
     PrintExpr(Node->getArgumentExpr());
@@ -806,7 +806,7 @@ void StmtPrinter::VisitCStyleCastExpr(CStyleCastExpr *Node) {
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
-  OS << "(" << Node->getType().getAsString() << ")";
+  OS << "(" << Node->getType().getAsString(Policy) << ")";
   PrintExpr(Node->getInitializer());
 }
 void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
@@ -852,8 +852,8 @@ void StmtPrinter::VisitStmtExpr(StmtExpr *E) {
 
 void StmtPrinter::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
   OS << "__builtin_types_compatible_p(";
-  OS << Node->getArgType1().getAsString() << ",";
-  OS << Node->getArgType2().getAsString() << ")";
+  OS << Node->getArgType1().getAsString(Policy) << ",";
+  OS << Node->getArgType2().getAsString(Policy) << ")";
 }
 
 void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
@@ -947,7 +947,7 @@ void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
   OS << "__builtin_va_arg(";
   PrintExpr(Node->getSubExpr());
   OS << ", ";
-  OS << Node->getType().getAsString();
+  OS << Node->getType().getAsString(Policy);
   OS << ")";
 }
 
@@ -1002,7 +1002,7 @@ void StmtPrinter::VisitCXXMemberCallExpr(CXXMemberCallExpr *Node) {
 
 void StmtPrinter::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   OS << Node->getCastName() << '<';
-  OS << Node->getTypeAsWritten().getAsString() << ">(";
+  OS << Node->getTypeAsWritten().getAsString(Policy) << ">(";
   PrintExpr(Node->getSubExpr());
   OS << ")";
 }
@@ -1026,7 +1026,7 @@ void StmtPrinter::VisitCXXConstCastExpr(CXXConstCastExpr *Node) {
 void StmtPrinter::VisitCXXTypeidExpr(CXXTypeidExpr *Node) {
   OS << "typeid(";
   if (Node->isTypeOperand()) {
-    OS << Node->getTypeOperand().getAsString();
+    OS << Node->getTypeOperand().getAsString(Policy);
   } else {
     PrintExpr(Node->getExprOperand());
   }
@@ -1059,7 +1059,7 @@ void StmtPrinter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
-  OS << Node->getType().getAsString();
+  OS << Node->getType().getAsString(Policy);
   OS << "(";
   PrintExpr(Node->getSubExpr());
   OS << ")";
@@ -1074,7 +1074,7 @@ void StmtPrinter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
-  OS << Node->getType().getAsString();
+  OS << Node->getType().getAsString(Policy);
   OS << "(";
   for (CXXTemporaryObjectExpr::arg_iterator Arg = Node->arg_begin(),
                                          ArgEnd = Node->arg_end();
@@ -1087,7 +1087,7 @@ void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
-  OS << Node->getType().getAsString() << "()";
+  OS << Node->getType().getAsString(Policy) << "()";
 }
 
 void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
@@ -1177,7 +1177,7 @@ void StmtPrinter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 void
 StmtPrinter::VisitCXXUnresolvedConstructExpr(
                                            CXXUnresolvedConstructExpr *Node) {
-  OS << Node->getTypeAsWritten().getAsString();
+  OS << Node->getTypeAsWritten().getAsString(Policy);
   OS << "(";
   for (CXXUnresolvedConstructExpr::arg_iterator Arg = Node->arg_begin(),
                                              ArgEnd = Node->arg_end();
@@ -1254,7 +1254,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
 
 void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   OS << getTypeTraitName(E->getTrait()) << "("
-     << E->getQueriedType().getAsString() << ")";
+     << E->getQueriedType().getAsString(Policy) << ")";
 }
 
 // Obj-C
@@ -1265,7 +1265,7 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
 }
 
 void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
-  OS << "@encode(" << Node->getEncodedType().getAsString() << ')';
+  OS << "@encode(" << Node->getEncodedType().getAsString(Policy) << ')';
 }
 
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {

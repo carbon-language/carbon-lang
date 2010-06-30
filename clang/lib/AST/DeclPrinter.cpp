@@ -406,7 +406,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
             FieldDecl *FD = BMInitializer->getMember();
             Out << FD;
           } else {
-            Out << QualType(BMInitializer->getBaseClass(), 0).getAsString();
+            Out << QualType(BMInitializer->getBaseClass(),
+                            0).getAsString(Policy);
           }
           
           Out << "(";
