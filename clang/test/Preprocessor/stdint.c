@@ -31,8 +31,8 @@
 // ARM:typedef int32_t intptr_t;
 // ARM:typedef uint32_t uintptr_t;
 // 
-// ARM:typedef int64_t intmax_t;
-// ARM:typedef uint64_t uintmax_t;
+// ARM:typedef long long int intmax_t;
+// ARM:typedef long long unsigned int uintmax_t;
 //
 // ARM:INT8_MAX_ 127
 // ARM:INT8_MIN_ (-127 -1)
@@ -139,8 +139,8 @@
 // BFIN:typedef int32_t intptr_t;
 // BFIN:typedef uint32_t uintptr_t;
 //
-// BFIN:typedef int64_t intmax_t;
-// BFIN:typedef uint64_t uintmax_t;
+// BFIN:typedef long long int intmax_t;
+// BFIN:typedef long long unsigned int uintmax_t;
 //
 // BFIN:INT8_MAX_ 127
 // BFIN:INT8_MIN_ (-127 -1)
@@ -247,8 +247,8 @@
 // I386:typedef int32_t intptr_t;
 // I386:typedef uint32_t uintptr_t;
 //
-// I386:typedef int64_t intmax_t;
-// I386:typedef uint64_t uintmax_t;
+// I386:typedef long long int intmax_t;
+// I386:typedef long long unsigned int uintmax_t;
 //
 // I386:INT8_MAX_ 127
 // I386:INT8_MIN_ (-127 -1)
@@ -347,8 +347,8 @@
 // MSP430:typedef int16_t intptr_t;
 // MSP430:typedef uint16_t uintptr_t;
 //
-// MSP430:typedef int32_t intmax_t;
-// MSP430:typedef uint32_t uintmax_t;
+// MSP430:typedef long int intmax_t;
+// MSP430:typedef long unsigned int uintmax_t;
 //
 // MSP430:INT8_MAX_ 127
 // MSP430:INT8_MIN_ (-127 -1)
@@ -447,8 +447,8 @@
 // PIC16:typedef int16_t intptr_t;
 // PIC16:typedef uint16_t uintptr_t;
 //
-// PIC16:typedef int32_t intmax_t;
-// PIC16:typedef uint32_t uintmax_t;
+// PIC16:typedef long int intmax_t;
+// PIC16:typedef long unsigned int uintmax_t;
 //
 // PIC16:INT8_MAX_ 127
 // PIC16:INT8_MIN_ (-127 -1)
@@ -554,8 +554,8 @@
 // PPC64:typedef int64_t intptr_t;
 // PPC64:typedef uint64_t uintptr_t;
 //
-// PPC64:typedef int64_t intmax_t;
-// PPC64:typedef uint64_t uintmax_t;
+// PPC64:typedef long int intmax_t;
+// PPC64:typedef long unsigned int uintmax_t;
 //
 // PPC64:INT8_MAX_ 127
 // PPC64:INT8_MIN_ (-127 -1)
@@ -662,8 +662,8 @@
 // PPC:typedef int32_t intptr_t;
 // PPC:typedef uint32_t uintptr_t;
 //
-// PPC:typedef int64_t intmax_t;
-// PPC:typedef uint64_t uintmax_t;
+// PPC:typedef long long int intmax_t;
+// PPC:typedef long long unsigned int uintmax_t;
 //
 // PPC:INT8_MAX_ 127
 // PPC:INT8_MIN_ (-127 -1)
@@ -769,8 +769,8 @@
 // S390X:typedef int64_t intptr_t;
 // S390X:typedef uint64_t uintptr_t;
 //
-// S390X:typedef int64_t intmax_t;
-// S390X:typedef uint64_t uintmax_t;
+// S390X:typedef long long int intmax_t;
+// S390X:typedef long long unsigned int uintmax_t;
 //
 // S390X:INT8_MAX_ 127
 // S390X:INT8_MIN_ (-127 -1)
@@ -876,8 +876,8 @@
 // SPARC:typedef int32_t intptr_t;
 // SPARC:typedef uint32_t uintptr_t;
 //
-// SPARC:typedef int64_t intmax_t;
-// SPARC:typedef uint64_t uintmax_t;
+// SPARC:typedef long long int intmax_t;
+// SPARC:typedef long long unsigned int uintmax_t;
 //
 // SPARC:INT8_MAX_ 127
 // SPARC:INT8_MIN_ (-127 -1)
@@ -976,8 +976,8 @@
 // TCE:typedef int32_t intptr_t;
 // TCE:typedef uint32_t uintptr_t;
 //
-// TCE:typedef int32_t intmax_t;
-// TCE:typedef uint32_t uintmax_t;
+// TCE:typedef long int intmax_t;
+// TCE:typedef long unsigned int uintmax_t;
 //
 // TCE:INT8_MAX_ 127
 // TCE:INT8_MIN_ (-127 -1)
@@ -1084,8 +1084,8 @@
 // X86_64:typedef int64_t intptr_t;
 // X86_64:typedef uint64_t uintptr_t;
 //
-// X86_64:typedef int64_t intmax_t;
-// X86_64:typedef uint64_t uintmax_t;
+// X86_64:typedef long int intmax_t;
+// X86_64:typedef long unsigned int uintmax_t;
 //
 // X86_64:INT8_MAX_ 127
 // X86_64:INT8_MIN_ (-127 -1)
@@ -1165,11 +1165,11 @@
 // the identifiers used in the operations (int, uint, _t, INT, UINT, _MIN,
 // _MAX, and _C(v)) are themselves macros.
 //
-// RUN: %clang_cc1 -E -ffreestanding -Dint=a -Duint=b -D_t=c -DINT=d -DUINT=e -D_MIN=f -D_MAX=g '-D_C(v)=h' -triple=i386-none-none %s | FileCheck -check-prefix JOIN %s
+// RUN: %clang_cc1 -E -ffreestanding -U__UINTMAX_TYPE__ -U__INTMAX_TYPE__ -Dint=a -Duint=b -D_t=c -DINT=d -DUINT=e -D_MIN=f -D_MAX=g '-D_C(v)=h' -triple=i386-none-none %s | FileCheck -check-prefix JOIN %s
 // JOIN:typedef int32_t intptr_t;
 // JOIN:typedef uint32_t uintptr_t;
-// JOIN:typedef int64_t intmax_t;
-// JOIN:typedef uint64_t uintmax_t;
+// JOIN:typedef __INTMAX_TYPE__ intmax_t;
+// JOIN:typedef __UINTMAX_TYPE__ uintmax_t;
 // JOIN:INTPTR_MIN_ (-2147483647 -1)
 // JOIN:INTPTR_MAX_ 2147483647
 // JOIN:UINTPTR_MAX_ 4294967295U

@@ -233,8 +233,8 @@ typedef __uintn_t(__INTPTR_WIDTH__) uintptr_t;
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
-typedef  __intn_t(__INTMAX_WIDTH__)  intmax_t;
-typedef __uintn_t(__INTMAX_WIDTH__) uintmax_t;
+typedef __INTMAX_TYPE__  intmax_t;
+typedef __UINTMAX_TYPE__ uintmax_t;
 
 /* C99 7.18.4 Macros for minimum-width integer constants.
  *
