@@ -42,8 +42,13 @@ public:
         GetByteSize() const = 0;
 
         virtual void
-        Dump (Stream *s, lldb::addr_t base_address, DataExtractor *bytes, uint32_t bytes_offset, const lldb_private::ExecutionContext exe_ctx, bool raw) = 0;
-
+        Dump (Stream *s,
+              Address *address,
+              const DataExtractor *bytes, 
+              uint32_t bytes_offset, 
+              const ExecutionContext &exe_ctx, 
+              bool raw) = 0;
+        
         virtual bool
         DoesBranch () const = 0;
 
@@ -89,7 +94,36 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const ExecutionContext &exe_ctx,
-                 uint32_t mixed_context_lines,
+                 const AddressRange &range,
+                 uint32_t num_mixed_context_lines,
+                 bool show_bytes,
+                 Stream &strm);
+
+    static size_t
+    Disassemble (Debugger &debugger,
+                 const ArchSpec &arch,
+                 const ExecutionContext &exe_ctx,
+                 SymbolContextList &sc_list,
+                 uint32_t num_mixed_context_lines,
+                 bool show_bytes,
+                 Stream &strm);
+    
+    static bool
+    Disassemble (Debugger &debugger,
+                 const ArchSpec &arch,
+                 const ExecutionContext &exe_ctx,
+                 const ConstString &name,
+                 Module *module,
+                 uint32_t num_mixed_context_lines,
+                 bool show_bytes,
+                 Stream &strm);
+
+    static bool
+    Disassemble (Debugger &debugger,
+                 const ArchSpec &arch,
+                 const ExecutionContext &exe_ctx,
+                 uint32_t num_mixed_context_lines,
+                 bool show_bytes,
                  Stream &strm);
 
     //------------------------------------------------------------------
@@ -102,17 +136,14 @@ public:
 
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
-                       lldb::AddressType addr_type,
-                       lldb::addr_t addr,
-                       size_t byte_size,
+                       const AddressRange &range,
                        DataExtractor& data);
 
     virtual size_t
-    ParseInstructions (const DataExtractor& data,
-                       uint32_t data_offset,
-                       uint32_t num_instructions,
-                       lldb::addr_t base_addr) = 0;
-
+    DecodeInstructions (const DataExtractor& data,
+                        uint32_t data_offset,
+                        uint32_t num_instructions) = 0;
+    
     InstructionList &
     GetInstructionList ();
 

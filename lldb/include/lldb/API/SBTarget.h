@@ -122,7 +122,8 @@ public:
     //Disassemble ();
 
     void
-    Disassemble (lldb::addr_t file_address_start, lldb::addr_t file_address_end = LLDB_INVALID_ADDRESS,
+    Disassemble (lldb::addr_t start_address, 
+                 lldb::addr_t end_address = LLDB_INVALID_ADDRESS,
                  const char *module_name = NULL);
 
     void

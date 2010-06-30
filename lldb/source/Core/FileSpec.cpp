@@ -496,21 +496,11 @@ FileSpec::MemorySize() const
     return m_filename.MemorySize() + m_directory.MemorySize();
 }
 
-//------------------------------------------------------------------
-// Returns a shared pointer to a data buffer that contains all or
-// part of the contents of a file. The data copies into a heap based
-// buffer that lives in the DataBuffer shared pointer object returned.
-// The data that is cached will start "file_offset" bytes into the
-// file, and "file_size" bytes will be mapped. If "file_size" is
-// greater than the number of bytes available in the file starting
-// at "file_offset", the number of bytes will be appropriately
-// truncated. The final number of bytes that get mapped can be
-// verified using the DataBuffer::GetByteSize() function.
-//------------------------------------------------------------------
-DataBufferSP
-FileSpec::ReadFileContents(off_t file_offset, size_t file_size) const
+
+size_t
+FileSpec::ReadFileContents (off_t file_offset, void *dst, size_t dst_len) const
 {
-    DataBufferSP data_sp;
+    size_t bytes_read = 0;
     char resolved_path[PATH_MAX];
     if (GetPath(resolved_path, sizeof(resolved_path)))
     {
@@ -527,17 +517,63 @@ FileSpec::ReadFileContents(off_t file_offset, size_t file_size) const
                     if (file_offset > 0)
                         lseek_result = ::lseek (fd, file_offset, SEEK_SET);
 
+                    if (lseek_result == file_offset)
+                    {
+                        ssize_t n = ::read (fd, dst, dst_len);
+                        if (n >= 0)
+                            bytes_read = n;
+                    }
+                }
+            }
+        }
+        close(fd);
+    }
+    return bytes_read;
+}
+
+//------------------------------------------------------------------
+// Returns a shared pointer to a data buffer that contains all or
+// part of the contents of a file. The data copies into a heap based
+// buffer that lives in the DataBuffer shared pointer object returned.
+// The data that is cached will start "file_offset" bytes into the
+// file, and "file_size" bytes will be mapped. If "file_size" is
+// greater than the number of bytes available in the file starting
+// at "file_offset", the number of bytes will be appropriately
+// truncated. The final number of bytes that get mapped can be
+// verified using the DataBuffer::GetByteSize() function.
+//------------------------------------------------------------------
+DataBufferSP
+FileSpec::ReadFileContents (off_t file_offset, size_t file_size) const
+{
+    DataBufferSP data_sp;
+    char resolved_path[PATH_MAX];
+    if (GetPath(resolved_path, sizeof(resolved_path)))
+    {
+        int fd = ::open (resolved_path, O_RDONLY, 0);
+        if (fd != -1)
+        {
+            struct stat file_stats;
+            if (::fstat (fd, &file_stats) == 0)
+            {
+                if (file_stats.st_size > 0)
+                {
+                    off_t lseek_result = 0;
+                    if (file_offset > 0)
+                        lseek_result = ::lseek (fd, file_offset, SEEK_SET);
+
                     if (lseek_result < 0)
                     {
                         // Get error from errno
                     }
                     else if (lseek_result == file_offset)
                     {
+                        const size_t bytes_left = file_stats.st_size - file_offset;
+                        size_t num_bytes_to_read = file_size;
+                        if (num_bytes_to_read > bytes_left)
+                            num_bytes_to_read = bytes_left;
+
                         std::auto_ptr<DataBufferHeap> data_heap_ap;
-                        if (file_stats.st_size < file_size)
-                            data_heap_ap.reset(new DataBufferHeap(file_stats.st_size, '\0'));
-                        else
-                            data_heap_ap.reset(new DataBufferHeap(file_size, '\0'));
+                        data_heap_ap.reset(new DataBufferHeap(num_bytes_to_read, '\0'));
 
                         if (data_heap_ap.get())
                         {

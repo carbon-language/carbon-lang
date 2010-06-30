@@ -100,19 +100,27 @@ void
 DisassemblerLLVM::Instruction::Dump
 (
     Stream *s,
-    lldb::addr_t base_address,
-    DataExtractor *bytes,
+    lldb_private::Address *inst_addr_ptr,
+    const DataExtractor *bytes,
     uint32_t bytes_offset,
-    const lldb_private::ExecutionContext exe_ctx,
+    const lldb_private::ExecutionContext& exe_ctx,
     bool raw
 )
 {
     const size_t opcodeColumnWidth = 7;
     const size_t operandColumnWidth = 25;
 
+    ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
     // If we have an address, print it out
-    if (base_address != LLDB_INVALID_ADDRESS)
-        s->Printf("0x%llx:  ", base_address);
+    if (inst_addr_ptr)
+    {
+        if (inst_addr_ptr->Dump (s, 
+                                 exe_scope, 
+                                 Address::DumpStyleLoadAddress, 
+                                 Address::DumpStyleModuleWithFileAddress,
+                                 0))
+            s->PutCString(":  ");
+    }
 
     // If we are supposed to show bytes, "bytes" will be non-NULL.
     if (bytes)
@@ -131,9 +139,15 @@ DisassemblerLLVM::Instruction::Dump
 
     int currentOpIndex = -1;
 
-    RegisterReaderArg rra(base_address + EDInstByteSize(m_inst), m_disassembler);
-
     lldb_private::Process *process = exe_ctx.process;
+    addr_t base_addr = LLDB_INVALID_ADDRESS;
+    if (process && process->IsAlive())
+        base_addr = inst_addr_ptr->GetLoadAddress (process);
+    if (base_addr == LLDB_INVALID_ADDRESS)
+        base_addr = inst_addr_ptr->GetFileAddress ();
+
+    RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
+
 
     bool printTokenized = false;
 
@@ -228,13 +242,21 @@ DisassemblerLLVM::Instruction::Dump
                                         }
 
                                         lldb_private::Address so_addr;
-                                        if (process)
+                                        if (process && process->IsAlive())
                                         {
-                                            if (process->ResolveLoadAddress(operand_value, so_addr))
+                                            if (process->ResolveLoadAddress (operand_value, so_addr))
+                                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
+                                        }
+                                        else if (inst_addr_ptr)
+                                        {
+                                            Module *module = inst_addr_ptr->GetModule();
+                                            if (module)
                                             {
-                                                so_addr.Dump(&comment, process, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
+                                                if (module->ResolveFileAddress (operand_value, so_addr))
+                                                    so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
                                             }
                                         }
+
                                     } // EDEvaluateOperand
                                 } // EDOperandIsMemory
                             } // EDGetOperand
@@ -364,12 +386,11 @@ DisassemblerLLVM::~DisassemblerLLVM()
 }
 
 size_t
-DisassemblerLLVM::ParseInstructions
+DisassemblerLLVM::DecodeInstructions
 (
     const DataExtractor& data,
     uint32_t data_offset,
-    uint32_t num_instructions,
-    lldb::addr_t base_addr
+    uint32_t num_instructions
 )
 {
     size_t total_inst_byte_size = 0;

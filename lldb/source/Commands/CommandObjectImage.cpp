@@ -231,7 +231,11 @@ LookupAddressInModule (CommandInterpreter &interpreter, Stream &strm, Module *mo
         strm.Indent ("    Address: ");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
         strm.EOL();
+        strm.Indent ("    Summary: ");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
+        strm.EOL();
+        if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext))
+            strm.EOL();
         strm.IndentLess();
         return true;
     }

@@ -17,39 +17,57 @@
 using namespace lldb;
 using namespace lldb_private;
 
+//static size_t
+//ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, size_t dst_len)
+//{
+//    if (exe_scope == NULL)
+//        return 0;
+//
+//    lldb::AddressType addr_type = eAddressTypeInvalid;
+//    addr_t addr = LLDB_INVALID_ADDRESS;
+//
+//    Process *process = exe_scope->CalculateProcess();
+//
+//    if (process && process->IsAlive())
+//    {
+//        addr = address.GetLoadAddress(process);
+//        if (addr != LLDB_INVALID_ADDRESS)
+//            addr_type = eAddressTypeLoad;
+//    }
+//
+//    if (addr == LLDB_INVALID_ADDRESS)
+//    {
+//        addr = address.GetFileAddress();
+//        if (addr != LLDB_INVALID_ADDRESS)
+//            addr_type = eAddressTypeFile;
+//    }
+//
+//    if (addr_type == eAddressTypeInvalid)
+//        return false;
+//
+//    Target *target = exe_scope->CalculateTarget();
+//    if (target)
+//    {
+//        Error error;
+//        ObjectFile *objfile = NULL;
+//        if (address.GetModule())
+//            objfile = address.GetModule()->GetObjectFile();
+//        return target->ReadMemory (addr_type, addr, dst, dst_len, error, objfile);
+//    }
+//    return 0;
+//}
+
 static size_t
 ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, size_t dst_len)
 {
     if (exe_scope == NULL)
         return 0;
 
-    lldb::AddressType addr_type = eAddressTypeInvalid;
-    addr_t addr = LLDB_INVALID_ADDRESS;
-
-    Process *process = exe_scope->CalculateProcess();
-
-    if (process && process->IsAlive())
-    {
-        addr = address.GetLoadAddress(process);
-        if (addr != LLDB_INVALID_ADDRESS)
-            addr_type = eAddressTypeLoad;
-    }
-
-    if (addr == LLDB_INVALID_ADDRESS)
-    {
-        addr = address.GetFileAddress();
-        if (addr != LLDB_INVALID_ADDRESS)
-            addr_type = eAddressTypeFile;
-    }
-
-    if (addr_type == eAddressTypeInvalid)
-        return false;
-
     Target *target = exe_scope->CalculateTarget();
     if (target)
     {
         Error error;
-        return target->ReadMemory (addr_type, addr, dst, dst_len, error, NULL);
+        return target->ReadMemory (address, dst, dst_len, error);
     }
     return 0;
 }
@@ -386,7 +404,7 @@ Address::Clear()
 
 
 bool
-Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, DumpStyle fallback_style) const
+Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, DumpStyle fallback_style, uint32_t addr_size) const
 {
     // If the section was NULL, only load address is going to work.
     if (m_section == NULL)
@@ -395,12 +413,17 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     Process *process = NULL;
     if (exe_scope)
         process = exe_scope->CalculateProcess();
-    int addr_size = sizeof (addr_t);
-    if (process)
-      addr_size = process->GetAddressByteSize ();
+    // If addr_byte_size is UINT32_MAX, then determine the correct address
+    // byte size for the process or default to the size of addr_t
+    if (addr_size == UINT32_MAX)
+    {
+        if (process)
+            addr_size = process->GetAddressByteSize ();
+        else
+            addr_size = sizeof(addr_t);
+    }
 
     lldb_private::Address so_addr;
-
     switch (style)
     {
     case DumpStyleSectionNameOffset:
@@ -411,12 +434,13 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         }
         else
         {
-            s->Printf("0x%16.16llx", m_offset);
+            s->Address(m_offset, addr_size);
         }
         break;
 
     case DumpStyleSectionPointerOffset:
-        s->Printf("(Section *)%.*p + 0x%16.16llx", (int)sizeof(void*) * 2, m_section, m_offset);
+        s->Printf("(Section *)%.*p + ", (int)sizeof(void*) * 2, m_section);
+        s->Address(m_offset, addr_size);
         break;
 
     case DumpStyleModuleWithFileAddress:
@@ -428,7 +452,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             if (file_addr == LLDB_INVALID_ADDRESS)
             {
                 if (fallback_style != DumpStyleInvalid)
-                    return Dump (s, exe_scope, fallback_style);
+                    return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
                 return false;
             }
             s->Address (file_addr, addr_size);
@@ -443,7 +467,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             if (load_addr == LLDB_INVALID_ADDRESS)
             {
                 if (fallback_style != DumpStyleInvalid)
-                    return Dump (s, exe_scope, fallback_style);
+                    return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
                 return false;
             }
             s->Address (load_addr, addr_size);
@@ -592,13 +616,17 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                             if (so_addr.IsSectionOffset())
                             {
                                 lldb_private::SymbolContext pointer_sc;
-                                process->GetTarget().GetImages().ResolveSymbolContextForAddress (so_addr,
-                                                                                                 eSymbolContextEverything,
-                                                                                                 pointer_sc);
-                                if (pointer_sc.function || pointer_sc.symbol)
+                                Target *target = exe_scope->CalculateTarget();
+                                if (target)
                                 {
-                                    s->PutCString(": ");
-                                    pointer_sc.DumpStopContext(s, process, so_addr, false);
+                                    target->GetImages().ResolveSymbolContextForAddress (so_addr,
+                                                                                        eSymbolContextEverything,
+                                                                                        pointer_sc);
+                                    if (pointer_sc.function || pointer_sc.symbol)
+                                    {
+                                        s->PutCString(": ");
+                                        pointer_sc.DumpStopContext(s, process, so_addr, false);
+                                    }
                                 }
                             }
                         }
@@ -629,10 +657,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         {
                             // We have a function or a symbol from the same
                             // sections as this address.
-                            s->Indent("    Summary: ");
-                            sc.DumpStopContext(s, process, *this, false);
-                            s->EOL();
-                            sc.GetDescription(s, eDescriptionLevelBrief, process);
+                            sc.DumpStopContext(s, process, *this, true);
                         }
                         else
                         {
@@ -648,9 +673,44 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         else
         {
             if (fallback_style != DumpStyleInvalid)
-                return Dump (s, exe_scope, fallback_style);
+                return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
             return false;
         }
+        break;
+
+    case DumpStyleDetailedSymbolContext:
+        if (IsSectionOffset())
+        {
+            lldb::AddressType addr_type = eAddressTypeLoad;
+            addr_t addr = GetLoadAddress (process);
+            if (addr == LLDB_INVALID_ADDRESS)
+            {
+                addr = GetFileAddress();
+                addr_type = eAddressTypeFile;
+            }
+
+            lldb_private::Module *module = GetModule();
+            if (module)
+            {
+                lldb_private::SymbolContext sc;
+                module->ResolveSymbolContextForAddress(*this, eSymbolContextEverything, sc);
+                if (sc.function || sc.symbol)
+                {
+                    if (sc.function == NULL && sc.symbol != NULL)
+                    {
+                        // If we have just a symbol make sure it is in the right section
+                        if (sc.symbol->GetAddressRangePtr() && sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() == GetSection())
+                        {
+                            sc.GetDescription(s, eDescriptionLevelBrief, process);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (fallback_style != DumpStyleInvalid)
+            return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
+        return false;
         break;
     }
 

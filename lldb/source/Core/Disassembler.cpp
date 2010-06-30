@@ -52,53 +52,121 @@ Disassembler::FindPlugin (const ArchSpec &arch)
     return NULL;
 }
 
+
+
+size_t
+Disassembler::Disassemble
+(
+    Debugger &debugger,
+    const ArchSpec &arch,
+    const ExecutionContext &exe_ctx,
+    SymbolContextList &sc_list,
+    uint32_t num_mixed_context_lines,
+    bool show_bytes,
+    Stream &strm
+)
+{
+    size_t success_count = 0;
+    const size_t count = sc_list.GetSize();
+    SymbolContext sc;
+    AddressRange range;
+    for (size_t i=0; i<count; ++i)
+    {
+        if (sc_list.GetContextAtIndex(i, sc) == false)
+            break;
+        if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
+        {
+            if (Disassemble (debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, strm))
+            {
+                ++success_count;
+                strm.EOL();
+            }
+        }
+    }
+    return success_count;
+}
+
 bool
 Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
     const ExecutionContext &exe_ctx,
-    uint32_t mixed_context_lines,
+    const ConstString &name,
+    Module *module,
+    uint32_t num_mixed_context_lines,
+    bool show_bytes,
     Stream &strm
 )
 {
-    Disassembler *disassembler = Disassembler::FindPlugin(arch);
+    if (exe_ctx.target == NULL && name)
+        return false;
 
-    if (disassembler)
+    SymbolContextList sc_list;
+
+    if (module)
     {
-        lldb::addr_t addr = LLDB_INVALID_ADDRESS;
-        size_t byte_size = 0;
-        if (exe_ctx.frame)
+        if (!module->FindFunctions (name, 
+                                    eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                    true,
+                                    sc_list))
+            return false;
+    }
+    else 
+    {
+        if (exe_ctx.target->GetImages().FindFunctions (name, 
+                                                       eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                                       sc_list))
         {
-            SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
-            if (sc.function)
+            return Disassemble (debugger, arch, exe_ctx, sc_list, num_mixed_context_lines, show_bytes, strm);
+        }
+        else if (exe_ctx.target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list))
+        {
+            return Disassemble (debugger, arch, exe_ctx, sc_list, num_mixed_context_lines, show_bytes, strm);
+        }
+    }
+    return false;
+}
+
+bool
+Disassembler::Disassemble
+(
+    Debugger &debugger,
+    const ArchSpec &arch,
+    const ExecutionContext &exe_ctx,
+    const AddressRange &disasm_range,
+    uint32_t num_mixed_context_lines,
+    bool show_bytes,
+    Stream &strm
+)
+{
+    if (disasm_range.GetByteSize())
+    {
+        Disassembler *disassembler = Disassembler::FindPlugin(arch);
+
+        if (disassembler)
+        {
+            AddressRange range(disasm_range);
+            
+            Process *process = exe_ctx.process;
+
+            // If we weren't passed in a section offset address range,
+            // try and resolve it to something
+            if (range.GetBaseAddress().IsSectionOffset() == false)
             {
-                addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
-                    byte_size = sc.function->GetAddressRange().GetByteSize();
-            }
-            else if (sc.symbol && sc.symbol->GetAddressRangePtr())
-            {
-                addr = sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
+                if (process && process->IsAlive())
                 {
-                    byte_size = sc.symbol->GetAddressRangePtr()->GetByteSize();
-                    if (byte_size == 0)
-                        byte_size = DEFAULT_DISASM_BYTE_SIZE;
+                    process->ResolveLoadAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
+                }
+                else if (exe_ctx.target)
+                {
+                    exe_ctx.target->GetImages().ResolveFileAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
                 }
             }
-            else
-            {
-                addr = exe_ctx.frame->GetPC().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
-                    byte_size = DEFAULT_DISASM_BYTE_SIZE;
-            }
-        }
 
-        if (byte_size)
-        {
+
             DataExtractor data;
-            size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, eAddressTypeLoad, addr, byte_size, data);
+            size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, range, data);
             if (bytes_disassembled == 0)
             {
                 return false;
@@ -111,63 +179,94 @@ Disassembler::Disassemble
                 SymbolContext sc;
                 SymbolContext prev_sc;
                 AddressRange sc_range;
-                if (mixed_context_lines)
+                if (num_mixed_context_lines)
                     strm.IndentMore ();
+
+
+                Address addr(range.GetBaseAddress());
+    
+                // We extract the section to make sure we don't transition out
+                // of the current section when disassembling
+                const Section *addr_section = addr.GetSection();
+                Module *range_module = range.GetBaseAddress().GetModule();
 
                 for (size_t i=0; i<num_instructions; ++i)
                 {
                     Disassembler::Instruction *inst = disassembler->GetInstructionList().GetInstructionAtIndex (i);
                     if (inst)
                     {
-                        lldb::addr_t curr_addr = addr + offset;
-                        if (mixed_context_lines)
+                        addr_t file_addr = addr.GetFileAddress();
+                        if (addr_section == NULL || addr_section->ContainsFileAddress (file_addr) == false)
                         {
-                            if (!sc_range.ContainsLoadAddress (curr_addr, exe_ctx.process))
+                            if (range_module)
+                                range_module->ResolveFileAddress (file_addr, addr);
+                            else if (exe_ctx.target)
+                                exe_ctx.target->GetImages().ResolveFileAddress (file_addr, addr);
+                                
+                            addr_section = addr.GetSection();
+                        }
+
+                        prev_sc = sc;
+
+                        if (addr_section)
+                        {
+                            Module *module = addr_section->GetModule();
+                            uint32_t resolved_mask = module->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
+                            if (resolved_mask)
                             {
-                                prev_sc = sc;
-                                Address curr_so_addr;
-                                Process *process = exe_ctx.process;
-                                if (process && process->ResolveLoadAddress (curr_addr, curr_so_addr))
+                                if (prev_sc.function != sc.function || prev_sc.symbol != sc.symbol)
                                 {
-                                    if (curr_so_addr.GetSection())
+                                    if (prev_sc.function || prev_sc.symbol)
+                                        strm.EOL();
+
+                                    strm << sc.module_sp->GetFileSpec().GetFilename();
+                                    
+                                    if (sc.function)
+                                        strm << '`' << sc.function->GetMangled().GetName();
+                                    else if (sc.symbol)
+                                        strm << '`' << sc.symbol->GetMangled().GetName();
+                                    strm << ":\n";
+                                }
+
+                                if (num_mixed_context_lines && !sc_range.ContainsFileAddress (addr))
+                                {
+                                    sc.GetAddressRange (eSymbolContextEverything, sc_range);
+                                        
+                                    if (sc != prev_sc)
                                     {
-                                        Module *module = curr_so_addr.GetSection()->GetModule();
-                                        uint32_t resolved_mask = module->ResolveSymbolContextForAddress(curr_so_addr, eSymbolContextEverything, sc);
-                                        if (resolved_mask)
+                                        if (offset != 0)
+                                            strm.EOL();
+
+                                        sc.DumpStopContext(&strm, process, addr);
+
+                                        if (sc.comp_unit && sc.line_entry.IsValid())
                                         {
-                                            sc.GetAddressRange (eSymbolContextEverything, sc_range);
-                                            if (sc != prev_sc)
-                                            {
-                                                if (offset != 0)
-                                                    strm.EOL();
-
-                                                sc.DumpStopContext(&strm, process, curr_so_addr);
-
-                                                if (sc.comp_unit && sc.line_entry.IsValid())
-                                                {
-                                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (
-                                                            sc.line_entry.file,
-                                                            sc.line_entry.line,
-                                                            mixed_context_lines,
-                                                            mixed_context_lines,
-                                                            mixed_context_lines ? "->" : "",
-                                                            &strm);
-                                                }
-                                            }
+                                            debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
+                                                                                                           sc.line_entry.line,
+                                                                                                           num_mixed_context_lines,
+                                                                                                           num_mixed_context_lines,
+                                                                                                           num_mixed_context_lines ? "->" : "",
+                                                                                                           &strm);
                                         }
                                     }
                                 }
                             }
+                            else
+                            {
+                                sc.Clear();
+                            }
                         }
-                        if (mixed_context_lines)
+                        if (num_mixed_context_lines)
                             strm.IndentMore ();
                         strm.Indent();
                         size_t inst_byte_size = inst->GetByteSize();
-                        //inst->Dump(&strm, curr_addr, &data, offset);  // Do dump opcode bytes
-                        inst->Dump(&strm, curr_addr, NULL, offset, exe_ctx, false); // Don't dump opcode bytes
+                        inst->Dump(&strm, &addr, show_bytes ? &data : NULL, offset, exe_ctx, show_bytes);
                         strm.EOL();
                         offset += inst_byte_size;
-                        if (mixed_context_lines)
+                        
+                        addr.SetOffset (addr.GetOffset() + inst_byte_size);
+
+                        if (num_mixed_context_lines)
                             strm.IndentLess ();
                     }
                     else
@@ -175,7 +274,7 @@ Disassembler::Disassemble
                         break;
                     }
                 }
-                if (mixed_context_lines)
+                if (num_mixed_context_lines)
                     strm.IndentLess ();
 
             }
@@ -183,6 +282,42 @@ Disassembler::Disassemble
         return true;
     }
     return false;
+}
+
+
+bool
+Disassembler::Disassemble
+(
+    Debugger &debugger,
+    const ArchSpec &arch,
+    const ExecutionContext &exe_ctx,
+    uint32_t num_mixed_context_lines,
+    bool show_bytes,
+    Stream &strm
+)
+{
+    AddressRange range;
+    if (exe_ctx.frame)
+    {
+        SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+        if (sc.function)
+        {
+            range = sc.function->GetAddressRange();
+        }
+        else if (sc.symbol && sc.symbol->GetAddressRangePtr())
+        {
+            range = *sc.symbol->GetAddressRangePtr();
+        }
+        else
+        {
+            range.GetBaseAddress() = exe_ctx.frame->GetPC();
+        }
+
+        if (range.GetBaseAddress().IsValid() && range.GetByteSize() == 0)
+            range.SetByteSize (DEFAULT_DISASM_BYTE_SIZE);
+    }
+
+    return Disassemble(debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, strm);
 }
 
 Disassembler::Instruction::Instruction()
@@ -244,26 +379,39 @@ size_t
 Disassembler::ParseInstructions
 (
     const ExecutionContext *exe_ctx,
-    lldb::AddressType addr_type,
-    lldb::addr_t addr,
-    size_t byte_size,
+    const AddressRange &range,
     DataExtractor& data
 )
 {
-    Process *process = exe_ctx->process;
+    Target *target = exe_ctx->target;
 
-    if (process == NULL)
+    const addr_t byte_size = range.GetByteSize();
+    if (target == NULL || byte_size == 0 || !range.GetBaseAddress().IsValid())
         return 0;
 
-    DataBufferSP data_sp(new DataBufferHeap (byte_size, '\0'));
+    DataBufferHeap *heap_buffer = new DataBufferHeap (byte_size, '\0');
+    DataBufferSP data_sp(heap_buffer);
 
     Error error;
-    if (process->GetTarget().ReadMemory (addr_type, addr, data_sp->GetBytes(), data_sp->GetByteSize(), error, NULL))
+    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), heap_buffer->GetBytes(), heap_buffer->GetByteSize(), error);
+    
+    if (bytes_read > 0)
     {
+        if (bytes_read != heap_buffer->GetByteSize())
+            heap_buffer->SetByteSize (bytes_read);
+
         data.SetData(data_sp);
-        data.SetByteOrder(process->GetByteOrder());
-        data.SetAddressByteSize(process->GetAddressByteSize());
-        return ParseInstructions (data, 0, UINT32_MAX, addr);
+        if (exe_ctx->process)
+        {
+            data.SetByteOrder(exe_ctx->process->GetByteOrder());
+            data.SetAddressByteSize(exe_ctx->process->GetAddressByteSize());
+        }
+        else
+        {
+            data.SetByteOrder(target->GetArchitecture().GetDefaultEndian());
+            data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
+        }
+        return DecodeInstructions (data, 0, UINT32_MAX);
     }
 
     return 0;

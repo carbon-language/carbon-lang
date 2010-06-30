@@ -264,13 +264,11 @@ public:
     GetTargetTriple (ConstString &target_triple);
 
     size_t
-    ReadMemory (lldb::AddressType addr_type,
-                lldb::addr_t addr,
-                void *buf,
-                size_t size,
-                Error &error,
-                ObjectFile* objfile = NULL);
-
+    ReadMemory (const Address& addr,
+                void *dst,
+                size_t dst_len,
+                Error &error);
+    
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------

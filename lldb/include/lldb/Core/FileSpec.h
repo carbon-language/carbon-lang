@@ -392,6 +392,9 @@ public:
     lldb::DataBufferSP
     ReadFileContents (off_t offset = 0, size_t length = SIZE_MAX) const;
 
+    size_t
+    ReadFileContents (off_t file_offset, void *dst, size_t dst_len) const;
+
     //------------------------------------------------------------------
     /// Change the file specificed with a new path.
     ///

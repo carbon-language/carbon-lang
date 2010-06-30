@@ -152,135 +152,6 @@ CommandObjectDisassemble::~CommandObjectDisassemble()
 {
 }
 
-void
-CommandObjectDisassemble::Disassemble
-(
-    CommandInterpreter &interpreter,
-    CommandReturnObject &result,
-    Disassembler *disassembler,
-    const SymbolContextList &sc_list
-)
-{
-    const size_t count = sc_list.GetSize();
-    SymbolContext sc;
-    AddressRange range;
-    for (size_t i=0; i<count; ++i)
-    {
-        if (sc_list.GetContextAtIndex(i, sc) == false)
-            break;
-        if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
-        {
-            lldb::addr_t addr = range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().process);
-            if (addr != LLDB_INVALID_ADDRESS)
-            {
-                lldb::addr_t end_addr = addr + range.GetByteSize();
-                Disassemble (interpreter, result, disassembler, addr, end_addr);
-            }
-        }
-    }
-}
-
-void
-CommandObjectDisassemble::Disassemble
-(
-    CommandInterpreter &interpreter,
-    CommandReturnObject &result,
-    Disassembler *disassembler,
-    lldb::addr_t addr,
-    lldb::addr_t end_addr
-)
-{
-    if (addr == LLDB_INVALID_ADDRESS)
-        return;
-
-    if (end_addr == LLDB_INVALID_ADDRESS || addr >= end_addr)
-        end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
-
-    ExecutionContext exe_ctx (interpreter.GetDebugger().GetExecutionContext());
-    DataExtractor data;
-    size_t bytes_disassembled = disassembler->ParseInstructions (&exe_ctx, eAddressTypeLoad, addr, end_addr - addr, data);
-    if (bytes_disassembled == 0)
-    {
-        // Nothing got disassembled...
-    }
-    else
-    {
-        // We got some things disassembled...
-        size_t num_instructions = disassembler->GetInstructionList().GetSize();
-        uint32_t offset = 0;
-        Stream &output_stream = result.GetOutputStream();
-        SymbolContext sc;
-        SymbolContext prev_sc;
-        AddressRange sc_range;
-        if (m_options.show_mixed)
-            output_stream.IndentMore ();
-
-        for (size_t i=0; i<num_instructions; ++i)
-        {
-            Disassembler::Instruction *inst = disassembler->GetInstructionList().GetInstructionAtIndex (i);
-            if (inst)
-            {
-                lldb::addr_t curr_addr = addr + offset;
-                if (m_options.show_mixed)
-                {
-                    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
-                    if (!sc_range.ContainsLoadAddress (curr_addr, process))
-                    {
-                        prev_sc = sc;
-                        Address curr_so_addr;
-                        if (process && process->ResolveLoadAddress (curr_addr, curr_so_addr))
-                        {
-                            if (curr_so_addr.GetSection())
-                            {
-                                Module *module = curr_so_addr.GetSection()->GetModule();
-                                uint32_t resolved_mask = module->ResolveSymbolContextForAddress(curr_so_addr, eSymbolContextEverything, sc);
-                                if (resolved_mask)
-                                {
-                                    sc.GetAddressRange (eSymbolContextEverything, sc_range);
-                                    if (sc != prev_sc)
-                                    {
-                                        if (offset != 0)
-                                            output_stream.EOL();
-
-                                        sc.DumpStopContext(&output_stream, process, curr_so_addr);
-                                        output_stream.EOL();
-                                        if (sc.comp_unit && sc.line_entry.IsValid())
-                                        {
-                                            interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
-                                                    sc.line_entry.file,
-                                                    sc.line_entry.line,
-                                                    m_options.num_lines_context,
-                                                    m_options.num_lines_context,
-                                                    m_options.num_lines_context ? "->" : "",
-                                                    &output_stream);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (m_options.show_mixed)
-                    output_stream.IndentMore ();
-                output_stream.Indent();
-                size_t inst_byte_size = inst->GetByteSize();
-                inst->Dump(&output_stream, curr_addr, m_options.show_bytes ? &data : NULL, offset, exe_ctx, m_options.raw);
-                output_stream.EOL();
-                offset += inst_byte_size;
-                if (m_options.show_mixed)
-                    output_stream.IndentLess ();
-            }
-            else
-            {
-                break;
-            }
-        }
-        if (m_options.show_mixed)
-            output_stream.IndentLess ();
-
-    }
-}
-
 bool
 CommandObjectDisassemble::Execute
 (
@@ -316,99 +187,94 @@ CommandObjectDisassemble::Execute
 
     result.SetStatus (eReturnStatusSuccessFinishResult);
 
-    lldb::addr_t addr = LLDB_INVALID_ADDRESS;
-    lldb::addr_t end_addr = LLDB_INVALID_ADDRESS;
-    ConstString name;
-    const size_t argc = command.GetArgumentCount();
-    if (argc != 0)
+    if (command.GetArgumentCount() != 0)
     {
         result.AppendErrorWithFormat ("\"disassemble\" doesn't take any arguments.\n");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
-    
-    if (m_options.m_start_addr != LLDB_INVALID_ADDRESS)
-    {
-        addr = m_options.m_start_addr;
-        if (m_options.m_end_addr != LLDB_INVALID_ADDRESS)
-        {
-            end_addr = m_options.m_end_addr;
-            if (end_addr < addr)
-            {
-                result.AppendErrorWithFormat ("End address before start address.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;            
-            }
-        }
-        else
-            end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
-    } 
-    else if (!m_options.m_func_name.empty())
-    {
-        ConstString tmpname(m_options.m_func_name.c_str());
-        name = tmpname;
-    } 
-    else
-    {
-        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
-        if (exe_ctx.frame)
-        {
-            SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
-            if (sc.function)
-            {
-                addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
-                    end_addr = addr + sc.function->GetAddressRange().GetByteSize();
-            }
-            else if (sc.symbol && sc.symbol->GetAddressRangePtr())
-            {
-                addr = sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
-                {
-                    end_addr = addr + sc.symbol->GetAddressRangePtr()->GetByteSize();
-                    if (addr == end_addr)
-                        end_addr += DEFAULT_DISASM_BYTE_SIZE;
-                }
-            }
-            else
-            {
-                addr = exe_ctx.frame->GetPC().GetLoadAddress(exe_ctx.process);
-                if (addr != LLDB_INVALID_ADDRESS)
-                    end_addr = addr + DEFAULT_DISASM_BYTE_SIZE;
-            }
-        }
-        else
-        {
-            result.AppendError ("invalid frame");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-    }
+    ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
 
-    if (!name.IsEmpty())
-    {
-        SymbolContextList sc_list;
+    if (m_options.show_mixed && m_options.num_lines_context == 0)
+        m_options.num_lines_context = 3;
 
-        if (target->GetImages().FindFunctions(name, 
-                                              eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
-                                              sc_list))
+    if (!m_options.m_func_name.empty())
+    {
+        ConstString name(m_options.m_func_name.c_str());
+        
+        if (Disassembler::Disassemble (interpreter.GetDebugger(), 
+                                       arch,
+                                       exe_ctx,
+                                       name,
+                                       NULL,    // Module *
+                                       m_options.show_mixed ? m_options.num_lines_context : 0,
+                                       m_options.show_bytes,
+                                       result.GetOutputStream()))
         {
-            Disassemble (interpreter, result, disassembler, sc_list);
-        }
-        else if (target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list))
-        {
-            Disassemble (interpreter, result, disassembler, sc_list);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
         {
             result.AppendErrorWithFormat ("Unable to find symbol with name '%s'.\n", name.GetCString());
             result.SetStatus (eReturnStatusFailed);
-            return false;
         }
-    }
+    } 
     else
     {
-        Disassemble (interpreter, result, disassembler, addr, end_addr);
+        AddressRange range;
+        if (m_options.m_start_addr != LLDB_INVALID_ADDRESS)
+        {
+            range.GetBaseAddress().SetOffset (m_options.m_start_addr);
+            if (m_options.m_end_addr != LLDB_INVALID_ADDRESS)
+            {
+                if (m_options.m_end_addr < m_options.m_start_addr)
+                {
+                    result.AppendErrorWithFormat ("End address before start address.\n");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;            
+                }
+                range.SetByteSize (m_options.m_end_addr - m_options.m_start_addr);
+            }
+            else
+                range.SetByteSize (DEFAULT_DISASM_BYTE_SIZE);
+        } 
+        else
+        {
+            if (exe_ctx.frame)
+            {
+                SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+                if (sc.function)
+                    range = sc.function->GetAddressRange();
+                else if (sc.symbol && sc.symbol->GetAddressRangePtr())
+                    range = *sc.symbol->GetAddressRangePtr();
+                else
+                    range.GetBaseAddress() = exe_ctx.frame->GetPC();
+            }
+            else
+            {
+                result.AppendError ("invalid frame");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        if (range.GetByteSize() == 0)
+            range.SetByteSize(DEFAULT_DISASM_BYTE_SIZE);
+
+        if (Disassembler::Disassemble (interpreter.GetDebugger(), 
+                                       arch,
+                                       exe_ctx,
+                                       range,
+                                       m_options.show_mixed ? m_options.num_lines_context : 0,
+                                       m_options.show_bytes,
+                                       result.GetOutputStream()))
+        {
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("Failed to disassemble memory at 0x%8.8llx.\n", m_options.m_start_addr);
+            result.SetStatus (eReturnStatusFailed);            
+        }
     }
 
     return result.Succeeded();

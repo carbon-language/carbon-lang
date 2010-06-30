@@ -117,11 +117,6 @@ SymbolContext::DumpStopContext
     bool show_module
 ) const
 {
-    Process *process = NULL;
-    if (exe_scope)
-        process = exe_scope->CalculateProcess();
-    addr_t load_addr = addr.GetLoadAddress (process);
-
     if (show_module && module_sp)
     {
         *s << module_sp->GetFileSpec().GetFilename() << '`';
@@ -132,9 +127,9 @@ SymbolContext::DumpStopContext
         if (function->GetMangled().GetName())
             function->GetMangled().GetName().Dump(s);
 
-        const addr_t func_load_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress(process);
-        if (load_addr > func_load_addr)
-            s->Printf(" + %llu", load_addr - func_load_addr);
+        const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
+        if (function_offset)
+            s->Printf(" + %llu", function_offset);
 
         if (block != NULL)
         {
@@ -158,9 +153,9 @@ SymbolContext::DumpStopContext
 
         if (symbol->GetAddressRangePtr())
         {
-            const addr_t sym_load_addr = symbol->GetAddressRangePtr()->GetBaseAddress().GetLoadAddress(process);
-            if (load_addr > sym_load_addr)
-                s->Printf(" + %llu", load_addr - sym_load_addr);
+            const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset();
+            if (symbol_offset)
+                s->Printf(" + %llu", symbol_offset);
         }
     }
     else

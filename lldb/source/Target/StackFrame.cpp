@@ -181,6 +181,7 @@ StackFrame::Disassemble ()
                                    target.GetArchitecture(),
                                    exe_ctx,
                                    0,
+                                   false,
                                    m_disassembly);
         if (m_disassembly.GetSize() == 0)
             return NULL;

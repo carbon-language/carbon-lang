@@ -507,90 +507,170 @@ Target::ModulesDidUnload (ModuleList &module_list)
     BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
 }
 
+
+//size_t
+//Target::ReadMemory
+//(
+//    lldb::AddressType addr_type,
+//    lldb::addr_t addr,
+//    void *dst,
+//    size_t dst_len,
+//    Error &error,
+//    ObjectFile* objfile
+//)
+//{
+//    size_t bytes_read = 0;
+//    error.Clear();
+//    switch (addr_type)
+//    {
+//    case eAddressTypeFile:
+//        if (objfile)
+//        {
+//            Address so_addr(addr, objfile->GetSectionList());
+//            if (m_process_sp.get())
+//            {
+//                // If we have an execution context with a process, lets try and
+//                // resolve the file address in "objfile" and read it from the
+//                // process
+//                lldb::addr_t load_addr = so_addr.GetLoadAddress(m_process_sp.get());
+//                if (load_addr == LLDB_INVALID_ADDRESS)
+//                {
+//                    if (objfile->GetFileSpec())
+//                        error.SetErrorStringWithFormat("0x%llx can't be resolved, %s in not currently loaded.\n", addr, objfile->GetFileSpec().GetFilename().AsCString());
+//                    else
+//                        error.SetErrorStringWithFormat("0x%llx can't be resolved.\n", addr, objfile->GetFileSpec().GetFilename().AsCString());
+//                }
+//                else
+//                {
+//                    bytes_read = m_process_sp->ReadMemory(load_addr, dst, dst_len, error);
+//                    if (bytes_read != dst_len)
+//                    {
+//                        if (error.Success())
+//                        {
+//                            if (bytes_read == 0)
+//                                error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", load_addr);
+//                            else
+//                                error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, load_addr);
+//                        }
+//                    }
+//                }
+//            }
+//            else
+//            {
+//                // Try and read the file based address from the object file's
+//                // section data.
+//                const Section *section = so_addr.GetSection();
+//                if (section)
+//                    return section->ReadSectionDataFromObjectFile(objfile, so_addr.GetOffset(), dst, dst_len);
+//            }
+//        }
+//        break;
+//
+//    case eAddressTypeLoad:
+//        if (m_process_sp.get())
+//        {
+//            bytes_read = m_process_sp->ReadMemory(addr, dst, dst_len, error);
+//            if (bytes_read != dst_len)
+//            {
+//                if (error.Success())
+//                {
+//                    if (bytes_read == 0)
+//                        error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", addr);
+//                    else
+//                        error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, addr);
+//                }
+//            }
+//        }
+//        else
+//            error.SetErrorStringWithFormat("Need valid process to read load address.\n");
+//        break;
+//
+//    case eAddressTypeHost:
+//        // The address is an address in this process, so just copy it
+//        ::memcpy (dst, (uint8_t*)NULL + addr, dst_len);
+//        break;
+//
+//    default:
+//        error.SetErrorStringWithFormat ("Unsupported lldb::AddressType value (%i).\n", addr_type);
+//        break;
+//    }
+//    return bytes_read;
+//}
+
 size_t
 Target::ReadMemory
 (
-    lldb::AddressType addr_type,
-    lldb::addr_t addr,
+    const Address& addr,
     void *dst,
     size_t dst_len,
-    Error &error,
-    ObjectFile* objfile
+    Error &error
 )
 {
-    size_t bytes_read = 0;
     error.Clear();
-    switch (addr_type)
-    {
-    case eAddressTypeFile:
-        if (objfile)
-        {
-            if (m_process_sp.get())
-            {
-                // If we have an execution context with a process, lets try and
-                // resolve the file address in "objfile" and read it from the
-                // process
-                Address so_addr(addr, objfile->GetSectionList());
-                lldb::addr_t load_addr = so_addr.GetLoadAddress(m_process_sp.get());
-                if (load_addr == LLDB_INVALID_ADDRESS)
-                {
-                    if (objfile->GetFileSpec())
-                        error.SetErrorStringWithFormat("0x%llx can't be resolved, %s in not currently loaded.\n", addr, objfile->GetFileSpec().GetFilename().AsCString());
-                    else
-                        error.SetErrorStringWithFormat("0x%llx can't be resolved.\n", addr, objfile->GetFileSpec().GetFilename().AsCString());
-                }
-                else
-                {
-                    bytes_read = m_process_sp->ReadMemory(load_addr, dst, dst_len, error);
-                    if (bytes_read != dst_len)
-                    {
-                        if (error.Success())
-                        {
-                            if (bytes_read == 0)
-                                error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", load_addr);
-                            else
-                                error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, load_addr);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Try and read the file based address from the object file's
-                // section data.
-            }
-        }
-        break;
 
-    case eAddressTypeLoad:
-        if (m_process_sp.get())
+    bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
+
+    Address resolved_addr(addr);
+    if (!resolved_addr.IsSectionOffset())
+    {
+        if (process_is_valid)
         {
-            bytes_read = m_process_sp->ReadMemory(addr, dst, dst_len, error);
+            m_process_sp->ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+        }
+        else
+        {
+            m_images.ResolveFileAddress(addr.GetOffset(), resolved_addr);
+        }
+    }
+    
+    
+    if (process_is_valid)
+    {
+        lldb::addr_t load_addr = resolved_addr.GetLoadAddress(m_process_sp.get());
+        if (load_addr == LLDB_INVALID_ADDRESS)
+        {
+            if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())
+                error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded.\n", 
+                                               resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString(), 
+                                               resolved_addr.GetFileAddress());
+            else
+                error.SetErrorStringWithFormat("0x%llx can't be resolved.\n", resolved_addr.GetFileAddress());
+        }
+        else
+        {
+            size_t bytes_read = m_process_sp->ReadMemory(load_addr, dst, dst_len, error);
             if (bytes_read != dst_len)
             {
                 if (error.Success())
                 {
                     if (bytes_read == 0)
-                        error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", addr);
+                        error.SetErrorStringWithFormat("Read memory from 0x%llx failed.\n", load_addr);
                     else
-                        error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, addr);
+                        error.SetErrorStringWithFormat("Only %zu of %zu bytes were read from memory at 0x%llx.\n", bytes_read, dst_len, load_addr);
                 }
             }
+            if (bytes_read)
+                return bytes_read;
+            // If the address is not section offset we have an address that
+            // doesn't resolve to any address in any currently loaded shared
+            // libaries and we failed to read memory so there isn't anything
+            // more we can do. If it is section offset, we might be able to
+            // read cached memory from the object file.
+            if (!resolved_addr.IsSectionOffset())
+                return 0;
         }
-        else
-            error.SetErrorStringWithFormat("Need valid process to read load address.\n");
-        break;
-
-    case eAddressTypeHost:
-        // The address is an address in this process, so just copy it
-        ::memcpy (dst, (uint8_t*)NULL + addr, dst_len);
-        break;
-
-    default:
-        error.SetErrorStringWithFormat ("Unsupported lldb::AddressType value (%i).\n", addr_type);
-        break;
     }
-    return bytes_read;
+    
+    const Section *section = resolved_addr.GetSection();
+    if (section && section->GetModule())
+    {
+        ObjectFile *objfile = section->GetModule()->GetObjectFile();
+        return section->ReadSectionDataFromObjectFile (objfile, 
+                                                       resolved_addr.GetOffset(), 
+                                                       dst, 
+                                                       dst_len);
+    }
+    return 0;
 }
 
 

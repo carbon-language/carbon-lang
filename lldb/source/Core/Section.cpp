@@ -323,6 +323,22 @@ Section::GetSectionDataFromImage (const DataExtractor& image_data, DataExtractor
     return false;
 }
 
+size_t
+Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section_offset, void *dst, size_t dst_len) const
+{
+    if (objfile && dst && dst_len)
+    {
+        const FileSpec& file = objfile->GetFileSpec();
+
+        if (file)
+        {
+            off_t section_file_offset = GetFileOffset() + objfile->GetOffset() + section_offset;        
+            return file.ReadFileContents (section_file_offset, dst, dst_len);
+        }
+    }
+    return 0;
+}
+
 //----------------------------------------------------------------------
 // Get the section data the file on disk
 //----------------------------------------------------------------------
@@ -340,11 +356,11 @@ Section::ReadSectionDataFromObjectFile(const ObjectFile* objfile, DataExtractor&
         if (section_file_size > 0)
         {
             off_t section_file_offset = GetFileOffset() + objfile->GetOffset();
-            DataBufferSP sectionDataSP(file.ReadFileContents(section_file_offset, section_file_size));
+            DataBufferSP section_data_sp(file.ReadFileContents(section_file_offset, section_file_size));
 
             section_data.SetByteOrder(objfile->GetByteOrder());
             section_data.SetAddressByteSize(objfile->GetAddressByteSize());
-            return section_data.SetData (sectionDataSP);
+            return section_data.SetData (section_data_sp);
         }
     }
     return 0;
@@ -364,10 +380,10 @@ Section::MemoryMapSectionDataFromObjectFile(const ObjectFile* objfile, DataExtra
         if (section_file_size > 0)
         {
             off_t section_file_offset = GetFileOffset() + objfile->GetOffset();
-            DataBufferSP sectionDataSP(file.MemoryMapFileContents(section_file_offset, section_file_size));
+            DataBufferSP section_data_sp(file.MemoryMapFileContents(section_file_offset, section_file_size));
             section_data.SetByteOrder(objfile->GetByteOrder());
             section_data.SetAddressByteSize(objfile->GetAddressByteSize());
-            return section_data.SetData (sectionDataSP);
+            return section_data.SetData (section_data_sp);
         }
     }
     return 0;

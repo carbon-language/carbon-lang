@@ -74,18 +74,6 @@ public:
 protected:
     CommandOptions m_options;
 
-    void
-    Disassemble (CommandInterpreter &interpreter,
-                 CommandReturnObject &result,
-                 Disassembler *disassembler,
-                 lldb::addr_t addr,
-                 lldb::addr_t end_addr);
-
-    void
-    Disassemble (CommandInterpreter &interpreter,
-                 CommandReturnObject &result,
-                 Disassembler *disassembler,
-                 const SymbolContextList &sc_list);
 };
 
 } // namespace lldb_private

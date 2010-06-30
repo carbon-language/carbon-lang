@@ -384,9 +384,9 @@ SBTarget::GetBroadcaster () const
 }
 
 void
-SBTarget::Disassemble (lldb::addr_t file_address_start, lldb::addr_t file_address_end, const char *module_name)
+SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const char *module_name)
 {
-    if (file_address_start == LLDB_INVALID_ADDRESS)
+    if (start_addr == LLDB_INVALID_ADDRESS)
         return;
 
     FILE *out = m_opaque_sp->GetDebugger().GetOutputFileHandle();
@@ -395,61 +395,65 @@ SBTarget::Disassemble (lldb::addr_t file_address_start, lldb::addr_t file_addres
 
     if (m_opaque_sp)
     {
-        SBModule module;
+        ModuleSP module_sp;
         if (module_name != NULL)
         {
-            SBFileSpec file_spec (module_name);
-            module = FindModule (file_spec);
+            FileSpec module_file_spec (module_name);
+            module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
         }
-        ArchSpec arch (m_opaque_sp->GetArchitecture());
-        if (!arch.IsValid())
-          return;
-        Disassembler *disassembler = Disassembler::FindPlugin (arch);
-        if (disassembler == NULL)
-          return;
+        
+        AddressRange range;
+
+        // Make sure the process object is alive if we have one (it might be
+        // created but we might not be launched yet).
+        Process *process = m_opaque_sp->GetProcessSP().get();
+        if (process && !process->IsAlive())
+            process = NULL;
+        
+        // If we are given a module, then "start_addr" is a file address in
+        // that module.
+        if (module_sp)
+        {
+            if (!module_sp->ResolveFileAddress (start_addr, range.GetBaseAddress()))
+                range.GetBaseAddress().SetOffset(start_addr);
+        }
+        else if (process)
+        {
+            // We don't have a module, se we need to figure out if "start_addr"
+            // resolves to anything in a running process.
+            if (!process->ResolveLoadAddress(start_addr, range.GetBaseAddress()))
+                range.GetBaseAddress().SetOffset(start_addr);
+        }
+        else
+        {
+            if (m_opaque_sp->GetImages().ResolveFileAddress (start_addr, range.GetBaseAddress()))
+                range.GetBaseAddress().SetOffset(start_addr);
+        }
 
         // For now, we need a process;  the disassembly functions insist.  If we don't have one already,
         // make one.
 
-        SBProcess process = GetProcess();
-        if (! process.IsValid())
-          process = CreateProcess();
+        ExecutionContext exe_ctx;
 
-        ExecutionContext exe_context (process.get());
+        if (process)
+            process->Calculate(exe_ctx);
+        else 
+            m_opaque_sp->Calculate(exe_ctx);
 
-        if (file_address_end == LLDB_INVALID_ADDRESS
-            || file_address_end < file_address_start)
-          file_address_end = file_address_start + DEFAULT_DISASM_BYTE_SIZE;
+        if (end_addr == LLDB_INVALID_ADDRESS || end_addr < start_addr)
+            range.SetByteSize( DEFAULT_DISASM_BYTE_SIZE);
+        else
+            range.SetByteSize(end_addr - start_addr);
 
-        // TO BE FIXED:  SOMEHOW WE NEED TO SPECIFY/USE THE MODULE, IF THE USER SPECIFIED ONE.  I'M NOT
-        // SURE HOW TO DO THAT AT THE MOMENT.  WE ALSO NEED TO FIGURE OUT WHAT TO DO IF THERE ARE MULTIPLE
-        // MODULES CONTAINING THE SPECIFIED ADDRESSES (E.G. THEY HAVEN'T ALL LOADED & BEEN GIVEN UNIQUE
-        // ADDRESSES YET).
+        StreamFile out_stream (out);
 
-        DataExtractor data;
-        size_t bytes_disassembled = disassembler->ParseInstructions (&exe_context, eAddressTypeLoad,
-                                                                     file_address_start,
-                                                                     file_address_end - file_address_start, data);
-
-        if (bytes_disassembled > 0)
-        {
-            size_t num_instructions = disassembler->GetInstructionList().GetSize();
-            uint32_t offset = 0;
-            StreamFile out_stream (out);
-
-            for (size_t i = 0; i < num_instructions; ++i)
-            {
-                Disassembler::Instruction *inst = disassembler->GetInstructionList().GetInstructionAtIndex (i);
-                if (inst)
-                {
-                    lldb::addr_t cur_addr = file_address_start + offset;
-                    size_t inst_byte_size = inst->GetByteSize();
-                    inst->Dump (&out_stream, cur_addr, &data, offset, exe_context, false);
-                    out_stream.EOL();
-                    offset += inst_byte_size;
-                }
-            }
-        }
+        Disassembler::Disassemble (m_opaque_sp->GetDebugger(),
+                                   m_opaque_sp->GetArchitecture(),
+                                   exe_ctx,
+                                   range,
+                                   3,
+                                   false,
+                                   out_stream);
     }
 }
 
@@ -465,102 +469,40 @@ SBTarget::Disassemble (const char *function_name, const char *module_name)
 
     if (m_opaque_sp)
     {
-        SBModule module;
-
-        if (module_name != NULL)
-        {
-            SBFileSpec file_spec (module_name);
-            module = FindModule (file_spec);
-        }
-
-        ArchSpec arch (m_opaque_sp->GetArchitecture());
-        if (!arch.IsValid())
-          return;
-
-        Disassembler *disassembler = Disassembler::FindPlugin (arch);
+        Disassembler *disassembler = Disassembler::FindPlugin (m_opaque_sp->GetArchitecture());
         if (disassembler == NULL)
           return;
 
-        // For now, we need a process;  the disassembly functions insist.  If we don't have one already,
-        // make one.
-
-        SBProcess process = GetProcess();
-        if (! process.IsValid()
-            ||  process.GetProcessID() == 0)
-        {
-            fprintf (out, "Cannot disassemble functions until after process has launched.\n");
-            return;
-        }
-
-        ExecutionContext exe_context (process.get());
-
-        FileSpec *containing_module = NULL;
-
+        ModuleSP module_sp;
         if (module_name != NULL)
-            containing_module = new FileSpec (module_name);
-
-        SearchFilterSP filter_sp (m_opaque_sp->GetSearchFilterForModule (containing_module));
-        AddressResolverSP resolver_sp (new AddressResolverName (function_name));
-
-        resolver_sp->ResolveAddress (*filter_sp);
-
-        size_t num_matches_found = resolver_sp->GetNumberOfAddresses();
-
-        if (num_matches_found == 1)
         {
-            DataExtractor data;
-
-            AddressRange func_addresses = resolver_sp->GetAddressRangeAtIndex (0);
-            Address start_addr = func_addresses.GetBaseAddress();
-            lldb::addr_t num_bytes = func_addresses.GetByteSize();
-
-            lldb::addr_t addr = LLDB_INVALID_ADDRESS;
-            size_t bytes_disassembled = 0;
-
-
-            if (process.GetProcessID() == 0)
-            {
-                // Leave this branch in for now, but it should not be reached, since we exit above if the PID is 0.
-                addr = start_addr.GetFileAddress ();
-                bytes_disassembled = disassembler->ParseInstructions (&exe_context, eAddressTypeFile, addr,
-                                                                      num_bytes, data);
-
-            }
-            else
-            {
-                addr = start_addr.GetLoadAddress (process.get());
-                bytes_disassembled = disassembler->ParseInstructions (&exe_context, eAddressTypeLoad, addr,
-                                                                      num_bytes, data);
-
-            }
-
-            if (bytes_disassembled > 0)
-            {
-                size_t num_instructions = disassembler->GetInstructionList().GetSize();
-                uint32_t offset = 0;
-                StreamFile out_stream (out);
-
-                for (size_t i = 0; i < num_instructions; ++i)
-                {
-                    Disassembler::Instruction *inst = disassembler->GetInstructionList().GetInstructionAtIndex (i);
-                    if (inst)
-                    {
-                        lldb::addr_t cur_addr = addr + offset;
-                        size_t inst_byte_size = inst->GetByteSize();
-                        inst->Dump (&out_stream, cur_addr, &data, offset, exe_context, false);
-                        out_stream.EOL();
-                        offset += inst_byte_size;
-                    }
-                }
-            }
+            FileSpec module_file_spec (module_name);
+            module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
         }
-        else if (num_matches_found > 1)
-        {
-            // TO BE FIXED:  Eventually we want to list/disassemble all functions found.
-            fprintf (out, "Function '%s' was found in multiple modules; please specify the desired module name.\n",
-                     function_name);
-        }
-        else
-            fprintf (out, "Function '%s' was not found.\n", function_name);
+
+        ExecutionContext exe_ctx;
+        
+        // Make sure the process object is alive if we have one (it might be
+        // created but we might not be launched yet).
+        Process *process = m_opaque_sp->GetProcessSP().get();
+        if (process && !process->IsAlive())
+            process = NULL;
+        
+        if (process)
+            process->Calculate(exe_ctx);
+        else 
+            m_opaque_sp->Calculate(exe_ctx);
+
+
+        StreamFile out_stream (out);
+
+        Disassembler::Disassemble (m_opaque_sp->GetDebugger(),
+                                   m_opaque_sp->GetArchitecture(),
+                                   exe_ctx,
+                                   ConstString (function_name),
+                                   module_sp.get(),
+                                   3,
+                                   false,
+                                   out_stream);
     }
 }

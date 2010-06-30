@@ -32,10 +32,10 @@ public:
 
         void
         Dump (lldb_private::Stream *s,
-              lldb::addr_t base_address,
-              lldb_private::DataExtractor *bytes,
+              lldb_private::Address *instr_addr_ptr,
+              const lldb_private::DataExtractor *bytes,
               uint32_t bytes_offset,
-              const lldb_private::ExecutionContext exe_ctx,
+              const lldb_private::ExecutionContext& exe_ctx,
               bool raw);
 
         bool
@@ -78,11 +78,10 @@ public:
     ~DisassemblerLLVM();
 
     size_t
-    ParseInstructions (const lldb_private::DataExtractor& data,
-                       uint32_t data_offset,
-                       uint32_t num_instructions,
-                       lldb::addr_t base_addr);
-
+    DecodeInstructions (const lldb_private::DataExtractor& data,
+                        uint32_t data_offset,
+                        uint32_t num_instructions);
+    
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------

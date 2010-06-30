@@ -82,7 +82,12 @@ public:
                                         ///< \code
                                         /// // address for printf in libSystem.B.dylib as a load address
                                         /// 0x00007fff8306bcff \endcode
-        DumpStyleResolvedDescription           ///< Display the name that an address resolves to
+        DumpStyleResolvedDescription,   ///< Display the details about what an address resolves to. This can
+                                        ///< be anything from a symbol context summary (module, function/symbol, 
+                                        ///< and file and line), to information about what the pointer points to
+                                        ///< if the address is in a section (section of pointers, c strings, etc).
+        DumpStyleDetailedSymbolContext  ///< Detailed symbol context information for an address for all symbol
+                                        ///< context members.
     } DumpStyle;
 
     //------------------------------------------------------------------
@@ -221,7 +226,8 @@ public:
     Dump (Stream *s,
           ExecutionContextScope *exe_scope,
           DumpStyle style,
-          DumpStyle fallback_style = DumpStyleInvalid) const;
+          DumpStyle fallback_style = DumpStyleInvalid,
+          uint32_t addr_byte_size = UINT32_MAX) const;
 
     //------------------------------------------------------------------
     /// Dump a debug description of this object to a Stream.
