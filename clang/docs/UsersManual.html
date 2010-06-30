@@ -53,16 +53,6 @@ td {
   <li><a href="#c_ms">Microsoft extensions</a></li>
   </ul>
 </li>
-<li><a href="#objc">Objective-C Language Features</a>
-  <ul>
-  <li><a href="#objc_incompatibilities">Intentional Incompatibilities with
-      GCC</a></li>
-  </ul>
-</li>
-<li><a href="#cxx">C++ Language Features</a>
-</li>
-<li><a href="#objcxx">Objective C++ Language Features</a>
-</li>
 <li><a href="#target_features">Target-Specific Features and Limitations</a>
   <ul>
   <li><a href="#target_arch">CPU Architectures Features and Limitations</a>
@@ -878,45 +868,6 @@ record members can be declared using user defined typedefs.</li>
 controlling record layout. GCC also contains support for this feature,
 however where MSVC and GCC are incompatible clang follows the MSVC
 definition.</li>
-
-<!-- ======================================================================= -->
-<h2 id="objc">Objective-C Language Features</h2>
-<!-- ======================================================================= -->
-
-
-<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
-<h3 id="objc_incompatibilities">Intentional Incompatibilities with GCC</h3>
-<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
-
-<p>No cast of super, no lvalue casts.</p>
-
-
-
-<!-- ======================================================================= -->
-<h2 id="cxx">C++ Language Features</h2>
-<!-- ======================================================================= -->
-
-<p>At this point, Clang C++ is not production-quality and is not recommended for use beyond experimentation.  However, Clang C++ support
-is under active development and is progressing rapidly.  Please see the <a
-href="http://clang.llvm.org/cxx_status.html">C++ Status</a> page for details or
-ask on the mailing list about how you can help.</p>
-
-<p>Note that released Clang compilers will refuse to even try to use clang to compile C++ code unless you pass the <tt>-ccc-clang-cxx</tt> option to the driver. To turn on Clang's C++ support, please pass that flag. Clang compilers built from the Subversion trunk enable C++ support by default, and do not require the <tt>-ccc-clang-cxx</tt> flag.</p>
- 
-<p>Clang strives to strictly conform to the C++ standard.  That means
-it will reject invalid C++ code that another compiler may accept.  If
-Clang reports errors in your code, please check
-the <a href="http://clang.llvm.org/cxx_compatibility.html">C++
-Compatibility</a> page to see whether they are C++-conformance bugs
-and how you can fix them.</p>
-
-<!-- ======================================================================= -->
-<h2 id="objcxx">Objective C++ Language Features</h2>
-<!-- ======================================================================= -->
-
-<p>At this point, Clang C++ support is not generally useful (and therefore,
-neither is Objective-C++).  Please see the <a href="#cxx">C++ section</a> for
-more information.</p>
 
 <!-- ======================================================================= -->
 <h2 id="target_features">Target-Specific Features and Limitations</h2>
