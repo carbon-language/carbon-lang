@@ -1373,7 +1373,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       // If the stored element is zero (common case), just store a null
       // constant.
       Constant *StoreVal;
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getArgOperand(1))) {
         if (CI->isZero()) {
           StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
@@ -1436,7 +1436,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       Value *Ops[] = {
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
-        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        ConstantInt::get(MI->getArgOperand(2)->getType(), EltSize), // Size
         // Align
         ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign),
         MI->getVolatileCst()
@@ -1451,8 +1451,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     } else {
       assert(isa<MemSetInst>(MI));
       Value *Ops[] = {
-        EltPtr, MI->getOperand(2),  // Dest, Value,
-        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        EltPtr, MI->getArgOperand(1),  // Dest, Value,
+        ConstantInt::get(MI->getArgOperand(2)->getType(), EltSize), // Size
         Zero,  // Align
         ConstantInt::get(Type::getInt1Ty(MI->getContext()), 0) // isVolatile
       };
