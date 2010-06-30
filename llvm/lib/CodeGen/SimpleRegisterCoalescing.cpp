@@ -742,16 +742,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
   unsigned DstReg = CP.getDstReg();
   unsigned SubIdx = CP.getSubIdx();
 
-  // Collect all the instructions using SrcReg.
-  SmallPtrSet<MachineInstr*, 32> Instrs;
-  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
-         E = mri_->reg_end(); I != E; ++I)
-    Instrs.insert(&*I);
-
-  for (SmallPtrSet<MachineInstr*, 32>::const_iterator I = Instrs.begin(),
-       E = Instrs.end(); I != E; ++I) {
-    MachineInstr *UseMI = *I;
-
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg);
+       MachineInstr *UseMI = I.skipInstruction();) {
     // A PhysReg copy that won't be coalesced can perhaps be rematerialized
     // instead.
     if (DstIsPhys) {
