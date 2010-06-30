@@ -24,6 +24,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 namespace clang {
   
