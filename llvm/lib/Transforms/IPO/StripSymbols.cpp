@@ -223,16 +223,12 @@ static bool StripDebugInfo(Module &M) {
     Changed = true;
   }
 
-  NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
-  if (NMD) {
-    Changed = true;
-    NMD->eraseFromParent();
-  }
-
-  NMD = M.getNamedMetadata("llvm.dbg.lv");
-  if (NMD) {
-    Changed = true;
-    NMD->eraseFromParent();
+  for (Module::named_metadata_iterator NMI = M.named_metadata_begin(),
+         NME = M.named_metadata_end(); NMI != NME;) {
+    NamedMDNode *NMD = NMI;
+    ++NMI;
+    if (NMD->getName().startswith("llvm.dbg."))
+      NMD->eraseFromParent();
   }
 
   unsigned MDDbgKind = M.getMDKindID("dbg");
