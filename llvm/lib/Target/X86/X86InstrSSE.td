@@ -2440,6 +2440,68 @@ defm PSADBW  : PDI_binop_rm_int<0xF6, "psadbw", int_x86_sse2_psad_bw>;
 // SSE2 - Packed Integer Logical Instructions
 //===---------------------------------------------------------------------===//
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE2] in {
+defm VPSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "vpsllw",
+                                int_x86_sse2_psll_w, int_x86_sse2_pslli_w, 0>,
+                                VEX_4V;
+defm VPSLLD : PDI_binop_rmi_int<0xF2, 0x72, MRM6r, "vpslld",
+                                int_x86_sse2_psll_d, int_x86_sse2_pslli_d, 0>,
+                                VEX_4V;
+defm VPSLLQ : PDI_binop_rmi_int<0xF3, 0x73, MRM6r, "vpsllq",
+                                int_x86_sse2_psll_q, int_x86_sse2_pslli_q, 0>,
+                                VEX_4V;
+
+defm VPSRLW : PDI_binop_rmi_int<0xD1, 0x71, MRM2r, "vpsrlw",
+                                int_x86_sse2_psrl_w, int_x86_sse2_psrli_w, 0>,
+                                VEX_4V;
+defm VPSRLD : PDI_binop_rmi_int<0xD2, 0x72, MRM2r, "vpsrld",
+                                int_x86_sse2_psrl_d, int_x86_sse2_psrli_d, 0>,
+                                VEX_4V;
+defm VPSRLQ : PDI_binop_rmi_int<0xD3, 0x73, MRM2r, "vpsrlq",
+                                int_x86_sse2_psrl_q, int_x86_sse2_psrli_q, 0>,
+                                VEX_4V;
+
+defm VPSRAW : PDI_binop_rmi_int<0xE1, 0x71, MRM4r, "vpsraw",
+                                int_x86_sse2_psra_w, int_x86_sse2_psrai_w, 0>,
+                                VEX_4V;
+defm VPSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
+                                int_x86_sse2_psra_d, int_x86_sse2_psrai_d, 0>,
+                                VEX_4V;
+
+let isCommutable = 1 in {
+defm VPAND : PDI_binop_rm_v2i64<0xDB, "vpand", and, 0>, VEX_4V;
+defm VPOR  : PDI_binop_rm_v2i64<0xEB, "vpor" , or, 0>, VEX_4V;
+defm VPXOR : PDI_binop_rm_v2i64<0xEF, "vpxor", xor, 0>, VEX_4V;
+}
+
+let ExeDomain = SSEPackedInt in {
+  let neverHasSideEffects = 1 in {
+    // 128-bit logical shifts.
+    def VPSLLDQri : PDIi8<0x73, MRM7r,
+                      (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                      "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      VEX_4V;
+    def VPSRLDQri : PDIi8<0x73, MRM3r,
+                      (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                      "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                      VEX_4V;
+    // PSRADQri doesn't exist in SSE[1-3].
+  }
+  def VPANDNrr : PDI<0xDF, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+                    "vpandn\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
+                                              VR128:$src2)))]>, VEX_4V;
+
+  def VPANDNrm : PDI<0xDF, MRMSrcMem,
+                    (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+                    "vpandn\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
+                                              (memopv2i64 addr:$src2))))]>,
+                                              VEX_4V;
+}
+}
+
 let Constraints = "$src1 = $dst" in {
 defm PSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw",
                                int_x86_sse2_psll_w, int_x86_sse2_pslli_w>;

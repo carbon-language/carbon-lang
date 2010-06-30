@@ -60,6 +60,27 @@ public:
   static unsigned GetX86RegNum(const MCOperand &MO) {
     return X86RegisterInfo::getX86RegNum(MO.getReg());
   }
+
+  // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the range
+  // 0-7 and the difference between the 2 groups is given by the REX prefix.
+  // In the VEX prefix, registers are seen sequencially from 0-15 and encoded
+  // in 1's complement form, example:
+  //
+  //  ModRM field => XMM9 => 1
+  //  VEX.VVVV    => XMM9 => ~9
+  //
+  // See table 4-35 of Intel AVX Programming Reference for details.
+  static unsigned char getVEXRegisterEncoding(const MCInst &MI,
+                                              unsigned OpNum) {
+    unsigned SrcReg = MI.getOperand(OpNum).getReg();
+    unsigned SrcRegNum = GetX86RegNum(MI.getOperand(OpNum));
+    if (SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15)
+      SrcRegNum += 8;
+  
+    // The registers represented through VEX_VVVV should
+    // be encoded in 1's complement form.
+    return (~SrcRegNum) & 0xf;
+  }
   
   void EmitByte(unsigned char C, unsigned &CurByte, raw_ostream &OS) const {
     OS << (char)C;
@@ -133,7 +154,6 @@ MCCodeEmitter *llvm::createX86_64MCCodeEmitter(const Target &,
                                                MCContext &Ctx) {
   return new X86MCCodeEmitter(TM, Ctx, true);
 }
-
 
 /// isDisp8 - Return true if this signed displacement fits in a 8-bit 
 /// sign-extended field. 
@@ -469,29 +489,12 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
 
-    // If the memory destination has been checked first,
-    // go back to the first operand
+    // CurOp and NumOps are equal when VEX_R represents a register used
+    // to index a memory destination (which is the last operand)
     CurOp = (CurOp == NumOps) ? 0 : CurOp+1;
 
-    // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the
-    // range 0-7 and the difference between the 2 groups is given by the
-    // REX prefix. In the VEX prefix, registers are seen sequencially
-    // from 0-15 and encoded in 1's complement form, example:
-    //
-    //  ModRM field => XMM9 => 1
-    //  VEX.VVVV    => XMM9 => ~9
-    //
-    // See table 4-35 of Intel AVX Programming Reference for details.
     if (HasVEX_4V) {
-      unsigned SrcReg = MI.getOperand(CurOp).getReg();
-      unsigned SrcRegNum = GetX86RegNum(MI.getOperand(1));
-      if (SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15)
-        SrcRegNum += 8;
-
-      // The registers represented through VEX_VVVV should
-      // be encoded in 1's complement form.
-      VEX_4V = (~SrcRegNum) & 0xf;
-
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
       CurOp++;
     }
 
@@ -505,7 +508,17 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         VEX_X = 0x0;
     }
     break;
-  default:
+  default: // MRM0r-MRM7r
+    if (HasVEX_4V)
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+
+    CurOp++;
+    for (; CurOp != NumOps; ++CurOp) {
+      const MCOperand &MO = MI.getOperand(CurOp);
+      if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+        VEX_B = 0x0;
+    }
+    break;
     assert(0 && "Not implemented!");
   }
 
@@ -831,6 +844,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
   case X86II::MRM6r: case X86II::MRM7r:
+    if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
+      CurOp++;
     EmitByte(BaseOpcode, CurByte, OS);
     EmitRegModRMByte(MI.getOperand(CurOp++),
                      (TSFlags & X86II::FormMask)-X86II::MRM0r,
