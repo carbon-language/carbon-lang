@@ -106,7 +106,7 @@ public:
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// ConvertType - Convert type T into a llvm::Type.
-  const llvm::Type *ConvertType(QualType T, bool IsRecursive = false);
+  const llvm::Type *ConvertType(QualType T);
   const llvm::Type *ConvertTypeRecursive(QualType T);
 
   /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
@@ -118,8 +118,7 @@ public:
 
   /// GetFunctionType - Get the LLVM function type for \arg Info.
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
-                                            bool IsVariadic,
-                                            bool IsRecursive = false);
+                                            bool IsVariadic);
 
   const llvm::FunctionType *GetFunctionType(GlobalDecl GD);
 
@@ -194,8 +193,7 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// GetExpandedTypes - Expand the type \arg Ty into the LLVM
   /// argument types it would be passed as on the provided vector \arg
   /// ArgTys. See ABIArgInfo::Expand.
-  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys,
-                        bool IsRecursive);
+  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys);
   
   /// ContainsPointerToDataMember - Return whether the given type contains a
   /// pointer to a data member.

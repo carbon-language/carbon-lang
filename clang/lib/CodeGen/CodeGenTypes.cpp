@@ -43,14 +43,9 @@ CodeGenTypes::~CodeGenTypes() {
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.
-const llvm::Type *CodeGenTypes::ConvertType(QualType T, bool IsRecursive) {
-  const llvm::Type *RawResult = ConvertTypeRecursive(T);
-  
-  if (IsRecursive || PointersToResolve.empty())
-    return RawResult;
+const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
+  llvm::PATypeHolder Result = ConvertTypeRecursive(T);
 
-  llvm::PATypeHolder Result = RawResult;
-  
   // Any pointers that were converted deferred evaluation of their pointee type,
   // creating an opaque type instead.  This is in order to avoid problems with
   // circular types.  Loop through all these defered pointees, if any, and
@@ -337,7 +332,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       isVariadic = true;
     }
 
-    return GetFunctionType(*FI, isVariadic, true);
+    return GetFunctionType(*FI, isVariadic);
   }
 
   case Type::ObjCObject:
