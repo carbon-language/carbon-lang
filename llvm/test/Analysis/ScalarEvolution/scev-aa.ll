@@ -1,8 +1,9 @@
 ; RUN: opt < %s -scev-aa -aa-eval -print-all-alias-modref-info \
 ; RUN:   |& FileCheck %s
 
-; At the time of this writing, -basicaa only misses the example of the form
-; A[i+(j+1)] != A[i+j], which can arise from multi-dimensional array references.
+; At the time of this writing, -basicaa misses the example of the form
+; A[i+(j+1)] != A[i+j], which can arise from multi-dimensional array references,
+; and the example of the form A[0] != A[i+1], where i+1 is known to be positive.
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64"
 
@@ -189,6 +190,26 @@ define void @bar() {
   ret void
 }
 
-; CHECK: 13 no alias responses
+; CHECK: Function: nonnegative: 2 pointers, 0 call sites
+; CHECK: NoAlias:  i64* %arrayidx, i64* %p
+
+define void @nonnegative(i64* %p) nounwind {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %i = phi i64 [ %inc, %for.body ], [ 0, %entry ] ; <i64> [#uses=2]
+  %inc = add nsw i64 %i, 1                         ; <i64> [#uses=2]
+  %arrayidx = getelementptr inbounds i64* %p, i64 %inc
+  store i64 0, i64* %arrayidx
+  %tmp6 = load i64* %p                            ; <i64> [#uses=1]
+  %cmp = icmp slt i64 %inc, %tmp6                 ; <i1> [#uses=1]
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+
+; CHECK: 14 no alias responses
 ; CHECK: 26 may alias responses
 ; CHECK: 18 must alias responses
