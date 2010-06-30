@@ -325,6 +325,33 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
 void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
                                        ArgStringList &CmdArgs) const {
   // The Clang toolchain uses explicit paths for internal libraries.
+
+  // Unfortunately, we still might depend on a few of the libraries that are
+  // only available in the gcc library directory (in particular
+  // libstdc++.dylib). For now, hardcode the path to the known install location.
+  llvm::sys::Path P(getDriver().Dir);
+  P.eraseComponent(); // .../usr/bin -> ../usr
+  P.appendComponent("lib");
+  P.appendComponent("gcc");
+  switch (getTriple().getArch()) {
+  default:
+    assert(0 && "Invalid Darwin arch!");
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    P.appendComponent("i686-apple-darwin10");
+    break;
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    P.appendComponent("arm-apple-darwin10");
+    break;
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+    P.appendComponent("powerpc-apple-darwin10");
+    break;
+  }
+  P.appendComponent("4.2.1");
+  if (P.exists())
+    CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
 }
 
 void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
