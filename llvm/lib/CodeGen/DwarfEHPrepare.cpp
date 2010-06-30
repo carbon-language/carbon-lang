@@ -88,12 +88,13 @@ namespace {
     /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still
     /// use the ".llvm.eh.catch.all.value" call need to convert to using its
     /// initializer instead.
-    bool CleanupSelectors();
+    bool CleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels);
 
     bool HasCatchAllInSelector(IntrinsicInst *);
 
     /// FindAllCleanupSelectors - Find all eh.selector calls that are clean-ups.
-    void FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels);
+    void FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels,
+                                 SmallPtrSet<IntrinsicInst*, 32> &CatchAllSels);
 
     /// FindAllURoRInvokes - Find all URoR invokes in the function.
     void FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes);
@@ -201,7 +202,8 @@ bool DwarfEHPrepare::HasCatchAllInSelector(IntrinsicInst *II) {
 
 /// FindAllCleanupSelectors - Find all eh.selector calls that are clean-ups.
 void DwarfEHPrepare::
-FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
+FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels,
+                        SmallPtrSet<IntrinsicInst*, 32> &CatchAllSels) {
   for (Value::use_iterator
          I = SelectorIntrinsic->use_begin(),
          E = SelectorIntrinsic->use_end(); I != E; ++I) {
@@ -212,6 +214,8 @@ FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
 
     if (!HasCatchAllInSelector(II))
       Sels.insert(II);
+    else
+      CatchAllSels.insert(II);
   }
 }
 
@@ -229,7 +233,7 @@ FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes) {
 /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
 /// the ".llvm.eh.catch.all.value" call need to convert to using its
 /// initializer instead.
-bool DwarfEHPrepare::CleanupSelectors() {
+bool DwarfEHPrepare::CleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
   if (!EHCatchAllValue) return false;
 
   if (!SelectorIntrinsic) {
@@ -239,11 +243,9 @@ bool DwarfEHPrepare::CleanupSelectors() {
   }
 
   bool Changed = false;
-  for (Value::use_iterator
-         I = SelectorIntrinsic->use_begin(),
-         E = SelectorIntrinsic->use_end(); I != E; ++I) {
-    IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(I);
-    if (!Sel || Sel->getParent()->getParent() != F) continue;
+  for (SmallPtrSet<IntrinsicInst*, 32>::iterator
+         I = Sels.begin(), E = Sels.end(); I != E; ++I) {
+    IntrinsicInst *Sel = *I;
 
     // Index of the ".llvm.eh.catch.all.value" variable.
     unsigned OpIdx = Sel->getNumArgOperands() - 1;
@@ -300,8 +302,6 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
 /// function. This is a candidate to merge the selector associated with the URoR
 /// invoke with the one from the URoR's landing pad.
 bool DwarfEHPrepare::HandleURoRInvokes() {
-  if (!DT) return CleanupSelectors(); // We require DominatorTree information.
-
   if (!EHCatchAllValue) {
     EHCatchAllValue =
       F->getParent()->getNamedGlobal(".llvm.eh.catch.all.value");
@@ -314,14 +314,20 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     if (!SelectorIntrinsic) return false;
   }
 
+  SmallPtrSet<IntrinsicInst*, 32> Sels;
+  SmallPtrSet<IntrinsicInst*, 32> CatchAllSels;
+  FindAllCleanupSelectors(Sels, CatchAllSels);
+
+  if (!DT)
+    // We require DominatorTree information.
+    return CleanupSelectors(CatchAllSels);
+
   if (!URoR) {
     URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
-    if (!URoR) return CleanupSelectors();
+    if (!URoR) return CleanupSelectors(CatchAllSels);
   }
 
-  SmallPtrSet<IntrinsicInst*, 32> Sels;
   SmallPtrSet<InvokeInst*, 32> URoRInvokes;
-  FindAllCleanupSelectors(Sels);
   FindAllURoRInvokes(URoRInvokes);
 
   SmallPtrSet<IntrinsicInst*, 32> SelsToConvert;
@@ -347,7 +353,8 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     if (!ExceptionValueIntrinsic) {
       ExceptionValueIntrinsic =
         Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
-      if (!ExceptionValueIntrinsic) return CleanupSelectors();
+      if (!ExceptionValueIntrinsic)
+        return CleanupSelectors(CatchAllSels);
     }
 
     for (Value::use_iterator
@@ -414,7 +421,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     }
   }
 
-  Changed |= CleanupSelectors();
+  Changed |= CleanupSelectors(CatchAllSels);
   return Changed;
 }
 
