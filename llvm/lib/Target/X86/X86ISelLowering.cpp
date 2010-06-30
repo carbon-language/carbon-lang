@@ -10022,7 +10022,7 @@ static bool LowerToBSwap(CallInst *CI) {
   // so don't worry about this.
 
   // Verify this is a simple bswap.
-  if (CI->getNumOperands() != 2 ||
+  if (CI->getNumArgOperands() != 1 ||
       CI->getType() != CI->getArgOperand(0)->getType() ||
       !CI->getType()->isIntegerTy())
     return false;
