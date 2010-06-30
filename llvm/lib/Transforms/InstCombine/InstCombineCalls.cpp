@@ -772,13 +772,13 @@ protected:
     NewInstruction = IC->ReplaceInstUsesWith(*CI, With);
   }
   bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp, bool isString) const {
-    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(SizeCIOp))) {
+    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp - CallInst::ArgOffset))) {
       if (SizeCI->isAllOnesValue())
         return true;
       if (isString)
         return SizeCI->getZExtValue() >=
-               GetStringLength(CI->getOperand(SizeArgOp));
-      if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getOperand(SizeArgOp)))
+               GetStringLength(CI->getArgOperand(SizeArgOp - CallInst::ArgOffset));
+      if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getArgOperand(SizeArgOp - CallInst::ArgOffset)))
         return SizeCI->getZExtValue() >= Arg->getZExtValue();
     }
     return false;
