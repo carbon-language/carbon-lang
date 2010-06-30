@@ -25,8 +25,10 @@ class TestArrayTypes(unittest.TestCase):
     def test_array_types(self):
         """Test 'variable list var_name' on some variables with array types."""
         res = lldb.SBCommandReturnObject()
-        self.ci.HandleCommand("file a.out", res)
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.ci.HandleCommand("file " + exe, res)
         self.assertTrue(res.Succeeded())
+
         self.ci.HandleCommand("breakpoint set -f main.c -l 42", res)
         self.assertTrue(res.Succeeded())
         self.assertTrue(res.GetOutput().startswith(
@@ -46,15 +48,16 @@ class TestArrayTypes(unittest.TestCase):
 
         self.ci.HandleCommand("variable list strings", res);
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().startswith('(char *[4])') and
-                        res.GetOutput().find('(char *) strings[0]') and
-                        res.GetOutput().find('(char *) strings[1]') and
-                        res.GetOutput().find('(char *) strings[2]') and
-                        res.GetOutput().find('(char *) strings[3]') and
-                        res.GetOutput().find('Hello') and
-                        res.GetOutput().find('Hola') and
-                        res.GetOutput().find('Bonjour') and
-                        res.GetOutput().find('Guten Tag'))
+        output = res.GetOutput()
+        self.assertTrue(output.startswith('(char *[4])') and
+                        output.find('(char *) strings[0]') and
+                        output.find('(char *) strings[1]') and
+                        output.find('(char *) strings[2]') and
+                        output.find('(char *) strings[3]') and
+                        output.find('Hello') and
+                        output.find('Hola') and
+                        output.find('Bonjour') and
+                        output.find('Guten Tag'))
 
         self.ci.HandleCommand("variable list char_16", res);
         self.assertTrue(res.Succeeded())
