@@ -5899,7 +5899,6 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
   // If this is the entry block, emit arguments.
   const Function &F = *LLVMBB->getParent();
   SelectionDAG &DAG = SDB->DAG;
-  SDValue OldRoot = DAG.getRoot();
   DebugLoc dl = SDB->getCurDebugLoc();
   const TargetData *TD = TLI.getTargetData();
   SmallVector<ISD::InputArg, 16> Ins;
