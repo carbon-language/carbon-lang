@@ -2760,38 +2760,6 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   return getUnknown(PN);
 }
 
-/// UseFlag - When creating an operator with operands L and R based on an
-/// LLVM IR instruction in basic block BB where the instruction has
-/// nsw, nuw, or inbounds, test whether the corresponding flag can be
-/// set for the resulting SCEV.
-static bool
-UseFlag(bool Flag, const SCEV *L, const SCEV *R, const Value *Inst) {
-  // If the flag is not set, don't use it. This is included here to reduce
-  // clutter in the callers.
-  if (!Flag)
-    return false;
-
-  // Determine the block which contains the instruction with the flag.
-  const Instruction *I = dyn_cast<Instruction>(Inst);
-  if (!I)
-    return false;
-  const BasicBlock *BB = I->getParent();
-
-  // Handle an easy case: test if exactly one of the operands is an addrec
-  // and that the instruction is trivially control-equivalent to the addrec's
-  // loop's header.
-  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(L)) {
-    if (!isa<SCEVAddRecExpr>(R) &&
-        AR->getLoop()->getHeader() == BB)
-      return true;
-  } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(R)) {
-    if (AR->getLoop()->getHeader() == BB)
-      return true;
-  }
-
-  return false;
-}
-
 /// createNodeForGEP - Expand GEP instructions into add and multiply
 /// operations. This allows them to be analyzed by regular SCEV code.
 ///
@@ -2800,9 +2768,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
   // Don't blindly transfer the inbounds flag from the GEP instruction to the
   // Add expression, because the Instruction may be guarded by control flow
   // and the no-overflow bits may not be valid for the expression in any
-  // context. However, in the special case where the GEP is in the loop header,
-  // we know it's trivially control-equivalent to any addrecs for that loop.
-  bool InBounds = GEP->isInBounds();
+  // context.
 
   const Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
@@ -2821,13 +2787,8 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       const SCEV *FieldOffset = getOffsetOfExpr(STy, FieldNo);
 
-      // Test if the GEP has the inbounds keyword and is control-equivalent
-      // to the addrec.
-      bool HasNUW = UseFlag(InBounds, TotalOffset, FieldOffset, GEP);
-
       // Add the field offset to the running total offset.
-      TotalOffset = getAddExpr(TotalOffset, FieldOffset,
-                               HasNUW, /*HasNSW=*/false);
+      TotalOffset = getAddExpr(TotalOffset, FieldOffset);
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *ElementSize = getSizeOfExpr(*GTI);
@@ -2835,33 +2796,19 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
       // Getelementptr indices are signed.
       IndexS = getTruncateOrSignExtend(IndexS, IntPtrTy);
 
-      // Test if the GEP has the inbounds keyword and is control-equivalent
-      // to the addrec.
-      bool HasNUW = UseFlag(InBounds, IndexS, ElementSize, GEP);
-
       // Multiply the index by the element size to compute the element offset.
-      const SCEV *LocalOffset = getMulExpr(IndexS, ElementSize,
-                                           HasNUW, /*HasNSW=*/false);
-
-      // Test if the GEP has the inbounds keyword and is control-equivalent
-      // to the addrec.
-      HasNUW = UseFlag(InBounds, TotalOffset, LocalOffset, GEP);
+      const SCEV *LocalOffset = getMulExpr(IndexS, ElementSize);
 
       // Add the element offset to the running total offset.
-      TotalOffset = getAddExpr(TotalOffset, LocalOffset,
-                               HasNUW, /*HasNSW=*/false);
+      TotalOffset = getAddExpr(TotalOffset, LocalOffset);
     }
   }
 
   // Get the SCEV for the GEP base.
   const SCEV *BaseS = getSCEV(Base);
 
-  // Test if the GEP has the inbounds keyword and is control-equivalent
-  // to the addrec.
-  bool HasNUW = UseFlag(InBounds, BaseS, TotalOffset, GEP);
-
   // Add the total offset from all the GEP indices to the base.
-  return getAddExpr(BaseS, TotalOffset, HasNUW, /*HasNSW=*/false);
+  return getAddExpr(BaseS, TotalOffset);
 }
 
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
@@ -3253,30 +3200,12 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
   Operator *U = cast<Operator>(V);
   switch (Opcode) {
-  case Instruction::Add: {
-    const SCEV *LHS = getSCEV(U->getOperand(0));
-    const SCEV *RHS = getSCEV(U->getOperand(1));
-
-    // Don't transfer the NSW and NUW bits from the Add instruction to the
-    // Add expression unless we can prove that it's safe.
-    AddOperator *Add = cast<AddOperator>(U);
-    bool HasNUW = UseFlag(Add->hasNoUnsignedWrap(), LHS, RHS, Add);
-    bool HasNSW = UseFlag(Add->hasNoSignedWrap(), LHS, RHS, Add);
-
-    return getAddExpr(LHS, RHS, HasNUW, HasNSW);
-  }
-  case Instruction::Mul: {
-    const SCEV *LHS = getSCEV(U->getOperand(0));
-    const SCEV *RHS = getSCEV(U->getOperand(1));
-
-    // Don't transfer the NSW and NUW bits from the Mul instruction to the
-    // Mul expression unless we can prove that it's safe.
-    MulOperator *Mul = cast<MulOperator>(U);
-    bool HasNUW = UseFlag(Mul->hasNoUnsignedWrap(), LHS, RHS, Mul);
-    bool HasNSW = UseFlag(Mul->hasNoSignedWrap(), LHS, RHS, Mul);
-
-    return getMulExpr(LHS, RHS, HasNUW, HasNSW);
-  }
+  case Instruction::Add:
+    return getAddExpr(getSCEV(U->getOperand(0)),
+                      getSCEV(U->getOperand(1)));
+  case Instruction::Mul:
+    return getMulExpr(getSCEV(U->getOperand(0)),
+                      getSCEV(U->getOperand(1)));
   case Instruction::UDiv:
     return getUDivExpr(getSCEV(U->getOperand(0)),
                        getSCEV(U->getOperand(1)));
