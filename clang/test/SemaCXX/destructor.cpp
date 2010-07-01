@@ -19,7 +19,9 @@ struct D {
     // expected-error{{type qualifier is not allowed on this function}} \
     // expected-error{{destructor cannot be declared 'static'}}  \
     // expected-error{{destructor cannot have any parameters}}   \
-    // expected-error{{destructor cannot be variadic}}
+    // expected-error{{destructor cannot be variadic}} \
+    // expected-error{{destructor cannot have a return type}} \
+    // expected-error{{'const' qualifier is not allowed on a destructor}}
 };
 
 struct D2 {
@@ -83,3 +85,6 @@ namespace PR6709 {
   template<class T> class X { T v; ~X() { ++*v; } };
   void a(X<int> x) {}
 }
+
+struct X0 { virtual ~X0() throw(); };
+struct X1 : public X0 { };

@@ -32,6 +32,25 @@ struct C {
 
 C::~C() { }
 
+namespace PR7526 {
+  extern void foo();
+  struct allocator {
+    ~allocator() throw();
+  };
+
+  struct allocator_derived : allocator { };
+
+  // CHECK: define void @_ZN6PR75269allocatorD2Ev
+  // CHECK: call void @__cxa_call_unexpected
+  allocator::~allocator() throw() { foo(); }
+
+  // CHECK: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev
+  // CHECK: call void @__cxa_call_unexpected
+  void foo() {
+    allocator_derived ad;
+  }
+}
+
 // PR5084
 template<typename T>
 class A1 {

@@ -2588,6 +2588,65 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                       dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));
 }
 
+namespace {
+  /// \brief Helper class that collects exception specifications for 
+  /// implicitly-declared special member functions.
+  class ImplicitExceptionSpecification {
+    ASTContext &Context;
+    bool AllowsAllExceptions;
+    llvm::SmallPtrSet<CanQualType, 4> ExceptionsSeen;
+    llvm::SmallVector<QualType, 4> Exceptions;
+    
+  public:
+    explicit ImplicitExceptionSpecification(ASTContext &Context) 
+      : Context(Context), AllowsAllExceptions(false) { }
+    
+    /// \brief Whether the special member function should have any
+    /// exception specification at all.
+    bool hasExceptionSpecification() const {
+      return !AllowsAllExceptions;
+    }
+    
+    /// \brief Whether the special member function should have a
+    /// throw(...) exception specification (a Microsoft extension).
+    bool hasAnyExceptionSpecification() const {
+      return false;
+    }
+    
+    /// \brief The number of exceptions in the exception specification.
+    unsigned size() const { return Exceptions.size(); }
+    
+    /// \brief The set of exceptions in the exception specification.
+    const QualType *data() const { return Exceptions.data(); }
+    
+    /// \brief Note that 
+    void CalledDecl(CXXMethodDecl *Method) {
+      // If we already know that we allow all exceptions, do nothing.
+      if (AllowsAllExceptions)
+        return;
+      
+      const FunctionProtoType *Proto
+        = Method->getType()->getAs<FunctionProtoType>();
+      
+      // If this function can throw any exceptions, make a note of that.
+      if (!Proto->hasExceptionSpec() || Proto->hasAnyExceptionSpec()) {
+        AllowsAllExceptions = true;
+        ExceptionsSeen.clear();
+        Exceptions.clear();
+        return;
+      }
+        
+      // Record the exceptions in this function's exception specification.
+      for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
+                                              EEnd = Proto->exception_end();
+           E != EEnd; ++E) 
+        if (ExceptionsSeen.insert(Context.getCanonicalType(*E)))
+          Exceptions.push_back(*E);
+    }
+  };
+}
+
+
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared
 /// special functions, such as the default constructor, copy
 /// constructor, or destructor, to the given C++ class (C++
@@ -2822,10 +2881,47 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
     //   If a class has no user-declared destructor, a destructor is
     //   declared implicitly. An implicitly-declared destructor is an
     //   inline public member of its class.
+    
+    // C++ [except.spec]p14: 
+    //   An implicitly declared special member function (Clause 12) shall have 
+    //   an exception-specification.
+    ImplicitExceptionSpecification ExceptSpec(Context);
+    
+    // Direct base-class destructors.
+    for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                         BEnd = ClassDecl->bases_end();
+         B != BEnd; ++B) {
+      if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+        ExceptSpec.CalledDecl(
+              cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor(Context));
+    }
+         
+    // Virtual base-class destructors.
+    for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
+                                         BEnd = ClassDecl->vbases_end();
+         B != BEnd; ++B) {
+      if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+        ExceptSpec.CalledDecl(
+              cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor(Context));
+    }
+
+    // Field destructors.
+    for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                                 FEnd = ClassDecl->field_end();
+         F != FEnd; ++F) {
+      if (const RecordType *RecordTy
+                = Context.getBaseElementType(F->getType())->getAs<RecordType>())
+        ExceptSpec.CalledDecl(
+              cast<CXXRecordDecl>(RecordTy->getDecl())->getDestructor(Context));
+    }
+    
     QualType Ty = Context.getFunctionType(Context.VoidTy,
                                           0, 0, false, 0,
-                                          /*FIXME: hasExceptionSpec*/false,
-                                          false, 0, 0, FunctionType::ExtInfo());
+                                        ExceptSpec.hasExceptionSpecification(),
+                                      ExceptSpec.hasAnyExceptionSpecification(),
+                                          ExceptSpec.size(),
+                                          ExceptSpec.data(),
+                                          FunctionType::ExtInfo());
 
     DeclarationName Name
       = Context.DeclarationNames.getCXXDestructorName(ClassType);
@@ -2990,9 +3086,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
 
   // Rebuild the function type "R" without any type qualifiers (in
   // case any of the errors above fired) and with "void" as the
-  // return type, since constructors don't have return types. We
-  // *always* have to do this, because GetTypeForDeclarator will
-  // put in a result type of "int" when none was specified.
+  // return type, since constructors don't have return types.
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                                  Proto->getNumArgs(),
@@ -3087,7 +3181,7 @@ FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
 /// emit diagnostics and set the declarator to invalid.  Even if this happens,
 /// will be updated to reflect a well-formed type for the destructor and
 /// returned.
-QualType Sema::CheckDestructorDeclarator(Declarator &D,
+QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
                                          FunctionDecl::StorageClass& SC) {
   // C++ [class.dtor]p1:
   //   [...] A typedef-name that names a class is a class-name
@@ -3095,11 +3189,9 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
   QualType DeclaratorType = GetTypeFromParser(D.getName().DestructorName);
-  if (isa<TypedefType>(DeclaratorType)) {
+  if (isa<TypedefType>(DeclaratorType))
     Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
       << DeclaratorType;
-    D.setInvalidType();
-  }
 
   // C++ [class.dtor]p2:
   //   A destructor is used to destroy objects of its class type. A
@@ -3113,9 +3205,10 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
         << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-        << SourceRange(D.getIdentifierLoc());
+        << SourceRange(D.getIdentifierLoc())
+        << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+    
     SC = FunctionDecl::None;
-    D.setInvalidType();
   }
   if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Destructors don't have return types, but the parser will
@@ -3163,11 +3256,17 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   // Rebuild the function type "R" without any type qualifiers or
   // parameters (in case any of the errors above fired) and with
   // "void" as the return type, since destructors don't have return
-  // types. We *always* have to do this, because GetTypeForDeclarator
-  // will put in a result type of "int" when none was specified.
-  // FIXME: Exceptions!
+  // types. 
+  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
+  if (!Proto)
+    return QualType();
+  
   return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0,
-                                 false, false, 0, 0, FunctionType::ExtInfo());
+                                 Proto->hasExceptionSpec(),
+                                 Proto->hasAnyExceptionSpec(),
+                                 Proto->getNumExceptions(),
+                                 Proto->exception_begin(),
+                                 Proto->getExtInfo());
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
