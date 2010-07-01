@@ -97,7 +97,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   /// If we don't have a definition for the destructor yet, don't
   /// emit.  We can't emit aliases to declarations; that's just not
   /// how aliases work.
-  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor(getContext());
+  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor();
   if (!BaseD->isImplicit() && !BaseD->getBody())
     return true;
 

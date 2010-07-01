@@ -461,7 +461,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                     LoadObjCSelf(), Ivar, 0);
       const RecordType *RT = FieldType->getAs<RecordType>();
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(getContext());
+      CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor();
       if (!Dtor->isTrivial()) {
         if (Array) {
           const llvm::Type *BasePtr = ConvertType(FieldType);

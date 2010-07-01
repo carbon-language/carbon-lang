@@ -5951,7 +5951,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   case CXXDestructor:
     if (RD->hasUserDeclaredDestructor()) {
-      SourceLocation DtorLoc = RD->getDestructor(Context)->getLocation();
+      SourceLocation DtorLoc = RD->getDestructor()->getLocation();
       Diag(DtorLoc, diag::note_nontrivial_user_defined) << QT << member;
       return;
     }

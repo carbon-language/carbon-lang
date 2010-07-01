@@ -829,7 +829,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   if (const RecordType *RT = DeleteTy->getAs<RecordType>()) {
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       if (!RD->hasTrivialDestructor()) {
-        const CXXDestructorDecl *Dtor = RD->getDestructor(getContext());
+        const CXXDestructorDecl *Dtor = RD->getDestructor();
         if (E->isArrayForm()) {
           llvm::Value *AllocatedObjectPtr;
           llvm::Value *NumElements;

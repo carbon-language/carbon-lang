@@ -566,7 +566,8 @@ CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
   return 0;
 }
 
-CXXDestructorDecl *CXXRecordDecl::getDestructor(ASTContext &Context) const {
+CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
+  ASTContext &Context = getASTContext();
   QualType ClassType = Context.getTypeDeclType(this);
 
   DeclarationName Name

@@ -342,7 +342,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
     // FIXME: Is this OK for C++0x delegating constructors?
     CodeGenFunction::EHCleanupBlock Cleanup(CGF);
 
-    CXXDestructorDecl *DD = BaseClassDecl->getDestructor(CGF.getContext());
+    CXXDestructorDecl *DD = BaseClassDecl->getDestructor();
     CGF.EmitCXXDestructorCall(DD, Dtor_Base, isBaseVirtual, V);
   }
 }
@@ -539,7 +539,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       llvm::Value *ThisPtr = CGF.LoadCXXThis();
       LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
 
-      CXXDestructorDecl *DD = RD->getDestructor(CGF.getContext());
+      CXXDestructorDecl *DD = RD->getDestructor();
       CGF.EmitCXXDestructorCall(DD, Dtor_Complete, /*ForVirtualBase=*/false,
                                 LHS.getAddress());
     }
@@ -783,7 +783,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
       // Ignore trivial destructors.
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
-      const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
+      const CXXDestructorDecl *D = BaseClassDecl->getDestructor();
       llvm::Value *V = 
         GetAddressOfDirectBaseInCompleteClass(LoadCXXThis(),
                                               ClassDecl, BaseClassDecl,
@@ -838,10 +838,10 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
       BasePtr = llvm::PointerType::getUnqual(BasePtr);
       llvm::Value *BaseAddrPtr =
         Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-      EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
+      EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(),
                                 Array, BaseAddrPtr);
     } else
-      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+      EmitCXXDestructorCall(FieldClassDecl->getDestructor(),
                             Dtor_Complete, /*ForVirtualBase=*/false,
                             LHS.getAddress());
   }
@@ -862,7 +862,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
-    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());    
+    const CXXDestructorDecl *D = BaseClassDecl->getDestructor();    
     llvm::Value *V = 
       GetAddressOfDirectBaseInCompleteClass(LoadCXXThis(), ClassDecl, 
                                             BaseClassDecl, 

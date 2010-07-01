@@ -372,8 +372,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
               if (CXXRecordDecl *ClassDecl = 
                     dyn_cast<CXXRecordDecl>(RT->getDecl())) {
                 if (!ClassDecl->hasTrivialDestructor()) {
-                  const CXXDestructorDecl *D = 
-                    ClassDecl->getDestructor(getContext());
+                  const CXXDestructorDecl *D = ClassDecl->getDestructor();
                   assert(D && "BuildBlockLiteralTmp - destructor is nul");
                   {
                     // Normal destruction. 

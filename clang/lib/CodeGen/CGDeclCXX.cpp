@@ -66,7 +66,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   if (RD->hasTrivialDestructor())
     return;
   
-  CXXDestructorDecl *Dtor = RD->getDestructor(Context);
+  CXXDestructorDecl *Dtor = RD->getDestructor();
   
   llvm::Constant *DtorFn;
   if (Array) {

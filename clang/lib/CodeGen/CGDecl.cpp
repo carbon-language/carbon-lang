@@ -678,7 +678,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
           Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
                                         D.getNameAsString());
         
-        const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
+        const CXXDestructorDecl *D = ClassDecl->getDestructor();
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
         
         if (const ConstantArrayType *Array = 

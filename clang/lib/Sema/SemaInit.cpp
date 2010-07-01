@@ -3709,7 +3709,7 @@ InitializationSequence::Perform(Sema &S,
         QualType T = CurInitExpr->getType();
         if (const RecordType *Record = T->getAs<RecordType>()) {
           CXXDestructorDecl *Destructor
-            = cast<CXXRecordDecl>(Record->getDecl())->getDestructor(S.Context);
+            = cast<CXXRecordDecl>(Record->getDecl())->getDestructor();
           S.CheckDestructorAccess(CurInitExpr->getLocStart(), Destructor, 
                                   S.PDiag(diag::err_access_dtor_temp) << T);
           S.MarkDeclarationReferenced(CurInitExpr->getLocStart(), Destructor);

@@ -304,7 +304,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   if (const RecordType *RecordTy = ThrowType->getAs<RecordType>()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
     if (!Record->hasTrivialDestructor()) {
-      CXXDestructorDecl *DtorD = Record->getDestructor(getContext());
+      CXXDestructorDecl *DtorD = Record->getDestructor();
       Dtor = CGM.GetAddrOfCXXDestructor(DtorD, Dtor_Complete);
       Dtor = llvm::ConstantExpr::getBitCast(Dtor, Int8PtrTy);
     }

@@ -275,7 +275,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
       if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
         CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
         if (!ClassDecl->hasTrivialDestructor())
-          ReferenceTemporaryDtor = ClassDecl->getDestructor(CGF.getContext());
+          ReferenceTemporaryDtor = ClassDecl->getDestructor();
       }
     }
 
