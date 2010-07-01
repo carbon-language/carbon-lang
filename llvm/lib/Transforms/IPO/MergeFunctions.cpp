@@ -535,6 +535,7 @@ static LinkageCategory categorize(const Function *F) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::ExternalWeakLinkage:
+  case GlobalValue::LinkerPrivateWeakLinkage:
     return ExternalWeak;
 
   case GlobalValue::ExternalLinkage:

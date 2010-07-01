@@ -24,6 +24,7 @@
         <ol>
           <li><a href="#linkage_private">'<tt>private</tt>' Linkage</a></li>
           <li><a href="#linkage_linker_private">'<tt>linker_private</tt>' Linkage</a></li>
+          <li><a href="#linkage_linker_private_weak">'<tt>linker_private_weak</tt>' Linkage</a></li>
           <li><a href="#linkage_internal">'<tt>internal</tt>' Linkage</a></li>
           <li><a href="#linkage_available_externally">'<tt>available_externally</tt>' Linkage</a></li>
           <li><a href="#linkage_linkonce">'<tt>linkonce</tt>' Linkage</a></li>
@@ -546,20 +547,24 @@ define i32 @main() {                                        <i>; i32()* </i>
 
 <dl>
   <dt><tt><b><a name="linkage_private">private</a></b></tt></dt>
-  <dd>Global values with private linkage are only directly accessible by objects
-      in the current module.  In particular, linking code into a module with an
-      private global value may cause the private to be renamed as necessary to
-      avoid collisions.  Because the symbol is private to the module, all
-      references can be updated. This doesn't show up in any symbol table in the
-      object file.</dd>
+  <dd>Global values with "<tt>private</tt>" linkage are only directly accessible
+      by objects in the current module. In particular, linking code into a
+      module with an private global value may cause the private to be renamed as
+      necessary to avoid collisions.  Because the symbol is private to the
+      module, all references can be updated. This doesn't show up in any symbol
+      table in the object file.</dd>
 
   <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt></dt>
-  <dd>Similar to private, but the symbol is passed through the assembler and
-      removed by the linker after evaluation.  Note that (unlike private
-      symbols) linker_private symbols are subject to coalescing by the linker:
-      weak symbols get merged and redefinitions are rejected.  However, unlike
-      normal strong symbols, they are removed by the linker from the final
-      linked image (executable or dynamic library).</dd>
+  <dd>Similar to <tt>private</tt>, but the symbol is passed through the
+      assembler and evaluated by the linker. Unlike normal strong symbols, they
+      are removed by the linker from the final linked image (executable or
+      dynamic library).</dd>
+
+  <dt><tt><b><a name="linkage_linker_private_weak">linker_private_weak</a></b></tt></dt>
+  <dd>Similar to "<tt>linker_private</tt>", but the symbol is weak. Note that
+      <tt>linker_private_weak</tt> symbols are subject to coalescing by the
+      linker. The symbols are removed by the linker from the final linked image
+      (executable or dynamic library).</dd>
 
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt></dt>
   <dd>Similar to private, but the value shows as a local symbol
@@ -623,8 +628,8 @@ define i32 @main() {                                        <i>; i32()* </i>
   <dt><tt><b><a name="linkage_weak_odr">weak_odr</a></b></tt></dt>
   <dd>Some languages allow differing globals to be merged, such as two functions
       with different semantics.  Other languages, such as <tt>C++</tt>, ensure
-      that only equivalent globals are ever merged (the "one definition rule" -
-      "ODR").  Such languages can use the <tt>linkonce_odr</tt>
+      that only equivalent globals are ever merged (the "one definition rule"
+      &mdash; "ODR").  Such languages can use the <tt>linkonce_odr</tt>
       and <tt>weak_odr</tt> linkage types to indicate that the global will only
       be merged with equivalent globals.  These linkage types are otherwise the
       same as their non-<tt>odr</tt> versions.</dd>
