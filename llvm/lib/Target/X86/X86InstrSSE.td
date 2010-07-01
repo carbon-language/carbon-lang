@@ -3221,10 +3221,20 @@ let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in
   defm VMOVDDUP : sse3_replicate_dfp<"vmovddup">, VEX;
 defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 
+// Move Unaligned Integer
+let isAsmParserOnly = 1 in
+  def VLDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                     "vlddqu\t{$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>, VEX;
+def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                   "lddqu\t{$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>;
+
 def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
                    (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
+// Several Move patterns
 let AddedComplexity = 5 in {
 def : Pat<(movddup (memopv2f64 addr:$src), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
@@ -3235,6 +3245,22 @@ def : Pat<(movddup (memopv2i64 addr:$src), (undef)),
 def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
 }
+
+// vector_shuffle v1, <undef> <1, 1, 3, 3>
+let AddedComplexity = 15 in
+def : Pat<(v4i32 (movshdup VR128:$src, (undef))),
+          (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+let AddedComplexity = 20 in
+def : Pat<(v4i32 (movshdup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
+          (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
+
+// vector_shuffle v1, <undef> <0, 0, 2, 2>
+let AddedComplexity = 15 in
+  def : Pat<(v4i32 (movsldup VR128:$src, (undef))),
+            (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+let AddedComplexity = 20 in
+  def : Pat<(v4i32 (movsldup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
+            (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Arithmetic
@@ -3275,27 +3301,42 @@ let Constraints = "$src1 = $dst", Predicates = [HasSSE3],
 // SSE3 Instructions
 //===---------------------------------------------------------------------===//
 
-def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                   "lddqu\t{$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>;
-
 // Horizontal ops
-class S3D_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+class S3D_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId, bit Is2Addr = 1>
   : S3DI<o, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+       !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
-class S3D_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+class S3D_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId, bit Is2Addr = 1>
   : S3DI<o, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
+       !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (memop addr:$src2))))]>;
-class S3_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+class S3_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId, bit Is2Addr = 1>
   : S3I<o, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
-class S3_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+class S3_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId, bit Is2Addr = 1>
   : S3I<o, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
       [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (memopv2f64 addr:$src2))))]>;
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in {
+  def VHADDPSrr : S3D_Intrr<0x7C, "vhaddps", int_x86_sse3_hadd_ps, 0>, VEX_4V;
+  def VHADDPSrm : S3D_Intrm<0x7C, "vhaddps", int_x86_sse3_hadd_ps, 0>, VEX_4V;
+  def VHADDPDrr : S3_Intrr <0x7C, "vhaddpd", int_x86_sse3_hadd_pd, 0>, VEX_4V;
+  def VHADDPDrm : S3_Intrm <0x7C, "vhaddpd", int_x86_sse3_hadd_pd, 0>, VEX_4V;
+  def VHSUBPSrr : S3D_Intrr<0x7D, "vhsubps", int_x86_sse3_hsub_ps, 0>, VEX_4V;
+  def VHSUBPSrm : S3D_Intrm<0x7D, "vhsubps", int_x86_sse3_hsub_ps, 0>, VEX_4V;
+  def VHSUBPDrr : S3_Intrr <0x7D, "vhsubpd", int_x86_sse3_hsub_pd, 0>, VEX_4V;
+  def VHSUBPDrm : S3_Intrm <0x7D, "vhsubpd", int_x86_sse3_hsub_pd, 0>, VEX_4V;
+}
 
 let Constraints = "$src1 = $dst" in {
   def HADDPSrr : S3D_Intrr<0x7C, "haddps", int_x86_sse3_hadd_ps>;
@@ -3308,31 +3349,15 @@ let Constraints = "$src1 = $dst" in {
   def HSUBPDrm : S3_Intrm <0x7D, "hsubpd", int_x86_sse3_hsub_pd>;
 }
 
+//===---------------------------------------------------------------------===//
+// SSSE3 Instructions
+//===---------------------------------------------------------------------===//
+
 // Thread synchronization
 def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
                 [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
 def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
                 [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
-
-// vector_shuffle v1, <undef> <1, 1, 3, 3>
-let AddedComplexity = 15 in
-def : Pat<(v4i32 (movshdup VR128:$src, (undef))),
-          (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
-let AddedComplexity = 20 in
-def : Pat<(v4i32 (movshdup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
-          (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
-
-// vector_shuffle v1, <undef> <0, 0, 2, 2>
-let AddedComplexity = 15 in
-  def : Pat<(v4i32 (movsldup VR128:$src, (undef))),
-            (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
-let AddedComplexity = 20 in
-  def : Pat<(v4i32 (movsldup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
-            (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
-
-//===---------------------------------------------------------------------===//
-// SSSE3 Instructions
-//===---------------------------------------------------------------------===//
 
 /// SS3I_unop_rm_int_8 - Simple SSSE3 unary operator whose type is v*i8.
 multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,

@@ -11582,3 +11582,35 @@
 // CHECK: encoding: [0xc5,0xf1,0xd0,0x10]
           vaddsubpd  (%eax), %xmm1, %xmm2
 
+// CHECK: vhaddps  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x7c,0xd9]
+          vhaddps  %xmm1, %xmm2, %xmm3
+
+// CHECK: vhaddps  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x7c,0x18]
+          vhaddps  (%eax), %xmm2, %xmm3
+
+// CHECK: vhaddpd  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x7c,0xd9]
+          vhaddpd  %xmm1, %xmm2, %xmm3
+
+// CHECK: vhaddpd  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x7c,0x18]
+          vhaddpd  (%eax), %xmm2, %xmm3
+
+// CHECK: vhsubps  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x7d,0xd9]
+          vhsubps  %xmm1, %xmm2, %xmm3
+
+// CHECK: vhsubps  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0x7d,0x18]
+          vhsubps  (%eax), %xmm2, %xmm3
+
+// CHECK: vhsubpd  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x7d,0xd9]
+          vhsubpd  %xmm1, %xmm2, %xmm3
+
+// CHECK: vhsubpd  (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0x7d,0x18]
+          vhsubpd  (%eax), %xmm2, %xmm3
+

@@ -1630,3 +1630,35 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x21,0xd0,0x20]
           vaddsubpd  (%rax), %xmm11, %xmm12
 
+// CHECK: vhaddps  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0x7c,0xeb]
+          vhaddps  %xmm11, %xmm12, %xmm13
+
+// CHECK: vhaddps  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0x7c,0x28]
+          vhaddps  (%rax), %xmm12, %xmm13
+
+// CHECK: vhaddpd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x7c,0xeb]
+          vhaddpd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vhaddpd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x7c,0x28]
+          vhaddpd  (%rax), %xmm12, %xmm13
+
+// CHECK: vhsubps  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0x7d,0xeb]
+          vhsubps  %xmm11, %xmm12, %xmm13
+
+// CHECK: vhsubps  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x1b,0x7d,0x28]
+          vhsubps  (%rax), %xmm12, %xmm13
+
+// CHECK: vhsubpd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0x7d,0xeb]
+          vhsubpd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vhsubpd  (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc5,0x19,0x7d,0x28]
+          vhsubpd  (%rax), %xmm12, %xmm13
+
