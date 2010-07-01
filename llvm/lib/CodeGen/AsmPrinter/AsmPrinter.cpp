@@ -199,7 +199,6 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::LinkerPrivateWeakLinkage:
     if (MAI->getWeakDefDirective() != 0) {
       // .globl _foo
@@ -226,6 +225,7 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
     break;
   default:
     llvm_unreachable("Unknown linkage type!");
