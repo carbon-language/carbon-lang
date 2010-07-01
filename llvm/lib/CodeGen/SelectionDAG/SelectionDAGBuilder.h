@@ -346,6 +346,8 @@ public:
   void visit(unsigned Opcode, const User &I);
 
   SDValue getValue(const Value *V);
+  SDValue getNonRegisterValue(const Value *V);
+  SDValue getValueImpl(const Value *V);
 
   void setValue(const Value *V, SDValue NewN) {
     SDValue &N = NodeMap[V];
