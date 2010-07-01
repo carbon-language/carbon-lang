@@ -430,6 +430,14 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
           if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
             // Constant-offset addressing.
             Disp += CI->getSExtValue() * S;
+          } else if (isa<AddOperator>(Op) &&
+                     isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
+            // An add with a constant operand. Fold the constant.
+            ConstantInt *CI =
+              cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
+            Disp += CI->getSExtValue() * S;
+            // Add the other operand back to the work list.
+            Worklist.push_back(cast<AddOperator>(Op)->getOperand(0));
           } else if (IndexReg == 0 &&
                      (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
                      (S == 1 || S == 2 || S == 4 || S == 8)) {
@@ -438,10 +446,6 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
             IndexReg = getRegForGEPIndex(Op).first;
             if (IndexReg == 0)
               return false;
-          } else if (const AddOperator *Add = dyn_cast<AddOperator>(Op)) {
-            // An add. Try to fold both operands.
-            Worklist.push_back(Add->getOperand(0));
-            Worklist.push_back(Add->getOperand(1));
           } else
             // Unsupported.
             goto unsupported_gep;
