@@ -1849,7 +1849,7 @@ public:
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
-                               Stmt* S, const GRState* state,
+                               const GRState* state,
                                SymbolReaper& SymReaper);
 
   std::pair<ExplodedNode*, const GRState *>
@@ -3400,10 +3400,9 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
                                  GRExprEngine& Eng,
                                  GRStmtNodeBuilder& Builder,
                                  ExplodedNode* Pred,
-                                 Stmt* S,
                                  const GRState* state,
                                  SymbolReaper& SymReaper) {
-
+  Stmt *S = Builder.getStmt();
   RefBindings B = state->get<RefBindings>();
 
   // Update counts from autorelease pools

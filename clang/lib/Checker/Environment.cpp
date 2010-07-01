@@ -125,7 +125,7 @@ static bool isBlockExprInCallers(const Stmt *E, const LocationContext *LC) {
 //   - Mark the region in DRoots if the binding is a loc::MemRegionVal.
 
 Environment
-EnvironmentManager::RemoveDeadBindings(Environment Env, const Stmt *S,
+EnvironmentManager::RemoveDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
                                        const GRState *ST,
                               llvm::SmallVectorImpl<const MemRegion*> &DRoots) {
@@ -163,7 +163,7 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, const Stmt *S,
     if (!C.isBlkExpr(BlkExpr))
       continue;
 
-    if (SymReaper.isLive(S, BlkExpr)) {
+    if (SymReaper.isLive(BlkExpr)) {
       // Copy the binding to the new map.
       NewEnv.ExprBindings = F.Add(NewEnv.ExprBindings, BlkExpr, X);
 

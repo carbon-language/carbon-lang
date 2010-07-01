@@ -72,7 +72,7 @@ public:
 
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
-  const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc, 
+  const GRState *RemoveDeadBindings(GRState &state,
                            const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
@@ -251,7 +251,7 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
   }
 }
 
-const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
+const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state,
                                             const StackFrameContext *LCtx,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
@@ -263,7 +263,7 @@ const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   // Iterate over the variable bindings.
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
     if (const VarRegion *VR = dyn_cast<VarRegion>(I.getKey())) {
-      if (SymReaper.isLive(Loc, VR))
+      if (SymReaper.isLive(VR))
         RegionRoots.push_back(VR);
       else
         continue;

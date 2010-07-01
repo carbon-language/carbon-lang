@@ -44,7 +44,7 @@ public:
   }
 
   SVal ArrayToPointer(Loc Array);
-  const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc, 
+  const GRState *RemoveDeadBindings(GRState &state, 
                            const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){

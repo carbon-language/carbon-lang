@@ -86,7 +86,7 @@ public:
   Environment BindExpr(Environment Env, const Stmt *S, SVal V,
                        bool Invalidate);
 
-  Environment RemoveDeadBindings(Environment Env, const Stmt *S,
+  Environment RemoveDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper, const GRState *ST,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 };

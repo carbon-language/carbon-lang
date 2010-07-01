@@ -360,7 +360,7 @@ public: // Part of public interface to class.
 
   /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc, 
+  const GRState *RemoveDeadBindings(GRState &state, 
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
@@ -1734,15 +1734,14 @@ class RemoveDeadBindingsWorker :
   public ClusterAnalysis<RemoveDeadBindingsWorker> {
   llvm::SmallVector<const SymbolicRegion*, 12> Postponed;
   SymbolReaper &SymReaper;
-  Stmt *Loc;
   const StackFrameContext *CurrentLCtx;
   
 public:
   RemoveDeadBindingsWorker(RegionStoreManager &rm, GRStateManager &stateMgr,
                            RegionBindings b, SymbolReaper &symReaper,
-                           Stmt *loc, const StackFrameContext *LCtx)
+                           const StackFrameContext *LCtx)
     : ClusterAnalysis<RemoveDeadBindingsWorker>(rm, stateMgr, b),
-      SymReaper(symReaper), Loc(loc), CurrentLCtx(LCtx) {}
+      SymReaper(symReaper), CurrentLCtx(LCtx) {}
 
   // Called by ClusterAnalysis.
   void VisitAddedToCluster(const MemRegion *baseR, RegionCluster &C);
@@ -1758,7 +1757,7 @@ void RemoveDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
                                                    RegionCluster &C) {
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(baseR)) {
-    if (SymReaper.isLive(Loc, VR))
+    if (SymReaper.isLive(VR))
       AddToWorkList(baseR, C);
 
     return;
@@ -1865,13 +1864,13 @@ bool RemoveDeadBindingsWorker::UpdatePostponed() {
   return changed;
 }
 
-const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
+const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state,
                                              const StackFrameContext *LCtx,
                                              SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   RegionBindings B = GetRegionBindings(state.getStore());
-  RemoveDeadBindingsWorker W(*this, StateMgr, B, SymReaper, Loc, LCtx);
+  RemoveDeadBindingsWorker W(*this, StateMgr, B, SymReaper, LCtx);
   W.GenerateClusters();
 
   // Enqueue the region roots onto the worklist.

@@ -68,7 +68,7 @@ public:
       II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
-  void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
+  void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
   const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption);
@@ -471,8 +471,7 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
   C.addTransition(state);
 }
 
-void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
-                                    SymbolReaper &SymReaper) {
+void MallocChecker::EvalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
          E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;

@@ -537,10 +537,10 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
   // Create the cleaned state.
   const ExplodedNode *BasePred = Builder->getBasePredecessor();
 
-  SymbolReaper SymReaper(BasePred->getLocationContext(), SymMgr);
+  SymbolReaper SymReaper(BasePred->getLocationContext(), CurrentStmt, SymMgr);
 
   CleanedState = AMgr.shouldPurgeDead()
-    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, 
+    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), 
                          BasePred->getLocationContext()->getCurrentStackFrame(),
                                   SymReaper)
     : EntryNode->getState();
@@ -559,7 +559,7 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
 
     // FIXME: This should soon be removed.
     ExplodedNodeSet Tmp2;
-    getTF().EvalDeadSymbols(Tmp2, *this, *Builder, EntryNode, CurrentStmt,
+    getTF().EvalDeadSymbols(Tmp2, *this, *Builder, EntryNode,
                             CleanedState, SymReaper);
 
     if (Checkers.empty())

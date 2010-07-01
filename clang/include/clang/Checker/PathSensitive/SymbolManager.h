@@ -330,21 +330,23 @@ class SymbolReaper {
   SetTy TheLiving;
   SetTy TheDead;
   const LocationContext *LCtx;
+  const Stmt *Loc;
   SymbolManager& SymMgr;
 
 public:
-  SymbolReaper(const LocationContext *ctx, SymbolManager& symmgr)
-    : LCtx(ctx), SymMgr(symmgr) {}
+  SymbolReaper(const LocationContext *ctx, const Stmt *s, SymbolManager& symmgr)
+   : LCtx(ctx), Loc(s), SymMgr(symmgr) {}
 
   ~SymbolReaper() {}
 
   const LocationContext *getLocationContext() const { return LCtx; }
+  const Stmt *getCurrentStatement() const { return Loc; }
 
   bool isLive(SymbolRef sym);
 
-  bool isLive(const Stmt* Loc, const Stmt* ExprVal) const;
+  bool isLive(const Stmt *ExprVal) const;
 
-  bool isLive(const Stmt* Loc, const VarRegion *VR) const;
+  bool isLive(const VarRegion *VR) const;
   
   void markLive(SymbolRef sym);
   bool maybeDead(SymbolRef sym);

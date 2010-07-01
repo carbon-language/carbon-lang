@@ -448,7 +448,7 @@ public:
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
 
-  const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc,
+  const GRState* RemoveDeadBindings(const GRState* St,
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper);
 

@@ -253,7 +253,7 @@ private:
                           SymbolReaper &SymReaper, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, 
                      ProgramPoint::PostPurgeDeadSymbolsKind, 0, S);
-    EvalDeadSymbols(C, S, SymReaper);
+    EvalDeadSymbols(C, SymReaper);
   }
 
 public:
@@ -263,8 +263,7 @@ public:
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
                             const Stmt *StoreE, SVal location, SVal val) {}
-  virtual void EvalDeadSymbols(CheckerContext &C, const Stmt *S,
-                               SymbolReaper &SymReaper) {}
+  virtual void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
   virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                            GRExprEngine &Eng) {}
 

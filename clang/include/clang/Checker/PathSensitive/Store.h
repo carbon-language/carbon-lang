@@ -148,7 +148,7 @@ public:
     return UnknownVal();
   }
 
-  virtual const GRState *RemoveDeadBindings(GRState &state, Stmt* Loc,
+  virtual const GRState *RemoveDeadBindings(GRState &state,
                                             const StackFrameContext *LCtx,
                                             SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;

@@ -66,7 +66,7 @@ public:
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
-                               Stmt* S, const GRState* state,
+                               const GRState* state,
                                SymbolReaper& SymReaper) {}
 
   // Return statements.
