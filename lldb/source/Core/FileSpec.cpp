@@ -66,23 +66,23 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     
     if (src_path == NULL || src_path[0] == '\0')
         return 0;
-        
+    
     // If there's no ~, then just copy src_path straight to dst_path (they may be the same string...)
     if (src_path[0] != '~')
     {
         int len = strlen (src_path);
         if (len >= dst_len)
         {
-           bcopy(src_path, dst_path, dst_len - 1);
-           dst_path[dst_len] = '\0';
+            ::bcopy (src_path, dst_path, dst_len - 1);
+            dst_path[dst_len] = '\0';
         }
         else
-            bcopy(src_path, dst_path, len + 1);
-            
+            ::bcopy (src_path, dst_path, len + 1);
+        
         return len;
     }
     
-    char *first_slash = strchr(src_path, '/');
+    char *first_slash = ::strchr (src_path, '/');
     char remainder[PATH_MAX];
     
     if (first_slash == NULL)
@@ -94,13 +94,13 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     else
     {
         int user_name_len = first_slash - src_path - 1;
-        memcpy(user_home, src_path + 1, user_name_len);
+        ::memcpy (user_home, src_path + 1, user_name_len);
         user_home[user_name_len] = '\0';
         user_name = user_home;
         
-        strcpy(remainder, first_slash);
+        ::strcpy (remainder, first_slash);
     }
-
+    
     if (user_name == NULL)
         return 0;
     // User name of "" means the current user...
@@ -114,7 +114,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     }
     else
     {
-        user_entry = getpwnam (user_name);
+        user_entry = ::getpwnam (user_name);
         if (user_entry != NULL)
             home_dir = user_entry->pw_dir;
     }

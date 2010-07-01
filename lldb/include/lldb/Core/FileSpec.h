@@ -23,8 +23,18 @@ namespace lldb_private {
 /// @brief A file utility class.
 ///
 /// A file specification class that divides paths up into a directory
-/// and filename. These string values of the paths are put into uniqued
+/// and basename. These string values of the paths are put into uniqued
 /// string pools for fast comparisons and efficient memory usage.
+///
+/// Another reason the paths are split into the directory and basename 
+/// is to allow efficient debugger searching. Often in a debugger the 
+/// user types in the basename of the file, for example setting a 
+/// breakpoint by file and line, or specifying a module (shared library)
+/// to limit the scope in which to execute a command. The user rarely
+/// types in a full path. When the paths are already split up, it makes
+/// it easy for us to compare only the basenames of a lot of file 
+/// specifications without having to split up the file path each time
+/// to get to the basename.
 //----------------------------------------------------------------------
 class FileSpec
 {
@@ -420,6 +430,9 @@ public:
     //------------------------------------------------------------------
     bool
     ReadFileLines (STLStringArray &lines);
+
+    static int
+    ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
 
     static int
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
