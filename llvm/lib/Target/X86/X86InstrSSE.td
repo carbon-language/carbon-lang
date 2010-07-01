@@ -3350,14 +3350,8 @@ let Constraints = "$src1 = $dst" in {
 }
 
 //===---------------------------------------------------------------------===//
-// SSSE3 Instructions
+// SSSE3 - Packed Absolute Instructions
 //===---------------------------------------------------------------------===//
-
-// Thread synchronization
-def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
-                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
-def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
-                [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
 /// SS3I_unop_rm_int - Simple SSSE3 unary op whose type can be v*{i8,i16,i32}.
 multiclass SS3I_unop_rm_int<bits<8> opc, string OpcodeStr,
@@ -3396,149 +3390,100 @@ defm PABSD       : SS3I_unop_rm_int<0x1E, "pabsd", memopv2i32, memopv4i32,
                                     int_x86_ssse3_pabs_d,
                                     int_x86_ssse3_pabs_d_128>;
 
-/// SS3I_binop_rm_int_8 - Simple SSSE3 binary operator whose type is v*i8.
-let Constraints = "$src1 = $dst" in {
-  multiclass SS3I_binop_rm_int_8<bits<8> opc, string OpcodeStr,
-                                 Intrinsic IntId64, Intrinsic IntId128,
-                                 bit Commutable = 0> {
-    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-                     (ins VR64:$src1, VR64:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
-      let isCommutable = Commutable;
-    }
-    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-                     (ins VR64:$src1, i64mem:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst,
-                       (IntId64 VR64:$src1,
-                        (bitconvert (memopv8i8 addr:$src2))))]>;
+//===---------------------------------------------------------------------===//
+// SSSE3 - Packed Binary Operator Instructions
+//===---------------------------------------------------------------------===//
 
-    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
-                      (ins VR128:$src1, VR128:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-                      OpSize {
-      let isCommutable = Commutable;
-    }
-    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, i128mem:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst,
-                        (IntId128 VR128:$src1,
-                         (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
-  }
+/// SS3I_binop_rm_int - Simple SSSE3 bin op whose type can be v*{i8,i16,i32}.
+multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
+                             PatFrag mem_frag64, PatFrag mem_frag128,
+                             Intrinsic IntId64, Intrinsic IntId128,
+                             bit Is2Addr = 1> {
+  let isCommutable = 1 in
+  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+       (ins VR64:$src1, VR64:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]>;
+  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+       (ins VR64:$src1, i64mem:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR64:$dst,
+         (IntId64 VR64:$src1,
+          (bitconvert (memopv8i8 addr:$src2))))]>;
+
+  let isCommutable = 1 in
+  def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+       (ins VR128:$src1, VR128:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+       OpSize;
+  def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+       (ins VR128:$src1, i128mem:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst,
+         (IntId128 VR128:$src1,
+          (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
-/// SS3I_binop_rm_int_16 - Simple SSSE3 binary operator whose type is v*i16.
-let Constraints = "$src1 = $dst" in {
-  multiclass SS3I_binop_rm_int_16<bits<8> opc, string OpcodeStr,
-                                  Intrinsic IntId64, Intrinsic IntId128,
-                                  bit Commutable = 0> {
-    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-                     (ins VR64:$src1, VR64:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
-      let isCommutable = Commutable;
-    }
-    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-                     (ins VR64:$src1, i64mem:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst,
-                       (IntId64 VR64:$src1,
-                        (bitconvert (memopv4i16 addr:$src2))))]>;
-
-    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
-                      (ins VR128:$src1, VR128:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-                      OpSize {
-      let isCommutable = Commutable;
-    }
-    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, i128mem:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst,
-                        (IntId128 VR128:$src1,
-                         (bitconvert (memopv8i16 addr:$src2))))]>, OpSize;
-  }
+// None of these have i8 immediate fields.
+let ImmT = NoImm, Constraints = "$src1 = $dst" in {
+let isCommutable = 0 in {
+  defm PHADDW    : SS3I_binop_rm_int<0x01, "phaddw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_phadd_w,
+                                     int_x86_ssse3_phadd_w_128>;
+  defm PHADDD    : SS3I_binop_rm_int<0x02, "phaddd", memopv2i32, memopv4i32,
+                                     int_x86_ssse3_phadd_d,
+                                     int_x86_ssse3_phadd_d_128>;
+  defm PHADDSW   : SS3I_binop_rm_int<0x03, "phaddsw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_phadd_sw,
+                                     int_x86_ssse3_phadd_sw_128>;
+  defm PHSUBW    : SS3I_binop_rm_int<0x05, "phsubw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_phsub_w,
+                                     int_x86_ssse3_phsub_w_128>;
+  defm PHSUBD    : SS3I_binop_rm_int<0x06, "phsubd", memopv2i32, memopv4i32,
+                                     int_x86_ssse3_phsub_d,
+                                     int_x86_ssse3_phsub_d_128>;
+  defm PHSUBSW   : SS3I_binop_rm_int<0x07, "phsubsw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_phsub_sw,
+                                     int_x86_ssse3_phsub_sw_128>;
+  defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw", memopv8i8, memopv16i8,
+                                     int_x86_ssse3_pmadd_ub_sw,
+                                     int_x86_ssse3_pmadd_ub_sw_128>;
+  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb", memopv8i8, memopv16i8,
+                                     int_x86_ssse3_pshuf_b,
+                                     int_x86_ssse3_pshuf_b_128>;
+  defm PSIGNB    : SS3I_binop_rm_int<0x08, "psignb", memopv8i8, memopv16i8,
+                                     int_x86_ssse3_psign_b,
+                                     int_x86_ssse3_psign_b_128>;
+  defm PSIGNW    : SS3I_binop_rm_int<0x09, "psignw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_psign_w,
+                                     int_x86_ssse3_psign_w_128>;
+  defm PSIGND    : SS3I_binop_rm_int<0x0A, "psignd", memopv2i32, memopv4i32,
+                                       int_x86_ssse3_psign_d,
+                                       int_x86_ssse3_psign_d_128>;
+}
+defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw", memopv4i16, memopv8i16,
+                                     int_x86_ssse3_pmul_hr_sw,
+                                     int_x86_ssse3_pmul_hr_sw_128>;
 }
 
-/// SS3I_binop_rm_int_32 - Simple SSSE3 binary operator whose type is v*i32.
-let Constraints = "$src1 = $dst" in {
-  multiclass SS3I_binop_rm_int_32<bits<8> opc, string OpcodeStr,
-                                  Intrinsic IntId64, Intrinsic IntId128,
-                                  bit Commutable = 0> {
-    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-                     (ins VR64:$src1, VR64:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
-      let isCommutable = Commutable;
-    }
-    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-                     (ins VR64:$src1, i64mem:$src2),
-                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                     [(set VR64:$dst,
-                       (IntId64 VR64:$src1,
-                        (bitconvert (memopv2i32 addr:$src2))))]>;
+def : Pat<(X86pshufb VR128:$src, VR128:$mask),
+          (PSHUFBrr128 VR128:$src, VR128:$mask)>, Requires<[HasSSSE3]>;
+def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
+          (PSHUFBrm128 VR128:$src, addr:$mask)>, Requires<[HasSSSE3]>;
 
-    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
-                      (ins VR128:$src1, VR128:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-                      OpSize {
-      let isCommutable = Commutable;
-    }
-    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, i128mem:$src2),
-                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                      [(set VR128:$dst,
-                        (IntId128 VR128:$src1,
-                         (bitconvert (memopv4i32 addr:$src2))))]>, OpSize;
-  }
-}
+//===---------------------------------------------------------------------===//
+// SSSE3 - Packed Align Instruction Patterns
+//===---------------------------------------------------------------------===//
 
-let ImmT = NoImm in {  // None of these have i8 immediate fields.
-defm PHADDW      : SS3I_binop_rm_int_16<0x01, "phaddw",
-                                        int_x86_ssse3_phadd_w,
-                                        int_x86_ssse3_phadd_w_128>;
-defm PHADDD      : SS3I_binop_rm_int_32<0x02, "phaddd",
-                                        int_x86_ssse3_phadd_d,
-                                        int_x86_ssse3_phadd_d_128>;
-defm PHADDSW     : SS3I_binop_rm_int_16<0x03, "phaddsw",
-                                        int_x86_ssse3_phadd_sw,
-                                        int_x86_ssse3_phadd_sw_128>;
-defm PHSUBW      : SS3I_binop_rm_int_16<0x05, "phsubw",
-                                        int_x86_ssse3_phsub_w,
-                                        int_x86_ssse3_phsub_w_128>;
-defm PHSUBD      : SS3I_binop_rm_int_32<0x06, "phsubd",
-                                        int_x86_ssse3_phsub_d,
-                                        int_x86_ssse3_phsub_d_128>;
-defm PHSUBSW     : SS3I_binop_rm_int_16<0x07, "phsubsw",
-                                        int_x86_ssse3_phsub_sw,
-                                        int_x86_ssse3_phsub_sw_128>;
-defm PMADDUBSW   : SS3I_binop_rm_int_8 <0x04, "pmaddubsw",
-                                        int_x86_ssse3_pmadd_ub_sw,
-                                        int_x86_ssse3_pmadd_ub_sw_128>;
-defm PMULHRSW    : SS3I_binop_rm_int_16<0x0B, "pmulhrsw",
-                                        int_x86_ssse3_pmul_hr_sw,
-                                        int_x86_ssse3_pmul_hr_sw_128, 1>;
-
-defm PSHUFB      : SS3I_binop_rm_int_8 <0x00, "pshufb",
-                                        int_x86_ssse3_pshuf_b,
-                                        int_x86_ssse3_pshuf_b_128>;
-defm PSIGNB      : SS3I_binop_rm_int_8 <0x08, "psignb",
-                                        int_x86_ssse3_psign_b,
-                                        int_x86_ssse3_psign_b_128>;
-defm PSIGNW      : SS3I_binop_rm_int_16<0x09, "psignw",
-                                        int_x86_ssse3_psign_w,
-                                        int_x86_ssse3_psign_w_128>;
-defm PSIGND      : SS3I_binop_rm_int_32<0x0A, "psignd",
-                                        int_x86_ssse3_psign_d,
-                                        int_x86_ssse3_psign_d_128>;
-}
-
-// palignr patterns.
 let Constraints = "$src1 = $dst" in {
   def PALIGNR64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
                            (ins VR64:$src1, VR64:$src2, i8imm:$src3),
@@ -3600,10 +3545,15 @@ def : Pat<(v16i8 (palign:$src3 VR128:$src1, VR128:$src2)),
       Requires<[HasSSSE3]>;
 }
 
-def : Pat<(X86pshufb VR128:$src, VR128:$mask),
-          (PSHUFBrr128 VR128:$src, VR128:$mask)>, Requires<[HasSSSE3]>;
-def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
-          (PSHUFBrm128 VR128:$src, addr:$mask)>, Requires<[HasSSSE3]>;
+//===---------------------------------------------------------------------===//
+// SSSE3 Misc Instructions
+//===---------------------------------------------------------------------===//
+
+// Thread synchronization
+def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
+                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
+def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
+                [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
 //===---------------------------------------------------------------------===//
 // Non-Instruction Patterns
