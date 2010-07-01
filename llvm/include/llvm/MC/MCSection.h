@@ -23,7 +23,7 @@ namespace llvm {
   class MCContext;
   class MCAsmInfo;
   class raw_ostream;
-  
+
   /// MCSection - Instances of this class represent a uniqued identifier for a
   /// section in the current translation unit.  The MCContext class uniques and
   /// creates these.
@@ -49,7 +49,7 @@ namespace llvm {
     SectionKind getKind() const { return Kind; }
 
     SectionVariant getVariant() const { return Variant; }
-    
+
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                       raw_ostream &OS) const = 0;
 
@@ -63,7 +63,7 @@ namespace llvm {
 
     static bool classof(const MCSection *) { return true; }
   };
-  
+
 } // end namespace llvm
 
 #endif

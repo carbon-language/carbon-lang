@@ -29,10 +29,10 @@ class SectionKind {
   enum Kind {
     /// Metadata - Debug info sections or other metadata.
     Metadata,
-    
+
     /// Text - Text section, used for functions and other executable code.
     Text,
-    
+
     /// ReadOnly - Data that is never written to at program runtime by the
     /// program or the dynamic linker.  Things in the top-level readonly
     /// SectionKind are not mergeable.
@@ -45,7 +45,7 @@ class SectionKind {
 
            /// Mergeable1ByteCString - 1 byte mergable, null terminated, string.
            Mergeable1ByteCString,
-    
+
            /// Mergeable2ByteCString - 2 byte mergable, null terminated, string.
            Mergeable2ByteCString,
 
@@ -56,11 +56,11 @@ class SectionKind {
         /// constants together.  For example, this can be used to unique
         /// constant pool entries etc.
         MergeableConst,
-    
+
             /// MergeableConst4 - This is a section used by 4-byte constants,
             /// for example, floats.
             MergeableConst4,
-    
+
             /// MergeableConst8 - This is a section used by 8-byte constants,
             /// for example, doubles.
             MergeableConst8,
@@ -68,33 +68,33 @@ class SectionKind {
             /// MergeableConst16 - This is a section used by 16-byte constants,
             /// for example, vectors.
             MergeableConst16,
-    
+
     /// Writeable - This is the base of all segments that need to be written
     /// to during program runtime.
-    
+
        /// ThreadLocal - This is the base of all TLS segments.  All TLS
        /// objects must be writeable, otherwise there is no reason for them to
        /// be thread local!
-    
+
            /// ThreadBSS - Zero-initialized TLS data objects.
            ThreadBSS,
-    
+
            /// ThreadData - Initialized TLS data objects.
            ThreadData,
-    
+
        /// GlobalWriteableData - Writeable data that is global (not thread
        /// local).
-    
+
            /// BSS - Zero initialized writeable data.
            BSS,
-    
+
                /// BSSLocal - This is BSS (zero initialized and writable) data
                /// which has local linkage.
                BSSLocal,
-    
+
                /// BSSExtern - This is BSS data with normal external linkage.
                BSSExtern,
-    
+
            /// Common - Data with common linkage.  These represent tentative
            /// definitions, which always have a zero initializer and are never
            /// marked 'constant'.
@@ -123,20 +123,20 @@ class SectionKind {
            /// mark the pages these globals end up on as read-only after it is
            /// done with its relocation phase.
            ReadOnlyWithRel,
-    
+
                /// ReadOnlyWithRelLocal - This is data that is readonly by the
                /// program, but must be writeable so that the dynamic linker
                /// can perform relocations in it.  This is used when we know
                /// that all the relocations are to globals in this final
                /// linked image.
                ReadOnlyWithRelLocal
-    
+
   } K : 8;
 public:
-  
+
   bool isMetadata() const { return K == Metadata; }
   bool isText() const { return K == Text; }
-  
+
   bool isReadOnly() const {
     return K == ReadOnly || isMergeableCString() ||
            isMergeableConst();
@@ -149,7 +149,7 @@ public:
   bool isMergeable1ByteCString() const { return K == Mergeable1ByteCString; }
   bool isMergeable2ByteCString() const { return K == Mergeable2ByteCString; }
   bool isMergeable4ByteCString() const { return K == Mergeable4ByteCString; }
-  
+
   bool isMergeableConst() const {
     return K == MergeableConst || K == MergeableConst4 ||
            K == MergeableConst8 || K == MergeableConst16;
@@ -157,38 +157,38 @@ public:
   bool isMergeableConst4() const { return K == MergeableConst4; }
   bool isMergeableConst8() const { return K == MergeableConst8; }
   bool isMergeableConst16() const { return K == MergeableConst16; }
-  
+
   bool isWriteable() const {
     return isThreadLocal() || isGlobalWriteableData();
   }
-  
+
   bool isThreadLocal() const {
     return K == ThreadData || K == ThreadBSS;
   }
-  
-  bool isThreadBSS() const { return K == ThreadBSS; } 
-  bool isThreadData() const { return K == ThreadData; } 
+
+  bool isThreadBSS() const { return K == ThreadBSS; }
+  bool isThreadData() const { return K == ThreadData; }
 
   bool isGlobalWriteableData() const {
     return isBSS() || isCommon() || isDataRel() || isReadOnlyWithRel();
   }
-  
+
   bool isBSS() const { return K == BSS || K == BSSLocal || K == BSSExtern; }
   bool isBSSLocal() const { return K == BSSLocal; }
   bool isBSSExtern() const { return K == BSSExtern; }
-  
+
   bool isCommon() const { return K == Common; }
-  
+
   bool isDataRel() const {
     return K == DataRel || K == DataRelLocal || K == DataNoRel;
   }
-  
+
   bool isDataRelLocal() const {
     return K == DataRelLocal || K == DataNoRel;
   }
 
   bool isDataNoRel() const { return K == DataNoRel; }
-  
+
   bool isReadOnlyWithRel() const {
     return K == ReadOnlyWithRel || K == ReadOnlyWithRelLocal;
   }
@@ -196,14 +196,14 @@ public:
   bool isReadOnlyWithRelLocal() const {
     return K == ReadOnlyWithRelLocal;
   }
-private: 
+private:
   static SectionKind get(Kind K) {
     SectionKind Res;
     Res.K = K;
     return Res;
   }
 public:
-  
+
   static SectionKind getMetadata() { return get(Metadata); }
   static SectionKind getText() { return get(Text); }
   static SectionKind getReadOnly() { return get(ReadOnly); }
@@ -234,7 +234,7 @@ public:
     return get(ReadOnlyWithRelLocal);
   }
 };
-  
+
 } // end namespace llvm
 
 #endif

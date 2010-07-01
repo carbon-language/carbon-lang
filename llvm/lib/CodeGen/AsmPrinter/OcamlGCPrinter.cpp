@@ -52,13 +52,13 @@ static void EmitCamlGlobal(const Module &M, AsmPrinter &AP, const char *Id) {
   SymName.append(MId.begin(), std::find(MId.begin(), MId.end(), '.'));
   SymName += "__";
   SymName += Id;
-  
+
   // Capitalize the first letter of the module name.
   SymName[Letter] = toupper(SymName[Letter]);
-  
+
   SmallString<128> TmpStr;
   AP.Mang->getNameWithPrefix(TmpStr, SymName);
-  
+
   MCSymbol *Sym = AP.OutContext.GetOrCreateSymbol(TmpStr);
 
   AP.OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
