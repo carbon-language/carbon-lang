@@ -1938,7 +1938,7 @@ bool AsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
   }
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.file' directive");
+    return TokError("unexpected token in '.line' directive");
 
   return false;
 }
