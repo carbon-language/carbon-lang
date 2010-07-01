@@ -6127,8 +6127,11 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
         }
         Reg = RegOut;
       } else {
-        Reg = FuncInfo.ValueMap[PHIOp];
-        if (Reg == 0) {
+        DenseMap<const Value *, unsigned>::iterator I =
+          FuncInfo.ValueMap.find(PHIOp);
+        if (I != FuncInfo.ValueMap.end())
+          Reg = I->second;
+        else {
           assert(isa<AllocaInst>(PHIOp) &&
                  FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
