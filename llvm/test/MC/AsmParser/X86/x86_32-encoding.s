@@ -11502,3 +11502,31 @@
 // CHECK: encoding: [0xc5,0xf9,0xf7,0xd1]
           vmaskmovdqu  %xmm1, %xmm2
 
+// CHECK: vmovd  %xmm1, %eax
+// CHECK: encoding: [0xc5,0xf9,0x7e,0xc8]
+          vmovd  %xmm1, %eax
+
+// CHECK: vmovd  %xmm1, (%eax)
+// CHECK: encoding: [0xc5,0xf9,0x7e,0x08]
+          vmovd  %xmm1, (%eax)
+
+// CHECK: vmovd  %eax, %xmm1
+// CHECK: encoding: [0xc5,0xf9,0x6e,0xc8]
+          vmovd  %eax, %xmm1
+
+// CHECK: vmovd  (%eax), %xmm1
+// CHECK: encoding: [0xc5,0xf9,0x6e,0x08]
+          vmovd  (%eax), %xmm1
+
+// CHECK: vmovq  %xmm1, (%eax)
+// CHECK: encoding: [0xc5,0xf9,0xd6,0x08]
+          vmovq  %xmm1, (%eax)
+
+// CHECK: vmovq  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfa,0x7e,0xd1]
+          vmovq  %xmm1, %xmm2
+
+// CHECK: vmovq  (%eax), %xmm1
+// CHECK: encoding: [0xc5,0xfa,0x7e,0x08]
+          vmovq  (%eax), %xmm1
+

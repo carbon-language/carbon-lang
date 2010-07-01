@@ -449,6 +449,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if (TSFlags & X86II::OpSize)
     VEX_PP = 0x01;
 
+  if ((TSFlags >> 32) & X86II::VEX_W)
+    VEX_W = 1;
+
   switch (TSFlags & X86II::Op0Mask) {
   default: assert(0 && "Invalid prefix!");
   case X86II::T8:  // 0F 38
@@ -508,15 +511,20 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         VEX_X = 0x0;
     }
     break;
-  default: // MRM0r-MRM7r
+  default: // MRMDestReg, MRM0r-MRM7r
+    if (MI.getOperand(CurOp).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
+      VEX_B = 0;
+
     if (HasVEX_4V)
       VEX_4V = getVEXRegisterEncoding(MI, CurOp);
 
     CurOp++;
     for (; CurOp != NumOps; ++CurOp) {
       const MCOperand &MO = MI.getOperand(CurOp);
-      if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
-        VEX_B = 0x0;
+      if (MO.isReg() && !HasVEX_4V &&
+          X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+        VEX_R = 0x0;
     }
     break;
     assert(0 && "Not implemented!");
@@ -535,7 +543,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //
   unsigned char LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
 
-  if (VEX_B && VEX_X) { // 2 byte VEX prefix
+  if (VEX_B && VEX_X && !VEX_W) { // 2 byte VEX prefix
     EmitByte(0xC5, CurByte, OS);
     EmitByte(LastByte | (VEX_R << 7), CurByte, OS);
     return;
@@ -543,7 +551,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // 3 byte VEX prefix
   EmitByte(0xC4, CurByte, OS);
-  EmitByte(VEX_R << 7 | VEX_X << 6 | VEX_5M, CurByte, OS);
+  EmitByte(VEX_R << 7 | VEX_X << 6 | VEX_B << 5 | VEX_5M, CurByte, OS);
   EmitByte(LastByte | (VEX_W << 7), CurByte, OS);
 }
 

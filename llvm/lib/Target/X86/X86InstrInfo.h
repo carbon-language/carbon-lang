@@ -429,9 +429,9 @@ namespace X86II {
     // address instructions in SSE are represented as 3 address ones in AVX
     // and the additional register is encoded in VEX_VVVV prefix.
     //
-    VEXShift    = 0,
-    VEX         = 1 << VEXShift,
-    VEX_4V      = 2 << VEXShift
+    VEX         = 1,
+    VEX_W       = 1 << 1,
+    VEX_4V      = 1 << 2
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

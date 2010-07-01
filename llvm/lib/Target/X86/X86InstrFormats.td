@@ -102,6 +102,7 @@ class T8     { bits<4> Prefix = 13; }
 class TA     { bits<4> Prefix = 14; }
 class TF     { bits<4> Prefix = 15; }
 class VEX    { bit hasVEXPrefix = 1; }
+class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
 
 class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
@@ -130,8 +131,9 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
   bits<2> SegOvrBits = 0;   // Segment override prefix.
   Domain ExeDomain = d;
-  bit hasVEXPrefix  = 0;    // Does this inst requires a VEX prefix?
-  bit hasVEX_4VPrefix  = 0; // Does this inst requires the VEX.VVVV field?
+  bit hasVEXPrefix = 0;     // Does this inst requires a VEX prefix?
+  bit hasVEX_WPrefix = 0;   // Does this inst set the VEX_W field?
+  bit hasVEX_4VPrefix = 0;  // Does this inst requires the VEX.VVVV field?
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{5-0}   = FormBits;
@@ -146,7 +148,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{23-22} = ExeDomain.Value;
   let TSFlags{31-24} = Opcode;
   let TSFlags{32}    = hasVEXPrefix;
-  let TSFlags{33}    = hasVEX_4VPrefix;
+  let TSFlags{33}    = hasVEX_WPrefix;
+  let TSFlags{34}    = hasVEX_4VPrefix;
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,
