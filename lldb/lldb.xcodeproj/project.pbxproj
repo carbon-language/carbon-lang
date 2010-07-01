@@ -328,6 +328,8 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
+		49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */; };
+		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
 		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
@@ -896,6 +898,8 @@
 		497E7B9D1188F6690065CCA1 /* ABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABI.cpp; path = source/Target/ABI.cpp; sourceTree = "<group>"; };
 		499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectArgs.h; path = source/Commands/CommandObjectArgs.h; sourceTree = "<group>"; };
 		499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectArgs.cpp; path = source/Commands/CommandObjectArgs.cpp; sourceTree = "<group>"; };
+		49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangResultSynthesizer.cpp; path = source/Expression/ClangResultSynthesizer.cpp; sourceTree = "<group>"; };
+		49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangResultSynthesizer.h; path = include/lldb/Expression/ClangResultSynthesizer.h; sourceTree = "<group>"; };
 		49BF48DC11ADF356008863BD /* ObjCObjectPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjCObjectPrinter.cpp; path = source/Target/ObjCObjectPrinter.cpp; sourceTree = "<group>"; };
 		49BF48E011ADF37D008863BD /* ObjCObjectPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCObjectPrinter.h; path = include/lldb/Target/ObjCObjectPrinter.h; sourceTree = "<group>"; };
 		49D7072611B5AD03001AD875 /* ClangASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTSource.h; path = include/lldb/Expression/ClangASTSource.h; sourceTree = "<group>"; };
@@ -1822,6 +1826,8 @@
 				49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */,
 				26BC7DC110F1B79500F91463 /* ClangExpressionVariable.h */,
 				26BC7ED610F1B86700F91463 /* ClangExpressionVariable.cpp */,
+				49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */,
+				49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */,
 				26BC7DC210F1B79500F91463 /* ClangStmtVisitor.h */,
 				26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */,
 				26BC7DC310F1B79500F91463 /* DWARFExpression.h */,
@@ -2177,6 +2183,7 @@
 				49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */,
 				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
 				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
+				49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2625,6 +2632,7 @@
 				AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */,
 				261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */,
 				4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */,
+				49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -49,11 +49,15 @@ public:
     unsigned Compile();
 
     unsigned
-    ParseExpression (const char *expr_text, Stream &stream);
+    ParseExpression (const char *expr_text, 
+                     Stream &stream, 
+                     bool add_result_var = false);
 
     unsigned
-    ParseBareExpression (llvm::StringRef expr_text, Stream &stream);
-
+    ParseBareExpression (llvm::StringRef expr_text, 
+                         Stream &stream, 
+                         bool add_result_var = false);
+    
     unsigned
     ConvertExpressionToDWARF (ClangExpressionVariableList &expr_local_variable_list, 
                               StreamString &dwarf_opcode_strm);

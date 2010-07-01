@@ -38,6 +38,7 @@
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/ParseAST.h"
+#include "clang/Sema/SemaConsumer.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Module.h"
@@ -53,6 +54,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangASTSource.h"
+#include "lldb/Expression/ClangResultSynthesizer.h"
 #include "lldb/Expression/ClangStmtVisitor.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
@@ -279,19 +281,23 @@ ClangExpression::GetASTContext ()
 }
 
 unsigned
-ClangExpression::ParseExpression (const char *expr_text, Stream &stream)
+ClangExpression::ParseExpression (const char *expr_text,
+                                  Stream &stream,
+                                  bool add_result_var)
 {
     // HACK: for now we have to make a function body around our expression
     // since there is no way to parse a single expression line in LLVM/Clang.
-    std::string func_expr("void ___clang_expr()\n{\n\t");
+    std::string func_expr("extern \"C\" void ___clang_expr()\n{\n\t");
     func_expr.append(expr_text);
     func_expr.append(";\n}");
-    return ParseBareExpression (func_expr, stream);
+    return ParseBareExpression (func_expr, stream, add_result_var);
 
 }
 
 unsigned
-ClangExpression::ParseBareExpression (llvm::StringRef expr_text, Stream &stream)
+ClangExpression::ParseBareExpression (llvm::StringRef expr_text, 
+                                      Stream &stream,
+                                      bool add_result_var)
 {
     Mutex::Locker locker(GetClangMutex ());
 
@@ -354,7 +360,17 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text, Stream &stream)
     // - CodeGeneration ASTConsumer (include/clang/ModuleBuilder.h), which will be passed in when you call...
     // - Call clang::ParseAST (in lib/Sema/ParseAST.cpp) to parse the buffer. The CodeGenerator will generate code for __dbg_expr.
     // - Once ParseAST completes, you can grab the llvm::Module from the CodeGenerator, which will have an llvm::Function you can hand off to the JIT.
-    ParseAST(m_clang_ap->getPreprocessor(), m_code_generator_ptr, m_clang_ap->getASTContext());
+    
+    if (add_result_var)
+    {
+        ClangResultSynthesizer result_synthesizer(m_code_generator_ptr);
+        ParseAST(m_clang_ap->getPreprocessor(), &result_synthesizer, m_clang_ap->getASTContext());
+    }
+    else 
+    {
+        ParseAST(m_clang_ap->getPreprocessor(), m_code_generator_ptr, m_clang_ap->getASTContext());
+    }
+
     
     text_diagnostic_buffer.EndSourceFile();
 
@@ -413,7 +429,6 @@ ClangExpression::ParseBareExpression (llvm::StringRef expr_text, Stream &stream)
     return num_errors;
 }
 
-
 static FrontendAction *
 CreateFrontendAction(CompilerInstance &CI)
 {
@@ -471,41 +486,42 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_vari
         return 1;
     }
     
-    llvm::Module::iterator fi;
-            
-    for (fi = module->begin();
-         fi != module->end();
-         ++fi)
+    llvm::Function* function = module->getFunction(StringRef("___clang_expr"));
+    
+    if (!function)
     {
-        llvm::Function &function = *fi;
-                
         if (log)
-            log->Printf("IR for %s:", function.getName().str().c_str());
+            log->Printf("Couldn't find ___clang_expr() in the module");
+        
+        return 1;
+    }
+            
+    if (log)
+        log->Printf("IR for %s:", function->getName().str().c_str());
+            
+    llvm::Function::iterator bbi;
+            
+    for (bbi = function->begin();
+         bbi != function->end();
+         ++bbi)
+    {
+        llvm::BasicBlock &bb = *bbi;
                 
-        llvm::Function::iterator bbi;
+        llvm::BasicBlock::iterator ii;
                 
-        for (bbi = function.begin();
-             bbi != function.end();
-             ++bbi)
+        for (ii = bb.begin();
+             ii != bb.end();
+             ++ii)
         {
-            llvm::BasicBlock &bb = *bbi;
-                    
-            llvm::BasicBlock::iterator ii;
-                    
-            for (ii = bb.begin();
-                 ii != bb.end();
-                 ++ii)
-            {
-                llvm::Instruction &inst = *ii;
-                
-                std::string s;
-                llvm::raw_string_ostream os(s);
-                
-                inst.print(os);
-                
-                if (log)
-                    log->Printf("  %s", s.c_str());
-            }
+            llvm::Instruction &inst = *ii;
+            
+            std::string s;
+            llvm::raw_string_ostream os(s);
+            
+            inst.print(os);
+            
+            if (log)
+                log->Printf("  %s", s.c_str());
         }
     }
     

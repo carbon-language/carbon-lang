@@ -233,7 +233,7 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     if (bare)
         num_errors = clang_expr.ParseBareExpression (llvm::StringRef (expr), error_stream);
     else
-        num_errors = clang_expr.ParseExpression (expr, error_stream);
+        num_errors = clang_expr.ParseExpression (expr, error_stream, m_options.use_ir);
 
     if (num_errors)
     {
