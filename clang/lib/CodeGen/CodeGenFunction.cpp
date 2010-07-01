@@ -254,7 +254,6 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
-    DI->EmitStopPoint(CurFn, Builder);
   }
 
   EmitFunctionInstrumentation("__cyg_profile_func_enter");
