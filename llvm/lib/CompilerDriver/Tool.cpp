@@ -85,7 +85,8 @@ StrVector Tool::SortArgs(ArgsVector& Args) const {
   StrVector Out;
 
   // HACK: this won't be needed when we'll migrate away from CommandLine.
-  std::stable_sort(Args.begin(), Args.end(), &CompareFirst<unsigned, std::string>);
+  std::stable_sort(Args.begin(), Args.end(),
+                   &CompareFirst<unsigned, std::string>);
   for (ArgsVector::iterator B = Args.begin(), E = Args.end(); B != E; ++B) {
     Out.push_back(B->second);
   }
