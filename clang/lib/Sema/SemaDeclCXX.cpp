@@ -2779,104 +2779,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
       ClassDecl->addDecl(CopyConstructor);
   }
 
-  if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
-    // Note: The following rules are largely analoguous to the copy
-    // constructor rules. Note that virtual bases are not taken into account
-    // for determining the argument type of the operator. Note also that
-    // operators taking an object instead of a reference are allowed.
-    //
-    // C++ [class.copy]p10:
-    //   If the class definition does not explicitly declare a copy
-    //   assignment operator, one is declared implicitly.
-    //   The implicitly-defined copy assignment operator for a class X
-    //   will have the form
-    //
-    //       X& X::operator=(const X&)
-    //
-    //   if
-    bool HasConstCopyAssignment = true;
-
-    //       -- each direct base class B of X has a copy assignment operator
-    //          whose parameter is of type const B&, const volatile B& or B,
-    //          and
-    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
-                                         BaseEnd = ClassDecl->bases_end();
-         HasConstCopyAssignment && Base != BaseEnd; ++Base) {
-      assert(!Base->getType()->isDependentType() &&
-            "Cannot generate implicit members for class with dependent bases.");
-      const CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-      const CXXMethodDecl *MD = 0;
-      HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context,
-                                                                     MD);
-    }
-
-    //       -- for all the nonstatic data members of X that are of a class
-    //          type M (or array thereof), each such class type has a copy
-    //          assignment operator whose parameter is of type const M&,
-    //          const volatile M& or M.
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                    FieldEnd = ClassDecl->field_end();
-         HasConstCopyAssignment && Field != FieldEnd;
-         ++Field) {
-      QualType FieldType = (*Field)->getType();
-      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-        FieldType = Array->getElementType();
-      if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-        const CXXRecordDecl *FieldClassDecl
-          = cast<CXXRecordDecl>(FieldClassType->getDecl());
-        const CXXMethodDecl *MD = 0;
-        HasConstCopyAssignment
-          = FieldClassDecl->hasConstCopyAssignment(Context, MD);
-      }
-    }
-
-    //   Otherwise, the implicitly declared copy assignment operator will
-    //   have the form
-    //
-    //       X& X::operator=(X&)
-    QualType ArgType = ClassType;
-    QualType RetType = Context.getLValueReferenceType(ArgType);
-    if (HasConstCopyAssignment)
-      ArgType = ArgType.withConst();
-    ArgType = Context.getLValueReferenceType(ArgType);
-
-    //   An implicitly-declared copy assignment operator is an inline public
-    //   member of its class.
-    DeclarationName Name =
-      Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-    CXXMethodDecl *CopyAssignment =
-      CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
-                            Context.getFunctionType(RetType, &ArgType, 1,
-                                                    false, 0,
-                                              /*FIXME: hasExceptionSpec*/false,
-                                                    false, 0, 0,
-                                                    FunctionType::ExtInfo()),
-                            /*TInfo=*/0, /*isStatic=*/false,
-                            /*StorageClassAsWritten=*/FunctionDecl::None,
-                            /*isInline=*/true);
-    CopyAssignment->setAccess(AS_public);
-    CopyAssignment->setImplicit();
-    CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
-    CopyAssignment->setCopyAssignment(true);
-
-    // Add the parameter to the operator.
-    ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
-                                                 ClassDecl->getLocation(),
-                                                 /*Id=*/0,
-                                                 ArgType, /*TInfo=*/0,
-                                                 VarDecl::None,
-                                                 VarDecl::None, 0);
-    CopyAssignment->setParams(&FromParam, 1);
-
-    // Don't call addedAssignmentOperator. There is no way to distinguish an
-    // implicit from an explicit assignment operator.
-    if (S)
-      PushOnScopeChains(CopyAssignment, S, true);
-    else
-      ClassDecl->addDecl(CopyAssignment);
-    AddOverriddenMethods(ClassDecl, CopyAssignment);
-  }
+  if (!ClassDecl->hasUserDeclaredCopyAssignment())
+    DeclareImplicitCopyAssignment(S, ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
     // C++ [class.dtor]p2:
@@ -4659,6 +4563,105 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                         Sema::DeclPtrTy(), 
                         S.MakeFullExpr(Increment),
                         Loc, move(Copy));
+}
+
+CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(Scope *S, 
+                                                   CXXRecordDecl *ClassDecl) {
+  // Note: The following rules are largely analoguous to the copy
+  // constructor rules. Note that virtual bases are not taken into account
+  // for determining the argument type of the operator. Note also that
+  // operators taking an object instead of a reference are allowed.
+  //
+  // C++ [class.copy]p10:
+  //   If the class definition does not explicitly declare a copy
+  //   assignment operator, one is declared implicitly.
+  //   The implicitly-defined copy assignment operator for a class X
+  //   will have the form
+  //
+  //       X& X::operator=(const X&)
+  //
+  //   if
+  bool HasConstCopyAssignment = true;
+  
+  //       -- each direct base class B of X has a copy assignment operator
+  //          whose parameter is of type const B&, const volatile B& or B,
+  //          and
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                       BaseEnd = ClassDecl->bases_end();
+       HasConstCopyAssignment && Base != BaseEnd; ++Base) {
+    assert(!Base->getType()->isDependentType() &&
+           "Cannot generate implicit members for class with dependent bases.");
+    const CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    const CXXMethodDecl *MD = 0;
+    HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context,
+                                                                   MD);
+  }
+  
+  //       -- for all the nonstatic data members of X that are of a class
+  //          type M (or array thereof), each such class type has a copy
+  //          assignment operator whose parameter is of type const M&,
+  //          const volatile M& or M.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end();
+       HasConstCopyAssignment && Field != FieldEnd;
+       ++Field) {
+    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      const CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      const CXXMethodDecl *MD = 0;
+      HasConstCopyAssignment
+        = FieldClassDecl->hasConstCopyAssignment(Context, MD);
+    }
+  }
+  
+  //   Otherwise, the implicitly declared copy assignment operator will
+  //   have the form
+  //
+  //       X& X::operator=(X&)
+  QualType ArgType = Context.getTypeDeclType(ClassDecl);
+  QualType RetType = Context.getLValueReferenceType(ArgType);
+  if (HasConstCopyAssignment)
+    ArgType = ArgType.withConst();
+  ArgType = Context.getLValueReferenceType(ArgType);
+  
+  //   An implicitly-declared copy assignment operator is an inline public
+  //   member of its class.
+  DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+  CXXMethodDecl *CopyAssignment
+    = CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
+                            Context.getFunctionType(RetType, &ArgType, 1,
+                                                    false, 0,
+                                              /*FIXME: hasExceptionSpec*/false,
+                                                    false, 0, 0,
+                                                    FunctionType::ExtInfo()),
+                            /*TInfo=*/0, /*isStatic=*/false,
+                            /*StorageClassAsWritten=*/FunctionDecl::None,
+                            /*isInline=*/true);
+  CopyAssignment->setAccess(AS_public);
+  CopyAssignment->setImplicit();
+  CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
+  CopyAssignment->setCopyAssignment(true);
+  
+  // Add the parameter to the operator.
+  ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
+                                               ClassDecl->getLocation(),
+                                               /*Id=*/0,
+                                               ArgType, /*TInfo=*/0,
+                                               VarDecl::None,
+                                               VarDecl::None, 0);
+  CopyAssignment->setParams(&FromParam, 1);
+  
+  // Don't call addedAssignmentOperator. The class does not need to know about
+  // the implicitly-declared copy assignment operator.
+  if (S)
+    PushOnScopeChains(CopyAssignment, S, true);
+  else
+    ClassDecl->addDecl(CopyAssignment);
+  
+  AddOverriddenMethods(ClassDecl, CopyAssignment);
+  return CopyAssignment;
 }
 
 void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,

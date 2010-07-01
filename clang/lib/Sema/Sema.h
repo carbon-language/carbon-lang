@@ -2236,7 +2236,19 @@ public:
                                      CXXConstructorDecl *Constructor,
                                      unsigned TypeQuals);
 
-  /// \brief Defined and implicitly-declared copy assignment operator.
+  /// \brief Declare the implicit copy assignment operator for the given class.
+  ///
+  /// \param S The scope of the class, which may be NULL if this is a 
+  /// template instantiation.
+  ///
+  /// \param ClassDecl The class declaration into which the implicit 
+  /// copy-assignment operator will be added.
+  ///
+  /// \returns The implicitly-declared copy assignment operator.
+  CXXMethodDecl *DeclareImplicitCopyAssignment(Scope *S, 
+                                               CXXRecordDecl *ClassDecl);
+  
+  /// \brief Defined an implicitly-declared copy assignment operator.
   void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                     CXXMethodDecl *MethodDecl);
 
