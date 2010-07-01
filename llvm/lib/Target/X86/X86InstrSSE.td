@@ -3359,9 +3359,10 @@ def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
 def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
                 [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
-/// SS3I_unop_rm_int_8 - Simple SSSE3 unary operator whose type is v*i8.
-multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,
-                              Intrinsic IntId64, Intrinsic IntId128> {
+/// SS3I_unop_rm_int - Simple SSSE3 unary op whose type can be v*{i8,i16,i32}.
+multiclass SS3I_unop_rm_int<bits<8> opc, string OpcodeStr,
+                            PatFrag mem_frag64, PatFrag mem_frag128,
+                            Intrinsic IntId64, Intrinsic IntId128> {
   def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR64:$dst, (IntId64 VR64:$src))]>;
@@ -3369,7 +3370,7 @@ multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,
   def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR64:$dst,
-                     (IntId64 (bitconvert (memopv8i8 addr:$src))))]>;
+                     (IntId64 (bitconvert (mem_frag64 addr:$src))))]>;
 
   def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src),
@@ -3382,76 +3383,18 @@ multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst,
                       (IntId128
-                       (bitconvert (memopv16i8 addr:$src))))]>, OpSize;
+                       (bitconvert (mem_frag128 addr:$src))))]>, OpSize;
 }
 
-/// SS3I_unop_rm_int_16 - Simple SSSE3 unary operator whose type is v*i16.
-multiclass SS3I_unop_rm_int_16<bits<8> opc, string OpcodeStr,
-                               Intrinsic IntId64, Intrinsic IntId128> {
-  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-                   (ins VR64:$src),
-                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR64:$dst, (IntId64 VR64:$src))]>;
-
-  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-                   (ins i64mem:$src),
-                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR64:$dst,
-                     (IntId64
-                      (bitconvert (memopv4i16 addr:$src))))]>;
-
-  def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
-                    (ins VR128:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (IntId128 VR128:$src))]>,
-                    OpSize;
-
-  def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
-                    (ins i128mem:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst,
-                      (IntId128
-                       (bitconvert (memopv8i16 addr:$src))))]>, OpSize;
-}
-
-/// SS3I_unop_rm_int_32 - Simple SSSE3 unary operator whose type is v*i32.
-multiclass SS3I_unop_rm_int_32<bits<8> opc, string OpcodeStr,
-                               Intrinsic IntId64, Intrinsic IntId128> {
-  def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
-                   (ins VR64:$src),
-                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR64:$dst, (IntId64 VR64:$src))]>;
-
-  def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
-                   (ins i64mem:$src),
-                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR64:$dst,
-                     (IntId64
-                      (bitconvert (memopv2i32 addr:$src))))]>;
-
-  def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
-                    (ins VR128:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (IntId128 VR128:$src))]>,
-                    OpSize;
-
-  def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
-                    (ins i128mem:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst,
-                      (IntId128
-                       (bitconvert (memopv4i32 addr:$src))))]>, OpSize;
-}
-
-defm PABSB       : SS3I_unop_rm_int_8 <0x1C, "pabsb",
-                                       int_x86_ssse3_pabs_b,
-                                       int_x86_ssse3_pabs_b_128>;
-defm PABSW       : SS3I_unop_rm_int_16<0x1D, "pabsw",
-                                       int_x86_ssse3_pabs_w,
-                                       int_x86_ssse3_pabs_w_128>;
-defm PABSD       : SS3I_unop_rm_int_32<0x1E, "pabsd",
-                                       int_x86_ssse3_pabs_d,
-                                       int_x86_ssse3_pabs_d_128>;
+defm PABSB       : SS3I_unop_rm_int<0x1C, "pabsb", memopv8i8, memopv16i8,
+                                    int_x86_ssse3_pabs_b,
+                                    int_x86_ssse3_pabs_b_128>;
+defm PABSW       : SS3I_unop_rm_int<0x1D, "pabsw", memopv4i16, memopv8i16,
+                                    int_x86_ssse3_pabs_w,
+                                    int_x86_ssse3_pabs_w_128>;
+defm PABSD       : SS3I_unop_rm_int<0x1E, "pabsd", memopv2i32, memopv4i32,
+                                    int_x86_ssse3_pabs_d,
+                                    int_x86_ssse3_pabs_d_128>;
 
 /// SS3I_binop_rm_int_8 - Simple SSSE3 binary operator whose type is v*i8.
 let Constraints = "$src1 = $dst" in {
