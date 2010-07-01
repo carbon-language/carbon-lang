@@ -43,7 +43,6 @@ private:
   MCContext &Ctx;
   MCStreamer &Out;
   SourceMgr &SrcMgr;
-  TargetAsmParser *GenericTargetParser;
   TargetAsmParser *TargetParser;
   
   /// This is the current buffer index we're lexing from as managed by the
