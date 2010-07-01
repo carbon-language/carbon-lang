@@ -948,6 +948,17 @@ public:
   Value *getArgOperand(unsigned i) const { return getOperand(i + ArgOffset); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i + ArgOffset, v); }
 
+  /// Provide compile-time errors for accessing operand 0
+  /// @deprecated these will go away soon
+  /// @detail see below comments and update your code to high-level interfaces
+  ///    - getOperand(0)  --->  getCalledValue()
+  ///    - setOperand(0, V)  --->  setCalledFunction(V)
+  ///
+private:
+  void getOperand(void*); // NO IMPL ---> use getCalledValue (or possibly getCalledFunction) instead
+  void setOperand(void*, Value*); // NO IMPL ---> use setCalledFunction instead
+public:
+
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
