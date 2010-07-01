@@ -161,7 +161,10 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
       }
     }
   } else if (const Operator *Op = dyn_cast<Operator>(V)) {
-    if (!SelectOperator(Op, Op->getOpcode())) return 0;
+    if (!SelectOperator(Op, Op->getOpcode()))
+      if (!isa<Instruction>(Op) ||
+          !TargetSelectInstruction(cast<Instruction>(Op)))
+        return 0;
     Reg = lookUpRegForValue(Op);
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));

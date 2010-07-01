@@ -935,7 +935,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       if (CI->getIntrinsicID() == Intrinsic::sadd_with_overflow ||
           CI->getIntrinsicID() == Intrinsic::uadd_with_overflow) {
         const MachineInstr *SetMI = 0;
-        unsigned Reg = lookUpRegForValue(EI);
+        unsigned Reg = getRegForValue(EI);
 
         for (MachineBasicBlock::const_reverse_iterator
                RI = MBB->rbegin(), RE = MBB->rend(); RI != RE; ++RI) {

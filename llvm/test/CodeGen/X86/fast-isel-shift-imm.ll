@@ -1,7 +1,8 @@
 ; RUN: llc < %s -march=x86 -O0 | grep {sarl	\$80, %eax}
 ; PR3242
 
-define i32 @foo(i32 %x) nounwind {
+define void @foo(i32 %x, i32* %p) nounwind {
   %y = ashr i32 %x, 50000
-  ret i32 %y
+  store i32 %y, i32* %p
+  ret void
 }
