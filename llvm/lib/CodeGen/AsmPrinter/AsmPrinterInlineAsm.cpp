@@ -83,7 +83,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   // Tell SrcMgr about this buffer, it takes ownership of the buffer.
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
   
-  AsmParser Parser(SrcMgr, OutContext, OutStreamer, *MAI);
+  AsmParser Parser(TM.getTarget(), SrcMgr, OutContext, OutStreamer, *MAI);
   OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(Parser));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"

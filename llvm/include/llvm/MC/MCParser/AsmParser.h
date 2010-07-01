@@ -36,11 +36,14 @@ class TargetAsmParser;
 class Twine;
 
 class AsmParser : public MCAsmParser {
+  AsmParser(const AsmParser &);   // DO NOT IMPLEMENT
+  void operator=(const AsmParser &);  // DO NOT IMPLEMENT
 private:
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
   SourceMgr &SrcMgr;
+  TargetAsmParser *GenericTargetParser;
   TargetAsmParser *TargetParser;
   
   /// This is the current buffer index we're lexing from as managed by the
@@ -56,7 +59,7 @@ private:
   /// in the directive name and the location of the directive keyword.
   StringMap<bool(AsmParser::*)(StringRef, SMLoc)> DirectiveMap;
 public:
-  AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
+  AsmParser(const Target &T, SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
   ~AsmParser();
 

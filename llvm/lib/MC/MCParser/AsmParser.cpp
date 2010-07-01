@@ -32,10 +32,9 @@ using namespace llvm;
 
 enum { DEFAULT_ADDRSPACE = 0 };
 
-AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
-                     const MCAsmInfo &_MAI) 
-  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
-    CurBuffer(0) {
+AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
+                     MCStreamer &_Out, const MCAsmInfo &_MAI)
+  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), CurBuffer(0) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
   
   // Debugging directives.
@@ -43,8 +42,6 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
   AddDirectiveHandler(".line", &AsmParser::ParseDirectiveLine);
   AddDirectiveHandler(".loc", &AsmParser::ParseDirectiveLoc);
 }
-
-
 
 AsmParser::~AsmParser() {
 }

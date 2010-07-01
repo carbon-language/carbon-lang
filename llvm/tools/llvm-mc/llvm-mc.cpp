@@ -312,7 +312,7 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createLoggingStreamer(Str.take(), errs()));
   }
 
-  AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);
+  AsmParser Parser(*TheTarget, SrcMgr, Ctx, *Str.get(), *MAI);
   OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(Parser));
   if (!TAP) {
     errs() << ProgName 
