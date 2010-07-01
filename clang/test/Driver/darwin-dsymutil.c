@@ -19,7 +19,7 @@
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-BINDINGS < %t %s
 //
 // CHECK-MULTIARCH-BINDINGS: "x86_64-apple-darwin10" - "darwin::Lipo", inputs: [{{.*}}, {{.*}}], output: "a.out"
-// CHECK-MULTIARCH-BINDINGS: # "x86_64-apple-darwin10" - "darwin::Dsymutil", inputs: ["a.out"], output: "a.dSYM"
+// CHECK-MULTIARCH-BINDINGS: # "x86_64-apple-darwin10" - "darwin::Dsymutil", inputs: ["a.out"], output: "a.out.dSYM"
 
 // Check output name derivation.
 //
