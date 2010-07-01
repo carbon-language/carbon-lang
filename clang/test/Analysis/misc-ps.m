@@ -999,3 +999,24 @@ void pr7491 () {
   }
 }
 
+//===----------------------------------------------------------------------===
+// PR 7475 - Test that assumptions about global variables are reset after
+//  calling a global function.
+//===----------------------------------------------------------------------===
+
+int *pr7475_someGlobal;
+void pr7475_setUpGlobal();
+
+void pr7475() {
+  if (pr7475_someGlobal == 0)
+    pr7475_setUpGlobal();
+  *pr7475_someGlobal = 0; // no-warning
+}
+
+void pr7475_warn() {
+  static int *someStatic = 0;
+  if (someStatic == 0)
+    pr7475_setUpGlobal();
+  *someStatic = 0; // expected-warning{{null pointer}}
+}
+

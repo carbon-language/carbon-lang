@@ -91,7 +91,8 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     case MemRegion::StackArgumentsSpaceRegionKind:
     case MemRegion::HeapSpaceRegionKind:
     case MemRegion::UnknownSpaceRegionKind:
-    case MemRegion::GlobalsSpaceRegionKind: {
+    case MemRegion::NonStaticGlobalSpaceRegionKind:
+    case MemRegion::StaticGlobalSpaceRegionKind: {
       assert(0 && "Invalid region cast");
       break;
     }
@@ -230,17 +231,6 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
     return ValMgr.getSValuator().EvalCastNL(*NL, castTy);
   
   return V;
-}
-
-Store StoreManager::InvalidateRegions(Store store,
-                                      const MemRegion * const *I,
-                                      const MemRegion * const *End,
-                                      const Expr *E, unsigned Count,
-                                      InvalidatedSymbols *IS) {
-  for ( ; I != End ; ++I)
-    store = InvalidateRegion(store, *I, E, Count, IS);
-  
-  return store;
 }
 
 SVal StoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {

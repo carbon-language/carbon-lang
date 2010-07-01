@@ -29,22 +29,22 @@ template<typename RegionTy> struct MemRegionManagerTrait;
 
 template <typename RegionTy, typename A1>
 RegionTy* MemRegionManager::getRegion(const A1 a1) {
-  
+
   const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
   MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1);
-  
+
   llvm::FoldingSetNodeID ID;
   RegionTy::ProfileRegion(ID, a1, superRegion);
   void* InsertPos;
   RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
                                                                    InsertPos));
-  
+
   if (!R) {
     R = (RegionTy*) A.Allocate<RegionTy>();
     new (R) RegionTy(a1, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
-  
+
   return R;
 }
 
@@ -56,72 +56,72 @@ RegionTy* MemRegionManager::getSubRegion(const A1 a1,
   void* InsertPos;
   RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
                                                                    InsertPos));
-  
+
   if (!R) {
     R = (RegionTy*) A.Allocate<RegionTy>();
     new (R) RegionTy(a1, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
-  
+
   return R;
 }
 
 template <typename RegionTy, typename A1, typename A2>
 RegionTy* MemRegionManager::getRegion(const A1 a1, const A2 a2) {
-  
+
   const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
   MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1, a2);
-  
+
   llvm::FoldingSetNodeID ID;
   RegionTy::ProfileRegion(ID, a1, a2, superRegion);
   void* InsertPos;
   RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
                                                                    InsertPos));
-  
+
   if (!R) {
     R = (RegionTy*) A.Allocate<RegionTy>();
     new (R) RegionTy(a1, a2, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
-  
+
   return R;
 }
 
 template <typename RegionTy, typename A1, typename A2>
 RegionTy* MemRegionManager::getSubRegion(const A1 a1, const A2 a2,
                                          const MemRegion *superRegion) {
-  
+
   llvm::FoldingSetNodeID ID;
   RegionTy::ProfileRegion(ID, a1, a2, superRegion);
   void* InsertPos;
   RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
                                                                    InsertPos));
-  
+
   if (!R) {
     R = (RegionTy*) A.Allocate<RegionTy>();
     new (R) RegionTy(a1, a2, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
-  
+
   return R;
 }
 
 template <typename RegionTy, typename A1, typename A2, typename A3>
 RegionTy* MemRegionManager::getSubRegion(const A1 a1, const A2 a2, const A3 a3,
                                          const MemRegion *superRegion) {
-  
+
   llvm::FoldingSetNodeID ID;
   RegionTy::ProfileRegion(ID, a1, a2, a3, superRegion);
   void* InsertPos;
   RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
                                                                    InsertPos));
-  
+
   if (!R) {
     R = (RegionTy*) A.Allocate<RegionTy>();
     new (R) RegionTy(a1, a2, a3, superRegion);
     Regions.InsertNode(R, InsertPos);
   }
-  
+
   return R;
 }
 
@@ -183,6 +183,11 @@ void StackSpaceRegion::Profile(llvm::FoldingSetNodeID &ID) const {
   ID.AddPointer(getStackFrame());
 }
 
+void StaticGlobalSpaceRegion::Profile(llvm::FoldingSetNodeID &ID) const {
+  ID.AddInteger((unsigned)getKind());
+  ID.AddPointer(getCodeRegion());
+}
+
 void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
                                  const StringLiteral* Str,
                                  const MemRegion* superRegion) {
@@ -226,7 +231,7 @@ void CXXThisRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
 void CXXThisRegion::Profile(llvm::FoldingSetNodeID &ID) const {
   CXXThisRegion::ProfileRegion(ID, ThisPointerTy, superRegion);
 }
-                                  
+
 void DeclRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
                                const MemRegion* superRegion, Kind k) {
   ID.AddInteger((unsigned) k);
@@ -412,7 +417,7 @@ const REG *MemRegionManager::LazyAllocate(REG*& region, ARG a) {
     region = (REG*) A.Allocate<REG>();
     new (region) REG(this, a);
   }
-  
+
   return region;
 }
 
@@ -442,8 +447,18 @@ MemRegionManager::getStackArgumentsRegion(const StackFrameContext *STC) {
   return R;
 }
 
-const GlobalsSpaceRegion *MemRegionManager::getGlobalsRegion() {
-  return LazyAllocate(globals);
+const GlobalsSpaceRegion
+*MemRegionManager::getGlobalsRegion(const CodeTextRegion *CR) {
+  if (!CR)
+    return LazyAllocate(globals);
+
+  StaticGlobalSpaceRegion *&R = StaticsGlobalSpaceRegions[CR];
+  if (R)
+    return R;
+
+  R = A.Allocate<StaticGlobalSpaceRegion>();
+  new (R) StaticGlobalSpaceRegion(this, CR);
+  return R;
 }
 
 const HeapSpaceRegion *MemRegionManager::getHeapRegion() {
@@ -462,7 +477,7 @@ const MemSpaceRegion *MemRegionManager::getCodeRegion() {
 // Constructing regions.
 //===----------------------------------------------------------------------===//
 
-const StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
+const StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str){
   return getSubRegion<StringRegion>(Str, getGlobalsRegion());
 }
 
@@ -470,7 +485,9 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
                                                 const LocationContext *LC) {
   const MemRegion *sReg = 0;
 
-  if (D->hasLocalStorage()) {    
+  if (D->hasGlobalStorage() && !D->isStaticLocal())
+    sReg = getGlobalsRegion();
+  else {
     // FIXME: Once we implement scope handling, we will need to properly lookup
     // 'D' to the proper LocationContext.
     const DeclContext *DC = D->getDeclContext();
@@ -479,15 +496,32 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
     if (!STC)
       sReg = getUnknownRegion();
     else {
-      sReg = isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
-            ? static_cast<const MemRegion*>(getStackArgumentsRegion(STC))
-            : static_cast<const MemRegion*>(getStackLocalsRegion(STC));
+      if (D->hasLocalStorage()) {
+        sReg = isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
+               ? static_cast<const MemRegion*>(getStackArgumentsRegion(STC))
+               : static_cast<const MemRegion*>(getStackLocalsRegion(STC));
+      }
+      else {
+        assert(D->isStaticLocal());
+        const Decl *D = STC->getDecl();
+        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+          sReg = getGlobalsRegion(getFunctionTextRegion(FD));
+        else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+          const BlockTextRegion *BTR =
+            getBlockTextRegion(BD,
+                     C.getCanonicalType(BD->getSignatureAsWritten()->getType()),
+                     STC->getAnalysisContext());
+          sReg = getGlobalsRegion(BTR);
+        }
+        else {
+          // FIXME: For ObjC-methods, we need a new CodeTextRegion.  For now
+          // just use the main global memspace.
+          sReg = getGlobalsRegion();
+        }
+      }
     }
   }
-  else {
-    sReg = getGlobalsRegion();
-  }
-  
+
   return getSubRegion<VarRegion>(D, sReg);
 }
 
@@ -500,10 +534,10 @@ const BlockDataRegion *
 MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
                                      const LocationContext *LC) {
   const MemRegion *sReg = 0;
-  
-  if (LC) {    
+
+  if (LC) {
     // FIXME: Once we implement scope handling, we want the parent region
-    // to be the scope.  
+    // to be the scope.
     const StackFrameContext *STC = LC->getCurrentStackFrame();
     assert(STC);
     sReg = getStackLocalsRegion(STC);
@@ -520,9 +554,9 @@ MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
 const CompoundLiteralRegion*
 MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL,
                                            const LocationContext *LC) {
-  
+
   const MemRegion *sReg = 0;
-  
+
   if (CL->isFileScope())
     sReg = getGlobalsRegion();
   else {
@@ -530,7 +564,7 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL,
     assert(STC);
     sReg = getStackLocalsRegion(STC);
   }
-  
+
   return getSubRegion<CompoundLiteralRegion>(CL, sReg);
 }
 
@@ -749,24 +783,24 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   AnalysisContext *AC = getCodeRegion()->getAnalysisContext();
   AnalysisContext::referenced_decls_iterator I, E;
   llvm::tie(I, E) = AC->getReferencedBlockVars(BC->getDecl());
-  
+
   if (I == E) {
     ReferencedVars = (void*) 0x1;
     return;
   }
-    
+
   MemRegionManager &MemMgr = *getMemRegionManager();
   llvm::BumpPtrAllocator &A = MemMgr.getAllocator();
   BumpVectorContext BC(A);
-  
+
   typedef BumpVector<const MemRegion*> VarVec;
   VarVec *BV = (VarVec*) A.Allocate<VarVec>();
   new (BV) VarVec(BC, E - I);
-  
+
   for ( ; I != E; ++I) {
     const VarDecl *VD = *I;
     const VarRegion *VR = 0;
-    
+
     if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage())
       VR = MemMgr.getVarRegion(VD, this);
     else {
@@ -776,11 +810,11 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
         VR = MemMgr.getVarRegion(VD, MemMgr.getUnknownRegion());
       }
     }
-    
+
     assert(VR);
     BV->push_back(VR, BC);
   }
-  
+
   ReferencedVars = BV;
 }
 
@@ -790,7 +824,7 @@ BlockDataRegion::referenced_vars_begin() const {
 
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
-  
+
   return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
                                                    NULL : Vec->begin());
 }
@@ -801,7 +835,7 @@ BlockDataRegion::referenced_vars_end() const {
 
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
-  
+
   return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
                                                    NULL : Vec->end());
 }

@@ -341,7 +341,8 @@ bool MallocChecker::SummarizeRegion(llvm::raw_ostream& os,
         os << "the address of a parameter";
       return true;
     }
-    case MemRegion::GlobalsSpaceRegionKind: {
+    case MemRegion::NonStaticGlobalSpaceRegionKind:
+    case MemRegion::StaticGlobalSpaceRegionKind: {
       const VarRegion *VR = dyn_cast<VarRegion>(MR);
       const VarDecl *VD;
       if (VR)

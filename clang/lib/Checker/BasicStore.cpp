@@ -46,8 +46,13 @@ public:
 
   SVal Retrieve(Store store, Loc loc, QualType T = QualType());
 
-  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
+  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E,
                          unsigned Count, InvalidatedSymbols *IS);
+
+  Store InvalidateRegions(Store store, const MemRegion * const *Begin,
+                          const MemRegion * const *End, const Expr *E,
+                          unsigned Count, InvalidatedSymbols *IS,
+                          bool invalidateGlobals);
 
   Store scanForIvars(Stmt *B, const Decl* SelfDecl,
                      const MemRegion *SelfRegion, Store St);
@@ -73,8 +78,8 @@ public:
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
   const GRState *RemoveDeadBindings(GRState &state,
-                           const StackFrameContext *LCtx,
-                           SymbolReaper& SymReaper,
+                                    const StackFrameContext *LCtx,
+                                    SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
@@ -144,9 +149,30 @@ SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
 
   // Globals and parameters start with symbolic values.
   // Local variables initially are undefined.
+
+  // Non-static globals may have had their values reset by InvalidateRegions.
+  const MemSpaceRegion *MS = VR->getMemorySpace();
+  if (isa<NonStaticGlobalSpaceRegion>(MS)) {
+    BindingsTy B = GetBindings(store);
+    // FIXME: Copy-and-pasted from RegionStore.cpp.
+    if (BindingsTy::data_type *Val = B.lookup(MS)) {
+      if (SymbolRef parentSym = Val->getAsSymbol())
+        return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+
+      if (Val->isZeroConstant())
+        return ValMgr.makeZeroVal(T);
+
+      if (Val->isUnknownOrUndef())
+        return *Val;
+
+      assert(0 && "Unknown default value.");
+    }
+  }
+
   if (VR->hasGlobalsOrParametersStorage() ||
       isa<UnknownSpaceRegion>(VR->getMemorySpace()))
     return ValMgr.getRegionValueSymbolVal(R);
+
   return UndefinedVal();
 }
 
@@ -194,6 +220,14 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
     return store;
 
   const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
+
+  // Special case: a default symbol assigned to the NonStaticGlobalsSpaceRegion
+  //  that is used to derive other symbols.
+  if (isa<NonStaticGlobalSpaceRegion>(R)) {
+    BindingsTy B = GetBindings(store);
+    return VBFactory.Add(B, R, V).getRoot();
+  }
+
   ASTContext &C = StateMgr.getContext();
 
   // Special case: handle store of pointer values (Loc) to pointers via
@@ -268,9 +302,9 @@ const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state,
       else
         continue;
     }
-    else if (isa<ObjCIvarRegion>(I.getKey())) {
+    else if (isa<ObjCIvarRegion>(I.getKey()) ||
+             isa<NonStaticGlobalSpaceRegion>(I.getKey()))
       RegionRoots.push_back(I.getKey());
-    }
     else
       continue;
 
@@ -292,7 +326,8 @@ const GRState *BasicStoreManager::RemoveDeadBindings(GRState &state,
         SymReaper.markLive(SymR->getSymbol());
         break;
       }
-      else if (isa<VarRegion>(MR) || isa<ObjCIvarRegion>(MR)) {
+      else if (isa<VarRegion>(MR) || isa<ObjCIvarRegion>(MR) ||
+               isa<NonStaticGlobalSpaceRegion>(MR)) {
         if (Marked.count(MR))
           break;
 
@@ -485,6 +520,49 @@ StoreManager::BindingsHandler::~BindingsHandler() {}
 //===----------------------------------------------------------------------===//
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
+
+
+Store BasicStoreManager::InvalidateRegions(Store store,
+                                      const MemRegion * const *I,
+                                      const MemRegion * const *End,
+                                      const Expr *E, unsigned Count,
+                                      InvalidatedSymbols *IS,
+                                      bool invalidateGlobals) {
+  if (invalidateGlobals) {
+    BindingsTy B = GetBindings(store);
+    for (BindingsTy::iterator I=B.begin(), End=B.end(); I != End; ++I) {
+      const MemRegion *R = I.getKey();
+      if (isa<NonStaticGlobalSpaceRegion>(R->getMemorySpace()))
+        store = InvalidateRegion(store, R, E, Count, IS);
+    }
+  }
+
+  for ( ; I != End ; ++I) {
+    const MemRegion *R = *I;
+    // Don't invalidate globals twice.
+    if (invalidateGlobals) {
+      if (isa<NonStaticGlobalSpaceRegion>(R->getMemorySpace()))
+        continue;
+    }
+    store = InvalidateRegion(store, *I, E, Count, IS);
+  }
+
+  // FIXME: This is copy-and-paste from RegionStore.cpp.
+  if (invalidateGlobals) {
+    // Bind the non-static globals memory space to a new symbol that we will
+    // use to derive the bindings for all non-static globals.
+    const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion();
+    SVal V =
+      ValMgr.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, E,
+                                  /* symbol type, doesn't matter */ Ctx.IntTy,
+                                  Count);
+
+    store = Bind(store, loc::MemRegionVal(GS), V);
+  }
+
+  return store;
+}
+
 
 Store BasicStoreManager::InvalidateRegion(Store store,
                                           const MemRegion *R,
