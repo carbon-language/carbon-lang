@@ -1578,3 +1578,39 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x61,0xf9,0x7e,0xf0]
           vmovq  %xmm14, %rax
 
+// CHECK: vcvtpd2dq  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x7b,0xe6,0xe3]
+          vcvtpd2dq  %xmm11, %xmm12
+
+// CHECK: vcvtdq2pd  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x7a,0xe6,0xe3]
+          vcvtdq2pd  %xmm11, %xmm12
+
+// CHECK: vcvtdq2pd  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x7a,0xe6,0x20]
+          vcvtdq2pd  (%rax), %xmm12
+
+// CHECK: vmovshdup  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x7a,0x16,0xe3]
+          vmovshdup  %xmm11, %xmm12
+
+// CHECK: vmovshdup  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x7a,0x16,0x20]
+          vmovshdup  (%rax), %xmm12
+
+// CHECK: vmovsldup  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x7a,0x12,0xe3]
+          vmovsldup  %xmm11, %xmm12
+
+// CHECK: vmovsldup  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x7a,0x12,0x20]
+          vmovsldup  (%rax), %xmm12
+
+// CHECK: vmovddup  %xmm11, %xmm12
+// CHECK: encoding: [0xc4,0x41,0x7b,0x12,0xe3]
+          vmovddup  %xmm11, %xmm12
+
+// CHECK: vmovddup  (%rax), %xmm12
+// CHECK: encoding: [0xc5,0x7b,0x12,0x20]
+          vmovddup  (%rax), %xmm12
+

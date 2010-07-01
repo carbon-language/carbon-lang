@@ -3161,10 +3161,18 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 //===---------------------------------------------------------------------===//
-// SSE3 Instructions
+// SSE3 - Conversion Instructions
 //===---------------------------------------------------------------------===//
 
-// Conversion Instructions
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in {
+def VCVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "vcvtpd2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+}
+
 def CVTPD2DQrm  : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "cvtpd2dq\t{$src, $dst|$dst, $src}", []>;
 def CVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -3174,33 +3182,44 @@ def CVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def CVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", []>;
 
-// Move Instructions
-def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                      "movshdup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (movshdup
-                                                VR128:$src, (undef))))]>;
-def MOVSHDUPrm : S3SI<0x16, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                      "movshdup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (movshdup
-                                         (memopv4f32 addr:$src), (undef)))]>;
+//===---------------------------------------------------------------------===//
+// SSE3 - Move Instructions
+//===---------------------------------------------------------------------===//
 
-def MOVSLDUPrr : S3SI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                      "movsldup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (movsldup
+// Replicate Single FP
+multiclass sse3_replicate_sfp<bits<8> op, PatFrag rep_frag, string OpcodeStr> {
+def rr : S3SI<op, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst, (v4f32 (rep_frag
                                                 VR128:$src, (undef))))]>;
-def MOVSLDUPrm : S3SI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                      "movsldup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (movsldup
+def rm : S3SI<op, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst, (rep_frag
                                          (memopv4f32 addr:$src), (undef)))]>;
+}
 
-def MOVDDUPrr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                      "movddup\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,(v2f64 (movddup VR128:$src, (undef))))]>;
-def MOVDDUPrm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                      "movddup\t{$src, $dst|$dst, $src}",
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in {
+defm VMOVSHDUP : sse3_replicate_sfp<0x16, movshdup, "vmovshdup">, VEX;
+defm VMOVSLDUP : sse3_replicate_sfp<0x12, movsldup, "vmovsldup">, VEX;
+}
+defm MOVSHDUP : sse3_replicate_sfp<0x16, movshdup, "movshdup">;
+defm MOVSLDUP : sse3_replicate_sfp<0x12, movsldup, "movsldup">;
+
+// Replicate Double FP
+multiclass sse3_replicate_dfp<string OpcodeStr> {
+def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst,(v2f64 (movddup VR128:$src, (undef))))]>;
+def rm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst,
                       (v2f64 (movddup (scalar_to_vector (loadf64 addr:$src)),
                                       (undef))))]>;
+}
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in
+  defm VMOVDDUP : sse3_replicate_dfp<"vmovddup">, VEX;
+defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 
 def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
                    (undef)),
@@ -3216,6 +3235,10 @@ def : Pat<(movddup (memopv2i64 addr:$src), (undef)),
 def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
 }
+
+//===---------------------------------------------------------------------===//
+// SSE3 Instructions
+//===---------------------------------------------------------------------===//
 
 // Arithmetic
 let Constraints = "$src1 = $dst" in {

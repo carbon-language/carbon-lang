@@ -11530,3 +11530,39 @@
 // CHECK: encoding: [0xc5,0xfa,0x7e,0x08]
           vmovq  (%eax), %xmm1
 
+// CHECK: vcvtpd2dq  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfb,0xe6,0xd1]
+          vcvtpd2dq  %xmm1, %xmm2
+
+// CHECK: vcvtdq2pd  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfa,0xe6,0xd1]
+          vcvtdq2pd  %xmm1, %xmm2
+
+// CHECK: vcvtdq2pd  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xfa,0xe6,0x10]
+          vcvtdq2pd  (%eax), %xmm2
+
+// CHECK: vmovshdup  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfa,0x16,0xd1]
+          vmovshdup  %xmm1, %xmm2
+
+// CHECK: vmovshdup  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xfa,0x16,0x10]
+          vmovshdup  (%eax), %xmm2
+
+// CHECK: vmovsldup  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfa,0x12,0xd1]
+          vmovsldup  %xmm1, %xmm2
+
+// CHECK: vmovsldup  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xfa,0x12,0x10]
+          vmovsldup  (%eax), %xmm2
+
+// CHECK: vmovddup  %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xfb,0x12,0xd1]
+          vmovddup  %xmm1, %xmm2
+
+// CHECK: vmovddup  (%eax), %xmm2
+// CHECK: encoding: [0xc5,0xfb,0x12,0x10]
+          vmovddup  (%eax), %xmm2
+
