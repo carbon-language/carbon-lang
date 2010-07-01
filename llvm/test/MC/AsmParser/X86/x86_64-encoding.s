@@ -1614,3 +1614,19 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x7b,0x12,0x20]
           vmovddup  (%rax), %xmm12
 
+// CHECK: vaddsubps  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x1b,0xd0,0xeb]
+          vaddsubps  %xmm11, %xmm12, %xmm13
+
+// CHECK: vaddsubps  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x23,0xd0,0x20]
+          vaddsubps  (%rax), %xmm11, %xmm12
+
+// CHECK: vaddsubpd  %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x41,0x19,0xd0,0xeb]
+          vaddsubpd  %xmm11, %xmm12, %xmm13
+
+// CHECK: vaddsubpd  (%rax), %xmm11, %xmm12
+// CHECK: encoding: [0xc5,0x21,0xd0,0x20]
+          vaddsubpd  (%rax), %xmm11, %xmm12
+

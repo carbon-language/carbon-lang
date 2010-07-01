@@ -3237,32 +3237,43 @@ def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
 }
 
 //===---------------------------------------------------------------------===//
-// SSE3 Instructions
+// SSE3 - Arithmetic
 //===---------------------------------------------------------------------===//
 
-// Arithmetic
-let Constraints = "$src1 = $dst" in {
-  def ADDSUBPSrr : S3DI<0xD0, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                        "addsubps\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst, (int_x86_sse3_addsub_ps VR128:$src1,
-                                           VR128:$src2))]>;
-  def ADDSUBPSrm : S3DI<0xD0, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                        "addsubps\t{$src2, $dst|$dst, $src2}",
-                        [(set VR128:$dst, (int_x86_sse3_addsub_ps VR128:$src1,
-                                           (memop addr:$src2)))]>;
-  def ADDSUBPDrr : S3I<0xD0, MRMSrcReg,
-                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                       "addsubpd\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst, (int_x86_sse3_addsub_pd VR128:$src1,
-                                          VR128:$src2))]>;
-  def ADDSUBPDrm : S3I<0xD0, MRMSrcMem,
-                       (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
-                       "addsubpd\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst, (int_x86_sse3_addsub_pd VR128:$src1,
-                                          (memop addr:$src2)))]>;
+multiclass sse3_addsub<Intrinsic Int, string OpcodeStr, bit Is2Addr = 1> {
+  def rr : I<0xD0, MRMSrcReg,
+       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst, (Int VR128:$src1,
+                          VR128:$src2))]>;
+  def rm : I<0xD0, MRMSrcMem,
+       (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst, (Int VR128:$src1,
+                          (memop addr:$src2)))]>;
+
 }
+
+let isAsmParserOnly = 1, Predicates = [HasSSE3, HasAVX],
+  ExeDomain = SSEPackedDouble in {
+  defm VADDSUBPS : sse3_addsub<int_x86_sse3_addsub_ps, "vaddsubps", 0>, XD,
+                              VEX_4V;
+  defm VADDSUBPD : sse3_addsub<int_x86_sse3_addsub_pd, "vaddsubpd", 0>, OpSize,
+                              VEX_4V;
+}
+let Constraints = "$src1 = $dst", Predicates = [HasSSE3],
+    ExeDomain = SSEPackedDouble in {
+  defm ADDSUBPS : sse3_addsub<int_x86_sse3_addsub_ps, "addsubps">, XD;
+  defm ADDSUBPD : sse3_addsub<int_x86_sse3_addsub_pd, "addsubpd">, TB, OpSize;
+}
+
+//===---------------------------------------------------------------------===//
+// SSE3 Instructions
+//===---------------------------------------------------------------------===//
 
 def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "lddqu\t{$src, $dst|$dst, $src}",

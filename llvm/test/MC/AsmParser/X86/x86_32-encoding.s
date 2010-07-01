@@ -11566,3 +11566,19 @@
 // CHECK: encoding: [0xc5,0xfb,0x12,0x10]
           vmovddup  (%eax), %xmm2
 
+// CHECK: vaddsubps  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xeb,0xd0,0xd9]
+          vaddsubps  %xmm1, %xmm2, %xmm3
+
+// CHECK: vaddsubps  (%eax), %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf3,0xd0,0x10]
+          vaddsubps  (%eax), %xmm1, %xmm2
+
+// CHECK: vaddsubpd  %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc5,0xe9,0xd0,0xd9]
+          vaddsubpd  %xmm1, %xmm2, %xmm3
+
+// CHECK: vaddsubpd  (%eax), %xmm1, %xmm2
+// CHECK: encoding: [0xc5,0xf1,0xd0,0x10]
+          vaddsubpd  (%eax), %xmm1, %xmm2
+
