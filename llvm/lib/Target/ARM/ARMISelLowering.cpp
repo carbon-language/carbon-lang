@@ -647,7 +647,7 @@ TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
-  return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 0 : 1;
+  return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 1 : 2;
 }
 
 Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
