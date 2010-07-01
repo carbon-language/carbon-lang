@@ -262,12 +262,12 @@ def llc : Tool<
 ]>;
 
 // Base class for linkers
-class llvm_gcc_based_linker <string cmd_prefix> : Tool<
+class llvm_gcc_based_linker <string cmd_prefix, dag on_empty> : Tool<
 [(in_language ["object-code", "static-library"]),
  (out_language "executable"),
  (output_suffix "out"),
  (command cmd_prefix),
- (works_on_empty (case (not_empty "filelist"), true,
+ (works_on_empty (case (and (not_empty "filelist"), on_empty), true,
                        (default), false)),
  (join),
  (actions (case
@@ -295,9 +295,13 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
 ]>;
 
 // Default linker
-def llvm_gcc_linker : llvm_gcc_based_linker<"@LLVMGCCCOMMAND@">;
+def llvm_gcc_linker : llvm_gcc_based_linker<"@LLVMGCCCOMMAND@",
+    (not (or (parameter_equals "linker", "g++"),
+         (parameter_equals "linker", "c++")))>;
 // Alternative linker for C++
-def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"@LLVMGXXCOMMAND@">;
+def llvm_gcc_cpp_linker : llvm_gcc_based_linker<"@LLVMGXXCOMMAND@",
+    (or (parameter_equals "linker", "g++"),
+        (parameter_equals "linker", "c++"))>;
 
 // Language map
 
