@@ -2990,9 +2990,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
 
   // Rebuild the function type "R" without any type qualifiers (in
   // case any of the errors above fired) and with "void" as the
-  // return type, since constructors don't have return types. We
-  // *always* have to do this, because GetTypeForDeclarator will
-  // put in a result type of "int" when none was specified.
+  // return type, since constructors don't have return types.
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                                  Proto->getNumArgs(),
@@ -3087,7 +3085,7 @@ FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
 /// emit diagnostics and set the declarator to invalid.  Even if this happens,
 /// will be updated to reflect a well-formed type for the destructor and
 /// returned.
-QualType Sema::CheckDestructorDeclarator(Declarator &D,
+QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
                                          FunctionDecl::StorageClass& SC) {
   // C++ [class.dtor]p1:
   //   [...] A typedef-name that names a class is a class-name
@@ -3095,11 +3093,9 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
   QualType DeclaratorType = GetTypeFromParser(D.getName().DestructorName);
-  if (isa<TypedefType>(DeclaratorType)) {
+  if (isa<TypedefType>(DeclaratorType))
     Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
       << DeclaratorType;
-    D.setInvalidType();
-  }
 
   // C++ [class.dtor]p2:
   //   A destructor is used to destroy objects of its class type. A
@@ -3113,9 +3109,10 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_destructor_cannot_be)
         << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-        << SourceRange(D.getIdentifierLoc());
+        << SourceRange(D.getIdentifierLoc())
+        << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+    
     SC = FunctionDecl::None;
-    D.setInvalidType();
   }
   if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
     // Destructors don't have return types, but the parser will
@@ -3163,11 +3160,17 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   // Rebuild the function type "R" without any type qualifiers or
   // parameters (in case any of the errors above fired) and with
   // "void" as the return type, since destructors don't have return
-  // types. We *always* have to do this, because GetTypeForDeclarator
-  // will put in a result type of "int" when none was specified.
-  // FIXME: Exceptions!
+  // types. 
+  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
+  if (!Proto)
+    return QualType();
+  
   return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0,
-                                 false, false, 0, 0, FunctionType::ExtInfo());
+                                 Proto->hasExceptionSpec(),
+                                 Proto->hasAnyExceptionSpec(),
+                                 Proto->getNumExceptions(),
+                                 Proto->exception_begin(),
+                                 Proto->getExtInfo());
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
