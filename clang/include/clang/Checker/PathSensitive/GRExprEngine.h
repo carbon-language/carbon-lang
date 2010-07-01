@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
+#include "clang/Checker/PathSensitive/AnalysisManager.h"
 #include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/GRState.h"
@@ -117,7 +118,7 @@ public:
   }
 
   /// getContext - Return the ASTContext associated with this analysis.
-  ASTContext& getContext() const { return G.getContext(); }
+  ASTContext& getContext() const { return AMgr.getASTContext(); }
 
   AnalysisManager &getAnalysisManager() const { return AMgr; }
 

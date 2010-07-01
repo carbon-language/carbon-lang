@@ -1403,7 +1403,7 @@ MakeReportGraph(const ExplodedGraph* G,
 
   // Create a new (third!) graph with a single path.  This is the graph
   // that will be returned to the caller.
-  ExplodedGraph *GNew = new ExplodedGraph(GTrim->getContext());
+  ExplodedGraph *GNew = new ExplodedGraph();
 
   // Sometimes the trimmed graph can contain a cycle.  Perform a reverse BFS
   // to the root node, and then construct a new graph that contains only

@@ -109,8 +109,8 @@ private:
 public:
   /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GRCoreEngine(ASTContext& ctx, GRSubEngine& subengine)
-    : SubEngine(subengine), G(new ExplodedGraph(ctx)),
+  GRCoreEngine(GRSubEngine& subengine)
+    : SubEngine(subengine), G(new ExplodedGraph()),
       WList(GRWorkList::MakeBFS()),
       BCounterFactory(G->getAllocator()),
       BlockAborted(false) {}
@@ -118,8 +118,8 @@ public:
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
-  GRCoreEngine(ASTContext& ctx, GRWorkList* wlist, GRSubEngine& subengine)
-    : SubEngine(subengine), G(new ExplodedGraph(ctx)), WList(wlist),
+  GRCoreEngine(GRWorkList* wlist, GRSubEngine& subengine)
+    : SubEngine(subengine), G(new ExplodedGraph()), WList(wlist),
       BCounterFactory(G->getAllocator()),
       BlockAborted(false) {}
 

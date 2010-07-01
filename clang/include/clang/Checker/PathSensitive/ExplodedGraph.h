@@ -36,7 +36,6 @@ namespace clang {
 
 class GRState;
 class CFG;
-class ASTContext;
 class ExplodedGraph;
 
 //===----------------------------------------------------------------------===//
@@ -240,9 +239,6 @@ protected:
   /// and successor groups.
   BumpVectorContext BVC;
 
-  /// Ctx - The ASTContext used to "interpret" CodeDecl.
-  ASTContext& Ctx;
-
   /// NumNodes - The number of nodes in the graph.
   unsigned NumNodes;
 
@@ -256,7 +252,7 @@ public:
                         bool* IsNew = 0);
 
   ExplodedGraph* MakeEmptyGraph() const {
-    return new ExplodedGraph(Ctx);
+    return new ExplodedGraph();
   }
 
   /// addRoot - Add an untyped node to the set of roots.
@@ -271,7 +267,7 @@ public:
     return V;
   }
 
-  ExplodedGraph(ASTContext& ctx) : Ctx(ctx), NumNodes(0) {}
+  ExplodedGraph() : NumNodes(0) {}
 
   ~ExplodedGraph() {}
 
@@ -317,8 +313,6 @@ public:
 
   llvm::BumpPtrAllocator & getAllocator() { return BVC.getAllocator(); }
   BumpVectorContext &getNodeAllocator() { return BVC; }
-
-  ASTContext& getContext() { return Ctx; }
 
   typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> NodeMap;
 

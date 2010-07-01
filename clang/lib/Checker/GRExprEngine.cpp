@@ -379,10 +379,10 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
   : AMgr(mgr),
-    CoreEngine(mgr.getASTContext(), *this),
+    CoreEngine(*this),
     G(CoreEngine.getGraph()),
     Builder(NULL),
-    StateMgr(G.getContext(), mgr.getStoreManagerCreator(),
+    StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),
              *this),
     SymMgr(StateMgr.getSymbolManager()),
@@ -390,7 +390,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
     SVator(ValMgr.getSValuator()),
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
-    RaiseSel(GetNullarySelector("raise", G.getContext())),
+    RaiseSel(GetNullarySelector("raise", getContext())),
     BR(mgr, *this), TF(tf) {
   // Register internal checks.
   RegisterInternalChecks(*this);
