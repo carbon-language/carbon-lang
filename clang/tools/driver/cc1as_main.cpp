@@ -275,7 +275,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get(), Opts.RelaxAll));
   }
 
-  AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);
+  AsmParser Parser(*TheTarget, SrcMgr, Ctx, *Str.get(), *MAI);
   OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(Parser));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
