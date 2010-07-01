@@ -51,3 +51,22 @@ entry:
 ; X64:  	ret
 
 }
+
+define double @test4(i64 %x, double* %p) nounwind {
+entry:
+  %x.addr = alloca i64, align 8                   ; <i64*> [#uses=2]
+  %p.addr = alloca double*, align 8               ; <double**> [#uses=2]
+  store i64 %x, i64* %x.addr
+  store double* %p, double** %p.addr
+  %tmp = load i64* %x.addr                        ; <i64> [#uses=1]
+  %add = add nsw i64 %tmp, 16                     ; <i64> [#uses=1]
+  %tmp1 = load double** %p.addr                   ; <double*> [#uses=1]
+  %arrayidx = getelementptr inbounds double* %tmp1, i64 %add ; <double*> [#uses=1]
+  %tmp2 = load double* %arrayidx                  ; <double> [#uses=1]
+  ret double %tmp2
+
+; X32: test4:
+; X32: 128(%e{{.*}},%e{{.*}},8)
+; X64: test4:
+; X64: 128(%r{{.*}},%r{{.*}},8)
+}

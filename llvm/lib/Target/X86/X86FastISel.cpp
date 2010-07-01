@@ -423,20 +423,29 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
         Disp += SL->getElementOffset(Idx);
       } else {
         uint64_t S = TD.getTypeAllocSize(GTI.getIndexedType());
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
-          // Constant-offset addressing.
-          Disp += CI->getSExtValue() * S;
-        } else if (IndexReg == 0 &&
-                   (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
-                   (S == 1 || S == 2 || S == 4 || S == 8)) {
-          // Scaled-index addressing.
-          Scale = S;
-          IndexReg = getRegForGEPIndex(Op).first;
-          if (IndexReg == 0)
-            return false;
-        } else
-          // Unsupported.
-          goto unsupported_gep;
+        SmallVector<const Value *, 4> Worklist;
+        Worklist.push_back(Op);
+        do {
+          Op = Worklist.pop_back_val();
+          if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+            // Constant-offset addressing.
+            Disp += CI->getSExtValue() * S;
+          } else if (IndexReg == 0 &&
+                     (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
+                     (S == 1 || S == 2 || S == 4 || S == 8)) {
+            // Scaled-index addressing.
+            Scale = S;
+            IndexReg = getRegForGEPIndex(Op).first;
+            if (IndexReg == 0)
+              return false;
+          } else if (const AddOperator *Add = dyn_cast<AddOperator>(Op)) {
+            // An add. Try to fold both operands.
+            Worklist.push_back(Add->getOperand(0));
+            Worklist.push_back(Add->getOperand(1));
+          } else
+            // Unsupported.
+            goto unsupported_gep;
+        } while (!Worklist.empty());
       }
     }
     // Check for displacement overflow.
