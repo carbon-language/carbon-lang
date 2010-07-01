@@ -55,10 +55,9 @@ static bool isKnownNonNull(const Value *V) {
 
 /// isNonEscapingLocalObject - Return true if the pointer is to a function-local
 /// object that never escapes from the function.
-static bool isNonEscapingLocalObject(const Value *V, bool Interprocedural) {
+static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
-  if (isa<AllocaInst>(V) ||
-      (!Interprocedural && isNoAliasCall(V)))
+  if (isa<AllocaInst>(V) || isNoAliasCall(V))
     // Set StoreCaptures to True so that we can assume in our callers that the
     // pointer is not the result of a load instruction. Currently
     // PointerMayBeCaptured doesn't have any special analysis for the
@@ -69,23 +68,21 @@ static bool isNonEscapingLocalObject(const Value *V, bool Interprocedural) {
   // If this is an argument that corresponds to a byval or noalias argument,
   // then it has not escaped before entering the function.  Check if it escapes
   // inside the function.
-  if (!Interprocedural)
-    if (const Argument *A = dyn_cast<Argument>(V))
-      if (A->hasByValAttr() || A->hasNoAliasAttr()) {
-        // Don't bother analyzing arguments already known not to escape.
-        if (A->hasNoCaptureAttr())
-          return true;
-        return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
-      }
+  if (const Argument *A = dyn_cast<Argument>(V))
+    if (A->hasByValAttr() || A->hasNoAliasAttr()) {
+      // Don't bother analyzing arguments already known not to escape.
+      if (A->hasNoCaptureAttr())
+        return true;
+      return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
+    }
   return false;
 }
 
 /// isEscapeSource - Return true if the pointer is one which would have
 /// been considered an escape by isNonEscapingLocalObject.
-static bool isEscapeSource(const Value *V, bool Interprocedural) {
-  if (!Interprocedural)
-    if (isa<CallInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V))
-      return true;
+static bool isEscapeSource(const Value *V) {
+  if (isa<CallInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V))
+    return true;
 
   // The load case works because isNonEscapingLocalObject considers all
   // stores to be escapes (it passes true for the StoreCaptures argument
@@ -197,7 +194,6 @@ ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 // BasicAliasAnalysis Pass
 //===----------------------------------------------------------------------===//
 
-#ifdef XDEBUG
 static const Function *getParent(const Value *V) {
   if (const Instruction *inst = dyn_cast<Instruction>(V))
     return inst->getParent()->getParent();
@@ -209,6 +205,15 @@ static const Function *getParent(const Value *V) {
 }
 
 static bool sameParent(const Value *O1, const Value *O2) {
+
+  const Function *F1 = getParent(O1);
+  const Function *F2 = getParent(O2);
+
+  return F1 && F1 == F2;
+}
+
+#ifdef XDEBUG
+static bool notDifferentParent(const Value *O1, const Value *O2) {
 
   const Function *F1 = getParent(O1);
   const Function *F2 = getParent(O2);
@@ -236,7 +241,7 @@ namespace {
                       const Value *V2, unsigned V2Size) {
       assert(Visited.empty() && "Visited must be cleared after use!");
 #ifdef XDEBUG
-      assert((Interprocedural || sameParent(V1, V2)) &&
+      assert((Interprocedural || notDifferentParent(V1, V2)) &&
              "BasicAliasAnalysis (-basicaa) doesn't support interprocedural "
              "queries; use InterproceduralAliasAnalysis "
              "(-interprocedural-basic-aa) instead.");
@@ -331,11 +336,17 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       if (CI->isTailCall())
         return NoModRef;
   
+  // If we can identify an object and it's known to be within the
+  // same function as the call, we can ignore interprocedural concerns.
+  bool EffectivelyInterprocedural =
+    Interprocedural && !sameParent(Object, CS.getInstruction());
+  
   // If the pointer is to a locally allocated object that does not escape,
   // then the call can not mod/ref the pointer unless the call takes the pointer
   // as an argument, and itself doesn't capture it.
   if (!isa<Constant>(Object) && CS.getInstruction() != Object &&
-      isNonEscapingLocalObject(Object, Interprocedural)) {
+      !EffectivelyInterprocedural &&
+      isNonEscapingLocalObject(Object)) {
     bool PassedAsArg = false;
     unsigned ArgNo = 0;
     for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
@@ -754,27 +765,32 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     if (CPN->getType()->getAddressSpace() == 0)
       return NoAlias;
 
+  // If we can identify two objects and they're known to be within the
+  // same function, we can ignore interprocedural concerns.
+  bool EffectivelyInterprocedural =
+    Interprocedural && !sameParent(O1, O2);
+
   if (O1 != O2) {
     // If V1/V2 point to two different objects we know that we have no alias.
-    if (isIdentifiedObject(O1, Interprocedural) &&
-        isIdentifiedObject(O2, Interprocedural))
+    if (isIdentifiedObject(O1, EffectivelyInterprocedural) &&
+        isIdentifiedObject(O2, EffectivelyInterprocedural))
       return NoAlias;
 
     // Constant pointers can't alias with non-const isIdentifiedObject objects.
     if ((isa<Constant>(O1) &&
-         isIdentifiedObject(O2, Interprocedural) &&
+         isIdentifiedObject(O2, EffectivelyInterprocedural) &&
          !isa<Constant>(O2)) ||
         (isa<Constant>(O2) &&
-         isIdentifiedObject(O1, Interprocedural) &&
+         isIdentifiedObject(O1, EffectivelyInterprocedural) &&
          !isa<Constant>(O1)))
       return NoAlias;
 
-    // Arguments can't alias with local allocations or noalias calls, unless
-    // we have to consider interprocedural aliasing.
-    if (!Interprocedural)
-      if ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
-          (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1))))
-        return NoAlias;
+    // Arguments can't alias with local allocations or noalias calls
+    // in the same function.
+    if (!EffectivelyInterprocedural &&
+        ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
+         (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1)))))
+      return NoAlias;
 
     // Most objects can't alias null.
     if ((isa<ConstantPointerNull>(V2) && isKnownNonNull(O1)) ||
@@ -790,14 +806,18 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
       return NoAlias;
   
   // If one pointer is the result of a call/invoke or load and the other is a
-  // non-escaping local object, then we know the object couldn't escape to a
-  // point where the call could return it.
-  if (O1 != O2) {
-    if (isEscapeSource(O1, Interprocedural) &&
-        isNonEscapingLocalObject(O2, Interprocedural))
+  // non-escaping local object within the same function, then we know the
+  // object couldn't escape to a point where the call could return it.
+  //
+  // Note that if the pointers are in different functions, there are a
+  // variety of complications. A call with a nocapture argument may still
+  // temporary store the nocapture argument's value in a temporary memory
+  // location if that memory location doesn't escape. Or it may pass a
+  // nocapture value to other functions as long as they don't capture it.
+  if (O1 != O2 && !EffectivelyInterprocedural) {
+    if (isEscapeSource(O1) && isNonEscapingLocalObject(O2))
       return NoAlias;
-    if (isEscapeSource(O2, Interprocedural) &&
-        isNonEscapingLocalObject(O1, Interprocedural))
+    if (isEscapeSource(O2) && isNonEscapingLocalObject(O1))
       return NoAlias;
   }
 

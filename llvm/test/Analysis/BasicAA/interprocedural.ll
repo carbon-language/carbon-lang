@@ -27,23 +27,33 @@ define void @s1() {
   ret void
 }
 
-; An alloca can alias an argument in a recursive function.
-; CHECK: MayAlias: i64* %t, i64* %u
+; An alloca does not alias an argument in the same function.
+; CHECK: NoAlias: i64* %t, i64* %u
+; CHECK: NoAlias: i64* %a, i64* %u
+; CHECK: NoAlias: i64* %a, i64* %t
 ; CHECK: MayAlias: i64* %u, i64* %v
 ; CHECK: MayAlias: i64* %t, i64* %v
-
+; CHECK: NoAlias: i64* %a, i64* %v
+; CHECK: MayAlias: i64* %b, i64* %u
+; CHECK: MayAlias: i64* %b, i64* %t
+; CHECK: MayAlias: i64* %b, i64* %v
+declare i64* @r0_callee(i64*)
 define i64* @r0(i64* %u) {
   %t = alloca i64, i32 10
-  %v = call i64* @r0(i64* %t)
+  %a = alloca i64, i32 10
+  %v = call i64* @r0_callee(i64* %t)
+  %b = call i64* @r0_callee(i64* %t)
   store i64 0, i64* %t
   store i64 0, i64* %u
   store i64 0, i64* %v
+  store i64 0, i64* %a
+  store i64 0, i64* %b
   ret i64* %t
 }
 
-; The noalias attribute is not necessarily safe in an interprocedural context even
-; in comparison to other noalias arguments in the same function.
-; CHECK: MayAlias: i8* %w, i8* %x
+; The noalias attribute is safe when both arguments belong to the same function
+; even in an interprocedural context.
+; CHECK: NoAlias: i8* %w, i8* %x
 
 define void @q0(i8* noalias %w, i8* noalias %x) {
   store i8 0, i8* %w
