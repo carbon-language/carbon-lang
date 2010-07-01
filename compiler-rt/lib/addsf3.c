@@ -1,15 +1,19 @@
-/*
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- */
+//===-- lib/addsf3.c - Single-precision addition and subtraction --*- C -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements single-precision soft-float addition and subtraction
+// with the IEEE-754 default rounding (to nearest, ties to even).
+//
+//===----------------------------------------------------------------------===//
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
-
-// This file implements single-precision soft-float addition and subtraction
-// with the IEEE-754 default rounding (to nearest, ties to even).
 
 fp_t __addsf3(fp_t a, fp_t b) {
 

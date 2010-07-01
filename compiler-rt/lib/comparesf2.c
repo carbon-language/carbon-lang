@@ -9,7 +9,7 @@
 //
 // This file implements the following soft-fp_t comparison routines:
 //
-//   __eqsf2   __gesf2   __nesf2
+//   __eqsf2   __gesf2   __unordsf2
 //   __lesf2   __gtsf2
 //   __ltsf2
 //   __nesf2
@@ -79,7 +79,6 @@ enum LE_RESULT __lesf2(fp_t a, fp_t b) {
     }
 }
 
-
 enum GE_RESULT {
     GE_LESS      = -1,
     GE_EQUAL     =  0,
@@ -113,7 +112,7 @@ int __unordsf2(fp_t a, fp_t b) {
     return aAbs > infRep || bAbs > infRep;
 }
 
-// The following are just other names for the forgoing routines.
+// The following are alternative names for the preceeding routines.
 
 enum LE_RESULT __eqsf2(fp_t a, fp_t b) {
     return __lesf2(a, b);
@@ -130,4 +129,3 @@ enum LE_RESULT __nesf2(fp_t a, fp_t b) {
 enum GE_RESULT __gtsf2(fp_t a, fp_t b) {
     return __gesf2(a, b);
 }
-

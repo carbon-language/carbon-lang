@@ -1,16 +1,15 @@
-/*
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- */
-
-#define DOUBLE_PRECISION
-#include "fp_lib.h"
-
-// This file implements the following soft-float comparison routines:
+//===-- lib/comparedf2.c - Double-precision comparisons -----------*- C -*-===//
 //
-//   __eqdf2   __gedf2   __nedf2
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// // This file implements the following soft-float comparison routines:
+//
+//   __eqdf2   __gedf2   __unorddf2
 //   __ledf2   __gtdf2
 //   __ltdf2
 //   __nedf2
@@ -35,6 +34,11 @@
 //
 // Note that __ledf2( ) and __gedf2( ) are identical except in their handling of
 // NaN values.
+//
+//===----------------------------------------------------------------------===//
+
+#define DOUBLE_PRECISION
+#include "fp_lib.h"
 
 enum LE_RESULT {
     LE_LESS      = -1,
@@ -75,7 +79,6 @@ enum LE_RESULT __ledf2(fp_t a, fp_t b) {
     }
 }
 
-
 enum GE_RESULT {
     GE_LESS      = -1,
     GE_EQUAL     =  0,
@@ -108,6 +111,8 @@ int __unorddf2(fp_t a, fp_t b) {
     const rep_t bAbs = toRep(b) & absMask;
     return aAbs > infRep || bAbs > infRep;
 }
+
+// The following are alternative names for the preceeding routines.
 
 enum LE_RESULT __eqdf2(fp_t a, fp_t b) {
     return __ledf2(a, b);

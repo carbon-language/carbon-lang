@@ -1,18 +1,15 @@
-/*
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- */
-
-#include <stdint.h>
-#include <limits.h>
-
+//===-- lib/extendsfdf2.c - single -> double conversion -----------*- C -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
 // This file implements a fairly generic conversion from a narrower to a wider
-// IEEE-754 floating-point type.  The next 10 lines parametrize which types
-// are to be used as the source and destination, the actual name used for
-// the conversion, and a suitable CLZ function for the source representation
-// type.
+// IEEE-754 floating-point type.  The constants and types defined following the
+// includes below parameterize the conversion.
 //
 // This routine can be trivially adapted to support conversions from 
 // half-precision or to quad-precision. It does not support types that don't
@@ -38,8 +35,11 @@
 //
 // 2. quiet NaNs, if supported, are indicated by the leading bit of the
 //    significand field being set
+//
+//===----------------------------------------------------------------------===//
 
-#define widen __extendsfdf2
+#include <stdint.h>
+#include <limits.h>
 
 typedef float src_t;
 typedef uint32_t src_rep_t;
@@ -67,7 +67,7 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 
 // End helper routines.  Conversion implementation follows.
 
-dst_t widen(src_t a) {
+dst_t __extendsfdf2(src_t a) {
     
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.
@@ -75,22 +75,25 @@ dst_t widen(src_t a) {
     const int srcExpBits = srcBits - srcSigBits - 1;
     const int srcInfExp = (1 << srcExpBits) - 1;
     const int srcExpBias = srcInfExp >> 1;
+    
     const src_rep_t srcMinNormal = SRC_REP_C(1) << srcSigBits;
     const src_rep_t srcInfinity = (src_rep_t)srcInfExp << srcSigBits;
     const src_rep_t srcSignMask = SRC_REP_C(1) << (srcSigBits + srcExpBits);
     const src_rep_t srcAbsMask = srcSignMask - 1;
     const src_rep_t srcQNaN = SRC_REP_C(1) << (srcSigBits - 1);
     const src_rep_t srcNaNCode = srcQNaN - 1;
+    
     const int dstBits = sizeof(dst_t)*CHAR_BIT;
     const int dstExpBits = dstBits - dstSigBits - 1;
     const int dstInfExp = (1 << dstExpBits) - 1;
     const int dstExpBias = dstInfExp >> 1;
+    
     const dst_rep_t dstMinNormal = DST_REP_C(1) << dstSigBits;
     
     // Break a into a sign and representation of the absolute value
-    src_rep_t aRep = srcToRep(a);
-    src_rep_t aAbs = aRep & srcAbsMask;
-    src_rep_t sign = aRep & srcSignMask;
+    const src_rep_t aRep = srcToRep(a);
+    const src_rep_t aAbs = aRep & srcAbsMask;
+    const src_rep_t sign = aRep & srcSignMask;
     dst_rep_t absResult;
     
     if (aAbs - srcMinNormal < srcInfinity - srcMinNormal) {
@@ -104,11 +107,11 @@ dst_t widen(src_t a) {
     else if (aAbs >= srcInfinity) {
         // a is NaN or infinity.
         // Conjure the result by beginning with infinity, then setting the qNaN
-        // bit if appropriate and then by right-aligning the rest of the
-        // trailing NaN payload field.
+        // bit (if needed) and right-aligning the rest of the trailing NaN
+        // payload field.
         absResult = (dst_rep_t)dstInfExp << dstSigBits;
         absResult |= (dst_rep_t)(aAbs & srcQNaN) << (dstSigBits - srcSigBits);
-        absResult |= (aAbs & srcNaNCode);
+        absResult |= aAbs & srcNaNCode;
     }
     
     else if (aAbs) {
@@ -128,6 +131,6 @@ dst_t widen(src_t a) {
     }
     
     // Apply the signbit to (dst_t)abs(a).
-    dst_rep_t result = absResult | (dst_rep_t)sign << (dstBits - srcBits);
+    const dst_rep_t result = absResult | (dst_rep_t)sign << (dstBits - srcBits);
     return dstFromRep(result);
 }

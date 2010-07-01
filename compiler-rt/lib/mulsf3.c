@@ -1,15 +1,19 @@
-/*
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- */
+//===-- lib/mulsf3.c - Single-precision multiplication ------------*- C -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements single-precision soft-float multiplication
+// with the IEEE-754 default rounding (to nearest, ties to even).
+//
+//===----------------------------------------------------------------------===//
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
-
-// This file implements single-precision soft-float multiplication with the
-// IEEE-754 default rounding (to nearest, ties to even).
 
 // 32x32 --> 64 bit multiply
 static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {

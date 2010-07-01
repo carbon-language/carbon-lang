@@ -1,8 +1,22 @@
+//===-- lib/fp_lib.h - Floating-point utilities -------------------*- C -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
 // This file is a configuration header for soft-float routines in compiler-rt.
-// This file does not provide any part of the compiler-rt interface.
-
+// This file does not provide any part of the compiler-rt interface, but defines
+// many useful constants and utility routines that are used in the
+// implementation of the soft-float routines in compiler-rt.
+//
 // Assumes that float and double correspond to the IEEE-754 binary32 and
-// binary64 types, respectively.
+// binary64 types, respectively, and that integer endianness matches floating
+// point endianness on the target platform.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef FP_LIB_HEADER
 #define FP_LIB_HEADER
@@ -12,9 +26,6 @@
 #include <limits.h>
 
 #if defined SINGLE_PRECISION
-#if 0
-#pragma mark single definitions
-#endif
 
 typedef uint32_t rep_t;
 typedef int32_t srep_t;
@@ -27,9 +38,6 @@ static inline int rep_clz(rep_t a) {
 }
 
 #elif defined DOUBLE_PRECISION
-#if 0
-#pragma mark double definitions
-#endif
 
 typedef uint64_t rep_t;
 typedef int64_t srep_t;
@@ -52,20 +60,10 @@ static inline int rep_clz(rep_t a) {
 #error Either SINGLE_PRECISION or DOUBLE_PRECISION must be defined.
 #endif
 
-#if 0
-#pragma mark -
-#pragma mark integer constants
-#endif
-
 #define typeWidth       (sizeof(rep_t)*CHAR_BIT)
 #define exponentBits    (typeWidth - significandBits - 1)
 #define maxExponent     ((1 << exponentBits) - 1)
 #define exponentBias    (maxExponent >> 1)
-
-#if 0
-#pragma mark -
-#pragma mark rep_t constants
-#endif
 
 #define implicitBit     (REP_C(1) << significandBits)
 #define significandMask (implicitBit - 1U)
@@ -76,11 +74,6 @@ static inline int rep_clz(rep_t a) {
 #define infRep          exponentMask
 #define quietBit        (implicitBit >> 1)
 #define qnanRep         (exponentMask | quietBit)
-
-#if 0
-#pragma mark -
-#pragma mark generic functions
-#endif
 
 static inline rep_t toRep(fp_t x) {
     const union { fp_t f; rep_t i; } rep = {.f = x};
