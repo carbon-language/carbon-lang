@@ -159,6 +159,29 @@ bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
   return getCopyConstructor(Context, Qualifiers::Const) != 0;
 }
 
+/// \brief Perform a simplistic form of overload resolution that only considers
+/// cv-qualifiers on a single parameter, and return the best overload candidate
+/// (if there is one).
+static CXXMethodDecl *
+GetBestOverloadCandidateSimple(
+  const llvm::SmallVectorImpl<std::pair<CXXMethodDecl *, Qualifiers> > &Cands) {
+  if (Cands.empty())
+    return 0;
+  if (Cands.size() == 1)
+    return Cands[0].first;
+  
+  unsigned Best = 0, N = Cands.size();
+  for (unsigned I = 1; I != N; ++I)
+    if (Cands[Best].second.isSupersetOf(Cands[I].second))
+      Best = I;
+  
+  for (unsigned I = 1; I != N; ++I)
+    if (Cands[Best].second.isSupersetOf(Cands[I].second))
+      return 0;
+  
+  return Cands[Best].first;
+}
+
 CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
                                                       unsigned TypeQuals) const{
   QualType ClassType
@@ -167,6 +190,7 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
     = Context.DeclarationNames.getCXXConstructorName(
                                           Context.getCanonicalType(ClassType));
   unsigned FoundTQs;
+  llvm::SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
@@ -175,14 +199,18 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
     if (isa<FunctionTemplateDecl>(*Con))
       continue;
 
-    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(FoundTQs)) {
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    if (Constructor->isCopyConstructor(FoundTQs)) {
       if (((TypeQuals & Qualifiers::Const) == (FoundTQs & Qualifiers::Const)) ||
           (!(TypeQuals & Qualifiers::Const) && (FoundTQs & Qualifiers::Const)))
-        return cast<CXXConstructorDecl>(*Con);
-
+        Found.push_back(std::make_pair(
+                                 const_cast<CXXConstructorDecl *>(Constructor), 
+                                       Qualifiers::fromCVRMask(FoundTQs)));
     }
   }
-  return 0;
+  
+  return cast_or_null<CXXConstructorDecl>(
+                                        GetBestOverloadCandidateSimple(Found));
 }
 
 bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
@@ -230,29 +258,6 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
   assert(isInvalidDecl() &&
          "No copy assignment operator declared in valid code.");
   return false;
-}
-
-/// \brief Perform a simplistic form of overload resolution that only considers
-/// cv-qualifiers on a single parameter, and return the best overload candidate
-/// (if there is one).
-static CXXMethodDecl *
-GetBestOverloadCandidateSimple(
-  const llvm::SmallVectorImpl<std::pair<CXXMethodDecl *, Qualifiers> > &Cands) {
-  if (Cands.empty())
-    return 0;
-  if (Cands.size() == 1)
-    return Cands[0].first;
-  
-  unsigned Best = 0, N = Cands.size();
-  for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.isSupersetOf(Cands[I].second))
-      Best = I;
-  
-  for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.isSupersetOf(Cands[I].second))
-      return 0;
-  
-  return Cands[Best].first;
 }
 
 CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
