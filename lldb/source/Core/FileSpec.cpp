@@ -9,12 +9,12 @@
 
 
 #include <fcntl.h>
-#include <glob.h>
 #include <libgen.h>
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <pwd.h>
 
 #include <fstream>
 
@@ -42,16 +42,87 @@ GetCachedGlobTildeSlash()
     static std::string g_tilde;
     if (g_tilde.empty())
     {
-        glob_t globbuf;
-        if (::glob("~/", GLOB_TILDE, NULL, &globbuf) == 0) //success
-        {
-            g_tilde = globbuf.gl_pathv[0];
-            ::globfree (&globbuf);
-        }
+        struct passwd *user_entry;
+        user_entry = getpwuid(geteuid());
+        if (user_entry != NULL)
+            g_tilde = user_entry->pw_dir;
+
         if (g_tilde.empty())
             return NULL;
     }
     return g_tilde.c_str();
+}
+
+// Resolves the username part of a path of the form ~user/other/directories, and
+// writes the result into dst_path.
+// Returns 0 if there WAS a ~ in the path but the username couldn't be resolved.
+// Otherwise returns the number of characters copied into dst_path.  If the return
+// is >= dst_len, then the resolved path is too long...
+int
+FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
+{
+    char user_home[PATH_MAX];
+    const char *user_name;
+    
+    if (src_path == NULL || src_path[0] == '\0')
+        return 0;
+        
+    // If there's no ~, then just copy src_path straight to dst_path (they may be the same string...)
+    if (src_path[0] != '~')
+    {
+        int len = strlen (src_path);
+        if (len >= dst_len)
+        {
+           bcopy(src_path, dst_path, dst_len - 1);
+           dst_path[dst_len] = '\0';
+        }
+        else
+            bcopy(src_path, dst_path, len + 1);
+            
+        return len;
+    }
+    
+    char *first_slash = strchr(src_path, '/');
+    char remainder[PATH_MAX];
+    
+    if (first_slash == NULL)
+    {
+        // The whole name is the username (minus the ~):
+        user_name = src_path + 1;
+        remainder[0] = '\0';
+    }
+    else
+    {
+        int user_name_len = first_slash - src_path - 1;
+        memcpy(user_home, src_path + 1, user_name_len);
+        user_home[user_name_len] = '\0';
+        user_name = user_home;
+        
+        strcpy(remainder, first_slash);
+    }
+
+    if (user_name == NULL)
+        return 0;
+    // User name of "" means the current user...
+    
+    struct passwd *user_entry;
+    const char *home_dir;
+    
+    if (user_name[0] == '\0')
+    {
+        home_dir = GetCachedGlobTildeSlash();
+    }
+    else
+    {
+        user_entry = getpwnam (user_name);
+        if (user_entry != NULL)
+            home_dir = user_entry->pw_dir;
+    }
+    
+    if (home_dir == NULL)
+        return 0;
+    else 
+        return ::snprintf (dst_path, dst_len, "%s%s", home_dir, remainder);
 }
 
 int
@@ -62,8 +133,15 @@ FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
 
     // Glob if needed for ~/, otherwise copy in case src_path is same as dst_path...
     char unglobbed_path[PATH_MAX];
-    if (::strstr (src_path, "~/") == src_path)
-        ::snprintf(unglobbed_path, sizeof(unglobbed_path), "%s%s", GetCachedGlobTildeSlash(), src_path + 2);
+    if (src_path[0] == '~')
+    {
+        int return_count = ResolveUsername(src_path, unglobbed_path, sizeof(unglobbed_path));
+        
+        // If we couldn't find the user referred to, or the resultant path was too long,
+        // then just copy over the src_path.
+        if (return_count == 0 || return_count >= sizeof(unglobbed_path)) 
+            ::snprintf (unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
+    }
     else
         ::snprintf(unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
 
