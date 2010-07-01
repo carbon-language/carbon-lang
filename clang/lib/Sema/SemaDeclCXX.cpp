@@ -2692,92 +2692,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
       ClassDecl->addDecl(DefaultCon);
   }
 
-  if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
-    // C++ [class.copy]p4:
-    //   If the class definition does not explicitly declare a copy
-    //   constructor, one is declared implicitly.
-
-    // C++ [class.copy]p5:
-    //   The implicitly-declared copy constructor for a class X will
-    //   have the form
-    //
-    //       X::X(const X&)
-    //
-    //   if
-    bool HasConstCopyConstructor = true;
-
-    //     -- each direct or virtual base class B of X has a copy
-    //        constructor whose first parameter is of type const B& or
-    //        const volatile B&, and
-    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-         HasConstCopyConstructor && Base != ClassDecl->bases_end(); ++Base) {
-      const CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-      HasConstCopyConstructor
-        = BaseClassDecl->hasConstCopyConstructor(Context);
-    }
-
-    //     -- for all the nonstatic data members of X that are of a
-    //        class type M (or array thereof), each such class type
-    //        has a copy constructor whose first parameter is of type
-    //        const M& or const volatile M&.
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-         HasConstCopyConstructor && Field != ClassDecl->field_end();
-         ++Field) {
-      QualType FieldType = (*Field)->getType();
-      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-        FieldType = Array->getElementType();
-      if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-        const CXXRecordDecl *FieldClassDecl
-          = cast<CXXRecordDecl>(FieldClassType->getDecl());
-        HasConstCopyConstructor
-          = FieldClassDecl->hasConstCopyConstructor(Context);
-      }
-    }
-
-    //   Otherwise, the implicitly declared copy constructor will have
-    //   the form
-    //
-    //       X::X(X&)
-    QualType ArgType = ClassType;
-    if (HasConstCopyConstructor)
-      ArgType = ArgType.withConst();
-    ArgType = Context.getLValueReferenceType(ArgType);
-
-    //   An implicitly-declared copy constructor is an inline public
-    //   member of its class.
-    DeclarationName Name
-      = Context.DeclarationNames.getCXXConstructorName(ClassType);
-    CXXConstructorDecl *CopyConstructor
-      = CXXConstructorDecl::Create(Context, ClassDecl,
-                                   ClassDecl->getLocation(), Name,
-                                   Context.getFunctionType(Context.VoidTy,
-                                                           &ArgType, 1,
-                                                           false, 0,
-                                               /*FIXME: hasExceptionSpec*/false,
-                                                           false, 0, 0,
-                                                       FunctionType::ExtInfo()),
-                                   /*TInfo=*/0,
-                                   /*isExplicit=*/false,
-                                   /*isInline=*/true,
-                                   /*isImplicitlyDeclared=*/true);
-    CopyConstructor->setAccess(AS_public);
-    CopyConstructor->setImplicit();
-    CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
-
-    // Add the parameter to the constructor.
-    ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
-                                                 ClassDecl->getLocation(),
-                                                 /*IdentifierInfo=*/0,
-                                                 ArgType, /*TInfo=*/0,
-                                                 VarDecl::None,
-                                                 VarDecl::None, 0);
-    CopyConstructor->setParams(&FromParam, 1);
-    if (S)
-      PushOnScopeChains(CopyConstructor, S, true);
-    else
-      ClassDecl->addDecl(CopyConstructor);
-  }
+  if (!ClassDecl->hasUserDeclaredCopyConstructor())
+    DeclareImplicitCopyConstructor(S, ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(S, ClassDecl);
@@ -4991,6 +4907,103 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                             /*isStmtExpr=*/false);
   assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
+}
+
+CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
+                                                     CXXRecordDecl *ClassDecl) {
+  // C++ [class.copy]p4:
+  //   If the class definition does not explicitly declare a copy
+  //   constructor, one is declared implicitly.
+  
+  // FIXME: virtual bases!
+  
+  // C++ [class.copy]p5:
+  //   The implicitly-declared copy constructor for a class X will
+  //   have the form
+  //
+  //       X::X(const X&)
+  //
+  //   if
+  bool HasConstCopyConstructor = true;
+  
+  //     -- each direct or virtual base class B of X has a copy
+  //        constructor whose first parameter is of type const B& or
+  //        const volatile B&, and
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                       BaseEnd = ClassDecl->bases_end();
+       HasConstCopyConstructor && Base != BaseEnd; 
+       ++Base) {
+    const CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    HasConstCopyConstructor
+      = BaseClassDecl->hasConstCopyConstructor(Context);
+  }
+  
+  //     -- for all the nonstatic data members of X that are of a
+  //        class type M (or array thereof), each such class type
+  //        has a copy constructor whose first parameter is of type
+  //        const M& or const volatile M&.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end();
+       HasConstCopyConstructor && Field != FieldEnd;
+       ++Field) {
+    QualType FieldType = (*Field)->getType();
+    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+      FieldType = Array->getElementType();
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      const CXXRecordDecl *FieldClassDecl
+      = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      HasConstCopyConstructor
+      = FieldClassDecl->hasConstCopyConstructor(Context);
+    }
+  }
+  
+  //   Otherwise, the implicitly declared copy constructor will have
+  //   the form
+  //
+  //       X::X(X&)
+  QualType ClassType = Context.getTypeDeclType(ClassDecl);
+  QualType ArgType = ClassType;
+  if (HasConstCopyConstructor)
+    ArgType = ArgType.withConst();
+  ArgType = Context.getLValueReferenceType(ArgType);
+  
+  //   An implicitly-declared copy constructor is an inline public
+  //   member of its class.
+  DeclarationName Name
+    = Context.DeclarationNames.getCXXConstructorName(
+                                           Context.getCanonicalType(ClassType));
+  CXXConstructorDecl *CopyConstructor
+    = CXXConstructorDecl::Create(Context, ClassDecl,
+                                 ClassDecl->getLocation(), Name,
+                                 Context.getFunctionType(Context.VoidTy,
+                                                         &ArgType, 1,
+                                                         false, 0,
+                                               /*FIXME: hasExceptionSpec*/false,
+                                                         false, 0, 0,
+                                                       FunctionType::ExtInfo()),
+                                 /*TInfo=*/0,
+                                 /*isExplicit=*/false,
+                                 /*isInline=*/true,
+                                 /*isImplicitlyDeclared=*/true);
+  CopyConstructor->setAccess(AS_public);
+  CopyConstructor->setImplicit();
+  CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
+  
+  // Add the parameter to the constructor.
+  ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
+                                               ClassDecl->getLocation(),
+                                               /*IdentifierInfo=*/0,
+                                               ArgType, /*TInfo=*/0,
+                                               VarDecl::None,
+                                               VarDecl::None, 0);
+  CopyConstructor->setParams(&FromParam, 1);
+  if (S)
+    PushOnScopeChains(CopyConstructor, S, true);
+  else
+    ClassDecl->addDecl(CopyConstructor);
+  
+  return CopyConstructor;
 }
 
 void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
