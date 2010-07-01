@@ -59,6 +59,8 @@ public:
              SmallVectorImpl<LiveInterval*> &spillIs,
              SlotIndex *earliestIndex);
   bool reMaterialize(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+  bool foldMemoryOperand(MachineBasicBlock::iterator MI,
+                         const SmallVectorImpl<unsigned> &Ops);
   void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
   void insertSpill(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
 };
@@ -146,6 +148,37 @@ bool InlineSpiller::reMaterialize(LiveInterval &NewLI,
   return true;
 }
 
+/// foldMemoryOperand - Try folding stack slot references in Ops into MI.
+/// Return true on success, and MI will be erased.
+bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                      const SmallVectorImpl<unsigned> &Ops) {
+  // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied
+  // operands.
+  SmallVector<unsigned, 8> FoldOps;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    unsigned Idx = Ops[i];
+    MachineOperand &MO = MI->getOperand(Idx);
+    if (MO.isImplicit())
+      continue;
+    // FIXME: Teach targets to deal with subregs.
+    if (MO.getSubReg())
+      return false;
+    // Tied use operands should not be passed to foldMemoryOperand.
+    if (!MI->isRegTiedToDefOperand(Idx))
+      FoldOps.push_back(Idx);
+  }
+
+  MachineInstr *FoldMI = tii_.foldMemoryOperand(mf_, MI, FoldOps, stackSlot_);
+  if (!FoldMI)
+    return false;
+  MachineBasicBlock &MBB = *MI->getParent();
+  lis_.ReplaceMachineInstrInMaps(MI, FoldMI);
+  vrm_.addSpillSlotUse(stackSlot_, FoldMI);
+  MBB.insert(MBB.erase(MI), FoldMI);
+  DEBUG(dbgs() << "\tfolded: " << *FoldMI);
+  return true;
+}
+
 /// insertReload - Insert a reload of NewLI.reg before MI.
 void InlineSpiller::insertReload(LiveInterval &NewLI,
                                  MachineBasicBlock::iterator MI) {
@@ -207,6 +240,10 @@ void InlineSpiller::spill(LiveInterval *li,
 
     // Attempt remat instead of reload.
     bool NeedsReload = Reads && !reMaterialize(NewLI, MI);
+
+    // Attempt to fold memory ops.
+    if (NewLI.empty() && foldMemoryOperand(MI, Ops))
+      continue;
 
     if (NeedsReload)
       insertReload(NewLI, MI);
