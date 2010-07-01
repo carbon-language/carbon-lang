@@ -977,17 +977,23 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
 
   // Visit the function type itself, which can be either
-  // FunctionNoProtoType or FunctionProtoType.
+  // FunctionNoProtoType or FunctionProtoType, or a typedef.  If it's
+  // not a Function*ProtoType, then it can't have a body or arguments,
+  // so we have to do less work.
   Type *FuncType = D->getType().getTypePtr();
-  if (FunctionNoProtoType *FuncNoProto =
+  if (FunctionProtoType *FuncProto = dyn_cast<FunctionProtoType>(FuncType)) {
+    // Don't call Traverse*, or the result type and parameter types
+    // will be double counted.
+    TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
+  } else if (FunctionNoProtoType *FuncNoProto =
       dyn_cast<FunctionNoProtoType>(FuncType)) {
     // Don't call Traverse*, or the result type will be double
     // counted.
     TRY_TO(WalkUpFromFunctionNoProtoType(FuncNoProto));
-  } else {
-    // Don't call Traverse*, or the result type and parameter types
-    // will be double counted.
-    TRY_TO(WalkUpFromFunctionProtoType(dyn_cast<FunctionProtoType>(FuncType)));
+  } else {   // a typedef type, or who knows what
+    TRY_TO(TraverseType(D->getType()));
+    assert(!D->isThisDeclarationADefinition() && "Unexpected function type");
+    return true;
   }
 
   TRY_TO(TraverseType(D->getResultType()));
