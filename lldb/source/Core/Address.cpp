@@ -410,9 +410,13 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     if (m_section == NULL)
         style = DumpStyleLoadAddress;
 
+    Target *target = NULL;
     Process *process = NULL;
     if (exe_scope)
+    {
+        target = exe_scope->CalculateTarget();
         process = exe_scope->CalculateProcess();
+    }
     // If addr_byte_size is UINT32_MAX, then determine the correct address
     // byte size for the process or default to the size of addr_t
     if (addr_size == UINT32_MAX)
@@ -475,6 +479,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         break;
 
     case DumpStyleResolvedDescription:
+    case DumpStyleResolvedDescriptionNoModule:
         if (IsSectionOffset())
         {
             lldb::AddressType addr_type = eAddressTypeLoad;
@@ -524,12 +529,12 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                     {
                         if (ReadAddress (exe_scope, *this, pointer_size, so_addr))
                         {
-                            if (so_addr.IsSectionOffset())
+                            if (target && so_addr.IsSectionOffset())
                             {
                                 lldb_private::SymbolContext func_sc;
-                                process->GetTarget().GetImages().ResolveSymbolContextForAddress (so_addr,
-                                                                                                 eSymbolContextEverything,
-                                                                                                 func_sc);
+                                target->GetImages().ResolveSymbolContextForAddress (so_addr,
+                                                                                    eSymbolContextEverything,
+                                                                                    func_sc);
                                 if (func_sc.function || func_sc.symbol)
                                 {
                                     showed_info = true;
@@ -541,7 +546,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 #endif
                                     Address cstr_addr(*this);
                                     cstr_addr.SetOffset(cstr_addr.GetOffset() + pointer_size);
-                                    func_sc.DumpStopContext(s, process, so_addr, true);
+                                    func_sc.DumpStopContext(s, exe_scope, so_addr, true);
                                     if (ReadAddress (exe_scope, cstr_addr, pointer_size, so_addr))
                                     {
 #if VERBOSE_OUTPUT
@@ -625,7 +630,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                     if (pointer_sc.function || pointer_sc.symbol)
                                     {
                                         s->PutCString(": ");
-                                        pointer_sc.DumpStopContext(s, process, so_addr, false);
+                                        pointer_sc.DumpStopContext(s, exe_scope, so_addr, false);
                                     }
                                 }
                             }
@@ -644,20 +649,24 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                     if (sc.function || sc.symbol)
                     {
                         bool show_stop_context = true;
+                        bool show_module = (style == DumpStyleResolvedDescription);
                         if (sc.function == NULL && sc.symbol != NULL)
                         {
                             // If we have just a symbol make sure it is in the right section
                             if (sc.symbol->GetAddressRangePtr())
                             {
                                 if (sc.symbol->GetAddressRangePtr()->GetBaseAddress().GetSection() != GetSection())
+                                {
+                                    // don't show the module if the symbol is a trampoline symbol
                                     show_stop_context = false;
+                                }
                             }
                         }
                         if (show_stop_context)
                         {
                             // We have a function or a symbol from the same
                             // sections as this address.
-                            sc.DumpStopContext(s, process, *this, true);
+                            sc.DumpStopContext(s, exe_scope, *this, show_module);
                         }
                         else
                         {

@@ -245,7 +245,7 @@ DisassemblerLLVM::Instruction::Dump
                                         if (process && process->IsAlive())
                                         {
                                             if (process->ResolveLoadAddress (operand_value, so_addr))
-                                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
+                                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
                                         }
                                         else if (inst_addr_ptr)
                                         {
@@ -253,7 +253,7 @@ DisassemblerLLVM::Instruction::Dump
                                             if (module)
                                             {
                                                 if (module->ResolveFileAddress (operand_value, so_addr))
-                                                    so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescription, Address::DumpStyleSectionNameOffset);
+                                                    so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
                                             }
                                         }
 

@@ -86,6 +86,7 @@ public:
                                         ///< be anything from a symbol context summary (module, function/symbol, 
                                         ///< and file and line), to information about what the pointer points to
                                         ///< if the address is in a section (section of pointers, c strings, etc).
+        DumpStyleResolvedDescriptionNoModule,
         DumpStyleDetailedSymbolContext  ///< Detailed symbol context information for an address for all symbol
                                         ///< context members.
     } DumpStyle;
