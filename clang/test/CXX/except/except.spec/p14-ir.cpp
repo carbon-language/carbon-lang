@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fexceptions -o - %s | FileCheck %s
 
+// Copy constructor
 struct X0 {
   X0();
   X0(const X0 &) throw();
@@ -41,4 +42,29 @@ void test(X2 x2, X3 x3, X5 x5) {
   // CHECK-NOT: call void @__cxa_call_unexpected
   // CHECK: ret void
   X5 x5a(x5);
+}
+
+// Default constructor
+struct X6 {
+  X6() throw();
+};
+
+struct X7 { 
+  X7();
+};
+
+struct X8 : X6 { };
+struct X9 : X6, X7 { };
+
+void test() {
+  // CHECK: define linkonce_odr void @_ZN2X8C1Ev
+  // CHECK-NOT: define
+  // CHECK: call void @__cxa_call_unexpected
+  // CHECK-NOT: define
+  // CHECK: ret void
+  X8();
+  // CHECK: define linkonce_odr void @_ZN2X9C1Ev
+  // CHECK-NOT: call void @__cxa_call_unexpected
+  // CHECK: ret void
+  X9();
 }

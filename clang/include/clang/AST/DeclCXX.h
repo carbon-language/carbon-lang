@@ -785,7 +785,7 @@ public:
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
   
   /// getDefaultConstructor - Returns the default constructor for this class
-  CXXConstructorDecl *getDefaultConstructor(ASTContext &Context);
+  CXXConstructorDecl *getDefaultConstructor();
 
   /// getDestructor - Returns the destructor decl for this class.
   CXXDestructorDecl *getDestructor() const;

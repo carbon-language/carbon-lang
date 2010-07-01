@@ -624,7 +624,8 @@ CXXRecordDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
 }
 
 CXXConstructorDecl *
-CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
+CXXRecordDecl::getDefaultConstructor() {
+  ASTContext &Context = getASTContext();
   QualType ClassType = Context.getTypeDeclType(this);
   DeclarationName ConstructorName
     = Context.DeclarationNames.getCXXConstructorName(

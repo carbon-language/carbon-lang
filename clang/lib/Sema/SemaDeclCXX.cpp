@@ -2656,9 +2656,6 @@ namespace {
 /// The scope, if provided, is the class scope.
 void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S, 
                                                CXXRecordDecl *ClassDecl) {
-  // FIXME: Implicit declarations have exception specifications, which are
-  // the union of the specifications of the implicitly called functions.
-
   if (!ClassDecl->hasUserDeclaredConstructor())
     DeclareImplicitDefaultConstructor(S, ClassDecl);
 
@@ -4146,6 +4143,48 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(Scope *S,
   //   user-declared constructor for class X, a default constructor is
   //   implicitly declared. An implicitly-declared default constructor
   //   is an inline public member of its class.
+  
+  // C++ [except.spec]p14:
+  //   An implicitly declared special member function (Clause 12) shall have an 
+  //   exception-specification. [...]
+  ImplicitExceptionSpecification ExceptSpec(Context);
+
+  // Direct base-class destructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                       BEnd = ClassDecl->bases_end();
+       B != BEnd; ++B) {
+    if (B->isVirtual()) // Handled below.
+      continue;
+    
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+      if (CXXConstructorDecl *Constructor
+            = cast<CXXRecordDecl>(BaseType->getDecl())->getDefaultConstructor())
+        ExceptSpec.CalledDecl(Constructor);
+  }
+  
+  // Virtual base-class destructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
+                                       BEnd = ClassDecl->vbases_end();
+       B != BEnd; ++B) {
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+      if (CXXConstructorDecl *Constructor
+            = cast<CXXRecordDecl>(BaseType->getDecl())->getDefaultConstructor())
+        ExceptSpec.CalledDecl(Constructor);
+  }
+  
+  // Field destructors.
+  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                               FEnd = ClassDecl->field_end();
+       F != FEnd; ++F) {
+    if (const RecordType *RecordTy
+                = Context.getBaseElementType(F->getType())->getAs<RecordType>())
+      if (CXXConstructorDecl *Constructor
+            = cast<CXXRecordDecl>(RecordTy->getDecl())->getDefaultConstructor())
+        ExceptSpec.CalledDecl(Constructor);
+  }
+  
+  
+  // Create the actual constructor declaration.
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   DeclarationName Name
@@ -4155,8 +4194,10 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(Scope *S,
                                  ClassDecl->getLocation(), Name,
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0,
-                                                         /*FIXME*/false, false,
-                                                         0, 0,
+                                       ExceptSpec.hasExceptionSpecification(),
+                                     ExceptSpec.hasAnyExceptionSpecification(),
+                                                         ExceptSpec.size(),
+                                                         ExceptSpec.data(),
                                                        FunctionType::ExtInfo()),
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
