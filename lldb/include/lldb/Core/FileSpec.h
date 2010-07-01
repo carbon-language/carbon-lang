@@ -436,6 +436,9 @@ public:
 
     static int
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
+    
+    static int
+    ResolveUsername (const char *user_name, char *dst_buffer, size_t dst_len);
 
 protected:
     //------------------------------------------------------------------
