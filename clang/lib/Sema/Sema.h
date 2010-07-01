@@ -2672,7 +2672,7 @@ public:
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);
   void CheckConstructor(CXXConstructorDecl *Constructor);
-  QualType CheckDestructorDeclarator(Declarator &D, QualType R,
+  QualType CheckDestructorDeclarator(Declarator &D,
                                      FunctionDecl::StorageClass& SC);
   bool CheckDestructor(CXXDestructorDecl *Destructor);
   void CheckConversionDeclarator(Declarator &D, QualType &R,

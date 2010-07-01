@@ -19,9 +19,7 @@ struct D {
     // expected-error{{type qualifier is not allowed on this function}} \
     // expected-error{{destructor cannot be declared 'static'}}  \
     // expected-error{{destructor cannot have any parameters}}   \
-    // expected-error{{destructor cannot be variadic}} \
-    // expected-error{{destructor cannot have a return type}} \
-    // expected-error{{'const' qualifier is not allowed on a destructor}}
+    // expected-error{{destructor cannot be variadic}}
 };
 
 struct D2 {
