@@ -227,8 +227,10 @@ static bool StripDebugInfo(Module &M) {
          NME = M.named_metadata_end(); NMI != NME;) {
     NamedMDNode *NMD = NMI;
     ++NMI;
-    if (NMD->getName().startswith("llvm.dbg."))
+    if (NMD->getName().startswith("llvm.dbg.")) {
       NMD->eraseFromParent();
+      Changed = true;
+    }
   }
 
   unsigned MDDbgKind = M.getMDKindID("dbg");
