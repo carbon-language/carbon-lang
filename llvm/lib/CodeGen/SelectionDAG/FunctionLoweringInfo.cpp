@@ -176,23 +176,23 @@ unsigned FunctionLoweringInfo::MakeReg(EVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
-/// CreateRegForValue - Allocate the appropriate number of virtual registers of
+/// CreateReg - Allocate the appropriate number of virtual registers of
 /// the correctly promoted or expanded types.  Assign these registers
 /// consecutive vreg numbers and return the first assigned number.
 ///
 /// In the case that the given value has struct or array type, this function
 /// will assign registers for each member or element.
 ///
-unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
+unsigned FunctionLoweringInfo::CreateReg(const Type *Ty) {
   SmallVector<EVT, 4> ValueVTs;
-  ComputeValueVTs(TLI, V->getType(), ValueVTs);
+  ComputeValueVTs(TLI, Ty, ValueVTs);
 
   unsigned FirstReg = 0;
   for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
     EVT ValueVT = ValueVTs[Value];
-    EVT RegisterVT = TLI.getRegisterType(V->getContext(), ValueVT);
+    EVT RegisterVT = TLI.getRegisterType(Ty->getContext(), ValueVT);
 
-    unsigned NumRegs = TLI.getNumRegisters(V->getContext(), ValueVT);
+    unsigned NumRegs = TLI.getNumRegisters(Ty->getContext(), ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       unsigned R = MakeReg(RegisterVT);
       if (!FirstReg) FirstReg = R;

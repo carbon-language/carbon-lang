@@ -121,12 +121,12 @@ public:
     return ValueMap.count(V);
   }
 
-  unsigned CreateRegForValue(const Value *V);
+  unsigned CreateReg(const Type *Ty);
   
   unsigned InitializeRegForValue(const Value *V) {
     unsigned &R = ValueMap[V];
     assert(R == 0 && "Already initialized this value register!");
-    return R = CreateRegForValue(V);
+    return R = CreateReg(V->getType());
   }
 };
 

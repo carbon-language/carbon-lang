@@ -6164,7 +6164,7 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       if (const Constant *C = dyn_cast<Constant>(PHIOp)) {
         unsigned &RegOut = ConstantsOut[C];
         if (RegOut == 0) {
-          RegOut = FuncInfo.CreateRegForValue(C);
+          RegOut = FuncInfo.CreateReg(C->getType());
           CopyValueToVirtualRegister(C, RegOut);
         }
         Reg = RegOut;
@@ -6177,7 +6177,7 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
           assert(isa<AllocaInst>(PHIOp) &&
                  FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
-          Reg = FuncInfo.CreateRegForValue(PHIOp);
+          Reg = FuncInfo.CreateReg(PHIOp->getType());
           CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }
