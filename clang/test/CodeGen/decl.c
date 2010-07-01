@@ -102,3 +102,18 @@ void init_error(void) {
   global_dc->x = cp_diagnostic_starter;
 }
 
+
+
+// rdar://8147692 - ABI crash in recursive struct-through-function-pointer.
+typedef struct {
+  int x5a;
+} x5;
+
+typedef struct x2 *x0;
+typedef long (*x1)(x0 x0a, x5 x6);
+struct x2 {
+  x1 x4;
+};
+long x3(x0 x0a, x5 a) {
+  return x0a->x4(x0a, a);
+}

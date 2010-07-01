@@ -94,6 +94,12 @@ private:
   /// is available only for ConvertType(). CovertType() is preferred
   /// interface to convert type T into a llvm::Type.
   const llvm::Type *ConvertNewType(QualType T);
+  
+  /// HandleLateResolvedPointers - For top-level ConvertType calls, this handles
+  /// pointers that are referenced but have not been converted yet.  This is
+  /// used to handle cyclic structures properly.
+  void HandleLateResolvedPointers();
+
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
                const ABIInfo &Info);

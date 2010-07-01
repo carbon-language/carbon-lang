@@ -251,18 +251,27 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     // If this is being called from the guts of the ConvertType loop, make sure
     // to call ConvertTypeRecursive so we don't get into issues with cyclic
     // pointer type structures.
-    const llvm::Type *ArgType;
-    if (IsRecursive)
-      ArgType = ConvertTypeRecursive(*I);
-    else 
-      ArgType = ConvertType(*I);
-    PreferredArgTypes.push_back(ArgType);
+    PreferredArgTypes.push_back(ConvertTypeRecursive(*I));
   }
-
+  
   // Compute ABI information.
   getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext(),
                            PreferredArgTypes.data(), PreferredArgTypes.size());
 
+  // If this is a top-level call and ConvertTypeRecursive hit unresolved pointer
+  // types, resolve them now.  These pointers may point to this function, which
+  // we *just* filled in the FunctionInfo for.
+  if (!IsRecursive && !PointersToResolve.empty()) {
+    // Use PATypeHolder's so that our preferred types don't dangle under
+    // refinement.
+    llvm::SmallVector<llvm::PATypeHolder, 8> Handles(PreferredArgTypes.begin(),
+                                                     PreferredArgTypes.end());
+    HandleLateResolvedPointers();
+    PreferredArgTypes.clear();
+    PreferredArgTypes.append(Handles.begin(), Handles.end());
+  }
+  
+  
   return *FI;
 }
 

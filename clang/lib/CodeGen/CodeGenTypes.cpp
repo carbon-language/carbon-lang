@@ -42,14 +42,11 @@ CodeGenTypes::~CodeGenTypes() {
     delete &*I++;
 }
 
-/// ConvertType - Convert the specified type to its LLVM form.
-const llvm::Type *CodeGenTypes::ConvertType(QualType T, bool IsRecursive) {
-  const llvm::Type *RawResult = ConvertTypeRecursive(T);
-  
-  if (IsRecursive || PointersToResolve.empty())
-    return RawResult;
-
-  llvm::PATypeHolder Result = RawResult;
+/// HandleLateResolvedPointers - For top-level ConvertType calls, this handles
+/// pointers that are referenced but have not been converted yet.  This is used
+/// to handle cyclic structures properly.
+void CodeGenTypes::HandleLateResolvedPointers() {
+  assert(!PointersToResolve.empty() && "No pointers to resolve!");
   
   // Any pointers that were converted deferred evaluation of their pointee type,
   // creating an opaque type instead.  This is in order to avoid problems with
@@ -64,7 +61,21 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, bool IsRecursive) {
     const llvm::Type *NT = ConvertTypeForMemRecursive(P.first);
     P.second->refineAbstractTypeTo(NT);
   }
+}
 
+
+/// ConvertType - Convert the specified type to its LLVM form.
+const llvm::Type *CodeGenTypes::ConvertType(QualType T, bool IsRecursive) {
+  const llvm::Type *Result = ConvertTypeRecursive(T);
+  
+  // If this is a top-level call to ConvertType and sub-conversions caused
+  // pointers to get lazily built as opaque types, resolve the pointers, which
+  // might cause Result to be merged away.
+  if (!IsRecursive && !PointersToResolve.empty()) {
+    llvm::PATypeHolder ResultHandle = Result;
+    HandleLateResolvedPointers();
+    Result = ResultHandle;
+  }
   return Result;
 }
 
