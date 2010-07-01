@@ -1127,7 +1127,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // If this isn't a C++ class, we aren't allowed to look into base
   // classes, we're done.
   CXXRecordDecl *LookupRec = dyn_cast<CXXRecordDecl>(LookupCtx);
-  if (!LookupRec)
+  if (!LookupRec || !LookupRec->getDefinition())
     return false;
 
   // If we're performing qualified name lookup into a dependent class,

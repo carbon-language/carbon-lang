@@ -131,11 +131,13 @@ static std::pair<unsigned,unsigned>
         InDiag = diag::note_protected_by_variable_init;
 
       CanQualType T = VD->getType()->getCanonicalTypeUnqualified();
-      while (CanQual<ArrayType> AT = T->getAs<ArrayType>())
-        T = AT->getElementType();
-      if (CanQual<RecordType> RT = T->getAs<RecordType>())
-        if (!cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
-          OutDiag = diag::note_exits_dtor;
+      if (!T->isDependentType()) {
+        while (CanQual<ArrayType> AT = T->getAs<ArrayType>())
+          T = AT->getElementType();
+        if (CanQual<RecordType> RT = T->getAs<RecordType>())
+          if (!cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
+            OutDiag = diag::note_exits_dtor;
+      }
     }
     
     return std::make_pair(InDiag, OutDiag);    
