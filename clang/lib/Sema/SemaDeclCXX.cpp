@@ -4626,6 +4626,33 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(Scope *S,
     ArgType = ArgType.withConst();
   ArgType = Context.getLValueReferenceType(ArgType);
   
+  // C++ [except.spec]p14:
+  //   An implicitly declared special member function (Clause 12) shall have an 
+  //   exception-specification. [...]
+  ImplicitExceptionSpecification ExceptSpec(Context);
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                       BaseEnd = ClassDecl->bases_end();
+       Base != BaseEnd; ++Base) {
+    const CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (CXXMethodDecl *CopyAssign
+           = BaseClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
+      ExceptSpec.CalledDecl(CopyAssign);
+  }
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd;
+       ++Field) {
+    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
+      const CXXRecordDecl *FieldClassDecl
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (CXXMethodDecl *CopyAssign
+            = FieldClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
+        ExceptSpec.CalledDecl(CopyAssign);      
+    }      
+  }
+  
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
@@ -4633,8 +4660,10 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(Scope *S,
     = CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0,
-                                              /*FIXME: hasExceptionSpec*/false,
-                                                    false, 0, 0,
+                                         ExceptSpec.hasExceptionSpecification(),
+                                      ExceptSpec.hasAnyExceptionSpecification(),
+                                                    ExceptSpec.size(),
+                                                    ExceptSpec.data(),
                                                     FunctionType::ExtInfo()),
                             /*TInfo=*/0, /*isStatic=*/false,
                             /*StorageClassAsWritten=*/FunctionDecl::None,

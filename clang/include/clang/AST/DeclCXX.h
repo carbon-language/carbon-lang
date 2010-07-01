@@ -537,6 +537,18 @@ public:
   bool hasConstCopyAssignment(ASTContext &Context,
                               const CXXMethodDecl *&MD) const;
 
+  /// \brief Retrieve the copy-assignment operator for this class, if available.
+  ///
+  /// This routine attempts to find the copy-assignment operator for this 
+  /// class, using a simplistic form of overload resolution.
+  ///
+  /// \param ArgIsConst Whether the argument to the copy-assignment operator
+  /// is const-qualified.
+  ///
+  /// \returns The copy-assignment operator that can be invoked, or NULL if
+  /// a unique copy-assignment operator could not be found.
+  CXXMethodDecl *getCopyAssignmentOperator(bool ArgIsConst) const;
+  
   /// addedConstructor - Notify the class that another constructor has
   /// been added. This routine helps maintain information about the
   /// class based on which constructors have been added.

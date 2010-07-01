@@ -271,6 +271,8 @@ public:
     }
   }
 
+  bool isSupersetOf(Qualifiers Other) const;
+
   bool operator==(Qualifiers Other) const { return Mask == Other.Mask; }
   bool operator!=(Qualifiers Other) const { return Mask != Other.Mask; }
 
@@ -3367,6 +3369,12 @@ inline FunctionType::ExtInfo getFunctionExtInfo(const Type &t) {
 
 inline FunctionType::ExtInfo getFunctionExtInfo(QualType t) {
   return getFunctionExtInfo(*t);
+}
+
+/// \brief Determine whether this set of qualifiers is a superset of the given 
+/// set of qualifiers.
+inline bool Qualifiers::isSupersetOf(Qualifiers Other) const {
+  return Mask != Other.Mask && (Mask | Other.Mask) == Mask;
 }
 
 /// isMoreQualifiedThan - Determine whether this type is more
