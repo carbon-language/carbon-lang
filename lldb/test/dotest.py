@@ -141,6 +141,20 @@ for testdir in testdirs:
 import lldb
 lldb.SBDebugger.Initialize()
 
+# Create a singleton SBDebugger in the lldb namespace.
+lldb.DBG = lldb.SBDebugger.Create()
+
+# Turn on logging for debugging purposes if ${LLDB_LOG} environment variable is
+# is defined.  Use ${LLDB_LOG} to specify the log file.
+ci = lldb.DBG.GetCommandInterpreter()
+res = lldb.SBCommandReturnObject()
+if ("LLDB_LOG" in os.environ):
+    ci.HandleCommand(
+        "log enable -f " + os.environ["LLDB_LOG"] + " lldb default", res)
+    pass
+if not res.Succeeded():
+    raise Exception('log enable failed (check your LLDB_LOG env variable...')
+
 unittest.TextTestRunner(verbosity=verbose).run(suite)
 
 # Add some delay before calling SBDebugger.Terminate().

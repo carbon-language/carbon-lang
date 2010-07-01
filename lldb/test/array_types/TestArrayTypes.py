@@ -4,15 +4,19 @@ import os, time
 import lldb
 import unittest
 
+main = False
+
 class TestArrayTypes(unittest.TestCase):
 
     def setUp(self):
+        global main
+
         # Save old working directory.
         self.oldcwd = os.getcwd()
         # Change current working directory if ${LLDB_TEST} is defined.
         if ("LLDB_TEST" in os.environ):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], "array_types"));
-        self.dbg = lldb.SBDebugger.Create()
+        self.dbg = lldb.SBDebugger.Create() if main else lldb.DBG
         if not self.dbg.IsValid():
             raise Exception('Invalid debugger instance')
         self.dbg.SetAsync(False)
@@ -23,6 +27,7 @@ class TestArrayTypes(unittest.TestCase):
     def tearDown(self):
         # Restore old working directory.
         os.chdir(self.oldcwd)
+        del self.dbg
 
     def test_array_types(self):
         """Test 'variable list var_name' on some variables with array types."""
@@ -87,5 +92,6 @@ class TestArrayTypes(unittest.TestCase):
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
+    main = True
     unittest.main()
     lldb.SBDebugger.Terminate()

@@ -4,15 +4,19 @@ import os, time
 import lldb
 import unittest
 
+main = False
+
 class TestClassTypes(unittest.TestCase):
 
     def setUp(self):
+        global main
+
         # Save old working directory.
         self.oldcwd = os.getcwd()
         # Change current working directory if ${LLDB_TEST} is defined.
         if ("LLDB_TEST" in os.environ):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], "class_types"));
-        self.dbg = lldb.SBDebugger.Create()
+        self.dbg = lldb.SBDebugger.Create() if main else lldb.DBG
         if not self.dbg.IsValid():
             raise Exception('Invalid debugger instance')
         self.dbg.SetAsync(False)
@@ -23,6 +27,7 @@ class TestClassTypes(unittest.TestCase):
     def tearDown(self):
         # Restore old working directory.
         os.chdir(self.oldcwd)
+        del self.dbg
 
     def test_class_types(self):
         """Test 'variable list this' when stopped on a class constructor."""
@@ -64,5 +69,6 @@ class TestClassTypes(unittest.TestCase):
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
+    main = True
     unittest.main()
     lldb.SBDebugger.Terminate()
