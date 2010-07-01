@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
   Passes.add(createGVExtractionPass(GVs, DeleteFn, Relink));
   if (!DeleteFn)
     Passes.add(createGlobalDCEPass());           // Delete unreachable globals
+  Passes.add(createStripDeadDebugInfoPass());    // Remove dead debug info
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
   Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
