@@ -1,4 +1,4 @@
-; RUN: opt -strip-dead-debug-info | llvm-dis -o %t.ll
+; RUN: opt -strip-dead-debug-info < %s | llvm-dis -o %t.ll
 ; RUN: grep -v bar %t.ll
 ; RUN: grep -v abcd %t.ll
 
