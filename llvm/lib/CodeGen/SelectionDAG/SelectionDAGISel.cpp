@@ -709,11 +709,13 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
+#if 0
         // Defer instructions with no side effects; they'll be emitted
         // on-demand later.
         if (BI->isSafeToSpeculativelyExecute() &&
             !FuncInfo->isExportedInst(BI))
           continue;
+#endif
 
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(BI))
