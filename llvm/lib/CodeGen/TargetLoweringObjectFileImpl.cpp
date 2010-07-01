@@ -825,32 +825,32 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
   TargetLoweringObjectFile::Initialize(Ctx, TM);
   TextSection =
     getContext().getCOFFSection(".text",
-                                MCSectionCOFF::IMAGE_SCN_CNT_CODE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_EXECUTE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_CNT_CODE |
+                                COFF::IMAGE_SCN_MEM_EXECUTE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getText());
   DataSection =
     getContext().getCOFFSection(".data",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ |
-                                MCSectionCOFF::IMAGE_SCN_MEM_WRITE,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
   ReadOnlySection =
     getContext().getCOFFSection(".rdata",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getReadOnly());
   StaticCtorSection =
     getContext().getCOFFSection(".ctors",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ |
-                                MCSectionCOFF::IMAGE_SCN_MEM_WRITE,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
   StaticDtorSection =
     getContext().getCOFFSection(".dtors",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ |
-                                MCSectionCOFF::IMAGE_SCN_MEM_WRITE,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
 
   // FIXME: We're emitting LSDA info into a readonly section on COFF, even
@@ -859,76 +859,76 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
   // adjusted or this should be a data section.
   LSDASection =
     getContext().getCOFFSection(".gcc_except_table",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getReadOnly());
   EHFrameSection =
     getContext().getCOFFSection(".eh_frame",
-                                MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ |
-                                MCSectionCOFF::IMAGE_SCN_MEM_WRITE,
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
 
   // Debug info.
   DwarfAbbrevSection =
     getContext().getCOFFSection(".debug_abbrev",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfInfoSection =
     getContext().getCOFFSection(".debug_info",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfLineSection =
     getContext().getCOFFSection(".debug_line",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfFrameSection =
     getContext().getCOFFSection(".debug_frame",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfPubNamesSection =
     getContext().getCOFFSection(".debug_pubnames",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfPubTypesSection =
     getContext().getCOFFSection(".debug_pubtypes",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfStrSection =
     getContext().getCOFFSection(".debug_str",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfLocSection =
     getContext().getCOFFSection(".debug_loc",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfARangesSection =
     getContext().getCOFFSection(".debug_aranges",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfRangesSection =
     getContext().getCOFFSection(".debug_ranges",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
   DwarfMacroInfoSection =
     getContext().getCOFFSection(".debug_macinfo",
-                                MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE |
-                                MCSectionCOFF::IMAGE_SCN_MEM_READ,
+                                COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
 
   DrectveSection =
     getContext().getCOFFSection(".drectve",
-                                MCSectionCOFF::IMAGE_SCN_LNK_INFO,
+                                COFF::IMAGE_SCN_LNK_INFO,
                                 SectionKind::getMetadata());
 }
 
@@ -938,25 +938,25 @@ getCOFFSectionFlags(SectionKind K) {
 
   if (!K.isMetadata())
     Flags |=
-      MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE;
+      COFF::IMAGE_SCN_MEM_DISCARDABLE;
   else if (K.isText())
     Flags |=
-      MCSectionCOFF::IMAGE_SCN_MEM_EXECUTE |
-      MCSectionCOFF::IMAGE_SCN_CNT_CODE;
+      COFF::IMAGE_SCN_MEM_EXECUTE |
+      COFF::IMAGE_SCN_CNT_CODE;
   else if (K.isBSS ())
     Flags |=
-      MCSectionCOFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
-      MCSectionCOFF::IMAGE_SCN_MEM_READ |
-      MCSectionCOFF::IMAGE_SCN_MEM_WRITE;
+      COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+      COFF::IMAGE_SCN_MEM_READ |
+      COFF::IMAGE_SCN_MEM_WRITE;
   else if (K.isReadOnly())
     Flags |=
-      MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-      MCSectionCOFF::IMAGE_SCN_MEM_READ;
+      COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+      COFF::IMAGE_SCN_MEM_READ;
   else if (K.isWriteable())
     Flags |=
-      MCSectionCOFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-      MCSectionCOFF::IMAGE_SCN_MEM_READ |
-      MCSectionCOFF::IMAGE_SCN_MEM_WRITE;
+      COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+      COFF::IMAGE_SCN_MEM_READ |
+      COFF::IMAGE_SCN_MEM_WRITE;
 
   return Flags;
 }
@@ -995,10 +995,10 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
-    Characteristics |= MCSectionCOFF::IMAGE_SCN_LNK_COMDAT;
+    Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
 
     return getContext().getCOFFSection(Name.str(), Characteristics,
-                          MCSectionCOFF::IMAGE_COMDAT_SELECT_EXACT_MATCH, Kind);
+                          COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH, Kind);
   }
 
   if (Kind.isText())

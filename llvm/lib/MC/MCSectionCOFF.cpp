@@ -44,28 +44,28 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << 'w';
   else
     OS << 'r';
-  if (getCharacteristics() & MCSectionCOFF::IMAGE_SCN_MEM_DISCARDABLE)
+  if (getCharacteristics() & COFF::IMAGE_SCN_MEM_DISCARDABLE)
     OS << 'n';
   OS << "\"\n";
   
-  if (getCharacteristics() & MCSectionCOFF::IMAGE_SCN_LNK_COMDAT) {
+  if (getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT) {
     switch (Selection) {
-      case IMAGE_COMDAT_SELECT_NODUPLICATES:
+      case COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
         OS << "\t.linkonce one_only\n";
         break;
-      case IMAGE_COMDAT_SELECT_ANY:
+      case COFF::IMAGE_COMDAT_SELECT_ANY:
         OS << "\t.linkonce discard\n";
         break;
-      case IMAGE_COMDAT_SELECT_SAME_SIZE:
+      case COFF::IMAGE_COMDAT_SELECT_SAME_SIZE:
         OS << "\t.linkonce same_size\n";
         break;
-      case IMAGE_COMDAT_SELECT_EXACT_MATCH:
+      case COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH:
         OS << "\t.linkonce same_contents\n";
         break;
     //NOTE: as of binutils 2.20, there is no way to specifiy select largest
     //      with the .linkonce directive. For now, we treat it as an invalid
     //      comdat selection value.
-      case IMAGE_COMDAT_SELECT_LARGEST:
+      case COFF::IMAGE_COMDAT_SELECT_LARGEST:
     //  OS << "\t.linkonce largest\n";
     //  break;
       default:
