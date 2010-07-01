@@ -2858,7 +2858,6 @@ static void TryUserDefinedConversion(Sema &S,
            Con != ConEnd; ++Con) {
         NamedDecl *D = *Con;
         DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
-        bool SuppressUserConversions = false;
         
         // Find the constructor (which may be a template).
         CXXConstructorDecl *Constructor = 0;
@@ -2867,17 +2866,8 @@ static void TryUserDefinedConversion(Sema &S,
         if (ConstructorTmpl)
           Constructor = cast<CXXConstructorDecl>(
                                            ConstructorTmpl->getTemplatedDecl());
-        else {
+        else
           Constructor = cast<CXXConstructorDecl>(D);
-          
-          // If we're performing copy initialization using a copy constructor, 
-          // we suppress user-defined conversions on the arguments.
-          // FIXME: Move constructors?
-          if (Kind.getKind() == InitializationKind::IK_Copy &&
-              Constructor->isCopyConstructor())
-            SuppressUserConversions = true;
-          
-        }
         
         if (!Constructor->isInvalidDecl() &&
             Constructor->isConvertingConstructor(AllowExplicit)) {
@@ -2885,11 +2875,11 @@ static void TryUserDefinedConversion(Sema &S,
             S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                            /*ExplicitArgs*/ 0,
                                            &Initializer, 1, CandidateSet,
-                                           SuppressUserConversions);
+                                           /*SuppressUserConversions=*/true);
           else
             S.AddOverloadCandidate(Constructor, FoundDecl,
                                    &Initializer, 1, CandidateSet,
-                                   SuppressUserConversions);
+                                   /*SuppressUserConversions=*/true);
         }
       }    
     }

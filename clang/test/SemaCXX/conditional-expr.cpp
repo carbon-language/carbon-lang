@@ -199,17 +199,24 @@ void test()
 }
 
 namespace PR6595 {
+  struct OtherString {
+    OtherString();
+    OtherString(const char*);
+  };
+
   struct String {
     String(const char *);
+    String(const OtherString&);
     operator const char*() const;
   };
 
-  void f(bool Cond, String S) {
+  void f(bool Cond, String S, OtherString OS) {
     (void)(Cond? S : "");
     (void)(Cond? "" : S);
     const char a[1] = {'a'};
     (void)(Cond? S : a);
     (void)(Cond? a : S);
+    (void)(Cond? OS : S);
   }
 }
 
