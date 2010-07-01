@@ -2622,7 +2622,7 @@ namespace {
     /// \brief Note that 
     void CalledDecl(CXXMethodDecl *Method) {
       // If we already know that we allow all exceptions, do nothing.
-      if (AllowsAllExceptions)
+      if (AllowsAllExceptions || !Method)
         return;
       
       const FunctionProtoType *Proto
@@ -2799,8 +2799,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
     //       -- each direct base class B of X has a copy assignment operator
     //          whose parameter is of type const B&, const volatile B& or B,
     //          and
-    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-         HasConstCopyAssignment && Base != ClassDecl->bases_end(); ++Base) {
+    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                         BaseEnd = ClassDecl->bases_end();
+         HasConstCopyAssignment && Base != BaseEnd; ++Base) {
       assert(!Base->getType()->isDependentType() &&
             "Cannot generate implicit members for class with dependent bases.");
       const CXXRecordDecl *BaseClassDecl
@@ -2814,8 +2815,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
     //          type M (or array thereof), each such class type has a copy
     //          assignment operator whose parameter is of type const M&,
     //          const volatile M& or M.
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin();
-         HasConstCopyAssignment && Field != ClassDecl->field_end();
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                    FieldEnd = ClassDecl->field_end();
+         HasConstCopyAssignment && Field != FieldEnd;
          ++Field) {
       QualType FieldType = (*Field)->getType();
       if (const ArrayType *Array = Context.getAsArrayType(FieldType))
