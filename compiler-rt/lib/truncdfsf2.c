@@ -76,12 +76,10 @@ dst_t __truncdfsf2(src_t a) {
     const int srcExpBias = srcInfExp >> 1;
     
     const src_rep_t srcMinNormal = SRC_REP_C(1) << srcSigBits;
-    const src_rep_t srcSignificandMask = srcMinNormal - 1;
+    const src_rep_t significandMask = srcMinNormal - 1;
     const src_rep_t srcInfinity = (src_rep_t)srcInfExp << srcSigBits;
     const src_rep_t srcSignMask = SRC_REP_C(1) << (srcSigBits + srcExpBits);
     const src_rep_t srcAbsMask = srcSignMask - 1;
-    const src_rep_t srcQNaN = SRC_REP_C(1) << (srcSigBits - 1);
-    const src_rep_t srcNaNCode = srcQNaN - 1;
     const src_rep_t roundMask = (SRC_REP_C(1) << (srcSigBits - dstSigBits)) - 1;
     const src_rep_t halfway = SRC_REP_C(1) << (srcSigBits - dstSigBits - 1);
     
@@ -143,7 +141,7 @@ dst_t __truncdfsf2(src_t a) {
         const int aExp = aAbs >> srcSigBits;
         const int shift = srcExpBias - dstExpBias - aExp + 1;
         
-        const src_rep_t significand = aRep & srcSignificandMask | srcMinNormal;
+        const src_rep_t significand = (aRep & significandMask) | srcMinNormal;
         
         // Right shift by the denormalization amount with sticky.
         if (shift > srcSigBits) {
