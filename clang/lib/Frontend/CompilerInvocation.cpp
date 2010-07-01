@@ -132,6 +132,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-fno-common");
   if (Opts.NoImplicitFloat)
     Res.push_back("-no-implicit-float");
+  if (Opts.OmitLeafFramePointer)
+    Res.push_back("-momit-leaf-frame-pointer");
   if (Opts.OptimizeSize) {
     assert(Opts.OptimizationLevel == 2 && "Invalid options!");
     Res.push_back("-Os");
@@ -833,6 +835,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.LimitFloatPrecision = Args.getLastArgValue(OPT_mlimit_float_precision);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
+  Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");

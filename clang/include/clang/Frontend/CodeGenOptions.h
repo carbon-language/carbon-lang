@@ -53,6 +53,8 @@ public:
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
+  unsigned OmitLeafFramePointer : 1; /// Set when -momit-leaf-frame-pointer is
+                                     /// enabled.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned RelaxAll          : 1; /// Relax all machine code instructions.
@@ -109,6 +111,7 @@ public:
     NoImplicitFloat = 0;
     NoZeroInitializedInBSS = 0;
     ObjCDispatchMethod = Legacy;
+    OmitLeafFramePointer = 0;
     OptimizationLevel = 0;
     OptimizeSize = 0;
     RelaxAll = 0;

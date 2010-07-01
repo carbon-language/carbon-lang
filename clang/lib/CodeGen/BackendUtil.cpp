@@ -160,7 +160,20 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
   // being gross, this is also totally broken if we ever care about
   // concurrency.
-  llvm::NoFramePointerElim = CodeGenOpts.DisableFPElim;
+
+  // Set frame pointer elimination mode.
+  if (!CodeGenOpts.DisableFPElim) {
+    llvm::NoFramePointerElim = false;
+    llvm::NoFramePointerElimNonLeaf = false;
+  } else if (CodeGenOpts.OmitLeafFramePointer) {
+    llvm::NoFramePointerElim = false;
+    llvm::NoFramePointerElimNonLeaf = true;
+  } else {
+    llvm::NoFramePointerElim = true;
+    llvm::NoFramePointerElimNonLeaf = true;
+  }
+
+  // Set float ABI type.
   if (CodeGenOpts.FloatABI == "soft")
     llvm::FloatABIType = llvm::FloatABI::Soft;
   else if (CodeGenOpts.FloatABI == "hard")
@@ -169,6 +182,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     assert(CodeGenOpts.FloatABI.empty() && "Invalid float abi!");
     llvm::FloatABIType = llvm::FloatABI::Default;
   }
+
   NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
   llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
   UnwindTablesMandatory = CodeGenOpts.UnwindTables;

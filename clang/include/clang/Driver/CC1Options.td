@@ -149,6 +149,8 @@ def mlimit_float_precision : Separate<"-mlimit-float-precision">,
   HelpText<"Limit float precision to the given value">;
 def mno_zero_initialized_in_bss : Flag<"-mno-zero-initialized-in-bss">,
   HelpText<"Do not put zero initialized data in the BSS">;
+def momit_leaf_frame_pointer : Flag<"-momit-leaf-frame-pointer">,
+  HelpText<"Omit frame pointer setup for leaf functions.">;
 def msoft_float : Flag<"-msoft-float">,
   HelpText<"Use software floating point">;
 def mrelax_all : Flag<"-mrelax-all">,

@@ -999,6 +999,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   }
 
+  // -mno-omit-leaf-frame-pointer is default.
+  if (Args.hasFlag(options::OPT_momit_leaf_frame_pointer,
+                   options::OPT_mno_omit_leaf_frame_pointer, false))
+    CmdArgs.push_back("-momit-leaf-frame-pointer");
+
   // -fno-math-errno is default.
   if (Args.hasFlag(options::OPT_fmath_errno,
                    options::OPT_fno_math_errno,
