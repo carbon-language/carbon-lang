@@ -1897,6 +1897,16 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
+/// \brief Look for the destructor of the given class.
+///
+/// During semantic analysis, this routine should be used in lieu of 
+/// CXXRecordDecl::getDestructor().
+///
+/// \returns The destructor for this class.
+CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
+  return Class->getDestructor();
+}
+
 void ADLResult::insert(NamedDecl *New) {
   NamedDecl *&Old = Decls[cast<NamedDecl>(New->getCanonicalDecl())];
 

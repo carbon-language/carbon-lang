@@ -1476,6 +1476,7 @@ public:
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
                                     UnresolvedSetImpl &Functions);
+  CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
@@ -1485,7 +1486,7 @@ public:
                           VisibleDeclConsumer &Consumer);
   void LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer);
-
+  
   /// \brief The context in which typo-correction occurs.
   ///
   /// The typo-correction context affects which keywords (if any) are

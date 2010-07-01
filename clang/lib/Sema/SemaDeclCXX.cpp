@@ -2230,7 +2230,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     if (FieldClassDecl->hasTrivialDestructor())
       continue;
 
-    CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor();
+    CXXDestructorDecl *Dtor = LookupDestructor(FieldClassDecl);
     CheckDestructorAccess(Field->getLocation(), Dtor,
                           PDiag(diag::err_access_dtor_field)
                             << Field->getDeclName()
@@ -2256,7 +2256,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
-    CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor();
+    CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
 
     // FIXME: caret should be on the start of the class name
     CheckDestructorAccess(Base->getSourceRange().getBegin(), Dtor,
@@ -2283,7 +2283,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
-    CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor();
+    CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
     CheckDestructorAccess(ClassDecl->getLocation(), Dtor,
                           PDiag(diag::err_access_dtor_vbase)
                             << VBase->getType());
@@ -4256,7 +4256,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S,
     
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
+                    LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
   }
   
   // Virtual base-class destructors.
@@ -4265,7 +4265,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S,
        B != BEnd; ++B) {
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
+                    LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
   }
   
   // Field destructors.
@@ -4275,7 +4275,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S,
     if (const RecordType *RecordTy
         = Context.getBaseElementType(F->getType())->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(RecordTy->getDecl())->getDestructor());
+                    LookupDestructor(cast<CXXRecordDecl>(RecordTy->getDecl())));
   }
   
   QualType Ty = Context.getFunctionType(Context.VoidTy,
@@ -5214,7 +5214,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Record->getDecl());
   if (!ClassDecl->isInvalidDecl() && !VD->isInvalidDecl() &&
       !ClassDecl->hasTrivialDestructor() && !ClassDecl->isDependentContext()) {
-    CXXDestructorDecl *Destructor = ClassDecl->getDestructor();
+    CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
     MarkDeclarationReferenced(VD->getLocation(), Destructor);
     CheckDestructorAccess(VD->getLocation(), Destructor,
                           PDiag(diag::err_access_dtor_var)
@@ -6685,8 +6685,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
                   = Context.getBaseElementType(Field->getType())
                                                         ->getAs<RecordType>()) {
                     CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
-        if (CXXDestructorDecl *Destructor
-                        = const_cast<CXXDestructorDecl*>(RD->getDestructor())) {
+        if (CXXDestructorDecl *Destructor = LookupDestructor(RD)) {
           MarkDeclarationReferenced(Field->getLocation(), Destructor);
           CheckDestructorAccess(Field->getLocation(), Destructor,
                             PDiag(diag::err_access_dtor_ivar)

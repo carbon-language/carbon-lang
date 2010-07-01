@@ -3708,8 +3708,8 @@ InitializationSequence::Perform(Sema &S,
         CurInitExpr = static_cast<Expr *>(CurInit.get());
         QualType T = CurInitExpr->getType();
         if (const RecordType *Record = T->getAs<RecordType>()) {
-          CXXDestructorDecl *Destructor
-            = cast<CXXRecordDecl>(Record->getDecl())->getDestructor();
+          CXXDestructorDecl *Destructor 
+            = S.LookupDestructor(cast<CXXRecordDecl>(Record->getDecl()));
           S.CheckDestructorAccess(CurInitExpr->getLocStart(), Destructor, 
                                   S.PDiag(diag::err_access_dtor_temp) << T);
           S.MarkDeclarationReferenced(CurInitExpr->getLocStart(), Destructor);

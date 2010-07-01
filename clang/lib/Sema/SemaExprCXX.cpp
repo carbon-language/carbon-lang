@@ -474,7 +474,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
     return false;
 
   CXXDestructorDecl *Destructor 
-    = const_cast<CXXDestructorDecl*>(RD->getDestructor());
+    = const_cast<CXXDestructorDecl*>(LookupDestructor(RD));
   if (!Destructor)
     return false;
 
@@ -1475,7 +1475,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         return ExprError();
       
       if (!RD->hasTrivialDestructor())
-        if (const CXXDestructorDecl *Dtor = RD->getDestructor())
+        if (const CXXDestructorDecl *Dtor = LookupDestructor(RD))
           MarkDeclarationReferenced(StartLoc,
                                     const_cast<CXXDestructorDecl*>(Dtor));
     }
@@ -2639,10 +2639,9 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (RD->hasTrivialDestructor())
     return Owned(E);
 
-  CXXTemporary *Temp = CXXTemporary::Create(Context, RD->getDestructor());
+  CXXTemporary *Temp = CXXTemporary::Create(Context, LookupDestructor(RD));
   ExprTemporaries.push_back(Temp);
-  if (CXXDestructorDecl *Destructor =
-        const_cast<CXXDestructorDecl*>(RD->getDestructor())) {
+  if (CXXDestructorDecl *Destructor = LookupDestructor(RD)) {
     MarkDeclarationReferenced(E->getExprLoc(), Destructor);
     CheckDestructorAccess(E->getExprLoc(), Destructor,
                           PDiag(diag::err_access_dtor_temp)
