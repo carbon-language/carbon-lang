@@ -45,6 +45,11 @@ ModulePass *createStripNonDebugSymbolsPass();
 ModulePass *createStripDebugDeclarePass();
 
 //===----------------------------------------------------------------------===//
+//
+// These pass removes unused symbols' debug info.
+ModulePass *createStripDeadDebugInfoPass();
+
+//===----------------------------------------------------------------------===//
 /// createLowerSetJmpPass - This function lowers the setjmp/longjmp intrinsics
 /// to invoke/unwind instructions.  This should really be part of the C/C++
 /// front-end, but it's so much easier to write transformations in LLVM proper.
