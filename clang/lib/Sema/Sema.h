@@ -2220,6 +2220,18 @@ public:
   /// constructed variable.
   void FinalizeVarWithDestructor(VarDecl *VD, const RecordType *DeclInitType);
 
+  /// \brief Declare the implicit default constructor for the given class.
+  ///
+  /// \param S The scope of the class, which may be NULL if this is a 
+  /// template instantiation.
+  ///
+  /// \param ClassDecl The class declaration into which the implicit 
+  /// default constructor will be added.
+  ///
+  /// \returns The implicitly-declared default constructor.
+  CXXConstructorDecl *DeclareImplicitDefaultConstructor(Scope *S,
+                                                     CXXRecordDecl *ClassDecl);
+  
   /// DefineImplicitDefaultConstructor - Checks for feasibility of
   /// defining this constructor as the default constructor.
   void DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,

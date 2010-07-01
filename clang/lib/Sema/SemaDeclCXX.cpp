@@ -2656,41 +2656,11 @@ namespace {
 /// The scope, if provided, is the class scope.
 void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S, 
                                                CXXRecordDecl *ClassDecl) {
-  CanQualType ClassType
-    = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
-
   // FIXME: Implicit declarations have exception specifications, which are
   // the union of the specifications of the implicitly called functions.
 
-  if (!ClassDecl->hasUserDeclaredConstructor()) {
-    // C++ [class.ctor]p5:
-    //   A default constructor for a class X is a constructor of class X
-    //   that can be called without an argument. If there is no
-    //   user-declared constructor for class X, a default constructor is
-    //   implicitly declared. An implicitly-declared default constructor
-    //   is an inline public member of its class.
-    DeclarationName Name
-      = Context.DeclarationNames.getCXXConstructorName(ClassType);
-    CXXConstructorDecl *DefaultCon =
-      CXXConstructorDecl::Create(Context, ClassDecl,
-                                 ClassDecl->getLocation(), Name,
-                                 Context.getFunctionType(Context.VoidTy,
-                                                         0, 0, false, 0,
-                                                         /*FIXME*/false, false,
-                                                         0, 0,
-                                                       FunctionType::ExtInfo()),
-                                 /*TInfo=*/0,
-                                 /*isExplicit=*/false,
-                                 /*isInline=*/true,
-                                 /*isImplicitlyDeclared=*/true);
-    DefaultCon->setAccess(AS_public);
-    DefaultCon->setImplicit();
-    DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
-    if (S)
-      PushOnScopeChains(DefaultCon, S, true);
-    else
-      ClassDecl->addDecl(DefaultCon);
-  }
+  if (!ClassDecl->hasUserDeclaredConstructor())
+    DeclareImplicitDefaultConstructor(S, ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
     DeclareImplicitCopyConstructor(S, ClassDecl);
@@ -4166,6 +4136,40 @@ namespace {
       S.CurContext = PreviousContext;
     }
   };
+}
+
+CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(Scope *S,
+                                                    CXXRecordDecl *ClassDecl) {
+  // C++ [class.ctor]p5:
+  //   A default constructor for a class X is a constructor of class X
+  //   that can be called without an argument. If there is no
+  //   user-declared constructor for class X, a default constructor is
+  //   implicitly declared. An implicitly-declared default constructor
+  //   is an inline public member of its class.
+  CanQualType ClassType
+    = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
+  DeclarationName Name
+    = Context.DeclarationNames.getCXXConstructorName(ClassType);
+  CXXConstructorDecl *DefaultCon
+    = CXXConstructorDecl::Create(Context, ClassDecl,
+                                 ClassDecl->getLocation(), Name,
+                                 Context.getFunctionType(Context.VoidTy,
+                                                         0, 0, false, 0,
+                                                         /*FIXME*/false, false,
+                                                         0, 0,
+                                                       FunctionType::ExtInfo()),
+                                 /*TInfo=*/0,
+                                 /*isExplicit=*/false,
+                                 /*isInline=*/true,
+                                 /*isImplicitlyDeclared=*/true);
+  DefaultCon->setAccess(AS_public);
+  DefaultCon->setImplicit();
+  DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
+  if (S)
+    PushOnScopeChains(DefaultCon, S, true);
+  else
+    ClassDecl->addDecl(DefaultCon);
+  return DefaultCon;
 }
 
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
