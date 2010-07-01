@@ -33,7 +33,9 @@ using namespace llvm;
 User::op_iterator CallSite::getCallee() const {
   Instruction *II(getInstruction());
   return isCall()
-    ? cast<CallInst>(II)->op_begin()
+    ? (CallInst::ArgOffset
+       ? cast</*FIXME: CallInst*/User>(II)->op_begin()
+       : cast</*FIXME: CallInst*/User>(II)->op_end() - 1)
     : cast<InvokeInst>(II)->op_end() - 3; // Skip BB, BB, Function
 }
 
