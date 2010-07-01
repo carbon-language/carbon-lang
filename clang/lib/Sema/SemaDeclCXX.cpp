@@ -4915,8 +4915,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
   //   If the class definition does not explicitly declare a copy
   //   constructor, one is declared implicitly.
   
-  // FIXME: virtual bases!
-  
   // C++ [class.copy]p5:
   //   The implicitly-declared copy constructor for a class X will
   //   have the form
@@ -4933,6 +4931,20 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
                                        BaseEnd = ClassDecl->bases_end();
        HasConstCopyConstructor && Base != BaseEnd; 
        ++Base) {
+    // Virtual bases are handled below.
+    if (Base->isVirtual())
+      continue;
+    
+    const CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    HasConstCopyConstructor
+      = BaseClassDecl->hasConstCopyConstructor(Context);
+  }
+
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
+                                       BaseEnd = ClassDecl->vbases_end();
+       HasConstCopyConstructor && Base != BaseEnd; 
+       ++Base) {
     const CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     HasConstCopyConstructor
@@ -4947,14 +4959,12 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
                                   FieldEnd = ClassDecl->field_end();
        HasConstCopyConstructor && Field != FieldEnd;
        ++Field) {
-    QualType FieldType = (*Field)->getType();
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
+    QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       const CXXRecordDecl *FieldClassDecl
-      = cast<CXXRecordDecl>(FieldClassType->getDecl());
+        = cast<CXXRecordDecl>(FieldClassType->getDecl());
       HasConstCopyConstructor
-      = FieldClassDecl->hasConstCopyConstructor(Context);
+        = FieldClassDecl->hasConstCopyConstructor(Context);
     }
   }
   
