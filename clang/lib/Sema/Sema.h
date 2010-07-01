@@ -2225,10 +2225,22 @@ public:
   void DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                         CXXConstructorDecl *Constructor);
 
+  /// \brief Declare the implicit destructor for the given class.
+  ///
+  /// \param S The scope of the class, which may be NULL if this is a 
+  /// template instantiation.
+  ///
+  /// \param ClassDecl The class declaration into which the implicit 
+  /// destructor will be added.
+  ///
+  /// \returns The implicitly-declared destructor.
+  CXXDestructorDecl *DeclareImplicitDestructor(Scope *S, 
+                                               CXXRecordDecl *ClassDecl);
+                                               
   /// DefineImplicitDestructor - Checks for feasibility of
   /// defining this destructor as the default destructor.
   void DefineImplicitDestructor(SourceLocation CurrentLocation,
-                                        CXXDestructorDecl *Destructor);
+                                CXXDestructorDecl *Destructor);
 
   /// \brief Declare the implicit copy constructor for the given class.
   ///

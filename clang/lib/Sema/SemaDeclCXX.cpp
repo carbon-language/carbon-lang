@@ -2698,73 +2698,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S,
   if (!ClassDecl->hasUserDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(S, ClassDecl);
 
-  if (!ClassDecl->hasUserDeclaredDestructor()) {
-    // C++ [class.dtor]p2:
-    //   If a class has no user-declared destructor, a destructor is
-    //   declared implicitly. An implicitly-declared destructor is an
-    //   inline public member of its class.
-    
-    // C++ [except.spec]p14: 
-    //   An implicitly declared special member function (Clause 12) shall have 
-    //   an exception-specification.
-    ImplicitExceptionSpecification ExceptSpec(Context);
-    
-    // Direct base-class destructors.
-    for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
-                                         BEnd = ClassDecl->bases_end();
-         B != BEnd; ++B) {
-      if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
-        ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
-    }
-         
-    // Virtual base-class destructors.
-    for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
-                                         BEnd = ClassDecl->vbases_end();
-         B != BEnd; ++B) {
-      if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
-        ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
-    }
-
-    // Field destructors.
-    for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                                 FEnd = ClassDecl->field_end();
-         F != FEnd; ++F) {
-      if (const RecordType *RecordTy
-                = Context.getBaseElementType(F->getType())->getAs<RecordType>())
-        ExceptSpec.CalledDecl(
-                    cast<CXXRecordDecl>(RecordTy->getDecl())->getDestructor());
-    }
-    
-    QualType Ty = Context.getFunctionType(Context.VoidTy,
-                                          0, 0, false, 0,
-                                        ExceptSpec.hasExceptionSpecification(),
-                                      ExceptSpec.hasAnyExceptionSpecification(),
-                                          ExceptSpec.size(),
-                                          ExceptSpec.data(),
-                                          FunctionType::ExtInfo());
-
-    DeclarationName Name
-      = Context.DeclarationNames.getCXXDestructorName(ClassType);
-    CXXDestructorDecl *Destructor
-      = CXXDestructorDecl::Create(Context, ClassDecl,
-                                  ClassDecl->getLocation(), Name, Ty,
-                                  /*isInline=*/true,
-                                  /*isImplicitlyDeclared=*/true);
-    Destructor->setAccess(AS_public);
-    Destructor->setImplicit();
-    Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
-    if (S)
-      PushOnScopeChains(Destructor, S, true);
-    else
-      ClassDecl->addDecl(Destructor);
-
-    // This could be uniqued if it ever proves significant.
-    Destructor->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(Ty));
-    
-    AddOverriddenMethods(ClassDecl, Destructor);
-  }
+  if (!ClassDecl->hasUserDeclaredDestructor())
+    DeclareImplicitDestructor(S, ClassDecl);
 }
 
 void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
@@ -4253,6 +4188,81 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     Constructor->setUsed();
     MarkVTableUsed(CurrentLocation, ClassDecl);
   }
+}
+
+CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S, 
+                                                   CXXRecordDecl *ClassDecl) {
+  // C++ [class.dtor]p2:
+  //   If a class has no user-declared destructor, a destructor is
+  //   declared implicitly. An implicitly-declared destructor is an
+  //   inline public member of its class.
+  
+  // C++ [except.spec]p14: 
+  //   An implicitly declared special member function (Clause 12) shall have 
+  //   an exception-specification.
+  ImplicitExceptionSpecification ExceptSpec(Context);
+  
+  // Direct base-class destructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                       BEnd = ClassDecl->bases_end();
+       B != BEnd; ++B) {
+    if (B->isVirtual()) // Handled below.
+      continue;
+    
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+      ExceptSpec.CalledDecl(
+                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
+  }
+  
+  // Virtual base-class destructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
+                                       BEnd = ClassDecl->vbases_end();
+       B != BEnd; ++B) {
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
+      ExceptSpec.CalledDecl(
+                    cast<CXXRecordDecl>(BaseType->getDecl())->getDestructor());
+  }
+  
+  // Field destructors.
+  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                               FEnd = ClassDecl->field_end();
+       F != FEnd; ++F) {
+    if (const RecordType *RecordTy
+        = Context.getBaseElementType(F->getType())->getAs<RecordType>())
+      ExceptSpec.CalledDecl(
+                    cast<CXXRecordDecl>(RecordTy->getDecl())->getDestructor());
+  }
+  
+  QualType Ty = Context.getFunctionType(Context.VoidTy,
+                                        0, 0, false, 0,
+                                        ExceptSpec.hasExceptionSpecification(),
+                                    ExceptSpec.hasAnyExceptionSpecification(),
+                                        ExceptSpec.size(),
+                                        ExceptSpec.data(),
+                                        FunctionType::ExtInfo());
+  
+  CanQualType ClassType
+    = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
+  DeclarationName Name
+    = Context.DeclarationNames.getCXXDestructorName(ClassType);
+  CXXDestructorDecl *Destructor
+    = CXXDestructorDecl::Create(Context, ClassDecl,
+                                ClassDecl->getLocation(), Name, Ty,
+                                /*isInline=*/true,
+                                /*isImplicitlyDeclared=*/true);
+  Destructor->setAccess(AS_public);
+  Destructor->setImplicit();
+  Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
+  if (S)
+    PushOnScopeChains(Destructor, S, true);
+  else
+    ClassDecl->addDecl(Destructor);
+  
+  // This could be uniqued if it ever proves significant.
+  Destructor->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(Ty));
+  
+  AddOverriddenMethods(ClassDecl, Destructor);
+  return Destructor;
 }
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
