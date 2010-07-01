@@ -459,7 +459,9 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
                                          SourceLocation KeyLoc,
                                          IdentifierInfo *ParamName,
                                          SourceLocation ParamNameLoc,
-                                         unsigned Depth, unsigned Position) {
+                                         unsigned Depth, unsigned Position,
+                                         SourceLocation EqualLoc,
+                                         TypeTy *DefaultArg) {
   assert(S->isTemplateParamScope() &&
          "Template type parameter not in template parameter scope!");
   bool Invalid = false;
@@ -490,42 +492,31 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     IdResolver.AddDecl(Param);
   }
 
+  // Handle the default argument, if provided.
+  if (DefaultArg) {
+    TypeSourceInfo *DefaultTInfo;
+    GetTypeFromParser(DefaultArg, &DefaultTInfo);
+    
+    assert(DefaultTInfo && "expected source information for type");
+    
+    // C++0x [temp.param]p9:
+    // A default template-argument may be specified for any kind of
+    // template-parameter that is not a template parameter pack.
+    if (Ellipsis) {
+      Diag(EqualLoc, diag::err_template_param_pack_default_arg);
+      return DeclPtrTy::make(Param);
+    }
+    
+    // Check the template argument itself.
+    if (CheckTemplateArgument(Param, DefaultTInfo)) {
+      Param->setInvalidDecl();
+      return DeclPtrTy::make(Param);;
+    }
+    
+    Param->setDefaultArgument(DefaultTInfo, false);
+  }
+  
   return DeclPtrTy::make(Param);
-}
-
-/// ActOnTypeParameterDefault - Adds a default argument (the type
-/// Default) to the given template type parameter (TypeParam).
-void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
-                                     SourceLocation EqualLoc,
-                                     SourceLocation DefaultLoc,
-                                     TypeTy *DefaultT) {
-  TemplateTypeParmDecl *Parm
-    = cast<TemplateTypeParmDecl>(TypeParam.getAs<Decl>());
-
-  TypeSourceInfo *DefaultTInfo;
-  GetTypeFromParser(DefaultT, &DefaultTInfo);
-
-  assert(DefaultTInfo && "expected source information for type");
-
-  // C++0x [temp.param]p9:
-  // A default template-argument may be specified for any kind of
-  // template-parameter that is not a template parameter pack.
-  if (Parm->isParameterPack()) {
-    Diag(DefaultLoc, diag::err_template_param_pack_default_arg);
-    return;
-  }
-
-  // C++ [temp.param]p14:
-  //   A template-parameter shall not be used in its own default argument.
-  // FIXME: Implement this check! Needs a recursive walk over the types.
-
-  // Check the template argument itself.
-  if (CheckTemplateArgument(Parm, DefaultTInfo)) {
-    Parm->setInvalidDecl();
-    return;
-  }
-
-  Parm->setDefaultArgument(DefaultTInfo, false);
 }
 
 /// \brief Check that the type of a non-type template parameter is
@@ -580,13 +571,11 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   return QualType();
 }
 
-/// ActOnNonTypeTemplateParameter - Called when a C++ non-type
-/// template parameter (e.g., "int Size" in "template<int Size>
-/// class Array") has been parsed. S is the current scope and D is
-/// the parsed declarator.
 Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                     unsigned Depth,
-                                                    unsigned Position) {
+                                                    unsigned Position,
+                                                    SourceLocation EqualLoc,
+                                                    ExprArg DefaultArg) {
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
 
@@ -622,33 +611,20 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     S->AddDecl(DeclPtrTy::make(Param));
     IdResolver.AddDecl(Param);
   }
+  
+  // Check the well-formedness of the default template argument, if provided.
+  if (Expr *Default = static_cast<Expr *>(DefaultArg.get())) {  
+    TemplateArgument Converted;
+    if (CheckTemplateArgument(Param, Param->getType(), Default, Converted)) {
+      Param->setInvalidDecl();
+      return DeclPtrTy::make(Param);;
+    }
+  
+    Param->setDefaultArgument(DefaultArg.takeAs<Expr>(), false);
+  }
+  
   return DeclPtrTy::make(Param);
 }
-
-/// \brief Adds a default argument to the given non-type template
-/// parameter.
-void Sema::ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParamD,
-                                                SourceLocation EqualLoc,
-                                                ExprArg DefaultE) {
-  NonTypeTemplateParmDecl *TemplateParm
-    = cast<NonTypeTemplateParmDecl>(TemplateParamD.getAs<Decl>());
-  Expr *Default = static_cast<Expr *>(DefaultE.get());
-
-  // C++ [temp.param]p14:
-  //   A template-parameter shall not be used in its own default argument.
-  // FIXME: Implement this check! Needs a recursive walk over the types.
-
-  // Check the well-formedness of the default template argument.
-  TemplateArgument Converted;
-  if (CheckTemplateArgument(TemplateParm, TemplateParm->getType(), Default,
-                            Converted)) {
-    TemplateParm->setInvalidDecl();
-    return;
-  }
-
-  TemplateParm->setDefaultArgument(DefaultE.takeAs<Expr>(), false);
-}
-
 
 /// ActOnTemplateTemplateParameter - Called when a C++ template template
 /// parameter (e.g. T in template <template <typename> class T> class array)
@@ -659,7 +635,9 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
                                                      IdentifierInfo *Name,
                                                      SourceLocation NameLoc,
                                                      unsigned Depth,
-                                                     unsigned Position) {
+                                                     unsigned Position,
+                                                     SourceLocation EqualLoc,
+                                       const ParsedTemplateArgument &Default) {
   assert(S->isTemplateParamScope() &&
          "Template template parameter not in template parameter scope!");
 
@@ -669,53 +647,33 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
                                      TmpLoc, Depth, Position, Name,
                                      (TemplateParameterList*)Params);
 
-  // Make sure the parameter is valid.
-  // FIXME: Decl object is not currently invalidated anywhere so this doesn't
-  // do anything yet. However, if the template parameter list or (eventual)
-  // default value is ever invalidated, that will propagate here.
-  bool Invalid = false;
-  if (Invalid) {
-    Param->setInvalidDecl();
-  }
-
-  // If the tt-param has a name, then link the identifier into the scope
-  // and lookup mechanisms.
+  // If the template template parameter has a name, then link the identifier 
+  // into the scope and lookup mechanisms.
   if (Name) {
     S->AddDecl(DeclPtrTy::make(Param));
     IdResolver.AddDecl(Param);
   }
 
-  return DeclPtrTy::make(Param);
-}
-
-/// \brief Adds a default argument to the given template template
-/// parameter.
-void Sema::ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParamD,
-                                                 SourceLocation EqualLoc,
-                                        const ParsedTemplateArgument &Default) {
-  TemplateTemplateParmDecl *TemplateParm
-    = cast<TemplateTemplateParmDecl>(TemplateParamD.getAs<Decl>());
-  
-  // C++ [temp.param]p14:
-  //   A template-parameter shall not be used in its own default argument.
-  // FIXME: Implement this check! Needs a recursive walk over the types.
-
-  // Check only that we have a template template argument. We don't want to
-  // try to check well-formedness now, because our template template parameter
-  // might have dependent types in its template parameters, which we wouldn't
-  // be able to match now.
-  //
-  // If none of the template template parameter's template arguments mention
-  // other template parameters, we could actually perform more checking here.
-  // However, it isn't worth doing.
-  TemplateArgumentLoc DefaultArg = translateTemplateArgument(*this, Default);
-  if (DefaultArg.getArgument().getAsTemplate().isNull()) {
-    Diag(DefaultArg.getLocation(), diag::err_template_arg_not_class_template)
-      << DefaultArg.getSourceRange();
-    return;
+  if (!Default.isInvalid()) {
+    // Check only that we have a template template argument. We don't want to
+    // try to check well-formedness now, because our template template parameter
+    // might have dependent types in its template parameters, which we wouldn't
+    // be able to match now.
+    //
+    // If none of the template template parameter's template arguments mention
+    // other template parameters, we could actually perform more checking here.
+    // However, it isn't worth doing.
+    TemplateArgumentLoc DefaultArg = translateTemplateArgument(*this, Default);
+    if (DefaultArg.getArgument().getAsTemplate().isNull()) {
+      Diag(DefaultArg.getLocation(), diag::err_template_arg_not_class_template)
+        << DefaultArg.getSourceRange();
+      return DeclPtrTy::make(Param);
+    }
+    
+    Param->setDefaultArgument(DefaultArg, false);
   }
   
-  TemplateParm->setDefaultArgument(DefaultArg, false);
+  return DeclPtrTy::make(Param);
 }
 
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that

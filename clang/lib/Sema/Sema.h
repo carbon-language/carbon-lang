@@ -2861,29 +2861,25 @@ public:
                                        SourceLocation KeyLoc,
                                        IdentifierInfo *ParamName,
                                        SourceLocation ParamNameLoc,
-                                       unsigned Depth, unsigned Position);
-  virtual void ActOnTypeParameterDefault(DeclPtrTy TypeParam,
-                                         SourceLocation EqualLoc,
-                                         SourceLocation DefaultLoc,
-                                         TypeTy *Default);
+                                       unsigned Depth, unsigned Position,
+                                       SourceLocation EqualLoc,
+                                       TypeTy *DefaultArg);
 
   QualType CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc);
   virtual DeclPtrTy ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                   unsigned Depth,
-                                                  unsigned Position);
-  virtual void ActOnNonTypeTemplateParameterDefault(DeclPtrTy TemplateParam,
-                                                    SourceLocation EqualLoc,
-                                                    ExprArg Default);
+                                                  unsigned Position,
+                                                  SourceLocation EqualLoc,
+                                                  ExprArg DefaultArg);
   virtual DeclPtrTy ActOnTemplateTemplateParameter(Scope *S,
                                                    SourceLocation TmpLoc,
                                                    TemplateParamsTy *Params,
                                                    IdentifierInfo *ParamName,
                                                    SourceLocation ParamNameLoc,
                                                    unsigned Depth,
-                                                   unsigned Position);
-  virtual void ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParam,
-                                                     SourceLocation EqualLoc,
-                                        const ParsedTemplateArgument &Default);
+                                                   unsigned Position,
+                                                   SourceLocation EqualLoc,
+                                     const ParsedTemplateArgument &DefaultArg);
 
   virtual TemplateParamsTy *
   ActOnTemplateParameterList(unsigned Depth,

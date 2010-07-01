@@ -58,7 +58,7 @@ namespace clang {
         Loc(TemplateLoc), SS(SS) { }
     
     /// \brief Determine whether the given template argument is invalid.
-    bool isInvalid() { return Arg == 0; }
+    bool isInvalid() const { return Arg == 0; }
     
     /// \brief Determine what kind of template argument we have.
     KindType getKind() const { return Kind; }

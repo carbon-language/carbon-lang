@@ -1833,46 +1833,87 @@ public:
 
   //===---------------------------C++ Templates----------------------------===//
 
-  /// ActOnTypeParameter - Called when a C++ template type parameter
-  /// (e.g., "typename T") has been parsed. Typename specifies whether
-  /// the keyword "typename" was used to declare the type parameter
-  /// (otherwise, "class" was used), ellipsis specifies whether this is a
-  /// C++0x parameter pack, EllipsisLoc specifies the start of the ellipsis,
-  /// and KeyLoc is the location of the "class" or "typename" keyword.
-  //  ParamName is the name of the parameter (NULL indicates an unnamed template
-  //  parameter) and ParamNameLoc is the location of the parameter name (if any)
-  /// If the type parameter has a default argument, it will be added
-  /// later via ActOnTypeParameterDefault. Depth and Position provide
-  /// the number of enclosing templates (see
-  /// ActOnTemplateParameterList) and the number of previous
-  /// parameters within this template parameter list.
+  /// \brief Called when a C++ template type parameter(e.g., "typename T") has 
+  /// been parsed. 
+  ///
+  /// Given
+  ///
+  /// \code
+  /// template<typename T, typename U = T> struct pair;
+  /// \endcode
+  ///
+  /// this callback will be invoked twice: once for the type parameter \c T
+  /// with \p Depth=0 and \p Position=0, and once for the type parameter \c U
+  /// with \p Depth=0 and \p Position=1.
+  ///
+  /// \param Typename Specifies whether the keyword "typename" was used to 
+  /// declare the type parameter (otherwise, "class" was used).
+  ///
+  /// \param Ellipsis Specifies whether this is a C++0x parameter pack.
+  ///
+  /// \param EllipsisLoc Specifies the start of the ellipsis.
+  ///
+  /// \param KeyLoc The location of the "class" or "typename" keyword.
+  ///
+  /// \param ParamName The name of the parameter, where NULL indicates an 
+  /// unnamed template parameter.
+  ///
+  /// \param ParamNameLoc The location of the parameter name (if any).
+  ///
+  /// \param Depth The depth of this template parameter, e.g., the number of
+  /// template parameter lists that occurred outside the template parameter
+  /// list in which this template type parameter occurs.
+  ///
+  /// \param Position The zero-based position of this template parameter within
+  /// its template parameter list, which is also the number of template
+  /// parameters that precede this parameter in the template parameter list.
+  ///
+  /// \param EqualLoc The location of the '=' sign for the default template
+  /// argument, if any.
+  ///
+  /// \param DefaultArg The default argument, if provided.
   virtual DeclPtrTy ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
                                        SourceLocation EllipsisLoc,
                                        SourceLocation KeyLoc,
                                        IdentifierInfo *ParamName,
                                        SourceLocation ParamNameLoc,
-                                       unsigned Depth, unsigned Position) {
+                                       unsigned Depth, unsigned Position,
+                                       SourceLocation EqualLoc,
+                                       TypeTy *DefaultArg) {
     return DeclPtrTy();
   }
 
-  /// ActOnTypeParameterDefault - Adds a default argument (the type
-  /// Default) to the given template type parameter (TypeParam).
-  virtual void ActOnTypeParameterDefault(DeclPtrTy TypeParam,
-                                         SourceLocation EqualLoc,
-                                         SourceLocation DefaultLoc,
-                                         TypeTy *Default) {
-  }
-
-  /// ActOnNonTypeTemplateParameter - Called when a C++ non-type
-  /// template parameter (e.g., "int Size" in "template<int Size>
-  /// class Array") has been parsed. S is the current scope and D is
-  /// the parsed declarator. Depth and Position provide the number of
-  /// enclosing templates (see
-  /// ActOnTemplateParameterList) and the number of previous
-  /// parameters within this template parameter list.
+  /// \brief Called when a C++ non-type template parameter has been parsed.
+  ///
+  /// Given
+  ///
+  /// \code
+  /// template<int Size> class Array;
+  /// \endcode
+  ///
+  /// This callback will be invoked for the 'Size' non-type template parameter.
+  ///
+  /// \param S The current scope.
+  ///
+  /// \param D The parsed declarator.
+  ///
+  /// \param Depth The depth of this template parameter, e.g., the number of
+  /// template parameter lists that occurred outside the template parameter
+  /// list in which this template type parameter occurs.
+  ///
+  /// \param Position The zero-based position of this template parameter within
+  /// its template parameter list, which is also the number of template
+  /// parameters that precede this parameter in the template parameter list.
+  ///
+  /// \param EqualLoc The location of the '=' sign for the default template
+  /// argument, if any.
+  ///
+  /// \param DefaultArg The default argument, if provided.
   virtual DeclPtrTy ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                   unsigned Depth,
-                                                  unsigned Position) {
+                                                  unsigned Position,
+                                                  SourceLocation EqualLoc,
+                                                  ExprArg DefaultArg) {
     return DeclPtrTy();
   }
 
@@ -1883,27 +1924,48 @@ public:
                                                     ExprArg Default) {
   }
 
-  /// ActOnTemplateTemplateParameter - Called when a C++ template template
-  /// parameter (e.g., "int T" in "template<template <typename> class T> class
-  /// Array") has been parsed. TmpLoc is the location of the "template" keyword,
-  /// TemplateParams is the sequence of parameters required by the template,
-  /// ParamName is the name of the parameter (null if unnamed), and ParamNameLoc
-  /// is the source location of the identifier (if given).
+  /// \brief Called when a C++ template template parameter has been parsed. 
+  ///
+  /// Given
+  ///
+  /// \code
+  /// template<template <typename> class T> class X;
+  /// \endcode
+  ///
+  /// this callback will be invoked for the template template parameter \c T.
+  ///
+  /// \param S The scope in which this template template parameter occurs.
+  ///
+  /// \param TmpLoc The location of the "template" keyword.
+  ///
+  /// \param TemplateParams The template parameters required by the template.
+  ///
+  /// \param ParamName The name of the parameter, or NULL if unnamed.
+  ///
+  /// \param ParamNameLoc The source location of the parameter name (if given).
+  ///
+  /// \param Depth The depth of this template parameter, e.g., the number of
+  /// template parameter lists that occurred outside the template parameter
+  /// list in which this template parameter occurs.
+  ///
+  /// \param Position The zero-based position of this template parameter within
+  /// its template parameter list, which is also the number of template
+  /// parameters that precede this parameter in the template parameter list.
+  ///
+  /// \param EqualLoc The location of the '=' sign for the default template
+  /// argument, if any.
+  ///
+  /// \param DefaultArg The default argument, if provided.
   virtual DeclPtrTy ActOnTemplateTemplateParameter(Scope *S,
                                                    SourceLocation TmpLoc,
                                                    TemplateParamsTy *Params,
                                                    IdentifierInfo *ParamName,
                                                    SourceLocation ParamNameLoc,
                                                    unsigned Depth,
-                                                   unsigned Position) {
+                                                   unsigned Position,
+                                                   SourceLocation EqualLoc,
+                                    const ParsedTemplateArgument &DefaultArg) {
     return DeclPtrTy();
-  }
-
-  /// \brief Adds a default argument to the given template template
-  /// parameter.
-  virtual void ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParam,
-                                                     SourceLocation EqualLoc,
-                                        const ParsedTemplateArgument &Default) {
   }
 
   /// ActOnTemplateParameterList - Called when a complete template
