@@ -39,7 +39,7 @@ void foo(const I *p, I* sel) {
 @interface DerivedFromI : I
 @end
 
-void accept_derived(DerivedFromI*); // expected-note{{candidate function not viable: cannot convert from base class pointer 'I *' to derived class pointer 'DerivedFromI *' for 1st argument}}
+void accept_derived(DerivedFromI*); // expected-note{{candidate function not viable: cannot convert from superclass 'I *' to subclass 'DerivedFromI *' for 1st argument}}
 
 void test_base_to_derived(I* i) {
   accept_derived(i); // expected-error{{no matching function for call to 'accept_derived'}}

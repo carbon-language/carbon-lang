@@ -1203,14 +1203,16 @@ def note_ovl_candidate_bad_cvr : Note<"candidate "
     "%select{const|volatile|const and volatile|restrict|const and restrict|"
     "volatile and restrict|const, volatile, and restrict}3 qualifier"
     "%select{||s||s|s|s}3">;
-def note_ovl_candidate_bad_base_to_derived_ptr_conv : Note<"candidate "
+def note_ovl_candidate_bad_base_to_derived_conv : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
     "function (the implicit copy assignment operator)}0%1"
-    " not viable: cannot convert from base class pointer %2 to derived class "
-    "pointer %3 for %ordinal4 argument">;
+    " not viable: cannot %select{convert from|convert from|bind}2 "
+    "%select{base class pointer|superclass|base class object of type}2 %3 to "
+    "%select{derived class pointer|subclass|derived class reference}2 %4 for "
+    "%ordinal5 argument">;
 
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion of %0 to %1">;

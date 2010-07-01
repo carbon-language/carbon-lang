@@ -236,6 +236,12 @@ void intref_test() {
   float* ir2 = intref(5.5);
 }
 
+void derived5(C&); // expected-note{{candidate function not viable: cannot bind base class object of type 'A' to derived class reference 'C &' for 1st argument}}
+
+void test_base(A& a) {
+  derived5(a); // expected-error{{no matching function for call to 'derived5}}
+}
+
 // Test reference binding vs. standard conversions.
 int& bind_vs_conv(const double&);
 float& bind_vs_conv(int);

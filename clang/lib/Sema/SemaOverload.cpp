@@ -5486,7 +5486,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   }
 
   // Diagnose base -> derived pointer conversions.
-  bool IsBaseToDerivedConversion = false;
+  unsigned BaseToDerivedConversion = 0;
   if (const PointerType *FromPtrTy = FromTy->getAs<PointerType>()) {
     if (const PointerType *ToPtrTy = ToTy->getAs<PointerType>()) {
       if (ToPtrTy->getPointeeType().isAtLeastAsQualifiedAs(
@@ -5495,7 +5495,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
           !ToPtrTy->getPointeeType()->isIncompleteType() &&
           S.IsDerivedFrom(ToPtrTy->getPointeeType(), 
                           FromPtrTy->getPointeeType()))
-        IsBaseToDerivedConversion = true;
+        BaseToDerivedConversion = 1;
     }
   } else if (const ObjCObjectPointerType *FromPtrTy
                                     = FromTy->getAs<ObjCObjectPointerType>()) {
@@ -5506,13 +5506,21 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
           if (ToPtrTy->getPointeeType().isAtLeastAsQualifiedAs(
                                                 FromPtrTy->getPointeeType()) &&
               FromIface->isSuperClassOf(ToIface))
-            IsBaseToDerivedConversion = true;
-  }
-  if (IsBaseToDerivedConversion) {
+            BaseToDerivedConversion = 2;
+  } else if (const ReferenceType *ToRefTy = ToTy->getAs<ReferenceType>()) {
+      if (ToRefTy->getPointeeType().isAtLeastAsQualifiedAs(FromTy) &&
+          !FromTy->isIncompleteType() &&
+          !ToRefTy->getPointeeType()->isIncompleteType() &&
+          S.IsDerivedFrom(ToRefTy->getPointeeType(), FromTy))
+        BaseToDerivedConversion = 3;
+    }
+    
+  if (BaseToDerivedConversion) {
     S.Diag(Fn->getLocation(), 
-           diag::note_ovl_candidate_bad_base_to_derived_ptr_conv)
+           diag::note_ovl_candidate_bad_base_to_derived_conv)
       << (unsigned) FnKind << FnDesc
       << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << (BaseToDerivedConversion - 1)
       << FromTy << ToTy << I+1;    
     return;
   }
