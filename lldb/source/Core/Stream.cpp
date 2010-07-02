@@ -461,6 +461,16 @@ Stream::GetFlags() const
     return m_flags;
 }
 
+//------------------------------------------------------------------
+// The byte order get accessor
+//------------------------------------------------------------------
+
+lldb::ByteOrder
+Stream::GetByteOrder() const
+{
+    return m_byte_order;
+}
+
 int
 Stream::PrintfAsRawHex8 (const char *format, ...)
 {
