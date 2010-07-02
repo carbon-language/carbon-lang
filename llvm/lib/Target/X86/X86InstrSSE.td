@@ -3380,6 +3380,18 @@ multiclass SS3I_unop_rm_int<bits<8> opc, string OpcodeStr,
                        (bitconvert (mem_frag128 addr:$src))))]>, OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in {
+  defm VPABSB  : SS3I_unop_rm_int<0x1C, "vpabsb", memopv8i8, memopv16i8,
+                                  int_x86_ssse3_pabs_b,
+                                  int_x86_ssse3_pabs_b_128>, VEX;
+  defm VPABSW  : SS3I_unop_rm_int<0x1D, "vpabsw", memopv4i16, memopv8i16,
+                                  int_x86_ssse3_pabs_w,
+                                  int_x86_ssse3_pabs_w_128>, VEX;
+  defm VPABSD  : SS3I_unop_rm_int<0x1E, "vpabsd", memopv2i32, memopv4i32,
+                                  int_x86_ssse3_pabs_d,
+                                  int_x86_ssse3_pabs_d_128>, VEX;
+}
+
 defm PABSB       : SS3I_unop_rm_int<0x1C, "pabsb", memopv8i8, memopv16i8,
                                     int_x86_ssse3_pabs_b,
                                     int_x86_ssse3_pabs_b_128>;
@@ -3433,6 +3445,47 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
           (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in {
+let isCommutable = 0 in {
+  defm VPHADDW    : SS3I_binop_rm_int<0x01, "vphaddw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_phadd_w,
+                                      int_x86_ssse3_phadd_w_128, 0>, VEX_4V;
+  defm VPHADDD    : SS3I_binop_rm_int<0x02, "vphaddd", memopv2i32, memopv4i32,
+                                      int_x86_ssse3_phadd_d,
+                                      int_x86_ssse3_phadd_d_128, 0>, VEX_4V;
+  defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_phadd_sw,
+                                      int_x86_ssse3_phadd_sw_128, 0>, VEX_4V;
+  defm VPHSUBW    : SS3I_binop_rm_int<0x05, "vphsubw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_phsub_w,
+                                      int_x86_ssse3_phsub_w_128, 0>, VEX_4V;
+  defm VPHSUBD    : SS3I_binop_rm_int<0x06, "vphsubd", memopv2i32, memopv4i32,
+                                      int_x86_ssse3_phsub_d,
+                                      int_x86_ssse3_phsub_d_128, 0>, VEX_4V;
+  defm VPHSUBSW   : SS3I_binop_rm_int<0x07, "vphsubsw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_phsub_sw,
+                                      int_x86_ssse3_phsub_sw_128, 0>, VEX_4V;
+  defm VPMADDUBSW : SS3I_binop_rm_int<0x04, "vpmaddubsw", memopv8i8, memopv16i8,
+                                      int_x86_ssse3_pmadd_ub_sw,
+                                      int_x86_ssse3_pmadd_ub_sw_128, 0>, VEX_4V;
+  defm VPSHUFB    : SS3I_binop_rm_int<0x00, "vpshufb", memopv8i8, memopv16i8,
+                                      int_x86_ssse3_pshuf_b,
+                                      int_x86_ssse3_pshuf_b_128, 0>, VEX_4V;
+  defm VPSIGNB    : SS3I_binop_rm_int<0x08, "vpsignb", memopv8i8, memopv16i8,
+                                      int_x86_ssse3_psign_b,
+                                      int_x86_ssse3_psign_b_128, 0>, VEX_4V;
+  defm VPSIGNW    : SS3I_binop_rm_int<0x09, "vpsignw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_psign_w,
+                                      int_x86_ssse3_psign_w_128, 0>, VEX_4V;
+  defm VPSIGND    : SS3I_binop_rm_int<0x0A, "vpsignd", memopv2i32, memopv4i32,
+                                      int_x86_ssse3_psign_d,
+                                      int_x86_ssse3_psign_d_128, 0>, VEX_4V;
+}
+defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw", memopv4i16, memopv8i16,
+                                      int_x86_ssse3_pmul_hr_sw,
+                                      int_x86_ssse3_pmul_hr_sw_128, 0>, VEX_4V;
+}
+
 // None of these have i8 immediate fields.
 let ImmT = NoImm, Constraints = "$src1 = $dst" in {
 let isCommutable = 0 in {
@@ -3484,25 +3537,42 @@ def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
 // SSSE3 - Packed Align Instruction Patterns
 //===---------------------------------------------------------------------===//
 
-let Constraints = "$src1 = $dst" in {
-  def PALIGNR64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
-                           (ins VR64:$src1, VR64:$src2, i8imm:$src3),
-                           "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                           []>;
-  def PALIGNR64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
-                           (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
-                           "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                           []>;
+multiclass sse3_palign<string asm, bit Is2Addr = 1> {
+  def R64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+      (ins VR64:$src1, VR64:$src2, i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      []>;
+  def R64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
+      (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      []>;
 
-  def PALIGNR128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
-                           (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-                           "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                           []>, OpSize;
-  def PALIGNR128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
-                           (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-                           "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                           []>, OpSize;
+  def R128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      []>, OpSize;
+  def R128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
+      (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      []>, OpSize;
 }
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE3] in
+  defm VPALIGN : sse3_palign<"vpalignr", 0>, VEX_4V;
+let Constraints = "$src1 = $dst" in
+  defm PALIGN : sse3_palign<"palignr">;
 
 let AddedComplexity = 5 in {
 

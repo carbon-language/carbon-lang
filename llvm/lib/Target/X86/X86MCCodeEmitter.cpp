@@ -543,7 +543,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //
   unsigned char LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
 
-  if (VEX_B && VEX_X && !VEX_W) { // 2 byte VEX prefix
+  if (VEX_B && VEX_X && !VEX_W && (VEX_5M == 1)) { // 2 byte VEX prefix
     EmitByte(0xC5, CurByte, OS);
     EmitByte(LastByte | (VEX_R << 7), CurByte, OS);
     return;
