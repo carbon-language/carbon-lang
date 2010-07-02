@@ -5454,6 +5454,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   const MDNode *SrcLoc = CS.getInstruction()->getMetadata("srcloc");
   AsmNodeOperands.push_back(DAG.getMDNode(SrcLoc));
 
+  // Remember the AlignStack bit as operand 3.
+  AsmNodeOperands.push_back(DAG.getTargetConstant(IA->isAlignStack() ? 1 : 0,
+                                            MVT::i1));
+
   // Loop over all of the inputs, copying the operand values into the
   // appropriate registers and processing the output regs.
   RegsForValue RetValRegs;
@@ -5642,7 +5646,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   }
 
   // Finish up input operands.  Set the input chain and add the flag last.
-  AsmNodeOperands[0] = Chain;
+  AsmNodeOperands[InlineAsm::Op_InputChain] = Chain;
   if (Flag.getNode()) AsmNodeOperands.push_back(Flag);
 
   Chain = DAG.getNode(ISD::INLINEASM, getCurDebugLoc(),

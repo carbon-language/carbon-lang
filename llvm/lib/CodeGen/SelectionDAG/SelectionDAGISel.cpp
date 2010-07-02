@@ -1089,6 +1089,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   Ops.push_back(InOps[InlineAsm::Op_InputChain]); // 0
   Ops.push_back(InOps[InlineAsm::Op_AsmString]);  // 1
   Ops.push_back(InOps[InlineAsm::Op_MDNode]);     // 2, !srcloc
+  Ops.push_back(InOps[InlineAsm::Op_IsAlignStack]);  // 3
 
   unsigned i = InlineAsm::Op_FirstOperand, e = InOps.size();
   if (InOps[e-1].getValueType() == MVT::Flag)

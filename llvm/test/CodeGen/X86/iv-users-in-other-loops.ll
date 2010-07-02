@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 -o %t
 ; RUN: not grep inc %t
 ; RUN: grep dec %t | count 2
-; RUN: grep addq %t | count 13
+; RUN: grep addq %t | count 12
 ; RUN: not grep addb %t
 ; RUN: not grep leaq %t
 ; RUN: not grep leal %t

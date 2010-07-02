@@ -881,14 +881,14 @@ int MachineInstr::findFirstPredOperandIdx() const {
 bool MachineInstr::
 isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
   if (isInlineAsm()) {
-    assert(DefOpIdx >= 2);
+    assert(DefOpIdx >= 3);
     const MachineOperand &MO = getOperand(DefOpIdx);
     if (!MO.isReg() || !MO.isDef() || MO.getReg() == 0)
       return false;
     // Determine the actual operand index that corresponds to this index.
     unsigned DefNo = 0;
     unsigned DefPart = 0;
-    for (unsigned i = 1, e = getNumOperands(); i < e; ) {
+    for (unsigned i = 2, e = getNumOperands(); i < e; ) {
       const MachineOperand &FMO = getOperand(i);
       // After the normal asm operands there may be additional imp-def regs.
       if (!FMO.isImm())
@@ -903,7 +903,7 @@ isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
       }
       ++DefNo;
     }
-    for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
+    for (unsigned i = 2, e = getNumOperands(); i != e; ++i) {
       const MachineOperand &FMO = getOperand(i);
       if (!FMO.isImm())
         continue;
@@ -946,7 +946,7 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
 
     // Find the flag operand corresponding to UseOpIdx
     unsigned FlagIdx, NumOps=0;
-    for (FlagIdx = 1; FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
+    for (FlagIdx = 2; FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
       const MachineOperand &UFMO = getOperand(FlagIdx);
       // After the normal asm operands there may be additional imp-def regs.
       if (!UFMO.isImm())
@@ -964,9 +964,9 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
       if (!DefOpIdx)
         return true;
 
-      unsigned DefIdx = 1;
-      // Remember to adjust the index. First operand is asm string, then there
-      // is a flag for each.
+      unsigned DefIdx = 2;
+      // Remember to adjust the index. First operand is asm string, second is
+      // the AlignStack bit, then there is a flag for each.
       while (DefNo) {
         const MachineOperand &FMO = getOperand(DefIdx);
         assert(FMO.isImm());

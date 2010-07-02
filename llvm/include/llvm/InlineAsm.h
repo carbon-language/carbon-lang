@@ -154,7 +154,8 @@ public:
     Op_InputChain = 0,
     Op_AsmString = 1,
     Op_MDNode = 2,
-    Op_FirstOperand = 3,
+    Op_IsAlignStack = 3,
+    Op_FirstOperand = 4,
     
     Kind_RegUse = 1,
     Kind_RegDef = 2,

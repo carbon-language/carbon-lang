@@ -158,9 +158,9 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
         AdjustsStack = true;
         FrameSDOps.push_back(I);
       } else if (I->isInlineAsm()) {
-        // An InlineAsm might be a call; assume it is to get the stack frame
-        // aligned correctly for calls.
-        AdjustsStack = true;
+        // Some inline asm's need a stack frame, as indicated by operand 1.
+        if (I->getOperand(1).getImm())
+          AdjustsStack = true;
       }
 
   MFI->setAdjustsStack(AdjustsStack);

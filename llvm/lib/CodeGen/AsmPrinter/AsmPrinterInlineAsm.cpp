@@ -279,7 +279,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
       // Okay, we finally have a value number.  Ask the target to print this
       // operand!
       if (CurVariant == -1 || CurVariant == AsmPrinterVariant) {
-        unsigned OpNo = 1;
+        unsigned OpNo = 2;
 
         bool Error = false;
 

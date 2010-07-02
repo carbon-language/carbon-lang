@@ -5,6 +5,6 @@ define void @t() nounwind {
 ; CHECK: t:
 ; CHECK: push {r7}
 entry:
-  call void asm sideeffect ".long 0xe7ffdefe", ""() nounwind
+  call void asm sideeffect alignstack ".long 0xe7ffdefe", ""() nounwind
   ret void
 }
