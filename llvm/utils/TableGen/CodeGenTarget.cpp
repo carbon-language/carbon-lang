@@ -329,61 +329,41 @@ struct SortInstByName {
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
+  // The ordering here must match the ordering in TargetOpcodes.h.
+  const char *const FixedInstrs[] = {
+    "PHI",
+    "INLINEASM",
+    "DBG_LABEL",
+    "EH_LABEL",
+    "GC_LABEL",
+    "KILL",
+    "EXTRACT_SUBREG",
+    "INSERT_SUBREG",
+    "IMPLICIT_DEF",
+    "SUBREG_TO_REG",
+    "COPY_TO_REGCLASS",
+    "DBG_VALUE",
+    "REG_SEQUENCE",
+    0
+  };
   const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
-  const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
-  const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
-  const CodeGenInstruction *DBG_LABEL = GetInstByName("DBG_LABEL", Insts);
-  const CodeGenInstruction *EH_LABEL = GetInstByName("EH_LABEL", Insts);
-  const CodeGenInstruction *GC_LABEL = GetInstByName("GC_LABEL", Insts);
-  const CodeGenInstruction *KILL = GetInstByName("KILL", Insts);
-  const CodeGenInstruction *EXTRACT_SUBREG =
-    GetInstByName("EXTRACT_SUBREG", Insts);
-  const CodeGenInstruction *INSERT_SUBREG =
-    GetInstByName("INSERT_SUBREG", Insts);
-  const CodeGenInstruction *IMPLICIT_DEF = GetInstByName("IMPLICIT_DEF", Insts);
-  const CodeGenInstruction *SUBREG_TO_REG =
-    GetInstByName("SUBREG_TO_REG", Insts);
-  const CodeGenInstruction *COPY_TO_REGCLASS =
-    GetInstByName("COPY_TO_REGCLASS", Insts);
-  const CodeGenInstruction *DBG_VALUE = GetInstByName("DBG_VALUE", Insts);
-  const CodeGenInstruction *REG_SEQUENCE = GetInstByName("REG_SEQUENCE", Insts);
-
-  // Print out the rest of the instructions now.
-  InstrsByEnum.push_back(PHI);
-  InstrsByEnum.push_back(INLINEASM);
-  InstrsByEnum.push_back(DBG_LABEL);
-  InstrsByEnum.push_back(EH_LABEL);
-  InstrsByEnum.push_back(GC_LABEL);
-  InstrsByEnum.push_back(KILL);
-  InstrsByEnum.push_back(EXTRACT_SUBREG);
-  InstrsByEnum.push_back(INSERT_SUBREG);
-  InstrsByEnum.push_back(IMPLICIT_DEF);
-  InstrsByEnum.push_back(SUBREG_TO_REG);
-  InstrsByEnum.push_back(COPY_TO_REGCLASS);
-  InstrsByEnum.push_back(DBG_VALUE);
-  InstrsByEnum.push_back(REG_SEQUENCE);
-  
+  for (const char *const *p = FixedInstrs; *p; ++p) {
+    const CodeGenInstruction *Instr = GetInstByName(*p, Insts);
+    assert(Instr && "Missing target independent instruction");
+    assert(Instr->Namespace == "TargetOpcode" && "Bad namespace");
+    InstrsByEnum.push_back(Instr);
+  }
   unsigned EndOfPredefines = InstrsByEnum.size();
-  
+
   for (DenseMap<const Record*, CodeGenInstruction*>::const_iterator
        I = Insts.begin(), E = Insts.end(); I != E; ++I) {
     const CodeGenInstruction *CGI = I->second;
-    if (CGI != PHI &&
-        CGI != INLINEASM &&
-        CGI != DBG_LABEL &&
-        CGI != EH_LABEL &&
-        CGI != GC_LABEL &&
-        CGI != KILL &&
-        CGI != EXTRACT_SUBREG &&
-        CGI != INSERT_SUBREG &&
-        CGI != IMPLICIT_DEF &&
-        CGI != SUBREG_TO_REG &&
-        CGI != COPY_TO_REGCLASS &&
-        CGI != DBG_VALUE &&
-        CGI != REG_SEQUENCE)
+    if (CGI->Namespace != "TargetOpcode")
       InstrsByEnum.push_back(CGI);
   }
-  
+
+  assert(InstrsByEnum.size() == Insts.size() && "Missing predefined instr");
+
   // All of the instructions are now in random order based on the map iteration.
   // Sort them by name.
   std::sort(InstrsByEnum.begin()+EndOfPredefines, InstrsByEnum.end(),

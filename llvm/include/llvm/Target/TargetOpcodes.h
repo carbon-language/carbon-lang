@@ -15,27 +15,31 @@
 #define LLVM_TARGET_TARGETOPCODES_H
 
 namespace llvm {
-  
+
 /// Invariant opcodes: All instruction sets have these as their low opcodes.
+///
+/// Every instruction defined here must also appear in Target.td and the order
+/// must be the same as in CodeGenTarget.cpp.
+///
 namespace TargetOpcode {
-  enum { 
+  enum {
     PHI = 0,
     INLINEASM = 1,
     DBG_LABEL = 2,
     EH_LABEL = 3,
     GC_LABEL = 4,
-    
+
     /// KILL - This instruction is a noop that is used only to adjust the
     /// liveness of registers. This can be useful when dealing with
     /// sub-registers.
     KILL = 5,
-    
+
     /// EXTRACT_SUBREG - This instruction takes two operands: a register
     /// that has subregisters, and a subregister index. It returns the
     /// extracted subregister value. This is commonly used to implement
     /// truncation operations on target architectures which support it.
     EXTRACT_SUBREG = 6,
-    
+
     /// INSERT_SUBREG - This instruction takes three operands: a register that
     /// has subregisters, a register providing an insert value, and a
     /// subregister index. It returns the value of the first register with the
@@ -43,16 +47,16 @@ namespace TargetOpcode {
     /// defined by an IMPLICIT_DEF, because it is commonly used to implement
     /// anyext operations on target architectures which support it.
     INSERT_SUBREG = 7,
-    
+
     /// IMPLICIT_DEF - This is the MachineInstr-level equivalent of undef.
     IMPLICIT_DEF = 8,
-    
+
     /// SUBREG_TO_REG - This instruction is similar to INSERT_SUBREG except that
     /// the first operand is an immediate integer constant. This constant is
     /// often zero, because it is commonly used to assert that the instruction
     /// defining the register implicitly clears the high bits.
     SUBREG_TO_REG = 9,
-    
+
     /// COPY_TO_REGCLASS - This instruction is a placeholder for a plain
     /// register-to-register copy into a specific register class. This is only
     /// used between instruction selection and MachineInstr creation, before

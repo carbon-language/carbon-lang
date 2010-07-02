@@ -24,19 +24,8 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
        I != E; ++I) {
     Record *R = *I;
-    if (R->getName() == "PHI" ||
-        R->getName() == "INLINEASM" ||
-        R->getName() == "DBG_LABEL" ||
-        R->getName() == "EH_LABEL" ||
-        R->getName() == "GC_LABEL" ||
-        R->getName() == "KILL" ||
-        R->getName() == "EXTRACT_SUBREG" ||
-        R->getName() == "INSERT_SUBREG" ||
-        R->getName() == "IMPLICIT_DEF" ||
-        R->getName() == "SUBREG_TO_REG" ||
-        R->getName() == "COPY_TO_REGCLASS" ||
-        R->getName() == "DBG_VALUE" ||
-        R->getName() == "REG_SEQUENCE") continue;
+    if (R->getValueAsString("Namespace") == "TargetOpcode")
+      continue;
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
@@ -103,19 +92,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
     const CodeGenInstruction *CGI = *IN;
     Record *R = CGI->TheDef;
     
-    if (R->getName() == "PHI" ||
-        R->getName() == "INLINEASM" ||
-        R->getName() == "DBG_LABEL" ||
-        R->getName() == "EH_LABEL" ||
-        R->getName() == "GC_LABEL" ||
-        R->getName() == "KILL" ||
-        R->getName() == "EXTRACT_SUBREG" ||
-        R->getName() == "INSERT_SUBREG" ||
-        R->getName() == "IMPLICIT_DEF" ||
-        R->getName() == "SUBREG_TO_REG" ||
-        R->getName() == "COPY_TO_REGCLASS" ||
-        R->getName() == "DBG_VALUE" ||
-        R->getName() == "REG_SEQUENCE") {
+    if (R->getValueAsString("Namespace") == "TargetOpcode") {
       o << "    0U,\n";
       continue;
     }
@@ -140,22 +117,10 @@ void CodeEmitterGen::run(raw_ostream &o) {
   for (std::vector<Record*>::iterator IC = Insts.begin(), EC = Insts.end();
         IC != EC; ++IC) {
     Record *R = *IC;
+    if (R->getValueAsString("Namespace") == "TargetOpcode")
+      continue;
     const std::string &InstName = R->getName();
     std::string Case("");
-    
-    if (InstName == "PHI" ||
-        InstName == "INLINEASM" ||
-        InstName == "DBG_LABEL"||
-        InstName == "EH_LABEL"||
-        InstName == "GC_LABEL"||
-        InstName == "KILL"||
-        InstName == "EXTRACT_SUBREG" ||
-        InstName == "INSERT_SUBREG" ||
-        InstName == "IMPLICIT_DEF" ||
-        InstName == "SUBREG_TO_REG" ||
-        InstName == "COPY_TO_REGCLASS" ||
-        InstName == "DBG_VALUE" ||
-        InstName == "REG_SEQUENCE") continue;
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
     const std::vector<RecordVal> &Vals = R->getValues();
