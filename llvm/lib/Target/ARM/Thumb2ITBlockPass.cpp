@@ -27,8 +27,7 @@ namespace {
 
   public:
     static char ID;
-    Thumb2ITBlockPass(bool PreRA) :
-      MachineFunctionPass(&ID), PreRegAlloc(PreRA) {}
+    Thumb2ITBlockPass() : MachineFunctionPass(&ID) {}
 
     const Thumb2InstrInfo *TII;
     const TargetRegisterInfo *TRI;
@@ -41,18 +40,6 @@ namespace {
     }
 
   private:
-    bool MoveCPSRUseUp(MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator MBBI,
-                       MachineBasicBlock::iterator E,
-                       unsigned PredReg,
-                       ARMCC::CondCodes CC, ARMCC::CondCodes OCC,
-                       bool &Done);
-
-    void FindITBlockRanges(MachineBasicBlock &MBB,
-                           SmallVector<MachineInstr*,4> &FirstUses,
-                           SmallVector<MachineInstr*,4> &LastUses);
-    bool InsertITBlock(MachineInstr *First, MachineInstr *Last);
-    bool InsertITBlocks(MachineBasicBlock &MBB);
     bool MoveCopyOutOfITBlock(MachineInstr *MI,
                               ARMCC::CondCodes CC, ARMCC::CondCodes OCC,
                               SmallSet<unsigned, 4> &Defs,
@@ -60,189 +47,6 @@ namespace {
     bool InsertITInstructions(MachineBasicBlock &MBB);
   };
   char Thumb2ITBlockPass::ID = 0;
-}
-
-bool
-Thumb2ITBlockPass::MoveCPSRUseUp(MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator MBBI,
-                                 MachineBasicBlock::iterator E,
-                                 unsigned PredReg,
-                                 ARMCC::CondCodes CC, ARMCC::CondCodes OCC,
-                                 bool &Done) {
-  SmallSet<unsigned, 4> Defs, Uses;
-  MachineBasicBlock::iterator I = MBBI;
-  // Look for next CPSR use by scanning up to 4 instructions.
-  for (unsigned i = 0; i < 4; ++i) {
-    MachineInstr *MI = &*I;
-    unsigned MPredReg = 0;
-    ARMCC::CondCodes MCC = llvm::getITInstrPredicate(MI, MPredReg);
-    if (MCC != ARMCC::AL) {
-      if (MPredReg != PredReg || (MCC != CC && MCC != OCC))
-        return false;
-
-      // Check if the instruction is using any register that's defined
-      // below the previous predicated instruction. Also return false if
-      // it defines any register which is used in between.
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isReg())
-          continue;
-        unsigned Reg = MO.getReg();
-        if (!Reg)
-          continue;
-        if (MO.isDef()) {
-          if (Reg == PredReg || Uses.count(Reg))
-            return false;
-        } else {
-          if (Defs.count(Reg))
-            return false;
-        }
-      }
-
-      Done = (I == E);
-      MBB.remove(MI);
-      MBB.insert(MBBI, MI);
-      ++NumMovedInsts;
-      return true;
-    }
-
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (!Reg)
-        continue;
-      if (MO.isDef()) {
-        if (Reg == PredReg)
-          return false;
-        Defs.insert(Reg);
-      } else
-        Uses.insert(Reg);
-    }
-
-    if (I == E)
-      break;
-    ++I;
-  }
-  return false;
-}
-
-static bool isCPSRLiveout(MachineBasicBlock &MBB) {
-  for (MachineBasicBlock::succ_iterator I = MBB.succ_begin(),
-         E = MBB.succ_end(); I != E; ++I) {
-    if ((*I)->isLiveIn(ARM::CPSR))
-      return true;
-  }
-  return false;
-}
-
-void Thumb2ITBlockPass::FindITBlockRanges(MachineBasicBlock &MBB,
-                                       SmallVector<MachineInstr*,4> &FirstUses,
-                                       SmallVector<MachineInstr*,4> &LastUses) {
-  bool SeenUse = false;
-  MachineOperand *LastUse = 0;
-  MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
-  while (MBBI != E) {
-    MachineInstr *MI = &*MBBI;
-    ++MBBI;
-
-    MachineOperand *Def = 0;
-    MachineOperand *Use = 0;
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || MO.getReg() != ARM::CPSR)
-        continue;
-      if (MO.isDef()) {
-        assert(Def == 0 && "Multiple defs of CPSR?");
-        Def = &MO;
-      } else {
-        assert(Use == 0 && "Multiple uses of CPSR?");
-        Use = &MO;
-      }
-    }
-
-    if (Use) {
-      LastUse = Use;
-      if (!SeenUse) {
-        FirstUses.push_back(MI);
-        SeenUse = true;
-      }
-    }
-    if (Def) {
-      if (LastUse) {
-        LastUses.push_back(LastUse->getParent());
-        LastUse = 0;
-      }
-      SeenUse = false;
-    }
-  }
-
-  if (LastUse) {
-    // Is the last use a kill?
-    if (isCPSRLiveout(MBB))
-      LastUses.push_back(0);
-    else
-      LastUses.push_back(LastUse->getParent());
-  }
-}
-
-bool Thumb2ITBlockPass::InsertITBlock(MachineInstr *First, MachineInstr *Last) {
-  if (First == Last)
-    return false;
-
-  bool Modified = false;
-  MachineBasicBlock *MBB = First->getParent();
-  MachineBasicBlock::iterator MBBI = First;
-  MachineBasicBlock::iterator E = Last;
-
-  if (First->getDesc().isBranch() || First->getDesc().isReturn())
-    return false;
-
-  unsigned PredReg = 0;
-  ARMCC::CondCodes CC = llvm::getITInstrPredicate(First, PredReg);
-  if (CC == ARMCC::AL)
-    return Modified;
-
-  // Move uses of the CPSR together if possible.
-  ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
-
-  do {
-    ++MBBI;
-    if (MBBI->getDesc().isBranch() || MBBI->getDesc().isReturn())
-      return Modified;
-    MachineInstr *NMI = &*MBBI;
-    unsigned NPredReg = 0;
-    ARMCC::CondCodes NCC = llvm::getITInstrPredicate(NMI, NPredReg);
-    if (NCC != CC && NCC != OCC) {
-      if (NCC != ARMCC::AL)
-        return Modified;
-      assert(MBBI != E);
-      bool Done = false;
-      if (!MoveCPSRUseUp(*MBB, MBBI, E, PredReg, CC, OCC, Done))
-        return Modified;
-      Modified = true;
-      if (Done)
-        MBBI = E;
-    }
-  } while (MBBI != E);
-  return true;
-}
-
-bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
-  SmallVector<MachineInstr*, 4> FirstUses;
-  SmallVector<MachineInstr*, 4> LastUses;
-  FindITBlockRanges(MBB, FirstUses, LastUses);
-  assert(FirstUses.size() == LastUses.size() && "Incorrect range information!");
-
-  bool Modified = false;
-  for (unsigned i = 0, e = FirstUses.size(); i != e; ++i) {
-    if (LastUses[i] == 0)
-      // Must be the last pair where CPSR is live out of the block.
-      return Modified;
-    Modified |= InsertITBlock(FirstUses[i], LastUses[i]);
-  }
-  return Modified;
 }
 
 /// TrackDefUses - Tracking what registers are being defined and used by
@@ -417,13 +221,10 @@ bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E; ) {
     MachineBasicBlock &MBB = *MFI;
     ++MFI;
-    if (PreRegAlloc)
-      Modified |= InsertITBlocks(MBB);
-    else
-      Modified |= InsertITInstructions(MBB);
+    Modified |= InsertITInstructions(MBB);
   }
 
-  if (Modified && !PreRegAlloc)
+  if (Modified)
     AFI->setHasITBlocks(true);
 
   return Modified;
@@ -431,6 +232,6 @@ bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
 
 /// createThumb2ITBlockPass - Returns an instance of the Thumb2 IT blocks
 /// insertion pass.
-FunctionPass *llvm::createThumb2ITBlockPass(bool PreAlloc) {
-  return new Thumb2ITBlockPass(PreAlloc);
+FunctionPass *llvm::createThumb2ITBlockPass() {
+  return new Thumb2ITBlockPass();
 }

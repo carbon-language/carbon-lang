@@ -16,16 +16,10 @@
 #include "ARM.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static cl::opt<bool>
-EarlyITBlockFormation("thumb2-early-it-blocks", cl::Hidden,
-  cl::desc("Form IT blocks early before register allocation"),
-  cl::init(false));
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
@@ -109,8 +103,6 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass(true));
 
-  if (Subtarget.isThumb2() && EarlyITBlockFormation)
-    PM.add(createThumb2ITBlockPass(true));
   return true;
 }
 
