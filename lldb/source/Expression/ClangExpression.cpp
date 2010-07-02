@@ -236,6 +236,7 @@ ClangExpression::CreateCompilerInstance (bool &IsAST)
     // Our hook into Clang's lookup mechanism only works in C++.
     m_clang_ap->getLangOpts().CPlusPlus = true;
     m_clang_ap->getLangOpts().ObjC1 = true;
+    m_clang_ap->getLangOpts().ThreadsafeStatics = false;
 
     // Disable some warnings.
     m_clang_ap->getDiagnosticOpts().Warnings.push_back("no-unused-value");

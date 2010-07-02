@@ -1,4 +1,4 @@
-//===-- IRToDWARF.cpp ---------------------------------------*- C++ -*-===//
+//===-- IRToDWARF.cpp -------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -141,7 +141,8 @@ IRToDWARF::runOnBasicBlock(BasicBlock &BB, Relocator &R)
     
     if (log)
     {
-        log->Printf("Translating a basic block:");
+        log->Printf("Translating basic block %s:",
+                    BB.hasName() ? BB.getNameStr().c_str() : "[anonymous]");
     
         llvm::BasicBlock::iterator ii;
         
