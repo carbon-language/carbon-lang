@@ -386,6 +386,12 @@ bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   if (!D)
     return true;
 
+  // As a syntax visitor, we want to ignore declarations for
+  // implicitly-defined declarations (ones not typed explicitly by the
+  // user).
+  if (D->isImplicit())
+    return true;
+
   switch (D->getKind()) {
 #define ABSTRACT_DECL(DECL)
 #define DECL(CLASS, BASE) \
@@ -883,9 +889,6 @@ DEF_TRAVERSE_DECL(RecordDecl, {
   })
 
 DEF_TRAVERSE_DECL(CXXRecordDecl, {
-    // FIXME: don't traverse compiler-generated constructor,
-    // destructor, and operator=, as they aren't written in the source
-    // code.
     TRY_TO(TraverseCXXRecordHelper(D));
   })
 
