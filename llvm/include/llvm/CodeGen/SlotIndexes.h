@@ -663,15 +663,20 @@ namespace llvm {
       MachineBasicBlock::iterator miItr(mi);
       bool needRenumber = false;
       IndexListEntry *newEntry;
-
+      // Get previous index, considering that not all instructions are indexed.
       IndexListEntry *prevEntry;
-      if (miItr == mbb->begin()) {
+      for (;;) {
         // If mi is at the mbb beginning, get the prev index from the mbb.
-        prevEntry = &mbbRangeItr->second.first.entry();
-      } else {
-        // Otherwise get it from the previous instr.
-        MachineBasicBlock::iterator pItr(prior(miItr));
-        prevEntry = &getInstructionIndex(pItr).entry();
+        if (miItr == mbb->begin()) {
+          prevEntry = &mbbRangeItr->second.first.entry();
+          break;
+        }
+        // Otherwise rewind until we find a mapped instruction.
+        Mi2IndexMap::const_iterator itr = mi2iMap.find(--miItr);
+        if (itr != mi2iMap.end()) {
+          prevEntry = &itr->second.entry();
+          break;
+        }
       }
 
       // Get next entry from previous entry.
