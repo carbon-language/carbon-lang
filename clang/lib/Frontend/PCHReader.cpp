@@ -2116,12 +2116,15 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getTypeDeclType(
              cast<UnresolvedUsingTypenameDecl>(GetDecl(Record[0])));
 
-  case pch::TYPE_TYPEDEF:
-    if (Record.size() != 1) {
+  case pch::TYPE_TYPEDEF: {
+    if (Record.size() != 2) {
       Error("incorrect encoding of typedef type");
       return QualType();
     }
-    return Context->getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
+    TypedefDecl *Decl = cast<TypedefDecl>(GetDecl(Record[0]));
+    QualType Canonical = GetType(Record[1]);
+    return Context->getTypedefType(Decl, Canonical);
+  }
 
   case pch::TYPE_TYPEOF_EXPR:
     return Context->getTypeOfExprType(ReadExpr());
@@ -2251,8 +2254,12 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     llvm::SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, Record, Idx);
     QualType Canon = GetType(Record[Idx++]);
-    return Context->getTemplateSpecializationType(Name, Args.data(),Args.size(),
-                                                  Canon);
+    if (Canon.isNull())
+      return Context->getCanonicalTemplateSpecializationType(Name, Args.data(),
+                                                             Args.size());
+    else
+      return Context->getTemplateSpecializationType(Name, Args.data(),
+                                                    Args.size(), Canon);
   }
   }
   // Suppress a GCC warning

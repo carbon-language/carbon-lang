@@ -614,7 +614,7 @@ public:
 
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
-  QualType getTypedefType(const TypedefDecl *Decl);
+  QualType getTypedefType(const TypedefDecl *Decl, QualType Canon = QualType());
 
   QualType getInjectedClassNameType(CXXRecordDecl *Decl, QualType TST);
 
@@ -629,6 +629,10 @@ public:
                                          const TemplateArgument *Args,
                                          unsigned NumArgs,
                                          QualType Canon = QualType());
+
+  QualType getCanonicalTemplateSpecializationType(TemplateName T,
+                                                  const TemplateArgument *Args,
+                                                  unsigned NumArgs);
 
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgumentListInfo &Args,

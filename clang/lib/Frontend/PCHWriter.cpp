@@ -173,6 +173,8 @@ void PCHTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
 
 void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
+  assert(!T->isCanonicalUnqualified() && "Invalid typedef ?");
+  Writer.AddTypeRef(T->getCanonicalTypeInternal(), Record);
   Code = pch::TYPE_TYPEDEF;
 }
 
@@ -223,8 +225,9 @@ PCHTypeWriter::VisitTemplateSpecializationType(
   for (TemplateSpecializationType::iterator ArgI = T->begin(), ArgE = T->end();
          ArgI != ArgE; ++ArgI)
     Writer.AddTemplateArgument(*ArgI, Record);
-  QualType Canon = T->getCanonicalTypeInternal();
-  Writer.AddTypeRef(Canon.getTypePtr() != T ? Canon : QualType(), Record);
+  Writer.AddTypeRef(T->isCanonicalUnqualified() ? QualType()
+                                                : T->getCanonicalTypeInternal(),
+                    Record);
   Code = pch::TYPE_TEMPLATE_SPECIALIZATION;
 }
 

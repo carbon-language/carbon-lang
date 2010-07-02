@@ -1787,10 +1787,12 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) {
 
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
-QualType ASTContext::getTypedefType(const TypedefDecl *Decl) {
+QualType
+ASTContext::getTypedefType(const TypedefDecl *Decl, QualType Canonical) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
-  QualType Canonical = getCanonicalType(Decl->getUnderlyingType());
+  if (Canonical.isNull())
+    Canonical = getCanonicalType(Decl->getUnderlyingType());
   Decl->TypeForDecl = new(*this, TypeAlignment)
     TypedefType(Type::Typedef, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
@@ -1894,41 +1896,8 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           QualType Canon) {
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
-  else {
-    // Build the canonical template specialization type.
-    TemplateName CanonTemplate = getCanonicalTemplateName(Template);
-    llvm::SmallVector<TemplateArgument, 4> CanonArgs;
-    CanonArgs.reserve(NumArgs);
-    for (unsigned I = 0; I != NumArgs; ++I)
-      CanonArgs.push_back(getCanonicalTemplateArgument(Args[I]));
-
-    // Determine whether this canonical template specialization type already
-    // exists.
-    llvm::FoldingSetNodeID ID;
-    TemplateSpecializationType::Profile(ID, CanonTemplate,
-                                        CanonArgs.data(), NumArgs, *this);
-
-    void *InsertPos = 0;
-    TemplateSpecializationType *Spec
-      = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
-
-    if (!Spec) {
-      // Allocate a new canonical template specialization type.
-      void *Mem = Allocate((sizeof(TemplateSpecializationType) +
-                            sizeof(TemplateArgument) * NumArgs),
-                           TypeAlignment);
-      Spec = new (Mem) TemplateSpecializationType(CanonTemplate,
-                                                  CanonArgs.data(), NumArgs,
-                                                  Canon);
-      Types.push_back(Spec);
-      TemplateSpecializationTypes.InsertNode(Spec, InsertPos);
-    }
-
-    if (Canon.isNull())
-      Canon = QualType(Spec, 0);
-    assert(Canon->isDependentType() &&
-           "Non-dependent template-id type must have a canonical type");
-  }
+  else
+    Canon = getCanonicalTemplateSpecializationType(Template, Args, NumArgs);
 
   // Allocate the (non-canonical) template specialization type, but don't
   // try to unique it: these types typically have location information that
@@ -1942,6 +1911,44 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                            Canon);
 
   Types.push_back(Spec);
+  return QualType(Spec, 0);
+}
+
+QualType
+ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
+                                                   const TemplateArgument *Args,
+                                                   unsigned NumArgs) {
+  // Build the canonical template specialization type.
+  TemplateName CanonTemplate = getCanonicalTemplateName(Template);
+  llvm::SmallVector<TemplateArgument, 4> CanonArgs;
+  CanonArgs.reserve(NumArgs);
+  for (unsigned I = 0; I != NumArgs; ++I)
+    CanonArgs.push_back(getCanonicalTemplateArgument(Args[I]));
+
+  // Determine whether this canonical template specialization type already
+  // exists.
+  llvm::FoldingSetNodeID ID;
+  TemplateSpecializationType::Profile(ID, CanonTemplate,
+                                      CanonArgs.data(), NumArgs, *this);
+
+  void *InsertPos = 0;
+  TemplateSpecializationType *Spec
+    = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (!Spec) {
+    // Allocate a new canonical template specialization type.
+    void *Mem = Allocate((sizeof(TemplateSpecializationType) +
+                          sizeof(TemplateArgument) * NumArgs),
+                         TypeAlignment);
+    Spec = new (Mem) TemplateSpecializationType(CanonTemplate,
+                                                CanonArgs.data(), NumArgs,
+                                                QualType());
+    Types.push_back(Spec);
+    TemplateSpecializationTypes.InsertNode(Spec, InsertPos);
+  }
+
+  assert(Spec->isDependentType() &&
+         "Non-dependent template-id type must have a canonical type");
   return QualType(Spec, 0);
 }
 
