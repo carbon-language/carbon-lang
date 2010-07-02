@@ -926,14 +926,12 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
           UnfoldTID.OpInfo[LoadRegIndex].getRegClass(TRI);
         unsigned Reg = MRI->createVirtualRegister(RC);
         SmallVector<MachineInstr *, 2> NewMIs;
-        bool Success =
-          TII->unfoldMemoryOperand(MF, mi, Reg,
-                                   /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
-                                   NewMIs);
-        (void)Success;
-        assert(Success &&
-               "unfoldMemoryOperand failed when getOpcodeAfterMemoryUnfold "
-               "succeeded!");
+        if (!TII->unfoldMemoryOperand(MF, mi, Reg,
+                                      /*UnfoldLoad=*/true,/*UnfoldStore=*/false,
+                                      NewMIs)) {
+          DEBUG(dbgs() << "2addr: ABANDONING UNFOLD\n");
+          return false;
+        }
         assert(NewMIs.size() == 2 &&
                "Unfolded a load into multiple instructions!");
         // The load was previously folded, so this is the only use.

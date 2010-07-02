@@ -2159,7 +2159,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   MachineInstr::mmo_iterator MMOBegin,
                                   MachineInstr::mmo_iterator MMOEnd,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = (*MMOBegin)->getAlignment() >= 16;
+  bool isAligned = *MMOBegin && (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
@@ -2189,7 +2189,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  MachineInstr::mmo_iterator MMOBegin,
                                  MachineInstr::mmo_iterator MMOEnd,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = (*MMOBegin)->getAlignment() >= 16;
+  bool isAligned = *MMOBegin && (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
@@ -2693,6 +2693,13 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.getRegClass(&RI);
+  if (!MI->hasOneMemOperand() &&
+      RC == &X86::VR128RegClass &&
+      !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
+    // Without memoperands, loadRegFromAddr and storeRegToStackSlot will
+    // conservatively assume the address is unaligned. That's bad for
+    // performance.
+    return false;
   SmallVector<MachineOperand, X86AddrNumOperands> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
   SmallVector<MachineOperand,2> AfterOps;
@@ -2834,7 +2841,12 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
               MachineInstr::mmo_iterator> MMOs =
       MF.extractLoadMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
                             cast<MachineSDNode>(N)->memoperands_end());
-    bool isAligned = (*MMOs.first)->getAlignment() >= 16;
+    if (!(*MMOs.first) &&
+        RC == &X86::VR128RegClass &&
+        !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
+      // Do not introduce a slow unaligned load.
+      return false;
+    bool isAligned = (*MMOs.first) && (*MMOs.first)->getAlignment() >= 16;
     Load = DAG.getMachineNode(getLoadRegOpcode(0, RC, isAligned, TM), dl,
                               VT, MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
@@ -2871,7 +2883,12 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
               MachineInstr::mmo_iterator> MMOs =
       MF.extractStoreMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
                              cast<MachineSDNode>(N)->memoperands_end());
-    bool isAligned = (*MMOs.first)->getAlignment() >= 16;
+    if (!(*MMOs.first) &&
+        RC == &X86::VR128RegClass &&
+        !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
+      // Do not introduce a slow unaligned store.
+      return false;
+    bool isAligned = (*MMOs.first) && (*MMOs.first)->getAlignment() >= 16;
     SDNode *Store = DAG.getMachineNode(getStoreRegOpcode(0, DstRC,
                                                          isAligned, TM),
                                        dl, MVT::Other,
