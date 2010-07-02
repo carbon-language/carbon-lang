@@ -245,20 +245,21 @@ void InlineSpiller::reMaterializeAll() {
     return;
 
   // Removing values may cause debug uses where li_ is not live.
-  for (MachineRegisterInfo::use_iterator
-       RI = mri_.use_begin(li_->reg), RE = mri_.use_end(); RI != RE;) {
-    MachineOperand &MO = RI.getOperand();
-    MachineInstr *MI = MO.getParent();
-    ++RI;
-    SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
-    DEBUG(dbgs() << "\tremaining use: " << UseIdx << '\t' << *MI);
-    if (li_->liveAt(UseIdx))
+  for (MachineRegisterInfo::use_iterator RI = mri_.use_begin(li_->reg);
+       MachineInstr *MI = RI.skipInstruction();) {
+    if (!MI->isDebugValue())
       continue;
-    assert(MI->isDebugValue() && "Remaining non-debug use after remat dead.");
-    if (li_->empty())
-      MO.setIsUndef();
-    else
-      MO.setReg(0);
+    // Try to preserve the debug value if li_ is live immediately after it.
+    MachineBasicBlock::iterator NextMI = MI;
+    ++NextMI;
+    if (NextMI != MI->getParent()->end() && !lis_.isNotInMIMap(NextMI)) {
+      SlotIndex NearIdx = lis_.getInstructionIndex(NextMI);
+      if (li_->liveAt(NearIdx))
+        continue;
+    }
+    DEBUG(dbgs() << "Removing debug info due to remat:" << "\t" << *MI);
+    assert(&*RI != MI && "Multiple register operands on debug value");
+    MI->eraseFromParent();
   }
 }
 
@@ -347,6 +348,24 @@ void InlineSpiller::spill(LiveInterval *li,
   // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(li->reg);
        MachineInstr *MI = RI.skipInstruction();) {
+
+    // Debug values are not allowed to affect codegen.
+    if (MI->isDebugValue()) {
+      // Modify DBG_VALUE now that the value is in a spill slot.
+      uint64_t Offset = MI->getOperand(1).getImm();
+      const MDNode *MDPtr = MI->getOperand(2).getMetadata();
+      DebugLoc DL = MI->getDebugLoc();
+      if (MachineInstr *NewDV = tii_.emitFrameIndexDebugValue(mf_, stackSlot_,
+                                                           Offset, MDPtr, DL)) {
+        DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
+        MachineBasicBlock *MBB = MI->getParent();
+        MBB->insert(MBB->erase(MI), NewDV);
+      } else {
+        DEBUG(dbgs() << "Removing debug info due to spill:" << "\t" << *MI);
+        MI->eraseFromParent();
+      }
+      continue;
+    }
 
     // Analyze instruction.
     bool Reads, Writes;
