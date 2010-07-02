@@ -1051,14 +1051,13 @@ declare signext i8 @returns_signed_char()
       for return values. </dd>
 
   <dt><tt><b>noalias</b></tt></dt>
-  <dd>This indicates that the pointer does not alias any global or any other
-      parameter.  The caller is responsible for ensuring that this is the
-      case. On a function return value, <tt>noalias</tt> additionally indicates
-      that the pointer does not alias any other pointers visible to the
-      caller. For further details, please see the discussion of the NoAlias
-      response in
-      <a href="http://llvm.org/docs/AliasAnalysis.html#MustMayNo">alias
-      analysis</a>.</dd>
+  <dd>This indicates that pointer values
+      <a href="#pointeraliasing"><i>based</i></a> on the argument or return
+      value do not alias pointer values which are not <i>based</i> on it.
+      The caller shares the responsibility with the callee for ensuring that
+      these requirements are met.
+      For further details, please see the discussion of the NoAlias response in
+      <a href="AliasAnalysis.html#MustMayNo">alias analysis</a>.</dd>
 
   <dt><tt><b>nocapture</b></tt></dt>
   <dd>This indicates that the callee does not make any copies of the pointer
@@ -1367,29 +1366,41 @@ is undefined. Pointer values are associated with address ranges
 according to the following rules:</p>
 
 <ul>
-  <li>A pointer value formed from a
-      <tt><a href="#i_getelementptr">getelementptr</a></tt> instruction
-      is associated with the addresses associated with the first operand
-      of the <tt>getelementptr</tt>.</li>
+  <li>A pointer value is associated with the addresses associated with
+      any value it is <i>based</i> on.
   <li>An address of a global variable is associated with the address
       range of the variable's storage.</li>
   <li>The result value of an allocation instruction is associated with
       the address range of the allocated storage.</li>
   <li>A null pointer in the default address-space is associated with
       no address.</li>
-  <li>A pointer value formed by an
-      <tt><a href="#i_inttoptr">inttoptr</a></tt> is associated with all
-      address ranges of all pointer values that contribute (directly or
-      indirectly) to the computation of the pointer's value.</li>
-  <li>The result value of a
-      <tt><a href="#i_bitcast">bitcast</a></tt> is associated with all
-      addresses associated with the operand of the <tt>bitcast</tt>.</li>
   <li>An integer constant other than zero or a pointer value returned
       from a function not defined within LLVM may be associated with address
       ranges allocated through mechanisms other than those provided by
       LLVM. Such ranges shall not overlap with any ranges of addresses
       allocated by mechanisms provided by LLVM.</li>
-  </ul>
+</ul>
+
+<p>A pointer value is <i>based</i> on another pointer value according
+   to the following rules:</p>
+
+<ul>
+  <li>A pointer value formed from a
+      <tt><a href="#i_getelementptr">getelementptr</a></tt> operation
+      is <i>based</i> on the first operand of the <tt>getelementptr</tt>.</li>
+  <li>The result value of a
+      <tt><a href="#i_bitcast">bitcast</a></tt> is <i>based</i> on the operand
+      of the <tt>bitcast</tt>.</li>
+  <li>A pointer value formed by an
+      <tt><a href="#i_inttoptr">inttoptr</a></tt> is <i>based</i> on all
+      pointer values that contribute (directly or indirectly) to the
+      computation of the pointer's value.</li>
+  <li>The "<i>based</i> on" relationship is transitive.</li>
+</ul>
+
+<p>Note that this definition of <i>"based"</i> is intentionally
+   similar to the definition of <i>"based"</i> in C99, though it is
+   slightly weaker.</p>
 
 <p>LLVM IR does not associate types with memory. The result type of a
 <tt><a href="#i_load">load</a></tt> merely indicates the size and
