@@ -642,6 +642,9 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {
+#ifndef NDEBUG
+    int SPAdjCount = 0; // frame setup / destroy count.
+#endif
     int SPAdj = 0;  // SP offset due to call frame setup / destroy.
     if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
@@ -649,6 +652,10 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
+#ifndef NDEBUG
+        // Track whether we see even pairs of them
+        SPAdjCount += I->getOpcode() == FrameSetupOpcode ? 1 : -1;
+#endif
         // Remember how much SP has been adjusted to create the call
         // frame.
         int Size = I->getOperand(0).getImm();
@@ -715,7 +722,13 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       if (RS && !FrameIndexVirtualScavenging && MI) RS->forward(MI);
     }
 
-    assert(SPAdj == 0 && "Unbalanced call frame setup / destroy pairs?");
+    // If we have evenly matched pairs of frame setup / destroy instructions,
+    // make sure the adjustments come out to zero. If we don't have matched
+    // pairs, we can't be sure the missing bit isn't in another basic block
+    // due to a custom inserter playing tricks, so just asserting SPAdj==0
+    // isn't sufficient. See tMOVCC on Thumb1, for example.
+    assert((SPAdjCount || SPAdj == 0) &&
+           "Unbalanced call frame setup / destroy pairs?");
   }
 }
 
