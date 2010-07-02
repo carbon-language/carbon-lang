@@ -58,6 +58,7 @@
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangResultSynthesizer.h"
 #include "lldb/Expression/ClangStmtVisitor.h"
+#include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -473,7 +474,7 @@ ClangExpression::ConvertExpressionToDWARF (ClangExpressionVariableList& expr_loc
 }
 
 unsigned
-ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_variable_list,
+ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &expr_local_variable_list,
                                    StreamString &dwarf_opcode_strm)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
@@ -488,46 +489,9 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &excpr_local_vari
         return 1;
     }
     
-    llvm::Function* function = module->getFunction(StringRef("___clang_expr"));
+    IRToDWARF ir_to_dwarf("IR to DWARF", expr_local_variable_list, m_decl_map, dwarf_opcode_strm);
     
-    if (!function)
-    {
-        if (log)
-            log->Printf("Couldn't find ___clang_expr() in the module");
-        
-        return 1;
-    }
-            
-    if (log)
-        log->Printf("IR for %s:", function->getName().str().c_str());
-            
-    llvm::Function::iterator bbi;
-            
-    for (bbi = function->begin();
-         bbi != function->end();
-         ++bbi)
-    {
-        llvm::BasicBlock &bb = *bbi;
-                
-        llvm::BasicBlock::iterator ii;
-                
-        for (ii = bb.begin();
-             ii != bb.end();
-             ++ii)
-        {
-            llvm::Instruction &inst = *ii;
-            
-            std::string s;
-            llvm::raw_string_ostream os(s);
-            
-            inst.print(os);
-            
-            if (log)
-                log->Printf("  %s", s.c_str());
-        }
-    }
-    
-    return 0;
+    return ir_to_dwarf.runOnModule(*module);
 }
 
 bool

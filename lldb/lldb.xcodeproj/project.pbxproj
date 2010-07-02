@@ -332,6 +332,8 @@
 		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
 		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
+		49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */; };
+		49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DA743411DE6BB2006AEF7E /* IRToDWARF.h */; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
 		49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */; };
 		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
@@ -904,6 +906,8 @@
 		49BF48E011ADF37D008863BD /* ObjCObjectPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjCObjectPrinter.h; path = include/lldb/Target/ObjCObjectPrinter.h; sourceTree = "<group>"; };
 		49D7072611B5AD03001AD875 /* ClangASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTSource.h; path = include/lldb/Expression/ClangASTSource.h; sourceTree = "<group>"; };
 		49D7072811B5AD11001AD875 /* ClangASTSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTSource.cpp; path = source/Expression/ClangASTSource.cpp; sourceTree = "<group>"; };
+		49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRToDWARF.cpp; path = source/Expression/IRToDWARF.cpp; sourceTree = "<group>"; };
+		49DA743411DE6BB2006AEF7E /* IRToDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRToDWARF.h; path = include/lldb/Expression/IRToDWARF.h; sourceTree = "<group>"; };
 		49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunction.cpp; path = source/Target/ThreadPlanCallFunction.cpp; sourceTree = "<group>"; };
 		49EC3E9C118F90D400B1265E /* ThreadPlanCallFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallFunction.h; path = include/lldb/Target/ThreadPlanCallFunction.h; sourceTree = "<group>"; };
 		49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionDeclMap.cpp; path = source/Expression/ClangExpressionDeclMap.cpp; sourceTree = "<group>"; };
@@ -1832,6 +1836,8 @@
 				26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */,
 				26BC7DC310F1B79500F91463 /* DWARFExpression.h */,
 				26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */,
+				49DA743411DE6BB2006AEF7E /* IRToDWARF.h */,
+				49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */,
 				4C98D3E1118FB98F00E575D0 /* RecordingMemoryManager.h */,
 				4C98D3DB118FB96F00E575D0 /* RecordingMemoryManager.cpp */,
 			);
@@ -2184,6 +2190,7 @@
 				261B5A5511C3F2AD00AABD0A /* SharingPtr.h in Headers */,
 				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
 				49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */,
+				49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2633,6 +2640,7 @@
 				261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */,
 				4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */,
 				49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */,
+				49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
