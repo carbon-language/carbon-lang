@@ -985,17 +985,34 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   // so we have to do less work.
   Type *FuncType = D->getType().getTypePtr();
   if (FunctionProtoType *FuncProto = dyn_cast<FunctionProtoType>(FuncType)) {
-    // Don't call Traverse*, or the result type and parameter types
-    // will be double counted.
-    TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
+    if (D->isThisDeclarationADefinition()) {
+      // Don't call Traverse*, or the result type and parameter types
+      // will be double counted.
+      TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
+    } else {
+      // This works around a bug in Clang that does not add the parameters
+      // to decls_begin/end for function declarations (as opposed to
+      // definitions):
+      //    http://llvm.org/PR7442
+      // We work around this here by traversing the function type.
+      // This isn't perfect because we don't traverse the default
+      // values, if any.  It also may not interact great with
+      // templates.  But it's the best we can do until the bug is
+      // fixed.
+      // FIXME: replace the entire 'if' statement with
+      //   TRY_TO(WalkUpFromFunctionProtoType(FuncProto));
+      // when the bug is fixed.
+      TRY_TO(TraverseFunctionProtoType(FuncProto));
+      return true;
+    }
   } else if (FunctionNoProtoType *FuncNoProto =
       dyn_cast<FunctionNoProtoType>(FuncType)) {
     // Don't call Traverse*, or the result type will be double
     // counted.
     TRY_TO(WalkUpFromFunctionNoProtoType(FuncNoProto));
   } else {   // a typedef type, or who knows what
-    TRY_TO(TraverseType(D->getType()));
     assert(!D->isThisDeclarationADefinition() && "Unexpected function type");
+    TRY_TO(TraverseType(D->getType()));
     return true;
   }
 
