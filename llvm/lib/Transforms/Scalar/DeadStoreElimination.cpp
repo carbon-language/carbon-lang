@@ -74,7 +74,6 @@ namespace {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MemoryDependenceAnalysis>();
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
 
