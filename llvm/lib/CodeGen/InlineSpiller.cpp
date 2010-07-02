@@ -39,9 +39,16 @@ class InlineSpiller : public Spiller {
 
   // Variables that are valid during spill(), but used by multiple methods.
   LiveInterval *li_;
+  std::vector<LiveInterval*> *newIntervals_;
   const TargetRegisterClass *rc_;
   int stackSlot_;
   const SmallVectorImpl<LiveInterval*> *spillIs_;
+
+  // Values of the current interval that can potentially remat.
+  SmallPtrSet<VNInfo*, 8> reMattable_;
+
+  // Values in reMattable_ that failed to remat at some point.
+  SmallPtrSet<VNInfo*, 8> usedValues_;
 
   ~InlineSpiller() {}
 
@@ -58,7 +65,13 @@ public:
              std::vector<LiveInterval*> &newIntervals,
              SmallVectorImpl<LiveInterval*> &spillIs,
              SlotIndex *earliestIndex);
-  bool reMaterialize(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+
+private:
+  bool allUsesAvailableAt(const MachineInstr *OrigMI, SlotIndex OrigIdx,
+                          SlotIndex UseIdx);
+  bool reMaterializeFor(MachineBasicBlock::iterator MI);
+  void reMaterializeAll();
+
   bool foldMemoryOperand(MachineBasicBlock::iterator MI,
                          const SmallVectorImpl<unsigned> &Ops);
   void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
@@ -75,77 +88,178 @@ Spiller *createInlineSpiller(MachineFunction *mf,
 }
 }
 
-/// reMaterialize - Attempt to rematerialize li_->reg before MI instead of
-/// reloading it.
-bool InlineSpiller::reMaterialize(LiveInterval &NewLI,
-                                  MachineBasicBlock::iterator MI) {
-  SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
-  LiveRange *LR = li_->getLiveRangeContaining(UseIdx);
-  if (!LR) {
-    DEBUG(dbgs() << "\tundef at " << UseIdx << ", adding <undef> flags.\n");
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() && MO.getReg() == li_->reg)
-        MO.setIsUndef();
-    }
-    return true;
-  }
-
-  // Find the instruction that defined this value of li_->reg.
-  if (!LR->valno->isDefAccurate())
-    return false;
-  SlotIndex OrigDefIdx = LR->valno->def;
-  MachineInstr *OrigDefMI = lis_.getInstructionFromIndex(OrigDefIdx);
-  if (!OrigDefMI)
-    return false;
-
-  // FIXME: Provide AliasAnalysis argument.
-  if (!tii_.isTriviallyReMaterializable(OrigDefMI))
-    return false;
-
-  // A rematerializable instruction may be using other virtual registers.
-  // Make sure they are available at the new location.
-  for (unsigned i = 0, e = OrigDefMI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = OrigDefMI->getOperand(i);
+/// allUsesAvailableAt - Return true if all registers used by OrigMI at
+/// OrigIdx are also available with the same value at UseIdx.
+bool InlineSpiller::allUsesAvailableAt(const MachineInstr *OrigMI,
+                                       SlotIndex OrigIdx,
+                                       SlotIndex UseIdx) {
+  OrigIdx = OrigIdx.getUseIndex();
+  UseIdx = UseIdx.getUseIndex();
+  for (unsigned i = 0, e = OrigMI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = OrigMI->getOperand(i);
     if (!MO.isReg() || !MO.getReg() || MO.getReg() == li_->reg)
       continue;
-    // Reserved physregs are OK. Others are not (probably from coalescing).
-    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
-      if (reserved_.test(MO.getReg()))
-        continue;
-      else
-        return false;
-    }
-    // We don't want to move any virtual defs.
+    // Reserved registers are OK.
+    if (MO.isUndef() || !lis_.hasInterval(MO.getReg()))
+      continue;
+    // We don't want to move any defs.
     if (MO.isDef())
       return false;
-    // We have a use of a virtual register other than li_->reg.
-    if (MO.isUndef())
-      continue;
     // We cannot depend on virtual registers in spillIs_. They will be spilled.
     for (unsigned si = 0, se = spillIs_->size(); si != se; ++si)
       if ((*spillIs_)[si]->reg == MO.getReg())
         return false;
 
-    // Is the register available here with the same value as at OrigDefMI?
-    LiveInterval &ULI = lis_.getInterval(MO.getReg());
-    LiveRange *HereLR = ULI.getLiveRangeContaining(UseIdx);
-    if (!HereLR)
-      return false;
-    LiveRange *DefLR = ULI.getLiveRangeContaining(OrigDefIdx.getUseIndex());
-    if (!DefLR || DefLR->valno != HereLR->valno)
+    LiveInterval &LI = lis_.getInterval(MO.getReg());
+    const VNInfo *OVNI = LI.getVNInfoAt(OrigIdx);
+    if (!OVNI)
+      continue;
+    if (OVNI != LI.getVNInfoAt(UseIdx))
       return false;
   }
+  return true;
+}
 
-  // Finally we can rematerialize OrigDefMI before MI.
+/// reMaterializeFor - Attempt to rematerialize li_->reg before MI instead of
+/// reloading it.
+bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
+  SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
+  VNInfo *OrigVNI = li_->getVNInfoAt(UseIdx);
+  if (!OrigVNI) {
+    DEBUG(dbgs() << "\tadding <undef> flags: ");
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isUse() && MO.getReg() == li_->reg)
+        MO.setIsUndef();
+    }
+    DEBUG(dbgs() << UseIdx << '\t' << *MI);
+    return true;
+  }
+  if (!reMattable_.count(OrigVNI)) {
+    DEBUG(dbgs() << "\tusing non-remat valno " << OrigVNI->id << ": "
+                 << UseIdx << '\t' << *MI);
+    return false;
+  }
+  MachineInstr *OrigMI = lis_.getInstructionFromIndex(OrigVNI->def);
+  if (!allUsesAvailableAt(OrigMI, OrigVNI->def, UseIdx)) {
+    usedValues_.insert(OrigVNI);
+    DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
+    return false;
+  }
+
+  // If the instruction also writes li_->reg, it had better not require the same
+  // register for uses and defs.
+  bool Reads, Writes;
+  SmallVector<unsigned, 8> Ops;
+  tie(Reads, Writes) = MI->readsWritesVirtualRegister(li_->reg, &Ops);
+  if (Writes) {
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(Ops[i]);
+      if (MO.isUse() ? MI->isRegTiedToDefOperand(Ops[i]) : MO.getSubReg()) {
+        usedValues_.insert(OrigVNI);
+        DEBUG(dbgs() << "\tcannot remat tied reg: " << UseIdx << '\t' << *MI);
+        return false;
+      }
+    }
+  }
+
+  // Alocate a new register for the remat.
+  unsigned NewVReg = mri_.createVirtualRegister(rc_);
+  vrm_.grow();
+  LiveInterval &NewLI = lis_.getOrCreateInterval(NewVReg);
+  NewLI.markNotSpillable();
+  newIntervals_->push_back(&NewLI);
+
+  // Finally we can rematerialize OrigMI before MI.
   MachineBasicBlock &MBB = *MI->getParent();
-  tii_.reMaterialize(MBB, MI, NewLI.reg, 0, OrigDefMI, tri_);
-  SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(--MI).getDefIndex();
-  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t' << *MI);
+  tii_.reMaterialize(MBB, MI, NewLI.reg, 0, OrigMI, tri_);
+  MachineBasicBlock::iterator RematMI = MI;
+  SlotIndex DefIdx = lis_.InsertMachineInstrInMaps(--RematMI).getDefIndex();
+  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t' << *RematMI);
+
+  // Replace operands
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(Ops[i]);
+    if (MO.isReg() && MO.isUse() && MO.getReg() == li_->reg) {
+      MO.setReg(NewVReg);
+      MO.setIsKill();
+    }
+  }
+  DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI);
+
   VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, true,
                                        lis_.getVNInfoAllocator());
   NewLI.addRange(LiveRange(DefIdx, UseIdx.getDefIndex(), DefVNI));
+  DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   return true;
+}
+
+/// reMaterializeAll - Try to rematerialize as many uses of li_ as possible,
+/// and trim the live ranges after.
+void InlineSpiller::reMaterializeAll() {
+  // Do a quick scan of the interval values to find if any are remattable.
+  reMattable_.clear();
+  usedValues_.clear();
+  for (LiveInterval::const_vni_iterator I = li_->vni_begin(),
+       E = li_->vni_end(); I != E; ++I) {
+    VNInfo *VNI = *I;
+    if (VNI->isUnused() || !VNI->isDefAccurate())
+      continue;
+    MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
+    if (!DefMI || !tii_.isTriviallyReMaterializable(DefMI))
+      continue;
+    reMattable_.insert(VNI);
+  }
+
+  // Often, no defs are remattable.
+  if (reMattable_.empty())
+    return;
+
+  // Try to remat before all uses of li_->reg.
+  bool anyRemat = false;
+  for (MachineRegisterInfo::use_nodbg_iterator
+       RI = mri_.use_nodbg_begin(li_->reg);
+       MachineInstr *MI = RI.skipInstruction();)
+     anyRemat |= reMaterializeFor(MI);
+
+  if (!anyRemat)
+    return;
+
+  // Remove any values that were completely rematted.
+  bool anyRemoved = false;
+  for (SmallPtrSet<VNInfo*, 8>::iterator I = reMattable_.begin(),
+       E = reMattable_.end(); I != E; ++I) {
+    VNInfo *VNI = *I;
+    if (VNI->hasPHIKill() || usedValues_.count(VNI))
+      continue;
+    MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
+    DEBUG(dbgs() << "\tremoving dead def: " << VNI->def << '\t' << *DefMI);
+    lis_.RemoveMachineInstrFromMaps(DefMI);
+    vrm_.RemoveMachineInstrFromMaps(DefMI);
+    DefMI->eraseFromParent();
+    li_->removeValNo(VNI);
+    anyRemoved = true;
+  }
+
+  if (!anyRemoved)
+    return;
+
+  // Removing values may cause debug uses where li_ is not live.
+  for (MachineRegisterInfo::use_iterator
+       RI = mri_.use_begin(li_->reg), RE = mri_.use_end(); RI != RE;) {
+    MachineOperand &MO = RI.getOperand();
+    MachineInstr *MI = MO.getParent();
+    ++RI;
+    SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
+    DEBUG(dbgs() << "\tremaining use: " << UseIdx << '\t' << *MI);
+    if (li_->liveAt(UseIdx))
+      continue;
+    assert(MI->isDebugValue() && "Remaining non-debug use after remat dead.");
+    if (li_->empty())
+      MO.setIsUndef();
+    else
+      MO.setReg(0);
+  }
 }
 
 /// foldMemoryOperand - Try folding stack slot references in Ops into MI.
@@ -218,9 +332,17 @@ void InlineSpiller::spill(LiveInterval *li,
   assert(!li->isStackSlot() && "Trying to spill a stack slot.");
 
   li_ = li;
+  newIntervals_ = &newIntervals;
   rc_ = mri_.getRegClass(li->reg);
-  stackSlot_ = vrm_.assignVirt2StackSlot(li->reg);
   spillIs_ = &spillIs;
+
+  reMaterializeAll();
+
+  // Remat may handle everything.
+  if (li_->empty())
+    return;
+
+  stackSlot_ = vrm_.assignVirt2StackSlot(li->reg);
 
   // Iterate over instructions using register.
   for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(li->reg);
@@ -231,6 +353,10 @@ void InlineSpiller::spill(LiveInterval *li,
     SmallVector<unsigned, 8> Ops;
     tie(Reads, Writes) = MI->readsWritesVirtualRegister(li->reg, &Ops);
 
+    // Attempt to fold memory ops.
+    if (foldMemoryOperand(MI, Ops))
+      continue;
+
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
     unsigned NewVReg = mri_.createVirtualRegister(rc_);
@@ -238,14 +364,7 @@ void InlineSpiller::spill(LiveInterval *li,
     LiveInterval &NewLI = lis_.getOrCreateInterval(NewVReg);
     NewLI.markNotSpillable();
 
-    // Attempt remat instead of reload.
-    bool NeedsReload = Reads && !reMaterialize(NewLI, MI);
-
-    // Attempt to fold memory ops.
-    if (NewLI.empty() && foldMemoryOperand(MI, Ops))
-      continue;
-
-    if (NeedsReload)
+    if (Reads)
       insertReload(NewLI, MI);
 
     // Rewrite instruction operands.

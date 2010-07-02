@@ -439,6 +439,12 @@ namespace llvm {
       return I == end() ? 0 : &*I;
     }
 
+    /// getVNInfoAt - Return the VNInfo that is live at Idx, or NULL.
+    VNInfo *getVNInfoAt(SlotIndex Idx) const {
+      const_iterator I = FindLiveRangeContaining(Idx);
+      return I == end() ? 0 : I->valno;
+    }
+
     /// FindLiveRangeContaining - Return an iterator to the live range that
     /// contains the specified index, or end() if there is none.
     const_iterator FindLiveRangeContaining(SlotIndex Idx) const;
