@@ -118,40 +118,6 @@ Mangled::SetValue (const char *s, bool mangled)
     }
 }
 
-namespace
-{
-    //------------------------------------------------------------------
-    // Convenience wrapper for __cxa_demangle.
-    //------------------------------------------------------------------
-    class DemangleBuffer
-    {
-        char *m_demangle_buf;
-        size_t m_demangle_buf_len;
-    public:
-        DemangleBuffer () : m_demangle_buf (NULL), m_demangle_buf_len (0) {}
-        ~DemangleBuffer ()
-        {
-            free (m_demangle_buf);
-        }
-        int Demangle (const char *mangled)
-        {
-            int status = 0;
-            m_demangle_buf = abi::__cxa_demangle(mangled, m_demangle_buf,
-                                                 &m_demangle_buf_len, &status);
-            return status;
-        }
-        const char *GetBuffer () const { return m_demangle_buf; }
-    };
-}
-
-//----------------------------------------------------------------------
-// Used to delete the thread specific buffer when the thread exits.
-//----------------------------------------------------------------------
-static void FreeDemangleBuffer (void *buf)
-{
-    delete static_cast<DemangleBuffer*> (buf);
-}
-
 //----------------------------------------------------------------------
 // Generate the demangled name on demand using this accessor. Code in
 // this class will need to use this accessor if it wishes to decode
@@ -176,29 +142,12 @@ Mangled::GetDemangledName () const
         const char * mangled = m_mangled.AsCString();
         if (mangled[0])
         {
-            // The first time the demangling routine is called, it will
-            // return a buffer value and length and we will continue to
-            // re-use that buffer so we don't always have to malloc/free
-            // a buffer for each demangle. The buffer can be realloc'ed
-            // by abi::__cxa_demangle, so we need to make it thread
-            // specific.
+            char *demangled_name = abi::__cxa_demangle (mangled, NULL, NULL, NULL);
 
-            // Set up thread specific storage.
-            static pthread_key_t g_demangle_key = 0;
-            if (!g_demangle_key)
-                ::pthread_key_create (&g_demangle_key, FreeDemangleBuffer);
-
-            DemangleBuffer *buf = static_cast<DemangleBuffer*> (
-                                      ::pthread_getspecific (g_demangle_key));
-            if (!buf) // No buffer for this thread, create a new one.
+            if (demangled_name)
             {
-                buf = new DemangleBuffer ();
-                ::pthread_setspecific (g_demangle_key, buf);
-            }
-
-            if (buf->Demangle (mangled) == 0)
-            {
-                m_demangled.SetCString(buf->GetBuffer());
+                m_demangled.SetCString (demangled_name);
+                free (demangled_name);
             }
             else
             {
