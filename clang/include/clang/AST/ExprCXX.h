@@ -465,7 +465,6 @@ class CXXDefaultArgExpr : public Expr {
   /// \brief The location where the default argument expression was used.
   SourceLocation Loc;
   
-protected:
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param)
     : Expr(SC, 
            param->hasUnparsedDefaultArg()
@@ -504,9 +503,6 @@ public:
   // Retrieve the parameter that the argument was created from.
   const ParmVarDecl *getParam() const { return Param.getPointer(); }
   ParmVarDecl *getParam() { return Param.getPointer(); }
-
-  /// isExprStored - Return true if this expression owns the expression.
-  bool isExprStored() const { return Param.getInt(); }
   
   // Retrieve the actual argument to the function call.
   const Expr *getExpr() const { 
@@ -519,16 +515,10 @@ public:
       return *reinterpret_cast<Expr **> (this + 1);
     return getParam()->getDefaultArg(); 
   }
-  
-  void setExpr(Expr *E) {
-    Param.setInt(true);
-    Param.setPointer((ParmVarDecl*)E);
-  }
 
   /// \brief Retrieve the location where this default argument was actually 
   /// used.
   SourceLocation getUsedLocation() const { return Loc; }
-  void setUsedLocation(SourceLocation L) { Loc = L; }
   
   virtual SourceRange getSourceRange() const {
     // Default argument expressions have no representation in the
@@ -544,6 +534,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
+  friend class PCHStmtWriter;
 };
 
 /// CXXTemporary - Represents a C++ temporary.

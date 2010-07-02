@@ -982,10 +982,11 @@ void PCHStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
 
 void PCHStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   VisitExpr(E);
-  E->setUsedLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  bool HasStoredExpr = Record[Idx++];
-  if (!HasStoredExpr) return;
-  E->setExpr(Reader.ReadSubExpr());
+
+  assert(Record[Idx] == E->Param.getInt() && "We messed up at creation ?");
+  ++Idx; // HasOtherExprStored and SubExpr was handled during creation.
+  E->Param.setPointer(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  E->Loc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
@@ -1552,9 +1553,15 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
     case pch::EXPR_CXX_THROW:
       S = new (Context) CXXThrowExpr(Empty);
       break;
-    case pch::EXPR_CXX_DEFAULT_ARG:
-      S = new (Context) CXXDefaultArgExpr(Empty);
+    case pch::EXPR_CXX_DEFAULT_ARG: {
+      bool HasOtherExprStored = Record[PCHStmtReader::NumExprFields];
+      if (HasOtherExprStored) {
+        Expr *SubExpr = ReadSubExpr();
+        S = CXXDefaultArgExpr::Create(*Context, SourceLocation(), 0, SubExpr);
+      } else
+        S = new (Context) CXXDefaultArgExpr(Empty);
       break;
+    }
     case pch::EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;

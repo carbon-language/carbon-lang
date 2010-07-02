@@ -983,13 +983,14 @@ void PCHStmtWriter::VisitCXXThrowExpr(CXXThrowExpr *E) {
 
 void PCHStmtWriter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   VisitExpr(E);
-  Writer.AddSourceLocation(E->getUsedLocation(), Record);
-  if (E->isExprStored()) {
-    Record.push_back(1);
+
+  bool HasOtherExprStored = E->Param.getInt();
+  // Store these first, the reader reads them before creation.
+  Record.push_back(HasOtherExprStored);
+  if (HasOtherExprStored)
     Writer.AddStmt(E->getExpr());
-  } else {
-    Record.push_back(0);
-  }
+  Writer.AddDeclRef(E->getParam(), Record);
+  Writer.AddSourceLocation(E->getUsedLocation(), Record);
 
   Code = pch::EXPR_CXX_DEFAULT_ARG;
 }
