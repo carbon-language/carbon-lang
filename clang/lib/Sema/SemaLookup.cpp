@@ -1990,6 +1990,16 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
+/// \brief Look up the constructors for the given class.
+DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
+  if (!Class->getDefinition())
+    return DeclContext::lookup_result();
+
+  CanQualType T = Context.getCanonicalType(Context.getTypeDeclType(Class));
+  DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(T);
+  return Class->lookup(Name);
+}
+
 /// \brief Look for the destructor of the given class.
 ///
 /// During semantic analysis, this routine should be used in lieu of 

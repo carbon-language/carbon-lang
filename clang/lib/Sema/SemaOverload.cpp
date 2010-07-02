@@ -1896,12 +1896,8 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
       // We're not going to find any constructors.
     } else if (CXXRecordDecl *ToRecordDecl
                  = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
-      DeclarationName ConstructorName
-        = Context.DeclarationNames.getCXXConstructorName(
-                       Context.getCanonicalType(ToType).getUnqualifiedType());
       DeclContext::lookup_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd)
-             = ToRecordDecl->lookup(ConstructorName);
+      for (llvm::tie(Con, ConEnd) = LookupConstructors(ToRecordDecl);
            Con != ConEnd; ++Con) {
         NamedDecl *D = *Con;
         DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());

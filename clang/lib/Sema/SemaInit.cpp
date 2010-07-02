@@ -2272,11 +2272,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // The type we're converting to is a class type. Enumerate its constructors
     // to see if there is a suitable conversion.
     CXXRecordDecl *T1RecordDecl = cast<CXXRecordDecl>(T1RecordType->getDecl());
-    DeclarationName ConstructorName
-      = S.Context.DeclarationNames.getCXXConstructorName(
-                           S.Context.getCanonicalType(T1).getUnqualifiedType());
     DeclContext::lookup_iterator Con, ConEnd;
-    for (llvm::tie(Con, ConEnd) = T1RecordDecl->lookup(ConstructorName);
+    for (llvm::tie(Con, ConEnd) = S.LookupConstructors(T1RecordDecl);
          Con != ConEnd; ++Con) {
       NamedDecl *D = *Con;
       DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
@@ -2670,11 +2667,8 @@ static void TryConstructorInitialization(Sema &S,
   CXXRecordDecl *DestRecordDecl
     = cast<CXXRecordDecl>(DestRecordType->getDecl());
     
-  DeclarationName ConstructorName
-    = S.Context.DeclarationNames.getCXXConstructorName(
-                     S.Context.getCanonicalType(DestType).getUnqualifiedType());
   DeclContext::lookup_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(DestRecordDecl);
        Con != ConEnd; ++Con) {
     NamedDecl *D = *Con;
     DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
@@ -2850,11 +2844,8 @@ static void TryUserDefinedConversion(Sema &S,
     
     // Try to complete the type we're converting to.
     if (!S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {    
-      DeclarationName ConstructorName
-        = S.Context.DeclarationNames.getCXXConstructorName(
-                     S.Context.getCanonicalType(DestType).getUnqualifiedType());
       DeclContext::lookup_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
+      for (llvm::tie(Con, ConEnd) = S.LookupConstructors(DestRecordDecl);
            Con != ConEnd; ++Con) {
         NamedDecl *D = *Con;
         DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
@@ -3303,12 +3294,9 @@ static Sema::OwningExprResult CopyObject(Sema &S,
     return move(CurInit);
 
   // Perform overload resolution using the class's copy constructors.
-  DeclarationName ConstructorName
-    = S.Context.DeclarationNames.getCXXConstructorName(
-                  S.Context.getCanonicalType(S.Context.getTypeDeclType(Class)));
   DeclContext::lookup_iterator Con, ConEnd;
   OverloadCandidateSet CandidateSet(Loc);
-  for (llvm::tie(Con, ConEnd) = Class->lookup(ConstructorName);
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
        Con != ConEnd; ++Con) {
     // Only consider copy constructors.
     CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(*Con);
