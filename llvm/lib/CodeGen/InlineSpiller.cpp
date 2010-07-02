@@ -258,7 +258,6 @@ void InlineSpiller::reMaterializeAll() {
         continue;
     }
     DEBUG(dbgs() << "Removing debug info due to remat:" << "\t" << *MI);
-    assert(&*RI != MI && "Multiple register operands on debug value");
     MI->eraseFromParent();
   }
 }
