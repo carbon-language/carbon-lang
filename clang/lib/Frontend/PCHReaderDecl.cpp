@@ -113,9 +113,14 @@ namespace clang {
 void PCHDeclReader::Visit(Decl *D) {
   DeclVisitor<PCHDeclReader, void>::Visit(D);
 
-  // if we have a fully initialized TypeDecl, we can safely read its type now.
-  if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
+  if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
+    // if we have a fully initialized TypeDecl, we can safely read its type now.
     TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtr());
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // FunctionDecl's body was written last after all other Stmts/Exprs.
+    if (Record[Idx++])
+      FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
+  }
 }
 
 void PCHDeclReader::VisitDecl(Decl *D) {
@@ -272,8 +277,9 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   }
   }
 
-  if (Record[Idx++])
-    FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
+  // FunctionDecl's body is handled last at PCHReaderDecl::Visit,
+  // after everything else is read.
+
   FD->setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
@@ -710,23 +716,83 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 }
 
 void PCHDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {
-  // assert(false && "cannot read CXXMethodDecl");
   VisitFunctionDecl(D);
 }
 
 void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
-  // assert(false && "cannot read CXXConstructorDecl");
   VisitCXXMethodDecl(D);
+  
+  D->IsExplicitSpecified = Record[Idx++];
+  D->ImplicitlyDefined = Record[Idx++];
+  
+  unsigned NumInitializers = Record[Idx++];
+  D->NumBaseOrMemberInitializers = NumInitializers;
+  if (NumInitializers) {
+    ASTContext &C = *Reader.getContext();
+
+    D->BaseOrMemberInitializers
+        = new (C) CXXBaseOrMemberInitializer*[NumInitializers];
+    for (unsigned i=0; i != NumInitializers; ++i) {
+      TypeSourceInfo *BaseClassInfo;
+      bool IsBaseVirtual;
+      FieldDecl *Member;
+  
+      bool IsBaseInitializer = Record[Idx++];
+      if (IsBaseInitializer) {
+        BaseClassInfo = Reader.GetTypeSourceInfo(Record, Idx);
+        IsBaseVirtual = Record[Idx++];
+      } else {
+        Member = cast<FieldDecl>(Reader.GetDecl(Record[Idx++]));
+      }
+      SourceLocation MemberLoc = Reader.ReadSourceLocation(Record, Idx);
+      Expr *Init = Reader.ReadExpr();
+      FieldDecl *AnonUnionMember
+          = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
+      SourceLocation LParenLoc = Reader.ReadSourceLocation(Record, Idx);
+      SourceLocation RParenLoc = Reader.ReadSourceLocation(Record, Idx);
+      bool IsWritten = Record[Idx++];
+      unsigned SourceOrderOrNumArrayIndices;
+      llvm::SmallVector<VarDecl *, 8> Indices;
+      if (IsWritten) {
+        SourceOrderOrNumArrayIndices = Record[Idx++];
+      } else {
+        SourceOrderOrNumArrayIndices = Record[Idx++];
+        Indices.reserve(SourceOrderOrNumArrayIndices);
+        for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
+          Indices.push_back(cast<VarDecl>(Reader.GetDecl(Record[Idx++])));
+      }
+      
+      CXXBaseOrMemberInitializer *BOMInit;
+      if (IsBaseInitializer) {
+        BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,
+                                                     IsBaseVirtual, LParenLoc,
+                                                     Init, RParenLoc);
+      } else if (IsWritten) {
+        BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
+                                                     LParenLoc, Init, RParenLoc);
+      } else {
+        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, MemberLoc,
+                                                     LParenLoc, Init, RParenLoc,
+                                                     Indices.data(),
+                                                     Indices.size());
+      }
+
+      BOMInit->setAnonUnionMember(AnonUnionMember);
+      D->BaseOrMemberInitializers[i] = BOMInit;
+    }
+  }
 }
 
 void PCHDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
-  // assert(false && "cannot read CXXDestructorDecl");
   VisitCXXMethodDecl(D);
+
+  D->ImplicitlyDefined = Record[Idx++];
+  D->OperatorDelete = cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
-  // assert(false && "cannot read CXXConversionDecl");
   VisitCXXMethodDecl(D);
+  D->IsExplicitSpecified = Record[Idx++];
 }
 
 void PCHDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {

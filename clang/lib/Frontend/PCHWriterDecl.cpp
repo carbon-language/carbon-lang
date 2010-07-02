@@ -40,6 +40,8 @@ namespace clang {
                   PCHWriter::RecordData &Record)
       : Writer(Writer), Context(Context), Record(Record) {
     }
+    
+    void Visit(Decl *D);
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
@@ -110,6 +112,19 @@ namespace clang {
 
     void WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base);
   };
+}
+
+void PCHDeclWriter::Visit(Decl *D) {
+  DeclVisitor<PCHDeclWriter>::Visit(D);
+
+  // Handle FunctionDecl's body here and write it after all other Stmts/Exprs
+  // have been written. We want it last because we will not read it back when
+  // retrieving it from the PCH, we'll just lazily set the offset. 
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    Record.push_back(FD->isThisDeclarationADefinition());
+    if (FD->isThisDeclarationADefinition())
+      Writer.AddStmt(FD->getBody());
+  }
 }
 
 void PCHDeclWriter::VisitDecl(Decl *D) {
@@ -255,11 +270,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   }
   }
 
-  // Make sure no Exprs are emitted after the body, because when reading the
-  // function, the body doesn't get read so the cursor doesn't advance. 
-  Record.push_back(D->isThisDeclarationADefinition());
-  if (D->isThisDeclarationADefinition())
-    Writer.AddStmt(D->getBody());
+  // FunctionDecl's body is handled last at PCHWriterDecl::Visit,
+  // after everything else is written.
 
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
@@ -691,26 +703,57 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 }
 
 void PCHDeclWriter::VisitCXXMethodDecl(CXXMethodDecl *D) {
-  // assert(false && "cannot write CXXMethodDecl");
   VisitFunctionDecl(D);
   Code = pch::DECL_CXX_METHOD;
 }
 
 void PCHDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
-  // assert(false && "cannot write CXXConstructorDecl");
   VisitCXXMethodDecl(D);
+
+  Record.push_back(D->IsExplicitSpecified);
+  Record.push_back(D->ImplicitlyDefined);
+  
+  Record.push_back(D->NumBaseOrMemberInitializers);
+  for (unsigned i=0; i != D->NumBaseOrMemberInitializers; ++i) {
+    CXXBaseOrMemberInitializer *Init = D->BaseOrMemberInitializers[i];
+
+    Record.push_back(Init->isBaseInitializer());
+    if (Init->isBaseInitializer()) {
+      Writer.AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
+      Record.push_back(Init->isBaseVirtual());
+    } else {
+      Writer.AddDeclRef(Init->getMember(), Record);
+    }
+    Writer.AddSourceLocation(Init->getMemberLocation(), Record);
+    Writer.AddStmt(Init->getInit());
+    Writer.AddDeclRef(Init->getAnonUnionMember(), Record);
+    Writer.AddSourceLocation(Init->getLParenLoc(), Record);
+    Writer.AddSourceLocation(Init->getRParenLoc(), Record);
+    Record.push_back(Init->isWritten());
+    if (Init->isWritten()) {
+      Record.push_back(Init->getSourceOrder());
+    } else {
+      Record.push_back(Init->getNumArrayIndices());
+      for (unsigned i=0, e=Init->getNumArrayIndices(); i != e; ++i)
+        Writer.AddDeclRef(Init->getArrayIndex(i), Record);
+    }
+  }
+
   Code = pch::DECL_CXX_CONSTRUCTOR;
 }
 
 void PCHDeclWriter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
-  // assert(false && "cannot write CXXDestructorDecl");
   VisitCXXMethodDecl(D);
+
+  Record.push_back(D->ImplicitlyDefined);
+  Writer.AddDeclRef(D->OperatorDelete, Record);
+
   Code = pch::DECL_CXX_DESTRUCTOR;
 }
 
 void PCHDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
-  // assert(false && "cannot write CXXConversionDecl");
   VisitCXXMethodDecl(D);
+  Record.push_back(D->IsExplicitSpecified);
   Code = pch::DECL_CXX_CONVERSION;
 }
 

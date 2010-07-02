@@ -1455,6 +1455,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXConstructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConstructor; }
+  
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// CXXDestructorDecl - Represents a C++ destructor within a
@@ -1518,6 +1521,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXDestructorDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXDestructor; }
+  
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// CXXConversionDecl - Represents a C++ conversion function within a
@@ -1572,6 +1578,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXConversionDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == CXXConversion; }
+  
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
