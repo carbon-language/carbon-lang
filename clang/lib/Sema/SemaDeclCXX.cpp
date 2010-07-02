@@ -2657,7 +2657,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     DeclareImplicitDefaultConstructor(ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
-    DeclareImplicitCopyConstructor(ClassDecl);
+    ++ASTContext::NumImplicitCopyConstructors;
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
     ++ASTContext::NumImplicitCopyAssignmentOperators;
@@ -5065,8 +5065,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
     if (Base->isVirtual())
       continue;
     
-    const CXXRecordDecl *BaseClassDecl
+    CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (!BaseClassDecl->hasDeclaredCopyConstructor())
+      DeclareImplicitCopyConstructor(BaseClassDecl);
+  
     HasConstCopyConstructor
       = BaseClassDecl->hasConstCopyConstructor(Context);
   }
@@ -5075,8 +5078,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                        BaseEnd = ClassDecl->vbases_end();
        HasConstCopyConstructor && Base != BaseEnd; 
        ++Base) {
-    const CXXRecordDecl *BaseClassDecl
+    CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (!BaseClassDecl->hasDeclaredCopyConstructor())
+      DeclareImplicitCopyConstructor(BaseClassDecl);
+    
     HasConstCopyConstructor
       = BaseClassDecl->hasConstCopyConstructor(Context);
   }
@@ -5091,8 +5097,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      const CXXRecordDecl *FieldClassDecl
+      CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (!FieldClassDecl->hasDeclaredCopyConstructor())
+        DeclareImplicitCopyConstructor(FieldClassDecl);
+
       HasConstCopyConstructor
         = FieldClassDecl->hasConstCopyConstructor(Context);
     }
@@ -5121,8 +5130,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
     if (Base->isVirtual())
       continue;
     
-    const CXXRecordDecl *BaseClassDecl
+    CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (!BaseClassDecl->hasDeclaredCopyConstructor())
+      DeclareImplicitCopyConstructor(BaseClassDecl);
+
     if (CXXConstructorDecl *CopyConstructor
                           = BaseClassDecl->getCopyConstructor(Context, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
@@ -5131,8 +5143,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                        BaseEnd = ClassDecl->vbases_end();
        Base != BaseEnd; 
        ++Base) {
-    const CXXRecordDecl *BaseClassDecl
+    CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (!BaseClassDecl->hasDeclaredCopyConstructor())
+      DeclareImplicitCopyConstructor(BaseClassDecl);
+
     if (CXXConstructorDecl *CopyConstructor
                           = BaseClassDecl->getCopyConstructor(Context, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
@@ -5143,8 +5158,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      const CXXRecordDecl *FieldClassDecl
+      CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      if (!FieldClassDecl->hasDeclaredCopyConstructor())
+        DeclareImplicitCopyConstructor(FieldClassDecl);
+
       if (CXXConstructorDecl *CopyConstructor
                           = FieldClassDecl->getCopyConstructor(Context, Quals))
         ExceptSpec.CalledDecl(CopyConstructor);
@@ -5175,6 +5193,10 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   CopyConstructor->setImplicit();
   CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
   
+  // Note that we have declared this constructor.
+  ClassDecl->setDeclaredCopyConstructor(true);
+  ++ASTContext::NumImplicitCopyConstructorsDeclared;
+  
   // Add the parameter to the constructor.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
                                                ClassDecl->getLocation(),
@@ -5184,9 +5206,8 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                                VarDecl::None, 0);
   CopyConstructor->setParams(&FromParam, 1);
   if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(CopyConstructor, S, true);
-  else
-    ClassDecl->addDecl(CopyConstructor);
+    PushOnScopeChains(CopyConstructor, S, false);
+  ClassDecl->addDecl(CopyConstructor);
   
   return CopyConstructor;
 }

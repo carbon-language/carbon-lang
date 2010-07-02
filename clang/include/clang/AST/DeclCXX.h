@@ -319,6 +319,9 @@ class CXXRecordDecl : public RecordDecl {
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
   
+    /// \brief Whether we have already declared the copy constructor.
+    bool DeclaredCopyConstructor : 1;
+    
     /// \brief Whether we have already declared the copy-assignment operator.
     bool DeclaredCopyAssignment : 1;
     
@@ -576,6 +579,20 @@ public:
     return data().UserDeclaredCopyConstructor;
   }
 
+  /// \brief Determine whether this class has had its copy constructor 
+  /// declared, either via the user or via an implicit declaration.
+  ///
+  /// This value is used for lazy creation of copy constructors.
+  bool hasDeclaredCopyConstructor() const {
+    return data().DeclaredCopyConstructor;
+  }
+  
+  /// \brief Note whether this class has already had its copy constructor 
+  /// declared.
+  void setDeclaredCopyConstructor(bool DCC) {
+    data().DeclaredCopyConstructor = DCC;
+  }
+  
   /// addedAssignmentOperator - Notify the class that another assignment
   /// operator has been added. This routine helps maintain information about the
   /// class based on which operators have been added.

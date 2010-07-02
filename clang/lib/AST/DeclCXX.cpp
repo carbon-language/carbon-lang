@@ -32,6 +32,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), HasTrivialConstructor(true),
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
+    DeclaredCopyConstructor(false), 
     DeclaredCopyAssignment(false), DeclaredDestructor(false),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Definition(D), FirstFriend(0) {
@@ -295,11 +296,13 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
   // suppress the implicit declaration of a copy constructor.
   if (ConDecl->isCopyConstructor()) {
     data().UserDeclaredCopyConstructor = true;
-
+    data().DeclaredCopyConstructor = true;
+    
     // C++ [class.copy]p6:
     //   A copy constructor is trivial if it is implicitly declared.
     // FIXME: C++0x: don't do this for "= default" copy constructors.
     data().HasTrivialCopyConstructor = false;
+    
   }
 }
 

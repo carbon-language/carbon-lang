@@ -464,14 +464,19 @@ static bool CanDeclareSpecialMemberFunction(ASTContext &Context,
 }
 
 void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
+  if (!CanDeclareSpecialMemberFunction(Context, Class))
+    return;
+  
+  // If the copy constructor has not yet been declared, do so now.
+  if (!Class->hasDeclaredCopyConstructor())
+    DeclareImplicitCopyConstructor(Class);
+  
   // If the copy assignment operator has not yet been declared, do so now.
-  if (CanDeclareSpecialMemberFunction(Context, Class) &&
-      !Class->hasDeclaredCopyAssignment())
+  if (!Class->hasDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(Class);
 
   // If the destructor has not yet been declared, do so now.
-  if (CanDeclareSpecialMemberFunction(Context, Class) &&
-      !Class->hasDeclaredDestructor())
+  if (!Class->hasDeclaredDestructor())
     DeclareImplicitDestructor(Class);  
 }
 
@@ -479,6 +484,7 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
 /// special member function.
 static bool isImplicitlyDeclaredMemberFunctionName(DeclarationName Name) {
   switch (Name.getNameKind()) {
+  case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
     return true;
     
@@ -501,12 +507,18 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
     return;
   
   switch (Name.getNameKind()) {
+  case DeclarationName::CXXConstructorName:
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
+      if (Record->getDefinition() && !Record->hasDeclaredCopyConstructor() &&
+          CanDeclareSpecialMemberFunction(S.Context, Record))
+        S.DeclareImplicitCopyConstructor(const_cast<CXXRecordDecl *>(Record));
+    break;
+      
   case DeclarationName::CXXDestructorName:
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
       if (Record->getDefinition() && !Record->hasDeclaredDestructor() &&
           CanDeclareSpecialMemberFunction(S.Context, Record))
         S.DeclareImplicitDestructor(const_cast<CXXRecordDecl *>(Record));
-    
     break;
     
   case DeclarationName::CXXOperatorName:
@@ -1992,9 +2004,11 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 
 /// \brief Look up the constructors for the given class.
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
-  if (!Class->getDefinition())
-    return DeclContext::lookup_result();
-
+  // If the copy constructor has not yet been declared, do so now.
+  if (CanDeclareSpecialMemberFunction(Context, Class) &&
+      !Class->hasDeclaredCopyConstructor())
+    DeclareImplicitCopyConstructor(Class);
+  
   CanQualType T = Context.getCanonicalType(Context.getTypeDeclType(Class));
   DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(T);
   return Class->lookup(Name);

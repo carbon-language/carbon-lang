@@ -1327,6 +1327,13 @@ public:
   //                    Statistics
   //===--------------------------------------------------------------------===//
 
+  /// \brief The number of implicitly-declared copy constructors.
+  static unsigned NumImplicitCopyConstructors;
+  
+  /// \brief The number of implicitly-declared constructors for 
+  /// which declarations were built.
+  static unsigned NumImplicitCopyConstructorsDeclared;
+
   /// \brief The number of implicitly-declared copy assignment operators.
   static unsigned NumImplicitCopyAssignmentOperators;
   
