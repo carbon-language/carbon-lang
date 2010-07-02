@@ -1007,11 +1007,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                    NodesLeadingTo);
     }
 
-    // Now that we legalized all of the inputs (which may have inserted
-    // libcalls) create the new CALLSEQ_START node.
+    // Now that we have legalized all of the inputs (which may have inserted
+    // libcalls), create the new CALLSEQ_START node.
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
 
-    // Merge in the last call, to ensure that this call start after the last
+    // Merge in the last call to ensure that this call starts after the last
     // call ended.
     if (LastCALLSEQ_END.getOpcode() != ISD::EntryToken) {
       Tmp1 = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
