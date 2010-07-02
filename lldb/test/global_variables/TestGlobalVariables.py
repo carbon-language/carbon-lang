@@ -61,9 +61,13 @@ class TestClassTypes(unittest.TestCase):
         # Check that GLOBAL scopes are indicated for the variables.
         self.ci.HandleCommand("variable list -s -a", res);
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('GLOBAL: g_file_static_cstr') and
-                        res.GetOutput().find('GLOBAL: g_file_global_int') and
-                        res.GetOutput().find('GLOBAL: g_file_global_cstr'))
+        output = res.GetOutput()
+        self.assertTrue(output.find('GLOBAL: g_file_static_cstr') and
+                        output.find('g_file_static_cstr') and
+                        output.find('GLOBAL: g_file_global_int') and
+                        output.find('(int) 42') and
+                        output.find('GLOBAL: g_file_global_cstr') and
+                        output.find('g_file_global_cstr'))
 
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())
