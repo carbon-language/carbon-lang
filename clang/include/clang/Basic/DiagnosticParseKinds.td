@@ -51,7 +51,7 @@ def ext_c99_variable_decl_in_for_loop : Extension<
   "variable declaration in for loop is a C99-specific feature">;
 def ext_c99_compound_literal : Extension<
   "compound literals are a C99-specific feature">;
-def ext_enumerator_list_comma : Extension<
+def ext_enumerator_list_comma : ExtWarn<
   "commas at the end of enumerator lists are a %select{C99|C++0x}0-specific "
   "feature">;
 
