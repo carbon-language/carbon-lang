@@ -1,7 +1,11 @@
 // Header for PCH test cxx-templates.cpp
 
 template <typename T1, typename T2>
+struct S;
+
+template <typename T1, typename T2>
 struct S {
+  S() { }
   static void templ();
 };
 
@@ -65,3 +69,34 @@ template <class T> class UseA : public UseBase<T> {
   using UseBase<T>::foo;
   using typename UseBase<T>::bar; 
 };
+
+template <class T> class Sub : public UseBase<int> { };
+
+template <class _Ret, class _Tp>
+  class mem_fun_t
+  {
+  public:
+    explicit
+    mem_fun_t(_Ret (_Tp::*__pf)())
+     {}
+
+  private:
+    _Ret (_Tp::*_M_f)();
+  };
+
+template<unsigned N>
+bool isInt(int x);
+
+template<> bool isInt<8>(int x) {
+    return true;
+}
+
+template<typename _CharT>
+int __copy_streambufs_eof(_CharT);
+
+class basic_streambuf 
+{
+  void m() { }
+  friend int __copy_streambufs_eof<>(int);
+};
+
