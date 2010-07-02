@@ -402,23 +402,10 @@ Host::GetProgramFileSpec ()
     static FileSpec g_program_filepsec;
     if (!g_program_filepsec)
     {
-#if 0
-        std::string program_fullpath;
-        program_fullpath.resize (PATH_MAX);
-        // If DST is NULL, then return the number of bytes needed.
-        uint32_t len = program_fullpath.size();
-        int err = _NSGetExecutablePath ((char *)program_fullpath.data(), &len);
-        if (err < 0)
-        {
-            // The path didn't fit in the buffer provided, increase its size
-            // and try again
-            program_fullpath.resize(len);
-            len = program_fullpath.size();
-            err = _NSGetExecutablePath ((char *)program_fullpath.data(), &len);
-        }
-        if (err == 0)
-            g_program_filepsec.SetFile(program_fullpath.data());
-#endif
+      char exe_path[PATH_MAX];
+      ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path));
+      if (len >= 0)
+        g_program_filepsec = FileSpec(exe_path);
     }
     return g_program_filepsec;
 }
