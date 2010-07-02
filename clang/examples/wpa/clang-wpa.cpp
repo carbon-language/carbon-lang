@@ -26,6 +26,9 @@ using namespace idx;
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input AST files>"));
 
+static llvm::cl::opt<bool> ViewCallGraph("view-call-graph", 
+                                     llvm::cl::desc("Display the call graph."));
+
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, "clang-wpa");
   FileManager FileMgr;
@@ -48,11 +51,14 @@ int main(int argc, char **argv) {
     ASTUnits.push_back(AST.take());
   }
 
-  llvm::OwningPtr<CallGraph> CG;
-  CG.reset(new CallGraph(Prog));
+  if (ViewCallGraph) {
+    llvm::OwningPtr<CallGraph> CG;
+    CG.reset(new CallGraph(Prog));
 
-  for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
-    CG->addTU(ASTUnits[i]->getASTContext());
+    for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
+      CG->addTU(ASTUnits[i]->getASTContext());
 
-  CG->ViewCallGraph();
+    CG->ViewCallGraph();
+    return 0;
+  }
 }
