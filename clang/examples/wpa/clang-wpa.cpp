@@ -17,6 +17,10 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Index/CallGraph.h"
+#include "clang/Index/Indexer.h"
+#include "clang/Index/TranslationUnit.h"
+#include "clang/Index/DeclReferenceMap.h"
+#include "clang/Index/SelectorMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -33,12 +37,38 @@ static llvm::cl::opt<std::string>
 AnalyzeFunction("analyze-function", 
                 llvm::cl::desc("Specify the entry function."));
 
+namespace {
+// A thin wrapper over ASTUnit implementing the TranslationUnit interface.
+class ASTUnitTU : public TranslationUnit {
+  ASTUnit *AST;
+  DeclReferenceMap DeclRefMap;
+  SelectorMap SelMap;
+  
+public:
+  ASTUnitTU(ASTUnit *ast) 
+    : AST(ast), DeclRefMap(AST->getASTContext()), SelMap(AST->getASTContext()) {
+  }
+
+  virtual ASTContext &getASTContext() {
+    return AST->getASTContext();
+  }
+
+  virtual DeclReferenceMap &getDeclReferenceMap() {
+    return DeclRefMap;
+  }
+
+  virtual SelectorMap &getSelectorMap() {
+    return SelMap;
+  }
+};
+}
+
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, "clang-wpa");
-  FileManager FileMgr;
   std::vector<ASTUnit*> ASTUnits;
 
   Program Prog;
+  Indexer Idxer(Prog);
 
   if (InputFilenames.empty())
     return 0;
@@ -69,6 +99,11 @@ int main(int argc, char **argv) {
   if (AnalyzeFunction.empty())
     return 0;
 
-  llvm::outs() << "Analyze function: " << AnalyzeFunction << '\n';
+  // Feed all ASTUnits to the Indexer.
+  for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i) {
+    ASTUnitTU TU(ASTUnits[i]);
+    Idxer.IndexAST(&TU);
+  }
+
   return 0;
 }
