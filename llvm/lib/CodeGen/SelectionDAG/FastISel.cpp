@@ -1211,7 +1211,7 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       // by bailing out early, we may leave behind some dead instructions,
       // since SelectionDAG's HandlePHINodesInSuccessorBlocks will insert its
       // own moves. Second, this check is necessary becuase FastISel doesn't
-      // use CreateReg to create registers, so it always creates
+      // use CreateRegs to create registers, so it always creates
       // exactly one register for each non-void instruction.
       EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
       if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {

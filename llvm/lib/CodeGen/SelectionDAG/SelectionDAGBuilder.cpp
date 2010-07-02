@@ -1508,7 +1508,7 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
   // therefore require extension or truncating.
   SwitchOp = DAG.getZExtOrTrunc(Sub, getCurDebugLoc(), TLI.getPointerTy());
 
-  unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
+  unsigned JumpTableReg = FuncInfo.CreateReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
                                     JumpTableReg, SwitchOp);
   JT.Reg = JumpTableReg;
@@ -1559,7 +1559,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
   SDValue ShiftOp = DAG.getZExtOrTrunc(Sub, getCurDebugLoc(),
                                        TLI.getPointerTy());
 
-  B.Reg = FuncInfo.MakeReg(TLI.getPointerTy());
+  B.Reg = FuncInfo.CreateReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
                                     B.Reg, ShiftOp);
 
@@ -6164,7 +6164,7 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       if (const Constant *C = dyn_cast<Constant>(PHIOp)) {
         unsigned &RegOut = ConstantsOut[C];
         if (RegOut == 0) {
-          RegOut = FuncInfo.CreateReg(C->getType());
+          RegOut = FuncInfo.CreateRegs(C->getType());
           CopyValueToVirtualRegister(C, RegOut);
         }
         Reg = RegOut;
@@ -6177,7 +6177,7 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
           assert(isa<AllocaInst>(PHIOp) &&
                  FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
-          Reg = FuncInfo.CreateReg(PHIOp->getType());
+          Reg = FuncInfo.CreateRegs(PHIOp->getType());
           CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }

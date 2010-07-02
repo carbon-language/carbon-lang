@@ -172,18 +172,19 @@ void FunctionLoweringInfo::clear() {
   ArgDbgValues.clear();
 }
 
-unsigned FunctionLoweringInfo::MakeReg(EVT VT) {
+/// CreateReg - Allocate a single virtual register for the given type.
+unsigned FunctionLoweringInfo::CreateReg(EVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
-/// CreateReg - Allocate the appropriate number of virtual registers of
+/// CreateRegs - Allocate the appropriate number of virtual registers of
 /// the correctly promoted or expanded types.  Assign these registers
 /// consecutive vreg numbers and return the first assigned number.
 ///
 /// In the case that the given value has struct or array type, this function
 /// will assign registers for each member or element.
 ///
-unsigned FunctionLoweringInfo::CreateReg(const Type *Ty) {
+unsigned FunctionLoweringInfo::CreateRegs(const Type *Ty) {
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, Ty, ValueVTs);
 
@@ -194,7 +195,7 @@ unsigned FunctionLoweringInfo::CreateReg(const Type *Ty) {
 
     unsigned NumRegs = TLI.getNumRegisters(Ty->getContext(), ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {
-      unsigned R = MakeReg(RegisterVT);
+      unsigned R = CreateReg(RegisterVT);
       if (!FirstReg) FirstReg = R;
     }
   }

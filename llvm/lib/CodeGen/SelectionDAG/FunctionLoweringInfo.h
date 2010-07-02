@@ -113,20 +113,20 @@ public:
   /// different function.
   void clear();
 
-  unsigned MakeReg(EVT VT);
-  
   /// isExportedInst - Return true if the specified value is an instruction
   /// exported from its block.
   bool isExportedInst(const Value *V) {
     return ValueMap.count(V);
   }
 
-  unsigned CreateReg(const Type *Ty);
+  unsigned CreateReg(EVT VT);
+  
+  unsigned CreateRegs(const Type *Ty);
   
   unsigned InitializeRegForValue(const Value *V) {
     unsigned &R = ValueMap[V];
     assert(R == 0 && "Already initialized this value register!");
-    return R = CreateReg(V->getType());
+    return R = CreateRegs(V->getType());
   }
 };
 
