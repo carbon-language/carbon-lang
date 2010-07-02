@@ -1572,6 +1572,8 @@ namespace ISD {
   struct OutputArg {
     ArgFlagsTy Flags;
     SDValue Val;
+
+    /// IsFixed - Is this a "fixed" value, ie not passed through a vararg "...".
     bool IsFixed;
 
     OutputArg() : IsFixed(false) {}
