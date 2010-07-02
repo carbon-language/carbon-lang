@@ -75,7 +75,11 @@ namespace TargetOpcode {
     /// e.g. v1027 = REG_SEQUENCE v1024, 3, v1025, 4, v1026, 5
     /// After register coalescing references of v1024 should be replace with
     /// v1027:3, v1025 with v1027:4, etc.
-    REG_SEQUENCE = 12
+    REG_SEQUENCE = 12,
+
+    /// COPY - Target-independent register copy. This instruction can also be
+    /// used to copy between subregisters of virtual registers.
+    COPY = 13
   };
 } // end namespace TargetOpcode
 } // end namespace llvm

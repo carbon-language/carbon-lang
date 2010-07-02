@@ -227,7 +227,10 @@ public:
   bool isRegSequence() const {
     return getOpcode() == TargetOpcode::REG_SEQUENCE;
   }
-  
+  bool isCopy() const {
+    return getOpcode() == TargetOpcode::COPY;
+  }
+
   /// readsRegister - Return true if the MachineInstr reads the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there
   /// is a read of a super-register.

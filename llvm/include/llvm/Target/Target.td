@@ -476,10 +476,16 @@ def DBG_VALUE : Instruction {
   let AsmString = "DBG_VALUE";
   let isAsCheapAsAMove = 1;
 }
-
 def REG_SEQUENCE : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins variable_ops);
+  let AsmString = "";
+  let neverHasSideEffects = 1;
+  let isAsCheapAsAMove = 1;
+}
+def COPY : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins unknown:$src);
   let AsmString = "";
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;

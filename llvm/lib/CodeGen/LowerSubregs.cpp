@@ -56,6 +56,7 @@ namespace {
     bool LowerExtract(MachineInstr *MI);
     bool LowerInsert(MachineInstr *MI);
     bool LowerSubregToReg(MachineInstr *MI);
+    bool LowerCopy(MachineInstr *MI);
 
     void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
                           const TargetRegisterInfo *TRI);
@@ -321,6 +322,52 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   return true;
 }
 
+bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
+  MachineOperand &DstMO = MI->getOperand(0);
+  MachineOperand &SrcMO = MI->getOperand(1);
+
+  if (SrcMO.getReg() == DstMO.getReg()) {
+    DEBUG(dbgs() << "identity copy: " << *MI);
+    // No need to insert an identity copy instruction, but replace with a KILL
+    // if liveness is changed.
+    if (DstMO.isDead() || SrcMO.isUndef() || MI->getNumOperands() > 2) {
+      // We must make sure the super-register gets killed. Replace the
+      // instruction with KILL.
+      MI->setDesc(TII->get(TargetOpcode::KILL));
+      DEBUG(dbgs() << "replaced by:   " << *MI);
+      return true;
+    }
+    // Vanilla identity copy.
+    MI->eraseFromParent();
+    return true;
+  }
+
+  DEBUG(dbgs() << "real copy:   " << *MI);
+  // Ask target for a lowered copy instruction.
+  const TargetRegisterClass *DstRC =
+    TRI->getPhysicalRegisterRegClass(DstMO.getReg());
+  const TargetRegisterClass *SrcRC =
+    TRI->getPhysicalRegisterRegClass(SrcMO.getReg());
+  bool Emitted = TII->copyRegToReg(*MI->getParent(), MI,
+                                   DstMO.getReg(), SrcMO.getReg(),
+                                   DstRC, SrcRC, MI->getDebugLoc());
+  (void)Emitted;
+  assert(Emitted && "Cannot emit copy");
+
+  if (DstMO.isDead())
+    TransferDeadFlag(MI, DstMO.getReg(), TRI);
+  if (SrcMO.isKill())
+    TransferKillFlag(MI, SrcMO.getReg(), TRI, true);
+  if (MI->getNumOperands() > 2)
+    TransferImplicitDefs(MI);
+  DEBUG({
+    MachineBasicBlock::iterator dMI = MI;
+    dbgs() << "replaced by: " << *(--dMI);
+  });
+  MI->eraseFromParent();
+  return true;
+}
+
 /// runOnMachineFunction - Reduce subregister inserts and extracts to register
 /// copies.
 ///
@@ -346,6 +393,8 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         MadeChange |= LowerInsert(MI);
       } else if (MI->isSubregToReg()) {
         MadeChange |= LowerSubregToReg(MI);
+      } else if (MI->isCopy()) {
+        MadeChange |= LowerCopy(MI);
       }
       mi = nmi;
     }

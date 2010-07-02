@@ -344,6 +344,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
     "COPY_TO_REGCLASS",
     "DBG_VALUE",
     "REG_SEQUENCE",
+    "COPY",
     0
   };
   const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
