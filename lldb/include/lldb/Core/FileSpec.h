@@ -431,10 +431,51 @@ public:
     bool
     ReadFileLines (STLStringArray &lines);
 
+    //------------------------------------------------------------------
+    /// Resolves user name and links in \a src_path, and writes the output
+    /// to \a dst_path.  Note if the path pointed to by \a src_path does not
+    /// exist, the contents of \a src_path will be copied to \a dst_path 
+    /// unchanged.
+    ///
+    /// @param[in] src_path
+    ///     Input path to be resolved.
+    ///
+    /// @param[in] dst_path
+    ///     Buffer to store the resolved path.
+    ///
+    /// @param[in] dst_len 
+    ///     Size of the buffer pointed to by dst_path.
+    ///
+    /// @result 
+    ///     The number of characters required to write the resolved path.  If the
+    ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
+    ///     be written to \a dst_path, but the actual required length will still be returned.
+    //------------------------------------------------------------------
     static int
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
     
-    int
+    //------------------------------------------------------------------
+    /// Resolves the user name at the beginning of \a src_path, and writes the output
+    /// to \a dst_path.  Note, \a src_path can contain other path components after the
+    /// user name, they will be copied over, and if the path doesn't start with "~" it
+    /// will also be copied over to \a dst_path.
+    ///
+    /// @param[in] src_path
+    ///     Input path to be resolved.
+    ///
+    /// @param[in] dst_path
+    ///     Buffer to store the resolved path.
+    ///
+    /// @param[in] dst_len 
+    ///     Size of the buffer pointed to by dst_path.
+    ///
+    /// @result 
+    ///     The number of characters required to write the resolved path, or 0 if
+    ///     the user name could not be found.  If the
+    ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
+    ///     be written to \a dst_path, but the actual required length will still be returned.
+    //------------------------------------------------------------------
+    static int
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
 
 
