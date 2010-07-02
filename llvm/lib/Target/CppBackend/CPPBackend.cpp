@@ -1399,8 +1399,8 @@ void CppWriter::printInstruction(const Instruction *I,
     if (call->getNumArgOperands() > 1) {
       Out << "std::vector<Value*> " << iName << "_params;";
       nl(Out);
-      for (unsigned i = 1; i < call->getNumOperands(); ++i) {
-        Out << iName << "_params.push_back(" << opNames[i] << ");";
+      for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
+        Out << iName << "_params.push_back(" << opNames[i+1] << ");";
         nl(Out);
       }
       Out << "CallInst* " << iName << " = CallInst::Create("
