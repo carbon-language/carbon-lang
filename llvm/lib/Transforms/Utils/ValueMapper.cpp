@@ -45,7 +45,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
   
   if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
       isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
-      isa<UndefValue>(C) || isa<MDString>(C))
+      isa<UndefValue>(C))
     return VMSlot = C;           // Primitive constants map directly
   
   if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
