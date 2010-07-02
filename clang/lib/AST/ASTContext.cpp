@@ -31,6 +31,9 @@
 
 using namespace clang;
 
+unsigned ASTContext::NumImplicitDestructors;
+unsigned ASTContext::NumImplicitDestructorsDeclared;
+
 enum FloatingRank {
   FloatRank, DoubleRank, LongDoubleRank
 };
@@ -253,6 +256,10 @@ void ASTContext::PrintStats() const {
 
   fprintf(stderr, "Total bytes = %d\n", int(TotalBytes));
 
+  // Implicit special member functions.
+  fprintf(stderr, "  %u/%u implicit destructors created\n",
+          NumImplicitDestructorsDeclared, NumImplicitDestructors);
+  
   if (ExternalSource.get()) {
     fprintf(stderr, "\n");
     ExternalSource->PrintStats();

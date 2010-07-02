@@ -2282,6 +2282,10 @@ public:
   void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                     CXXMethodDecl *MethodDecl);
 
+  /// \brief Force the declaration of any implicitly-declared members of this
+  /// class.
+  void ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class);
+  
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise
   /// it simply returns the passed in expression.

@@ -668,6 +668,7 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Data.HasTrivialCopyAssignment = Record[Idx++];
       Data.HasTrivialDestructor = Record[Idx++];
       Data.ComputedVisibleConversions = Record[Idx++];
+      Data.DeclaredDestructor = Record[Idx++];
 
       // setBases() is unsuitable since it may try to iterate the bases of an
       // unitialized base.

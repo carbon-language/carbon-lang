@@ -1322,6 +1322,17 @@ public:
   /// \brief Data Pointer data that will be provided to the callback function
   /// when it is called.
   void AddDeallocation(void (*Callback)(void*), void *Data);
+
+  //===--------------------------------------------------------------------===//
+  //                    Statistics
+  //===--------------------------------------------------------------------===//
+
+  /// \brief The number of implicitly-declared destructors.
+  static unsigned NumImplicitDestructors;
+  
+  /// \brief The number of implicitly-declared destructors for which 
+  /// declarations were built.
+  static unsigned NumImplicitDestructorsDeclared;
   
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT

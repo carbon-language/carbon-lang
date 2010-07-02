@@ -447,11 +447,52 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
   return false;
 }
 
+/// \brief Determine whether we can declare a special member function within
+/// the class at this point.
+static bool CanDeclareSpecialMemberFunction(ASTContext &Context,
+                                            const CXXRecordDecl *Class) {
+  // We need to have a definition for the class.
+  if (!Class->getDefinition() || Class->isDependentContext())
+    return false;
+  
+  // We can't be in the middle of defining the class.
+  if (const RecordType *RecordTy
+                        = Context.getTypeDeclType(Class)->getAs<RecordType>())
+    return !RecordTy->isBeingDefined();
+    
+  return false;
+}
+
+void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
+  // If the destructor has not yet been declared, do so now.
+  if (CanDeclareSpecialMemberFunction(Context, Class) &&
+      !Class->hasDeclaredDestructor())
+    DeclareImplicitDestructor(Class);  
+}
+
+
 // Adds all qualifying matches for a name within a decl context to the
 // given lookup result.  Returns true if any matches were found.
 static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
+  // Lazily declare C++ special member functions.
+  if (S.getLangOptions().CPlusPlus) {
+    switch (R.getLookupName().getNameKind()) {
+    case DeclarationName::CXXDestructorName:
+      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
+        if (Record->getDefinition() && !Record->hasDeclaredDestructor() &&
+            CanDeclareSpecialMemberFunction(S.Context, Record))
+          S.DeclareImplicitDestructor(const_cast<CXXRecordDecl *>(Record));
+        
+      break;
+        
+    default:
+      break;      
+    }
+  }
+  
+  // Perform lookup into this declaration context.
   DeclContext::lookup_const_iterator I, E;
   for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I) {
     NamedDecl *D = *I;
@@ -1904,6 +1945,11 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 ///
 /// \returns The destructor for this class.
 CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
+  // If the destructor has not yet been declared, do so now.
+  if (CanDeclareSpecialMemberFunction(Context, Class) &&
+      !Class->hasDeclaredDestructor())
+    DeclareImplicitDestructor(Class);
+
   return Class->getDestructor();
 }
 
@@ -2205,6 +2251,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
   if (Visited.visitedContext(Ctx->getPrimaryContext()))
     return;
   
+  if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx))
+    Result.getSema().ForceDeclarationOfImplicitMembers(Class);
+
   // Enumerate all of the results in this context.
   for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
        CurCtx = CurCtx->getNextContext()) {

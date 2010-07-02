@@ -2662,8 +2662,16 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(ClassDecl);
 
-  if (!ClassDecl->hasUserDeclaredDestructor())
-    DeclareImplicitDestructor(ClassDecl);
+  if (!ClassDecl->hasUserDeclaredDestructor()) {
+    ++ASTContext::NumImplicitDestructors;
+    
+    // If we have a dynamic class, then the destructor may be virtual, so we 
+    // have to declare the destructor immediately. This ensures that, e.g., it
+    // shows up in the right place in the vtable and that we diagnose problems
+    // with the implicit exception specification.
+    if (ClassDecl->isDynamicClass())
+      DeclareImplicitDestructor(ClassDecl);
+  }
 }
 
 void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
@@ -4274,6 +4282,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
                     LookupDestructor(cast<CXXRecordDecl>(RecordTy->getDecl())));
   }
   
+  // Create the actual destructor declaration.
   QualType Ty = Context.getFunctionType(Context.VoidTy,
                                         0, 0, false, 0,
                                         ExceptSpec.hasExceptionSpecification(),
@@ -4294,15 +4303,21 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   Destructor->setAccess(AS_public);
   Destructor->setImplicit();
   Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
+  
+  // Note that we have declared this destructor.
+  ClassDecl->setDeclaredDestructor(true);
+  ++ASTContext::NumImplicitDestructorsDeclared;
+  
+  // Introduce this destructor into its scope.
   if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(Destructor, S, true);
-  else
-    ClassDecl->addDecl(Destructor);
+    PushOnScopeChains(Destructor, S, false);
+  ClassDecl->addDecl(Destructor);
   
   // This could be uniqued if it ever proves significant.
   Destructor->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(Ty));
   
   AddOverriddenMethods(ClassDecl, Destructor);
+  
   return Destructor;
 }
 

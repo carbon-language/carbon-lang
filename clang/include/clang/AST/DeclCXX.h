@@ -319,6 +319,9 @@ class CXXRecordDecl : public RecordDecl {
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
   
+    /// \brief Whether we have already declared a destructor within the class.
+    bool DeclaredDestructor : 1;
+    
     /// Bases - Base classes of this class.
     /// FIXME: This is wasted space for a union.
     CXXBaseSpecifier *Bases;
@@ -600,8 +603,21 @@ public:
   /// fully defined, a destructor will be implicitly declared.
   void setUserDeclaredDestructor(bool UCD) {
     data().UserDeclaredDestructor = UCD;
+    if (UCD)
+      data().DeclaredDestructor = true;
   }
 
+  /// \brief Determine whether this class has had its destructor declared,
+  /// either via the user or via an implicit declaration.
+  ///
+  /// This value is used for lazy creation of destructors.
+  bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
+  
+  /// \brief Note whether this class has already had its destructor declared.
+  void setDeclaredDestructor(bool DD) {
+    data().DeclaredDestructor = DD;
+  }
+  
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
   UnresolvedSetImpl *getConversionFunctions() {
