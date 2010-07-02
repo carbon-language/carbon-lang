@@ -83,7 +83,8 @@ namespace {
   // pressure, it can caused fewer GPRs to be held in the queue.
   static cl::opt<unsigned>
   NumRecentlyUsedRegs("linearscan-skip-count",
-                      cl::desc("Number of registers for linearscan to remember to skip."),
+                      cl::desc("Number of registers for linearscan to remember"
+                               "to skip."),
                       cl::init(0),
                       cl::Hidden);
  
