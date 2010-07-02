@@ -26,8 +26,12 @@ using namespace idx;
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input AST files>"));
 
-static llvm::cl::opt<bool> ViewCallGraph("view-call-graph", 
-                                     llvm::cl::desc("Display the call graph."));
+static llvm::cl::opt<bool> 
+ViewCallGraph("view-call-graph", llvm::cl::desc("Display the call graph."));
+
+static llvm::cl::opt<std::string>
+AnalyzeFunction("analyze-function", 
+                llvm::cl::desc("Specify the entry function."));
 
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, "clang-wpa");
@@ -61,4 +65,10 @@ int main(int argc, char **argv) {
     CG->ViewCallGraph();
     return 0;
   }
+
+  if (AnalyzeFunction.empty())
+    return 0;
+
+  llvm::outs() << "Analyze function: " << AnalyzeFunction << '\n';
+  return 0;
 }
