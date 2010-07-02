@@ -151,9 +151,8 @@ res = lldb.SBCommandReturnObject()
 if ("LLDB_LOG" in os.environ):
     ci.HandleCommand(
         "log enable -f " + os.environ["LLDB_LOG"] + " lldb default", res)
-    pass
-if not res.Succeeded():
-    raise Exception('log enable failed (check your LLDB_LOG env variable...')
+    if not res.Succeeded():
+        raise Exception('log enable failed (check your LLDB_LOG env variable...')
 
 unittest.TextTestRunner(verbosity=verbose).run(suite)
 
