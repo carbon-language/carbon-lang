@@ -13,6 +13,8 @@
 #include <dirent.h>
 #include <libgen.h>
 #include <glob.h>
+#include <pwd.h>
+#include <sys/types.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -22,6 +24,7 @@
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Core/FileSpec.h"
 
 
 using namespace lldb_private;
@@ -155,20 +158,52 @@ DiskFilesOrDirectories
         if (*partial_name_copy == '~')
         {
             // Nothing here but the user name.  We could just put a slash on the end, 
-            // but for completeness sake we'll glob the user name and only put a slash
+            // but for completeness sake we'll resolve the user name and only put a slash
             // on the end if it exists.
-           glob_t glob_buf;
-           if (glob (partial_name_copy, GLOB_TILDE, NULL, &glob_buf) != 0)
-               return matches.GetSize();
-           
-           //The thing exists, put a '/' on the end, and return it...
-           // FIXME: complete user names here:
-           partial_name_copy[partial_name_len] = '/';
-           partial_name_copy[partial_name_len+1] = '\0';
-           matches.AppendString(partial_name_copy);
-           globfree(&glob_buf);
-           saw_directory = true;
-           return matches.GetSize();
+            char resolved_username[PATH_MAX];
+            int resolved_username_len = FileSpec::ResolveUsername (partial_name_copy, resolved_username, 
+                                                          sizeof (resolved_username));
+                                                          
+           // Not sure how this would happen, a username longer than PATH_MAX?  Still...
+            if (resolved_username_len >= sizeof (resolved_username))
+                return matches.GetSize();
+            else if (resolved_username_len == 0)
+            {
+                // The user name didn't resolve, let's look in the password database for matches.
+                // The user name database contains duplicates, and is not in alphabetical order, so
+                // we'll use a set to manage that for us.
+                
+                setpwent();
+                struct passwd *user_entry;
+                const char *name_start = partial_name_copy + 1;
+                std::set<std::string> name_list;
+                
+                while ((user_entry = getpwent()) != NULL)
+                {
+                    if (strstr(user_entry->pw_name, name_start) == user_entry->pw_name)
+                    {
+                        std::string tmp_buf("~");
+                        tmp_buf.append(user_entry->pw_name);
+                        tmp_buf.push_back('/');
+                        name_list.insert(tmp_buf);                    
+                        saw_directory = true;
+                    }
+                }
+                std::set<std::string>::iterator pos, end = name_list.end();
+                for (pos = name_list.begin(); pos != end; pos++)
+                {  
+                    matches.AppendString((*pos).c_str());
+                }
+                return matches.GetSize();
+            }    
+            
+            //The thing exists, put a '/' on the end, and return it...
+            // FIXME: complete user names here:
+            partial_name_copy[partial_name_len] = '/';
+            partial_name_copy[partial_name_len+1] = '\0';
+            matches.AppendString(partial_name_copy);
+            saw_directory = true;
+            return matches.GetSize();
         }
         else
         {
@@ -198,25 +233,15 @@ DiskFilesOrDirectories
         strcpy(remainder, end_ptr);
     }
     
-    // Look for a user name in the containing part, and if it's there, glob containing_part and stick the
+    // Look for a user name in the containing part, and if it's there, resolve it and stick the
     // result back into the containing_part:
     
     if (*partial_name_copy == '~')
     {
-        glob_t glob_buf;
-        
+        int resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
         // User name doesn't exist, we're not getting any further...
-        if (glob (containing_part, GLOB_TILDE, NULL, &glob_buf) != 0)
+        if (resolved_username_len = 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
-            
-        if (glob_buf.gl_pathc != 1)
-        {
-            // I'm not really sure how this would happen?
-            globfree(&glob_buf);
-            return matches.GetSize();
-        }
-        strcpy(containing_part, glob_buf.gl_pathv[0]);
-        globfree(&glob_buf);
     }
     
     // Okay, containing_part is now the directory we want to open and look for files:
@@ -245,6 +270,8 @@ DiskFilesOrDirectories
             else if (remainder[0] != '.')
                 continue;
         }
+        
+        // If we found a directory, we put a "/" at the end of the name.
         
         if (remainder[0] == '\0' || strstr(dirent_buf->d_name, remainder) == name)
         {

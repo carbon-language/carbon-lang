@@ -432,9 +432,6 @@ public:
     ReadFileLines (STLStringArray &lines);
 
     static int
-    ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
-
-    static int
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
 
 protected:
