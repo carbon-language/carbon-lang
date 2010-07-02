@@ -31,6 +31,8 @@ int main(int argc, char **argv) {
   FileManager FileMgr;
   std::vector<ASTUnit*> ASTUnits;
 
+  Program Prog;
+
   if (InputFilenames.empty())
     return 0;
 
@@ -47,7 +49,7 @@ int main(int argc, char **argv) {
   }
 
   llvm::OwningPtr<CallGraph> CG;
-  CG.reset(new CallGraph());
+  CG.reset(new CallGraph(Prog));
 
   for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
     CG->addTU(ASTUnits[i]->getASTContext());

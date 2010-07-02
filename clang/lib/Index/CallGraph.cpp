@@ -55,7 +55,7 @@ void CGBuilder::VisitCallExpr(CallExpr *CE) {
   }
 }
 
-CallGraph::CallGraph() : Root(0) {
+CallGraph::CallGraph(Program &P) : Prog(P), Root(0) {
   ExternalCallingNode = getOrInsertFunction(Entity());
 }
 

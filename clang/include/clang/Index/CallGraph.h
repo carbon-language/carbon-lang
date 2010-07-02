@@ -54,7 +54,7 @@ public:
 
 class CallGraph {
   /// Program manages all Entities.
-  idx::Program Prog;
+  idx::Program &Prog;
 
   typedef std::map<idx::Entity, CallGraphNode *> FunctionMapTy;
 
@@ -71,7 +71,7 @@ class CallGraph {
   CallGraphNode *ExternalCallingNode;
 
 public:
-  CallGraph();
+  CallGraph(idx::Program &P);
   ~CallGraph();
 
   typedef FunctionMapTy::iterator iterator;
