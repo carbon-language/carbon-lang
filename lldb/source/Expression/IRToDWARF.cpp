@@ -97,9 +97,13 @@ public:
             int16_t relative = (int16_t)target_off - (int16_t)off;
             
             swapper.Clear();
-            swapper << target_off;
+            swapper << relative;
             
-            memcpy(temporary_buffer + off, swapper.GetData(), sizeof(uint16_t));
+            // off is intended to be the offset of the branch opcode (which is 
+            // what the relative location is added to) so 
+            // (temporary_buffer + off + 1) skips the opcode and writes to the
+            // relative location
+            memcpy(temporary_buffer + off + 1, swapper.GetData(), sizeof(uint16_t));
         }
         
         strm.Clear();
