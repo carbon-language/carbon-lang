@@ -173,7 +173,7 @@ public:
     void addImage (uint64_t mh, uint64_t text_start, uint64_t text_end, uint64_t eh_frame, uint64_t eh_frame_len, uint64_t compact_unwind_start, uint64_t compact_unwind_len);
     bool addProfile (RemoteProcInfo* procinfo, unw_accessors_t *acc, unw_addr_space_t as, uint64_t start, uint64_t end, void *arg);
     RemoteUnwindProfile* findProfileByTextAddr (uint64_t pc);
-    void addMemBlob (RemoteMemoryBlob *blob);
+    bool addMemBlob (RemoteMemoryBlob *blob);
     uint8_t *getMemBlobMemory (uint64_t addr, int len);
 private:
     RemoteImages();
@@ -312,14 +312,25 @@ bool RemoteImages::findFuncBounds (uint32_t pc, uint32_t &startAddr, uint32_t &e
 // as this is used today, the only duplication will be with the same
 // start address.
 
-void RemoteImages::addMemBlob (RemoteMemoryBlob *blob) { 
-    std::vector<RemoteMemoryBlob *>::iterator i;
-    for (i = fMemBlobs.begin(); i != fMemBlobs.end(); ++i) {
-        if (blob->getStartAddr() == (*i)->getStartAddr())
-            return;
+bool 
+RemoteImages::addMemBlob (RemoteMemoryBlob *blob) { 
+
+    if (fMemBlobs.empty())
+    {
+        fMemBlobs.push_back(blob);
     }
-    fMemBlobs.push_back(blob); 
-    std::sort(fMemBlobs.begin(), fMemBlobs.end());
+    else
+    {
+        std::vector<RemoteMemoryBlob *>::iterator pos;
+
+        pos = std::lower_bound (fMemBlobs.begin(), fMemBlobs.end(), blob);
+
+        if (pos != fMemBlobs.end() && (*pos)->getStartAddr() == blob->getStartAddr())
+            return false;
+
+        fMemBlobs.insert (pos, blob);
+    }
+    return true;
 }
 
 uint8_t *RemoteImages::getMemBlobMemory (uint64_t addr, int len) {
@@ -702,7 +713,7 @@ public:
     unw_addr_space_t wrap ()                    { return (unw_addr_space_t) &fWrapper; }
     bool remoteIsLittleEndian ()                { return fLittleEndian; }
     unw_log_level_t getDebugLoggingLevel()      { return fLogLevel; }
-    void addMemBlob (RemoteMemoryBlob *blob)    { fImages.addMemBlob(blob); }
+    bool addMemBlob (RemoteMemoryBlob *blob)    { return fImages.addMemBlob(blob); }
     unw_caching_policy_t getCachingPolicy()     { return fCachingPolicy; }
 
 private:
@@ -742,14 +753,16 @@ bool RemoteProcInfo::haveImageEntry (uint64_t pc, void *arg) {
                     uint8_t *buf = (uint8_t*) malloc (compact_unwind_len);
                     if (this->getBytes (compact_unwind, compact_unwind_len, buf, arg)) {
                         RemoteMemoryBlob *b = new RemoteMemoryBlob(buf, free, compact_unwind, compact_unwind_len, mh, NULL);
-                        fImages.addMemBlob (b);
+                        if (fImages.addMemBlob (b) == false)
+                            delete b;
                     }
                 } else if (eh_frame_len != 0) {
                     logVerbose ("Creating RemoteMemoryBlob of eh_frame for image at mh 0x%llx, %lld bytes", mh, (uint64_t) compact_unwind_len);
                     uint8_t *buf = (uint8_t*) malloc (eh_frame_len);
                     if (this->getBytes (eh_frame, eh_frame_len, buf, arg)) {
                         RemoteMemoryBlob *b = new RemoteMemoryBlob(buf, free, eh_frame, eh_frame_len, mh, NULL);
-                        fImages.addMemBlob (b);
+                        if (fImages.addMemBlob (b) == false)
+                            delete b;
                     }
                 }
             }

@@ -44,6 +44,8 @@ namespace lldb_private
 
 class AssemblyParse_x86 {
 public:
+    enum { kMaxInstructionByteSize = 32 };
+
     AssemblyParse_x86 (RemoteProcInfo& procinfo, unw_accessors_t *acc, unw_addr_space_t as, void *arg) : fArg(arg), fAccessors(acc), fAs(as), fRemoteProcInfo(procinfo) {
         fRegisterMap = fRemoteProcInfo.getRegisterMap();
         if (fRemoteProcInfo.getTargetArch() == UNW_TARGET_X86_64) {
@@ -76,7 +78,7 @@ public:
 private:
 
     void *fArg;
-    uint8_t*           fCurInsnByteBuf;
+    uint8_t            fCurInsnByteBuf[kMaxInstructionByteSize];
     int                fCurInsnSize;
     RemoteProcInfo&    fRemoteProcInfo;
     RemoteRegisterMap  *fRegisterMap;
@@ -285,7 +287,7 @@ bool AssemblyParse_x86::profileFunction (uint64_t start, uint64_t end, RemoteUnw
             /* An error parsing the instruction; stop scanning.  */
             break;
         }
-        fCurInsnByteBuf = (uint8_t *) malloc (fCurInsnSize);
+        assert (fCurInsnSize <= kMaxInstructionByteSize);
         if (fRemoteProcInfo.getBytes (cur_addr, fCurInsnSize, fCurInsnByteBuf, fArg) == 0)
           return false;
         next_addr = cur_addr + fCurInsnSize;

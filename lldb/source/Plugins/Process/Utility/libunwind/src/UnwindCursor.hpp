@@ -1168,9 +1168,13 @@ int RemoteUnwindCursor<A,R>::step()
                 // thing anyway so we might as well save it.
                 uint8_t *eh_buf = (uint8_t *)malloc (eh_frame_len);
                 if (UnwindCursor<A,R>::fAddressSpace.getBytes (eh_frame_start, eh_frame_len, eh_buf) == 0)
-                  return UNW_EUNSPEC;
+                {
+                    free (eh_buf);
+                    return UNW_EUNSPEC;
+                }
                 RemoteMemoryBlob *ehmem = new RemoteMemoryBlob(eh_buf, free, eh_frame_start, eh_frame_len, mh, NULL);
-                procinfo->addMemBlob (ehmem);
+                if (procinfo->addMemBlob (ehmem) == false)
+                    delete ehmem;
             }
             
             if (CFI_Parser<A>::functionFuncBoundsViaFDE(UnwindCursor<A,R>::fAddressSpace, eh_frame_start, eh_frame_len, func_bounds)) {
@@ -1271,9 +1275,13 @@ int RemoteUnwindCursor<A,R>::endOfPrologueInsns (unw_word_t start, unw_word_t en
                     // thing anyway so we might as well save it.
                     uint8_t *eh_buf = (uint8_t *)malloc (eh_frame_len);
                     if (UnwindCursor<A,R>::fAddressSpace.getBytes (eh_frame_start, eh_frame_len, eh_buf) == 0)
-                      return UNW_EUNSPEC;
+                    {
+                        free (eh_buf);
+                        return UNW_EUNSPEC;
+                    }
                     RemoteMemoryBlob *ehmem = new RemoteMemoryBlob(eh_buf, free, eh_frame_start, eh_frame_len, mh, NULL);
-                    procinfo->addMemBlob (ehmem);
+                    if (procinfo->addMemBlob (ehmem) == false)
+                        delete ehmem;
                 }
                 if (CFI_Parser<A>::functionFuncBoundsViaFDE(UnwindCursor<A,R>::fAddressSpace, eh_frame_start, eh_frame_len, func_bounds)) {
                     procinfo->addFuncBounds(mh, func_bounds);

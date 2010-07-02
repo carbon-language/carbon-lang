@@ -235,25 +235,32 @@ EXPORT int unw_init_remote(unw_cursor_t *cursor, unw_addr_space_t as, void *arg)
     // with the rest of the code here.
     switch ( remote->ras->getTargetArch() ) {
         case UNW_TARGET_I386:
-	{
-                Registers_x86 *r = new Registers_x86;
+            {
+                Registers_x86 r;
+                // LEAK: "addrSpace" is being leaked every time here with no easy solution.
+                // The address space is in the cursor and the cursor may get 
+                // duplicated, though if it does get duplicated, it will just be
+                // memcpy'ed since unw_cursor_t is just a bunch of uint64_t types...
                 OtherAddressSpace<Pointer32<LittleEndian> > *addrSpace = new OtherAddressSpace<Pointer32<LittleEndian> >(as, arg);
-                getRemoteContext (remote->ras, *r, arg);
-                unw_context_t *context = (unw_context_t*) r;
+                getRemoteContext (remote->ras, r, arg);
+                unw_context_t *context = (unw_context_t*) &r;
                 new ((void*)cursor) RemoteUnwindCursor<OtherAddressSpace<Pointer32<LittleEndian> >, Registers_x86>(*addrSpace, context, arg);
-                break;
-	}
+            }
             break;
         case UNW_TARGET_X86_64:
-	{
-                Registers_x86_64 *r = new Registers_x86_64;
+            {
+                Registers_x86_64 r;
+                // LEAK: "addrSpace" is being leaked every time here with no easy solution.
+                // The address space is in the cursor and the cursor may get 
+                // duplicated, though if it does get duplicated, it will just be
+                // memcpy'ed since unw_cursor_t is just a bunch of uint64_t types...
                 OtherAddressSpace<Pointer64<LittleEndian> > *addrSpace = new OtherAddressSpace<Pointer64<LittleEndian> >(as, arg);
-                getRemoteContext (remote->ras, *r, arg);
-                unw_context_t *context = (unw_context_t*) r;
+                getRemoteContext (remote->ras, r, arg);
+                unw_context_t *context = (unw_context_t*) &r;
                 new ((void*)cursor) RemoteUnwindCursor<OtherAddressSpace<Pointer64<LittleEndian> >, Registers_x86_64>(*addrSpace, context, arg);
-                break;
-	}
-
+            }
+            break;
+            
         case UNW_TARGET_PPC:
               ABORT("ppc not supported for remote unwinds");
             break;
