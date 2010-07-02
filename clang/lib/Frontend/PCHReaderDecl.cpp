@@ -32,13 +32,16 @@ namespace clang {
     PCHReader &Reader;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
+    pch::TypeID TypeIDForTypeDecl;
 
   public:
     PCHDeclReader(PCHReader &Reader, const PCHReader::RecordData &Record,
                   unsigned &Idx)
-      : Reader(Reader), Record(Record), Idx(Idx) { }
+      : Reader(Reader), Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
 
     CXXBaseSpecifier *ReadCXXBaseSpecifier();
+
+    void Visit(Decl *D);
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
@@ -107,6 +110,14 @@ namespace clang {
   };
 }
 
+void PCHDeclReader::Visit(Decl *D) {
+  DeclVisitor<PCHDeclReader, void>::Visit(D);
+
+  // if we have a fully initialized TypeDecl, we can safely read its type now.
+  if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
+    TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtr());
+}
+
 void PCHDeclReader::VisitDecl(Decl *D) {
   D->setDeclContext(cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
   D->setLexicalDeclContext(
@@ -134,17 +145,13 @@ void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
 
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
   VisitNamedDecl(TD);
-  TD->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
+  // Delay type reading until after we have fully initialized the decl.
+  TypeIDForTypeDecl = Record[Idx++];
 }
 
 void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
-  // Note that we cannot use VisitTypeDecl here, because we need to
-  // set the underlying type of the typedef *before* we try to read
-  // the type associated with the TypedefDecl.
-  VisitNamedDecl(TD);
-  uint64_t TypeData = Record[Idx++];
+  VisitTypeDecl(TD);
   TD->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
-  TD->setTypeForDecl(Reader.GetType(TypeData).getTypePtr());
 }
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
