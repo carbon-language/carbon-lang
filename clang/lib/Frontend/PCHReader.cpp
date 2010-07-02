@@ -659,16 +659,17 @@ bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
   // Parse the line entries
   std::vector<LineEntry> Entries;
   while (Idx < Record.size()) {
-    int FID = FileIDs[Record[Idx++]];
+    int FID = Record[Idx++];
 
     // Extract the line entries
     unsigned NumEntries = Record[Idx++];
+    assert(NumEntries && "Numentries is 00000");
     Entries.clear();
     Entries.reserve(NumEntries);
     for (unsigned I = 0; I != NumEntries; ++I) {
       unsigned FileOffset = Record[Idx++];
       unsigned LineNo = Record[Idx++];
-      int FilenameID = Record[Idx++];
+      int FilenameID = FileIDs[Record[Idx++]];
       SrcMgr::CharacteristicKind FileKind
         = (SrcMgr::CharacteristicKind)Record[Idx++];
       unsigned IncludeOffset = Record[Idx++];
