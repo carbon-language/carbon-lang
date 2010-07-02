@@ -2217,7 +2217,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(Record, Idx);
     const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
-    return Context->getDependentNameType(Keyword, NNS, Name, QualType());
+    QualType Canon = GetType(Record[Idx++]);
+    return Context->getDependentNameType(Keyword, NNS, Name, Canon);
   }
   
   case pch::TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {

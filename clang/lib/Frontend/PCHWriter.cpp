@@ -260,6 +260,9 @@ PCHTypeWriter::VisitDependentNameType(const DependentNameType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
   Writer.AddIdentifierRef(T->getIdentifier(), Record);
+  Writer.AddTypeRef(T->isCanonicalUnqualified() ? QualType()
+                                                : T->getCanonicalTypeInternal(),
+                    Record);
   Code = pch::TYPE_DEPENDENT_NAME;
 }
 
