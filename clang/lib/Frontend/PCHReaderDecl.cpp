@@ -39,7 +39,7 @@ namespace clang {
                   unsigned &Idx)
       : Reader(Reader), Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
 
-    CXXBaseSpecifier *ReadCXXBaseSpecifier();
+    CXXBaseSpecifier ReadCXXBaseSpecifier();
 
     void Visit(Decl *D);
 
@@ -628,20 +628,63 @@ void PCHDeclReader::VisitUnresolvedUsingTypenameDecl(
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
 
-CXXBaseSpecifier *PCHDeclReader::ReadCXXBaseSpecifier() {
+CXXBaseSpecifier PCHDeclReader::ReadCXXBaseSpecifier() {
   bool isVirtual = static_cast<bool>(Record[Idx++]);
   bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
   AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
   QualType T = Reader.GetType(Record[Idx++]);
   SourceRange Range = Reader.ReadSourceRange(Record, Idx);
-  return new (*Reader.getContext())
-    CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, T);
+  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, T);
 }
 
 void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  // assert(false && "cannot read CXXRecordDecl");
   VisitRecordDecl(D);
-  
+
+  ASTContext &C = *Reader.getContext();
+
+  if (D->isFirstDeclaration()) {
+    if (Record[Idx++]) { // DefinitionData != 0
+      D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(0);
+      struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+
+      Data.UserDeclaredConstructor = Record[Idx++];
+      Data.UserDeclaredCopyConstructor = Record[Idx++];
+      Data.UserDeclaredCopyAssignment = Record[Idx++];
+      Data.UserDeclaredDestructor = Record[Idx++];
+      Data.Aggregate = Record[Idx++];
+      Data.PlainOldData = Record[Idx++];
+      Data.Empty = Record[Idx++];
+      Data.Polymorphic = Record[Idx++];
+      Data.Abstract = Record[Idx++];
+      Data.HasTrivialConstructor = Record[Idx++];
+      Data.HasTrivialCopyConstructor = Record[Idx++];
+      Data.HasTrivialCopyAssignment = Record[Idx++];
+      Data.HasTrivialDestructor = Record[Idx++];
+      Data.ComputedVisibleConversions = Record[Idx++];
+
+      // setBases() is unsuitable since it may try to iterate the bases of an
+      // unitialized base.
+      Data.NumBases = Record[Idx++];
+      Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
+      for (unsigned i = 0; i != Data.NumBases; ++i)
+        Data.Bases[i] = ReadCXXBaseSpecifier();
+
+      // FIXME: Make VBases lazily computed when needed to avoid storing them.
+      Data.NumVBases = Record[Idx++];
+      Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
+      for (unsigned i = 0; i != Data.NumVBases; ++i)
+        Data.VBases[i] = ReadCXXBaseSpecifier();
+
+      Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
+      Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
+      Data.Definition = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
+      Data.FirstFriend
+          = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
+    }
+  } else {
+    D->DefinitionData = D->getPreviousDeclaration()->DefinitionData;
+  }
+
   enum CXXRecKind {
     CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
   };
@@ -662,31 +705,6 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
     D->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
     break;
   }
-  }
-
-  // FIXME: Hack. See PCHDeclWriter::VisitTypeDecl.
-  D->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
-
-  // FIXME: this is far from complete
-
-  if (D->isDefinition()) {
-    D->setDefinition(false); // make peace with an assertion
-    D->startDefinition();
-
-    unsigned NumBases = Record[Idx++];
-
-    llvm::SmallVector<CXXBaseSpecifier*, 4> Bases;
-    Bases.reserve(NumBases);
-    for (unsigned I = 0; I != NumBases; ++I)
-      Bases.push_back(ReadCXXBaseSpecifier());
-    D->setBases(Bases.begin(), NumBases);
-
-    D->data().FirstFriend
-        = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
-
-    // FIXME: there's a lot of stuff we do here that's kindof sketchy
-    // if we're leaving the context incomplete.
-    D->completeDefinition();
   }
 }
 

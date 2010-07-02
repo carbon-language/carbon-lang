@@ -92,6 +92,11 @@ public:
     return D;
   }
 
+  /// \brief Returns true if this is the first declaration.
+  bool isFirstDeclaration() const {
+    return RedeclLink.NextIsLatest();
+  }
+
   /// \brief Returns the most recent (re)declaration of this declaration.
   decl_type *getMostRecentDeclaration() {
     return getFirstDeclaration()->RedeclLink.getNext();

@@ -632,6 +632,44 @@ void PCHDeclWriter::WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base) {
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   VisitRecordDecl(D);
 
+  if (D->isFirstDeclaration()) {
+    Record.push_back(D->DefinitionData != 0);
+    if (D->DefinitionData) {
+      struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+
+      Record.push_back(Data.UserDeclaredConstructor);
+      Record.push_back(Data.UserDeclaredCopyConstructor);
+      Record.push_back(Data.UserDeclaredCopyAssignment);
+      Record.push_back(Data.UserDeclaredDestructor);
+      Record.push_back(Data.Aggregate);
+      Record.push_back(Data.PlainOldData);
+      Record.push_back(Data.Empty);
+      Record.push_back(Data.Polymorphic);
+      Record.push_back(Data.Abstract);
+      Record.push_back(Data.HasTrivialConstructor);
+      Record.push_back(Data.HasTrivialCopyConstructor);
+      Record.push_back(Data.HasTrivialCopyAssignment);
+      Record.push_back(Data.HasTrivialDestructor);
+      Record.push_back(Data.ComputedVisibleConversions);
+
+      Record.push_back(D->getNumBases());
+      for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
+             E = D->bases_end(); I != E; ++I)
+        WriteCXXBaseSpecifier(&*I);
+
+      // FIXME: Make VBases lazily computed when needed to avoid storing them.
+      Record.push_back(D->getNumVBases());
+      for (CXXRecordDecl::base_class_iterator I = D->vbases_begin(),
+             E = D->vbases_end(); I != E; ++I)
+        WriteCXXBaseSpecifier(&*I);
+
+      Writer.AddUnresolvedSet(Data.Conversions, Record);
+      Writer.AddUnresolvedSet(Data.VisibleConversions, Record);
+      Writer.AddDeclRef(Data.Definition, Record);
+      Writer.AddDeclRef(Data.FirstFriend, Record);
+    }
+  }
+
   enum {
     CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
   };
@@ -648,18 +686,6 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
     Record.push_back(CXXRecNotTemplate);
   }
 
-  // FIXME: Hack. See PCHDeclWriter::VisitTypeDecl.
-  Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
-
-  if (D->isDefinition()) {
-    unsigned NumBases = D->getNumBases();
-    Record.push_back(NumBases);
-    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
-           E = D->bases_end(); I != E; ++I)
-      WriteCXXBaseSpecifier(&*I);
-    
-    Writer.AddDeclRef(D->data().FirstFriend, Record);
-  }
   Code = pch::DECL_CXX_RECORD;
 }
 

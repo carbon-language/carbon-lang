@@ -743,6 +743,10 @@ public:
   ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
                            const RecordData &Record, unsigned &Idx);
 
+  /// \brief Read a UnresolvedSet structure.
+  void ReadUnresolvedSet(UnresolvedSetImpl &Set,
+                         const RecordData &Record, unsigned &Idx);
+
   /// \brief Read a source location.
   SourceLocation ReadSourceLocation(const RecordData &Record, unsigned& Idx) {
     return SourceLocation::getFromRawEncoding(Record[Idx++]);

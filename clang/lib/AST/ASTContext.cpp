@@ -1741,8 +1741,7 @@ QualType ASTContext::getInjectedClassNameType(CXXRecordDecl *Decl,
   assert(NeedsInjectedClassNameType(Decl));
   if (Decl->TypeForDecl) {
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));
-  } else if (CXXRecordDecl *PrevDecl
-               = cast_or_null<CXXRecordDecl>(Decl->getPreviousDeclaration())) {
+  } else if (CXXRecordDecl *PrevDecl = Decl->getPreviousDeclaration()) {
     assert(PrevDecl->TypeForDecl && "previous declaration has no type");
     Decl->TypeForDecl = PrevDecl->TypeForDecl;
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));

@@ -414,6 +414,13 @@ public:
   virtual const CXXRecordDecl *getCanonicalDecl() const {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
+  
+  const CXXRecordDecl *getPreviousDeclaration() const {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDeclaration());
+  }
+  CXXRecordDecl *getPreviousDeclaration() {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDeclaration());
+  }
 
   CXXRecordDecl *getDefinition() const {
     if (!DefinitionData) return 0;

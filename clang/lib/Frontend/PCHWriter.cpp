@@ -2621,3 +2621,14 @@ PCHWriter::AddTemplateArgumentList(const TemplateArgumentList *TemplateArgs,
   for (int i=0, e = TemplateArgs->flat_size(); i != e; ++i)
     AddTemplateArgument(TemplateArgs->get(i), Record);
 }
+
+
+void
+PCHWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
+  Record.push_back(Set.size());
+  for (UnresolvedSetImpl::const_iterator
+         I = Set.begin(), E = Set.end(); I != E; ++I) {
+    AddDeclRef(I.getDecl(), Record);
+    Record.push_back(I.getAccess());
+  }
+}

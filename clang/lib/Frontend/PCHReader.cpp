@@ -3090,6 +3090,17 @@ ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
     TemplArgs.push_back(ReadTemplateArgument(Record, Idx));
 }
 
+/// \brief Read a UnresolvedSet structure.
+void PCHReader::ReadUnresolvedSet(UnresolvedSetImpl &Set,
+                                  const RecordData &Record, unsigned &Idx) {
+  unsigned NumDecls = Record[Idx++];
+  while (NumDecls--) {
+    NamedDecl *D = cast<NamedDecl>(GetDecl(Record[Idx++]));
+    AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
+    Set.addDecl(D, AS);
+  }
+}
+
 NestedNameSpecifier *
 PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
   unsigned N = Record[Idx++];
