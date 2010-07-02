@@ -199,24 +199,6 @@ void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclaratorDecl(D);
 
-  Record.push_back(D->isThisDeclarationADefinition());
-  if (D->isThisDeclarationADefinition())
-    Writer.AddStmt(D->getBody());
-
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
-  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
-  Record.push_back(D->getStorageClassAsWritten());
-  Record.push_back(D->isInlineSpecified());
-  Record.push_back(D->isVirtualAsWritten());
-  Record.push_back(D->isPure());
-  Record.push_back(D->hasInheritedPrototype());
-  Record.push_back(D->hasWrittenPrototype());
-  Record.push_back(D->isDeleted());
-  Record.push_back(D->isTrivial());
-  Record.push_back(D->isCopyAssignment());
-  Record.push_back(D->hasImplicitReturnZero());
-  Writer.AddSourceLocation(D->getLocEnd(), Record);
-  
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
   default: assert(false && "Unhandled TemplatedKind!");
@@ -243,6 +225,7 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     Writer.AddTemplateArgumentList(FTSInfo->TemplateArguments, Record);
     
     // Template args as written.
+    Record.push_back(FTSInfo->TemplateArgumentsAsWritten != 0);
     if (FTSInfo->TemplateArgumentsAsWritten) {
       Record.push_back(FTSInfo->TemplateArgumentsAsWritten->size());
       for (int i=0, e = FTSInfo->TemplateArgumentsAsWritten->size(); i!=e; ++i)
@@ -252,8 +235,6 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
                                Record);
       Writer.AddSourceLocation(FTSInfo->TemplateArgumentsAsWritten->getRAngleLoc(),
                                Record);
-    } else {
-      Record.push_back(0);
     }
     break;
   }
@@ -273,6 +254,26 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     break;
   }
   }
+
+  // Make sure no Exprs are emitted after the body, because when reading the
+  // function, the body doesn't get read so the cursor doesn't advance. 
+  Record.push_back(D->isThisDeclarationADefinition());
+  if (D->isThisDeclarationADefinition())
+    Writer.AddStmt(D->getBody());
+
+  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
+  Record.push_back(D->getStorageClassAsWritten());
+  Record.push_back(D->isInlineSpecified());
+  Record.push_back(D->isVirtualAsWritten());
+  Record.push_back(D->isPure());
+  Record.push_back(D->hasInheritedPrototype());
+  Record.push_back(D->hasWrittenPrototype());
+  Record.push_back(D->isDeleted());
+  Record.push_back(D->isTrivial());
+  Record.push_back(D->isCopyAssignment());
+  Record.push_back(D->hasImplicitReturnZero());
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
 
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();

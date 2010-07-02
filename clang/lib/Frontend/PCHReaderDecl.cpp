@@ -206,22 +206,6 @@ void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitDeclaratorDecl(FD);
-  if (Record[Idx++])
-    FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
-  FD->setPreviousDeclaration(
-                   cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
-  FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
-  FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
-  FD->setInlineSpecified(Record[Idx++]);
-  FD->setVirtualAsWritten(Record[Idx++]);
-  FD->setPure(Record[Idx++]);
-  FD->setHasInheritedPrototype(Record[Idx++]);
-  FD->setHasWrittenPrototype(Record[Idx++]);
-  FD->setDeleted(Record[Idx++]);
-  FD->setTrivial(Record[Idx++]);
-  FD->setCopyAssignment(Record[Idx++]);
-  FD->setHasImplicitReturnZero(Record[Idx++]);
-  FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
   default: assert(false && "Unhandled TemplatedKind!");
@@ -250,22 +234,22 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
     
     // Template args as written.
-    unsigned NumTemplateArgLocs = Record[Idx++];
     llvm::SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
-    TemplArgLocs.reserve(NumTemplateArgLocs);
-    for (unsigned i=0; i != NumTemplateArgLocs; ++i)
-      TemplArgLocs.push_back(Reader.ReadTemplateArgumentLoc(Record, Idx));
-
     SourceLocation LAngleLoc, RAngleLoc;
-    if (NumTemplateArgLocs) {
+    if (Record[Idx++]) {  // TemplateArgumentsAsWritten != 0
+      unsigned NumTemplateArgLocs = Record[Idx++];
+      TemplArgLocs.reserve(NumTemplateArgLocs);
+      for (unsigned i=0; i != NumTemplateArgLocs; ++i)
+        TemplArgLocs.push_back(Reader.ReadTemplateArgumentLoc(Record, Idx));
+  
       LAngleLoc = Reader.ReadSourceLocation(Record, Idx);
       RAngleLoc = Reader.ReadSourceLocation(Record, Idx);
     }
 
     FD->setFunctionTemplateSpecialization(Template, TemplArgs.size(),
                                           TemplArgs.data(), TSK,
-                                          NumTemplateArgLocs,
-                                  NumTemplateArgLocs ? TemplArgLocs.data() : 0,
+                                          TemplArgLocs.size(),
+                                          TemplArgLocs.data(),
                                           LAngleLoc, RAngleLoc);
     break;
   }
@@ -287,7 +271,24 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     break;
   }
   }
-  
+
+  if (Record[Idx++])
+    FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
+  FD->setPreviousDeclaration(
+                   cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
+  FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
+  FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
+  FD->setInlineSpecified(Record[Idx++]);
+  FD->setVirtualAsWritten(Record[Idx++]);
+  FD->setPure(Record[Idx++]);
+  FD->setHasInheritedPrototype(Record[Idx++]);
+  FD->setHasWrittenPrototype(Record[Idx++]);
+  FD->setDeleted(Record[Idx++]);
+  FD->setTrivial(Record[Idx++]);
+  FD->setCopyAssignment(Record[Idx++]);
+  FD->setHasImplicitReturnZero(Record[Idx++]);
+  FD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+
   // Read in the parameters.
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
