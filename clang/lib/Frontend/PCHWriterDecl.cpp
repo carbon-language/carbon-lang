@@ -751,14 +751,24 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     typedef llvm::FoldingSet<ClassTemplateSpecializationDecl> CTSDSetTy;
     CTSDSetTy &CTSDSet = D->getSpecializations();
     Record.push_back(CTSDSet.size());
-    for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I)
-      Writer.AddDeclRef(&*I, Record);
+    for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I) {
+      ClassTemplateSpecializationDecl *CTSD = &*I; 
+      Writer.AddDeclRef(CTSD, Record);
+      // Write the argument list here because we may get it uninitialized when
+      // reading it back. 
+      Writer.AddTemplateArgumentList(&CTSD->getTemplateArgs(), Record);
+    }
 
     typedef llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> CTPSDSetTy;
     CTPSDSetTy &CTPSDSet = D->getPartialSpecializations();
     Record.push_back(CTPSDSet.size());
-    for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E = CTPSDSet.end(); I!=E; ++I)
-      Writer.AddDeclRef(&*I, Record);
+    for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E=CTPSDSet.end(); I!=E; ++I) {
+      ClassTemplatePartialSpecializationDecl *CTPSD = &*I; 
+      Writer.AddDeclRef(CTPSD, Record);
+      // Write the argument list here because we may get it uninitialized when
+      // reading it back. 
+      Writer.AddTemplateArgumentList(&CTPSD->getTemplateArgs(), Record);
+    }
 
     // InjectedClassNameType is computed, no need to write it.
 

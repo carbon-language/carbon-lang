@@ -768,11 +768,12 @@ void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     while (size--) {
       ClassTemplateSpecializationDecl *CTSD
          = cast<ClassTemplateSpecializationDecl>(Reader.GetDecl(Record[Idx++]));
+      llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+      Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
       llvm::FoldingSetNodeID ID;
       void *InsertPos = 0;
-      ClassTemplateSpecializationDecl::Profile(ID, 
-                                  CTSD->getTemplateArgs().getFlatArgumentList(),
-                                            CTSD->getTemplateArgs().flat_size(),
+      ClassTemplateSpecializationDecl::Profile(ID, TemplArgs.data(),
+                                               TemplArgs.size(),
                                                *Reader.getContext());
       D->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
       D->getSpecializations().InsertNode(CTSD, InsertPos);
@@ -783,12 +784,13 @@ void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
       ClassTemplatePartialSpecializationDecl *CTSD
          = cast<ClassTemplatePartialSpecializationDecl>(
                                                  Reader.GetDecl(Record[Idx++]));
+      llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+      Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
       llvm::FoldingSetNodeID ID;
       void *InsertPos = 0;
-      ClassTemplatePartialSpecializationDecl::Profile(ID, 
-                                  CTSD->getTemplateArgs().getFlatArgumentList(),
-                                            CTSD->getTemplateArgs().flat_size(),
-                                               *Reader.getContext());
+      ClassTemplatePartialSpecializationDecl::Profile(ID, TemplArgs.data(),
+                                                      TemplArgs.size(),
+                                                      *Reader.getContext());
       D->getPartialSpecializations().FindNodeOrInsertPos(ID, InsertPos);
       D->getPartialSpecializations().InsertNode(CTSD, InsertPos);
     }
