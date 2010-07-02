@@ -2197,7 +2197,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   case pch::TYPE_INJECTED_CLASS_NAME: {
     CXXRecordDecl *D = cast<CXXRecordDecl>(GetDecl(Record[0]));
     QualType TST = GetType(Record[1]); // probably derivable
-    return Context->getInjectedClassNameType(D, TST);
+    // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
+    // for PCH reading, too much interdependencies.
+    return
+      QualType(new (*Context, TypeAlignment) InjectedClassNameType(D, TST), 0);
   }
   
   case pch::TYPE_TEMPLATE_TYPE_PARM: {

@@ -2544,6 +2544,9 @@ class InjectedClassNameType : public Type {
 
   friend class ASTContext; // ASTContext creates these.
   friend class TagDecl; // TagDecl mutilates the Decl
+  friend class PCHReader; // FIXME: ASTContext::getInjectedClassNameType is not
+                          // currently suitable for PCH reading, too much
+                          // interdependencies.
   InjectedClassNameType(CXXRecordDecl *D, QualType TST)
     : Type(InjectedClassName, QualType(), true),
       Decl(D), InjectedType(TST) {
