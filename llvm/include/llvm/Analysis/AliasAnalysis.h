@@ -165,27 +165,6 @@ public:
     /// ModRefInfo - Whether the pointer is loaded or stored to/from.
     ///
     ModRefResult ModRefInfo;
-
-    /// AccessType - Specific fine-grained access information for the argument.
-    /// If none of these classifications is general enough, the
-    /// getModRefBehavior method should not return AccessesArguments*.  If a
-    /// record is not returned for a particular argument, the argument is never
-    /// dead and never dereferenced.
-    enum AccessType {
-      /// ScalarAccess - The pointer is dereferenced.
-      ///
-      ScalarAccess,
-
-      /// ArrayAccess - The pointer is indexed through as an array of elements.
-      ///
-      ArrayAccess,
-
-      /// ElementAccess ?? P->F only?
-
-      /// CallsThrough - Indirect calls are made through the specified function
-      /// pointer.
-      CallsThrough
-    };
   };
 
   /// getModRefBehavior - Return the behavior when calling the given call site.
