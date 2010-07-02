@@ -2015,7 +2015,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
 
   case pch::TYPE_MEMBER_POINTER: {
-    if (Record.size() != 1) {
+    if (Record.size() != 2) {
       Error("Incorrect encoding of member pointer type");
       return QualType();
     }
