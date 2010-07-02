@@ -1421,6 +1421,7 @@ void CppWriter::printInstruction(const Instruction *I,
     nl(Out) << iName << "->setTailCall("
         << (call->isTailCall() ? "true" : "false");
     Out << ");";
+    nl(Out);
     printAttributes(call->getAttributes(), iName);
     Out << iName << "->setAttributes(" << iName << "_PAL);";
     nl(Out);
