@@ -346,6 +346,9 @@ public:
   /// \brief Emit a UnresolvedSet structure.
   void AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record);
 
+  /// brief Emit a C++ base specifier.
+  void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordData &Record);
+
   /// \brief Add a string to the given record.
   void AddString(const std::string &Str, RecordData &Record);
 

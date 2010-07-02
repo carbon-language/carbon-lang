@@ -41,6 +41,7 @@ public:
   typedef const T **iterator;
   iterator begin() const;
   iterator end() const;
+  size_t size() const;
 
   void push_back(T *Method);
   void Destroy();
@@ -56,7 +57,6 @@ UsuallyTinyPtrVector<T>::begin() const {
   return &Vec->front();
 }
 
-
 template<typename T>
 typename UsuallyTinyPtrVector<T>::iterator 
 UsuallyTinyPtrVector<T>::end() const {
@@ -69,6 +69,15 @@ UsuallyTinyPtrVector<T>::end() const {
 
   vector_type *Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
   return &Vec->front() + Vec->size();
+}
+
+template<typename T>
+size_t UsuallyTinyPtrVector<T>::size() const {
+  if ((Storage & 0x01) == 0)
+    return (Storage == 0) ? 0 : 1;
+
+  vector_type *Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
+  return Vec->size();
 }
 
 template<typename T>

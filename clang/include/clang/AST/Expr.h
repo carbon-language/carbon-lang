@@ -2024,6 +2024,7 @@ public:
   }
 
   const CXXBaseSpecifierArray& getBasePath() const { return BasePath; }
+        CXXBaseSpecifierArray& getBasePath()       { return BasePath; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstCastExprConstant &&

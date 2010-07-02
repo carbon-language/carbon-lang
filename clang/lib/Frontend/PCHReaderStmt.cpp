@@ -537,6 +537,14 @@ void PCHStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   E->setSubExpr(Reader.ReadSubExpr());
   E->setCastKind((CastExpr::CastKind)Record[Idx++]);
+  CXXBaseSpecifierArray &BasePath = E->getBasePath();
+  unsigned NumBaseSpecs = Record[Idx++];
+  while (NumBaseSpecs--) {
+    // FIXME: These gets leaked.
+    CXXBaseSpecifier *BaseSpec = new (*Reader.getContext()) CXXBaseSpecifier;
+    *BaseSpec = Reader.ReadCXXBaseSpecifier(Record, Idx);
+    BasePath.push_back(BaseSpec);
+  }
 }
 
 void PCHStmtReader::VisitBinaryOperator(BinaryOperator *E) {

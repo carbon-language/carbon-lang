@@ -109,8 +109,6 @@ namespace clang {
     void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
-
-    void WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base);
   };
 }
 
@@ -634,14 +632,6 @@ void PCHDeclWriter::VisitUnresolvedUsingTypenameDecl(
   Code = pch::DECL_UNRESOLVED_USING_TYPENAME;
 }
 
-void PCHDeclWriter::WriteCXXBaseSpecifier(const CXXBaseSpecifier *Base) {
-  Record.push_back(Base->isVirtual());
-  Record.push_back(Base->isBaseOfClass());
-  Record.push_back(Base->getAccessSpecifierAsWritten());
-  Writer.AddTypeRef(Base->getType(), Record);
-  Writer.AddSourceRange(Base->getSourceRange(), Record);
-}
-
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   VisitRecordDecl(D);
 
@@ -670,13 +660,13 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Record.push_back(D->getNumBases());
       for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
              E = D->bases_end(); I != E; ++I)
-        WriteCXXBaseSpecifier(&*I);
+        Writer.AddCXXBaseSpecifier(*I, Record);
 
       // FIXME: Make VBases lazily computed when needed to avoid storing them.
       Record.push_back(D->getNumVBases());
       for (CXXRecordDecl::base_class_iterator I = D->vbases_begin(),
              E = D->vbases_end(); I != E; ++I)
-        WriteCXXBaseSpecifier(&*I);
+        Writer.AddCXXBaseSpecifier(*I, Record);
 
       Writer.AddUnresolvedSet(Data.Conversions, Record);
       Writer.AddUnresolvedSet(Data.VisibleConversions, Record);

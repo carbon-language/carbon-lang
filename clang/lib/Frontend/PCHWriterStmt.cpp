@@ -529,6 +529,11 @@ void PCHStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getSubExpr());
   Record.push_back(E->getCastKind()); // FIXME: stable encoding
+  CXXBaseSpecifierArray &BasePath = E->getBasePath();
+  Record.push_back(BasePath.size());
+  for (CXXBaseSpecifierArray::iterator I = BasePath.begin(), E = BasePath.end();
+       I != E; ++I)
+    Writer.AddCXXBaseSpecifier(**I, Record);
 }
 
 void PCHStmtWriter::VisitBinaryOperator(BinaryOperator *E) {

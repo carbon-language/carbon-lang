@@ -39,8 +39,6 @@ namespace clang {
                   unsigned &Idx)
       : Reader(Reader), Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
 
-    CXXBaseSpecifier ReadCXXBaseSpecifier();
-
     void Visit(Decl *D);
 
     void VisitDecl(Decl *D);
@@ -635,15 +633,6 @@ void PCHDeclReader::VisitUnresolvedUsingTypenameDecl(
   D->setTargetNestedNameSpecifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
 
-CXXBaseSpecifier PCHDeclReader::ReadCXXBaseSpecifier() {
-  bool isVirtual = static_cast<bool>(Record[Idx++]);
-  bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
-  AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
-  QualType T = Reader.GetType(Record[Idx++]);
-  SourceRange Range = Reader.ReadSourceRange(Record, Idx);
-  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, T);
-}
-
 void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   VisitRecordDecl(D);
 
@@ -676,13 +665,13 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Data.NumBases = Record[Idx++];
       Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
       for (unsigned i = 0; i != Data.NumBases; ++i)
-        Data.Bases[i] = ReadCXXBaseSpecifier();
+        Data.Bases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
 
       // FIXME: Make VBases lazily computed when needed to avoid storing them.
       Data.NumVBases = Record[Idx++];
       Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
       for (unsigned i = 0; i != Data.NumVBases; ++i)
-        Data.VBases[i] = ReadCXXBaseSpecifier();
+        Data.VBases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
 
       Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
       Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);

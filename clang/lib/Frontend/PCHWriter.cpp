@@ -2632,3 +2632,12 @@ PCHWriter::AddUnresolvedSet(const UnresolvedSetImpl &Set, RecordData &Record) {
     Record.push_back(I.getAccess());
   }
 }
+
+void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
+                                    RecordData &Record) {
+  Record.push_back(Base.isVirtual());
+  Record.push_back(Base.isBaseOfClass());
+  Record.push_back(Base.getAccessSpecifierAsWritten());
+  AddTypeRef(Base.getType(), Record);
+  AddSourceRange(Base.getSourceRange(), Record);
+}

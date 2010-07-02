@@ -3101,6 +3101,16 @@ void PCHReader::ReadUnresolvedSet(UnresolvedSetImpl &Set,
   }
 }
 
+CXXBaseSpecifier
+PCHReader::ReadCXXBaseSpecifier(const RecordData &Record, unsigned &Idx) {
+  bool isVirtual = static_cast<bool>(Record[Idx++]);
+  bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
+  AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
+  QualType T = GetType(Record[Idx++]);
+  SourceRange Range = ReadSourceRange(Record, Idx);
+  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, T);
+}
+
 NestedNameSpecifier *
 PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
   unsigned N = Record[Idx++];
