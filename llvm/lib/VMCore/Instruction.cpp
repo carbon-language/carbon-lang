@@ -421,6 +421,7 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Store:
   case Ret:
   case Br:
+  case IndirectBr:
   case Switch:
   case Unwind:
   case Unreachable:
