@@ -1042,7 +1042,7 @@ declare signext i8 @returns_signed_char()
       generator that usually indicates a desired alignment for the synthesized
       stack slot.</dd>
 
-  <dt><tt><b>sret</b></tt></dt>
+  <dt><tt><b><a name="sret">sret</a></b></tt></dt>
   <dd>This indicates that the pointer parameter specifies the address of a
       structure that is the return value of the function in the source program.
       This pointer must be guaranteed by the caller to be valid: loads and
@@ -1050,7 +1050,7 @@ declare signext i8 @returns_signed_char()
       may only be applied to the first parameter. This is not a valid attribute
       for return values. </dd>
 
-  <dt><tt><b>noalias</b></tt></dt>
+  <dt><tt><b><a name="noalias">noalias</a></b></tt></dt>
   <dd>This indicates that pointer values
       <a href="#pointeraliasing"><i>based</i></a> on the argument or return
       value do not alias pointer values which are not <i>based</i> on it.
@@ -1059,12 +1059,12 @@ declare signext i8 @returns_signed_char()
       For further details, please see the discussion of the NoAlias response in
       <a href="AliasAnalysis.html#MustMayNo">alias analysis</a>.</dd>
 
-  <dt><tt><b>nocapture</b></tt></dt>
+  <dt><tt><b><a name="nocapture">nocapture</a></b></tt></dt>
   <dd>This indicates that the callee does not make any copies of the pointer
       that outlive the callee itself. This is not a valid attribute for return
       values.</dd>
 
-  <dt><tt><b>nest</b></tt></dt>
+  <dt><tt><b><a name="nest">nest</a></b></tt></dt>
   <dd>This indicates that the pointer parameter can be excised using the
       <a href="#int_trampoline">trampoline intrinsics</a>. This is not a valid
       attribute for return values.</dd>
@@ -6952,7 +6952,8 @@ LLVM</a>.</p>
 <div class="doc_text">
 
 <p>This intrinsic makes it possible to excise one parameter, marked with
-   the <tt>nest</tt> attribute, from a function.  The result is a callable
+   the <a href="#nest"><tt>nest</tt></a> attribute, from a function.
+   The result is a callable
    function pointer lacking the nest parameter - the caller does not need to
    provide a value for it.  Instead, the value to use is stored in advance in a
    "trampoline", a block of memory usually allocated on the stack, which also
