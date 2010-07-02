@@ -82,7 +82,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
         return len;
     }
     
-    char *first_slash = ::strchr (src_path, '/');
+    const char *first_slash = ::strchr (src_path, '/');
     char remainder[PATH_MAX];
     
     if (first_slash == NULL)
