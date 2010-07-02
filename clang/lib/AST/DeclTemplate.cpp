@@ -266,6 +266,12 @@ TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
 }
 
+TemplateTypeParmDecl *
+TemplateTypeParmDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) TemplateTypeParmDecl(0, SourceLocation(), 0, false,
+                                      QualType(), false);
+}
+
 SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
   return DefaultArgument->getTypeLoc().getSourceRange().getBegin();
 }
@@ -476,7 +482,7 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
 }
 
 ClassTemplateSpecializationDecl *
-ClassTemplateSpecializationDecl::CreateEmpty(ASTContext &Context) {
+ClassTemplateSpecializationDecl::Create(ASTContext &Context, EmptyShell Empty) {
   return
     new (Context)ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
 }
@@ -545,7 +551,8 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
 }
 
 ClassTemplatePartialSpecializationDecl *
-ClassTemplatePartialSpecializationDecl::CreateEmpty(ASTContext &Context) {
+ClassTemplatePartialSpecializationDecl::Create(ASTContext &Context,
+                                               EmptyShell Empty) {
   return new (Context)ClassTemplatePartialSpecializationDecl();
 }
 

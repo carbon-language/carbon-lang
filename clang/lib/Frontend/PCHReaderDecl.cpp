@@ -1145,11 +1145,10 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_ENUM:
-    D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(), 0);
+    D = EnumDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_RECORD:
-    D = RecordDecl::Create(*Context, TTK_Struct, 0, SourceLocation(),
-                           0, SourceLocation(), 0);
+    D = RecordDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_ENUM_CONSTANT:
     D = EnumConstantDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
@@ -1196,8 +1195,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                             DeclarationName());
     break;
   case pch::DECL_CXX_RECORD:
-    D = CXXRecordDecl::Create(*Context, TTK_Struct, 0,
-                              SourceLocation(), 0, SourceLocation(), 0);
+    D = CXXRecordDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_CXX_METHOD:
     D = CXXMethodDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
@@ -1227,17 +1225,18 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                   DeclarationName(), 0, 0, 0);
     break;
   case pch::DECL_CLASS_TEMPLATE_SPECIALIZATION:
-    D = ClassTemplateSpecializationDecl::CreateEmpty(*Context);
+    D = ClassTemplateSpecializationDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
-    D = ClassTemplatePartialSpecializationDecl::CreateEmpty(*Context);
+    D = ClassTemplatePartialSpecializationDecl::Create(*Context,
+                                                            Decl::EmptyShell());
     break;
   case pch::DECL_FUNCTION_TEMPLATE:
     D = FunctionTemplateDecl::Create(*Context, 0, SourceLocation(),
                                      DeclarationName(), 0, 0);
     break;
   case pch::DECL_TEMPLATE_TYPE_PARM:
-    D = TemplateTypeParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,0,0);
+    D = TemplateTypeParmDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_NON_TYPE_TEMPLATE_PARM:
     D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,

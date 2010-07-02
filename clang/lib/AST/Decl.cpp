@@ -1638,6 +1638,10 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
   return Enum;
 }
 
+EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation());
+}
+
 void EnumDecl::Destroy(ASTContext& C) {
   TagDecl::Destroy(C);
 }
@@ -1675,6 +1679,11 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, PrevDecl, TKL);
   C.getTypeDeclType(R, PrevDecl);
   return R;
+}
+
+RecordDecl *RecordDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) RecordDecl(Record, TTK_Struct, 0, SourceLocation(), 0, 0,
+                            SourceLocation());
 }
 
 RecordDecl::~RecordDecl() {

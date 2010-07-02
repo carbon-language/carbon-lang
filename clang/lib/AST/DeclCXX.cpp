@@ -58,6 +58,11 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   return R;
 }
 
+CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(), 0, 0,
+                               SourceLocation());
+}
+
 CXXRecordDecl::~CXXRecordDecl() {
 }
 

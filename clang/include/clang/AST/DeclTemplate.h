@@ -703,6 +703,7 @@ public:
                                       SourceLocation L, unsigned D, unsigned P,
                                       IdentifierInfo *Id, bool Typename,
                                       bool ParameterPack);
+  static TemplateTypeParmDecl *Create(ASTContext &C, EmptyShell Empty);
 
   /// \brief Whether this template type parameter was declared with
   /// the 'typename' keyword. If not, it was declared with the 'class'
@@ -980,8 +981,8 @@ public:
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
          ClassTemplateSpecializationDecl *PrevDecl);
-
-  static ClassTemplateSpecializationDecl *CreateEmpty(ASTContext &Context);
+  static ClassTemplateSpecializationDecl *
+  Create(ASTContext &Context, EmptyShell Empty);
 
   virtual void Destroy(ASTContext& C);
 
@@ -1230,7 +1231,7 @@ public:
          unsigned SequenceNumber);
 
   static ClassTemplatePartialSpecializationDecl *
-  CreateEmpty(ASTContext &Context);
+  Create(ASTContext &Context, EmptyShell Empty);
 
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {

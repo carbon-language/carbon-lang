@@ -1993,6 +1993,7 @@ public:
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
                           SourceLocation TKL, EnumDecl *PrevDecl);
+  static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
 
   virtual void Destroy(ASTContext& C);
 
@@ -2110,6 +2111,7 @@ public:
                             SourceLocation L, IdentifierInfo *Id,
                             SourceLocation TKL = SourceLocation(),
                             RecordDecl* PrevDecl = 0);
+  static RecordDecl *Create(ASTContext &C, EmptyShell Empty);
 
   virtual void Destroy(ASTContext& C);
 

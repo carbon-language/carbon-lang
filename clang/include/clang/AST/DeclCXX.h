@@ -427,6 +427,7 @@ public:
                                SourceLocation TKL = SourceLocation(),
                                CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
+  static CXXRecordDecl *Create(ASTContext &C, EmptyShell Empty);
 
   virtual void Destroy(ASTContext& C);
 
