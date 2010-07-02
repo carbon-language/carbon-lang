@@ -203,8 +203,9 @@ and reallocation.</p>
 
 <p>As an exception to this is with the
 <a href="LangRef.html#noalias"><tt>noalias</tt></a> keyword. AliasAnalysis
-implementations may choose to ignore the "irrelevant" dependencies, provided
-their clients do not need to be aware of these dependencies for correctness.</p>
+implementations may choose to respect the <tt>noalias</tt> keyword and ignore
+the "irrelevant" dependencies, provided their clients do not need to be aware
+of these dependencies for correctness.</p>
 
 <p>The MayAlias response is used whenever the two pointers might refer to the
 same object.  If the two memory objects overlap, but do not start at the same
