@@ -2885,6 +2885,10 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         {
                             type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, base_classes.data(), base_classes.size());
                         }
+                        
+                        // Clang will copy each CXXBaseSpecifier in "base_classes"
+                        // so we have to free them all.
+                        ClangASTContext::DeleteBaseClassSpecifiers (base_classes.data(), base_classes.size());
                     }
                     type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
                 }

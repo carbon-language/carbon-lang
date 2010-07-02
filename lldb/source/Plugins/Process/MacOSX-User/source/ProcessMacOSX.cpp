@@ -1802,6 +1802,8 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
         if (err.Fail() || log)
             err.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, NULL, &attr, argv, envp);
     }
+    
+    ::posix_spawnattr_destroy (&attr);
 
     // We have seen some cases where posix_spawnp was returning a valid
     // looking pid even when an error was returned, so clear it out

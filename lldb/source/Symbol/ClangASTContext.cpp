@@ -201,38 +201,7 @@ ParseLangArgs
 //    }
 }
 
-//----------------------------------------------------------------------
-// ClangASTContext constructor
-//----------------------------------------------------------------------
-//ClangASTContext::ClangASTContext(Module *module) :
-//  m_target_triple(),
-//  m_ast_context_ap(),
-//  m_language_options_ap(),
-//  m_source_manager_ap(),
-//  m_target_info_ap(),
-//  m_identifier_table_ap(),
-//  m_selector_table_ap(),
-//  m_builtins_ap()
-//{
-//  if (module)
-//  {
-//      ObjectFile * objfile = module->GetObjectFile();
-//      if (objfile)
-//          objfile->GetTargetTriple(m_target_triple);
-//  }
-//}
 
-//ClangASTContext::ClangASTContext(const ConstString& target_triple) :
-//  m_target_triple(target_triple),
-//  m_ast_context_ap(),
-//  m_language_options_ap(),
-//  m_source_manager_ap(),
-//  m_target_info_ap(),
-//  m_identifier_table_ap(),
-//  m_selector_table_ap(),
-//  m_builtins_ap()
-//{
-//}
 ClangASTContext::ClangASTContext(const char *target_triple) :
     m_target_triple(),
     m_ast_context_ap(),
@@ -918,6 +887,16 @@ ClangASTContext::CreateBaseClassSpecifier (void *base_class_type, int access, bo
     if (base_class_type)
         return new CXXBaseSpecifier(SourceRange(), is_virtual, base_of_class, (AccessSpecifier)access, QualType::getFromOpaquePtr(base_class_type));
     return NULL;
+}
+
+void
+ClangASTContext::DeleteBaseClassSpecifiers (CXXBaseSpecifier **base_classes, unsigned num_base_classes)
+{
+    for (unsigned i=0; i<num_base_classes; ++i)
+    {
+        delete base_classes[i];
+        base_classes[i] = NULL;
+    }
 }
 
 bool

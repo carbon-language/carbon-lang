@@ -33,11 +33,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-//  ClangASTContext(Module *module);
-
     ClangASTContext(const char *target_triple);
-
-//  ClangASTContext(const ConstString &target_triple);
 
     ~ClangASTContext();
 
@@ -131,40 +127,35 @@ public:
     //------------------------------------------------------------------
 
     void *
-    CreateRecordType (
-        const char *name,
-        int kind,
-        clang::DeclContext *decl_ctx);
+    CreateRecordType (const char *name,
+                      int kind,
+                      clang::DeclContext *decl_ctx);
 
     bool
-    AddFieldToRecordType (
-        void * record_qual_type,
-        const char *name,
-        void * field_type,
-        int access,
-        uint32_t bitfield_bit_size);
-
+    AddFieldToRecordType (void * record_qual_type,
+                          const char *name,
+                          void * field_type,
+                          int access,
+                          uint32_t bitfield_bit_size);
+    
     bool
-    FieldIsBitfield (
-        clang::FieldDecl* field,
-        uint32_t& bitfield_bit_size);
+    FieldIsBitfield (clang::FieldDecl* field,
+                     uint32_t& bitfield_bit_size);
 
     static bool
-    FieldIsBitfield (
-        clang::ASTContext *ast_context,
-        clang::FieldDecl* field,
-        uint32_t& bitfield_bit_size);
+    FieldIsBitfield (clang::ASTContext *ast_context,
+                     clang::FieldDecl* field,
+                     uint32_t& bitfield_bit_size);
 
     static bool
     RecordHasFields (const clang::RecordDecl *record_decl);
 
     void
-    SetDefaultAccessForRecordFields (
-        void * clang_qual_type,
-        int default_accessibility,
-        int *assigned_accessibilities,
-        size_t num_assigned_accessibilities);
-
+    SetDefaultAccessForRecordFields (void * clang_qual_type,
+                                     int default_accessibility,
+                                     int *assigned_accessibilities,
+                                     size_t num_assigned_accessibilities);
+    
     //------------------------------------------------------------------
     // Aggregate Types
     //------------------------------------------------------------------
@@ -172,37 +163,34 @@ public:
     IsAggregateType (void * clang_type);
 
     static uint32_t
-    GetNumChildren (
-        void * clang_type,
-        bool omit_empty_base_classes);
+    GetNumChildren (void * clang_type,
+                    bool omit_empty_base_classes);
 
     void *
-    GetChildClangTypeAtIndex (
-        const char *parent_name,
-        void * parent_clang_type,
-        uint32_t idx,
-        bool transparent_pointers,
-        bool omit_empty_base_classes,
-        std::string& child_name,
-        uint32_t &child_byte_size,
-        int32_t &child_byte_offset,
-        uint32_t &child_bitfield_bit_size,
-        uint32_t &child_bitfield_bit_offset);
-
+    GetChildClangTypeAtIndex (const char *parent_name,
+                              void * parent_clang_type,
+                              uint32_t idx,
+                              bool transparent_pointers,
+                              bool omit_empty_base_classes,
+                              std::string& child_name,
+                              uint32_t &child_byte_size,
+                              int32_t &child_byte_offset,
+                              uint32_t &child_bitfield_bit_size,
+                              uint32_t &child_bitfield_bit_offset);
+    
     static void *
-    GetChildClangTypeAtIndex (
-        clang::ASTContext *ast_context,
-        const char *parent_name,
-        void * parent_clang_type,
-        uint32_t idx,
-        bool transparent_pointers,
-        bool omit_empty_base_classes,
-        std::string& child_name,
-        uint32_t &child_byte_size,
-        int32_t &child_byte_offset,
-        uint32_t &child_bitfield_bit_size,
-        uint32_t &child_bitfield_bit_offset);
-
+    GetChildClangTypeAtIndex (clang::ASTContext *ast_context,
+                              const char *parent_name,
+                              void * parent_clang_type,
+                              uint32_t idx,
+                              bool transparent_pointers,
+                              bool omit_empty_base_classes,
+                              std::string& child_name,
+                              uint32_t &child_byte_size,
+                              int32_t &child_byte_offset,
+                              uint32_t &child_bitfield_bit_size,
+                              uint32_t &child_bitfield_bit_offset);
+    
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
     static uint32_t
@@ -228,26 +216,27 @@ public:
     //------------------------------------------------------------------
 
     bool
-    SetTagTypeKind (
-        void * tag_qual_type,
-        int kind);
+    SetTagTypeKind (void * tag_qual_type,
+                    int kind);
 
     //------------------------------------------------------------------
     // C++ Base Classes
     //------------------------------------------------------------------
 
     clang::CXXBaseSpecifier *
-    CreateBaseClassSpecifier (
-        void * base_class_type,
-        int access,
-        bool is_virtual,
-        bool base_of_class);
+    CreateBaseClassSpecifier (void * base_class_type,
+                              int access,
+                              bool is_virtual,
+                              bool base_of_class);
+    
+    static void
+    DeleteBaseClassSpecifiers (clang::CXXBaseSpecifier **base_classes, 
+                               unsigned num_base_classes);
 
     bool
-    SetBaseClassesForClassType (
-        void * class_clang_type,
-        clang::CXXBaseSpecifier const * const *base_classes,
-        unsigned num_base_classes);
+    SetBaseClassesForClassType (void * class_clang_type,
+                                clang::CXXBaseSpecifier const * const *base_classes,
+                                unsigned num_base_classes);
 
     //------------------------------------------------------------------
     // DeclContext Functions
@@ -261,51 +250,45 @@ public:
     //------------------------------------------------------------------
 
     clang::NamespaceDecl *
-    GetUniqueNamespaceDeclaration (
-        const char *name,
-        const Declaration &decl,
-        clang::DeclContext *decl_ctx);
+    GetUniqueNamespaceDeclaration (const char *name,
+                                   const Declaration &decl,
+                                   clang::DeclContext *decl_ctx);
 
     //------------------------------------------------------------------
     // Function Types
     //------------------------------------------------------------------
 
     clang::FunctionDecl *
-    CreateFunctionDeclaration (
-        const char *name,
-        void * function_Type,
-        int storage,
-        bool is_inline);
-
+    CreateFunctionDeclaration (const char *name,
+                               void * function_Type,
+                               int storage,
+                               bool is_inline);
+    
     void *
-    CreateFunctionType (
-        void * result_type,
-        void **args,
-        unsigned num_args,
-        bool isVariadic,
-        unsigned TypeQuals);
-
+    CreateFunctionType (void * result_type,
+                        void **args,
+                        unsigned num_args,
+                        bool isVariadic,
+                        unsigned TypeQuals);
+    
     clang::ParmVarDecl *
-    CreateParmeterDeclaration (
-        const char *name,
-        void * return_type,
-        int storage);
+    CreateParmeterDeclaration (const char *name,
+                               void * return_type,
+                               int storage);
 
     void
-    SetFunctionParameters (
-        clang::FunctionDecl *function_decl,
-        clang::ParmVarDecl **params,
-        unsigned num_params);
+    SetFunctionParameters (clang::FunctionDecl *function_decl,
+                           clang::ParmVarDecl **params,
+                           unsigned num_params);
 
     //------------------------------------------------------------------
     // Array Types
     //------------------------------------------------------------------
 
     void *
-    CreateArrayType (
-        void * element_type,
-        size_t element_count,
-        uint32_t bit_stride);
+    CreateArrayType (void * element_type,
+                     size_t element_count,
+                     uint32_t bit_stride);
 
     //------------------------------------------------------------------
     // Tag Declarations
@@ -323,14 +306,13 @@ public:
     CreateEnumerationType (const Declaration &decl, const char *name);
 
     bool
-    AddEnumerationValueToEnumerationType (
-        void * enum_qual_type,
-        void * enumerator_qual_type,
-        const Declaration &decl,
-        const char *name,
-        int64_t enum_value,
-        uint32_t enum_value_bit_size);
-
+    AddEnumerationValueToEnumerationType (void * enum_qual_type,
+                                          void * enumerator_qual_type,
+                                          const Declaration &decl,
+                                          const char *name,
+                                          int64_t enum_value,
+                                          uint32_t enum_value_bit_size);
+    
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------
@@ -375,10 +357,9 @@ public:
     // Typedefs
     //------------------------------------------------------------------
     void *
-    CreateTypedefType (
-        const char *name,
-        void * clang_type,
-        clang::DeclContext *decl_ctx);
+    CreateTypedefType (const char *name,
+                       void * clang_type,
+                       clang::DeclContext *decl_ctx);
 
     //------------------------------------------------------------------
     // Type names
@@ -390,11 +371,20 @@ public:
     IsFloatingPointType (void * clang_type, uint32_t &count, bool &is_complex);
 
     //static bool
-    //ConvertFloatValueToString (clang::ASTContext *ast_context, void * clang_type, const uint8_t* bytes, size_t byte_size, int apint_byte_order, std::string &float_str);
-
+    //ConvertFloatValueToString (clang::ASTContext *ast_context, 
+    //                           void * clang_type, 
+    //                           const uint8_t* bytes, 
+    //                           size_t byte_size, 
+    //                           int apint_byte_order, 
+    //                           std::string &float_str);
+    
     static size_t
-    ConvertStringToFloatValue (clang::ASTContext *ast_context, void * clang_type, const char *s, uint8_t *dst, size_t dst_size);
-
+    ConvertStringToFloatValue (clang::ASTContext *ast_context, 
+                               void * clang_type, 
+                               const char *s, 
+                               uint8_t *dst, 
+                               size_t dst_size);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these

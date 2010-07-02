@@ -1869,6 +1869,9 @@ ProcessGDBRemote::StartDebugserverProcess
                                              (char * const*)inferior_envp),
                              eErrorTypePOSIX);
 
+
+            ::posix_spawnattr_destroy (&attr);
+
             if (file_actions_err.Success())
                 ::posix_spawn_file_actions_destroy (&file_actions);
 

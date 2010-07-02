@@ -1678,6 +1678,8 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             process->SetChildFileDescriptors(master_fd, master_fd, master_fd);
         }
     }
+    
+    ::posix_spawnattr_destroy (&attr);
 
     if (file_actions_valid)
     {
