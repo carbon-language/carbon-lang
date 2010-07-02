@@ -11,15 +11,15 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "clang/Frontend/CodeGenAction.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "clang/Frontend/CompilerInstance.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/CodeGen/CodeGenAction.h"
+#include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Module.h"
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "llvm/ADT/StringRef.h"
 
 // Project includes
 #include "lldb/Expression/ClangFunction.h"
