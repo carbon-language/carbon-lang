@@ -32,7 +32,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), HasTrivialConstructor(true),
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
-    DeclaredDestructor(false),
+    DeclaredCopyAssignment(false), DeclaredDestructor(false),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Definition(D), FirstFriend(0) {
 }
@@ -219,53 +219,6 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
                                         GetBestOverloadCandidateSimple(Found));
 }
 
-bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
-                                           const CXXMethodDecl *& MD) const {
-  QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
-    const_cast<CXXRecordDecl*>(this)));
-  DeclarationName OpName =Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-
-  DeclContext::lookup_const_iterator Op, OpEnd;
-  for (llvm::tie(Op, OpEnd) = this->lookup(OpName);
-       Op != OpEnd; ++Op) {
-    // C++ [class.copy]p9:
-    //   A user-declared copy assignment operator is a non-static non-template
-    //   member function of class X with exactly one parameter of type X, X&,
-    //   const X&, volatile X& or const volatile X&.
-    const CXXMethodDecl* Method = dyn_cast<CXXMethodDecl>(*Op);
-    if (!Method)
-      continue;
-
-    if (Method->isStatic())
-      continue;
-    if (Method->getPrimaryTemplate())
-      continue;
-    const FunctionProtoType *FnType =
-      Method->getType()->getAs<FunctionProtoType>();
-    assert(FnType && "Overloaded operator has no prototype.");
-    // Don't assert on this; an invalid decl might have been left in the AST.
-    if (FnType->getNumArgs() != 1 || FnType->isVariadic())
-      continue;
-    bool AcceptsConst = true;
-    QualType ArgType = FnType->getArgType(0);
-    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()) {
-      ArgType = Ref->getPointeeType();
-      // Is it a non-const lvalue reference?
-      if (!ArgType.isConstQualified())
-        AcceptsConst = false;
-    }
-    if (!Context.hasSameUnqualifiedType(ArgType, ClassType))
-      continue;
-    MD = Method;
-    // We have a single argument of type cv X or cv X&, i.e. we've found the
-    // copy assignment operator. Return whether it accepts const arguments.
-    return AcceptsConst;
-  }
-  assert(isInvalidDecl() &&
-         "No copy assignment operator declared in valid code.");
-  return false;
-}
-
 CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
   ASTContext &Context = getASTContext();
   QualType Class = Context.getTypeDeclType(const_cast<CXXRecordDecl *>(this));
@@ -378,7 +331,8 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 
   // Suppress the implicit declaration of a copy constructor.
   data().UserDeclaredCopyAssignment = true;
-
+  data().DeclaredCopyAssignment = true;
+  
   // C++ [class.copy]p11:
   //   A copy assignment operator is trivial if it is implicitly declared.
   // FIXME: C++0x: don't do this for "= default" copy operators.

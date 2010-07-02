@@ -319,6 +319,9 @@ class CXXRecordDecl : public RecordDecl {
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
   
+    /// \brief Whether we have already declared the copy-assignment operator.
+    bool DeclaredCopyAssignment : 1;
+    
     /// \brief Whether we have already declared a destructor within the class.
     bool DeclaredDestructor : 1;
     
@@ -542,12 +545,6 @@ public:
   CXXConstructorDecl *getCopyConstructor(ASTContext &Context,
                                          unsigned TypeQuals) const;
 
-  /// hasConstCopyAssignment - Determines whether this class has a
-  /// copy assignment operator that accepts a const-qualified argument.
-  /// It returns its decl in MD if found.
-  bool hasConstCopyAssignment(ASTContext &Context,
-                              const CXXMethodDecl *&MD) const;
-
   /// \brief Retrieve the copy-assignment operator for this class, if available.
   ///
   /// This routine attempts to find the copy-assignment operator for this 
@@ -581,7 +578,7 @@ public:
 
   /// addedAssignmentOperator - Notify the class that another assignment
   /// operator has been added. This routine helps maintain information about the
-   /// class based on which operators have been added.
+  /// class based on which operators have been added.
   void addedAssignmentOperator(ASTContext &Context, CXXMethodDecl *OpDecl);
 
   /// hasUserDeclaredCopyAssignment - Whether this class has a
@@ -591,6 +588,20 @@ public:
     return data().UserDeclaredCopyAssignment;
   }
 
+  /// \brief Determine whether this class has had its copy assignment operator 
+  /// declared, either via the user or via an implicit declaration.
+  ///
+  /// This value is used for lazy creation of copy assignment operators.
+  bool hasDeclaredCopyAssignment() const {
+    return data().DeclaredCopyAssignment;
+  }
+  
+  /// \brief Note whether this class has already had its copy assignment 
+  /// operator declared.
+  void setDeclaredCopyAssignment(bool DCA) {
+    data().DeclaredCopyAssignment = DCA;
+  }
+  
   /// hasUserDeclaredDestructor - Whether this class has a
   /// user-declared destructor. When false, a destructor will be
   /// implicitly declared.

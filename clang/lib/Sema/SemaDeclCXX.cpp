@@ -2659,8 +2659,16 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
     DeclareImplicitCopyConstructor(ClassDecl);
 
-  if (!ClassDecl->hasUserDeclaredCopyAssignment())
-    DeclareImplicitCopyAssignment(ClassDecl);
+  if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
+    ++ASTContext::NumImplicitCopyAssignmentOperators;
+    
+    // If we have a dynamic class, then the copy assignment operator may be 
+    // virtual, so we have to declare it immediately. This ensures that, e.g.,
+    // it shows up in the right place in the vtable and that we diagnose 
+    // problems with the implicit exception specification.    
+    if (ClassDecl->isDynamicClass())
+      DeclareImplicitCopyAssignment(ClassDecl);
+  }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
     ++ASTContext::NumImplicitDestructors;
@@ -4547,6 +4555,58 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                         Loc, move(Copy));
 }
 
+/// \brief Determine whether the given class has a copy assignment operator 
+/// that accepts a const-qualified argument.
+static bool hasConstCopyAssignment(Sema &S, const CXXRecordDecl *CClass) {
+  CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(CClass);
+  
+  if (!Class->hasDeclaredCopyAssignment())
+    S.DeclareImplicitCopyAssignment(Class);
+  
+  QualType ClassType = S.Context.getCanonicalType(S.Context.getTypeDeclType(Class));
+  DeclarationName OpName 
+    = S.Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+    
+  DeclContext::lookup_const_iterator Op, OpEnd;
+  for (llvm::tie(Op, OpEnd) = Class->lookup(OpName); Op != OpEnd; ++Op) {
+    // C++ [class.copy]p9:
+    //   A user-declared copy assignment operator is a non-static non-template
+    //   member function of class X with exactly one parameter of type X, X&,
+    //   const X&, volatile X& or const volatile X&.
+    const CXXMethodDecl* Method = dyn_cast<CXXMethodDecl>(*Op);
+    if (!Method)
+      continue;
+    
+    if (Method->isStatic())
+      continue;
+    if (Method->getPrimaryTemplate())
+      continue;
+    const FunctionProtoType *FnType =
+    Method->getType()->getAs<FunctionProtoType>();
+    assert(FnType && "Overloaded operator has no prototype.");
+    // Don't assert on this; an invalid decl might have been left in the AST.
+    if (FnType->getNumArgs() != 1 || FnType->isVariadic())
+      continue;
+    bool AcceptsConst = true;
+    QualType ArgType = FnType->getArgType(0);
+    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()){
+      ArgType = Ref->getPointeeType();
+      // Is it a non-const lvalue reference?
+      if (!ArgType.isConstQualified())
+        AcceptsConst = false;
+    }
+    if (!S.Context.hasSameUnqualifiedType(ArgType, ClassType))
+      continue;
+    
+    // We have a single argument of type cv X or cv X&, i.e. we've found the
+    // copy assignment operator. Return whether it accepts const arguments.
+    return AcceptsConst;
+  }
+  assert(Class->isInvalidDecl() &&
+         "No copy assignment operator declared in valid code.");
+  return false;  
+}
+
 CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // Note: The following rules are largely analoguous to the copy
   // constructor rules. Note that virtual bases are not taken into account
@@ -4574,9 +4634,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
            "Cannot generate implicit members for class with dependent bases.");
     const CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    const CXXMethodDecl *MD = 0;
-    HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context,
-                                                                   MD);
+    HasConstCopyAssignment = hasConstCopyAssignment(*this, BaseClassDecl);
   }
   
   //       -- for all the nonstatic data members of X that are of a class
@@ -4591,9 +4649,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       const CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      const CXXMethodDecl *MD = 0;
-      HasConstCopyAssignment
-        = FieldClassDecl->hasConstCopyAssignment(Context, MD);
+      HasConstCopyAssignment = hasConstCopyAssignment(*this, FieldClassDecl);
     }
   }
   
@@ -4614,8 +4670,12 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
                                        BaseEnd = ClassDecl->bases_end();
        Base != BaseEnd; ++Base) {
-    const CXXRecordDecl *BaseClassDecl
+    CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    
+    if (!BaseClassDecl->hasDeclaredCopyAssignment())
+      DeclareImplicitCopyAssignment(BaseClassDecl);
+
     if (CXXMethodDecl *CopyAssign
            = BaseClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
       ExceptSpec.CalledDecl(CopyAssign);
@@ -4626,8 +4686,12 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      const CXXRecordDecl *FieldClassDecl
+      CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
+      
+      if (!FieldClassDecl->hasDeclaredCopyAssignment())
+        DeclareImplicitCopyAssignment(FieldClassDecl);
+
       if (CXXMethodDecl *CopyAssign
             = FieldClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
         ExceptSpec.CalledDecl(CopyAssign);      
@@ -4663,12 +4727,13 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                                                VarDecl::None, 0);
   CopyAssignment->setParams(&FromParam, 1);
   
-  // Don't call addedAssignmentOperator. The class does not need to know about
-  // the implicitly-declared copy assignment operator.
+  // Note that we have added this copy-assignment operator.
+  ClassDecl->setDeclaredCopyAssignment(true);
+  ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
+  
   if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(CopyAssignment, S, true);
-  else
-    ClassDecl->addDecl(CopyAssignment);
+    PushOnScopeChains(CopyAssignment, S, false);
+  ClassDecl->addDecl(CopyAssignment);
   
   AddOverriddenMethods(ClassDecl, CopyAssignment);
   return CopyAssignment;

@@ -464,12 +464,65 @@ static bool CanDeclareSpecialMemberFunction(ASTContext &Context,
 }
 
 void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
+  // If the copy assignment operator has not yet been declared, do so now.
+  if (CanDeclareSpecialMemberFunction(Context, Class) &&
+      !Class->hasDeclaredCopyAssignment())
+    DeclareImplicitCopyAssignment(Class);
+
   // If the destructor has not yet been declared, do so now.
   if (CanDeclareSpecialMemberFunction(Context, Class) &&
       !Class->hasDeclaredDestructor())
     DeclareImplicitDestructor(Class);  
 }
 
+/// \brief Determine whether this is the name of an implicitly-declared 
+/// special member function.
+static bool isImplicitlyDeclaredMemberFunctionName(DeclarationName Name) {
+  switch (Name.getNameKind()) {
+  case DeclarationName::CXXDestructorName:
+    return true;
+    
+  case DeclarationName::CXXOperatorName:
+    return Name.getCXXOverloadedOperator() == OO_Equal;
+    
+  default:
+    break;      
+  }
+  
+  return false;
+}
+
+/// \brief If there are any implicit member functions with the given name
+/// that need to be declared in the given declaration context, do so.
+static void DeclareImplicitMemberFunctionsWithName(Sema &S, 
+                                                   DeclarationName Name,
+                                                   const DeclContext *DC) {
+  if (!DC)
+    return;
+  
+  switch (Name.getNameKind()) {
+  case DeclarationName::CXXDestructorName:
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
+      if (Record->getDefinition() && !Record->hasDeclaredDestructor() &&
+          CanDeclareSpecialMemberFunction(S.Context, Record))
+        S.DeclareImplicitDestructor(const_cast<CXXRecordDecl *>(Record));
+    
+    break;
+    
+  case DeclarationName::CXXOperatorName:
+    if (Name.getCXXOverloadedOperator() != OO_Equal)
+      break;
+    
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
+      if (Record->getDefinition() && !Record->hasDeclaredCopyAssignment() &&
+          CanDeclareSpecialMemberFunction(S.Context, Record))
+        S.DeclareImplicitCopyAssignment(const_cast<CXXRecordDecl *>(Record));
+    break;
+    
+  default:
+    break;      
+  }
+}
 
 // Adds all qualifying matches for a name within a decl context to the
 // given lookup result.  Returns true if any matches were found.
@@ -477,20 +530,8 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
   // Lazily declare C++ special member functions.
-  if (S.getLangOptions().CPlusPlus) {
-    switch (R.getLookupName().getNameKind()) {
-    case DeclarationName::CXXDestructorName:
-      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
-        if (Record->getDefinition() && !Record->hasDeclaredDestructor() &&
-            CanDeclareSpecialMemberFunction(S.Context, Record))
-          S.DeclareImplicitDestructor(const_cast<CXXRecordDecl *>(Record));
-        
-      break;
-        
-    default:
-      break;      
-    }
-  }
+  if (S.getLangOptions().CPlusPlus)
+    DeclareImplicitMemberFunctionsWithName(S, R.getLookupName(), DC);
   
   // Perform lookup into this declaration context.
   DeclContext::lookup_const_iterator I, E;
@@ -680,6 +721,17 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   assert(getLangOptions().CPlusPlus && "Can perform only C++ lookup");
 
   DeclarationName Name = R.getLookupName();
+
+  // If this is the name of an implicitly-declared special member function,
+  // go through the scope stack to implicitly declare
+  if (isImplicitlyDeclaredMemberFunctionName(Name)) {
+    for (Scope *PreS = S; PreS; PreS = PreS->getParent())
+      if (DeclContext *DC = static_cast<DeclContext *>(PreS->getEntity()))
+        DeclareImplicitMemberFunctionsWithName(*this, Name, DC);
+  }
+    
+  // Implicitly declare member functions with the name we're looking for, if in
+  // fact we are in a scope where it matters.
 
   Scope *Initial = S;
   IdentifierResolver::iterator

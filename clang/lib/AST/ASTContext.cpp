@@ -31,6 +31,8 @@
 
 using namespace clang;
 
+unsigned ASTContext::NumImplicitCopyAssignmentOperators;
+unsigned ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
 unsigned ASTContext::NumImplicitDestructors;
 unsigned ASTContext::NumImplicitDestructorsDeclared;
 
@@ -257,6 +259,9 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "Total bytes = %d\n", int(TotalBytes));
 
   // Implicit special member functions.
+  fprintf(stderr, "  %u/%u implicit copy assignment operators created\n",
+          NumImplicitCopyAssignmentOperatorsDeclared, 
+          NumImplicitCopyAssignmentOperators);
   fprintf(stderr, "  %u/%u implicit destructors created\n",
           NumImplicitDestructorsDeclared, NumImplicitDestructors);
   
