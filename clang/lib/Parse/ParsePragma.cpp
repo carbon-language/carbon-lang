@@ -227,7 +227,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
 
   // Perform the action to handle the pragma.
   Actions.ActOnPragmaUnused(Identifiers.data(), Identifiers.size(),
-                            parser.CurScope, UnusedLoc, LParenLoc, RParenLoc);
+                            parser.getCurScope(), UnusedLoc, LParenLoc, RParenLoc);
 }
 
 // #pragma weak identifier

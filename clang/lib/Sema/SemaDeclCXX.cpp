@@ -2460,12 +2460,12 @@ namespace {
 /// \brief Perform semantic checks on a class definition that has been
 /// completing, introducing implicitly-declared members, checking for
 /// abstract types, etc.
-void Sema::CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record) {
+void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   if (!Record || Record->isInvalidDecl())
     return;
 
   if (!Record->isDependentType())
-    AddImplicitlyDeclaredMembersToClass(S, Record);
+    AddImplicitlyDeclaredMembersToClass(Record);
   
   if (Record->isInvalidDecl())
     return;
@@ -2584,8 +2584,8 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
               (DeclPtrTy*)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, AttrList);
 
-  CheckCompletedCXXClass(S, 
-                      dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));
+  CheckCompletedCXXClass(
+                        dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));
 }
 
 namespace {
@@ -2652,21 +2652,18 @@ namespace {
 /// constructor, or destructor, to the given C++ class (C++
 /// [special]p1).  This routine can only be executed just before the
 /// definition of the class is complete.
-///
-/// The scope, if provided, is the class scope.
-void Sema::AddImplicitlyDeclaredMembersToClass(Scope *S, 
-                                               CXXRecordDecl *ClassDecl) {
+void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredConstructor())
-    DeclareImplicitDefaultConstructor(S, ClassDecl);
+    DeclareImplicitDefaultConstructor(ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
-    DeclareImplicitCopyConstructor(S, ClassDecl);
+    DeclareImplicitCopyConstructor(ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment())
-    DeclareImplicitCopyAssignment(S, ClassDecl);
+    DeclareImplicitCopyAssignment(ClassDecl);
 
   if (!ClassDecl->hasUserDeclaredDestructor())
-    DeclareImplicitDestructor(S, ClassDecl);
+    DeclareImplicitDestructor(ClassDecl);
 }
 
 void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
@@ -4135,8 +4132,8 @@ namespace {
   };
 }
 
-CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(Scope *S,
-                                                    CXXRecordDecl *ClassDecl) {
+CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
+                                                     CXXRecordDecl *ClassDecl) {
   // C++ [class.ctor]p5:
   //   A default constructor for a class X is a constructor of class X
   //   that can be called without an argument. If there is no
@@ -4206,7 +4203,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(Scope *S,
   DefaultCon->setAccess(AS_public);
   DefaultCon->setImplicit();
   DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
-  if (S)
+  if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(DefaultCon, S, true);
   else
     ClassDecl->addDecl(DefaultCon);
@@ -4235,8 +4232,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   }
 }
 
-CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S, 
-                                                   CXXRecordDecl *ClassDecl) {
+CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   // C++ [class.dtor]p2:
   //   If a class has no user-declared destructor, a destructor is
   //   declared implicitly. An implicitly-declared destructor is an
@@ -4298,7 +4294,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(Scope *S,
   Destructor->setAccess(AS_public);
   Destructor->setImplicit();
   Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
-  if (S)
+  if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(Destructor, S, true);
   else
     ClassDecl->addDecl(Destructor);
@@ -4536,8 +4532,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                         Loc, move(Copy));
 }
 
-CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(Scope *S, 
-                                                   CXXRecordDecl *ClassDecl) {
+CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // Note: The following rules are largely analoguous to the copy
   // constructor rules. Note that virtual bases are not taken into account
   // for determining the argument type of the operator. Note also that
@@ -4655,7 +4650,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(Scope *S,
   
   // Don't call addedAssignmentOperator. The class does not need to know about
   // the implicitly-declared copy assignment operator.
-  if (S)
+  if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(CopyAssignment, S, true);
   else
     ClassDecl->addDecl(CopyAssignment);
@@ -4964,8 +4959,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
 }
 
-CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
-                                                     CXXRecordDecl *ClassDecl) {
+CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
+                                                    CXXRecordDecl *ClassDecl) {
   // C++ [class.copy]p4:
   //   If the class definition does not explicitly declare a copy
   //   constructor, one is declared implicitly.
@@ -5108,7 +5103,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(Scope *S,
                                                VarDecl::None,
                                                VarDecl::None, 0);
   CopyConstructor->setParams(&FromParam, 1);
-  if (S)
+  if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(CopyConstructor, S, true);
   else
     ClassDecl->addDecl(CopyConstructor);

@@ -674,6 +674,8 @@ public:
 
   virtual void ActOnEndOfTranslationUnit();
 
+  Scope *getScopeForContext(DeclContext *Ctx);
+
   void PushFunctionScope();
   void PushBlockScope(Scope *BlockScope, BlockDecl *Block);
   void PopFunctionOrBlockScope();
@@ -2223,14 +2225,11 @@ public:
 
   /// \brief Declare the implicit default constructor for the given class.
   ///
-  /// \param S The scope of the class, which may be NULL if this is a 
-  /// template instantiation.
-  ///
   /// \param ClassDecl The class declaration into which the implicit 
   /// default constructor will be added.
   ///
   /// \returns The implicitly-declared default constructor.
-  CXXConstructorDecl *DeclareImplicitDefaultConstructor(Scope *S,
+  CXXConstructorDecl *DeclareImplicitDefaultConstructor(
                                                      CXXRecordDecl *ClassDecl);
   
   /// DefineImplicitDefaultConstructor - Checks for feasibility of
@@ -2240,15 +2239,11 @@ public:
 
   /// \brief Declare the implicit destructor for the given class.
   ///
-  /// \param S The scope of the class, which may be NULL if this is a 
-  /// template instantiation.
-  ///
   /// \param ClassDecl The class declaration into which the implicit 
   /// destructor will be added.
   ///
   /// \returns The implicitly-declared destructor.
-  CXXDestructorDecl *DeclareImplicitDestructor(Scope *S, 
-                                               CXXRecordDecl *ClassDecl);
+  CXXDestructorDecl *DeclareImplicitDestructor(CXXRecordDecl *ClassDecl);
                                                
   /// DefineImplicitDestructor - Checks for feasibility of
   /// defining this destructor as the default destructor.
@@ -2264,8 +2259,7 @@ public:
   /// copy constructor will be added.
   ///
   /// \returns The implicitly-declared copy constructor.
-  CXXConstructorDecl *DeclareImplicitCopyConstructor(Scope *S,
-                                                     CXXRecordDecl *ClassDecl);
+  CXXConstructorDecl *DeclareImplicitCopyConstructor(CXXRecordDecl *ClassDecl);
                                                      
   /// DefineImplicitCopyConstructor - Checks for feasibility of
   /// defining this constructor as the copy constructor.
@@ -2282,8 +2276,7 @@ public:
   /// copy-assignment operator will be added.
   ///
   /// \returns The implicitly-declared copy assignment operator.
-  CXXMethodDecl *DeclareImplicitCopyAssignment(Scope *S, 
-                                               CXXRecordDecl *ClassDecl);
+  CXXMethodDecl *DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl);
   
   /// \brief Defined an implicitly-declared copy assignment operator.
   void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
@@ -2682,14 +2675,14 @@ public:
   /// \returns true if any work was done, false otherwise.
   bool DefineUsedVTables();
 
-  void AddImplicitlyDeclaredMembersToClass(Scope *S, CXXRecordDecl *ClassDecl);
+  void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits,
                                     bool AnyErrors);
 
-  void CheckCompletedCXXClass(Scope *S, CXXRecordDecl *Record);
+  void CheckCompletedCXXClass(CXXRecordDecl *Record);
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclPtrTy TagDecl,
                                                  SourceLocation LBrac,

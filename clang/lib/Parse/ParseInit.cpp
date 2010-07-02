@@ -146,7 +146,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     if  (getLang().ObjC1 && getLang().CPlusPlus) {
       // Send to 'super'.
       if (Tok.is(tok::identifier) && Tok.getIdentifierInfo() == Ident_super &&
-          NextToken().isNot(tok::period) && CurScope->isInObjcMethodScope()) {
+          NextToken().isNot(tok::period) && getCurScope()->isInObjcMethodScope()) {
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
                                                            ConsumeToken(), 0, 
@@ -184,7 +184,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // This is a message send to super:  [super foo]
       // This is a message sent to an expr:  [super.bar foo]
       switch (Action::ObjCMessageKind Kind
-                = Actions.getObjCMessageKind(CurScope, II, IILoc, 
+                = Actions.getObjCMessageKind(getCurScope(), II, IILoc, 
                                              II == Ident_super,
                                              NextToken().is(tok::period),
                                              ReceiverType)) {

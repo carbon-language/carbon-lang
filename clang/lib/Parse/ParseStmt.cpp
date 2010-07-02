@@ -98,7 +98,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
 
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Statement);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Statement);
     ConsumeCodeCompletionToken();
     return ParseStatementOrDeclaration(OnlyStatement);
       
@@ -284,7 +284,7 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
     SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteCase(CurScope);
+      Actions.CodeCompleteCase(getCurScope());
       ConsumeCodeCompletionToken();
     }
     
@@ -404,7 +404,7 @@ Parser::OwningStmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
     return StmtError();
 
   return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
-                                  move(SubStmt), CurScope);
+                                  move(SubStmt), getCurScope());
 }
 
 
@@ -554,7 +554,7 @@ bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
     // If required, convert to a boolean value.
     if (!ExprResult.isInvalid() && ConvertToBoolean)
       ExprResult
-        = Actions.ActOnBooleanCondition(CurScope, Loc, move(ExprResult));
+        = Actions.ActOnBooleanCondition(getCurScope(), Loc, move(ExprResult));
   }
 
   // If the parser was confused by the condition and we don't have a ')', try to
@@ -670,10 +670,10 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
     // Regardless of whether or not InnerScope actually pushed a scope, set the
     // ElseScope flag for the innermost scope so we can diagnose use of the if
     // condition variable in C++.
-    unsigned OldFlags = CurScope->getFlags();
-    CurScope->setFlags(OldFlags | Scope::ElseScope);
+    unsigned OldFlags = getCurScope()->getFlags();
+    getCurScope()->setFlags(OldFlags | Scope::ElseScope);
     ElseStmt = ParseStatement();
-    CurScope->setFlags(OldFlags);
+    getCurScope()->setFlags(OldFlags);
     
     // Pop the 'else' scope if needed.
     InnerScope.Exit();
@@ -999,7 +999,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   DeclPtrTy SecondVar;
   
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(CurScope, 
+    Actions.CodeCompleteOrdinaryName(getCurScope(), 
                                      C99orCXXorObjC? Action::CCC_ForInit
                                                    : Action::CCC_Expression);
     ConsumeCodeCompletionToken();
@@ -1063,7 +1063,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
       else {
         Second = ParseExpression();
         if (!Second.isInvalid())
-          Second = Actions.ActOnBooleanCondition(CurScope, ForLoc, 
+          Second = Actions.ActOnBooleanCondition(getCurScope(), ForLoc, 
                                                  move(Second));
       }
       SecondPartIsInvalid = Second.isInvalid();
@@ -1172,7 +1172,7 @@ Parser::OwningStmtResult Parser::ParseContinueStatement(AttributeList *Attr) {
   delete Attr;
 
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
-  return Actions.ActOnContinueStmt(ContinueLoc, CurScope);
+  return Actions.ActOnContinueStmt(ContinueLoc, getCurScope());
 }
 
 /// ParseBreakStatement
@@ -1186,7 +1186,7 @@ Parser::OwningStmtResult Parser::ParseBreakStatement(AttributeList *Attr) {
   delete Attr;
 
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
-  return Actions.ActOnBreakStmt(BreakLoc, CurScope);
+  return Actions.ActOnBreakStmt(BreakLoc, getCurScope());
 }
 
 /// ParseReturnStatement
@@ -1202,7 +1202,7 @@ Parser::OwningStmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
   OwningExprResult R(Actions);
   if (Tok.isNot(tok::semi)) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteReturn(CurScope);
+      Actions.CodeCompleteReturn(getCurScope());
       ConsumeCodeCompletionToken();
       SkipUntil(tok::semi, false, true);
       return StmtError();
@@ -1597,7 +1597,7 @@ Parser::OwningStmtResult Parser::ParseCXXCatchBlock() {
       return StmtError();
     Declarator ExDecl(DS, Declarator::CXXCatchContext);
     ParseDeclarator(ExDecl);
-    ExceptionDecl = Actions.ActOnExceptionDeclarator(CurScope, ExDecl);
+    ExceptionDecl = Actions.ActOnExceptionDeclarator(getCurScope(), ExDecl);
   } else
     ConsumeToken();
 

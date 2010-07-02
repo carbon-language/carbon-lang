@@ -210,7 +210,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
     if (LHS.isInvalid()) return move(LHS);
   }
 
-  LHS = Actions.ActOnUnaryOp(CurScope, ExtLoc, tok::kw___extension__,
+  LHS = Actions.ActOnUnaryOp(getCurScope(), ExtLoc, tok::kw___extension__,
                              move(LHS));
   if (LHS.isInvalid()) return move(LHS);
 
@@ -221,7 +221,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 ///
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Expression);
     ConsumeCodeCompletionToken();
   }
 
@@ -346,7 +346,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
     // Code completion for the right-hand side of an assignment expression
     // goes through a special hook that takes the left-hand side into account.
     if (Tok.is(tok::code_completion) && NextTokPrec == prec::Assignment) {
-      Actions.CodeCompleteAssignmentRHS(CurScope, LHS.get());
+      Actions.CodeCompleteAssignmentRHS(getCurScope(), LHS.get());
       ConsumeCodeCompletionToken();
       return ExprError();
     }
@@ -407,7 +407,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, prec::Level MinPrec) {
                          SourceRange(Actions.getExprRange(LHS.get()).getBegin(),
                                      Actions.getExprRange(RHS.get()).getEnd()));
 
-        LHS = Actions.ActOnBinOp(CurScope, OpToken.getLocation(),
+        LHS = Actions.ActOnBinOp(getCurScope(), OpToken.getLocation(),
                                  OpToken.getKind(), move(LHS), move(RHS));
       } else
         LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
@@ -647,9 +647,9 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     
     // Support 'Class.property' and 'super.property' notation.
     if (getLang().ObjC1 && Tok.is(tok::period) &&
-        (Actions.getTypeName(II, ILoc, CurScope) ||
+        (Actions.getTypeName(II, ILoc, getCurScope()) ||
          // Allow the base to be 'super' if in an objc-method.
-         (&II == Ident_super && CurScope->isInObjcMethodScope()))) {
+         (&II == Ident_super && getCurScope()->isInObjcMethodScope()))) {
       SourceLocation DotLoc = ConsumeToken();
       
       if (Tok.isNot(tok::identifier)) {
@@ -671,7 +671,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     UnqualifiedId Name;
     CXXScopeSpec ScopeSpec;
     Name.setIdentifier(&II, ILoc);
-    Res = Actions.ActOnIdExpression(CurScope, ScopeSpec, Name, 
+    Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, Name, 
                                     Tok.is(tok::l_paren), false);
 
     // These can be followed by postfix-expr pieces.
@@ -708,7 +708,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
+      Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
   case tok::amp: {         // unary-expression: '&' cast-expression
@@ -716,7 +716,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false, true);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
+      Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
 
@@ -730,7 +730,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
+      Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
 
@@ -740,7 +740,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnUnaryOp(CurScope, SavedLoc, SavedKind, move(Res));
+      Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, move(Res));
     return move(Res);
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
@@ -915,7 +915,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::caret:
     return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Action::CCC_Expression);
     ConsumeCodeCompletionToken();
     return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
                                NotCastExpr, TypeOfCast);
@@ -977,7 +977,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       SourceLocation RLoc = Tok.getLocation();
 
       if (!LHS.isInvalid() && !Idx.isInvalid() && Tok.is(tok::r_square)) {
-        LHS = Actions.ActOnArraySubscriptExpr(CurScope, move(LHS), Loc,
+        LHS = Actions.ActOnArraySubscriptExpr(getCurScope(), move(LHS), Loc,
                                               move(Idx), RLoc);
       } else
         LHS = ExprError();
@@ -999,7 +999,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       }
 
       if (Tok.is(tok::code_completion)) {
-        Actions.CodeCompleteCall(CurScope, LHS.get(), 0, 0);
+        Actions.CodeCompleteCall(getCurScope(), LHS.get(), 0, 0);
         ConsumeCodeCompletionToken();
       }
       
@@ -1020,7 +1020,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       if (!LHS.isInvalid()) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ActOnCallExpr(CurScope, move(LHS), Loc,
+        LHS = Actions.ActOnCallExpr(getCurScope(), move(LHS), Loc,
                                     move_arg(ArgExprs), CommaLocs.data(),
                                     Tok.getLocation());
       }
@@ -1039,7 +1039,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       Action::TypeTy *ObjectType = 0;
       bool MayBePseudoDestructor = false;
       if (getLang().CPlusPlus && !LHS.isInvalid()) {
-        LHS = Actions.ActOnStartCXXMemberReference(CurScope, move(LHS),
+        LHS = Actions.ActOnStartCXXMemberReference(getCurScope(), move(LHS),
                                                    OpLoc, OpKind, ObjectType,
                                                    MayBePseudoDestructor);
         if (LHS.isInvalid())
@@ -1053,7 +1053,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 
       if (Tok.is(tok::code_completion)) {
         // Code completion for a member access expression.
-        Actions.CodeCompleteMemberReferenceExpr(CurScope, LHS.get(),
+        Actions.CodeCompleteMemberReferenceExpr(getCurScope(), LHS.get(),
                                                 OpLoc, OpKind == tok::arrow);
         
         ConsumeCodeCompletionToken();
@@ -1080,7 +1080,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         return ExprError();
       
       if (!LHS.isInvalid())
-        LHS = Actions.ActOnMemberAccessExpr(CurScope, move(LHS), OpLoc, 
+        LHS = Actions.ActOnMemberAccessExpr(getCurScope(), move(LHS), OpLoc, 
                                             OpKind, SS, Name, ObjCImpDecl,
                                             Tok.is(tok::l_paren));
       break;
@@ -1088,7 +1088,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid()) {
-        LHS = Actions.ActOnPostfixUnaryOp(CurScope, Tok.getLocation(),
+        LHS = Actions.ActOnPostfixUnaryOp(getCurScope(), Tok.getLocation(),
                                           Tok.getKind(), move(LHS));
       }
       ConsumeToken();
@@ -1336,7 +1336,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
         } else if (Ty.isInvalid()) {
           Res = ExprError();
         } else {
-          Res = Actions.ActOnBuiltinOffsetOf(CurScope, StartLoc, TypeLoc,
+          Res = Actions.ActOnBuiltinOffsetOf(getCurScope(), StartLoc, TypeLoc,
                                              Ty.get(), &Comps[0],
                                              Comps.size(), ConsumeParen());
         }
@@ -1478,7 +1478,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       // Reject the cast of super idiom in ObjC.
       if (Tok.is(tok::identifier) && getLang().ObjC1 &&
           Tok.getIdentifierInfo() == Ident_super && 
-          CurScope->isInObjcMethodScope() &&
+          getCurScope()->isInObjcMethodScope() &&
           GetLookAheadToken(1).isNot(tok::period)) {
         Diag(Tok.getLocation(), diag::err_illegal_super_cast)
           << SourceRange(OpenLoc, RParenLoc);
@@ -1489,7 +1489,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
       // TODO: For cast expression with CastTy.
       Result = ParseCastExpression(false, false, CastTy);
       if (!Result.isInvalid())
-        Result = Actions.ActOnCastExpr(CurScope, OpenLoc, CastTy, RParenLoc,
+        Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc, CastTy, RParenLoc,
                                        move(Result));
       return move(Result);
     }
@@ -1588,7 +1588,7 @@ bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
   while (1) {
     if (Tok.is(tok::code_completion)) {
       if (Completer)
-        (Actions.*Completer)(CurScope, Data, Exprs.data(), Exprs.size());
+        (Actions.*Completer)(getCurScope(), Data, Exprs.data(), Exprs.size());
       ConsumeCodeCompletionToken();
     }
     
@@ -1630,7 +1630,7 @@ void Parser::ParseBlockId() {
   }
 
   // Inform sema that we are starting a block.
-  Actions.ActOnBlockArguments(DeclaratorInfo, CurScope);
+  Actions.ActOnBlockArguments(DeclaratorInfo, getCurScope());
 }
 
 /// ParseBlockLiteralExpression - Parse a block literal, which roughly looks
@@ -1658,7 +1658,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
                               Scope::DeclScope);
 
   // Inform sema that we are starting a block.
-  Actions.ActOnBlockStart(CaretLoc, CurScope);
+  Actions.ActOnBlockStart(CaretLoc, getCurScope());
 
   // Parse the return type if present.
   DeclSpec DS;
@@ -1681,7 +1681,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
       // If there was an error parsing the arguments, they may have
       // tried to use ^(x+y) which requires an argument list.  Just
       // skip the whole block literal.
-      Actions.ActOnBlockError(CaretLoc, CurScope);
+      Actions.ActOnBlockError(CaretLoc, getCurScope());
       return ExprError();
     }
 
@@ -1692,7 +1692,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     }
 
     // Inform sema that we are starting a block.
-    Actions.ActOnBlockArguments(ParamInfo, CurScope);
+    Actions.ActOnBlockArguments(ParamInfo, getCurScope());
   } else if (!Tok.is(tok::l_brace)) {
     ParseBlockId();
   } else {
@@ -1713,7 +1713,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
     }
 
     // Inform sema that we are starting a block.
-    Actions.ActOnBlockArguments(ParamInfo, CurScope);
+    Actions.ActOnBlockArguments(ParamInfo, getCurScope());
   }
 
 
@@ -1721,14 +1721,14 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
   if (!Tok.is(tok::l_brace)) {
     // Saw something like: ^expr
     Diag(Tok, diag::err_expected_expression);
-    Actions.ActOnBlockError(CaretLoc, CurScope);
+    Actions.ActOnBlockError(CaretLoc, getCurScope());
     return ExprError();
   }
 
   OwningStmtResult Stmt(ParseCompoundStatementBody());
   if (!Stmt.isInvalid())
-    Result = Actions.ActOnBlockStmtExpr(CaretLoc, move(Stmt), CurScope);
+    Result = Actions.ActOnBlockStmtExpr(CaretLoc, move(Stmt), getCurScope());
   else
-    Actions.ActOnBlockError(CaretLoc, CurScope);
+    Actions.ActOnBlockError(CaretLoc, getCurScope());
   return move(Result);
 }

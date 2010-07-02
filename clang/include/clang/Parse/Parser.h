@@ -94,7 +94,6 @@ class Parser {
   /// and SemaActions for those uses that don't matter.
   Action &Actions;
 
-  Scope *CurScope;
   Diagnostic &Diags;
 
   /// ScopeCache - Cache scopes to reduce malloc traffic.
@@ -141,7 +140,8 @@ public:
   Action &getActions() const { return Actions; }
 
   const Token &getCurToken() const { return Tok; }
-
+  Scope *getCurScope() const { return Actions.getCurScope(); }
+  
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
   typedef Action::ExprTy ExprTy;
@@ -1347,14 +1347,14 @@ private:
       CreatedScope = true;
       P.EnterScope(0); // Not a decl scope.
 
-      if (!P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS))
+      if (!P.Actions.ActOnCXXEnterDeclaratorScope(P.getCurScope(), SS))
         EnteredScope = true;
     }
 
     ~DeclaratorScopeObj() {
       if (EnteredScope) {
         assert(SS.isSet() && "C++ scope was cleared ?");
-        P.Actions.ActOnCXXExitDeclaratorScope(P.CurScope, SS);
+        P.Actions.ActOnCXXExitDeclaratorScope(P.getCurScope(), SS);
       }
       if (CreatedScope)
         P.ExitScope();

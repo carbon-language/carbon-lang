@@ -201,7 +201,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   if (Tok.is(tok::semi)) {
     DeclEnd = ConsumeToken();
-    DeclPtrTy Decl = Actions.ParsedFreeStandingDeclSpec(CurScope, AS, DS);
+    DeclPtrTy Decl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
     DS.complete(Decl);
     return Decl;
   }
@@ -481,7 +481,7 @@ Parser::DeclPtrTy Parser::ParseTypeParameter(unsigned Depth, unsigned Position){
     DefaultArg = ParseTypeName().get();
   }
   
-  return Actions.ActOnTypeParameter(CurScope, TypenameKeyword, Ellipsis, 
+  return Actions.ActOnTypeParameter(getCurScope(), TypenameKeyword, Ellipsis, 
                                     EllipsisLoc, KeyLoc, ParamName, NameLoc,
                                     Depth, Position, EqualLoc, DefaultArg);
 }
@@ -556,7 +556,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     }
   }
   
-  return Actions.ActOnTemplateTemplateParameter(CurScope, TemplateLoc,
+  return Actions.ActOnTemplateTemplateParameter(getCurScope(), TemplateLoc,
                                                 ParamList, ParamName,
                                                 NameLoc, Depth, Position,
                                                 EqualLoc, DefaultArg);
@@ -612,7 +612,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   }
 
   // Create the parameter.
-  return Actions.ActOnNonTypeTemplateParameter(CurScope, ParamDecl, 
+  return Actions.ActOnNonTypeTemplateParameter(getCurScope(), ParamDecl, 
                                                Depth, Position, EqualLoc, 
                                                move(DefaultArg));
 }
@@ -906,7 +906,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       // template argument.
       TemplateTy Template;
       if (isEndOfTemplateArgument(Tok) &&
-          Actions.ActOnDependentTemplateName(CurScope, TemplateLoc, SS, Name, 
+          Actions.ActOnDependentTemplateName(getCurScope(), TemplateLoc, SS, Name, 
                                              /*ObjectType=*/0,
                                              /*EnteringContext=*/false,
                                              Template))
@@ -921,7 +921,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
     
     if (isEndOfTemplateArgument(Tok)) {
       bool MemberOfUnknownSpecialization;
-      TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, Name, 
+      TemplateNameKind TNK = Actions.isTemplateName(getCurScope(), SS, Name, 
                                                     /*ObjectType=*/0, 
                                                     /*EnteringContext=*/false, 
                                                     Template,

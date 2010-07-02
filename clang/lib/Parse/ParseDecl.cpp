@@ -42,7 +42,7 @@ Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
   if (DeclaratorInfo.isInvalidType())
     return true;
 
-  return Actions.ActOnTypeName(CurScope, DeclaratorInfo);
+  return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
 }
 
 /// ParseGNUAttributes - Parse a non-empty attributes list.
@@ -366,7 +366,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
     if (RequireSemi) ConsumeToken();
-    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, AS_none,
+    DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS_none,
                                                            DS);
     DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
@@ -466,7 +466,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       ConsumeToken();
   }
 
-  return Actions.FinalizeDeclaratorGroup(CurScope, DS,
+  return Actions.FinalizeDeclaratorGroup(getCurScope(), DS,
                                          DeclsInGroup.data(),
                                          DeclsInGroup.size());
 }
@@ -518,12 +518,12 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   DeclPtrTy ThisDecl;
   switch (TemplateInfo.Kind) {
   case ParsedTemplateInfo::NonTemplate:
-    ThisDecl = Actions.ActOnDeclarator(CurScope, D);
+    ThisDecl = Actions.ActOnDeclarator(getCurScope(), D);
     break;
       
   case ParsedTemplateInfo::Template:
   case ParsedTemplateInfo::ExplicitSpecialization:
-    ThisDecl = Actions.ActOnTemplateDeclarator(CurScope,
+    ThisDecl = Actions.ActOnTemplateDeclarator(getCurScope(),
                              Action::MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
                                           TemplateInfo.TemplateParams->size()),
@@ -532,7 +532,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
       
   case ParsedTemplateInfo::ExplicitInstantiation: {
     Action::DeclResult ThisRes 
-      = Actions.ActOnExplicitInstantiation(CurScope,
+      = Actions.ActOnExplicitInstantiation(getCurScope(),
                                            TemplateInfo.ExternLoc,
                                            TemplateInfo.TemplateLoc,
                                            D);
@@ -555,11 +555,11 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
     } else {
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         EnterScope(0);
-        Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
+        Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
       }
 
       if (Tok.is(tok::code_completion)) {
-        Actions.CodeCompleteInitializer(CurScope, ThisDecl);
+        Actions.CodeCompleteInitializer(getCurScope(), ThisDecl);
         ConsumeCodeCompletionToken();
         SkipUntil(tok::comma, true, true);
         return ThisDecl;
@@ -568,7 +568,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
       OwningExprResult Init(ParseInitializer());
 
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
-        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
 
@@ -586,14 +586,14 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
 
     if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
       EnterScope(0);
-      Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
+      Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
     }
 
     if (ParseExpressionList(Exprs, CommaLocs)) {
       SkipUntil(tok::r_paren);
 
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
-        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
     } else {
@@ -604,7 +604,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
              "Unexpected number of commas!");
 
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
-        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
 
@@ -732,7 +732,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     const char *TagName = 0;
     tok::TokenKind TagKind = tok::unknown;
 
-    switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
+    switch (Actions.isTagName(*Tok.getIdentifierInfo(), getCurScope())) {
       default: break;
       case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
       case DeclSpec::TST_union: TagName="union" ;TagKind=tok::kw_union ;break;
@@ -758,7 +758,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   // diagnostic and attempt to recover.
   Action::TypeTy *T = 0;
   if (Actions.DiagnoseUnknownTypeName(*Tok.getIdentifierInfo(), Loc,
-                                      CurScope, SS, T)) {
+                                      getCurScope(), SS, T)) {
     // The action emitted a diagnostic, so we don't have to.
     if (T) {
       // The action has suggested that the type T could be used. Set that as
@@ -847,7 +847,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     else if (ObjCImpDecl)
       CCC = Action::CCC_ObjCImplementation;
     
-    Actions.CodeCompleteOrdinaryName(CurScope, CCC);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
     ConsumeCodeCompletionToken();
   }
   
@@ -917,7 +917,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         if ((DSContext == DSC_top_level ||
              (DSContext == DSC_class && DS.isFriendSpecified())) &&
             TemplateId->Name &&
-            Actions.isCurrentClassName(*TemplateId->Name, CurScope, &SS)) {
+            Actions.isCurrentClassName(*TemplateId->Name, getCurScope(), &SS)) {
           if (isConstructorDeclarator()) {
             // The user meant this to be an out-of-line constructor
             // definition, but template arguments are not allowed
@@ -963,7 +963,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // check whether this is a constructor declaration.
       if ((DSContext == DSC_top_level ||
            (DSContext == DSC_class && DS.isFriendSpecified())) &&
-          Actions.isCurrentClassName(*Next.getIdentifierInfo(), CurScope, 
+          Actions.isCurrentClassName(*Next.getIdentifierInfo(), getCurScope(), 
                                      &SS)) {
         if (isConstructorDeclarator())
           goto DoneWithDeclSpec;
@@ -979,7 +979,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       }
 
       TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
-                                            Next.getLocation(), CurScope, &SS);
+                                            Next.getLocation(), getCurScope(), &SS);
 
       // If the referenced identifier is not a type, then this declspec is
       // erroneous: We already checked about that it has no type specifier, and
@@ -1063,7 +1063,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // It has to be available as a typedef too!
       TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                            Tok.getLocation(), CurScope);
+                                            Tok.getLocation(), getCurScope());
 
       // If this is not a typedef name, don't parse it as part of the declspec,
       // it must be an implicit int or an error.
@@ -1075,7 +1075,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If we're in a context where the identifier could be a class name,
       // check whether this is a constructor declaration.
       if (getLang().CPlusPlus && DSContext == DSC_class &&
-          Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) &&
+          Actions.isCurrentClassName(*Tok.getIdentifierInfo(), getCurScope()) &&
           isConstructorDeclarator())
         goto DoneWithDeclSpec;
 
@@ -1123,7 +1123,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // constructor name or specialization, check whether this is a
       // constructor declaration.
       if (getLang().CPlusPlus && DSContext == DSC_class &&
-          Actions.isCurrentClassName(*TemplateId->Name, CurScope) &&
+          Actions.isCurrentClassName(*TemplateId->Name, getCurScope()) &&
           isConstructorDeclarator())
         goto DoneWithDeclSpec;
 
@@ -1686,7 +1686,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   // If there are no declarators, this is a free-standing declaration
   // specifier. Let the actions module cope with it.
   if (Tok.is(tok::semi)) {
-    Actions.ParsedFreeStandingDeclSpec(CurScope, AS_none, DS);
+    Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS_none, DS);
     return;
   }
 
@@ -1762,7 +1762,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   SourceLocation LBraceLoc = ConsumeBrace();
 
   ParseScope StructScope(this, Scope::ClassScope|Scope::DeclScope);
-  Actions.ActOnTagStartDefinition(CurScope, TagDecl);
+  Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
 
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
@@ -1800,7 +1800,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
         virtual DeclPtrTy invoke(FieldDeclarator &FD) {
           // Install the declarator into the current TagDecl.
-          DeclPtrTy Field = P.Actions.ActOnField(P.CurScope, TagDecl,
+          DeclPtrTy Field = P.Actions.ActOnField(P.getCurScope(), TagDecl,
                               FD.D.getDeclSpec().getSourceRange().getBegin(),
                                                  FD.D, FD.BitfieldSize);
           FieldDecls.push_back(Field);
@@ -1824,7 +1824,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         continue;
       }
       llvm::SmallVector<DeclPtrTy, 16> Fields;
-      Actions.ActOnDefs(CurScope, TagDecl, Tok.getLocation(),
+      Actions.ActOnDefs(getCurScope(), TagDecl, Tok.getLocation(),
                         Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
       ConsumeToken();
@@ -1852,12 +1852,12 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   if (Tok.is(tok::kw___attribute))
     AttrList.reset(ParseGNUAttributes());
 
-  Actions.ActOnFields(CurScope,
+  Actions.ActOnFields(getCurScope(),
                       RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
                       LBraceLoc, RBraceLoc,
                       AttrList.get());
   StructScope.Exit();
-  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
+  Actions.ActOnTagFinishDefinition(getCurScope(), TagDecl, RBraceLoc);
 }
 
 
@@ -1879,7 +1879,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // Parse the tag portion of this.
   if (Tok.is(tok::code_completion)) {
     // Code completion for an enum name.
-    Actions.CodeCompleteTag(CurScope, DeclSpec::TST_enum);
+    Actions.CodeCompleteTag(getCurScope(), DeclSpec::TST_enum);
     ConsumeCodeCompletionToken();
   }
   
@@ -1953,7 +1953,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
   const char *PrevSpec = 0;
   unsigned DiagID;
-  DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TUK,
+  DeclPtrTy TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
                                        StartLoc, SS, Name, NameLoc, Attr.get(),
                                        AS,
                                        Action::MultiTemplateParamsArg(Actions),
@@ -1967,7 +1967,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       return;
     }
     
-    TypeResult Type = Actions.ActOnDependentTag(CurScope, DeclSpec::TST_enum,
+    TypeResult Type = Actions.ActOnDependentTag(getCurScope(), DeclSpec::TST_enum,
                                                 TUK, SS, Name, StartLoc, 
                                                 NameLoc);
     if (Type.isInvalid()) {
@@ -2017,7 +2017,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   // Enter the scope of the enum body and start the definition.
   ParseScope EnumScope(this, Scope::DeclScope);
-  Actions.ActOnTagStartDefinition(CurScope, EnumDecl);
+  Actions.ActOnTagStartDefinition(getCurScope(), EnumDecl);
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
@@ -2044,7 +2044,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
     }
 
     // Install the enumerator constant into EnumDecl.
-    DeclPtrTy EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
+    DeclPtrTy EnumConstDecl = Actions.ActOnEnumConstant(getCurScope(), EnumDecl,
                                                         LastEnumConstDecl,
                                                         IdentLoc, Ident,
                                                         EqualLoc,
@@ -2073,10 +2073,10 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
 
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
                         EnumConstantDecls.data(), EnumConstantDecls.size(),
-                        CurScope, Attr.get());
+                        getCurScope(), Attr.get());
 
   EnumScope.Exit();
-  Actions.ActOnTagFinishDefinition(CurScope, EnumDecl, RBraceLoc);
+  Actions.ActOnTagFinishDefinition(getCurScope(), EnumDecl, RBraceLoc);
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the
@@ -2361,7 +2361,7 @@ bool Parser::isConstructorDeclarator() {
 
   // If we need to, enter the specified scope.
   DeclaratorScopeObj DeclScopeObj(*this, SS);
-  if (SS.isSet() && Actions.ShouldEnterDeclaratorScope(CurScope, SS))
+  if (SS.isSet() && Actions.ShouldEnterDeclaratorScope(getCurScope(), SS))
     DeclScopeObj.EnterDeclaratorScope();
 
   // Check whether the next token(s) are part of a declaration
@@ -2650,7 +2650,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     }
 
     if (D.getCXXScopeSpec().isValid()) {
-      if (Actions.ShouldEnterDeclaratorScope(CurScope, D.getCXXScopeSpec()))
+      if (Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
         DeclScopeObj.EnterDeclaratorScope();
@@ -2709,7 +2709,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // scope when parsing the parenthesized declarator, then exited
     // the scope already. Re-enter the scope, if we need to.
     if (D.getCXXScopeSpec().isSet()) {
-      if (Actions.ShouldEnterDeclaratorScope(CurScope, D.getCXXScopeSpec()))
+      if (Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
         DeclScopeObj.EnterDeclaratorScope();
@@ -3046,7 +3046,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      DeclPtrTy Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
+      DeclPtrTy Param = Actions.ActOnParamDeclarator(getCurScope(), ParmDecl);
 
       // Parse the default argument, if any. We parse the default
       // arguments in all dialects; the semantic analysis in
@@ -3204,7 +3204,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
     IdentifierInfo *ParmII = Tok.getIdentifierInfo();
 
     // Reject 'typedef int y; int test(x, y)', but continue parsing.
-    if (Actions.getTypeName(*ParmII, Tok.getLocation(), CurScope))
+    if (Actions.getTypeName(*ParmII, Tok.getLocation(), getCurScope()))
       Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
 
     // Verify that the argument identifier has not already been mentioned.

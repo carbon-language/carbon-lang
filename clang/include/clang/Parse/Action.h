@@ -64,7 +64,21 @@ namespace clang {
 /// parse to complete accurately.  The MinimalAction class does this
 /// bare-minimum of tracking to implement this functionality.
 class Action : public ActionBase {
+  /// \brief The parser's current scope.
+  ///
+  /// The parser maintains this state here so that is accessible to \c Action 
+  /// subclasses via \c getCurScope().
+  Scope *CurScope;
+  
+protected:
+  friend class Parser;
+  
+  /// \brief Retrieve the parser's current scope.
+  Scope *getCurScope() const { return CurScope; }
+  
 public:
+  Action() : CurScope(0) { }
+  
   /// Out-of-line virtual destructor to provide home for this class.
   virtual ~Action();
 
