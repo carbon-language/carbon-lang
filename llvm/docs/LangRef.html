@@ -1053,7 +1053,12 @@ declare signext i8 @returns_signed_char()
   <dt><tt><b><a name="noalias">noalias</a></b></tt></dt>
   <dd>This indicates that pointer values
       <a href="#pointeraliasing"><i>based</i></a> on the argument or return
-      value do not alias pointer values which are not <i>based</i> on it.
+      value do not alias pointer values which are not <i>based</i> on it,
+      ignoring certain "irrelevant" dependencies.
+      For a call to the parent function, dependencies between memory
+      references from before or after the call and from those during the call
+      are "irrelevant" to the <tt>noalias</tt> keyword for the arguments and
+      return value used in that call.
       The caller shares the responsibility with the callee for ensuring that
       these requirements are met.
       For further details, please see the discussion of the NoAlias response in
