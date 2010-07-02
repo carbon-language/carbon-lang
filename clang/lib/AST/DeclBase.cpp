@@ -464,14 +464,16 @@ SourceLocation Decl::getBodyRBrace() const {
 
 #ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
+  // FIXME: Disable this until rdar://8146294 "access specifier for inner class
+  // templates is not set or checked" is fixed.
+  return;
   // Suppress this check if any of the following hold:
   // 1. this is the translation unit (and thus has no parent)
   // 2. this is a template parameter (and thus doesn't belong to its context)
-  // 3. this is a ParmVarDecl (which can be in a record context during
-  //    the brief period between its creation and the creation of the
-  //    FunctionDecl)
-  // 4. the context is not a record
+  // 3. the context is not a record
+  // 4. it's invalid
   if (isa<TranslationUnitDecl>(this) ||
+      isa<TemplateTypeParmDecl>(this) ||
       !isa<CXXRecordDecl>(getDeclContext()) ||
       isInvalidDecl())
     return;
