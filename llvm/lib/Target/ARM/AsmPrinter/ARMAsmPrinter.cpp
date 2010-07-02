@@ -1044,8 +1044,8 @@ void ARMAsmPrinter::printNEONModImmOperand(const MachineInstr *MI, int OpNum,
     Val = Imm8 << (8 * ByteNum);
   } else if ((OpCmode & 0xe) == 0xc) {
     // 32-bit vector elements, one byte with low bits set
-    unsigned ByteNum = (OpCmode & 0x1);
-    Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (1 - ByteNum)));
+    unsigned ByteNum = 1 + (OpCmode & 0x1);
+    Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (2 - ByteNum)));
   } else if (OpCmode == 0x1e) {
     // 64-bit vector elements
     for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
