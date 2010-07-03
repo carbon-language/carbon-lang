@@ -94,7 +94,7 @@ struct X1 : public X0 { };
 namespace test6 {
   template <class T> class A {
   public:
-    void *operator new(unsigned long);
+    void *operator new(__SIZE_TYPE__);
     void operator delete(void *p) {
       T::deleteIt(p); // expected-error {{type 'int' cannot be used prior to '::'}}
     }
