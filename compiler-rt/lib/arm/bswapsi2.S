@@ -16,5 +16,16 @@
 //
 	.align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapsi2)
+#if __ARM_ARCH_5TEJ__ || __ARM_ARCH_4T__
+	// before armv6 does not have "rev" instruction
+	mov	r1, #255, 24
+	mov	r2, #255, 16
+	and	r1, r1, r0, lsr #8
+	and	r2, r2, r0, lsl #8
+	orr	r1, r1, r0, lsr #24
+	orr	r0, r2, r0, lsl #24
+	orr	r0, r0, r1
+#else
 	rev	r0, r0		// reverse bytes in parameter and put into result register
+#endif
 	bx	lr
