@@ -14,25 +14,23 @@
 //
 // Reverse all the bytes in a 64-bit integer.
 //
-    .align 2
+.align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
 #if __ARM_ARCH_5TEJ__ || __ARM_ARCH_4T__
-    mov r12, #0xff00
-    
-    and r3,  r12, r0, lsr #8
-    and r2,  r12, r0    
-    orr r3,   r3, r0, lsr #24   
-    orr r3,   r3, r0, lsl #24
-    orr r2,   r3, r2, lsl #8  // r2 = rev(r0)
-    
-    and r3,  r12, r1, lsr #8
-    and r0,  r12, r1
-    orr r3,   r3, r1, lsr #24
-    orr r3,   r3, r1, lsl #24
-    orr r0,   r3, r0, lsl #8  // r0 = rev(r1)
+    // before armv6 does not have "rev" instruction
+    // r2 = rev(r0)
+    eor r2, r0, r0, ror #16
+    bic r2, r2, #0xff0000
+    mov r2, r2, lsr #8
+    eor r2, r2, r0, ror #8
+    // r0 = rev(r1)
+    eor r0, r1, r1, ror #16
+    bic r0, r0, #0xff0000
+    mov r0, r0, lsr #8
+    eor r0, r0, r1, ror #8
 #else
-    rev r2,   r0  // r2 = rev(r0)
-    rev r0,   r1  // r0 = rev(r1)
+    rev r2, r0  // r2 = rev(r0)
+    rev r0, r1  // r0 = rev(r1)
 #endif
-    mov r1,   r2  // r1 = r2 = rev(r0)
+    mov r1, r2  // r1 = r2 = rev(r0)
     bx  lr
