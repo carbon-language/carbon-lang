@@ -1,4 +1,4 @@
-//===-- lib/floatunssisf.c - uint -> single-precision conversion --*- C -*-===//
+//===-- lib/floatunsidf.c - uint -> double-precision conversion ---*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements unsigned integer to single-precision conversion for the
+// This file implements unsigned integer to double-precision conversion for the
 // compiler-rt library in the IEEE-754 default round-to-nearest, ties-to-even
 // mode.
 //
 //===----------------------------------------------------------------------===//
 
-#define SINGLE_PRECISION
+#define DOUBLE_PRECISION
 #include "fp_lib.h"
 
-fp_t __floatunssisf(unsigned int a) {
+fp_t __floatunsidf(unsigned int a) {
     
     const int aWidth = sizeof a * CHAR_BIT;
     

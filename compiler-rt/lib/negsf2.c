@@ -1,4 +1,4 @@
-//===-- lib/negsf3.c - single-precision negation ------------------*- C -*-===//
+//===-- lib/negsf2.c - single-precision negation ------------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

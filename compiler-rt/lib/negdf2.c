@@ -1,4 +1,4 @@
-//===-- lib/negdf3.c - double-precision negation ------------------*- C -*-===//
+//===-- lib/negdf2.c - double-precision negation ------------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
