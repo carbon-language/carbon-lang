@@ -1015,6 +1015,11 @@ void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
   if (PointeeTy->isArrayType()) {
     // Pointers to arrays are mangled like arrays.
     mangleExtraDimensions(T->getPointeeType());
+  } else if (PointeeTy->isFunctionType()) {
+    // Function pointers are special.
+    Out << '6';
+    mangleType(static_cast<const FunctionType *>(PointeeTy.getTypePtr()),
+               NULL, false, false);
   } else {
     if (!PointeeTy.hasQualifiers())
       // Lack of qualifiers is mangled as 'A'.

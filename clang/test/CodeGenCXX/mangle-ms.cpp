@@ -9,6 +9,7 @@
 // CHECK: @"\01?g@bar@@2HA"
 // CHECK: @"\01?h@@3QAHA"
 // CHECK: @"\01?i@@3PAY0BD@HA"
+// CHECK: @"\01?j@@3P6GHCE@ZA"
 
 int a;
 
@@ -57,6 +58,8 @@ int bar::g;
 extern int * const h = &a;
 
 int i[10][20];
+
+int (__stdcall *j)(signed char, unsigned char);
 
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
