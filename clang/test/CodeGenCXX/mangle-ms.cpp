@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-apple-darwin10 | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-apple-darwin10 | FileCheck %s
 
 // CHECK: @"\01?a@@3HA"
 // CHECK: @"\01?b@N@@3HA"
@@ -86,7 +86,11 @@ void gamma(class foo, struct bar, union baz, enum quux) {}
 void delta(int * const a, const long &) {}
 // CHECK: @"\01?delta@@YAXQAHABJ@Z"
 
-// Array mangling. (It should be mangled as a const pointer, but that needs
-// to be fixed in Sema.)
+// Array mangling.
 void epsilon(int a[][10][20]) {}
 // CHECK: @"\01?epsilon@@YAXQAY19BE@H@Z"
+
+// Blocks mangling (Clang extension).
+void zeta(int (^)(int, int)) {}
+// CHECK: @"\01?zeta@@YAXP_EAHHH@Z@Z"
+

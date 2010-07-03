@@ -599,6 +599,7 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
   //                       ::= _B <basis> # based function (far?) (pointers only)
   //                       ::= _C <basis> # based method (pointers only)
   //                       ::= _D <basis> # based method (far?) (pointers only)
+  //                       ::= _E # block (Clang)
   // <basis> ::= 0 # __based(void)
   //         ::= 1 # __based(segment)?
   //         ::= 2 <name> # __based(name)
@@ -641,14 +642,15 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
   Qualifiers Quals = T.getLocalQualifiers();
   if (Quals) {
     // We have to mangle these now, while we still have enough information.
-    // <pointer-cvr-qualifiers> ::= P # pointer
-    //                          ::= Q # const pointer
-    //                          ::= R # volatile pointer
-    //                          ::= S # const volatile pointer
-    if (T->isAnyPointerType() || T->isMemberPointerType()) {
-      if (!Quals.hasVolatile()) {
+    // <pointer-cvr-qualifiers> ::= P  # pointer
+    //                          ::= Q  # const pointer
+    //                          ::= R  # volatile pointer
+    //                          ::= S  # const volatile pointer
+    if (T->isAnyPointerType() || T->isMemberPointerType() ||
+        T->isBlockPointerType()) {
+      if (!Quals.hasVolatile())
         Out << 'Q';
-      } else {
+      else {
         if (!Quals.hasConst())
           Out << 'R';
         else
@@ -660,8 +662,8 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
       // type has no qualifiers, the lack of qualifier gets mangled
       // in there.
       mangleQualifiers(Quals, false);
-  }
-  else if (T->isAnyPointerType() || T->isMemberPointerType()) {
+  } else if (T->isAnyPointerType() || T->isMemberPointerType() ||
+             T->isBlockPointerType()) {
     Out << 'P';
   }
   switch (T->getTypeClass()) {
@@ -1040,7 +1042,9 @@ void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
   }
 }
 void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T) {
-  assert(false && "Don't know how to mangle ObjCObjectPointerTypes yet!");
+  // Object pointers never have qualifiers.
+  Out << 'A';
+  mangleType(T->getPointeeType());
 }
 
 // <type> ::= <reference-type>
@@ -1073,15 +1077,20 @@ void MicrosoftCXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ObjCInterfaceType *T) {
-  assert(false && "Don't know how to mangle ObjCInterfaceTypes yet!");
+  // ObjC interfaces have structs underlying them.
+  Out << 'U';
+  mangleName(T->getDecl());
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ObjCObjectType *T) {
-  assert(false && "Don't know how to mangle ObjCObjectTypes yet!");
+  // We don't allow overloading by different protocol qualification,
+  // so mangling them isn't necessary.
+  mangleType(T->getBaseType());
 }
 
 void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T) {
-  assert(false && "Don't know how to mangle BlockPointerTypes yet!");
+  Out << "_E";
+  mangleType(T->getPointeeType());
 }
 
 void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *T) {
