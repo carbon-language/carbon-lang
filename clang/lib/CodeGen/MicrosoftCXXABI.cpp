@@ -69,7 +69,8 @@ private:
 #include "clang/AST/TypeNodes.def"
   
   void mangleType(const TagType*);
-  void mangleType(const FunctionType *T, bool IsStructor, bool IsInstMethod);
+  void mangleType(const FunctionType *T, const FunctionDecl *D,
+                  bool IsStructor, bool IsInstMethod);
   void mangleType(const ArrayType *T, bool IsGlobal);
   void mangleExtraDimensions(QualType T);
   void mangleFunctionClass(const FunctionDecl *FD);
@@ -218,7 +219,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // First, the function class.
   mangleFunctionClass(FD);
 
-  mangleType(FT, InStructor, InInstMethod);
+  mangleType(FT, FD, InStructor, InInstMethod);
 }
 
 void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
@@ -339,8 +340,9 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
         break;
       }
 
-      // TODO: How does VC mangle anonymous structs?
-      assert(false && "Don't know how to mangle anonymous types yet!");
+      // When VC encounters an anonymous type with no tag and no typedef,
+      // it literally emits '<unnamed-tag>'.
+      Out << "<unnamed-tag>";
       break;
     }
       
@@ -756,13 +758,14 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T) {
   // structor type.
   // I'll probably have mangleType(MemberPointerType) call the mangleType()
   // method directly.
-  mangleType(T, false, false);
+  mangleType(T, NULL, false, false);
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T) {
   llvm_unreachable("Can't mangle K&R function prototypes");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
+                                         const FunctionDecl *D,
                                          bool IsStructor,
                                          bool IsInstMethod) {
   // <function-type> ::= <this-cvr-qualifiers> <calling-convention>
@@ -789,11 +792,19 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
     Out << 'X';
   } else {
-    for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-         ArgEnd = Proto->arg_type_end();
-         Arg != ArgEnd; ++Arg)
-      mangleType(*Arg);
-
+    if (D) {
+      // If we got a decl, use the "types-as-written" to make sure arrays
+      // get mangled right.
+      for (FunctionDecl::param_const_iterator Parm = D->param_begin(),
+           ParmEnd = D->param_end();
+           Parm != ParmEnd; ++Parm)
+        mangleType((*Parm)->getTypeSourceInfo()->getType());
+    } else {
+      for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
+           ArgEnd = Proto->arg_type_end();
+           Arg != ArgEnd; ++Arg)
+        mangleType(*Arg);
+    }
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
       Out << 'Z';

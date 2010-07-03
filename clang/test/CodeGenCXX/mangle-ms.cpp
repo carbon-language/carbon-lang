@@ -80,4 +80,4 @@ void delta(int * const a, const long &) {}
 // Array mangling. (It should be mangled as a const pointer, but that needs
 // to be fixed in Sema.)
 void epsilon(int a[][10][20]) {}
-// CHECK: @"\01?epsilon@@YAXPAY19BD@H@Z"
+// CHECK: @"\01?epsilon@@YAXQAY19BD@H@Z"
