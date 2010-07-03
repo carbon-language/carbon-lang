@@ -645,7 +645,7 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
     //                          ::= Q # const pointer
     //                          ::= R # volatile pointer
     //                          ::= S # const volatile pointer
-    if (T->isPointerType()) {
+    if (T->isAnyPointerType() || T->isMemberPointerType()) {
       if (!Quals.hasVolatile()) {
         Out << 'Q';
       } else {
@@ -661,7 +661,7 @@ void MicrosoftCXXNameMangler::mangleType(QualType T) {
       // in there.
       mangleQualifiers(Quals, false);
   }
-  else if (T->isPointerType()) {
+  else if (T->isAnyPointerType() || T->isMemberPointerType()) {
     Out << 'P';
   }
   switch (T->getTypeClass()) {
@@ -1000,8 +1000,20 @@ void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
   mangleType(ElementTy.getLocalUnqualifiedType());
 }
 
+// <type>                   ::= <pointer-to-member-type>
+// <pointer-to-member-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers>
+//                                                          <class name> <type>
 void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T) {
-  assert(false && "Don't know how to mangle MemberPointerTypes yet!");
+  QualType PointeeType = T->getPointeeType();
+  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
+    Out << '8';
+    mangleName(cast<RecordType>(T->getClass())->getDecl());
+    mangleType(FPT, NULL, false, true);
+  } else {
+    mangleQualifiers(PointeeType.getQualifiers(), true);
+    mangleName(cast<RecordType>(T->getClass())->getDecl());
+    mangleType(PointeeType.getLocalUnqualifiedType());
+  }
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TemplateTypeParmType *T) {
