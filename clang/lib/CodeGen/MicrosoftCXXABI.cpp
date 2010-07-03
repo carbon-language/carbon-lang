@@ -289,8 +289,8 @@ void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
     Out << '?';
     Number = -Number;
   }
-  if (Number <= 9) {
-    Out << Number;
+  if (Number >= 1 && Number <= 10) {
+    Out << Number-1;
   } else {
     // We have to build up the encoding in reverse order, so it will come
     // out right when we write it out.
@@ -935,8 +935,8 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
       break;
     case TTK_Enum:
       Out << 'W';
-      mangleNumber(getASTContext().getTypeSizeInChars(
-                cast<EnumDecl>(T->getDecl())->getIntegerType()).getQuantity());
+      Out << getASTContext().getTypeSizeInChars(
+                cast<EnumDecl>(T->getDecl())->getIntegerType()).getQuantity();
       break;
   }
   mangleName(T->getDecl());
@@ -977,7 +977,7 @@ void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
     if (ElementTy->isConstantArrayType()) {
       const ConstantArrayType *CAT =
       static_cast<const ConstantArrayType *>(ElementTy.getTypePtr());
-      Dimensions.push_back(CAT->getSize()-1);
+      Dimensions.push_back(CAT->getSize());
       ElementTy = CAT->getElementType();
     } else if (ElementTy->isVariableArrayType()) {
       assert(false && "Don't know how to mangle VLAs!");
@@ -991,8 +991,8 @@ void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
   // If there are any additional dimensions, mangle them now.
   if (Dimensions.size() > 0) {
     Out << 'Y';
-    // <dimension-count> ::= <number> # number of extra dimensions minus 1
-    mangleNumber(Dimensions.size()-1);
+    // <dimension-count> ::= <number> # number of extra dimensions
+    mangleNumber(Dimensions.size());
     for (unsigned Dim = 0; Dim < Dimensions.size(); ++Dim) {
       mangleNumber(Dimensions[Dim].getLimitedValue());
     }

@@ -8,7 +8,7 @@
 // CHECK: @"\01?f@foo@@2DD"
 // CHECK: @"\01?g@bar@@2HA"
 // CHECK: @"\01?h@@3QAHA"
-// CHECK: @"\01?i@@3PAY0BD@HA"
+// CHECK: @"\01?i@@3PAY0BE@HA"
 // CHECK: @"\01?j@@3P6GHCE@ZA"
 // CHECK: @"\01?k@@3PTfoo@@DA"
 // CHECK: @"\01?l@@3P8foo@@AAHH@ZA"
@@ -89,4 +89,4 @@ void delta(int * const a, const long &) {}
 // Array mangling. (It should be mangled as a const pointer, but that needs
 // to be fixed in Sema.)
 void epsilon(int a[][10][20]) {}
-// CHECK: @"\01?epsilon@@YAXQAY19BD@H@Z"
+// CHECK: @"\01?epsilon@@YAXQAY19BE@H@Z"
