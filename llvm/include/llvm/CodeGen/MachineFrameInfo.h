@@ -98,8 +98,7 @@ class MachineFrameInfo {
     // cannot alias any other memory objects.
     bool isSpillSlot;
 
-    StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM,
-                bool isSS)
+    StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM, bool isSS)
       : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM),
         isSpillSlot(isSS) {}
   };
@@ -350,8 +349,7 @@ public:
   /// efficiency. By default, fixed objects are immutable. This returns an
   /// index with a negative value.
   ///
-  int CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                        bool Immutable, bool isSS);
+  int CreateFixedObject(uint64_t Size, int64_t SPOffset, bool Immutable);
   
   
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a

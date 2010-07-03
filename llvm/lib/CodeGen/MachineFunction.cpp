@@ -438,10 +438,10 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
 /// index with a negative value.
 ///
 int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                                        bool Immutable, bool isSS) {
+                                        bool Immutable) {
   assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
   Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable,
-                                              isSS));
+                                              /*isSS*/false));
   return -++NumFixedObjects;
 }
 

@@ -787,7 +787,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // the stack (even if less than 4 are used as arguments)
   if (Subtarget->isABI_O32()) {
     int VTsize = EVT(MVT::i32).getSizeInBits()/8;
-    MFI->CreateFixedObject(VTsize, (VTsize*3), true, false);
+    MFI->CreateFixedObject(VTsize, (VTsize*3), true);
     CCInfo.AnalyzeCallOperands(Outs, 
                      isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);
   } else
@@ -857,7 +857,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // if O32 ABI is used. For EABI the first address is zero.
     LastArgStackLoc = (FirstStackArgLoc + VA.getLocMemOffset());
     int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                    LastArgStackLoc, true, false);
+                                    LastArgStackLoc, true);
 
     SDValue PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -929,7 +929,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         // Create the frame index only once. SPOffset here can be anything 
         // (this will be fixed on processFunctionBeforeFrameFinalized)
         if (MipsFI->getGPStackOffset() == -1) {
-          FI = MFI->CreateFixedObject(4, 0, true, false);
+          FI = MFI->CreateFixedObject(4, 0, true);
           MipsFI->setGPFI(FI);
         }
         MipsFI->setGPStackOffset(LastArgStackLoc);
@@ -1098,7 +1098,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // offset on PEI::calculateFrameObjectOffsets.
       // Arguments are always 32-bit.
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, 0, true, false);
+      int FI = MFI->CreateFixedObject(ArgSize, 0, true);
       MipsFI->recordLoadArgsFI(FI, -(ArgSize+
         (FirstStackArgLoc + VA.getLocMemOffset())));
 
@@ -1137,7 +1137,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
 
-      int FI = MFI->CreateFixedObject(4, 0, true, false);
+      int FI = MFI->CreateFixedObject(4, 0, true);
       MipsFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
       SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0,

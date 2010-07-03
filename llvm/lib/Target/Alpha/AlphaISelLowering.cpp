@@ -425,7 +425,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       }
     } else { //more args
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(8, 8 * (ArgNo - 6), true, false);
+      int FI = MFI->CreateFixedObject(8, 8 * (ArgNo - 6), true);
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
@@ -444,7 +444,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
       SDValue argt = DAG.getCopyFromReg(Chain, dl, args_int[i], MVT::i64);
-      int FI = MFI->CreateFixedObject(8, -8 * (6 - i), true, false);
+      int FI = MFI->CreateFixedObject(8, -8 * (6 - i), true);
       if (i == 0) FuncInfo->setVarArgsBase(FI);
       SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
@@ -453,7 +453,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
       argt = DAG.getCopyFromReg(Chain, dl, args_float[i], MVT::f64);
-      FI = MFI->CreateFixedObject(8, - 8 * (12 - i), true, false);
+      FI = MFI->CreateFixedObject(8, - 8 * (12 - i), true);
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
                                 false, false, 0));

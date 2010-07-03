@@ -1072,7 +1072,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(ObjSize,
                                       LRSaveSize + VA.getLocMemOffset(),
-                                      true, false);
+                                      true);
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
@@ -1097,7 +1097,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       // address
       for (unsigned i = array_lengthof(ArgRegs) - 1; i >= FirstVAReg; --i) {
         // Create a stack slot
-        int FI = MFI->CreateFixedObject(4, offset, true, false);
+        int FI = MFI->CreateFixedObject(4, offset, true);
         if (i == FirstVAReg) {
           XFI->setVarArgsFrameIndex(FI);
         }
@@ -1120,7 +1120,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       // This will point to the next argument passed via stack.
       XFI->setVarArgsFrameIndex(
         MFI->CreateFixedObject(4, LRSaveSize + CCInfo.getNextStackOffset(),
-                               true, false));
+                               true));
     }
   }
   

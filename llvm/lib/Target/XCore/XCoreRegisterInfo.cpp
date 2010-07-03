@@ -308,7 +308,7 @@ XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     int FrameIdx;
     if (! isVarArg) {
       // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
-      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true, false);
+      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true);
     } else {
       FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
                                         false);

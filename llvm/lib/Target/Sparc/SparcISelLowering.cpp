@@ -133,7 +133,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
         InVals.push_back(Arg);
       } else {
         int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                            true, false);
+                                                            true);
         SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
         SDValue Load;
         if (ObjectVT == MVT::i32) {
@@ -169,7 +169,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
         InVals.push_back(Arg);
       } else {
         int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                            true, false);
+                                                            true);
         SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
         SDValue Load = DAG.getLoad(MVT::f32, dl, Chain, FIPtr, NULL, 0,
                                    false, false, 0);
@@ -192,7 +192,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
           HiVal = DAG.getCopyFromReg(Chain, dl, VRegHi, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                              true, false);
+                                                              true);
           SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
           HiVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr, NULL, 0,
                               false, false, 0);
@@ -205,7 +205,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
           LoVal = DAG.getCopyFromReg(Chain, dl, VRegLo, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4,
-                                                              true, false);
+                                                              true);
           SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
           LoVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr, NULL, 0,
                               false, false, 0);
@@ -239,7 +239,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
       SDValue Arg = DAG.getCopyFromReg(DAG.getRoot(), dl, VReg, MVT::i32);
 
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                          true, false);
+                                                          true);
       SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
 
       OutChains.push_back(DAG.getStore(DAG.getRoot(), dl, Arg, FIPtr, NULL, 0,

@@ -674,8 +674,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     //   }
     //   [EBP]
     MFI->CreateFixedObject(-TailCallReturnAddrDelta,
-                           (-1U*SlotSize)+TailCallReturnAddrDelta,
-                           true, false);
+                           (-1U*SlotSize)+TailCallReturnAddrDelta, true);
   }
 
   if (hasFP(MF)) {
@@ -688,7 +687,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                           -(int)SlotSize +
                                           TFI.getOffsetOfLocalArea() +
                                           TailCallReturnAddrDelta,
-                                          true, false);
+                                          true);
     assert(FrameIdx == MFI->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
     FrameIdx = 0;

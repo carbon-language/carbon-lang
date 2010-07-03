@@ -588,7 +588,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
       // Create the frame index object for this incoming parameter
       LastArgStackLoc = (FirstStackArgLoc + VA.getLocMemOffset());
       int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                      LastArgStackLoc, true, false);
+                                      LastArgStackLoc, true);
 
       SDValue PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -777,7 +777,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       // offset on PEI::calculateFrameObjectOffsets.
       // Arguments are always 32-bit.
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, 0, true, false);
+      int FI = MFI->CreateFixedObject(ArgSize, 0, true);
       MBlazeFI->recordLoadArgsFI(FI, -(ArgSize+
         (FirstStackArgLoc + VA.getLocMemOffset())));
 
@@ -808,7 +808,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       unsigned LiveReg = MF.addLiveIn(Reg, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, LiveReg, MVT::i32);
 
-      int FI = MFI->CreateFixedObject(4, 0, true, false);
+      int FI = MFI->CreateFixedObject(4, 0, true);
       MBlazeFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
       SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0,

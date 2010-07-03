@@ -369,7 +369,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
              << "\n";
       }
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true, false);
+      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true);
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
@@ -888,7 +888,7 @@ MSP430TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
     // Set up a frame object for the return address.
     uint64_t SlotSize = TD->getPointerSize();
     ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize,
-                                                           true, false);
+                                                           true);
     FuncInfo->setRAIndex(ReturnAddrIndex);
   }
 

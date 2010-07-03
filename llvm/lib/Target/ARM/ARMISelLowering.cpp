@@ -1996,7 +1996,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
   SDValue ArgValue2;
   if (NextVA.isMemLoc()) {
     MachineFrameInfo *MFI = MF.getFrameInfo();
-    int FI = MFI->CreateFixedObject(4, NextVA.getLocMemOffset(), true, false);
+    int FI = MFI->CreateFixedObject(4, NextVA.getLocMemOffset(), true);
 
     // Create load node to retrieve arguments from the stack.
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -2052,8 +2052,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           VA = ArgLocs[++i]; // skip ahead to next loc
           SDValue ArgValue2;
           if (VA.isMemLoc()) {
-            int FI = MFI->CreateFixedObject(8, VA.getLocMemOffset(),
-                                            true, false);
+            int FI = MFI->CreateFixedObject(8, VA.getLocMemOffset(), true);
             SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
             ArgValue2 = DAG.getLoad(MVT::f64, dl, Chain, FIN,
                                     PseudoSourceValue::getFixedStack(FI), 0,
@@ -2120,8 +2119,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       assert(VA.getValVT() != MVT::i64 && "i64 should already be lowered");
 
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset(),
-                                      true, false);
+      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset(), true);
 
       // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -2152,7 +2150,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       AFI->setVarArgsFrameIndex(
         MFI->CreateFixedObject(VARegSaveSize,
                                ArgOffset + VARegSaveSize - VARegSize,
-                               true, false));
+                               true));
       SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
                                       getPointerTy());
 
@@ -2179,8 +2177,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                             &MemOps[0], MemOps.size());
     } else
       // This will point to the next argument passed via stack.
-      AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset,
-                                                       true, false));
+      AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset, true));
   }
 
   return Chain;

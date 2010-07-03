@@ -1074,7 +1074,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       // We need to load the argument to a virtual register if we determined
       // above that we ran out of physical registers of the appropriate type
       // or we're forced to do vararg
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset, true, false);
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0, false, false, 0);
       ArgOffset += StackSlotSize;
@@ -1095,8 +1095,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
 
     for (; ArgRegIdx != NumArgRegs; ++ArgRegIdx) {
       FuncInfo->setVarArgsFrameIndex(
-        MFI->CreateFixedObject(StackSlotSize, ArgOffset,
-                               true, false));
+        MFI->CreateFixedObject(StackSlotSize, ArgOffset, true));
       SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
       unsigned VReg = MF.addLiveIn(ArgRegs[ArgRegIdx], &SPU::R32CRegClass);
       SDValue ArgVal = DAG.getRegister(VReg, MVT::v16i8);
