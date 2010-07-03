@@ -1888,3 +1888,39 @@ of the ADD, and replacing the ADD with the ADDE, should give the desired result.
 (That said, we are doing a lot better than gcc on this testcase. :) )
 
 //===---------------------------------------------------------------------===//
+
+Switch lowering generates less than ideal code for the following switch:
+define void @a(i32 %x) nounwind {
+entry:
+  switch i32 %x, label %if.end [
+    i32 0, label %if.then
+    i32 1, label %if.then
+    i32 2, label %if.then
+    i32 3, label %if.then
+    i32 5, label %if.then
+  ]
+if.then:
+  tail call void @foo() nounwind
+  ret void
+if.end:
+  ret void
+}
+declare void @foo()
+
+Generated code on x86-64 (other platforms give similar results):
+a:
+	cmpl	$5, %edi
+	ja	.LBB0_2
+	movl	%edi, %eax
+	movl	$47, %ecx
+	btq	%rax, %rcx
+	jb	.LBB0_3
+.LBB0_2:
+	ret
+.LBB0_3:
+	xorb	%al, %al
+	jmp	foo@PLT  # TAILCALL
+
+The movl+movl+btq+jb could be simplified to a cmpl+jne.
+
+//===---------------------------------------------------------------------===//
