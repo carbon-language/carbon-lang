@@ -519,10 +519,12 @@ RAFast::defineVirtReg(MachineInstr *MI, unsigned OpNum,
     // If there is no hint, peek at the only use of this register.
     if ((!Hint || !TargetRegisterInfo::isPhysicalRegister(Hint)) &&
         MRI->hasOneNonDBGUse(VirtReg)) {
+      const MachineInstr &UseMI = *MRI->use_nodbg_begin(VirtReg);
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
       // It's a copy, use the destination register as a hint.
-      if (TII->isMoveInstr(*MRI->use_nodbg_begin(VirtReg),
-                           SrcReg, DstReg, SrcSubReg, DstSubReg))
+      if (UseMI.isCopyLike())
+        Hint = UseMI.getOperand(0).getReg();
+      else if (TII->isMoveInstr(UseMI, SrcReg, DstReg, SrcSubReg, DstSubReg))
         Hint = DstReg;
     }
     allocVirtReg(MI, *LRI, Hint);
@@ -771,7 +773,12 @@ void RAFast::AllocateBasicBlock() {
 
     // If this is a copy, we may be able to coalesce.
     unsigned CopySrc, CopyDst, CopySrcSub, CopyDstSub;
-    if (!TII->isMoveInstr(*MI, CopySrc, CopyDst, CopySrcSub, CopyDstSub))
+    if (MI->isCopy()) {
+      CopyDst = MI->getOperand(0).getReg();
+      CopySrc = MI->getOperand(1).getReg();
+      CopyDstSub = MI->getOperand(0).getSubReg();
+      CopySrcSub = MI->getOperand(1).getSubReg();
+    } else if (!TII->isMoveInstr(*MI, CopySrc, CopyDst, CopySrcSub, CopyDstSub))
       CopySrc = CopyDst = 0;
 
     // Track registers used by instruction.

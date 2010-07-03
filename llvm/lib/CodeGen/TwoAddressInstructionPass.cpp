@@ -382,7 +382,7 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
   DstReg = 0;
   unsigned SrcSubIdx, DstSubIdx;
   if (!TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-    if (MI.isExtractSubreg()) {
+    if (MI.isCopy() || MI.isExtractSubreg()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(1).getReg();
     } else if (MI.isInsertSubreg()) {

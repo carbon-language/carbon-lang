@@ -44,7 +44,12 @@ unsigned CoalescerPair::compose(unsigned a, unsigned b) const {
 bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
                                 unsigned &Src, unsigned &Dst,
                                 unsigned &SrcSub, unsigned &DstSub) const {
-  if (MI->isExtractSubreg()) {
+  if (MI->isCopy()) {
+    Dst = MI->getOperand(0).getReg();
+    DstSub = MI->getOperand(0).getSubReg();
+    Src = MI->getOperand(1).getReg();
+    SrcSub = MI->getOperand(1).getSubReg();
+  } else if (MI->isExtractSubreg()) {
     Dst = MI->getOperand(0).getReg();
     DstSub = MI->getOperand(0).getSubReg();
     Src = MI->getOperand(1).getReg();

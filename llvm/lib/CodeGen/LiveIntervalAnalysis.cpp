@@ -321,7 +321,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (mi->isExtractSubreg() || mi->isInsertSubreg() || mi->isSubregToReg() ||
+    if (mi->isCopyLike() ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
       CopyMI = mi;
 
@@ -457,8 +457,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // A re-def may be a copy. e.g. %reg1030:6<def> = VMOVD %reg1026, ...
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (PartReDef &&
-          tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
+      if (PartReDef && (mi->isCopyLike() ||
+          tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg)))
         OldValNo->setCopy(&*mi);
       
       // Add the new live interval which replaces the range for the input copy.
@@ -488,7 +488,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (mi->isExtractSubreg() || mi->isInsertSubreg() || mi->isSubregToReg()||
+      if (mi->isCopyLike() ||
           tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, true, VNInfoAllocator);
@@ -605,7 +605,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   else if (allocatableRegs_[MO.getReg()]) {
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg() ||
+    if (MI->isCopyLike() ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,

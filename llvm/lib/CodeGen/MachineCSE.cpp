@@ -241,8 +241,8 @@ bool MachineCSE::PhysRegDefReaches(MachineInstr *CSMI, MachineInstr *MI,
 
 static bool isCopy(const MachineInstr *MI, const TargetInstrInfo *TII) {
   unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  return TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
-    MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg();
+  return MI->isCopyLike() ||
+    TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
 }
 
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {

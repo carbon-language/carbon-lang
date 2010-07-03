@@ -46,14 +46,15 @@ bool ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
                                                  const TargetInstrInfo *tii_) {
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
   if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-      Reg == SrcReg && SrcSubReg == 0 && DstSubReg == 0)
+      Reg == SrcReg && DstSubReg == 0)
     return true;
 
-  if (OpIdx == 2 && MI->isSubregToReg())
-    return true;
-  if (OpIdx == 1 && MI->isExtractSubreg())
-    return true;
-  return false;
+  switch(OpIdx) {
+    case 1: return (MI->isExtractSubreg() || MI->isCopy()) &&
+                   MI->getOperand(0).getSubReg() == 0;
+    case 2: return MI->isSubregToReg() && MI->getOperand(0).getSubReg() == 0;
+    default: return false;
+  }
 }
 
 /// processImplicitDefs - Process IMPLICIT_DEF instructions and make sure
@@ -219,8 +220,10 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
 
         // Turn a copy use into an implicit_def.
         unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-        if (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-            Reg == SrcReg && SrcSubReg == 0 && DstSubReg == 0) {
+        if ((RMI->isCopy() && RMI->getOperand(1).getReg() == Reg &&
+             RMI->getOperand(0).getSubReg() == 0) ||
+            (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+             Reg == SrcReg && DstSubReg == 0)) {
           RMI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
 
           bool isKill = false;

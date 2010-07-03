@@ -450,20 +450,25 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
         UseMO.setIsKill(false);
     }
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+    if (UseMI->isCopy()) {
+      if (UseMI->getOperand(0).getReg() != IntB.reg ||
+          UseMI->getOperand(0).getSubReg())
+        continue;
+    } else if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
+      if (DstReg != IntB.reg || DstSubIdx)
+        continue;
+    } else
       continue;
-    if (DstReg == IntB.reg && DstSubIdx == 0) {
-      // This copy will become a noop. If it's defining a new val#,
-      // remove that val# as well. However this live range is being
-      // extended to the end of the existing live range defined by the copy.
-      SlotIndex DefIdx = UseIdx.getDefIndex();
-      const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
-      BHasPHIKill |= DLR->valno->hasPHIKill();
-      assert(DLR->valno->def == DefIdx);
-      BDeadValNos.push_back(DLR->valno);
-      BExtend[DLR->start] = DLR->end;
-      JoinedCopies.insert(UseMI);
-    }
+    // This copy will become a noop. If it's defining a new val#,
+    // remove that val# as well. However this live range is being
+    // extended to the end of the existing live range defined by the copy.
+    SlotIndex DefIdx = UseIdx.getDefIndex();
+    const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
+    BHasPHIKill |= DLR->valno->hasPHIKill();
+    assert(DLR->valno->def == DefIdx);
+    BDeadValNos.push_back(DLR->valno);
+    BExtend[DLR->start] = DLR->end;
+    JoinedCopies.insert(UseMI);
   }
 
   // We need to insert a new liverange: [ALR.start, LastUse). It may be we can
@@ -604,8 +609,9 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
     LastUse->setIsKill();
     removeRange(li, LastUseIdx.getDefIndex(), LR->end, li_, tri_);
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        DstReg == li.reg && DstSubIdx == 0) {
+    if ((LastUseMI->isCopy() && !LastUseMI->getOperand(0).getSubReg()) ||
+        (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+         DstReg == li.reg && DstSubIdx == 0)) {
       // Last use is itself an identity code.
       int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg,
                                                          false, false, tri_);
@@ -1556,7 +1562,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     // If this isn't a copy nor a extract_subreg, we can't join intervals.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     bool isInsUndef = false;
-    if (Inst->isExtractSubreg()) {
+    if (Inst->isCopy() || Inst->isExtractSubreg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
     } else if (Inst->isInsertSubreg()) {
@@ -1793,8 +1799,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         // Delete all coalesced copies.
         bool DoDelete = true;
         if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-          assert((MI->isExtractSubreg() || MI->isInsertSubreg() ||
-                  MI->isSubregToReg()) && "Unrecognized copy instruction");
+          assert(MI->isCopyLike() && "Unrecognized copy instruction");
           SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
           if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
             // Do not delete extract_subreg, insert_subreg of physical
