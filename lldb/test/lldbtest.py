@@ -35,9 +35,12 @@ class TestBase(unittest.TestCase):
     """This LLDB abstract base class is meant to be subclassed."""
 
     # The concrete subclass should override this attribute.
-    mydir = ""
+    mydir = None
 
     def setUp(self):
+        # Fail fast if 'mydir' attribute is not overridden.
+        if not self.mydir or len(self.mydir) == 0:
+            raise Exception("Subclasses must override the 'mydir' attribute.")
         # Save old working directory.
         self.oldcwd = os.getcwd()
 
@@ -49,10 +52,9 @@ class TestBase(unittest.TestCase):
         # Create the debugger instance if necessary.
         try:
             self.dbg = lldb.DBG
-        except NameError:
-            self.dbg = lldb.SBDebugger.Create()
         except AttributeError:
             self.dbg = lldb.SBDebugger.Create()
+
         if not self.dbg.IsValid():
             raise Exception('Invalid debugger instance')
 

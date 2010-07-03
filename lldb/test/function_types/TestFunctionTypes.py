@@ -14,8 +14,6 @@ class TestClassTypes(lldbtest.TestBase):
         res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
-        print "os.getcwd(): ", os.getcwd()
-        print "file a.out :", res.GetOutput()
         self.assertTrue(res.Succeeded())
 
         # Break inside the main.
