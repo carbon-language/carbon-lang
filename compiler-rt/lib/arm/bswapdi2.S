@@ -1,4 +1,4 @@
-//===------- bswapdi2 - Implement bswapdi2 ---------------------------------===//
+//===------- bswapdi2 - Implement bswapdi2 --------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,30 +14,25 @@
 //
 // Reverse all the bytes in a 64-bit integer.
 //
-	.align 2
+    .align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
 #if __ARM_ARCH_5TEJ__ || __ARM_ARCH_4T__
-	// before armv6 does not have "rev" instruction
-	stmfd	sp!, {r7, lr}
-	mov	r7, sp
-	mov	r2, #255, 24
-	and	r3, r2, r1, lsr #8
-	mov	r12, #255, 16
-	and	lr, r12, r1, lsl #8
-	orr	r3, r3, r1, lsr #24
-	orr	r1, lr, r1, lsl #24
-	and	r2, r2, r0, lsr #8
-	orr	r3, r1, r3
-	orr	r1, r2, r0, lsr #24
-	and	r2, r12, r0, lsl #8
-	orr	r0, r2, r0, lsl #24
-	orr	r1, r0, r1
-	mov	r0, r3
-	ldmfd	sp!, {r7, pc}
+    mov r12, #0xff00
+    
+    and r3,  r12, r0, lsr #8
+    and r2,  r12, r0    
+    orr r3,   r3, r0, lsr #24   
+    orr r3,   r3, r0, lsl #24
+    orr r2,   r3, r2, lsl #8  // r2 = rev(r0)
+    
+    and r3,  r12, r1, lsr #8
+    and r0,  r12, r1
+    orr r3,   r3, r1, lsr #24
+    orr r3,   r3, r1, lsl #24
+    orr r0,   r3, r0, lsl #8  // r0 = rev(r1)
 #else
-	rev	r2, r1		// reverse bytes in high 32-bits into temp2
-	rev	r3, r0		// reverse bytes in low 32-bit into temp3
-	mov	r0, r2		// set low 32-bits of result to temp2
-	mov	r1, r3		// set high 32-bits of result to temp3
-	bx	lr
+    rev r2,   r0  // r2 = rev(r0)
+    rev r0,   r1  // r0 = rev(r1)
 #endif
+    mov r1,   r2  // r1 = r2 = rev(r0)
+    bx  lr
