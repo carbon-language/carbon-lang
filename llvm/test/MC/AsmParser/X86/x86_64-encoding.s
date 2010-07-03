@@ -1918,3 +1918,59 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x62,0x19,0x28,0x28]
           vpmuldq  (%rax), %xmm12, %xmm13
 
+// CHECK: vpmulld  %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x42,0x51,0x40,0xdc]
+          vpmulld  %xmm12, %xmm5, %xmm11
+
+// CHECK: vpmulld  (%rax), %xmm5, %xmm13
+// CHECK: encoding: [0xc4,0x62,0x51,0x40,0x28]
+          vpmulld  (%rax), %xmm5, %xmm13
+
+// CHECK: vblendps  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x0c,0xdc,0x03]
+          vblendps  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vblendps  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x0c,0x18,0x03]
+          vblendps  $3, (%rax), %xmm5, %xmm11
+
+// CHECK: vblendpd  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x0d,0xdc,0x03]
+          vblendpd  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vblendpd  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x0d,0x18,0x03]
+          vblendpd  $3, (%rax), %xmm5, %xmm11
+
+// CHECK: vpblendw  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x0e,0xdc,0x03]
+          vpblendw  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vpblendw  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x0e,0x18,0x03]
+          vpblendw  $3, (%rax), %xmm5, %xmm11
+
+// CHECK: vmpsadbw  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x42,0xdc,0x03]
+          vmpsadbw  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vmpsadbw  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x42,0x18,0x03]
+          vmpsadbw  $3, (%rax), %xmm5, %xmm11
+
+// CHECK: vdpps  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x40,0xdc,0x03]
+          vdpps  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vdpps  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x40,0x18,0x03]
+          vdpps  $3, (%rax), %xmm5, %xmm11
+
+// CHECK: vdppd  $3, %xmm12, %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x51,0x41,0xdc,0x03]
+          vdppd  $3, %xmm12, %xmm5, %xmm11
+
+// CHECK: vdppd  $3, (%rax), %xmm5, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x51,0x41,0x18,0x03]
+          vdppd  $3, (%rax), %xmm5, %xmm11
+

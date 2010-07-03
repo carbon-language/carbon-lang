@@ -4190,6 +4190,8 @@ multiclass SS48I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPMULLD : SS48I_binop_rm<0x40, "vpmulld", mul, v4i32, 0>, VEX_4V;
 let Constraints = "$src1 = $dst" in
   defm PMULLD : SS48I_binop_rm<0x40, "pmulld", mul, v4i32>;
 
@@ -4218,6 +4220,23 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
           (IntId128 VR128:$src1,
            (bitconvert (memopv16i8 addr:$src2)), imm:$src3))]>,
         OpSize;
+}
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in {
+  let isCommutable = 0 in {
+  defm VBLENDPS : SS41I_binop_rmi_int<0x0C, "vblendps", int_x86_sse41_blendps,
+                                                        0>, VEX_4V;
+  defm VBLENDPD : SS41I_binop_rmi_int<0x0D, "vblendpd", int_x86_sse41_blendpd,
+                                                        0>, VEX_4V;
+  defm VPBLENDW : SS41I_binop_rmi_int<0x0E, "vpblendw", int_x86_sse41_pblendw,
+                                                        0>, VEX_4V;
+  defm VMPSADBW : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_sse41_mpsadbw,
+                                                        0>, VEX_4V;
+  }
+  defm VDPPS : SS41I_binop_rmi_int<0x40, "vdpps", int_x86_sse41_dpps,
+                                                        0>, VEX_4V;
+  defm VDPPD : SS41I_binop_rmi_int<0x41, "vdppd", int_x86_sse41_dppd,
+                                                        0>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {

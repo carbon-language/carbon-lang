@@ -11870,3 +11870,60 @@
 // CHECK: encoding: [0xc4,0xe2,0x69,0x28,0x18]
           vpmuldq  (%eax), %xmm2, %xmm3
 
+// CHECK: vpmulld  %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0x40,0xca]
+          vpmulld  %xmm2, %xmm5, %xmm1
+
+// CHECK: vpmulld  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0x40,0x18]
+          vpmulld  (%eax), %xmm5, %xmm3
+
+// CHECK: vblendps  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0c,0xca,0x03]
+          vblendps  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vblendps  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0c,0x08,0x03]
+          vblendps  $3, (%eax), %xmm5, %xmm1
+
+// CHECK: vblendpd  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0d,0xca,0x03]
+          vblendpd  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vblendpd  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0d,0x08,0x03]
+          vblendpd  $3, (%eax), %xmm5, %xmm1
+
+// CHECK: vpblendw  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0e,0xca,0x03]
+          vpblendw  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vpblendw  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x0e,0x08,0x03]
+          vpblendw  $3, (%eax), %xmm5, %xmm1
+
+// CHECK: vmpsadbw  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x42,0xca,0x03]
+          vmpsadbw  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vmpsadbw  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x42,0x08,0x03]
+          vmpsadbw  $3, (%eax), %xmm5, %xmm1
+
+// CHECK: vdpps  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x40,0xca,0x03]
+          vdpps  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vdpps  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x40,0x08,0x03]
+          vdpps  $3, (%eax), %xmm5, %xmm1
+
+// CHECK: vdppd  $3, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x41,0xca,0x03]
+          vdppd  $3, %xmm2, %xmm5, %xmm1
+
+// CHECK: vdppd  $3, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x41,0x08,0x03]
+          vdppd  $3, (%eax), %xmm5, %xmm1
+
+
