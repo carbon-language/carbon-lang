@@ -21,9 +21,9 @@ my $testDir = $ARGV[0];
 my $dbgPath = "$baseDir/build/Debug/LLDB.framework/Resources/Python";
 my $relPath = "$baseDir/build/Release/LLDB.framework/Resources/Python";
 if (-d $dbgPath) {
-  $ENV{'PYTHONPATH'} = "$dbgPath";
+  $ENV{'PYTHONPATH'} = "$dbgPath:$scriptDir";
 } elsif (-d $relPath) {
-  $ENV{'PYTHONPATH'} = "$relPath";
+  $ENV{'PYTHONPATH'} = "$relPath:$scriptDir";
 }
 #print("ENV{PYTHONPATH}=$ENV{'PYTHONPATH'}\n");
 

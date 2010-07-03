@@ -1,39 +1,21 @@
 """Test variable with function ptr type and that break on the function works."""
 
 import os, time
-import lldb
 import unittest
+import lldb
+import lldbtest
 
-main = False
+class TestClassTypes(lldbtest.TestBase):
 
-class TestClassTypes(unittest.TestCase):
-
-    def setUp(self):
-        global main
-
-        # Save old working directory.
-        self.oldcwd = os.getcwd()
-        # Change current working directory if ${LLDB_TEST} is defined.
-        if ("LLDB_TEST" in os.environ):
-            os.chdir(os.path.join(os.environ["LLDB_TEST"], "function_types"));
-        self.dbg = lldb.SBDebugger.Create() if main else lldb.DBG
-        if not self.dbg.IsValid():
-            raise Exception('Invalid debugger instance')
-        self.dbg.SetAsync(False)
-        self.ci = self.dbg.GetCommandInterpreter()
-        if not self.ci:
-            raise Exception('Could not get the command interpreter')
-
-    def tearDown(self):
-        # Restore old working directory.
-        os.chdir(self.oldcwd)
-        del self.dbg
+    mydir = "function_types"
 
     def test_function_types(self):
         """Test 'callback' has function ptr type, then break on the function."""
-        res = lldb.SBCommandReturnObject()
+        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
+        print "os.getcwd(): ", os.getcwd()
+        print "file a.out :", res.GetOutput()
         self.assertTrue(res.Succeeded())
 
         # Break inside the main.
@@ -85,6 +67,5 @@ class TestClassTypes(unittest.TestCase):
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
-    main = True
     unittest.main()
     lldb.SBDebugger.Terminate()

@@ -1,37 +1,17 @@
 """Show global variables and check that they do indeed have global scopes."""
 
 import os, time
-import lldb
 import unittest
+import lldb
+import lldbtest
 
-main = False
+class TestClassTypes(lldbtest.TestBase):
 
-class TestClassTypes(unittest.TestCase):
-
-    def setUp(self):
-        global main
-
-        # Save old working directory.
-        self.oldcwd = os.getcwd()
-        # Change current working directory if ${LLDB_TEST} is defined.
-        if ("LLDB_TEST" in os.environ):
-            os.chdir(os.path.join(os.environ["LLDB_TEST"], "global_variables"));
-        self.dbg = lldb.SBDebugger.Create() if main else lldb.DBG
-        if not self.dbg.IsValid():
-            raise Exception('Invalid debugger instance')
-        self.dbg.SetAsync(False)
-        self.ci = self.dbg.GetCommandInterpreter()
-        if not self.ci:
-            raise Exception('Could not get the command interpreter')
-
-    def tearDown(self):
-        # Restore old working directory.
-        os.chdir(self.oldcwd)
-        del self.dbg
+    mydir = "global_variables"
 
     def test_global_variables(self):
         """Test 'variable list -s -a' which omits args and shows scopes."""
-        res = lldb.SBCommandReturnObject()
+        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
         self.assertTrue(res.Succeeded())
@@ -75,6 +55,5 @@ class TestClassTypes(unittest.TestCase):
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
-    main = True
     unittest.main()
     lldb.SBDebugger.Terminate()

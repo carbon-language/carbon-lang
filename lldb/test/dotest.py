@@ -53,14 +53,14 @@ def setupSysPath():
     """Add LLDB.framework/Resources/Python to the search paths for modules."""
 
     # Get the directory containing the current script.
-    testPath = sys.path[0]
-    if not testPath.endswith('test'):
+    scriptPath = sys.path[0]
+    if not scriptPath.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
 
-    os.environ["LLDB_TEST"] = testPath
+    os.environ["LLDB_TEST"] = scriptPath
 
-    base = os.path.abspath(os.path.join(testPath, os.pardir))
+    base = os.path.abspath(os.path.join(scriptPath, os.pardir))
     dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
                            'Resources', 'Python')
     relPath = os.path.join(base, 'build', 'Release', 'LLDB.framework',
@@ -78,6 +78,7 @@ def setupSysPath():
         sys.exit(-1)
 
     sys.path.append(lldbPath)
+    sys.path.append(scriptPath)
 
 
 def initTestdirs():

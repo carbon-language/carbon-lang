@@ -1,37 +1,17 @@
 """Test breakpoint by file/line number; and list variables with array types."""
 
 import os, time
-import lldb
 import unittest
+import lldb
+import lldbtest
 
-main = False
+class TestArrayTypes(lldbtest.TestBase):
 
-class TestArrayTypes(unittest.TestCase):
-
-    def setUp(self):
-        global main
-
-        # Save old working directory.
-        self.oldcwd = os.getcwd()
-        # Change current working directory if ${LLDB_TEST} is defined.
-        if ("LLDB_TEST" in os.environ):
-            os.chdir(os.path.join(os.environ["LLDB_TEST"], "array_types"));
-        self.dbg = lldb.SBDebugger.Create() if main else lldb.DBG
-        if not self.dbg.IsValid():
-            raise Exception('Invalid debugger instance')
-        self.dbg.SetAsync(False)
-        self.ci = self.dbg.GetCommandInterpreter()
-        if not self.ci:
-            raise Exception('Could not get the command interpreter')
-
-    def tearDown(self):
-        # Restore old working directory.
-        os.chdir(self.oldcwd)
-        del self.dbg
+    mydir = "array_types"
 
     def test_array_types(self):
         """Test 'variable list var_name' on some variables with array types."""
-        res = lldb.SBCommandReturnObject()
+        res = self.res
         exe = os.path.join(os.getcwd(), "a.out")
         self.ci.HandleCommand("file " + exe, res)
         self.assertTrue(res.Succeeded())
@@ -92,6 +72,5 @@ class TestArrayTypes(unittest.TestCase):
 
 if __name__ == '__main__':
     lldb.SBDebugger.Initialize()
-    main = True
     unittest.main()
     lldb.SBDebugger.Terminate()
