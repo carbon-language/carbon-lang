@@ -1918,9 +1918,17 @@ a:
 .LBB0_2:
 	ret
 .LBB0_3:
-	xorb	%al, %al
-	jmp	foo@PLT  # TAILCALL
+	jmp	foo  # TAILCALL
 
 The movl+movl+btq+jb could be simplified to a cmpl+jne.
+
+Or, if we wanted to be really clever, we could simplify the whole thing to
+something like the following, which eliminates a branch:
+	xorl    $1, %edi
+	cmpl	$4, %edi
+	ja	.LBB0_2
+	ret
+.LBB0_2:
+	jmp	foo  # TAILCALL
 
 //===---------------------------------------------------------------------===//
