@@ -3948,6 +3948,38 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd,
                     OpSize;
 }
 
+multiclass sse41_fp_unop_rm_avx<bits<8> opcps, bits<8> opcpd,
+                                string OpcodeStr> {
+  // Intrinsic operation, reg.
+  // Vector intrinsic operation, reg
+  def PSr : SS4AIi8<opcps, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, OpSize;
+
+  // Vector intrinsic operation, mem
+  def PSm : Ii8<opcps, MRMSrcMem,
+                    (outs VR128:$dst), (ins f128mem:$src1, i32i8imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, TA, OpSize, Requires<[HasSSE41]>;
+
+  // Vector intrinsic operation, reg
+  def PDr : SS4AIi8<opcpd, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, OpSize;
+
+  // Vector intrinsic operation, mem
+  def PDm : SS4AIi8<opcpd, MRMSrcMem,
+                    (outs VR128:$dst), (ins f128mem:$src1, i32i8imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, OpSize;
+}
+
 multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
                             string OpcodeStr,
                             Intrinsic F32Int,
@@ -3999,7 +4031,51 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
         OpSize;
 }
 
+multiclass sse41_fp_binop_rm_avx<bits<8> opcss, bits<8> opcsd,
+                                 string OpcodeStr> {
+  // Intrinsic operation, reg.
+  def SSr : SS4AIi8<opcss, MRMSrcReg,
+        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+        !strconcat(OpcodeStr,
+                "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, OpSize;
+
+  // Intrinsic operation, mem.
+  def SSm : SS4AIi8<opcss, MRMSrcMem,
+        (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
+        !strconcat(OpcodeStr,
+                "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, OpSize;
+
+  // Intrinsic operation, reg.
+  def SDr : SS4AIi8<opcsd, MRMSrcReg,
+        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+            !strconcat(OpcodeStr,
+                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, OpSize;
+
+  // Intrinsic operation, mem.
+  def SDm : SS4AIi8<opcsd, MRMSrcMem,
+        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
+            !strconcat(OpcodeStr,
+                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, OpSize;
+}
+
 // FP round - roundss, roundps, roundsd, roundpd
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in {
+  // Intrinsic form
+  defm VROUND  : sse41_fp_unop_rm<0x08, 0x09, "vround",
+                                int_x86_sse41_round_ps, int_x86_sse41_round_pd>,
+                                VEX;
+  defm VROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "vround",
+                                int_x86_sse41_round_ss, int_x86_sse41_round_sd,
+                                0>, VEX_4V;
+  // Instructions for the assembler
+  defm VROUND  : sse41_fp_unop_rm_avx<0x08, 0x09, "vround">, VEX;
+  defm VROUND  : sse41_fp_binop_rm_avx<0x0A, 0x0B, "vround">, VEX_4V;
+}
+
 defm ROUND  : sse41_fp_unop_rm<0x08, 0x09, "round",
                                int_x86_sse41_round_ps, int_x86_sse41_round_pd>;
 let Constraints = "$src1 = $dst" in

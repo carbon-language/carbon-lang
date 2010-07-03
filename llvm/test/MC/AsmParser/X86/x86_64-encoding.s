@@ -1790,3 +1790,35 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x19,0x0f,0x28,0x07]
           vpalignr  $7, (%rax), %xmm12, %xmm13
 
+// CHECK: vroundsd  $7, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x43,0x19,0x0b,0xeb,0x07]
+          vroundsd  $7, %xmm11, %xmm12, %xmm13
+
+// CHECK: vroundsd  $7, (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x19,0x0b,0x28,0x07]
+          vroundsd  $7, (%rax), %xmm12, %xmm13
+
+// CHECK: vroundss  $7, %xmm11, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x43,0x19,0x0a,0xeb,0x07]
+          vroundss  $7, %xmm11, %xmm12, %xmm13
+
+// CHECK: vroundss  $7, (%rax), %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x19,0x0a,0x28,0x07]
+          vroundss  $7, (%rax), %xmm12, %xmm13
+
+// CHECK: vroundpd  $7, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x43,0x79,0x09,0xec,0x07]
+          vroundpd  $7, %xmm12, %xmm13
+
+// CHECK: vroundpd  $7, (%rax), %xmm13
+// CHECK: encoding: [0xc4,0x63,0x79,0x09,0x28,0x07]
+          vroundpd  $7, (%rax), %xmm13
+
+// CHECK: vroundps  $7, %xmm12, %xmm13
+// CHECK: encoding: [0xc4,0x43,0x79,0x08,0xec,0x07]
+          vroundps  $7, %xmm12, %xmm13
+
+// CHECK: vroundps  $7, (%rax), %xmm13
+// CHECK: encoding: [0xc4,0x63,0x79,0x08,0x28,0x07]
+          vroundps  $7, (%rax), %xmm13
+

@@ -11742,3 +11742,35 @@
 // CHECK: encoding: [0xc4,0xe3,0x69,0x0f,0x18,0x07]
           vpalignr  $7, (%eax), %xmm2, %xmm3
 
+// CHECK: vroundsd  $7, %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x69,0x0b,0xd9,0x07]
+          vroundsd  $7, %xmm1, %xmm2, %xmm3
+
+// CHECK: vroundsd  $7, (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x69,0x0b,0x18,0x07]
+          vroundsd  $7, (%eax), %xmm2, %xmm3
+
+// CHECK: vroundss  $7, %xmm1, %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x69,0x0a,0xd9,0x07]
+          vroundss  $7, %xmm1, %xmm2, %xmm3
+
+// CHECK: vroundss  $7, (%eax), %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x69,0x0a,0x18,0x07]
+          vroundss  $7, (%eax), %xmm2, %xmm3
+
+// CHECK: vroundpd  $7, %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x79,0x09,0xda,0x07]
+          vroundpd  $7, %xmm2, %xmm3
+
+// CHECK: vroundpd  $7, (%eax), %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x79,0x09,0x18,0x07]
+          vroundpd  $7, (%eax), %xmm3
+
+// CHECK: vroundps  $7, %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x79,0x08,0xda,0x07]
+          vroundps  $7, %xmm2, %xmm3
+
+// CHECK: vroundps  $7, (%eax), %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x79,0x08,0x18,0x07]
+          vroundps  $7, (%eax), %xmm3
+
