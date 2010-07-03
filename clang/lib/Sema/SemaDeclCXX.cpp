@@ -2898,6 +2898,8 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
     Context.DeclarationNames.getCXXOperatorName(OO_Delete);
     if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
       return true;
+
+    MarkDeclarationReferenced(Loc, OperatorDelete);
     
     Destructor->setOperatorDelete(OperatorDelete);
   }
