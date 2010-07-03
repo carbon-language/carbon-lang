@@ -1327,10 +1327,17 @@ public:
   //                    Statistics
   //===--------------------------------------------------------------------===//
 
+  /// \brief The number of implicitly-declared default constructors.
+  static unsigned NumImplicitDefaultConstructors;
+  
+  /// \brief The number of implicitly-declared default constructors for 
+  /// which declarations were built.
+  static unsigned NumImplicitDefaultConstructorsDeclared;
+
   /// \brief The number of implicitly-declared copy constructors.
   static unsigned NumImplicitCopyConstructors;
   
-  /// \brief The number of implicitly-declared constructors for 
+  /// \brief The number of implicitly-declared copy constructors for 
   /// which declarations were built.
   static unsigned NumImplicitCopyConstructorsDeclared;
 

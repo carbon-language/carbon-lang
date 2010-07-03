@@ -975,6 +975,12 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
     CreateStoredDeclsMap(*C);
   }
 
+  // If there is an external AST source, load any declarations it knows about
+  // with this declaration's name.
+  if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
+    if (hasExternalVisibleStorage())
+      Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
+
   // Insert this declaration into the map.
   StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];
   if (DeclNameEntries.isNull()) {

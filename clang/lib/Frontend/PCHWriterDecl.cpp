@@ -654,6 +654,7 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Record.push_back(Data.HasTrivialCopyAssignment);
       Record.push_back(Data.HasTrivialDestructor);
       Record.push_back(Data.ComputedVisibleConversions);
+      Record.push_back(Data.DeclaredDefaultConstructor);
       Record.push_back(Data.DeclaredCopyConstructor);
       Record.push_back(Data.DeclaredCopyAssignment);
       Record.push_back(Data.DeclaredDestructor);

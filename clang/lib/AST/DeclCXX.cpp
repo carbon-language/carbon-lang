@@ -32,7 +32,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), HasTrivialConstructor(true),
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
-    DeclaredCopyConstructor(false), 
+    DeclaredDefaultConstructor(false), DeclaredCopyConstructor(false), 
     DeclaredCopyAssignment(false), DeclaredDestructor(false),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Definition(D), FirstFriend(0) {
@@ -277,6 +277,9 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
   // Note that we have a user-declared constructor.
   data().UserDeclaredConstructor = true;
 
+  // Note that we have no need of an implicitly-declared default constructor.
+  data().DeclaredDefaultConstructor = true;
+  
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is an array or a class (clause 9) with no
   //   user-declared constructors (12.1) [...].

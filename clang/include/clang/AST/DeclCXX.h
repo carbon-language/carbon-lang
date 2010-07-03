@@ -318,7 +318,11 @@ class CXXRecordDecl : public RecordDecl {
     /// ComputedVisibleConversions - True when visible conversion functions are
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
-  
+
+    /// \brief Whether we have already declared the default constructor or 
+    /// do not need to have one declared.
+    bool DeclaredDefaultConstructor : 1;
+
     /// \brief Whether we have already declared the copy constructor.
     bool DeclaredCopyConstructor : 1;
     
@@ -540,6 +544,20 @@ public:
     return data().FirstFriend != 0;
   }
 
+  /// \brief Determine whether this class has had its default constructor 
+  /// declared implicitly or does not need one declared implicitly.
+  ///
+  /// This value is used for lazy creation of default constructors.
+  bool hasDeclaredDefaultConstructor() const {
+    return data().DeclaredDefaultConstructor;
+  }
+  
+  /// \brief Note whether this class has already had its default constructor 
+  /// implicitly declared or doesn't need one.
+  void setDeclaredDefaultConstructor(bool DDC) {
+    data().DeclaredDefaultConstructor = DDC;
+  }
+  
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(ASTContext &Context) const;

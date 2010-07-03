@@ -2654,7 +2654,7 @@ namespace {
 /// definition of the class is complete.
 void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredConstructor())
-    DeclareImplicitDefaultConstructor(ClassDecl);
+    ++ASTContext::NumImplicitDefaultConstructors;
 
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
     ++ASTContext::NumImplicitCopyConstructors;
@@ -4156,6 +4156,19 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   //   user-declared constructor for class X, a default constructor is
   //   implicitly declared. An implicitly-declared default constructor
   //   is an inline public member of its class.
+  assert(!ClassDecl->hasUserDeclaredConstructor() && 
+         "Should not build implicit default constructor!");
+  
+  // FIXME: HACK HACK HACK
+  if (Context.getExternalSource()) {
+    // This hack ensures that, when using precompiled headers, the lookup
+    // table in the DeclContext has already loaded the constructor declarations
+    // so that we can add a new one. The real fix will go into DeclContext,
+    // when I figure out what that is.
+    CanQualType T
+      = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
+    ClassDecl->lookup(Context.DeclarationNames.getCXXConstructorName(T));
+  }
   
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
@@ -4169,20 +4182,28 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     if (B->isVirtual()) // Handled below.
       continue;
     
-    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
-      if (CXXConstructorDecl *Constructor
-            = cast<CXXRecordDecl>(BaseType->getDecl())->getDefaultConstructor())
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      if (!BaseClassDecl->hasDeclaredDefaultConstructor())
+        ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
+      else if (CXXConstructorDecl *Constructor 
+                                       = BaseClassDecl->getDefaultConstructor())
         ExceptSpec.CalledDecl(Constructor);
+    }
   }
   
   // Virtual base-class destructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
                                        BEnd = ClassDecl->vbases_end();
        B != BEnd; ++B) {
-    if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
-      if (CXXConstructorDecl *Constructor
-            = cast<CXXRecordDecl>(BaseType->getDecl())->getDefaultConstructor())
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      if (!BaseClassDecl->hasDeclaredDefaultConstructor())
+        ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
+      else if (CXXConstructorDecl *Constructor
+                                       = BaseClassDecl->getDefaultConstructor())
         ExceptSpec.CalledDecl(Constructor);
+    }
   }
   
   // Field destructors.
@@ -4190,10 +4211,15 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                FEnd = ClassDecl->field_end();
        F != FEnd; ++F) {
     if (const RecordType *RecordTy
-                = Context.getBaseElementType(F->getType())->getAs<RecordType>())
-      if (CXXConstructorDecl *Constructor
-            = cast<CXXRecordDecl>(RecordTy->getDecl())->getDefaultConstructor())
+              = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
+      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
+      if (!FieldClassDecl->hasDeclaredDefaultConstructor())
+        ExceptSpec.CalledDecl(
+                            DeclareImplicitDefaultConstructor(FieldClassDecl));
+      else if (CXXConstructorDecl *Constructor
+                                      = FieldClassDecl->getDefaultConstructor())
         ExceptSpec.CalledDecl(Constructor);
+    }
   }
   
   
@@ -4219,10 +4245,15 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   DefaultCon->setAccess(AS_public);
   DefaultCon->setImplicit();
   DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
+  
+  // Note that we have declared this constructor.
+  ClassDecl->setDeclaredDefaultConstructor(true);
+  ++ASTContext::NumImplicitDefaultConstructorsDeclared;
+  
   if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(DefaultCon, S, true);
-  else
-    ClassDecl->addDecl(DefaultCon);
+    PushOnScopeChains(DefaultCon, S, false);
+  ClassDecl->addDecl(DefaultCon);
+  
   return DefaultCon;
 }
 
@@ -4612,7 +4643,17 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // constructor rules. Note that virtual bases are not taken into account
   // for determining the argument type of the operator. Note also that
   // operators taking an object instead of a reference are allowed.
-  //
+  
+  
+  // FIXME: HACK HACK HACK
+  if (Context.getExternalSource()) {
+    // This hack ensures that, when using precompiled headers, the lookup
+    // table in the DeclContext has already loaded the assignment operator
+    // declarations so that we can add a new one. The real fix will go into 
+    // DeclContext, when I figure out what that is.
+    ClassDecl->lookup(Context.DeclarationNames.getCXXOperatorName(OO_Equal));
+  }
+  
   // C++ [class.copy]p10:
   //   If the class definition does not explicitly declare a copy
   //   assignment operator, one is declared implicitly.
@@ -5044,6 +5085,17 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   // C++ [class.copy]p4:
   //   If the class definition does not explicitly declare a copy
   //   constructor, one is declared implicitly.
+  
+  // FIXME: HACK HACK HACK
+  if (Context.getExternalSource()) {
+    // This hack ensures that, when using precompiled headers, the lookup
+    // table in the DeclContext has already loaded the constructor declarations
+    // so that we can add a new one. The real fix will go into DeclContext,
+    // when I figure out what that is.
+    CanQualType T
+      = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
+    ClassDecl->lookup(Context.DeclarationNames.getCXXConstructorName(T));
+  }
   
   // C++ [class.copy]p5:
   //   The implicitly-declared copy constructor for a class X will

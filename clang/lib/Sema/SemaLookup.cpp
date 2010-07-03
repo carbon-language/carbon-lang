@@ -466,6 +466,10 @@ static bool CanDeclareSpecialMemberFunction(ASTContext &Context,
 void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
   if (!CanDeclareSpecialMemberFunction(Context, Class))
     return;
+
+  // If the default constructor has not yet been declared, do so now.
+  if (!Class->hasDeclaredDefaultConstructor())
+    DeclareImplicitDefaultConstructor(Class);
   
   // If the copy constructor has not yet been declared, do so now.
   if (!Class->hasDeclaredCopyConstructor())
@@ -509,9 +513,14 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
   switch (Name.getNameKind()) {
   case DeclarationName::CXXConstructorName:
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
-      if (Record->getDefinition() && !Record->hasDeclaredCopyConstructor() &&
-          CanDeclareSpecialMemberFunction(S.Context, Record))
-        S.DeclareImplicitCopyConstructor(const_cast<CXXRecordDecl *>(Record));
+      if (Record->getDefinition() &&
+          CanDeclareSpecialMemberFunction(S.Context, Record)) {
+        if (!Record->hasDeclaredDefaultConstructor())
+          S.DeclareImplicitDefaultConstructor(
+                                           const_cast<CXXRecordDecl *>(Record));
+        if (!Record->hasDeclaredCopyConstructor())
+          S.DeclareImplicitCopyConstructor(const_cast<CXXRecordDecl *>(Record));
+      }
     break;
       
   case DeclarationName::CXXDestructorName:
@@ -2005,9 +2014,12 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 /// \brief Look up the constructors for the given class.
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   // If the copy constructor has not yet been declared, do so now.
-  if (CanDeclareSpecialMemberFunction(Context, Class) &&
-      !Class->hasDeclaredCopyConstructor())
-    DeclareImplicitCopyConstructor(Class);
+  if (CanDeclareSpecialMemberFunction(Context, Class)) {
+    if (!Class->hasDeclaredDefaultConstructor())
+      DeclareImplicitDefaultConstructor(Class);
+    if (!Class->hasDeclaredCopyConstructor())
+      DeclareImplicitCopyConstructor(Class);
+  }
   
   CanQualType T = Context.getCanonicalType(Context.getTypeDeclType(Class));
   DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(T);
