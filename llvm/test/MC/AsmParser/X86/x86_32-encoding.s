@@ -11774,3 +11774,11 @@
 // CHECK: encoding: [0xc4,0xe3,0x79,0x08,0x18,0x07]
           vroundps  $7, (%eax), %xmm3
 
+// CHECK: vphminposuw  %xmm2, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x79,0x41,0xda]
+          vphminposuw  %xmm2, %xmm3
+
+// CHECK: vphminposuw  (%eax), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0x79,0x41,0x10]
+          vphminposuw  (%eax), %xmm2
+

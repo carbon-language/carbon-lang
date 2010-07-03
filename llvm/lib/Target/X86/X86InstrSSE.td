@@ -4097,6 +4097,9 @@ multiclass SS41I_unop_rm_int_v16<bits<8> opc, string OpcodeStr,
                        (bitconvert (memopv8i16 addr:$src))))]>, OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+defm VPHMINPOSUW : SS41I_unop_rm_int_v16 <0x41, "vphminposuw",
+                                         int_x86_sse41_phminposuw>, VEX;
 defm PHMINPOSUW : SS41I_unop_rm_int_v16 <0x41, "phminposuw",
                                          int_x86_sse41_phminposuw>;
 
