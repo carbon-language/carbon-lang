@@ -116,7 +116,7 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
       SmallVector<LiveInterval*, 4> spillIs;
       if (lis->isReMaterializable(li, spillIs, isLoad)) {
         // If all of the definitions of the interval are re-materializable,
-        // it is a preferred candidate for spilling. If non of the defs are
+        // it is a preferred candidate for spilling. If none of the defs are
         // loads, then it's potentially very cheap to re-materialize.
         // FIXME: this gets much more complicated once we support non-trivial
         // re-materialization.
