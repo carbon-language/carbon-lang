@@ -252,11 +252,29 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
     ClangExpressionVariableList expr_local_vars;
 
     bool success;
+    bool canInterpret = false;
     
     if (m_options.use_ir)
-        success = (clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+    {
+        canInterpret = clang_expr.ConvertIRToDWARF (expr_local_vars, dwarf_opcodes);
+        
+        if (canInterpret)
+        {
+            if (log)
+                log->Printf("Code can be interpreted.");
+            success = true;
+        }
+        else
+        {
+            if (log)
+                log->Printf("Code cannot be interpreted and must be run in the target.");
+            success = clang_expr.PrepareIRForTarget (expr_local_vars);
+        }
+    }
     else
+    {
         success = (clang_expr.ConvertExpressionToDWARF (expr_local_vars, dwarf_opcodes) == 0);
+    }
     
     if (!success)
     {

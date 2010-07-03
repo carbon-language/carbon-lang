@@ -328,6 +328,8 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
+		49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49307AAD11DEA4D90081F992 /* IRForTarget.cpp */; };
+		49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 49307AB111DEA4F20081F992 /* IRForTarget.h */; };
 		49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A8A39F11D568A300AD3B68 /* ClangResultSynthesizer.cpp */; };
 		49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A8A3A311D568BF00AD3B68 /* ClangResultSynthesizer.h */; };
 		49D7072711B5AD03001AD875 /* ClangASTSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7072611B5AD03001AD875 /* ClangASTSource.h */; };
@@ -890,6 +892,8 @@
 		26F996A8119B79C300412154 /* ARM_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM_GCC_Registers.h; path = source/Utility/ARM_GCC_Registers.h; sourceTree = "<group>"; };
 		26FE25221146CADE00F4085A /* GDBRemoteCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteCommunication.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.cpp"; sourceTree = "<group>"; };
 		26FE25231146CADE00F4085A /* GDBRemoteCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteCommunication.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.h"; sourceTree = "<group>"; };
+		49307AAD11DEA4D90081F992 /* IRForTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRForTarget.cpp; path = source/Expression/IRForTarget.cpp; sourceTree = "<group>"; };
+		49307AB111DEA4F20081F992 /* IRForTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRForTarget.h; path = include/lldb/Expression/IRForTarget.h; sourceTree = "<group>"; };
 		493C63F01189203300914D5E /* ABISysV_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_x86_64.h; path = "ABI/SysV-x86_64/ABISysV_x86_64.h"; sourceTree = "<group>"; };
 		493C63F11189203300914D5E /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_x86_64.cpp; path = "ABI/SysV-x86_64/ABISysV_x86_64.cpp"; sourceTree = "<group>"; };
 		495BBACB119A0DBE00418BEA /* PathMappingList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathMappingList.cpp; path = source/Target/PathMappingList.cpp; sourceTree = "<group>"; };
@@ -1836,6 +1840,8 @@
 				26BC7ED710F1B86700F91463 /* ClangStmtVisitor.cpp */,
 				26BC7DC310F1B79500F91463 /* DWARFExpression.h */,
 				26BC7ED810F1B86700F91463 /* DWARFExpression.cpp */,
+				49307AB111DEA4F20081F992 /* IRForTarget.h */,
+				49307AAD11DEA4D90081F992 /* IRForTarget.cpp */,
 				49DA743411DE6BB2006AEF7E /* IRToDWARF.h */,
 				49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */,
 				4C98D3E1118FB98F00E575D0 /* RecordingMemoryManager.h */,
@@ -2191,6 +2197,7 @@
 				4C08CDEC11C81F1E001610A8 /* ThreadSpec.h in Headers */,
 				49A8A3A411D568BF00AD3B68 /* ClangResultSynthesizer.h in Headers */,
 				49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */,
+				49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2641,6 +2648,7 @@
 				4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */,
 				49A8A3A011D568A300AD3B68 /* ClangResultSynthesizer.cpp in Sources */,
 				49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */,
+				49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

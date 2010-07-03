@@ -207,9 +207,11 @@ IRToDWARF::runOnModule(Module &M)
     
     Relocator relocator;
     
-    llvm::BasicBlock &currentBB = function->getEntryBlock();
+    if (!runOnBasicBlock(function->getEntryBlock(), relocator))
+        return false;
     
-    runOnBasicBlock(currentBB, relocator);
+    // TEMPORARY: Fail in order to force execution in the target.
+    return false;
     
     return relocator.ResolveRelocations(m_strm);    
 }

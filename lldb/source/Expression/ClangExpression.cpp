@@ -58,6 +58,7 @@
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangResultSynthesizer.h"
 #include "lldb/Expression/ClangStmtVisitor.h"
+#include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
@@ -474,7 +475,7 @@ ClangExpression::ConvertExpressionToDWARF (ClangExpressionVariableList& expr_loc
     return 0;
 }
 
-unsigned
+bool
 ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &expr_local_variable_list,
                                    StreamString &dwarf_opcode_strm)
 {
@@ -493,6 +494,26 @@ ClangExpression::ConvertIRToDWARF (ClangExpressionVariableList &expr_local_varia
     IRToDWARF ir_to_dwarf("IR to DWARF", expr_local_variable_list, m_decl_map, dwarf_opcode_strm);
     
     return ir_to_dwarf.runOnModule(*module);
+}
+
+bool
+ClangExpression::PrepareIRForTarget (ClangExpressionVariableList &expr_local_variable_list)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    llvm::Module *module = m_code_generator_ptr->GetModule();
+    
+    if (!module)
+    {
+        if (log)
+            log->Printf("IR doesn't contain a module");
+        
+        return 1;
+    }
+    
+    IRForTarget ir_for_target("IR for target", m_decl_map);
+    
+    return ir_for_target.runOnModule(*module);
 }
 
 bool
