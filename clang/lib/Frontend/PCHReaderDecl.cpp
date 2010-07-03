@@ -564,13 +564,9 @@ void PCHDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   D->setNextNamespace(
                     cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
 
-  // Only read one reference--the original or anonymous namespace.
   bool IsOriginal = Record[Idx++];
-  if (IsOriginal)
-    D->setAnonymousNamespace(
-                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
-  else
-    D->setOriginalNamespace(
+  D->OrigOrAnonNamespace.setInt(IsOriginal);
+  D->OrigOrAnonNamespace.setPointer(
                     cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
 }
 

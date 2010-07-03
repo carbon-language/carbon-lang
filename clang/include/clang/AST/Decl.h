@@ -344,6 +344,9 @@ public:
   static NamespaceDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<NamespaceDecl *>(const_cast<DeclContext*>(DC));
   }
+  
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is
