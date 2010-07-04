@@ -15,7 +15,7 @@ endif
 ifeq (,$(SDKROOT))
 	INSTALL_TARGET = install-MacOSX
 else
-	INSTALL_TARGET = install-iPhoneOS
+	INSTALL_TARGET = install-iOS
 endif
 
 
@@ -63,13 +63,13 @@ $(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(RC_ARCHS), \
 
 
 # Copy results to DSTROOT.
-install-iPhoneOS: $(SYMROOT)/libcompiler_rt.a $(SYMROOT)/libcompiler_rt-static.a 
-	mkdir -p $(DSTROOT)/$(SDKROOT)/usr/local/lib/libgcc
+install-iOS: $(SYMROOT)/libcompiler_rt.a $(SYMROOT)/libcompiler_rt-static.a 
+	mkdir -p $(DSTROOT)/usr/local/lib/libgcc
 	cp $(SYMROOT)/libcompiler_rt.a \
-				    $(DSTROOT)/$(SDKROOT)/usr/local/lib/libgcc/libcompiler_rt.a
-	mkdir -p $(DSTROOT)/$(SDKROOT)/usr/local/
+				    $(DSTROOT)/usr/local/lib/libgcc/libcompiler_rt.a
+	mkdir -p $(DSTROOT)/usr/local/
 	cp $(SYMROOT)/libcompiler_rt-static.a  \
-				    $(DSTROOT)/$(SDKROOT)/usr/local/lib/libcompiler_rt-static.a
+				    $(DSTROOT)/usr/local/lib/libcompiler_rt-static.a
 
 
 # Rule to make fat archive
