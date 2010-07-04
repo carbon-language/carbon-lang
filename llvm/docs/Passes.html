@@ -128,7 +128,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#globaldce">-globaldce</a></td><td>Dead Global Elimination</td></tr>
 <tr><td><a href="#globalopt">-globalopt</a></td><td>Global Variable Optimizer</td></tr>
 <tr><td><a href="#gvn">-gvn</a></td><td>Global Value Numbering</td></tr>
-<tr><td><a href="#indmemrem">-indmemrem</a></td><td>Indirect Malloc and Free Removal</td></tr>
 <tr><td><a href="#indvars">-indvars</a></td><td>Canonicalize Induction Variables</td></tr>
 <tr><td><a href="#inline">-inline</a></td><td>Function Integration/Inlining</td></tr>
 <tr><td><a href="#insert-block-profiling">-insert-block-profiling</a></td><td>Insert instrumentation for block profiling</td></tr>
@@ -152,7 +151,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll loops</td></tr>
 <tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch loops</td></tr>
 <tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize natural loops</td></tr>
-<tr><td><a href="#lowerallocs">-lowerallocs</a></td><td>Lower allocations from instructions to calls</td></tr>
 <tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower invoke and unwind, for unwindless code generators</td></tr>
 <tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
 <tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
@@ -831,23 +829,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="indmemrem">Indirect Malloc and Free Removal</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass finds places where memory allocation functions may escape into
-  indirect land.  Some transforms are much easier (aka possible) only if free 
-  or malloc are not called indirectly.
-  </p>
-  
-  <p>
-  Thus find places where the address of memory functions are taken and construct
-  bounce functions with direct calls of those functions.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="indvars">Canonicalize Induction Variables</a>
 </div>
 <div class="doc_text">
@@ -1324,22 +1305,6 @@ if (X &lt; 3) {</pre>
   <p>
   This pass obviously modifies the CFG, but updates loop information and
   dominator information.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="lowerallocs">Lower allocations from instructions to calls</a>
-</div>
-<div class="doc_text">
-  <p>
-  Turn <tt>malloc</tt> and <tt>free</tt> instructions into <tt>@malloc</tt> and
-  <tt>@free</tt> calls.
-  </p>
-
-  <p>
-  This is a target-dependent tranformation because it depends on the size of
-  data types and alignment constraints.
   </p>
 </div>
 
