@@ -1305,6 +1305,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
         OS << "!\"" << MDS->getString() << '\"';
       else
         MO.print(OS, TM);
+    } else if (TM && (isInsertSubreg() || isRegSequence()) && MO.isImm()) {
+      OS << TM->getRegisterInfo()->getSubRegIndexName(MO.getImm());
     } else
       MO.print(OS, TM);
   }
