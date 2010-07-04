@@ -622,6 +622,10 @@ public:
   /// specified typename decl.
   QualType getTypedefType(const TypedefDecl *Decl, QualType Canon = QualType());
 
+  QualType getRecordType(const RecordDecl *Decl);
+
+  QualType getEnumType(const EnumDecl *Decl);
+
   QualType getInjectedClassNameType(CXXRecordDecl *Decl, QualType TST);
 
   QualType getSubstTemplateTypeParmType(const TemplateTypeParmType *Replaced,

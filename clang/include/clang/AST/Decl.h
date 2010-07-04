@@ -1993,6 +1993,13 @@ public:
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
   }
 
+  const EnumDecl *getPreviousDeclaration() const {
+    return cast_or_null<EnumDecl>(TagDecl::getPreviousDeclaration());
+  }
+  EnumDecl *getPreviousDeclaration() {
+    return cast_or_null<EnumDecl>(TagDecl::getPreviousDeclaration());
+  }
+
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
                           SourceLocation TKL, EnumDecl *PrevDecl);
@@ -2115,6 +2122,13 @@ public:
                             SourceLocation TKL = SourceLocation(),
                             RecordDecl* PrevDecl = 0);
   static RecordDecl *Create(ASTContext &C, EmptyShell Empty);
+
+  const RecordDecl *getPreviousDeclaration() const {
+    return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
+  }
+  RecordDecl *getPreviousDeclaration() {
+    return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
+  }
 
   virtual void Destroy(ASTContext& C);
 

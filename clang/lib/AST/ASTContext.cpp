@@ -1802,11 +1802,11 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) {
     assert(!Record->getPreviousDeclaration() &&
            "struct/union has previous declaration");
     assert(!NeedsInjectedClassNameType(Record));
-    Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Record);
+    return getRecordType(Record);
   } else if (const EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
     assert(!Enum->getPreviousDeclaration() &&
            "enum has previous declaration");
-    Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Enum);
+    return getEnumType(Enum);
   } else if (const UnresolvedUsingTypenameDecl *Using =
                dyn_cast<UnresolvedUsingTypenameDecl>(Decl)) {
     Decl->TypeForDecl = new (*this, TypeAlignment) UnresolvedUsingType(Using);
@@ -1827,6 +1827,30 @@ ASTContext::getTypedefType(const TypedefDecl *Decl, QualType Canonical) {
     Canonical = getCanonicalType(Decl->getUnderlyingType());
   Decl->TypeForDecl = new(*this, TypeAlignment)
     TypedefType(Type::Typedef, Decl, Canonical);
+  Types.push_back(Decl->TypeForDecl);
+  return QualType(Decl->TypeForDecl, 0);
+}
+
+QualType ASTContext::getRecordType(const RecordDecl *Decl) {
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+
+  if (const RecordDecl *PrevDecl = Decl->getPreviousDeclaration())
+    if (PrevDecl->TypeForDecl)
+      return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
+
+  Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Decl);
+  Types.push_back(Decl->TypeForDecl);
+  return QualType(Decl->TypeForDecl, 0);
+}
+
+QualType ASTContext::getEnumType(const EnumDecl *Decl) {
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+
+  if (const EnumDecl *PrevDecl = Decl->getPreviousDeclaration())
+    if (PrevDecl->TypeForDecl)
+      return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
+
+  Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Decl);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }

@@ -2149,14 +2149,14 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       Error("incorrect encoding of record type");
       return QualType();
     }
-    return Context->getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
+    return Context->getRecordType(cast<RecordDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ENUM:
     if (Record.size() != 1) {
       Error("incorrect encoding of enum type");
       return QualType();
     }
-    return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
+    return Context->getEnumType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ELABORATED: {
     unsigned Idx = 0;

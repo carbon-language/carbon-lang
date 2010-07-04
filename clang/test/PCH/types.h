@@ -42,3 +42,8 @@ typedef typeof(17) typeof_17;
 
 // TYPE_TYPEOF
 typedef typeof(int_ptr *) int_ptr_ptr2;
+
+struct S2;
+struct S2 {};
+enum E;
+enum E { myenum };

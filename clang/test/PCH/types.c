@@ -3,7 +3,7 @@
 
 // Test with pch.
 // RUN: %clang_cc1 -emit-pch -fblocks -o %t %S/types.h
-// RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s -ast-print
 
 typedef int INT;
 INT int_value;
