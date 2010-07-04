@@ -15,13 +15,6 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
-// 32x32 --> 64 bit multiply
-static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
-    const uint64_t product = (uint64_t)a*b;
-    *hi = product >> 32;
-    *lo = product;
-}
-
 fp_t __mulsf3(fp_t a, fp_t b) {
     
     const unsigned int aExponent = toRep(a) >> significandBits & maxExponent;

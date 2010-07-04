@@ -37,6 +37,13 @@ static inline int rep_clz(rep_t a) {
     return __builtin_clz(a);
 }
 
+// 32x32 --> 64 bit multiply
+static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
+    const uint64_t product = (uint64_t)a*b;
+    *hi = product >> 32;
+    *lo = product;
+}
+
 #elif defined DOUBLE_PRECISION
 
 typedef uint64_t rep_t;
@@ -54,6 +61,26 @@ static inline int rep_clz(rep_t a) {
     else 
         return __builtin_clz(a & REP_C(0xffffffff));
 #endif
+}
+
+#define loWord(a) (a & 0xffffffffU)
+#define hiWord(a) (a >> 32)
+
+// 64x64 -> 128 wide multiply for platforms that don't have such an operation;
+// many 64-bit platforms have this operation, but they tend to have hardware
+// floating-point, so we don't bother with a special case for them here.
+static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
+    // Each of the component 32x32 -> 64 products
+    const uint64_t plolo = loWord(a) * loWord(b);
+    const uint64_t plohi = loWord(a) * hiWord(b);
+    const uint64_t philo = hiWord(a) * loWord(b);
+    const uint64_t phihi = hiWord(a) * hiWord(b);
+    // Sum terms that contribute to lo in a way that allows us to get the carry
+    const uint64_t r0 = loWord(plolo);
+    const uint64_t r1 = hiWord(plolo) + loWord(plohi) + loWord(philo);
+    *lo = r0 + (r1 << 32);
+    // Sum terms contributing to hi with the carry from lo
+    *hi = hiWord(plohi) + hiWord(philo) + hiWord(r1) + phihi;
 }
 
 #else

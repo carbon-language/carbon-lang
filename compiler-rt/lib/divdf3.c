@@ -1,4 +1,4 @@
-//===-- lib/divsf3.c - Single-precision division ------------------*- C -*-===//
+//===-- lib/divdf3.c - Double-precision division ------------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements single-precision soft-float division
+// This file implements double-precision soft-float division
 // with the IEEE-754 default rounding (to nearest, ties to even).
 //
 // For simplicity, this implementation currently flushes denormals to zero.
@@ -16,10 +16,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define SINGLE_PRECISION
+#define DOUBLE_PRECISION
 #include "fp_lib.h"
 
-fp_t __divsf3(fp_t a, fp_t b) {
+fp_t __divdf3(fp_t a, fp_t b) {
     
     const unsigned int aExponent = toRep(a) >> significandBits & maxExponent;
     const unsigned int bExponent = toRep(b) >> significandBits & maxExponent;
@@ -77,8 +77,8 @@ fp_t __divsf3(fp_t a, fp_t b) {
     // [1, 2.0) and get a Q32 approximate reciprocal using a small minimax
     // polynomial approximation: reciprocal = 3/4 + 1/sqrt(2) - b/2.  This
     // is accurate to about 3.5 binary digits.
-    uint32_t q31b = bSignificand << 8;
-    uint32_t reciprocal = UINT32_C(0x7504f333) - q31b;
+    const uint32_t q31b = bSignificand >> 21;
+    uint32_t recip32 = UINT32_C(0x7504f333) - q31b;
     
     // Now refine the reciprocal estimate using a Newton-Raphson iteration:
     //
@@ -87,35 +87,50 @@ fp_t __divsf3(fp_t a, fp_t b) {
     // This doubles the number of correct binary digits in the approximation
     // with each iteration, so after three iterations, we have about 28 binary
     // digits of accuracy.
-    uint32_t correction;
-    correction = -((uint64_t)reciprocal * q31b >> 32);
-    reciprocal = (uint64_t)reciprocal * correction >> 31;
-    correction = -((uint64_t)reciprocal * q31b >> 32);
-    reciprocal = (uint64_t)reciprocal * correction >> 31;
-    correction = -((uint64_t)reciprocal * q31b >> 32);
-    reciprocal = (uint64_t)reciprocal * correction >> 31;
+    uint32_t correction32;
+    correction32 = -((uint64_t)recip32 * q31b >> 32);
+    recip32 = (uint64_t)recip32 * correction32 >> 31;
+    correction32 = -((uint64_t)recip32 * q31b >> 32);
+    recip32 = (uint64_t)recip32 * correction32 >> 31;
+    correction32 = -((uint64_t)recip32 * q31b >> 32);
+    recip32 = (uint64_t)recip32 * correction32 >> 31;
     
-    // Exhaustive testing shows that the error in reciprocal after three steps
-    // is in the interval [-0x1.f58108p-31, 0x1.d0e48cp-29], in line with our
-    // expectations.  We bump the reciprocal by a tiny value to force the error
-    // to be strictly positive (in the range [0x1.4fdfp-37,0x1.287246p-29], to
-    // be specific).  This also causes 1/1 to give a sensible approximation
-    // instead of zero (due to overflow).
+    // recip32 might have overflowed to exactly zero in the preceeding
+    // computation if the high word of b is exactly 1.0.  This would sabotage
+    // the full-width final stage of the computation that follows, so we adjust
+    // recip32 downward by one bit.
+    recip32--;
+    
+    // We need to perform one more iteration to get us to 56 binary digits;
+    // The last iteration needs to happen with extra precision.
+    const uint32_t q63blo = bSignificand << 11;
+    uint64_t correction, reciprocal;
+    correction = -((uint64_t)recip32*q31b + ((uint64_t)recip32*q63blo >> 32));
+    uint32_t cHi = correction >> 32;
+    uint32_t cLo = correction;
+    reciprocal = (uint64_t)recip32*cHi + ((uint64_t)recip32*cLo >> 32);
+    
+    // We already adjusted the 32-bit estimate, now we need to adjust the final
+    // 64-bit reciprocal estimate downward to ensure that it is strictly smaller
+    // than the infinitely precise exact reciprocal.  Because the computation
+    // of the Newton-Raphson step is truncating at every step, this adjustment
+    // is small; most of the work is already done.
     reciprocal -= 2;
     
-    // The numerical reciprocal is accurate to within 2^-28, lies in the
-    // interval [0x1.000000eep-1, 0x1.fffffffcp-1], and is strictly smaller
-    // than the true reciprocal of b.  Multiplying a by this reciprocal thus
-    // gives a numerical q = a/b in Q24 with the following properties:
+    // The numerical reciprocal is accurate to within 2^-56, lies in the
+    // interval [0.5, 1.0), and is strictly smaller than the true reciprocal
+    // of b.  Multiplying a by this reciprocal thus gives a numerical q = a/b
+    // in Q53 with the following properties:
     //
     //    1. q < a/b
-    //    2. q is in the interval [0x1.000000eep-1, 0x1.fffffffcp0)
-    //    3. the error in q is at most 2^-24 + 2^-27 -- the 2^24 term comes
-    //       from the fact that we truncate the product, and the 2^27 term
-    //       is the error in the reciprocal of b scaled by the maximum
-    //       possible value of a.  As a consequence of this error bound,
-    //       either q or nextafter(q) is the correctly rounded 
-    rep_t quotient = (uint64_t)reciprocal*(aSignificand << 1) >> 32;
+    //    2. q is in the interval [0.5, 2.0)
+    //    3. the error in q is bounded away from 2^-53 (actually, we have a
+    //       couple of bits to spare, but this is all we need).
+    
+    // We need a 64 x 64 multiply high to compute q, which isn't a basic
+    // operation in C, so we need to be a little bit fussy.
+    rep_t quotient, quotientLo;
+    wideMultiply(aSignificand << 2, reciprocal, &quotient, &quotientLo);
     
     // Two cases: quotient is in [0.5, 1.0) or quotient is in [1.0, 2.0).
     // In either case, we are going to compute a residual of the form
@@ -132,13 +147,13 @@ fp_t __divsf3(fp_t a, fp_t b) {
     // range and adjust the exponent accordingly.
     rep_t residual;
     if (quotient < (implicitBit << 1)) {
-        residual = (aSignificand << 24) - quotient * bSignificand;
+        residual = (aSignificand << 53) - quotient * bSignificand;
         quotientExponent--;
     } else {
         quotient >>= 1;
-        residual = (aSignificand << 23) - quotient * bSignificand;
+        residual = (aSignificand << 52) - quotient * bSignificand;
     }
-
+    
     const int writtenExponent = quotientExponent + exponentBias;
     
     if (writtenExponent >= maxExponent) {
@@ -161,6 +176,7 @@ fp_t __divsf3(fp_t a, fp_t b) {
         // Round
         absResult += round;
         // Insert the sign and return
-        return fromRep(absResult | quotientSign);
+        const double result = fromRep(absResult | quotientSign);
+        return result;
     }
 }
