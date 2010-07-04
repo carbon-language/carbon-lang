@@ -492,6 +492,16 @@ void PCHDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->getInit() ? 1 : 0);
   if (D->getInit())
     Writer.AddStmt(D->getInit());
+
+  MemberSpecializationInfo *SpecInfo
+    = D->isStaticDataMember() ? D->getMemberSpecializationInfo() : 0;
+  Record.push_back(SpecInfo != 0);
+  if (SpecInfo) {
+    Writer.AddDeclRef(SpecInfo->getInstantiatedFrom(), Record);
+    Record.push_back(SpecInfo->getTemplateSpecializationKind());
+    Writer.AddSourceLocation(SpecInfo->getPointOfInstantiation(), Record);
+  }
+
   Code = pch::DECL_VAR;
 }
 
@@ -530,6 +540,8 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   assert(!D->isDeclaredInCondition() && "PARM_VAR_DECL can't be in condition");
   assert(!D->isExceptionVariable() && "PARM_VAR_DECL can't be exception var");
   assert(D->getPreviousDeclaration() == 0 && "PARM_VAR_DECL can't be redecl");
+  assert(!D->isStaticDataMember() &&
+         "PARM_VAR_DECL can't be static data member");
 }
 
 void PCHDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
@@ -974,6 +986,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isNRVOVariable
   Abv->Add(BitCodeAbbrevOp(0));                       // PrevDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
+  Abv->Add(BitCodeAbbrevOp(0));                   // HasMemberSpecializationInfo
   // ParmVarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // ObjCDeclQualifier
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInheritedDefaultArg

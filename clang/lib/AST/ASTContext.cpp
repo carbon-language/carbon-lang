@@ -392,13 +392,14 @@ ASTContext::getInstantiatedFromStaticDataMember(const VarDecl *Var) {
 
 void
 ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
-                                                TemplateSpecializationKind TSK) {
+                                                TemplateSpecializationKind TSK,
+                                          SourceLocation PointOfInstantiation) {
   assert(Inst->isStaticDataMember() && "Not a static data member");
   assert(Tmpl->isStaticDataMember() && "Not a static data member");
   assert(!InstantiatedFromStaticDataMember[Inst] &&
          "Already noted what static data member was instantiated from");
   InstantiatedFromStaticDataMember[Inst] 
-    = new (*this) MemberSpecializationInfo(Tmpl, TSK);
+    = new (*this) MemberSpecializationInfo(Tmpl, TSK, PointOfInstantiation);
 }
 
 NamedDecl *

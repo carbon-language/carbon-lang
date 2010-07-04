@@ -331,7 +331,8 @@ public:
   /// \brief Note that the static data member \p Inst is an instantiation of
   /// the static data member template \p Tmpl of a class template.
   void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
-                                           TemplateSpecializationKind TSK);
+                                           TemplateSpecializationKind TSK,
+                        SourceLocation PointOfInstantiation = SourceLocation());
 
   /// \brief If the given using decl is an instantiation of a
   /// (possibly unresolved) using decl from a template instantiation,

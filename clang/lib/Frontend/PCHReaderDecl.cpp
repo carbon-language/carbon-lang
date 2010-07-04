@@ -522,6 +522,13 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr());
+
+  if (Record[Idx++]) { // HasMemberSpecializationInfo.
+    VarDecl *Tmpl = cast<VarDecl>(Reader.GetDecl(Record[Idx++]));
+    TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
+    SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
+    Reader.getContext()->setInstantiatedFromStaticDataMember(VD, Tmpl, TSK,POI);
+  }
 }
 
 void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {

@@ -379,8 +379,9 @@ class MemberSpecializationInfo {
   
 public:
   explicit 
-  MemberSpecializationInfo(NamedDecl *IF, TemplateSpecializationKind TSK)
-    : MemberAndTSK(IF, TSK - 1), PointOfInstantiation() {
+  MemberSpecializationInfo(NamedDecl *IF, TemplateSpecializationKind TSK,
+                           SourceLocation POI = SourceLocation())
+    : MemberAndTSK(IF, TSK - 1), PointOfInstantiation(POI) {
     assert(TSK != TSK_Undeclared && 
            "Cannot encode undeclared template specializations for members");
   }
