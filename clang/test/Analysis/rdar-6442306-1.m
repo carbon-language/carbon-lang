@@ -10,7 +10,7 @@ struct QuxSize {};
 typedef struct QuxSize QuxSize;
 typedef struct {
   Foo_record_t Foo;
-  QuxSize size;
+  QuxSize size[0];
 } __Request__SetPortalSize_t;
 
 double __Foo_READSWAP__double(double*);

@@ -57,15 +57,24 @@ bool BuiltinFunctionChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE){
   case Builtin::BI__builtin_alloca: {
     // FIXME: Refactor into StoreManager itself?
     MemRegionManager& RM = C.getStoreManager().getRegionManager();
-    const MemRegion* R =
+    const AllocaRegion* R =
       RM.getAllocaRegion(CE, C.getNodeBuilder().getCurrentBlockCount(),
                          C.getPredecessor()->getLocationContext());
 
     // Set the extent of the region in bytes. This enables us to use the
     // SVal of the argument directly. If we save the extent in bits, we
     // cannot represent values like symbol*8.
-    SVal Extent = state->getSVal(*(CE->arg_begin()));
-    state = C.getStoreManager().setExtent(state, R, Extent);
+    DefinedOrUnknownSVal Size =
+      cast<DefinedOrUnknownSVal>(state->getSVal(*(CE->arg_begin())));
+
+    ValueManager& ValMgr = C.getValueManager();
+    DefinedOrUnknownSVal Extent = R->getExtent(ValMgr);
+
+    SValuator& SVator = ValMgr.getSValuator();
+    DefinedOrUnknownSVal ExtentMatchesSizeArg =
+      SVator.EvalEQ(state, Extent, Size);
+    state = state->Assume(ExtentMatchesSizeArg, true);
+
     C.GenerateNode(state->BindExpr(CE, loc::MemRegionVal(R)));
     return true;
   }

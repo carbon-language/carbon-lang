@@ -49,3 +49,8 @@ void f6() {
   int *b = (int*)a;
   b[1] = 3; // expected-warning{{out-of-bound}}
 }
+
+void f7() {
+  struct three_words a;
+  a.c[3] = 1; // expected-warning{{out-of-bound}}
+}

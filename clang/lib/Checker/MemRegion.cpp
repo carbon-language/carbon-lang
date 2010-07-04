@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Checker/PathSensitive/MemRegion.h"
+#include "clang/Checker/PathSensitive/ValueManager.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"
@@ -168,6 +169,52 @@ MemRegionManager* SubRegion::getMemRegionManager() const {
 const StackFrameContext *VarRegion::getStackFrame() const {
   const StackSpaceRegion *SSR = dyn_cast<StackSpaceRegion>(getMemorySpace());
   return SSR ? SSR->getStackFrame() : NULL;
+}
+
+//===----------------------------------------------------------------------===//
+// Region extents.
+//===----------------------------------------------------------------------===//
+
+DefinedOrUnknownSVal DeclRegion::getExtent(ValueManager& ValMgr) const {
+  ASTContext& Ctx = ValMgr.getContext();
+  QualType T = getDesugaredValueType(Ctx);
+
+  // FIXME: Handle variable-length arrays.
+  if (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
+    return UnknownVal();
+
+  CharUnits Size = Ctx.getTypeSizeInChars(T);
+  QualType SizeTy = Ctx.getSizeType();
+  return ValMgr.makeIntVal(Size.getQuantity(), SizeTy);
+}
+
+DefinedOrUnknownSVal FieldRegion::getExtent(ValueManager& ValMgr) const {
+  DefinedOrUnknownSVal Extent = DeclRegion::getExtent(ValMgr);
+
+  // A zero-length array at the end of a struct often stands for dynamically-
+  // allocated extra memory.
+  if (Extent.isZeroConstant()) {
+    ASTContext& Ctx = ValMgr.getContext();
+    QualType T = getDesugaredValueType(Ctx);
+
+    if (isa<ConstantArrayType>(T))
+      return UnknownVal();
+  }
+
+  return Extent;
+}
+
+DefinedOrUnknownSVal AllocaRegion::getExtent(ValueManager& ValMgr) const {
+  return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+}
+
+DefinedOrUnknownSVal SymbolicRegion::getExtent(ValueManager& ValMgr) const {
+  return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+}
+
+DefinedOrUnknownSVal StringRegion::getExtent(ValueManager& ValMgr) const {
+  QualType SizeTy = ValMgr.getContext().getSizeType();
+  return ValMgr.makeIntVal(getStringLiteral()->getByteLength()+1, SizeTy);
 }
 
 //===----------------------------------------------------------------------===//

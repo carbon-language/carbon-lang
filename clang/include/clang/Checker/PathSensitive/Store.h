@@ -114,7 +114,8 @@ public:
 
   virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
 
-  // FIXME: Make out-of-line.
+  // FIXME: This should soon be eliminated altogether; clients should deal with
+  // region extents directly.
   virtual DefinedOrUnknownSVal getSizeInElements(const GRState *state, 
                                                  const MemRegion *region,
                                                  QualType EleTy) {
@@ -170,17 +171,6 @@ public:
                                   const Expr *E, unsigned Count,
                                   InvalidatedSymbols *IS,
                                   bool invalidateGlobals) = 0;
-
-  // FIXME: Make out-of-line.
-  virtual const GRState *setExtent(const GRState *state,
-                                   const MemRegion *region, SVal extent) {
-    return state;
-  }
-
-  virtual llvm::Optional<SVal> getExtent(const GRState *state, 
-                                         const MemRegion *R) {
-    return llvm::Optional<SVal>();
-  }
 
   /// EnterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.

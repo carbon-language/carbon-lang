@@ -172,15 +172,23 @@ const GRState *MallocChecker::MallocMemAux(CheckerContext &C,
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
 
+  // Set the return value.
   SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
+  state = state->BindExpr(CE, RetVal);
 
-  state = C.getEngine().getStoreManager().setExtent(state, RetVal.getAsRegion(),
-                                                    Size);
-
+  // Fill the region with the initialization value.
   state = state->bindDefault(RetVal, Init);
 
-  state = state->BindExpr(CE, RetVal);
-  
+  // Set the region's extent equal to the Size parameter.
+  const SymbolicRegion *R = cast<SymbolicRegion>(RetVal.getAsRegion());
+  DefinedOrUnknownSVal Extent = R->getExtent(ValMgr);
+  DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
+
+  SValuator &SVator = ValMgr.getSValuator();
+  DefinedOrUnknownSVal ExtentMatchesSize =
+    SVator.EvalEQ(state, Extent, DefinedSize);
+  state = state->Assume(ExtentMatchesSize, true);
+
   SymbolRef Sym = RetVal.getAsLocSymbol();
   assert(Sym);
   // Set the symbol's state to Allocated.

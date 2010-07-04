@@ -118,22 +118,6 @@ public:
 }
 
 //===----------------------------------------------------------------------===//
-// Region "Extents"
-//===----------------------------------------------------------------------===//
-//
-//  MemRegions represent chunks of memory with a size (their "extent").  This
-//  GDM entry tracks the extents for regions.  Extents are in bytes.
-//
-namespace { class RegionExtents {}; }
-static int RegionExtentsIndex = 0;
-namespace clang {
-  template<> struct GRStateTrait<RegionExtents>
-    : public GRStatePartialTrait<llvm::ImmutableMap<const MemRegion*, SVal> > {
-    static void* GDMIndex() { return &RegionExtentsIndex; }
-  };
-}
-
-//===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
@@ -380,18 +364,7 @@ public: // Part of public interface to class.
   // Region "extents".
   //===------------------------------------------------------------------===//
 
-  const GRState *setExtent(const GRState *state,const MemRegion* R,SVal Extent){
-    return state->set<RegionExtents>(R, Extent);
-  }
-
-  Optional<SVal> getExtent(const GRState *state, const MemRegion *R) {
-    const SVal *V = state->get<RegionExtents>(R);
-    if (V)
-      return *V;
-    else
-      return Optional<SVal>();
-  }
-
+  // FIXME: This method will soon be eliminated; see the note in Store.h.
   DefinedOrUnknownSVal getSizeInElements(const GRState *state,
                                          const MemRegion* R, QualType EleTy);
 
@@ -772,88 +745,19 @@ Store RegionStoreManager::InvalidateRegions(Store store,
 DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
                                                            const MemRegion *R,
                                                            QualType EleTy) {
+  SVal Size = cast<SubRegion>(R)->getExtent(ValMgr);
+  SValuator &SVator = ValMgr.getSValuator();
+  const llvm::APSInt *SizeInt = SVator.getKnownValue(state, Size);
+  if (!SizeInt)
+    return UnknownVal();
 
-  switch (R->getKind()) {
-    case MemRegion::CXXThisRegionKind:
-      assert(0 && "Cannot get size of 'this' region");
-    case MemRegion::GenericMemSpaceRegionKind:
-    case MemRegion::StackLocalsSpaceRegionKind:
-    case MemRegion::StackArgumentsSpaceRegionKind:
-    case MemRegion::HeapSpaceRegionKind:
-    case MemRegion::NonStaticGlobalSpaceRegionKind:
-    case MemRegion::StaticGlobalSpaceRegionKind:
-    case MemRegion::UnknownSpaceRegionKind:
-      assert(0 && "Cannot index into a MemSpace");
-      return UnknownVal();
+  CharUnits RegionSize = CharUnits::fromQuantity(SizeInt->getSExtValue());
+  CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
 
-    case MemRegion::FunctionTextRegionKind:
-    case MemRegion::BlockTextRegionKind:
-    case MemRegion::BlockDataRegionKind:
-      // Technically this can happen if people do funny things with casts.
-      return UnknownVal();
-
-      // Not yet handled.
-    case MemRegion::AllocaRegionKind:
-    case MemRegion::CompoundLiteralRegionKind:
-    case MemRegion::ElementRegionKind:
-    case MemRegion::FieldRegionKind:
-    case MemRegion::ObjCIvarRegionKind:
-    case MemRegion::CXXObjectRegionKind:
-      return UnknownVal();
-
-    case MemRegion::SymbolicRegionKind: {
-      const SVal *Size = state->get<RegionExtents>(R);
-      if (!Size)
-        return UnknownVal();
-      const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(Size);
-      if (!CI)
-        return UnknownVal();
-
-      CharUnits RegionSize =
-        CharUnits::fromQuantity(CI->getValue().getSExtValue());
-      CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
-      assert(RegionSize % EleSize == 0);
-
-      return ValMgr.makeIntVal(RegionSize / EleSize, false);
-    }
-
-    case MemRegion::StringRegionKind: {
-      const StringLiteral* Str = cast<StringRegion>(R)->getStringLiteral();
-      // We intentionally made the size value signed because it participates in
-      // operations with signed indices.
-      return ValMgr.makeIntVal(Str->getByteLength()+1, false);
-    }
-
-    case MemRegion::VarRegionKind: {
-      const VarRegion* VR = cast<VarRegion>(R);
-      ASTContext& Ctx = getContext();
-      // Get the type of the variable.
-      QualType T = VR->getDesugaredValueType(Ctx);
-
-      // FIXME: Handle variable-length arrays.
-      if (isa<VariableArrayType>(T))
-        return UnknownVal();
-
-      CharUnits EleSize = Ctx.getTypeSizeInChars(EleTy);
-
-      if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T)) {
-        // return the size as signed integer.
-        CharUnits RealEleSize = Ctx.getTypeSizeInChars(CAT->getElementType());
-        CharUnits::QuantityType EleRatio = RealEleSize / EleSize;
-        int64_t Length = CAT->getSize().getSExtValue();
-        return ValMgr.makeIntVal(Length * EleRatio, false);
-      }
-
-      // Clients can reinterpret ordinary variables as arrays, possibly of
-      // another type. The width is rounded down to ensure that an access is
-      // entirely within bounds.
-      CharUnits VarSize = Ctx.getTypeSizeInChars(T);
-      return ValMgr.makeIntVal(VarSize / EleSize, false);
-    }
-  }
-
-  assert(0 && "Unreachable");
-  return UnknownVal();
+  // If a variable is reinterpreted as a type that doesn't fit into a larger
+  // type evenly, round it down.
+  // This is a signed value, since it's used in arithmetic with signed indices.
+  return ValMgr.makeIntVal(RegionSize / EleSize, false);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1954,13 +1858,6 @@ const GRState *RegionStoreManager::RemoveDeadBindings(GRState &state,
   }
   state.setStore(B.getRoot());
   const GRState *s = StateMgr.getPersistentState(state);
-  // Remove the extents of dead symbolic regions.
-  llvm::ImmutableMap<const MemRegion*,SVal> Extents = s->get<RegionExtents>();
-  for (llvm::ImmutableMap<const MemRegion *, SVal>::iterator I=Extents.begin(),
-         E = Extents.end(); I != E; ++I) {
-    if (!W.isVisited(I->first))
-      s = s->remove<RegionExtents>(I->first);
-  }
   return s;
 }
 

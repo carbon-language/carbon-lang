@@ -34,6 +34,7 @@ class MemRegionManager;
 class MemSpaceRegion;
 class LocationContext;
 class StackFrameContext;
+class ValueManager;
 class VarRegion;
 class CodeTextRegion;
 
@@ -266,6 +267,11 @@ public:
     return superRegion;
   }
 
+  /// getExtent - Returns the size of the region in bytes.
+  virtual DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const {
+    return UnknownVal();
+  }
+
   MemRegionManager* getMemRegionManager() const;
 
   bool isSubRegionOf(const MemRegion* R) const;
@@ -321,6 +327,8 @@ public:
   const Expr* getExpr() const { return Ex; }
 
   bool isBoundable() const { return true; }
+
+  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -536,6 +544,8 @@ public:
 
   bool isBoundable() const { return true; }
 
+  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
@@ -569,6 +579,8 @@ public:
   QualType getValueType(ASTContext& C) const {
     return Str->getType();
   }
+
+  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
   bool isBoundable() const { return false; }
 
@@ -628,6 +640,8 @@ protected:
 public:
   const Decl* getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
+
+  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
@@ -712,6 +726,8 @@ public:
     // FIXME: We can cache this if needed.
     return C.getCanonicalType(getDecl()->getType());
   }
+
+  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl* FD,
                             const MemRegion* superRegion) {

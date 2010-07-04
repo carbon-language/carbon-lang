@@ -44,7 +44,8 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 
   QualType ToPointeeTy = ToPTy->getPointeeType();
 
-  const MemRegion *R = C.getState()->getSVal(E).getAsRegion();
+  const GRState *state = C.getState();
+  const MemRegion *R = state->getSVal(E).getAsRegion();
   if (R == 0)
     return;
 
@@ -52,19 +53,18 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
   if (SR == 0)
     return;
 
-  llvm::Optional<SVal> V = 
-                    C.getEngine().getStoreManager().getExtent(C.getState(), SR);
-  if (!V)
+  ValueManager &ValMgr = C.getValueManager();
+  SVal Extent = SR->getExtent(ValMgr);
+
+  SValuator &SVator = ValMgr.getSValuator();
+  const llvm::APSInt *ExtentInt = SVator.getKnownValue(state, Extent);
+  if (!ExtentInt)
     return;
 
-  const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(V);
-  if (!CI)
-    return;
-
-  CharUnits RegionSize = CharUnits::fromQuantity(CI->getValue().getSExtValue());
+  CharUnits RegionSize = CharUnits::fromQuantity(ExtentInt->getSExtValue());
   CharUnits TypeSize = C.getASTContext().getTypeSizeInChars(ToPointeeTy);
   
-  // void, and a few other un-sizeable types
+  // Ignore void, and a few other un-sizeable types.
   if (TypeSize.isZero())
     return;
   

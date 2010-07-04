@@ -34,6 +34,10 @@ public:
                            Loc lhs, Loc rhs, QualType resultTy);
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
+
+  /// getKnownValue - Evaluates a given SVal. If the SVal has only one possible
+  ///  (integer) value, that value is returned. Otherwise, returns NULL.
+  virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal V);
   
   SVal MakeSymIntVal(const SymExpr *LHS, BinaryOperator::Opcode op,
                      const llvm::APSInt &RHS, QualType resultTy);
@@ -818,4 +822,22 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
   // Delegate pointer arithmetic to the StoreManager.
   return state->getStateManager().getStoreManager().EvalBinOp(op, lhs,
                                                               rhs, resultTy);
+}
+
+const llvm::APSInt *SimpleSValuator::getKnownValue(const GRState *state,
+                                                   SVal V) {
+  if (V.isUnknownOrUndef())
+    return NULL;
+
+  if (loc::ConcreteInt* X = dyn_cast<loc::ConcreteInt>(&V))
+    return &X->getValue();
+
+  if (nonloc::ConcreteInt* X = dyn_cast<nonloc::ConcreteInt>(&V))
+    return &X->getValue();
+
+  if (SymbolRef Sym = V.getAsSymbol())
+    return state->getSymVal(Sym);
+
+  // FIXME: Add support for SymExprs.
+  return NULL;
 }
