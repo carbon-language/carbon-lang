@@ -47,6 +47,7 @@ CFLAGS.Profile := $(CFLAGS) -pg -g
 FUNCTIONS.i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.ppc := $(CommonFunctions) $(ArchFunctions.ppc)
 FUNCTIONS.x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
+FUNCTIONS.armv5 := $(CommonFunctions) $(ArchFunctions.armv5)
 FUNCTIONS.armv6 := $(CommonFunctions) $(ArchFunctions.armv6)
 FUNCTIONS.armv7 := $(CommonFunctions) $(ArchFunctions.armv7)
 

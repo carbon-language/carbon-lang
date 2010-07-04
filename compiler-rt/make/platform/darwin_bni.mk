@@ -52,6 +52,19 @@ FUNCTIONS.x86_64 := $(FUNCTIONS) \
                 mulvti3 mulxc3 negti2 negvti2 parityti2 \
                 popcountti2 powixf2 subvti3 ucmpti2 udivmodti4 \
                 udivti3 umodti3 clear_cache enable_execute_stack
+FUNCTIONS.armv5 := $(FUNCTIONS) \
+                adddf3 addsf3 bswapdi2 bswapsi2  \
+                comparedf2 comparesf2 extendsfdf2 \
+                divdf3 divsf3 \
+                fixdfsi fixsfsi fixunsdfsi fixunssfsi \
+                floatsidf floatsisf floatunsidf floatunsisf \
+                muldf3 mulsf3 \
+                negdf2 negsf2 \
+                truncdfsf2  \
+                modsi3 umodsi3 udivsi3 divsi3 \
+                switch8 switchu8 switch16 switch32 \
+                sync_synchronize 
+			
 FUNCTIONS.armv6 := $(FUNCTIONS) \
                 adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
                 divsf3vfp eqdf2vfp eqsf2vfp extendsfdf2vfp \
