@@ -362,6 +362,8 @@ public:
   overridden_cxx_method_iterator
   overridden_methods_end(const CXXMethodDecl *Method) const;
 
+  unsigned overridden_methods_size(const CXXMethodDecl *Method) const;
+
   /// \brief Note that the given C++ \p Method overrides the given \p
   /// Overridden method.
   void addOverriddenMethod(const CXXMethodDecl *Method, 

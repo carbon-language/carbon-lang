@@ -1114,6 +1114,7 @@ public:
 
   method_iterator begin_overridden_methods() const;
   method_iterator end_overridden_methods() const;
+  unsigned size_overridden_methods() const;
 
   /// getParent - Returns the parent of this method declaration, which
   /// is the class in which this method is defined.

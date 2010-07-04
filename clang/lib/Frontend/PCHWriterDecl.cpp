@@ -476,6 +476,8 @@ void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   Record.push_back(D->getBitWidth()? 1 : 0);
   if (D->getBitWidth())
     Writer.AddStmt(D->getBitWidth());
+  if (!D->getDeclName())
+    Writer.AddDeclRef(Context.getInstantiatedFromUnnamedFieldDecl(D), Record);
   Code = pch::DECL_FIELD;
 }
 
@@ -609,6 +611,7 @@ void PCHDeclWriter::VisitUsingDecl(UsingDecl *D) {
        PEnd = D->shadow_end(); P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
   Record.push_back(D->isTypeName());
+  Writer.AddDeclRef(Context.getInstantiatedFromUsingDecl(D), Record);
   Code = pch::DECL_USING;
 }
 
@@ -616,6 +619,7 @@ void PCHDeclWriter::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   Writer.AddDeclRef(D->getTargetDecl(), Record);
   Writer.AddDeclRef(D->getUsingDecl(), Record);
+  Writer.AddDeclRef(Context.getInstantiatedFromUsingShadowDecl(D), Record);
   Code = pch::DECL_USING_SHADOW;
 }
 
@@ -714,6 +718,11 @@ void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
 void PCHDeclWriter::VisitCXXMethodDecl(CXXMethodDecl *D) {
   VisitFunctionDecl(D);
+  Record.push_back(D->size_overridden_methods());
+  for (CXXMethodDecl::method_iterator
+         I = D->begin_overridden_methods(), E = D->end_overridden_methods();
+         I != E; ++I)
+    Writer.AddDeclRef(*I, Record);
   Code = pch::DECL_CXX_METHOD;
 }
 

@@ -478,6 +478,16 @@ ASTContext::overridden_methods_end(const CXXMethodDecl *Method) const {
   return Pos->second.end();
 }
 
+unsigned
+ASTContext::overridden_methods_size(const CXXMethodDecl *Method) const {
+  llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
+    = OverriddenMethods.find(Method);
+  if (Pos == OverriddenMethods.end())
+    return 0;
+
+  return Pos->second.size();
+}
+
 void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method, 
                                      const CXXMethodDecl *Overridden) {
   OverriddenMethods[Method].push_back(Overridden);

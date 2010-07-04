@@ -507,6 +507,11 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   FD->setMutable(Record[Idx++]);
   if (Record[Idx++])
     FD->setBitWidth(Reader.ReadExpr());
+  if (!FD->getDeclName()) {
+    FieldDecl *Tmpl = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
+    if (Tmpl)
+      Reader.getContext()->setInstantiatedFromUnnamedFieldDecl(FD, Tmpl);
+  }
 }
 
 void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
@@ -603,12 +608,19 @@ void PCHDeclReader::VisitUsingDecl(UsingDecl *D) {
     D->addShadowDecl(cast<UsingShadowDecl>(Reader.GetDecl(Record[Idx++])));
   }
   D->setTypeName(Record[Idx++]);
+  NamedDecl *Pattern = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+  if (Pattern)
+    Reader.getContext()->setInstantiatedFromUsingDecl(D, Pattern);
 }
 
 void PCHDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
   VisitNamedDecl(D);
   D->setTargetDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
   D->setUsingDecl(cast<UsingDecl>(Reader.GetDecl(Record[Idx++])));
+  UsingShadowDecl *Pattern
+      = cast_or_null<UsingShadowDecl>(Reader.GetDecl(Record[Idx++]));
+  if (Pattern)
+    Reader.getContext()->setInstantiatedFromUsingShadowDecl(D, Pattern);
 }
 
 void PCHDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
@@ -715,6 +727,13 @@ void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
 void PCHDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {
   VisitFunctionDecl(D);
+  unsigned NumOverridenMethods = Record[Idx++];
+  while (NumOverridenMethods--) {
+    CXXMethodDecl *MD = cast<CXXMethodDecl>(Reader.GetDecl(Record[Idx++]));
+    // Avoid invariant checking of CXXMethodDecl::addOverriddenMethod,
+    // MD may be initializing.
+    Reader.getContext()->addOverriddenMethod(D, MD);
+  }
 }
 
 void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
