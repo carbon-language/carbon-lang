@@ -657,7 +657,7 @@ struct ObjCInterfaceLocInfo {
 };
 
 /// \brief Wrapper for source info for ObjC interfaces.
-class ObjCInterfaceTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+class ObjCInterfaceTypeLoc : public ConcreteTypeLoc<ObjCObjectTypeLoc,
                                                     ObjCInterfaceTypeLoc,
                                                     ObjCInterfaceType,
                                                     ObjCInterfaceLocInfo> {
