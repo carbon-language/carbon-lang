@@ -940,8 +940,24 @@ public:
                                unsigned(isTC));
   }
 
+  /// @deprecated these "define hacks" will go away soon
+  /// @brief coerce out-of-tree code to abandon the low-level interfaces
+  /// @detail see below comments and update your code to high-level interfaces
+  ///    in LLVM v2.8-only code
+  ///    - getOperand(N+1)  --->  getArgOperand(N)
+  ///    - setOperand(N+1, V)  --->  setArgOperand(N, V)
+  ///    - getNumOperands()  --->  getNumArgOperands()+1  // note the "+1"!
+  ///
+  ///    in backward compatible code please consult llvm/Support/CallSite.h,
+  ///    you should create a callsite using the CallInst pointer and call its methods
+  ///
+# define public private
+# define protected private
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+# undef public
+# undef protected
+public:
 
   enum { ArgOffset = 1 }; ///< temporary, do not use for new code!
   unsigned getNumArgOperands() const { return getNumOperands() - 1; }
@@ -951,7 +967,7 @@ public:
   /// Provide compile-time errors for accessing operand 0
   /// @deprecated these will go away soon
   /// @detail see below comments and update your code to high-level interfaces
-  ///    - getOperand(0)  --->  getCalledValue()
+  ///    - getOperand(0)  --->  getCalledValue(), or possibly getCalledFunction()
   ///    - setOperand(0, V)  --->  setCalledFunction(V)
   ///
 private:
@@ -1107,6 +1123,10 @@ CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
+
+// Note: if you get compile errors about private methods then
+//       please update your code to use the high-level operand
+//       interfaces. See line 943 above.
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CallInst, Value)
 
 //===----------------------------------------------------------------------===//
