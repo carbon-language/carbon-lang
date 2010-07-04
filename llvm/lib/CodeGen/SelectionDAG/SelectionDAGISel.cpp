@@ -1586,7 +1586,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
                                       SDValue(Res, ResNumResults-1));
 
   if ((EmitNodeInfo & OPFL_FlagOutput) != 0)
-  --ResNumResults;
+    --ResNumResults;
 
   // Move the chain reference if needed.
   if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
