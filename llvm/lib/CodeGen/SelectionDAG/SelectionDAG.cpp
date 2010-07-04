@@ -6262,23 +6262,6 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
     const MachineFrameInfo &MFI = *getMachineFunction().getFrameInfo();
     unsigned FIInfoAlign = MinAlign(MFI.getObjectAlignment(FrameIdx),
                                     FrameOffset);
-    if (MFI.isFixedObjectIndex(FrameIdx)) {
-      int64_t ObjectOffset = MFI.getObjectOffset(FrameIdx) + FrameOffset;
-
-      // The alignment of the frame index can be determined from its offset from
-      // the incoming frame position.  If the frame object is at offset 32 and
-      // the stack is guaranteed to be 16-byte aligned, then we know that the
-      // object is 16-byte aligned.
-      unsigned StackAlign = getTarget().getFrameInfo()->getStackAlignment();
-      unsigned Align = MinAlign(ObjectOffset, StackAlign);
-
-      // Finally, the frame object itself may have a known alignment.  Factor
-      // the alignment + offset into a new alignment.  For example, if we know
-      // the FI is 8 byte aligned, but the pointer is 4 off, we really have a
-      // 4-byte alignment of the resultant pointer.  Likewise align 4 + 4-byte
-      // offset = 4-byte alignment, align 4 + 1-byte offset = align 1, etc.
-      return std::max(Align, FIInfoAlign);
-    }
     return FIInfoAlign;
   }
 

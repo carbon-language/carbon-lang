@@ -440,7 +440,13 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
 int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
                                         bool Immutable) {
   assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
-  Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable,
+  // The alignment of the frame index can be determined from its offset from
+  // the incoming frame position.  If the frame object is at offset 32 and
+  // the stack is guaranteed to be 16-byte aligned, then we know that the
+  // object is 16-byte aligned.
+  unsigned StackAlign = TFI.getStackAlignment();
+  unsigned Align = MinAlign(SPOffset, StackAlign);
+  Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/false));
   return -++NumFixedObjects;
 }
