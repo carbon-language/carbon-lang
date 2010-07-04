@@ -947,9 +947,10 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   }
 
   // If we already have a lookup data structure, perform the insertion
-  // into it. Otherwise, be lazy and don't build that structure until
-  // someone asks for it.
-  if (LookupPtr || !Recoverable)
+  // into it. If we haven't deserialized externally stored decls, deserialize
+  // them so we can add the decl. Otherwise, be lazy and don't build that
+  // structure until someone asks for it.
+  if (LookupPtr || !Recoverable || hasExternalVisibleStorage())
     makeDeclVisibleInContextImpl(D);
 
   // If we are a transparent context, insert into our parent context,
@@ -969,17 +970,17 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   if (isa<ClassTemplateSpecializationDecl>(D))
     return;
 
-  ASTContext *C = 0;
-  if (!LookupPtr) {
-    C = &getParentASTContext();
-    CreateStoredDeclsMap(*C);
-  }
-
   // If there is an external AST source, load any declarations it knows about
   // with this declaration's name.
   if (ExternalASTSource *Source = getParentASTContext().getExternalSource())
     if (hasExternalVisibleStorage())
       Source->FindExternalVisibleDeclsByName(this, D->getDeclName());
+
+  ASTContext *C = 0;
+  if (!LookupPtr) {
+    C = &getParentASTContext();
+    CreateStoredDeclsMap(*C);
+  }
 
   // Insert this declaration into the map.
   StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];
