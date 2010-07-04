@@ -655,8 +655,9 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
 
 /// EmitOpcodePrefix - Emit all instruction prefixes prior to the opcode.
 void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
-                            const MCInst &MI, const TargetInstrDesc &Desc,
-                            raw_ostream &OS) const {
+                                        const MCInst &MI, 
+                                        const TargetInstrDesc &Desc,
+                                        raw_ostream &OS) const {
 
   // Emit the lock opcode prefix as needed.
   if (TSFlags & X86II::LOCK)
