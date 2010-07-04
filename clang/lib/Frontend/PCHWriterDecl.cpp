@@ -514,6 +514,9 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
   Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
   Record.push_back(D->hasInheritedDefaultArg());
+  Record.push_back(D->hasUninstantiatedDefaultArg());
+  if (D->hasUninstantiatedDefaultArg())
+    Writer.AddStmt(D->getUninstantiatedDefaultArg());
   Code = pch::DECL_PARM_VAR;
 
   // If the assumptions about the DECL_PARM_VAR abbrev are true, use it.  Here
@@ -529,7 +532,8 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       !D->hasCXXDirectInitializer() && // Can params have this ever?
       D->getObjCDeclQualifier() == 0 &&
       !D->hasInheritedDefaultArg() &&
-      D->getInit() == 0)  // No default expr.
+      D->getInit() == 0 &&
+      !D->hasUninstantiatedDefaultArg())  // No default expr.
     AbbrevToUse = Writer.getParmVarDeclAbbrev();
 
   // Check things we know are true of *every* PARM_VAR_DECL, which is more than
@@ -990,6 +994,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   // ParmVarDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // ObjCDeclQualifier
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInheritedDefaultArg
+  Abv->Add(BitCodeAbbrevOp(0));                   // HasUninstantiatedDefaultArg
 
   ParmVarDeclAbbrev = Stream.EmitAbbrev(Abv);
 }
