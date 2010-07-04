@@ -29,6 +29,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/TypeLoc.h"
 
 // The following three macros are used for meta programming.  The code
 // using them is responsible for defining macro OPERATOR().
@@ -144,6 +145,14 @@ public:
   /// otherwise (including when the argument is a Null type).
   bool TraverseType(QualType T);
 
+  /// \brief Recursively visit a type with location, by dispatching to
+  /// Visit*TypeLoc() based on the argument type's getTypeClass() property.
+  /// This is NOT meant to be overridden by a subclass.
+  ///
+  /// \returns false if the visitation was terminated early, true
+  /// otherwise (including when the argument is a Null type location).
+  bool TraverseTypeLoc(TypeLoc TL);
+
   /// \brief Recursively visit a declaration, by dispatching to
   /// Visit*Decl() based on the argument's dynamic type.  This is
   /// NOT meant to be overridden by a subclass.
@@ -167,8 +176,14 @@ public:
   /// appropriate method for the argument type.
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
-  // FIXME: take a TemplateArgumentLoc instead.
+  // FIXME: migrate callers to TemplateArgumentLoc instead.
   bool TraverseTemplateArgument(const TemplateArgument &Arg);
+
+  /// \brief Recursively visit a template argument location and dispatch to the
+  /// appropriate method for the argument type.
+  ///
+  /// \returns false if the visitation was terminated early, true otherwise.
+  bool TraverseTemplateArgumentLoc(const TemplateArgumentLoc &ArgLoc);
 
   /// \brief Recursively visit a set of template arguments.
   /// This can be overridden by a subclass, but it's not expected that
@@ -281,6 +296,46 @@ public:
   bool Visit##CLASS##Type(CLASS##Type *T) { return true; }
 #include "clang/AST/TypeNodes.def"
 
+  // ---- Methods on TypeLocs ----
+  // FIXME: this currently just calls the matching Type methods
+
+  // Declare Traverse*() for all concrete Type classes.
+#define ABSTRACT_TYPELOC(CLASS, BASE)
+#define TYPELOC(CLASS, BASE) \
+  bool Traverse##CLASS##TypeLoc(CLASS##TypeLoc TL);
+#include "clang/AST/TypeLocNodes.def"
+  // The above header #undefs ABSTRACT_TYPELOC and TYPELOC upon exit.
+
+  // Define WalkUpFrom*() and Visit*() for all TypeLoc classes.  The Visit*()
+  // methods call into the equivalent Visit*() method for Type classes.
+  bool WalkUpFromTypeLoc(TypeLoc TL) { return getDerived().VisitTypeLoc(TL); }
+  bool VisitTypeLoc(TypeLoc TL) {
+    return getDerived().VisitType(TL.getTypePtr());
+  }
+  bool WalkUpFromQualifiedTypeLoc(QualifiedTypeLoc TL) {
+    return getDerived().VisitUnqualTypeLoc(TL.getUnqualifiedLoc());
+  }
+  bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+    return getDerived().VisitType(TL.getTypePtr());
+  }
+  bool WalkUpFromUnqualTypeLoc(UnqualTypeLoc TL) {
+    return getDerived().VisitUnqualTypeLoc(TL.getUnqualifiedLoc());
+  }
+  bool VisitUnqualTypeLoc(UnqualTypeLoc TL) {
+    return getDerived().VisitType(TL.getTypePtr());
+  }
+  // Note that BASE includes trailing 'Type' which CLASS doesn't.
+#define TYPE(CLASS, BASE)                                       \
+  bool WalkUpFrom##CLASS##TypeLoc(CLASS##TypeLoc TL) {          \
+    TRY_TO(WalkUpFrom##BASE##Loc(TL));                          \
+    TRY_TO(Visit##CLASS##TypeLoc(TL));                          \
+    return true;                                                \
+  }                                                             \
+  bool Visit##CLASS##TypeLoc(CLASS##TypeLoc TL) {               \
+    return getDerived().Visit##CLASS##Type(TL.getTypePtr());    \
+  }
+#include "clang/AST/TypeNodes.def"
+
   // ---- Methods on Decls ----
 
   // Declare Traverse*() for all concrete Decl classes.
@@ -382,6 +437,23 @@ bool RecursiveASTVisitor<Derived>::TraverseType(QualType T) {
 }
 
 template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseTypeLoc(TypeLoc TL) {
+  if (TL.isNull())
+    return true;
+
+  switch (TL.getTypeLocClass()) {
+#define ABSTRACT_TYPELOC(CLASS, BASE)
+#define TYPELOC(CLASS, BASE) \
+  case TypeLoc::CLASS: \
+    return getDerived().Traverse##CLASS##TypeLoc(*cast<CLASS##TypeLoc>(&TL));
+#include "clang/AST/TypeLocNodes.def"
+  }
+
+  return true;
+}
+
+
+template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   if (!D)
     return true;
@@ -454,6 +526,38 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArgument(
 
   case TemplateArgument::Expression:
     return getDerived().TraverseStmt(Arg.getAsExpr());
+
+  case TemplateArgument::Pack:
+    return getDerived().TraverseTemplateArguments(Arg.pack_begin(),
+                                                  Arg.pack_size());
+  }
+
+  return true;
+}
+
+// FIXME: no template name location?
+// FIXME: no source locations for a template argument pack?
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseTemplateArgumentLoc(
+                                           const TemplateArgumentLoc &ArgLoc) {
+  const TemplateArgument &Arg = ArgLoc.getArgument();
+
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Integral:
+    return true;
+
+  case TemplateArgument::Type: {
+    TypeSourceInfo *TSI = ArgLoc.getTypeSourceInfo();
+    return getDerived().TraverseTypeLoc(TSI->getTypeLoc());
+  }
+
+  case TemplateArgument::Template:
+    return getDerived().TraverseTemplateName(Arg.getAsTemplate());
+
+  case TemplateArgument::Expression:
+    return getDerived().TraverseStmt(ArgLoc.getSourceExpression());
 
   case TemplateArgument::Pack:
     return getDerived().TraverseTemplateArguments(Arg.pack_begin(),
@@ -551,7 +655,9 @@ DEF_TRAVERSE_TYPE(VectorType, {
     TRY_TO(TraverseType(T->getElementType()));
   })
 
-DEF_TRAVERSE_TYPE(ExtVectorType, { })
+DEF_TRAVERSE_TYPE(ExtVectorType, {
+    TRY_TO(TraverseType(T->getElementType()));
+  })
 
 DEF_TRAVERSE_TYPE(FunctionNoProtoType, {
     TRY_TO(TraverseType(T->getResultType()));
@@ -630,6 +736,183 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
   })
 
 #undef DEF_TRAVERSE_TYPE
+
+// ----------------- TypeLoc traversal -----------------
+
+// This macro makes available a variable TL, the passed-in TypeLoc.
+#define DEF_TRAVERSE_TYPELOC(TYPELOC, CODE)                            \
+  template<typename Derived>                                           \
+  bool RecursiveASTVisitor<Derived>::Traverse##TYPELOC (TYPELOC TL) {  \
+    TRY_TO(WalkUpFrom##TYPELOC (TL));                                  \
+    { CODE; }                                                          \
+    return true;                                                       \
+  }
+
+DEF_TRAVERSE_TYPELOC(QualifiedTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getUnqualifiedLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(BuiltinTypeLoc, { })
+
+// FIXME: ComplexTypeLoc is unfinished
+DEF_TRAVERSE_TYPELOC(ComplexTypeLoc, {
+    TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
+  })
+
+DEF_TRAVERSE_TYPELOC(PointerTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(BlockPointerTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(LValueReferenceTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(RValueReferenceTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+// FIXME: location of base class?
+// We traverse this in the type case as well, but how is it not reached through
+// the pointee type?
+DEF_TRAVERSE_TYPELOC(MemberPointerTypeLoc, {
+    TRY_TO(TraverseType(QualType(TL.getTypePtr()->getClass(), 0)));
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(ConstantArrayTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(IncompleteArrayTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(VariableArrayTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+    TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
+  })
+
+DEF_TRAVERSE_TYPELOC(DependentSizedArrayTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+    if (TL.getTypePtr()->getSizeExpr())
+      TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
+  })
+
+// FIXME: order? why not size expr first?
+// FIXME: base VectorTypeLoc is unfinished
+DEF_TRAVERSE_TYPELOC(DependentSizedExtVectorTypeLoc, {
+    if (TL.getTypePtr()->getSizeExpr())
+      TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
+    TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
+  })
+
+// FIXME: VectorTypeLoc is unfinished
+DEF_TRAVERSE_TYPELOC(VectorTypeLoc, {
+    TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
+  })
+
+// FIXME: size and attributes
+// FIXME: base VectorTypeLoc is unfinished
+DEF_TRAVERSE_TYPELOC(ExtVectorTypeLoc, {
+    TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
+  })
+
+DEF_TRAVERSE_TYPELOC(FunctionNoProtoTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+  })
+
+// FIXME: location of arguments, exception specifications (attributes?)
+// Note that we have the ParmVarDecl's here. Do we want to use them?
+DEF_TRAVERSE_TYPELOC(FunctionProtoTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+
+    FunctionProtoType *T = TL.getTypePtr();
+/*
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      TRY_TO(TraverseDecl(TL.getArg(I)));
+    }
+*/
+    for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
+                                           AEnd = T->arg_type_end();
+         A != AEnd; ++A) {
+      TRY_TO(TraverseType(*A));
+    }
+    for (FunctionProtoType::exception_iterator E = T->exception_begin(),
+                                            EEnd = T->exception_end();
+         E != EEnd; ++E) {
+      TRY_TO(TraverseType(*E));
+    }
+  })
+
+DEF_TRAVERSE_TYPELOC(UnresolvedUsingTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(TypedefTypeLoc, { })
+
+DEF_TRAVERSE_TYPELOC(TypeOfExprTypeLoc, {
+    TRY_TO(TraverseStmt(TL.getUnderlyingExpr()));
+  })
+
+DEF_TRAVERSE_TYPELOC(TypeOfTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getUnderlyingTInfo()->getTypeLoc()));
+  })
+
+// FIXME: location of underlying expr
+DEF_TRAVERSE_TYPELOC(DecltypeTypeLoc, {
+    TRY_TO(TraverseStmt(TL.getTypePtr()->getUnderlyingExpr()));
+  })
+
+DEF_TRAVERSE_TYPELOC(RecordTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(EnumTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(TemplateTypeParmTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(SubstTemplateTypeParmTypeLoc, { })
+
+// FIXME: use the loc for the template name?
+DEF_TRAVERSE_TYPELOC(TemplateSpecializationTypeLoc, {
+    TRY_TO(TraverseTemplateName(TL.getTypePtr()->getTemplateName()));
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
+    }
+  })
+
+DEF_TRAVERSE_TYPELOC(InjectedClassNameTypeLoc, { })
+
+// FIXME: use the sourceloc on qualifier?
+DEF_TRAVERSE_TYPELOC(ElaboratedTypeLoc, {
+    if (TL.getTypePtr()->getQualifier()) {
+      TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
+    }
+    TRY_TO(TraverseTypeLoc(TL.getNamedTypeLoc()));
+  })
+
+// FIXME: use the sourceloc on qualifier?
+DEF_TRAVERSE_TYPELOC(DependentNameTypeLoc, {
+    TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
+  })
+
+DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationTypeLoc, {
+    TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
+    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
+    }
+  })
+
+DEF_TRAVERSE_TYPELOC(ObjCInterfaceTypeLoc, { })
+
+DEF_TRAVERSE_TYPELOC(ObjCObjectTypeLoc, {
+    // We have to watch out here because an ObjCInterfaceType's base
+    // type is itself.
+    if (TL.getTypePtr()->getBaseType().getTypePtr() != TL.getTypePtr())
+      TRY_TO(TraverseTypeLoc(TL.getBaseLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(ObjCObjectPointerTypeLoc, {
+    TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+#undef DEF_TRAVERSE_TYPELOC
 
 // ----------------- Decl traversal -----------------
 //
@@ -811,9 +1094,8 @@ DEF_TRAVERSE_DECL(TemplateTemplateParmDecl, {
     // D is the "T" in something like
     //   template <template <typename> class T> class container { };
     TRY_TO(TraverseDecl(D->getTemplatedDecl()));
-    // FIXME: pass along the full TemplateArgumentLoc
     if (D->hasDefaultArgument()) {
-      TRY_TO(TraverseTemplateArgument(D->getDefaultArgument().getArgument()));
+      TRY_TO(TraverseTemplateArgumentLoc(D->getDefaultArgument()));
     }
     TRY_TO(TraverseTemplateParameterListHelper(D->getTemplateParameters()));
   })
@@ -821,7 +1103,7 @@ DEF_TRAVERSE_DECL(TemplateTemplateParmDecl, {
 DEF_TRAVERSE_DECL(TemplateTypeParmDecl, {
     // D is the "T" in something like "template<typename T> class vector;"
     if (D->hasDefaultArgument())
-      TRY_TO(TraverseType(D->getDefaultArgument()));
+      TRY_TO(TraverseTypeLoc(D->getDefaultArgumentInfo()->getTypeLoc()));
     if (D->getTypeForDecl())
       TRY_TO(TraverseType(QualType(D->getTypeForDecl(), 0)));
   })
@@ -902,9 +1184,8 @@ DEF_TRAVERSE_DECL(ClassTemplateSpecializationDecl, {
     // is the only callback that's made for this instantiation.
     // We use getTypeAsWritten() to distinguish.
     // FIXME: see how we want to handle template specializations.
-    TypeSourceInfo *TSI = D->getTypeAsWritten();
-    if (TSI)
-      TRY_TO(TraverseType(TSI->getType()));
+    if (TypeSourceInfo *TSI = D->getTypeAsWritten())
+      TRY_TO(TraverseTypeLoc(TSI->getTypeLoc()));
     return true;
   })
 
@@ -912,16 +1193,14 @@ template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseTemplateArgumentLocsHelper(
     const TemplateArgumentLoc *TAL, unsigned Count) {
   for (unsigned I = 0; I < Count; ++I) {
-    // FIXME: pass along the loc information to this callback as well?
-    TRY_TO(TraverseTemplateArgument(TAL[I].getArgument()));
+    TRY_TO(TraverseTemplateArgumentLoc(TAL[I]));
   }
   return true;
 }
 
 DEF_TRAVERSE_DECL(ClassTemplatePartialSpecializationDecl, {
     // The partial specialization.
-    TemplateParameterList *TPL = D->getTemplateParameters();
-    if (TPL) {
+    if (TemplateParameterList *TPL = D->getTemplateParameters()) {
       for (TemplateParameterList::iterator I = TPL->begin(), E = TPL->end();
            I != E; ++I) {
         TRY_TO(TraverseDecl(*I));
@@ -951,7 +1230,7 @@ template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
   if (D->getTypeSourceInfo())
-    TRY_TO(TraverseType(D->getTypeSourceInfo()->getType()));
+    TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
   return true;
 }
 
