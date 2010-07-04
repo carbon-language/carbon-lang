@@ -1769,6 +1769,9 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_NS_CONSTANT_STRING])
     Context->setNSConstantStringType(GetType(String));
+
+  if (SpecialTypes[pch::SPECIAL_TYPE_INT128_INSTALLED])
+    Context->setInt128Installed();
 }
 
 /// \brief Retrieve the name of the original source file name

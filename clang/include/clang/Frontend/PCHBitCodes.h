@@ -467,7 +467,9 @@ namespace clang {
       /// \brief Objective-C "SEL" redefinition type
       SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14,
       /// \brief NSConstantString type
-      SPECIAL_TYPE_NS_CONSTANT_STRING          = 15
+      SPECIAL_TYPE_NS_CONSTANT_STRING          = 15,
+      /// \brief Whether __[u]int128_t identifier is installed.
+      SPECIAL_TYPE_INT128_INSTALLED            = 16
     };
 
     /// \brief Record codes for each kind of declaration.

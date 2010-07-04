@@ -46,7 +46,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 
   VAListTagName = PP.getIdentifierInfo("__va_list_tag");
 
-  if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+  if (!Context.isInt128Installed() && // May be set by PCHReader.
+      PP.getTargetInfo().getPointerWidth(0) >= 64) {
     TypeSourceInfo *TInfo;
 
     // Install [u]int128_t for 64-bit targets.
@@ -61,6 +62,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
                                           SourceLocation(),
                                           &Context.Idents.get("__uint128_t"),
                                           TInfo), TUScope);
+    Context.setInt128Installed();
   }
 
 

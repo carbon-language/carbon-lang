@@ -148,7 +148,10 @@ class ASTContext {
   
   TemplateTemplateParmDecl *getCanonicalTemplateTemplateParmDecl(
                                                TemplateTemplateParmDecl *TTP);
-  
+
+  /// \brief Whether __[u]int128_t identifier is installed.
+  bool IsInt128Installed;
+
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
@@ -817,6 +820,10 @@ public:
   /// getObjCEncodingTypeSize returns size of type for objective-c encoding
   /// purpose in characters.
   CharUnits getObjCEncodingTypeSize(QualType t);
+
+  /// \brief Whether __[u]int128_t identifier is installed.
+  bool isInt128Installed() const { return IsInt128Installed; }
+  void setInt128Installed() { IsInt128Installed = true; }
 
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.

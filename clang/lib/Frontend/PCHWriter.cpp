@@ -2159,6 +2159,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);
   AddTypeRef(Context.ObjCSelRedefinitionType, Record);
   AddTypeRef(Context.getRawNSConstantStringType(), Record);
+  Record.push_back(Context.isInt128Installed());
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
   // Keep writing types and declarations until all types and
