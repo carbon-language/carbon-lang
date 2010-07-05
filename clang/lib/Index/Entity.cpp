@@ -126,8 +126,8 @@ Entity EntityGetter::VisitFunctionDecl(FunctionDecl *D) {
 }
 
 Entity EntityGetter::VisitFieldDecl(FieldDecl *D) {
-  // Make FieldDecl an internal Entity.
-  return Entity(D);
+  // Make FieldDecl an invalid Entity since it has no linkage.
+  return Entity();
 }
 
 //===----------------------------------------------------------------------===//
