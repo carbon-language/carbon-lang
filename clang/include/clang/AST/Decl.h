@@ -1599,6 +1599,9 @@ public:
   static FunctionDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<FunctionDecl *>(const_cast<DeclContext*>(DC));
   }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 
@@ -1960,6 +1963,9 @@ public:
   static TagDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<TagDecl *>(const_cast<DeclContext*>(DC));
   }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared

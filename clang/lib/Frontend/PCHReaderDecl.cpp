@@ -159,6 +159,7 @@ void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   VisitTypeDecl(TD);
+  TD->IdentifierNamespace = Record[Idx++];
   TD->setPreviousDeclaration(
                         cast_or_null<TagDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
@@ -210,6 +211,7 @@ void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   VisitDeclaratorDecl(FD);
 
+  FD->IdentifierNamespace = Record[Idx++];
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
   default: assert(false && "Unhandled TemplatedKind!");
     break;
@@ -282,7 +284,9 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // FunctionDecl's body is handled last at PCHReaderDecl::Visit,
   // after everything else is read.
 
-  FD->setPreviousDeclaration(
+  // Avoid side effects and invariant checking of FunctionDecl's
+  // setPreviousDeclaration.
+  FD->redeclarable_base::setPreviousDeclaration(
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setStorageClassAsWritten((FunctionDecl::StorageClass)Record[Idx++]);
@@ -304,11 +308,6 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setParams(Params.data(), NumParams);
-
-  // FIXME: order this properly w.r.t. friendness
-  // FIXME: this same thing needs to happen for function templates
-  if (FD->isOverloadedOperator() && !FD->getDeclContext()->isRecord())
-    FD->setNonMemberOperator();
 }
 
 void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
@@ -822,6 +821,7 @@ void PCHDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
 }
 
 void PCHDeclReader::VisitFriendDecl(FriendDecl *D) {
+  VisitDecl(D);
   if (Record[Idx++])
     D->Friend = Reader.GetTypeSourceInfo(Record, Idx);
   else
@@ -846,6 +846,7 @@ void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
 void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitTemplateDecl(D);
 
+  D->IdentifierNamespace = Record[Idx++];
   ClassTemplateDecl *PrevDecl =
       cast_or_null<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
   D->setPreviousDeclaration(PrevDecl);
@@ -952,6 +953,7 @@ void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
 void PCHDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitTemplateDecl(D);
 
+  D->IdentifierNamespace = Record[Idx++];
   FunctionTemplateDecl *PrevDecl =
       cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]));
   D->setPreviousDeclaration(PrevDecl);

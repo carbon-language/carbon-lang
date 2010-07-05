@@ -161,6 +161,7 @@ void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
 
 void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
+  Record.push_back(D->getIdentifierNamespace());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
@@ -212,6 +213,7 @@ void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   VisitDeclaratorDecl(D);
 
+  Record.push_back(D->getIdentifierNamespace());
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
   default: assert(false && "Unhandled TemplatedKind!");
@@ -787,6 +789,7 @@ void PCHDeclWriter::VisitAccessSpecDecl(AccessSpecDecl *D) {
 }
 
 void PCHDeclWriter::VisitFriendDecl(FriendDecl *D) {
+  VisitDecl(D);
   Record.push_back(D->Friend.is<TypeSourceInfo*>());
   if (D->Friend.is<TypeSourceInfo*>())
     Writer.AddTypeSourceInfo(D->Friend.get<TypeSourceInfo*>(), Record);
@@ -811,6 +814,7 @@ void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
 void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitTemplateDecl(D);
 
+  Record.push_back(D->getIdentifierNamespace());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
     // This ClassTemplateDecl owns the CommonPtr; write it.
@@ -899,6 +903,7 @@ void PCHDeclWriter::VisitClassTemplatePartialSpecializationDecl(
 void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitTemplateDecl(D);
 
+  Record.push_back(D->getIdentifierNamespace());
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
     // This FunctionTemplateDecl owns the CommonPtr; write it.

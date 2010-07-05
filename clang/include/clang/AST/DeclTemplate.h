@@ -629,6 +629,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == FunctionTemplate; }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 //===----------------------------------------------------------------------===//
@@ -1527,6 +1530,9 @@ public:
   static bool classofKind(Kind K) { return K == ClassTemplate; }
 
   virtual void Destroy(ASTContext& C);
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// Declaration of a friend template.  For example:
