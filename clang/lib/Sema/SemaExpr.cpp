@@ -6072,15 +6072,20 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     return Context.getMemberPointerType(op->getType(),
                 Context.getTypeDeclType(cast<RecordDecl>(dcl->getDeclContext()))
                        .getTypePtr());
-  } else if (lval == Expr::LV_ClassTemporary) {
+  }
+  
+  if (lval == Expr::LV_ClassTemporary) {
     Diag(OpLoc, isSFINAEContext()? diag::err_typecheck_addrof_class_temporary
                                  : diag::ext_typecheck_addrof_class_temporary)
       << op->getType() << op->getSourceRange();
     if (isSFINAEContext())
       return QualType();
-  } else if (isa<ObjCSelectorExpr>(op)) {
-      return Context.getPointerType(op->getType());
-  } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
+  }
+  
+  if (isa<ObjCSelectorExpr>(op))
+    return Context.getPointerType(op->getType());
+
+  if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
     if (!op->getType()->isFunctionType()) {
@@ -6161,26 +6166,32 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   return Context.getPointerType(op->getType());
 }
 
+/// CheckIndirectionOperand - Type check unary indirection (prefix '*').
 QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   if (Op->isTypeDependent())
     return Context.DependentTy;
 
   UsualUnaryConversions(Op);
-  QualType Ty = Op->getType();
+  QualType OpTy = Op->getType();
+  QualType Result;
+  
+  // Note that per both C89 and C99, indirection is always legal, even if OpTy
+  // is an incomplete type or void.  It would be possible to warn about
+  // dereferencing a void pointer, but it's completely well-defined, and such a
+  // warning is unlikely to catch any mistakes.
+  if (const PointerType *PT = OpTy->getAs<PointerType>())
+    Result = PT->getPointeeType();
+  else if (const ObjCObjectPointerType *OPT =
+             OpTy->getAs<ObjCObjectPointerType>())
+    Result = OPT->getPointeeType();
 
-  // Note that per both C89 and C99, this is always legal, even if ptype is an
-  // incomplete type or void.  It would be possible to warn about dereferencing
-  // a void pointer, but it's completely well-defined, and such a warning is
-  // unlikely to catch any mistakes.
-  if (const PointerType *PT = Ty->getAs<PointerType>())
-    return PT->getPointeeType();
-
-  if (const ObjCObjectPointerType *OPT = Ty->getAs<ObjCObjectPointerType>())
-    return OPT->getPointeeType();
-
-  Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
-    << Ty << Op->getSourceRange();
-  return QualType();
+  if (Result.isNull()) {
+    Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
+      << OpTy << Op->getSourceRange();
+    return QualType();
+  }
+  
+  return Result;
 }
 
 static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
