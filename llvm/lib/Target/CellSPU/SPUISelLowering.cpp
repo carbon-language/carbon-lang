@@ -1179,24 +1179,8 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     case MVT::i32:
     case MVT::i64:
     case MVT::i128:
-      if (ArgRegIdx != NumArgRegs) {
-        RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
-      } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
-                                           false, false, 0));
-        ArgOffset += StackSlotSize;
-      }
-      break;
     case MVT::f32:
     case MVT::f64:
-      if (ArgRegIdx != NumArgRegs) {
-        RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
-      } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
-                                           false, false, 0));
-        ArgOffset += StackSlotSize;
-      }
-      break;
     case MVT::v2i64:
     case MVT::v2f64:
     case MVT::v4f32:

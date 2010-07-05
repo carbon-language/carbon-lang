@@ -53,10 +53,6 @@ namespace llvm {
     static int minStackSize() {
       return (2 * stackSlotSize());
     }
-    //! Frame size required to spill all registers plus frame info
-    static int fullSpillSize() {
-      return (SPURegisterInfo::getNumArgRegs() * stackSlotSize());
-    }
     //! Convert frame index to stack offset
     static int FItoStackOffset(int frame_index) {
       return frame_index * stackSlotSize();
