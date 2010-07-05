@@ -190,11 +190,38 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
       Tmp = Tmp.shl(8 - BitsInPreviousByte);
     }
 
-    // Or in the bits that go into the previous byte.
-    if (llvm::ConstantInt *Val = dyn_cast<llvm::ConstantInt>(Elements.back()))
+    // 'or' in the bits that go into the previous byte.
+    llvm::Value *LastElt = Elements.back();
+    if (llvm::ConstantInt *Val = dyn_cast<llvm::ConstantInt>(LastElt))
       Tmp |= Val->getValue();
-    else
-      assert(isa<llvm::UndefValue>(Elements.back()));
+    else {
+      assert(isa<llvm::UndefValue>(LastElt));
+      // If there is an undef field that we're adding to, it can either be a
+      // scalar undef (in which case, we just replace it with our field) or it
+      // is an array.  If it is an array, we have to pull one byte off the
+      // array so that the other undef bytes stay around.
+      if (!isa<llvm::IntegerType>(LastElt->getType())) {
+        // The undef padding will be a multibyte array, create a new smaller
+        // padding and then an hole for our i8 to get plopped into.
+        assert(isa<llvm::ArrayType>(LastElt->getType()) &&
+               "Expected array padding of undefs");
+        const llvm::ArrayType *AT = cast<llvm::ArrayType>(LastElt->getType());
+        assert(AT->getElementType()->isIntegerTy(8) &&
+               AT->getNumElements() != 0 &&
+               "Expected non-empty array padding of undefs");
+        
+        // Remove the padding array.
+        NextFieldOffsetInBytes -= AT->getNumElements();
+        Elements.pop_back();
+        
+        // Add the padding back in two chunks.
+        AppendPadding(AT->getNumElements()-1);
+        AppendPadding(1);
+        assert(isa<llvm::UndefValue>(Elements.back()) &&
+               Elements.back()->getType()->isIntegerTy(8) &&
+               "Padding addition didn't work right");
+      }
+    }
 
     Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
 

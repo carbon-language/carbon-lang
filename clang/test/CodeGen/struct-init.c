@@ -10,3 +10,11 @@ char a;
 const zend_ini_entry ini_entries[] = {
   {  ((char*)&((zend_ini_entry*)0)->mh_arg1 - (char*)(void*)0)},
 };
+
+// PR7564
+struct GLGENH {
+  int : 27;
+  int EMHJAA : 1;
+};
+
+struct GLGENH ABHFBF = {1};
