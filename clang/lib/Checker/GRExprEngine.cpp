@@ -2696,9 +2696,38 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
       // sizeof(void) == 1 byte.
       amt = CharUnits::One();
     }
-    else if (!T.getTypePtr()->isConstantSizeType()) {
-      // FIXME: Add support for VLAs.
-      Dst.Add(Pred);
+    else if (!T->isConstantSizeType()) {
+      assert(T->isVariableArrayType() && "Unknown non-constant-sized type.");
+
+      // FIXME: Add support for VLA type arguments, not just VLA expressions.
+      // When that happens, we should probably refactor VLASizeChecker's code.
+      if (Ex->isArgumentType()) {
+        Dst.Add(Pred);
+        return;
+      }
+
+      // Get the size by getting the extent of the sub-expression.
+      // First, visit the sub-expression to find its region.
+      Expr *Arg = Ex->getArgumentExpr();
+      ExplodedNodeSet Tmp;
+      VisitLValue(Arg, Pred, Tmp);
+
+      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+        const GRState* state = GetState(*I);
+        const MemRegion *MR = state->getSVal(Arg).getAsRegion();
+
+        // If the subexpression can't be resolved to a region, we don't know
+        // anything about its size. Just leave the state as is and continue.
+        if (!MR) {
+          Dst.Add(*I);
+          continue;
+        }
+
+        // The result is the extent of the VLA.
+        SVal Extent = cast<SubRegion>(MR)->getExtent(ValMgr);
+        MakeNode(Dst, Ex, *I, state->BindExpr(Ex, Extent));
+      }
+
       return;
     }
     else if (T->getAs<ObjCObjectType>()) {

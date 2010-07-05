@@ -62,3 +62,12 @@ void vla(int a) {
     x[5] = 5; // expected-warning{{out-of-bound}}
   }
 }
+
+void sizeof_vla(int a) {
+  if (a == 5) {
+    char x[a];
+    int y[sizeof(x)];
+    y[4] = 4; // no-warning
+    y[5] = 5; // expected-warning{{out-of-bound}}
+  }
+}
