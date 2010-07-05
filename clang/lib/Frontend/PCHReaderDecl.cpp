@@ -248,12 +248,14 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
       LAngleLoc = Reader.ReadSourceLocation(Record, Idx);
       RAngleLoc = Reader.ReadSourceLocation(Record, Idx);
     }
+    
+    SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
 
     FD->setFunctionTemplateSpecialization(Template, TemplArgs.size(),
                                           TemplArgs.data(), TSK,
                                           TemplArgLocs.size(),
                                           TemplArgLocs.data(),
-                                          LAngleLoc, RAngleLoc);
+                                          LAngleLoc, RAngleLoc, POI);
     break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
@@ -268,6 +270,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     unsigned NumArgs = Record[Idx++];
     while (NumArgs--)
       TemplArgs.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    TemplArgs.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
+    TemplArgs.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
     
     FD->setDependentTemplateSpecialization(*Reader.getContext(),
                                            TemplDecls, TemplArgs);

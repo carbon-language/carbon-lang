@@ -1352,7 +1352,8 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
                                                 void *InsertPos,
                                                 TemplateSpecializationKind TSK,
-                        const TemplateArgumentListInfo *TemplateArgsAsWritten) {
+                        const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                                          SourceLocation PointOfInstantiation) {
   assert(TSK != TSK_Undeclared && 
          "Must specify the type of function template specialization");
   FunctionTemplateSpecializationInfo *Info
@@ -1365,6 +1366,7 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
   Info->Template.setInt(TSK - 1);
   Info->TemplateArguments = TemplateArgs;
   Info->TemplateArgumentsAsWritten = TemplateArgsAsWritten;
+  Info->PointOfInstantiation = PointOfInstantiation;
   TemplateOrSpecialization = Info;
 
   // Insert this function template specialization into the set of known
@@ -1391,7 +1393,8 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                               unsigned NumTemplateArgsAsWritten,
                                    TemplateArgumentLoc *TemplateArgsAsWritten,
                                                 SourceLocation LAngleLoc,
-                                                SourceLocation RAngleLoc) {
+                                                SourceLocation RAngleLoc,
+                                          SourceLocation PointOfInstantiation) {
   ASTContext &Ctx = getASTContext();
   TemplateArgumentList *TemplArgs
     = new (Ctx) TemplateArgumentList(Ctx, TemplateArgs, NumTemplateArgs);
@@ -1401,7 +1404,7 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
     TemplArgsInfo->addArgument(TemplateArgsAsWritten[i]);
 
   setFunctionTemplateSpecialization(Template, TemplArgs, /*InsertPos=*/0, TSK,
-                                    TemplArgsInfo);
+                                    TemplArgsInfo, PointOfInstantiation);
 }
 
 void

@@ -1508,11 +1508,15 @@ public:
   /// \param TSK the kind of template specialization this is.
   ///
   /// \param TemplateArgsAsWritten location info of template arguments.
+  ///
+  /// \param PointOfInstantiation point at which the function template
+  /// specialization was first instantiated. 
   void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos,
                     TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
-                    const TemplateArgumentListInfo *TemplateArgsAsWritten = 0);
+                    const TemplateArgumentListInfo *TemplateArgsAsWritten = 0,
+                    SourceLocation PointOfInstantiation = SourceLocation());
 
   /// \brief Specify that this function declaration is actually a function
   /// template specialization.
@@ -1537,6 +1541,9 @@ public:
   /// \param LAngleLoc location of left angle token.
   ///
   /// \param RAngleLoc location of right angle token.
+  ///
+  /// \param PointOfInstantiation point at which the function template
+  /// specialization was first instantiated. 
   void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                          unsigned NumTemplateArgs,
                                          const TemplateArgument *TemplateArgs,
@@ -1544,7 +1551,8 @@ public:
                                          unsigned NumTemplateArgsAsWritten,
                                      TemplateArgumentLoc *TemplateArgsAsWritten,
                                           SourceLocation LAngleLoc,
-                                          SourceLocation RAngleLoc);
+                                          SourceLocation RAngleLoc,
+                                          SourceLocation PointOfInstantiation);
 
   /// \brief Specifies that this function declaration is actually a
   /// dependent function template specialization.

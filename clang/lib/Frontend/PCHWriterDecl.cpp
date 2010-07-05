@@ -249,6 +249,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
       Writer.AddSourceLocation(FTSInfo->TemplateArgumentsAsWritten->getRAngleLoc(),
                                Record);
     }
+    
+    Writer.AddSourceLocation(FTSInfo->getPointOfInstantiation(), Record);
     break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
@@ -264,6 +266,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     Record.push_back(DFTSInfo->getNumTemplateArgs());
     for (int i=0, e = DFTSInfo->getNumTemplateArgs(); i != e; ++i)
       Writer.AddTemplateArgumentLoc(DFTSInfo->getTemplateArg(i), Record);
+    Writer.AddSourceLocation(DFTSInfo->getLAngleLoc(), Record);
+    Writer.AddSourceLocation(DFTSInfo->getRAngleLoc(), Record);
     break;
   }
   }
