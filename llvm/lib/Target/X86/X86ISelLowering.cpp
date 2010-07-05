@@ -793,9 +793,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       EVT VT = SVT;
 
       // Do not attempt to promote non-128-bit vectors
-      if (!VT.is128BitVector()) {
+      if (!VT.is128BitVector())
         continue;
-      }
       
       setOperationAction(ISD::AND,    SVT, Promote);
       AddPromotedToType (ISD::AND,    SVT, MVT::v2i64);
