@@ -46,6 +46,7 @@ public:
   Entity VisitVarDecl(VarDecl *D);
   Entity VisitFieldDecl(FieldDecl *D);
   Entity VisitFunctionDecl(FunctionDecl *D);
+  Entity VisitTypeDecl(TypeDecl *D);
 };
 
 }
@@ -127,6 +128,13 @@ Entity EntityGetter::VisitFunctionDecl(FunctionDecl *D) {
 
 Entity EntityGetter::VisitFieldDecl(FieldDecl *D) {
   // Make FieldDecl an invalid Entity since it has no linkage.
+  return Entity();
+}
+
+Entity EntityGetter::VisitTypeDecl(TypeDecl *D) {
+  // Make TypeDecl an invalid Entity. Although in C++ class name has external
+  // linkage, usually the definition of the class is available in the same
+  // translation unit when it's needed. So we make all of them invalid Entity.
   return Entity();
 }
 
