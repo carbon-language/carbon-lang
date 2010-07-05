@@ -3584,10 +3584,6 @@ def : Pat<(v2i32 (palign:$src3 VR64:$src1, VR64:$src2)),
           (PALIGNR64rr VR64:$src2, VR64:$src1,
                        (SHUFFLE_get_palign_imm VR64:$src3))>,
           Requires<[HasSSSE3]>;
-def : Pat<(v2f32 (palign:$src3 VR64:$src1, VR64:$src2)),
-          (PALIGNR64rr VR64:$src2, VR64:$src1,
-                       (SHUFFLE_get_palign_imm VR64:$src3))>,
-          Requires<[HasSSSE3]>;
 def : Pat<(v4i16 (palign:$src3 VR64:$src1, VR64:$src2)),
           (PALIGNR64rr VR64:$src2, VR64:$src1,
                        (SHUFFLE_get_palign_imm VR64:$src3))>,
