@@ -52,8 +52,8 @@ private:
   bool AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                    llvm::Constant *InitExpr);
 
-  bool AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
-                      llvm::Constant *InitExpr);
+  void AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
+                      llvm::ConstantInt *InitExpr);
 
   void AppendPadding(uint64_t NumBytes);
 
@@ -123,14 +123,9 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
   return true;
 }
 
-bool ConstStructBuilder::
-  AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
-                 llvm::Constant *InitCst) {
-  llvm::ConstantInt *CI = cast_or_null<llvm::ConstantInt>(InitCst);
-  // FIXME: Can this ever happen?
-  if (!CI)
-    return false;
-
+void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
+                                        uint64_t FieldOffset,
+                                        llvm::ConstantInt *CI) {
   if (FieldOffset > NextFieldOffsetInBytes * 8) {
     // We need to add padding.
     uint64_t NumBytes =
@@ -204,7 +199,7 @@ bool ConstStructBuilder::
     Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
 
     if (FitsCompletelyInPreviousByte)
-      return true;
+      return;
   }
 
   while (FieldValue.getBitWidth() > 8) {
@@ -248,7 +243,6 @@ bool ConstStructBuilder::
   Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(),
                                             FieldValue));
   NextFieldOffsetInBytes++;
-  return true;
 }
 
 void ConstStructBuilder::AppendPadding(uint64_t NumBytes) {
@@ -346,8 +340,8 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
         return false;
     } else {
       // Otherwise we have a bitfield.
-      if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo), EltInit))
-        return false;
+      AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
+                     cast<llvm::ConstantInt>(EltInit));
     }
   }
 
