@@ -44,6 +44,7 @@ public:
 
   Entity VisitNamedDecl(NamedDecl *D);
   Entity VisitVarDecl(VarDecl *D);
+  Entity VisitFieldDecl(FieldDecl *D);
   Entity VisitFunctionDecl(FunctionDecl *D);
 };
 
@@ -122,6 +123,11 @@ Entity EntityGetter::VisitFunctionDecl(FunctionDecl *D) {
     return Entity(D);
 
   return VisitNamedDecl(D);
+}
+
+Entity EntityGetter::VisitFieldDecl(FieldDecl *D) {
+  // Make FieldDecl an internal Entity.
+  return Entity(D);
 }
 
 //===----------------------------------------------------------------------===//
