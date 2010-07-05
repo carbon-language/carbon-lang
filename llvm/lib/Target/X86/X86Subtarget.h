@@ -14,6 +14,7 @@
 #ifndef X86SUBTARGET_H
 #define X86SUBTARGET_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetSubtarget.h"
 #include "llvm/CallingConv.h"
 #include <string>
@@ -89,10 +90,6 @@ protected:
   /// operands. This may require setting a feature bit in the processor.
   bool HasVectorUAMem;
 
-  /// DarwinVers - Nonzero if this is a darwin platform: the numeric
-  /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
-  unsigned char DarwinVers; // Is any darwin-x86 platform.
-
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -100,6 +97,9 @@ protected:
   /// Max. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   ///
   unsigned MaxInlineSizeThreshold;
+  
+  /// TargetTriple - What processor and OS we're targeting.
+  Triple TargetTriple;
 
 private:
   /// Is64Bit - True if the processor supports 64-bit instructions and
@@ -107,9 +107,6 @@ private:
   bool Is64Bit;
 
 public:
-  enum {
-    isELF, isCygwin, isDarwin, isWindows, isMingw
-  } TargetType;
 
   /// This constructor initializes the data members to match that
   /// of the specified triple.
@@ -158,24 +155,31 @@ public:
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
 
-  bool isTargetDarwin() const { return TargetType == isDarwin; }
-  bool isTargetELF() const { return TargetType == isELF; }
-
-  bool isTargetWindows() const { return TargetType == isWindows; }
-  bool isTargetMingw() const { return TargetType == isMingw; }
-  bool isTargetCygwin() const { return TargetType == isCygwin; }
-  bool isTargetCygMing() const {
-    return TargetType == isMingw || TargetType == isCygwin;
+  bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
+  
+  // ELF is a reasonably sane default and the only other X86 targets we
+  // support are Darwin and Windows. Just use "not those".
+  bool isTargetELF() const { 
+    return !isTargetDarwin() && !isTargetWindows() && !isTargetCygMing();
   }
+  bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
 
+  bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
+  bool isTargetMingw() const { 
+    return TargetTriple.getOS() == Triple::MinGW32 ||
+           TargetTriple.getOS() == Triple::MinGW64; }
+  bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
+  bool isTargetCygMing() const {
+    return isTargetMingw() || isTargetCygwin();
+  }
+  
   /// isTargetCOFF - Return true if this is any COFF/Windows target variant.
   bool isTargetCOFF() const {
-    return TargetType == isMingw || TargetType == isCygwin ||
-           TargetType == isWindows;
+    return isTargetMingw() || isTargetCygwin() || isTargetWindows();
   }
 
   bool isTargetWin64() const {
-    return Is64Bit && (TargetType == isMingw || TargetType == isWindows);
+    return Is64Bit && (isTargetMingw() || isTargetWindows());
   }
 
   std::string getDataLayout() const {
@@ -209,7 +213,10 @@ public:
 
   /// getDarwinVers - Return the darwin version number, 8 = Tiger, 9 = Leopard,
   /// 10 = Snow Leopard, etc.
-  unsigned getDarwinVers() const { return DarwinVers; }
+  unsigned getDarwinVers() const {
+    if (isTargetDarwin()) return TargetTriple.getDarwinMajorNumber();
+    return 0;
+  }
 
   /// ClassifyGlobalReference - Classify a global variable reference for the
   /// current subtarget according to how we should reference it in a non-pcrel
