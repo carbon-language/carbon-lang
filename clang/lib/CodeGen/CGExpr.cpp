@@ -44,8 +44,8 @@ void CodeGenFunction::InitTempAlloca(llvm::AllocaInst *Var,
   Block->getInstList().insertAfter(&*AllocaInsertPt, Store);
 }
 
-llvm::Value *CodeGenFunction::CreateIRTemp(QualType Ty,
-                                           const llvm::Twine &Name) {
+llvm::AllocaInst *CodeGenFunction::CreateIRTemp(QualType Ty,
+                                                const llvm::Twine &Name) {
   llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertType(Ty), Name);
   // FIXME: Should we prefer the preferred type alignment here?
   CharUnits Align = getContext().getTypeAlignInChars(Ty);
@@ -53,8 +53,8 @@ llvm::Value *CodeGenFunction::CreateIRTemp(QualType Ty,
   return Alloc;
 }
 
-llvm::Value *CodeGenFunction::CreateMemTemp(QualType Ty,
-                                            const llvm::Twine &Name) {
+llvm::AllocaInst *CodeGenFunction::CreateMemTemp(QualType Ty,
+                                                 const llvm::Twine &Name) {
   llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty), Name);
   // FIXME: Should we prefer the preferred type alignment here?
   CharUnits Align = getContext().getTypeAlignInChars(Ty);

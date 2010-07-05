@@ -819,7 +819,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // initialize the return value.  TODO: it might be nice to have
   // a more general mechanism for this that didn't require synthesized
   // return statements.
-  if (const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
     if (FD->hasImplicitReturnZero()) {
       QualType RetTy = FD->getResultType().getUnqualifiedType();
       const llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
@@ -924,7 +924,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // FIXME: This is very wasteful; EmitParmDecl is just going to drop the
       // result in a new alloca anyway, so we could just store into that
       // directly if we broke the abstraction down more.
-      llvm::Value *V = CreateMemTemp(Ty, "coerce");
+      llvm::AllocaInst *Alloca = CreateMemTemp(Ty, "coerce");
+      Alloca->setAlignment(getContext().getDeclAlign(Arg).getQuantity());
+      llvm::Value *V = Alloca;
       
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel

@@ -71,7 +71,7 @@ void f12_1(struct s12 a0) {}
 
 // Check that sret parameter is accounted for when checking available integer
 // registers.
-// CHECK: define void @f13(%struct.s13_0* sret %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, %struct.s13_1* byval %e, i32 %f)
+// CHECK: define void @f13(%struct.s13_0* sret %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, {{.*}}* byval %e, i32 %f)
 
 struct s13_0 { long long f0[3]; };
 struct s13_1 { long long f0[2]; };
@@ -122,4 +122,12 @@ struct StringRef {
 // rdar://7375902
 // CHECK: define i8* @f21(i64 %S.coerce0, i8* %S.coerce1) 
 const char *f21(struct StringRef S) { return S.x+S.Ptr; }
+
+// PR7567
+typedef __attribute__ ((aligned(16))) struct f22s { unsigned long long x[2]; } L;
+void f22(L x, L y) { }
+// CHECK: @f22
+// CHECK: %x = alloca{{.*}}, align 16
+// CHECK: %y = alloca{{.*}}, align 16
+
 

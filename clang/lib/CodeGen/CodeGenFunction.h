@@ -698,11 +698,11 @@ public:
   /// value needs to be stored into an alloca (for example, to avoid explicit
   /// PHI construction), but the type is the IR type, not the type appropriate
   /// for storing in memory.
-  llvm::Value *CreateIRTemp(QualType T, const llvm::Twine &Name = "tmp");
+  llvm::AllocaInst *CreateIRTemp(QualType T, const llvm::Twine &Name = "tmp");
 
   /// CreateMemTemp - Create a temporary memory object of the given type, with
   /// appropriate alignment.
-  llvm::Value *CreateMemTemp(QualType T, const llvm::Twine &Name = "tmp");
+  llvm::AllocaInst *CreateMemTemp(QualType T, const llvm::Twine &Name = "tmp");
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.
