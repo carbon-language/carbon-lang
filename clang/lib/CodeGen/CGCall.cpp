@@ -933,25 +933,14 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // and the optimizer generally likes scalar values better than FCAs.
       if (const llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgI.getCoerceToType())) {
-        // If the argument and alloca types match up, we don't have to build the
-        // FCA at all, emit a series of GEPs and stores, which is better for
-        // fast isel.
-        if (STy == cast<llvm::PointerType>(V->getType())->getElementType()) {
-          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-            assert(AI != Fn->arg_end() && "Argument mismatch!");
-            AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
-            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(V, 0, i);
-            Builder.CreateStore(AI++, EltPtr);
-          }
-        } else {
-          // Reconstruct the FCA here so we can do a coerced store.
-          llvm::Value *FormalArg = llvm::UndefValue::get(STy);
-          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-            assert(AI != Fn->arg_end() && "Argument mismatch!");
-            AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
-            FormalArg = Builder.CreateInsertValue(FormalArg, AI++, i);
-          }
-          CreateCoercedStore(FormalArg, V, /*DestIsVolatile=*/false, *this);
+        llvm::Value *Ptr = V;
+        Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
+        
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+          assert(AI != Fn->arg_end() && "Argument mismatch!");
+          AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
+          llvm::Value *EltPtr = Builder.CreateConstGEP2_32(Ptr, 0, i);
+          Builder.CreateStore(AI++, EltPtr);
         }
       } else {
         // Simple case, just do a coerced store of the argument into the alloca.
@@ -1166,22 +1155,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // and the optimizer generally likes scalar values better than FCAs.
       if (const llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgInfo.getCoerceToType())) {
-        // If the argument and alloca types match up, we don't have to build the
-        // FCA at all, emit a series of GEPs and loads, which is better for
-        // fast isel.
-        if (STy ==cast<llvm::PointerType>(SrcPtr->getType())->getElementType()){
-          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(SrcPtr, 0, i);
-            Args.push_back(Builder.CreateLoad(EltPtr));
-          }
-        } else {
-          // Otherwise, do a coerced load the entire FCA and handle the pieces.
-          llvm::Value *SrcVal = 
-            CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(), *this);
-
-          // Extract the elements of the value to pass in.
-          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-            Args.push_back(Builder.CreateExtractValue(SrcVal, i));
+        SrcPtr = Builder.CreateBitCast(SrcPtr,
+                                       llvm::PointerType::getUnqual(STy));
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+          llvm::Value *EltPtr = Builder.CreateConstGEP2_32(SrcPtr, 0, i);
+          Args.push_back(Builder.CreateLoad(EltPtr));
         }
       } else {
         // In the simple case, just pass the coerced loaded value.
