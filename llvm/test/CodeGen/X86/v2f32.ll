@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86-64 -asm-verbose=0 -o - | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -march=x86 -asm-verbose=0 -o - | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mcpu=yonah -march=x86 -asm-verbose=0 -o - | FileCheck %s -check-prefix=X32
 
 ; PR7518
 define void @test1(<2 x float> %Q, float *%P2) nounwind {
