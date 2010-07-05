@@ -132,9 +132,9 @@ Entity EntityGetter::VisitFieldDecl(FieldDecl *D) {
 }
 
 Entity EntityGetter::VisitTypeDecl(TypeDecl *D) {
-  // Make TypeDecl an invalid Entity. Although in C++ class name has external
-  // linkage, usually the definition of the class is available in the same
-  // translation unit when it's needed. So we make all of them invalid Entity.
+  // Although in C++ class name has external linkage, usually the definition of
+  // the class is available in the same translation unit when it's needed. So we
+  // make all of them invalid Entity.
   return Entity();
 }
 
