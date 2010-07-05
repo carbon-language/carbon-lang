@@ -846,3 +846,34 @@ This would be better kept in the SSE unit by treating XMM0 as a 4xfloat and
 doing a shuffle from v[1] to v[0] then a float store.
 
 //===---------------------------------------------------------------------===//
+
+On SSE4 machines, we compile this code:
+
+define <2 x float> @test2(<2 x float> %Q, <2 x float> %R,
+       <2 x float> *%P) nounwind {
+  %Z = fadd <2 x float> %Q, %R
+
+  store <2 x float> %Z, <2 x float> *%P
+  ret <2 x float> %Z
+}
+
+into:
+
+_test2:                                 ## @test2
+## BB#0:
+	insertps	$0, %xmm2, %xmm2
+	insertps	$16, %xmm3, %xmm2
+	insertps	$0, %xmm0, %xmm3
+	insertps	$16, %xmm1, %xmm3
+	addps	%xmm2, %xmm3
+	movq	%xmm3, (%rdi)
+	movaps	%xmm3, %xmm0
+	pshufd	$1, %xmm3, %xmm1
+                                        ## kill: XMM1<def> XMM1<kill>
+	ret
+
+The insertps's of $0 are pointless complex copies.
+
+//===---------------------------------------------------------------------===//
+
+
