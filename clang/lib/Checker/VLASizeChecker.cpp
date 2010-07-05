@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
@@ -42,9 +43,9 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl());
   if (!VD)
     return;
-  
-  const VariableArrayType *VLA
-    = C.getASTContext().getAsVariableArrayType(VD->getType());
+
+  ASTContext &Ctx = C.getASTContext();
+  const VariableArrayType *VLA = Ctx.getAsVariableArrayType(VD->getType());
   if (!VLA)
     return;
 
@@ -70,9 +71,14 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
     C.EmitReport(report);
     return;
   }
+
+  // See if the size value is known. It can't be undefined because we would have
+  // warned about that already.
+  if (sizeV.isUnknown())
+    return;
   
   // Check if the size is zero.
-  DefinedOrUnknownSVal sizeD = cast<DefinedOrUnknownSVal>(sizeV);
+  DefinedSVal sizeD = cast<DefinedSVal>(sizeV);
 
   const GRState *stateNotZero, *stateZero;
   llvm::tie(stateNotZero, stateZero) = state->Assume(sizeD);
@@ -92,5 +98,29 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   }
  
   // From this point on, assume that the size is not zero.
-  C.addTransition(stateNotZero);
+  state = stateNotZero;
+
+  // Convert the array length to size_t.
+  ValueManager &ValMgr = C.getValueManager();
+  SValuator &SV = ValMgr.getSValuator();
+  QualType SizeTy = Ctx.getSizeType();
+  NonLoc ArrayLength = cast<NonLoc>(SV.EvalCast(sizeD, SizeTy, SE->getType()));
+
+  // Get the element size.
+  CharUnits EleSize = Ctx.getTypeSizeInChars(VLA->getElementType());
+  SVal EleSizeVal = ValMgr.makeIntVal(EleSize.getQuantity(), SizeTy);
+
+  // Multiply the array length by the element size.
+  SVal ArraySizeVal = SV.EvalBinOpNN(state, BinaryOperator::Mul, ArrayLength,
+                                     cast<NonLoc>(EleSizeVal), SizeTy);
+
+  // Finally, Assume that the array's extent matches the given size.
+  const LocationContext *LC = C.getPredecessor()->getLocationContext();
+  DefinedOrUnknownSVal Extent = state->getRegion(VD, LC)->getExtent(ValMgr);
+  DefinedOrUnknownSVal ArraySize = cast<DefinedOrUnknownSVal>(ArraySizeVal);
+  DefinedOrUnknownSVal SizeIsKnown = SV.EvalEQ(state, Extent, ArraySize);
+  state = state->Assume(SizeIsKnown, true);
+
+  // Remember our assumptions!
+  C.addTransition(state);
 }

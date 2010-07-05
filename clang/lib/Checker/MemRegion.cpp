@@ -179,8 +179,9 @@ DefinedOrUnknownSVal DeclRegion::getExtent(ValueManager& ValMgr) const {
   ASTContext& Ctx = ValMgr.getContext();
   QualType T = getDesugaredValueType(Ctx);
 
-  // FIXME: Handle variable-length arrays.
-  if (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
+  if (isa<VariableArrayType>(T))
+    return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+  if (isa<IncompleteArrayType>(T))
     return UnknownVal();
 
   CharUnits Size = Ctx.getTypeSizeInChars(T);

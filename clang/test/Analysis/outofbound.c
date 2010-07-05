@@ -54,3 +54,11 @@ void f7() {
   struct three_words a;
   a.c[3] = 1; // expected-warning{{out-of-bound}}
 }
+
+void vla(int a) {
+  if (a == 5) {
+    int x[a];
+    x[4] = 4; // no-warning
+    x[5] = 5; // expected-warning{{out-of-bound}}
+  }
+}
