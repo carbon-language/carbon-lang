@@ -4858,11 +4858,16 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
 
 
 void SelectionDAGBuilder::visitCall(const CallInst &I) {
+  // Handle inline assembly differently.
+  if (isa<InlineAsm>(I.getCalledValue())) {
+    visitInlineAsm(&I);
+    return;
+  }
+  
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
     if (F->isDeclaration()) {
-      const TargetIntrinsicInfo *II = TM.getIntrinsicInfo();
-      if (II) {
+      if (const TargetIntrinsicInfo *II = TM.getIntrinsicInfo()) {
         if (unsigned IID = II->getIntrinsicID(F)) {
           RenameFn = visitIntrinsicCall(I, IID);
           if (!RenameFn)
@@ -4935,11 +4940,8 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
           return;
       }
     }
-  } else if (isa<InlineAsm>(I.getCalledValue())) {
-    visitInlineAsm(&I);
-    return;
   }
-
+  
   SDValue Callee;
   if (!RenameFn)
     Callee = getValue(I.getCalledValue());

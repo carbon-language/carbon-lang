@@ -609,9 +609,9 @@ bool TargetLowering::canOpTrap(unsigned Op, EVT VT) const {
 
 
 static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
-                                       unsigned &NumIntermediates,
-                                       EVT &RegisterVT,
-                                       TargetLowering* TLI) {
+                                          unsigned &NumIntermediates,
+                                          EVT &RegisterVT,
+                                          TargetLowering *TLI) {
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = VT.getVectorNumElements();
   MVT EltTy = VT.getVectorElementType();
@@ -736,39 +736,39 @@ void TargetLowering::computeRegisterProperties() {
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
     MVT VT = (MVT::SimpleValueType)i;
-    if (!isTypeLegal(VT)) {
-      MVT IntermediateVT;
-      EVT RegisterVT;
-      unsigned NumIntermediates;
-      NumRegistersForVT[i] =
-        getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
-                                  RegisterVT, this);
-      RegisterTypeForVT[i] = RegisterVT;
-      
-      // Determine if there is a legal wider type.
-      bool IsLegalWiderType = false;
-      EVT EltVT = VT.getVectorElementType();
-      unsigned NElts = VT.getVectorNumElements();
-      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-        EVT SVT = (MVT::SimpleValueType)nVT;
-        if (isTypeSynthesizable(SVT) && SVT.getVectorElementType() == EltVT &&
-            SVT.getVectorNumElements() > NElts && NElts != 1) {
-          TransformToType[i] = SVT;
-          ValueTypeActions.setTypeAction(VT, Promote);
-          IsLegalWiderType = true;
-          break;
-        }
+    if (isTypeLegal(VT)) continue;
+    
+    MVT IntermediateVT;
+    EVT RegisterVT;
+    unsigned NumIntermediates;
+    NumRegistersForVT[i] =
+      getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
+                                RegisterVT, this);
+    RegisterTypeForVT[i] = RegisterVT;
+    
+    // Determine if there is a legal wider type.
+    bool IsLegalWiderType = false;
+    EVT EltVT = VT.getVectorElementType();
+    unsigned NElts = VT.getVectorNumElements();
+    for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+      EVT SVT = (MVT::SimpleValueType)nVT;
+      if (isTypeSynthesizable(SVT) && SVT.getVectorElementType() == EltVT &&
+          SVT.getVectorNumElements() > NElts && NElts != 1) {
+        TransformToType[i] = SVT;
+        ValueTypeActions.setTypeAction(VT, Promote);
+        IsLegalWiderType = true;
+        break;
       }
-      if (!IsLegalWiderType) {
-        EVT NVT = VT.getPow2VectorType();
-        if (NVT == VT) {
-          // Type is already a power of 2.  The default action is to split.
-          TransformToType[i] = MVT::Other;
-          ValueTypeActions.setTypeAction(VT, Expand);
-        } else {
-          TransformToType[i] = NVT;
-          ValueTypeActions.setTypeAction(VT, Promote);
-        }
+    }
+    if (!IsLegalWiderType) {
+      EVT NVT = VT.getPow2VectorType();
+      if (NVT == VT) {
+        // Type is already a power of 2.  The default action is to split.
+        TransformToType[i] = MVT::Other;
+        ValueTypeActions.setTypeAction(VT, Expand);
+      } else {
+        TransformToType[i] = NVT;
+        ValueTypeActions.setTypeAction(VT, Promote);
       }
     }
   }
