@@ -602,8 +602,12 @@ void ARMAsmPrinter::printAddrMode6Operand(const MachineInstr *MI, int Op,
 
   O << "[" << getRegisterName(MO1.getReg());
   if (MO2.getImm()) {
+    unsigned Align = MO2.getImm();
+    assert((Align == 8 || Align == 16 || Align == 32) &&
+           "unexpected NEON load/store alignment");
+    Align <<= 3;
     // FIXME: Both darwin as and GNU as violate ARM docs here.
-    O << ", :" << MO2.getImm();
+    O << ", :" << Align;
   }
   O << "]";
 }

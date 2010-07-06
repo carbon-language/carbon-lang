@@ -832,7 +832,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     // FIXME: Neon instructions should support predicates
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q))
-                     .addFrameIndex(FI).addImm(128)
+                     .addFrameIndex(FI).addImm(16)
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addMemOperand(MMO));
     } else {
@@ -849,7 +849,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       // FIXME: It's possible to only store part of the QQ register if the
       // spilled def has a sub-register index.
       MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VST2q32))
-        .addFrameIndex(FI).addImm(128);
+        .addFrameIndex(FI).addImm(16);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
@@ -929,7 +929,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   case ARM::QPR_8RegClassID:
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q), DestReg)
-                     .addFrameIndex(FI).addImm(128)
+                     .addFrameIndex(FI).addImm(16)
                      .addMemOperand(MMO));
     } else {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
@@ -946,7 +946,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
-      AddDefaultPred(MIB.addFrameIndex(FI).addImm(128).addMemOperand(MMO));
+      AddDefaultPred(MIB.addFrameIndex(FI).addImm(16).addMemOperand(MMO));
     } else {
       MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMD))
@@ -1131,7 +1131,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
       if (MFI.getObjectAlignment(FI) >= 16 &&
           getRegisterInfo().canRealignStack(MF)) {
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::VST1q))
-          .addFrameIndex(FI).addImm(128)
+          .addFrameIndex(FI).addImm(16)
           .addReg(SrcReg,
                   getKillRegState(isKill) | getUndefRegState(isUndef),
                   SrcSubReg)
@@ -1157,7 +1157,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                   getDeadRegState(isDead) |
                   getUndefRegState(isUndef),
                   DstSubReg)
-          .addFrameIndex(FI).addImm(128).addImm(Pred).addReg(PredReg);
+          .addFrameIndex(FI).addImm(16).addImm(Pred).addReg(PredReg);
       } else {
         NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::VLDMQ))
           .addReg(DstReg,

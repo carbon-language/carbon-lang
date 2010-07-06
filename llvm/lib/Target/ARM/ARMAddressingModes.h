@@ -520,6 +520,8 @@ namespace ARM_AM {
   // This is stored in two operands [regaddr, align].  The first is the
   // address register.  The second operand is the value of the alignment
   // specifier to use or zero if no explicit alignment.
+  // Valid alignments are: 0, 8, 16, and 32 bytes, depending on the specific
+  // instruction.
 
 } // end namespace ARM_AM
 } // end namespace llvm
