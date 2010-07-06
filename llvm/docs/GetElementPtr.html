@@ -64,7 +64,8 @@
 
 <div class="doc_text"> 
   <p>This document seeks to dispel the mystery and confusion surrounding LLVM's
-  GetElementPtr (GEP) instruction. Questions about the wily GEP instruction are
+  <a href="LangRef.html#i_getelementptr">GetElementPtr</a> (GEP) instruction.
+  Questions about the wily GEP instruction are
   probably the most frequently occurring questions once a developer gets down to
   coding with LLVM. Here we lay out the sources of confusion and show that the
   GEP instruction is really quite simple.
@@ -653,7 +654,8 @@ idx3 = (char*) &amp;MyVar + 8
      <li>Support C, C-like languages, and languages which can be
          conceptually lowered into C (this covers a lot).</li>
      <li>Support optimizations such as those that are common in
-         C compilers.</li>
+         C compilers. In particular, GEP is a cornerstone of LLVM's
+         <a href="LangRef.html#pointeraliasing">pointer aliasing model</a>.</li>
      <li>Provide a consistent method for computing addresses so that
          address computations don't need to be a part of load and
          store instructions in the IR.</li>

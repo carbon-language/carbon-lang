@@ -1062,7 +1062,15 @@ declare signext i8 @returns_signed_char()
       The caller shares the responsibility with the callee for ensuring that
       these requirements are met.
       For further details, please see the discussion of the NoAlias response in
-      <a href="AliasAnalysis.html#MustMayNo">alias analysis</a>.</dd>
+      <a href="AliasAnalysis.html#MustMayNo">alias analysis</a>.<br>
+<br>
+      Note that this definition of <tt>noalias<tt> is intentionally
+      similar to the definition of <tt>restrict<tt> in C99 for function
+      arguments, thought it is slightly weaker.
+<br>
+      For function return values, C99's <tt>restrict</tt> is not meaningful,
+      while LLVM's <tt>noalias</tt> is.
+      </dd>
 
   <dt><tt><b><a name="nocapture">nocapture</a></b></tt></dt>
   <dd>This indicates that the callee does not make any copies of the pointer
@@ -2397,7 +2405,8 @@ has undefined behavior.</p>
 
 <li>An instruction with externally visible side effects depends on the most
     recent preceding instruction with externally visible side effects, following
-    the order in the IR. (This includes volatile loads and stores.)</li>
+    the order in the IR. (This includes
+    <a href="#volatile">volatile operations</a>.)</li>
 
 <li>An instruction <i>control-depends</i> on a
     <a href="#terminators">terminator instruction</a>
