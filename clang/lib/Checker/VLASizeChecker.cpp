@@ -121,6 +121,9 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   DefinedOrUnknownSVal SizeIsKnown = SV.EvalEQ(state, Extent, ArraySize);
   state = state->Assume(SizeIsKnown, true);
 
+  // Assume should not fail at this point.
+  assert(state);
+
   // Remember our assumptions!
   C.addTransition(state);
 }
