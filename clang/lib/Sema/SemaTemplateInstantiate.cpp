@@ -620,6 +620,14 @@ namespace {
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
                                            TemplateTypeParmTypeLoc TL,
                                            QualType ObjectType);
+
+    Sema::OwningExprResult TransformCallExpr(CallExpr *CE) {
+      getSema().CallsUndergoingInstantiation.push_back(CE);
+      OwningExprResult Result =
+          TreeTransform<TemplateInstantiator>::TransformCallExpr(CE);
+      getSema().CallsUndergoingInstantiation.pop_back();
+      return move(Result);
+    }
   };
 }
 

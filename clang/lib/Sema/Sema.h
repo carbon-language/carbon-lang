@@ -2793,6 +2793,7 @@ public:
                                          const CXXMethodDecl *Old);
 
   bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
+
   //===--------------------------------------------------------------------===//
   // C++ Access Control
   //
@@ -3561,6 +3562,12 @@ public:
   /// same instantiation. FIXME: Does this belong in Sema? It's tough
   /// to implement it anywhere else.
   ActiveTemplateInstantiation LastTemplateInstantiationErrorContext;
+
+  /// \brief The stack of calls expression undergoing template instantiation.
+  ///
+  /// The top of this stack is used by a fixit instantiating unresolved
+  /// function calls to fix the AST to match the textual change it prints.
+  llvm::SmallVector<CallExpr *, 8> CallsUndergoingInstantiation;
 
   /// \brief A stack object to be created when performing template
   /// instantiation.

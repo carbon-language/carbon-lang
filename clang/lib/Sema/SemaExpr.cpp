@@ -869,8 +869,8 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
 /// Diagnose an empty lookup.
 ///
 /// \return false if new lookup candidates were found
-bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
-                               LookupResult &R, CorrectTypoContext CTC) {
+bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
+                               CorrectTypoContext CTC) {
   DeclarationName Name = R.getLookupName();
 
   unsigned diagnostic = diag::err_undeclared_var_use;
@@ -886,7 +886,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
   // unqualified lookup.  This is useful when (for example) the
   // original lookup would not have found something because it was a
   // dependent name.
-  for (DeclContext *DC = SS.isEmpty()? CurContext : 0;
+  for (DeclContext *DC = SS.isEmpty() ? CurContext : 0;
        DC; DC = DC->getParent()) {
     if (isa<CXXRecordDecl>(DC)) {
       LookupQualifiedName(R, DC);
@@ -903,11 +903,29 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS,
         // Give a code modification hint to insert 'this->'.
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
         // Actually quite difficult!
-        if (isInstance)
+        if (isInstance) {
           Diag(R.getNameLoc(), diagnostic) << Name
             << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
-        else
+
+          UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(
+              CallsUndergoingInstantiation.back()->getCallee());
+          CXXMethodDecl *DepMethod = cast<CXXMethodDecl>(
+              CurMethod->getInstantiatedFromMemberFunction());
+          QualType DepThisType = DepMethod->getThisType(Context);
+          CXXThisExpr *DepThis = new (Context) CXXThisExpr(R.getNameLoc(),
+                                                           DepThisType, false);
+          TemplateArgumentListInfo TList;
+          if (ULE->hasExplicitTemplateArgs())
+            ULE->copyTemplateArgumentsInto(TList);
+          CXXDependentScopeMemberExpr *DepExpr =
+              CXXDependentScopeMemberExpr::Create(
+                  Context, DepThis, DepThisType, true, SourceLocation(),
+                  ULE->getQualifier(), ULE->getQualifierRange(), NULL, Name,
+                  R.getNameLoc(), &TList);
+          CallsUndergoingInstantiation.back()->setCallee(DepExpr);
+        } else {
           Diag(R.getNameLoc(), diagnostic) << Name;
+        }
 
         // Do we really want to note all of these?
         for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
