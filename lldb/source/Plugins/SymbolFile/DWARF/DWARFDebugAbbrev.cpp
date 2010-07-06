@@ -196,7 +196,7 @@ DWARFDebugAbbrev::GetAbbreviationDeclarationSet(dw_offset_t cu_abbr_offset) cons
         m_prev_abbr_offset_pos = pos;
     }
 
-    if (pos != m_abbrevCollMap.end());
+    if (pos != m_abbrevCollMap.end())
         return &(pos->second);
     return NULL;
 }

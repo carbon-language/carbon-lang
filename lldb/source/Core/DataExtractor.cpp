@@ -1279,17 +1279,17 @@ DataExtractor::Dump
             break;
 
         case eFormatDecimal:
-            if (item_byte_size <= 8);
+            if (item_byte_size <= 8)
                 s->Printf ("%lld", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             break;
 
         case eFormatUnsigned:
-            if (item_byte_size <= 8);
+            if (item_byte_size <= 8)
                 s->Printf ("%llu", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             break;
 
         case eFormatOctal:
-            if (item_byte_size <= 8);
+            if (item_byte_size <= 8)
                 s->Printf ("0%llo", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             break;
 
