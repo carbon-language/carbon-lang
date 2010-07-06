@@ -836,7 +836,7 @@ DataExtractor::GetPointer (uint32_t *offset_ptr) const
 uint64_t
 DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb::addr_t pc_rel_addr, lldb::addr_t text_addr, lldb::addr_t data_addr)//, BSDRelocs *data_relocs) const
 {
-    if (eh_ptr_enc == DW_GNU_EH_PE_omit)
+    if (eh_ptr_enc == DW_EH_PE_omit)
         return ULONG_LONG_MAX;  // Value isn't in the buffer...
 
     uint64_t baseAddress = 0;
@@ -847,7 +847,7 @@ DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
     // Decode the base part or adjust our offset
     switch (eh_ptr_enc & 0x70)
     {
-    case DW_GNU_EH_PE_pcrel:
+    case DW_EH_PE_pcrel:
         signExtendValue = true;
         baseAddress = *offset_ptr;
         if (pc_rel_addr != LLDB_INVALID_ADDRESS)
@@ -856,7 +856,7 @@ DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
 //          Log::GlobalWarning ("PC relative pointer encoding found with invalid pc relative address.");
         break;
 
-    case DW_GNU_EH_PE_textrel:
+    case DW_EH_PE_textrel:
         signExtendValue = true;
         if (text_addr != LLDB_INVALID_ADDRESS)
             baseAddress = text_addr;
@@ -864,7 +864,7 @@ DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
 //          Log::GlobalWarning ("text relative pointer encoding being decoded with invalid text section address, setting base address to zero.");
         break;
 
-    case DW_GNU_EH_PE_datarel:
+    case DW_EH_PE_datarel:
         signExtendValue = true;
         if (data_addr != LLDB_INVALID_ADDRESS)
             baseAddress = data_addr;
@@ -872,11 +872,11 @@ DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
 //          Log::GlobalWarning ("data relative pointer encoding being decoded with invalid data section address, setting base address to zero.");
         break;
 
-    case DW_GNU_EH_PE_funcrel:
+    case DW_EH_PE_funcrel:
         signExtendValue = true;
         break;
 
-    case DW_GNU_EH_PE_aligned:
+    case DW_EH_PE_aligned:
         {
             // SetPointerSize should be called prior to extracting these so the
             // pointer size is cached
@@ -896,23 +896,23 @@ DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
     }
 
     // Decode the value part
-    switch (eh_ptr_enc & DW_GNU_EH_PE_MASK_ENCODING)
+    switch (eh_ptr_enc & DW_EH_PE_MASK_ENCODING)
     {
-    case DW_GNU_EH_PE_absptr    :
+    case DW_EH_PE_absptr    :
         {
             addressValue = GetAddress (offset_ptr);
 //          if (data_relocs)
 //              addressValue = data_relocs->Relocate(*offset_ptr - addr_size, *this, addressValue);
         }
         break;
-    case DW_GNU_EH_PE_uleb128   : addressValue = GetULEB128(offset_ptr);        break;
-    case DW_GNU_EH_PE_udata2    : addressValue = GetU16(offset_ptr);            break;
-    case DW_GNU_EH_PE_udata4    : addressValue = GetU32(offset_ptr);            break;
-    case DW_GNU_EH_PE_udata8    : addressValue = GetU64(offset_ptr);            break;
-    case DW_GNU_EH_PE_sleb128   : addressValue = GetSLEB128(offset_ptr);        break;
-    case DW_GNU_EH_PE_sdata2    : addressValue = (int16_t)GetU16(offset_ptr);   break;
-    case DW_GNU_EH_PE_sdata4    : addressValue = (int32_t)GetU32(offset_ptr);   break;
-    case DW_GNU_EH_PE_sdata8    : addressValue = (int64_t)GetU64(offset_ptr);   break;
+    case DW_EH_PE_uleb128   : addressValue = GetULEB128(offset_ptr);        break;
+    case DW_EH_PE_udata2    : addressValue = GetU16(offset_ptr);            break;
+    case DW_EH_PE_udata4    : addressValue = GetU32(offset_ptr);            break;
+    case DW_EH_PE_udata8    : addressValue = GetU64(offset_ptr);            break;
+    case DW_EH_PE_sleb128   : addressValue = GetSLEB128(offset_ptr);        break;
+    case DW_EH_PE_sdata2    : addressValue = (int16_t)GetU16(offset_ptr);   break;
+    case DW_EH_PE_sdata4    : addressValue = (int32_t)GetU32(offset_ptr);   break;
+    case DW_EH_PE_sdata8    : addressValue = (int64_t)GetU64(offset_ptr);   break;
     default:
     // Unhandled encoding type
     assert(eh_ptr_enc);

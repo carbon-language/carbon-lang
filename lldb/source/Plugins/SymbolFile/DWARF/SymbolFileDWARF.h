@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/dwarf.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/UniqueCStringMap.h"

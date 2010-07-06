@@ -27,7 +27,6 @@
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/LangStandard.h"
 
-// Project includes
 #include "lldb/Core/dwarf.h"
 
 #include <stdio.h>
@@ -35,7 +34,6 @@
 using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
-
 
 static void
 ParseLangArgs

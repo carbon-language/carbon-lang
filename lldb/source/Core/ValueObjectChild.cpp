@@ -9,7 +9,6 @@
 
 #include "lldb/Core/ValueObjectChild.h"
 
-#include "lldb/Core/dwarf.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
 

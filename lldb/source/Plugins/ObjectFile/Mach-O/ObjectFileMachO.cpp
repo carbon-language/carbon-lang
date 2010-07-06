@@ -572,7 +572,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         if (symtab_load_command.cmd == LC_SYMTAB)
         {
             // Read in the rest of the symtab load command
-            if (m_data.GetU32(&offset, &symtab_load_command.symoff, 4))
+            if (m_data.GetU32(&offset, &symtab_load_command.symoff, 4)) // fill in symoff, nsyms, stroff, strsize fields
             {
                 Symtab *symtab = m_symtab_ap.get();
                 SectionList *section_list = GetSectionList();
@@ -673,7 +673,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeFunction;
                             break;
 
-                        case N_FUN:                                         // procedure: name,,n_sect,linenumber,address
+                        case N_FUN:                                       // procedure: name,,n_sect,linenumber,address
                             if (symbol_name)
                             {
                                 type = eSymbolTypeFunction;
@@ -692,7 +692,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                     // to hunt for it later
                                     symtab->SymbolAtIndex(N_FUN_indexes.back())->SetByteSize(nlist.n_value);
                                     N_FUN_indexes.pop_back();
-                                    // We dont' really need the end function STAB as it contains the size which
+                                    // We don't really need the end function STAB as it contains the size which
                                     // we already placed with the original symbol, so don't add it if we want a
                                     // minimal symbol table
                                     if (minimize)

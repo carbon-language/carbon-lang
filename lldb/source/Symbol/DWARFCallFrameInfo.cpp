@@ -353,7 +353,7 @@ DWARFCallFrameInfo::CIE::CIE(dw_offset_t offset) :
     return_addr_reg_num (0),
     inst_offset (0),
     inst_length (0),
-    ptr_encoding (DW_GNU_EH_PE_absptr)
+    ptr_encoding (DW_EH_PE_absptr)
 {
 }
 
@@ -456,7 +456,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
         //    cie.offset = cie_offset;
         //    cie.length = length;
         //    cie.cieID = cieID;
-        cie_sp->ptr_encoding = DW_GNU_EH_PE_absptr;
+        cie_sp->ptr_encoding = DW_EH_PE_absptr;
         cie_sp->version = m_cfi_data.GetU8(&offset);
 
         for (i=0; i<CFI_AUG_MAX_SIZE; ++i)
@@ -584,7 +584,7 @@ DWARFCallFrameInfo::ParseFDE(const dw_offset_t fde_offset)
         const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
         const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
         lldb::addr_t range_base = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
-        lldb::addr_t range_len = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_GNU_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
+        lldb::addr_t range_len = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
 
         if (cie->augmentation[0] == 'z')
         {
@@ -680,7 +680,7 @@ DWARFCallFrameInfo::Index ()
                 const CIE* cie = GetCIE(cie_offset);
                 assert(cie);
                 lldb::addr_t addr = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
-                lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_GNU_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
+                lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
                 m_fde_map[VMRange(addr, addr + length)] = FDEInfo(curr_offset);
             }
 

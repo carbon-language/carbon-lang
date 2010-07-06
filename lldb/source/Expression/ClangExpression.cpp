@@ -67,7 +67,6 @@
 
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Core/dwarf.h"
 
 
 using namespace lldb_private;

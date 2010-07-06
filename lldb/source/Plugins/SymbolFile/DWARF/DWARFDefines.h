@@ -10,20 +10,13 @@
 #ifndef liblldb_DWARFDefines_h_
 #define liblldb_DWARFDefines_h_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 #include "lldb/Core/dwarf.h"
 
-/* DWARF constants generated on Wed Sep  7 16:41:50 2005 */
+namespace lldb_private {
 
 typedef uint32_t DRC_class;          // Holds DRC_* class bitfields
-
-/* [7.5.4] Figure 16 "Tag Encodings" (pp. 125-127) in DWARFv3 draft 8 */
-
 
 enum DW_TAG_Category
 {
@@ -36,171 +29,49 @@ enum DW_TAG_Category
 typedef enum DW_TAG_Category DW_TAG_CategoryEnum;
 const char *DW_TAG_value_to_name (uint32_t val);
 const char *DW_TAG_value_to_englishy_name (uint32_t val);
-DRC_class DW_TAG_value_to_class (uint32_t val);
 DW_TAG_CategoryEnum get_tag_category (uint16_t tag);
-#define DW_TAG_MAX_NAME_LENGTH 31
-
-
-/* [7.5.4] Figure 17 "Child determination encodings" (p. 128) in DWARFv3 draft 8 */
 
 const char *DW_CHILDREN_value_to_name (uint8_t val);
-const char *DW_CHILDREN_value_to_englishy_name (uint8_t val);
-DRC_class DW_CHILDREN_value_to_class (uint32_t val);
-#define DW_CHILDREN_MAX_NAME_LENGTH 15
-
-
-/* [7.5.4] Figure 18 "Attribute encodings" (pp. 129-132) in DWARFv3 draft 8 */
-
 
 const char *DW_AT_value_to_name (uint32_t val);
 const char *DW_AT_value_to_englishy_name (uint32_t val);
-DRC_class DW_AT_value_to_class (uint32_t val);
-#define DW_AT_MAX_NAME_LENGTH 34
-
-
-/* [7.5.4] Figure 19 "Attribute form encodings" (pp. 133-134) in DWARFv3 draft 8 */
 
 const char *DW_FORM_value_to_name (uint32_t val);
 const char *DW_FORM_value_to_englishy_name (uint32_t val);
-DRC_class DW_FORM_value_to_class (uint32_t val);
-#define DW_FORM_MAX_NAME_LENGTH 17
-
-
-/* [7.7.1] Figure 22 "DWARF operation encodings" (pp. 136-139) in DWARFv3 draft 8 */
 
 const char *DW_OP_value_to_name (uint32_t val);
 const char *DW_OP_value_to_englishy_name (uint32_t val);
 DRC_class DW_OP_value_to_class (uint32_t val);
-#define DW_OP_MAX_NAME_LENGTH 25
-
-
-/* [7.8] Figure 23 "Base type encoding values" (pp. 140-141) in DWARFv3 draft 8 */
 
 const char *DW_ATE_value_to_name (uint32_t val);
-const char *DW_ATE_value_to_englishy_name (uint32_t val);
-DRC_class DW_ATE_value_to_class (uint32_t val);
-#define DW_ATE_MAX_NAME_LENGTH 22
-
-
-/* [7.9] Figure 24 "Accessibility encodings" (p. 141) in DWARFv3 draft 8 */
 
 const char *DW_ACCESS_value_to_name (uint32_t val);
-const char *DW_ACCESS_value_to_englishy_name (uint32_t val);
-DRC_class DW_ACCESS_value_to_class (uint32_t val);
-#define DW_ACCESS_MAX_NAME_LENGTH 19
-
-
-/* [7.10] Figure 25 "Visibility encodings" (p. 142) in DWARFv3 draft 8 */
 
 const char *DW_VIS_value_to_name (uint32_t val);
-const char *DW_VIS_value_to_englishy_name (uint32_t val);
-DRC_class DW_VIS_value_to_class (uint32_t val);
-#define DW_VIS_MAX_NAME_LENGTH 16
-
-
-/* [7.11] Figure 26 "Virtuality encodings" (p. 142) in DWARFv3 draft 8 */
 
 const char *DW_VIRTUALITY_value_to_name (uint32_t val);
-const char *DW_VIRTUALITY_value_to_englishy_name (uint32_t val);
-DRC_class DW_VIRTUALITY_value_to_class (uint32_t val);
-#define DW_VIRTUALITY_MAX_NAME_LENGTH 26
-
-
-/* [7.12] Figure 27 "Language encodings" (p. 143) in DWARFv3 draft 8 */
 
 const char *DW_LANG_value_to_name (uint32_t val);
-const char *DW_LANG_value_to_englishy_name (uint32_t val);
-DRC_class DW_LANG_value_to_class (uint32_t val);
-#define DW_LANG_MAX_NAME_LENGTH 19
-
-
-/* [7.13], "Address Class Encodings" (p. 144) in DWARFv3 draft 8 */
-
-const char *DW_ADDR_value_to_name (uint32_t val);
-const char *DW_ADDR_value_to_englishy_name (uint32_t val);
-DRC_class DW_ADDR_value_to_class (uint32_t val);
-#define DW_ADDR_MAX_NAME_LENGTH 12
-
-
-/* [7.14] Figure 28 "Identifier case encodings" (p. 144) in DWARFv3 draft 8 */
 
 const char *DW_ID_value_to_name (uint32_t val);
-const char *DW_ID_value_to_englishy_name (uint32_t val);
-DRC_class DW_ID_value_to_class (uint32_t val);
-#define DW_ID_MAX_NAME_LENGTH 22
-
-
-/* [7.15] Figure 29 "Calling convention encodings" (p. 144) in DWARFv3 draft 8 */
 
 const char *DW_CC_value_to_name (uint32_t val);
-const char *DW_CC_value_to_englishy_name (uint32_t val);
-DRC_class DW_CC_value_to_class (uint32_t val);
-#define DW_CC_MAX_NAME_LENGTH 13
-
-
-/* [7.16] Figure 30 "Inline encodings" (p. 145) in DWARFv3 draft 8 */
 
 const char *DW_INL_value_to_name (uint32_t val);
-const char *DW_INL_value_to_englishy_name (uint32_t val);
-DRC_class DW_INL_value_to_class (uint32_t val);
-#define DW_INL_MAX_NAME_LENGTH 27
-
-
-/* [7.17] Figure 31 "Ordering encodings" (p. 145) in DWARFv3 draft 8 */
 
 const char *DW_ORD_value_to_name (uint32_t val);
-const char *DW_ORD_value_to_englishy_name (uint32_t val);
-DRC_class DW_ORD_value_to_class (uint32_t val);
-#define DW_ORD_MAX_NAME_LENGTH 16
-
-
-/* [7.18] Figure 32 "Discriminant descriptor encodings" (p. 146) in DWARFv3 draft 8 */
 
 const char *DW_DSC_value_to_name (uint32_t val);
-const char *DW_DSC_value_to_englishy_name (uint32_t val);
-DRC_class DW_DSC_value_to_class (uint32_t val);
-#define DW_DSC_MAX_NAME_LENGTH 12
-
-
-/* [7.21] Figure 33 "Line Number Standard Opcode Encodings" (pp. 148-149) in DWARFv3 draft 8 */
 
 const char *DW_LNS_value_to_name (uint32_t val);
-const char *DW_LNS_value_to_englishy_name (uint32_t val);
-DRC_class DW_LNS_value_to_class (uint32_t val);
-#define DW_LNS_MAX_NAME_LENGTH 25
-
-
-/* [7.21] Figure 34 "Line Number Extended Opcode Encodings" (p. 149) in DWARFv3 draft 8 */
 
 const char *DW_LNE_value_to_name (uint32_t val);
-const char *DW_LNE_value_to_englishy_name (uint32_t val);
-DRC_class DW_LNE_value_to_class (uint32_t val);
-#define DW_LNE_MAX_NAME_LENGTH 19
-
-
-/* [7.22] Figure 35 "Macinfo Type Encodings" (p. 150) in DWARFv3 draft 8 */
 
 const char *DW_MACINFO_value_to_name (uint32_t val);
-const char *DW_MACINFO_value_to_englishy_name (uint32_t val);
-DRC_class DW_MACINFO_value_to_class (uint32_t val);
-#define DW_MACINFO_MAX_NAME_LENGTH 21
-
-
-/* [7.23] Figure 36 "Call frame instruction encodings" (pp. 151-152) in DWARFv3 draft 8 */
 
 const char *DW_CFA_value_to_name (uint32_t val);
-const char *DW_CFA_value_to_englishy_name (uint32_t val);
-DRC_class DW_CFA_value_to_class (uint32_t val);
-#define DW_CFA_MAX_NAME_LENGTH 25
-
-
-/* FSF exception handling Pointer-Encoding constants (CFI augmentation) -- "DW_EH_PE_..." in the FSF sources */
 
 const char *DW_GNU_EH_PE_value_to_name (uint32_t val);
-const char *DW_GNU_EH_PE_value_to_englishy_name (uint32_t val);
-DRC_class DW_GNU_EH_PE_value_to_class (uint32_t val);
-#define DW_GNU_EH_PE_MAX_NAME_LENGTH 21
-
 
 /* These DRC are entirely our own construction,
     although they are derived from various comments in the DWARF standard.
@@ -240,13 +111,7 @@ DRC_class DW_GNU_EH_PE_value_to_class (uint32_t val);
 #define DRC_VENDOR_MIPS                 0x40000000
 #define DRC_ZEROOPERANDS                0x80000000
 
-bool is_type_tag (uint16_t tag);
-bool is_pubtype_tag (uint16_t tag);
-
-
-#ifdef __cplusplus
-}
-#endif
+} // namespace lldb_private
 
 
 #endif  // liblldb_DWARFDefines_h_

@@ -231,7 +231,7 @@
 		26D5B11111B07550009A862E /* DWARFDebugPubnames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89C910F57C5600BB2B04 /* DWARFDebugPubnames.cpp */; };
 		26D5B11211B07550009A862E /* DWARFDebugPubnamesSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89CB10F57C5600BB2B04 /* DWARFDebugPubnamesSet.cpp */; };
 		26D5B11311B07550009A862E /* DWARFDebugRanges.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89CD10F57C5600BB2B04 /* DWARFDebugRanges.cpp */; };
-		26D5B11411B07550009A862E /* DWARFDefines.c in Sources */ = {isa = PBXBuildFile; fileRef = 260C89CF10F57C5600BB2B04 /* DWARFDefines.c */; };
+		26D5B11411B07550009A862E /* DWARFDefines.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89CF10F57C5600BB2B04 /* DWARFDefines.cpp */; };
 		26D5B11511B07550009A862E /* DWARFDIECollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D110F57C5600BB2B04 /* DWARFDIECollection.cpp */; };
 		26D5B11611B07550009A862E /* DWARFFormValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D310F57C5600BB2B04 /* DWARFFormValue.cpp */; };
 		26D5B11711B07550009A862E /* DWARFLocationDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89D510F57C5600BB2B04 /* DWARFLocationDescription.cpp */; };
@@ -479,7 +479,7 @@
 		260C89CC10F57C5600BB2B04 /* DWARFDebugPubnamesSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDebugPubnamesSet.h; sourceTree = "<group>"; };
 		260C89CD10F57C5600BB2B04 /* DWARFDebugRanges.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDebugRanges.cpp; sourceTree = "<group>"; };
 		260C89CE10F57C5600BB2B04 /* DWARFDebugRanges.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDebugRanges.h; sourceTree = "<group>"; };
-		260C89CF10F57C5600BB2B04 /* DWARFDefines.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = DWARFDefines.c; sourceTree = "<group>"; };
+		260C89CF10F57C5600BB2B04 /* DWARFDefines.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; path = DWARFDefines.cpp; sourceTree = "<group>"; };
 		260C89D010F57C5600BB2B04 /* DWARFDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDefines.h; sourceTree = "<group>"; };
 		260C89D110F57C5600BB2B04 /* DWARFDIECollection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFDIECollection.cpp; sourceTree = "<group>"; };
 		260C89D210F57C5600BB2B04 /* DWARFDIECollection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFDIECollection.h; sourceTree = "<group>"; };
@@ -1328,7 +1328,7 @@
 				260C89CC10F57C5600BB2B04 /* DWARFDebugPubnamesSet.h */,
 				260C89CD10F57C5600BB2B04 /* DWARFDebugRanges.cpp */,
 				260C89CE10F57C5600BB2B04 /* DWARFDebugRanges.h */,
-				260C89CF10F57C5600BB2B04 /* DWARFDefines.c */,
+				260C89CF10F57C5600BB2B04 /* DWARFDefines.cpp */,
 				260C89D010F57C5600BB2B04 /* DWARFDefines.h */,
 				260C89D110F57C5600BB2B04 /* DWARFDIECollection.cpp */,
 				260C89D210F57C5600BB2B04 /* DWARFDIECollection.h */,
@@ -2535,7 +2535,7 @@
 				26D5B11111B07550009A862E /* DWARFDebugPubnames.cpp in Sources */,
 				26D5B11211B07550009A862E /* DWARFDebugPubnamesSet.cpp in Sources */,
 				26D5B11311B07550009A862E /* DWARFDebugRanges.cpp in Sources */,
-				26D5B11411B07550009A862E /* DWARFDefines.c in Sources */,
+				26D5B11411B07550009A862E /* DWARFDefines.cpp in Sources */,
 				26D5B11511B07550009A862E /* DWARFDIECollection.cpp in Sources */,
 				26D5B11611B07550009A862E /* DWARFFormValue.cpp in Sources */,
 				26D5B11711B07550009A862E /* DWARFLocationDescription.cpp in Sources */,
