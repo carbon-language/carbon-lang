@@ -127,6 +127,72 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+// Recursively find any substatements containing macros
+bool Stmt::containsMacro(const Stmt *S) {
+  if (S->getLocStart().isMacroID())
+    return true;
+
+  if (S->getLocEnd().isMacroID())
+    return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end(); ++I)
+    if (const Stmt *child = *I)
+      if (containsMacro(child))
+        return true;
+
+  return false;
+}
+
+// Recursively find any substatements containing enum constants
+bool Stmt::containsEnum(const Stmt *S) {
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
+
+  if (DR && isa<EnumConstantDecl>(DR->getDecl()))
+    return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end(); ++I)
+      if (const Stmt *child = *I)
+        if (containsEnum(child))
+          return true;
+
+  return false;
+}
+
+bool Stmt::containsZeroConstant(const Stmt *S) {
+  const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
+  if (IL && IL->getValue() == 0)
+    return true;
+
+  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S);
+  if (FL && FL->getValue().isZero())
+    return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end(); ++I)
+    if (const Stmt *child = *I)
+      if (containsZeroConstant(child))
+        return true;
+
+  return false;
+}
+
+bool Stmt::containsOneConstant(const Stmt *S) {
+  const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
+  if (IL && IL->getValue() == 1)
+    return true;
+
+  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S);
+  const llvm::APFloat one(1.0);
+  if (FL && FL->getValue().compare(one) == llvm::APFloat::cmpEqual)
+    return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end(); ++I)
+    if (const Stmt *child = *I)
+      if (containsOneConstant(child))
+        return true;
+
+  return false;
+}
+
 Expr *AsmStmt::getOutputExpr(unsigned i) {
   return cast<Expr>(Exprs[i]);
 }

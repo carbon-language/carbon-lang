@@ -253,6 +253,25 @@ public:
   ///  within CFGs.
   bool hasImplicitControlFlow() const;
 
+  /// contains* - Useful recursive methods to see if a statement contains an
+  ///   element somewhere. Used in static analysis to reduce false positives.
+  static bool containsMacro(const Stmt *S);
+  static bool containsEnum(const Stmt *S);
+  static bool containsZeroConstant(const Stmt *S);
+  static bool containsOneConstant(const Stmt *S);
+  template <class T> static bool containsStmt(const Stmt *S) {
+    if (isa<T>(S))
+        return true;
+
+    for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end(); ++I)
+        if (const Stmt *child = *I)
+          if (containsStmt<T>(child))
+            return true;
+
+      return false;
+  }
+
+
   /// Child Iterators: All subclasses must implement child_begin and child_end
   ///  to permit easy iteration over the substatements/subexpessions of an
   ///  AST node.  This permits easy iteration over all nodes in the AST.
