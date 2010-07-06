@@ -30,13 +30,13 @@ class TestClassTypes(lldbtest.TestBase):
         self.ci.HandleCommand("thread list", res)
         print "thread list ->", res.GetOutput()
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('state is Stopped') and
-                        res.GetOutput().find('stop reason = breakpoint'))
+        self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
+                        res.GetOutput().find('stop reason = breakpoint') > 0)
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1'))
+        self.assertTrue(res.GetOutput().find(' resolved, hit count = 1') > 0)
 
         # Check that the 'callback' variable display properly.
         self.ci.HandleCommand("variable list callback", res);
@@ -55,9 +55,9 @@ class TestClassTypes(lldbtest.TestBase):
         self.assertTrue(res.Succeeded())
         output = res.GetOutput()
         #print "process status =", output
-        self.assertTrue(output.find('where = a.out`string_not_empty') and
-                        output.find('main.c:12') and
-                        output.find('stop reason = breakpoint'))
+        self.assertTrue(output.find('where = a.out`string_not_empty') > 0 and
+                        output.find('main.c:12') > 0 and
+                        output.find('stop reason = breakpoint') > 0)
 
         self.ci.HandleCommand("continue", res)
         self.assertTrue(res.Succeeded())

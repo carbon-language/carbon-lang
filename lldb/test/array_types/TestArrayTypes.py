@@ -30,13 +30,13 @@ class TestArrayTypes(lldbtest.TestBase):
         self.ci.HandleCommand("thread list", res)
         print "thread list ->", res.GetOutput()
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('state is Stopped') and
-                        res.GetOutput().find('stop reason = breakpoint'))
+        self.assertTrue(res.GetOutput().find('state is Stopped') > 0 and
+                        res.GetOutput().find('stop reason = breakpoint') > 0)
 
         # The breakpoint should have a hit count of 1.
         self.ci.HandleCommand("breakpoint list", res)
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('resolved, hit count = 1'))
+        self.assertTrue(res.GetOutput().find('resolved, hit count = 1') > 0)
 
         # Issue 'variable list' command on several array-type variables.
 
@@ -44,19 +44,19 @@ class TestArrayTypes(lldbtest.TestBase):
         self.assertTrue(res.Succeeded())
         output = res.GetOutput()
         self.assertTrue(output.startswith('(char *[4])') and
-                        output.find('(char *) strings[0]') and
-                        output.find('(char *) strings[1]') and
-                        output.find('(char *) strings[2]') and
-                        output.find('(char *) strings[3]') and
-                        output.find('Hello') and
-                        output.find('Hola') and
-                        output.find('Bonjour') and
-                        output.find('Guten Tag'))
+                        output.find('(char *) strings[0]') > 0 and
+                        output.find('(char *) strings[1]') > 0 and
+                        output.find('(char *) strings[2]') > 0 and
+                        output.find('(char *) strings[3]') > 0 and
+                        output.find('Hello') > 0 and
+                        output.find('Hola') > 0 and
+                        output.find('Bonjour') > 0 and
+                        output.find('Guten Tag') > 0)
 
         self.ci.HandleCommand("variable list char_16", res);
         self.assertTrue(res.Succeeded())
-        self.assertTrue(res.GetOutput().find('(char) char_16[0]') and
-                        res.GetOutput().find('(char) char_16[15]'))
+        self.assertTrue(res.GetOutput().find('(char) char_16[0]') > 0 and
+                        res.GetOutput().find('(char) char_16[15]') > 0)
 
         self.ci.HandleCommand("variable list ushort_matrix", res);
         self.assertTrue(res.Succeeded())
