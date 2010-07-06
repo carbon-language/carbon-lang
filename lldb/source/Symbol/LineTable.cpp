@@ -194,22 +194,50 @@ LineTable::FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry
                     --pos;
                 else if (pos->sect_offset == search_entry.sect_offset)
                 {
-                    while (pos != begin_pos)
+                    // If this is a termination entry, it should't match since
+                    // entries with the "is_terminal_entry" member set to true 
+                    // are termination entries that define the range for the 
+                    // previous entry.
+                    if (pos->is_terminal_entry)
                     {
-                        entry_collection::const_iterator prev_pos = pos - 1;
-                        if (prev_pos->sect_idx    == search_entry.sect_idx &&
-                            prev_pos->sect_offset == search_entry.sect_offset)
-                            --pos;
-                        else
-                            break;
+                        // The matching entry is a terminal entry, so we skip
+                        // ahead to the next entry to see if there is another
+                        // entry following this one whose section/offset matches.
+                        ++pos;
+                        if (pos != end_pos)
+                        {
+                            if (pos->sect_offset != search_entry.sect_offset)
+                                pos = end_pos;
+                        }
+                    }
+                    
+                    if (pos != end_pos)
+                    {
+                        // While in the same section/offset backup to find the first
+                        // line entry that matches the address in case there are 
+                        // multiple
+                        while (pos != begin_pos)
+                        {
+                            entry_collection::const_iterator prev_pos = pos - 1;
+                            if (prev_pos->sect_idx    == search_entry.sect_idx &&
+                                prev_pos->sect_offset == search_entry.sect_offset &&
+                                prev_pos->is_terminal_entry == false)
+                                --pos;
+                            else
+                                break;
+                        }
                     }
                 }
 
             }
-            uint32_t match_idx = std::distance (begin_pos, pos);
-            success = ConvertEntryAtIndexToLineEntry(match_idx, line_entry);
-            if (index_ptr != NULL && success)
-                *index_ptr = match_idx;
+            
+            if (pos != end_pos)
+            {
+                uint32_t match_idx = std::distance (begin_pos, pos);
+                success = ConvertEntryAtIndexToLineEntry(match_idx, line_entry);
+                if (index_ptr != NULL && success)
+                    *index_ptr = match_idx;
+            }
         }
     }
     return success;
