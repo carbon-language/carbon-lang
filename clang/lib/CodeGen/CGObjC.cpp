@@ -783,8 +783,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                               llvm::ConstantInt::get(UnsignedLongLTy, 1));
   Builder.CreateStore(Counter, CounterPtr);
 
-  llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
-  llvm::BasicBlock *AfterBody = createBasicBlock("afterbody");
+  JumpDest LoopEnd = getJumpDestInCurrentScope("loopend");
+  JumpDest AfterBody = getJumpDestInCurrentScope("afterbody");
 
   BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
 
@@ -792,7 +792,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   BreakContinueStack.pop_back();
 
-  EmitBlock(AfterBody);
+  EmitBlock(AfterBody.Block);
 
   llvm::BasicBlock *FetchMore = createBasicBlock("fetchmore");
 
@@ -828,11 +828,11 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                         LV.getAddress());
   }
 
-  EmitBlock(LoopEnd);
+  EmitBlock(LoopEnd.Block);
 }
 
 void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S) {
-  CGM.getObjCRuntime().EmitTryOrSynchronizedStmt(*this, S);
+  CGM.getObjCRuntime().EmitTryStmt(*this, S);
 }
 
 void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S) {
@@ -841,7 +841,9 @@ void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S) {
 
 void CodeGenFunction::EmitObjCAtSynchronizedStmt(
                                               const ObjCAtSynchronizedStmt &S) {
-  CGM.getObjCRuntime().EmitTryOrSynchronizedStmt(*this, S);
+  CGM.getObjCRuntime().EmitSynchronizedStmt(*this, S);
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}
+
+

@@ -532,7 +532,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 
   // Don't make this a live temporary if we're emitting an initializer expr.
   if (!IsInitializer)
-    CGF.PushCXXTemporary(E->getTemporary(), Val);
+    CGF.EmitCXXTemporary(E->getTemporary(), Val);
 }
 
 void

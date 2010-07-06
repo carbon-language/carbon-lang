@@ -347,8 +347,6 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   EmitBlock(InitCheckBlock);
 
   // Variables used when coping with thread-safe statics and exceptions.
-  llvm::BasicBlock *SavedLandingPad = 0;
-  llvm::BasicBlock *LandingPad = 0;
   if (ThreadsafeStatics) {    
     // Call __cxa_guard_acquire.
     V = Builder.CreateCall(getGuardAcquireFn(*this), GuardVariable);
@@ -358,10 +356,10 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     Builder.CreateCondBr(Builder.CreateIsNotNull(V, "tobool"),
                          InitBlock, EndBlock);
   
+    // Call __cxa_guard_abort along the exceptional edge.
     if (Exceptions) {
-      SavedLandingPad = getInvokeDest();
-      LandingPad = createBasicBlock("guard.lpad");
-      setInvokeDest(LandingPad);
+      CleanupBlock Cleanup(*this, EHCleanup);
+      Builder.CreateCall(getGuardAbortFn(*this), GuardVariable);
     }
     
     EmitBlock(InitBlock);
@@ -376,7 +374,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
     EmitDeclInit(*this, D, GV);
 
   if (ThreadsafeStatics) {
-    // Call __cxa_guard_release.
+    // Call __cxa_guard_release.  This cannot throw.
     Builder.CreateCall(getGuardReleaseFn(*this), GuardVariable);    
   } else {
     llvm::Value *One = 
@@ -387,58 +385,6 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   // Register the call to the destructor.
   if (!D.getType()->isReferenceType())
     EmitDeclDestroy(*this, D, GV);
-  
-  if (ThreadsafeStatics && Exceptions) {
-    // If an exception is thrown during initialization, call __cxa_guard_abort
-    // along the exceptional edge.
-    EmitBranch(EndBlock);
-    
-    // Construct the landing pad.
-    EmitBlock(LandingPad);
-        
-    // Personality function and LLVM intrinsics.
-    llvm::Constant *Personality =
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
-                                                        (VMContext),
-                                                        true),
-                                "__gxx_personality_v0");
-    Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
-    llvm::Value *llvm_eh_exception =
-      CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
-    llvm::Value *llvm_eh_selector =
-      CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
-    
-    // Exception object
-    llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
-    llvm::Value *RethrowPtr = CreateTempAlloca(Exc->getType(), "_rethrow");
-
-    // Call the selector function.
-    const llvm::PointerType *PtrToInt8Ty 
-      = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
-    llvm::Constant *Null = llvm::ConstantPointerNull::get(PtrToInt8Ty);
-    llvm::Value* SelectorArgs[3] = { Exc, Personality, Null };
-    Builder.CreateCall(llvm_eh_selector, SelectorArgs, SelectorArgs + 3,
-                           "selector");
-    Builder.CreateStore(Exc, RethrowPtr);
-                                
-    // Call __cxa_guard_abort along the exceptional edge.
-    Builder.CreateCall(getGuardAbortFn(*this), GuardVariable);
-
-    setInvokeDest(SavedLandingPad);
-
-    // Rethrow the current exception.
-    if (getInvokeDest()) {
-      llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
-      Builder.CreateInvoke(getUnwindResumeOrRethrowFn(), Cont,
-                           getInvokeDest(),
-                           Builder.CreateLoad(RethrowPtr));
-      EmitBlock(Cont);
-    } else
-      Builder.CreateCall(getUnwindResumeOrRethrowFn(),
-                         Builder.CreateLoad(RethrowPtr));
-    
-    Builder.CreateUnreachable();    
-  }    
   
   EmitBlock(EndBlock);
 }

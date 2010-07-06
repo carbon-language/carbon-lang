@@ -181,8 +181,10 @@ public:
   /// compiler when a mutation is detected during foreach iteration.
   virtual llvm::Constant *EnumerationMutationFunction() = 0;
 
-  virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
-                                         const Stmt &S) = 0;
+  virtual void EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
+                                    const ObjCAtSynchronizedStmt &S) = 0;
+  virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
+                           const ObjCAtTryStmt &S) = 0;
   virtual void EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                              const ObjCAtThrowStmt &S) = 0;
   virtual llvm::Value *EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,

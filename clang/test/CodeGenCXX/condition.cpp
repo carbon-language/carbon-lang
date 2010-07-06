@@ -96,66 +96,132 @@ void switch_destruct(int z) {
 
 int foo();
 
+// CHECK: define void @_Z14while_destructi
 void while_destruct(int z) {
-  // CHECK: define void @_Z14while_destructi
-  // CHECK: {{while.cond:|:3}}
+  // CHECK: [[Z:%.*]] = alloca i32
+  // CHECK: [[CLEANUPDEST:%.*]] = alloca i32
   while (X x = X()) {
     // CHECK: call void @_ZN1XC1Ev
+    // CHECK-NEXT: [[COND:%.*]] = call zeroext i1 @_ZN1XcvbEv
+    // CHECK-NEXT: br i1 [[COND]]
 
-    // CHECK: {{while.body:|:5}}
-    // CHECK: store i32 21
+    // Loop-exit staging block.
+    // CHECK: store i32 1, i32* [[CLEANUPDEST]]
+    // CHECK-NEXT: br
+
+    // While body.
+    // CHECK: store i32 21, i32* [[Z]]
+    // CHECK: store i32 2, i32* [[CLEANUPDEST]]
+    // CHECK-NEXT: br
     z = 21;
 
-    // CHECK: {{while.cleanup:|:6}}
+    // Cleanup.
     // CHECK: call void @_ZN1XD1Ev
+    // CHECK-NEXT: [[DEST:%.*]] = load i32* [[CLEANUPDEST]]
+    // CHECK-NEXT: switch i32 [[DEST]]
   }
-  // CHECK: {{while.end|:8}}
-  // CHECK: store i32 22
+
+  // CHECK: store i32 22, i32* [[Z]]
   z = 22;
 
   // CHECK: call void @_Z4getXv
-  // CHECK: call zeroext i1 @_ZN1XcvbEv
-  // CHECK: call void @_ZN1XD1Ev
-  // CHECK: br
+  // CHECK-NEXT: call zeroext i1 @_ZN1XcvbEv
+  // CHECK-NEXT: call void @_ZN1XD1Ev
+  // CHECK-NEXT: br
   while(getX()) { }
 
-  // CHECK: store i32 25
+  // CHECK: store i32 25, i32* [[Z]]
   z = 25;
 
   // CHECK: ret
 }
 
+// CHECK: define void @_Z12for_destructi(
 void for_destruct(int z) {
-  // CHECK: define void @_Z12for_destruct
+  // CHECK: [[Z:%.*]] = alloca i32
+  // CHECK: [[XDEST:%.*]] = alloca i32
+  // CHECK: [[I:%.*]] = alloca i32
   // CHECK: call void @_ZN1YC1Ev
-  for(Y y = Y(); X x = X(); ++z)
-    // CHECK: {{for.cond:|:4}}
+  // CHECK-NEXT: br
+  // -> %for.cond
+
+  for(Y y = Y(); X x = X(); ++z) {
+    // %for.cond: The loop condition.
     // CHECK: call void @_ZN1XC1Ev
-    // CHECK: {{for.body:|:6}}
-    // CHECK: store i32 23
+    // CHECK-NEXT: [[COND:%.*]] = call zeroext i1 @_ZN1XcvbEv(
+    // CHECK-NEXT: br i1 [[COND]]
+    // -> %for.body, %for.cond.cleanup
+
+    // %for.cond.cleanup: Exit cleanup staging.
+    // CHECK: store i32 1, i32* [[XDEST]]
+    // CHECK-NEXT: br
+    // -> %cleanup
+
+    // %for.body:
+    // CHECK: store i32 23, i32* [[Z]]
+    // CHECK-NEXT: br
+    // -> %for.inc
     z = 23;
-    // CHECK: {{for.inc:|:7}}
-    // CHECK: br label %{{for.cond.cleanup|10}}
-    // CHECK: {{for.cond.cleanup:|:10}}
+
+    // %for.inc:
+    // CHECK: [[TMP:%.*]] = load i32* [[Z]]
+    // CHECK-NEXT: [[INC:%.*]] = add nsw i32 [[TMP]], 1
+    // CHECK-NEXT: store i32 [[INC]], i32* [[Z]]
+    // CHECK-NEXT: store i32 2, i32* [[XDEST]]
+    // CHECK-NEXT: br
+    // -> %cleanup
+
+    // %cleanup:  Destroys X.
     // CHECK: call void @_ZN1XD1Ev
-  // CHECK: {{for.end:|:12}}
-  // CHECK: call void @_ZN1YD1Ev
+    // CHECK-NEXT: [[YDESTTMP:%.*]] = load i32* [[XDEST]]
+    // CHECK-NEXT: switch i32 [[YDESTTMP]]
+    // 1 -> %cleanup4, 2 -> %cleanup.cont
+
+    // %cleanup.cont:  (eliminable)
+    // CHECK: br
+    // -> %for.cond
+
+    // %cleanup4: Destroys Y.
+    // CHECK: call void @_ZN1YD1Ev(
+    // CHECK-NEXT: br
+    // -> %for.end
+  }
+
+  // %for.end:
   // CHECK: store i32 24
   z = 24;
 
+  // CHECK-NEXT: store i32 0, i32* [[I]]
+  // CHECK-NEXT: br
+  // -> %for.cond6
+
+  // %for.cond6:
   // CHECK: call void @_Z4getXv
-  // CHECK: call zeroext i1 @_ZN1XcvbEv
-  // CHECK: call void @_ZN1XD1Ev
+  // CHECK-NEXT: call zeroext i1 @_ZN1XcvbEv
+  // CHECK-NEXT: call void @_ZN1XD1Ev
+  // CHECK-NEXT: br
+  // -> %for.body10, %for.end16
+
+  // %for.body10:
   // CHECK: br
+  // -> %for.inc11
+
+  // %for.inc11:
   // CHECK: call void @_Z4getXv
-  // CHECK: load
-  // CHECK: add
-  // CHECK: call void @_ZN1XD1Ev
+  // CHECK-NEXT: load i32* [[I]]
+  // CHECK-NEXT: add
+  // CHECK-NEXT: store
+  // CHECK-NEXT: call void @_ZN1XD1Ev
+  // CHECK-NEXT: br
+  // -> %for.cond6
   int i = 0;
   for(; getX(); getX(), ++i) { }
-  z = 26;
+
+  // %for.end16
   // CHECK: store i32 26
-  // CHECK: ret
+  z = 26;
+
+  // CHECK-NEXT: ret void
 }
 
 void do_destruct(int z) {

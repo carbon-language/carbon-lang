@@ -391,7 +391,8 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
-void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
+void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
+                                            SpecialInitFn *SpecialInit) {
   QualType Ty = D.getType();
   bool isByRef = D.hasAttr<BlocksAttr>();
   bool needsDispose = false;
@@ -489,7 +490,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
       {
         // Push a cleanup block and restore the stack there.
-        DelayedCleanupBlock scope(*this);
+        CleanupBlock scope(*this, NormalCleanup);
 
         V = Builder.CreateLoad(Stack, "tmp");
         llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
@@ -597,7 +598,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
   }
 
-  if (Init) {
+  if (SpecialInit) {
+    SpecialInit(*this, D, DeclPtr);
+  } else if (Init) {
     llvm::Value *Loc = DeclPtr;
     if (isByRef)
       Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
@@ -663,7 +666,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EmitAggExpr(Init, Loc, isVolatile);
     }
   }
-  
+
   // Handle CXX destruction of variables.
   QualType DtorTy(Ty);
   while (const ArrayType *Array = getContext().getAsArrayType(DtorTy))
@@ -683,20 +686,18 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         
         if (const ConstantArrayType *Array = 
               getContext().getAsConstantArrayType(Ty)) {
-          {
-            DelayedCleanupBlock Scope(*this);
-            QualType BaseElementTy = getContext().getBaseElementType(Array);
-            const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-            BasePtr = llvm::PointerType::getUnqual(BasePtr);
-            llvm::Value *BaseAddrPtr =
-              Builder.CreateBitCast(Loc, BasePtr);
-            EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
-          
-            // Make sure to jump to the exit block.
-            EmitBranch(Scope.getCleanupExitBlock());
-          }
+          CleanupBlock Scope(*this, NormalCleanup);
+
+          QualType BaseElementTy = getContext().getBaseElementType(Array);
+          const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+          BasePtr = llvm::PointerType::getUnqual(BasePtr);
+          llvm::Value *BaseAddrPtr =
+            Builder.CreateBitCast(Loc, BasePtr);
+          EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+
           if (Exceptions) {
-            EHCleanupBlock Cleanup(*this);
+            Scope.beginEHCleanup();
+
             QualType BaseElementTy = getContext().getBaseElementType(Array);
             const llvm::Type *BasePtr = ConvertType(BaseElementTy);
             BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -705,30 +706,30 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
             EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           }
         } else {
-          {
-            // Normal destruction. 
-            DelayedCleanupBlock Scope(*this);
+          // Normal destruction. 
+          CleanupBlock Scope(*this, NormalCleanup);
 
-            if (NRVO) {
-              // If we exited via NRVO, we skip the destructor call.
-              llvm::BasicBlock *NoNRVO = createBasicBlock("nrvo.unused");
-              Builder.CreateCondBr(Builder.CreateLoad(NRVOFlag, "nrvo.val"),
-                                   Scope.getCleanupExitBlock(),
-                                   NoNRVO);
-              EmitBlock(NoNRVO);
-            }
-            
-            // We don't call the destructor along the normal edge if we're
-            // applying the NRVO.
-            EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
-                                  Loc);
-
-            // Make sure to jump to the exit block.
-            EmitBranch(Scope.getCleanupExitBlock());
+          llvm::BasicBlock *SkipDtor = 0;
+          if (NRVO) {
+            // If we exited via NRVO, we skip the destructor call.
+            llvm::BasicBlock *NoNRVO = createBasicBlock("nrvo.unused");
+            SkipDtor = createBasicBlock("nrvo.skipdtor");
+            Builder.CreateCondBr(Builder.CreateLoad(NRVOFlag, "nrvo.val"),
+                                 SkipDtor,
+                                 NoNRVO);
+            EmitBlock(NoNRVO);
           }
           
+          // We don't call the destructor along the normal edge if we're
+          // applying the NRVO.
+          EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
+                                Loc);
+
+          if (NRVO) EmitBlock(SkipDtor);
+
+          // Along the exceptions path we always execute the dtor.
           if (Exceptions) {
-            EHCleanupBlock Cleanup(*this);
+            Scope.beginEHCleanup();
             EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
                                   Loc);
           }
@@ -752,17 +753,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     //
     // To fix this we insert a bitcast here.
     QualType ArgTy = Info.arg_begin()->type;
-    {
-      DelayedCleanupBlock scope(*this);
 
-      CallArgList Args;
-      Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
-                                                           ConvertType(ArgTy))),
-                                    getContext().getPointerType(D.getType())));
-      EmitCall(Info, F, ReturnValueSlot(), Args);
-    }
+    CleanupBlock CleanupScope(*this, NormalCleanup);
+
+    // Normal cleanup.
+    CallArgList Args;
+    Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
+                                                         ConvertType(ArgTy))),
+                                  getContext().getPointerType(D.getType())));
+    EmitCall(Info, F, ReturnValueSlot(), Args);
+
+    // EH cleanup.
     if (Exceptions) {
-      EHCleanupBlock Cleanup(*this);
+      CleanupScope.beginEHCleanup();
 
       CallArgList Args;
       Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
@@ -773,15 +776,16 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
-    {
-      DelayedCleanupBlock scope(*this);
-      llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-      V = Builder.CreateLoad(V);
-      BuildBlockRelease(V);
-    }
+    CleanupBlock CleanupScope(*this, NormalCleanup);
+
+    llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+    V = Builder.CreateLoad(V);
+    BuildBlockRelease(V);
+
     // FIXME: Turn this on and audit the codegen
     if (0 && Exceptions) {
-      EHCleanupBlock Cleanup(*this);
+      CleanupScope.beginEHCleanup();
+
       llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
       V = Builder.CreateLoad(V);
       BuildBlockRelease(V);

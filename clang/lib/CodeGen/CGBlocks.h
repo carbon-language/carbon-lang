@@ -99,7 +99,7 @@ public:
 
   llvm::Value *BlockObjectAssign;
   llvm::Value *BlockObjectDispose;
-  const llvm::Type *PtrToInt8Ty;
+  const llvm::PointerType *PtrToInt8Ty;
 
   std::map<uint64_t, llvm::Constant *> AssignCache;
   std::map<uint64_t, llvm::Constant *> DestroyCache;

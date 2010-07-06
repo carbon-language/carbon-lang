@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGDebugInfo.h"
+#include "CGException.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
@@ -30,10 +31,12 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : BlockFunction(cgm, *this, Builder), CGM(cgm),
     Target(CGM.getContext().Target),
     Builder(cgm.getModule().getContext()),
-    DebugInfo(0), IndirectBranch(0),
+    ExceptionSlot(0), DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
+    DidCallStackSave(false), UnreachableBlock(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
-    ConditionalBranchLevel(0), TerminateHandler(0), TrapBB(0) {
+    ConditionalBranchLevel(0), TerminateLandingPad(0), TerminateHandler(0),
+    TrapBB(0) {
       
   // Get some frequently used types.
   LLVMPointerWidth = Target.getPointerWidth(0);
@@ -51,14 +54,6 @@ ASTContext &CodeGenFunction::getContext() const {
   return CGM.getContext();
 }
 
-
-llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
-  llvm::BasicBlock *&BB = LabelMap[S];
-  if (BB) return BB;
-
-  // Create, but don't insert, the new block.
-  return BB = createBasicBlock(S->getName());
-}
 
 llvm::Value *CodeGenFunction::GetAddrOfLocalVar(const VarDecl *VD) {
   llvm::Value *Res = LocalDeclMap[VD];
@@ -94,25 +89,26 @@ void CodeGenFunction::EmitReturnBlock() {
 
     // We have a valid insert point, reuse it if it is empty or there are no
     // explicit jumps to the return block.
-    if (CurBB->empty() || ReturnBlock->use_empty()) {
-      ReturnBlock->replaceAllUsesWith(CurBB);
-      delete ReturnBlock;
+    if (CurBB->empty() || ReturnBlock.Block->use_empty()) {
+      ReturnBlock.Block->replaceAllUsesWith(CurBB);
+      delete ReturnBlock.Block;
     } else
-      EmitBlock(ReturnBlock);
+      EmitBlock(ReturnBlock.Block);
     return;
   }
 
   // Otherwise, if the return block is the target of a single direct
   // branch then we can just put the code in that block instead. This
   // cleans up functions which started with a unified return block.
-  if (ReturnBlock->hasOneUse()) {
+  if (ReturnBlock.Block->hasOneUse()) {
     llvm::BranchInst *BI =
-      dyn_cast<llvm::BranchInst>(*ReturnBlock->use_begin());
-    if (BI && BI->isUnconditional() && BI->getSuccessor(0) == ReturnBlock) {
+      dyn_cast<llvm::BranchInst>(*ReturnBlock.Block->use_begin());
+    if (BI && BI->isUnconditional() &&
+        BI->getSuccessor(0) == ReturnBlock.Block) {
       // Reset insertion point and delete the branch.
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
-      delete ReturnBlock;
+      delete ReturnBlock.Block;
       return;
     }
   }
@@ -121,16 +117,19 @@ void CodeGenFunction::EmitReturnBlock() {
   // unless it has uses. However, we still need a place to put the debug
   // region.end for now.
 
-  EmitBlock(ReturnBlock);
+  EmitBlock(ReturnBlock.Block);
+}
+
+static void EmitIfUsed(CodeGenFunction &CGF, llvm::BasicBlock *BB) {
+  if (!BB) return;
+  if (!BB->use_empty())
+    return CGF.CurFn->getBasicBlockList().push_back(BB);
+  delete BB;
 }
 
 void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
-  assert(BlockScopes.empty() &&
-         "did not remove all blocks from block scope map!");
-  assert(CleanupEntries.empty() &&
-         "mismatched push/pop in cleanup stack!");
 
   // Emit function epilog (to return).
   EmitReturnBlock();
@@ -145,6 +144,9 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 
   EmitFunctionEpilog(*CurFnInfo);
   EmitEndEHSpec(CurCodeDecl);
+
+  assert(EHStack.empty() &&
+         "did not remove all scopes from cleanup stack!");
 
   // If someone did an indirect goto, emit the indirect goto block at the end of
   // the function.
@@ -167,6 +169,10 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
       PN->eraseFromParent();
     }
   }
+
+  EmitIfUsed(*this, TerminateLandingPad);
+  EmitIfUsed(*this, TerminateHandler);
+  EmitIfUsed(*this, UnreachableBlock);
 }
 
 /// ShouldInstrumentFunction - Return true if the current function should be
@@ -241,7 +247,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   if (Builder.isNamePreserving())
     AllocaInsertPt->setName("allocapt");
 
-  ReturnBlock = createBasicBlock("return");
+  ReturnBlock = getJumpDestInCurrentScope("return");
 
   Builder.SetInsertPoint(EntryBB);
 
@@ -576,7 +582,7 @@ llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelStmt *L) {
   if (IndirectBranch == 0)
     GetIndirectGotoBlock();
   
-  llvm::BasicBlock *BB = getBasicBlockForLabel(L);
+  llvm::BasicBlock *BB = getJumpDestForLabel(L).Block;
   
   // Make sure the indirect branch includes all of the address-taken blocks.
   IndirectBranch->addDestination(BB);
@@ -653,223 +659,386 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
   return EmitLValue(E).getAddress();
 }
 
-void CodeGenFunction::PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
-                                       llvm::BasicBlock *CleanupExitBlock,
-                                       llvm::BasicBlock *PreviousInvokeDest,
-                                       bool EHOnly) {
-  CleanupEntries.push_back(CleanupEntry(CleanupEntryBlock, CleanupExitBlock,
-                                        PreviousInvokeDest, EHOnly));
+/// Pops cleanup blocks until the given savepoint is reached.
+void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old) {
+  assert(Old.isValid());
+
+  EHScopeStack::iterator E = EHStack.find(Old);
+  while (EHStack.begin() != E)
+    PopCleanupBlock();
 }
 
-void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize) {
-  assert(CleanupEntries.size() >= OldCleanupStackSize &&
-         "Cleanup stack mismatch!");
+/// Destroys a cleanup if it was unused.
+static void DestroyCleanup(CodeGenFunction &CGF,
+                           llvm::BasicBlock *Entry,
+                           llvm::BasicBlock *Exit) {
+  assert(Entry->use_empty() && "destroying cleanup with uses!");
+  assert(Exit->getTerminator() == 0 &&
+         "exit has terminator but entry has no predecessors!");
 
-  while (CleanupEntries.size() > OldCleanupStackSize)
-    EmitCleanupBlock();
+  // This doesn't always remove the entire cleanup, but it's much
+  // safer as long as we don't know what blocks belong to the cleanup.
+  // A *much* better approach if we care about this inefficiency would
+  // be to lazily emit the cleanup.
+
+  // If the exit block is distinct from the entry, give it a branch to
+  // an unreachable destination.  This preserves the well-formedness
+  // of the IR.
+  if (Entry != Exit)
+    llvm::BranchInst::Create(CGF.getUnreachableBlock(), Exit);
+
+  assert(!Entry->getParent() && "cleanup entry already positioned?");
+  delete Entry;
 }
 
-CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
-  CleanupEntry &CE = CleanupEntries.back();
-
-  llvm::BasicBlock *CleanupEntryBlock = CE.CleanupEntryBlock;
-
-  std::vector<llvm::BasicBlock *> Blocks;
-  std::swap(Blocks, CE.Blocks);
-
-  std::vector<llvm::BranchInst *> BranchFixups;
-  std::swap(BranchFixups, CE.BranchFixups);
-
-  bool EHOnly = CE.EHOnly;
-
-  setInvokeDest(CE.PreviousInvokeDest);
-
-  CleanupEntries.pop_back();
-
-  // Check if any branch fixups pointed to the scope we just popped. If so,
-  // we can remove them.
-  for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
-    llvm::BasicBlock *Dest = BranchFixups[i]->getSuccessor(0);
-    BlockScopeMap::iterator I = BlockScopes.find(Dest);
-
-    if (I == BlockScopes.end())
-      continue;
-
-    assert(I->second <= CleanupEntries.size() && "Invalid branch fixup!");
-
-    if (I->second == CleanupEntries.size()) {
-      // We don't need to do this branch fixup.
-      BranchFixups[i] = BranchFixups.back();
-      BranchFixups.pop_back();
-      i--;
-      e--;
-      continue;
-    }
-  }
-
-  llvm::BasicBlock *SwitchBlock = CE.CleanupExitBlock;
-  llvm::BasicBlock *EndBlock = 0;
-  if (!BranchFixups.empty()) {
-    if (!SwitchBlock)
-      SwitchBlock = createBasicBlock("cleanup.switch");
-    EndBlock = createBasicBlock("cleanup.end");
-
-    llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
-
-    Builder.SetInsertPoint(SwitchBlock);
-
-    llvm::Value *DestCodePtr = CreateTempAlloca(Int32Ty, "cleanup.dst");
-    llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
-
-    // Create a switch instruction to determine where to jump next.
-    llvm::SwitchInst *SI = Builder.CreateSwitch(DestCode, EndBlock,
-                                                BranchFixups.size());
-
-    // Restore the current basic block (if any)
-    if (CurBB) {
-      Builder.SetInsertPoint(CurBB);
-
-      // If we had a current basic block, we also need to emit an instruction
-      // to initialize the cleanup destination.
-      Builder.CreateStore(llvm::Constant::getNullValue(Int32Ty),
-                          DestCodePtr);
-    } else
-      Builder.ClearInsertionPoint();
-
-    for (size_t i = 0, e = BranchFixups.size(); i != e; ++i) {
-      llvm::BranchInst *BI = BranchFixups[i];
-      llvm::BasicBlock *Dest = BI->getSuccessor(0);
-
-      // Fixup the branch instruction to point to the cleanup block.
-      BI->setSuccessor(0, CleanupEntryBlock);
-
-      if (CleanupEntries.empty()) {
-        llvm::ConstantInt *ID;
-
-        // Check if we already have a destination for this block.
-        if (Dest == SI->getDefaultDest())
-          ID = llvm::ConstantInt::get(Int32Ty, 0);
-        else {
-          ID = SI->findCaseDest(Dest);
-          if (!ID) {
-            // No code found, get a new unique one by using the number of
-            // switch successors.
-            ID = llvm::ConstantInt::get(Int32Ty, SI->getNumSuccessors());
-            SI->addCase(ID, Dest);
-          }
-        }
-
-        // Store the jump destination before the branch instruction.
-        new llvm::StoreInst(ID, DestCodePtr, BI);
-      } else {
-        // We need to jump through another cleanup block. Create a pad block
-        // with a branch instruction that jumps to the final destination and add
-        // it as a branch fixup to the current cleanup scope.
-
-        // Create the pad block.
-        llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
-
-        // Create a unique case ID.
-        llvm::ConstantInt *ID
-          = llvm::ConstantInt::get(Int32Ty, SI->getNumSuccessors());
-
-        // Store the jump destination before the branch instruction.
-        new llvm::StoreInst(ID, DestCodePtr, BI);
-
-        // Add it as the destination.
-        SI->addCase(ID, CleanupPad);
-
-        // Create the branch to the final destination.
-        llvm::BranchInst *BI = llvm::BranchInst::Create(Dest);
-        CleanupPad->getInstList().push_back(BI);
-
-        // And add it as a branch fixup.
-        CleanupEntries.back().BranchFixups.push_back(BI);
-      }
-    }
-  }
-
-  // Remove all blocks from the block scope map.
-  for (size_t i = 0, e = Blocks.size(); i != e; ++i) {
-    assert(BlockScopes.count(Blocks[i]) &&
-           "Did not find block in scope map!");
-
-    BlockScopes.erase(Blocks[i]);
-  }
-
-  return CleanupBlockInfo(CleanupEntryBlock, SwitchBlock, EndBlock, EHOnly);
-}
-
-void CodeGenFunction::EmitCleanupBlock() {
-  CleanupBlockInfo Info = PopCleanupBlock();
-
-  if (Info.EHOnly) {
-    // FIXME: Add this to the exceptional edge
-    if (Info.CleanupBlock->getNumUses() == 0)
-      delete Info.CleanupBlock;
+/// Creates a switch instruction to thread branches out of the given
+/// block (which is the exit block of a cleanup).
+static void CreateCleanupSwitch(CodeGenFunction &CGF,
+                                llvm::BasicBlock *Block) {
+  if (Block->getTerminator()) {
+    assert(isa<llvm::SwitchInst>(Block->getTerminator()) &&
+           "cleanup block already has a terminator, but it isn't a switch");
     return;
   }
 
-  //  Scrub debug location info.
-  for (llvm::BasicBlock::iterator LBI = Info.CleanupBlock->begin(),
-         LBE = Info.CleanupBlock->end(); LBI != LBE; ++LBI)
-    Builder.SetInstDebugLocation(LBI);
+  llvm::Value *DestCodePtr
+    = CGF.CreateTempAlloca(CGF.Builder.getInt32Ty(), "cleanup.dst");
+  CGBuilderTy Builder(Block);
+  llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
 
-  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
-  if (CurBB && !CurBB->getTerminator() &&
-      Info.CleanupBlock->getNumUses() == 0) {
-    CurBB->getInstList().splice(CurBB->end(), Info.CleanupBlock->getInstList());
-    delete Info.CleanupBlock;
-  } else
-    EmitBlock(Info.CleanupBlock);
-
-  if (Info.SwitchBlock)
-    EmitBlock(Info.SwitchBlock);
-  if (Info.EndBlock)
-    EmitBlock(Info.EndBlock);
+  // Create a switch instruction to determine where to jump next.
+  Builder.CreateSwitch(DestCode, CGF.getUnreachableBlock());
 }
 
-void CodeGenFunction::AddBranchFixup(llvm::BranchInst *BI) {
-  assert(!CleanupEntries.empty() &&
-         "Trying to add branch fixup without cleanup block!");
+/// Attempts to reduce a cleanup's entry block to a fallthrough.  This
+/// is basically llvm::MergeBlockIntoPredecessor, except
+/// simplified/optimized for the tighter constraints on cleanup
+/// blocks.
+static void SimplifyCleanupEntry(CodeGenFunction &CGF,
+                                 llvm::BasicBlock *Entry) {
+  llvm::BasicBlock *Pred = Entry->getSinglePredecessor();
+  if (!Pred) return;
 
-  // FIXME: We could be more clever here and check if there's already a branch
-  // fixup for this destination and recycle it.
-  CleanupEntries.back().BranchFixups.push_back(BI);
+  llvm::BranchInst *Br = dyn_cast<llvm::BranchInst>(Pred->getTerminator());
+  if (!Br || Br->isConditional()) return;
+  assert(Br->getSuccessor(0) == Entry);
+
+  // If we were previously inserting at the end of the cleanup entry
+  // block, we'll need to continue inserting at the end of the
+  // predecessor.
+  bool WasInsertBlock = CGF.Builder.GetInsertBlock() == Entry;
+  assert(!WasInsertBlock || CGF.Builder.GetInsertPoint() == Entry->end());
+
+  // Kill the branch.
+  Br->eraseFromParent();
+
+  // Merge the blocks.
+  Pred->getInstList().splice(Pred->end(), Entry->getInstList());
+
+  // Kill the entry block.
+  Entry->eraseFromParent();
+
+  if (WasInsertBlock)
+    CGF.Builder.SetInsertPoint(Pred);
 }
 
-void CodeGenFunction::EmitBranchThroughCleanup(llvm::BasicBlock *Dest) {
+/// Attempts to reduce an cleanup's exit switch to an unconditional
+/// branch.
+static void SimplifyCleanupExit(llvm::BasicBlock *Exit) {
+  llvm::TerminatorInst *Terminator = Exit->getTerminator();
+  assert(Terminator && "completed cleanup exit has no terminator");
+
+  llvm::SwitchInst *Switch = dyn_cast<llvm::SwitchInst>(Terminator);
+  if (!Switch) return;
+  if (Switch->getNumCases() != 2) return; // default + 1
+
+  llvm::LoadInst *Cond = cast<llvm::LoadInst>(Switch->getCondition());
+  llvm::AllocaInst *CondVar = cast<llvm::AllocaInst>(Cond->getPointerOperand());
+
+  // Replace the switch instruction with an unconditional branch.
+  llvm::BasicBlock *Dest = Switch->getSuccessor(1); // default is 0
+  Switch->eraseFromParent();
+  llvm::BranchInst::Create(Dest, Exit);
+
+  // Delete all uses of the condition variable.
+  Cond->eraseFromParent();
+  while (!CondVar->use_empty())
+    cast<llvm::StoreInst>(*CondVar->use_begin())->eraseFromParent();
+
+  // Delete the condition variable itself.
+  CondVar->eraseFromParent();
+}
+
+/// Threads a branch fixup through a cleanup block.
+static void ThreadFixupThroughCleanup(CodeGenFunction &CGF,
+                                      BranchFixup &Fixup,
+                                      llvm::BasicBlock *Entry,
+                                      llvm::BasicBlock *Exit) {
+  if (!Exit->getTerminator())
+    CreateCleanupSwitch(CGF, Exit);
+
+  // Find the switch and its destination index alloca.
+  llvm::SwitchInst *Switch = cast<llvm::SwitchInst>(Exit->getTerminator());
+  llvm::Value *DestCodePtr =
+    cast<llvm::LoadInst>(Switch->getCondition())->getPointerOperand();
+
+  // Compute the index of the new case we're adding to the switch.
+  unsigned Index = Switch->getNumCases();
+
+  const llvm::IntegerType *i32 = llvm::Type::getInt32Ty(CGF.getLLVMContext());
+  llvm::ConstantInt *IndexV = llvm::ConstantInt::get(i32, Index);
+
+  // Set the index in the origin block.
+  new llvm::StoreInst(IndexV, DestCodePtr, Fixup.Origin);
+
+  // Add a case to the switch.
+  Switch->addCase(IndexV, Fixup.Destination);
+
+  // Change the last branch to point to the cleanup entry block.
+  Fixup.LatestBranch->setSuccessor(Fixup.LatestBranchIndex, Entry);
+
+  // And finally, update the fixup.
+  Fixup.LatestBranch = Switch;
+  Fixup.LatestBranchIndex = Index;
+}
+
+/// Try to simplify both the entry and exit edges of a cleanup.
+static void SimplifyCleanupEdges(CodeGenFunction &CGF,
+                                 llvm::BasicBlock *Entry,
+                                 llvm::BasicBlock *Exit) {
+
+  // Given their current implementations, it's important to run these
+  // in this order: SimplifyCleanupEntry will delete Entry if it can
+  // be merged into its predecessor, which will then break
+  // SimplifyCleanupExit if (as is common) Entry == Exit.
+
+  SimplifyCleanupExit(Exit);
+  SimplifyCleanupEntry(CGF, Entry);  
+}
+
+/// Pops a cleanup block.  If the block includes a normal cleanup, the
+/// current insertion point is threaded through the cleanup, as are
+/// any branch fixups on the cleanup.
+void CodeGenFunction::PopCleanupBlock() {
+  assert(!EHStack.empty() && "cleanup stack is empty!");
+  assert(isa<EHCleanupScope>(*EHStack.begin()) && "top not a cleanup!");
+  EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.begin());
+  assert(Scope.getFixupDepth() <= EHStack.getNumBranchFixups());
+
+  // Handle the EH cleanup if (1) there is one and (2) it's different
+  // from the normal cleanup.
+  if (Scope.isEHCleanup() &&
+      Scope.getEHEntry() != Scope.getNormalEntry()) {
+    llvm::BasicBlock *EHEntry = Scope.getEHEntry();
+    llvm::BasicBlock *EHExit = Scope.getEHExit();
+    
+    if (EHEntry->use_empty()) {
+      DestroyCleanup(*this, EHEntry, EHExit);
+    } else {
+      // TODO: this isn't really the ideal location to put this EH
+      // cleanup, but lazy emission is a better solution than trying
+      // to pick a better spot.
+      CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
+      EmitBlock(EHEntry);
+      Builder.restoreIP(SavedIP);
+
+      SimplifyCleanupEdges(*this, EHEntry, EHExit);
+    }
+  }
+
+  // If we only have an EH cleanup, we don't really need to do much
+  // here.  Branch fixups just naturally drop down to the enclosing
+  // cleanup scope.
+  if (!Scope.isNormalCleanup()) {
+    EHStack.popCleanup();
+    assert(EHStack.getNumBranchFixups() == 0 || EHStack.hasNormalCleanups());
+    return;
+  }
+
+  // Check whether the scope has any fixups that need to be threaded.
+  unsigned FixupDepth = Scope.getFixupDepth();
+  bool HasFixups = EHStack.getNumBranchFixups() != FixupDepth;
+
+  // Grab the entry and exit blocks.
+  llvm::BasicBlock *Entry = Scope.getNormalEntry();
+  llvm::BasicBlock *Exit = Scope.getNormalExit();
+
+  // Check whether anything's been threaded through the cleanup already.
+  assert((Exit->getTerminator() == 0) == Entry->use_empty() &&
+         "cleanup entry/exit mismatch");
+  bool HasExistingBranches = !Entry->use_empty();
+
+  // Check whether we need to emit a "fallthrough" branch through the
+  // cleanup for the current insertion point.
+  llvm::BasicBlock *FallThrough = Builder.GetInsertBlock();
+  if (FallThrough && FallThrough->getTerminator())
+    FallThrough = 0;
+
+  // If *nothing* is using the cleanup, kill it.
+  if (!FallThrough && !HasFixups && !HasExistingBranches) {
+    EHStack.popCleanup();
+    DestroyCleanup(*this, Entry, Exit);
+    return;
+  }
+
+  // Otherwise, add the block to the function.
+  EmitBlock(Entry);
+
+  if (FallThrough)
+    Builder.SetInsertPoint(Exit);
+  else
+    Builder.ClearInsertionPoint();
+
+  // Fast case: if we don't have to add any fixups, and either
+  // we don't have a fallthrough or the cleanup wasn't previously
+  // used, then the setup above is sufficient.
+  if (!HasFixups) {
+    if (!FallThrough) {
+      assert(HasExistingBranches && "no reason for cleanup but didn't kill before");
+      EHStack.popCleanup();
+      SimplifyCleanupEdges(*this, Entry, Exit);
+      return;
+    } else if (!HasExistingBranches) {
+      assert(FallThrough && "no reason for cleanup but didn't kill before");
+      // We can't simplify the exit edge in this case because we're
+      // already inserting at the end of the exit block.
+      EHStack.popCleanup();
+      SimplifyCleanupEntry(*this, Entry);
+      return;
+    }
+  }
+
+  // Otherwise we're going to have to thread things through the cleanup.
+  llvm::SmallVector<BranchFixup*, 8> Fixups;
+
+  // Synthesize a fixup for the current insertion point.
+  BranchFixup Cur;
+  if (FallThrough) {
+    Cur.Destination = createBasicBlock("cleanup.cont");
+    Cur.LatestBranch = FallThrough->getTerminator();
+    Cur.LatestBranchIndex = 0;
+    Cur.Origin = Cur.LatestBranch;
+
+    // Restore fixup invariant.  EmitBlock added a branch to the cleanup
+    // which we need to redirect to the destination.
+    cast<llvm::BranchInst>(Cur.LatestBranch)->setSuccessor(0, Cur.Destination);
+
+    Fixups.push_back(&Cur);
+  } else {
+    Cur.Destination = 0;
+  }
+
+  // Collect any "real" fixups we need to thread.
+  for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();
+        I != E; ++I)
+    if (EHStack.getBranchFixup(I).Destination)
+      Fixups.push_back(&EHStack.getBranchFixup(I));
+
+  assert(!Fixups.empty() && "no fixups, invariants broken!");
+
+  // If there's only a single fixup to thread through, do so with
+  // unconditional branches.  This only happens if there's a single
+  // branch and no fallthrough.
+  if (Fixups.size() == 1 && !HasExistingBranches) {
+    Fixups[0]->LatestBranch->setSuccessor(Fixups[0]->LatestBranchIndex, Entry);
+    llvm::BranchInst *Br =
+      llvm::BranchInst::Create(Fixups[0]->Destination, Exit);
+    Fixups[0]->LatestBranch = Br;
+    Fixups[0]->LatestBranchIndex = 0;
+
+  // Otherwise, force a switch statement and thread everything through
+  // the switch.
+  } else {
+    CreateCleanupSwitch(*this, Exit);
+    for (unsigned I = 0, E = Fixups.size(); I != E; ++I)
+      ThreadFixupThroughCleanup(*this, *Fixups[I], Entry, Exit);
+  }
+
+  // Emit the fallthrough destination block if necessary.
+  if (Cur.Destination)
+    EmitBlock(Cur.Destination);
+
+  // We're finally done with the cleanup.
+  EHStack.popCleanup();
+}
+
+void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
   if (!HaveInsertPoint())
     return;
 
-  llvm::BranchInst* BI = Builder.CreateBr(Dest);
+  // Create the branch.
+  llvm::BranchInst *BI = Builder.CreateBr(Dest.Block);
 
+  // If we're not in a cleanup scope, we don't need to worry about
+  // fixups.
+  if (!EHStack.hasNormalCleanups()) {
+    Builder.ClearInsertionPoint();
+    return;
+  }
+
+  // Initialize a fixup.
+  BranchFixup Fixup;
+  Fixup.Destination = Dest.Block;
+  Fixup.Origin = BI;
+  Fixup.LatestBranch = BI;
+  Fixup.LatestBranchIndex = 0;
+
+  // If we can't resolve the destination cleanup scope, just add this
+  // to the current cleanup scope.
+  if (!Dest.ScopeDepth.isValid()) {
+    EHStack.addBranchFixup() = Fixup;
+    Builder.ClearInsertionPoint();
+    return;
+  }
+
+  for (EHScopeStack::iterator I = EHStack.begin(),
+         E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
+    if (isa<EHCleanupScope>(*I)) {
+      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
+      if (Scope.isNormalCleanup())
+        ThreadFixupThroughCleanup(*this, Fixup, Scope.getNormalEntry(),
+                                  Scope.getNormalExit());
+    }
+  }
+  
   Builder.ClearInsertionPoint();
+}
 
-  // The stack is empty, no need to do any cleanup.
-  if (CleanupEntries.empty())
+void CodeGenFunction::EmitBranchThroughEHCleanup(JumpDest Dest) {
+  if (!HaveInsertPoint())
     return;
 
-  if (!Dest->getParent()) {
-    // We are trying to branch to a block that hasn't been inserted yet.
-    AddBranchFixup(BI);
-    return;
-  }
+  // Create the branch.
+  llvm::BranchInst *BI = Builder.CreateBr(Dest.Block);
 
-  BlockScopeMap::iterator I = BlockScopes.find(Dest);
-  if (I == BlockScopes.end()) {
-    // We are trying to jump to a block that is outside of any cleanup scope.
-    AddBranchFixup(BI);
+  // If we're not in a cleanup scope, we don't need to worry about
+  // fixups.
+  if (!EHStack.hasEHCleanups()) {
+    Builder.ClearInsertionPoint();
     return;
   }
 
-  assert(I->second < CleanupEntries.size() &&
-         "Trying to branch into cleanup region");
+  // Initialize a fixup.
+  BranchFixup Fixup;
+  Fixup.Destination = Dest.Block;
+  Fixup.Origin = BI;
+  Fixup.LatestBranch = BI;
+  Fixup.LatestBranchIndex = 0;
 
-  if (I->second == CleanupEntries.size() - 1) {
-    // We have a branch to a block in the same scope.
-    return;
+  // We should never get invalid scope depths for these: invalid scope
+  // depths only arise for as-yet-unemitted labels, and we can't do an
+  // EH-unwind to one of those.
+  assert(Dest.ScopeDepth.isValid() && "invalid scope depth on EH dest?");
+
+  for (EHScopeStack::iterator I = EHStack.begin(),
+         E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
+    if (isa<EHCleanupScope>(*I)) {
+      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
+      if (Scope.isEHCleanup())
+        ThreadFixupThroughCleanup(*this, Fixup, Scope.getEHEntry(),
+                                  Scope.getEHExit());
+    }
   }
-
-  AddBranchFixup(BI);
+  
+  Builder.ClearInsertionPoint();
 }

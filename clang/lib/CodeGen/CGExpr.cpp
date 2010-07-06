@@ -201,7 +201,7 @@ EmitExprForReferenceBinding(CodeGenFunction& CGF, const Expr* E,
     E = DAE->getExpr();
   
   if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
-    CodeGenFunction::CXXTemporariesCleanupScope Scope(CGF);
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
 
     return EmitExprForReferenceBinding(CGF, TE->getSubExpr(), 
                                        ReferenceTemporary, 
@@ -363,17 +363,12 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     }
   }
   
-  {
-    DelayedCleanupBlock Scope(*this);
-    EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
-                          /*ForVirtualBase=*/false, ReferenceTemporary);
+  CleanupBlock Cleanup(*this, NormalCleanup);
+  EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
+                        /*ForVirtualBase=*/false, ReferenceTemporary);
             
-    // Make sure to jump to the exit block.
-    EmitBranch(Scope.getCleanupExitBlock());
-  }
-
   if (Exceptions) {
-    EHCleanupBlock Cleanup(*this);
+    Cleanup.beginEHCleanup();
     EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
                           /*ForVirtualBase=*/false, ReferenceTemporary);
   }
@@ -1947,7 +1942,7 @@ CodeGenFunction::EmitCXXTypeidLValue(const CXXTypeidExpr *E) {
 LValue
 CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
   LValue LV = EmitLValue(E->getSubExpr());
-  PushCXXTemporary(E->getTemporary(), LV.getAddress());
+  EmitCXXTemporary(E->getTemporary(), LV.getAddress());
   return LV;
 }
 

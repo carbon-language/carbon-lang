@@ -1075,6 +1075,24 @@ RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
   return EmitAnyExprToTemp(E);
 }
 
+/// Emits a call or invoke instruction to the given function, depending
+/// on the current state of the EH stack.
+llvm::CallSite
+CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
+                                  llvm::Value * const *ArgBegin,
+                                  llvm::Value * const *ArgEnd,
+                                  const llvm::Twine &Name) {
+  llvm::BasicBlock *InvokeDest = getInvokeDest();
+  if (!InvokeDest)
+    return Builder.CreateCall(Callee, ArgBegin, ArgEnd, Name);
+
+  llvm::BasicBlock *ContBB = createBasicBlock("invoke.cont");
+  llvm::InvokeInst *Invoke = Builder.CreateInvoke(Callee, ContBB, InvokeDest,
+                                                  ArgBegin, ArgEnd, Name);
+  EmitBlock(ContBB);
+  return Invoke;
+}
+
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee,
                                  ReturnValueSlot ReturnValue,
@@ -1206,15 +1224,18 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     }
 
 
-  llvm::BasicBlock *InvokeDest = getInvokeDest();
   unsigned CallingConv;
   CodeGen::AttributeListType AttributeList;
   CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList, CallingConv);
   llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList.begin(),
                                                    AttributeList.end());
 
+  llvm::BasicBlock *InvokeDest = 0;
+  if (!(Attrs.getFnAttributes() & llvm::Attribute::NoUnwind))
+    InvokeDest = getInvokeDest();
+
   llvm::CallSite CS;
-  if (!InvokeDest || (Attrs.getFnAttributes() & llvm::Attribute::NoUnwind)) {
+  if (!InvokeDest) {
     CS = Builder.CreateCall(Callee, Args.data(), Args.data()+Args.size());
   } else {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
