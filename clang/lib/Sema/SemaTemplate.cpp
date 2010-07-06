@@ -3959,7 +3959,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 TemplateArgs, CanonType);
   if (TUK != TUK_Friend) {
     Specialization->setTypeAsWritten(WrittenTy);
-    Specialization->setTemplateKeywordLoc(KWLoc);
+    if (TemplateParams)
+      Specialization->setTemplateKeywordLoc(TemplateParams->getTemplateLoc());
   }
   TemplateArgsIn.release();
 
