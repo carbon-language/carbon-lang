@@ -4161,17 +4161,6 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   assert(!ClassDecl->hasUserDeclaredConstructor() && 
          "Should not build implicit default constructor!");
   
-  // FIXME: HACK HACK HACK
-  if (Context.getExternalSource()) {
-    // This hack ensures that, when using precompiled headers, the lookup
-    // table in the DeclContext has already loaded the constructor declarations
-    // so that we can add a new one. The real fix will go into DeclContext,
-    // when I figure out what that is.
-    CanQualType T
-      = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
-    ClassDecl->lookup(Context.DeclarationNames.getCXXConstructorName(T));
-  }
-  
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
   //   exception-specification. [...]
@@ -4647,15 +4636,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // operators taking an object instead of a reference are allowed.
   
   
-  // FIXME: HACK HACK HACK
-  if (Context.getExternalSource()) {
-    // This hack ensures that, when using precompiled headers, the lookup
-    // table in the DeclContext has already loaded the assignment operator
-    // declarations so that we can add a new one. The real fix will go into 
-    // DeclContext, when I figure out what that is.
-    ClassDecl->lookup(Context.DeclarationNames.getCXXOperatorName(OO_Equal));
-  }
-  
   // C++ [class.copy]p10:
   //   If the class definition does not explicitly declare a copy
   //   assignment operator, one is declared implicitly.
@@ -5087,17 +5067,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   // C++ [class.copy]p4:
   //   If the class definition does not explicitly declare a copy
   //   constructor, one is declared implicitly.
-  
-  // FIXME: HACK HACK HACK
-  if (Context.getExternalSource()) {
-    // This hack ensures that, when using precompiled headers, the lookup
-    // table in the DeclContext has already loaded the constructor declarations
-    // so that we can add a new one. The real fix will go into DeclContext,
-    // when I figure out what that is.
-    CanQualType T
-      = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
-    ClassDecl->lookup(Context.DeclarationNames.getCXXConstructorName(T));
-  }
   
   // C++ [class.copy]p5:
   //   The implicitly-declared copy constructor for a class X will
