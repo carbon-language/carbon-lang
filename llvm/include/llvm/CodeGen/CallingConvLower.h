@@ -35,6 +35,9 @@ public:
     ZExt,   // The value is zero extended in the location.
     AExt,   // The value is extended with undefined upper bits.
     BCvt,   // The value is bit-converted in the location.
+    VExt,   // The value is vector-widened in the location.
+            // FIXME: Not implemented yet. Code that uses AExt to mean
+            // vector-widen should be fixed to use VExt instead.
     Indirect // The location contains pointer to the value.
     // TODO: a subset of the value is in the location.
   };
