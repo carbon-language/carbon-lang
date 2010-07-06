@@ -69,6 +69,13 @@ public:
     virtual
     Options *
     GetOptions ();
+    
+    virtual const char *GetRepeatCommand (const char *current_command_line)
+    {
+        printf("\nReturning: \"%s\"\n", m_cmd_name.c_str());
+        return m_cmd_name.c_str();
+    }
+
 
 protected:
     CommandOptions m_options;

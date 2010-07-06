@@ -627,7 +627,13 @@ CommandInterpreter::HandleCommand
         }
         else
         {
-            command_line = m_command_history.back().c_str();
+            command_line = m_repeat_command.c_str();
+            if (m_repeat_command.empty())
+            {
+                result.AppendError("");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
         }
         add_to_history = false;
     }
@@ -653,6 +659,18 @@ CommandInterpreter::HandleCommand
                         return false;
                 }
 
+                if (add_to_history)
+                {
+                    const char *repeat_command = command_obj->GetRepeatCommand(command_line);
+                    if (repeat_command)
+                        m_repeat_command.assign(repeat_command);
+                    else
+                        m_repeat_command.clear();
+                        
+                    m_command_history.push_back (command_line);
+                }
+
+
                 if (command_obj->WantsRawCommandString())
                 {
                     const char *stripped_command = ::strstr (command_line, command_cstr);
@@ -666,9 +684,6 @@ CommandInterpreter::HandleCommand
                 }
                 else
                 {
-                    if (add_to_history)
-                        m_command_history.push_back (command_line);
-
                     // Remove the command from the args.
                     command_args.Shift();
                     command_obj->ExecuteWithOptions (*this, command_args, result);

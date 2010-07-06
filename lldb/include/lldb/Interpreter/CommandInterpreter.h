@@ -260,6 +260,7 @@ private:
     VariableMap m_variables;
     OptionArgMap m_alias_options; // Stores any options (with or without arguments) that go with any alias.
     std::vector<std::string> m_command_history;
+    std::string m_repeat_command;  // Stores the command that will be executed for an empty command string.
 };
 
 

@@ -252,6 +252,21 @@ public:
     //------------------------------------------------------------------
     const Flags&
     GetFlags() const;
+    
+    //------------------------------------------------------------------
+    /// Get the command that appropriate for a "repeat" of the current command.
+    ///
+    /// @param[in] current_command_line
+    ///    The complete current command line.
+    ///
+    /// @return
+    ///     NULL if the command is not to be repeated.
+    ///     Otherwise a pointer to the command to be repeated.    
+    //------------------------------------------------------------------
+    virtual const char *GetRepeatCommand (const char *current_command_line)
+    {
+        return current_command_line;
+    }
 
 protected:
     std::string m_cmd_name;
