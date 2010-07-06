@@ -9,6 +9,8 @@
 //
 // This defines VLASizeChecker, a builtin check in GRExprEngine that 
 // performs checks for declaration of VLA of undefined or zero size.
+// In addition, VLASizeChecker is responsible for defining the extent
+// of the MemRegion that represents a VLA.
 //
 //===----------------------------------------------------------------------===//
 
@@ -99,6 +101,10 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
  
   // From this point on, assume that the size is not zero.
   state = stateNotZero;
+
+  // VLASizeChecker is responsible for defining the extent of the array being
+  // declared. We do this by multiplying the array length by the element size,
+  // then matching that with the array region's extent symbol.
 
   // Convert the array length to size_t.
   ValueManager &ValMgr = C.getValueManager();
