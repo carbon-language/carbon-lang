@@ -72,6 +72,7 @@ public:
   unsigned VisualizeEGUbi : 1;
   unsigned EnableExperimentalChecks : 1;
   unsigned EnableExperimentalInternalChecks : 1;
+  unsigned EnableIdempotentOperationChecker : 1;
   unsigned InlineCall : 1;
 
 public:

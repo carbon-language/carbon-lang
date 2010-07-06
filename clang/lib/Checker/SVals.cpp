@@ -200,13 +200,17 @@ bool SVal::isConstant() const {
   return isa<nonloc::ConcreteInt>(this) || isa<loc::ConcreteInt>(this);
 }
 
-bool SVal::isZeroConstant() const {
+bool SVal::isConstant(int I) const {
   if (isa<loc::ConcreteInt>(*this))
-    return cast<loc::ConcreteInt>(*this).getValue() == 0;
+    return cast<loc::ConcreteInt>(*this).getValue() == I;
   else if (isa<nonloc::ConcreteInt>(*this))
-    return cast<nonloc::ConcreteInt>(*this).getValue() == 0;
+    return cast<nonloc::ConcreteInt>(*this).getValue() == I;
   else
     return false;
+}
+
+bool SVal::isZeroConstant() const {
+  return isConstant(0);
 }
 
 

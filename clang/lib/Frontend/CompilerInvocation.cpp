@@ -112,6 +112,8 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-experimental-checks");
   if (Opts.EnableExperimentalInternalChecks)
     Res.push_back("-analyzer-experimental-internal-checks");
+  if (Opts.EnableIdempotentOperationChecker)
+    Res.push_back("-analyzer-idempotent-operation");
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
@@ -788,6 +790,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.EnableExperimentalChecks = Args.hasArg(OPT_analyzer_experimental_checks);
   Opts.EnableExperimentalInternalChecks =
     Args.hasArg(OPT_analyzer_experimental_internal_checks);
+  Opts.EnableIdempotentOperationChecker =
+    Args.hasArg(OPT_analyzer_idempotent_operation);
   Opts.TrimGraph = Args.hasArg(OPT_trim_egraph);
   Opts.MaxNodes = Args.getLastArgIntValue(OPT_analyzer_max_nodes, 150000,Diags);
   Opts.MaxLoop = Args.getLastArgIntValue(OPT_analyzer_max_loop, 3, Diags);

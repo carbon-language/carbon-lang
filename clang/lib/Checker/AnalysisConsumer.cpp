@@ -28,6 +28,7 @@
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
 #include "clang/Checker/PathDiagnosticClients.h"
+#include "GRExprEngineExperimentalChecks.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/AnalyzerOptions.h"
@@ -339,6 +340,9 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
 
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
+
+  if (C.Opts.EnableIdempotentOperationChecker)
+    RegisterIdempotentOperationChecker(Eng);
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;

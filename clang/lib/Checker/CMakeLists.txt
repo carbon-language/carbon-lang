@@ -39,6 +39,7 @@ add_clang_library(clangChecker
   GRExprEngineExperimentalChecks.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
+  IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp
   MallocChecker.cpp
