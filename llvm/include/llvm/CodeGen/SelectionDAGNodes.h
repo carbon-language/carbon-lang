@@ -1583,6 +1583,23 @@ namespace ISD {
              "OutputArg value type must be Simple!");
     }
   };
+
+  /// OutputArgReg - This struct carries flags and a register value for a
+  /// single outgoing (actual) argument or outgoing (from the perspective
+  /// of the caller) return value virtual register.
+  ///
+  struct OutputArgReg {
+    ArgFlagsTy Flags;
+    EVT VT;
+    unsigned Reg;
+
+    /// IsFixed - Is this a "fixed" value, ie not passed through a vararg "...".
+    bool IsFixed;
+
+    OutputArgReg() : IsFixed(false) {}
+    OutputArgReg(ISD::ArgFlagsTy flags, EVT vt, unsigned reg, bool isfixed)
+      : Flags(flags), VT(vt), Reg(reg), IsFixed(isfixed) {}
+  };
 }
 
 /// VTSDNode - This class is used to represent EVT's, which are used
