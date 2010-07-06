@@ -1189,6 +1189,27 @@ unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
   return F->hasFnAttr(Attribute::OptimizeForSize) ? 0 : 4;
 }
 
+bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
+                                               unsigned &Offset) const {
+  if (!Subtarget->isTargetLinux())
+    return false;
+
+  if (Subtarget->is64Bit()) {
+    // %fs:0x28, unless we're using a Kernel code model, in which case it's %gs:
+    Offset = 0x28;
+    if (getTargetMachine().getCodeModel() == CodeModel::Kernel)
+      AddressSpace = 256;
+    else
+      AddressSpace = 257;
+  } else {
+    // %gs:0x14 on i386
+    Offset = 0x14;
+    AddressSpace = 256;
+  }
+  return true;
+}
+
+
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//

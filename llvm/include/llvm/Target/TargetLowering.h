@@ -749,6 +749,14 @@ public:
   /// getFunctionAlignment - Return the Log2 alignment of this function.
   virtual unsigned getFunctionAlignment(const Function *) const = 0;
 
+  /// getStackCookieLocation - Return true if the target stores stack
+  /// protector cookies at a fixed offset in some non-standard address
+  /// space, and populates the address space and offset as
+  /// appropriate.
+  virtual bool getStackCookieLocation(unsigned &AddressSpace, unsigned &Offset) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
