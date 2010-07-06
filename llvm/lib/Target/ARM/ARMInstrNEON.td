@@ -3291,22 +3291,16 @@ let hasExtraSrcRegAllocReq = 1 in {
 def  VTBL2
   : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$src), NVTBLFrm, IIC_VTB2,
-        "vtbl", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl2
-                               DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "", []>;
 def  VTBL3
   : N3V<1,1,0b11,0b1010,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src), NVTBLFrm, IIC_VTB3,
-        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src", "",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl3
-                               DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src", "", []>;
 def  VTBL4
   : N3V<1,1,0b11,0b1011,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src),
         NVTBLFrm, IIC_VTB4,
-        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src", "",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl4 DPR:$tbl1, DPR:$tbl2,
-                               DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src", "", []>;
 } // hasExtraSrcRegAllocReq = 1
 
 //   VTBX     : Vector Table Extension
