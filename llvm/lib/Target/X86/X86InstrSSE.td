@@ -4304,6 +4304,21 @@ multiclass SS41I_binop_rm_int8<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
        OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in {
+defm VPMOVSXBW : SS41I_binop_rm_int8<0x20, "vpmovsxbw", int_x86_sse41_pmovsxbw>,
+                                     VEX;
+defm VPMOVSXWD : SS41I_binop_rm_int8<0x23, "vpmovsxwd", int_x86_sse41_pmovsxwd>,
+                                     VEX;
+defm VPMOVSXDQ : SS41I_binop_rm_int8<0x25, "vpmovsxdq", int_x86_sse41_pmovsxdq>,
+                                     VEX;
+defm VPMOVZXBW : SS41I_binop_rm_int8<0x30, "vpmovzxbw", int_x86_sse41_pmovzxbw>,
+                                     VEX;
+defm VPMOVZXWD : SS41I_binop_rm_int8<0x33, "vpmovzxwd", int_x86_sse41_pmovzxwd>,
+                                     VEX;
+defm VPMOVZXDQ : SS41I_binop_rm_int8<0x35, "vpmovzxdq", int_x86_sse41_pmovzxdq>,
+                                     VEX;
+}
+
 defm PMOVSXBW   : SS41I_binop_rm_int8<0x20, "pmovsxbw", int_x86_sse41_pmovsxbw>;
 defm PMOVSXWD   : SS41I_binop_rm_int8<0x23, "pmovsxwd", int_x86_sse41_pmovsxwd>;
 defm PMOVSXDQ   : SS41I_binop_rm_int8<0x25, "pmovsxdq", int_x86_sse41_pmovsxdq>;
