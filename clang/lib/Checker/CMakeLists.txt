@@ -13,17 +13,17 @@ add_clang_library(clangChecker
   BugReporter.cpp
   BugReporterVisitors.cpp
   BuiltinFunctionChecker.cpp
+  CFRefCount.cpp
   CallAndMessageChecker.cpp
   CallInliner.cpp
   CastSizeChecker.cpp
   CastToStructChecker.cpp
-  CFRefCount.cpp
   CheckDeadStores.cpp
-  Checker.cpp
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
   CheckSecuritySyntaxOnly.cpp
   CheckSizeofPointer.cpp
+  Checker.cpp
   CocoaConventions.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
@@ -33,8 +33,8 @@ add_clang_library(clangChecker
   FlatStore.cpp
   FrontendActions.cpp
   GRBlockCounter.cpp
-  GRCoreEngine.cpp
   GRCXXExprEngine.cpp
+  GRCoreEngine.cpp
   GRExprEngine.cpp
   GRExprEngineExperimentalChecks.cpp
   GRState.cpp
@@ -45,11 +45,11 @@ add_clang_library(clangChecker
   MallocChecker.cpp
   ManagerRegistry.cpp
   MemRegion.cpp
-  NoReturnFunctionChecker.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
-  ObjCUnusedIVarsChecker.cpp
+  NoReturnFunctionChecker.cpp
   OSAtomicChecker.cpp
+  ObjCUnusedIVarsChecker.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp
   PointerArithChecker.cpp
@@ -59,22 +59,22 @@ add_clang_library(clangChecker
   RegionStore.cpp
   ReturnPointerRangeChecker.cpp
   ReturnUndefChecker.cpp
+  SVals.cpp
+  SValuator.cpp
   SimpleConstraintManager.cpp
   SimpleSValuator.cpp
   StackAddrLeakChecker.cpp
   Store.cpp
   StreamChecker.cpp
-  SVals.cpp
-  SValuator.cpp
   SymbolManager.cpp
   UndefBranchChecker.cpp
   UndefCapturedBlockVarChecker.cpp
+  UndefResultChecker.cpp
   UndefinedArraySubscriptChecker.cpp
   UndefinedAssignmentChecker.cpp
-  UndefResultChecker.cpp
   UnixAPIChecker.cpp
-  ValueManager.cpp
   VLASizeChecker.cpp
+  ValueManager.cpp
   )
 
 add_dependencies(clangChecker ClangAttrClasses ClangAttrList ClangDeclNodes
