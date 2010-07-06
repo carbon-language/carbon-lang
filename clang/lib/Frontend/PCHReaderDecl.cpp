@@ -977,9 +977,12 @@ void PCHDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (PrevDecl == 0) {
     // This FunctionTemplateDecl owns a CommonPtr; read it.
 
-    // FunctionTemplateSpecializationInfos are filled through the
-    // templated FunctionDecl's setFunctionTemplateSpecialization, no need to
-    // read them here.
+    // Read the function specialization declarations.
+    // FunctionTemplateDecl's FunctionTemplateSpecializationInfos are filled
+    // through the specialized FunctionDecl's setFunctionTemplateSpecialization.
+    unsigned NumSpecs = Record[Idx++];
+    while (NumSpecs--)
+      Reader.GetDecl(Record[Idx++]);
 
     if (FunctionTemplateDecl *CTD
           = cast_or_null<FunctionTemplateDecl>(Reader.GetDecl(Record[Idx++]))) {

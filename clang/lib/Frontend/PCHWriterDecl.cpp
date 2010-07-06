@@ -923,9 +923,12 @@ void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (D->getPreviousDeclaration() == 0) {
     // This FunctionTemplateDecl owns the CommonPtr; write it.
 
-    // FunctionTemplateSpecializationInfos are filled through the
-    // templated FunctionDecl's setFunctionTemplateSpecialization, no need to
-    // write them here.
+    // Write the function specialization declarations.
+    Record.push_back(D->getSpecializations().size());
+    for (llvm::FoldingSet<FunctionTemplateSpecializationInfo>::iterator
+           I = D->getSpecializations().begin(),
+           E = D->getSpecializations().end()   ; I != E; ++I)
+      Writer.AddDeclRef(I->Function, Record);
 
     Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
     if (D->getInstantiatedFromMemberTemplate())
