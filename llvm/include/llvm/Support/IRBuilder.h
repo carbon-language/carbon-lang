@@ -148,33 +148,88 @@ public:
   /// specified.  If Name is specified, it is the name of the global variable
   /// created.
   Value *CreateGlobalString(const char *Str = "", const Twine &Name = "");
+
+  /// getInt1 - Get a constant value representing either true or false.
+  ConstantInt *getInt1(bool V) {
+    return ConstantInt::get(getInt1Ty(), V);
+  }
+
+  /// getTrue - Get the constant value for i1 true.
+  ConstantInt *getTrue() {
+    return ConstantInt::getTrue(Context);
+  }
+
+  /// getFalse - Get the constant value for i1 false.
+  ConstantInt *getFalse() {
+    return ConstantInt::getFalse(Context);
+  }
+
+  /// getInt8 - Get a constant 8-bit value.
+  ConstantInt *getInt8(int8_t C) {
+    return ConstantInt::getSigned(getInt8Ty(), C);
+  }
+
+  /// getInt8 - Get a constant 8-bit value.
+  ConstantInt *getInt8(uint8_t C) {
+    return ConstantInt::get(getInt8Ty(), C);
+  }
+
+  /// getInt16 - Get a constant 16-bit value.
+  ConstantInt *getInt16(int16_t C) {
+    return ConstantInt::getSigned(getInt16Ty(), C);
+  }
+
+  /// getInt16 - Get a constant 16-bit value.
+  ConstantInt *getInt16(uint16_t C) {
+    return ConstantInt::get(getInt16Ty(), C);
+  }
+
+  /// getInt32 - Get a constant 32-bit value.
+  ConstantInt *getInt32(int32_t C) {
+    return ConstantInt::getSigned(getInt32Ty(), C);
+  }
+
+  /// getInt32 - Get a constant 32-bit value.
+  ConstantInt *getInt32(uint32_t C) {
+    return ConstantInt::get(getInt32Ty(), C);
+  }
+  
+  /// getInt64 - Get a constant 64-bit value.
+  ConstantInt *getInt64(int64_t C) {
+    return ConstantInt::getSigned(getInt64Ty(), C);
+  }
+
+  /// getInt64 - Get a constant 64-bit value.
+  ConstantInt *getInt64(uint64_t C) {
+    return ConstantInt::get(getInt64Ty(), C);
+  }
   
   //===--------------------------------------------------------------------===//
   // Type creation methods
   //===--------------------------------------------------------------------===//
   
   /// getInt1Ty - Fetch the type representing a single bit
-  const Type *getInt1Ty() {
+  const IntegerType *getInt1Ty() {
     return Type::getInt1Ty(Context);
   }
   
   /// getInt8Ty - Fetch the type representing an 8-bit integer.
-  const Type *getInt8Ty() {
+  const IntegerType *getInt8Ty() {
     return Type::getInt8Ty(Context);
   }
   
   /// getInt16Ty - Fetch the type representing a 16-bit integer.
-  const Type *getInt16Ty() {
+  const IntegerType *getInt16Ty() {
     return Type::getInt16Ty(Context);
   }
   
   /// getInt32Ty - Fetch the type resepresenting a 32-bit integer.
-  const Type *getInt32Ty() {
+  const IntegerType *getInt32Ty() {
     return Type::getInt32Ty(Context);
   }
   
   /// getInt64Ty - Fetch the type representing a 64-bit integer.
-  const Type *getInt64Ty() {
+  const IntegerType *getInt64Ty() {
     return Type::getInt64Ty(Context);
   }
   
@@ -193,7 +248,7 @@ public:
     return Type::getVoidTy(Context);
   }
   
-  const Type *getInt8PtrTy() {
+  const PointerType *getInt8PtrTy() {
     return Type::getInt8PtrTy(Context);
   }
   
