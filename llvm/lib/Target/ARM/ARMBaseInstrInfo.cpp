@@ -718,6 +718,12 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (SrcRC == ARM::DPR_8RegisterClass)
     SrcRC = ARM::DPR_VFP2RegisterClass;
 
+  // NEONMoveFixPass will convert VFP moves to NEON moves when profitable.
+  if (DestRC == ARM::DPR_VFP2RegisterClass)
+    DestRC = ARM::DPRRegisterClass;
+  if (SrcRC == ARM::DPR_VFP2RegisterClass)
+    SrcRC = ARM::DPRRegisterClass;
+
   // Allow QPR / QPR_VFP2 / QPR_8 cross-class copies.
   if (DestRC == ARM::QPR_VFP2RegisterClass ||
       DestRC == ARM::QPR_8RegisterClass)
@@ -750,10 +756,6 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = (SrcRC == ARM::GPRRegisterClass ? ARM::VMOVSR : ARM::VMOVS);
     else if (DestRC == ARM::DPRRegisterClass)
       Opc = ARM::VMOVD;
-    else if (DestRC == ARM::DPR_VFP2RegisterClass ||
-             SrcRC == ARM::DPR_VFP2RegisterClass)
-      // Always use neon reg-reg move if source or dest is NEON-only regclass.
-      Opc = ARM::VMOVDneon;
     else if (DestRC == ARM::QPRRegisterClass)
       Opc = ARM::VMOVQ;
     else if (DestRC == ARM::QQPRRegisterClass)
