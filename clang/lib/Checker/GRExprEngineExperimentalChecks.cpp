@@ -24,6 +24,7 @@ void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
   RegisterPthreadLockChecker(Eng);  
   RegisterMallocChecker(Eng);
   RegisterStreamChecker(Eng);
+  RegisterCStringChecker(Eng);
 }
 
 void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {

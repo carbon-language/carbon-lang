@@ -25,6 +25,7 @@ add_clang_library(clangChecker
   CheckSizeofPointer.cpp
   Checker.cpp
   CocoaConventions.cpp
+  CStringChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp
