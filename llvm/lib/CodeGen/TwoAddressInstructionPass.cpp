@@ -1218,6 +1218,19 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
       }
 
+      // Rewrite INSERT_SUBREG as COPY now that we no longer need SSA form.
+      if (mi->isInsertSubreg()) {
+        // From %reg = INSERT_SUBREG %reg, %subreg, subidx
+        // To   %reg:subidx = COPY %subreg
+        unsigned SubIdx = mi->getOperand(3).getImm();
+        mi->RemoveOperand(3);
+        assert(mi->getOperand(0).getSubReg() == 0 && "Unexpected subreg idx");
+        mi->getOperand(0).setSubReg(SubIdx);
+        mi->RemoveOperand(1);
+        mi->setDesc(TII->get(TargetOpcode::COPY));
+        DEBUG(dbgs() << "\t\tconvert to:\t" << *mi);
+      }
+
       // Clear TiedOperands here instead of at the top of the loop
       // since most instructions do not have tied operands.
       TiedOperands.clear();

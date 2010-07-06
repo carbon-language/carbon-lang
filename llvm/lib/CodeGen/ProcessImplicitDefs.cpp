@@ -117,10 +117,24 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         }
       }
 
+      // Eliminate %reg1032:sub<def> = COPY undef.
+      if (MI->isCopy() && MI->getOperand(0).getSubReg()) {
+        MachineOperand &MO = MI->getOperand(1);
+        if (ImpDefRegs.count(MO.getReg())) {
+          if (MO.isKill()) {
+            LiveVariables::VarInfo& vi = lv_->getVarInfo(MO.getReg());
+            vi.removeKill(MI);
+          }
+          MI->eraseFromParent();
+          Changed = true;
+          continue;
+        }
+      }
+
       bool ChangedToImpDef = false;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand& MO = MI->getOperand(i);
-        if (!MO.isReg() || !MO.isUse() || MO.isUndef())
+        if (!MO.isReg() || (MO.isDef() && !MO.getSubReg()) || MO.isUndef())
           continue;
         unsigned Reg = MO.getReg();
         if (!Reg)
@@ -145,6 +159,12 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
 
         Changed = true;
         MO.setIsUndef();
+        // This is a partial register redef of an implicit def.
+        // Make sure the whole register is defined by the instruction.
+        if (MO.isDef()) {
+          MI->addRegisterDefined(Reg);
+          continue;
+        }
         if (MO.isKill() || MI->isRegTiedToDefOperand(i)) {
           // Make sure other uses of 
           for (unsigned j = i+1; j != e; ++j) {

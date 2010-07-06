@@ -265,7 +265,7 @@ bool MultipleDefsBySameMI(const MachineInstr &MI, unsigned MOIdx) {
     if (MO.getReg() == Reg && MO.isDef()) {
       assert(MI.getOperand(MOIdx).getSubReg() != MO.getSubReg() &&
              MI.getOperand(MOIdx).getSubReg() &&
-             MO.getSubReg());
+             (MO.getSubReg() || MO.isImplicit()));
       return true;
     }
   }
