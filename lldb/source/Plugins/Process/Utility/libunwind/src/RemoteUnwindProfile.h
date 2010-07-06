@@ -59,7 +59,7 @@ public:
 
 class RemoteProcInfo;
 
-bool AssemblyParse (RemoteProcInfo *procinfo, unw_accessors_t *as, unw_addr_space_t as, uint64_t start, uint64_t end, RemoteUnwindProfile &profile, void *arg);
+bool AssemblyParse (RemoteProcInfo *procinfo, unw_accessors_t *accessor, unw_addr_space_t as, uint64_t start, uint64_t end, RemoteUnwindProfile &profile, void *arg);
 
 
 class FuncBounds {
