@@ -178,7 +178,7 @@ void PCHDeclWriter::VisitEnumDecl(EnumDecl *D) {
   Writer.AddTypeRef(D->getPromotionType(), Record);
   Record.push_back(D->getNumPositiveBits());
   Record.push_back(D->getNumNegativeBits());
-  // FIXME: C++ InstantiatedFrom
+  Writer.AddDeclRef(D->getInstantiatedFromMemberEnum(), Record);
   Code = pch::DECL_ENUM;
 }
 

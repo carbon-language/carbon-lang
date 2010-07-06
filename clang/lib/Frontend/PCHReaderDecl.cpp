@@ -178,7 +178,8 @@ void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->setPromotionType(Reader.GetType(Record[Idx++]));
   ED->setNumPositiveBits(Record[Idx++]);
   ED->setNumNegativeBits(Record[Idx++]);
-  // FIXME: C++ InstantiatedFrom
+  ED->setInstantiationOfMemberEnum(
+                         cast_or_null<EnumDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitRecordDecl(RecordDecl *RD) {
