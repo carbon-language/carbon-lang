@@ -2132,6 +2132,20 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I)
     AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
 
+  // Build a record containing all of the VTable uses information.
+  RecordData VTableUses;
+  VTableUses.push_back(SemaRef.VTableUses.size());
+  for (unsigned I = 0, N = SemaRef.VTableUses.size(); I != N; ++I) {
+    AddDeclRef(SemaRef.VTableUses[I].first, VTableUses);
+    AddSourceLocation(SemaRef.VTableUses[I].second, VTableUses);
+    VTableUses.push_back(SemaRef.VTablesUsed[SemaRef.VTableUses[I].first]);
+  }
+
+  // Build a record containing all of dynamic classes declarations.
+  RecordData DynamicClasses;
+  for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
+    AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
+
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
@@ -2226,6 +2240,14 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing ext_vector type names.
   if (!ExtVectorDecls.empty())
     Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
+
+  // Write the record containing VTable uses information.
+  if (!VTableUses.empty())
+    Stream.EmitRecord(pch::VTABLE_USES, VTableUses);
+
+  // Write the record containing dynamic classes declarations.
+  if (!DynamicClasses.empty())
+    Stream.EmitRecord(pch::DYNAMIC_CLASSES, DynamicClasses);
 
   // Some simple statistics
   Record.clear();

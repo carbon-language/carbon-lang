@@ -333,6 +333,12 @@ private:
   /// PCH file.
   llvm::SmallVector<uint64_t, 4> ExtVectorDecls;
 
+  /// \brief The set of VTable uses of CXXRecordDecls stored in the PCH file.
+  llvm::SmallVector<uint64_t, 64> VTableUses;
+
+  /// \brief The set of dynamic CXXRecord declarations stored in the PCH file.
+  llvm::SmallVector<uint64_t, 16> DynamicClasses;
+
   /// \brief The set of Objective-C category definitions stored in the
   /// the PCH file.
   llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;

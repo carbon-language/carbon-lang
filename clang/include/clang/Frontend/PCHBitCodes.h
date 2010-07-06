@@ -226,7 +226,14 @@ namespace clang {
       
       /// \brief Record code for the table of offsets to macro definition
       /// entries in the preprocessing record.
-      MACRO_DEFINITION_OFFSETS = 23
+      MACRO_DEFINITION_OFFSETS = 23,
+
+      /// \brief Record code for the array of VTable uses.
+      VTABLE_USES = 24,
+
+      /// \brief Record code for the array of dynamic classes.
+      DYNAMIC_CLASSES = 25
+
     };
 
     /// \brief Record types used within a source manager block.

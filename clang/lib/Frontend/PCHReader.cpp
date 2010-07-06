@@ -1505,6 +1505,22 @@ PCHReader::ReadPCHBlock() {
       ExtVectorDecls.swap(Record);
       break;
 
+    case pch::VTABLE_USES:
+      if (!VTableUses.empty()) {
+        Error("duplicate VTABLE_USES record in PCH file");
+        return Failure;
+      }
+      VTableUses.swap(Record);
+      break;
+
+    case pch::DYNAMIC_CLASSES:
+      if (!DynamicClasses.empty()) {
+        Error("duplicate DYNAMIC_CLASSES record in PCH file");
+        return Failure;
+      }
+      DynamicClasses.swap(Record);
+      break;
+
     case pch::ORIGINAL_FILE_NAME:
       ActualOriginalFileName.assign(BlobStart, BlobLen);
       OriginalFileName = ActualOriginalFileName;
@@ -2801,6 +2817,26 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = ExtVectorDecls.size(); I != N; ++I)
     SemaObj->ExtVectorDecls.push_back(
                                cast<TypedefDecl>(GetDecl(ExtVectorDecls[I])));
+
+  // FIXME: Do VTable uses and dynamic classes deserialize too much ?
+  // Can we cut them down before writing them ?
+
+  // If there were any VTable uses, deserialize the information and add it
+  // to Sema's vector and map of VTable uses.
+  unsigned Idx = 0;
+  for (unsigned I = 0, N = VTableUses[Idx++]; I != N; ++I) {
+    CXXRecordDecl *Class = cast<CXXRecordDecl>(GetDecl(VTableUses[Idx++]));
+    SourceLocation Loc = ReadSourceLocation(VTableUses, Idx);
+    bool DefinitionRequired = VTableUses[Idx++];
+    SemaObj->VTableUses.push_back(std::make_pair(Class, Loc));
+    SemaObj->VTablesUsed[Class] = DefinitionRequired;
+  }
+
+  // If there were any dynamic classes declarations, deserialize them
+  // and add them to Sema's vector of such declarations.
+  for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I)
+    SemaObj->DynamicClasses.push_back(
+                               cast<CXXRecordDecl>(GetDecl(DynamicClasses[I])));
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
