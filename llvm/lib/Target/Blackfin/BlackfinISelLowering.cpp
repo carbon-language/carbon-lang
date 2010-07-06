@@ -143,7 +143,7 @@ SDValue BlackfinTargetLowering::LowerGlobalAddress(SDValue Op,
   DebugLoc DL = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
-  Op = DAG.getTargetGlobalAddress(GV, MVT::i32);
+  Op = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
   return DAG.getNode(BFISD::Wrapper, DL, MVT::i32, Op);
 }
 
@@ -356,7 +356,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
 

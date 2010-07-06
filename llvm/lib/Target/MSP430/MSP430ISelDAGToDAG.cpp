@@ -272,7 +272,8 @@ bool MSP430DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N,
     AM.Base.Reg;
 
   if (AM.GV)
-    Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i16, AM.Disp,
+    Disp = CurDAG->getTargetGlobalAddress(AM.GV, Op->getDebugLoc(),
+                                          MVT::i16, AM.Disp,
                                           0/*AM.SymbolFlags*/);
   else if (AM.CP)
     Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i16,

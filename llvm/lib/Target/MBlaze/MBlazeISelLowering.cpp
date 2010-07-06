@@ -404,7 +404,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);
 
   return DAG.getNode(MBlazeISD::Wrap, dl, MVT::i32, GA);
 }
@@ -617,7 +617,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   // node so that legalize doesn't hack it.
   unsigned char OpFlag = MBlazeII::MO_NO_FLAG;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(),
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
                                 getPointerTy(), 0, OpFlag);
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(),

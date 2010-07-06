@@ -2414,7 +2414,8 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       if (ConstraintLetter != 'n') {
         int64_t Offs = GA->getOffset();
         if (C) Offs += C->getZExtValue();
-        Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(),
+        Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(), 
+                                                 C->getDebugLoc(),
                                                  Op.getValueType(), Offs));
         return;
       }

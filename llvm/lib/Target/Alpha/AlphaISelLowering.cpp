@@ -643,10 +643,12 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     const GlobalValue *GV = GSDN->getGlobal();
-    SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
+    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i64, 
+                                            GSDN->getOffset());
     // FIXME there isn't really any debug info here
 
-    //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
+    //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() 
+    //        && !GV->hasLinkOnceLinkage()) {
     if (GV->hasLocalLinkage()) {
       SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, GA,
                                 DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));

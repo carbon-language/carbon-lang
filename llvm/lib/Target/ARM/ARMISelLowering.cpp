@@ -1238,7 +1238,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
                            getPointerTy(), Callee, PICLabel);
     } else
-      Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
+      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     isDirect = true;
     bool isStub = Subtarget->isTargetDarwin() &&
@@ -1769,7 +1769,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
     // pair. This is always cheaper.
     if (Subtarget->useMovt()) {
       return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
-                         DAG.getTargetGlobalAddress(GV, PtrVT));
+                         DAG.getTargetGlobalAddress(GV, dl, PtrVT));
     } else {
       SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);

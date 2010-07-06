@@ -529,7 +529,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i16);
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i16);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i16);
 
@@ -642,7 +642,8 @@ SDValue MSP430TargetLowering::LowerGlobalAddress(SDValue Op,
   int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
 
   // Create the TargetGlobalAddress node, folding in the constant offset.
-  SDValue Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
+  SDValue Result = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(),
+                                              getPointerTy(), Offset);
   return DAG.getNode(MSP430ISD::Wrapper, Op.getDebugLoc(),
                      getPointerTy(), Result);
 }

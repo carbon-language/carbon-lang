@@ -348,13 +348,13 @@ public:
   SDValue getTargetConstantFP(const ConstantFP &Val, EVT VT) {
     return getConstantFP(Val, VT, true);
   }
-  SDValue getGlobalAddress(const GlobalValue *GV, EVT VT,
+  SDValue getGlobalAddress(const GlobalValue *GV, DebugLoc DL, EVT VT,
                            int64_t offset = 0, bool isTargetGA = false,
                            unsigned char TargetFlags = 0);
-  SDValue getTargetGlobalAddress(const GlobalValue *GV, EVT VT,
+  SDValue getTargetGlobalAddress(const GlobalValue *GV, DebugLoc DL, EVT VT,
                                  int64_t offset = 0,
                                  unsigned char TargetFlags = 0) {
-    return getGlobalAddress(GV, VT, offset, true, TargetFlags);
+    return getGlobalAddress(GV, DL, VT, offset, true, TargetFlags);
   }
   SDValue getFrameIndex(int FI, EVT VT, bool isTarget = false);
   SDValue getTargetFrameIndex(int FI, EVT VT) {

@@ -852,7 +852,7 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
       return DAG.getConstant(*CI, VT);
 
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return DAG.getGlobalAddress(GV, VT);
+      return DAG.getGlobalAddress(GV, getCurDebugLoc(), VT);
 
     if (isa<ConstantPointerNull>(C))
       return DAG.getConstant(0, TLI.getPointerTy());

@@ -953,7 +953,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   EVT PtrVT = Op.getValueType();
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = GSDN->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
+  SDValue GA = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(),
+                                          PtrVT, GSDN->getOffset());
   const TargetMachine &TM = DAG.getTarget();
   SDValue Zero = DAG.getConstant(0, PtrVT);
   // FIXME there is no actual debug info here
@@ -1232,7 +1233,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     const GlobalValue *GV = G->getGlobal();
     EVT CalleeVT = Callee.getValueType();
     SDValue Zero = DAG.getConstant(0, PtrVT);
-    SDValue GA = DAG.getTargetGlobalAddress(GV, CalleeVT);
+    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, CalleeVT);
 
     if (!ST->usingLargeMem()) {
       // Turn calls to targets that are defined (i.e., have bodies) into BRSL

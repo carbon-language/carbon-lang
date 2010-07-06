@@ -223,7 +223,8 @@ namespace {
       // These are 32-bit even in 64-bit mode since RIP relative offset
       // is 32-bit.
       if (AM.GV)
-        Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp,
+        Disp = CurDAG->getTargetGlobalAddress(AM.GV, DebugLoc(),
+                                              MVT::i32, AM.Disp,
                                               AM.SymbolFlags);
       else if (AM.CP)
         Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32,

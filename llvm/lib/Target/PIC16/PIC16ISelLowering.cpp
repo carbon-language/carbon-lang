@@ -672,7 +672,8 @@ SDValue PIC16TargetLowering::ExpandGlobalAddress(SDNode *N,
   // FIXME there isn't really debug info here
   DebugLoc dl = G->getDebugLoc();
   
-  SDValue TGA = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i8,
+  SDValue TGA = DAG.getTargetGlobalAddress(G->getGlobal(), N->getDebugLoc(),
+                                           MVT::i8,
                                            G->getOffset());
 
   SDValue Offset = DAG.getConstant(0, MVT::i8);
@@ -1428,7 +1429,7 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
        // Considering the GlobalAddressNode case here.
        if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
           const GlobalValue *GV = G->getGlobal();
-          Callee = DAG.getTargetGlobalAddress(GV, MVT::i8);
+          Callee = DAG.getTargetGlobalAddress(GV, dl, MVT::i8);
           Name = G->getGlobal()->getName();
        } else {// Considering the ExternalSymbol case here
           ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Callee);
