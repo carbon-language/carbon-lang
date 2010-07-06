@@ -770,9 +770,9 @@ void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
     D->BaseOrMemberInitializers
         = new (C) CXXBaseOrMemberInitializer*[NumInitializers];
     for (unsigned i=0; i != NumInitializers; ++i) {
-      TypeSourceInfo *BaseClassInfo;
-      bool IsBaseVirtual;
-      FieldDecl *Member;
+      TypeSourceInfo *BaseClassInfo = 0;
+      bool IsBaseVirtual = false;
+      FieldDecl *Member = 0;
   
       bool IsBaseInitializer = Record[Idx++];
       if (IsBaseInitializer) {
