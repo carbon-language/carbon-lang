@@ -153,21 +153,16 @@ bool StackProtector::InsertStackProtectors() {
       //     StackGuard = load __stack_chk_guard
       //     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
       // 
-      PointerType *PtrTy = PointerType::getUnqual(
-          Type::getInt8Ty(RI->getContext()));
-
+      const PointerType *PtrTy = Type::getInt8PtrTy(RI->getContext());
       unsigned AddressSpace, Offset;
       if (TLI->getStackCookieLocation(AddressSpace, Offset)) {
-        Constant *ASPtr = Constant::getNullValue(
-            PointerType::get(Type::getInt8Ty(RI->getContext()), AddressSpace));
-        APInt OffsetInt(32, Offset);
-        Constant *OffsetVal = Constant::getIntegerValue(
-            Type::getInt32Ty(RI->getContext()), OffsetInt);
-        StackGuardVar = ConstantExpr::getPointerCast(
-            ConstantExpr::getGetElementPtr(ASPtr, &OffsetVal, 1),
-            PointerType::get(PtrTy, AddressSpace));
+        Constant *OffsetVal =
+          ConstantInt::get(Type::getInt32Ty(RI->getContext()), Offset);
+        
+        StackGuardVar = ConstantExpr::getIntToPtr(OffsetVal,
+                                      PointerType::get(PtrTy, AddressSpace));
       } else {
-          StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy); 
+        StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy); 
       }
 
       BasicBlock &Entry = F->getEntryBlock();
