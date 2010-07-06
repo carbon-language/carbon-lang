@@ -859,6 +859,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
   case ISD::FRAME_TO_ARGS_OFFSET:
+  case ISD::EH_SJLJ_SETJMP:
+  case ISD::EH_SJLJ_LONGJMP:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be expanded.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -868,8 +870,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::TRAMPOLINE:
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
-  case ISD::EH_SJLJ_SETJMP:
-  case ISD::EH_SJLJ_LONGJMP:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be custom-lowered.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -2507,6 +2507,11 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::EH_LABEL:
   case ISD::PREFETCH:
   case ISD::VAEND:
+  case ISD::EH_SJLJ_LONGJMP:
+    Results.push_back(Node->getOperand(0));
+    break;
+  case ISD::EH_SJLJ_SETJMP:
+    Results.push_back(DAG.getConstant(0, MVT::i32));
     Results.push_back(Node->getOperand(0));
     break;
   case ISD::MEMBARRIER: {
