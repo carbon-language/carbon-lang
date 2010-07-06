@@ -65,12 +65,7 @@ class TestClassTypes(lldbtest.TestBase):
         output = res.GetOutput()
         self.assertTrue(res.Succeeded())
         self.assertTrue(output.find('state is Stopped') > 0 and
-                        # TODO:
-                        #
-                        # Uncomment 'main.c:40' line when rdar://problem/8163668
-                        # is fixed.
-                        #
-                        #output.find('main.c:40') > 0 and
+                        output.find('main.c:40') > 0 and
                         output.find('where = a.out`f3') > 0 and
                         output.find('stop reason = breakpoint') > 0)
 
