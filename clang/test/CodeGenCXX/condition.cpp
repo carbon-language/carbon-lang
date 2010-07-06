@@ -72,12 +72,10 @@ void switch_destruct(int z) {
     break;
 
   default:
-    // CHECK: {{sw.default:|:5}}
     // CHECK: store i32 19
     z = 19;
     break;
   }
-  // CHECK: {{sw.epilog:|:6}}
   // CHECK: call void @_ZN16ConvertibleToIntD1Ev
   // CHECK: store i32 20
   z = 20;
