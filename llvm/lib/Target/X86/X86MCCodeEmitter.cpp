@@ -502,7 +502,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     }
 
     // If the last register should be encoded in the immediate field
-    // ignored it here.
+    // do not use any bit from VEX prefix to this register, ignore it
     if ((TSFlags >> 32) & X86II::VEX_I8IMM)
       NumOps--;
 
