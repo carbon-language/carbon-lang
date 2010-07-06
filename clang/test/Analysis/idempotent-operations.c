@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-idempotent-operation -analyzer-store=basic -analyzer-constraints=range
+// RUN: %clang_cc1 -analyze -analyzer-idempotent-operation -analyzer-store=region -analyzer-constraints=range -fblocks -verify -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -verify %s
 
 // Basic tests
 
