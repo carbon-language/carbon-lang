@@ -284,6 +284,18 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineFunction *F = BB->getParent();
     MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
+
+    // Transfer the remainder of BB and its successor edges to sinkMBB.
+    sinkMBB->splice(sinkMBB->begin(), BB,
+                    llvm::next(MachineBasicBlock::iterator(MI)),
+                    BB->end());
+    sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+    // Next, add the true and fallthrough blocks as its successors.
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
 
     // Emit the right instruction according to the type of the operands compared
     if (isFPCmp) {
@@ -295,20 +307,6 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     } else
       BuildMI(BB, dl, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
         .addReg(Mips::ZERO).addMBB(sinkMBB);
-
-    F->insert(It, copy0MBB);
-    F->insert(It, sinkMBB);
-    // Update machine-CFG edges by first adding all successors of the current
-    // block to the new block which will contain the Phi node for the select.
-    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
-          e = BB->succ_end(); i != e; ++i)
-      sinkMBB->addSuccessor(*i);
-    // Next, remove all successors of the current block, and add the true
-    // and fallthrough blocks as its successors.
-    while(!BB->succ_empty())
-      BB->removeSuccessor(BB->succ_begin());
-    BB->addSuccessor(copy0MBB);
-    BB->addSuccessor(sinkMBB);
 
     //  copy0MBB:
     //   %FalseValue = ...
@@ -322,11 +320,12 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(BB, dl, TII->get(Mips::PHI), MI->getOperand(0).getReg())
+    BuildMI(*BB, BB->begin(), dl,
+            TII->get(Mips::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB);
 
-    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+    MI->eraseFromParent();   // The pseudo instruction is gone now.
     return BB;
   }
   }

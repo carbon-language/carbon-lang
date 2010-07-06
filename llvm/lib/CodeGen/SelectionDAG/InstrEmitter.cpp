@@ -723,6 +723,11 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   MI->setMemRefs(cast<MachineSDNode>(Node)->memoperands_begin(),
                  cast<MachineSDNode>(Node)->memoperands_end());
 
+  // Insert the instruction into position in the block. This needs to
+  // happen before any custom inserter hook is called so that the
+  // hook knows where in the block to insert the replacement code.
+  MBB->insert(InsertPos, MI);
+
   if (II.usesCustomInsertionHook()) {
     // Insert this instruction into the basic block using a target
     // specific inserter which may returns a new basic block.
@@ -731,8 +736,6 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     return;
   }
   
-  MBB->insert(InsertPos, MI);
-
   // Additional results must be an physical register def.
   if (HasPhysRegOuts) {
     for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {

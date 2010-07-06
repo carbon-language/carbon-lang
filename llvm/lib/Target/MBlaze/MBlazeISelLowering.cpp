@@ -234,6 +234,24 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineRegisterInfo &R = F->getRegInfo();
     MachineBasicBlock *loop = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *finish = F->CreateMachineBasicBlock(LLVM_BB);
+    F->insert(It, loop);
+    F->insert(It, finish);
+
+    // Update machine-CFG edges by transfering adding all successors and
+    // remaining instructions from the current block to the new block which
+    // will contain the Phi node for the select.
+    finish->splice(finish->begin(), BB,
+                   llvm::next(MachineBasicBlock::iterator(MI)),
+                   BB->end());
+    finish->transferSuccessorsAndUpdatePHIs(BB);
+
+    // Add the true and fallthrough blocks as its successors.
+    BB->addSuccessor(loop);
+    BB->addSuccessor(finish);
+
+    // Next, add the finish block as a successor of the loop block
+    loop->addSuccessor(finish);
+    loop->addSuccessor(loop);
 
     unsigned IAMT = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
     BuildMI(BB, dl, TII->get(MBlaze::ANDI), IAMT)
@@ -248,26 +266,6 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BuildMI(BB, dl, TII->get(MBlaze::BEQID))
       .addReg(IAMT)
       .addMBB(finish);
-
-    F->insert(It, loop);
-    F->insert(It, finish);
-
-    // Update machine-CFG edges by first adding all successors of the current
-    // block to the new block which will contain the Phi node for the select.
-    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
-          e = BB->succ_end(); i != e; ++i)
-      finish->addSuccessor(*i);
-
-    // Next, remove all successors of the current block, and add the true
-    // and fallthrough blocks as its successors.
-    while(!BB->succ_empty())
-      BB->removeSuccessor(BB->succ_begin());
-    BB->addSuccessor(loop);
-    BB->addSuccessor(finish);
-
-    // Next, add the finish block as a successor of the loop block
-    loop->addSuccessor(finish);
-    loop->addSuccessor(loop);
 
     unsigned DST = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
     unsigned NDST = R.createVirtualRegister(MBlaze::CPURegsRegisterClass);
@@ -298,12 +296,13 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(NAMT)
       .addMBB(loop);
 
-    BuildMI(finish, dl, TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
+    BuildMI(*finish, finish->begin(), dl,
+            TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
       .addReg(IVAL).addMBB(BB)
       .addReg(NDST).addMBB(loop);
 
     // The pseudo instruction is no longer needed so remove it
-    F->DeleteMachineInstr(MI);
+    MI->eraseFromParent();
     return finish;
     }
 
@@ -338,26 +337,22 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     case MBlazeCC::LE: Opc = MBlaze::BGTID; break;
     }
 
-    BuildMI(BB, dl, TII->get(Opc))
-      .addReg(MI->getOperand(3).getReg())
-      .addMBB(dneBB);
-
     F->insert(It, flsBB);
     F->insert(It, dneBB);
 
-    // Update machine-CFG edges by first adding all successors of the current
-    // block to the new block which will contain the Phi node for the select.
-    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
-          e = BB->succ_end(); i != e; ++i)
-      dneBB->addSuccessor(*i);
+    // Transfer the remainder of BB and its successor edges to dneBB.
+    dneBB->splice(dneBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+    dneBB->transferSuccessorsAndUpdatePHIs(BB);
 
-    // Next, remove all successors of the current block, and add the true
-    // and fallthrough blocks as its successors.
-    while(!BB->succ_empty())
-      BB->removeSuccessor(BB->succ_begin());
     BB->addSuccessor(flsBB);
     BB->addSuccessor(dneBB);
     flsBB->addSuccessor(dneBB);
+
+    BuildMI(BB, dl, TII->get(Opc))
+      .addReg(MI->getOperand(3).getReg())
+      .addMBB(dneBB);
 
     //  sinkMBB:
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
@@ -366,11 +361,12 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //  .addReg(MI->getOperand(1).getReg()).addMBB(flsBB)
     //  .addReg(MI->getOperand(2).getReg()).addMBB(BB);
 
-    BuildMI(dneBB, dl, TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
+    BuildMI(*dneBB, dneBB->begin(), dl,
+            TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(2).getReg()).addMBB(flsBB)
       .addReg(MI->getOperand(1).getReg()).addMBB(BB);
 
-    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+    MI->eraseFromParent();   // The pseudo instruction is gone now.
     return dneBB;
   }
   }

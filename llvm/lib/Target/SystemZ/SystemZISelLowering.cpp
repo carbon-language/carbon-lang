@@ -827,15 +827,19 @@ SystemZTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *copy1MBB = F->CreateMachineBasicBlock(LLVM_BB);
   SystemZCC::CondCodes CC = (SystemZCC::CondCodes)MI->getOperand(3).getImm();
-  BuildMI(BB, dl, TII.getBrCond(CC)).addMBB(copy1MBB);
   F->insert(I, copy0MBB);
   F->insert(I, copy1MBB);
   // Update machine-CFG edges by transferring all successors of the current
   // block to the new block which will contain the Phi node for the select.
-  copy1MBB->transferSuccessors(BB);
+  copy1MBB->splice(copy1MBB->begin(), BB,
+                   llvm::next(MachineBasicBlock::iterator(MI)),
+                   BB->end());
+  copy1MBB->transferSuccessorsAndUpdatePHIs(BB);
   // Next, add the true and fallthrough blocks as its successors.
   BB->addSuccessor(copy0MBB);
   BB->addSuccessor(copy1MBB);
+
+  BuildMI(BB, dl, TII.getBrCond(CC)).addMBB(copy1MBB);
 
   //  copy0MBB:
   //   %FalseValue = ...
@@ -849,11 +853,11 @@ SystemZTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = copy1MBB;
-  BuildMI(BB, dl, TII.get(SystemZ::PHI),
+  BuildMI(*BB, BB->begin(), dl, TII.get(SystemZ::PHI),
           MI->getOperand(0).getReg())
     .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
 
-  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
 }
