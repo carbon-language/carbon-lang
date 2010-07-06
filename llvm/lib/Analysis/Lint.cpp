@@ -19,7 +19,8 @@
 // 
 // Another limitation is that it assumes all code will be executed. A store
 // through a null pointer in a basic block which is never reached is harmless,
-// but this pass will warn about it anyway.
+// but this pass will warn about it anyway. This is the main reason why most
+// of these checks live here instead of in the Verifier pass.
 //
 // Optimization passes may make conditions that this pass checks for more or
 // less obvious. If an optimization pass appears to be introducing a warning,
