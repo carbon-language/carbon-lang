@@ -1548,6 +1548,8 @@ private:
   const TargetCodeGenInfo &getTargetHooks() const {
     return CGM.getTargetCodeGenInfo();
   }
+
+  void EmitDeclMetadata();
 };
 
 

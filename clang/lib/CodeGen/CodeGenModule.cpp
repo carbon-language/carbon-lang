@@ -104,6 +104,9 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   EmitLLVMUsed();
+
+  if (getCodeGenOpts().EmitDeclMetadata)
+    EmitDeclMetadata();
 }
 
 bool CodeGenModule::isTargetDarwin() const {
@@ -2034,5 +2037,75 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // non-top-level decl.  FIXME: Would be nice to have an isTopLevelDeclKind
     // function. Need to recode Decl::Kind to do that easily.
     assert(isa<TypeDecl>(D) && "Unsupported decl kind");
+  }
+}
+
+/// Turns the given pointer into a constant.
+static llvm::Constant *GetPointerConstant(llvm::LLVMContext &Context,
+                                          const void *Ptr) {
+  uintptr_t PtrInt = reinterpret_cast<uintptr_t>(Ptr);
+  const llvm::Type *i64 = llvm::Type::getInt64Ty(Context);
+  return llvm::ConstantInt::get(i64, PtrInt);
+}
+
+static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
+                                   llvm::NamedMDNode *&GlobalMetadata,
+                                   GlobalDecl D,
+                                   llvm::GlobalValue *Addr) {
+  if (!GlobalMetadata)
+    GlobalMetadata =
+      CGM.getModule().getOrInsertNamedMetadata("clang.global.decl.ptrs");
+
+  // TODO: should we report variant information for ctors/dtors?
+  llvm::Value *Ops[] = {
+    Addr,
+    GetPointerConstant(CGM.getLLVMContext(), D.getDecl())
+  };
+  GlobalMetadata->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops, 2));
+}
+
+/// Emits metadata nodes associating all the global values in the
+/// current module with the Decls they came from.  This is useful for
+/// projects using IR gen as a subroutine.
+///
+/// Since there's currently no way to associate an MDNode directly
+/// with an llvm::GlobalValue, we create a global named metadata
+/// with the name 'clang.global.decl.ptrs'.
+void CodeGenModule::EmitDeclMetadata() {
+  llvm::NamedMDNode *GlobalMetadata = 0;
+
+  // StaticLocalDeclMap
+  for (llvm::DenseMap<GlobalDecl,llvm::StringRef>::iterator
+         I = MangledDeclNames.begin(), E = MangledDeclNames.end();
+       I != E; ++I) {
+    llvm::GlobalValue *Addr = getModule().getNamedValue(I->second);
+    EmitGlobalDeclMetadata(*this, GlobalMetadata, I->first, Addr);
+  }
+}
+
+/// Emits metadata nodes for all the local variables in the current
+/// function.
+void CodeGenFunction::EmitDeclMetadata() {
+  if (LocalDeclMap.empty()) return;
+
+  llvm::LLVMContext &Context = getLLVMContext();
+
+  // Find the unique metadata ID for this name.
+  unsigned DeclPtrKind = Context.getMDKindID("clang.decl.ptr");
+
+  llvm::NamedMDNode *GlobalMetadata = 0;
+
+  for (llvm::DenseMap<const Decl*, llvm::Value*>::iterator
+         I = LocalDeclMap.begin(), E = LocalDeclMap.end(); I != E; ++I) {
+    const Decl *D = I->first;
+    llvm::Value *Addr = I->second;
+
+    if (llvm::AllocaInst *Alloca = dyn_cast<llvm::AllocaInst>(Addr)) {
+      llvm::Value *DAddr = GetPointerConstant(getLLVMContext(), D);
+      Alloca->setMetadata(DeclPtrKind, llvm::MDNode::get(Context, &DAddr, 1));
+    } else if (llvm::GlobalValue *GV = dyn_cast<llvm::GlobalValue>(Addr)) {
+      GlobalDecl GD = GlobalDecl(cast<VarDecl>(D));
+      EmitGlobalDeclMetadata(CGM, GlobalMetadata, GD, GV);
+    }
   }
 }

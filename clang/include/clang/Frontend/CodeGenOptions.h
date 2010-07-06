@@ -67,6 +67,9 @@ public:
   unsigned UnwindTables      : 1; /// Emit unwind tables.
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
+  unsigned EmitDeclMetadata  : 1; /// Emit special metadata indicating what Decl*
+                                  /// various IR entities came from.  Only useful
+                                  /// when running CodeGen as a subroutine.
 
   /// The code model to use (-mcmodel).
   std::string CodeModel;
@@ -122,6 +125,7 @@ public:
     UnrollLoops = 0;
     UnwindTables = 0;
     VerifyModule = 1;
+    EmitDeclMetadata = 0;
 
     Inlining = NoInlining;
     RelocationModel = "pic";

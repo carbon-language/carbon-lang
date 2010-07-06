@@ -594,6 +594,8 @@ private:
   /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed(void);
 
+  void EmitDeclMetadata();
+
   /// MayDeferGeneration - Determine if the given decl can be emitted
   /// lazily; this is only relevant for definitions. The given decl
   /// must be either a function or var decl.
