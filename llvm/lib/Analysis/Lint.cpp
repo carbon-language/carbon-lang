@@ -201,6 +201,8 @@ void Lint::visitFunction(Function &F) {
   // fairly common mistake to neglect to name a function.
   Assert1(F.hasName() || F.hasLocalLinkage(),
           "Unusual: Unnamed function with non-local linkage", &F);
+
+  // TODO: Check for irreducible control flow.
 }
 
 void Lint::visitCallSite(CallSite CS) {
@@ -224,6 +226,7 @@ void Lint::visitCallSite(CallSite CS) {
             "argument count", &I);
 
     // Check argument types (in case the callee was casted) and attributes.
+    // TODO: Verify that caller and callee attributes are compatible.
     Function::arg_iterator PI = F->arg_begin(), PE = F->arg_end();
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
     for (; AI != AE; ++AI) {
@@ -361,6 +364,7 @@ void Lint::visitReturnInst(ReturnInst &I) {
 }
 
 // TODO: Check that the reference is in bounds.
+// TODO: Check readnone/readonly function attributes.
 void Lint::visitMemoryReference(Instruction &I,
                                 Value *Ptr, unsigned Size, unsigned Align,
                                 const Type *Ty, unsigned Flags) {
@@ -501,6 +505,8 @@ void Lint::visitAllocaInst(AllocaInst &I) {
     // This isn't undefined behavior, it's just an obvious pessimization.
     Assert1(&I.getParent()->getParent()->getEntryBlock() == I.getParent(),
             "Pessimization: Static alloca outside of entry block", &I);
+
+  // TODO: Check for an unusual size (MSB set?)
 }
 
 void Lint::visitVAArgInst(VAArgInst &I) {
