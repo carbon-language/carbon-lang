@@ -335,32 +335,12 @@ void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB) {
   if (this == fromMBB)
     return;
   
-  while (!fromMBB->succ_empty()) {
-    MachineBasicBlock *Succ = *fromMBB->succ_begin();
-    addSuccessor(Succ);
-    fromMBB->removeSuccessor(Succ);
-  }
-}
-
-void
-MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
-  if (this == fromMBB)
-    return;
+  for (MachineBasicBlock::succ_iterator I = fromMBB->succ_begin(), 
+       E = fromMBB->succ_end(); I != E; ++I)
+    addSuccessor(*I);
   
-  while (!fromMBB->succ_empty()) {
-    MachineBasicBlock *Succ = *fromMBB->succ_begin();
-    addSuccessor(Succ);
-    fromMBB->removeSuccessor(Succ);
-
-    // Fix up any PHI nodes in the successor.
-    for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
-         MI != ME && MI->isPHI(); ++MI)
-      for (unsigned i = 2, e = MI->getNumOperands()+1; i != e; i += 2) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (MO.getMBB() == fromMBB)
-          MO.setMBB(this);
-      }
-  }
+  while (!fromMBB->succ_empty())
+    fromMBB->removeSuccessor(fromMBB->succ_begin());
 }
 
 bool MachineBasicBlock::isSuccessor(const MachineBasicBlock *MBB) const {

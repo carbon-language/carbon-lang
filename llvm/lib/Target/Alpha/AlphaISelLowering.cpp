@@ -863,10 +863,7 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineBasicBlock *llscMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
 
-  sinkMBB->splice(sinkMBB->begin(), thisMBB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  thisMBB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(thisMBB);
+  sinkMBB->transferSuccessors(thisMBB);
 
   F->insert(It, llscMBB);
   F->insert(It, sinkMBB);
@@ -915,7 +912,7 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   thisMBB->addSuccessor(llscMBB);
   llscMBB->addSuccessor(llscMBB);
   llscMBB->addSuccessor(sinkMBB);
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
 
   return sinkMBB;
 }

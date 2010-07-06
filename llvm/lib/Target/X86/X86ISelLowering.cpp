@@ -8023,11 +8023,8 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   F->insert(MBBIter, newMBB);
   F->insert(MBBIter, nextMBB);
 
-  // Transfer the remainder of thisMBB and its successor edges to nextMBB.
-  nextMBB->splice(nextMBB->begin(), thisMBB,
-                  llvm::next(MachineBasicBlock::iterator(bInstr)),
-                  thisMBB->end());
-  nextMBB->transferSuccessorsAndUpdatePHIs(thisMBB);
+  // Move all successors to thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
 
   // Update thisMBB to fall through to newMBB
   thisMBB->addSuccessor(newMBB);
@@ -8090,7 +8087,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   // insert branch
   BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
-  bInstr->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
   return nextMBB;
 }
 
@@ -8135,11 +8132,8 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   F->insert(MBBIter, newMBB);
   F->insert(MBBIter, nextMBB);
 
-  // Transfer the remainder of thisMBB and its successor edges to nextMBB.
-  nextMBB->splice(nextMBB->begin(), thisMBB,
-                  llvm::next(MachineBasicBlock::iterator(bInstr)),
-                  thisMBB->end());
-  nextMBB->transferSuccessorsAndUpdatePHIs(thisMBB);
+  // Move all successors to thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
 
   // Update thisMBB to fall through to newMBB
   thisMBB->addSuccessor(newMBB);
@@ -8256,7 +8250,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   // insert branch
   BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
-  bInstr->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
   return nextMBB;
 }
 
@@ -8290,11 +8284,8 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   F->insert(MBBIter, newMBB);
   F->insert(MBBIter, nextMBB);
 
-  // Transfer the remainder of thisMBB and its successor edges to nextMBB.
-  nextMBB->splice(nextMBB->begin(), thisMBB,
-                  llvm::next(MachineBasicBlock::iterator(mInstr)),
-                  thisMBB->end());
-  nextMBB->transferSuccessorsAndUpdatePHIs(thisMBB);
+  // Move all successors of thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
 
   // Update thisMBB to fall through to newMBB
   thisMBB->addSuccessor(newMBB);
@@ -8362,7 +8353,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   // insert branch
   BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
-  mInstr->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(mInstr);   // The pseudo instruction is gone now.
   return nextMBB;
 }
 
@@ -8372,6 +8363,7 @@ MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
                             unsigned numArgs, bool memArg) const {
 
+  MachineFunction *F = BB->getParent();
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
 
@@ -8393,7 +8385,7 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
   BuildMI(BB, dl, TII->get(X86::MOVAPSrr), MI->getOperand(0).getReg())
     .addReg(X86::XMM0);
 
-  MI->eraseFromParent();
+  F->DeleteMachineInstr(MI);
 
   return BB;
 }
@@ -8422,12 +8414,9 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   F->insert(MBBIter, XMMSaveMBB);
   F->insert(MBBIter, EndMBB);
 
-  // Transfer the remainder of MBB and its successor edges to EndMBB.
-  EndMBB->splice(EndMBB->begin(), MBB,
-                 llvm::next(MachineBasicBlock::iterator(MI)),
-                 MBB->end());
-  EndMBB->transferSuccessorsAndUpdatePHIs(MBB);
-
+  // Set up the CFG.
+  // Move any original successors of MBB to the end block.
+  EndMBB->transferSuccessors(MBB);
   // The original block will now fall through to the XMM save block.
   MBB->addSuccessor(XMMSaveMBB);
   // The XMMSaveMBB will fall through to the end block.
@@ -8466,7 +8455,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
       .addMemOperand(MMO);
   }
 
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
 
   return EndMBB;
 }
@@ -8495,38 +8484,43 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  unsigned Opc =
+    X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
+
+  BuildMI(BB, DL, TII->get(Opc)).addMBB(sinkMBB);
   F->insert(It, copy0MBB);
   F->insert(It, sinkMBB);
+
+  // Update machine-CFG edges by first adding all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
+         E = BB->succ_end(); I != E; ++I)
+    sinkMBB->addSuccessor(*I);
+
+  // Next, remove all successors of the current block, and add the true
+  // and fallthrough blocks as its successors.
+  while (!BB->succ_empty())
+    BB->removeSuccessor(BB->succ_begin());
+
+  // Add the true and fallthrough blocks as its successors.
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
 
   // If the EFLAGS register isn't dead in the terminator, then claim that it's
   // live into the sink and copy blocks.
   const MachineFunction *MF = BB->getParent();
   const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
   BitVector ReservedRegs = TRI->getReservedRegs(*MF);
+  const MachineInstr *Term = BB->getFirstTerminator();
 
-  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
-    const MachineOperand &MO = MI->getOperand(I);
+  for (unsigned I = 0, E = Term->getNumOperands(); I != E; ++I) {
+    const MachineOperand &MO = Term->getOperand(I);
     if (!MO.isReg() || MO.isKill() || MO.isDead()) continue;
     unsigned Reg = MO.getReg();
     if (Reg != X86::EFLAGS) continue;
     copy0MBB->addLiveIn(Reg);
     sinkMBB->addLiveIn(Reg);
   }
-
-  // Transfer the remainder of BB and its successor edges to sinkMBB.
-  sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-
-  // Create the conditional branch instruction.
-  unsigned Opc =
-    X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
-  BuildMI(BB, DL, TII->get(Opc)).addMBB(sinkMBB);
 
   //  copy0MBB:
   //   %FalseValue = ...
@@ -8536,12 +8530,11 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   //  sinkMBB:
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
-  BuildMI(*sinkMBB, sinkMBB->begin(), DL,
-          TII->get(X86::PHI), MI->getOperand(0).getReg())
+  BuildMI(sinkMBB, DL, TII->get(X86::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return sinkMBB;
 }
 
@@ -8550,20 +8543,21 @@ X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
                                           MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
+  MachineFunction *F = BB->getParent();
 
   // The lowering is pretty easy: we're just emitting the call to _alloca.  The
   // non-trivial part is impdef of ESP.
   // FIXME: The code should be tweaked as soon as we'll try to do codegen for
   // mingw-w64.
 
-  BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
+  BuildMI(BB, DL, TII->get(X86::CALLpcrel32))
     .addExternalSymbol("_alloca")
     .addReg(X86::EAX, RegState::Implicit)
     .addReg(X86::ESP, RegState::Implicit)
     .addReg(X86::EAX, RegState::Define | RegState::Implicit)
     .addReg(X86::ESP, RegState::Define | RegState::Implicit);
 
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return BB;
 }
 
@@ -8582,38 +8576,35 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
   assert(MI->getOperand(3).isGlobal() && "This should be a global");
   
   if (Subtarget->is64Bit()) {
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
-                                      TII->get(X86::MOV64rm), X86::RDI)
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV64rm), X86::RDI)
     .addReg(X86::RIP)
     .addImm(0).addReg(0)
     .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
-    MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL64m));
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL64m));
     addDirectMem(MIB, X86::RDI).addReg(0);
   } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
-                                      TII->get(X86::MOV32rm), X86::EAX)
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rm), X86::EAX)
     .addReg(0)
     .addImm(0).addReg(0)
     .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
-    MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL32m));
     addDirectMem(MIB, X86::EAX).addReg(0);
   } else {
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
-                                      TII->get(X86::MOV32rm), X86::EAX)
+    MachineInstrBuilder MIB = BuildMI(BB, DL, TII->get(X86::MOV32rm), X86::EAX)
     .addReg(TII->getGlobalBaseReg(F))
     .addImm(0).addReg(0)
     .addGlobalAddress(MI->getOperand(3).getGlobal(), 0, 
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
-    MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
+    MIB = BuildMI(BB, DL, TII->get(X86::CALL32m));
     addDirectMem(MIB, X86::EAX).addReg(0);
   }
   
-  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI); // The pseudo instruction is gone now.
   return BB;
 }
 
@@ -8657,25 +8648,23 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // mode when truncating to an integer value.
     MachineFunction *F = BB->getParent();
     int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2, false);
-    addFrameReference(BuildMI(*BB, MI, DL,
-                              TII->get(X86::FNSTCW16m)), CWFrameIdx);
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::FNSTCW16m)), CWFrameIdx);
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
       F->getRegInfo().createVirtualRegister(X86::GR16RegisterClass);
-    addFrameReference(BuildMI(*BB, MI, DL, TII->get(X86::MOV16rm), OldCW),
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::MOV16rm), OldCW),
                       CWFrameIdx);
 
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(*BB, MI, DL, TII->get(X86::MOV16mi)), CWFrameIdx)
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::MOV16mi)), CWFrameIdx)
       .addImm(0xC7F);
 
     // Reload the modified control word now...
-    addFrameReference(BuildMI(*BB, MI, DL,
-                              TII->get(X86::FLDCW16m)), CWFrameIdx);
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::FLDCW16m)), CWFrameIdx);
 
     // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(*BB, MI, DL, TII->get(X86::MOV16mr)), CWFrameIdx)
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::MOV16mr)), CWFrameIdx)
       .addReg(OldCW);
 
     // Get the X86 opcode to use.
@@ -8714,14 +8703,13 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     } else {
       AM.Disp = Op.getImm();
     }
-    addFullAddress(BuildMI(*BB, MI, DL, TII->get(Opc)), AM)
+    addFullAddress(BuildMI(BB, DL, TII->get(Opc)), AM)
                       .addReg(MI->getOperand(X86AddrNumOperands).getReg());
 
     // Reload the original control word now.
-    addFrameReference(BuildMI(*BB, MI, DL,
-                              TII->get(X86::FLDCW16m)), CWFrameIdx);
+    addFrameReference(BuildMI(BB, DL, TII->get(X86::FLDCW16m)), CWFrameIdx);
 
-    MI->eraseFromParent();   // The pseudo instruction is gone now.
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
     // String/text processing lowering.

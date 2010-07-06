@@ -3637,12 +3637,7 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   MF->insert(It, loop1MBB);
   MF->insert(It, loop2MBB);
   MF->insert(It, exitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  exitMBB->splice(exitMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+  exitMBB->transferSuccessors(BB);
 
   //  thisMBB:
   //   ...
@@ -3680,7 +3675,7 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //   ...
   BB = exitMBB;
 
-  MI->eraseFromParent();   // The instruction is gone now.
+  MF->DeleteMachineInstr(MI);   // The instruction is gone now.
 
   return BB;
 }
@@ -3723,12 +3718,7 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MF->insert(It, loopMBB);
   MF->insert(It, exitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  exitMBB->splice(exitMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+  exitMBB->transferSuccessors(BB);
 
   MachineRegisterInfo &RegInfo = MF->getRegInfo();
   unsigned scratch = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
@@ -3773,7 +3763,7 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //   ...
   BB = exitMBB;
 
-  MI->eraseFromParent();   // The instruction is gone now.
+  MF->DeleteMachineInstr(MI);   // The instruction is gone now.
 
   return BB;
 }
@@ -3858,20 +3848,21 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineFunction *F = BB->getParent();
     MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-    F->insert(It, copy0MBB);
-    F->insert(It, sinkMBB);
-
-    // Transfer the remainder of BB and its successor edges to sinkMBB.
-    sinkMBB->splice(sinkMBB->begin(), BB,
-                    llvm::next(MachineBasicBlock::iterator(MI)),
-                    BB->end());
-    sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-    BB->addSuccessor(copy0MBB);
-    BB->addSuccessor(sinkMBB);
-
     BuildMI(BB, dl, TII->get(ARM::tBcc)).addMBB(sinkMBB)
       .addImm(MI->getOperand(3).getImm()).addReg(MI->getOperand(4).getReg());
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
+    // Update machine-CFG edges by first adding all successors of the current
+    // block to the new block which will contain the Phi node for the select.
+    for (MachineBasicBlock::succ_iterator I = BB->succ_begin(), 
+           E = BB->succ_end(); I != E; ++I)
+      sinkMBB->addSuccessor(*I);
+    // Next, remove all successors of the current block, and add the true
+    // and fallthrough blocks as its successors.
+    while (!BB->succ_empty())
+      BB->removeSuccessor(BB->succ_begin());
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
 
     //  copy0MBB:
     //   %FalseValue = ...
@@ -3885,12 +3876,11 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(*BB, BB->begin(), dl,
-            TII->get(ARM::PHI), MI->getOperand(0).getReg())
+    BuildMI(BB, dl, TII->get(ARM::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
-    MI->eraseFromParent();   // The pseudo instruction is gone now.
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
 
@@ -3911,7 +3901,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(SrcReg);
       unsigned CopyOpc = (RC == ARM::tGPRRegisterClass)
         ? ARM::tMOVtgpr2gpr : ARM::tMOVgpr2gpr;
-      BuildMI(*BB, MI, dl, TII->get(CopyOpc), ARM::SP)
+      BuildMI(BB, dl, TII->get(CopyOpc), ARM::SP)
         .addReg(SrcReg, getKillRegState(SrcIsKill));
     }
 
@@ -3943,7 +3933,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       NeedPred = true; NeedCC = true; NeedOp3 = true;
       break;
     }
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(OpOpc), ARM::SP);
+    MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(OpOpc), ARM::SP);
     if (OpOpc == ARM::tAND)
       AddDefaultT1CC(MIB);
     MIB.addReg(ARM::SP);
@@ -3959,10 +3949,10 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(DstReg);
     unsigned CopyOpc = (RC == ARM::tGPRRegisterClass)
       ? ARM::tMOVgpr2tgpr : ARM::tMOVgpr2gpr;
-    BuildMI(*BB, MI, dl, TII->get(CopyOpc))
+    BuildMI(BB, dl, TII->get(CopyOpc))
       .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstIsDead))
       .addReg(ARM::SP);
-    MI->eraseFromParent();   // The pseudo instruction is gone now.
+    MF->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
   }

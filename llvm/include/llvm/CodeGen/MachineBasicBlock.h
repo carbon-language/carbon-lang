@@ -259,11 +259,6 @@ public:
   /// machine basic block (i.e., copies all the successors fromMBB and
   /// remove all the successors from fromMBB).
   void transferSuccessors(MachineBasicBlock *fromMBB);
-
-  /// transferSuccessorsAndUpdatePHIs - Transfers all the successors, as
-  /// in transferSuccessors, and update PHI operands in the successor blocks
-  /// which refer to fromMBB to refer to this.
-  void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
   
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.
