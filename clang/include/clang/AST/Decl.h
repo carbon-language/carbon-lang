@@ -436,6 +436,17 @@ public:
       DeclInfo = TI;
   }
 
+  /// getInnerLocStart - Return SourceLocation representing start of source
+  /// range ignoring outer template declarations.
+  virtual SourceLocation getInnerLocStart() const { return getLocation(); }
+
+  /// getOuterLocStart - Return SourceLocation representing start of source
+  /// range taking into account any outer template declarations.
+  SourceLocation getOuterLocStart() const;
+  SourceRange getSourceRange() const {
+    return SourceRange(getOuterLocStart(), getLocation());
+  }
+
   NestedNameSpecifier *getQualifier() const {
     return hasExtInfo() ? getExtInfo()->NNS : 0;
   }
@@ -601,6 +612,7 @@ public:
   virtual void Destroy(ASTContext& C);
   virtual ~VarDecl();
 
+  virtual SourceLocation getInnerLocStart() const;
   virtual SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
@@ -1209,7 +1221,7 @@ public:
                                     bool Qualified) const;
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), EndRangeLoc);
+    return SourceRange(getOuterLocStart(), EndRangeLoc);
   }
   void setLocEnd(SourceLocation E) {
     EndRangeLoc = E;
@@ -1865,6 +1877,13 @@ public:
   SourceLocation getTagKeywordLoc() const { return TagKeywordLoc; }
   void setTagKeywordLoc(SourceLocation TKL) { TagKeywordLoc = TKL; }
 
+  /// getInnerLocStart - Return SourceLocation representing start of source
+  /// range ignoring outer template declarations.
+  virtual SourceLocation getInnerLocStart() const { return TagKeywordLoc; }
+
+  /// getOuterLocStart - Return SourceLocation representing start of source
+  /// range taking into account any outer template declarations.
+  SourceLocation getOuterLocStart() const;
   virtual SourceRange getSourceRange() const;
 
   virtual TagDecl* getCanonicalDecl();

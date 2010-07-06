@@ -523,6 +523,14 @@ bool NamedDecl::isCXXInstanceMember() const {
 // DeclaratorDecl Implementation
 //===----------------------------------------------------------------------===//
 
+template <typename DeclT>
+static SourceLocation getTemplateOrInnerLocStart(const DeclT *decl) {
+  if (decl->getNumTemplateParameterLists() > 0)
+    return decl->getTemplateParameterList(0)->getTemplateLoc();
+  else
+    return decl->getInnerLocStart();
+}
+
 DeclaratorDecl::~DeclaratorDecl() {}
 void DeclaratorDecl::Destroy(ASTContext &C) {
   if (hasExtInfo())
@@ -564,6 +572,10 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
       DeclInfo = savedTInfo;
     }
   }
+}
+
+SourceLocation DeclaratorDecl::getOuterLocStart() const {
+  return getTemplateOrInnerLocStart(this);
 }
 
 void
@@ -636,14 +648,17 @@ void VarDecl::Destroy(ASTContext& C) {
 VarDecl::~VarDecl() {
 }
 
-SourceRange VarDecl::getSourceRange() const {
+SourceLocation VarDecl::getInnerLocStart() const {
   SourceLocation Start = getTypeSpecStartLoc();
   if (Start.isInvalid())
     Start = getLocation();
-  
+  return Start;
+}
+
+SourceRange VarDecl::getSourceRange() const {
   if (getInit())
-    return SourceRange(Start, getInit()->getLocEnd());
-  return SourceRange(Start, getLocation());
+    return SourceRange(getOuterLocStart(), getInit()->getLocEnd());
+  return SourceRange(getOuterLocStart(), getLocation());
 }
 
 bool VarDecl::isExternC() const {
@@ -1544,9 +1559,13 @@ void TagDecl::Destroy(ASTContext &C) {
   TypeDecl::Destroy(C);
 }
 
+SourceLocation TagDecl::getOuterLocStart() const {
+  return getTemplateOrInnerLocStart(this);
+}
+
 SourceRange TagDecl::getSourceRange() const {
   SourceLocation E = RBraceLoc.isValid() ? RBraceLoc : getLocation();
-  return SourceRange(TagKeywordLoc, E);
+  return SourceRange(getOuterLocStart(), E);
 }
 
 TagDecl* TagDecl::getCanonicalDecl() {

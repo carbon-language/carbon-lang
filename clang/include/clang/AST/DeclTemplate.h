@@ -1149,6 +1149,8 @@ public:
     return ExplicitInfo ? ExplicitInfo->TemplateKeywordLoc : SourceLocation();
   }
 
+  SourceLocation getInnerLocStart() const { return getTemplateKeywordLoc(); }
+
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size(),
             getASTContext());
