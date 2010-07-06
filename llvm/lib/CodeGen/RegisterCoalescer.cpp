@@ -83,7 +83,6 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     std::swap(SrcSub, DstSub);
     flipped_ = true;
   }
-  origDstReg_ = Dst;
 
   const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
 
