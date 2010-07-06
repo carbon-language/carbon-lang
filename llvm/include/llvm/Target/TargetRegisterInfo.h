@@ -320,7 +320,8 @@ public:
     getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
   /// getMinimalPhysRegClass - Returns the Register Class of a physical
-  /// register of the given type.
+  /// register of the given type, picking the most sub register class of
+  /// the right type that contains this physreg.
   const TargetRegisterClass *
     getMinimalPhysRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 

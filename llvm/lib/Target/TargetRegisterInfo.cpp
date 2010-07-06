@@ -61,7 +61,8 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
 }
 
 /// getMinimalPhysRegClass - Returns the Register Class of a physical
-/// register of the given type.
+/// register of the given type, picking the most sub register class of
+/// the right type that contains this physreg.
 const TargetRegisterClass *
 TargetRegisterInfo::getMinimalPhysRegClass(unsigned reg, EVT VT) const {
   assert(isPhysicalRegister(reg) && "reg must be a physical register");
