@@ -321,7 +321,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
 MachineBasicBlock *
 SelectionDAGISel::SelectBasicBlock(MachineBasicBlock *BB,
-                                   const BasicBlock *LLVMBB,
                                    BasicBlock::const_iterator Begin,
                                    BasicBlock::const_iterator End,
                                    bool &HadTailCall) {
@@ -736,7 +735,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           }
 
           bool HadTailCall = false;
-          BB = SelectBasicBlock(BB, LLVMBB, BI, llvm::next(BI), HadTailCall);
+          BB = SelectBasicBlock(BB, BI, llvm::next(BI), HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {
@@ -772,7 +771,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     // block.
     if (BI != End) {
       bool HadTailCall;
-      BB = SelectBasicBlock(BB, LLVMBB, BI, End, HadTailCall);
+      BB = SelectBasicBlock(BB, BI, End, HadTailCall);
     }
 
     FinishBasicBlock(BB);

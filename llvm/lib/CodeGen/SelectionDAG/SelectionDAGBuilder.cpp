@@ -4562,7 +4562,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                 OutVTs, OutsFlags, TLI, &Offsets);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
-                        FTy->isVarArg(), OutVTs, OutsFlags, DAG);
+                        FTy->isVarArg(), OutVTs, OutsFlags, FTy->getContext());
 
   SDValue DemoteStackSlot;
 
@@ -5959,7 +5959,8 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
   FuncInfo->CanLowerReturn = TLI.CanLowerReturn(F.getCallingConv(),
                                                 F.isVarArg(),
-                                                OutVTs, OutsFlags, DAG);
+                                                OutVTs, OutsFlags,
+                                                F.getContext());
   if (!FuncInfo->CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.
     SmallVector<EVT, 1> ValueVTs;

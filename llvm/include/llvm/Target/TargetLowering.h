@@ -1158,7 +1158,7 @@ public:
   virtual bool CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
                const SmallVectorImpl<EVT> &OutTys,
                const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
-               SelectionDAG &DAG) const
+               LLVMContext &Context) const
   {
     // Return true by default to get preexisting behavior.
     return true;

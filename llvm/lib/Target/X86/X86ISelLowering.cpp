@@ -1220,10 +1220,10 @@ bool
 X86TargetLowering::CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
                         const SmallVectorImpl<EVT> &OutTys,
                         const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
-                        SelectionDAG &DAG) const {
+                        LLVMContext &Context) const {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+                 RVLocs, Context);
   return CCInfo.CheckReturn(OutTys, ArgsFlags, RetCC_X86);
 }
 

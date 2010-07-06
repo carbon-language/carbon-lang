@@ -285,7 +285,6 @@ private:
   void FinishBasicBlock(MachineBasicBlock *BB);
 
   MachineBasicBlock *SelectBasicBlock(MachineBasicBlock *BB,
-                                      const BasicBlock *LLVMBB,
                                       BasicBlock::const_iterator Begin,
                                       BasicBlock::const_iterator End,
                                       bool &HadTailCall);
