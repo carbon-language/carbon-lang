@@ -505,7 +505,6 @@ void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   O << V.getName();
   O << " <- ";
   // Frame address.  Currently handles register +- offset only.
-  assert(MI->getOperand(0).isReg() && MI->getOperand(3).isImm());
   O << '['; printOperand(MI, 0, O); O << '+'; printOperand(MI, 3, O);
   O << ']';
   O << "+";
@@ -517,8 +516,9 @@ X86AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
   MachineLocation Location;
   assert (MI->getNumOperands() == 7 && "Invalid no. of machine operands!");
   // Frame address.  Currently handles register +- offset only.
-  assert(MI->getOperand(0).isReg() && MI->getOperand(3).isImm());
-  Location.set(MI->getOperand(0).getReg(), MI->getOperand(3).getImm());
+
+  if (MI->getOperand(0).isReg() && MI->getOperand(3).isImm())
+    Location.set(MI->getOperand(0).getReg(), MI->getOperand(3).getImm());
   return Location;
 }
 
