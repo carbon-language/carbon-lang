@@ -468,6 +468,20 @@ void f16(int x, CFTypeRef p) {
   }
 }
 
+// Test that an object is non-null after being CFRetained/CFReleased.
+void f17(int x, CFTypeRef p) {
+	if (x) {
+		CFRelease(p);
+		if (!p)
+			CFRelease(0); // no-warning
+	}
+	else {
+		CFRetain(p);
+		if (!p)
+			CFRetain(0); // no-warning
+	}
+}
+
 // Test basic tracking of ivars associated with 'self'.  For the retain/release
 // checker we currently do not want to flag leaks associated with stores
 // of tracked objects to ivars.
