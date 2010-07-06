@@ -352,6 +352,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
       AValNo->isUnused() || AValNo->hasPHIKill())
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
+  if (!DefMI)
+    return false;
   const TargetInstrDesc &TID = DefMI->getDesc();
   if (!TID.isCommutable())
     return false;
