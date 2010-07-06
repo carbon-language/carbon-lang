@@ -173,14 +173,14 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM,
   // Install an instruction selector.
   PM.add(createX86ISelDag(*this, OptLevel));
 
-  // Install a pass to insert x87 FP_REG_KILL instructions, as needed.
-  PM.add(createX87FPRegKillInserterPass());
-
   return false;
 }
 
 bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
+  // Install a pass to insert x87 FP_REG_KILL instructions, as needed.
+  PM.add(createX87FPRegKillInserterPass());
+
   PM.add(createX86MaxStackAlignmentHeuristicPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
