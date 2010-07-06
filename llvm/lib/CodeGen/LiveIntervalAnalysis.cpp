@@ -324,12 +324,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     if (mi->isCopyLike() ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
       CopyMI = mi;
-
-      // Some of the REG_SEQUENCE lowering in TwoAddressInstrPass creates
-      // implicit defs without really knowing. It shows up as INSERT_SUBREG
-      // using an undefined register.
-      if (mi->isInsertSubreg())
-        mi->getOperand(1).setIsUndef();
     }
 
     VNInfo *ValNo = interval.getNextValue(defIndex, CopyMI, true,
