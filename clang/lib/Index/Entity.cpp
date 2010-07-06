@@ -111,6 +111,10 @@ Entity EntityGetter::VisitNamedDecl(NamedDecl *D) {
 }
 
 Entity EntityGetter::VisitVarDecl(VarDecl *D) {
+  // Local variables have no linkage, make invalid Entities.
+  if (D->hasLocalStorage())
+    return Entity();
+
   // If it's static it cannot be referred to by another translation unit.
   if (D->getStorageClass() == VarDecl::Static)
     return Entity(D);
