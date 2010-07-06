@@ -279,7 +279,7 @@ struct StrCmpOpt : public LibCallOptimization {
     // Verify the "strcmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
-	!FT->getReturnType()->isIntegerTy(32) ||
+        !FT->getReturnType()->isIntegerTy(32) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context))
       return 0;
@@ -327,7 +327,7 @@ struct StrNCmpOpt : public LibCallOptimization {
     // Verify the "strncmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 ||
-	!FT->getReturnType()->isIntegerTy(32) ||
+        !FT->getReturnType()->isIntegerTy(32) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
         !FT->getParamType(2)->isIntegerTy())
@@ -682,7 +682,7 @@ struct MemSetOpt : public LibCallOptimization {
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
     Value *Val = B.CreateIntCast(CI->getArgOperand(1), Type::getInt8Ty(*Context),
-				 false);
+                                 false);
     EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2), false, B, TD);
     return CI->getArgOperand(0);
   }
@@ -766,11 +766,11 @@ struct Exp2Opt : public LibCallOptimization {
     if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
       if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
         LdExpArg = B.CreateSExt(OpC->getOperand(0),
-				Type::getInt32Ty(*Context), "tmp");
+                                Type::getInt32Ty(*Context), "tmp");
     } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
       if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
         LdExpArg = B.CreateZExt(OpC->getOperand(0),
-				Type::getInt32Ty(*Context), "tmp");
+                                Type::getInt32Ty(*Context), "tmp");
     }
 
     if (LdExpArg) {
@@ -836,7 +836,7 @@ struct FFSOpt : public LibCallOptimization {
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
     if (FT->getNumParams() != 1 ||
-	!FT->getReturnType()->isIntegerTy(32) ||
+        !FT->getReturnType()->isIntegerTy(32) ||
         !FT->getParamType(0)->isIntegerTy())
       return 0;
 
@@ -860,7 +860,7 @@ struct FFSOpt : public LibCallOptimization {
 
     Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType), "tmp");
     return B.CreateSelect(Cond, V,
-			  ConstantInt::get(Type::getInt32Ty(*Context), 0));
+                          ConstantInt::get(Type::getInt32Ty(*Context), 0));
   }
 };
 
