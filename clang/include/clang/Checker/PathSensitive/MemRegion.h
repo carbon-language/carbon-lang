@@ -172,6 +172,8 @@ class StaticGlobalSpaceRegion : public GlobalsSpaceRegion {
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const;
   
+  void dumpToStream(llvm::raw_ostream& os) const;
+
   const CodeTextRegion *getCodeRegion() const { return CR; }
 
   static bool classof(const MemRegion *R) {
@@ -186,6 +188,9 @@ class NonStaticGlobalSpaceRegion : public GlobalsSpaceRegion {
     : GlobalsSpaceRegion(mgr, NonStaticGlobalSpaceRegionKind) {}
   
 public:
+
+  void dumpToStream(llvm::raw_ostream& os) const;
+
   static bool classof(const MemRegion *R) {
     return R->getKind() == NonStaticGlobalSpaceRegionKind;
   }

@@ -402,7 +402,6 @@ void BlockDataRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "block_data{" << BC << '}';
 }
 
-
 void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
   os << "{ " << (void*) CL <<  " }";
@@ -419,6 +418,10 @@ void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
 
 void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << superRegion << "->" << getDecl();
+}
+
+void NonStaticGlobalSpaceRegion::dumpToStream(llvm::raw_ostream &os) const {
+  os << "NonStaticGlobalSpaceRegion";
 }
 
 void ObjCIvarRegion::dumpToStream(llvm::raw_ostream& os) const {
@@ -443,6 +446,10 @@ void RegionRawOffset::dump() const {
 
 void RegionRawOffset::dumpToStream(llvm::raw_ostream& os) const {
   os << "raw_offset{" << getRegion() << ',' << getByteOffset() << '}';
+}
+
+void StaticGlobalSpaceRegion::dumpToStream(llvm::raw_ostream &os) const {
+  os << "StaticGlobalsMemSpace{" << CR << '}';
 }
 
 //===----------------------------------------------------------------------===//
