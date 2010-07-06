@@ -17,57 +17,10 @@ namespace CodeGen {
 
 // Don't preserve names on values in an optimized build.
 #ifdef NDEBUG
-typedef llvm::IRBuilder<false> CGBuilderSuperTy;
+typedef llvm::IRBuilder<false> CGBuilderTy;
 #else
-typedef llvm::IRBuilder<> CGBuilderSuperTy;
+typedef llvm::IRBuilder<> CGBuilderTy;
 #endif
-
-/// IR generation's wrapper around an LLVM IRBuilder.
-class CGBuilderTy : public CGBuilderSuperTy {
-public:
-  CGBuilderTy(llvm::LLVMContext &Context) : CGBuilderSuperTy(Context) {}
-  CGBuilderTy(llvm::BasicBlock *Block) : CGBuilderSuperTy(Block) {}
-  CGBuilderTy(llvm::BasicBlock *Block, llvm::BasicBlock::iterator Point)
-    : CGBuilderSuperTy(Block, Point) {}
-
-  CGBuilderTy(const CGBuilderTy &Builder)
-    : CGBuilderSuperTy(Builder.getContext()) {
-
-    if (Builder.GetInsertBlock())
-      SetInsertPoint(Builder.GetInsertBlock(), Builder.GetInsertPoint());
-  }
-
-  /// A saved insertion point.
-  class InsertPoint {
-    llvm::BasicBlock *Block;
-    llvm::BasicBlock::iterator Point;
-
-  public:
-    InsertPoint(llvm::BasicBlock *Block, llvm::BasicBlock::iterator Point)
-      : Block(Block), Point(Point) {}
-
-    bool isSet() const { return (Block != 0); }
-    llvm::BasicBlock *getBlock() const { return Block; }
-    llvm::BasicBlock::iterator getPoint() const { return Point; }
-  };
-
-  InsertPoint saveIP() const {
-    return InsertPoint(GetInsertBlock(), GetInsertPoint());
-  }
-
-  InsertPoint saveAndClearIP() {
-    InsertPoint IP(GetInsertBlock(), GetInsertPoint());
-    ClearInsertionPoint();
-    return IP;
-  }
-
-  void restoreIP(InsertPoint IP) {
-    if (IP.isSet())
-      SetInsertPoint(IP.getBlock(), IP.getPoint());
-    else
-      ClearInsertionPoint();
-  }
-};
 
 }  // end namespace CodeGen
 }  // end namespace clang
