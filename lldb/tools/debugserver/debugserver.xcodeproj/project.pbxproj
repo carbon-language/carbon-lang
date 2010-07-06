@@ -501,6 +501,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -532,6 +533,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -561,6 +563,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,

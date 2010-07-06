@@ -2759,6 +2759,7 @@
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
+					"-Wparentheses",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -2811,6 +2812,7 @@
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
+					"-Wparentheses",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -2871,6 +2873,7 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -2918,6 +2921,7 @@
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
+					"-Wparentheses",
 				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -2959,6 +2963,7 @@
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -2996,6 +3001,7 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
