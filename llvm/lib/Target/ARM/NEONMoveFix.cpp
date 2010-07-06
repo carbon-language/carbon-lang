@@ -105,8 +105,8 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
       unsigned MOReg = MO.getReg();
 
       Defs[MOReg] = MI;
-      // Catch subregs as well.
-      for (const unsigned *R = TRI->getSubRegisters(MOReg); *R; ++R)
+      // Catch aliases as well.
+      for (const unsigned *R = TRI->getAliasSet(MOReg); *R; ++R)
         Defs[*R] = MI;
     }
   }
