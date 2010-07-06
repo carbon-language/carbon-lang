@@ -501,6 +501,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       CurOp++;
     }
 
+    // If the last register should be encoded in the immediate field
+    // ignored it here.
+    if ((TSFlags >> 32) & X86II::VEX_I8IMM)
+      NumOps--;
+
     for (; CurOp != NumOps; ++CurOp) {
       const MCOperand &MO = MI.getOperand(CurOp);
       if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
@@ -914,11 +919,24 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   
   // If there is a remaining operand, it must be a trailing immediate.  Emit it
   // according to the right size for the instruction.
-  if (CurOp != NumOps)
-    EmitImmediate(MI.getOperand(CurOp++),
-                  X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
-                  CurByte, OS, Fixups);
-  
+  if (CurOp != NumOps) {
+    // The last source register of a 4 operand instruction in AVX is encoded
+    // in bits[7:4] of a immediate byte, and bits[3:0] are ignored.
+    if ((TSFlags >> 32) & X86II::VEX_I8IMM) {
+      const MCOperand &MO = MI.getOperand(CurOp++);
+      bool IsExtReg =
+        X86InstrInfo::isX86_64ExtendedReg(MO.getReg());
+      unsigned RegNum = (IsExtReg ? (1 << 7) : 0);
+      RegNum |= GetX86RegNum(MO) << 4;
+      EmitImmediate(MCOperand::CreateImm(RegNum), 1, FK_Data_1, CurByte, OS,
+                    Fixups);
+    } else
+      EmitImmediate(MI.getOperand(CurOp++),
+                    X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
+                    CurByte, OS, Fixups);
+  }
+
+
 #ifndef NDEBUG
   // FIXME: Verify.
   if (/*!Desc.isVariadic() &&*/ CurOp != NumOps) {

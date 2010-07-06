@@ -4246,6 +4246,27 @@ let Constraints = "$src1 = $dst" in {
   defm DPPD : SS41I_binop_rmi_int<0x41, "dppd", int_x86_sse41_dppd>;
 }
 
+/// SS41I_quaternary_int_avx - AVX SSE 4.1 with 4 operators
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in {
+  multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr> {
+    def rr : I<opc, MRMSrcReg, (outs VR128:$dst),
+                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
+                    !strconcat(OpcodeStr,
+                     "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                     [], SSEPackedInt>, OpSize, TA, VEX_4V, VEX_I8IMM;
+
+    def rm : I<opc, MRMSrcMem, (outs VR128:$dst),
+                    (ins VR128:$src1, i128mem:$src2, VR128:$src3),
+                    !strconcat(OpcodeStr,
+                     "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                     [], SSEPackedInt>, OpSize, TA, VEX_4V, VEX_I8IMM;
+  }
+}
+
+defm VBLENDVPD : SS41I_quaternary_int_avx<0x4B, "vblendvpd">;
+defm VBLENDVPS : SS41I_quaternary_int_avx<0x4A, "vblendvps">;
+defm VPBLENDVB : SS41I_quaternary_int_avx<0x4C, "vpblendvb">;
+
 /// SS41I_ternary_int - SSE 4.1 ternary operator
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {

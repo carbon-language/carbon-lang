@@ -104,6 +104,7 @@ class TF     { bits<4> Prefix = 15; }
 class VEX    { bit hasVEXPrefix = 1; }
 class VEX_W  { bit hasVEX_WPrefix = 1; }
 class VEX_4V : VEX { bit hasVEX_4VPrefix = 1; }
+class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 
 class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
               string AsmStr, Domain d = GenericDomain>
@@ -134,6 +135,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasVEXPrefix = 0;     // Does this inst requires a VEX prefix?
   bit hasVEX_WPrefix = 0;   // Does this inst set the VEX_W field?
   bit hasVEX_4VPrefix = 0;  // Does this inst requires the VEX.VVVV field?
+  bit hasVEX_i8ImmReg = 0;  // Does this inst requires the last source register
+                            // to be encoded in a immediate field?
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{5-0}   = FormBits;
@@ -150,6 +153,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{32}    = hasVEXPrefix;
   let TSFlags{33}    = hasVEX_WPrefix;
   let TSFlags{34}    = hasVEX_4VPrefix;
+  let TSFlags{35}    = hasVEX_i8ImmReg;
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,

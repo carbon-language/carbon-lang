@@ -1974,3 +1974,27 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x51,0x41,0x18,0x03]
           vdppd  $3, (%rax), %xmm5, %xmm11
 
+// CHECK: vblendvpd  %xmm12, %xmm5, %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4b,0xed,0xc0]
+          vblendvpd  %xmm12, %xmm5, %xmm11, %xmm13
+
+// CHECK: vblendvpd  %xmm12, (%rax), %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4b,0x28,0xc0]
+          vblendvpd  %xmm12, (%rax), %xmm11, %xmm13
+
+// CHECK: vblendvps  %xmm12, %xmm5, %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4a,0xed,0xc0]
+          vblendvps  %xmm12, %xmm5, %xmm11, %xmm13
+
+// CHECK: vblendvps  %xmm12, (%rax), %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4a,0x28,0xc0]
+          vblendvps  %xmm12, (%rax), %xmm11, %xmm13
+
+// CHECK: vpblendvb  %xmm12, %xmm5, %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4c,0xed,0xc0]
+          vpblendvb  %xmm12, %xmm5, %xmm11, %xmm13
+
+// CHECK: vpblendvb  %xmm12, (%rax), %xmm11, %xmm13
+// CHECK: encoding: [0xc4,0x63,0x21,0x4c,0x28,0xc0]
+          vpblendvb  %xmm12, (%rax), %xmm11, %xmm13
+

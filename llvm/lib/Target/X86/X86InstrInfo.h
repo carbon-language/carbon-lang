@@ -424,14 +424,22 @@ namespace X86II {
   // those enums below are used, TSFlags must be shifted right by 32 first.
   enum {
     //===------------------------------------------------------------------===//
-    // VEXPrefix - VEX prefixes are instruction prefixes used in AVX.
+    // VEX - A prefix used by AVX instructions
+    VEX         = 1,
+
+    // VEX_W is has a opcode specific functionality, but is used in the same
+    // way as REX_W is for regular SSE instructions.
+    VEX_W       = 1 << 1,
+
     // VEX_4V is used to specify an additional AVX/SSE register. Several 2
     // address instructions in SSE are represented as 3 address ones in AVX
     // and the additional register is encoded in VEX_VVVV prefix.
-    //
-    VEX         = 1,
-    VEX_W       = 1 << 1,
-    VEX_4V      = 1 << 2
+    VEX_4V      = 1 << 2,
+
+    // VEX_I8IMM specifies that the last register used in a AVX instruction,
+    // must be encoded in the i8 immediate field. This usually happens in
+    // instructions with 4 operands.
+    VEX_I8IMM   = 1 << 3
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

@@ -11926,4 +11926,27 @@
 // CHECK: encoding: [0xc4,0xe3,0x51,0x41,0x08,0x03]
           vdppd  $3, (%eax), %xmm5, %xmm1
 
+// CHECK: vblendvpd  %xmm2, %xmm5, %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4b,0xdd,0x20]
+          vblendvpd  %xmm2, %xmm5, %xmm1, %xmm3
+
+// CHECK: vblendvpd  %xmm2, (%eax), %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4b,0x18,0x20]
+          vblendvpd  %xmm2, (%eax), %xmm1, %xmm3
+
+// CHECK: vblendvps  %xmm2, %xmm5, %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4a,0xdd,0x20]
+          vblendvps  %xmm2, %xmm5, %xmm1, %xmm3
+
+// CHECK: vblendvps  %xmm2, (%eax), %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4a,0x18,0x20]
+          vblendvps  %xmm2, (%eax), %xmm1, %xmm3
+
+// CHECK: vpblendvb  %xmm2, %xmm5, %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4c,0xdd,0x20]
+          vpblendvb  %xmm2, %xmm5, %xmm1, %xmm3
+
+// CHECK: vpblendvb  %xmm2, (%eax), %xmm1, %xmm3
+// CHECK: encoding: [0xc4,0xe3,0x71,0x4c,0x18,0x20]
+          vpblendvb  %xmm2, (%eax), %xmm1, %xmm3
 
