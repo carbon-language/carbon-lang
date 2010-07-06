@@ -240,7 +240,7 @@ DiskFilesOrDirectories
     {
         int resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
         // User name doesn't exist, we're not getting any further...
-        if (resolved_username_len = 0 || resolved_username_len >= sizeof (containing_part))
+        if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
     }
     
