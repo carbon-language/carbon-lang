@@ -55,8 +55,8 @@ protected:
   const TargetInstrInfo *tii;
   const TargetRegisterInfo *tri;
   VirtRegMap *vrm;
-  
-  /// Construct a spiller base. 
+
+  /// Construct a spiller base.
   SpillerBase(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
     : mf(mf), lis(lis), vrm(vrm)
   {
@@ -97,7 +97,7 @@ protected:
       do {
         ++regItr;
       } while (regItr != mri->reg_end() && (&*regItr == mi));
-      
+
       // Collect uses & defs for this instr.
       SmallVector<unsigned, 2> indices;
       bool hasUse = false;
@@ -117,7 +117,7 @@ protected:
       vrm->assignVirt2StackSlot(newVReg, ss);
       LiveInterval *newLI = &lis->getOrCreateInterval(newVReg);
       newLI->weight = HUGE_VALF;
-      
+
       // Update the reg operands & kill flags.
       for (unsigned i = 0; i < indices.size(); ++i) {
         unsigned mopIdx = indices[i];
@@ -217,7 +217,7 @@ namespace {
 /// When a call to spill is placed this spiller will first try to break the
 /// interval up into its component values (one new interval per value).
 /// If this fails, or if a call is placed to spill a previously split interval
-/// then the spiller falls back on the standard spilling mechanism. 
+/// then the spiller falls back on the standard spilling mechanism.
 class SplittingSpiller : public StandardSpiller {
 public:
   SplittingSpiller(MachineFunction *mf, LiveIntervals *lis,
@@ -243,7 +243,7 @@ private:
 
   MachineRegisterInfo *mri;
   const TargetInstrInfo *tii;
-  const TargetRegisterInfo *tri;  
+  const TargetRegisterInfo *tri;
   DenseSet<LiveInterval*> alreadySplit;
 
   bool worthTryingToSplit(LiveInterval *li) const {
@@ -260,18 +260,18 @@ private:
     SmallVector<VNInfo*, 4> vnis;
 
     std::copy(li->vni_begin(), li->vni_end(), std::back_inserter(vnis));
-   
+
     for (SmallVectorImpl<VNInfo*>::iterator vniItr = vnis.begin(),
          vniEnd = vnis.end(); vniItr != vniEnd; ++vniItr) {
       VNInfo *vni = *vniItr;
-      
+
       // Skip unused VNIs.
       if (vni->isUnused())
         continue;
 
       DEBUG(dbgs() << "  Extracted Val #" << vni->id << " as ");
       LiveInterval *splitInterval = extractVNI(li, vni);
-      
+
       if (splitInterval != 0) {
         DEBUG(dbgs() << *splitInterval << "\n");
         added.push_back(splitInterval);
@@ -283,12 +283,12 @@ private:
       } else {
         DEBUG(dbgs() << "0\n");
       }
-    } 
+    }
 
     DEBUG(dbgs() << "Original LI: " << *li << "\n");
 
     // If there original interval still contains some live ranges
-    // add it to added and alreadySplit.    
+    // add it to added and alreadySplit.
     if (!li->empty()) {
       added.push_back(li);
       alreadySplit.insert(li);
@@ -312,7 +312,7 @@ private:
     LiveInterval *newLI = &lis->getOrCreateInterval(newVReg);
     VNInfo *newVNI = newLI->createValueCopy(vni, lis->getVNInfoAllocator());
 
-    // Start by copying all live ranges in the VN to the new interval.                                                                                                                                                        
+    // Start by copying all live ranges in the VN to the new interval.
     for (LiveInterval::iterator rItr = li->begin(), rEnd = li->end();
          rItr != rEnd; ++rItr) {
       if (rItr->valno == vni) {
@@ -320,7 +320,7 @@ private:
       }
     }
 
-    // Erase the old VNI & ranges.                                                                                                                                                                                            
+    // Erase the old VNI & ranges.
     li->removeValNo(vni);
 
     // Collect all current uses of the register belonging to the given VNI.
@@ -367,8 +367,8 @@ private:
       newVNI->setIsPHIDef(false); // not a PHI def anymore.
       newVNI->setIsDefAccurate(true);
     } else {
-      // non-PHI def. Rename the def. If it's two-addr that means renaming the use
-      // and inserting a new copy too.
+      // non-PHI def. Rename the def. If it's two-addr that means renaming the
+      // use and inserting a new copy too.
       MachineInstr *defInst = lis->getInstructionFromIndex(newVNI->def);
       // We'll rename this now, so we can remove it from uses.
       uses.erase(defInst);
@@ -384,7 +384,7 @@ private:
             twoAddrUseIsUndef = true;
         }
       }
-    
+
       SlotIndex defIdx = lis->getInstructionIndex(defInst);
       newVNI->def = defIdx.getDefIndex();
 
@@ -402,9 +402,9 @@ private:
                                               true, lis->getVNInfoAllocator());
         LiveRange copyRange(copyIdx.getDefIndex(),defIdx.getDefIndex(),copyVNI);
         newLI->addRange(copyRange);
-      }    
+      }
     }
-    
+
     for (std::set<MachineInstr*>::iterator
          usesItr = uses.begin(), usesEnd = uses.end();
          usesItr != usesEnd; ++usesItr) {
@@ -424,7 +424,7 @@ private:
       // Check if this instr is two address.
       unsigned useOpIdx = useInst->findRegisterUseOperandIdx(li->reg);
       bool isTwoAddress = useInst->isRegTiedToDefOperand(useOpIdx);
-      
+
       // Rename uses (and defs for two-address instrs).
       for (unsigned i = 0; i < useInst->getNumOperands(); ++i) {
         MachineOperand &mo = useInst->getOperand(i);
@@ -440,8 +440,8 @@ private:
         // reg.
         MachineBasicBlock *useMBB = useInst->getParent();
         MachineBasicBlock::iterator useItr(useInst);
-        tii->copyRegToReg(*useMBB, llvm::next(useItr), li->reg, newVReg, trc, trc,
-                          DebugLoc());
+        tii->copyRegToReg(*useMBB, llvm::next(useItr), li->reg, newVReg, trc,
+                          trc, DebugLoc());
         MachineInstr *copyMI = llvm::next(useItr);
         copyMI->addRegisterKilled(newVReg, tri);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
