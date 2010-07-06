@@ -152,6 +152,9 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
         CGM.getContext().Target.getStaticInitSectionSpecifier())
     Fn->setSection(Section);
 
+  if (!CGM.getLangOptions().Exceptions)
+    Fn->setDoesNotThrow();
+
   return Fn;
 }
 
