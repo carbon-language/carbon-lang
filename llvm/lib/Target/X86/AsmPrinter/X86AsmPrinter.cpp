@@ -388,6 +388,8 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       } 
       if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol()) {
         printSymbolOperand(MO, O);
+        if (Subtarget->isPICStyleRIPRel())
+          O << "(%rip)";
         return false;
       }
       if (MO.isReg()) {
