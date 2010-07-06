@@ -655,55 +655,71 @@ void PCHDeclReader::VisitUnresolvedUsingTypenameDecl(
 }
 
 void PCHDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  VisitRecordDecl(D);
-
   ASTContext &C = *Reader.getContext();
 
-  if (D->isFirstDeclaration()) {
-    if (Record[Idx++]) { // DefinitionData != 0
-      D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(0);
-      struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+  // We need to allocate the DefinitionData struct ahead of VisitRecordDecl
+  // so that the other CXXRecordDecls can get a pointer even when the owner
+  // is still initializing.
+  bool OwnsDefinitionData = false;
+  enum DataOwnership { Data_NoDefData, Data_Owner, Data_NotOwner };
+  switch ((DataOwnership)Record[Idx++]) {
+  default:
+    assert(0 && "Out of sync with PCHDeclWriter or messed up reading");
+  case Data_NoDefData:
+    break;
+  case Data_Owner:
+    OwnsDefinitionData = true;
+    D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
+    break;
+  case Data_NotOwner:
+    D->DefinitionData
+        = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]))->DefinitionData;
+    break;
+  }
 
-      Data.UserDeclaredConstructor = Record[Idx++];
-      Data.UserDeclaredCopyConstructor = Record[Idx++];
-      Data.UserDeclaredCopyAssignment = Record[Idx++];
-      Data.UserDeclaredDestructor = Record[Idx++];
-      Data.Aggregate = Record[Idx++];
-      Data.PlainOldData = Record[Idx++];
-      Data.Empty = Record[Idx++];
-      Data.Polymorphic = Record[Idx++];
-      Data.Abstract = Record[Idx++];
-      Data.HasTrivialConstructor = Record[Idx++];
-      Data.HasTrivialCopyConstructor = Record[Idx++];
-      Data.HasTrivialCopyAssignment = Record[Idx++];
-      Data.HasTrivialDestructor = Record[Idx++];
-      Data.ComputedVisibleConversions = Record[Idx++];
-      Data.DeclaredDefaultConstructor = Record[Idx++];
-      Data.DeclaredCopyConstructor = Record[Idx++];
-      Data.DeclaredCopyAssignment = Record[Idx++];
-      Data.DeclaredDestructor = Record[Idx++];
+  VisitRecordDecl(D);
 
-      // setBases() is unsuitable since it may try to iterate the bases of an
-      // unitialized base.
-      Data.NumBases = Record[Idx++];
-      Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
-      for (unsigned i = 0; i != Data.NumBases; ++i)
-        Data.Bases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
+  if (OwnsDefinitionData) {
+    assert(D->DefinitionData);
+    struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
 
-      // FIXME: Make VBases lazily computed when needed to avoid storing them.
-      Data.NumVBases = Record[Idx++];
-      Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
-      for (unsigned i = 0; i != Data.NumVBases; ++i)
-        Data.VBases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
+    Data.UserDeclaredConstructor = Record[Idx++];
+    Data.UserDeclaredCopyConstructor = Record[Idx++];
+    Data.UserDeclaredCopyAssignment = Record[Idx++];
+    Data.UserDeclaredDestructor = Record[Idx++];
+    Data.Aggregate = Record[Idx++];
+    Data.PlainOldData = Record[Idx++];
+    Data.Empty = Record[Idx++];
+    Data.Polymorphic = Record[Idx++];
+    Data.Abstract = Record[Idx++];
+    Data.HasTrivialConstructor = Record[Idx++];
+    Data.HasTrivialCopyConstructor = Record[Idx++];
+    Data.HasTrivialCopyAssignment = Record[Idx++];
+    Data.HasTrivialDestructor = Record[Idx++];
+    Data.ComputedVisibleConversions = Record[Idx++];
+    Data.DeclaredDefaultConstructor = Record[Idx++];
+    Data.DeclaredCopyConstructor = Record[Idx++];
+    Data.DeclaredCopyAssignment = Record[Idx++];
+    Data.DeclaredDestructor = Record[Idx++];
 
-      Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
-      Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
-      Data.Definition = cast<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
-      Data.FirstFriend
-          = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
-    }
-  } else {
-    D->DefinitionData = D->getPreviousDeclaration()->DefinitionData;
+    // setBases() is unsuitable since it may try to iterate the bases of an
+    // unitialized base.
+    Data.NumBases = Record[Idx++];
+    Data.Bases = new(C) CXXBaseSpecifier [Data.NumBases];
+    for (unsigned i = 0; i != Data.NumBases; ++i)
+      Data.Bases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
+
+    // FIXME: Make VBases lazily computed when needed to avoid storing them.
+    Data.NumVBases = Record[Idx++];
+    Data.VBases = new(C) CXXBaseSpecifier [Data.NumVBases];
+    for (unsigned i = 0; i != Data.NumVBases; ++i)
+      Data.VBases[i] = Reader.ReadCXXBaseSpecifier(Record, Idx);
+
+    Reader.ReadUnresolvedSet(Data.Conversions, Record, Idx);
+    Reader.ReadUnresolvedSet(Data.VisibleConversions, Record, Idx);
+    assert(Data.Definition && "Data.Definition should be already set!");
+    Data.FirstFriend
+        = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
   }
 
   enum CXXRecKind {

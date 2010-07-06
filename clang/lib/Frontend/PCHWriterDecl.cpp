@@ -659,48 +659,63 @@ void PCHDeclWriter::VisitUnresolvedUsingTypenameDecl(
 }
 
 void PCHDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  // See comments at PCHDeclReader::VisitCXXRecordDecl about why this happens
+  // before VisitRecordDecl.
+  enum { Data_NoDefData, Data_Owner, Data_NotOwner };
+  bool OwnsDefinitionData = false;
+  if (D->DefinitionData) {
+    assert(D->DefinitionData->Definition &&
+           "DefinitionData don't point to a definition decl!");
+    OwnsDefinitionData = D->DefinitionData->Definition == D;
+    if (OwnsDefinitionData) {
+      Record.push_back(Data_Owner);
+    } else {
+      Record.push_back(Data_NotOwner);
+      Writer.AddDeclRef(D->DefinitionData->Definition, Record);
+    }
+  } else
+    Record.push_back(Data_NoDefData);
+
   VisitRecordDecl(D);
 
-  if (D->isFirstDeclaration()) {
-    Record.push_back(D->DefinitionData != 0);
-    if (D->DefinitionData) {
-      struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+  if (OwnsDefinitionData) {
+    assert(D->DefinitionData);
+    struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
 
-      Record.push_back(Data.UserDeclaredConstructor);
-      Record.push_back(Data.UserDeclaredCopyConstructor);
-      Record.push_back(Data.UserDeclaredCopyAssignment);
-      Record.push_back(Data.UserDeclaredDestructor);
-      Record.push_back(Data.Aggregate);
-      Record.push_back(Data.PlainOldData);
-      Record.push_back(Data.Empty);
-      Record.push_back(Data.Polymorphic);
-      Record.push_back(Data.Abstract);
-      Record.push_back(Data.HasTrivialConstructor);
-      Record.push_back(Data.HasTrivialCopyConstructor);
-      Record.push_back(Data.HasTrivialCopyAssignment);
-      Record.push_back(Data.HasTrivialDestructor);
-      Record.push_back(Data.ComputedVisibleConversions);
-      Record.push_back(Data.DeclaredDefaultConstructor);
-      Record.push_back(Data.DeclaredCopyConstructor);
-      Record.push_back(Data.DeclaredCopyAssignment);
-      Record.push_back(Data.DeclaredDestructor);
+    Record.push_back(Data.UserDeclaredConstructor);
+    Record.push_back(Data.UserDeclaredCopyConstructor);
+    Record.push_back(Data.UserDeclaredCopyAssignment);
+    Record.push_back(Data.UserDeclaredDestructor);
+    Record.push_back(Data.Aggregate);
+    Record.push_back(Data.PlainOldData);
+    Record.push_back(Data.Empty);
+    Record.push_back(Data.Polymorphic);
+    Record.push_back(Data.Abstract);
+    Record.push_back(Data.HasTrivialConstructor);
+    Record.push_back(Data.HasTrivialCopyConstructor);
+    Record.push_back(Data.HasTrivialCopyAssignment);
+    Record.push_back(Data.HasTrivialDestructor);
+    Record.push_back(Data.ComputedVisibleConversions);
+    Record.push_back(Data.DeclaredDefaultConstructor);
+    Record.push_back(Data.DeclaredCopyConstructor);
+    Record.push_back(Data.DeclaredCopyAssignment);
+    Record.push_back(Data.DeclaredDestructor);
 
-      Record.push_back(D->getNumBases());
-      for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
-             E = D->bases_end(); I != E; ++I)
-        Writer.AddCXXBaseSpecifier(*I, Record);
+    Record.push_back(D->getNumBases());
+    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
+           E = D->bases_end(); I != E; ++I)
+      Writer.AddCXXBaseSpecifier(*I, Record);
 
-      // FIXME: Make VBases lazily computed when needed to avoid storing them.
-      Record.push_back(D->getNumVBases());
-      for (CXXRecordDecl::base_class_iterator I = D->vbases_begin(),
-             E = D->vbases_end(); I != E; ++I)
-        Writer.AddCXXBaseSpecifier(*I, Record);
+    // FIXME: Make VBases lazily computed when needed to avoid storing them.
+    Record.push_back(D->getNumVBases());
+    for (CXXRecordDecl::base_class_iterator I = D->vbases_begin(),
+           E = D->vbases_end(); I != E; ++I)
+      Writer.AddCXXBaseSpecifier(*I, Record);
 
-      Writer.AddUnresolvedSet(Data.Conversions, Record);
-      Writer.AddUnresolvedSet(Data.VisibleConversions, Record);
-      Writer.AddDeclRef(Data.Definition, Record);
-      Writer.AddDeclRef(Data.FirstFriend, Record);
-    }
+    Writer.AddUnresolvedSet(Data.Conversions, Record);
+    Writer.AddUnresolvedSet(Data.VisibleConversions, Record);
+    // Data.Definition is written at the top. 
+    Writer.AddDeclRef(Data.FirstFriend, Record);
   }
 
   enum {
