@@ -615,8 +615,8 @@ void InvalidateRegionsWorker::VisitBinding(SVal V) {
     RegionBindings B = RegionStoreManager::GetRegionBindings(LCS->getStore());
 
     for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
-      const MemRegion *baseR = RI.getKey().getRegion();
-      if (cast<SubRegion>(baseR)->isSubRegionOf(LazyR))
+      const SubRegion *baseR = dyn_cast<SubRegion>(RI.getKey().getRegion());
+      if (baseR && baseR->isSubRegionOf(LazyR))
         VisitBinding(RI.getData());
     }
 
@@ -1750,8 +1750,8 @@ void RemoveDeadBindingsWorker::VisitBinding(SVal V) {
     const MemRegion *LazyR = LCS->getRegion();
     RegionBindings B = RegionStoreManager::GetRegionBindings(LCS->getStore());
     for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
-      const MemRegion *baseR = RI.getKey().getRegion();
-      if (cast<SubRegion>(baseR)->isSubRegionOf(LazyR))
+      const SubRegion *baseR = dyn_cast<SubRegion>(RI.getKey().getRegion());
+      if (baseR && baseR->isSubRegionOf(LazyR))
         VisitBinding(RI.getData());
     }
     return;
