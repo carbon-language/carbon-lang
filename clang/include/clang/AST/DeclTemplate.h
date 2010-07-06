@@ -1421,6 +1421,10 @@ public:
 
   virtual ClassTemplateDecl *getCanonicalDecl();
 
+  const ClassTemplateDecl *getCanonicalDecl() const {
+    return const_cast<ClassTemplateDecl*>(this)->getCanonicalDecl();
+  }
+
   /// Create a class template node.
   static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
