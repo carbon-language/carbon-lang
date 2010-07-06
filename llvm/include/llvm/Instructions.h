@@ -993,7 +993,7 @@ public:
   
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return paramHasAttr(~0, Attribute::NoInline); }
-  void setIsNoInline(bool Value) {
+  void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
   }
@@ -1017,18 +1017,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const {
-    return paramHasAttr(~0, Attribute::NoReturn);
-  }
+  bool doesNotReturn() const { return paramHasAttr(~0, Attribute::NoReturn); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(~0, Attribute::NoUnwind);
-  }
+  bool doesNotThrow() const { return paramHasAttr(~0, Attribute::NoUnwind); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);
@@ -2488,11 +2484,11 @@ public:
 
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const { return paramHasAttr(~0, Attribute::NoInline); }
-  void setIsNoInline(bool Value) {
+  void setIsNoInline(bool Value = true) {
     if (Value) addAttribute(~0, Attribute::NoInline);
     else removeAttribute(~0, Attribute::NoInline);
   }
-  
+
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     return paramHasAttr(~0, Attribute::ReadNone);
@@ -2512,18 +2508,14 @@ public:
   }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const {
-    return paramHasAttr(~0, Attribute::NoReturn);
-  }
+  bool doesNotReturn() const { return paramHasAttr(~0, Attribute::NoReturn); }
   void setDoesNotReturn(bool DoesNotReturn = true) {
     if (DoesNotReturn) addAttribute(~0, Attribute::NoReturn);
     else removeAttribute(~0, Attribute::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(~0, Attribute::NoUnwind);
-  }
+  bool doesNotThrow() const { return paramHasAttr(~0, Attribute::NoUnwind); }
   void setDoesNotThrow(bool DoesNotThrow = true) {
     if (DoesNotThrow) addAttribute(~0, Attribute::NoUnwind);
     else removeAttribute(~0, Attribute::NoUnwind);
