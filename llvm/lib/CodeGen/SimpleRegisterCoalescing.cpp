@@ -499,8 +499,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     if (BHasSubRegs) {
       for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
         LiveInterval &SRLI = li_->getInterval(*SR);
-        const LiveRange *SRLR = SRLI.getLiveRangeContaining(DeadVNI->def);
-        SRLI.removeValNo(SRLR->valno);
+        if (const LiveRange *SRLR = SRLI.getLiveRangeContaining(DeadVNI->def))
+          SRLI.removeValNo(SRLR->valno);
       }
     }
     IntB.removeValNo(BDeadValNos[i]);
