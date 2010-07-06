@@ -121,7 +121,7 @@ CommandObjectAlias::Execute
     }
     else
     {
-         CommandObjectSP command_obj_sp(interpreter.GetCommandSP (actual_command.c_str()));
+         CommandObjectSP command_obj_sp(interpreter.GetCommandSPExact (actual_command.c_str(), true));
          CommandObjectSP subcommand_obj_sp;
          bool use_subcommand = false;
          if (command_obj_sp.get())

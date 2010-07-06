@@ -43,6 +43,7 @@ CommandObject::CommandObject (const char *name, const char *help, const char *sy
     m_cmd_help_short (),
     m_cmd_help_long (),
     m_cmd_syntax (),
+    m_is_alias (false),
     m_flags (flags)
 {
     if (help && help[0])

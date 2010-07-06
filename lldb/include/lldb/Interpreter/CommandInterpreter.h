@@ -51,10 +51,13 @@ public:
     ~CommandInterpreter ();
 
     lldb::CommandObjectSP
-    GetCommandSP (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
+    GetCommandSPExact (const char *cmd, bool include_aliases);
 
     CommandObject *
-    GetCommandObject (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
+    GetCommandObjectExact (const char *cmd_cstr, bool include_aliases);
+
+    CommandObject *
+    GetCommandObject (const char *cmd, StringList *matches = NULL);
 
     StateVariable *
     GetStateVariable(const char *name);
@@ -242,6 +245,9 @@ protected:
 
     void
     SetSynchronous (bool value);
+
+    lldb::CommandObjectSP
+    GetCommandSP (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
 
 private:
 

@@ -91,6 +91,7 @@ CommandInterpreter::Initialize ()
     result.Clear(); HandleCommand ("alias continue process continue", false, result);
     result.Clear(); HandleCommand ("alias expr     expression", false, result);
     result.Clear(); HandleCommand ("alias exit     quit", false, result);
+    result.Clear(); HandleCommand ("alias b        breakpoint", false, result);
     result.Clear(); HandleCommand ("alias bt       thread backtrace", false, result);
     result.Clear(); HandleCommand ("alias si       thread step-inst", false, result);
     result.Clear(); HandleCommand ("alias step     thread step-in", false, result);
@@ -296,13 +297,21 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
 
     if (!exact && ret_val == NULL)
     {
+        // We will only get into here if we didn't find any exact matches.
+        
+        CommandObjectSP user_match_sp, alias_match_sp, real_match_sp;
+
         StringList local_matches;
         if (matches == NULL)
             matches = &local_matches;
 
-        int num_cmd_matches = 0;
-        int num_alias_matches = 0;
-        int num_user_matches = 0;
+        unsigned int num_cmd_matches = 0;
+        unsigned int num_alias_matches = 0;
+        unsigned int num_user_matches = 0;
+        
+        // Look through the command dictionaries one by one, and if we get only one match from any of
+        // them in toto, then return that, otherwise return an empty CommandObjectSP and the list of matches.
+        
         if (HasCommands())
         {
             num_cmd_matches = CommandObject::AddNamesMatchingPartialString (m_command_dict, cmd_cstr, *matches);
@@ -313,7 +322,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             cmd.assign(matches->GetStringAtIndex(0));
             pos = m_command_dict.find(cmd);
             if (pos != m_command_dict.end())
-                ret_val = pos->second;
+                real_match_sp = pos->second;
         }
 
         if (include_aliases && HasAliases())
@@ -322,17 +331,12 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
 
         }
 
-        if (num_alias_matches == 1 && num_cmd_matches == 0)
+        if (num_alias_matches == 1)
         {
             cmd.assign(matches->GetStringAtIndex (num_cmd_matches));
             pos = m_alias_dict.find(cmd);
             if (pos != m_alias_dict.end())
-            {
-                matches->Clear();
-                matches->AppendString (cmd.c_str());
-
-                ret_val = pos->second;
-            }
+                alias_match_sp = pos->second;
         }
 
         if (HasUserCommands())
@@ -340,33 +344,68 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
             num_user_matches = CommandObject::AddNamesMatchingPartialString (m_user_dict, cmd_cstr, *matches);
         }
 
-        if (num_user_matches == 1 && num_alias_matches == 0 && num_cmd_matches == 0)
+        if (num_user_matches == 1)
         {
             cmd.assign (matches->GetStringAtIndex (num_cmd_matches + num_alias_matches));
 
             pos = m_user_dict.find (cmd);
             if (pos != m_user_dict.end())
-            {
-                matches->Clear();
-                matches->AppendString (cmd.c_str());
-
-                ret_val = pos->second;
-            }
+                user_match_sp = pos->second;
+        }
+        
+        // If we got exactly one match, return that, otherwise return the match list.
+        
+        if (num_user_matches + num_cmd_matches + num_alias_matches == 1)
+        {
+            if (num_cmd_matches)
+                return real_match_sp;
+            else if (num_alias_matches)
+                return alias_match_sp;
+            else
+                return user_match_sp;
         }
     }
-    else {
-        if (matches)
-            matches->AppendString (cmd_cstr);
+    else if (matches && ret_val != NULL)
+    {
+        matches->AppendString (cmd_cstr);
     }
 
 
     return ret_val;
 }
 
-CommandObject *
-CommandInterpreter::GetCommandObject (const char *cmd_cstr, bool include_aliases, bool exact, StringList *matches)
+CommandObjectSP
+CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliases)
 {
-    return GetCommandSP (cmd_cstr, include_aliases, exact, matches).get();
+    return GetCommandSP(cmd_cstr, include_aliases, true, NULL);
+}
+
+CommandObject *
+CommandInterpreter::GetCommandObjectExact (const char *cmd_cstr, bool include_aliases)
+{
+    return GetCommandSPExact (cmd_cstr, include_aliases).get();
+}
+
+CommandObject *
+CommandInterpreter::GetCommandObject (const char *cmd_cstr, StringList *matches)
+{
+    CommandObject *command_obj = GetCommandSP (cmd_cstr, false, true, matches).get();
+
+    // If we didn't find an exact match to the command string in the commands, look in
+    // the aliases.
+
+    if (command_obj == NULL)
+    {
+        command_obj = GetCommandSP (cmd_cstr, true, true, matches).get();
+    }
+
+    // Finally, if there wasn't an exact match among the aliases, look for an inexact match
+    // in both the commands and the aliases.
+
+    if (command_obj == NULL)
+        command_obj = GetCommandSP(cmd_cstr, true, false, matches).get();
+
+    return command_obj;
 }
 
 bool
@@ -390,6 +429,7 @@ CommandInterpreter::UserCommandExists (const char *cmd)
 void
 CommandInterpreter::AddAlias (const char *alias_name, CommandObjectSP& command_obj_sp)
 {
+    command_obj_sp->SetIsAlias (true);
     m_alias_dict[alias_name] = command_obj_sp;
 }
 
@@ -602,30 +642,17 @@ CommandInterpreter::HandleCommand
 
             // We're looking up the command object here.  So first find an exact match to the
             // command in the commands.
-
-            CommandObject *command_obj = GetCommandObject (command_cstr, false, true);
-
-            // If we didn't find an exact match to the command string in the commands, look in
-            // the aliases.
-
-            if (command_obj == NULL)
+            CommandObject *command_obj = GetCommandObject(command_cstr);
+                
+            if (command_obj != NULL)
             {
-                command_obj = GetCommandObject (command_cstr, true, true);
-                if (command_obj != NULL)
+                if (command_obj->IsAlias())
                 {
                     BuildAliasCommandArgs (command_obj, command_cstr, command_args, result);
                     if (!result.Succeeded())
                         return false;
                 }
-            }
 
-            // Finally, if there wasn't an exact match among the aliases, look for an inexact match.
-
-            if (command_obj == NULL)
-                command_obj = GetCommandObject(command_cstr, false, false);
-
-            if (command_obj)
-            {
                 if (command_obj->WantsRawCommandString())
                 {
                     const char *stripped_command = ::strstr (command_line, command_cstr);
@@ -649,10 +676,11 @@ CommandInterpreter::HandleCommand
             }
             else
             {
+                // We didn't find the first command object, so complete the first argument.
                 StringList matches;
                 int num_matches;
-                int cursor_index = command_args.GetArgumentCount() - 1;
-                int cursor_char_position = strlen (command_args.GetArgumentAtIndex(command_args.GetArgumentCount() - 1));
+                int cursor_index = 0;
+                int cursor_char_position = strlen (command_args.GetArgumentAtIndex(0));
                 bool word_complete;
                 num_matches = HandleCompletionMatches (command_args, 
                                                        cursor_index,
@@ -698,7 +726,6 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
                                              StringList &matches)
 {
     int num_command_matches = 0;
-    bool include_aliases = true;
     bool look_for_subcommand = false;
     
     // For any of the command completions a unique match will be a complete word.
@@ -707,13 +734,13 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
     if (cursor_index == -1)
     {
         // We got nothing on the command line, so return the list of commands
+        bool include_aliases = true;
         num_command_matches = GetCommandNamesMatchingPartialString ("", include_aliases, matches);
     }
     else if (cursor_index == 0)
     {
         // The cursor is in the first argument, so just do a lookup in the dictionary.
-        CommandObject *cmd_obj = GetCommandObject (parsed_line.GetArgumentAtIndex(0), include_aliases, false,
-                                                   &matches);
+        CommandObject *cmd_obj = GetCommandObject (parsed_line.GetArgumentAtIndex(0), &matches);
         num_command_matches = matches.GetSize();
 
         if (num_command_matches == 1
@@ -735,7 +762,7 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
         // We are completing further on into a commands arguments, so find the command and tell it
         // to complete the command.
         // First see if there is a matching initial command:
-        CommandObject *command_object = GetCommandObject (parsed_line.GetArgumentAtIndex(0), include_aliases, false);
+        CommandObject *command_object = GetCommandObject (parsed_line.GetArgumentAtIndex(0));
         if (command_object == NULL)
         {
             return 0;
@@ -910,7 +937,7 @@ CommandInterpreter::SetPrompt (const char *new_prompt)
 void
 CommandInterpreter::CrossRegisterCommand (const char * dest_cmd, const char * object_type)
 {
-    CommandObjectSP cmd_obj_sp = GetCommandSP (dest_cmd);
+    CommandObjectSP cmd_obj_sp = GetCommandSPExact (dest_cmd, true);
 
     if (cmd_obj_sp != NULL)
     {

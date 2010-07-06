@@ -54,12 +54,8 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
     else
     {
         // Get command object for the first command argument. Only search built-in command dictionary.
-        cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex (0), false, false);
-        if (cmd_obj == NULL)
-        {
-            // That failed, so now search in the aliases dictionary, too.
-            cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex (0), true, false);
-        }
+        StringList matches;
+        cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex (0), &matches);
         
         if (cmd_obj != NULL)
         {
@@ -123,6 +119,15 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
                 }
             }
         }
+        else if (matches.GetSize() > 0)
+        {
+            Stream &output_strm = result.GetOutputStream();
+            output_strm.Printf("Help requested with ambiguous command name, possible completions:\n");
+            for (int i = 0; i < matches.GetSize(); i++)
+            {
+                output_strm.Printf("\t%s\n", matches.GetStringAtIndex(i));
+            }
+        }
         else
         {
             result.AppendErrorWithFormat 
@@ -156,7 +161,7 @@ CommandObjectHelp::HandleCompletion
     }
     else
     {
-        CommandObject *cmd_obj = interpreter.GetCommandObject (input.GetArgumentAtIndex(0), true, false);
+        CommandObject *cmd_obj = interpreter.GetCommandObject (input.GetArgumentAtIndex(0));
         input.Shift();
         cursor_index--;
         return cmd_obj->HandleCompletion (interpreter, input, cursor_index, cursor_char_position, match_start_point, 
