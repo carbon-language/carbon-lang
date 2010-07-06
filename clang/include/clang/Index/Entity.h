@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace clang {
@@ -70,6 +71,9 @@ public:
   /// \brief Get an Entity associated with the given Decl.
   /// \returns invalid Entity if an Entity cannot refer to this Decl.
   static Entity get(Decl *D, Program &Prog);
+
+  /// \brief Get an Entity associated with a name in the global namespace.
+  static Entity get(llvm::StringRef Name, Program &Prog);
 
   /// \brief true if the Entity is not visible outside the trasnlation unit.
   bool isInternalToTU() const {

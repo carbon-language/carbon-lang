@@ -23,6 +23,7 @@
 
 namespace clang {
   class ASTContext;
+  class FunctionDecl;
 
 namespace idx {
   class Program;
@@ -35,6 +36,7 @@ public:
   typedef llvm::DenseMap<ASTContext *, TranslationUnit *> CtxTUMapTy;
   typedef std::map<Entity, TUSetTy> MapTy;
   typedef std::map<GlobalSelector, TUSetTy> SelMapTy;
+  typedef std::map<Entity, std::pair<FunctionDecl*,TranslationUnit*> > DefMapTy;
 
   explicit Indexer(Program &prog) :
     Prog(prog) { }
@@ -49,10 +51,15 @@ public:
   virtual void GetTranslationUnitsFor(GlobalSelector Sel,
                                       TranslationUnitHandler &Handler);
 
+  std::pair<FunctionDecl*, TranslationUnit*> getDefinitionFor(Entity Ent);
+
 private:
   Program &Prog;
 
   MapTy Map;
+  // Map a function Entity to the its definition.
+  DefMapTy DefMap;
+
   CtxTUMapTy CtxTUMap;
   SelMapTy SelMap;
 };

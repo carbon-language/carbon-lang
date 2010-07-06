@@ -105,5 +105,12 @@ int main(int argc, char **argv) {
     Idxer.IndexAST(&TU);
   }
 
+  Entity Ent = Entity::get(AnalyzeFunction, Prog);
+  FunctionDecl *FD;
+  TranslationUnit *TU;
+  llvm::tie(FD, TU) = Idxer.getDefinitionFor(Ent);
+
+  if (!FD)
+    return 0;
   return 0;
 }

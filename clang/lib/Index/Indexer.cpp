@@ -25,14 +25,22 @@ namespace {
 class EntityIndexer : public EntityHandler {
   TranslationUnit *TU;
   Indexer::MapTy &Map;
+  Indexer::DefMapTy &DefMap;
 
 public:
-  EntityIndexer(TranslationUnit *tu, Indexer::MapTy &map) : TU(tu), Map(map) { }
+  EntityIndexer(TranslationUnit *tu, Indexer::MapTy &map, 
+                Indexer::DefMapTy &defmap) 
+    : TU(tu), Map(map), DefMap(defmap) { }
 
   virtual void Handle(Entity Ent) {
     if (Ent.isInternalToTU())
       return;
     Map[Ent].insert(TU);
+
+    Decl *D = Ent.getDecl(TU->getASTContext());
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+      if (FD->isThisDeclarationADefinition())
+        DefMap[Ent] = std::make_pair(FD, TU);
   }
 };
 
@@ -62,7 +70,7 @@ void Indexer::IndexAST(TranslationUnit *TU) {
   assert(TU && "Passed null TranslationUnit");
   ASTContext &Ctx = TU->getASTContext();
   CtxTUMap[&Ctx] = TU;
-  EntityIndexer Idx(TU, Map);
+  EntityIndexer Idx(TU, Map, DefMap);
   Prog.FindEntities(Ctx, Idx);
 
   SelectorIndexer SelIdx(Prog, TU, SelMap);
@@ -101,4 +109,13 @@ void Indexer::GetTranslationUnitsFor(GlobalSelector Sel,
   TUSetTy &Set = I->second;
   for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
     Handler.Handle(*I);
+}
+
+std::pair<FunctionDecl *, TranslationUnit *> 
+Indexer::getDefinitionFor(Entity Ent) {
+  DefMapTy::iterator I = DefMap.find(Ent);
+  if (I == DefMap.end())
+    return std::make_pair((FunctionDecl *)0, (TranslationUnit *)0);
+  else
+    return I->second;
 }
