@@ -554,7 +554,7 @@ Host::StartMonitoringChildProcess
         Mutex::Locker locker(&g_monitor_map_mutex);
         if (!g_monitor_thread)
         {
-            pid_t wait_pid = -1;
+            lldb::pid_t wait_pid = -1;
             g_monitor_thread = ThreadCreate ("<lldb.host.wait4>",
                                              MonitorChildProcessThreadFunction,
                                              &wait_pid,
@@ -640,7 +640,7 @@ MonitorChildProcessThreadFunction (void *arg)
     if (log)
         log->Printf ("%s (arg = %p) thread starting...", function, arg);
 
-    const pid_t wait_pid = -1;//*((pid_t*)arg);
+    const lldb::pid_t wait_pid = -1;//*((pid_t*)arg);
     int status = -1;
     const int options = 0;
     struct rusage *rusage = NULL;

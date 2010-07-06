@@ -616,7 +616,7 @@ ProcessGDBRemote::DidLaunch ()
 }
 
 Error
-ProcessGDBRemote::DoAttach (pid_t attach_pid)
+ProcessGDBRemote::DoAttach (lldb::pid_t attach_pid)
 {
     Error error;
     // Clear out and clean up from any current state
