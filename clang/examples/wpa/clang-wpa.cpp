@@ -14,6 +14,10 @@
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Checker/PathSensitive/AnalysisManager.h"
+#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/Checker/PathSensitive/GRTransferFuncs.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Index/CallGraph.h"
@@ -21,6 +25,7 @@
 #include "clang/Index/TranslationUnit.h"
 #include "clang/Index/DeclReferenceMap.h"
 #include "clang/Index/SelectorMap.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -51,6 +56,10 @@ public:
 
   virtual ASTContext &getASTContext() {
     return AST->getASTContext();
+  }
+  
+  virtual Preprocessor &getPreprocessor() {
+    return AST->getPreprocessor();
   }
 
   virtual DeclReferenceMap &getDeclReferenceMap() {
@@ -101,8 +110,8 @@ int main(int argc, char **argv) {
 
   // Feed all ASTUnits to the Indexer.
   for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i) {
-    ASTUnitTU TU(ASTUnits[i]);
-    Idxer.IndexAST(&TU);
+    ASTUnitTU *TU = new ASTUnitTU(ASTUnits[i]);
+    Idxer.IndexAST(TU);
   }
 
   Entity Ent = Entity::get(AnalyzeFunction, Prog);
@@ -112,5 +121,25 @@ int main(int argc, char **argv) {
 
   if (!FD)
     return 0;
+
+  // Create an analysis engine.
+  Preprocessor &PP = TU->getPreprocessor();
+
+  // Hard code options for now.
+  AnalysisManager AMgr(TU->getASTContext(), PP.getDiagnostics(),
+                       PP.getLangOptions(), /* PathDiagnostic */ 0,
+                       CreateRegionStoreManager,
+                       CreateRangeConstraintManager,
+                       /* MaxNodes */ 300000, /* MaxLoop */ 3,
+                       /* VisualizeEG */ false, /* VisualizeEGUbi */ false,
+                       /* PurgeDead */ true, /* EagerlyAssume */ false,
+                       /* TrimGraph */ false, /* InlineCall */ true);
+
+  GRTransferFuncs* TF = MakeCFRefCountTF(AMgr.getASTContext(), /*GC*/false,
+                                         AMgr.getLangOptions());
+  GRExprEngine Eng(AMgr, TF);
+
+  Eng.ExecuteWorkList(AMgr.getStackFrame(FD), AMgr.getMaxNodes());
+  
   return 0;
 }

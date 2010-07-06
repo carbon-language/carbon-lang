@@ -16,6 +16,7 @@
 
 namespace clang {
   class ASTContext;
+  class Preprocessor;
 
 namespace idx {
   class DeclReferenceMap;
@@ -26,6 +27,7 @@ class TranslationUnit {
 public:
   virtual ~TranslationUnit();
   virtual ASTContext &getASTContext() = 0;
+  virtual Preprocessor &getPreprocessor() = 0;
   virtual DeclReferenceMap &getDeclReferenceMap() = 0;
   virtual SelectorMap &getSelectorMap() = 0;
 };

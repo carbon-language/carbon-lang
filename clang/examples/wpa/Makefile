@@ -16,7 +16,8 @@ NO_INSTALL = 1
 TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := asmparser bitreader mc core
-USEDLIBS = clangIndex.a clangFrontend.a clangDriver.a clangSema.a \
-	   clangAnalysis.a clangAST.a clangParse.a clangLex.a clangBasic.a
+USEDLIBS = clangChecker.a clangIndex.a clangFrontend.a clangDriver.a \
+	   clangSema.a clangAnalysis.a clangAST.a clangParse.a clangLex.a \
+	   clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
