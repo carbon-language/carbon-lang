@@ -470,9 +470,6 @@ public:
 
   const GRState* getPersistentState(GRState& Impl);
 
-  bool isEqual(const GRState* state, const Expr* Ex, const llvm::APSInt& V);
-  bool isEqual(const GRState* state, const Expr* Ex, uint64_t);
-
   //==---------------------------------------------------------------------==//
   // Generic Data Map methods.
   //==---------------------------------------------------------------------==//
