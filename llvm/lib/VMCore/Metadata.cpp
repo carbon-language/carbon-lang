@@ -133,6 +133,7 @@ static const Function *getFunctionForValue(Value *V) {
 static const Function *assertLocalFunction(const MDNode *N) {
   if (!N->isFunctionLocal()) return 0;
 
+  // FIXME: This does not handle cyclic function local metadata.
   const Function *F = 0, *NewF = 0;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (Value *V = N->getOperand(i)) {
