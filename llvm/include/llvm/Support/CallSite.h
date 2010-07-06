@@ -204,9 +204,9 @@ public:
     CALLSITE_DELEGATE_GETTER(isNoInline());
   }
   void setIsNoInline(bool Value = true) {
-    CALLSITE_DELEGATE_GETTER(setIsNoInline(Value));
+    CALLSITE_DELEGATE_SETTER(setIsNoInline(Value));
   }
-  
+
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     CALLSITE_DELEGATE_GETTER(doesNotAccessMemory());
