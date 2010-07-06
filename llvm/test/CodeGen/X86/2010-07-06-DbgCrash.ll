@@ -1,4 +1,4 @@
-; RUN: llc -O0 -relocation-model pic -o /dev/null
+; RUN: llc -O0 -relocation-model pic < %s -o /dev/null
 ; PR7545
 @.str = private constant [4 x i8] c"one\00", align 1 ; <[4 x i8]*> [#uses=1]
 @.str1 = private constant [4 x i8] c"two\00", align 1 ; <[5 x i8]*> [#uses=1]
