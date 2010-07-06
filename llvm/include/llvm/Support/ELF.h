@@ -159,6 +159,42 @@ enum {
   ELFOSABI_STANDALONE = 255   // Standalone (embedded) application
 };
 
+// X86_64 relocations.
+enum {
+  R_X86_64_NONE       = 0,
+  R_X86_64_64         = 1,
+  R_X86_64_PC32       = 2,
+  R_X86_64_GOT32      = 3,
+  R_X86_64_PLT32      = 4,
+  R_X86_64_COPY       = 5,
+  R_X86_64_GLOB_DAT   = 6,
+  R_X86_64_JUMP_SLOT  = 7,
+  R_X86_64_RELATIVE   = 8,
+  R_X86_64_GOTPCREL   = 9,
+  R_X86_64_32         = 10,
+  R_X86_64_32S        = 11,
+  R_X86_64_16         = 12,
+  R_X86_64_PC16       = 13,
+  R_X86_64_8          = 14,
+  R_X86_64_PC8        = 15,
+  R_X86_64_DTPMOD64   = 16,
+  R_X86_64_DTPOFF64   = 17,
+  R_X86_64_TPOFF64    = 18,
+  R_X86_64_TLSGD      = 19,
+  R_X86_64_TLSLD      = 20,
+  R_X86_64_DTPOFF32   = 21,
+  R_X86_64_GOTTPOFF   = 22,
+  R_X86_64_TPOFF32    = 23,
+  R_X86_64_PC64       = 24,
+  R_X86_64_GOTOFF64   = 25,
+  R_X86_64_GOTPC32    = 26,
+  R_X86_64_SIZE32     = 32,
+  R_X86_64_SIZE64     = 33,
+  R_X86_64_GOTPC32_TLSDESC = 34,
+  R_X86_64_TLSDESC_CALL    = 35,
+  R_X86_64_TLSDESC    = 36
+};
+
 // Section header.
 struct Elf32_Shdr {
   Elf32_Word sh_name;      // Section name (index into string table)
@@ -296,6 +332,43 @@ struct Elf32_Rela {
   void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
   void setSymbolAndType (Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
+  };
+};
+
+// Relocation entry, without explicit addend.
+struct Elf64_Rel {
+  Elf64_Addr r_offset; // Location (file byte offset, or program virtual addr).
+  Elf64_Xword r_info;   // Symbol table index and type of relocation to apply.
+
+  // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
+  // and ELF64_R_INFO macros defined in the ELF specification:
+  Elf64_Xword getSymbol () const { return (r_info >> 32); }
+  unsigned char getType () const {
+    return (unsigned char) (r_info & 0xffffffffL);
+  }
+  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
+  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
+  void setSymbolAndType (Elf64_Xword s, unsigned char t) {
+    r_info = (s << 32) + (t&0xffffffffL);
+  };
+};
+
+// Relocation entry with explicit addend.
+struct Elf64_Rela {
+  Elf64_Addr  r_offset; // Location (file byte offset, or program virtual addr).
+  Elf64_Xword  r_info;   // Symbol table index and type of relocation to apply.
+  Elf64_Sxword r_addend; // Compute value for relocatable field by adding this.
+
+  // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
+  // and ELF64_R_INFO macros defined in the ELF specification:
+  Elf64_Xword getSymbol () const { return (r_info >> 32); }
+  unsigned char getType () const {
+    return (unsigned char) (r_info & 0xffffffffL);
+  }
+  void setSymbol (Elf64_Xword s) { setSymbolAndType (s, getType ()); }
+  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
+  void setSymbolAndType (Elf64_Xword s, unsigned char t) {
+    r_info = (s << 32) + (t&0xffffffffL);
   };
 };
 
