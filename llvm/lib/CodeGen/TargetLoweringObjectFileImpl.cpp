@@ -936,7 +936,7 @@ static unsigned
 getCOFFSectionFlags(SectionKind K) {
   unsigned Flags = 0;
 
-  if (!K.isMetadata())
+  if (K.isMetadata())
     Flags |=
       COFF::IMAGE_SCN_MEM_DISCARDABLE;
   else if (K.isText())
