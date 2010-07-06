@@ -688,6 +688,12 @@ static void DestroyCleanup(CodeGenFunction &CGF,
     llvm::BranchInst::Create(CGF.getUnreachableBlock(), Exit);
 
   assert(!Entry->getParent() && "cleanup entry already positioned?");
+  // We can't just delete the entry; we have to kill any references to
+  // its instructions in other blocks.
+  for (llvm::BasicBlock::iterator I = Entry->begin(), E = Entry->end();
+         I != E; ++I)
+    if (!I->use_empty())
+      I->replaceAllUsesWith(llvm::UndefValue::get(I->getType()));
   delete Entry;
 }
 

@@ -228,6 +228,37 @@ namespace test4 {
   }
 }
 
+// PR7575
+namespace test5 {
+  struct A { ~A(); };
+
+  // This is really unnecessarily verbose; we should be using phis,
+  // even at -O0.
+
+  // CHECK: define void @_ZN5test53fooEv()
+  // CHECK:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
+  // CHECK-NEXT: [[IVAR:%.*]] = alloca i64
+  // CHECK:      [[ELEMSARRAY:%.*]] = bitcast [5 x [[A]]]* [[ELEMS]] to [[A]]
+  // CHECK-NEXT: store i64 5, i64* [[IVAR]]
+  // CHECK-NEXT: br label
+  // CHECK:      [[I:%.*]] = load i64* [[IVAR]]
+  // CHECK-NEXT: icmp ne i64 [[I]], 0
+  // CHECK-NEXT: br i1
+  // CHECK:      [[I:%.*]] = load i64* [[IVAR]]
+  // CHECK-NEXT: [[I2:%.*]] = sub i64 [[I]], 1
+  // CHECK-NEXT: getelementptr inbounds [[A]]* [[ELEMSARRAY]], i64 [[I2]]
+  // CHECK-NEXT: call void @_ZN5test51AD1Ev(
+  // CHECK-NEXT: br label
+  // CHECK:      [[I:%.*]] = load i64* [[IVAR]]
+  // CHECK-NEXT: [[I1:%.*]] = sub i64 [[I]], 1
+  // CHECK-NEXT: store i64 [[I1]], i64* [[IVAR]]
+  // CHECK-NEXT: br label
+  // CHECK:      ret void
+  void foo() {
+    A elems[5];
+  }
+}
+
 // Checks from test3:
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(
