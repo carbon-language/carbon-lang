@@ -97,6 +97,48 @@ public:
       I->setDebugLoc(CurDbgLocation);
   }
 
+  /// InsertPoint - A saved insertion point.
+  class InsertPoint {
+    BasicBlock *Block;
+    BasicBlock::iterator Point;
+
+  public:
+    /// Creates a new insertion point which doesn't point to anything.
+    InsertPoint() : Block(0) {}
+
+    /// Creates a new insertion point at the given location.
+    InsertPoint(BasicBlock *InsertBlock, BasicBlock::iterator InsertPoint)
+      : Block(InsertBlock), Point(InsertPoint) {}
+
+    /// isSet - Returns true if this insert point is set.
+    bool isSet() const { return (Block != 0); }
+
+    llvm::BasicBlock *getBlock() const { return Block; }
+    llvm::BasicBlock::iterator getPoint() const { return Point; }
+  };
+
+  /// saveIP - Returns the current insert point.
+  InsertPoint saveIP() const {
+    return InsertPoint(GetInsertBlock(), GetInsertPoint());
+  }
+
+  /// saveAndClearIP - Returns the current insert point, clearing it
+  /// in the process.
+  InsertPoint saveAndClearIP() {
+    InsertPoint IP(GetInsertBlock(), GetInsertPoint());
+    ClearInsertionPoint();
+    return IP;
+  }
+
+  /// restoreIP - Sets the current insert point to a previously-saved
+  /// location.
+  void restoreIP(InsertPoint IP) {
+    if (IP.isSet())
+      SetInsertPoint(IP.getBlock(), IP.getPoint());
+    else
+      ClearInsertionPoint();
+  }
+
   //===--------------------------------------------------------------------===//
   // Miscellaneous creation methods.
   //===--------------------------------------------------------------------===//
