@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -836,6 +837,65 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   }
   
   return 1;
+}
+
+/// Get the EVTs and ArgFlags collections that represent the legalized return 
+/// type of the given function.  This does not require a DAG or a return value,
+/// and is suitable for use before any DAGs for the function are constructed.
+/// TODO: Move this out of TargetLowering.cpp.
+void llvm::GetReturnInfo(const Type* ReturnType, Attributes attr,
+                         SmallVectorImpl<ISD::OutputArg> &Outs,
+                         const TargetLowering &TLI,
+                         SmallVectorImpl<uint64_t> *Offsets) {
+  SmallVector<EVT, 4> ValueVTs;
+  ComputeValueVTs(TLI, ReturnType, ValueVTs);
+  unsigned NumValues = ValueVTs.size();
+  if (NumValues == 0) return;
+  unsigned Offset = 0;
+
+  for (unsigned j = 0, f = NumValues; j != f; ++j) {
+    EVT VT = ValueVTs[j];
+    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+
+    if (attr & Attribute::SExt)
+      ExtendKind = ISD::SIGN_EXTEND;
+    else if (attr & Attribute::ZExt)
+      ExtendKind = ISD::ZERO_EXTEND;
+
+    // FIXME: C calling convention requires the return type to be promoted to
+    // at least 32-bit. But this is not necessary for non-C calling
+    // conventions. The frontend should mark functions whose return values
+    // require promoting with signext or zeroext attributes.
+    if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
+      EVT MinVT = TLI.getRegisterType(ReturnType->getContext(), MVT::i32);
+      if (VT.bitsLT(MinVT))
+        VT = MinVT;
+    }
+
+    unsigned NumParts = TLI.getNumRegisters(ReturnType->getContext(), VT);
+    EVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
+    unsigned PartSize = TLI.getTargetData()->getTypeAllocSize(
+                        PartVT.getTypeForEVT(ReturnType->getContext()));
+
+    // 'inreg' on function refers to return value
+    ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
+    if (attr & Attribute::InReg)
+      Flags.setInReg();
+
+    // Propagate extension type if any
+    if (attr & Attribute::SExt)
+      Flags.setSExt();
+    else if (attr & Attribute::ZExt)
+      Flags.setZExt();
+
+    for (unsigned i = 0; i < NumParts; ++i) {
+      Outs.push_back(ISD::OutputArg(Flags, PartVT, /*isFixed=*/true));
+      if (Offsets) {
+        Offsets->push_back(Offset);
+        Offset += PartSize;
+      }
+    }
+  }
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate

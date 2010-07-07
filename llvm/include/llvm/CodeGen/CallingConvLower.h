@@ -188,8 +188,7 @@ public:
   /// CheckReturn - Analyze the return values of a function, returning
   /// true if the return can be performed without sret-demotion, and
   /// false otherwise.
-  bool CheckReturn(const SmallVectorImpl<EVT> &OutTys,
-                   const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+  bool CheckReturn(const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
                    CCAssignFn Fn);
 
   /// AnalyzeCallOperands - Analyze the outgoing arguments to a call,

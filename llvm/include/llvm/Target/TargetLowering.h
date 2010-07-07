@@ -24,6 +24,7 @@
 
 #include "llvm/CallingConv.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/Attributes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
@@ -1159,8 +1160,7 @@ public:
   /// registers.  If false is returned, an sret-demotion is performed.
   ///
   virtual bool CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
-               const SmallVectorImpl<EVT> &OutTys,
-               const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+               const SmallVectorImpl<ISD::OutputArg> &Outs,
                LLVMContext &Context) const
   {
     // Return true by default to get preexisting behavior.
@@ -1656,6 +1656,15 @@ protected:
   /// optimization.
   bool benefitFromCodePlacementOpt;
 };
+
+/// GetReturnInfo - Given an LLVM IR type and return type attributes,
+/// compute the return value EVTs and flags, and optionally also
+/// the offsets, if the return value is being lowered to memory.
+void GetReturnInfo(const Type* ReturnType, Attributes attr,
+                   SmallVectorImpl<ISD::OutputArg> &Outs,
+                   const TargetLowering &TLI,
+                   SmallVectorImpl<uint64_t> *Offsets = 0);
+
 } // end llvm namespace
 
 #endif

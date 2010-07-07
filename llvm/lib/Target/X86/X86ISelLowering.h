@@ -740,8 +740,7 @@ namespace llvm {
 
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
-                     const SmallVectorImpl<EVT> &OutTys,
-                     const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                      LLVMContext &Context) const;
 
     void ReplaceATOMIC_BINARY_64(SDNode *N, SmallVectorImpl<SDValue> &Results,

@@ -1135,13 +1135,12 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
 bool XCoreTargetLowering::
 CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
-               const SmallVectorImpl<EVT> &OutTys,
-               const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+               const SmallVectorImpl<ISD::OutputArg> &Outs,
                LLVMContext &Context) const {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  RVLocs, Context);
-  return CCInfo.CheckReturn(OutTys, ArgsFlags, RetCC_XCore);
+  return CCInfo.CheckReturn(Outs, RetCC_XCore);
 }
 
 SDValue

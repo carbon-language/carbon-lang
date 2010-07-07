@@ -23,6 +23,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -83,6 +84,8 @@ private:
   bool X86SelectLoad(const Instruction *I);
   
   bool X86SelectStore(const Instruction *I);
+
+  bool X86SelectRet(const Instruction *I);
 
   bool X86SelectCmp(const Instruction *I);
 
@@ -660,6 +663,67 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
   return X86FastEmitStore(VT, I->getOperand(0), AM);
 }
 
+/// X86SelectRet - Select and emit code to implement ret instructions.
+bool X86FastISel::X86SelectRet(const Instruction *I) {
+  const ReturnInst *Ret = cast<ReturnInst>(I);
+  const Function &F = *I->getParent()->getParent();
+
+  if (!FuncInfo.CanLowerReturn)
+    return false;
+
+  CallingConv::ID CC = F.getCallingConv();
+  if (CC != CallingConv::C &&
+      CC != CallingConv::Fast &&
+      CC != CallingConv::X86_FastCall)
+    return false;
+
+  if (Subtarget->isTargetWin64())
+    return false;
+
+  // fastcc with -tailcallopt is intended to provide a guaranteed
+  // tail call optimization. Fastisel doesn't know how to do that.
+  if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
+    return false;
+
+  // Let SDISel handle vararg functions.
+  if (F.isVarArg())
+    return false;
+
+  SmallVector<ISD::OutputArg, 4> Outs;
+  GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
+                Outs, TLI);
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ValLocs;
+  CCState CCInfo(CC, F.isVarArg(), TM, ValLocs, I->getContext());
+  CCInfo.AnalyzeReturn(Outs, CCAssignFnForCall(CC));
+
+  // Copy the return value into registers.
+  for (unsigned i = 0, e = ValLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ValLocs[i];
+  
+    // Don't bother handling odd stuff for now.
+    if (VA.getLocInfo() != CCValAssign::Full)
+      return false;
+    if (!VA.isRegLoc())
+      return false;
+
+    const Value *RV = Ret->getOperand(VA.getValNo());
+    unsigned Reg = getRegForValue(RV);
+
+    TargetRegisterClass* RC = TLI.getRegClassFor(VA.getValVT());
+    bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                    VA.getLocReg(), Reg, RC, RC, DL);
+    assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+
+    MRI.addLiveOut(X86::XMM0);
+  }
+
+  // Now emit the RET.
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::RET));
+  return true;
+}
+
 /// X86SelectLoad - Select and emit code to implement load instructions.
 ///
 bool X86FastISel::X86SelectLoad(const Instruction *I)  {
@@ -1194,13 +1258,17 @@ bool X86FastISel::X86SelectExtractValue(const Instruction *I) {
     switch (CI->getIntrinsicID()) {
     default: break;
     case Intrinsic::sadd_with_overflow:
-    case Intrinsic::uadd_with_overflow:
+    case Intrinsic::uadd_with_overflow: {
       // Cheat a little. We know that the registers for "add" and "seto" are
       // allocated sequentially. However, we only keep track of the register
       // for "add" in the value map. Use extractvalue's index to get the
       // correct register for "seto".
-      UpdateValueMap(I, lookUpRegForValue(Agg) + *EI->idx_begin());
+      unsigned OpReg = getRegForValue(Agg);
+      if (OpReg == 0)
+        return false;
+      UpdateValueMap(I, OpReg + *EI->idx_begin());
       return true;
+    }
     }
   }
 
@@ -1664,6 +1732,8 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
     return X86SelectLoad(I);
   case Instruction::Store:
     return X86SelectStore(I);
+  case Instruction::Ret:
+    return X86SelectRet(I);
   case Instruction::ICmp:
   case Instruction::FCmp:
     return X86SelectCmp(I);

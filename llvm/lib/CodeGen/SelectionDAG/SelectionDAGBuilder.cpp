@@ -963,67 +963,6 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   return SDValue();
 }
 
-/// Get the EVTs and ArgFlags collections that represent the legalized return 
-/// type of the given function.  This does not require a DAG or a return value,
-/// and is suitable for use before any DAGs for the function are constructed.
-static void getReturnInfo(const Type* ReturnType,
-                   Attributes attr, SmallVectorImpl<EVT> &OutVTs,
-                   SmallVectorImpl<ISD::ArgFlagsTy> &OutFlags,
-                   const TargetLowering &TLI,
-                   SmallVectorImpl<uint64_t> *Offsets = 0) {
-  SmallVector<EVT, 4> ValueVTs;
-  ComputeValueVTs(TLI, ReturnType, ValueVTs);
-  unsigned NumValues = ValueVTs.size();
-  if (NumValues == 0) return;
-  unsigned Offset = 0;
-
-  for (unsigned j = 0, f = NumValues; j != f; ++j) {
-    EVT VT = ValueVTs[j];
-    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-
-    if (attr & Attribute::SExt)
-      ExtendKind = ISD::SIGN_EXTEND;
-    else if (attr & Attribute::ZExt)
-      ExtendKind = ISD::ZERO_EXTEND;
-
-    // FIXME: C calling convention requires the return type to be promoted to
-    // at least 32-bit. But this is not necessary for non-C calling
-    // conventions. The frontend should mark functions whose return values
-    // require promoting with signext or zeroext attributes.
-    if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-      EVT MinVT = TLI.getRegisterType(ReturnType->getContext(), MVT::i32);
-      if (VT.bitsLT(MinVT))
-        VT = MinVT;
-    }
-
-    unsigned NumParts = TLI.getNumRegisters(ReturnType->getContext(), VT);
-    EVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
-    unsigned PartSize = TLI.getTargetData()->getTypeAllocSize(
-                        PartVT.getTypeForEVT(ReturnType->getContext()));
-
-    // 'inreg' on function refers to return value
-    ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-    if (attr & Attribute::InReg)
-      Flags.setInReg();
-
-    // Propagate extension type if any
-    if (attr & Attribute::SExt)
-      Flags.setSExt();
-    else if (attr & Attribute::ZExt)
-      Flags.setZExt();
-
-    for (unsigned i = 0; i < NumParts; ++i) {
-      OutVTs.push_back(PartVT);
-      OutFlags.push_back(Flags);
-      if (Offsets)
-      {
-        Offsets->push_back(Offset);
-        Offset += PartSize;
-      }
-    }
-  }
-}
-
 void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
   SDValue Chain = getControlRoot();
   SmallVector<ISD::OutputArg, 8> Outs;
@@ -4559,14 +4498,13 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
   Args.reserve(CS.arg_size());
 
   // Check whether the function can return without sret-demotion.
-  SmallVector<EVT, 4> OutVTs;
-  SmallVector<ISD::ArgFlagsTy, 4> OutsFlags;
+  SmallVector<ISD::OutputArg, 4> Outs;
   SmallVector<uint64_t, 4> Offsets;
-  getReturnInfo(RetTy, CS.getAttributes().getRetAttributes(),
-                OutVTs, OutsFlags, TLI, &Offsets);
+  GetReturnInfo(RetTy, CS.getAttributes().getRetAttributes(),
+                Outs, TLI, &Offsets);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
-                        FTy->isVarArg(), OutVTs, OutsFlags, FTy->getContext());
+                        FTy->isVarArg(), Outs, FTy->getContext());
 
   SDValue DemoteStackSlot;
 
@@ -4659,7 +4597,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     ComputeValueVTs(TLI, PtrRetTy, PVTs);
     assert(PVTs.size() == 1 && "Pointers should fit in one register");
     EVT PtrVT = PVTs[0];
-    unsigned NumValues = OutVTs.size();
+    unsigned NumValues = Outs.size();
     SmallVector<SDValue, 4> Values(NumValues);
     SmallVector<SDValue, 4> Chains(NumValues);
 
@@ -4667,7 +4605,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
       SDValue Add = DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT,
                                 DemoteStackSlot,
                                 DAG.getConstant(Offsets[i], PtrVT));
-      SDValue L = DAG.getLoad(OutVTs[i], getCurDebugLoc(), Result.second,
+      SDValue L = DAG.getLoad(Outs[i].VT, getCurDebugLoc(), Result.second,
                               Add, NULL, Offsets[i], false, false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
@@ -5959,15 +5897,13 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
   SmallVector<ISD::InputArg, 16> Ins;
 
   // Check whether the function can return without sret-demotion.
-  SmallVector<EVT, 4> OutVTs;
-  SmallVector<ISD::ArgFlagsTy, 4> OutsFlags;
-  getReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
-                OutVTs, OutsFlags, TLI);
+  SmallVector<ISD::OutputArg, 4> Outs;
+  GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
+                Outs, TLI);
 
   FuncInfo->CanLowerReturn = TLI.CanLowerReturn(F.getCallingConv(),
                                                 F.isVarArg(),
-                                                OutVTs, OutsFlags,
-                                                F.getContext());
+                                                Outs, F.getContext());
   if (!FuncInfo->CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.
     SmallVector<EVT, 1> ValueVTs;
