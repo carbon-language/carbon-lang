@@ -1389,6 +1389,7 @@ static bool isSubprogramContext(const MDNode *Context) {
 DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
   CompileUnit *SPCU = getCompileUnit(SPNode);
   DIE *SPDie = SPCU->getDIE(SPNode);
+
   assert(SPDie && "Unable to find subprogram DIE!");
   DISubprogram SP(SPNode);
   
@@ -1422,6 +1423,14 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
     SPCU->addDie(SPDie);
   }
   
+  // Pick up abstract subprogram DIE.
+  if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
+    SPDie = new DIE(dwarf::DW_TAG_subprogram);
+    addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin,
+                dwarf::DW_FORM_ref4, AbsSPDIE);
+    SPCU->addDie(SPDie);
+  }
+
   addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
            Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber()));
   addLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
@@ -1695,8 +1704,12 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
     ScopeDIE = constructInlinedScopeDIE(Scope);
   else if (DS.isSubprogram()) {
     ProcessedSPNodes.insert(DS);
-    if (Scope->isAbstractScope())
+    if (Scope->isAbstractScope()) {
       ScopeDIE = getCompileUnit(DS)->getDIE(DS);
+      // Note down abstract DIE.
+      if (ScopeDIE)
+        AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
+    }
     else
       ScopeDIE = updateSubprogramScopeDIE(DS);
   }

@@ -156,6 +156,9 @@ class DwarfDebug {
   /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
   DenseMap<const MDNode *, DbgScope *> AbstractScopes;
 
+  /// AbstractSPDies - Collection of abstract subprogram DIEs.
+  DenseMap<const MDNode *, DIE *> AbstractSPDies;
+
   /// AbstractScopesList - Tracks abstract scopes constructed while processing
   /// a function. This list is cleared during endFunction().
   SmallVector<DbgScope *, 4>AbstractScopesList;
