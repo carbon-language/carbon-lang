@@ -3189,8 +3189,8 @@ PCHReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
       // No associated value, and there can't be a prefix.
       break;
     }
-    Prev = NNS;
     }
+    Prev = NNS;
   }
   return NNS;
 }
