@@ -181,15 +181,8 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
       if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
         return MD->getSourceRange();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        // FIXME: We would like to always get the function body, even
-        // when it needs to be de-serialized, but getting the
-        // ASTContext here requires significant changes.
-        if (Stmt *Body = FD->getBody()) {
-          if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
-            return CS->getSourceRange();
-          else
-            return cast<CXXTryStmt>(Body)->getSourceRange();
-        }
+        if (Stmt *Body = FD->getBody())
+          return Body->getSourceRange();
       }
       else {
         SourceLocation L = D->getLocation();
