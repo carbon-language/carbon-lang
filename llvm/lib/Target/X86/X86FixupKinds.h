@@ -17,6 +17,7 @@ namespace X86 {
 enum Fixups {
   reloc_pcrel_4byte = FirstTargetFixupKind,  // 32-bit pcrel, e.g. a branch.
   reloc_pcrel_1byte,                         // 8-bit pcrel, e.g. branch_1
+  reloc_pcrel_2byte,                         // 16-bit pcrel, e.g. callw
   reloc_riprel_4byte,                        // 32-bit rip-relative
   reloc_riprel_4byte_movq_load               // 32-bit rip-relative in movq
 };

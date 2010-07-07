@@ -38,13 +38,14 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 4;
+    return 5;
   }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
       { "reloc_pcrel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_pcrel_1byte", 0, 1 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_pcrel_2byte", 0, 2 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_riprel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
       { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel }
     };
@@ -170,8 +171,8 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
   switch (Size) {
   default: assert(0 && "Unknown immediate size");
   case 1: return isPCRel ? MCFixupKind(X86::reloc_pcrel_1byte) : FK_Data_1;
+  case 2: return isPCRel ? MCFixupKind(X86::reloc_pcrel_2byte) : FK_Data_2;
   case 4: return isPCRel ? MCFixupKind(X86::reloc_pcrel_4byte) : FK_Data_4;
-  case 2: assert(!isPCRel); return FK_Data_2;
   case 8: assert(!isPCRel); return FK_Data_8;
   }
 }
@@ -199,6 +200,8 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
       FixupKind == MCFixupKind(X86::reloc_riprel_4byte) ||
       FixupKind == MCFixupKind(X86::reloc_riprel_4byte_movq_load))
     ImmOffset -= 4;
+  if (FixupKind == MCFixupKind(X86::reloc_pcrel_2byte))
+    ImmOffset -= 4;// FIXME: This should be 2, but 'as' produces an offset of 4.
   if (FixupKind == MCFixupKind(X86::reloc_pcrel_1byte))
     ImmOffset -= 1;
   

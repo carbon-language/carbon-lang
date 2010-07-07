@@ -259,6 +259,7 @@ def lea32mem : Operand<i32> {
 let ParserMatchClass = X86AbsMemAsmOperand,
     PrintMethod = "print_pcrel_imm" in {
 def i32imm_pcrel : Operand<i32>;
+def i16imm_pcrel : Operand<i16>;
 
 def offset8 : Operand<i64>;
 def offset16 : Operand<i64>;
@@ -709,6 +710,12 @@ let isCall = 1 in
                         "lcall{w}\t{*}$dst", []>, OpSize;
     def FARCALL32m  : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
                         "lcall{l}\t{*}$dst", []>;
+
+    // callw for 16 bit code for the assembler.
+    let isAsmParserOnly = 1 in
+      def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
+                       (outs), (ins i16imm_pcrel:$dst, variable_ops),
+                       "callw\t$dst", []>, OpSize;
   }
 
 // Constructing a stack frame.

@@ -360,9 +360,10 @@ namespace X86II {
     Imm8       = 1 << ImmShift,
     Imm8PCRel  = 2 << ImmShift,
     Imm16      = 3 << ImmShift,
-    Imm32      = 4 << ImmShift,
-    Imm32PCRel = 5 << ImmShift,
-    Imm64      = 6 << ImmShift,
+    Imm16PCRel = 4 << ImmShift,
+    Imm32      = 5 << ImmShift,
+    Imm32PCRel = 6 << ImmShift,
+    Imm64      = 7 << ImmShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
@@ -460,7 +461,8 @@ namespace X86II {
     default: assert(0 && "Unknown immediate size");
     case X86II::Imm8:
     case X86II::Imm8PCRel:  return 1;
-    case X86II::Imm16:      return 2;
+    case X86II::Imm16:
+    case X86II::Imm16PCRel: return 2;
     case X86II::Imm32:
     case X86II::Imm32PCRel: return 4;
     case X86II::Imm64:      return 8;
@@ -473,6 +475,7 @@ namespace X86II {
     switch (TSFlags & X86II::ImmMask) {
       default: assert(0 && "Unknown immediate size");
       case X86II::Imm8PCRel:
+      case X86II::Imm16PCRel:
       case X86II::Imm32PCRel:
         return true;
       case X86II::Imm8:

@@ -347,6 +347,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   LEA("lea64mem");
   
   // all I
+  PCR("i16imm_pcrel");
   PCR("i32imm_pcrel");
   PCR("i64i32imm_pcrel");
   PCR("brtarget8");
