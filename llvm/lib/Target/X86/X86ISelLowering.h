@@ -579,16 +579,7 @@ namespace llvm {
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
-    virtual FastISel *
-    createFastISel(MachineFunction &mf,
-                   DenseMap<const Value *, unsigned> &,
-                   DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                   DenseMap<const AllocaInst *, int> &,
-                   std::vector<std::pair<MachineInstr*, unsigned> > &
-#ifndef NDEBUG
-                   , SmallSet<const Instruction *, 8> &
-#endif
-                   ) const;
+    virtual FastISel *createFastISel(FunctionLoweringInfo &funcInfo) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
@@ -821,15 +812,7 @@ namespace llvm {
   };
 
   namespace X86 {
-    FastISel *createFastISel(MachineFunction &mf,
-                           DenseMap<const Value *, unsigned> &,
-                           DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                           DenseMap<const AllocaInst *, int> &,
-                           std::vector<std::pair<MachineInstr*, unsigned> > &
-#ifndef NDEBUG
-                           , SmallSet<const Instruction*, 8> &
-#endif
-                           );
+    FastISel *createFastISel(FunctionLoweringInfo &funcInfo);
   }
 }
 

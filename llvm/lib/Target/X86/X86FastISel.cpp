@@ -24,6 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/CodeGen/FastISel.h"
+#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -52,20 +53,7 @@ class X86FastISel : public FastISel {
   bool X86ScalarSSEf32;
 
 public:
-  explicit X86FastISel(MachineFunction &mf,
-                       DenseMap<const Value *, unsigned> &vm,
-                       DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                       DenseMap<const AllocaInst *, int> &am,
-                       std::vector<std::pair<MachineInstr*, unsigned> > &pn
-#ifndef NDEBUG
-                       , SmallSet<const Instruction *, 8> &cil
-#endif
-                       )
-    : FastISel(mf, vm, bm, am, pn
-#ifndef NDEBUG
-               , cil
-#endif
-               ) {
+  explicit X86FastISel(FunctionLoweringInfo &funcInfo) : FastISel(funcInfo) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
     X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -345,7 +333,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     // Don't walk into other basic blocks; it's possible we haven't
     // visited them yet, so the instructions may not yet be assigned
     // virtual registers.
-    if (MBBMap[I->getParent()] != MBB)
+    if (FuncInfo.MBBMap[I->getParent()] != MBB)
       return false;
 
     Opcode = I->getOpcode();
@@ -382,8 +370,9 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
   case Instruction::Alloca: {
     // Do static allocas.
     const AllocaInst *A = cast<AllocaInst>(V);
-    DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
-    if (SI != StaticAllocaMap.end()) {
+    DenseMap<const AllocaInst*, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(A);
+    if (SI != FuncInfo.StaticAllocaMap.end()) {
       AM.BaseType = X86AddressMode::FrameIndexBase;
       AM.Base.FrameIndex = SI->second;
       return true;
@@ -498,7 +487,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     // If this reference is relative to the pic base, set it now.
     if (isGlobalRelativeToPICBase(GVFlags)) {
       // FIXME: How do we know Base.Reg is free??
-      AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
+      AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
     }
     
     // Unless the ABI requires an extra load, return a direct reference to
@@ -844,8 +833,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   // Unconditional branches are selected by tablegen-generated code.
   // Handle a conditional branch.
   const BranchInst *BI = cast<BranchInst>(I);
-  MachineBasicBlock *TrueMBB = MBBMap[BI->getSuccessor(0)];
-  MachineBasicBlock *FalseMBB = MBBMap[BI->getSuccessor(1)];
+  MachineBasicBlock *TrueMBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
+  MachineBasicBlock *FalseMBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
   // Fold the common case of a conditional branch with a comparison.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
@@ -1511,7 +1500,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // GOT pointer.  
   if (Subtarget->isPICStyleGOT()) {
     TargetRegisterClass *RC = X86::GR32RegisterClass;
-    unsigned Base = getInstrInfo()->getGlobalBaseReg(&MF);
+    unsigned Base = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC,
                                     DL);
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
@@ -1758,10 +1747,10 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   unsigned char OpFlag = 0;
   if (Subtarget->isPICStyleStubPIC()) { // Not dynamic-no-pic
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
-    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+    PICBase = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
   } else if (Subtarget->isPICStyleGOT()) {
     OpFlag = X86II::MO_GOTOFF;
-    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+    PICBase = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
   } else if (Subtarget->isPICStyleRIPRel() &&
              TM.getCodeModel() == CodeModel::Small) {
     PICBase = X86::RIP;
@@ -1784,7 +1773,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
   // various places, but TargetMaterializeAlloca also needs a check
   // in order to avoid recursion between getRegForValue,
   // X86SelectAddrss, and TargetMaterializeAlloca.
-  if (!StaticAllocaMap.count(C))
+  if (!FuncInfo.StaticAllocaMap.count(C))
     return 0;
 
   X86AddressMode AM;
@@ -1798,19 +1787,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
 }
 
 namespace llvm {
-  llvm::FastISel *X86::createFastISel(MachineFunction &mf,
-                        DenseMap<const Value *, unsigned> &vm,
-                        DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                        DenseMap<const AllocaInst *, int> &am,
-                        std::vector<std::pair<MachineInstr*, unsigned> > &pn
-#ifndef NDEBUG
-                        , SmallSet<const Instruction *, 8> &cil
-#endif
-                        ) {
-    return new X86FastISel(mf, vm, bm, am, pn
-#ifndef NDEBUG
-                           , cil
-#endif
-                           );
+  llvm::FastISel *X86::createFastISel(FunctionLoweringInfo &funcInfo) {
+    return new X86FastISel(funcInfo);
   }
 }

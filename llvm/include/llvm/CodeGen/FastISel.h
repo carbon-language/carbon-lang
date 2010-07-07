@@ -24,6 +24,7 @@ namespace llvm {
 
 class AllocaInst;
 class ConstantFP;
+class FunctionLoweringInfo;
 class Instruction;
 class MachineBasicBlock;
 class MachineConstantPool;
@@ -45,14 +46,7 @@ class FastISel {
 protected:
   MachineBasicBlock *MBB;
   DenseMap<const Value *, unsigned> LocalValueMap;
-  DenseMap<const Value *, unsigned> &ValueMap;
-  DenseMap<const BasicBlock *, MachineBasicBlock *> &MBBMap;
-  DenseMap<const AllocaInst *, int> &StaticAllocaMap;
-  std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate;
-#ifndef NDEBUG
-  SmallSet<const Instruction *, 8> &CatchInfoLost;
-#endif
-  MachineFunction &MF;
+  FunctionLoweringInfo &FuncInfo;
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;
@@ -113,15 +107,7 @@ public:
   virtual ~FastISel();
 
 protected:
-  FastISel(MachineFunction &mf,
-           DenseMap<const Value *, unsigned> &vm,
-           DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-           DenseMap<const AllocaInst *, int> &am,
-           std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate
-#ifndef NDEBUG
-           , SmallSet<const Instruction *, 8> &cil
-#endif
-           );
+  explicit FastISel(FunctionLoweringInfo &funcInfo);
 
   /// TargetSelectInstruction - This method is called by target-independent
   /// code when the normal FastISel process fails to select an instruction.

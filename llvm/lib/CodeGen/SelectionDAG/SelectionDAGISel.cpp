@@ -671,13 +671,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (EnableFastISel)
-    FastIS = TLI.createFastISel(*MF, FuncInfo->ValueMap, FuncInfo->MBBMap,
-                                FuncInfo->StaticAllocaMap,
-                                FuncInfo->PHINodesToUpdate
-#ifndef NDEBUG
-                                , FuncInfo->CatchInfoLost
-#endif
-                                );
+    FastIS = TLI.createFastISel(*FuncInfo);
 
   // Iterate over all basic blocks in the function.
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {

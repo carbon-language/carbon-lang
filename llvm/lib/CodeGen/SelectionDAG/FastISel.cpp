@@ -100,8 +100,8 @@ unsigned FastISel::getRegForValue(const Value *V) {
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
   // def-dominates-use requirement enforced.
-  DenseMap<const Value *, unsigned>::iterator I = ValueMap.find(V);
-  if (I != ValueMap.end())
+  DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(V);
+  if (I != FuncInfo.ValueMap.end())
     return I->second;
   unsigned Reg = LocalValueMap[V];
   if (Reg != 0)
@@ -112,7 +112,7 @@ unsigned FastISel::getRegForValue(const Value *V) {
   if (IsBottomUp) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     if (isa<Instruction>(V))
-      ValueMap[V] = Reg;
+      FuncInfo.ValueMap[V] = Reg;
     else
       LocalValueMap[V] = Reg;
     return Reg;
@@ -189,8 +189,8 @@ unsigned FastISel::lookUpRegForValue(const Value *V) {
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
   // def-dominates-use requirement enforced.
-  DenseMap<const Value *, unsigned>::iterator I = ValueMap.find(V);
-  if (I != ValueMap.end())
+  DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(V);
+  if (I != FuncInfo.ValueMap.end())
     return I->second;
   return LocalValueMap[V];
 }
@@ -207,7 +207,7 @@ unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
     return Reg;
   }
   
-  unsigned &AssignedReg = ValueMap[I];
+  unsigned &AssignedReg = FuncInfo.ValueMap[I];
   if (AssignedReg == 0)
     AssignedReg = Reg;
   else if (Reg != AssignedReg) {
@@ -400,7 +400,7 @@ bool FastISel::SelectCall(const User *I) {
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     if (!DIVariable(DI->getVariable()).Verify() ||
-        !MF.getMMI().hasDebugInfo())
+        !FuncInfo.MF->getMMI().hasDebugInfo())
       return true;
 
     const Value *Address = DI->getAddress();
@@ -414,11 +414,12 @@ bool FastISel::SelectCall(const User *I) {
     // those are handled in SelectionDAGBuilder.
     if (AI) {
       DenseMap<const AllocaInst*, int>::iterator SI =
-        StaticAllocaMap.find(AI);
-      if (SI == StaticAllocaMap.end()) break; // VLAs.
+        FuncInfo.StaticAllocaMap.find(AI);
+      if (SI == FuncInfo.StaticAllocaMap.end()) break; // VLAs.
       int FI = SI->second;
       if (!DI->getDebugLoc().isUnknown())
-        MF.getMMI().setVariableDbgInfo(DI->getVariable(), FI, DI->getDebugLoc());
+        FuncInfo.MF->getMMI().setVariableDbgInfo(DI->getVariable(),
+                                                 FI, DI->getDebugLoc());
     } else
       // Building the map above is target independent.  Generating DBG_VALUE
       // inline is target dependent; do this now.
@@ -478,10 +479,10 @@ bool FastISel::SelectCall(const User *I) {
     default: break;
     case TargetLowering::Expand: {
       if (MBB->isLandingPad())
-        AddCatchInfo(*cast<CallInst>(I), &MF.getMMI(), MBB);
+        AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), MBB);
       else {
 #ifndef NDEBUG
-        CatchInfoLost.insert(cast<CallInst>(I));
+        FuncInfo.CatchInfoLost.insert(cast<CallInst>(I));
 #endif
         // FIXME: Mark exception selector register as live in.  Hack for PR1508.
         unsigned Reg = TLI.getExceptionSelectorRegister();
@@ -790,7 +791,7 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 
     if (BI->isUnconditional()) {
       const BasicBlock *LLVMSucc = BI->getSuccessor(0);
-      MachineBasicBlock *MSucc = MBBMap[LLVMSucc];
+      MachineBasicBlock *MSucc = FuncInfo.MBBMap[LLVMSucc];
       FastEmitBranch(MSucc, BI->getDebugLoc());
       return true;
     }
@@ -806,7 +807,7 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 
   case Instruction::Alloca:
     // FunctionLowering has the static-sized case covered.
-    if (StaticAllocaMap.count(cast<AllocaInst>(I)))
+    if (FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(I)))
       return true;
 
     // Dynamic-sized alloca is not handled yet.
@@ -852,28 +853,13 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
   }
 }
 
-FastISel::FastISel(MachineFunction &mf,
-                   DenseMap<const Value *, unsigned> &vm,
-                   DenseMap<const BasicBlock *, MachineBasicBlock *> &bm,
-                   DenseMap<const AllocaInst *, int> &am,
-                   std::vector<std::pair<MachineInstr*, unsigned> > &pn
-#ifndef NDEBUG
-                   , SmallSet<const Instruction *, 8> &cil
-#endif
-                   )
+FastISel::FastISel(FunctionLoweringInfo &funcInfo)
   : MBB(0),
-    ValueMap(vm),
-    MBBMap(bm),
-    StaticAllocaMap(am),
-    PHINodesToUpdate(pn),
-#ifndef NDEBUG
-    CatchInfoLost(cil),
-#endif
-    MF(mf),
-    MRI(MF.getRegInfo()),
-    MFI(*MF.getFrameInfo()),
-    MCP(*MF.getConstantPool()),
-    TM(MF.getTarget()),
+    FuncInfo(funcInfo),
+    MRI(FuncInfo.MF->getRegInfo()),
+    MFI(*FuncInfo.MF->getFrameInfo()),
+    MCP(*FuncInfo.MF->getConstantPool()),
+    TM(FuncInfo.MF->getTarget()),
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()),
@@ -1183,14 +1169,14 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
   const TerminatorInst *TI = LLVMBB->getTerminator();
 
   SmallPtrSet<MachineBasicBlock *, 4> SuccsHandled;
-  unsigned OrigNumPHINodesToUpdate = PHINodesToUpdate.size();
+  unsigned OrigNumPHINodesToUpdate = FuncInfo.PHINodesToUpdate.size();
 
   // Check successor nodes' PHI nodes that expect a constant to be available
   // from this block.
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     const BasicBlock *SuccBB = TI->getSuccessor(succ);
     if (!isa<PHINode>(SuccBB->begin())) continue;
-    MachineBasicBlock *SuccMBB = MBBMap[SuccBB];
+    MachineBasicBlock *SuccMBB = FuncInfo.MBBMap[SuccBB];
 
     // If this terminator has multiple identical successors (common for
     // switches), only handle each succ once.
@@ -1219,7 +1205,7 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
         if (VT == MVT::i1)
           VT = TLI.getTypeToTransformTo(LLVMBB->getContext(), VT);
         else {
-          PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+          FuncInfo.PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
           return false;
         }
       }
@@ -1234,10 +1220,10 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
 
       unsigned Reg = getRegForValue(PHIOp);
       if (Reg == 0) {
-        PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
+        FuncInfo.PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
         return false;
       }
-      PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
+      FuncInfo.PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg));
       DL = DebugLoc();
     }
   }

@@ -43,6 +43,7 @@ namespace llvm {
   class CallInst;
   class Function;
   class FastISel;
+  class FunctionLoweringInfo;
   class MachineBasicBlock;
   class MachineFunction;
   class MachineFrameInfo;
@@ -1223,16 +1224,7 @@ public:
 
   /// createFastISel - This method returns a target specific FastISel object,
   /// or null if the target does not support "fast" ISel.
-  virtual FastISel *
-  createFastISel(MachineFunction &,
-                 DenseMap<const Value *, unsigned> &,
-                 DenseMap<const BasicBlock *, MachineBasicBlock *> &,
-                 DenseMap<const AllocaInst *, int> &,
-                 std::vector<std::pair<MachineInstr*, unsigned> > &
-#ifndef NDEBUG
-                 , SmallSet<const Instruction *, 8> &CatchInfoLost
-#endif
-                 ) const {
+  virtual FastISel *createFastISel(FunctionLoweringInfo &funcInfo) const {
     return 0;
   }
 
