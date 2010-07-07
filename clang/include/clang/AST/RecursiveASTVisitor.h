@@ -130,32 +130,28 @@ public:
   Derived &getDerived() { return *static_cast<Derived*>(this); }
 
   /// \brief Recursively visit a statement or expression, by
-  /// dispatching to Visit*() based on the argument's dynamic type.
-  /// This is NOT meant to be overridden by a subclass.
+  /// dispatching to Traverse*() based on the argument's dynamic type.
   ///
   /// \returns false if the visitation was terminated early, true
   /// otherwise (including when the argument is NULL).
   bool TraverseStmt(Stmt *S);
 
   /// \brief Recursively visit a type, by dispatching to
-  /// Visit*Type() based on the argument's getTypeClass() property.
-  /// This is NOT meant to be overridden by a subclass.
+  /// Traverse*Type() based on the argument's getTypeClass() property.
   ///
   /// \returns false if the visitation was terminated early, true
   /// otherwise (including when the argument is a Null type).
   bool TraverseType(QualType T);
 
   /// \brief Recursively visit a type with location, by dispatching to
-  /// Visit*TypeLoc() based on the argument type's getTypeClass() property.
-  /// This is NOT meant to be overridden by a subclass.
+  /// Traverse*TypeLoc() based on the argument type's getTypeClass() property.
   ///
   /// \returns false if the visitation was terminated early, true
   /// otherwise (including when the argument is a Null type location).
   bool TraverseTypeLoc(TypeLoc TL);
 
   /// \brief Recursively visit a declaration, by dispatching to
-  /// Visit*Decl() based on the argument's dynamic type.  This is
-  /// NOT meant to be overridden by a subclass.
+  /// Traverse*Decl() based on the argument's dynamic type.
   ///
   /// \returns false if the visitation was terminated early, true
   /// otherwise (including when the argument is NULL).
@@ -306,24 +302,21 @@ public:
 #include "clang/AST/TypeLocNodes.def"
   // The above header #undefs ABSTRACT_TYPELOC and TYPELOC upon exit.
 
-  // Define WalkUpFrom*() and Visit*() for all TypeLoc classes.  The Visit*()
-  // methods call into the equivalent Visit*() method for Type classes.
+  // Define WalkUpFrom*() and empty Visit*() for all TypeLoc classes.
   bool WalkUpFromTypeLoc(TypeLoc TL) { return getDerived().VisitTypeLoc(TL); }
-  bool VisitTypeLoc(TypeLoc TL) {
-    return getDerived().VisitType(TL.getTypePtr());
-  }
+  bool VisitTypeLoc(TypeLoc TL) { return true; }
+
+  // QualifiedTypeLoc and UnqualTypeLoc are not declared in
+  // TypeNodes.def and thus need to be handled specially.
   bool WalkUpFromQualifiedTypeLoc(QualifiedTypeLoc TL) {
     return getDerived().VisitUnqualTypeLoc(TL.getUnqualifiedLoc());
   }
-  bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
-    return getDerived().VisitType(TL.getTypePtr());
-  }
+  bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL) { return true; }
   bool WalkUpFromUnqualTypeLoc(UnqualTypeLoc TL) {
     return getDerived().VisitUnqualTypeLoc(TL.getUnqualifiedLoc());
   }
-  bool VisitUnqualTypeLoc(UnqualTypeLoc TL) {
-    return getDerived().VisitType(TL.getTypePtr());
-  }
+  bool VisitUnqualTypeLoc(UnqualTypeLoc TL) { return true; }
+
   // Note that BASE includes trailing 'Type' which CLASS doesn't.
 #define TYPE(CLASS, BASE)                                       \
   bool WalkUpFrom##CLASS##TypeLoc(CLASS##TypeLoc TL) {          \
@@ -331,9 +324,7 @@ public:
     TRY_TO(Visit##CLASS##TypeLoc(TL));                          \
     return true;                                                \
   }                                                             \
-  bool Visit##CLASS##TypeLoc(CLASS##TypeLoc TL) {               \
-    return getDerived().Visit##CLASS##Type(TL.getTypePtr());    \
-  }
+  bool Visit##CLASS##TypeLoc(CLASS##TypeLoc TL) { return true; }
 #include "clang/AST/TypeNodes.def"
 
   // ---- Methods on Decls ----
@@ -740,66 +731,71 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
 // ----------------- TypeLoc traversal -----------------
 
 // This macro makes available a variable TL, the passed-in TypeLoc.
-#define DEF_TRAVERSE_TYPELOC(TYPELOC, CODE)                            \
-  template<typename Derived>                                           \
-  bool RecursiveASTVisitor<Derived>::Traverse##TYPELOC (TYPELOC TL) {  \
-    TRY_TO(WalkUpFrom##TYPELOC (TL));                                  \
-    { CODE; }                                                          \
-    return true;                                                       \
+// It calls WalkUpFrom* for the Type in the given TypeLoc, in addition
+// to WalkUpFrom* for the TypeLoc itself, such that existing clients
+// that override the WalkUpFrom*Type() and/or Visit*Type() methods
+// continue to work.
+#define DEF_TRAVERSE_TYPELOC(TYPE, CODE)                                \
+  template<typename Derived>                                            \
+  bool RecursiveASTVisitor<Derived>::Traverse##TYPE##Loc(TYPE##Loc TL) { \
+    TRY_TO(WalkUpFrom##TYPE(TL.getTypePtr()));                          \
+    TRY_TO(WalkUpFrom##TYPE##Loc(TL));                                  \
+    { CODE; }                                                           \
+    return true;                                                        \
   }
 
-template<typename Derived>                                             \
+template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseQualifiedTypeLoc(
-                                                         QualifiedTypeLoc TL) {
+    QualifiedTypeLoc TL) {
   // Move this over to the 'main' typeloc tree.
-  return TraverseTypeLoc(TL.getUnqualifiedLoc());
+  return getDerived().TraverseTypeLoc(TL.getUnqualifiedLoc());
 }
 
-DEF_TRAVERSE_TYPELOC(BuiltinTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(BuiltinType, { })
 
 // FIXME: ComplexTypeLoc is unfinished
-DEF_TRAVERSE_TYPELOC(ComplexTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ComplexType, {
     TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
   })
 
-DEF_TRAVERSE_TYPELOC(PointerTypeLoc, {
+DEF_TRAVERSE_TYPELOC(PointerType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(BlockPointerTypeLoc, {
+DEF_TRAVERSE_TYPELOC(BlockPointerType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(LValueReferenceTypeLoc, {
+DEF_TRAVERSE_TYPELOC(LValueReferenceType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(RValueReferenceTypeLoc, {
+DEF_TRAVERSE_TYPELOC(RValueReferenceType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
 // FIXME: location of base class?
 // We traverse this in the type case as well, but how is it not reached through
 // the pointee type?
-DEF_TRAVERSE_TYPELOC(MemberPointerTypeLoc, {
+DEF_TRAVERSE_TYPELOC(MemberPointerType, {
     TRY_TO(TraverseType(QualType(TL.getTypePtr()->getClass(), 0)));
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(ConstantArrayTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ConstantArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(IncompleteArrayTypeLoc, {
+DEF_TRAVERSE_TYPELOC(IncompleteArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(VariableArrayTypeLoc, {
+DEF_TRAVERSE_TYPELOC(VariableArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
     TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
   })
 
-DEF_TRAVERSE_TYPELOC(DependentSizedArrayTypeLoc, {
+DEF_TRAVERSE_TYPELOC(DependentSizedArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
     if (TL.getTypePtr()->getSizeExpr())
       TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
@@ -807,30 +803,30 @@ DEF_TRAVERSE_TYPELOC(DependentSizedArrayTypeLoc, {
 
 // FIXME: order? why not size expr first?
 // FIXME: base VectorTypeLoc is unfinished
-DEF_TRAVERSE_TYPELOC(DependentSizedExtVectorTypeLoc, {
+DEF_TRAVERSE_TYPELOC(DependentSizedExtVectorType, {
     if (TL.getTypePtr()->getSizeExpr())
       TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
     TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
   })
 
 // FIXME: VectorTypeLoc is unfinished
-DEF_TRAVERSE_TYPELOC(VectorTypeLoc, {
+DEF_TRAVERSE_TYPELOC(VectorType, {
     TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
   })
 
 // FIXME: size and attributes
 // FIXME: base VectorTypeLoc is unfinished
-DEF_TRAVERSE_TYPELOC(ExtVectorTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ExtVectorType, {
     TRY_TO(TraverseType(TL.getTypePtr()->getElementType()));
   })
 
-DEF_TRAVERSE_TYPELOC(FunctionNoProtoTypeLoc, {
+DEF_TRAVERSE_TYPELOC(FunctionNoProtoType, {
     TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
   })
 
 // FIXME: location of arguments, exception specifications (attributes?)
 // Note that we have the ParmVarDecl's here. Do we want to use them?
-DEF_TRAVERSE_TYPELOC(FunctionProtoTypeLoc, {
+DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
     TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
 
     FunctionProtoType *T = TL.getTypePtr();
@@ -851,39 +847,39 @@ DEF_TRAVERSE_TYPELOC(FunctionProtoTypeLoc, {
     }
   })
 
-DEF_TRAVERSE_TYPELOC(UnresolvedUsingTypeLoc, { })
-DEF_TRAVERSE_TYPELOC(TypedefTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(UnresolvedUsingType, { })
+DEF_TRAVERSE_TYPELOC(TypedefType, { })
 
-DEF_TRAVERSE_TYPELOC(TypeOfExprTypeLoc, {
+DEF_TRAVERSE_TYPELOC(TypeOfExprType, {
     TRY_TO(TraverseStmt(TL.getUnderlyingExpr()));
   })
 
-DEF_TRAVERSE_TYPELOC(TypeOfTypeLoc, {
+DEF_TRAVERSE_TYPELOC(TypeOfType, {
     TRY_TO(TraverseTypeLoc(TL.getUnderlyingTInfo()->getTypeLoc()));
   })
 
 // FIXME: location of underlying expr
-DEF_TRAVERSE_TYPELOC(DecltypeTypeLoc, {
+DEF_TRAVERSE_TYPELOC(DecltypeType, {
     TRY_TO(TraverseStmt(TL.getTypePtr()->getUnderlyingExpr()));
   })
 
-DEF_TRAVERSE_TYPELOC(RecordTypeLoc, { })
-DEF_TRAVERSE_TYPELOC(EnumTypeLoc, { })
-DEF_TRAVERSE_TYPELOC(TemplateTypeParmTypeLoc, { })
-DEF_TRAVERSE_TYPELOC(SubstTemplateTypeParmTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(RecordType, { })
+DEF_TRAVERSE_TYPELOC(EnumType, { })
+DEF_TRAVERSE_TYPELOC(TemplateTypeParmType, { })
+DEF_TRAVERSE_TYPELOC(SubstTemplateTypeParmType, { })
 
 // FIXME: use the loc for the template name?
-DEF_TRAVERSE_TYPELOC(TemplateSpecializationTypeLoc, {
+DEF_TRAVERSE_TYPELOC(TemplateSpecializationType, {
     TRY_TO(TraverseTemplateName(TL.getTypePtr()->getTemplateName()));
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
     }
   })
 
-DEF_TRAVERSE_TYPELOC(InjectedClassNameTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(InjectedClassNameType, { })
 
 // FIXME: use the sourceloc on qualifier?
-DEF_TRAVERSE_TYPELOC(ElaboratedTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ElaboratedType, {
     if (TL.getTypePtr()->getQualifier()) {
       TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
     }
@@ -891,27 +887,27 @@ DEF_TRAVERSE_TYPELOC(ElaboratedTypeLoc, {
   })
 
 // FIXME: use the sourceloc on qualifier?
-DEF_TRAVERSE_TYPELOC(DependentNameTypeLoc, {
+DEF_TRAVERSE_TYPELOC(DependentNameType, {
     TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
   })
 
-DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationTypeLoc, {
+DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationType, {
     TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
     }
   })
 
-DEF_TRAVERSE_TYPELOC(ObjCInterfaceTypeLoc, { })
+DEF_TRAVERSE_TYPELOC(ObjCInterfaceType, { })
 
-DEF_TRAVERSE_TYPELOC(ObjCObjectTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ObjCObjectType, {
     // We have to watch out here because an ObjCInterfaceType's base
     // type is itself.
     if (TL.getTypePtr()->getBaseType().getTypePtr() != TL.getTypePtr())
       TRY_TO(TraverseTypeLoc(TL.getBaseLoc()));
   })
 
-DEF_TRAVERSE_TYPELOC(ObjCObjectPointerTypeLoc, {
+DEF_TRAVERSE_TYPELOC(ObjCObjectPointerType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
