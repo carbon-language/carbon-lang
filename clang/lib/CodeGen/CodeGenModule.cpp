@@ -1085,7 +1085,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     // If this class has a key function, use that to determine the linkage of
     // the vtable.
     const FunctionDecl *Def = 0;
-    if (KeyFunction->getBody(Def))
+    if (KeyFunction->hasBody(Def))
       KeyFunction = cast<CXXMethodDecl>(Def);
     
     switch (KeyFunction->getTemplateSpecializationKind()) {
@@ -1453,7 +1453,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   if (D->hasAttr<DLLExportAttr>()) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // The dllexport attribute is ignored for undefined symbols.
-      if (FD->getBody())
+      if (FD->hasBody())
         GA->setLinkage(llvm::Function::DLLExportLinkage);
     } else {
       GA->setLinkage(llvm::Function::DLLExportLinkage);

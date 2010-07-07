@@ -953,6 +953,17 @@ bool FunctionDecl::isVariadic() const {
   return false;
 }
 
+bool FunctionDecl::hasBody(const FunctionDecl *&Definition) const {
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->Body) {
+      Definition = *I;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
     if (I->Body) {
@@ -1153,11 +1164,11 @@ bool FunctionDecl::isInlined() const {
   }
 
   const FunctionDecl *PatternDecl = getTemplateInstantiationPattern();
-  Stmt *Pattern = 0;
+  bool HasPattern = false;
   if (PatternDecl)
-    Pattern = PatternDecl->getBody(PatternDecl);
+    HasPattern = PatternDecl->hasBody(PatternDecl);
   
-  if (Pattern && PatternDecl)
+  if (HasPattern && PatternDecl)
     return PatternDecl->isInlined();
   
   return false;
@@ -1302,15 +1313,15 @@ bool FunctionDecl::isImplicitlyInstantiable() const {
 
   // Find the actual template from which we will instantiate.
   const FunctionDecl *PatternDecl = getTemplateInstantiationPattern();
-  Stmt *Pattern = 0;
+  bool HasPattern = false;
   if (PatternDecl)
-    Pattern = PatternDecl->getBody(PatternDecl);
+    HasPattern = PatternDecl->hasBody(PatternDecl);
   
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
   //   have the effect of suppressing the implicit instantiation of the entity
   //   to which they refer. 
-  if (!Pattern || !PatternDecl)
+  if (!HasPattern || !PatternDecl) 
     return true;
 
   return PatternDecl->isInlined();
@@ -1514,7 +1525,7 @@ bool FunctionDecl::isOutOfLine() const {
   // class template, check whether that member function was defined out-of-line.
   if (FunctionDecl *FD = getInstantiatedFromMemberFunction()) {
     const FunctionDecl *Definition;
-    if (FD->getBody(Definition))
+    if (FD->hasBody(Definition))
       return Definition->isOutOfLine();
   }
   
@@ -1522,7 +1533,7 @@ bool FunctionDecl::isOutOfLine() const {
   // check whether that function template was defined out-of-line.
   if (FunctionTemplateDecl *FunTmpl = getPrimaryTemplate()) {
     const FunctionDecl *Definition;
-    if (FunTmpl->getTemplatedDecl()->getBody(Definition))
+    if (FunTmpl->getTemplatedDecl()->hasBody(Definition))
       return Definition->isOutOfLine();
   }
   

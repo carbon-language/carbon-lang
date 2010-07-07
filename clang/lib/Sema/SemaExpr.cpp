@@ -3676,7 +3676,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       // Check if we have too few/too many template arguments, based
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
-      if (FDecl->getBody(Def) && NumArgs != Def->param_size()) {
+      if (FDecl->hasBody(Def) && NumArgs != Def->param_size()) {
         const FunctionProtoType *Proto =
             Def->getType()->getAs<FunctionProtoType>();
         if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size())) {

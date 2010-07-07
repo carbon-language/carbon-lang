@@ -6652,7 +6652,7 @@ bool Sema::DefineUsedVTables() {
     if (const CXXMethodDecl *KeyFunction
                              = Context.getKeyFunction(DynamicClasses[I])) {
       const FunctionDecl *Definition = 0;
-      if (KeyFunction->getBody(Definition))
+      if (KeyFunction->hasBody(Definition))
         MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
     }
   }
@@ -6675,7 +6675,7 @@ bool Sema::DefineUsedVTables() {
     // defined in another translation unit, we don't need to emit the
     // vtable even though we're using it.
     const CXXMethodDecl *KeyFunction = Context.getKeyFunction(Class);
-    if (KeyFunction && !KeyFunction->getBody()) {
+    if (KeyFunction && !KeyFunction->hasBody()) {
       switch (KeyFunction->getTemplateSpecializationKind()) {
       case TSK_Undeclared:
       case TSK_ExplicitSpecialization:
@@ -6723,7 +6723,7 @@ bool Sema::DefineUsedVTables() {
     // Optionally warn if we're emitting a weak vtable.
     if (Class->getLinkage() == ExternalLinkage &&
         Class->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
-      if (!KeyFunction || (KeyFunction->getBody() && KeyFunction->isInlined()))
+      if (!KeyFunction || (KeyFunction->hasBody() && KeyFunction->isInlined()))
         Diag(Class->getLocation(), diag::warn_weak_vtable) << Class;
     }
   }

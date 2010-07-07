@@ -301,7 +301,7 @@ public:
 				       const CXXRecordDecl *RD) {
     assert (RD->isDynamicClass() && "Non dynamic classes have no key.");
     const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-    return KeyFunction && !KeyFunction->getBody();
+    return KeyFunction && !KeyFunction->hasBody();
   }
 
   /// needsVTTParameter - Return whether the given global decl needs a VTT

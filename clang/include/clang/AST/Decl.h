@@ -1227,11 +1227,25 @@ public:
     EndRangeLoc = E;
   }
 
+  /// \brief Returns true if the function has a body (definition). The
+  /// function body might be in any of the (re-)declarations of this
+  /// function. The variant that accepts a FunctionDecl pointer will
+  /// set that function declaration to the actual declaration
+  /// containing the body (if there is one).
+  bool hasBody(const FunctionDecl *&Definition) const;
+
+  virtual bool hasBody() const {
+    const FunctionDecl* Definition;
+    return hasBody(Definition);
+  }
+
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
   /// function. The variant that accepts a FunctionDecl pointer will
   /// set that function declaration to the actual declaration
   /// containing the body (if there is one).
+  /// NOTE: For checking if there is a body, use hasBody() instead, to avoid
+  /// unnecessary PCH de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
   virtual Stmt *getBody() const {

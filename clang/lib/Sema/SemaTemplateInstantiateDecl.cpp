@@ -1181,7 +1181,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
         D->isThisDeclarationADefinition()) {
       // Check for a function body.
       const FunctionDecl *Definition = 0;
-      if (Function->getBody(Definition) &&
+      if (Function->hasBody(Definition) &&
           Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
         SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
           << Function->getDeclName();
@@ -1197,7 +1197,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
             ((*R)->getFriendObjectKind() != Decl::FOK_None)) {
           if (const FunctionDecl *RPattern
               = (*R)->getTemplateInstantiationPattern())
-            if (RPattern->getBody(RPattern)) {
+            if (RPattern->hasBody(RPattern)) {
               SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
                 << Function->getDeclName();
               SemaRef.Diag((*R)->getLocation(), diag::note_previous_definition);
@@ -2040,7 +2040,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          FunctionDecl *Function,
                                          bool Recursive,
                                          bool DefinitionRequired) {
-  if (Function->isInvalidDecl() || Function->getBody())
+  if (Function->isInvalidDecl() || Function->hasBody())
     return;
 
   // Never instantiate an explicit specialization.

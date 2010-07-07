@@ -294,7 +294,7 @@ static void ScanCodeDecls(DeclContext *DC, BugReporter &BR) {
 
     Decl *D = *I;
 
-    if (D->getBody())
+    if (D->hasBody())
       CheckStringRefAssignedTemporary(D, BR);
 
     if (CXXRecordDecl *R = dyn_cast<CXXRecordDecl>(D))

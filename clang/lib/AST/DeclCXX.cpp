@@ -743,7 +743,7 @@ bool CXXMethodDecl::hasInlineBody() const {
     CheckFn = this;
   
   const FunctionDecl *fn;
-  return CheckFn->getBody(fn) && !fn->isOutOfLine();
+  return CheckFn->hasBody(fn) && !fn->isOutOfLine();
 }
 
 CXXBaseOrMemberInitializer::

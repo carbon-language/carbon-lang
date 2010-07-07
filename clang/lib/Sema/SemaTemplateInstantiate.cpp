@@ -1442,7 +1442,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
             SuppressNew)
           continue;
         
-        if (Function->getBody())
+        if (Function->hasBody())
           continue;
 
         if (TSK == TSK_ExplicitInstantiationDefinition) {
@@ -1452,7 +1452,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
           //   specialization and is only an explicit instantiation definition 
           //   of members whose definition is visible at the point of 
           //   instantiation.
-          if (!Pattern->getBody())
+          if (!Pattern->hasBody())
             continue;
         
           Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);

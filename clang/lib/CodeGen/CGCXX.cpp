@@ -98,7 +98,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   /// emit.  We can't emit aliases to declarations; that's just not
   /// how aliases work.
   const CXXDestructorDecl *BaseD = UniqueBase->getDestructor();
-  if (!BaseD->isImplicit() && !BaseD->getBody())
+  if (!BaseD->isImplicit() && !BaseD->hasBody())
     return true;
 
   // If the base is at a non-zero offset, give up.

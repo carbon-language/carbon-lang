@@ -488,6 +488,10 @@ public:
   ///  top-level Stmt* of that body.  Otherwise this method returns null.
   virtual Stmt* getBody() const { return 0; }
 
+  /// \brief Returns true if this Decl represents a declaration for a body of
+  /// code, such as a function or method definition.
+  virtual bool hasBody() const { return getBody() != 0; }
+
   /// getCompoundBody - Returns getBody(), dyn_casted to a CompoundStmt.
   CompoundStmt* getCompoundBody() const;
 
