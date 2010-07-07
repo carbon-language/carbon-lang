@@ -97,10 +97,10 @@ lldb_private::Terminate ()
 #endif
 }
 
+extern "C" const double LLDBVersionNumber;
 const char *
 lldb_private::GetVersion ()
 {
-    extern const double LLDBVersionNumber;
     static char g_version_string[32];
     if (g_version_string[0] == '\0')
         ::snprintf (g_version_string, sizeof(g_version_string), "LLDB-%g", LLDBVersionNumber);
