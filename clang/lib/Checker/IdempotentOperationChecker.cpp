@@ -328,10 +328,10 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       case RHSis0:
         msg = "idempotent operation; the right operand is always 0";
         break;
-      case Impossible:
-        break;
       case Possible:
         llvm_unreachable("Operation was never marked with an assumption");
+      case Impossible:
+        llvm_unreachable(0);
       }
 
       // Create the SourceRange Arrays
