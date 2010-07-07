@@ -17,7 +17,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Target/TargetCallingConv.h"
 #include "llvm/CallingConv.h"
 
 namespace llvm {
