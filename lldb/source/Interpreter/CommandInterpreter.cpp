@@ -12,7 +12,6 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-#include "../Commands/CommandObjectAlias.h"
 #include "../Commands/CommandObjectAppend.h"
 #include "../Commands/CommandObjectApropos.h"
 #include "../Commands/CommandObjectArgs.h"
@@ -42,7 +41,6 @@
 #include "../Commands/CommandObjectSyntax.h"
 #include "../Commands/CommandObjectTarget.h"
 #include "../Commands/CommandObjectThread.h"
-#include "../Commands/CommandObjectUnalias.h"
 #include "../Commands/CommandObjectVariable.h"
 
 #include "lldb/Interpreter/Args.h"
