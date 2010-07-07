@@ -763,8 +763,22 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     if ((isa<ConstantPointerNull>(O2) && isKnownNonNull(O1)) ||
         (isa<ConstantPointerNull>(O1) && isKnownNonNull(O2)))
       return NoAlias;
-  }
   
+    // If one pointer is the result of a call/invoke or load and the other is a
+    // non-escaping local object within the same function, then we know the
+    // object couldn't escape to a point where the call could return it.
+    //
+    // Note that if the pointers are in different functions, there are a
+    // variety of complications. A call with a nocapture argument may still
+    // temporary store the nocapture argument's value in a temporary memory
+    // location if that memory location doesn't escape. Or it may pass a
+    // nocapture value to other functions as long as they don't capture it.
+    if (isEscapeSource(O1) && isNonEscapingLocalObject(O2))
+      return NoAlias;
+    if (isEscapeSource(O2) && isNonEscapingLocalObject(O1))
+      return NoAlias;
+  }
+
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
   if (TD)
@@ -772,22 +786,6 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
         (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, *TD)))
       return NoAlias;
   
-  // If one pointer is the result of a call/invoke or load and the other is a
-  // non-escaping local object within the same function, then we know the
-  // object couldn't escape to a point where the call could return it.
-  //
-  // Note that if the pointers are in different functions, there are a
-  // variety of complications. A call with a nocapture argument may still
-  // temporary store the nocapture argument's value in a temporary memory
-  // location if that memory location doesn't escape. Or it may pass a
-  // nocapture value to other functions as long as they don't capture it.
-  if (O1 != O2) {
-    if (isEscapeSource(O1) && isNonEscapingLocalObject(O2))
-      return NoAlias;
-    if (isEscapeSource(O2) && isNonEscapingLocalObject(O1))
-      return NoAlias;
-  }
-
   // FIXME: This isn't aggressively handling alias(GEP, PHI) for example: if the
   // GEP can't simplify, we don't even look at the PHI cases.
   if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
