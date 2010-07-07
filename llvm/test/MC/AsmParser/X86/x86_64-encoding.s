@@ -2166,3 +2166,23 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x99,0x22,0x10,0x07]
           vpinsrq  $7, (%rax), %xmm12, %xmm10
 
+// CHECK: vinsertps  $7, %xmm12, %xmm10, %xmm11
+// CHECK: encoding: [0xc4,0x43,0x29,0x21,0xdc,0x07]
+          vinsertps  $7, %xmm12, %xmm10, %xmm11
+
+// CHECK: vinsertps  $7, (%rax), %xmm10, %xmm11
+// CHECK: encoding: [0xc4,0x63,0x29,0x21,0x18,0x07]
+          vinsertps  $7, (%rax), %xmm10, %xmm11
+
+// CHECK: vptest  %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x42,0x79,0x17,0xd4]
+          vptest  %xmm12, %xmm10
+
+// CHECK: vptest  (%rax), %xmm12
+// CHECK: encoding: [0xc4,0x62,0x79,0x17,0x20]
+          vptest  (%rax), %xmm12
+
+// CHECK: vmovntdqa  (%rax), %xmm12
+// CHECK: encoding: [0xc4,0x62,0x79,0x2a,0x20]
+          vmovntdqa  (%rax), %xmm12
+

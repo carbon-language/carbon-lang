@@ -12102,3 +12102,23 @@
 // CHECK: encoding: [0xc4,0xe3,0x69,0x22,0x28,0x07]
           vpinsrd  $7, (%eax), %xmm2, %xmm5
 
+// CHECK: vinsertps  $7, %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x21,0xca,0x07]
+          vinsertps  $7, %xmm2, %xmm5, %xmm1
+
+// CHECK: vinsertps  $7, (%eax), %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe3,0x51,0x21,0x08,0x07]
+          vinsertps  $7, (%eax), %xmm5, %xmm1
+
+// CHECK: vptest  %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe2,0x79,0x17,0xea]
+          vptest  %xmm2, %xmm5
+
+// CHECK: vptest  (%eax), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0x79,0x17,0x10]
+          vptest  (%eax), %xmm2
+
+// CHECK: vmovntdqa  (%eax), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0x79,0x2a,0x10]
+          vmovntdqa  (%eax), %xmm2
+

@@ -4602,33 +4602,49 @@ let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
 // are optimized inserts that won't zero arbitrary elements in the destination
 // vector. The next one matches the intrinsic and could zero arbitrary elements
 // in the target vector.
-let Constraints = "$src1 = $dst" in {
-  multiclass SS41I_insertf32<bits<8> opc, string OpcodeStr> {
-    def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))]>,
+multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1> {
+  def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))]>,
       OpSize;
-    def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (X86insrtps VR128:$src1,
-                                (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
-                                 imm:$src3))]>, OpSize;
-  }
+  def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
+      (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (X86insrtps VR128:$src1,
+                   (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
+                    imm:$src3))]>, OpSize;
 }
 
-defm INSERTPS    : SS41I_insertf32<0x21, "insertps">;
+let Constraints = "$src1 = $dst" in
+  defm INSERTPS : SS41I_insertf32<0x21, "insertps">;
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VINSERTPS : SS41I_insertf32<0x21, "vinsertps", 0>, VEX_4V;
 
 def : Pat<(int_x86_sse41_insertps VR128:$src1, VR128:$src2, imm:$src3),
           (INSERTPSrr VR128:$src1, VR128:$src2, imm:$src3)>;
 
 // ptest instruction we'll lower to this in X86ISelLowering primarily from
 // the intel intrinsic that corresponds to this.
+let Defs = [EFLAGS], isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in {
+def VPTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
+                    "vptest\t{$src2, $src1|$src1, $src2}",
+                    [(set EFLAGS, (X86ptest VR128:$src1, VR128:$src2))]>,
+              OpSize, VEX;
+def VPTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
+                    "vptest\t{$src2, $src1|$src1, $src2}",
+                    [(set EFLAGS, (X86ptest VR128:$src1, (load addr:$src2)))]>,
+              OpSize, VEX;
+}
+
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
                     "ptest \t{$src2, $src1|$src1, $src2}",
@@ -4640,6 +4656,11 @@ def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
               OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+def VMOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                       "vmovntdqa\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>,
+                       OpSize, VEX;
 def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movntdqa\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>,
