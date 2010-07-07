@@ -57,6 +57,17 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+/// startNewBlock - Set the current block to which generated machine
+/// instructions will be appended, and clear the local CSE map.
+///
+void FastISel::startNewBlock() {
+  LocalValueMap.clear();
+
+  // Start out as end(), meaining no local-value instructions have
+  // been emitted.
+  LastLocalValue = FuncInfo.MBB->end();
+}
+
 bool FastISel::hasTrivialKill(const Value *V) const {
   // Don't consider constants or arguments to have trivial kills.
   const Instruction *I = dyn_cast<Instruction>(V);
@@ -109,12 +120,9 @@ unsigned FastISel::getRegForValue(const Value *V) {
 
   // In bottom-up mode, just create the virtual register which will be used
   // to hold the value. It will be materialized later.
-  if (IsBottomUp) {
+  if (isa<Instruction>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
-    if (isa<Instruction>(V))
-      FuncInfo.ValueMap[V] = Reg;
-    else
-      LocalValueMap[V] = Reg;
+    FuncInfo.ValueMap[V] = Reg;
     return Reg;
   }
 
@@ -180,8 +188,10 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
   
   // Don't cache constant materializations in the general ValueMap.
   // To do so would require tracking what uses they dominate.
-  if (Reg != 0)
+  if (Reg != 0) {
     LocalValueMap[V] = Reg;
+    LastLocalValue = MRI.getVRegDef(Reg);
+  }
   return Reg;
 }
 
@@ -210,12 +220,20 @@ unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
   
   unsigned &AssignedReg = FuncInfo.ValueMap[I];
   if (AssignedReg == 0)
+    // Use the new register.
     AssignedReg = Reg;
   else if (Reg != AssignedReg) {
-    const TargetRegisterClass *RegClass = MRI.getRegClass(Reg);
-    TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, AssignedReg,
-                     Reg, RegClass, RegClass, DL);
+    // We already have a register for this value. Replace uses of
+    // the existing register with uses of the new one.
+    MRI.replaceRegWith(AssignedReg, Reg);
+    // Replace uses of the existing register in PHINodesToUpdate too.
+    for (unsigned i = 0, e = FuncInfo.PHINodesToUpdate.size(); i != e; ++i)
+      if (FuncInfo.PHINodesToUpdate[i].second == AssignedReg)
+        FuncInfo.PHINodesToUpdate[i].second = Reg;
+    // And update the ValueMap.
+    AssignedReg = Reg;
   }
+
   return AssignedReg;
 }
 
@@ -736,10 +754,14 @@ FastISel::SelectLoad(const User *I) {
     BasicBlock::iterator ScanFrom = LI;
     if (const Value *V = FindAvailableLoadedValue(LI->getPointerOperand(),
                                                   LI->getParent(), ScanFrom)) {
+      if (!isa<Instruction>(V) ||
+          cast<Instruction>(V)->getParent() == LI->getParent() ||
+          (isa<AllocaInst>(V) && FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(V)))) {
       unsigned ResultReg = getRegForValue(V);
       if (ResultReg != 0) {
         UpdateValueMap(I, ResultReg);
         return true;
+      }
       }
     }
   }
@@ -871,8 +893,7 @@ FastISel::FastISel(FunctionLoweringInfo &funcInfo)
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
     TLI(*TM.getTargetLowering()),
-    TRI(*TM.getRegisterInfo()),
-    IsBottomUp(false) {
+    TRI(*TM.getRegisterInfo()) {
 }
 
 FastISel::~FastISel() {}

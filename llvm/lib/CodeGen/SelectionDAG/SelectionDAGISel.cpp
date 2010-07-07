@@ -680,60 +680,55 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
     BasicBlock::const_iterator const Begin = LLVMBB->getFirstNonPHI();
     BasicBlock::const_iterator const End = LLVMBB->end();
-    BasicBlock::const_iterator BI = Begin;
+    BasicBlock::const_iterator BI = End;
 
-    // Lower any arguments needed in this block if this is the entry block.
-    if (LLVMBB == &Fn.getEntryBlock())
-      LowerArguments(LLVMBB);
-
-    // Setup an EH landing-pad block.
-    if (FuncInfo->MBB->isLandingPad())
-      PrepareEHLandingPad();
-    
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS) {
-      // Emit code for any incoming arguments. This must happen before
-      // beginning FastISel on the entry block.
-      if (LLVMBB == &Fn.getEntryBlock()) {
-        CurDAG->setRoot(SDB->getControlRoot());
-        SDB->clear();
-        CodeGenAndEmitDAG();
-      }
       FastIS->startNewBlock();
+
       // Do FastISel on as many instructions as possible.
-      for (; BI != End; ++BI) {
-#if 0
-        // Defer instructions with no side effects; they'll be emitted
-        // on-demand later.
-        if (BI->isSafeToSpeculativelyExecute() &&
-            !FuncInfo->isExportedInst(BI))
+      for (; BI != Begin; --BI) {
+        const Instruction *Inst = llvm::prior(BI);
+
+        // If we no longer require this instruction, skip it.
+        if (!Inst->mayWriteToMemory() &&
+            !isa<TerminatorInst>(Inst) &&
+            !isa<DbgInfoIntrinsic>(Inst) &&
+            !FuncInfo->isExportedInst(Inst))
           continue;
-#endif
+
+        // Bottom-up: reset the insert pos at the top, after any local-value
+        // instructions.
+        MachineBasicBlock::iterator LVIP = FastIS->getLastLocalValue();
+        if (LVIP != FuncInfo->MBB->end())
+          FuncInfo->InsertPt = next(LVIP);
+        else
+          FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 
         // Try to select the instruction with FastISel.
-        if (FastIS->SelectInstruction(BI))
+        if (FastIS->SelectInstruction(Inst))
           continue;
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
-        if (isa<CallInst>(BI)) {
+        if (isa<CallInst>(Inst)) {
           ++NumFastIselFailures;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel missed call: ";
-            BI->dump();
+            Inst->dump();
           }
 
-          if (!BI->getType()->isVoidTy() && !BI->use_empty()) {
-            unsigned &R = FuncInfo->ValueMap[BI];
+          if (!Inst->getType()->isVoidTy() && !Inst->use_empty()) {
+            unsigned &R = FuncInfo->ValueMap[Inst];
             if (!R)
-              R = FuncInfo->CreateRegs(BI->getType());
+              R = FuncInfo->CreateRegs(Inst->getType());
           }
 
           bool HadTailCall = false;
-          SelectBasicBlock(BI, llvm::next(BI), HadTailCall);
+          SelectBasicBlock(Inst, BI, HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {
-            BI = End;
+            --BI;
             break;
           }
 
@@ -746,7 +741,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           ++NumFastIselFailures;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel miss: ";
-            BI->dump();
+            Inst->dump();
           }
           if (EnableFastISelAbort)
             // The "fast" selector couldn't handle something and bailed.
@@ -757,13 +752,21 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       }
     }
 
+    FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
+
+    // Setup an EH landing-pad block.
+    if (FuncInfo->MBB->isLandingPad())
+      PrepareEHLandingPad();
+    
+    // Lower any arguments needed in this block if this is the entry block.
+    if (LLVMBB == &Fn.getEntryBlock())
+      LowerArguments(LLVMBB);
+
     // Run SelectionDAG instruction selection on the remainder of the block
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
-    if (BI != End) {
-      bool HadTailCall;
-      SelectBasicBlock(BI, End, HadTailCall);
-    }
+    bool HadTailCall;
+    SelectBasicBlock(Begin, BI, HadTailCall);
 
     FinishBasicBlock();
     FuncInfo->PHINodesToUpdate.clear();
@@ -963,7 +966,8 @@ SelectionDAGISel::FinishBasicBlock() {
     for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
       FuncInfo->MBB = Succs[i];
       FuncInfo->InsertPt = FuncInfo->MBB->end();
-      // BB may have been removed from the CFG if a branch was constant folded.
+      // FuncInfo->MBB may have been removed from the CFG if a branch was
+      // constant folded.
       if (ThisBB->isSuccessor(FuncInfo->MBB)) {
         for (MachineBasicBlock::iterator Phi = FuncInfo->MBB->begin();
              Phi != FuncInfo->MBB->end() && Phi->isPHI();

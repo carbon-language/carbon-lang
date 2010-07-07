@@ -951,12 +951,10 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
 
   // If this is an instruction which fast-isel has deferred, select it now.
   if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
-    assert(Inst->isSafeToSpeculativelyExecute() &&
-           "Instruction with side effects deferred!");
-    visit(*Inst);
-    DenseMap<const Value *, SDValue>::iterator NIt = NodeMap.find(Inst);
-    if (NIt != NodeMap.end() && NIt->second.getNode())
-      return NIt->second;
+    unsigned InReg = FuncInfo.InitializeRegForValue(Inst);
+    RegsForValue RFV(*DAG.getContext(), TLI, InReg, Inst->getType());
+    SDValue Chain = DAG.getEntryNode();
+    return RFV.getCopyFromRegs(DAG, FuncInfo, getCurDebugLoc(), Chain, NULL);
   }
 
   llvm_unreachable("Can't get register for value!");
@@ -1259,7 +1257,7 @@ SelectionDAGBuilder::ShouldEmitAsBranches(const std::vector<CaseBlock> &Cases){
 }
 
 void SelectionDAGBuilder::visitBr(const BranchInst &I) {
-  MachineBasicBlock *BrMBB = FuncInfo.MBBMap[I.getParent()];
+  MachineBasicBlock *BrMBB = FuncInfo.MBB;
 
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
@@ -1585,7 +1583,7 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
 }
 
 void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
-  MachineBasicBlock *InvokeMBB = FuncInfo.MBBMap[I.getParent()];
+  MachineBasicBlock *InvokeMBB = FuncInfo.MBB;
 
   // Retrieve successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
@@ -2113,7 +2111,7 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
 }
 
 void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
-  MachineBasicBlock *SwitchMBB = FuncInfo.MBBMap[SI.getParent()];
+  MachineBasicBlock *SwitchMBB = FuncInfo.MBB;
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -2179,7 +2177,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
 }
 
 void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
-  MachineBasicBlock *IndirectBrMBB = FuncInfo.MBBMap[I.getParent()];
+  MachineBasicBlock *IndirectBrMBB = FuncInfo.MBB;
 
   // Update machine-CFG edges with unique successors.
   SmallVector<BasicBlock*, 32> succs;
@@ -3839,7 +3837,7 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const DbgValueInst &DI,
   if (DV.isInlinedFnArgument(MF.getFunction()))
     return false;
 
-  MachineBasicBlock *MBB = FuncInfo.MBBMap[DI.getParent()];
+  MachineBasicBlock *MBB = FuncInfo.MBB;
   if (MBB != &MF.front())
     return false;
 
@@ -4102,7 +4100,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::eh_exception: {
     // Insert the EXCEPTIONADDR instruction.
-    assert(FuncInfo.MBBMap[I.getParent()]->isLandingPad() &&
+    assert(FuncInfo.MBB->isLandingPad() &&
            "Call to eh.exception not in landing pad!");
     SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
     SDValue Ops[1];
@@ -4114,7 +4112,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
 
   case Intrinsic::eh_selector: {
-    MachineBasicBlock *CallMBB = FuncInfo.MBBMap[I.getParent()];
+    MachineBasicBlock *CallMBB = FuncInfo.MBB;
     MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
     if (CallMBB->isLandingPad())
       AddCatchInfo(I, &MMI, CallMBB);
@@ -4124,7 +4122,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 #endif
       // FIXME: Mark exception selector register as live in.  Hack for PR1508.
       unsigned Reg = TLI.getExceptionSelectorRegister();
-      if (Reg) FuncInfo.MBBMap[I.getParent()]->addLiveIn(Reg);
+      if (Reg) FuncInfo.MBB->addLiveIn(Reg);
     }
 
     // Insert the EHSELECTION instruction.
@@ -5901,9 +5899,6 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
   GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
                 Outs, TLI);
 
-  FuncInfo->CanLowerReturn = TLI.CanLowerReturn(F.getCallingConv(),
-                                                F.isVarArg(),
-                                                Outs, F.getContext());
   if (!FuncInfo->CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.
     SmallVector<EVT, 1> ValueVTs;

@@ -108,6 +108,7 @@ private:
   bool X86SelectCall(const Instruction *I);
 
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool isTailCall = false);
+  CCAssignFn *CCAssignFnForRet(CallingConv::ID CC, bool isTailCall = false);
 
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
@@ -179,6 +180,20 @@ CCAssignFn *X86FastISel::CCAssignFnForCall(CallingConv::ID CC,
     return CC_X86_32_GHC;
   else
     return CC_X86_32_C;
+}
+
+/// CCAssignFnForRet - Selects the correct CCAssignFn for a given calling
+/// convention.
+CCAssignFn *X86FastISel::CCAssignFnForRet(CallingConv::ID CC,
+                                          bool isTaillCall) {
+  if (Subtarget->is64Bit()) {
+    if (Subtarget->isTargetWin64())
+      return RetCC_X86_Win64_C;
+    else
+      return RetCC_X86_64_C;
+  }
+
+  return RetCC_X86_32_C;
 }
 
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
@@ -689,34 +704,39 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   if (F.isVarArg())
     return false;
 
-  SmallVector<ISD::OutputArg, 4> Outs;
-  GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
-                Outs, TLI);
+  if (Ret->getNumOperands() > 0) {
+    SmallVector<ISD::OutputArg, 4> Outs;
+    GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
+                  Outs, TLI);
 
-  // Analyze operands of the call, assigning locations to each operand.
-  SmallVector<CCValAssign, 16> ValLocs;
-  CCState CCInfo(CC, F.isVarArg(), TM, ValLocs, I->getContext());
-  CCInfo.AnalyzeReturn(Outs, CCAssignFnForCall(CC));
+    // Analyze operands of the call, assigning locations to each operand.
+    SmallVector<CCValAssign, 16> ValLocs;
+    CCState CCInfo(CC, F.isVarArg(), TM, ValLocs, I->getContext());
+    CCInfo.AnalyzeReturn(Outs, CCAssignFnForRet(CC));
 
-  // Copy the return value into registers.
-  for (unsigned i = 0, e = ValLocs.size(); i != e; ++i) {
-    CCValAssign &VA = ValLocs[i];
-  
-    // Don't bother handling odd stuff for now.
-    if (VA.getLocInfo() != CCValAssign::Full)
-      return false;
-    if (!VA.isRegLoc())
-      return false;
-
-    const Value *RV = Ret->getOperand(VA.getValNo());
+    const Value *RV = Ret->getOperand(0);
     unsigned Reg = getRegForValue(RV);
+    if (Reg == 0)
+      return false;
 
-    TargetRegisterClass* RC = TLI.getRegClassFor(VA.getValVT());
-    bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                    VA.getLocReg(), Reg, RC, RC, DL);
-    assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+    // Copy the return value into registers.
+    for (unsigned i = 0, e = ValLocs.size(); i != e; ++i) {
+      CCValAssign &VA = ValLocs[i];
+  
+      // Don't bother handling odd stuff for now.
+      if (VA.getLocInfo() != CCValAssign::Full)
+        return false;
+      if (!VA.isRegLoc())
+        return false;
 
-    MRI.addLiveOut(X86::XMM0);
+      TargetRegisterClass* RC = TLI.getRegClassFor(VA.getValVT());
+      bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                      VA.getLocReg(), Reg + VA.getValNo(),
+                                      RC, RC, DL);
+      assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
+
+      MRI.addLiveOut(VA.getLocReg());
+    }
   }
 
   // Now emit the RET.

@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallSet.h"
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 
 namespace llvm {
 
@@ -55,15 +56,17 @@ protected:
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const TargetRegisterInfo &TRI;
-  bool IsBottomUp;
+  MachineBasicBlock::iterator LastLocalValue;
 
 public:
+  /// getLastLocalValue - Return the position of the last instruction
+  /// emitted for materializing constants for use in the current block.
+  MachineBasicBlock::iterator getLastLocalValue() { return LastLocalValue; }
+
   /// startNewBlock - Set the current block to which generated machine
   /// instructions will be appended, and clear the local CSE map.
   ///
-  void startNewBlock() {
-    LocalValueMap.clear();
-  }
+  void startNewBlock();
 
   /// getCurDebugLoc() - Return current debug location information.
   DebugLoc getCurDebugLoc() const { return DL; }
