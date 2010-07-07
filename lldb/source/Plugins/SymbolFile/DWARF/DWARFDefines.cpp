@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFDefines.h"
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include "lldb/Core/ConstString.h"
 
