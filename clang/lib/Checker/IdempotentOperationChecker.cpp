@@ -311,7 +311,7 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       hash.begin(); i != hash.end(); ++i) {
     if (i->second != Impossible) {
       // Select the error message.
-      const char *msg;
+      const char *msg = 0;
       switch (i->second) {
       case Equal:
         msg = "idempotent operation; both operands are always equal in value";
