@@ -169,7 +169,8 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
     Reg = lookUpRegForValue(Op);
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
-    BuildMI(MBB, DL, TII.get(TargetOpcode::IMPLICIT_DEF), Reg);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+            TII.get(TargetOpcode::IMPLICIT_DEF), Reg);
   }
   
   // If target-independent code couldn't handle the value, give target-specific
@@ -212,7 +213,7 @@ unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
     AssignedReg = Reg;
   else if (Reg != AssignedReg) {
     const TargetRegisterClass *RegClass = MRI.getRegClass(Reg);
-    TII.copyRegToReg(*MBB, MBB->end(), AssignedReg,
+    TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, AssignedReg,
                      Reg, RegClass, RegClass, DL);
   }
   return AssignedReg;
@@ -434,23 +435,28 @@ bool FastISel::SelectCall(const User *I) {
     if (!V) {
       // Currently the optimizer can produce this; insert an undef to
       // help debugging.  Probably the optimizer should not do this.
-      BuildMI(MBB, DL, II).addReg(0U).addImm(DI->getOffset()).
-                                     addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+        .addReg(0U).addImm(DI->getOffset())
+        .addMetadata(DI->getVariable());
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      BuildMI(MBB, DL, II).addImm(CI->getZExtValue()).addImm(DI->getOffset()).
-                                     addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+        .addImm(CI->getZExtValue()).addImm(DI->getOffset())
+        .addMetadata(DI->getVariable());
     } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-      BuildMI(MBB, DL, II).addFPImm(CF).addImm(DI->getOffset()).
-                                     addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+        .addFPImm(CF).addImm(DI->getOffset())
+        .addMetadata(DI->getVariable());
     } else if (unsigned Reg = lookUpRegForValue(V)) {
-      BuildMI(MBB, DL, II).addReg(Reg, RegState::Debug).addImm(DI->getOffset()).
-                                     addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+        .addReg(Reg, RegState::Debug).addImm(DI->getOffset())
+        .addMetadata(DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
       // Insert an undef so we can see what we dropped.
-      BuildMI(MBB, DL, II).addReg(0U).addImm(DI->getOffset()).
-                                     addMetadata(DI->getVariable());
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+        .addReg(0U).addImm(DI->getOffset())
+        .addMetadata(DI->getVariable());
     }     
     return true;
   }
@@ -459,12 +465,13 @@ bool FastISel::SelectCall(const User *I) {
     switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      assert(MBB->isLandingPad() && "Call to eh.exception not in landing pad!");
+      assert(FuncInfo.MBB->isLandingPad() &&
+             "Call to eh.exception not in landing pad!");
       unsigned Reg = TLI.getExceptionAddressRegister();
       const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
       unsigned ResultReg = createResultReg(RC);
-      bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                           Reg, RC, RC, DL);
+      bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                           ResultReg, Reg, RC, RC, DL);
       assert(InsertedCopy && "Can't copy address registers!");
       InsertedCopy = InsertedCopy;
       UpdateValueMap(I, ResultReg);
@@ -478,23 +485,23 @@ bool FastISel::SelectCall(const User *I) {
     switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      if (MBB->isLandingPad())
-        AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), MBB);
+      if (FuncInfo.MBB->isLandingPad())
+        AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), FuncInfo.MBB);
       else {
 #ifndef NDEBUG
         FuncInfo.CatchInfoLost.insert(cast<CallInst>(I));
 #endif
         // FIXME: Mark exception selector register as live in.  Hack for PR1508.
         unsigned Reg = TLI.getExceptionSelectorRegister();
-        if (Reg) MBB->addLiveIn(Reg);
+        if (Reg) FuncInfo.MBB->addLiveIn(Reg);
       }
 
       unsigned Reg = TLI.getExceptionSelectorRegister();
       EVT SrcVT = TLI.getPointerTy();
       const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
       unsigned ResultReg = createResultReg(RC);
-      bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Reg,
-                                           RC, RC, DL);
+      bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                           ResultReg, Reg, RC, RC, DL);
       assert(InsertedCopy && "Can't copy address registers!");
       InsertedCopy = InsertedCopy;
 
@@ -613,8 +620,9 @@ bool FastISel::SelectBitCast(const User *I) {
     TargetRegisterClass* DstClass = TLI.getRegClassFor(DstVT);
     ResultReg = createResultReg(DstClass);
     
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         Op0, DstClass, SrcClass, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, Op0,
+                                         DstClass, SrcClass, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -662,13 +670,14 @@ FastISel::SelectInstruction(const Instruction *I) {
 /// the CFG.
 void
 FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DL) {
-  if (MBB->isLayoutSuccessor(MSucc)) {
+  if (FuncInfo.MBB->isLayoutSuccessor(MSucc)) {
     // The unconditional fall-through case, which needs no instructions.
   } else {
     // The unconditional branch case.
-    TII.InsertBranch(*MBB, MSucc, NULL, SmallVector<MachineOperand, 0>(), DL);
+    TII.InsertBranch(*FuncInfo.MBB, MSucc, NULL,
+                     SmallVector<MachineOperand, 0>(), DL);
   }
-  MBB->addSuccessor(MSucc);
+  FuncInfo.MBB->addSuccessor(MSucc);
 }
 
 /// SelectFNeg - Emit an FNeg operation.
@@ -854,8 +863,7 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 }
 
 FastISel::FastISel(FunctionLoweringInfo &funcInfo)
-  : MBB(0),
-    FuncInfo(funcInfo),
+  : FuncInfo(funcInfo),
     MRI(FuncInfo.MF->getRegInfo()),
     MFI(*FuncInfo.MF->getFrameInfo()),
     MCP(*FuncInfo.MF->getConstantPool()),
@@ -993,7 +1001,7 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
-  BuildMI(MBB, DL, II, ResultReg);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg);
   return ResultReg;
 }
 
@@ -1004,11 +1012,14 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg).addReg(Op0, Op0IsKill * RegState::Kill);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
+      .addReg(Op0, Op0IsKill * RegState::Kill);
   else {
-    BuildMI(MBB, DL, II).addReg(Op0, Op0IsKill * RegState::Kill);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+      .addReg(Op0, Op0IsKill * RegState::Kill);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1024,15 +1035,16 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill);
   else {
-    BuildMI(MBB, DL, II)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1047,15 +1059,16 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addImm(Imm);
   else {
-    BuildMI(MBB, DL, II)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1070,15 +1083,16 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addFPImm(FPImm);
   else {
-    BuildMI(MBB, DL, II)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addFPImm(FPImm);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1094,17 +1108,18 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill)
       .addImm(Imm);
   else {
-    BuildMI(MBB, DL, II)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill)
       .addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1118,11 +1133,12 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   const TargetInstrDesc &II = TII.get(MachineInstOpcode);
   
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg).addImm(Imm);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg).addImm(Imm);
   else {
-    BuildMI(MBB, DL, II).addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II).addImm(Imm);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }
@@ -1138,15 +1154,16 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT,
   const TargetInstrDesc &II = TII.get(TargetOpcode::EXTRACT_SUBREG);
   
   if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addImm(Idx);
   else {
-    BuildMI(MBB, DL, II)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addImm(Idx);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
+    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                         ResultReg, II.ImplicitDefs[0],
+                                         RC, RC, DL);
     if (!InsertedCopy)
       ResultReg = 0;
   }

@@ -44,7 +44,6 @@ class TargetRegisterInfo;
 /// lowering, but runs quickly.
 class FastISel {
 protected:
-  MachineBasicBlock *MBB;
   DenseMap<const Value *, unsigned> LocalValueMap;
   FunctionLoweringInfo &FuncInfo;
   MachineRegisterInfo &MRI;
@@ -62,16 +61,8 @@ public:
   /// startNewBlock - Set the current block to which generated machine
   /// instructions will be appended, and clear the local CSE map.
   ///
-  void startNewBlock(MachineBasicBlock *mbb) {
-    setCurrentBlock(mbb);
+  void startNewBlock() {
     LocalValueMap.clear();
-  }
-
-  /// setCurrentBlock - Set the current block to which generated machine
-  /// instructions will be appended.
-  ///
-  void setCurrentBlock(MachineBasicBlock *mbb) {
-    MBB = mbb;
   }
 
   /// getCurDebugLoc() - Return current debug location information.
