@@ -1787,7 +1787,7 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
 {
   MachineFunction &MF = *BB->getParent();
 
-  // If it's the destination block is terminated by an unconditional branch,
+  // If the destination block is terminated by an unconditional branch,
   // try to move it; otherwise, create a new block following the jump
   // table that branches back to the actual target. This is a very simple
   // heuristic. FIXME: We can definitely improve it.
