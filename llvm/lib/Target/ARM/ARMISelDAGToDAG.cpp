@@ -143,10 +143,10 @@ private:
                           unsigned *DOpcodes, unsigned *QOpcodes0,
                           unsigned *QOpcodes1);
 
-  /// SelectVTBL - Select NEON VTBL intrinsics.  NumVecs should be 2, 3 or 4.
-  /// These are custom-selected so that a REG_SEQUENCE can be generated to
-  /// force the table registers to be consecutive.
-  SDNode *SelectVTBL(SDNode *N, unsigned NumVecs, unsigned Opc);
+  /// SelectVTBL - Select NEON VTBL and VTBX intrinsics.  NumVecs should be 2,
+  /// 3 or 4.  These are custom-selected so that a REG_SEQUENCE can be
+  /// generated to force the table registers to be consecutive.
+  SDNode *SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs, unsigned Opc);
 
   /// SelectV6T2BitfieldExtractOp - Select SBFX/UBFX instructions for ARM.
   SDNode *SelectV6T2BitfieldExtractOp(SDNode *N, bool isSigned);
@@ -1529,29 +1529,33 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   return NULL;
 }
 
-SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, unsigned NumVecs, unsigned Opc) {
+SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, bool IsExt, unsigned NumVecs,
+                                    unsigned Opc) {
   assert(NumVecs >= 2 && NumVecs <= 4 && "VTBL NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
+  unsigned FirstTblReg = IsExt ? 2 : 1;
 
   // Form a REG_SEQUENCE to force register allocation.
   SDValue RegSeq;
-  SDValue V0 = N->getOperand(1);
-  SDValue V1 = N->getOperand(2);
+  SDValue V0 = N->getOperand(FirstTblReg + 0);
+  SDValue V1 = N->getOperand(FirstTblReg + 1);
   if (NumVecs == 2)
     RegSeq = SDValue(PairDRegs(MVT::v16i8, V0, V1), 0);
   else {
-    SDValue V2 = N->getOperand(3);
+    SDValue V2 = N->getOperand(FirstTblReg + 2);
     // If it's a vtbl3, form a quad D-register and leave the last part as 
     // an undef.
     SDValue V3 = (NumVecs == 3)
       ? SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0)
-      : N->getOperand(4);
+      : N->getOperand(FirstTblReg + 3);
     RegSeq = SDValue(QuadDRegs(MVT::v4i64, V0, V1, V2, V3), 0);
   }
 
   // Now extract the D registers back out.
-  SmallVector<SDValue, 5> Ops;
+  SmallVector<SDValue, 6> Ops;
+  if (IsExt)
+    Ops.push_back(N->getOperand(1));
   Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_0, dl, VT, RegSeq));
   Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_1, dl, VT, RegSeq));
   if (NumVecs > 2)
@@ -1559,10 +1563,10 @@ SDNode *ARMDAGToDAGISel::SelectVTBL(SDNode *N, unsigned NumVecs, unsigned Opc) {
   if (NumVecs > 3)
     Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::dsub_3, dl, VT, RegSeq));
 
-  Ops.push_back(N->getOperand(NumVecs+1));
+  Ops.push_back(N->getOperand(FirstTblReg + NumVecs));
   Ops.push_back(getAL(CurDAG)); // predicate
   Ops.push_back(CurDAG->getRegister(0, MVT::i32)); // predicate register
-  return CurDAG->getMachineNode(Opc, dl, VT, Ops.data(), NumVecs+3);
+  return CurDAG->getMachineNode(Opc, dl, VT, Ops.data(), Ops.size());
 }
 
 SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
@@ -2329,11 +2333,18 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       break;
 
     case Intrinsic::arm_neon_vtbl2:
-      return SelectVTBL(N, 2, ARM::VTBL2);
+      return SelectVTBL(N, false, 2, ARM::VTBL2);
     case Intrinsic::arm_neon_vtbl3:
-      return SelectVTBL(N, 3, ARM::VTBL3);
+      return SelectVTBL(N, false, 3, ARM::VTBL3);
     case Intrinsic::arm_neon_vtbl4:
-      return SelectVTBL(N, 4, ARM::VTBL4);
+      return SelectVTBL(N, false, 4, ARM::VTBL4);
+
+    case Intrinsic::arm_neon_vtbx2:
+      return SelectVTBL(N, true, 2, ARM::VTBX2);
+    case Intrinsic::arm_neon_vtbx3:
+      return SelectVTBL(N, true, 3, ARM::VTBX3);
+    case Intrinsic::arm_neon_vtbx4:
+      return SelectVTBL(N, true, 4, ARM::VTBX4);
     }
     break;
   }

@@ -3314,23 +3314,18 @@ let hasExtraSrcRegAllocReq = 1 in {
 def  VTBX2
   : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$dst),
         (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src), NVTBLFrm, IIC_VTBX2,
-        "vtbx", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "$orig = $dst",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx2
-                               DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
+        "vtbx", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "$orig = $dst", []>;
 def  VTBX3
   : N3V<1,1,0b11,0b1010,1,0, (outs DPR:$dst),
         (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src),
         NVTBLFrm, IIC_VTBX3,
-        "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src", "$orig = $dst",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx3 DPR:$orig, DPR:$tbl1,
-                               DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
+        "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src",
+        "$orig = $dst", []>;
 def  VTBX4
   : N3V<1,1,0b11,0b1011,1,0, (outs DPR:$dst), (ins DPR:$orig, DPR:$tbl1,
         DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src), NVTBLFrm, IIC_VTBX4,
         "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src",
-        "$orig = $dst",
-        [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx4 DPR:$orig, DPR:$tbl1,
-                               DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+        "$orig = $dst", []>;
 } // hasExtraSrcRegAllocReq = 1
 
 //===----------------------------------------------------------------------===//
