@@ -461,14 +461,10 @@ SourceLocation Decl::getBodyRBrace() const {
     return SourceLocation();
   }
 
-  Stmt *Body = getBody();
-  if (!Body)
-    return SourceLocation();
-  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
-    return CS->getRBracLoc();
-  assert(isa<CXXTryStmt>(Body) &&
-         "Body can only be CompoundStmt or CXXTryStmt");
-  return cast<CXXTryStmt>(Body)->getSourceRange().getEnd();
+  if (Stmt *Body = getBody())
+    return Body->getSourceRange().getEnd();
+
+  return SourceLocation();
 }
 
 #ifndef NDEBUG
