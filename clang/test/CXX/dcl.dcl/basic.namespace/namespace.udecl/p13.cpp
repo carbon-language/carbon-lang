@@ -55,6 +55,19 @@ namespace test0 {
   }
 }
 
+// Typedef redeclaration.
+namespace rdar8018262 {
+  typedef void (*fp)();
+
+  namespace N {
+    typedef void (*fp)();
+  }
+
+  using N::fp;
+
+  fp fp_1;
+}
+
 // Things to test:
 //   member operators
 //   conversion operators

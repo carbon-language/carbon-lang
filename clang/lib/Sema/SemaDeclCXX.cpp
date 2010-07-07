@@ -3496,6 +3496,28 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   return DeclPtrTy::make(UD);
 }
 
+/// \brief Determine whether a using declaration considers the given
+/// declarations as "equivalent", e.g., if they are redeclarations of
+/// the same entity or are both typedefs of the same type.
+static bool 
+IsEquivalentForUsingDecl(ASTContext &Context, NamedDecl *D1, NamedDecl *D2,
+                         bool &SuppressRedeclaration) {
+  if (D1->getCanonicalDecl() == D2->getCanonicalDecl()) {
+    SuppressRedeclaration = false;
+    return true;
+  }
+
+  if (TypedefDecl *TD1 = dyn_cast<TypedefDecl>(D1))
+    if (TypedefDecl *TD2 = dyn_cast<TypedefDecl>(D2)) {
+      SuppressRedeclaration = true;
+      return Context.hasSameType(TD1->getUnderlyingType(),
+                                 TD2->getUnderlyingType());
+    }
+
+  return false;
+}
+
+
 /// Determines whether to create a using shadow decl for a particular
 /// decl, given the set of decls existing prior to this using lookup.
 bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
@@ -3562,8 +3584,9 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
          I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
-    if (D->getCanonicalDecl() == Target->getCanonicalDecl())
-      return false;
+    bool Result;
+    if (IsEquivalentForUsingDecl(Context, D, Target, Result))
+      return Result;
 
     (isa<TagDecl>(D) ? Tag : NonTag) = D;
   }
