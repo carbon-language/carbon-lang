@@ -12046,3 +12046,27 @@
 // CHECK: encoding: [0xc4,0xe2,0x79,0x34,0x10]
           vpmovzxwq  (%eax), %xmm2
 
+// CHECK: vpextrw  $7, %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf9,0xc5,0xc2,0x07]
+          vpextrw  $7, %xmm2, %eax
+
+// CHECK: vpextrw  $7, %xmm2, (%eax)
+// CHECK: encoding: [0xc4,0xe3,0x79,0x15,0x10,0x07]
+          vpextrw  $7, %xmm2, (%eax)
+
+// CHECK: vpextrd  $7, %xmm2, %eax
+// CHECK: encoding: [0xc4,0xe3,0x79,0x16,0xd0,0x07]
+          vpextrd  $7, %xmm2, %eax
+
+// CHECK: vpextrd  $7, %xmm2, (%eax)
+// CHECK: encoding: [0xc4,0xe3,0x79,0x16,0x10,0x07]
+          vpextrd  $7, %xmm2, (%eax)
+
+// CHECK: vpextrb  $7, %xmm2, %eax
+// CHECK: encoding: [0xc4,0xe3,0x79,0x14,0xd0,0x07]
+          vpextrb  $7, %xmm2, %eax
+
+// CHECK: vpextrb  $7, %xmm2, (%eax)
+// CHECK: encoding: [0xc4,0xe3,0x79,0x14,0x10,0x07]
+          vpextrb  $7, %xmm2, (%eax)
+

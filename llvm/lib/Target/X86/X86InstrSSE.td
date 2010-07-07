@@ -4450,6 +4450,9 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
 // (store (i8 (trunc (X86pextrb (v16i8 VR128:$src1), imm:$src2))), addr:$dst)
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPEXTRB : SS41I_extract8<0x14, "vpextrb">, VEX;
+
 defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 
 
@@ -4464,6 +4467,9 @@ multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
 // There's an AssertZext in the way of writing the store pattern
 // (store (i16 (trunc (X86pextrw (v16i8 VR128:$src1), imm:$src2))), addr:$dst)
 }
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPEXTRW : SS41I_extract16<0x15, "vpextrw">, VEX;
 
 defm PEXTRW      : SS41I_extract16<0x15, "pextrw">;
 
@@ -4484,8 +4490,13 @@ multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>, OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPEXTRD : SS41I_extract32<0x16, "vpextrd">, VEX;
+
 defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPEXTRQ : SS41I_extract64<0x16, "vpextrq">, VEX, VEX_W;
 
 /// SS41I_extractf32 - SSE 4.1 extract 32 bits fp value to int reg or memory
 /// destination
