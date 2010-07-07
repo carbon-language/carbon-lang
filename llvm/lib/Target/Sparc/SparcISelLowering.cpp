@@ -147,7 +147,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
           unsigned Offset = 4-std::max(1U, ObjectVT.getSizeInBits()/8);
           FIPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIPtr,
                               DAG.getConstant(Offset, MVT::i32));
-          Load = DAG.getExtLoad(LoadOp, dl, MVT::i32, Chain, FIPtr,
+          Load = DAG.getExtLoad(LoadOp, MVT::i32, dl, Chain, FIPtr,
                                 NULL, 0, ObjectVT, false, false, 0);
           Load = DAG.getNode(ISD::TRUNCATE, dl, ObjectVT, Load);
         }

@@ -454,12 +454,12 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   
   if (LD->getAlignment() == 2) {
     int SVOffset = LD->getSrcValueOffset();
-    SDValue Low = DAG.getExtLoad(ISD::ZEXTLOAD, dl, MVT::i32, Chain,
+    SDValue Low = DAG.getExtLoad(ISD::ZEXTLOAD, MVT::i32, dl, Chain,
                                  BasePtr, LD->getSrcValue(), SVOffset, MVT::i16,
                                  LD->isVolatile(), LD->isNonTemporal(), 2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, BasePtr,
                                    DAG.getConstant(2, MVT::i32));
-    SDValue High = DAG.getExtLoad(ISD::EXTLOAD, dl, MVT::i32, Chain,
+    SDValue High = DAG.getExtLoad(ISD::EXTLOAD, MVT::i32, dl, Chain,
                                   HighAddr, LD->getSrcValue(), SVOffset + 2,
                                   MVT::i16, LD->isVolatile(),
                                   LD->isNonTemporal(), 2);

@@ -500,7 +500,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
                                           N->getOperand(0),
                                           MemTmp, NULL, 0, MemVT,
                                           false, false, 0);
-    SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, dl, DstVT, Store, MemTmp,
+    SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, DstVT, dl, Store, MemTmp,
                                         NULL, 0, MemVT, false, false, 0);
 
     // We're about to replace all uses of the FP_ROUND/FP_EXTEND with the

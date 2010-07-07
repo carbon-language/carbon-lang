@@ -632,18 +632,20 @@ public:
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                   const Value *SV, int SVOffset, bool isVolatile,
                   bool isNonTemporal, unsigned Alignment);
-  SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
+  SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
                      SDValue Chain, SDValue Ptr, const Value *SV,
                      int SVOffset, EVT MemVT, bool isVolatile,
                      bool isNonTemporal, unsigned Alignment);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
-                           SDValue Offset, ISD::MemIndexedMode AM);
-  SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
-                  EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
+                         SDValue Offset, ISD::MemIndexedMode AM);
+  SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                  EVT VT, DebugLoc dl,
+                  SDValue Chain, SDValue Ptr, SDValue Offset,
                   const Value *SV, int SVOffset, EVT MemVT,
                   bool isVolatile, bool isNonTemporal, unsigned Alignment);
-  SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
-                  EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
+  SDValue getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                  EVT VT, DebugLoc dl,
+                  SDValue Chain, SDValue Ptr, SDValue Offset,
                   EVT MemVT, MachineMemOperand *MMO);
 
   /// getStore - Helper function to build ISD::STORE nodes.

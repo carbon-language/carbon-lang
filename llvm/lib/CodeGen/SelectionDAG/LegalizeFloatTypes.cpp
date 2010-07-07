@@ -453,8 +453,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
 
   SDValue NewL;
   if (L->getExtensionType() == ISD::NON_EXTLOAD) {
-    NewL = DAG.getLoad(L->getAddressingMode(), dl, L->getExtensionType(),
-                       NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
+    NewL = DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
+                       NVT, dl, L->getChain(), L->getBasePtr(), L->getOffset(),
                        L->getSrcValue(), L->getSrcValueOffset(), NVT,
                        L->isVolatile(), L->isNonTemporal(), L->getAlignment());
     // Legalized the chain result - switch anything that used the old chain to
@@ -464,8 +464,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   }
 
   // Do a non-extending load followed by FP_EXTEND.
-  NewL = DAG.getLoad(L->getAddressingMode(), dl, ISD::NON_EXTLOAD,
-                     L->getMemoryVT(), L->getChain(),
+  NewL = DAG.getLoad(L->getAddressingMode(), ISD::NON_EXTLOAD,
+                     L->getMemoryVT(), dl, L->getChain(),
                      L->getBasePtr(), L->getOffset(),
                      L->getSrcValue(), L->getSrcValueOffset(),
                      L->getMemoryVT(), L->isVolatile(),
@@ -1109,7 +1109,7 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
   assert(NVT.isByteSized() && "Expanded type not byte sized!");
   assert(LD->getMemoryVT().bitsLE(NVT) && "Float type not round?");
 
-  Hi = DAG.getExtLoad(LD->getExtensionType(), dl, NVT, Chain, Ptr,
+  Hi = DAG.getExtLoad(LD->getExtensionType(), NVT, dl, Chain, Ptr,
                       LD->getSrcValue(), LD->getSrcValueOffset(),
                       LD->getMemoryVT(), LD->isVolatile(),
                       LD->isNonTemporal(), LD->getAlignment());
