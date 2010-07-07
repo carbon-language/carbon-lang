@@ -505,7 +505,12 @@ void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   O << V.getName();
   O << " <- ";
   // Frame address.  Currently handles register +- offset only.
-  O << '['; printOperand(MI, 0, O); O << '+'; printOperand(MI, 3, O);
+  O << '['; 
+  if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg())
+    printOperand(MI, 0, O); 
+  else
+    O << "undef";
+  O << '+'; printOperand(MI, 3, O);
   O << ']';
   O << "+";
   printOperand(MI, NOps-2, O);
