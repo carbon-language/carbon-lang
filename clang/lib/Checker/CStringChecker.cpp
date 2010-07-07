@@ -35,6 +35,7 @@ public:
 
   const GRState *EvalMemcpy(CheckerContext &C, const CallExpr *CE);
   const GRState *EvalMemmove(CheckerContext &C, const CallExpr *CE);
+  const GRState *EvalMemcmp(CheckerContext &C, const CallExpr *CE);
   const GRState *EvalBcopy(CheckerContext &C, const CallExpr *CE);
 
   // Utility methods
@@ -388,6 +389,70 @@ CStringChecker::EvalMemmove(CheckerContext &C, const CallExpr *CE) {
 }
 
 const GRState *
+CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
+  // int memcmp(const void *s1, const void *s2, size_t n);
+  const Expr *Left = CE->getArg(0);
+  const Expr *Right = CE->getArg(1);
+  const Expr *Size = CE->getArg(2);
+
+  const GRState *state = C.getState();
+  ValueManager &ValMgr = C.getValueManager();
+  SValuator &SV = ValMgr.getSValuator();
+  const GRState *stateTrue, *stateFalse;
+
+  // If we know the size argument is 0, we know the result is 0, and we don't
+  // have to check either of the buffers. (Another checker will have already
+  // made sure the size isn't undefined, so we can cast it safely.)
+  DefinedOrUnknownSVal SizeV = cast<DefinedOrUnknownSVal>(state->getSVal(Size));
+  DefinedOrUnknownSVal Zero = ValMgr.makeZeroVal(Size->getType());
+
+  DefinedOrUnknownSVal SizeIsZero = SV.EvalEQ(state, SizeV, Zero);
+  llvm::tie(stateTrue, stateFalse) = state->Assume(SizeIsZero);
+
+  // FIXME: This should really cause a bifurcation of the state, but that would
+  // require changing the contract to allow the various Eval* methods to add
+  // transitions themselves. Currently that isn't the case because some of these
+  // functions are "basically" like another function, but with one or two
+  // additional restrictions (like memcpy and memmove).
+
+  if (stateTrue && !stateFalse)
+    return stateTrue->BindExpr(CE, ValMgr.makeZeroVal(CE->getType()));
+
+  // At this point, we still don't know that the size is nonzero, only that it
+  // might be.
+
+  // If we know the two buffers are the same, we know the result is 0.
+  // First, get the two buffers' addresses. Another checker will have already
+  // made sure they're not undefined.
+  DefinedOrUnknownSVal LBuf = cast<DefinedOrUnknownSVal>(state->getSVal(Left));
+  DefinedOrUnknownSVal RBuf = cast<DefinedOrUnknownSVal>(state->getSVal(Right));
+
+  // See if they are the same.
+  DefinedOrUnknownSVal SameBuf = SV.EvalEQ(state, LBuf, RBuf);
+  llvm::tie(stateTrue, stateFalse) = state->Assume(SameBuf);
+
+  // FIXME: This should also bifurcate the state (as above).
+
+  // If the two arguments are known to be the same buffer, we know the result is
+  // zero, and we only need to check one size.
+  if (stateTrue && !stateFalse) {
+    state = CheckBufferAccess(C, stateTrue, Size, Left);
+    return state->BindExpr(CE, ValMgr.makeZeroVal(CE->getType()));
+  }
+
+  // At this point, we don't know if the arguments are the same or not -- we
+  // only know that they *might* be different. We can't make any assumptions.
+
+  // The return value is the comparison result, which we don't know.
+  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+  SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
+  state = state->BindExpr(CE, RetVal);
+
+  // Check that the accesses will stay in bounds.
+  return CheckBufferAccess(C, state, Size, Left, Right);
+}
+
+const GRState *
 CStringChecker::EvalBcopy(CheckerContext &C, const CallExpr *CE) {
   // void bcopy(const void *src, void *dst, size_t n);
   return CheckBufferAccess(C, C.getState(),
@@ -411,6 +476,7 @@ bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   FnCheck EvalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Cases("memcpy", "__memcpy_chk", &CStringChecker::EvalMemcpy)
+    .Cases("memcmp", "bcmp", &CStringChecker::EvalMemcmp)
     .Cases("memmove", "__memmove_chk", &CStringChecker::EvalMemmove)
     .Case("bcopy", &CStringChecker::EvalBcopy)
     .Default(NULL);

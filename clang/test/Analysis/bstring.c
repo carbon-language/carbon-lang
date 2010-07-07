@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===
 
 // Some functions are so similar to each other that they follow the same code
-// path, such as memcpy and __memcpy_chk. If VARIANT is defined, make sure to
-// use the variants instead to make sure they are still checked by the analyzer.
+// path, such as memcpy and __memcpy_chk, or memcmp and bcmp. If VARIANT is
+// defined, make sure to use the variants instead to make sure they are still
+// checked by the analyzer.
 
 // Some functions are implemented as builtins. These should be #defined as
 // BUILTIN(f), which will prepend "__builtin_" if USE_BUILTINS is defined.
@@ -170,6 +171,71 @@ void memmove2 () {
   char dst[1];
 
   memmove(dst, src, 4); // expected-warning{{out-of-bound}}
+}
+
+//===----------------------------------------------------------------------===
+// memcmp()
+//===----------------------------------------------------------------------===
+
+#ifdef VARIANT
+
+#define bcmp BUILTIN(bcmp)
+// __builtin_bcmp is not defined with const in Builtins.def.
+int bcmp(/*const*/ void *s1, /*const*/ void *s2, size_t n);
+#define memcmp bcmp
+
+#else /* VARIANT */
+
+#define memcmp BUILTIN(memcmp)
+int memcmp(const void *s1, const void *s2, size_t n);
+
+#endif /* VARIANT */
+
+
+void memcmp0 () {
+  char a[] = {1, 2, 3, 4};
+  char b[4] = { 0 };
+
+  memcmp(a, b, 4); // no-warning
+}
+
+void memcmp1 () {
+  char a[] = {1, 2, 3, 4};
+  char b[10] = { 0 };
+
+  memcmp(a, b, 5); // expected-warning{{out-of-bound}}
+}
+
+void memcmp2 () {
+  char a[] = {1, 2, 3, 4};
+  char b[1] = { 0 };
+
+  memcmp(a, b, 4); // expected-warning{{out-of-bound}}
+}
+
+void memcmp3 () {
+  char a[] = {1, 2, 3, 4};
+
+  if (memcmp(a, a, 4))
+    (void)*(char*)0; // no-warning
+}
+
+void memcmp4 (char *input) {
+  char a[] = {1, 2, 3, 4};
+
+  if (memcmp(a, input, 4))
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void memcmp5 (char *input) {
+  char a[] = {1, 2, 3, 4};
+
+  if (memcmp(a, 0, 0)) // no-warning
+    (void)*(char*)0;   // no-warning
+  if (memcmp(0, a, 0)) // no-warning
+    (void)*(char*)0;   // no-warning
+  if (memcmp(a, input, 0)) // no-warning
+    (void)*(char*)0;   // no-warning
 }
 
 //===----------------------------------------------------------------------===
