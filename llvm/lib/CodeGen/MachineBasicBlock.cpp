@@ -139,6 +139,13 @@ void ilist_traits<MachineInstr>::deleteNode(MachineInstr* MI) {
   Parent->getParent()->DeleteMachineInstr(MI);
 }
 
+MachineBasicBlock::iterator MachineBasicBlock::getFirstNonPHI() {
+  iterator I = begin();
+  while (I != end() && I->isPHI())
+    ++I;
+  return I;
+}
+
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator I = end();
   while (I != begin() && (--I)->getDesc().isTerminator())
