@@ -925,7 +925,7 @@ public:
     // statement (if it doesn't already exist).
     // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
     if (const CompoundStmt *CS =
-          PDB.getCodeDecl().getCompoundBody())
+          dyn_cast_or_null<CompoundStmt>(PDB.getCodeDecl().getBody()))
       if (!CS->body_empty()) {
         SourceLocation Loc = (*CS->body_begin())->getLocStart();
         rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));

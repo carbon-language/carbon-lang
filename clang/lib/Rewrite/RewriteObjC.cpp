@@ -5651,7 +5651,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
     // FIXME: If this should support Obj-C++, support CXXTryStmt
-    if (CompoundStmt *Body = FD->getCompoundBody()) {
+    if (CompoundStmt *Body = dyn_cast_or_null<CompoundStmt>(FD->getBody())) {
       CurFunctionDef = FD;
       CurFunctionDeclToDeclareForBlock = FD;
       CollectPropertySetters(Body);

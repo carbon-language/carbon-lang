@@ -447,10 +447,6 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
   }
 }
 
-CompoundStmt* Decl::getCompoundBody() const {
-  return dyn_cast_or_null<CompoundStmt>(getBody());
-}
-
 SourceLocation Decl::getBodyRBrace() const {
   // Special handling of FunctionDecl to avoid de-serializing the body from PCH.
   // FunctionDecl stores EndRangeLoc for this purpose.

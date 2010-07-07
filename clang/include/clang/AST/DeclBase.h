@@ -492,9 +492,6 @@ public:
   /// code, such as a function or method definition.
   virtual bool hasBody() const { return getBody() != 0; }
 
-  /// getCompoundBody - Returns getBody(), dyn_casted to a CompoundStmt.
-  CompoundStmt* getCompoundBody() const;
-
   /// getBodyRBrace - Gets the right brace of the body, if a body exists.
   /// This works whether the body is a CompoundStmt or a CXXTryStmt.
   SourceLocation getBodyRBrace() const;
