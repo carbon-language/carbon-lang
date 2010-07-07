@@ -748,9 +748,12 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
     return true;                                                       \
   }
 
-DEF_TRAVERSE_TYPELOC(QualifiedTypeLoc, {
-    TRY_TO(TraverseTypeLoc(TL.getUnqualifiedLoc()));
-  })
+template<typename Derived>                                             \
+bool RecursiveASTVisitor<Derived>::TraverseQualifiedTypeLoc(
+                                                         QualifiedTypeLoc TL) {
+  // Move this over to the 'main' typeloc tree.
+  return TraverseTypeLoc(TL.getUnqualifiedLoc());
+}
 
 DEF_TRAVERSE_TYPELOC(BuiltinTypeLoc, { })
 
