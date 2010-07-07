@@ -3,6 +3,7 @@ add_llvm_library(LLVMCodeGen
   Analysis.cpp
   BranchFolding.cpp
   CalcSpillWeights.cpp
+  CallingConvLower.cpp
   CodePlacementOpt.cpp
   CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
