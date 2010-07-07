@@ -473,8 +473,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
-  setOperationAction(ISD::EH_SJLJ_SETJMP, MVT::i32, Custom);
-  setOperationAction(ISD::EH_SJLJ_LONGJMP, MVT::Other, Custom);
+  if (Subtarget->isTargetDarwin()) {
+    setOperationAction(ISD::EH_SJLJ_SETJMP, MVT::i32, Custom);
+    setOperationAction(ISD::EH_SJLJ_LONGJMP, MVT::Other, Custom);
+  }
 
   setOperationAction(ISD::SETCC,     MVT::i32, Expand);
   setOperationAction(ISD::SETCC,     MVT::f32, Expand);
