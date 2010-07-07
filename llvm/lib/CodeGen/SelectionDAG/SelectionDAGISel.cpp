@@ -550,6 +550,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   {
     NamedRegionTimer T("Instruction Creation", GroupName, TimePassesIsEnabled);
     FuncInfo->MBB = Scheduler->EmitSchedule();
+    FuncInfo->InsertPt = Scheduler->InsertPos;
   }
 
   // Free the scheduler state.
