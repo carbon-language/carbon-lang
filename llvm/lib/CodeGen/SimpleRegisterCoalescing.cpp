@@ -211,6 +211,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // physreg has sub-registers, update their live intervals as well.
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
     for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
+      if (!li_->hasInterval(*SR))
+        continue;
       LiveInterval &SRLI = li_->getInterval(*SR);
       SRLI.addRange(LiveRange(FillerStart, FillerEnd,
                               SRLI.getNextValue(FillerStart, 0, true,
@@ -392,7 +394,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   // clobbers from the superreg.
   if (BHasSubRegs)
     for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
-      if (HasOtherReachingDefs(IntA, li_->getInterval(*SR), AValNo, 0))
+      if (li_->hasInterval(*SR) &&
+          HasOtherReachingDefs(IntA, li_->getInterval(*SR), AValNo, 0))
         return false;
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
@@ -498,6 +501,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     VNInfo *DeadVNI = BDeadValNos[i];
     if (BHasSubRegs) {
       for (const unsigned *SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR) {
+        if (!li_->hasInterval(*SR))
+          continue;
         LiveInterval &SRLI = li_->getInterval(*SR);
         if (const LiveRange *SRLR = SRLI.getLiveRangeContaining(DeadVNI->def))
           SRLI.removeValNo(SRLR->valno);
