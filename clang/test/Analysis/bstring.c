@@ -1,21 +1,21 @@
 // RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
 // RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
-// RUN: %clang_cc1 -analyze -DCHECK -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DCHECK -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
+// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
 
 //===----------------------------------------------------------------------===
 // Declarations
 //===----------------------------------------------------------------------===
 
-// Some functions having a checking variant, which checks if there is overflow
-// using a flow-insensitive calculation of the buffer size. If CHECK is defined,
-// use those instead to make sure they are still checked by the analyzer.
+// Some functions are so similar to each other that they follow the same code
+// path, such as memcpy and __memcpy_chk. If VARIANT is defined, make sure to
+// use the variants instead to make sure they are still checked by the analyzer.
 
 // Some functions are implemented as builtins. These should be #defined as
 // BUILTIN(f), which will prepend "__builtin_" if USE_BUILTINS is defined.
 
-// Functions that have both checking and builtin variants should be declared
-// carefully! See memcpy() for an example.
+// Functions that have variants and are also availabe as builtins should be
+// declared carefully! See memcpy() for an example.
 
 #ifdef USE_BUILTINS
 # define BUILTIN(f) __builtin_ ## f
@@ -29,7 +29,7 @@ typedef typeof(sizeof(int)) size_t;
 // memcpy()
 //===----------------------------------------------------------------------===
 
-#ifdef CHECK
+#ifdef VARIANT
 
 #define __memcpy_chk BUILTIN(__memcpy_chk)
 void *__memcpy_chk(void *restrict s1, const void *restrict s2, size_t n,
@@ -37,12 +37,12 @@ void *__memcpy_chk(void *restrict s1, const void *restrict s2, size_t n,
 
 #define memcpy(a,b,c) __memcpy_chk(a,b,c,(size_t)-1)
 
-#else /* CHECK */
+#else /* VARIANT */
 
 #define memcpy BUILTIN(memcpy)
 void *memcpy(void *restrict s1, const void *restrict s2, size_t n);
 
-#endif /* CHECK */
+#endif /* VARIANT */
 
 
 void memcpy0 () {
@@ -112,23 +112,39 @@ void memcpy9() {
   memcpy(a+1, a+2, 4); // no-warning
 }
 
+void memcpy10() {
+  char a[4] = {0};
+  memcpy(0, a, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void memcpy11() {
+  char a[4] = {0};
+  memcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void memcpy12() {
+  char a[4] = {0};
+  memcpy(0, a, 0); // no-warning
+  memcpy(a, 0, 0); // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // memmove()
 //===----------------------------------------------------------------------===
 
-#ifdef CHECK
+#ifdef VARIANT
 
 #define __memmove_chk BUILTIN(__memmove_chk)
 void *__memmove_chk(void *s1, const void *s2, size_t n, size_t destlen);
 
 #define memmove(a,b,c) __memmove_chk(a,b,c,(size_t)-1)
 
-#else /* CHECK */
+#else /* VARIANT */
 
 #define memmove BUILTIN(memmove)
 void *memmove(void *s1, const void *s2, size_t n);
 
-#endif /* CHECK */
+#endif /* VARIANT */
 
 
 void memmove0 () {

@@ -38,6 +38,8 @@ public:
   const GRState *EvalBcopy(CheckerContext &C, const CallExpr *CE);
 
   // Utility methods
+  const GRState *CheckNonNull(CheckerContext &C, const GRState *state,
+                               const Stmt *S, SVal l);
   const GRState *CheckLocation(CheckerContext &C, const GRState *state,
                                const Stmt *S, SVal l);
   const GRState *CheckBufferAccess(CheckerContext &C, const GRState *state,
@@ -56,6 +58,48 @@ void clang::RegisterCStringChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
 }
 
+const GRState *CStringChecker::CheckNonNull(CheckerContext &C,
+                                            const GRState *state,
+                                            const Stmt *S, SVal l) {
+  // FIXME: This method just checks, of course, that the value is non-null.
+  // It should maybe be refactored and combined with AttrNonNullChecker.
+  if (l.isUnknownOrUndef())
+    return state;
+
+  ValueManager &ValMgr = C.getValueManager();
+  SValuator &SV = ValMgr.getSValuator();
+
+  Loc Null = ValMgr.makeNull();
+  DefinedOrUnknownSVal LocIsNull = SV.EvalEQ(state, cast<Loc>(l), Null);
+
+  const GRState *stateIsNull, *stateIsNonNull;
+  llvm::tie(stateIsNull, stateIsNonNull) = state->Assume(LocIsNull);
+
+  if (stateIsNull && !stateIsNonNull) {
+    ExplodedNode *N = C.GenerateSink(stateIsNull);
+    if (!N)
+      return NULL;
+
+    if (!BT_Bounds)
+      BT_Bounds = new BuiltinBug("API",
+        "Null pointer argument in call to byte string function");
+
+    // Generate a report for this bug.
+    BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Bounds);
+    EnhancedBugReport *report = new EnhancedBugReport(*BT,
+                                                      BT->getDescription(), N);
+
+    report->addRange(S->getSourceRange());
+    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, S);
+    C.EmitReport(report);
+    return NULL;
+  }
+
+  // From here on, assume that the value is non-null.
+  assert(stateIsNonNull);
+  return stateIsNonNull;
+}
+
 // FIXME: This was originally copied from ArrayBoundChecker.cpp. Refactor?
 const GRState *CStringChecker::CheckLocation(CheckerContext &C,
                                              const GRState *state,
@@ -64,8 +108,6 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   const MemRegion *R = l.getAsRegion();
   if (!R)
     return state;
-
-  R = R->StripCasts();
 
   const ElementRegion *ER = dyn_cast<ElementRegion>(R);
   if (!ER)
@@ -131,13 +173,38 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
   if (!Length)
     return state;
 
+  // If the length is zero, it doesn't matter what the two buffers are.
+  DefinedOrUnknownSVal Zero = VM.makeZeroVal(SizeTy);
+  DefinedOrUnknownSVal LengthIsZero = SV.EvalEQ(state, *Length, Zero);
+
+  const GRState *stateZeroLength, *stateNonZeroLength;
+  llvm::tie(stateZeroLength, stateNonZeroLength) = state->Assume(LengthIsZero);
+  if (stateZeroLength && !stateNonZeroLength)
+    return stateZeroLength;
+
+  // FIXME: At this point all we know is it's *possible* for the length to be
+  // nonzero; we don't know it for sure. Unfortunately, that means the next few
+  // tests are incorrect for the edge cases in which a buffer is null or invalid
+  // but the size argument was set to zero in some way that we couldn't track.
+  // What we should really do is bifurcate the state here, but that doesn't
+  // match the way CheckBufferAccess is being used.
+
+  // From here on, we're going to pretend that even if the length is zero, the
+  // buffer access rules still apply. That means the buffer must be non-NULL,
+  // and the value at buffer[size-1] must be valid.
+
+  // Check that the first buffer is non-null.
+  SVal BufVal = state->getSVal(FirstBuf);
+  state = CheckNonNull(C, state, FirstBuf, BufVal);
+  if (!state)
+    return NULL;
+
   // Compute the offset of the last element to be accessed: size-1.
   NonLoc One = cast<NonLoc>(VM.makeIntVal(1, SizeTy));
   NonLoc LastOffset = cast<NonLoc>(SV.EvalBinOpNN(state, BinaryOperator::Sub,
                                                   *Length, One, SizeTy));
 
-  // Check that the first buffer is sufficiently long.
-  SVal BufVal = state->getSVal(FirstBuf);
+  // Check that the first buffer is sufficently long.
   Loc BufStart = cast<Loc>(SV.EvalCast(BufVal, PtrTy, FirstBuf->getType()));
   SVal BufEnd
     = SV.EvalBinOpLN(state, BinaryOperator::Add, BufStart, LastOffset, PtrTy);
@@ -150,6 +217,10 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
   // If there's a second buffer, check it as well.
   if (SecondBuf) {
     BufVal = state->getSVal(SecondBuf);
+    state = CheckNonNull(C, state, SecondBuf, BufVal);
+    if (!state)
+      return NULL;
+
     BufStart = cast<Loc>(SV.EvalCast(BufVal, PtrTy, SecondBuf->getType()));
     BufEnd
       = SV.EvalBinOpLN(state, BinaryOperator::Add, BufStart, LastOffset, PtrTy);
@@ -339,10 +410,8 @@ bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     Name = Name.substr(10);
 
   FnCheck EvalFunction = llvm::StringSwitch<FnCheck>(Name)
-    .Case("memcpy", &CStringChecker::EvalMemcpy)
-    .Case("__memcpy_chk", &CStringChecker::EvalMemcpy)
-    .Case("memmove", &CStringChecker::EvalMemmove)
-    .Case("__memmove_chk", &CStringChecker::EvalMemmove)
+    .Cases("memcpy", "__memcpy_chk", &CStringChecker::EvalMemcpy)
+    .Cases("memmove", "__memmove_chk", &CStringChecker::EvalMemmove)
     .Case("bcopy", &CStringChecker::EvalBcopy)
     .Default(NULL);
 
