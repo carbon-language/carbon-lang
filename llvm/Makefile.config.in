@@ -222,8 +222,8 @@ RDYNAMIC := @RDYNAMIC@
 
 # When ENABLE_PROFILING is enabled, profile instrumentation is done
 # and output is put into the "<Flavor>+Profile" directories, where
-# <Flavor> is either Debug or Release depending on how other builkd
-# flags are set.. Otherwise, output is put in the <Flavor>
+# <Flavor> is either Debug or Release depending on how other build
+# flags are set. Otherwise, output is put in the <Flavor>
 # directories.
 #ENABLE_PROFILING = 1
 @ENABLE_PROFILING@
