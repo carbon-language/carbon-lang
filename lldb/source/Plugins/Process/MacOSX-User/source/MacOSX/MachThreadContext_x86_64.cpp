@@ -179,7 +179,7 @@ MachThreadContext_x86_64::GetStackFrameData(StackFrame *first_frame, std::vector
 
     std::pair<lldb::addr_t, lldb::addr_t> fp_pc_pair;
 
-    typedef struct Frame_x86_64
+    struct Frame_x86_64
     {
         uint64_t fp;
         uint64_t pc;

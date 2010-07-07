@@ -53,7 +53,7 @@ public:
 protected:
     friend class RegisterContextMacOSXFrameBackchain;
 
-    typedef struct Cursor
+    struct Cursor
     {
         lldb::addr_t pc;    // Program counter
         lldb::addr_t fp;    // Frame pointer for us with backchain

@@ -332,7 +332,7 @@ protected:
 };
 
 
-typedef enum StepScope
+enum StepScope
 {
     eStepScopeSource,
     eStepScopeInstruction

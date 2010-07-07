@@ -80,7 +80,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (StackFrame *first_frame)
 
     std::pair<lldb::addr_t, lldb::addr_t> fp_pc_pair;
 
-    typedef struct Frame_i386
+    struct Frame_i386
     {
         uint32_t fp;
         uint32_t pc;
@@ -168,7 +168,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_x86_64 (StackFrame *first_frame)
 
     std::pair<lldb::addr_t, lldb::addr_t> fp_pc_pair;
 
-    typedef struct Frame_x86_64
+    struct Frame_x86_64
     {
         uint64_t fp;
         uint64_t pc;

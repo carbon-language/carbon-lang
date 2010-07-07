@@ -164,7 +164,7 @@ public:
 
 protected:
 
-    typedef enum
+    enum
     {
         GPRRegSet = 1,
         FPURegSet = 2,

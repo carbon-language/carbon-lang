@@ -213,7 +213,7 @@ InitThreadCreated()
     ::pthread_key_create (&g_thread_create_key, MacOSXDarwinThread::PThreadDestructor);
 }
 
-typedef struct HostThreadCreateInfo
+struct HostThreadCreateInfo
 {
     std::string thread_name;
     thread_func_t thread_fptr;
@@ -503,7 +503,7 @@ Host::ResolveExecutableInBundle (FileSpec *file)
     return false;
 }
 
-typedef struct MonitorInfo
+struct MonitorInfo
 {
     int handle;
     pthread_t thread;

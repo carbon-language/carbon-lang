@@ -46,7 +46,7 @@ public:
     {
     public:
 
-        typedef enum Type
+        enum Type
             {
                 unspecified,    // not specified, we may be able to assume this is the same register.
                                 // gcc doesn't specify all initial values so we really don't know...

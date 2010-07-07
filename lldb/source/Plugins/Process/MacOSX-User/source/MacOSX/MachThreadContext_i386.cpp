@@ -166,7 +166,7 @@ MachThreadContext_i386::GetStackFrameData(StackFrame *first_frame, std::vector<s
 
     std::pair<lldb::addr_t, lldb::addr_t> fp_pc_pair;
 
-    typedef struct Frame_i386
+    struct Frame_i386
     {
         uint32_t fp;
         uint32_t pc;
