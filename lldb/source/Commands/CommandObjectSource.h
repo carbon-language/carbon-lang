@@ -1,4 +1,4 @@
-//===-- CommandObjectSource.h -----------------------------------*- C++ -*-===//
+//===-- CommandObjectSource.h.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,33 +15,26 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Core/STLUtils.h"
 
 namespace lldb_private {
 
 //-------------------------------------------------------------------------
-// CommandObjectSource
+// CommandObjectMultiwordSource
 //-------------------------------------------------------------------------
 
-class CommandObjectSource : public CommandObject
+class CommandObjectMultiwordSource : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectSource ();
+    CommandObjectMultiwordSource (CommandInterpreter &interpreter);
 
     virtual
-    ~CommandObjectSource ();
-
-    STLStringArray &
-    GetCommands ();
-
-    virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& command,
-             CommandReturnObject &result);
+    ~CommandObjectMultiwordSource ();
 
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectSource_h_
+#endif  // liblldb_CommandObjectSource.h_h_

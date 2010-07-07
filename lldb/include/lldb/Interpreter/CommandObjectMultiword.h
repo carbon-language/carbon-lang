@@ -67,6 +67,8 @@ public:
                       bool &word_complete,
                       StringList &matches);
 
+    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index);
+
     CommandObject::CommandMap m_subcommand_dict;
 };
 

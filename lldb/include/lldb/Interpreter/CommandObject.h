@@ -260,12 +260,13 @@ public:
     ///    The complete current command line.
     ///
     /// @return
-    ///     NULL if the command is not to be repeated.
-    ///     Otherwise a pointer to the command to be repeated.    
+    ///     NULL if there is no special repeat command - it will use the current command line.
+    ///     Otherwise a pointer to the command to be repeated.
+    ///     If the returned string is the empty string, the command won't be repeated.    
     //------------------------------------------------------------------
-    virtual const char *GetRepeatCommand (const char *current_command_line)
+    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
     {
-        return current_command_line;
+        return NULL;
     }
 
 protected:

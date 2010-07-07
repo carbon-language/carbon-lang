@@ -38,7 +38,7 @@
 #include "../Commands/CommandObjectSettings.h"
 #include "../Commands/CommandObjectShow.h"
 #include "../Commands/CommandObjectSource.h"
-#include "../Commands/CommandObjectSourceFile.h"
+#include "../Commands/CommandObjectCommands.h"
 #include "../Commands/CommandObjectSyntax.h"
 #include "../Commands/CommandObjectTarget.h"
 #include "../Commands/CommandObjectThread.h"
@@ -84,24 +84,24 @@ CommandInterpreter::Initialize ()
     InitializeVariables ();
 
     // Set up some initial aliases.
-    result.Clear(); HandleCommand ("alias q        quit", false, result);
-    result.Clear(); HandleCommand ("alias run      process launch", false, result);
-    result.Clear(); HandleCommand ("alias r        process launch", false, result);
-    result.Clear(); HandleCommand ("alias c        process continue", false, result);
-    result.Clear(); HandleCommand ("alias continue process continue", false, result);
-    result.Clear(); HandleCommand ("alias expr     expression", false, result);
-    result.Clear(); HandleCommand ("alias exit     quit", false, result);
-    result.Clear(); HandleCommand ("alias b        breakpoint", false, result);
-    result.Clear(); HandleCommand ("alias bt       thread backtrace", false, result);
-    result.Clear(); HandleCommand ("alias si       thread step-inst", false, result);
-    result.Clear(); HandleCommand ("alias step     thread step-in", false, result);
-    result.Clear(); HandleCommand ("alias s        thread step-in", false, result);
-    result.Clear(); HandleCommand ("alias next     thread step-over", false, result);
-    result.Clear(); HandleCommand ("alias n        thread step-over", false, result);
-    result.Clear(); HandleCommand ("alias finish   thread step-out", false, result);
-    result.Clear(); HandleCommand ("alias x        memory read", false, result);
-    result.Clear(); HandleCommand ("alias l        source-file", false, result);
-    result.Clear(); HandleCommand ("alias list     source-file", false, result);
+    result.Clear(); HandleCommand ("command alias q        quit", false, result);
+    result.Clear(); HandleCommand ("command alias run      process launch", false, result);
+    result.Clear(); HandleCommand ("command alias r        process launch", false, result);
+    result.Clear(); HandleCommand ("command alias c        process continue", false, result);
+    result.Clear(); HandleCommand ("command alias continue process continue", false, result);
+    result.Clear(); HandleCommand ("command alias expr     expression", false, result);
+    result.Clear(); HandleCommand ("command alias exit     quit", false, result);
+    result.Clear(); HandleCommand ("command alias b        breakpoint", false, result);
+    result.Clear(); HandleCommand ("command alias bt       thread backtrace", false, result);
+    result.Clear(); HandleCommand ("command alias si       thread step-inst", false, result);
+    result.Clear(); HandleCommand ("command alias step     thread step-in", false, result);
+    result.Clear(); HandleCommand ("command alias s        thread step-in", false, result);
+    result.Clear(); HandleCommand ("command alias next     thread step-over", false, result);
+    result.Clear(); HandleCommand ("command alias n        thread step-over", false, result);
+    result.Clear(); HandleCommand ("command alias finish   thread step-out", false, result);
+    result.Clear(); HandleCommand ("command alias x        memory read", false, result);
+    result.Clear(); HandleCommand ("command alias l        source list", false, result);
+    result.Clear(); HandleCommand ("command alias list     source list", false, result);
 }
 
 void
@@ -206,11 +206,11 @@ CommandInterpreter::LoadCommandDictionary ()
 
     // Non-CommandObjectCrossref commands can now be created.
 
-    m_command_dict["alias"]     = CommandObjectSP (new CommandObjectAlias ());
     m_command_dict["append"]    = CommandObjectSP (new CommandObjectAppend ());
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos ());
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
     m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall ());
+    m_command_dict["commands"]  = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
     m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble ());
     m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression ());
     m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile ());
@@ -226,11 +226,9 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["set"]       = CommandObjectSP (new CommandObjectSet ());
     m_command_dict["settings"]  = CommandObjectSP (new CommandObjectSettings ());
     m_command_dict["show"]      = CommandObjectSP (new CommandObjectShow ());
-    m_command_dict["source"]    = CommandObjectSP (new CommandObjectSource ());
-    m_command_dict["source-file"] = CommandObjectSP (new CommandObjectSourceFile ());
+    m_command_dict["source"]    = CommandObjectSP (new CommandObjectMultiwordSource (*this));
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
-    m_command_dict["unalias"]   = CommandObjectSP (new CommandObjectUnalias ());
     m_command_dict["variable"]  = CommandObjectSP (new CommandObjectVariable (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>
@@ -630,7 +628,7 @@ CommandInterpreter::HandleCommand
             command_line = m_repeat_command.c_str();
             if (m_repeat_command.empty())
             {
-                result.AppendError("");
+                result.AppendErrorWithFormat("No auto repeat.\n");
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -661,11 +659,11 @@ CommandInterpreter::HandleCommand
 
                 if (add_to_history)
                 {
-                    const char *repeat_command = command_obj->GetRepeatCommand(command_line);
-                    if (repeat_command)
+                    const char *repeat_command = command_obj->GetRepeatCommand(command_args, 0);
+                    if (repeat_command != NULL)
                         m_repeat_command.assign(repeat_command);
                     else
-                        m_repeat_command.clear();
+                        m_repeat_command.assign(command_line);
                         
                     m_command_history.push_back (command_line);
                 }

@@ -1,4 +1,4 @@
-//===-- CommandObjectUnalias.h ----------------------------------*- C++ -*-===//
+//===-- CommandObjectCommands.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,37 +7,34 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_CommandObjectUnalias_h_
-#define liblldb_CommandObjectUnalias_h_
+#ifndef liblldb_CommandObjectCommands_h_
+#define liblldb_CommandObjectCommands_h_
 
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
+#include "lldb/Core/STLUtils.h"
 
 namespace lldb_private {
 
 //-------------------------------------------------------------------------
-// CommandObjectUnalias
+// CommandObjectMultiwordCommands
 //-------------------------------------------------------------------------
 
-class CommandObjectUnalias : public CommandObject
+class CommandObjectMultiwordCommands : public CommandObjectMultiword
 {
 public:
 
-    CommandObjectUnalias ();
+    CommandObjectMultiwordCommands (CommandInterpreter &interpreter);
 
     virtual
-    ~CommandObjectUnalias ();
-
-    virtual bool
-    Execute (CommandInterpreter &interpreter,
-             Args& args,
-             CommandReturnObject &result);
+    ~CommandObjectMultiwordCommands ();
 
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectUnalias_h_
+#endif  // liblldb_CommandObjectCommands_h_

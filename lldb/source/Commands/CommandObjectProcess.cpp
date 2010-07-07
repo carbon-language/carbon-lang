@@ -247,6 +247,12 @@ public:
         return result.Succeeded();
     }
 
+    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
+    {
+        // No repeat for "process launch"...
+        return "";
+    }
+
 protected:
 
     CommandOptions m_options;

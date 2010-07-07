@@ -287,3 +287,16 @@ CommandObjectMultiword::HandleCompletion
     }
 }
 
+const char *
+CommandObjectMultiword::GetRepeatCommand (Args &current_command_args, uint32_t index)
+{
+    if (current_command_args.GetArgumentCount() == 0)
+        return NULL;
+    index++;
+    CommandObject *sub_command_object = GetSubcommandObject (current_command_args.GetArgumentAtIndex(index));
+    if (sub_command_object == NULL)
+        return NULL;
+    else 
+    return sub_command_object->GetRepeatCommand(current_command_args, index);
+}
+

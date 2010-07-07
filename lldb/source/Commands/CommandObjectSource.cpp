@@ -17,110 +17,347 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Core/FileSpec.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Interpreter/Options.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-const char *k_space_characters = "\t\n\v\f\r ";
-
 //-------------------------------------------------------------------------
-// CommandObjectSource
+// CommandObjectSourceList
 //-------------------------------------------------------------------------
 
-CommandObjectSource::CommandObjectSource() :
-    CommandObject ("source",
-                   "Reads in debugger commands from the file <filename> and executes them.",
-                   "source <filename>")
+class CommandObjectSourceInfo : public CommandObject
 {
-}
 
-CommandObjectSource::~CommandObjectSource ()
-{
-}
-
-bool
-CommandObjectSource::Execute
-(
-    CommandInterpreter &interpreter,
-    Args& args,
-    CommandReturnObject &result
-)
-{
-    const int argc = args.GetArgumentCount();
-    if (argc == 1)
+    class CommandOptions : public Options
     {
-        const char *filename = args.GetArgumentAtIndex(0);
-        bool success = true;
-
-        result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
-
-        FileSpec cmd_file (filename);
-        if (cmd_file.Exists())
+    public:
+        CommandOptions () :
+            Options()
         {
-            STLStringArray commands;
-            success = cmd_file.ReadFileLines (commands);
+        }
 
-            STLStringArray::iterator pos = commands.begin();
+        ~CommandOptions ()
+        {
+        }
 
-            // Trim out any empty lines or lines that start with the comment
-            // char '#'
-            while (pos != commands.end())
+        Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            const char short_option = g_option_table[option_idx].short_option;
+            switch (short_option)
             {
-                bool remove_string = false;
-                size_t non_space = pos->find_first_not_of (k_space_characters);
-                if (non_space == std::string::npos)
-                    remove_string = true; // Empty line
-                else if ((*pos)[non_space] == '#')
-                    remove_string = true; // Comment line that starts with '#'
+            case 'l':
+                start_line = Args::StringToUInt32 (option_arg, 0);
+                if (start_line == 0)
+                    error.SetErrorStringWithFormat("Invalid line number: '%s'.\n", option_arg);
+                break;
 
-                if (remove_string)
-                    pos = commands.erase(pos);
-                else
-                    ++pos;
+             case 'f':
+                file_name = option_arg;
+                break;
+
+           default:
+                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                break;
             }
 
-            if (commands.size() > 0)
-            {
-                const size_t num_commands = commands.size();
-                size_t i;
-                for (i = 0; i<num_commands; ++i)
-                {
-                    result.GetOutputStream().Printf("%s %s\n", interpreter.GetPrompt(), commands[i].c_str());
-                    if (!interpreter.HandleCommand(commands[i].c_str(), false, result))
-                        break;
-                }
+            return error;
+        }
 
-                if (i < num_commands)
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+
+            file_spec.Clear();
+            file_name.clear();
+            start_line = 0;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        FileSpec file_spec;
+        std::string file_name;
+        uint32_t start_line;
+        
+    };
+ 
+public:   
+    CommandObjectSourceInfo() :
+        CommandObject ("source info",
+                         "Display info on the source lines from the current executable's debug info.",
+                         "source info [<cmd-options>]")
+    {
+    }
+
+    ~CommandObjectSourceInfo ()
+    {
+    }
+
+
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+
+    bool
+    Execute
+    (
+        CommandInterpreter &interpreter,
+        Args& args,
+        CommandReturnObject &result
+    )
+    {
+        result.AppendError ("Not yet implemented");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+protected:
+    CommandOptions m_options;
+};
+
+lldb::OptionDefinition
+CommandObjectSourceInfo::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
+{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+};
+
+#pragma mark CommandObjectSourceList
+//-------------------------------------------------------------------------
+// CommandObjectSourceList
+//-------------------------------------------------------------------------
+
+class CommandObjectSourceList : public CommandObject
+{
+
+    class CommandOptions : public Options
+    {
+    public:
+        CommandOptions () :
+            Options()
+        {
+        }
+
+        ~CommandOptions ()
+        {
+        }
+
+        Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            const char short_option = g_option_table[option_idx].short_option;
+            switch (short_option)
+            {
+            case 'l':
+                start_line = Args::StringToUInt32 (option_arg, 0);
+                if (start_line == 0)
+                    error.SetErrorStringWithFormat("Invalid line number: '%s'.\n", option_arg);
+                break;
+
+            case 'n':
+                num_lines = Args::StringToUInt32 (option_arg, 0);
+                if (num_lines == 0)
+                    error.SetErrorStringWithFormat("Invalid line count: '%s'.\n", option_arg);
+                break;
+
+             case 'f':
+                file_name = option_arg;
+                break;
+
+           default:
+                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                break;
+            }
+
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+
+            file_spec.Clear();
+            file_name.clear();
+            start_line = 0;
+            num_lines = 10;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+        FileSpec file_spec;
+        std::string file_name;
+        uint32_t start_line;
+        uint32_t num_lines;
+        
+    };
+ 
+public:   
+    CommandObjectSourceList() :
+        CommandObject ("source list",
+                         "Display source files from the current executable's debug info.",
+                         "source list [<cmd-options>] [<filename>]")
+    {
+    }
+
+    ~CommandObjectSourceList ()
+    {
+    }
+
+
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+
+    bool
+    Execute
+    (
+        CommandInterpreter &interpreter,
+        Args& args,
+        CommandReturnObject &result
+    )
+    {
+        const int argc = args.GetArgumentCount();
+
+        if (argc != 0)
+        {
+            result.AppendErrorWithFormat("'%s' takes no arguments, only flags.\n", GetCommandName());
+            result.SetStatus (eReturnStatusFailed);
+        }
+
+        ExecutionContext exe_ctx(interpreter.GetDebugger().GetExecutionContext());
+        if (m_options.file_name.empty())
+        {
+            // Last valid source manager context, or the current frame if no
+            // valid last context in source manager.
+            // One little trick here, if you type the exact same list command twice in a row, it is
+            // more likely because you typed it once, then typed it again
+            if (m_options.start_line == 0)
+            {
+                if (interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
                 {
-                    result.AppendErrorWithFormat("Aborting source of '%s' after command '%s' failed.\n", filename, commands[i].c_str());
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
-                else
+            }
+            else
+            {
+                if (interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
+                            m_options.start_line,   // Line to display
+                            0,                      // Lines before line to display
+                            m_options.num_lines,    // Lines after line to display
+                            "",                     // Don't mark "line"
+                            &result.GetOutputStream()))
                 {
-                    success = true;
-                    result.SetStatus (eReturnStatusFailed);
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
+
             }
         }
         else
         {
-            result.AppendErrorWithFormat ("File '%s' does not exist.\n", filename);
-            result.SetStatus (eReturnStatusFailed);
-            success = false;
+            const char *filename = m_options.file_name.c_str();
+            Target *target = interpreter.GetDebugger().GetCurrentTarget().get();
+            if (target == NULL)
+            {
+                result.AppendError ("invalid target, set executable file using 'file' command");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+
+
+            bool check_inlines = false;
+            SymbolContextList sc_list;
+            size_t num_matches = target->GetImages().ResolveSymbolContextForFilePath (filename,
+                                                                                      0,
+                                                                                      check_inlines,
+                                                                                      eSymbolContextModule | eSymbolContextCompUnit,
+                                                                                      sc_list);
+            if (num_matches > 0)
+            {
+                SymbolContext sc;
+                if (sc_list.GetContextAtIndex(0, sc))
+                {
+                    if (sc.comp_unit)
+                    {
+                        interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
+                                                                                                         m_options.start_line,   // Line to display
+                                                                                                         0,                      // Lines before line to display
+                                                                                                         m_options.num_lines,    // Lines after line to display
+                                                                                                         "",                     // Don't mark "line"
+                                                                                                         &result.GetOutputStream());
+                        
+                        result.SetStatus (eReturnStatusSuccessFinishResult);
+
+                    }
+                }
+            }
         }
 
-        if (success)
-        {
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        }
+        return result.Succeeded();
     }
-    else
+    
+    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
     {
-        result.AppendErrorWithFormat("'%s' takes exactly one executable filename argument.\n", GetCommandName());
-        result.SetStatus (eReturnStatusFailed);
+        return m_cmd_name.c_str();
     }
-    return result.Succeeded();
 
+protected:
+    CommandOptions m_options;
+
+};
+
+lldb::OptionDefinition
+CommandObjectSourceList::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, "<line>",    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, "<file>",    "The file from which to display source."},
+{ LLDB_OPT_SET_1, false, "count",      'n', required_argument, NULL, 0, "<count>",   "The number of source lines to display."},
+{ 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
+};
+
+#pragma mark CommandObjectMultiwordSource
+
+//-------------------------------------------------------------------------
+// CommandObjectMultiwordSource
+//-------------------------------------------------------------------------
+
+CommandObjectMultiwordSource::CommandObjectMultiwordSource (CommandInterpreter &interpreter) :
+    CommandObjectMultiword ("source",
+                            "Commands for accessing source file information",
+                            "source <subcommand> [<subcommand-options>]")
+{
+    LoadSubCommand (interpreter, "info",   CommandObjectSP (new CommandObjectSourceInfo ()));
+    LoadSubCommand (interpreter, "list",   CommandObjectSP (new CommandObjectSourceList ()));
 }
+
+CommandObjectMultiwordSource::~CommandObjectMultiwordSource ()
+{
+}
+
