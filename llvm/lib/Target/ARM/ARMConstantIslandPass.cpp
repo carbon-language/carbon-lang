@@ -1661,15 +1661,25 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
         continue;
       unsigned IdxReg = MI->getOperand(1).getReg();
       bool IdxRegKill = MI->getOperand(1).isKill();
+
+      // Scan backwards to find the instruction that defines the base
+      // register. Due to post-RA scheduling, we can't count on it
+      // immediately preceding the branch instruction.
       MachineBasicBlock::iterator PrevI = MI;
-      if (PrevI == MBB->begin())
+      MachineBasicBlock::iterator B = MBB->begin();
+      while (PrevI != B && !PrevI->definesRegister(BaseReg))
+        --PrevI;
+
+      // If for some reason we didn't find it, we can't do anything, so
+      // just skip this one.
+      if (!PrevI->definesRegister(BaseReg))
         continue;
 
-      MachineInstr *AddrMI = --PrevI;
+      MachineInstr *AddrMI = PrevI;
       bool OptOk = true;
       // Examine the instruction that calculates the jumptable entry address.
-      // If it's not the one just before the t2BR_JT, we won't delete it, then
-      // it's not worth doing the optimization.
+      // Make sure it only defines the base register and kills any uses
+      // other than the index register.
       for (unsigned k = 0, eee = AddrMI->getNumOperands(); k != eee; ++k) {
         const MachineOperand &MO = AddrMI->getOperand(k);
         if (!MO.isReg() || !MO.getReg())
@@ -1686,9 +1696,14 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       if (!OptOk)
         continue;
 
-      // The previous instruction should be a tLEApcrel or t2LEApcrelJT, we want
+      // Now scan back again to find the tLEApcrel or t2LEApcrelJT instruction
+      // that gave us the initial base register definition.
+      for (--PrevI; PrevI != B && !PrevI->definesRegister(BaseReg); --PrevI)
+        ;
+
+      // The instruction should be a tLEApcrel or t2LEApcrelJT; we want
       // to delete it as well.
-      MachineInstr *LeaMI = --PrevI;
+      MachineInstr *LeaMI = PrevI;
       if ((LeaMI->getOpcode() != ARM::tLEApcrelJT &&
            LeaMI->getOpcode() != ARM::t2LEApcrelJT) ||
           LeaMI->getOperand(0).getReg() != BaseReg)
