@@ -453,7 +453,7 @@ private:
   /// "Interesting" declarations are those that have data that may
   /// need to be emitted, such as inline function definitions or
   /// Objective-C protocols.
-  llvm::SmallVector<Decl *, 16> InterestingDecls;
+  std::deque<Decl *> InterestingDecls;
 
   /// \brief When reading a Stmt tree, Stmt operands are placed in this stack.
   llvm::SmallVector<Stmt *, 16> StmtStack;
@@ -518,6 +518,8 @@ private:
   QualType ReadTypeRecord(uint64_t Offset);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(uint64_t Offset, unsigned Index);
+
+  void PassInterestingDeclsToConsumer();
 
   /// \brief Produce an error diagnostic and return true.
   ///

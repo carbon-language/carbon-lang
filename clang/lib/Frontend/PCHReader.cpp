@@ -2692,6 +2692,15 @@ PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 
+void PCHReader::PassInterestingDeclsToConsumer() {
+  assert(Consumer);
+  while (!InterestingDecls.empty()) {
+    DeclGroupRef DG(InterestingDecls.front());
+    InterestingDecls.pop_front();
+    Consumer->HandleTopLevelDecl(DG);
+  }
+}
+
 void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
   this->Consumer = Consumer;
 
@@ -2699,15 +2708,12 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
     return;
 
   for (unsigned I = 0, N = ExternalDefinitions.size(); I != N; ++I) {
-    // Force deserialization of this decl, which will cause it to be passed to
-    // the consumer (or queued).
+    // Force deserialization of this decl, which will cause it to be queued for
+    // passing to the consumer.
     GetDecl(ExternalDefinitions[I]);
   }
 
-  for (unsigned I = 0, N = InterestingDecls.size(); I != N; ++I) {
-    DeclGroupRef DG(InterestingDecls[I]);
-    Consumer->HandleTopLevelDecl(DG);
-  }
+  PassInterestingDeclsToConsumer();
 }
 
 void PCHReader::PrintStats() {
@@ -3340,6 +3346,11 @@ PCHReader::LoadingTypeOrDecl::~LoadingTypeOrDecl() {
                                      true);
       Reader.PendingIdentifierInfos.pop_front();
     }
+
+    // We are not in recursive loading, so it's safe to pass the "interesting"
+    // decls to the consumer.
+    if (Reader.Consumer)
+      Reader.PassInterestingDeclsToConsumer();
   }
 
   Reader.CurrentlyLoadingTypeOrDecl = Parent;

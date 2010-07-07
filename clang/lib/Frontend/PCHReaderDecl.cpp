@@ -1474,16 +1474,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   assert(Idx == Record.size());
 
   // If we have deserialized a declaration that has a definition the
-  // AST consumer might need to know about, notify the consumer
-  // about that definition now or queue it for later.
-  if (isConsumerInterestedIn(D)) {
-    if (Consumer) {
-      DeclGroupRef DG(D);
-      Consumer->HandleTopLevelDecl(DG);
-    } else {
-      InterestingDecls.push_back(D);
-    }
-  }
+  // AST consumer might need to know about, queue it.
+  // We don't pass it to the consumer immediately because we may be in recursive
+  // loading, and some declarations may still be initializing.
+  if (isConsumerInterestedIn(D))
+    InterestingDecls.push_back(D);
 
   return D;
 }
