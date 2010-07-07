@@ -186,5 +186,5 @@ enum
     dwarf_d31
 };
 
-#endif utility_ARM_DWARF_Registers_h_
+#endif // utility_ARM_DWARF_Registers_h_
 

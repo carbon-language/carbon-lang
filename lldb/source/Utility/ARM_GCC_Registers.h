@@ -31,5 +31,5 @@ enum
     gcc_cpsr
 };
 
-#endif utility_ARM_GCC_Registers_h_
+#endif // utility_ARM_GCC_Registers_h_
 
