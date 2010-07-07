@@ -229,20 +229,18 @@ bool llvm::isNoAliasCall(const Value *V) {
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions (but not Global Aliases)
 ///    Allocas and Mallocs
-///    ByVal and NoAlias Arguments, if Interprocedural is false
-///    NoAlias returns, if Interprocedural is false
+///    ByVal and NoAlias Arguments
+///    NoAlias returns
 ///
-bool llvm::isIdentifiedObject(const Value *V, bool Interprocedural) {
+bool llvm::isIdentifiedObject(const Value *V) {
   if (isa<AllocaInst>(V))
     return true;
   if (isa<GlobalValue>(V) && !isa<GlobalAlias>(V))
     return true;
-  if (!Interprocedural) {
-    if (isNoAliasCall(V))
-      return true;
-    if (const Argument *A = dyn_cast<Argument>(V))
-      return A->hasNoAliasAttr() || A->hasByValAttr();
-  }
+  if (isNoAliasCall(V))
+    return true;
+  if (const Argument *A = dyn_cast<Argument>(V))
+    return A->hasNoAliasAttr() || A->hasByValAttr();
   return false;
 }
 

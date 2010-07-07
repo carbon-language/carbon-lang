@@ -117,6 +117,11 @@ as the actual <tt>call</tt> or <tt>invoke</tt> instructions that performs the
 call.  The <tt>AliasAnalysis</tt> interface also exposes some helper methods
 which allow you to get mod/ref information for arbitrary instructions.</p>
 
+<p>All <tt>AliasAnalysis</tt> interfaces require that in queries involving
+multiple values, values which are not
+<a href="LangRef.html#constants">constants</a> are all defined within the
+same function.</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -181,9 +186,13 @@ that the accesses alias.</p>
 </div>
   
 <div class="doc_text">
-The <tt>alias</tt> method is the primary interface used to determine whether or
-not two memory objects alias each other.  It takes two memory objects as input
-and returns MustAlias, MayAlias, or NoAlias as appropriate.
+<p>The <tt>alias</tt> method is the primary interface used to determine whether
+or not two memory objects alias each other.  It takes two memory objects as
+input and returns MustAlias, MayAlias, or NoAlias as appropriate.</p>
+
+<p>Like all <tt>AliasAnalysis</tt> interfaces, the <tt>alias</tt> method requires
+that either the two pointer values be defined within the same function, or at
+least one of the values is a <a href="LangRef.html#constants">constant</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -202,10 +211,8 @@ the other -- in this case, there is a dependence, but it's mediated by the free
 and reallocation.</p>
 
 <p>As an exception to this is with the
-<a href="LangRef.html#noalias"><tt>noalias</tt></a> keyword. AliasAnalysis
-implementations may choose to respect the <tt>noalias</tt> keyword and ignore
-the "irrelevant" dependencies, provided their clients do not need to be aware
-of these dependencies for correctness.</p>
+<a href="LangRef.html#noalias"><tt>noalias</tt></a> keyword; the "irrelevant"
+dependencies are ignored.</p>
 
 <p>The MayAlias response is used whenever the two pointers might refer to the
 same object.  If the two memory objects overlap, but do not start at the same
