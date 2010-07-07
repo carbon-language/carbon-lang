@@ -1359,11 +1359,25 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
 
     // Insert a copy or an extract to replace the original extracts.
     MachineBasicBlock::iterator InsertLoc = SomeMI;
-    MachineInstr *CopyMI = BuildMI(*SomeMI->getParent(), SomeMI,
-                                   SomeMI->getDebugLoc(),
-                                   TII->get(TargetOpcode::COPY))
-      .addReg(DstReg, RegState::Define, NewDstSubIdx)
-      .addReg(SrcReg, 0, NewSrcSubIdx);
+    if (NewSrcSubIdx) {
+      // Insert an extract subreg.
+      BuildMI(*SomeMI->getParent(), InsertLoc, SomeMI->getDebugLoc(),
+              TII->get(TargetOpcode::EXTRACT_SUBREG), DstReg)
+        .addReg(SrcReg).addImm(NewSrcSubIdx);
+    } else if (NewDstSubIdx) {
+      // Do a subreg insertion.
+      BuildMI(*SomeMI->getParent(), InsertLoc, SomeMI->getDebugLoc(),
+              TII->get(TargetOpcode::INSERT_SUBREG), DstReg)
+        .addReg(DstReg).addReg(SrcReg).addImm(NewDstSubIdx);
+    } else {
+      // Insert a copy.
+      bool Emitted =
+        TII->copyRegToReg(*SomeMI->getParent(), InsertLoc, DstReg, SrcReg,
+                          MRI->getRegClass(DstReg), MRI->getRegClass(SrcReg),
+                          SomeMI->getDebugLoc());
+      (void)Emitted;
+    }
+    MachineBasicBlock::iterator CopyMI = prior(InsertLoc);
 
     // Remove all the old extract instructions.
     for (MachineRegisterInfo::use_nodbg_iterator

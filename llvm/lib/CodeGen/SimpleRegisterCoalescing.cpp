@@ -1523,7 +1523,12 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     if (Inst->isCopy() || Inst->isExtractSubreg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
-    } else if (Inst->isSubregToReg()) {
+    } else if (Inst->isInsertSubreg()) {
+      DstReg = Inst->getOperand(0).getReg();
+      SrcReg = Inst->getOperand(2).getReg();
+      if (Inst->getOperand(1).isUndef())
+        isInsUndef = true;
+    } else if (Inst->isInsertSubreg() || Inst->isSubregToReg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(2).getReg();
     } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
