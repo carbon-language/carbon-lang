@@ -820,41 +820,33 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
 void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this character contain the \0 character?
 
-  // Handle the common case of 'x' and '\y' efficiently.
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
     if (!isLexingRawMode() && !Features.AsmPreprocessor)
       Diag(BufferPtr, diag::err_empty_character);
     FormTokenWithChars(Result, CurPtr, tok::unknown);
     return;
-  } else if (C == '\\') {
-    // Skip the escaped character.
-    // FIXME: UCN's.
+  }
+
+  while (C != '\'') {
+    // Skip escaped characters.
+    if (C == '\\') {
+      // Skip the escaped character.
+      // FIXME: UCN's
+      C = getAndAdvanceChar(CurPtr, Result);
+    } else if (C == '\n' || C == '\r' ||             // Newline.
+               (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
+      if (!isLexingRawMode() && !Features.AsmPreprocessor)
+        Diag(BufferPtr, diag::err_unterminated_char);
+      FormTokenWithChars(Result, CurPtr-1, tok::unknown);
+      return;
+    } else if (C == 0) {
+      NulCharacter = CurPtr-1;
+    }
     C = getAndAdvanceChar(CurPtr, Result);
   }
 
-  if (C && C != '\n' && C != '\r' && CurPtr[0] == '\'') {
-    ++CurPtr;
-  } else {
-    // Fall back on generic code for embedded nulls, newlines, wide chars.
-    do {
-      // Skip escaped characters.
-      if (C == '\\') {
-        // Skip the escaped character.
-        C = getAndAdvanceChar(CurPtr, Result);
-      } else if (C == '\n' || C == '\r' ||               // Newline.
-                 (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
-        if (!isLexingRawMode() && !Features.AsmPreprocessor)
-          Diag(BufferPtr, diag::err_unterminated_char);
-        FormTokenWithChars(Result, CurPtr-1, tok::unknown);
-        return;
-      } else if (C == 0) {
-        NulCharacter = CurPtr-1;
-      }
-      C = getAndAdvanceChar(CurPtr, Result);
-    } while (C != '\'');
-  }
-
+  // If a nul character existed in the character, warn about it.
   if (NulCharacter && !isLexingRawMode())
     Diag(NulCharacter, diag::null_in_char);
 
