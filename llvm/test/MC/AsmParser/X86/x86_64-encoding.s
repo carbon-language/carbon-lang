@@ -2186,3 +2186,42 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x62,0x79,0x2a,0x20]
           vmovntdqa  (%rax), %xmm12
 
+// CHECK: vpcmpgtq  %xmm12, %xmm10, %xmm11
+// CHECK: encoding: [0xc4,0x42,0x29,0x37,0xdc]
+          vpcmpgtq  %xmm12, %xmm10, %xmm11
+
+// CHECK: vpcmpgtq  (%rax), %xmm10, %xmm13
+// CHECK: encoding: [0xc4,0x62,0x29,0x37,0x28]
+          vpcmpgtq  (%rax), %xmm10, %xmm13
+
+// CHECK: vpcmpistrm  $7, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x62,0xd4,0x07]
+          vpcmpistrm  $7, %xmm12, %xmm10
+
+// CHECK: vpcmpistrm  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x62,0x10,0x07]
+          vpcmpistrm  $7, (%rax), %xmm10
+
+// CHECK: vpcmpestrm  $7, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x60,0xd4,0x07]
+          vpcmpestrm  $7, %xmm12, %xmm10
+
+// CHECK: vpcmpestrm  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x60,0x10,0x07]
+          vpcmpestrm  $7, (%rax), %xmm10
+
+// CHECK: vpcmpistri  $7, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x63,0xd4,0x07]
+          vpcmpistri  $7, %xmm12, %xmm10
+
+// CHECK: vpcmpistri  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x63,0x10,0x07]
+          vpcmpistri  $7, (%rax), %xmm10
+
+// CHECK: vpcmpestri  $7, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x61,0xd4,0x07]
+          vpcmpestri  $7, %xmm12, %xmm10
+
+// CHECK: vpcmpestri  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x61,0x10,0x07]
+          vpcmpestri  $7, (%rax), %xmm10
