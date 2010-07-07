@@ -70,16 +70,22 @@ ObjectFileELF::CreateInstance (Module* module, DataBufferSP& dataSP, const FileS
 }
 
 bool
-ObjectFileELF::MagicBytesMatch (DataBufferSP& dataSP)
+ObjectFileELF::MagicBytesMatch (DataBufferSP& data_sp)
 {
-    DataExtractor data(dataSP, eByteOrderHost, 4);
-    const uint8_t* magic = data.PeekData(0, 4);
-    if (magic != NULL)
+    if (data_sp && data_sp->GetByteSize() > EI_PAD)
     {
-        return magic[EI_MAG0] == 0x7f
-            && magic[EI_MAG1] == 'E'
-            && magic[EI_MAG2] == 'L'
-            && magic[EI_MAG3] == 'F';
+        const uint8_t* magic = data_sp->GetBytes();
+        if (magic != NULL)
+        {
+            bool have_magic = (magic[EI_MAG0] == 0x7f &&
+                               magic[EI_MAG1] == 'E'  &&
+                               magic[EI_MAG2] == 'L'  &&
+                               magic[EI_MAG3] == 'F');
+        
+            bool have_32bit = magic[EI_CLASS] == ELFCLASS32;
+        
+            return have_magic && have_32bit;
+        }
     }
     return false;
 }
@@ -376,7 +382,7 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
             break;
         }
 
-        switch (ELF32_ST_BIND (symbol.st_info))
+        switch (ELF_ST_BIND (symbol.st_info))
         {
         default:
         case STT_NOTYPE:
@@ -442,7 +448,7 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
                         symbol_name,    // symbol name
                         false,          // Is the symbol name mangled?
                         symbol_type,    // type of this symbol
-                        ELF32_ST_BIND (symbol.st_info) == STB_GLOBAL,   // Is this globally visible?
+                        ELF_ST_BIND (symbol.st_info) == STB_GLOBAL,   // Is this globally visible?
                         false,          // Is this symbol debug info?
                         false,          // Is this symbol a trampoline?
                         false,          // Is this symbol artificial?

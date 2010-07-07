@@ -58,6 +58,8 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		26A9641011E52C8800EE609E /* ObjectFileELF64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A9640E11E52C8800EE609E /* ObjectFileELF64.cpp */; };
+		26A9641111E52C8800EE609E /* ObjectFileELF64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A9640F11E52C8800EE609E /* ObjectFileELF64.h */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D5B06511B07550009A862E /* StoppointCallbackContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */; };
@@ -545,6 +547,8 @@
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
 		26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerBSDArchive.h; sourceTree = "<group>"; };
 		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LLDBWrapPython.cpp; path = source/LLDBWrapPython.cpp; sourceTree = "<group>"; };
+		26A9640E11E52C8800EE609E /* ObjectFileELF64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFileELF64.cpp; sourceTree = "<group>"; };
+		26A9640F11E52C8800EE609E /* ObjectFileELF64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFileELF64.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
 		26B42B1E1187A92B0079C8C8 /* lldb-include.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-include.h"; path = "include/lldb/lldb-include.h"; sourceTree = "<group>"; };
 		26B42C4C1187ABA50079C8C8 /* LLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LLDB.h; path = include/lldb/API/LLDB.h; sourceTree = "<group>"; };
@@ -1197,8 +1201,10 @@
 			isa = PBXGroup;
 			children = (
 				260C898410F57C5600BB2B04 /* elf.h */,
-				260C898510F57C5600BB2B04 /* ObjectFileELF.cpp */,
 				260C898610F57C5600BB2B04 /* ObjectFileELF.h */,
+				260C898510F57C5600BB2B04 /* ObjectFileELF.cpp */,
+				26A9640F11E52C8800EE609E /* ObjectFileELF64.h */,
+				26A9640E11E52C8800EE609E /* ObjectFileELF64.cpp */,
 			);
 			path = ELF;
 			sourceTree = "<group>";
@@ -2190,6 +2196,7 @@
 				49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */,
 				49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */,
 				4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */,
+				26A9641111E52C8800EE609E /* ObjectFileELF64.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2639,6 +2646,7 @@
 				49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */,
 				49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */,
 				4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */,
+				26A9641011E52C8800EE609E /* ObjectFileELF64.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

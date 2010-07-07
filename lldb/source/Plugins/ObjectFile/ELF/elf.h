@@ -10,17 +10,30 @@
 #ifndef __elf_h__
 #define __elf_h__
 
+//----------------------------------------------------------------------
+// Typedefs for ELF32.
+//----------------------------------------------------------------------
 typedef uint16_t    Elf32_Half;
 typedef uint32_t    Elf32_Word;
 typedef int32_t     Elf32_Sword;
 typedef uint32_t    Elf32_Addr;
 typedef uint32_t    Elf32_Off;
 
+//----------------------------------------------------------------------
+// Typedefs for ELF64.
+//----------------------------------------------------------------------
+typedef uint16_t    Elf64_Half;
+typedef uint32_t    Elf64_Word;
+typedef int32_t     Elf64_Sword;
+typedef uint64_t    Elf64_Xword;
+typedef int64_t     Elf64_Sxword;
+typedef uint64_t    Elf64_Addr;
+typedef uint64_t    Elf64_Off;
 
 #define EI_NIDENT 16
 
 //----------------------------------------------------------------------
-// ELF Header
+// ELF Headers
 //----------------------------------------------------------------------
 typedef struct Elf32_Ehdr_Tag
 {
@@ -39,6 +52,24 @@ typedef struct Elf32_Ehdr_Tag
     Elf32_Half  e_shnum;
     Elf32_Half  e_shstrndx;
 } Elf32_Ehdr;
+
+typedef struct Elf64_Ehdr_Tag
+{
+    unsigned char e_ident[EI_NIDENT];
+    Elf64_Half  e_type;
+    Elf64_Half  e_machine;
+    Elf64_Word  e_version;
+    Elf64_Addr  e_entry;
+    Elf64_Off   e_phoff;
+    Elf64_Off   e_shoff;
+    Elf64_Word  e_flags;
+    Elf64_Half  e_ehsize;
+    Elf64_Half  e_phentsize;
+    Elf64_Half  e_phnum;
+    Elf64_Half  e_shentsize;
+    Elf64_Half  e_shnum;
+    Elf64_Half  e_shstrndx;
+} Elf64_Ehdr;
 
 //----------------------------------------------------------------------
 // e_type
@@ -69,6 +100,7 @@ typedef struct Elf32_Ehdr_Tag
 #define EM_PPC      20  // PowerPC
 #define EM_PPC64    21  // PowerPC64
 #define EM_ARM      40  // ARM
+#define EM_X86_64   62  // AMD x86-64
 
 
 //----------------------------------------------------------------------
@@ -83,6 +115,11 @@ typedef struct Elf32_Ehdr_Tag
 #define EI_VERSION  6   // File version
 #define EI_PAD      7   // Start of padding bytes
 
+//----------------------------------------------------------------------
+// EI_CLASS definitions
+//----------------------------------------------------------------------
+#define ELFCLASS32 1 // 32-bit object file
+#define ELFCLASS64 2 // 64-bit object file
 
 //----------------------------------------------------------------------
 // EI_DATA definitions
@@ -92,7 +129,7 @@ typedef struct Elf32_Ehdr_Tag
 #define ELFDATA2MSB 2   // Big Endian
 
 //----------------------------------------------------------------------
-// Section Header
+// Section Headers
 //----------------------------------------------------------------------
 typedef struct Elf32_Shdr_Tag
 {
@@ -107,6 +144,20 @@ typedef struct Elf32_Shdr_Tag
     Elf32_Word  sh_addralign;
     Elf32_Word  sh_entsize;
 } Elf32_Shdr;
+
+typedef struct Elf64_Shdr_Tag
+{
+    Elf64_Word  sh_name;
+    Elf64_Word  sh_type;
+    Elf64_Xword sh_flags;
+    Elf64_Addr  sh_addr;
+    Elf64_Off   sh_offset;
+    Elf64_Xword sh_size;
+    Elf64_Word  sh_link;
+    Elf64_Word  sh_info;
+    Elf64_Xword sh_addralign;
+    Elf64_Xword sh_entsize;
+} Elf64_Shdr;
 
 //----------------------------------------------------------------------
 // Section Types (sh_type)
@@ -149,7 +200,7 @@ typedef struct Elf32_Shdr_Tag
 
 
 //----------------------------------------------------------------------
-// Symbol Table Entry Header
+// Symbol Table Entry Headers
 //----------------------------------------------------------------------
 typedef struct Elf32_Sym_Tag
 {
@@ -161,10 +212,23 @@ typedef struct Elf32_Sym_Tag
     Elf32_Half      st_shndx;
 } Elf32_Sym;
 
+typedef struct Elf64_Sym_Tag
+{
+    Elf64_Word      st_name;
+    unsigned char   st_info;
+    unsigned char   st_other;
+    Elf64_Half      st_shndx;
+    Elf64_Addr      st_value;
+    Elf64_Xword     st_size;
+} Elf64_Sym;
 
-#define ELF32_ST_BIND(i)    ((i)>>4)
-#define ELF32_ST_TYPE(i)    ((i)&0xf)
-#define ELF32_ST_INFO(b,t)  (((b)<<4)+((t)&0xf))
+//----------------------------------------------------------------------
+// Accessors to the binding and type bits in the st_info field of a 
+// symbol table entry.  Valid for both 32 and 64 bit variations.
+//----------------------------------------------------------------------
+#define ELF_ST_BIND(i)    ((i)>>4)
+#define ELF_ST_TYPE(i)    ((i)&0xf)
+#define ELF_ST_INFO(b,t)  (((b)<<4)+((t)&0xf))
 
 // ST_BIND
 #define STB_LOCAL   0
@@ -199,9 +263,69 @@ typedef struct Elf32_Rela_Tag
     Elf32_Sword r_addend;
 } Elf32_Rela;
 
+typedef struct Elf64_Rel_Tag
+{
+    Elf64_Addr  r_offset;
+    Elf64_Word  r_info;
+} Elf64_Rel;
+
+typedef struct Elf64_Rela_Tag
+{
+    Elf64_Addr  r_offset;
+    Elf64_Word  r_info;
+    Elf64_Sword r_addend;
+} Elf64_Rela;
+
 #define ELF32_R_SYM(i)      ((i)>>8)
 #define ELF32_R_TYPE(i)     ((unsignedchar)(i))
 #define ELF32_R_INFO(s,t)   (((s)<<8)+(unsignedchar)(t))
+
+//----------------------------------------------------------------------
+// Dynamic Table Entry Headers
+//----------------------------------------------------------------------
+typedef struct Elf64_Dyn_Tag
+{
+    Elf64_Sxword d_tag;
+    union
+    {
+        Elf64_Xword d_val;
+        Elf64_Addr  d_ptr;
+    } d_un;
+} Elf64_Dyn;
+
+#define DT_NULL         0       // Marks end of dynamic array.
+#define DT_NEEDED       1       // String table offset of needed library.
+#define DT_PLTRELSZ     2       // Size of relocation entries in PLT.
+#define DT_PLTGOT       3       // Address associated with linkage table.
+#define DT_HASH         4       // Address of symbolic hash table.
+#define DT_STRTAB       5       // Address of dynamic string table.
+#define DT_SYMTAB       6       // Address of dynamic symbol table.
+#define DT_RELA         7       // Address of relocation table (Rela entries).
+#define DT_RELASZ       8       // Size of Rela relocation table.
+#define DT_RELAENT      9       // Size of a Rela relocation entry.
+#define DT_STRSZ        10      // Total size of the string table.
+#define DT_SYMENT       11      // Size of a symbol table entry.
+#define DT_INIT         12      // Address of initialization function.
+#define DT_FINI         13      // Address of termination function.
+#define DT_SONAME       14      // String table offset of a shared objects name.
+#define DT_RPATH        15      // String table offset of library search path.
+#define DT_SYMBOLIC     16      // Changes symbol resolution algorithm.
+#define DT_REL          17      // Address of relocation table (Rel entries).
+#define DT_RELSZ        18      // Size of Rel relocation table.
+#define DT_RELENT       19      // Size of a Rel relocation entry.
+#define DT_PLTREL       20      // Type of relocation entry used for linking.
+#define DT_DEBUG        21      // Reserved for debugger.
+#define DT_TEXTREL      22      // Relocations exist for non-writable segements.
+#define DT_JMPREL       23      // Address of relocations associated with PLT.
+#define DT_BIND_NOW     24      // Process all relocations before execution.
+#define DT_INIT_ARRAY   25      // Pointer to array of initialization functions.
+#define DT_FINI_ARRAY   26      // Pointer to array of termination functions.
+#define DT_INIT_ARRAYSZ 27      // Size of DT_INIT_ARRAY.
+#define DT_FINI_ARRAYSZ 28      // Size of DT_FINI_ARRAY.
+#define DT_LOOS         0x60000000 // Start of environment specific tags.
+#define DT_HIOS         0x6FFFFFFF // End of environment specific tags.
+#define DT_LOPROC       0x70000000 // Start of processor specific tags.
+#define DT_HIPROC       0x7FFFFFFF // End of processor specific tags.
 
 
 //----------------------------------------------------------------------
@@ -218,6 +342,18 @@ typedef struct Elf32_Phdr_Tag
     Elf32_Word  p_flags;
     Elf32_Word  p_align;
 } Elf32_Phdr;
+
+typedef struct Elf64_Phdr_Tag
+{
+    Elf64_Word  p_type;
+    Elf64_Off   p_offset;
+    Elf64_Addr  p_vaddr;
+    Elf64_Addr  p_paddr;
+    Elf64_Word  p_filesz;
+    Elf64_Word  p_memsz;
+    Elf64_Word  p_flags;
+    Elf64_Word  p_align;
+} Elf64_Phdr;
 
 //----------------------------------------------------------------------
 // Program Header Type (p_type)
