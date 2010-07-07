@@ -5892,6 +5892,23 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
                                RHS, AA_Assigning))
     return QualType();
 
+  
+  // Check to see if the destination operand is a dereferenced null pointer.  If
+  // so, and if not volatile-qualified, this is undefined behavior that the
+  // optimizer will delete, so warn about it.  People sometimes try to use this
+  // to get a deterministic trap and are surprised by clang's behavior.  This
+  // only handles the pattern "*null = whatever", which is a very syntactic
+  // check.
+  if (UnaryOperator *UO = dyn_cast<UnaryOperator>(LHS->IgnoreParenCasts()))
+    if (UO->getOpcode() == UnaryOperator::Deref &&
+        UO->getSubExpr()->IgnoreParenCasts()->
+          isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) &&
+        !UO->getType().isVolatileQualified()) {
+    Diag(UO->getOperatorLoc(), diag::warn_indirection_through_null)
+        << UO->getSubExpr()->getSourceRange();
+    Diag(UO->getOperatorLoc(), diag::note_indirection_through_null);
+  }
+  
   // C99 6.5.16p3: The type of an assignment expression is the type of the
   // left operand unless the left operand has qualified type, in which case
   // it is the unqualified version of the type of the left operand.

@@ -582,7 +582,7 @@ void pr4781(unsigned long *raw1) {
 - (id) foo {
   if (self)
     return self;
-  *((int *) 0x0) = 0xDEADBEEF; // no-warning
+  *((volatile int *) 0x0) = 0xDEADBEEF; // no-warning
   return self;
 }
 @end

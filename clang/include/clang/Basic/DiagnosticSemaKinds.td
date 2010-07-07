@@ -21,12 +21,6 @@ def ext_expr_not_ice : Extension<
   "expression is not integer constant expression "
   "(but is allowed as an extension)">;
 
-def ext_null_pointer_expr_not_ice : Extension<
-  "null pointer expression is not an integer constant expression "
-  "(but is allowed as an extension)">;
-
-
-
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<
   "predefined identifier is only valid inside function">;
@@ -2095,6 +2089,11 @@ def err_typecheck_unary_expr : Error<
   "invalid argument type %0 to unary expression">;
 def err_typecheck_indirection_requires_pointer : Error<
   "indirection requires pointer operand (%0 invalid)">;
+def warn_indirection_through_null : Warning<
+  "indirection of non-volatile null pointer will be deleted, not trap">;
+def note_indirection_through_null : Note<
+  "consider using __builtin_trap() or qualifying pointer with 'volatile'">;
+
 def err_indirection_requires_nonfragile_object : Error<
   "indirection cannot be to an interface in non-fragile ABI (%0 invalid)">;
 def err_direct_interface_unsupported : Error<
