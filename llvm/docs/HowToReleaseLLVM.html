@@ -213,13 +213,13 @@ Building the Release</a></div>
 
 <div class="doc_text">
 The build of <tt>llvm</tt>, <tt>llvm-gcc</tt>, and <tt>clang</tt> must be free
-of errors and warnings in both debug, release, and release-asserts builds. 
+of errors and warnings in both debug, release+asserts, and release builds. 
 If all builds are clean, then the release passes build qualification.
 
 <ol>
 <li>debug: ENABLE_OPTIMIZED=0</li>
-<li>release: ENABLE_OPTIMIZED=1</li>
-<li>release-asserts: ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</li>
+<li>release+asserts: ENABLE_OPTIMIZED=1</li>
+<li>release: ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</li>
 </ol>
 </div>
 
@@ -227,7 +227,7 @@ If all builds are clean, then the release passes build qualification.
 <div class="doc_subsubsection"><a name="build">Build LLVM</a></div>
 <div class="doc_text">
   <p>
-  Build both debug, release (optimized), and release-asserts versions of 
+  Build both debug, release+asserts (optimized), and release versions of 
   LLVM on all supported platforms. Direction to build llvm are 
   <a href="http://llvm.org/docs/GettingStarted.html#quickstart">here</a>.
   </p>
@@ -264,7 +264,7 @@ If all builds are clean, then the release passes build qualification.
 Binary Distribution</a></div>
 <div class="doc_text">
   <p>
-  Creating the Clang binary distribution (debug/release/release-asserts) requires 
+  Creating the Clang binary distribution (debug/release/release) requires
   performing the following steps for each supported platform:
   </p>
 
@@ -429,7 +429,7 @@ Qualification Details</a></div>
 </a></div>
 <div class="doc_text">
   <p>
-  The final stages of the release process involving taging the release branch,
+  The final stages of the release process involving tagging the release branch,
   updating documentation that refers to the release, and updating the demo
   page.</p>
   <p>FIXME: Add a note if anything needs to be done to the clang website. 

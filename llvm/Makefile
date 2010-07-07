@@ -180,7 +180,7 @@ $(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in
 # that it gets executed last.
 ifneq ($(BUILD_DIRS_ONLY),1)
 all::
-	$(Echo) '*****' Completed $(BuildMode)$(AssertMode) Build
+	$(Echo) '*****' Completed $(BuildMode) Build
 ifeq ($(BuildMode),Debug)
 	$(Echo) '*****' Note: Debug build can be 10 times slower than an
 	$(Echo) '*****' optimized build. Use 'make ENABLE_OPTIMIZED=1' to

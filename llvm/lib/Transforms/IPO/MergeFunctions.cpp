@@ -146,7 +146,7 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
   switch(Ty1->getTypeID()) {
   default:
     llvm_unreachable("Unknown type!");
-    // Fall through in Release-Asserts mode.
+    // Fall through in Release mode.
   case Type::IntegerTyID:
   case Type::OpaqueTyID:
     // Ty1 == Ty2 would have returned true earlier.

@@ -398,12 +398,11 @@ endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
-ifdef DISABLE_ASSERTIONS
-  # Indicate that assertions are turned off using a minus sign
-  BuildMode := $(BuildMode)-Asserts
-  CPP.Defines += -DNDEBUG
-else
+ifndef DISABLE_ASSERTIONS
+  BuildMode := $(BuildMode)+Asserts
   CPP.Defines += -D_DEBUG
+else
+  CPP.Defines += -DNDEBUG
 endif
 
 # If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or
