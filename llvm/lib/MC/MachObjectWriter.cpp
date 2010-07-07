@@ -33,6 +33,7 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   default: llvm_unreachable("invalid fixup kind!");
   case X86::reloc_pcrel_1byte:
   case FK_Data_1: return 0;
+  case X86::reloc_pcrel_2byte:
   case FK_Data_2: return 1;
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
@@ -47,6 +48,7 @@ static bool isFixupKindPCRel(unsigned Kind) {
   default:
     return false;
   case X86::reloc_pcrel_1byte:
+  case X86::reloc_pcrel_2byte:
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:

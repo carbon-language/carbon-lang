@@ -201,7 +201,7 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
       FixupKind == MCFixupKind(X86::reloc_riprel_4byte_movq_load))
     ImmOffset -= 4;
   if (FixupKind == MCFixupKind(X86::reloc_pcrel_2byte))
-    ImmOffset -= 4;// FIXME: This should be 2, but 'as' produces an offset of 4.
+    ImmOffset -= 2;
   if (FixupKind == MCFixupKind(X86::reloc_pcrel_1byte))
     ImmOffset -= 1;
   
