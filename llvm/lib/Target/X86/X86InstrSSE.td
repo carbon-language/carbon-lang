@@ -4214,25 +4214,31 @@ let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
 let Constraints = "$src1 = $dst" in
   defm PINSRD : SS41I_insert32<0x22, "pinsrd">;
 
-multiclass SS41I_insert64_avx<bits<8> opc, string OpcodeStr> {
+multiclass SS41I_insert64<bits<8> opc, string asm, bit Is2Addr = 1> {
   def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                 (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
-                 !strconcat(OpcodeStr, 
-                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-                 [(set VR128:$dst, 
-                   (v2i64 (insertelt VR128:$src1, GR64:$src2, imm:$src3)))]>,
-                 OpSize, REX_W;
+      (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (v2i64 (insertelt VR128:$src1, GR64:$src2, imm:$src3)))]>,
+      OpSize;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-                 (ins VR128:$src1, i64mem:$src2, i32i8imm:$src3),
-                 !strconcat(OpcodeStr,
-                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-                 [(set VR128:$dst, 
-                   (v2i64 (insertelt VR128:$src1, (loadi64 addr:$src2),
-                                     imm:$src3)))]>, OpSize, REX_W;
+      (ins VR128:$src1, i64mem:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (v2i64 (insertelt VR128:$src1, (loadi64 addr:$src2),
+                          imm:$src3)))]>, OpSize;
 }
 
 let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
-  defm VPINSRQ : SS41I_insert64_avx<0x22, "vpinsrq">, VEX_4V, VEX_W;
+  defm VPINSRQ : SS41I_insert64<0x22, "vpinsrq", 0>, VEX_4V, VEX_W;
+let Constraints = "$src1 = $dst" in
+  defm PINSRQ : SS41I_insert64<0x22, "pinsrq">, REX_W;
 
 // insertps has a few different modes, there's the first two here below which
 // are optimized inserts that won't zero arbitrary elements in the destination

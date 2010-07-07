@@ -2349,27 +2349,3 @@ def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
 
-//===----------------------------------------------------------------------===//
-// X86-64 SSE4.1 Instructions
-//===----------------------------------------------------------------------===//
-
-let Constraints = "$src1 = $dst" in {
-  multiclass SS41I_insert64<bits<8> opc, string OpcodeStr> {
-    def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr, 
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst, 
-                     (v2i64 (insertelt VR128:$src1, GR64:$src2, imm:$src3)))]>,
-                   OpSize, REX_W;
-    def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, i64mem:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst, 
-                     (v2i64 (insertelt VR128:$src1, (loadi64 addr:$src2),
-                                       imm:$src3)))]>, OpSize, REX_W;
-  }
-} // Constraints = "$src1 = $dst"
-
-defm PINSRQ      : SS41I_insert64<0x22, "pinsrq">;
