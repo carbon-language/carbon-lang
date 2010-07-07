@@ -53,6 +53,8 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
   //   }
   //
   // See also PR6358 and PR6359.
+  // For this reason, we're currently only doing the C++03 version of this
+  // code; the C++0x version has to wait until we get a proper spec.
   QualType SearchType;
   DeclContext *LookupCtx = 0;
   bool isDependent = false;
@@ -69,50 +71,33 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
     
     bool AlreadySearched = false;
     bool LookAtPrefix = true;
-    if (!getLangOptions().CPlusPlus0x) {
-      // C++ [basic.lookup.qual]p6:
-      //   If a pseudo-destructor-name (5.2.4) contains a nested-name-specifier, 
-      //   the type-names are looked up as types in the scope designated by the
-      //   nested-name-specifier. In a qualified-id of the form:
-      // 
-      //     ::[opt] nested-name-specifier  ̃ class-name 
-      //
-      //   where the nested-name-specifier designates a namespace scope, and in
-      //   a qualified-id of the form:
-      //
-      //     ::opt nested-name-specifier class-name ::  ̃ class-name 
-      //
-      //   the class-names are looked up as types in the scope designated by 
-      //   the nested-name-specifier.
-      //
-      // Here, we check the first case (completely) and determine whether the
-      // code below is permitted to look at the prefix of the 
-      // nested-name-specifier (as we do in C++0x).
-      DeclContext *DC = computeDeclContext(SS, EnteringContext);
-      if (DC && DC->isFileContext()) {
-        AlreadySearched = true;
-        LookupCtx = DC;
-        isDependent = false;
-      } else if (DC && isa<CXXRecordDecl>(DC))
-        LookAtPrefix = false;
-    }
-    
-    // C++0x [basic.lookup.qual]p6:
-    //   If a pseudo-destructor-name (5.2.4) contains a
-    //   nested-name-specifier, the type-names are looked up as types
-    //   in the scope designated by the nested-name-specifier. Similarly, in 
+    // C++ [basic.lookup.qual]p6:
+    //   If a pseudo-destructor-name (5.2.4) contains a nested-name-specifier, 
+    //   the type-names are looked up as types in the scope designated by the
+    //   nested-name-specifier. In a qualified-id of the form:
+    // 
+    //     ::[opt] nested-name-specifier  ̃ class-name 
+    //
+    //   where the nested-name-specifier designates a namespace scope, and in
     //   a qualified-id of the form:
     //
-    //     :: [opt] nested-name-specifier[opt] class-name :: ~class-name 
+    //     ::opt nested-name-specifier class-name ::  ̃ class-name 
     //
-    //   the second class-name is looked up in the same scope as the first.
+    //   the class-names are looked up as types in the scope designated by 
+    //   the nested-name-specifier.
     //
-    // To implement this, we look at the prefix of the
-    // nested-name-specifier we were given, and determine the lookup
-    // context from that.
-    //
-    // We also fold in the second case from the C++03 rules quoted further 
-    // above.
+    // Here, we check the first case (completely) and determine whether the
+    // code below is permitted to look at the prefix of the 
+    // nested-name-specifier.
+    DeclContext *DC = computeDeclContext(SS, EnteringContext);
+    if (DC && DC->isFileContext()) {
+      AlreadySearched = true;
+      LookupCtx = DC;
+      isDependent = false;
+    } else if (DC && isa<CXXRecordDecl>(DC))
+      LookAtPrefix = false;
+    
+    // The second case from the C++03 rules quoted further above.
     NestedNameSpecifier *Prefix = 0;
     if (AlreadySearched) {
       // Nothing left to do.
@@ -121,11 +106,6 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
       PrefixSS.setScopeRep(Prefix);
       LookupCtx = computeDeclContext(PrefixSS, EnteringContext);
       isDependent = isDependentScopeSpecifier(PrefixSS);
-    } else if (getLangOptions().CPlusPlus0x &&
-               (LookupCtx = computeDeclContext(SS, EnteringContext))) {
-      if (!LookupCtx->isTranslationUnit())
-        LookupCtx = LookupCtx->getParent();
-      isDependent = LookupCtx && LookupCtx->isDependentContext();
     } else if (ObjectTypePtr) {
       LookupCtx = computeDeclContext(SearchType);
       isDependent = SearchType->isDependentType();
