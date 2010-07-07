@@ -44,7 +44,8 @@ using namespace llvm;
 static cl::opt<bool> PrintDbgScope("print-dbgscope", cl::Hidden,
      cl::desc("Print DbgScope information for each machine instruction"));
 
-static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print", cl::Hidden,
+static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print", 
+                                              cl::Hidden,
      cl::desc("Disable debug info printing"));
 
 static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
@@ -1072,8 +1073,9 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   if (!Name.empty())
     addString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
-  if (Tag == dwarf::DW_TAG_enumeration_type || Tag == dwarf::DW_TAG_class_type ||
-      Tag == dwarf::DW_TAG_structure_type || Tag == dwarf::DW_TAG_union_type) {
+  if (Tag == dwarf::DW_TAG_enumeration_type || Tag == dwarf::DW_TAG_class_type 
+      || Tag == dwarf::DW_TAG_structure_type || Tag == dwarf::DW_TAG_union_type)
+    {
     // Add size if non-zero (derived types might be zero-sized.)
     if (Size)
       addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
@@ -1615,11 +1617,13 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     // FIXME : Handle getNumOperands != 3 
     if (DVInsn->getNumOperands() == 3) {
       if (DVInsn->getOperand(0).isReg())
-        updated = addRegisterAddress(VariableDie, DVLabel, DVInsn->getOperand(0));
+        updated = 
+          addRegisterAddress(VariableDie, DVLabel, DVInsn->getOperand(0));
       else if (DVInsn->getOperand(0).isImm())
         updated = addConstantValue(VariableDie, DVLabel, DVInsn->getOperand(0));
       else if (DVInsn->getOperand(0).isFPImm()) 
-        updated = addConstantFPValue(VariableDie, DVLabel, DVInsn->getOperand(0));
+        updated = 
+          addConstantFPValue(VariableDie, DVLabel, DVInsn->getOperand(0));
     } else {
       MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
       if (Location.getReg()) {
@@ -2270,7 +2274,8 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     const MachineInstr *Begin = NULL;
     const MachineInstr *End = NULL;
     for (SmallVector<const MachineInstr *, 4>::iterator 
-           MVI = MultipleValues.begin(), MVE = MultipleValues.end(); MVI != MVE; ++MVI) {
+           MVI = MultipleValues.begin(), MVE = MultipleValues.end(); 
+         MVI != MVE; ++MVI) {
       if (!Begin) {
         Begin = *MVI;
         continue;
@@ -2375,7 +2380,8 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
 }
 
 /// getOrCreateDbgScope - Create DbgScope for the scope.
-DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope, const MDNode *InlinedAt) {
+DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope, 
+                                          const MDNode *InlinedAt) {
   if (!InlinedAt) {
     DbgScope *WScope = DbgScopeMap.lookup(Scope);
     if (WScope)
@@ -2548,7 +2554,8 @@ bool DwarfDebug::extractScopeInformation() {
         // current instruction scope does not match scope of first instruction
         // in this range then create a new instruction range.
         DbgRange R(RangeBeginMI, PrevMI);
-        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevScope, PrevInlinedAt);
+        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevScope, 
+                                                        PrevInlinedAt);
         MIRanges.push_back(R);
       } 
 
@@ -2771,7 +2778,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       if (ProcessedSPNodes.count((*AI)->getScopeNode()) == 0)
         constructScopeDIE(*AI);
     }
-    
+
     DIE *CurFnDIE = constructScopeDIE(CurrentFnDbgScope);
     
     if (!DisableFramePointerElim(*MF))
@@ -2852,7 +2859,8 @@ DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
 /// recordSourceLine - Register a source line with debug info. Returns the
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
-MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S) {
+MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, 
+                                       const MDNode *S) {
   StringRef Dir;
   StringRef Fn;
 
@@ -3597,8 +3605,9 @@ void DwarfDebug::emitDebugLoc() {
   unsigned char Size = Asm->getTargetData().getPointerSize();
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
   unsigned index = 1;
-  for (SmallVector<DotDebugLocEntry, 4>::iterator I = DotDebugLocEntries.begin(),
-         E = DotDebugLocEntries.end(); I != E; ++I, ++index) {
+  for (SmallVector<DotDebugLocEntry, 4>::iterator 
+         I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end(); 
+       I != E; ++I, ++index) {
     DotDebugLocEntry Entry = *I;
     if (Entry.isEmpty()) {
       Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
