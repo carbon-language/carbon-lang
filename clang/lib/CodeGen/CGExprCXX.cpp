@@ -572,9 +572,18 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   }
 
   if (CXXConstructorDecl *Ctor = E->getConstructor()) {
-    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false, 
-                               NewPtr, E->constructor_arg_begin(),
-                               E->constructor_arg_end());
+    // Per C++ [expr.new]p15, if we have an initializer, then we're performing
+    // direct initialization. C++ [dcl.init]p5 requires that we 
+    // zero-initialize storage if there are no user-declared constructors.
+    if (E->hasInitializer() && 
+        !Ctor->getParent()->hasUserDeclaredConstructor() &&
+        !Ctor->getParent()->isEmpty())
+      CGF.EmitNullInitialization(NewPtr, E->getAllocatedType());
+      
+    if (!Ctor->isTrivial())
+      CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false, 
+                                 NewPtr, E->constructor_arg_begin(),
+                                 E->constructor_arg_end());
 
     return;
   }

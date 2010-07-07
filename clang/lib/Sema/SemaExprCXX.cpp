@@ -480,7 +480,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
 
   MarkDeclarationReferenced(E->getExprLoc(), Destructor);
   CheckDestructorAccess(E->getExprLoc(), Destructor,
-                        PDiag(diag::err_access_dtor_temp) << Ty);
+                        PDiag(diag::err_access_dtor_exception) << Ty);
   return false;
 }
 
@@ -566,27 +566,19 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                                      RParenLoc));
   }
 
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
+  if (Ty->isRecordType()) {
+    InitializedEntity Entity = InitializedEntity::InitializeTemporary(Ty);
+    InitializationKind Kind
+      = NumExprs ? InitializationKind::CreateDirect(TypeRange.getBegin(), 
+                                                    LParenLoc, RParenLoc)
+                 : InitializationKind::CreateValue(TypeRange.getBegin(), 
+                                                   LParenLoc, RParenLoc);
+    InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
+    OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                              move(exprs));
 
-    if (NumExprs > 1 || !Record->hasTrivialConstructor() ||
-        !Record->hasTrivialDestructor()) {
-      InitializedEntity Entity = InitializedEntity::InitializeTemporary(Ty);
-      InitializationKind Kind
-        = NumExprs ? InitializationKind::CreateDirect(TypeRange.getBegin(), 
-                                                      LParenLoc, RParenLoc)
-                   : InitializationKind::CreateValue(TypeRange.getBegin(), 
-                                                     LParenLoc, RParenLoc);
-      InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
-      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                                move(exprs));
-
-      // FIXME: Improve AST representation?
-      return move(Result);
-    }
-
-    // Fall through to value-initialize an object of class type that
-    // doesn't have a user-declared default constructor.
+    // FIXME: Improve AST representation?
+    return move(Result);
   }
 
   // C++ [expr.type.conv]p1:

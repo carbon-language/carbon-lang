@@ -320,3 +320,21 @@ namespace UserConvertToValue {
     f(1);
   }
 }
+
+namespace PR7556 {
+  struct A { ~A(); }; 
+  struct B { int i; ~B(); }; 
+  struct C { int C::*pm; ~C(); }; 
+  // CHECK: define void @_ZN6PR75563fooEv()
+  void foo() { 
+    // CHECK: call void @_ZN6PR75561AD1Ev
+    A(); 
+    // CHECK: call void @llvm.memset.p0i8.i64
+    // CHECK: call void @_ZN6PR75561BD1Ev
+    B();
+    // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+    // CHECK: call void @_ZN6PR75561CD1Ev
+    C();
+    // CHECK-NEXT: ret void
+  }
+}
