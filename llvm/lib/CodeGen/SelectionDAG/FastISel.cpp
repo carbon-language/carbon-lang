@@ -120,7 +120,9 @@ unsigned FastISel::getRegForValue(const Value *V) {
 
   // In bottom-up mode, just create the virtual register which will be used
   // to hold the value. It will be materialized later.
-  if (isa<Instruction>(V)) {
+  if (isa<Instruction>(V) &&
+      (!isa<AllocaInst>(V) ||
+       !FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(V)))) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
     FuncInfo.ValueMap[V] = Reg;
     return Reg;
