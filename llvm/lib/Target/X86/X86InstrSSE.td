@@ -4966,33 +4966,47 @@ let Constraints = "$src1 = $dst" in {
 // AES-NI Instructions
 //===----------------------------------------------------------------------===//
 
-let Constraints = "$src1 = $dst" in {
-  multiclass AESI_binop_rm_int<bits<8> opc, string OpcodeStr,
-                                Intrinsic IntId128, bit Commutable = 0> {
-    def rr : AES8I<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, VR128:$src2),
-                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                   [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-                   OpSize {
-      let isCommutable = Commutable;
-    }
-    def rm : AES8I<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, i128mem:$src2),
-                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                   [(set VR128:$dst,
-                     (IntId128 VR128:$src1,
-                      (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
-  }
+multiclass AESI_binop_rm_int<bits<8> opc, string OpcodeStr,
+                              Intrinsic IntId128, bit Is2Addr = 1> {
+  def rr : AES8I<opc, MRMSrcReg, (outs VR128:$dst),
+       (ins VR128:$src1, VR128:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+       OpSize;
+  def rm : AES8I<opc, MRMSrcMem, (outs VR128:$dst),
+       (ins VR128:$src1, i128mem:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set VR128:$dst,
+         (IntId128 VR128:$src1,
+          (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
-defm AESENC          : AESI_binop_rm_int<0xDC, "aesenc",
-                       int_x86_aesni_aesenc>;
-defm AESENCLAST      : AESI_binop_rm_int<0xDD, "aesenclast",
-                       int_x86_aesni_aesenclast>;
-defm AESDEC          : AESI_binop_rm_int<0xDE, "aesdec",
-                       int_x86_aesni_aesdec>;
-defm AESDECLAST      : AESI_binop_rm_int<0xDF, "aesdeclast",
-                       int_x86_aesni_aesdeclast>;
+// Perform One Round of an AES Encryption/Decryption Flow
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasAES] in {
+  defm VAESENC          : AESI_binop_rm_int<0xDC, "vaesenc",
+                         int_x86_aesni_aesenc, 0>, VEX_4V;
+  defm VAESENCLAST      : AESI_binop_rm_int<0xDD, "vaesenclast",
+                         int_x86_aesni_aesenclast, 0>, VEX_4V;
+  defm VAESDEC          : AESI_binop_rm_int<0xDE, "vaesdec",
+                         int_x86_aesni_aesdec, 0>, VEX_4V;
+  defm VAESDECLAST      : AESI_binop_rm_int<0xDF, "vaesdeclast",
+                         int_x86_aesni_aesdeclast, 0>, VEX_4V;
+}
+
+let Constraints = "$src1 = $dst" in {
+  defm AESENC          : AESI_binop_rm_int<0xDC, "aesenc",
+                         int_x86_aesni_aesenc>;
+  defm AESENCLAST      : AESI_binop_rm_int<0xDD, "aesenclast",
+                         int_x86_aesni_aesenclast>;
+  defm AESDEC          : AESI_binop_rm_int<0xDE, "aesdec",
+                         int_x86_aesni_aesdec>;
+  defm AESDECLAST      : AESI_binop_rm_int<0xDF, "aesdeclast",
+                         int_x86_aesni_aesdeclast>;
+}
 
 def : Pat<(v2i64 (int_x86_aesni_aesenc VR128:$src1, VR128:$src2)),
           (AESENCrr VR128:$src1, VR128:$src2)>;
@@ -5011,13 +5025,27 @@ def : Pat<(v2i64 (int_x86_aesni_aesdeclast VR128:$src1, VR128:$src2)),
 def : Pat<(v2i64 (int_x86_aesni_aesdeclast VR128:$src1, (memop addr:$src2))),
           (AESDECLASTrm VR128:$src1, addr:$src2)>;
 
+// Perform the AES InvMixColumn Transformation
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasAES] in {
+  def VAESIMCrr : AES8I<0xDB, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1),
+      "vaesimc\t{$src1, $dst|$dst, $src1}",
+      [(set VR128:$dst,
+        (int_x86_aesni_aesimc VR128:$src1))]>,
+      OpSize, VEX;
+  def VAESIMCrm : AES8I<0xDB, MRMSrcMem, (outs VR128:$dst),
+      (ins i128mem:$src1),
+      "vaesimc\t{$src1, $dst|$dst, $src1}",
+      [(set VR128:$dst,
+        (int_x86_aesni_aesimc (bitconvert (memopv2i64 addr:$src1))))]>,
+      OpSize, VEX;
+}
 def AESIMCrr : AES8I<0xDB, MRMSrcReg, (outs VR128:$dst),
   (ins VR128:$src1),
   "aesimc\t{$src1, $dst|$dst, $src1}",
   [(set VR128:$dst,
     (int_x86_aesni_aesimc VR128:$src1))]>,
   OpSize;
-
 def AESIMCrm : AES8I<0xDB, MRMSrcMem, (outs VR128:$dst),
   (ins i128mem:$src1),
   "aesimc\t{$src1, $dst|$dst, $src1}",
@@ -5025,6 +5053,22 @@ def AESIMCrm : AES8I<0xDB, MRMSrcMem, (outs VR128:$dst),
     (int_x86_aesni_aesimc (bitconvert (memopv2i64 addr:$src1))))]>,
   OpSize;
 
+// AES Round Key Generation Assist
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasAES] in {
+  def VAESKEYGENASSIST128rr : AESAI<0xDF, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1, i8imm:$src2),
+      "vaeskeygenassist\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+      [(set VR128:$dst,
+        (int_x86_aesni_aeskeygenassist VR128:$src1, imm:$src2))]>,
+      OpSize, VEX;
+  def VAESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
+      (ins i128mem:$src1, i8imm:$src2),
+      "vaeskeygenassist\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+      [(set VR128:$dst,
+        (int_x86_aesni_aeskeygenassist (bitconvert (memopv2i64 addr:$src1)),
+                                        imm:$src2))]>,
+      OpSize, VEX;
+}
 def AESKEYGENASSIST128rr : AESAI<0xDF, MRMSrcReg, (outs VR128:$dst),
   (ins VR128:$src1, i8imm:$src2),
   "aeskeygenassist\t{$src2, $src1, $dst|$dst, $src1, $src2}",

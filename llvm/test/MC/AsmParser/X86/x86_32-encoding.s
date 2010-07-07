@@ -12162,3 +12162,51 @@
 // CHECK: encoding: [0xc4,0xe3,0x79,0x61,0x28,0x07]
           vpcmpestri  $7, (%eax), %xmm5
 
+// CHECK: vaesimc  %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe2,0x79,0xdb,0xea]
+          vaesimc  %xmm2, %xmm5
+
+// CHECK: vaesimc  (%eax), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0x79,0xdb,0x10]
+          vaesimc  (%eax), %xmm2
+
+// CHECK: vaesenc  %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdc,0xca]
+          vaesenc  %xmm2, %xmm5, %xmm1
+
+// CHECK: vaesenc  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdc,0x18]
+          vaesenc  (%eax), %xmm5, %xmm3
+
+// CHECK: vaesenclast  %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdd,0xca]
+          vaesenclast  %xmm2, %xmm5, %xmm1
+
+// CHECK: vaesenclast  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdd,0x18]
+          vaesenclast  (%eax), %xmm5, %xmm3
+
+// CHECK: vaesdec  %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0xde,0xca]
+          vaesdec  %xmm2, %xmm5, %xmm1
+
+// CHECK: vaesdec  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0xde,0x18]
+          vaesdec  (%eax), %xmm5, %xmm3
+
+// CHECK: vaesdeclast  %xmm2, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdf,0xca]
+          vaesdeclast  %xmm2, %xmm5, %xmm1
+
+// CHECK: vaesdeclast  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0xdf,0x18]
+          vaesdeclast  (%eax), %xmm5, %xmm3
+
+// CHECK: vaeskeygenassist  $7, %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0xdf,0xea,0x07]
+          vaeskeygenassist  $7, %xmm2, %xmm5
+
+// CHECK: vaeskeygenassist  $7, (%eax), %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0xdf,0x28,0x07]
+          vaeskeygenassist  $7, (%eax), %xmm5
+
