@@ -2210,6 +2210,8 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   } else if (E->getType()->isIntegerType()) {
     if (!IntExprEvaluator(Info, Info.EvalResult.Val).Visit(const_cast<Expr*>(E)))
       return false;
+    if (Result.Val.isLValue() && !IsGlobalLValue(Result.Val.getLValueBase()))
+      return false;
   } else if (E->getType()->hasPointerRepresentation()) {
     LValue LV;
     if (!EvaluatePointer(E, LV, Info))
