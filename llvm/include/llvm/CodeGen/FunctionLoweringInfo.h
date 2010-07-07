@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef FUNCTIONLOWERINGINFO_H
-#define FUNCTIONLOWERINGINFO_H
+#ifndef LLVM_CODEGEN_FUNCTIONLOWERINGINFO_H
+#define LLVM_CODEGEN_FUNCTIONLOWERINGINFO_H
 
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
