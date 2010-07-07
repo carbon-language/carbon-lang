@@ -563,13 +563,12 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  CXXTryStmtInfo Info = EnterCXXTryStmt(S);
+  EnterCXXTryStmt(S);
   EmitStmt(S.getTryBlock());
-  ExitCXXTryStmt(S, Info);
+  ExitCXXTryStmt(S);
 }
 
-CodeGenFunction::CXXTryStmtInfo
-CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S) {
+void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
   unsigned NumHandlers = S.getNumHandlers();
   EHCatchScope *CatchScope = EHStack.pushCatch(NumHandlers);
 
@@ -593,8 +592,6 @@ CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S) {
       CatchScope->setCatchAllHandler(I, Handler);
     }
   }
-  
-  return CXXTryStmtInfo();
 }
 
 /// Check whether this is a non-EH scope, i.e. a scope which doesn't
@@ -1103,8 +1100,7 @@ static void BeginCatch(CodeGenFunction &CGF,
   CGF.EmitLocalBlockVarDecl(*CatchParam, &InitCatchParam);
 }
 
-void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
-                                     CXXTryStmtInfo TryInfo) {
+void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
   unsigned NumHandlers = S.getNumHandlers();
   EHCatchScope &CatchScope = cast<EHCatchScope>(*EHStack.begin());
   assert(CatchScope.getNumHandlers() == NumHandlers);
@@ -1123,6 +1119,12 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
   if (HaveInsertPoint())
     Builder.CreateBr(ContBB);
 
+  // Determine if we need an implicit rethrow for all these catch handlers.
+  bool ImplicitRethrow = false;
+  if (IsFnTryBlock)
+    ImplicitRethrow = isa<CXXDestructorDecl>(CurCodeDecl) ||
+                      isa<CXXConstructorDecl>(CurCodeDecl);
+
   for (unsigned I = 0; I != NumHandlers; ++I) {
     llvm::BasicBlock *CatchBlock = Handlers[I].Block;
     EmitBlock(CatchBlock);
@@ -1136,6 +1138,14 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
 
     // Initialize the catch variable and set up the cleanups.
     BeginCatch(*this, C);
+
+    // If there's an implicit rethrow, push a normal "cleanup" to call
+    // _cxa_rethrow.  This needs to happen before _cxa_end_catch is
+    // called.
+    if (ImplicitRethrow) {
+      CleanupBlock Rethrow(*this, NormalCleanup);
+      EmitCallOrInvoke(getReThrowFn(*this), 0, 0);
+    }
 
     // Perform the body of the catch.
     EmitStmt(C->getHandlerBlock());

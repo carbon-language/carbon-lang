@@ -606,11 +606,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 
   // Enter the function-try-block before the constructor prologue if
   // applicable.
-  CXXTryStmtInfo TryInfo;
   bool IsTryBody = (Body && isa<CXXTryStmt>(Body));
-
   if (IsTryBody)
-    TryInfo = EnterCXXTryStmt(*cast<CXXTryStmt>(Body));
+    EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
   EHScopeStack::stable_iterator CleanupDepth = EHStack.stable_begin();
 
@@ -631,7 +629,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   PopCleanupBlocks(CleanupDepth);
 
   if (IsTryBody)
-    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), TryInfo);
+    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 }
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
@@ -671,11 +669,10 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // anything else --- unless we're in a deleting destructor, in which
   // case we're just going to call the complete destructor and then
   // call operator delete() on the way out.
-  CXXTryStmtInfo TryInfo;
   bool isTryBody = (DtorType != Dtor_Deleting &&
                     Body && isa<CXXTryStmt>(Body));
   if (isTryBody)
-    TryInfo = EnterCXXTryStmt(*cast<CXXTryStmt>(Body));
+    EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
   // Emit the destructor epilogue now.  If this is a complete
   // destructor with a function-try-block, perform the base epilogue
@@ -742,7 +739,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
 
   // Exit the try if applicable.
   if (isTryBody)
-    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), TryInfo);
+    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 }
 
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's

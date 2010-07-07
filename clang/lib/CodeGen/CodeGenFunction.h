@@ -1102,9 +1102,8 @@ public:
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
 
   llvm::Constant *getUnwindResumeOrRethrowFn();
-  struct CXXTryStmtInfo {};
-  CXXTryStmtInfo EnterCXXTryStmt(const CXXTryStmt &S);
-  void ExitCXXTryStmt(const CXXTryStmt &S, CXXTryStmtInfo Info);
+  void EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);
+  void ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);
 
   void EmitCXXTryStmt(const CXXTryStmt &S);
   

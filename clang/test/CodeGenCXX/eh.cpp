@@ -193,3 +193,30 @@ namespace test8 {
     }
   }
 }
+
+// Constructor function-try-block must rethrow on fallthrough.
+// rdar://problem/7696603
+namespace test9 {
+  void opaque();
+
+  struct A { A(); };
+
+  // CHECK:      define void @_ZN5test91AC1Ev
+  // CHECK:      call void @_ZN5test91AC2Ev
+  // CHECK-NEXT: ret void
+
+  // CHECK: define void @_ZN5test91AC2Ev(
+  A::A() try {
+  // CHECK:      invoke void @_ZN5test96opaqueEv()
+    opaque();
+  } catch (int x) {
+  // CHECK:      call i8* @__cxa_begin_catch
+  // CHECK:      invoke void @_ZN5test96opaqueEv()
+  // CHECK:      invoke void @__cxa_rethrow()
+    opaque();
+  }
+
+  // landing pad from first call to invoke
+  // CHECK:      call i8* @llvm.eh.exception
+  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+}
