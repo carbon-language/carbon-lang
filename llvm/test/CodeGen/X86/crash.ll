@@ -130,3 +130,14 @@ bb14:
 bb67:
   ret void
 }
+
+; Crash when trying to copy AH to AL.
+; PR7540
+define void @copy8bitregs() nounwind {
+entry:
+  %div.i = sdiv i32 115200, 0
+  %shr8.i = lshr i32 %div.i, 8
+  %conv4.i = trunc i32 %shr8.i to i8
+  call void asm sideeffect "outb $0, ${1:w}", "{ax},N{dx},~{dirflag},~{fpsr},~{flags}"(i8 %conv4.i, i32 1017) nounwind
+  unreachable
+}

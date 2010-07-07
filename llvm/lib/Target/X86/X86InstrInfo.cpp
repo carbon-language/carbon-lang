@@ -1913,6 +1913,9 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     else if (SrcRC->hasSuperClass(&X86::GR32RegClass) &&
              DestRC->hasSuperClass(&X86::GR32RegClass))
       CommonRC = &X86::GR32RegClass;
+    else if (SrcRC->hasSuperClass(&X86::GR8RegClass) &&
+             DestRC->hasSuperClass(&X86::GR8RegClass))
+      CommonRC = &X86::GR8RegClass;
     else
       CommonRC = 0;
   }
