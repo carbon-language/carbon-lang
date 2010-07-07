@@ -732,8 +732,11 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   if (II.usesCustomInsertionHook()) {
     // Insert this instruction into the basic block using a target
     // specific inserter which may returns a new basic block.
-    MBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
-    InsertPos = MBB->end();
+    MachineBasicBlock *NewMBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
+    if (NewMBB != MBB) {
+      MBB = NewMBB;
+      InsertPos = NewMBB->end();
+    }
     return;
   }
   
