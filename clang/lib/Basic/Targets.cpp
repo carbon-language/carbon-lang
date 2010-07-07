@@ -212,6 +212,30 @@ public:
     }
 };
 
+// Minix Target
+template<typename Target>
+class MinixTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                            MacroBuilder &Builder) const {
+    // Minix defines
+
+    Builder.defineMacro("__minix", "3");
+    Builder.defineMacro("_EM_WSIZE", "4");
+    Builder.defineMacro("_EM_PSIZE", "4");
+    Builder.defineMacro("_EM_SSIZE", "2");
+    Builder.defineMacro("_EM_LSIZE", "4");
+    Builder.defineMacro("_EM_FSIZE", "4");
+    Builder.defineMacro("_EM_DSIZE", "8");
+    DefineStd(Builder, "unix", Opts);
+  }
+public:
+  MinixTargetInfo(const std::string &triple)
+    : OSTargetInfo<Target>(triple) {
+      this->UserLabelPrefix = "";
+    }
+};
+
 // Linux target
 template<typename Target>
 class LinuxTargetInfo : public OSTargetInfo<Target> {
@@ -2501,6 +2525,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new OpenBSDI386TargetInfo(T);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<X86_32TargetInfo>(T);
+    case llvm::Triple::Minix:
+      return new MinixTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::Cygwin:

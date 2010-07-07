@@ -723,6 +723,10 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     // FreeBSD 7.3
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2", "", "", "", triple);
     break;
+  case llvm::Triple::Minix:
+    AddGnuCPlusPlusIncludePaths("/usr/gnu/include/c++/4.4.3",
+                                "", "", "", triple);
+    break;
   case llvm::Triple::Solaris:
     // Solaris - Fall though..
   case llvm::Triple::AuroraUX:

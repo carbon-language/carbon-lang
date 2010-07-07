@@ -271,6 +271,13 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
+class LLVM_LIBRARY_VISIBILITY Minix : public Generic_GCC {
+public:
+  Minix(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+};
+
 class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_GCC {
 public:
   DragonFly(const HostInfo &Host, const llvm::Triple& Triple);

@@ -908,6 +908,38 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   return *T;
 }
 
+/// Minix - Minix tool chain which can call as(1) and ld(1) directly.
+
+Minix::Minix(const HostInfo &Host, const llvm::Triple& Triple)
+  : Generic_GCC(Host, Triple) {
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+  getFilePaths().push_back("/usr/gnu/lib");
+  getFilePaths().push_back("/usr/gnu/lib/gcc/i686-pc-minix/4.4.3");
+}
+
+Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::minix::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::minix::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA);
+    }
+  }
+
+  return *T;
+}
+
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
 
 AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)

@@ -425,6 +425,58 @@ ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
   return TC;
 }
 
+// Minix Host Info
+
+/// MinixHostInfo -  Minix host information implementation.
+class MinixHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  MinixHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
+  ~MinixHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
+};
+
+MinixHostInfo::~MinixHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it){
+    delete it->second;
+  }
+}
+
+bool MinixHostInfo::useDriverDriver() const {
+  return false;
+}
+
+ToolChain *MinixHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
+  assert(!ArchName &&
+         "Unexpected arch name on platform without driver driver support.");
+
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
+
+  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::Minix(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 // DragonFly Host Info
 
 /// DragonFlyHostInfo -  DragonFly host information implementation.
@@ -563,6 +615,12 @@ const HostInfo *
 clang::driver::createFreeBSDHostInfo(const Driver &D,
                                      const llvm::Triple& Triple) {
   return new FreeBSDHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createMinixHostInfo(const Driver &D,
+                                     const llvm::Triple& Triple) {
+  return new MinixHostInfo(D, Triple);
 }
 
 const HostInfo *

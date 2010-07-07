@@ -76,6 +76,8 @@ const HostInfo *createOpenBSDHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
 const HostInfo *createFreeBSDHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
+const HostInfo *createMinixHostInfo(const Driver &D,
+                                      const llvm::Triple& Triple);
 const HostInfo *createDragonFlyHostInfo(const Driver &D,
                                         const llvm::Triple& Triple);
 const HostInfo *createLinuxHostInfo(const Driver &D,

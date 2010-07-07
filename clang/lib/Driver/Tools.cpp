@@ -2680,13 +2680,18 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crt1.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crti.o")));
     }
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
+    CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crtn.o")));
   }
 
   CmdArgs.push_back(Args.MakeArgString("-L/opt/gcc4/lib/gcc/"
@@ -2731,9 +2736,8 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
-//    else
-//      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                                getToolChain().GetFilePath(C, "crtend.o")));
   }
 
   const char *Exec =
@@ -2811,10 +2815,13 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt0.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crt0.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtbeginS.o")));
     }
   }
 
@@ -2862,9 +2869,11 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtend.o")));
     else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtendS.o")));
   }
 
   const char *Exec =
@@ -2954,12 +2963,17 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crt1.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtbeginS.o")));
     }
   }
 
@@ -3019,14 +3033,120 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+                                                                  "crtend.o")));
     else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+                                                                 "crtendS.o")));
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+                                                                    "crtn.o")));
   }
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                     Job &Dest, const InputInfo &Output,
+                                     const InputInfoList &Inputs,
+                                     const ArgList &Args,
+                                     const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  CmdArgs.push_back("-o");
+  if (Output.isPipe())
+    CmdArgs.push_back("-");
+  else
+    CmdArgs.push_back(Output.getFilename());
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    if (II.isPipe())
+      CmdArgs.push_back("-");
+    else
+      CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "gas"));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                 Job &Dest, const InputInfo &Output,
+                                 const InputInfoList &Inputs,
+                                 const ArgList &Args,
+                                 const char *LinkingOutput) const {
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+
+  if (Output.isPipe()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back("-");
+  } else if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles))
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+                                                      "/usr/gnu/lib/crtso.o")));
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString();
+
+    if (II.isPipe())
+      CmdArgs.push_back("-");
+    else if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    if (D.CCCIsCXX) {
+      CmdArgs.push_back("-lstdc++");
+      CmdArgs.push_back("-lm");
+    }
+
+    if (Args.hasArg(options::OPT_pthread))
+      CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-lc");
+    CmdArgs.push_back("-lgcc");
+    CmdArgs.push_back("-L/usr/gnu/lib");
+    // FIXME: fill in the correct search path for the final
+    // support libraries.
+    CmdArgs.push_back("-L/usr/gnu/lib/gcc/i686-pc-minix/4.4.3");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+                                              "/usr/gnu/lib/libend.a")));
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "/usr/gnu/bin/gld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -3108,12 +3228,17 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
+      CmdArgs.push_back(
+            Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
+      CmdArgs.push_back(
+            Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(
+            Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
+      CmdArgs.push_back(
+            Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+      CmdArgs.push_back(
+            Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
     }
   }
 
@@ -3183,10 +3308,13 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtend.o")));
     else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtendS.o")));
+    CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath(C, "crtn.o")));
   }
 
   const char *Exec =

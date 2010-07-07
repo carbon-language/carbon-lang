@@ -1298,6 +1298,8 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
     return createOpenBSDHostInfo(*this, Triple);
   case llvm::Triple::FreeBSD:
     return createFreeBSDHostInfo(*this, Triple);
+  case llvm::Triple::Minix:
+    return createMinixHostInfo(*this, Triple);
   case llvm::Triple::Linux:
     return createLinuxHostInfo(*this, Triple);
   default:

@@ -377,6 +377,41 @@ namespace freebsd {
   };
 } // end namespace freebsd
 
+  /// minix -- Directly call GNU Binutils assembler and linker
+namespace minix {
+  class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
+  public:
+    Assemble(const ToolChain &TC) : Tool("minix::Assemble", "assembler",
+                                         TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return true; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+  class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
+  public:
+    Link(const ToolChain &TC) : Tool("minix::Link", "linker", TC) {}
+
+    virtual bool acceptsPipedInput() const { return true; }
+    virtual bool canPipeOutput() const { return true; }
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              Job &Dest,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+} // end namespace minix
+
   /// auroraux -- Directly call GNU Binutils assembler and linker
 namespace auroraux {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
