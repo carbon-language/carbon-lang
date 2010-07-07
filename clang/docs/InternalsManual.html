@@ -118,8 +118,8 @@ classes somewhere else, or introduce some other solution.</p>
 <p>The Clang Diagnostics subsystem is an important part of how the compiler
 communicates with the human.  Diagnostics are the warnings and errors produced
 when the code is incorrect or dubious.  In Clang, each diagnostic produced has
-(at the minimum) a unique ID, a <a href="#SourceLocation">SourceLocation</a> to
-"put the caret", an English translation associated with it, and a severity (e.g.
+(at the minimum) a unique ID, an English translation associated with it, a <a
+href="#SourceLocation">SourceLocation</a> to "put the caret", and a severity (e.g.
 <tt>WARNING</tt> or <tt>ERROR</tt>).  They can also optionally include a number
 of arguments to the dianostic (which fill in "%0"'s in the string) as well as a
 number of source ranges that related to the diagnostic.</p>
@@ -127,7 +127,7 @@ number of source ranges that related to the diagnostic.</p>
 <p>In this section, we'll be giving examples produced by the Clang command line
 driver, but diagnostics can be <a href="#DiagnosticClient">rendered in many
 different ways</a> depending on how the DiagnosticClient interface is
-implemented.  A representative example of a diagonstic is:</p>
+implemented.  A representative example of a diagnostic is:</p>
 
 <pre>
 t.c:38:15: error: invalid operands to binary expression ('int *' and '_Complex float')
