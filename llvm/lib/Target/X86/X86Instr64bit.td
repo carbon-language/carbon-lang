@@ -2353,24 +2353,6 @@ def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
 // X86-64 SSE4.1 Instructions
 //===----------------------------------------------------------------------===//
 
-/// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
-multiclass SS41I_extract64<bits<8> opc, string OpcodeStr> {
-  def rr : SS4AIi8<opc, MRMDestReg, (outs GR64:$dst),
-                 (ins VR128:$src1, i32i8imm:$src2),
-                 !strconcat(OpcodeStr, 
-                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(set GR64:$dst,
-                  (extractelt (v2i64 VR128:$src1), imm:$src2))]>, OpSize, REX_W;
-  def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins i64mem:$dst, VR128:$src1, i32i8imm:$src2),
-                 !strconcat(OpcodeStr, 
-                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(store (extractelt (v2i64 VR128:$src1), imm:$src2),
-                          addr:$dst)]>, OpSize, REX_W;
-}
-
-defm PEXTRQ      : SS41I_extract64<0x16, "pextrq">;
-
 let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insert64<bits<8> opc, string OpcodeStr> {
     def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
