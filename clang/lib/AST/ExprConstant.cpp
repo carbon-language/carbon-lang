@@ -938,7 +938,7 @@ public:
     return Success(0, E);
   }
 
-  bool VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
+  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
     return Success(0, E);
   }
 
@@ -1756,7 +1756,7 @@ public:
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitFloatingLiteral(const FloatingLiteral *E);
   bool VisitCastExpr(CastExpr *E);
-  bool VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+  bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitConditionalOperator(ConditionalOperator *E);
 
   bool VisitChooseExpr(const ChooseExpr *E)
@@ -1952,7 +1952,7 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   return false;
 }
 
-bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+bool FloatExprEvaluator::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
   Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
   return true;
 }
@@ -2410,7 +2410,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::IntegerLiteralClass:
   case Expr::CharacterLiteralClass:
   case Expr::CXXBoolLiteralExprClass:
-  case Expr::CXXZeroInitValueExprClass:
+  case Expr::CXXScalarValueInitExprClass:
   case Expr::TypesCompatibleExprClass:
   case Expr::UnaryTypeTraitExprClass:
     return NoDiag();

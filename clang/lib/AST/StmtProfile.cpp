@@ -721,7 +721,7 @@ void StmtProfiler::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *S) {
   VisitCXXConstructExpr(S);
 }
 
-void StmtProfiler::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *S) {
+void StmtProfiler::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *S) {
   VisitExpr(S);
 }
 

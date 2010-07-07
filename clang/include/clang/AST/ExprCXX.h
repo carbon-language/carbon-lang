@@ -857,21 +857,21 @@ public:
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
 };
 
-/// CXXZeroInitValueExpr - [C++ 5.2.3p2]
+/// CXXScalarValueInitExpr - [C++ 5.2.3p2]
 /// Expression "T()" which creates a value-initialized rvalue of type
 /// T, which is a non-class type.
 ///
-class CXXZeroInitValueExpr : public Expr {
+class CXXScalarValueInitExpr : public Expr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 
 public:
-  CXXZeroInitValueExpr(QualType ty, SourceLocation tyBeginLoc,
+  CXXScalarValueInitExpr(QualType ty, SourceLocation tyBeginLoc,
                        SourceLocation rParenLoc ) :
-    Expr(CXXZeroInitValueExprClass, ty, false, false),
+    Expr(CXXScalarValueInitExprClass, ty, false, false),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
-  explicit CXXZeroInitValueExpr(EmptyShell Shell)
-    : Expr(CXXZeroInitValueExprClass, Shell) { }
+  explicit CXXScalarValueInitExpr(EmptyShell Shell)
+    : Expr(CXXScalarValueInitExprClass, Shell) { }
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -890,9 +890,9 @@ public:
   }
 
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXZeroInitValueExprClass;
+    return T->getStmtClass() == CXXScalarValueInitExprClass;
   }
-  static bool classof(const CXXZeroInitValueExpr *) { return true; }
+  static bool classof(const CXXScalarValueInitExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();

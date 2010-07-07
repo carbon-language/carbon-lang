@@ -1086,7 +1086,7 @@ void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
+void StmtPrinter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *Node) {
   OS << Node->getType().getAsString(Policy) << "()";
 }
 

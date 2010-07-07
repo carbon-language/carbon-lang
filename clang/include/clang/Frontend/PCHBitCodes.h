@@ -778,7 +778,7 @@ namespace clang {
       EXPR_CXX_DEFAULT_ARG,       // CXXDefaultArgExpr
       EXPR_CXX_BIND_TEMPORARY,    // CXXBindTemporaryExpr
       //
-      EXPR_CXX_ZERO_INIT_VALUE,   // CXXZeroInitValueExpr
+      EXPR_CXX_SCALAR_VALUE_INIT, // CXXScalarValueInitExpr
       EXPR_CXX_NEW,               // CXXNewExpr
       EXPR_CXX_DELETE,            // CXXDeleteExpr
       EXPR_CXX_PSEUDO_DESTRUCTOR, // CXXPseudoDestructorExpr

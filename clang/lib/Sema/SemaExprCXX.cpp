@@ -597,7 +597,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // rvalue of the specified type, which is value-initialized.
   //
   exprs.release();
-  return Owned(new (Context) CXXZeroInitValueExpr(Ty, TyBeginLoc, RParenLoc));
+  return Owned(new (Context) CXXScalarValueInitExpr(Ty, TyBeginLoc, RParenLoc));
 }
 
 
@@ -2004,7 +2004,7 @@ QualType Sema::CheckPointerToMemberOperands(
                       BasePath);
   }
 
-  if (isa<CXXZeroInitValueExpr>(rex->IgnoreParens())) {
+  if (isa<CXXScalarValueInitExpr>(rex->IgnoreParens())) {
     // Diagnose use of pointer-to-member type which when used as
     // the functional cast in a pointer-to-member expression.
     Diag(Loc, diag::err_pointer_to_member_type) << isIndirect;

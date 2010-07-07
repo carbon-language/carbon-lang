@@ -1545,7 +1545,7 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
   return true;
 }
 
-DEF_TRAVERSE_STMT(CXXZeroInitValueExpr, {
+DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
     // This is called for code like 'return MyClass()' where MyClass
     // has no user-defined constructor.  It's also called for 'return
     // int()'.  We recurse on type MyClass/int.

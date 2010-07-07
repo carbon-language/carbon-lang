@@ -655,7 +655,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXTryStmtClass:
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXUnresolvedConstructExprClass:
-    case Stmt::CXXZeroInitValueExprClass:
+    case Stmt::CXXScalarValueInitExprClass:
     case Stmt::DependentScopeDeclRefExprClass:
     case Stmt::UnaryTypeTraitExprClass:
     case Stmt::UnresolvedLookupExprClass:
@@ -962,7 +962,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     // C++ stuff we don't support yet.
     case Stmt::CXXExprWithTemporariesClass:
     case Stmt::CXXMemberCallExprClass:
-    case Stmt::CXXZeroInitValueExprClass: {
+    case Stmt::CXXScalarValueInitExprClass: {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       Builder->BuildSinks = true;
       MakeNode(Dst, Ex, Pred, GetState(Pred));

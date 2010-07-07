@@ -3837,7 +3837,7 @@ InitializationSequence::Perform(Sema &S,
       } else if (Kind.getKind() == InitializationKind::IK_Value &&
                  S.getLangOptions().CPlusPlus &&
                  !Kind.isImplicitValueInit()) {
-        CurInit = S.Owned(new (S.Context) CXXZeroInitValueExpr(Step->Type,
+        CurInit = S.Owned(new (S.Context) CXXScalarValueInitExpr(Step->Type,
                                                    Kind.getRange().getBegin(),
                                                     Kind.getRange().getEnd()));
       } else {
