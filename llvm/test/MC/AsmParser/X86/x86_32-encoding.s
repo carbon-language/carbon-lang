@@ -12070,3 +12070,35 @@
 // CHECK: encoding: [0xc4,0xe3,0x79,0x14,0x10,0x07]
           vpextrb  $7, %xmm2, (%eax)
 
+// CHECK: vextractps  $7, %xmm2, (%eax)
+// CHECK: encoding: [0xc4,0xe3,0x79,0x17,0x10,0x07]
+          vextractps  $7, %xmm2, (%eax)
+
+// CHECK: vextractps  $7, %xmm2, %eax
+// CHECK: encoding: [0xc4,0xe3,0x79,0x17,0xd0,0x07]
+          vextractps  $7, %xmm2, %eax
+
+// CHECK: vpinsrw  $7, %eax, %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe9,0xc4,0xe8,0x07]
+          vpinsrw  $7, %eax, %xmm2, %xmm5
+
+// CHECK: vpinsrw  $7, (%eax), %xmm2, %xmm5
+// CHECK: encoding: [0xc5,0xe9,0xc4,0x28,0x07]
+          vpinsrw  $7, (%eax), %xmm2, %xmm5
+
+// CHECK: vpinsrb  $7, %eax, %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x69,0x20,0xe8,0x07]
+          vpinsrb  $7, %eax, %xmm2, %xmm5
+
+// CHECK: vpinsrb  $7, (%eax), %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x69,0x20,0x28,0x07]
+          vpinsrb  $7, (%eax), %xmm2, %xmm5
+
+// CHECK: vpinsrd  $7, %eax, %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x69,0x22,0xe8,0x07]
+          vpinsrd  $7, %eax, %xmm2, %xmm5
+
+// CHECK: vpinsrd  $7, (%eax), %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x69,0x22,0x28,0x07]
+          vpinsrd  $7, (%eax), %xmm2, %xmm5
+

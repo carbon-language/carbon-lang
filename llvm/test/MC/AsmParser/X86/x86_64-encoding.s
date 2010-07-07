@@ -2126,3 +2126,43 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0xf9,0x16,0x21,0x07]
           vpextrq  $7, %xmm12, (%rcx)
 
+// CHECK: vextractps  $7, %xmm12, (%rax)
+// CHECK: encoding: [0xc4,0x63,0x79,0x17,0x20,0x07]
+          vextractps  $7, %xmm12, (%rax)
+
+// CHECK: vextractps  $7, %xmm12, %eax
+// CHECK: encoding: [0xc4,0x63,0x79,0x17,0xe0,0x07]
+          vextractps  $7, %xmm12, %eax
+
+// CHECK: vpinsrw  $7, %eax, %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x19,0xc4,0xd0,0x07]
+          vpinsrw  $7, %eax, %xmm12, %xmm10
+
+// CHECK: vpinsrw  $7, (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc5,0x19,0xc4,0x10,0x07]
+          vpinsrw  $7, (%rax), %xmm12, %xmm10
+
+// CHECK: vpinsrb  $7, %eax, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x19,0x20,0xd0,0x07]
+          vpinsrb  $7, %eax, %xmm12, %xmm10
+
+// CHECK: vpinsrb  $7, (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x19,0x20,0x10,0x07]
+          vpinsrb  $7, (%rax), %xmm12, %xmm10
+
+// CHECK: vpinsrd  $7, %eax, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x19,0x22,0xd0,0x07]
+          vpinsrd  $7, %eax, %xmm12, %xmm10
+
+// CHECK: vpinsrd  $7, (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x19,0x22,0x10,0x07]
+          vpinsrd  $7, (%rax), %xmm12, %xmm10
+
+// CHECK: vpinsrq  $7, %rax, %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x99,0x22,0xd0,0x07]
+          vpinsrq  $7, %rax, %xmm12, %xmm10
+
+// CHECK: vpinsrq  $7, (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x63,0x99,0x22,0x10,0x07]
+          vpinsrq  $7, (%rax), %xmm12, %xmm10
+

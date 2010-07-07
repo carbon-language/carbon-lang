@@ -4516,6 +4516,8 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>, OpSize;
 }
 
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VEXTRACTPS : SS41I_extractf32<0x17, "vextractps">, VEX;
 defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 
 // Also match an EXTRACTPS store when the store is done as f32 instead of i32.
@@ -4525,46 +4527,76 @@ def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
           (EXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
          Requires<[HasSSE41]>;
 
-let Constraints = "$src1 = $dst" in {
-  multiclass SS41I_insert8<bits<8> opc, string OpcodeStr> {
-    def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (X86pinsrb VR128:$src1, GR32:$src2, imm:$src3))]>, OpSize;
-    def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, i8mem:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (X86pinsrb VR128:$src1, (extloadi8 addr:$src2),
-                                imm:$src3))]>, OpSize;
-  }
+multiclass SS41I_insert8<bits<8> opc, string asm, bit Is2Addr = 1> {
+  def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (X86pinsrb VR128:$src1, GR32:$src2, imm:$src3))]>, OpSize;
+  def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
+      (ins VR128:$src1, i8mem:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (X86pinsrb VR128:$src1, (extloadi8 addr:$src2),
+                   imm:$src3))]>, OpSize;
 }
 
-defm PINSRB      : SS41I_insert8<0x20, "pinsrb">;
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPINSRB : SS41I_insert8<0x20, "vpinsrb", 0>, VEX_4V;
+let Constraints = "$src1 = $dst" in
+  defm PINSRB  : SS41I_insert8<0x20, "pinsrb">;
 
-let Constraints = "$src1 = $dst" in {
-  multiclass SS41I_insert32<bits<8> opc, string OpcodeStr> {
-    def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (v4i32 (insertelt VR128:$src1, GR32:$src2, imm:$src3)))]>,
-                   OpSize;
-    def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-                   (ins VR128:$src1, i32mem:$src2, i32i8imm:$src3),
-                   !strconcat(OpcodeStr,
-                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set VR128:$dst,
-                     (v4i32 (insertelt VR128:$src1, (loadi32 addr:$src2),
-                                       imm:$src3)))]>, OpSize;
-  }
+multiclass SS41I_insert32<bits<8> opc, string asm, bit Is2Addr = 1> {
+  def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
+      (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (v4i32 (insertelt VR128:$src1, GR32:$src2, imm:$src3)))]>,
+      OpSize;
+  def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
+      (ins VR128:$src1, i32mem:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+        !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+        !strconcat(asm,
+                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      [(set VR128:$dst,
+        (v4i32 (insertelt VR128:$src1, (loadi32 addr:$src2),
+                          imm:$src3)))]>, OpSize;
 }
 
-defm PINSRD      : SS41I_insert32<0x22, "pinsrd">;
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPINSRD : SS41I_insert32<0x22, "vpinsrd", 0>, VEX_4V;
+let Constraints = "$src1 = $dst" in
+  defm PINSRD : SS41I_insert32<0x22, "pinsrd">;
+
+multiclass SS41I_insert64_avx<bits<8> opc, string OpcodeStr> {
+  def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
+                 (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
+                 !strconcat(OpcodeStr, 
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                 [(set VR128:$dst, 
+                   (v2i64 (insertelt VR128:$src1, GR64:$src2, imm:$src3)))]>,
+                 OpSize, REX_W;
+  def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
+                 (ins VR128:$src1, i64mem:$src2, i32i8imm:$src3),
+                 !strconcat(OpcodeStr,
+                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                 [(set VR128:$dst, 
+                   (v2i64 (insertelt VR128:$src1, (loadi64 addr:$src2),
+                                     imm:$src3)))]>, OpSize, REX_W;
+}
+
+let isAsmParserOnly = 1, Predicates = [HasAVX, HasSSE41] in
+  defm VPINSRQ : SS41I_insert64_avx<0x22, "vpinsrq">, VEX_4V, VEX_W;
 
 // insertps has a few different modes, there's the first two here below which
 // are optimized inserts that won't zero arbitrary elements in the destination
