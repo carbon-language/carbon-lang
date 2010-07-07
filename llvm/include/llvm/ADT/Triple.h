@@ -100,7 +100,8 @@ public:
     Psp,
     Solaris,
     Win32,
-    Haiku
+    Haiku,
+    Minix
   };
   
 private:
