@@ -337,7 +337,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     if (CPChange && ++NoCPIters > 30)
       llvm_unreachable("Constant Island pass failed to converge!");
     DEBUG(dumpBBs());
-    
+
     // Clear NewWaterList now.  If we split a block for branches, it should
     // appear as "new water" for the next iteration of constant pool placement.
     NewWaterList.clear();
@@ -361,8 +361,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // After a while, this might be made debug-only, but it is not expensive.
   verify(MF);
 
-  // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
-  // Undo the spill / restore of LR if possible.
+  // If LR has been forced spilled and no far jump (i.e. BL) has been issued,
+  // undo the spill / restore of LR if possible.
   if (isThumb && !HasFarJump && AFI->isLRSpilledForFarJump())
     MadeChange |= UndoLRSpillRestore();
 
@@ -1624,7 +1624,7 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   // constantpool tables?
   MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
   if (MJTI == 0) return false;
-  
+
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
@@ -1667,7 +1667,7 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
 
       MachineInstr *AddrMI = --PrevI;
       bool OptOk = true;
-      // Examine the instruction that calculate the jumptable entry address.
+      // Examine the instruction that calculates the jumptable entry address.
       // If it's not the one just before the t2BR_JT, we won't delete it, then
       // it's not worth doing the optimization.
       for (unsigned k = 0, eee = AddrMI->getNumOperands(); k != eee; ++k) {
@@ -1732,7 +1732,7 @@ bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
 
   MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
   if (MJTI == 0) return false;
-  
+
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
