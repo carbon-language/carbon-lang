@@ -544,8 +544,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
   case Expr::CXXExprWithTemporariesClass:
     return EmitCXXExprWithTemporariesLValue(cast<CXXExprWithTemporaries>(E));
-  case Expr::CXXScalarValueInitExprClass:
-    return EmitNullInitializationLValue(cast<CXXScalarValueInitExpr>(E));
+  case Expr::CXXZeroInitValueExprClass:
+    return EmitNullInitializationLValue(cast<CXXZeroInitValueExpr>(E));
   case Expr::CXXDefaultArgExprClass:
     return EmitLValue(cast<CXXDefaultArgExpr>(E)->getExpr());
   case Expr::CXXTypeidExprClass:
@@ -1829,7 +1829,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 }
 
 LValue CodeGenFunction::EmitNullInitializationLValue(
-                                              const CXXScalarValueInitExpr *E) {
+                                              const CXXZeroInitValueExpr *E) {
   QualType Ty = E->getType();
   LValue LV = LValue::MakeAddr(CreateMemTemp(Ty), MakeQualifiers(Ty));
   EmitNullInitialization(LV.getAddress(), Ty);

@@ -174,7 +174,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::CXXThisExprClass:            
   case Stmt::CXXThrowExprClass:           
   case Stmt::CXXDefaultArgExprClass:      
-  case Stmt::CXXScalarValueInitExprClass:   
+  case Stmt::CXXZeroInitValueExprClass:   
   case Stmt::CXXNewExprClass:             
   case Stmt::CXXDeleteExprClass:          
   case Stmt::CXXPseudoDestructorExprClass:

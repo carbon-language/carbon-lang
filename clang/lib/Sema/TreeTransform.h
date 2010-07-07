@@ -1577,7 +1577,7 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXScalarValueInitExpr(SourceLocation TypeStartLoc,
+  OwningExprResult RebuildCXXZeroInitValueExpr(SourceLocation TypeStartLoc,
                                                SourceLocation LParenLoc,
                                                QualType T,
                                                SourceLocation RParenLoc) {
@@ -5219,7 +5219,7 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+TreeTransform<Derived>::TransformCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getType());
@@ -5230,10 +5230,10 @@ TreeTransform<Derived>::TransformCXXScalarValueInitExpr(CXXScalarValueInitExpr *
       T == E->getType())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXScalarValueInitExpr(E->getTypeBeginLoc(),
-                                                 /*FIXME:*/E->getTypeBeginLoc(),
-                                                    T,
-                                                    E->getRParenLoc());
+  return getDerived().RebuildCXXZeroInitValueExpr(E->getTypeBeginLoc(),
+                                                /*FIXME:*/E->getTypeBeginLoc(),
+                                                  T,
+                                                  E->getRParenLoc());
 }
 
 template<typename Derived>

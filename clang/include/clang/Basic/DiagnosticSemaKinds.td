@@ -509,9 +509,6 @@ def err_access_dtor_vbase :
 def err_access_dtor_temp :
     Error<"temporary of type %0 has %select{private|protected}1 destructor">,
     NoSFINAE;
-def err_access_dtor_exception :
-    Error<"exception object of type %0 has %select{private|protected}1 "
-          "destructor">, NoSFINAE;
 def err_access_dtor_field :
     Error<"field of type %1 has %select{private|protected}2 destructor">,
     NoSFINAE;

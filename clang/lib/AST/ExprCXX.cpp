@@ -74,11 +74,11 @@ Stmt::child_iterator CXXDefaultArgExpr::child_end() {
   return child_iterator();
 }
 
-// CXXScalarValueInitExpr
-Stmt::child_iterator CXXScalarValueInitExpr::child_begin() {
+// CXXZeroInitValueExpr
+Stmt::child_iterator CXXZeroInitValueExpr::child_begin() {
   return child_iterator();
 }
-Stmt::child_iterator CXXScalarValueInitExpr::child_end() {
+Stmt::child_iterator CXXZeroInitValueExpr::child_end() {
   return child_iterator();
 }
 

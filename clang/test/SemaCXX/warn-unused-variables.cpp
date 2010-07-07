@@ -26,7 +26,7 @@ namespace PR5531 {
   };
 
   void test() {
-    A();
+    A(); // expected-warning{{expression result unused}}
     B(17);
     C();
   }

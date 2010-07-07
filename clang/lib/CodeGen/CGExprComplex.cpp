@@ -181,7 +181,7 @@ public:
   ComplexPairTy VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
     return CGF.EmitCXXExprWithTemporaries(E).getComplexVal();
   }
-  ComplexPairTy VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+  ComplexPairTy VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");
     QualType Elem = E->getType()->getAs<ComplexType>()->getElementType();
     llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));

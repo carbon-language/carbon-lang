@@ -423,7 +423,6 @@ namespace test15 {
 
 // PR7281
 namespace test16 {
-  class A { ~A(); }; // expected-note 2{{declared private here}}
-  void b() { throw A(); } // expected-error{{temporary of type 'test16::A' has private destructor}} \
-  // expected-error{{exception object of type 'test16::A' has private destructor}}
+  class A { ~A(); }; // expected-note {{declared private here}}
+  void b() { throw A(); } // expected-error{{temporary of type 'test16::A' has private destructor}}
 }

@@ -44,6 +44,7 @@ class obj{ int a; float b; double d; };
 // CHECK: define void @_Z1hv()
 void h() {
   // CHECK: call void @llvm.memset.p0i8.i64(
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(
   obj o = obj();
 }
 

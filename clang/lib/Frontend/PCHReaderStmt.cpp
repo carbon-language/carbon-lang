@@ -132,7 +132,7 @@ namespace clang {
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
     
-    void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
+    void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
     void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
@@ -1003,7 +1003,7 @@ void PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   E->setSubExpr(Reader.ReadSubExpr());
 }
 
-void PCHStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+void PCHStmtReader::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   VisitExpr(E);
   E->setTypeBeginLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -1574,8 +1574,8 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;
 
-    case pch::EXPR_CXX_SCALAR_VALUE_INIT:
-      S = new (Context) CXXScalarValueInitExpr(Empty);
+    case pch::EXPR_CXX_ZERO_INIT_VALUE:
+      S = new (Context) CXXZeroInitValueExpr(Empty);
       break;
     case pch::EXPR_CXX_NEW:
       S = new (Context) CXXNewExpr(Empty);

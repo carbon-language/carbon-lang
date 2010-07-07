@@ -132,7 +132,7 @@ namespace clang {
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
 
-    void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
+    void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
     void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
@@ -1007,11 +1007,11 @@ void PCHStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   Code = pch::EXPR_CXX_BIND_TEMPORARY;
 }
 
-void PCHStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
+void PCHStmtWriter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
-  Code = pch::EXPR_CXX_SCALAR_VALUE_INIT;
+  Code = pch::EXPR_CXX_ZERO_INIT_VALUE;
 }
 
 void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
