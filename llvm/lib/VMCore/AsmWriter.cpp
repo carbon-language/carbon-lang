@@ -70,8 +70,7 @@ static const Module *getModuleFromVal(const Value *V) {
 
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const StringRef &Name,
-                               raw_ostream &Out) {
+static void PrintEscapedString(StringRef Name, raw_ostream &Out) {
   for (unsigned i = 0, e = Name.size(); i != e; ++i) {
     unsigned char C = Name[i];
     if (isprint(C) && C != '\\' && C != '"')
@@ -1472,8 +1471,11 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     writeOperand(GV->getInitializer(), false);
   }
 
-  if (GV->hasSection())
-    Out << ", section \"" << GV->getSection() << '"';
+  if (GV->hasSection()) {
+    Out << ", section \"";
+    PrintEscapedString(GV->getSection(), Out);
+    Out << '"';
+  }
   if (GV->getAlignment())
     Out << ", align " << GV->getAlignment();
 
@@ -1631,8 +1633,11 @@ void AssemblyWriter::printFunction(const Function *F) {
   Attributes FnAttrs = Attrs.getFnAttributes();
   if (FnAttrs != Attribute::None)
     Out << ' ' << Attribute::getAsString(Attrs.getFnAttributes());
-  if (F->hasSection())
-    Out << " section \"" << F->getSection() << '"';
+  if (F->hasSection()) {
+    Out << " section \"";
+    PrintEscapedString(F->getSection(), Out);
+    Out << '"';
+  }
   if (F->getAlignment())
     Out << " align " << F->getAlignment();
   if (F->hasGC())
