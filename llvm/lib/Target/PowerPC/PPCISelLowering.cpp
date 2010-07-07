@@ -2136,6 +2136,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
                                      unsigned CC,
                                      const SmallVectorImpl<ISD::OutputArg>
                                        &Outs,
+                                     const SmallVectorImpl<SDValue> &OutVals,
                                      unsigned &nAltivecParamsAtEnd) {
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
@@ -2152,9 +2153,9 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
   // 16-byte aligned.
   nAltivecParamsAtEnd = 0;
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
-    EVT ArgVT = Arg.getValueType();
+    EVT ArgVT = Outs[i].VT;
     // Varargs Altivec parameters are padded to a 16 byte boundary.
     if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
         ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8) {
@@ -2704,6 +2705,7 @@ PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
+                             const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) const {
@@ -2713,11 +2715,11 @@ PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
     return LowerCall_SVR4(Chain, Callee, CallConv, isVarArg,
-                          isTailCall, Outs, Ins,
+                          isTailCall, Outs, OutVals, Ins,
                           dl, DAG, InVals);
   } else {
     return LowerCall_Darwin(Chain, Callee, CallConv, isVarArg,
-                            isTailCall, Outs, Ins,
+                            isTailCall, Outs, OutVals, Ins,
                             dl, DAG, InVals);
   }
 }
@@ -2727,6 +2729,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   bool isTailCall,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                  const SmallVectorImpl<SDValue> &OutVals,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
                                   DebugLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) const {
@@ -2767,7 +2770,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
     unsigned NumArgs = Outs.size();
     
     for (unsigned i = 0; i != NumArgs; ++i) {
-      EVT ArgVT = Outs[i].Val.getValueType();
+      EVT ArgVT = Outs[i].VT;
       ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
       bool Result;
       
@@ -2836,7 +2839,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
        i != e;
        ++i) {
     CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     
     if (Flags.isByVal()) {
@@ -2932,6 +2935,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
                                     CallingConv::ID CallConv, bool isVarArg,
                                     bool isTailCall,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const {
@@ -2959,7 +2963,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // prereserved space for [SP][CR][LR][3 x unused].
   unsigned NumBytes =
     CalculateParameterAndLinkageAreaSize(DAG, isPPC64, isVarArg, CallConv,
-                                         Outs,
+                                         Outs, OutVals,
                                          nAltivecParamsAtEnd);
 
   // Calculate by how many bytes the stack has to be adjusted in case of tail
@@ -3023,7 +3027,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
 
   SmallVector<SDValue, 8> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
 
     // PtrOff will be used to store the current argument to the stack if a
@@ -3226,8 +3230,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     ArgOffset = ((ArgOffset+15)/16)*16;
     ArgOffset += 12*16;
     for (unsigned i = 0; i != NumOps; ++i) {
-      SDValue Arg = Outs[i].Val;
-      EVT ArgType = Arg.getValueType();
+      SDValue Arg = OutVals[i];
+      EVT ArgType = Outs[i].VT;
       if (ArgType==MVT::v4f32 || ArgType==MVT::v4i32 ||
           ArgType==MVT::v8i16 || ArgType==MVT::v16i8) {
         if (++j > NumVRs) {
@@ -3295,6 +3299,7 @@ SDValue
 PPCTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                DebugLoc dl, SelectionDAG &DAG) const {
 
   SmallVector<CCValAssign, 16> RVLocs;
@@ -3316,7 +3321,7 @@ PPCTargetLowering::LowerReturn(SDValue Chain,
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
-                             Outs[i].Val, Flag);
+                             OutVals[i], Flag);
     Flag = Chain.getValue(1);
   }
 

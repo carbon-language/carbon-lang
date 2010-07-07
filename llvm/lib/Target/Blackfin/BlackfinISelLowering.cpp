@@ -219,6 +219,7 @@ SDValue
 BlackfinTargetLowering::LowerReturn(SDValue Chain,
                                     CallingConv::ID CallConv, bool isVarArg,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
                                     DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to locations.
@@ -244,7 +245,7 @@ BlackfinTargetLowering::LowerReturn(SDValue Chain,
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
-    SDValue Opi = Outs[i].Val;
+    SDValue Opi = OutVals[i];
 
     // Expand to i32 if necessary
     switch (VA.getLocInfo()) {
@@ -277,6 +278,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   bool &isTailCall,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                  const SmallVectorImpl<SDValue> &OutVals,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
                                   DebugLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) const {
@@ -300,7 +302,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {

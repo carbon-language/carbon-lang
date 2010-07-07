@@ -14,8 +14,6 @@
 #ifndef LLVM_TARGET_TARGETCALLINGCONV_H
 #define LLVM_TARGET_TARGETCALLINGCONV_H
 
-#include "llvm/CodeGen/SelectionDAGNodes.h"
-
 namespace llvm {
 
 namespace ISD {
@@ -112,7 +110,7 @@ namespace ISD {
     bool Used;
 
     InputArg() : VT(MVT::Other), Used(false) {}
-    InputArg(ISD::ArgFlagsTy flags, EVT vt, bool used)
+    InputArg(ArgFlagsTy flags, EVT vt, bool used)
       : Flags(flags), VT(vt), Used(used) {
       assert(VT.isSimple() &&
              "InputArg value type must be Simple!");
@@ -125,34 +123,17 @@ namespace ISD {
   ///
   struct OutputArg {
     ArgFlagsTy Flags;
-    SDValue Val;
+    EVT VT;
 
     /// IsFixed - Is this a "fixed" value, ie not passed through a vararg "...".
     bool IsFixed;
 
     OutputArg() : IsFixed(false) {}
-    OutputArg(ISD::ArgFlagsTy flags, SDValue val, bool isfixed)
-      : Flags(flags), Val(val), IsFixed(isfixed) {
-      assert(Val.getValueType().isSimple() &&
+    OutputArg(ArgFlagsTy flags, EVT vt, bool isfixed)
+      : Flags(flags), VT(vt), IsFixed(isfixed) {
+      assert(VT.isSimple() &&
              "OutputArg value type must be Simple!");
     }
-  };
-
-  /// OutputArgReg - This struct carries flags and a register value for a
-  /// single outgoing (actual) argument or outgoing (from the perspective
-  /// of the caller) return value virtual register.
-  ///
-  struct OutputArgReg {
-    ArgFlagsTy Flags;
-    EVT VT;
-    unsigned Reg;
-
-    /// IsFixed - Is this a "fixed" value, ie not passed through a vararg "...".
-    bool IsFixed;
-
-    OutputArgReg() : IsFixed(false) {}
-    OutputArgReg(ISD::ArgFlagsTy flags, EVT vt, unsigned reg, bool isfixed)
-      : Flags(flags), VT(vt), Reg(reg), IsFixed(isfixed) {}
   };
 }
 

@@ -1027,6 +1027,7 @@ static void getReturnInfo(const Type* ReturnType,
 void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
   SDValue Chain = getControlRoot();
   SmallVector<ISD::OutputArg, 8> Outs;
+  SmallVector<SDValue, 8> OutVals;
 
   if (!FuncInfo.CanLowerReturn) {
     unsigned DemoteReg = FuncInfo.DemoteRegister;
@@ -1105,8 +1106,11 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
         else if (F->paramHasAttr(0, Attribute::ZExt))
           Flags.setZExt();
 
-        for (unsigned i = 0; i < NumParts; ++i)
-          Outs.push_back(ISD::OutputArg(Flags, Parts[i], /*isfixed=*/true));
+        for (unsigned i = 0; i < NumParts; ++i) {
+          Outs.push_back(ISD::OutputArg(Flags, Parts[i].getValueType(),
+                                        /*isfixed=*/true));
+          OutVals.push_back(Parts[i]);
+        }
       }
     }
   }
@@ -1115,7 +1119,7 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
   CallingConv::ID CallConv =
     DAG.getMachineFunction().getFunction()->getCallingConv();
   Chain = TLI.LowerReturn(Chain, CallConv, isVarArg,
-                          Outs, getCurDebugLoc(), DAG);
+                          Outs, OutVals, getCurDebugLoc(), DAG);
 
   // Verify that the target's LowerReturn behaved as expected.
   assert(Chain.getNode() && Chain.getValueType() == MVT::Other &&
@@ -5768,6 +5772,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             DebugLoc dl) const {
   // Handle all of the outgoing arguments.
   SmallVector<ISD::OutputArg, 32> Outs;
+  SmallVector<SDValue, 32> OutVals;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     SmallVector<EVT, 4> ValueVTs;
     ComputeValueVTs(*this, Args[i].Ty, ValueVTs);
@@ -5821,13 +5826,15 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
       for (unsigned j = 0; j != NumParts; ++j) {
         // if it isn't first piece, alignment must be 1
-        ISD::OutputArg MyFlags(Flags, Parts[j], i < NumFixedArgs);
+        ISD::OutputArg MyFlags(Flags, Parts[j].getValueType(),
+                               i < NumFixedArgs);
         if (NumParts > 1 && j == 0)
           MyFlags.Flags.setSplit();
         else if (j != 0)
           MyFlags.Flags.setOrigAlign(1);
 
         Outs.push_back(MyFlags);
+        OutVals.push_back(Parts[j]);
       }
     }
   }
@@ -5856,7 +5863,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
   SmallVector<SDValue, 4> InVals;
   Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
-                    Outs, Ins, dl, DAG, InVals);
+                    Outs, OutVals, Ins, dl, DAG, InVals);
 
   // Verify that the target's LowerCall behaved as expected.
   assert(Chain.getNode() && Chain.getValueType() == MVT::Other &&

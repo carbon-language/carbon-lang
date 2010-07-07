@@ -525,6 +525,7 @@ SDValue MBlazeTargetLowering::
 LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
           bool isVarArg, bool &isTailCall,
           const SmallVectorImpl<ISD::OutputArg> &Outs,
+          const SmallVectorImpl<SDValue> &OutVals,
           const SmallVectorImpl<ISD::InputArg> &Ins,
           DebugLoc dl, SelectionDAG &DAG,
           SmallVectorImpl<SDValue> &InVals) const {
@@ -556,7 +557,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     EVT RegVT = VA.getLocVT();
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -835,6 +836,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 SDValue MBlazeTargetLowering::
 LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
             const SmallVectorImpl<ISD::OutputArg> &Outs,
+            const SmallVectorImpl<SDValue> &OutVals,
             DebugLoc dl, SelectionDAG &DAG) const {
   // CCValAssign - represent the assignment of
   // the return value to a location
@@ -863,7 +865,7 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     assert(VA.isRegLoc() && "Can only return in registers!");
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
-                             Outs[i].Val, Flag);
+                             OutVals[i], Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad

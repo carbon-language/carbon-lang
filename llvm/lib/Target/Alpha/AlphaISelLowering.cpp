@@ -224,6 +224,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) const {
@@ -251,7 +252,7 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
 
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -470,6 +471,7 @@ SDValue
 AlphaTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                 const SmallVectorImpl<SDValue> &OutVals,
                                  DebugLoc dl, SelectionDAG &DAG) const {
 
   SDValue Copy = DAG.getCopyToReg(Chain, dl, Alpha::R26,
@@ -483,7 +485,7 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
     break;
     //return SDValue(); // ret void is legal
   case 1: {
-    EVT ArgVT = Outs[0].Val.getValueType();
+    EVT ArgVT = Outs[0].VT;
     unsigned ArgReg;
     if (ArgVT.isInteger())
       ArgReg = Alpha::R0;
@@ -492,13 +494,13 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
       ArgReg = Alpha::F0;
     }
     Copy = DAG.getCopyToReg(Copy, dl, ArgReg,
-                            Outs[0].Val, Copy.getValue(1));
+                            OutVals[0], Copy.getValue(1));
     if (DAG.getMachineFunction().getRegInfo().liveout_empty())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg);
     break;
   }
   case 2: {
-    EVT ArgVT = Outs[0].Val.getValueType();
+    EVT ArgVT = Outs[0].VT;
     unsigned ArgReg1, ArgReg2;
     if (ArgVT.isInteger()) {
       ArgReg1 = Alpha::R0;
@@ -509,13 +511,13 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
       ArgReg2 = Alpha::F1;
     }
     Copy = DAG.getCopyToReg(Copy, dl, ArgReg1,
-                            Outs[0].Val, Copy.getValue(1));
+                            OutVals[0], Copy.getValue(1));
     if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(),
                   DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg1)
         == DAG.getMachineFunction().getRegInfo().liveout_end())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg1);
     Copy = DAG.getCopyToReg(Copy, dl, ArgReg2,
-                            Outs[1].Val, Copy.getValue(1));
+                            OutVals[1], Copy.getValue(1));
     if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(),
                    DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg2)
         == DAG.getMachineFunction().getRegInfo().liveout_end())

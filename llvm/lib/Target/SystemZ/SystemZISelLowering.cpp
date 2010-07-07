@@ -254,6 +254,7 @@ SystemZTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  bool &isTailCall,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                 const SmallVectorImpl<SDValue> &OutVals,
                                  const SmallVectorImpl<ISD::InputArg> &Ins,
                                  DebugLoc dl, SelectionDAG &DAG,
                                  SmallVectorImpl<SDValue> &InVals) const {
@@ -266,7 +267,7 @@ SystemZTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   case CallingConv::Fast:
   case CallingConv::C:
     return LowerCCCCallTo(Chain, Callee, CallConv, isVarArg, isTailCall,
-                          Outs, Ins, dl, DAG, InVals);
+                          Outs, OutVals, Ins, dl, DAG, InVals);
   }
 }
 
@@ -372,6 +373,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                       bool isTailCall,
                                       const SmallVectorImpl<ISD::OutputArg>
                                         &Outs,
+                                      const SmallVectorImpl<SDValue> &OutVals,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                       DebugLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
@@ -402,7 +404,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
 
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -550,6 +552,7 @@ SDValue
 SystemZTargetLowering::LowerReturn(SDValue Chain,
                                    CallingConv::ID CallConv, bool isVarArg,
                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                   const SmallVectorImpl<SDValue> &OutVals,
                                    DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to a location
@@ -575,7 +578,7 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
-    SDValue ResValue = Outs[i].Val;
+    SDValue ResValue = OutVals[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
     // If this is an 8/16/32-bit value, it is really should be passed promoted

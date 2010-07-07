@@ -1030,6 +1030,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
+                             const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) const {
@@ -1043,7 +1044,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
                     isVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
-                                                   Outs, Ins, DAG);
+                                                   Outs, OutVals, Ins, DAG);
     // We don't support GuaranteedTailCallOpt for ARM, only automatically
     // detected sibcalls.
     if (isTailCall) {
@@ -1083,7 +1084,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
        i != e;
        ++i, ++realArgIdx) {
     CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = Outs[realArgIdx].Val;
+    SDValue Arg = OutVals[realArgIdx];
     ISD::ArgFlagsTy Flags = Outs[realArgIdx].Flags;
 
     // Promote the value if needed.
@@ -1377,6 +1378,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      bool isCalleeStructRet,
                                                      bool isCallerStructRet,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
   const Function *CallerF = DAG.getMachineFunction().getFunction();
@@ -1470,7 +1472,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
            ++i, ++realArgIdx) {
         CCValAssign &VA = ArgLocs[i];
         EVT RegVT = VA.getLocVT();
-        SDValue Arg = Outs[realArgIdx].Val;
+        SDValue Arg = OutVals[realArgIdx];
         ISD::ArgFlagsTy Flags = Outs[realArgIdx].Flags;
         if (VA.getLocInfo() == CCValAssign::Indirect)
           return false;
@@ -1505,6 +1507,7 @@ SDValue
 ARMTargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to a location.
@@ -1535,7 +1538,7 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
-    SDValue Arg = Outs[realRVLocIdx].Val;
+    SDValue Arg = OutVals[realRVLocIdx];
 
     switch (VA.getLocInfo()) {
     default: llvm_unreachable("Unknown loc info!");

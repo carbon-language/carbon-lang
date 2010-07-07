@@ -38,6 +38,7 @@ SDValue
 SparcTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                 const SmallVectorImpl<SDValue> &OutVals,
                                  DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to locations.
@@ -66,7 +67,7 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
     assert(VA.isRegLoc() && "Can only return in registers!");
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
-                             Outs[i].Val, Flag);
+                             OutVals[i], Flag);
 
     // Guarantee that all emitted copies are stuck together with flags.
     Flag = Chain.getValue(1);
@@ -262,6 +263,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) const {
@@ -283,7 +285,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    switch (Outs[i].Val.getValueType().getSimpleVT().SimpleTy) {
+    switch (Outs[i].VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unknown value type!");
       case MVT::i1:
       case MVT::i8:
@@ -316,7 +318,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -358,8 +360,8 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   unsigned ArgOffset = 68;
 
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    SDValue Val = Outs[i].Val;
-    EVT ObjectVT = Val.getValueType();
+    SDValue Val = OutVals[i];
+    EVT ObjectVT = Outs[i].VT;
     SDValue ValToStore(0, 0);
     unsigned ObjSize;
     switch (ObjectVT.getSimpleVT().SimpleTy) {

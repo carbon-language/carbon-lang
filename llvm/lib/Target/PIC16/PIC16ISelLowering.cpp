@@ -1121,6 +1121,7 @@ SDValue PIC16TargetLowering::
 LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
                            SDValue DataAddr_Lo, SDValue DataAddr_Hi,
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
+                           const SmallVectorImpl<SDValue> &OutVals,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
                            DebugLoc dl, SelectionDAG &DAG) const {
   unsigned NumOps = Outs.size();
@@ -1137,7 +1138,7 @@ LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
   unsigned RetVals = Ins.size();
   for (unsigned i = 0, ArgOffset = RetVals; i < NumOps; i++) {
     // Get the arguments
-    Arg = Outs[i].Val;
+    Arg = OutVals[i];
     
     Ops.clear();
     Ops.push_back(Chain);
@@ -1159,6 +1160,7 @@ LowerIndirectCallArguments(SDValue Chain, SDValue InFlag,
 SDValue PIC16TargetLowering::
 LowerDirectCallArguments(SDValue ArgLabel, SDValue Chain, SDValue InFlag,
                          const SmallVectorImpl<ISD::OutputArg> &Outs,
+                         const SmallVectorImpl<SDValue> &OutVals,
                          DebugLoc dl, SelectionDAG &DAG) const {
   unsigned NumOps = Outs.size();
   std::string Name;
@@ -1184,7 +1186,7 @@ LowerDirectCallArguments(SDValue ArgLabel, SDValue Chain, SDValue InFlag,
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   for (unsigned i=0, Offset = 0; i<NumOps; i++) {
     // Get the argument
-    Arg = Outs[i].Val;
+    Arg = OutVals[i];
     StoreOffset = (Offset + AddressOffset);
    
     // Store the argument on frame
@@ -1283,6 +1285,7 @@ SDValue
 PIC16TargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                 const SmallVectorImpl<SDValue> &OutVals,
                                  DebugLoc dl, SelectionDAG &DAG) const {
 
   // Number of values to return 
@@ -1299,7 +1302,7 @@ PIC16TargetLowering::LowerReturn(SDValue Chain,
   SDValue BS = DAG.getConstant(1, MVT::i8);
   SDValue RetVal;
   for(unsigned i=0;i<NumRet; ++i) {
-    RetVal = Outs[i].Val;
+    RetVal = OutVals[i];
     Chain =  DAG.getNode (PIC16ISD::PIC16Store, dl, MVT::Other, Chain, RetVal,
                         ES, BS,
                         DAG.getConstant (i, MVT::i8));
@@ -1375,6 +1378,7 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) const {
@@ -1462,12 +1466,13 @@ PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     SDValue CallArgs;
     if (IsDirectCall) {
       CallArgs = LowerDirectCallArguments(ArgLabel, Chain, OperFlag,
-                                          Outs, dl, DAG);
+                                          Outs, OutVals, dl, DAG);
       Chain = getChain(CallArgs);
       OperFlag = getOutFlag(CallArgs);
     } else {
       CallArgs = LowerIndirectCallArguments(Chain, OperFlag, DataAddr_Lo,
-                                            DataAddr_Hi, Outs, Ins, dl, DAG);
+                                            DataAddr_Hi, Outs, OutVals, Ins,
+                                            dl, DAG);
       Chain = getChain(CallArgs);
       OperFlag = getOutFlag(CallArgs);
     }

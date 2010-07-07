@@ -1231,6 +1231,7 @@ SDValue
 X86TargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
+                               const SmallVectorImpl<SDValue> &OutVals,
                                DebugLoc dl, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
@@ -1258,7 +1259,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
-    SDValue ValToCopy = Outs[i].Val;
+    SDValue ValToCopy = OutVals[i];
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
     // the RET instruction and handled by the FP Stackifier.
@@ -1816,6 +1817,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
+                             const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) const {
@@ -1828,7 +1830,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
                     isVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
-                                                   Outs, Ins, DAG);
+                                                   Outs, OutVals, Ins, DAG);
 
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
@@ -1888,7 +1890,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     EVT RegVT = VA.getLocVT();
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     bool isByVal = Flags.isByVal();
 
@@ -2027,7 +2029,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         if (VA.isRegLoc())
           continue;
         assert(VA.isMemLoc());
-        SDValue Arg = Outs[i].Val;
+        SDValue Arg = OutVals[i];
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
         // Create frame index.
         int32_t Offset = VA.getLocMemOffset()+FPDiff;
@@ -2320,6 +2322,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      bool isCalleeStructRet,
                                                      bool isCallerStructRet,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
   if (!IsTailCallConvention(CalleeCC) &&
@@ -2433,7 +2436,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
         ((X86TargetMachine&)getTargetMachine()).getInstrInfo();
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
-        SDValue Arg = Outs[i].Val;
+        SDValue Arg = OutVals[i];
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
         if (VA.getLocInfo() == CCValAssign::Indirect)
           return false;

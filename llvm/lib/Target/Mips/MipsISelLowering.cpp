@@ -767,6 +767,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                               CallingConv::ID CallConv, bool isVarArg,
                               bool &isTailCall,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
+                              const SmallVectorImpl<SDValue> &OutVals,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
                               DebugLoc dl, SelectionDAG &DAG,
                               SmallVectorImpl<SDValue> &InVals) const {
@@ -807,7 +808,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-    SDValue Arg = Outs[i].Val;
+    SDValue Arg = OutVals[i];
     CCValAssign &VA = ArgLocs[i];
 
     // Promote the value if needed.
@@ -1168,6 +1169,7 @@ SDValue
 MipsTargetLowering::LowerReturn(SDValue Chain,
                                 CallingConv::ID CallConv, bool isVarArg,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                const SmallVectorImpl<SDValue> &OutVals,
                                 DebugLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of
@@ -1197,7 +1199,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
     assert(VA.isRegLoc() && "Can only return in registers!");
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), 
-                             Outs[i].Val, Flag);
+                             OutVals[i], Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
