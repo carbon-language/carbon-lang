@@ -54,6 +54,7 @@
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 
@@ -330,7 +331,7 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       case Impossible:
         break;
       case Possible:
-        assert(0 && "Operation was never marked with an assumption");
+        llvm_unreachable("Operation was never marked with an assumption");
       }
 
       // Create the SourceRange Arrays
