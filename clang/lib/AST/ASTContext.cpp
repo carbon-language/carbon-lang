@@ -275,6 +275,9 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "  %u/%u implicit destructors created\n",
           NumImplicitDestructorsDeclared, NumImplicitDestructors);
   
+  if (!FreeMemory)
+    BumpAlloc.PrintStats();
+    
   if (ExternalSource.get()) {
     fprintf(stderr, "\n");
     ExternalSource->PrintStats();
