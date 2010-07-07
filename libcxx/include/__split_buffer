@@ -18,7 +18,7 @@ protected:
     void __throw_out_of_range() const;
 };
 
-template <class _Tp, class _Allocator>
+template <class _Tp, class _Allocator = allocator<_Tp> >
 struct __split_buffer
     : private __split_buffer_common<true>
 {
@@ -497,7 +497,7 @@ __split_buffer<_Tp, _Allocator>::push_front(const_reference __x)
         else
         {
             size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
-            __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 2) / 4, __alloc());
+            __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 3) / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
             _STD::swap(__first_, __t.__first_);
@@ -528,7 +528,7 @@ __split_buffer<_Tp, _Allocator>::push_front(value_type&& __x)
         else
         {
             size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
-            __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 2) / 4, __alloc());
+            __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 3) / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
             _STD::swap(__first_, __t.__first_);
