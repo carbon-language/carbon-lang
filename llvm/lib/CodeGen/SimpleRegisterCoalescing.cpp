@@ -618,10 +618,14 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
     // of last use.
     LastUse->setIsKill();
     removeRange(li, LastUseIdx.getDefIndex(), LR->end, li_, tri_);
+    if (LastUseMI->isCopy()) {
+      MachineOperand &DefMO = LastUseMI->getOperand(0);
+      if (DefMO.getReg() == li.reg && !DefMO.getSubReg())
+        DefMO.setIsDead();
+    }
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if ((LastUseMI->isCopy() && !LastUseMI->getOperand(0).getSubReg()) ||
-        (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-         DstReg == li.reg && DstSubIdx == 0)) {
+    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+        DstReg == li.reg && DstSubIdx == 0) {
       // Last use is itself an identity code.
       int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg,
                                                          false, false, tri_);
