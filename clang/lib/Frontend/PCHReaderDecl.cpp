@@ -609,7 +609,9 @@ void PCHDeclReader::VisitUsingDecl(UsingDecl *D) {
   // would avoid existence checks.
   unsigned NumShadows = Record[Idx++];
   for(unsigned I = 0; I != NumShadows; ++I) {
-    D->addShadowDecl(cast<UsingShadowDecl>(Reader.GetDecl(Record[Idx++])));
+    // Avoid invariant checking of UsingDecl::addShadowDecl, the decl may still
+    // be initializing.
+    D->Shadows.insert(cast<UsingShadowDecl>(Reader.GetDecl(Record[Idx++])));
   }
   D->setTypeName(Record[Idx++]);
   NamedDecl *Pattern = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
