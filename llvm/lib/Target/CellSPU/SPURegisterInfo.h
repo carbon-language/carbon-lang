@@ -86,15 +86,6 @@ namespace llvm {
     // New methods added:
     //------------------------------------------------------------------------
 
-    //! Return the array of argument passing registers
-    /*!
-      \note The size of this array is returned by getArgRegsSize().
-     */
-    static const unsigned *getArgRegs();
-
-    //! Return the size of the argument passing register array
-    static unsigned getNumArgRegs();
-
     //! Get DWARF debugging register number
     int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 

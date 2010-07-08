@@ -1014,22 +1014,26 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SPUFunctionInfo *FuncInfo = MF.getInfo<SPUFunctionInfo>();
 
-  const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
-  const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
-
   unsigned ArgOffset = SPUFrameInfo::minStackSize();
   unsigned ArgRegIdx = 0;
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
+                 *DAG.getContext());
+  // FIXME: allow for other calling conventions
+  CCInfo.AnalyzeFormalArguments(Ins, CCC_SPU);
+
   // Add DAG nodes to load the arguments or copy them out of registers.
   for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e; ++ArgNo) {
     EVT ObjectVT = Ins[ArgNo].VT;
     unsigned ObjSize = ObjectVT.getSizeInBits()/8;
     SDValue ArgVal;
+    CCValAssign &VA = ArgLocs[ArgNo];
 
-    if (ArgRegIdx < NumArgRegs) {
+    if (VA.isRegLoc()) {
       const TargetRegisterClass *ArgRegClass;
 
       switch (ObjectVT.getSimpleVT().SimpleTy) {
@@ -1068,7 +1072,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       }
 
       unsigned VReg = RegInfo.createVirtualRegister(ArgRegClass);
-      RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+      RegInfo.addLiveIn(VA.getLocReg(), VReg);
       ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
       ++ArgRegIdx;
     } else {
@@ -1088,12 +1092,28 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // vararg handling:
   if (isVarArg) {
-    // unsigned int ptr_size = PtrVT.getSizeInBits() / 8;
+    // FIXME: we should be able to query the argument registers from 
+    //        tablegen generated code. 
+    static const unsigned ArgRegs[] = {
+      SPU::R3,  SPU::R4,  SPU::R5,  SPU::R6,  SPU::R7,  SPU::R8,  SPU::R9,
+      SPU::R10, SPU::R11, SPU::R12, SPU::R13, SPU::R14, SPU::R15, SPU::R16,
+      SPU::R17, SPU::R18, SPU::R19, SPU::R20, SPU::R21, SPU::R22, SPU::R23,
+      SPU::R24, SPU::R25, SPU::R26, SPU::R27, SPU::R28, SPU::R29, SPU::R30,
+      SPU::R31, SPU::R32, SPU::R33, SPU::R34, SPU::R35, SPU::R36, SPU::R37,
+      SPU::R38, SPU::R39, SPU::R40, SPU::R41, SPU::R42, SPU::R43, SPU::R44,
+      SPU::R45, SPU::R46, SPU::R47, SPU::R48, SPU::R49, SPU::R50, SPU::R51,
+      SPU::R52, SPU::R53, SPU::R54, SPU::R55, SPU::R56, SPU::R57, SPU::R58,
+      SPU::R59, SPU::R60, SPU::R61, SPU::R62, SPU::R63, SPU::R64, SPU::R65,
+      SPU::R66, SPU::R67, SPU::R68, SPU::R69, SPU::R70, SPU::R71, SPU::R72,
+      SPU::R73, SPU::R74, SPU::R75, SPU::R76, SPU::R77, SPU::R78, SPU::R79
+    };
+    // size of ArgRegs array
+    unsigned NumArgRegs = 77;
+
     // We will spill (79-3)+1 registers to the stack
     SmallVector<SDValue, 79-3+1> MemOps;
 
     // Create the frame slot
-
     for (; ArgRegIdx != NumArgRegs; ++ArgRegIdx) {
       FuncInfo->setVarArgsFrameIndex(
         MFI->CreateFixedObject(StackSlotSize, ArgOffset, true));
@@ -1145,8 +1165,15 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   const SPUSubtarget *ST = SPUTM.getSubtargetImpl();
   unsigned NumOps     = Outs.size();
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
-  const unsigned *ArgRegs = SPURegisterInfo::getArgRegs();
-  const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
+
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
+                 *DAG.getContext()); 
+  // FIXME: allow for other calling conventions
+  CCInfo.AnalyzeCallOperands(Outs, CCC_SPU);
+  
+  const unsigned NumArgRegs = ArgLocs.size();
+
 
   // Handy pointer type
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
@@ -1166,8 +1193,9 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // And the arguments passed on the stack
   SmallVector<SDValue, 8> MemOpChains;
 
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDValue Arg = OutVals[i];
+  for (; ArgRegIdx != NumOps; ++ArgRegIdx) {
+    SDValue Arg = OutVals[ArgRegIdx];
+    CCValAssign &VA = ArgLocs[ArgRegIdx];
 
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
@@ -1190,7 +1218,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     case MVT::v8i16:
     case MVT::v16i8:
       if (ArgRegIdx != NumArgRegs) {
-        RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
       } else {
         MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
                                            false, false, 0));
