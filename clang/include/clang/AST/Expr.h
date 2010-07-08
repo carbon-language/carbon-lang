@@ -562,15 +562,9 @@ class DeclRefExpr : public Expr {
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T);
   
-protected:
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
   void computeDependence();
-
-  DeclRefExpr(StmtClass SC, ValueDecl *d, QualType t, SourceLocation l) :
-    Expr(SC, t, false, false), DecoratedD(d, 0), Loc(l) {
-    computeDependence();
-  }
 
 public:
   DeclRefExpr(ValueDecl *d, QualType t, SourceLocation l) :
