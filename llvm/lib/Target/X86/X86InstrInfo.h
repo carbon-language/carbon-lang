@@ -473,21 +473,80 @@ namespace X86II {
   /// TSFlags indicates that it is pc relative.
   static inline unsigned isImmPCRel(uint64_t TSFlags) {
     switch (TSFlags & X86II::ImmMask) {
-      default: assert(0 && "Unknown immediate size");
-      case X86II::Imm8PCRel:
-      case X86II::Imm16PCRel:
-      case X86II::Imm32PCRel:
-        return true;
-      case X86II::Imm8:
-      case X86II::Imm16:
-      case X86II::Imm32:
-      case X86II::Imm64:
-        return false;
+    default: assert(0 && "Unknown immediate size");
+    case X86II::Imm8PCRel:
+    case X86II::Imm16PCRel:
+    case X86II::Imm32PCRel:
+      return true;
+    case X86II::Imm8:
+    case X86II::Imm16:
+    case X86II::Imm32:
+    case X86II::Imm64:
+      return false;
     }
-  }    
+  }
+  
+  /// getMemoryOperandNo - The function returns the MCInst operand # for the
+  /// first field of the memory operand.  If the instruction doesn't have a
+  /// memory operand, this returns -1.
+  ///
+  /// Note that this ignores tied operands.  If there is a tied register which
+  /// is duplicated in the MCInst (e.g. "EAX = addl EAX, [mem]") it is only
+  /// counted as one operand.
+  ///
+  static inline int getMemoryOperandNo(uint64_t TSFlags) {
+    switch (TSFlags & X86II::FormMask) {
+    case X86II::MRMInitReg:  assert(0 && "FIXME: Remove this form");
+    default: assert(0 && "Unknown FormMask value in getMemoryOperandNo!");
+    case X86II::Pseudo:
+    case X86II::RawFrm:
+    case X86II::AddRegFrm:
+    case X86II::MRMDestReg:
+    case X86II::MRMSrcReg:
+       return -1;
+    case X86II::MRMDestMem:
+      return 0;
+    case X86II::MRMSrcMem: {
+      bool HasVEX_4V = (TSFlags >> 32) & X86II::VEX_4V;
+      unsigned FirstMemOp = 1;
+      if (HasVEX_4V)
+        ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
+      
+      // FIXME: Maybe lea should have its own form?  This is a horrible hack.
+      //if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
+      //    Opcode == X86::LEA16r || Opcode == X86::LEA32r)
+      return FirstMemOp;
+    }
+    case X86II::MRM0r: case X86II::MRM1r:
+    case X86II::MRM2r: case X86II::MRM3r:
+    case X86II::MRM4r: case X86II::MRM5r:
+    case X86II::MRM6r: case X86II::MRM7r:
+      return -1;
+    case X86II::MRM0m: case X86II::MRM1m:
+    case X86II::MRM2m: case X86II::MRM3m:
+    case X86II::MRM4m: case X86II::MRM5m:
+    case X86II::MRM6m: case X86II::MRM7m:
+      return 0;
+    case X86II::MRM_C1:
+    case X86II::MRM_C2:
+    case X86II::MRM_C3:
+    case X86II::MRM_C4:
+    case X86II::MRM_C8:
+    case X86II::MRM_C9:
+    case X86II::MRM_E8:
+    case X86II::MRM_F0:
+    case X86II::MRM_F8:
+    case X86II::MRM_F9:
+      return -1;
+    }
+  }
 }
 
-const int X86AddrNumOperands = 5;
+// FIXME: Move into X86II namespace.
+enum {
+  X86AddrSegment = 4,
+  X86AddrNumOperands = 5
+};
 
 inline static bool isScale(const MachineOperand &MO) {
   return MO.isImm() &&
