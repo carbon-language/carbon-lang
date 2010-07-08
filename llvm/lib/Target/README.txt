@@ -906,17 +906,6 @@ The expression should optimize to something like
 
 //===---------------------------------------------------------------------===//
 
-From GCC Bug 3756:
-int
-pn (int n)
-{
- return (n >= 0 ? 1 : -1);
-}
-Should combine to (n >> 31) | 1.  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts | llc".
-
-//===---------------------------------------------------------------------===//
-
 void a(int variable)
 {
  if (variable == 4 || variable == 6)

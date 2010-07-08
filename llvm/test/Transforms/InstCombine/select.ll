@@ -438,3 +438,35 @@ define i32 @test34(i32 %x, i32 %y) {
 ; CHECK: @test34
 ; CHECK: ret i32 %x
 }
+
+define i32 @test35(i32 %x) {
+  %cmp = icmp sge i32 %x, 0
+  %cond = select i1 %cmp, i32 60, i32 100
+  ret i32 %cond
+; CHECK: @test35
+; CHECK: ashr i32 %x, 31
+; CHECK: and i32 {{.*}}, 40
+; CHECK: add i32 {{.*}}, 60
+; CHECK: ret
+}
+
+define i32 @test36(i32 %x) {
+  %cmp = icmp slt i32 %x, 0
+  %cond = select i1 %cmp, i32 60, i32 100
+  ret i32 %cond
+; CHECK: @test36
+; CHECK: ashr i32 %x, 31
+; CHECK: and i32 {{.*}}, -40
+; CHECK: add i32 {{.*}}, 100
+; CHECK: ret
+}
+
+define i32 @test37(i32 %x) {
+  %cmp = icmp sgt i32 %x, -1
+  %cond = select i1 %cmp, i32 1, i32 -1
+  ret i32 %cond
+; CHECK: @test37
+; CHECK: ashr i32 %x, 31
+; CHECK: or i32 {{.*}}, 1
+; CHECK: ret
+}
