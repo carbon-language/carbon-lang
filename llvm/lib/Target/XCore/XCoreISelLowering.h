@@ -193,7 +193,8 @@ namespace llvm {
 
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
-                     const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
+                     const SmallVectorImpl<EVT> &OutTys,
+                     const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
                      LLVMContext &Context) const;
   };
 }

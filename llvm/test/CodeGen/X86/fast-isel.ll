@@ -49,10 +49,9 @@ entry:
 	ret i32 %tmp2
 }
 
-define void @ptrtoint_i1(i8* %p, i1* %q) nounwind {
+define i1 @ptrtoint_i1(i8* %p) nounwind {
   %t = ptrtoint i8* %p to i1
-  store i1 %t, i1* %q
-  ret void
+  ret i1 %t
 }
 define i8* @inttoptr_i1(i1 %p) nounwind {
   %t = inttoptr i1 %p to i8*
@@ -87,8 +86,11 @@ define i8 @mul_i8(i8 %a) nounwind {
        ret i8 %tmp
 }
 
-define void @load_store_i1(i1* %p, i1* %q) nounwind {
-  %t = load i1* %p
-  store i1 %t, i1* %q
+define void @store_i1(i1* %p, i1 %t) nounwind {
+  store i1 %t, i1* %p
   ret void
+}
+define i1 @load_i1(i1* %p) nounwind {
+  %t = load i1* %p
+  ret i1 %t
 }

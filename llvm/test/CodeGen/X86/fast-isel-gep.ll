@@ -14,7 +14,8 @@ define i32 @test1(i32 %t3, i32* %t1) nounwind {
 
 ; X64: test1:
 ; X64:  	movslq	%edi, %rax
-; X64:  	movl	(%rsi,%rax,4), %e
+; X64:  	movl	(%rsi,%rax,4), %eax
+; X64:  	ret
 
 }
 define i32 @test2(i64 %t3, i32* %t1) nounwind {
