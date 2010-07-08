@@ -53,7 +53,7 @@ public:
     assert(!It.atEnd() && "pred_iterator out of range!");
     return cast<TerminatorInst>(*It)->getParent();
   }
-  inline pointer *operator->() const { return &(operator*()); }
+  inline pointer *operator->() const { return &operator*(); }
 
   inline Self& operator++() {   // Preincrement
     assert(!It.atEnd() && "pred_iterator out of range!");
