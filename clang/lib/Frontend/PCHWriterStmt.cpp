@@ -359,10 +359,23 @@ void PCHStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
 
 void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
+
+  Record.push_back(E->hasQualifier());
+  unsigned NumTemplateArgs = E->getNumTemplateArgs();
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgumentList() &&
+         "Template args list with no args ?");
+  Record.push_back(NumTemplateArgs);
+
+  if (E->hasQualifier()) {
+    Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+    Writer.AddSourceRange(E->getQualifierRange(), Record);
+  }
+
+  if (NumTemplateArgs)
+    AddExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList());
+
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
-  // FIXME: write qualifier
-  // FIXME: write explicit template arguments
   Code = pch::EXPR_DECL_REF;
 }
 
@@ -507,13 +520,34 @@ void PCHStmtWriter::VisitCallExpr(CallExpr *E) {
 }
 
 void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
-  VisitExpr(E);
+  // Don't call VisitExpr, we'll write everything here.
+
+  Record.push_back(E->hasQualifier());
+  if (E->hasQualifier()) {
+    Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
+    Writer.AddSourceRange(E->getQualifierRange(), Record);
+  }
+
+  unsigned NumTemplateArgs = E->getNumTemplateArgs();
+  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgumentList() &&
+         "Template args list with no args ?");
+  Record.push_back(NumTemplateArgs);
+  if (NumTemplateArgs) {
+    Writer.AddSourceLocation(E->getLAngleLoc(), Record);
+    Writer.AddSourceLocation(E->getRAngleLoc(), Record);
+    for (unsigned i=0; i != NumTemplateArgs; ++i)
+      Writer.AddTemplateArgumentLoc(E->getTemplateArgs()[i], Record);
+  }
+  
+  DeclAccessPair FoundDecl = E->getFoundDecl();
+  Writer.AddDeclRef(FoundDecl.getDecl(), Record);
+  Record.push_back(FoundDecl.getAccess());
+
+  Writer.AddTypeRef(E->getType(), Record);
   Writer.AddStmt(E->getBase());
   Writer.AddDeclRef(E->getMemberDecl(), Record);
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
-  // FIXME: C++ nested-name-specifier
-  // FIXME: C++ template argument list
   Code = pch::EXPR_MEMBER;
 }
 

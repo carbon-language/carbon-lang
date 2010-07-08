@@ -561,6 +561,10 @@ class DeclRefExpr : public Expr {
               ValueDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T);
+
+  /// \brief Construct an empty declaration reference expression.
+  explicit DeclRefExpr(EmptyShell Empty)
+    : Expr(DeclRefExprClass, Empty) { }
   
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
@@ -572,10 +576,6 @@ public:
     computeDependence();
   }
 
-  /// \brief Construct an empty declaration reference expression.
-  explicit DeclRefExpr(EmptyShell Empty)
-    : Expr(DeclRefExprClass, Empty) { }
-
   static DeclRefExpr *Create(ASTContext &Context,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange,
@@ -583,6 +583,10 @@ public:
                              SourceLocation NameLoc,
                              QualType T,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
+
+  /// \brief Construct an empty declaration reference expression.
+  static DeclRefExpr *CreateEmpty(ASTContext &Context,
+                                  bool HasQualifier, unsigned NumTemplateArgs);
   
   ValueDecl *getDecl() { return DecoratedD.getPointer(); }
   const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }
@@ -672,6 +676,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  friend class PCHStmtReader;
+  friend class PCHStmtWriter;
 };
 
 /// PredefinedExpr - [C99 6.4.2.2] - A predefined identifier such as __func__.
@@ -1640,11 +1647,6 @@ public:
            base->isTypeDependent(), base->isValueDependent()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {}
-
-  /// \brief Build an empty member reference expression.
-  explicit MemberExpr(EmptyShell Empty)
-    : Expr(MemberExprClass, Empty), HasQualifierOrFoundDecl(false),
-      HasExplicitTemplateArgumentList(false) { }
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifier *qual, SourceRange qualrange,

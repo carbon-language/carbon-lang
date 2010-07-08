@@ -228,6 +228,19 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                TemplateArgs, T);
 }
 
+DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, bool HasQualifier,
+                                      unsigned NumTemplateArgs) {
+  std::size_t Size = sizeof(DeclRefExpr);
+  if (HasQualifier)
+    Size += sizeof(NameQualifier);
+  
+  if (NumTemplateArgs)
+    Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+  
+  void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
+  return new (Mem) DeclRefExpr(EmptyShell());
+}
+
 SourceRange DeclRefExpr::getSourceRange() const {
   // FIXME: Does not handle multi-token names well, e.g., operator[].
   SourceRange R(Loc);

@@ -374,10 +374,24 @@ void PCHStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
 
 void PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
+
+  bool HasQualifier = Record[Idx++];
+  unsigned NumTemplateArgs = Record[Idx++];
+  
+  E->DecoratedD.setInt((HasQualifier? DeclRefExpr::HasQualifierFlag : 0) |
+      (NumTemplateArgs ? DeclRefExpr::HasExplicitTemplateArgumentListFlag : 0));
+  
+  if (HasQualifier) {
+    E->getNameQualifier()->NNS = Reader.ReadNestedNameSpecifier(Record, Idx);
+    E->getNameQualifier()->Range = Reader.ReadSourceRange(Record, Idx);
+  }
+
+  if (NumTemplateArgs)
+    ReadExplicitTemplateArgumentList(*E->getExplicitTemplateArgumentList(),
+                                     NumTemplateArgs);
+
   E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  // FIXME: read qualifier
-  // FIXME: read explicit template arguments
+  E->setLocation(Reader.ReadSourceLocation(Record, Idx));
 }
 
 void PCHStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
@@ -519,11 +533,9 @@ void PCHStmtReader::VisitCallExpr(CallExpr *E) {
 }
 
 void PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
-  VisitExpr(E);
-  E->setBase(Reader.ReadSubExpr());
-  E->setMemberDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setArrow(Record[Idx++]);
+  // Don't call VisitExpr, this is fully initialized at creation.
+  assert(E->getStmtClass() == Stmt::MemberExprClass &&
+         "It's a subclass, we must advance Idx!");
 }
 
 void PCHStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
@@ -1321,7 +1333,9 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_DECL_REF:
-      S = new (Context) DeclRefExpr(Empty);
+      S = DeclRefExpr::CreateEmpty(*Context,
+                         /*HasQualifier=*/Record[PCHStmtReader::NumExprFields],
+                  /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields + 1]);
       break;
 
     case pch::EXPR_INTEGER_LITERAL:
@@ -1375,9 +1389,43 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       S = new (Context) CallExpr(*Context, Stmt::CallExprClass, Empty);
       break;
 
-    case pch::EXPR_MEMBER:
-      S = new (Context) MemberExpr(Empty);
+    case pch::EXPR_MEMBER: {
+      // We load everything here and fully initialize it at creation.
+      // That way we can use MemberExpr::Create and don't have to duplicate its
+      // logic with a MemberExpr::CreateEmpty.
+
+      assert(Idx == 0);
+      NestedNameSpecifier *NNS = 0;
+      SourceRange QualifierRange;
+      if (Record[Idx++]) { // HasQualifier.
+        NNS = ReadNestedNameSpecifier(Record, Idx);
+        QualifierRange = ReadSourceRange(Record, Idx);
+      }
+
+      TemplateArgumentListInfo ArgInfo;
+      unsigned NumTemplateArgs = Record[Idx++];
+      if (NumTemplateArgs) {
+        ArgInfo.setLAngleLoc(ReadSourceLocation(Record, Idx));
+        ArgInfo.setRAngleLoc(ReadSourceLocation(Record, Idx));
+        for (unsigned i = 0; i != NumTemplateArgs; ++i)
+          ArgInfo.addArgument(ReadTemplateArgumentLoc(Record, Idx));
+      }
+      
+      NamedDecl *FoundD = cast_or_null<NamedDecl>(GetDecl(Record[Idx++]));
+      AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
+      DeclAccessPair FoundDecl = DeclAccessPair::make(FoundD, AS);
+
+      QualType T = GetType(Record[Idx++]);
+      Expr *Base = ReadSubExpr();
+      ValueDecl *MemberD = cast<ValueDecl>(GetDecl(Record[Idx++]));
+      SourceLocation MemberLoc = ReadSourceLocation(Record, Idx);
+      bool IsArrow = Record[Idx++];
+
+      S = MemberExpr::Create(*Context, Base, IsArrow, NNS, QualifierRange,
+                             MemberD, FoundDecl, MemberLoc,
+                             NumTemplateArgs ? &ArgInfo : 0, T);
       break;
+    }
 
     case pch::EXPR_BINARY_OPERATOR:
       S = new (Context) BinaryOperator(Empty);
