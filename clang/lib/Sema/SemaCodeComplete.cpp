@@ -2174,12 +2174,25 @@ namespace {
   };
 }
 
-static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results) {
+static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
+                            bool TargetTypeIsPointer = false) {
+  typedef CodeCompleteConsumer::Result Result;
+  
   Results.EnterNewScope();
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
-       M != MEnd; ++M)
-    Results.AddResult(M->first);
+       M != MEnd; ++M) {
+    unsigned Priority = CCP_Macro;
+    
+    // Treat the "nil" and "NULL" macros as null pointer constants.
+    if (M->first->isStr("nil") || M->first->isStr("NULL")) {
+      Priority = CCP_Constant;
+      if (TargetTypeIsPointer)
+        Priority = Priority / CCF_SimilarTypeMatch;
+    }
+      
+    Results.AddResult(Result(M->first, Priority));
+  }
   Results.ExitScope();
 }
 
@@ -2261,8 +2274,13 @@ void Sema::CodeCompleteExpression(Scope *S, QualType T) {
   AddOrdinaryNameResults(CCC_Expression, S, *this, Results);
   Results.ExitScope();
   
+  bool PreferredTypeIsPointer = false;
+  if (!T.isNull())
+    PreferredTypeIsPointer = T->isAnyPointerType() || 
+      T->isMemberPointerType() || T->isBlockPointerType();
+  
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, Results);
+    AddMacroResults(PP, Results, PreferredTypeIsPointer);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
