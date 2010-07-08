@@ -18,8 +18,8 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <set>
-#include <stack>
 #include <vector>
 
 namespace llvm {
@@ -52,21 +52,21 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
 
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
-  std::stack<std::pair<NodeType *, ChildItTy> > VisitStack;
+  SmallVector<std::pair<NodeType *, ChildItTy>, 16> VisitStack;
 
   void traverseChild() {
-    while (VisitStack.top().second != GT::child_end(VisitStack.top().first)) {
-      NodeType *BB = *VisitStack.top().second++;
+    while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
+      NodeType *BB = *VisitStack.back().second++;
       if (!this->Visited.count(BB)) {  // If the block is not visited...
         this->Visited.insert(BB);
-        VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
+        VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       }
     }
   }
 
   inline po_iterator(NodeType *BB) {
     this->Visited.insert(BB);
-    VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
+    VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
     traverseChild();
   }
   inline po_iterator() {} // End is when stack is empty.
@@ -75,7 +75,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
     po_iterator_storage<SetType, ExtStorage>(S) {
     if(!S.count(BB)) {
       this->Visited.insert(BB);
-      VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
+      VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       traverseChild();
     }
   }
@@ -102,7 +102,7 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const {
-    return VisitStack.top().first;
+    return VisitStack.back().first;
   }
 
   // This is a nonstandard operator-> that dereferences the pointer an extra
@@ -112,7 +112,7 @@ public:
   inline NodeType *operator->() const { return operator*(); }
 
   inline _Self& operator++() {   // Preincrement
-    VisitStack.pop();
+    VisitStack.pop_back();
     if (!VisitStack.empty())
       traverseChild();
     return *this;

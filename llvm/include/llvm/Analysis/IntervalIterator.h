@@ -33,10 +33,10 @@
 #ifndef LLVM_INTERVAL_ITERATOR_H
 #define LLVM_INTERVAL_ITERATOR_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
-#include <stack>
 #include <set>
 #include <algorithm>
 
@@ -88,7 +88,7 @@ inline void addNodeToInterval(Interval *Int, Interval *I) {
 template<class NodeTy, class OrigContainer_t, class GT = GraphTraits<NodeTy*>,
          class IGT = GraphTraits<Inverse<NodeTy*> > >
 class IntervalIterator {
-  std::stack<std::pair<Interval*, typename Interval::succ_iterator> > IntStack;
+  SmallVector<std::pair<Interval*, typename Interval::succ_iterator>, 16> IntStack;
   std::set<BasicBlock*> Visited;
   OrigContainer_t *OrigContainer;
   bool IOwnMem;     // If True, delete intervals when done with them
@@ -116,15 +116,15 @@ public:
     if (IOwnMem)
       while (!IntStack.empty()) {
         delete operator*();
-        IntStack.pop();
+        IntStack.pop_back();
       }
   }
 
   inline bool operator==(const _Self& x) const { return IntStack == x.IntStack;}
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline const Interval *operator*() const { return IntStack.top().first; }
-  inline       Interval *operator*()       { return IntStack.top().first; }
+  inline const Interval *operator*() const { return IntStack.back().first; }
+  inline       Interval *operator*()       { return IntStack.back().first; }
   inline const Interval *operator->() const { return operator*(); }
   inline       Interval *operator->()       { return operator*(); }
 
@@ -133,8 +133,8 @@ public:
     do {
       // All of the intervals on the stack have been visited.  Try visiting
       // their successors now.
-      Interval::succ_iterator &SuccIt = IntStack.top().second,
-                                EndIt = succ_end(IntStack.top().first);
+      Interval::succ_iterator &SuccIt = IntStack.back().second,
+                                EndIt = succ_end(IntStack.back().first);
       while (SuccIt != EndIt) {                 // Loop over all interval succs
         bool Done = ProcessInterval(getSourceGraphNode(OrigContainer, *SuccIt));
         ++SuccIt;                               // Increment iterator
@@ -142,10 +142,10 @@ public:
       }
 
       // Free interval memory... if necessary
-      if (IOwnMem) delete IntStack.top().first;
+      if (IOwnMem) delete IntStack.back().first;
 
       // We ran out of successors for this interval... pop off the stack
-      IntStack.pop();
+      IntStack.pop_back();
     } while (!IntStack.empty());
 
     return *this;
@@ -175,7 +175,7 @@ private:
            E = GT::child_end(Node); I != E; ++I)
       ProcessNode(Int, getSourceGraphNode(OrigContainer, *I));
 
-    IntStack.push(std::make_pair(Int, succ_begin(Int)));
+    IntStack.push_back(std::make_pair(Int, succ_begin(Int)));
     return true;
   }
 
