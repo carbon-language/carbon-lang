@@ -365,3 +365,20 @@ ScheduleHazardRecognizer *TargetInstrInfoImpl::
 CreateTargetPostRAHazardRecognizer(const InstrItineraryData &II) const {
   return (ScheduleHazardRecognizer *)new PostRAHazardRecognizer(II);
 }
+
+// Default implementation of copyPhysReg using copyRegToReg.
+void TargetInstrInfoImpl::copyPhysReg(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MI,
+                                      DebugLoc DL,
+                                      unsigned DestReg, unsigned SrcReg,
+                                      bool KillSrc) const {
+  assert(TargetRegisterInfo::isPhysicalRegister(DestReg));
+  assert(TargetRegisterInfo::isPhysicalRegister(SrcReg));
+  const TargetRegisterInfo *TRI = MBB.getParent()->getTarget().getRegisterInfo();
+  const TargetRegisterClass *DRC = TRI->getPhysicalRegisterRegClass(DestReg);
+  const TargetRegisterClass *SRC = TRI->getPhysicalRegisterRegClass(SrcReg);
+  if (!copyRegToReg(MBB, MI, DestReg, SrcReg, DRC, SRC, DL))
+    llvm_unreachable("Cannot emit physreg copy instruction");
+  if (KillSrc)
+    llvm::prior(MI)->addRegisterKilled(SrcReg, TRI, true);
+}

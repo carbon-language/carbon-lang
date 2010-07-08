@@ -85,7 +85,7 @@ LowerSubregsInstructionPass::TransferDeadFlag(MachineInstr *MI,
     if (MII->addRegisterDead(DstReg, TRI))
       break;
     assert(MII != MI->getParent()->begin() &&
-           "copyRegToReg output doesn't reference destination register!");
+           "copyPhysReg output doesn't reference destination register!");
   }
 }
 
@@ -102,7 +102,7 @@ LowerSubregsInstructionPass::TransferKillFlag(MachineInstr *MI,
     if (MII->addRegisterKilled(SrcReg, TRI, AddIfNotFound))
       break;
     assert(MII != MI->getParent()->begin() &&
-           "copyRegToReg output doesn't reference source register!");
+           "copyPhysReg output doesn't reference source register!");
   }
 }
 
@@ -155,13 +155,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
 
     DEBUG(dbgs() << "subreg: eliminated!");
   } else {
-    // Insert copy
-    const TargetRegisterClass *TRCS = TRI->getPhysicalRegisterRegClass(DstReg);
-    const TargetRegisterClass *TRCD = TRI->getPhysicalRegisterRegClass(SrcReg);
-    bool Emitted = TII->copyRegToReg(*MBB, MI, DstReg, SrcReg, TRCD, TRCS,
-                                     MI->getDebugLoc());
-    (void)Emitted;
-    assert(Emitted && "Subreg and Dst must be of compatible register class");
+    TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstReg, SrcReg, false);
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstReg, TRI);
@@ -215,18 +209,11 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
     }
     DEBUG(dbgs() << "subreg: eliminated!");
   } else {
-    // Insert sub-register copy
-    const TargetRegisterClass *TRC0= TRI->getPhysicalRegisterRegClass(DstSubReg);
-    const TargetRegisterClass *TRC1= TRI->getPhysicalRegisterRegClass(InsReg);
-    bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1,
-                                     MI->getDebugLoc());
-    (void)Emitted;
-    assert(Emitted && "Subreg and Dst must be of compatible register class");
+    TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstSubReg, InsReg,
+                     MI->getOperand(2).isKill());
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstSubReg, TRI);
-    if (MI->getOperand(2).isKill())
-      TransferKillFlag(MI, InsReg, TRI);
     DEBUG({
         MachineBasicBlock::iterator dMI = MI;
         dbgs() << "subreg: " << *(--dMI);
@@ -280,18 +267,13 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     }
   } else {
     // Insert sub-register copy
-    const TargetRegisterClass *TRC0= TRI->getPhysicalRegisterRegClass(DstSubReg);
-    const TargetRegisterClass *TRC1= TRI->getPhysicalRegisterRegClass(InsReg);
     if (MI->getOperand(2).isUndef())
       // If the source register being inserted is undef, then this becomes a
       // KILL.
       BuildMI(*MBB, MI, MI->getDebugLoc(),
               TII->get(TargetOpcode::KILL), DstSubReg);
     else {
-      bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1,
-                                       MI->getDebugLoc());
-      (void)Emitted;
-      assert(Emitted && "Subreg and Dst must be of compatible register class");
+      TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstSubReg, InsReg, false);
     }
     MachineBasicBlock::iterator CopyMI = MI;
     --CopyMI;
@@ -343,21 +325,11 @@ bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
   }
 
   DEBUG(dbgs() << "real copy:   " << *MI);
-  // Ask target for a lowered copy instruction.
-  const TargetRegisterClass *DstRC =
-    TRI->getPhysicalRegisterRegClass(DstMO.getReg());
-  const TargetRegisterClass *SrcRC =
-    TRI->getPhysicalRegisterRegClass(SrcMO.getReg());
-  bool Emitted = TII->copyRegToReg(*MI->getParent(), MI,
-                                   DstMO.getReg(), SrcMO.getReg(),
-                                   DstRC, SrcRC, MI->getDebugLoc());
-  (void)Emitted;
-  assert(Emitted && "Cannot emit copy");
+  TII->copyPhysReg(*MI->getParent(), MI, MI->getDebugLoc(),
+                   DstMO.getReg(), SrcMO.getReg(), SrcMO.isKill());
 
   if (DstMO.isDead())
     TransferDeadFlag(MI, DstMO.getReg(), TRI);
-  if (SrcMO.isKill())
-    TransferKillFlag(MI, SrcMO.getReg(), TRI, true);
   if (MI->getNumOperands() > 2)
     TransferImplicitDefs(MI);
   DEBUG({
