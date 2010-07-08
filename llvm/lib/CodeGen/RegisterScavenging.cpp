@@ -339,13 +339,16 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
       Candidates.reset(MO.getReg());
   }
 
+  // Try to find a register that's unused if there is one, as then we won't
+  // have to spill.
+  if ((Candidates & RegsAvailable).any())
+     Candidates &= RegsAvailable;
+
   // Find the register whose use is furthest away.
   MachineBasicBlock::iterator UseMI;
   unsigned SReg = findSurvivorReg(I, Candidates, 25, UseMI);
 
-  // If we found an unused register there is no reason to spill it. We have
-  // probably found a callee-saved register that has been saved in the
-  // prologue, but happens to be unused at this point.
+  // If we found an unused register there is no reason to spill it.
   if (!isAliasUsed(SReg))
     return SReg;
 

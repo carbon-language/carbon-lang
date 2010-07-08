@@ -885,21 +885,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             // Scavenge a new scratch register
             CurrentVirtReg = Reg;
             const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
-            const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
-            BitVector Candidates(TRI->getNumRegs());
-            RS->getRegsAvailable(RC, Candidates);
-
-            // If there are any registers available, use the one that's
-            // unused for the longest after this instruction. That increases
-            // the ability to reuse the value.
-            if (Candidates.any()) {
-              MachineBasicBlock::iterator UMI;
-              CurrentScratchReg = RS->findSurvivorReg(I, Candidates, 25, UMI);
-            } else {
-              // No register is "free". Scavenge a register.
-              CurrentScratchReg = RS->scavengeRegister(RC, I, SPAdj);
-            }
-
+            CurrentScratchReg = RS->scavengeRegister(RC, I, SPAdj);
             PrevValue = Value;
           }
           // replace this reference to the virtual register with the
