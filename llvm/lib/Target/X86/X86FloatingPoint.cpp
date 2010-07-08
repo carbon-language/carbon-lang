@@ -164,6 +164,8 @@ namespace {
     void handleCompareFP(MachineBasicBlock::iterator &I);
     void handleCondMovFP(MachineBasicBlock::iterator &I);
     void handleSpecialFP(MachineBasicBlock::iterator &I);
+
+    bool translateCopy(MachineInstr*);
   };
   char FPS::ID = 0;
 }
@@ -237,7 +239,10 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     unsigned FPInstClass = Flags & X86II::FPTypeMask;
     if (MI->isInlineAsm())
       FPInstClass = X86II::SpecialFP;
-    
+
+    if (MI->isCopy() && translateCopy(MI))
+      FPInstClass = X86II::SpecialFP;
+
     if (FPInstClass == X86II::NotFP)
       continue;  // Efficiently ignore non-fp insts!
 
@@ -1205,4 +1210,34 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
   I = MBB->erase(I);  // Remove the pseudo instruction
   --I;
+}
+
+// Translate a COPY instruction to a pseudo-op that handleSpecialFP understands.
+bool FPS::translateCopy(MachineInstr *MI) {
+  unsigned DstReg = MI->getOperand(0).getReg();
+  unsigned SrcReg = MI->getOperand(1).getReg();
+
+  if (DstReg == X86::ST0) {
+    MI->setDesc(TII->get(X86::FpSET_ST0_80));
+    MI->RemoveOperand(0);
+    return true;
+  }
+  if (DstReg == X86::ST1) {
+    MI->setDesc(TII->get(X86::FpSET_ST1_80));
+    MI->RemoveOperand(0);
+    return true;
+  }
+  if (SrcReg == X86::ST0) {
+    MI->setDesc(TII->get(X86::FpGET_ST0_80));
+    return true;
+  }
+  if (SrcReg == X86::ST1) {
+    MI->setDesc(TII->get(X86::FpGET_ST1_80));
+    return true;
+  }
+  if (X86::RFP80RegClass.contains(DstReg, SrcReg)) {
+    MI->setDesc(TII->get(X86::MOV_Fp8080));
+    return true;
+  }
+  return false;
 }
