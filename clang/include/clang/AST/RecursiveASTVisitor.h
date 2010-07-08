@@ -1546,9 +1546,8 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
 }
 
 DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
-    // This is called for code like 'return MyClass()' where MyClass
-    // has no user-defined constructor.  It's also called for 'return
-    // int()'.  We recurse on type MyClass/int.
+    // This is called for code like 'return T()' where T is a built-in
+    // (i.e. non-class) type.
     if (!S->isImplicit())
       TRY_TO(TraverseType(S->getType()));
   })
@@ -1603,7 +1602,12 @@ DEF_TRAVERSE_STMT(UnresolvedLookupExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedMemberExpr, { })
 DEF_TRAVERSE_STMT(VAArgExpr, { })
 DEF_TRAVERSE_STMT(CXXConstructExpr, { })
-DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, { })
+
+DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, {
+    // This is called for code like 'return T()' where T is a class type.
+    TRY_TO(TraverseType(S->getType()));
+  })
+
 DEF_TRAVERSE_STMT(CallExpr, { })
 DEF_TRAVERSE_STMT(CXXMemberCallExpr, { })
 DEF_TRAVERSE_STMT(CXXOperatorCallExpr, { })
