@@ -39,3 +39,14 @@ namespace PR6570 {
   };
 
 }
+
+namespace PR7594 {
+  // If the lazy declaration of special member functions is triggered
+  // in an out-of-line initializer, make sure the functions aren't in
+  // the initializer scope. This used to crash Clang:
+  struct C {
+    C();
+    static C *c;
+  };
+  C *C::c = new C();
+}
