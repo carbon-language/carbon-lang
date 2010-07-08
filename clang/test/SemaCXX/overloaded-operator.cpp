@@ -293,7 +293,7 @@ void circ() {
 
 // PR5360: Arrays should lead to built-in candidates for subscript.
 typedef enum {
-  LastReg = 23, // expected-warning{{commas at the end of enumerator lists are a C++0x-specific feature}}
+  LastReg = 23,
 } Register;
 class RegAlloc {
   int getPriority(Register r) {

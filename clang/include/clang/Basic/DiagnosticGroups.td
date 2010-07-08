@@ -38,7 +38,6 @@ def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;
 def EmptyBody : DiagGroup<"empty-body">;
-def EnumeratorListComma : DiagGroup<"enumerator-list-comma">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
