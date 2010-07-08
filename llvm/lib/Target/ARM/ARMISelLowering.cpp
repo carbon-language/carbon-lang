@@ -2295,11 +2295,13 @@ SDValue
 ARMTargetLowering::getVFPCmp(SDValue &LHS, SDValue &RHS, ISD::CondCode CC,
                              SDValue &ARMCC, SelectionDAG &DAG,
                              DebugLoc dl) const {
-  if ((CC == ISD::SETEQ || CC == ISD::SETOEQ ||
+  if (UnsafeFPMath &&
+      (CC == ISD::SETEQ || CC == ISD::SETOEQ ||
        CC == ISD::SETNE || CC == ISD::SETUNE) &&
       canBitcastToInt(LHS.getNode()) && canBitcastToInt(RHS.getNode())) {
-    // If there are no othter uses of the CMP operands, and the condition
-    // code is EQ oe NE, we can optimize it to an integer comparison.
+    // If unsafe fp math optimization is enabled and there are no othter uses of
+    // the CMP operands, and the condition code is EQ oe NE, we can optimize it
+    // to an integer comparison.
     if (CC == ISD::SETOEQ)
       CC = ISD::SETEQ;
     else if (CC == ISD::SETUNE)
