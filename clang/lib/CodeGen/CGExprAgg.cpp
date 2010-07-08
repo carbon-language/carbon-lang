@@ -806,11 +806,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // equal, but other compilers do this optimization, and almost every memcpy
   // implementation handles this case safely.  If there is a libc that does not
   // safely handle this, we can add a target hook.
-  const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-  if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
-  if (SrcPtr->getType() != BP)
-    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
 
   // Get size and alignment info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
@@ -829,18 +824,16 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   //
   // we need to use a different call here.  We use isVolatile to indicate when
   // either the source or the destination is volatile.
-  const llvm::Type *I1Ty = llvm::Type::getInt1Ty(VMContext);
-  const llvm::Type *I8Ty = llvm::Type::getInt8Ty(VMContext);
 
   const llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::Type *DBP = llvm::PointerType::get(I8Ty, DPT->getAddressSpace());
-  if (DestPtr->getType() != DBP)
-    DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
+  const llvm::Type *DBP =
+    llvm::Type::getInt8PtrTy(VMContext, DPT->getAddressSpace());
+  DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
 
   const llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
-  const llvm::Type *SBP = llvm::PointerType::get(I8Ty, SPT->getAddressSpace());
-  if (SrcPtr->getType() != SBP)
-    SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
+  const llvm::Type *SBP =
+    llvm::Type::getInt8PtrTy(VMContext, SPT->getAddressSpace());
+  SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
 
   if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
     RecordDecl *Record = RecordTy->getDecl();
@@ -871,6 +864,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
-                      llvm::ConstantInt::get(Int32Ty,  TypeInfo.second/8),
-                      llvm::ConstantInt::get(I1Ty,  isVolatile));
+                      Builder.getInt32(TypeInfo.second/8),
+                      Builder.getInt1(isVolatile));
 }

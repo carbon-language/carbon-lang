@@ -30,3 +30,15 @@ void test3() {
   *A = *B;
 }
 
+// PR7437
+typedef struct {
+  float aData[1];
+} MyStruct;
+
+// CHECK: define void @test4(
+// CHECK: call void @llvm.memcpy.p0i8.p2i8.i64
+// CHECK: call void @llvm.memcpy.p2i8.p0i8.i64
+void test4(MyStruct __attribute__((address_space(2))) *pPtr) {
+  MyStruct s = pPtr[0];
+  pPtr[0] = s;
+}
