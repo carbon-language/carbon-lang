@@ -49,11 +49,6 @@ bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
     DstSub = MI->getOperand(0).getSubReg();
     Src = MI->getOperand(1).getReg();
     SrcSub = MI->getOperand(1).getSubReg();
-  } else if (MI->isExtractSubreg()) {
-    Dst = MI->getOperand(0).getReg();
-    DstSub = MI->getOperand(0).getSubReg();
-    Src = MI->getOperand(1).getReg();
-    SrcSub = compose(MI->getOperand(1).getSubReg(), MI->getOperand(2).getImm());
   } else if (MI->isSubregToReg()) {
     Dst = MI->getOperand(0).getReg();
     DstSub = compose(MI->getOperand(0).getSubReg(), MI->getOperand(3).getImm());

@@ -2012,7 +2012,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
       //       = EXTRACT_SUBREG fi#1
       // fi#1 is available in EDI, but it cannot be reused because it's not in
       // the right register file.
-      if (PhysReg && !AvoidReload && (SubIdx || MI.isExtractSubreg())) {
+      if (PhysReg && !AvoidReload && SubIdx) {
         const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
         if (!RC->contains(PhysReg))
           PhysReg = 0;

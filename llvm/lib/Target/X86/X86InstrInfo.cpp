@@ -1201,10 +1201,9 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
 
   MachineInstr *NewMI = MIB;
   MachineInstr *ExtMI =
-    BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::EXTRACT_SUBREG))
+    BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(TargetOpcode::COPY))
     .addReg(Dest, RegState::Define | getDeadRegState(isDead))
-    .addReg(leaOutReg, RegState::Kill)
-    .addImm(X86::sub_16bit);
+    .addReg(leaOutReg, RegState::Kill, X86::sub_16bit);
 
   if (LV) {
     // Update live variables

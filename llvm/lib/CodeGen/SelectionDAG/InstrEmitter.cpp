@@ -428,11 +428,8 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
   }
   
   if (Opc == TargetOpcode::EXTRACT_SUBREG) {
+    // EXTRACT_SUBREG is lowered as %dst = COPY %src:sub
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
-
-    // Create the extract_subreg machine instruction.
-    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
-                               TII->get(TargetOpcode::EXTRACT_SUBREG));
 
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
@@ -450,11 +447,16 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
       VRBase = MRI->createVirtualRegister(SRC);
     }
 
-    // Add def, source, and subreg index
-    MI->addOperand(MachineOperand::CreateReg(VRBase, true));
+    // Create the extract_subreg machine instruction.
+    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
+                               TII->get(TargetOpcode::COPY), VRBase);
+
+    // Add source, and subreg index
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap, /*IsDebug=*/false,
                IsClone, IsCloned);
-    MI->addOperand(MachineOperand::CreateImm(SubIdx));
+    assert(TargetRegisterInfo::isVirtualRegister(MI->getOperand(1).getReg()) &&
+           "Cannot yet extract from physregs");
+    MI->getOperand(1).setSubReg(SubIdx);
     MBB->insert(InsertPos, MI);
   } else if (Opc == TargetOpcode::INSERT_SUBREG ||
              Opc == TargetOpcode::SUBREG_TO_REG) {

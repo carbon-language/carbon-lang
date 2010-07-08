@@ -382,7 +382,7 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
   DstReg = 0;
   unsigned SrcSubIdx, DstSubIdx;
   if (!TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-    if (MI.isCopy() || MI.isExtractSubreg()) {
+    if (MI.isCopy()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(1).getReg();
     } else if (MI.isInsertSubreg()) {
@@ -1291,7 +1291,7 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     if (SrcDefMI->getParent() != DstDefMI->getParent())
       continue;
 
-    // If there are no other uses than extract_subreg which feed into
+    // If there are no other uses than copies which feed into
     // the reg_sequence, then we might be able to coalesce them.
     bool CanCoalesce = true;
     SmallVector<unsigned, 4> SrcSubIndices, DstSubIndices;
@@ -1299,13 +1299,11 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
       MachineInstr *UseMI = &*UI;
-      if (!UseMI->isExtractSubreg() ||
-          UseMI->getOperand(0).getReg() != DstReg ||
-          UseMI->getOperand(1).getSubReg() != 0) {
+      if (!UseMI->isCopy() || UseMI->getOperand(0).getReg() != DstReg) {
         CanCoalesce = false;
         break;
       }
-      SrcSubIndices.push_back(UseMI->getOperand(2).getImm());
+      SrcSubIndices.push_back(UseMI->getOperand(1).getSubReg());
       DstSubIndices.push_back(UseMI->getOperand(0).getSubReg());
     }
 
@@ -1340,9 +1338,9 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
            UI = MRI->use_nodbg_begin(SrcReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
       MachineInstr *UseMI = &*UI;
-      assert(UseMI->isExtractSubreg());
+      assert(UseMI->isCopy());
       unsigned DstSubIdx = UseMI->getOperand(0).getSubReg();
-      unsigned SrcSubIdx = UseMI->getOperand(2).getImm();
+      unsigned SrcSubIdx = UseMI->getOperand(1).getSubReg();
       assert(DstSubIdx != 0 && "missing subreg from RegSequence elimination");
       if ((NewDstSubIdx == 0 &&
            TRI->composeSubRegIndices(NewSrcSubIdx, DstSubIdx) != SrcSubIdx) ||
@@ -1357,7 +1355,7 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     if (!CanCoalesce)
       continue;
 
-    // Insert a copy or an extract to replace the original extracts.
+    // Insert a copy to replace the original.
     MachineBasicBlock::iterator InsertLoc = SomeMI;
     MachineInstr *CopyMI = BuildMI(*SomeMI->getParent(), SomeMI,
                                    SomeMI->getDebugLoc(),
@@ -1373,11 +1371,10 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
       ++UI;
       if (UseMI == CopyMI)
         continue;
-      assert(UseMI->isExtractSubreg());
+      assert(UseMI->isCopy());
       // Move any kills to the new copy or extract instruction.
       if (UseMI->getOperand(1).isKill()) {
-        MachineOperand *KillMO = CopyMI->findRegisterUseOperand(SrcReg);
-        KillMO->setIsKill();
+        CopyMI->getOperand(1).setIsKill();
         if (LV)
           // Update live variables
           LV->replaceKillInstruction(SrcReg, UseMI, &*CopyMI);
@@ -1438,9 +1435,8 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       }
       IsImpDef = false;
 
-      // Remember EXTRACT_SUBREG sources. These might be candidate for
-      // coalescing.
-      if (DefMI->isExtractSubreg())
+      // Remember COPY sources. These might be candidate for coalescing.
+      if (DefMI->isCopy())
         RealSrcs.push_back(DefMI->getOperand(1).getReg());
 
       if (!Seen.insert(SrcReg) ||

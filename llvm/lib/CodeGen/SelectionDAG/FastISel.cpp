@@ -1132,24 +1132,11 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
 unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT,
                                               unsigned Op0, bool Op0IsKill,
                                               uint32_t Idx) {
-  const TargetRegisterClass* RC = MRI.getRegClass(Op0);
-  
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
-  const TargetInstrDesc &II = TII.get(TargetOpcode::EXTRACT_SUBREG);
-  
-  if (II.getNumDefs() >= 1)
-    BuildMI(MBB, DL, II, ResultReg)
-      .addReg(Op0, Op0IsKill * RegState::Kill)
-      .addImm(Idx);
-  else {
-    BuildMI(MBB, DL, II)
-      .addReg(Op0, Op0IsKill * RegState::Kill)
-      .addImm(Idx);
-    bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                         II.ImplicitDefs[0], RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
-  }
+  assert(TargetRegisterInfo::isVirtualRegister(Op0) &&
+         "Cannot yet extract from physregs");
+  BuildMI(MBB, DL, TII.get(TargetOpcode::COPY), ResultReg)
+    .addReg(Op0, getKillRegState(Op0IsKill), Idx);
   return ResultReg;
 }
 

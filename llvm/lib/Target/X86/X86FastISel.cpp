@@ -1039,11 +1039,10 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
   TII.copyRegToReg(*MBB, MBB->end(), CReg, Op1Reg, RC, RC, DL);
 
   // The shift instruction uses X86::CL. If we defined a super-register
-  // of X86::CL, emit an EXTRACT_SUBREG to precisely describe what
-  // we're doing here.
+  // of X86::CL, emit a subreg KILL to precisely describe what we're doing here.
   if (CReg != X86::CL)
-    BuildMI(MBB, DL, TII.get(TargetOpcode::EXTRACT_SUBREG), X86::CL)
-      .addReg(CReg).addImm(X86::sub_8bit);
+    BuildMI(MBB, DL, TII.get(TargetOpcode::KILL), X86::CL)
+      .addReg(CReg, RegState::Kill);
 
   unsigned ResultReg = createResultReg(RC);
   BuildMI(MBB, DL, TII.get(OpReg), ResultReg).addReg(Op0Reg);

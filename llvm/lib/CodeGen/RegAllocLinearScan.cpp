@@ -422,9 +422,10 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (vni->def != SlotIndex() && vni->isDefAccurate() &&
         (CopyMI = li_->getInstructionFromIndex(vni->def)) &&
-        tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg))
+        (CopyMI->isCopy() ||
+         tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg)))
       // Defined by a copy, try to extend SrcReg forward
-      CandReg = SrcReg;
+      CandReg = CopyMI->isCopy() ? CopyMI->getOperand(1).getReg() : SrcReg;
     else if (TrivCoalesceEnds &&
              (CopyMI =
               li_->getInstructionFromIndex(range.end.getBaseIndex())) &&
@@ -980,6 +981,24 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
       if (CopyMI &&
           tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
+        unsigned Reg = 0;
+        if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
+          Reg = SrcReg;
+        else if (vrm_->isAssignedReg(SrcReg))
+          Reg = vrm_->getPhys(SrcReg);
+        if (Reg) {
+          if (SrcSubReg)
+            Reg = tri_->getSubReg(Reg, SrcSubReg);
+          if (DstSubReg)
+            Reg = tri_->getMatchingSuperReg(Reg, DstSubReg, RC);
+          if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
+            mri_->setRegAllocationHint(cur->reg, 0, Reg);
+        }
+      } else if (CopyMI && CopyMI->isCopy()) {
+        DstReg = CopyMI->getOperand(0).getReg();
+        DstSubReg = CopyMI->getOperand(0).getSubReg();
+        SrcReg = CopyMI->getOperand(1).getReg();
+        SrcSubReg = CopyMI->getOperand(1).getSubReg();
         unsigned Reg = 0;
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
           Reg = SrcReg;

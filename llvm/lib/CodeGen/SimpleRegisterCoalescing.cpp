@@ -1525,7 +1525,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     // If this isn't a copy nor a extract_subreg, we can't join intervals.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     bool isInsUndef = false;
-    if (Inst->isCopy() || Inst->isExtractSubreg()) {
+    if (Inst->isCopy()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
     } else if (Inst->isSubregToReg()) {
@@ -1657,6 +1657,8 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
            E = mri_->use_nodbg_end(); I != E; ++I) {
       MachineOperand &Use = I.getOperand();
       MachineInstr *UseMI = Use.getParent();
+      if (UseMI->isIdentityCopy())
+        continue;
       unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
       if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
           SrcReg == DstReg && SrcSubIdx == DstSubIdx)
@@ -1687,7 +1689,8 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
 
     // Ignore identity copies.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+    if (!MI->isIdentityCopy() &&
+        !(tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
           SrcReg == DstReg && SrcSubIdx == DstSubIdx))
       for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
         MachineOperand &Use = MI->getOperand(i);
@@ -1818,7 +1821,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
       // If the move will be an identity move delete it
       bool isMove= tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
-      if (isMove && SrcReg == DstReg && SrcSubIdx == DstSubIdx) {
+      if (MI->isIdentityCopy() ||
+          (isMove && SrcReg == DstReg && SrcSubIdx == DstSubIdx)) {
         if (li_->hasInterval(SrcReg)) {
           LiveInterval &RegInt = li_->getInterval(SrcReg);
           // If def of this move instruction is dead, remove its live range

@@ -122,10 +122,6 @@ public:
         SrcReg == DstReg)
       return true;
 
-    if (MI.getOpcode() == TargetOpcode::EXTRACT_SUBREG &&
-        MI.getOperand(0).getReg() == MI.getOperand(1).getReg())
-    return true;
-
     if ((MI.getOpcode() == TargetOpcode::INSERT_SUBREG ||
          MI.getOpcode() == TargetOpcode::SUBREG_TO_REG) &&
         MI.getOperand(0).getReg() == MI.getOperand(2).getReg())

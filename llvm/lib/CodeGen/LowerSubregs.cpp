@@ -53,7 +53,6 @@ namespace {
     bool runOnMachineFunction(MachineFunction&);
 
   private:
-    bool LowerExtract(MachineInstr *MI);
     bool LowerSubregToReg(MachineInstr *MI);
     bool LowerCopy(MachineInstr *MI);
 
@@ -119,57 +118,6 @@ LowerSubregsInstructionPass::TransferImplicitDefs(MachineInstr *MI) {
       continue;
     CopyMI->addOperand(MachineOperand::CreateReg(MO.getReg(), true, true));
   }
-}
-
-bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
-  MachineBasicBlock *MBB = MI->getParent();
-
-  assert(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
-         MI->getOperand(1).isReg() && MI->getOperand(1).isUse() &&
-         MI->getOperand(2).isImm() && "Malformed extract_subreg");
-
-  unsigned DstReg   = MI->getOperand(0).getReg();
-  unsigned SuperReg = MI->getOperand(1).getReg();
-  unsigned SubIdx   = MI->getOperand(2).getImm();
-  unsigned SrcReg   = TRI->getSubReg(SuperReg, SubIdx);
-
-  assert(TargetRegisterInfo::isPhysicalRegister(SuperReg) &&
-         "Extract supperg source must be a physical register");
-  assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-         "Extract destination must be in a physical register");
-  assert(SrcReg && "invalid subregister index for register");
-
-  DEBUG(dbgs() << "subreg: CONVERTING: " << *MI);
-
-  if (SrcReg == DstReg) {
-    // No need to insert an identity copy instruction.
-    if (MI->getOperand(1).isKill()) {
-      // We must make sure the super-register gets killed. Replace the
-      // instruction with KILL.
-      MI->setDesc(TII->get(TargetOpcode::KILL));
-      MI->RemoveOperand(2);     // SubIdx
-      DEBUG(dbgs() << "subreg: replace by: " << *MI);
-      return true;
-    }
-
-    DEBUG(dbgs() << "subreg: eliminated!");
-  } else {
-    TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstReg, SrcReg, false);
-    // Transfer the kill/dead flags, if needed.
-    if (MI->getOperand(0).isDead())
-      TransferDeadFlag(MI, DstReg, TRI);
-    if (MI->getOperand(1).isKill())
-      TransferKillFlag(MI, SuperReg, TRI, true);
-    TransferImplicitDefs(MI);
-    DEBUG({
-        MachineBasicBlock::iterator dMI = MI;
-        dbgs() << "subreg: " << *(--dMI);
-      });
-  }
-
-  DEBUG(dbgs() << '\n');
-  MBB->erase(MI);
-  return true;
 }
 
 bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
@@ -280,9 +228,9 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       MachineBasicBlock::iterator nmi = llvm::next(mi);
       MachineInstr *MI = mi;
       assert(!MI->isInsertSubreg() && "INSERT_SUBREG should no longer appear");
-      if (MI->isExtractSubreg()) {
-        MadeChange |= LowerExtract(MI);
-      } else if (MI->isSubregToReg()) {
+      assert(MI->getOpcode() != TargetOpcode::EXTRACT_SUBREG &&
+             "EXTRACT_SUBREG should no longer appear");
+      if (MI->isSubregToReg()) {
         MadeChange |= LowerSubregToReg(MI);
       } else if (MI->isCopy()) {
         MadeChange |= LowerCopy(MI);

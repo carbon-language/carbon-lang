@@ -407,7 +407,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
            "expected a virtual register");
     // Extracting from a Q or QQ register.
     MachineInstr *DefMI = MRI->getVRegDef(VirtReg);
-    if (!DefMI || !DefMI->isExtractSubreg())
+    if (!DefMI || !DefMI->isCopy() || !DefMI->getOperand(1).getSubReg())
       return false;
     VirtReg = DefMI->getOperand(1).getReg();
     if (LastSrcReg && LastSrcReg != VirtReg)
@@ -418,7 +418,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
         RC != ARM::QQPRRegisterClass &&
         RC != ARM::QQQQPRRegisterClass)
       return false;
-    unsigned SubIdx = DefMI->getOperand(2).getImm();
+    unsigned SubIdx = DefMI->getOperand(1).getSubReg();
     if (LastSubIdx) {
       if (LastSubIdx != SubIdx-Stride)
         return false;
@@ -445,7 +445,7 @@ NEONPreAllocPass::FormsRegSequence(MachineInstr *MI,
     MachineOperand &MO = MI->getOperand(FirstOpnd + R);
     unsigned OldReg = MO.getReg();
     MachineInstr *DefMI = MRI->getVRegDef(OldReg);
-    assert(DefMI->isExtractSubreg());
+    assert(DefMI->isCopy());
     MO.setReg(LastSrcReg);
     MO.setSubReg(SubIds[R]);
     MO.setIsKill(false);

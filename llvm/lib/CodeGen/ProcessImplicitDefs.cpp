@@ -50,8 +50,7 @@ bool ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
     return true;
 
   switch(OpIdx) {
-    case 1: return (MI->isExtractSubreg() || MI->isCopy()) &&
-                   MI->getOperand(0).getSubReg() == 0;
+    case 1: return MI->isCopy() && MI->getOperand(0).getSubReg() == 0;
     case 2: return MI->isSubregToReg() && MI->getOperand(0).getSubReg() == 0;
     default: return false;
   }
