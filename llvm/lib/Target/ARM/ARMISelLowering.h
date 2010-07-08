@@ -313,6 +313,7 @@ namespace llvm {
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
@@ -362,6 +363,8 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG) const;
 
     SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
+                      SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl) const;
+    SDValue getVFPCmp(SDValue &LHS, SDValue &RHS, ISD::CondCode CC,
                       SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl) const;
 
     MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI,

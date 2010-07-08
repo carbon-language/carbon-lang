@@ -59,7 +59,7 @@ EnableARMTailCalls("arm-tail-calls", cl::Hidden,
 
 static cl::opt<bool>
 EnableARMLongCalls("arm-long-calls", cl::Hidden,
-  cl::desc("Generate calls via indirect call instructions."),
+  cl::desc("Generate calls via indirect call instructions"),
   cl::init(false));
 
 static cl::opt<bool>
@@ -69,7 +69,7 @@ ARMInterworking("arm-interworking", cl::Hidden,
 
 static cl::opt<bool>
 EnableARMCodePlacement("arm-code-placement", cl::Hidden,
-  cl::desc("Enable code placement pass for ARM."),
+  cl::desc("Enable code placement pass for ARM"),
   cl::init(false));
 
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
@@ -2273,9 +2273,42 @@ ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
   return DAG.getNode(CompareType, dl, MVT::Flag, LHS, RHS);
 }
 
+static bool canBitcastToInt(SDNode *Op) {
+  return Op->hasOneUse() && 
+    ISD::isNormalLoad(Op) &&
+    Op->getValueType(0) == MVT::f32;
+}
+
+static SDValue bitcastToInt(SDValue Op, SelectionDAG &DAG) {
+  if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Op))
+    return DAG.getLoad(MVT::i32, Op.getDebugLoc(),
+                       Ld->getChain(), Ld->getBasePtr(),
+                       Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                       Ld->isVolatile(), Ld->isNonTemporal(),
+                       Ld->getAlignment());
+
+  llvm_unreachable("Unknown VFP cmp argument!");
+}
+
 /// Returns a appropriate VFP CMP (fcmp{s|d}+fmstat) for the given operands.
-static SDValue getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG,
-                         DebugLoc dl) {
+SDValue
+ARMTargetLowering::getVFPCmp(SDValue &LHS, SDValue &RHS, ISD::CondCode CC,
+                             SDValue &ARMCC, SelectionDAG &DAG,
+                             DebugLoc dl) const {
+  if ((CC == ISD::SETEQ || CC == ISD::SETOEQ ||
+       CC == ISD::SETNE || CC == ISD::SETUNE) &&
+      canBitcastToInt(LHS.getNode()) && canBitcastToInt(RHS.getNode())) {
+    // If there are no othter uses of the CMP operands, and the condition
+    // code is EQ oe NE, we can optimize it to an integer comparison.
+    if (CC == ISD::SETOEQ)
+      CC = ISD::SETEQ;
+    else if (CC == ISD::SETUNE)
+      CC = ISD::SETNE;
+    LHS = bitcastToInt(LHS, DAG);
+    RHS = bitcastToInt(RHS, DAG);
+    return getARMCmp(LHS, RHS, CC, ARMCC, DAG, dl);
+  }
+
   SDValue Cmp;
   if (!isFloatingPointZero(RHS))
     Cmp = DAG.getNode(ARMISD::CMPFP, dl, MVT::Flag, LHS, RHS);
@@ -2305,13 +2338,13 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
+  SDValue Cmp = getVFPCmp(LHS, RHS, CC, ARMCC, DAG, dl);
   SDValue Result = DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal,
-                                 ARMCC, CCR, Cmp);
+                               ARMCC, CCR, Cmp);
   if (CondCode2 != ARMCC::AL) {
     SDValue ARMCC2 = DAG.getConstant(CondCode2, MVT::i32);
     // FIXME: Needs another CMP because flag can have but one use.
-    SDValue Cmp2 = getVFPCmp(LHS, RHS, DAG, dl);
+    SDValue Cmp2 = getVFPCmp(LHS, RHS, CC, ARMCC2, DAG, dl);
     Result = DAG.getNode(ARMISD::CMOV, dl, VT,
                          Result, TrueVal, ARMCC2, CCR, Cmp2);
   }
@@ -2338,8 +2371,8 @@ SDValue ARMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   ARMCC::CondCodes CondCode, CondCode2;
   FPCCToARMCC(CC, CondCode, CondCode2);
 
-  SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
+  SDValue Cmp = getVFPCmp(LHS, RHS, CC, ARMCC, DAG, dl);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Flag);
   SDValue Ops[] = { Chain, Dest, ARMCC, CCR, Cmp };
@@ -2427,7 +2460,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(Opc, dl, VT, Op);
 }
 
-static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
+SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   // Implement fcopysign with a fabs and a conditional fneg.
   SDValue Tmp0 = Op.getOperand(0);
   SDValue Tmp1 = Op.getOperand(1);
@@ -2435,8 +2468,10 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   EVT SrcVT = Tmp1.getValueType();
   SDValue AbsVal = DAG.getNode(ISD::FABS, dl, VT, Tmp0);
-  SDValue Cmp = getVFPCmp(Tmp1, DAG.getConstantFP(0.0, SrcVT), DAG, dl);
   SDValue ARMCC = DAG.getConstant(ARMCC::LT, MVT::i32);
+  SDValue FP0 = DAG.getConstantFP(0.0, SrcVT);
+  SDValue Cmp = getVFPCmp(Tmp1, FP0,
+                          ISD::SETLT, ARMCC, DAG, dl);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   return DAG.getNode(ARMISD::CNEG, dl, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
