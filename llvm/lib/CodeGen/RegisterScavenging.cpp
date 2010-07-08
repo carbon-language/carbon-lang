@@ -242,8 +242,18 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
   return 0;
 }
 
+/// getRegsAvailable - Return all available registers in the register class
+/// in Mask.
+void RegScavenger::getRegsAvailable(const TargetRegisterClass *RC,
+                                    BitVector &Mask) {
+  for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
+       I != E; ++I)
+    if (!isAliasUsed(*I))
+      Mask.set(*I);
+}
+
 /// findSurvivorReg - Return the candidate register that is unused for the
-/// longest after MBBI. UseMI is set to the instruction where the search
+/// longest after StargMII. UseMI is set to the instruction where the search
 /// stopped.
 ///
 /// No more than InstrLimit instructions are inspected.
