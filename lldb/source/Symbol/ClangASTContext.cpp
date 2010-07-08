@@ -14,6 +14,7 @@
 #include <string>
 
 // Other libraries and framework includes
+#define NDEBUG
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTImporter.h"
 #include "clang/AST/CXXInheritance.h"
@@ -26,6 +27,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/LangStandard.h"
+#undef NDEBUG
 
 #include "lldb/Core/dwarf.h"
 

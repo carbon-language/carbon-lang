@@ -2755,7 +2755,6 @@
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = (
-					"-DNDEBUG",
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
 					"-Wparentheses",
@@ -2809,7 +2808,6 @@
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = (
-					"-DNDEBUG",
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
 					"-Wparentheses",
@@ -2919,7 +2917,6 @@
 				LLVM_BUILD_DIR = "$(DERIVED_FILE_DIR)/llvm.build";
 				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = (
-					"-DNDEBUG",
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
 					"-Wparentheses",
