@@ -33,12 +33,12 @@
 #ifndef LLVM_INTERVAL_ITERATOR_H
 #define LLVM_INTERVAL_ITERATOR_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
-#include <set>
 #include <algorithm>
+#include <set>
+#include <vector>
 
 namespace llvm {
 
@@ -88,7 +88,7 @@ inline void addNodeToInterval(Interval *Int, Interval *I) {
 template<class NodeTy, class OrigContainer_t, class GT = GraphTraits<NodeTy*>,
          class IGT = GraphTraits<Inverse<NodeTy*> > >
 class IntervalIterator {
-  SmallVector<std::pair<Interval*, typename Interval::succ_iterator>, 16> IntStack;
+  std::vector<std::pair<Interval*, typename Interval::succ_iterator> > IntStack;
   std::set<BasicBlock*> Visited;
   OrigContainer_t *OrigContainer;
   bool IOwnMem;     // If True, delete intervals when done with them

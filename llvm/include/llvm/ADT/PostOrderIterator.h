@@ -18,7 +18,6 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include <set>
 #include <vector>
 
@@ -52,7 +51,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
 
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
-  SmallVector<std::pair<NodeType *, ChildItTy>, 16> VisitStack;
+  std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 
   void traverseChild() {
     while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
