@@ -2295,7 +2295,7 @@ SDValue
 ARMTargetLowering::getVFPCmp(SDValue &LHS, SDValue &RHS, ISD::CondCode CC,
                              SDValue &ARMCC, SelectionDAG &DAG,
                              DebugLoc dl) const {
-  if (UnsafeFPMath &&
+  if (UnsafeFPMath && FiniteOnlyFPMath() &&
       (CC == ISD::SETEQ || CC == ISD::SETOEQ ||
        CC == ISD::SETNE || CC == ISD::SETUNE) &&
       canBitcastToInt(LHS.getNode()) && canBitcastToInt(RHS.getNode())) {

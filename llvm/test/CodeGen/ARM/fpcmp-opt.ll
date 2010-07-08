@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 -enable-unsafe-fp-math | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+vfp2 -enable-unsafe-fp-math -enable-finite-only-fp-math | FileCheck %s
 ; rdar://7461510
 
 define arm_apcscc i32 @t1(float* %a, float* %b) nounwind {
