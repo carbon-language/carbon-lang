@@ -106,16 +106,6 @@ public:
   /// Return 0 if none is found.
   unsigned FindUnusedReg(const TargetRegisterClass *RegClass) const;
 
-  /// findSurvivorReg - Return the candidate register that is unused for the
-  /// longest after StartMI. UseMI is set to the instruction where the search
-  /// stopped.
-  ///
-  /// No more than InstrLimit instructions are inspected.
-  unsigned findSurvivorReg(MachineBasicBlock::iterator StartMI,
-                           BitVector &Candidates,
-                           unsigned InstrLimit,
-                           MachineBasicBlock::iterator &UseMI);
-
   /// setScavengingFrameIndex / getScavengingFrameIndex - accessor and setter of
   /// ScavengingFrameIndex.
   void setScavengingFrameIndex(int FI) { ScavengingFrameIndex = FI; }
@@ -160,6 +150,16 @@ private:
 
   /// Add Reg and its aliases to BV.
   void addRegWithAliases(BitVector &BV, unsigned Reg);
+
+  /// findSurvivorReg - Return the candidate register that is unused for the
+  /// longest after StartMI. UseMI is set to the instruction where the search
+  /// stopped.
+  ///
+  /// No more than InstrLimit instructions are inspected.
+  unsigned findSurvivorReg(MachineBasicBlock::iterator StartMI,
+                           BitVector &Candidates,
+                           unsigned InstrLimit,
+                           MachineBasicBlock::iterator &UseMI);
 
 };
 
