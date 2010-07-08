@@ -288,6 +288,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakDefinition: OS << "\t.weak_definition\t"; break;
       // .weak_reference
   case MCSA_WeakReference:  OS << MAI.getWeakRefDirective(); break;
+  case MCSA_WeakDefAutoPrivate: OS << "\t.weak_def_can_be_hidden\t"; break;
   }
 
   OS << *Symbol;

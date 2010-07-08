@@ -217,6 +217,11 @@ namespace llvm {
     /// global as being a weak defined symbol.
     const char *WeakDefDirective;            // Defaults to NULL.
 
+    /// WeakDefAutoPrivateDirective - This directive, if non-null, is used to
+    /// declare a global as being a weak defined symbol that is automatically
+    /// made private by the static linker.
+    const char *WeakDefAutoPrivateDirective; // Defaults to NULL.
+
     /// LinkOnceDirective - This directive, if non-null is used to declare a
     /// global as being a weak defined symbol.  This is used on cygwin/mingw.
     const char *LinkOnceDirective;           // Defaults to NULL.
@@ -387,6 +392,9 @@ namespace llvm {
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }
     const char *getWeakDefDirective() const { return WeakDefDirective; }
+    const char *getWeakDefAutoPrivateDirective() const {
+      return WeakDefAutoPrivateDirective;
+    }
     const char *getLinkOnceDirective() const { return LinkOnceDirective; }
     
     MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}

@@ -33,6 +33,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Directives:
   WeakDefDirective = "\t.weak_definition ";
   WeakRefDirective = "\t.weak_reference ";
+  WeakDefAutoPrivateDirective = "\t.weak_def_can_be_hidden ";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill
   HasMachoTBSSDirective = true; // Uses .tbss

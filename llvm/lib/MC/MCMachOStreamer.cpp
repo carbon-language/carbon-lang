@@ -273,6 +273,10 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     // it has to be in a coalesced section, but this isn't enforced.
     SD.setFlags(SD.getFlags() | SF_WeakDefinition);
     break;
+
+  case MCSA_WeakDefAutoPrivate:
+    SD.setFlags(SD.getFlags() | SF_WeakDefinition | SF_WeakReference);
+    break;
   }
 }
 
