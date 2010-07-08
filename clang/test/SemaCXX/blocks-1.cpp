@@ -33,3 +33,13 @@ int main (int argc, const char * argv[]) {
     
     return 0;
 }
+
+namespace rdar8134521 {
+  void foo() {
+    int (^P)(int) = reinterpret_cast<int(^)(int)>(1);
+    P = (int(^)(int))(1);
+    
+    P = reinterpret_cast<int(^)(int)>((void*)1);
+    P = (int(^)(int))((void*)1);
+  }
+}

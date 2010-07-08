@@ -233,6 +233,15 @@ bool UnwrapDissimilarPointerTypes(QualType& T1, QualType& T2) {
     T2 = T2MPType->getPointeeType();
     return true;
   }
+  
+  const BlockPointerType *T1BPType = T1->getAs<BlockPointerType>(),
+                         *T2BPType = T2->getAs<BlockPointerType>();
+  if (T1BPType && T2BPType) {
+    T1 = T1BPType->getPointeeType();
+    T2 = T2BPType->getPointeeType();
+    return true;
+  }
+  
   return false;
 }
 
@@ -246,9 +255,11 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   // C++ 4.4. We piggyback on Sema::IsQualificationConversion for this, since
   // the rules are non-trivial. So first we construct Tcv *...cv* as described
   // in C++ 5.2.11p8.
-  assert((SrcType->isAnyPointerType() || SrcType->isMemberPointerType()) &&
+  assert((SrcType->isAnyPointerType() || SrcType->isMemberPointerType() ||
+          SrcType->isBlockPointerType()) &&
          "Source type is not pointer or pointer to member.");
-  assert((DestType->isAnyPointerType() || DestType->isMemberPointerType()) &&
+  assert((DestType->isAnyPointerType() || DestType->isMemberPointerType() ||
+          DestType->isBlockPointerType()) &&
          "Destination type is not pointer or pointer to member.");
 
   QualType UnwrappedSrcType = Self.Context.getCanonicalType(SrcType), 
@@ -265,7 +276,8 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
     Self.Context.getUnqualifiedArrayType(UnwrappedDestType, DestQuals);
     cv2.push_back(DestQuals);
   }
-  assert(cv1.size() > 0 && "Must have at least one pointer level.");
+  if (cv1.empty())
+    return false;
 
   // Construct void pointers with those qualifiers (in reverse order of
   // unwrapping, of course).
@@ -1128,8 +1140,10 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     return TC_Failed;
   }
   
-  bool destIsPtr = DestType->isAnyPointerType();
-  bool srcIsPtr = SrcType->isAnyPointerType();
+  bool destIsPtr = DestType->isAnyPointerType() ||
+                   DestType->isBlockPointerType();
+  bool srcIsPtr = SrcType->isAnyPointerType() ||
+                  SrcType->isBlockPointerType();
   if (!destIsPtr && !srcIsPtr) {
     // Except for std::nullptr_t->integer and lvalue->reference, which are
     // handled above, at least one of the two arguments must be a pointer.
@@ -1180,11 +1194,19 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     msg = diag::err_bad_cxx_cast_const_away;
     return TC_Failed;
   }
+  
+  // Cannot convert between block pointers and Objective-C object pointers.
+  if ((SrcType->isBlockPointerType() && DestType->isObjCObjectPointerType()) ||
+      (DestType->isBlockPointerType() && SrcType->isObjCObjectPointerType()))
+    return TC_NotApplicable;
+
+  // Any pointer can be cast to an Objective-C pointer type with a C-style
+  // cast.
   if (CStyle && DestType->isObjCObjectPointerType()) {
     Kind = CastExpr::CK_AnyPointerToObjCPointerCast;
     return TC_Success;
   }
-  
+    
   // Not casting away constness, so the only remaining check is for compatible
   // pointer categories.
   Kind = CastExpr::CK_BitCast;
@@ -1213,7 +1235,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
       Self.Diag(OpRange.getBegin(), diag::ext_cast_fn_obj) << OpRange;
     return TC_Success;
   }
-
+  
   // C++ 5.2.10p7: A pointer to an object can be explicitly converted to
   //   a pointer to an object of different type.
   // Void pointers are not specified, but supported by every compiler out there.
