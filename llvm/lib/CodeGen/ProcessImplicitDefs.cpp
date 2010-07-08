@@ -102,21 +102,6 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         continue;
       }
 
-      if (MI->isInsertSubreg()) {
-        MachineOperand &MO = MI->getOperand(2);
-        if (ImpDefRegs.count(MO.getReg())) {
-          // %reg1032<def> = INSERT_SUBREG %reg1032, undef, 2
-          // This is an identity copy, eliminate it now.
-          if (MO.isKill()) {
-            LiveVariables::VarInfo& vi = lv_->getVarInfo(MO.getReg());
-            vi.removeKill(MI);
-          }
-          MI->eraseFromParent();
-          Changed = true;
-          continue;
-        }
-      }
-
       // Eliminate %reg1032:sub<def> = COPY undef.
       if (MI->isCopy() && MI->getOperand(0).getSubReg()) {
         MachineOperand &MO = MI->getOperand(1);

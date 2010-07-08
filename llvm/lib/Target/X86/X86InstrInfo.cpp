@@ -1145,10 +1145,9 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
   // least on modern x86 machines).
   BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::IMPLICIT_DEF), leaInReg);
   MachineInstr *InsMI =
-    BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg)
-    .addReg(leaInReg)
-    .addReg(Src, getKillRegState(isKill))
-    .addImm(X86::sub_16bit);
+    BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(TargetOpcode::COPY))
+    .addReg(leaInReg, RegState::Define, X86::sub_16bit)
+    .addReg(Src, getKillRegState(isKill));
 
   MachineInstrBuilder MIB = BuildMI(*MFI, MBBI, MI->getDebugLoc(),
                                     get(Opc), leaOutReg);
@@ -1189,10 +1188,9 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
       // well be shifting and then extracting the lower 16-bits. 
       BuildMI(*MFI, MIB, MI->getDebugLoc(), get(X86::IMPLICIT_DEF), leaInReg2);
       InsMI2 =
-        BuildMI(*MFI, MIB, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg2)
-        .addReg(leaInReg2)
-        .addReg(Src2, getKillRegState(isKill2))
-        .addImm(X86::sub_16bit);
+        BuildMI(*MFI, MIB, MI->getDebugLoc(), get(TargetOpcode::COPY))
+        .addReg(leaInReg2, RegState::Define, X86::sub_16bit)
+        .addReg(Src2, getKillRegState(isKill2));
       addRegReg(MIB, leaInReg, true, leaInReg2, true);
     }
     if (LV && isKill2 && InsMI2)

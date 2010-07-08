@@ -54,7 +54,6 @@ namespace {
 
   private:
     bool LowerExtract(MachineInstr *MI);
-    bool LowerInsert(MachineInstr *MI);
     bool LowerSubregToReg(MachineInstr *MI);
     bool LowerCopy(MachineInstr *MI);
 
@@ -225,85 +224,6 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
   return true;
 }
 
-bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
-  MachineBasicBlock *MBB = MI->getParent();
-  assert((MI->getOperand(0).isReg() && MI->getOperand(0).isDef()) &&
-         (MI->getOperand(1).isReg() && MI->getOperand(1).isUse()) &&
-         (MI->getOperand(2).isReg() && MI->getOperand(2).isUse()) &&
-          MI->getOperand(3).isImm() && "Invalid insert_subreg");
-          
-  unsigned DstReg = MI->getOperand(0).getReg();
-#ifndef NDEBUG
-  unsigned SrcReg = MI->getOperand(1).getReg();
-#endif
-  unsigned InsReg = MI->getOperand(2).getReg();
-  unsigned SubIdx = MI->getOperand(3).getImm();     
-
-  assert(DstReg == SrcReg && "insert_subreg not a two-address instruction?");
-  assert(SubIdx != 0 && "Invalid index for insert_subreg");
-  unsigned DstSubReg = TRI->getSubReg(DstReg, SubIdx);
-  assert(DstSubReg && "invalid subregister index for register");
-  assert(TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
-         "Insert superreg source must be in a physical register");
-  assert(TargetRegisterInfo::isPhysicalRegister(InsReg) &&
-         "Inserted value must be in a physical register");
-
-  DEBUG(dbgs() << "subreg: CONVERTING: " << *MI);
-
-  if (DstSubReg == InsReg) {
-    // No need to insert an identity copy instruction. If the SrcReg was
-    // <undef>, we need to make sure it is alive by inserting a KILL
-    if (MI->getOperand(1).isUndef() && !MI->getOperand(0).isDead()) {
-      MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
-                                TII->get(TargetOpcode::KILL), DstReg);
-      if (MI->getOperand(2).isUndef())
-        MIB.addReg(InsReg, RegState::Undef);
-      else
-        MIB.addReg(InsReg, RegState::Kill);
-    } else {
-      DEBUG(dbgs() << "subreg: eliminated!\n");
-      MBB->erase(MI);
-      return true;
-    }
-  } else {
-    // Insert sub-register copy
-    if (MI->getOperand(2).isUndef())
-      // If the source register being inserted is undef, then this becomes a
-      // KILL.
-      BuildMI(*MBB, MI, MI->getDebugLoc(),
-              TII->get(TargetOpcode::KILL), DstSubReg);
-    else {
-      TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstSubReg, InsReg, false);
-    }
-    MachineBasicBlock::iterator CopyMI = MI;
-    --CopyMI;
-
-    // INSERT_SUBREG is a two-address instruction so it implicitly kills SrcReg.
-    if (!MI->getOperand(1).isUndef())
-      CopyMI->addOperand(MachineOperand::CreateReg(DstReg, false, true, true));
-
-    // Transfer the kill/dead flags, if needed.
-    if (MI->getOperand(0).isDead()) {
-      TransferDeadFlag(MI, DstSubReg, TRI);
-    } else {
-      // Make sure the full DstReg is live after this replacement.
-      CopyMI->addOperand(MachineOperand::CreateReg(DstReg, true, true));
-    }
-
-    // Make sure the inserted register gets killed
-    if (MI->getOperand(2).isKill() && !MI->getOperand(2).isUndef())
-      TransferKillFlag(MI, InsReg, TRI);
-  }
-
-  DEBUG({
-      MachineBasicBlock::iterator dMI = MI;
-      dbgs() << "subreg: " << *(--dMI) << "\n";
-    });
-
-  MBB->erase(MI);
-  return true;
-}
-
 bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
   MachineOperand &DstMO = MI->getOperand(0);
   MachineOperand &SrcMO = MI->getOperand(1);
@@ -359,10 +279,9 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
          mi != me;) {
       MachineBasicBlock::iterator nmi = llvm::next(mi);
       MachineInstr *MI = mi;
+      assert(!MI->isInsertSubreg() && "INSERT_SUBREG should no longer appear");
       if (MI->isExtractSubreg()) {
         MadeChange |= LowerExtract(MI);
-      } else if (MI->isInsertSubreg()) {
-        MadeChange |= LowerInsert(MI);
       } else if (MI->isSubregToReg()) {
         MadeChange |= LowerSubregToReg(MI);
       } else if (MI->isCopy()) {
