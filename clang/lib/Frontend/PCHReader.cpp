@@ -1702,7 +1702,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   PP->setExternalSource(this);
 
   // Load the translation unit declaration
-  ReadDeclRecord(DeclOffsets[0], 0);
+  GetTranslationUnitDecl();
 
   // Load the special types.
   Context->setBuiltinVaListType(
@@ -2588,6 +2588,13 @@ PCHReader::ReadTemplateArgumentLoc(const RecordData &Record, unsigned &Index) {
 
 Decl *PCHReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
+}
+
+TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
+  if (!DeclsLoaded[0])
+    ReadDeclRecord(DeclOffsets[0], 0);
+
+  return cast<TranslationUnitDecl>(DeclsLoaded[0]);
 }
 
 Decl *PCHReader::GetDecl(pch::DeclID ID) {

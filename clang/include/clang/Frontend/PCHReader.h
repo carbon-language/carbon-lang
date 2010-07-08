@@ -616,6 +616,9 @@ public:
   TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
                                     unsigned &Idx);
 
+  /// \brief Resolve and return the translation unit declaration.
+  TranslationUnitDecl *GetTranslationUnitDecl();
+
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
   QualType GetType(pch::TypeID ID);
