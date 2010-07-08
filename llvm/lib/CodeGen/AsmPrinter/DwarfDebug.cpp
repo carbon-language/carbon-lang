@@ -1504,7 +1504,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   const MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
-  if (StartLabel == FunctionBeginSym || EndLabel == 0) {
+  if (StartLabel == 0 || EndLabel == 0) {
     assert (0 && "Unexpected Start and End  labels for a inlined scope!");
     return 0;
   }
