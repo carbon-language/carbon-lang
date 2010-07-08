@@ -238,6 +238,14 @@ void memcmp5 (char *input) {
     (void)*(char*)0;   // no-warning
 }
 
+void memcmp6 (char *a, char *b, size_t n) {
+  int result = memcmp(a, b, n);
+  if (result != 0)
+    return;
+  if (n == 0)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
 //===----------------------------------------------------------------------===
 // bcopy()
 //===----------------------------------------------------------------------===
