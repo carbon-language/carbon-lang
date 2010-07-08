@@ -194,6 +194,7 @@ void PCHTypeWriter::VisitDecltypeType(const DecltypeType *T) {
 }
 
 void PCHTypeWriter::VisitTagType(const TagType *T) {
+  Record.push_back(T->isDependentType());
   Writer.AddDeclRef(T->getDecl(), Record);
   assert(!T->isBeingDefined() &&
          "Cannot serialize in the middle of a type definition");
@@ -220,6 +221,7 @@ PCHTypeWriter::VisitSubstTemplateTypeParmType(
 void
 PCHTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {
+  Record.push_back(T->isDependentType());
   Writer.AddTemplateName(T->getTemplateName(), Record);
   Record.push_back(T->getNumArgs());
   for (TemplateSpecializationType::iterator ArgI = T->begin(), ArgE = T->end();

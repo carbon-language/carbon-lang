@@ -1013,6 +1013,9 @@ public:
   CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
   void dump() const;
   static bool classof(const Type *) { return true; }
+
+  friend class PCHReader;
+  friend class PCHWriter;
 };
 
 template <> inline const TypedefType *Type::getAs() const {

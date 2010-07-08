@@ -2160,19 +2160,27 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   case pch::TYPE_DECLTYPE:
     return Context->getDecltypeType(ReadExpr());
 
-  case pch::TYPE_RECORD:
-    if (Record.size() != 1) {
+  case pch::TYPE_RECORD: {
+    if (Record.size() != 2) {
       Error("incorrect encoding of record type");
       return QualType();
     }
-    return Context->getRecordType(cast<RecordDecl>(GetDecl(Record[0])));
+    bool IsDependent = Record[0];
+    QualType T = Context->getRecordType(cast<RecordDecl>(GetDecl(Record[1])));
+    T->Dependent = IsDependent;
+    return T;
+  }
 
-  case pch::TYPE_ENUM:
-    if (Record.size() != 1) {
+  case pch::TYPE_ENUM: {
+    if (Record.size() != 2) {
       Error("incorrect encoding of enum type");
       return QualType();
     }
-    return Context->getEnumType(cast<EnumDecl>(GetDecl(Record[0])));
+    bool IsDependent = Record[0];
+    QualType T = Context->getEnumType(cast<EnumDecl>(GetDecl(Record[1])));
+    T->Dependent = IsDependent;
+    return T;
+  }
 
   case pch::TYPE_ELABORATED: {
     unsigned Idx = 0;
@@ -2273,16 +2281,20 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
+    bool IsDependent = Record[Idx++];
     TemplateName Name = ReadTemplateName(Record, Idx);
     llvm::SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, Record, Idx);
     QualType Canon = GetType(Record[Idx++]);
+    QualType T;
     if (Canon.isNull())
-      return Context->getCanonicalTemplateSpecializationType(Name, Args.data(),
-                                                             Args.size());
+      T = Context->getCanonicalTemplateSpecializationType(Name, Args.data(),
+                                                          Args.size());
     else
-      return Context->getTemplateSpecializationType(Name, Args.data(),
-                                                    Args.size(), Canon);
+      T = Context->getTemplateSpecializationType(Name, Args.data(),
+                                                 Args.size(), Canon);
+    T->Dependent = IsDependent;
+    return T;
   }
   }
   // Suppress a GCC warning
