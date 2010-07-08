@@ -684,6 +684,12 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (TargetDecl) {
     if (TargetDecl->hasAttr<NoThrowAttr>())
       FuncAttrs |= llvm::Attribute::NoUnwind;
+    else if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
+      const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
+      if (FPT && FPT->hasEmptyExceptionSpec())
+        FuncAttrs |= llvm::Attribute::NoUnwind;
+    }
+
     if (TargetDecl->hasAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
     if (TargetDecl->hasAttr<ConstAttr>())

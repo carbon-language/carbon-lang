@@ -27,18 +27,14 @@ struct X5 : X0, X4 { };
 
 void test(X2 x2, X3 x3, X5 x5) {
   // CHECK: define linkonce_odr void @_ZN2X2C1ERKS_
-  // CHECK-NOT: }
-  // CHECK: ret void
-  // CHECK-NOT: }
-  // CHECK: call void @__cxa_call_unexpected
-  // CHECK: }
+  // CHECK:      call void @_ZN2X2C2ERKS_({{.*}}) nounwind
+  // CHECK-NEXT: ret void
+  // CHECK-NEXT: }
   X2 x2a(x2);
   // CHECK: define linkonce_odr void @_ZN2X3C1ERKS_
-  // CHECK-NOT: }
-  // CHECK: ret void
-  // CHECK-NOT: }
-  // CHECK: call void @__cxa_call_unexpected
-  // CHECK: }
+  // CHECK:      call void @_ZN2X3C2ERKS_({{.*}}) nounwind
+  // CHECK-NEXT: ret void
+  // CHECK-NEXT: }
   X3 x3a(x3);
   // CHECK: define linkonce_odr void @_ZN2X5C1ERS_
   // CHECK-NOT: call void @__cxa_call_unexpected
@@ -60,14 +56,20 @@ struct X9 : X6, X7 { };
 
 void test() {
   // CHECK: define linkonce_odr void @_ZN2X8C1Ev
-  // CHECK-NOT: }
-  // CHECK: ret void
-  // CHECK-NOT: }
-  // CHECK: call void @__cxa_call_unexpected
-  // CHECK: }
+  // CHECK:      call void @_ZN2X8C2Ev({{.*}}) nounwind
+  // CHECK-NEXT: ret void
   X8();
   // CHECK: define linkonce_odr void @_ZN2X9C1Ev
-  // CHECK-NOT: call void @__cxa_call_unexpected
-  // CHECK: ret void
+  // CHECK:      call void @_ZN2X9C2Ev({{.*}}){{$}}
+  // CHECK-NEXT: ret void
   X9();
+
+  // CHECK: define linkonce_odr void @_ZN2X9C2Ev
+  // CHECK:      call void @_ZN2X6C2Ev({{.*}}) nounwind
+  // CHECK-NEXT: call void @_ZN2X7C2Ev({{.*}}){{$}}
+  // CHECK: ret void
+
+  // CHECK: define linkonce_odr void @_ZN2X8C2Ev
+  // CHECK:      call void @_ZN2X6C2Ev({{.*}}) nounwind
+  // CHECK-NEXT: ret void
 }

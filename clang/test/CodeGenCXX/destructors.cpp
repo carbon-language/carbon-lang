@@ -45,7 +45,8 @@ namespace PR7526 {
   allocator::~allocator() throw() { foo(); }
 
   // CHECK: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev
-  // CHECK: call void @__cxa_call_unexpected
+  // CHECK-NOT: call void @__cxa_call_unexpected
+  // CHECK:     }
   void foo() {
     allocator_derived ad;
   }
@@ -268,13 +269,11 @@ namespace test5 {
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
-  // CHECK: call void @_ZdlPv(
+  // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: ret void
   // CHECK: call i8* @llvm.eh.exception(
-  // CHECK: invoke void @_ZdlPv
+  // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: call void @_Unwind_Resume_or_Rethrow
-  // CHECK: call i8* @llvm.eh.exception(
-  // CHECK: call void @_ZSt9terminatev(
 
   // Checked at top of file:
   // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
@@ -295,13 +294,11 @@ namespace test5 {
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD1Ev(
-  // CHECK: call void @_ZdlPv(
+  // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: ret void
   // CHECK: call i8* @llvm.eh.exception()
-  // CHECK: invoke void @_ZdlPv(
+  // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: call void @_Unwind_Resume_or_Rethrow(
-  // CHECK: call i8* @llvm.eh.exception()
-  // CHECK: call void @_ZSt9terminatev()
 
   // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
