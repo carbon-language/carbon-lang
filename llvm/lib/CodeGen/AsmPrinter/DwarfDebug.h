@@ -263,6 +263,8 @@ class DwarfDebug {
   MCSymbol *DwarfDebugLocSectionSym;
   MCSymbol *DwarfDebugLineSectionSym, *CurrentLineSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
+
+  DIEInteger *DIEIntegerOne;
 private:
   
   /// getSourceDirectoryAndFileIds - Return the directory and file ids that
