@@ -28,6 +28,7 @@ using namespace clang;
 namespace {
   class PCHGenerator : public SemaConsumer {
     const Preprocessor &PP;
+    const PCHReader *Chain;
     const char *isysroot;
     llvm::raw_ostream *Out;
     Sema *SemaPtr;
@@ -35,6 +36,7 @@ namespace {
 
   public:
     explicit PCHGenerator(const Preprocessor &PP,
+                          const PCHReader *Chain,
                           const char *isysroot,
                           llvm::raw_ostream *Out);
     virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
@@ -43,9 +45,11 @@ namespace {
 }
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
+                           const PCHReader *Chain,
                            const char *isysroot,
                            llvm::raw_ostream *OS)
-  : PP(PP), isysroot(isysroot), Out(OS), SemaPtr(0), StatCalls(0) {
+  : PP(PP), Chain(Chain), isysroot(isysroot), Out(OS), SemaPtr(0),
+    StatCalls(0) {
 
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -64,7 +68,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WritePCH(*SemaPtr, StatCalls, isysroot);
+  Writer.WritePCH(*SemaPtr, StatCalls, Chain, isysroot);
 
   // Write the generated bitstream to "Out".
   Out->write((char *)&Buffer.front(), Buffer.size());
@@ -75,6 +79,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
 ASTConsumer *clang::CreatePCHGenerator(const Preprocessor &PP,
                                        llvm::raw_ostream *OS,
+                                       const PCHReader *Chain,
                                        const char *isysroot) {
-  return new PCHGenerator(PP, isysroot, OS);
+  return new PCHGenerator(PP, Chain, isysroot, OS);
 }

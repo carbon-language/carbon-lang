@@ -144,6 +144,15 @@ deserialized from the precompiled header. These statistics can be
 useful to determine whether the precompiled header implementation can
 be improved by making more of the implementation lazy.</p>
 
+<p>Precompiled headers can be chained. When you create a PCH while
+including an existing PCH, Clang can create the new PCH by referencing
+the original file and only writing the new data to the new file. For
+example, you could create a PCH out of all the headers that are very
+commonly used throughout your project, and then create a PCH for every
+single source file in the project that includes the code that is
+specific to that file, so that recompiling the file itself is very fast,
+without duplicating the data from the common headers for every file.</p>
+
 <h2 id="contents">Precompiled Header Contents</h2>
 
 <img src="PCHLayout.png" align="right" alt="Precompiled header layout">
@@ -208,6 +217,27 @@ within the <a href="#sourcemgr">source manager block</a>, but its
 contents are verified along with the rest of the metadata.</dd>
 
 </dl>
+
+<p>A chained PCH file (that is, one that references another PCH) has
+a slightly different metadata block, which contains the following
+information:</p>
+
+<dl>
+  <dt>Referenced file</dt>
+  <dd>The name of the referenced PCH file. It is looked up like a file
+specified using -include-pch.</dd>
+
+  <dt>PCH version</dt>
+  <dd>This is the same as in normal PCH files.</dd>
+
+  <dt>Original file name</dt>
+  <dd>The full path of the header that was used to generate this
+precompiled header.</dd>
+
+</dl>
+
+<p>The language options, target architecture and predefines buffer data
+is taken from the end of the chain, since they have to match anyway.</p>
 
 <h3 id="sourcemgr">Source Manager Block</h3>
 

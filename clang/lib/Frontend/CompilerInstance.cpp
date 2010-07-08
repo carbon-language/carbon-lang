@@ -255,6 +255,8 @@ void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path) {
   llvm::OwningPtr<ExternalASTSource> Source;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           getPreprocessor(), getASTContext()));
+  // Remember the PCHReader, but in a non-owning way.
+  Reader = static_cast<PCHReader*>(Source.get());
   getASTContext().setExternalSource(Source);
 }
 

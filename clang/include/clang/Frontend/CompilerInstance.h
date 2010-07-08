@@ -34,6 +34,7 @@ class DiagnosticClient;
 class ExternalASTSource;
 class FileManager;
 class FrontendAction;
+class PCHReader;
 class Preprocessor;
 class SourceManager;
 class TargetInfo;
@@ -95,6 +96,9 @@ class CompilerInstance {
 
   /// The list of active output files.
   std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
+
+  /// The PCH reader. Not owned; the ASTContext owns this.
+  PCHReader *Reader;
 
   void operator=(const CompilerInstance &);  // DO NOT IMPLEMENT
   CompilerInstance(const CompilerInstance&); // DO NOT IMPLEMENT
@@ -506,6 +510,9 @@ public:
   static ExternalASTSource *
   createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
                              Preprocessor &PP, ASTContext &Context);
+
+  /// Get the PCH reader, if any.
+  PCHReader *getPCHReader() { return Reader; }
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the

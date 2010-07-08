@@ -30,10 +30,10 @@ namespace clang {
     /// designed for the previous version could not support reading
     /// the new version), this number should be increased.
     ///
-    /// Version 3 of PCH files also requires that the version control branch and
+    /// Version 4 of PCH files also requires that the version control branch and
     /// revision match exactly, since there is no backward compatibility of
     /// PCH files at this time.
-    const unsigned VERSION_MAJOR = 3;
+    const unsigned VERSION_MAJOR = 4;
 
     /// \brief PCH minor version number supported by this version of
     /// Clang.
@@ -47,7 +47,7 @@ namespace clang {
 
     /// \brief An ID number that refers to a declaration in a PCH file.
     ///
-    /// The ID numbers of types are consecutive (in order of
+    /// The ID numbers of declarations are consecutive (in order of
     /// discovery) and start at 2. 0 is reserved for NULL, and 1 is
     /// reserved for the translation unit declaration.
     typedef uint32_t DeclID;
@@ -232,7 +232,11 @@ namespace clang {
       VTABLE_USES = 24,
 
       /// \brief Record code for the array of dynamic classes.
-      DYNAMIC_CLASSES = 25
+      DYNAMIC_CLASSES = 25,
+
+      /// \brief Record code for the chained PCH metadata, including the
+      /// PCH version and the name of the PCH this is chained to.
+      CHAINED_METADATA = 26
 
     };
 

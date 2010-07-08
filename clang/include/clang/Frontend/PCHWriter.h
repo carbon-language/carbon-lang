@@ -39,6 +39,7 @@ class CXXBaseOrMemberInitializer;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
+class PCHReader;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -257,7 +258,7 @@ public:
   /// \param PPRec Record of the preprocessing actions that occurred while
   /// preprocessing this file, e.g., macro instantiations
   void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                const char* isysroot);
+                const PCHReader *Chain, const char* isysroot);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);

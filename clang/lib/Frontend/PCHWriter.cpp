@@ -628,6 +628,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
   RECORD(UNUSED_STATIC_FUNCS);
   RECORD(MACRO_DEFINITION_OFFSETS);
+  RECORD(CHAINED_METADATA);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -2075,7 +2076,7 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
     NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) { }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                         const char *isysroot) {
+                         const PCHReader *Chain, const char *isysroot) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;

@@ -81,9 +81,10 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
     return 0;
 
   if (CI.getFrontendOpts().RelocatablePCH)
-    return CreatePCHGenerator(CI.getPreprocessor(), OS, Sysroot.c_str());
+    return CreatePCHGenerator(CI.getPreprocessor(), OS,
+                              CI.getPCHReader(), Sysroot.c_str());
 
-  return CreatePCHGenerator(CI.getPreprocessor(), OS);
+  return CreatePCHGenerator(CI.getPreprocessor(), OS, CI.getPCHReader());
 }
 
 ASTConsumer *InheritanceViewAction::CreateASTConsumer(CompilerInstance &CI,
