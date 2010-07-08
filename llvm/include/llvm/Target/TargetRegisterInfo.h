@@ -115,6 +115,11 @@ public:
     return RegSet.count(Reg);
   }
 
+  /// contains - Return true if both registers are in this class.
+  bool contains(unsigned Reg1, unsigned Reg2) const {
+    return contains(Reg1) && contains(Reg2);
+  }
+
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
   bool hasType(EVT vt) const {

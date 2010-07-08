@@ -2058,6 +2058,66 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   return false;
 }
 
+void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator MI, DebugLoc DL,
+                               unsigned DestReg, unsigned SrcReg,
+                               bool KillSrc) const {
+  // First deal with the normal symmetric copies.
+  unsigned Opc = 0;
+  if (X86::GR64RegClass.contains(DestReg, SrcReg))
+    Opc = X86::MOV64rr;
+  else if (X86::GR32RegClass.contains(DestReg, SrcReg))
+    Opc = X86::MOV32rr;
+  else if (X86::GR16RegClass.contains(DestReg, SrcReg))
+    Opc = X86::MOV16rr;
+  else if (X86::GR8RegClass.contains(DestReg, SrcReg)) {
+    // Copying to or from a physical H register on x86-64 requires a NOREX
+    // move.  Otherwise use a normal move.
+    if ((isHReg(DestReg) || isHReg(SrcReg)) &&
+        TM.getSubtarget<X86Subtarget>().is64Bit())
+      Opc = X86::MOV8rr_NOREX;
+    else
+      Opc = X86::MOV8rr;
+  } else if (X86::VR128RegClass.contains(DestReg, SrcReg))
+    Opc = X86::MOVAPSrr;
+
+  if (Opc) {
+    BuildMI(MBB, MI, DL, get(Opc), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
+  // Moving EFLAGS to / from another register requires a push and a pop.
+  if (SrcReg == X86::EFLAGS) {
+    if (X86::GR64RegClass.contains(DestReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSHF64));
+      BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
+      return;
+    } else if (X86::GR32RegClass.contains(DestReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSHF32));
+      BuildMI(MBB, MI, DL, get(X86::POP32r), DestReg);
+      return;
+    }
+  }
+  if (DestReg == X86::EFLAGS) {
+    if (X86::GR64RegClass.contains(SrcReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSH64r))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+      BuildMI(MBB, MI, DL, get(X86::POPF64));
+      return;
+    } else if (X86::GR32RegClass.contains(SrcReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSH32r))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+      BuildMI(MBB, MI, DL, get(X86::POPF32));
+      return;
+    }
+  }
+
+  DEBUG(dbgs() << "Cannot copy " << RI.getName(SrcReg)
+               << " to " << RI.getName(DestReg) << '\n');
+  llvm_unreachable("Cannot emit physreg copy instruction");
+}
+
 static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       const TargetRegisterClass *RC,
                                       bool isStackAligned,
