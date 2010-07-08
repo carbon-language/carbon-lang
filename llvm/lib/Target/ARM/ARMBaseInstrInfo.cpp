@@ -848,7 +848,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
       // FIXME: It's possible to only store part of the QQ register if the
       // spilled def has a sub-register index.
-      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VST2q32))
+      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VST1d64Q))
         .addFrameIndex(FI).addImm(16);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
       MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
@@ -941,7 +941,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   case ARM::QQPRRegClassID:
   case ARM::QQPR_VFP2RegClassID:
     if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VLD2q32));
+      MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(ARM::VLD1d64Q));
       MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
