@@ -265,14 +265,17 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
     // initialize the semi dominator to point to the parent node
     WInfo.Semi = WInfo.Parent;
-    for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType CI =
-         GraphTraits<Inverse<NodeT> >::child_begin(W),
-         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI)
-      if (DT.Info.count(*CI)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = DT.Info[Eval<GraphT>(DT, *CI)].Semi;
+    typedef GraphTraits<Inverse<NodeT> > InvTraits;
+    for (typename InvTraits::ChildIteratorType CI =
+         InvTraits::child_begin(W),
+         E = InvTraits::child_end(W); CI != E; ++CI) {
+      typename InvTraits::NodeType *N = *CI;
+      if (DT.Info.count(N)) {  // Only if this predecessor is reachable!
+        unsigned SemiU = DT.Info[Eval<GraphT>(DT, N)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
+    }
 
     DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
 
