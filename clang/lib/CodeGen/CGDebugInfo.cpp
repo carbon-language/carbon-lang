@@ -758,21 +758,29 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
+  llvm::DIDescriptor FDContext =
+    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+
+  // If this is just a forward declaration, construct an appropriately
+  // marked node and just return it.
+  if (!RD->getDefinition()) {
+    llvm::DICompositeType FwdDecl =
+      DebugFactory.CreateCompositeType(Tag, FDContext, RD->getName(),
+                                       DefUnit, Line, 0, 0, 0,
+                                       llvm::DIType::FlagFwdDecl,
+                                       llvm::DIType(), llvm::DIArray());
+
+      return FwdDecl;
+  }
 
   // A RD->getName() is not unique. However, the debug info descriptors 
   // are uniqued so use type name to ensure uniquness.
   llvm::SmallString<128> FwdDeclName;
   llvm::raw_svector_ostream(FwdDeclName) << "fwd.type." << FwdDeclCount++;
-  llvm::DIDescriptor FDContext = 
-    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, FDContext, FwdDeclName,
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
-
-  // If this is just a forward declaration, return it.
-  if (!RD->getDefinition())
-    return FwdDecl;
 
   llvm::MDNode *MN = FwdDecl;
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
