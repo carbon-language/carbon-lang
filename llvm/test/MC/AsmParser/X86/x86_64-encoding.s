@@ -4,6 +4,11 @@
 // CHECK: callw 42
 // CHECK: encoding: [0x66,0xe8,A,A]
        callw 42
+       
+// rdar://8127102
+// CHECK: movq	%gs:(%rdi), %rax
+// CHECK: encoding: [0x65,0x48,0x8b,0x07]
+movq	%gs:(%rdi), %rax
 
 // CHECK: crc32b 	%bl, %eax
 // CHECK:  encoding: [0xf2,0x0f,0x38,0xf0,0xc3]
