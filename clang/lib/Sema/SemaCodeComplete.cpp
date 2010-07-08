@@ -4147,6 +4147,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
 
 void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S, 
                                               bool IsInstanceMethod,
+                                              bool AtParameterName,
                                               TypeTy *ReturnTy,
                                               IdentifierInfo **SelIdents,
                                               unsigned NumSelIdents) {
@@ -4184,6 +4185,20 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
       if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
                                   NumSelIdents))
         continue;
+      
+      if (AtParameterName) {
+        // Suggest parameter names we've seen before.
+        if (NumSelIdents && NumSelIdents <= MethList->Method->param_size()) {
+          ParmVarDecl *Param = MethList->Method->param_begin()[NumSelIdents-1];
+          if (Param->getIdentifier()) {
+            CodeCompletionString *Pattern = new CodeCompletionString;
+            Pattern->AddTypedTextChunk(Param->getIdentifier()->getName());
+            Results.AddResult(Pattern);
+          }
+        }
+        
+        continue;
+      }
       
       Result R(MethList->Method, 0);
       R.StartParameter = NumSelIdents;

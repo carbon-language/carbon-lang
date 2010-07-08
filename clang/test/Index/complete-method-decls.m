@@ -44,12 +44,12 @@
 
 @interface C
 - (int)first:(int)x second:(float)y third:(double)z;
-- (id)first:(int)x second2:(float)y third:(double)z;
-- (void*)first:(int)x second3:(float)y third:(double)z;
+- (id)first:(int)xx second2:(float)y2 third:(double)z;
+- (void*)first:(int)xxx second3:(float)y3 third:(double)z;
 @end
 
 @interface D
-- (int)first:(int)x second4:(float)y third:(double)z;
+- (int)first:(int)x second2:(float)y third:(double)z;
 @end
 
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -90,8 +90,14 @@
 // RUN: c-index-test -code-completion-at=%s:42:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: NotImplemented:{LeftParen (}{Text id}{RightParen )}{TypedText categoryFunction}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // RUN: c-index-test -code-completion-at=%s:52:21 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC8 %s
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y2}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y3}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
 // CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (5)
+// RUN: c-index-test -code-completion-at=%s:52:19 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC9 %s
+// CHECK-CC9: NotImplemented:{TypedText x} (30)
+// CHECK-CC9: NotImplemented:{TypedText xx} (30)
+// CHECK-CC9: NotImplemented:{TypedText xxx} (30)
+// RUN: c-index-test -code-completion-at=%s:52:36 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CCA %s
+// CHECK-CCA: NotImplemented:{TypedText y2} (30)
 
 

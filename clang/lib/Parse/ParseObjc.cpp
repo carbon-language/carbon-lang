@@ -856,6 +856,20 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
       ArgInfo.ArgAttrs = ParseGNUAttributes();
 
+    // Code completion for the next piece of the selector.
+    if (Tok.is(tok::code_completion)) {
+      ConsumeCodeCompletionToken();
+      KeyIdents.push_back(SelIdent);
+      Actions.CodeCompleteObjCMethodDeclSelector(getCurScope(), 
+                                                 mType == tok::minus,
+                                                 /*AtParameterName=*/true,
+                                                 ReturnType,
+                                                 KeyIdents.data(), 
+                                                 KeyIdents.size());
+      KeyIdents.pop_back();
+      break;
+    }
+    
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident); // missing argument name.
       break;
@@ -873,6 +887,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       ConsumeCodeCompletionToken();
       Actions.CodeCompleteObjCMethodDeclSelector(getCurScope(), 
                                                  mType == tok::minus,
+                                                 /*AtParameterName=*/false,
                                                  ReturnType,
                                                  KeyIdents.data(), 
                                                  KeyIdents.size());

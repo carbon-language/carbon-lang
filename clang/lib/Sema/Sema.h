@@ -4574,6 +4574,7 @@ public:
                                           DeclPtrTy IDecl);
   virtual void CodeCompleteObjCMethodDeclSelector(Scope *S, 
                                                   bool IsInstanceMethod,
+                                                  bool AtParameterName,
                                                   TypeTy *ReturnType,
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents);

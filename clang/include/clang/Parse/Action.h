@@ -3134,13 +3134,16 @@ public:
                                           DeclPtrTy IDecl) {
   }
   
-  /// \brief Code completion for a selector identifier within an Objective-C
-  /// method declaration.
+  /// \brief Code completion for a selector identifier or argument name within
+  /// an Objective-C method declaration.
   ///
   /// \param S The scope in which this code completion occurs.
   ///
   /// \param IsInstanceMethod Whether we are parsing an instance method (or, 
   /// if false, a class method).
+  ///
+  /// \param AtParameterName Whether the actual code completion point is at the
+  /// argument name.
   ///
   /// \param ReturnType If non-NULL, the specified return type of the method
   /// being declared or defined.
@@ -3151,6 +3154,7 @@ public:
   /// \param NumSelIdents The number of identifiers provided by SelIdents.
   virtual void CodeCompleteObjCMethodDeclSelector(Scope *S, 
                                                   bool IsInstanceMethod,
+                                                  bool AtParameterName,
                                                   TypeTy *ReturnType,
                                                   IdentifierInfo **SelIdents,
                                                   unsigned NumSelIdents) { }
