@@ -59,7 +59,6 @@ MCAsmInfo::MCAsmInfo() {
   HasNoDeadStrip = false;
   WeakRefDirective = 0;
   WeakDefDirective = 0;
-  WeakDefAutoPrivateDirective = 0;
   LinkOnceDirective = 0;
   HiddenVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
