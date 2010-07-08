@@ -1209,7 +1209,7 @@ public:
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
   LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
-  LValue EmitNullInitializationLValue(const CXXZeroInitValueExpr *E);
+  LValue EmitNullInitializationLValue(const CXXScalarValueInitExpr *E);
   
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);

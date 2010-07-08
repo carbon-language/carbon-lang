@@ -822,12 +822,8 @@ public:
 ///
 /// This expression type represents a C++ "functional" cast
 /// (C++[expr.type.conv]) with N != 1 arguments that invokes a
-/// constructor to build a temporary object. If N == 0 but no
-/// constructor will be called (because the functional cast is
-/// performing a value-initialized an object whose class type has no
-/// user-declared constructors), CXXZeroInitValueExpr will represent
-/// the functional cast. Finally, with N == 1 arguments the functional
-/// cast expression will be represented by CXXFunctionalCastExpr.
+/// constructor to build a temporary object. With N == 1 arguments the 
+/// functional cast expression will be represented by CXXFunctionalCastExpr.
 /// Example:
 /// @code
 /// struct X { X(int, float); }
@@ -861,22 +857,21 @@ public:
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
 };
 
-/// CXXZeroInitValueExpr - [C++ 5.2.3p2]
+/// CXXScalarValueInitExpr - [C++ 5.2.3p2]
 /// Expression "T()" which creates a value-initialized rvalue of type
-/// T, which is either a non-class type or a class type without any
-/// user-defined constructors.
+/// T, which is a non-class type.
 ///
-class CXXZeroInitValueExpr : public Expr {
+class CXXScalarValueInitExpr : public Expr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 
 public:
-  CXXZeroInitValueExpr(QualType ty, SourceLocation tyBeginLoc,
+  CXXScalarValueInitExpr(QualType ty, SourceLocation tyBeginLoc,
                        SourceLocation rParenLoc ) :
-    Expr(CXXZeroInitValueExprClass, ty, false, false),
+    Expr(CXXScalarValueInitExprClass, ty, false, false),
     TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
-  explicit CXXZeroInitValueExpr(EmptyShell Shell)
-    : Expr(CXXZeroInitValueExprClass, Shell) { }
+  explicit CXXScalarValueInitExpr(EmptyShell Shell)
+    : Expr(CXXScalarValueInitExprClass, Shell) { }
 
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -895,9 +890,9 @@ public:
   }
 
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXZeroInitValueExprClass;
+    return T->getStmtClass() == CXXScalarValueInitExprClass;
   }
-  static bool classof(const CXXZeroInitValueExpr *) { return true; }
+  static bool classof(const CXXScalarValueInitExpr *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();

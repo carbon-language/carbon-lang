@@ -261,7 +261,7 @@ void ASTContext::PrintStats() const {
 #include "clang/AST/TypeNodes.def"
 
   fprintf(stderr, "Total bytes = %d\n", int(TotalBytes));
-
+  
   // Implicit special member functions.
   fprintf(stderr, "  %u/%u implicit default constructors created\n",
           NumImplicitDefaultConstructorsDeclared, 
@@ -282,6 +282,9 @@ void ASTContext::PrintStats() const {
     fprintf(stderr, "\n");
     ExternalSource->PrintStats();
   }
+  
+  if (!FreeMemory)
+    BumpAlloc.PrintStats();
 }
 
 

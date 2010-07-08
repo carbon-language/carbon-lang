@@ -126,7 +126,7 @@ public:
   Value *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
-  Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
+  Value *VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E) {
     return EmitNullValue(E->getType());
   }
   Value *VisitGNUNullExpr(const GNUNullExpr *E) {
