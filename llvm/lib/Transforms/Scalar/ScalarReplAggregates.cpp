@@ -1272,6 +1272,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
   // If there is an other pointer, we want to convert it to the same pointer
   // type as AI has, so we can GEP through it safely.
   if (OtherPtr) {
+    unsigned AddrSpace =
+      cast<PointerType>(OtherPtr->getType())->getAddressSpace();
 
     // Remove bitcasts and all-zero GEPs from OtherPtr.  This is an
     // optimization, but it's also required to detect the corner case where
@@ -1279,20 +1281,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     // OtherPtr may be a bitcast or GEP that currently being rewritten.  (This
     // function is only called for mem intrinsics that access the whole
     // aggregate, so non-zero GEPs are not an issue here.)
-    while (1) {
-      if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr)) {
-        OtherPtr = BC->getOperand(0);
-        continue;
-      }
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(OtherPtr)) {
-        // All zero GEPs are effectively bitcasts.
-        if (GEP->hasAllZeroIndices()) {
-          OtherPtr = GEP->getOperand(0);
-          continue;
-        }
-      }
-      break;
-    }
+    OtherPtr = OtherPtr->stripPointerCasts();
+    
     // Copying the alloca to itself is a no-op: just delete it.
     if (OtherPtr == AI || OtherPtr == NewElts[0]) {
       // This code will run twice for a no-op memcpy -- once for each operand.
@@ -1304,15 +1294,13 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       return;
     }
     
-    if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
-      if (BCE->getOpcode() == Instruction::BitCast)
-        OtherPtr = BCE->getOperand(0);
-    
     // If the pointer is not the right type, insert a bitcast to the right
     // type.
-    if (OtherPtr->getType() != AI->getType())
-      OtherPtr = new BitCastInst(OtherPtr, AI->getType(), OtherPtr->getName(),
-                                 MI);
+    const Type *NewTy =
+      PointerType::get(AI->getType()->getElementType(), AddrSpace);
+    
+    if (OtherPtr->getType() != NewTy)
+      OtherPtr = new BitCastInst(OtherPtr, NewTy, OtherPtr->getName(), MI);
   }
   
   // Process each element of the aggregate.
