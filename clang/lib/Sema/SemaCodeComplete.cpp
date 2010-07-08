@@ -130,6 +130,8 @@ namespace {
     /// different levels of, e.g., the inheritance hierarchy.
     std::list<ShadowMap> ShadowMaps;
     
+    void AdjustResultPriorityForPreferredType(Result &R);
+
   public:
     explicit ResultBuilder(Sema &SemaRef, LookupFilter Filter = 0)
       : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false) { }
@@ -470,6 +472,134 @@ bool ResultBuilder::CheckHiddenResult(Result &R, DeclContext *CurContext,
   return false;
 }
 
+enum SimplifiedTypeClass {
+  STC_Arithmetic,
+  STC_Array,
+  STC_Block,
+  STC_Function,
+  STC_ObjectiveC,
+  STC_Other,
+  STC_Pointer,
+  STC_Record,
+  STC_Void
+};
+
+/// \brief A simplified classification of types used to determine whether two
+/// types are "similar enough" when adjusting priorities.
+static SimplifiedTypeClass getSimplifiedTypeClass(CanQualType T) {
+  switch (T->getTypeClass()) {
+  case Type::Builtin:
+    switch (cast<BuiltinType>(T)->getKind()) {
+      case BuiltinType::Void:
+        return STC_Void;
+        
+      case BuiltinType::NullPtr:
+        return STC_Pointer;
+        
+      case BuiltinType::Overload:
+      case BuiltinType::Dependent:
+      case BuiltinType::UndeducedAuto:
+        return STC_Other;
+        
+      case BuiltinType::ObjCId:
+      case BuiltinType::ObjCClass:
+      case BuiltinType::ObjCSel:
+        return STC_ObjectiveC;
+        
+      default:
+        return STC_Arithmetic;
+    }
+    return STC_Other;
+    
+  case Type::Complex:
+    return STC_Arithmetic;
+    
+  case Type::Pointer:
+    return STC_Pointer;
+    
+  case Type::BlockPointer:
+    return STC_Block;
+    
+  case Type::LValueReference:
+  case Type::RValueReference:
+    return getSimplifiedTypeClass(T->getAs<ReferenceType>()->getPointeeType());
+    
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+  case Type::DependentSizedArray:
+    return STC_Array;
+    
+  case Type::DependentSizedExtVector:
+  case Type::Vector:
+  case Type::ExtVector:
+    return STC_Arithmetic;
+    
+  case Type::FunctionProto:
+  case Type::FunctionNoProto:
+    return STC_Function;
+    
+  case Type::Record:
+    return STC_Record;
+    
+  case Type::Enum:
+    return STC_Arithmetic;
+    
+  case Type::ObjCObject:
+  case Type::ObjCInterface:
+  case Type::ObjCObjectPointer:
+    return STC_ObjectiveC;
+    
+  default:
+    return STC_Other;
+  }
+}
+
+/// \brief Get the type that a given expression will have if this declaration
+/// is used as an expression in its "typical" code-completion form.
+static QualType getDeclUsageType(ASTContext &C, NamedDecl *ND) {
+  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
+  
+  if (TypeDecl *Type = dyn_cast<TypeDecl>(ND))
+    return C.getTypeDeclType(Type);
+  if (ObjCInterfaceDecl *Iface = dyn_cast<ObjCInterfaceDecl>(ND))
+    return C.getObjCInterfaceType(Iface);
+  
+  QualType T;
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
+    T = Function->getResultType();
+  else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
+    T = Method->getResultType();
+  else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND))
+    T = FunTmpl->getTemplatedDecl()->getResultType();
+  else if (EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
+    T = C.getTypeDeclType(cast<EnumDecl>(Enumerator->getDeclContext()));
+  else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
+    T = Property->getType();
+  else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND))
+    T = Value->getType();
+  else
+    return QualType();
+  
+  return T.getNonReferenceType();
+}
+
+void ResultBuilder::AdjustResultPriorityForPreferredType(Result &R) {
+  QualType T = getDeclUsageType(SemaRef.Context, R.Declaration);
+  if (T.isNull())
+    return;
+  
+  CanQualType TC = SemaRef.Context.getCanonicalType(T);
+  // Check for exactly-matching types (modulo qualifiers).
+  if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, TC))
+    R.Priority /= CCF_ExactTypeMatch;
+  // Check for nearly-matching types, based on classification of each.
+  else if ((getSimplifiedTypeClass(PreferredType)
+                                               == getSimplifiedTypeClass(TC)) &&
+           !(PreferredType->isEnumeralType() && TC->isEnumeralType()))
+    R.Priority /= CCF_SimilarTypeMatch;  
+}
+
 void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   assert(!ShadowMaps.empty() && "Must enter into a results scope");
   
@@ -554,8 +684,9 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (AsNestedNameSpecifier) {
     R.StartsNestedNameSpecifier = true;
     R.Priority = CCP_NestedNameSpecifier;
-  }
-  
+  } else if (!PreferredType.isNull())
+      AdjustResultPriorityForPreferredType(R);
+
   // If this result is supposed to have an informative qualifier, add one.
   if (R.QualifierIsInformative && !R.Qualifier &&
       !R.StartsNestedNameSpecifier) {
@@ -573,118 +704,6 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   // map.
   SMap[R.Declaration->getDeclName()].Add(R.Declaration, Results.size());
   Results.push_back(R);
-}
-
-enum SimplifiedTypeClass {
-  STC_Arithmetic,
-  STC_Array,
-  STC_Block,
-  STC_Function,
-  STC_ObjectiveC,
-  STC_Other,
-  STC_Pointer,
-  STC_Record,
-  STC_Void
-};
-
-/// \brief A simplified classification of types used to determine whether two
-/// types are "similar enough" when adjusting priorities.
-static SimplifiedTypeClass getSimplifiedTypeClass(CanQualType T) {
-  switch (T->getTypeClass()) {
-  case Type::Builtin:
-    switch (cast<BuiltinType>(T)->getKind()) {
-    case BuiltinType::Void:
-      return STC_Void;
-        
-    case BuiltinType::NullPtr:
-      return STC_Pointer;
-        
-    case BuiltinType::Overload:
-    case BuiltinType::Dependent:
-    case BuiltinType::UndeducedAuto:
-      return STC_Other;
-        
-    case BuiltinType::ObjCId:
-    case BuiltinType::ObjCClass:
-    case BuiltinType::ObjCSel:
-      return STC_ObjectiveC;
-        
-    default:
-      return STC_Arithmetic;
-    }
-    return STC_Other;
-      
-  case Type::Complex:
-    return STC_Arithmetic;
-    
-  case Type::Pointer:
-    return STC_Pointer;
-    
-  case Type::BlockPointer:
-    return STC_Block;
-    
-  case Type::LValueReference:
-  case Type::RValueReference:
-    return getSimplifiedTypeClass(T->getAs<ReferenceType>()->getPointeeType());
-      
-  case Type::ConstantArray:
-  case Type::IncompleteArray:
-  case Type::VariableArray:
-  case Type::DependentSizedArray:
-    return STC_Array;
-      
-  case Type::DependentSizedExtVector:
-  case Type::Vector:
-  case Type::ExtVector:
-    return STC_Arithmetic;
-      
-  case Type::FunctionProto:
-  case Type::FunctionNoProto:
-    return STC_Function;
-      
-  case Type::Record:
-    return STC_Record;
-    
-  case Type::Enum:
-    return STC_Arithmetic;
-      
-  case Type::ObjCObject:
-  case Type::ObjCInterface:
-  case Type::ObjCObjectPointer:
-    return STC_ObjectiveC;
-      
-  default:
-    return STC_Other;
-  }
-}
- 
-/// \brief Get the type that a given expression will have if this declaration
-/// is used as an expression in its "typical" code-completion form.
-static QualType getDeclUsageType(ASTContext &C, NamedDecl *ND) {
-  ND = cast<NamedDecl>(ND->getUnderlyingDecl());
-  
-  if (TypeDecl *Type = dyn_cast<TypeDecl>(ND))
-    return C.getTypeDeclType(Type);
-  if (ObjCInterfaceDecl *Iface = dyn_cast<ObjCInterfaceDecl>(ND))
-    return C.getObjCInterfaceType(Iface);
-  
-  QualType T;
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
-    T = Function->getResultType();
-  else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
-    T = Method->getResultType();
-  else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND))
-    T = FunTmpl->getTemplatedDecl()->getResultType();
-  else if (EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
-    T = C.getTypeDeclType(cast<EnumDecl>(Enumerator->getDeclContext()));
-  else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
-    T = Property->getType();
-  else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND))
-    T = Value->getType();
-  else
-    return QualType();
-  
-  return T.getNonReferenceType();
 }
 
 void ResultBuilder::AddResult(Result R, DeclContext *CurContext, 
@@ -740,20 +759,8 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   if (InBaseClass)
     R.Priority += CCD_InBaseClass;
   
-  if (!PreferredType.isNull()) {
-    if (ValueDecl *Value = dyn_cast<ValueDecl>(R.Declaration)) {
-      CanQualType T = SemaRef.Context.getCanonicalType(
-                                     getDeclUsageType(SemaRef.Context, Value));
-      // Check for exactly-matching types (modulo qualifiers).
-      if (SemaRef.Context.hasSameUnqualifiedType(PreferredType, T))
-        R.Priority /= CCF_ExactTypeMatch;
-      // Check for nearly-matching types, based on classification of each.
-      else if ((getSimplifiedTypeClass(PreferredType)
-                                                == getSimplifiedTypeClass(T)) &&
-               !(PreferredType->isEnumeralType() && T->isEnumeralType()))
-        R.Priority /= CCF_SimilarTypeMatch;
-    }
-  }
+  if (!PreferredType.isNull())
+    AdjustResultPriorityForPreferredType(R);
   
   // Insert this result into the set of results.
   Results.push_back(R);
@@ -1955,9 +1962,9 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
         if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(Idx))
           Keyword += II->getName().str();
         Keyword += ":";
-        if (Idx < StartParameter || AllParametersAreInformative) {
+        if (Idx < StartParameter || AllParametersAreInformative)
           Result->AddInformativeChunk(Keyword);
-        } else if (Idx == StartParameter)
+        else if (Idx == StartParameter)
           Result->AddTypedTextChunk(Keyword);
         else
           Result->AddTextChunk(Keyword);
@@ -1972,14 +1979,18 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       Arg = "(" + Arg + ")";
       if (IdentifierInfo *II = (*P)->getIdentifier())
         Arg += II->getName().str();
-      if (AllParametersAreInformative)
+      if (DeclaringEntity)
+        Result->AddTextChunk(Arg);
+      else if (AllParametersAreInformative)
         Result->AddInformativeChunk(Arg);
       else
         Result->AddPlaceholderChunk(Arg);
     }
 
     if (Method->isVariadic()) {
-      if (AllParametersAreInformative)
+      if (DeclaringEntity)
+        Result->AddTextChunk(", ...");
+      else if (AllParametersAreInformative)
         Result->AddInformativeChunk(", ...");
       else
         Result->AddPlaceholderChunk(", ...");
@@ -4131,5 +4142,57 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
 
   Results.ExitScope();
   
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S, 
+                                              bool IsInstanceMethod,
+                                              TypeTy *ReturnTy,
+                                              IdentifierInfo **SelIdents,
+                                              unsigned NumSelIdents) {
+  llvm::DenseMap<Selector, ObjCMethodList> &Pool 
+    = IsInstanceMethod? InstanceMethodPool : FactoryMethodPool;
+  
+  // If we have an external source, load the entire class method
+  // pool from the PCH file.
+  if (ExternalSource) {
+    for (uint32_t I = 0, N = ExternalSource->GetNumExternalSelectors();
+         I != N; ++I) {
+      Selector Sel = ExternalSource->GetExternalSelector(I);
+      if (Sel.isNull() || InstanceMethodPool.count(Sel) ||
+          FactoryMethodPool.count(Sel))
+        continue;
+      
+      ReadMethodPool(Sel, IsInstanceMethod);
+    }
+  }
+
+  // Build the set of methods we can see.
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  
+  if (ReturnTy)
+    Results.setPreferredType(GetTypeFromParser(ReturnTy).getNonReferenceType());
+  
+  Results.EnterNewScope();  
+  for (llvm::DenseMap<Selector, ObjCMethodList>::iterator M = Pool.begin(),
+                                                       MEnd = Pool.end();
+       M != MEnd;
+       ++M) {
+    for (ObjCMethodList *MethList = &M->second; MethList && MethList->Method; 
+         MethList = MethList->Next) {
+      if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents, 
+                                  NumSelIdents))
+        continue;
+      
+      Result R(MethList->Method, 0);
+      R.StartParameter = NumSelIdents;
+      R.AllParametersAreInformative = false;
+      R.DeclaringEntity = true;
+      Results.MaybeAddResult(R, CurContext);
+    }
+  }
+  
+  Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

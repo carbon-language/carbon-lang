@@ -42,6 +42,16 @@
 - (id)categoryFunction:(int)x { return self; }
 @end
 
+@interface C
+- (int)first:(int)x second:(float)y third:(double)z;
+- (id)first:(int)x second2:(float)y third:(double)z;
+- (void*)first:(int)x second3:(float)y third:(double)z;
+@end
+
+@interface D
+- (int)first:(int)x second4:(float)y third:(double)z;
+@end
+
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: NotImplemented:{LeftParen (}{Text id}{RightParen )}{TypedText abc}
 // CHECK-CC1: NotImplemented:{LeftParen (}{Text int}{RightParen )}{TypedText getInt}
@@ -79,4 +89,9 @@
 // CHECK-CC6: NotImplemented:{TypedText initWithTwoInts}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{Text second}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text y}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
 // RUN: c-index-test -code-completion-at=%s:42:3 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: NotImplemented:{LeftParen (}{Text id}{RightParen )}{TypedText categoryFunction}{Colon :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{LeftBrace {}{VerticalSpace 
+// RUN: c-index-test -code-completion-at=%s:52:21 -Xclang -code-completion-patterns %s | FileCheck -check-prefix=CHECK-CC8 %s
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType id}{Informative first:}{TypedText second2:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType void *}{Informative first:}{TypedText second3:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (20)
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative first:}{TypedText second:}{Text (float)y}{HorizontalSpace  }{Text third:}{Text (double)z} (5)
+
 

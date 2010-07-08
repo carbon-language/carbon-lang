@@ -868,6 +868,17 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     ArgInfos.push_back(ArgInfo);
     KeyIdents.push_back(SelIdent);
 
+    // Code completion for the next piece of the selector.
+    if (Tok.is(tok::code_completion)) {
+      ConsumeCodeCompletionToken();
+      Actions.CodeCompleteObjCMethodDeclSelector(getCurScope(), 
+                                                 mType == tok::minus,
+                                                 ReturnType,
+                                                 KeyIdents.data(), 
+                                                 KeyIdents.size());
+      break;
+    }
+    
     // Check for another keyword selector.
     SourceLocation Loc;
     SelIdent = ParseObjCSelectorPiece(Loc);

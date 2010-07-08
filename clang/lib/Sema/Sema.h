@@ -4572,6 +4572,12 @@ public:
                                           bool IsInstanceMethod,
                                           TypeTy *ReturnType,
                                           DeclPtrTy IDecl);
+  virtual void CodeCompleteObjCMethodDeclSelector(Scope *S, 
+                                                  bool IsInstanceMethod,
+                                                  TypeTy *ReturnType,
+                                                  IdentifierInfo **SelIdents,
+                                                  unsigned NumSelIdents);
+  
   //@}
 
   //===--------------------------------------------------------------------===//

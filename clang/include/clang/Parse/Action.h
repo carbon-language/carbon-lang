@@ -3043,7 +3043,7 @@ public:
   /// parsed.
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols) { }
-
+  
   /// \brief Code completion for a protocol declaration or definition, after
   /// the @protocol but before any identifier.
   ///
@@ -3133,6 +3133,28 @@ public:
                                           TypeTy *ReturnType,
                                           DeclPtrTy IDecl) {
   }
+  
+  /// \brief Code completion for a selector identifier within an Objective-C
+  /// method declaration.
+  ///
+  /// \param S The scope in which this code completion occurs.
+  ///
+  /// \param IsInstanceMethod Whether we are parsing an instance method (or, 
+  /// if false, a class method).
+  ///
+  /// \param ReturnType If non-NULL, the specified return type of the method
+  /// being declared or defined.
+  ///
+  /// \param SelIdents The identifiers that occurred in the selector for the
+  /// method declaration prior to the code completion point.
+  ///
+  /// \param NumSelIdents The number of identifiers provided by SelIdents.
+  virtual void CodeCompleteObjCMethodDeclSelector(Scope *S, 
+                                                  bool IsInstanceMethod,
+                                                  TypeTy *ReturnType,
+                                                  IdentifierInfo **SelIdents,
+                                                  unsigned NumSelIdents) { }
+  
   //@}
 };
 

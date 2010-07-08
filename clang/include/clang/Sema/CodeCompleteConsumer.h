@@ -355,6 +355,10 @@ public:
     /// method, etc.) should be considered "informative".
     bool AllParametersAreInformative : 1;
 
+    /// \brief Whether we're completing a declaration of the given entity,
+    /// rather than a use of that entity.
+    bool DeclaringEntity : 1;
+    
     /// \brief If the result should have a nested-name-specifier, this is it.
     /// When \c QualifierIsInformative, the nested-name-specifier is 
     /// informative rather than required.
@@ -368,7 +372,7 @@ public:
         Priority(getPriorityFromDecl(Declaration)), StartParameter(0), 
         Hidden(false), QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        Qualifier(Qualifier) { 
+        DeclaringEntity(false), Qualifier(Qualifier) { 
     }
     
     /// \brief Build a result that refers to a keyword or symbol.
@@ -376,21 +380,21 @@ public:
       : Kind(RK_Keyword), Keyword(Keyword), Priority(Priority), 
         StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        Qualifier(0) { }
+        DeclaringEntity(false), Qualifier(0) { }
     
     /// \brief Build a result that refers to a macro.
     Result(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
      : Kind(RK_Macro), Macro(Macro), Priority(Priority), StartParameter(0), 
        Hidden(false), QualifierIsInformative(0), 
        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-       Qualifier(0) { }
+       DeclaringEntity(false), Qualifier(0) { }
 
     /// \brief Build a result that refers to a pattern.
     Result(CodeCompletionString *Pattern, unsigned Priority = CCP_CodePattern)
       : Kind(RK_Pattern), Pattern(Pattern), Priority(Priority), 
         StartParameter(0), Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-        Qualifier(0) { }
+        DeclaringEntity(false), Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {
