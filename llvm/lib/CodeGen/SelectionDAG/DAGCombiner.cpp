@@ -6892,38 +6892,34 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
     }
   }
 
-  // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
+  // Check to see if this is an integer abs.
+  // select_cc setg[te] X,  0,  X, -X ->
+  // select_cc setgt    X, -1,  X, -X ->
+  // select_cc setl[te] X,  0, -X,  X ->
+  // select_cc setlt    X,  1, -X,  X ->
   // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
-  if (N1C && N1C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
-      N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1) &&
-      N2.getOperand(0) == N1 && N0.getValueType().isInteger()) {
+  if (N1C) {
+    ConstantSDNode *SubC = NULL;
+    if (((N1C->isNullValue() && (CC == ISD::SETGT || CC == ISD::SETGE)) ||
+         (N1C->isAllOnesValue() && CC == ISD::SETGT)) &&
+        N0 == N2 && N3.getOpcode() == ISD::SUB && N0 == N3.getOperand(1))
+      SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0));
+    else if (((N1C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE)) ||
+              (N1C->isOne() && CC == ISD::SETLT)) &&
+             N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1))
+      SubC = dyn_cast<ConstantSDNode>(N2.getOperand(0));
+
     EVT XType = N0.getValueType();
-    SDValue Shift = DAG.getNode(ISD::SRA, N0.getDebugLoc(), XType, N0,
-                                DAG.getConstant(XType.getSizeInBits()-1,
-                                                getShiftAmountTy()));
-    SDValue Add = DAG.getNode(ISD::ADD, N0.getDebugLoc(), XType,
-                              N0, Shift);
-    AddToWorkList(Shift.getNode());
-    AddToWorkList(Add.getNode());
-    return DAG.getNode(ISD::XOR, DL, XType, Add, Shift);
-  }
-  // Check to see if this is an integer abs. select_cc setgt X, -1, X, -X ->
-  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
-  if (N1C && N1C->isAllOnesValue() && CC == ISD::SETGT &&
-      N0 == N2 && N3.getOpcode() == ISD::SUB && N0 == N3.getOperand(1)) {
-    if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0))) {
-      EVT XType = N0.getValueType();
-      if (SubC->isNullValue() && XType.isInteger()) {
-        SDValue Shift = DAG.getNode(ISD::SRA, N0.getDebugLoc(), XType,
-                                    N0,
-                                    DAG.getConstant(XType.getSizeInBits()-1,
-                                                    getShiftAmountTy()));
-        SDValue Add = DAG.getNode(ISD::ADD, N0.getDebugLoc(),
-                                  XType, N0, Shift);
-        AddToWorkList(Shift.getNode());
-        AddToWorkList(Add.getNode());
-        return DAG.getNode(ISD::XOR, DL, XType, Add, Shift);
-      }
+    if (SubC && SubC->isNullValue() && XType.isInteger()) {
+      SDValue Shift = DAG.getNode(ISD::SRA, N0.getDebugLoc(), XType,
+                                  N0,
+                                  DAG.getConstant(XType.getSizeInBits()-1,
+                                                  getShiftAmountTy()));
+      SDValue Add = DAG.getNode(ISD::ADD, N0.getDebugLoc(),
+                                XType, N0, Shift);
+      AddToWorkList(Shift.getNode());
+      AddToWorkList(Add.getNode());
+      return DAG.getNode(ISD::XOR, DL, XType, Add, Shift);
     }
   }
 
