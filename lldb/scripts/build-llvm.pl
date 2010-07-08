@@ -25,7 +25,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "'{2010-07-02T08:00}'";
+our $llvm_revision = "'{2010-07-07T08:00}'";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
 our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";
@@ -225,7 +225,7 @@ sub build_llvm
 			# Build llvm and clang
 	        print "Configuring clang ($arch) in '$llvm_dstroot_arch'...\n";
 			my $lldb_configuration_options = '';
-			$llvm_configuration eq 'Release' and $lldb_configuration_options .= '--enable-optimized';
+			$llvm_configuration eq 'Release' and $lldb_configuration_options .= '--enable-optimized --disable-assertions';
 	        do_command ("cd '$llvm_dstroot_arch' && '$llvm_source_dir/llvm/configure' $lldb_configuration_options --enable-targets=x86,x86_64,arm --build=$arch-apple-darwin10 CC=\"$cc -arch $arch\" CXX=\"$cxx -arch $arch\"",
 	                    "configuring llvm build", 1);			
 		}
