@@ -2080,6 +2080,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       Opc = X86::MOV8rr;
   } else if (X86::VR128RegClass.contains(DestReg, SrcReg))
     Opc = X86::MOVAPSrr;
+  else if (X86::VR64RegClass.contains(DestReg, SrcReg))
+    Opc = X86::MMX_MOVQ64rr;
 
   if (Opc) {
     BuildMI(MBB, MI, DL, get(Opc), DestReg)
