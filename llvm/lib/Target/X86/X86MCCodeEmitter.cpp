@@ -655,10 +655,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   default: assert(0 && "Invalid segment!");
   case 0:
     // No segment override, check for explicit one on memory operand.
-    if (MemOperand != -1 &&   // If the instruction has a memory operand.
-        // FIXME: This is disgusting.
-        MI.getOpcode() != X86::LEA64r && MI.getOpcode() != X86::LEA64_32r &&
-        MI.getOpcode() != X86::LEA16r && MI.getOpcode() != X86::LEA32r) {
+    if (MemOperand != -1) {   // If the instruction has a memory operand.
       switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
       default: assert(0 && "Unknown segment register!");
       case 0: break;
@@ -838,11 +835,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       ++AddrOperands;
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
     }
-
-    // FIXME: Maybe lea should have its own form?  This is a horrible hack.
-    if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
-        Opcode == X86::LEA16r || Opcode == X86::LEA32r)
-      --AddrOperands; // No segment register
 
     EmitByte(BaseOpcode, CurByte, OS);
     

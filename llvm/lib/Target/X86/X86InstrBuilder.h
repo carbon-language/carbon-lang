@@ -64,19 +64,15 @@ struct X86AddressMode {
 ///
 static inline const MachineInstrBuilder &
 addDirectMem(const MachineInstrBuilder &MIB, unsigned Reg) {
-  // Because memory references are always represented with four
-  // values, this adds: Reg, [1, NoReg, 0] to the instruction.
-  return MIB.addReg(Reg).addImm(1).addReg(0).addImm(0);
+  // Because memory references are always represented with five
+  // values, this adds: Reg, 1, NoReg, 0, NoReg to the instruction.
+  return MIB.addReg(Reg).addImm(1).addReg(0).addImm(0).addReg(0);
 }
 
-static inline const MachineInstrBuilder &
-addLeaOffset(const MachineInstrBuilder &MIB, int Offset) {
-  return MIB.addImm(1).addReg(0).addImm(Offset);
-}
 
 static inline const MachineInstrBuilder &
 addOffset(const MachineInstrBuilder &MIB, int Offset) {
-  return addLeaOffset(MIB, Offset).addReg(0);
+  return MIB.addImm(1).addReg(0).addImm(Offset).addReg(0);
 }
 
 /// addRegOffset - This function is used to add a memory reference of the form
@@ -89,25 +85,20 @@ addRegOffset(const MachineInstrBuilder &MIB,
   return addOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
 }
 
-static inline const MachineInstrBuilder &
-addLeaRegOffset(const MachineInstrBuilder &MIB,
-                unsigned Reg, bool isKill, int Offset) {
-  return addLeaOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
-}
-
 /// addRegReg - This function is used to add a memory reference of the form:
 /// [Reg + Reg].
 static inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
                                             unsigned Reg1, bool isKill1,
                                             unsigned Reg2, bool isKill2) {
   return MIB.addReg(Reg1, getKillRegState(isKill1)).addImm(1)
-    .addReg(Reg2, getKillRegState(isKill2)).addImm(0);
+    .addReg(Reg2, getKillRegState(isKill2)).addImm(0).addReg(0);
 }
 
 static inline const MachineInstrBuilder &
-addLeaAddress(const MachineInstrBuilder &MIB, const X86AddressMode &AM) {
-  assert (AM.Scale == 1 || AM.Scale == 2 || AM.Scale == 4 || AM.Scale == 8);
-
+addFullAddress(const MachineInstrBuilder &MIB,
+               const X86AddressMode &AM) {
+  assert(AM.Scale == 1 || AM.Scale == 2 || AM.Scale == 4 || AM.Scale == 8);
+  
   if (AM.BaseType == X86AddressMode::RegBase)
     MIB.addReg(AM.Base.Reg);
   else if (AM.BaseType == X86AddressMode::FrameIndexBase)
@@ -116,15 +107,11 @@ addLeaAddress(const MachineInstrBuilder &MIB, const X86AddressMode &AM) {
     assert (0);
   MIB.addImm(AM.Scale).addReg(AM.IndexReg);
   if (AM.GV)
-    return MIB.addGlobalAddress(AM.GV, AM.Disp, AM.GVOpFlags);
+    MIB.addGlobalAddress(AM.GV, AM.Disp, AM.GVOpFlags);
   else
-    return MIB.addImm(AM.Disp);
-}
-
-static inline const MachineInstrBuilder &
-addFullAddress(const MachineInstrBuilder &MIB,
-               const X86AddressMode &AM) {
-  return addLeaAddress(MIB, AM).addReg(0);
+    MIB.addImm(AM.Disp);
+    
+  return MIB.addReg(0);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of

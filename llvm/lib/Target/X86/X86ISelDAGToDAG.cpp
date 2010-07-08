@@ -190,9 +190,11 @@ namespace {
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
     bool SelectLEAAddr(SDNode *Op, SDValue N, SDValue &Base,
-                       SDValue &Scale, SDValue &Index, SDValue &Disp);
+                       SDValue &Scale, SDValue &Index, SDValue &Disp,
+                       SDValue &Segment);
     bool SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
-                       SDValue &Scale, SDValue &Index, SDValue &Disp);
+                           SDValue &Scale, SDValue &Index, SDValue &Disp,
+                           SDValue &Segment);
     bool SelectScalarSSELoad(SDNode *Root, SDValue N,
                              SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
@@ -1205,7 +1207,8 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
 /// mode it matches can be cost effectively emitted as an LEA instruction.
 bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
                                     SDValue &Base, SDValue &Scale,
-                                    SDValue &Index, SDValue &Disp) {
+                                    SDValue &Index, SDValue &Disp,
+                                    SDValue &Segment) {
   X86ISelAddressMode AM;
 
   // Set AM.Segment to prevent MatchAddress from using one. LEA doesn't support
@@ -1259,7 +1262,6 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
   if (Complexity <= 2)
     return false;
   
-  SDValue Segment;
   getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
   return true;
 }
@@ -1267,7 +1269,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
 /// SelectTLSADDRAddr - This is only run on TargetGlobalTLSAddress nodes.
 bool X86DAGToDAGISel::SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
                                         SDValue &Scale, SDValue &Index,
-                                        SDValue &Disp) {
+                                        SDValue &Disp, SDValue &Segment) {
   assert(N.getOpcode() == ISD::TargetGlobalTLSAddress);
   const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
     
@@ -1284,7 +1286,6 @@ bool X86DAGToDAGISel::SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
     AM.IndexReg = CurDAG->getRegister(0, MVT::i64);
   }
   
-  SDValue Segment;
   getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
   return true;
 }

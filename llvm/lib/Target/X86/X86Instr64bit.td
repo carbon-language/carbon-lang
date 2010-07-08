@@ -35,6 +35,14 @@ def i64i8imm   : Operand<i64> {
   let ParserMatchClass = ImmSExti64i8AsmOperand;
 }
 
+def lea64_32mem : Operand<i32> {
+  let PrintMethod = "printi32mem";
+  let AsmOperandLowerMethod = "lower_lea64_32mem";
+  let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm, i8imm);
+  let ParserMatchClass = X86MemAsmOperand;
+}
+
+
 // Special i64mem for addresses of load folding tail calls. These are not
 // allowed to use callee-saved registers since they must be scheduled
 // after callee-saved register are popped.
@@ -44,27 +52,14 @@ def i64mem_TC : Operand<i64> {
   let ParserMatchClass = X86MemAsmOperand;
 }
 
-def lea64mem : Operand<i64> {
-  let PrintMethod = "printlea64mem";
-  let MIOperandInfo = (ops GR64, i8imm, GR64_NOSP, i32imm);
-  let ParserMatchClass = X86NoSegMemAsmOperand;
-}
-
-def lea64_32mem : Operand<i32> {
-  let PrintMethod = "printlea64_32mem";
-  let AsmOperandLowerMethod = "lower_lea64_32mem";
-  let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
-  let ParserMatchClass = X86NoSegMemAsmOperand;
-}
-
 //===----------------------------------------------------------------------===//
 // Complex Pattern Definitions.
 //
-def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
+def lea64addr : ComplexPattern<i64, 5, "SelectLEAAddr",
                         [add, sub, mul, X86mul_imm, shl, or, frameindex,
                          X86WrapperRIP], []>;
 
-def tls64addr : ComplexPattern<i64, 4, "SelectTLSADDRAddr",
+def tls64addr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
                                
 //===----------------------------------------------------------------------===//
@@ -289,7 +284,7 @@ def LEA64_32r : I<0x8D, MRMSrcMem,
                   [(set GR32:$dst, lea32addr:$src)]>, Requires<[In64BitMode]>;
 
 let isReMaterializable = 1 in
-def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins lea64mem:$src),
+def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                   "lea{q}\t{$src|$dst}, {$dst|$src}",
                   [(set GR64:$dst, lea64addr:$src)]>;
 
@@ -1697,7 +1692,7 @@ let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [RSP] in
-def TLS_addr64 : I<0, Pseudo, (outs), (ins lea64mem:$sym),
+def TLS_addr64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                    ".byte\t0x66; "
                    "leaq\t$sym(%rip), %rdi; "
                    ".word\t0x6666; "

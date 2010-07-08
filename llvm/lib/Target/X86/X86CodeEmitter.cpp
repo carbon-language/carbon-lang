@@ -750,13 +750,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     break;
 
   case X86II::MRMSrcMem: {
-    // FIXME: Maybe lea should have its own form?
-    int AddrOperands;
-    if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
-        Opcode == X86::LEA16r || Opcode == X86::LEA32r)
-      AddrOperands = X86::AddrNumOperands - 1; // No segment register
-    else
-      AddrOperands = X86::AddrNumOperands;
+    int AddrOperands = X86::AddrNumOperands;
 
     intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
       X86II::getSizeOfImm(Desc->TSFlags) : 0;

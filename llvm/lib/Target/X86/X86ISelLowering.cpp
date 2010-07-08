@@ -8580,7 +8580,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL64m));
-    addDirectMem(MIB, X86::RDI).addReg(0);
+    addDirectMem(MIB, X86::RDI);
   } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV32rm), X86::EAX)
@@ -8590,7 +8590,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
-    addDirectMem(MIB, X86::EAX).addReg(0);
+    addDirectMem(MIB, X86::EAX);
   } else {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV32rm), X86::EAX)
@@ -8600,7 +8600,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
                       MI->getOperand(3).getTargetFlags())
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
-    addDirectMem(MIB, X86::EAX).addReg(0);
+    addDirectMem(MIB, X86::EAX);
   }
   
   MI->eraseFromParent(); // The pseudo instruction is gone now.

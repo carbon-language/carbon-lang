@@ -349,6 +349,15 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   switch (OutMI.getOpcode()) {
   case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&OutMI, 1);
+    // FALL THROUGH.
+  case X86::LEA64r:
+  case X86::LEA16r:
+  case X86::LEA32r:
+    // LEA should have a segment register, but it must be empty.
+    assert(OutMI.getNumOperands() == 1+X86::AddrNumOperands &&
+           "Unexpected # of LEA operands");
+    assert(OutMI.getOperand(1+X86::AddrSegmentReg).getReg() == 0 &&
+           "LEA has segment specified!");
     break;
   case X86::MOVZX16rr8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rr8); break;
   case X86::MOVZX16rm8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rm8); break;

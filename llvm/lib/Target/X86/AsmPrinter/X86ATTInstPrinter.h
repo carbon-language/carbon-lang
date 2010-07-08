@@ -34,7 +34,6 @@ public:
 
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemReference(const MCInst *MI, unsigned Op, raw_ostream &OS);
-  void printLeaMemReference(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printSSECC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void print_pcrel_imm(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   
@@ -68,15 +67,6 @@ public:
   }
   void printf128mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
-  }
-  void printlea32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printLeaMemReference(MI, OpNo, O);
-  }
-  void printlea64mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printLeaMemReference(MI, OpNo, O);
-  }
-  void printlea64_32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printLeaMemReference(MI, OpNo, O);
   }
 };
   

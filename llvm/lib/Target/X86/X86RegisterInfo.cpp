@@ -1217,8 +1217,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     if (CSSize) {
       unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
       MachineInstr *MI =
-        addLeaRegOffset(BuildMI(MF, DL, TII.get(Opc), StackPtr),
-                        FramePtr, false, -CSSize);
+        addRegOffset(BuildMI(MF, DL, TII.get(Opc), StackPtr),
+                     FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else {
       BuildMI(MBB, MBBI, DL,

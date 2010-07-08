@@ -202,13 +202,9 @@ def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
   let SuperClasses = [];
 }
-def X86NoSegMemAsmOperand : AsmOperandClass {
-  let Name = "NoSegMem";
-  let SuperClasses = [X86MemAsmOperand];
-}
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
-  let SuperClasses = [X86NoSegMemAsmOperand];
+  let SuperClasses = [X86MemAsmOperand];
 }
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
@@ -250,11 +246,6 @@ def i32mem_TC : Operand<i32> {
   let ParserMatchClass = X86MemAsmOperand;
 }
 
-def lea32mem : Operand<i32> {
-  let PrintMethod = "printlea32mem";
-  let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
-  let ParserMatchClass = X86NoSegMemAsmOperand;
-}
 
 let ParserMatchClass = X86AbsMemAsmOperand,
     PrintMethod = "print_pcrel_imm" in {
@@ -289,26 +280,31 @@ class ImmSExtAsmOperandClass : AsmOperandClass {
 // 64-bit immediates, but for a 16-bit target value we want to accept both "-1"
 // (which will be a -1ULL), and "0xFF" (-1 in 16-bits).
 
-// [0, 0x7FFFFFFF]                                            | [0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF]
+// [0, 0x7FFFFFFF]                                            |
+//   [0xFFFFFFFF80000000, 0xFFFFFFFFFFFFFFFF]
 def ImmSExti64i32AsmOperand : ImmSExtAsmOperandClass {
   let Name = "ImmSExti64i32";
 }
 
-// [0, 0x0000007F] | [0x000000000000FF80, 0x000000000000FFFF] | [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
+// [0, 0x0000007F] | [0x000000000000FF80, 0x000000000000FFFF] |
+//   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
 def ImmSExti16i8AsmOperand : ImmSExtAsmOperandClass {
   let Name = "ImmSExti16i8";
   let SuperClasses = [ImmSExti64i32AsmOperand];
 }
 
-// [0, 0x0000007F] | [0x00000000FFFFFF80, 0x00000000FFFFFFFF] | [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
+// [0, 0x0000007F] | [0x00000000FFFFFF80, 0x00000000FFFFFFFF] |
+//   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
 def ImmSExti32i8AsmOperand : ImmSExtAsmOperandClass {
   let Name = "ImmSExti32i8";
 }
 
-// [0, 0x0000007F]                                            | [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
+// [0, 0x0000007F]                                            |
+//   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
 def ImmSExti64i8AsmOperand : ImmSExtAsmOperandClass {
   let Name = "ImmSExti64i8";
-  let SuperClasses = [ImmSExti16i8AsmOperand, ImmSExti32i8AsmOperand, ImmSExti64i32AsmOperand];
+  let SuperClasses = [ImmSExti16i8AsmOperand, ImmSExti32i8AsmOperand,
+                      ImmSExti64i32AsmOperand];
 }
 
 // A couple of more descriptive operand definitions.
@@ -327,10 +323,10 @@ def i32i8imm  : Operand<i32> {
 
 // Define X86 specific addressing mode.
 def addr      : ComplexPattern<iPTR, 5, "SelectAddr", [], []>;
-def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
+def lea32addr : ComplexPattern<i32, 5, "SelectLEAAddr",
                                [add, sub, mul, X86mul_imm, shl, or, frameindex],
                                []>;
-def tls32addr : ComplexPattern<i32, 4, "SelectTLSADDRAddr",
+def tls32addr : ComplexPattern<i32, 5, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
 
 //===----------------------------------------------------------------------===//
@@ -878,11 +874,11 @@ def BSR32rm  : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
 
 let neverHasSideEffects = 1 in
 def LEA16r   : I<0x8D, MRMSrcMem,
-                 (outs GR16:$dst), (ins lea32mem:$src),
+                 (outs GR16:$dst), (ins i32mem:$src),
                  "lea{w}\t{$src|$dst}, {$dst|$src}", []>, OpSize;
 let isReMaterializable = 1 in
 def LEA32r   : I<0x8D, MRMSrcMem,
-                 (outs GR32:$dst), (ins lea32mem:$src),
+                 (outs GR32:$dst), (ins i32mem:$src),
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)]>, Requires<[In32BitMode]>;
 
@@ -3864,7 +3860,7 @@ let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
     Uses = [ESP] in
-def TLS_addr32 : I<0, Pseudo, (outs), (ins lea32mem:$sym),
+def TLS_addr32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
                   "leal\t$sym, %eax; "
                   "call\t___tls_get_addr@PLT",
                   [(X86tlsaddr tls32addr:$sym)]>,
