@@ -717,6 +717,9 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 } // std
 */
 
+#include <sstream>
+#include <cassert>
+
 #include <__config>
 #include <stdexcept>
 #include <__locale>
@@ -1224,10 +1227,9 @@ struct __command
     {
         __end_state = -1000,
         __consume_input,  // -999
-//        __try_state,      // -998
         __begin_marked_expr, // -998
         __end_marked_expr,   // -997
-        __go_back,           // -996
+        __pop_state,           // -996
         __accept_and_consume,  // -995
         __accept_but_not_consume,  // -994
         __reject,                  // -993
@@ -1239,7 +1241,6 @@ struct __command
     typedef __state<_CharT> __state;
 
     int __do_;
-    int __data_;
     const __state* first;
     const __state* second;
 
@@ -1251,6 +1252,18 @@ struct __command
     explicit __command(const __state* __s1, const __state* __s2 = nullptr)
         : __do_(0), first(__s1), second(__s2) {}
 };
+
+template <class _CharT>
+ostream&
+operator<<(ostream& os, const __command<_CharT>& c)
+{
+    os << c.__do_;
+    if (c.first)
+        os << ", " << c.first->speak();
+    if (c.second)
+        os << ", " << c.second->speak();
+    return os;
+}
 
 template <class _BidirectionalIterator> class sub_match;
 
@@ -1272,6 +1285,8 @@ public:
                              vector<size_t>& __lc,
                              sub_match<const _CharT*>* __m,
                              regex_constants::match_flag_type __flags) const = 0;
+
+    virtual string speak() const = 0;
 };
 
 // __end_state
@@ -1290,6 +1305,8 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const {return "end state";}
 };
 
 template <class _CharT>
@@ -1359,6 +1376,8 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const {return "empty state";}
 };
 
 template <class _CharT>
@@ -1390,6 +1409,8 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const {return "empty non-owning state";}
 };
 
 template <class _CharT>
@@ -1457,6 +1478,16 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type __flags) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "loop {" << __min_ << ',' << __max_ << "}";
+        if (!__greedy_)
+            os << " not";
+        os << " greedy";
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1503,6 +1534,13 @@ public:
                              vector<size_t>& __lc,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "zero loop " << __loop_id_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1537,6 +1575,13 @@ public:
                              vector<size_t>& __lc,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "increment loop " << __loop_id_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1572,6 +1617,13 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>* __sm,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "zero marked exprs [" << __begin_ << ',' << __end_ << ')';
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1599,29 +1651,36 @@ class __begin_marked_subexpression
 {
     typedef __owns_one_state<_CharT> base;
 
-    __begin_marked_subexpression(const __begin_marked_subexpression&);
-    __begin_marked_subexpression& operator=(const __begin_marked_subexpression&);
+    unsigned __mexp_;
 public:
     typedef __command<_CharT> __command;
 
-    explicit __begin_marked_subexpression(__state<_CharT>* __s)
-        : base(__s) {}
+    explicit __begin_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
+        : base(__s), __mexp_(__mexp) {}
 
     virtual __command __test(const _CharT*, const _CharT*,
                              const _CharT*,
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "begin marked expr " << __mexp_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
 __command<_CharT>
 __begin_marked_subexpression<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT*,
                              vector<size_t>&,
-                             sub_match<const _CharT*>*,
+                             sub_match<const _CharT*>* __s,
                              regex_constants::match_flag_type) const
 {
-    return __command(__command::__begin_marked_expr, this->first());
+    __s[__mexp_].first = __c;
+    return __command(__command::__accept_but_not_consume, this->first());
 }
 
 // __end_marked_subexpression
@@ -1632,29 +1691,37 @@ class __end_marked_subexpression
 {
     typedef __owns_one_state<_CharT> base;
 
-    __end_marked_subexpression(const __end_marked_subexpression&);
-    __end_marked_subexpression& operator=(const __end_marked_subexpression&);
+    unsigned __mexp_;
 public:
     typedef __command<_CharT> __command;
 
-    explicit __end_marked_subexpression(__state<_CharT>* __s)
-        : base(__s) {}
+    explicit __end_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
+        : base(__s), __mexp_(__mexp) {}
 
     virtual __command __test(const _CharT*, const _CharT*,
                              const _CharT*,
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "end marked expr " << __mexp_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
 __command<_CharT>
 __end_marked_subexpression<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT*,
                              vector<size_t>&,
-                             sub_match<const _CharT*>*,
+                             sub_match<const _CharT*>* __s,
                              regex_constants::match_flag_type) const
 {
-    return __command(__command::__end_marked_expr, this->first());
+    __s[__mexp_].second = __c;
+    __s[__mexp_].matched = true;
+    return __command(__command::__accept_but_not_consume, this->first());
 }
 
 // __state_arg
@@ -1680,6 +1747,13 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "state arg " << __arg_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1715,6 +1789,13 @@ public:
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "match char " << __c_;
+        return os.str();
+    }
 };
 
 template <class _CharT>
@@ -1876,7 +1957,8 @@ private:
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_RE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last,
-                               __owns_one_state<_CharT>* __s);
+                               __owns_one_state<_CharT>* __s,
+                               unsigned __mexp_begin, unsigned __mexp_end);
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_ERE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last);
@@ -1923,8 +2005,10 @@ private:
     void __push_l_anchor() {}
     void __push_r_anchor() {}
     void __push_match_any() {}
-    void __push_greedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s)
-        {__push_loop(__min, numeric_limits<size_t>::max(), __s);}
+    void __push_greedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s,
+                                  unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
+        {__push_loop(__min, numeric_limits<size_t>::max(), __s,
+                     __mexp_begin, __mexp_end);}
     void __push_exact_repeat(int __count) {}
     void __push_loop(size_t __min, size_t __max, __owns_one_state<_CharT>* __s,
                      size_t __mexp_begin = 0, size_t __mexp_end = 0,
@@ -1969,6 +2053,7 @@ private:
         bool
         __match_at_start_posix_subs(_BidirectionalIterator __first, _BidirectionalIterator __last,
                  match_results<_BidirectionalIterator, _Allocator>& __m,
+                 vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
 
     template <class _B, class _A, class _C, class _T>
@@ -2151,9 +2236,11 @@ basic_regex<_CharT, _Traits>::__parse_simple_RE(_ForwardIterator __first,
     if (__first != __last)
     {
         __owns_one_state<_CharT>* __e = __end_;
+        unsigned __mexp_begin = __marked_count_;
         _ForwardIterator __temp = __parse_nondupl_RE(__first, __last);
         if (__temp != __first)
-            __first = __parse_RE_dupl_symbol(__temp, __last, __e);
+            __first = __parse_RE_dupl_symbol(__temp, __last, __e,
+                                             __mexp_begin+1, __marked_count_+1);
     }
     return __first;
 }
@@ -2462,13 +2549,15 @@ template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                                                      _ForwardIterator __last,
-                                                     __owns_one_state<_CharT>* __s)
+                                                     __owns_one_state<_CharT>* __s,
+                                                     unsigned __mexp_begin,
+                                                     unsigned __mexp_end)
 {
     if (__first != __last)
     {
         if (*__first == '*')
         {
-            __push_greedy_inf_repeat(0, __s);
+            __push_greedy_inf_repeat(0, __s, __mexp_begin, __mexp_end);
             ++__first;
         }
         else
@@ -2501,7 +2590,7 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     if (__temp == __first)
                         throw regex_error(regex_constants::error_brace);
                     if (__max == -1)
-                        __push_greedy_inf_repeat(__min, __s);
+                        __push_greedy_inf_repeat(__min, __s, __mexp_end, __mexp_end);
                     else
                     {
                         if (__max < __min)
@@ -2834,37 +2923,26 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_char(value_type __c)
 {
-    __match_char<_CharT>* __s = new __match_char<_CharT>(__c, __end_->first());
-    __end_->first() = __s;
-    __end_ = __s;
+    __end_->first() = new __match_char<_CharT>(__c, __end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
 template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_begin_marked_subexpression()
 {
-    __begin_marked_subexpression<_CharT>* __s =
-                     new __begin_marked_subexpression<_CharT>(__end_->first());
-    __end_->first() = __s;
-    __end_ = __s;
-    __state_arg<_CharT>* __a = new __state_arg<_CharT>(++__marked_count_,
+    __end_->first() = new __begin_marked_subexpression<_CharT>(++__marked_count_,
                                                                __end_->first());
-    __end_->first() = __a;
-    __end_ = __a;
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
 template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_end_marked_subexpression(unsigned __sub)
 {
-    __end_marked_subexpression<_CharT>* __s =
-                        new __end_marked_subexpression<_CharT>(__end_->first());
-    __end_->first() = __s;
-    __end_ = __s;
-    __state_arg<_CharT>* __a = new __state_arg<_CharT>(++__marked_count_,
-                                                               __end_->first());
-    __end_->first() = __a;
-    __end_ = __a;
+    __end_->first() = new __end_marked_subexpression<_CharT>(__sub,
+                                                             __end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
 typedef basic_regex<char>    regex;
@@ -3402,9 +3480,7 @@ match_results<_BidirectionalIterator, _Allocator>::__init(unsigned __s,
     __prefix_.first      = __f;
     __prefix_.second     = __f;
     __prefix_.matched    = false;
-    __suffix_.first      = __l;
-    __suffix_.second     = __l;
-    __suffix_.matched    = false;
+    __suffix_ = __unmatched_;
 }
 
 typedef match_results<const char*>             cmatch;
@@ -3449,16 +3525,6 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
         vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
-/*
-    How do you set __m.__matches[i].first and second?
-    With const _CharT* [__first, __last), we need a reference
-    _BidirectionalIterator to bounce off of.  Something like:
-    __m.__matches_[0].second = next(__m.__matches_[0].first, __current - __first_);
-
-    Pre:  __m.__matches_[0].first <-> __first ? or
-          __m.__prefix_.first <-> first and
-          __m.__suffix_.second <-> last ?
-*/
     typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
     __split_buffer<__command> __commands;
     difference_type __j = 0;
@@ -3491,8 +3557,6 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
                 break;
             case __command::__accept_and_consume:
                 __commands.push_front(__command(__cmd.first));
-                if (__cmd.second != nullptr)
-                    __commands.push_front(__command(__cmd.second));
                 break;
             case __command::__accept_but_not_consume:
                 __commands.push_back(__command(__cmd.first));
@@ -3523,8 +3587,90 @@ bool
 basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
         _BidirectionalIterator __first, _BidirectionalIterator __last,
         match_results<_BidirectionalIterator, _Allocator>& __m,
+        vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
+    typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
+    vector<__command> __commands;
+    vector<_BidirectionalIterator> __current_stack;
+    vector<sub_match<_BidirectionalIterator> > __saved_matches;
+    vector<sub_match<_BidirectionalIterator> > __best_matches;
+    difference_type __j = 0;
+    difference_type __highest_j = 0;
+    difference_type _N = _STD::distance(__first, __last);
+    __state* __st = __start_.get();
+    if (__st)
+    {
+        __commands.push_back(__command(__st));
+        _BidirectionalIterator __current = __first;
+        do
+        {
+            __command __cmd = __commands.back();
+            __commands.pop_back();
+            if (__cmd.first != nullptr)
+                __cmd = __cmd.first->__test(__first, __current, __last, __lc,
+                                            __m.__matches_.data(), __flags);
+            switch (__cmd.__do_)
+            {
+            case __command::__end_state:
+                if (__highest_j < __j)
+                {
+                    __highest_j = __j;
+                    for (unsigned __i = 1; __i < __m.__matches_.size(); ++__i)
+                        __best_matches.push_back(__m.__matches_[__i]);
+                }
+                break;
+            case __command::__pop_state:
+                for (unsigned __i = __m.__matches_.size(); __i > 1;)
+                {
+                    assert(!__saved_matches.empty());
+                    __m.__matches_[--__i] = __saved_matches.back();
+                    __saved_matches.pop_back();
+                }
+                assert(!__current_stack.empty());
+                __current = __current_stack.back();
+                __current_stack.pop_back();
+                break;
+            case __command::__accept_and_consume:
+                __commands.push_back(__command(__cmd.first));
+                if (__current != __last)
+                {
+                    ++__current;
+                    ++__j;
+                }
+                break;
+            case __command::__accept_but_not_consume:
+                if (__cmd.second != nullptr)
+                {
+                    __commands.push_back(__command(__cmd.second));
+                    __commands.push_back(__command(__command::__pop_state));
+                    __current_stack.push_back(__current);
+                    for (unsigned __i = 1; __i < __m.__matches_.size(); ++__i)
+                        __saved_matches.push_back(__m.__matches_[__i]);
+                }
+                __commands.push_back(__command(__cmd.first));
+                break;
+            case __command::__reject:
+                break;
+            default:
+                throw regex_error(regex_constants::error_temp);
+                break;
+            }
+        } while (!__commands.empty());
+        if (__highest_j != 0)
+        {
+            __m.__matches_[0].first = __first;
+            __m.__matches_[0].second = _STD::next(__first, __highest_j);
+            __m.__matches_[0].matched = true;
+            for (unsigned __i = __m.__matches_.size(); __i > 1;)
+            {
+                assert(!__best_matches.empty());
+                __m.__matches_[--__i] = __best_matches.back();
+                __best_matches.pop_back();
+            }
+            return true;
+        }
+    }
     return false;
 }
 
@@ -3541,7 +3687,7 @@ basic_regex<_CharT, _Traits>::__match_at_start(
         return __match_at_start_ecma(__first, __last, __m, __flags);
     if (mark_count() == 0)
         return __match_at_start_posix_nosubs(__first, __last, __m, __lc, __flags);
-    return __match_at_start_posix_subs(__first, __last, __m, __flags);
+    return __match_at_start_posix_subs(__first, __last, __m, __lc, __flags);
 }
 
 template <class _CharT, class _Traits>
