@@ -116,6 +116,7 @@ def Trigraphs      : DiagGroup<"trigraphs">;
 def : DiagGroup<"type-limits">;
 def Uninitialized  : DiagGroup<"uninitialized">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
+def UnknownAttributes : DiagGroup<"unknown-attributes">;
 def UnusedArgument : DiagGroup<"unused-argument">;
 def UnusedExceptionParameter : DiagGroup<"unused-exception-parameter">;
 def UnusedFunction : DiagGroup<"unused-function">;

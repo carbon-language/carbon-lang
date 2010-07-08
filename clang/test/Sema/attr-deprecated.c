@@ -4,8 +4,6 @@ int f() __attribute__((deprecated));
 void g() __attribute__((deprecated));
 void g();
 
-void z() __attribute__((bogusattr)); // expected-warning {{'bogusattr' attribute ignored}}
-
 extern int var __attribute__((deprecated));
 
 int a() {
@@ -45,7 +43,7 @@ typedef struct foo foo_dep __attribute__((deprecated));
 foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
 
 struct bar_dep __attribute__((deprecated, 
-                              invalid_attribute));  // expected-warning {{'invalid_attribute' attribute ignored}}
+                              invalid_attribute));  // expected-warning {{unknown attribute 'invalid_attribute' ignored}}
 
 struct bar_dep *test3;   // expected-warning {{'bar_dep' is deprecated}}
 

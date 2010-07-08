@@ -2069,7 +2069,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     // Ask target about the attribute.
     const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
     if (!TargetAttrs.ProcessDeclAttribute(scope, D, Attr, S))
-      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+      S.Diag(Attr.getLoc(), diag::warn_unknown_attribute_ignored)
+        << Attr.getName();
     break;
   }
 }
