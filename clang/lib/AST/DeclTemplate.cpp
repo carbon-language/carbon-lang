@@ -201,7 +201,7 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
 }
 
 QualType
-ClassTemplateDecl::getInjectedClassNameSpecialization(ASTContext &Context) {
+ClassTemplateDecl::getInjectedClassNameSpecialization() {
   Common *CommonPtr = getCommonPtr();
   if (!CommonPtr->InjectedClassNameType.isNull())
     return CommonPtr->InjectedClassNameType;
@@ -210,7 +210,7 @@ ClassTemplateDecl::getInjectedClassNameSpecialization(ASTContext &Context) {
   // corresponding to template parameter packs should be pack
   // expansions. We already say that in 14.6.2.1p2, so it would be
   // better to fix that redundancy.
-
+  ASTContext &Context = getASTContext();
   TemplateParameterList *Params = getTemplateParameters();
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   TemplateArgs.reserve(Params->size());

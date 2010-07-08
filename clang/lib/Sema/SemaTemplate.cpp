@@ -884,7 +884,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   NewClass->setDescribedClassTemplate(NewTemplate);
 
   // Build the type for the class template declaration now.
-  QualType T = NewTemplate->getInjectedClassNameSpecialization(Context);
+  QualType T = NewTemplate->getInjectedClassNameSpecialization();
   T = Context.getInjectedClassNameType(NewClass, T);
   assert(T->isDependentType() && "Class template type is not dependent?");
   (void)T;

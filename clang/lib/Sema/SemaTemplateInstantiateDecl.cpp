@@ -820,7 +820,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   
   // Trigger creation of the type for the instantiation.
   SemaRef.Context.getInjectedClassNameType(RecordInst,
-                  Inst->getInjectedClassNameSpecialization(SemaRef.Context));
+                                    Inst->getInjectedClassNameSpecialization());
 
   // Finish handling of friends.
   if (isFriend) {
@@ -978,9 +978,10 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   void *InsertPos = 0;
   if (FunctionTemplate && !TemplateParams) {
     llvm::FoldingSetNodeID ID;
-    FunctionTemplateSpecializationInfo::Profile(ID,
-                             TemplateArgs.getInnermost().getFlatArgumentList(),
-                                       TemplateArgs.getInnermost().flat_size(),
+    std::pair<const TemplateArgument *, unsigned> Innermost 
+      = TemplateArgs.getInnermost();
+    FunctionTemplateSpecializationInfo::Profile(ID, Innermost.first,
+                                                Innermost.second,
                                                 SemaRef.Context);
 
     FunctionTemplateSpecializationInfo *Info
@@ -1089,8 +1090,12 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     }
   } else if (FunctionTemplate) {
     // Record this function template specialization.
+    std::pair<const TemplateArgument *, unsigned> Innermost 
+      = TemplateArgs.getInnermost();
     Function->setFunctionTemplateSpecialization(FunctionTemplate,
-                                                &TemplateArgs.getInnermost(),
+                  new (SemaRef.Context) TemplateArgumentList(SemaRef.Context,
+                                                             Innermost.first,
+                                                             Innermost.second),
                                                 InsertPos);
   } else if (isFriend && D->isThisDeclarationADefinition()) {
     // TODO: should we remember this connection regardless of whether
@@ -1227,9 +1232,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     // template. Check whether there is already a function template
     // specialization for this particular set of template arguments.
     llvm::FoldingSetNodeID ID;
-    FunctionTemplateSpecializationInfo::Profile(ID,
-                            TemplateArgs.getInnermost().getFlatArgumentList(),
-                                      TemplateArgs.getInnermost().flat_size(),
+    std::pair<const TemplateArgument *, unsigned> Innermost 
+      = TemplateArgs.getInnermost();
+    FunctionTemplateSpecializationInfo::Profile(ID, Innermost.first,
+                                                Innermost.second,
                                                 SemaRef.Context);
 
     FunctionTemplateSpecializationInfo *Info
@@ -1374,8 +1380,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method->setDescribedFunctionTemplate(FunctionTemplate);
   } else if (FunctionTemplate) {
     // Record this function template specialization.
+    std::pair<const TemplateArgument *, unsigned> Innermost 
+      = TemplateArgs.getInnermost();
     Method->setFunctionTemplateSpecialization(FunctionTemplate,
-                                              &TemplateArgs.getInnermost(),
+                    new (SemaRef.Context) TemplateArgumentList(SemaRef.Context,
+                                                              Innermost.first,
+                                                              Innermost.second),
                                               InsertPos);
   } else if (!isFriend) {
     // Record that this is an instantiation of a member function.
@@ -2597,7 +2607,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate();
     
     if (ClassTemplate) {
-      T = ClassTemplate->getInjectedClassNameSpecialization(Context);
+      T = ClassTemplate->getInjectedClassNameSpecialization();
     } else if (ClassTemplatePartialSpecializationDecl *PartialSpec
                  = dyn_cast<ClassTemplatePartialSpecializationDecl>(Record)) {
       ClassTemplate = PartialSpec->getSpecializedTemplate();

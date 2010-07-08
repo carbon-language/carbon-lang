@@ -36,10 +36,14 @@ namespace clang {
   /// When instantiating X<int>::Y<17>::f, the multi-level template argument
   /// list will contain a template argument list (int) at depth 0 and a
   /// template argument list (17) at depth 1.
-  struct MultiLevelTemplateArgumentList {
+  class MultiLevelTemplateArgumentList {
+  public:
+    typedef std::pair<const TemplateArgument *, unsigned> ArgList;
+    
+  private:
     /// \brief The template argument lists, stored from the innermost template
     /// argument list (first) to the outermost template argument list (last).
-    llvm::SmallVector<const TemplateArgumentList *, 4> TemplateArgumentLists;
+    llvm::SmallVector<ArgList, 4> TemplateArgumentLists;
     
   public:
     /// \brief Construct an empty set of template argument lists.
@@ -48,7 +52,7 @@ namespace clang {
     /// \brief Construct a single-level template argument list.
     explicit 
     MultiLevelTemplateArgumentList(const TemplateArgumentList &TemplateArgs) {
-      TemplateArgumentLists.push_back(&TemplateArgs);
+      addOuterTemplateArguments(&TemplateArgs);
     }
     
     /// \brief Determine the number of levels in this template argument
@@ -58,8 +62,8 @@ namespace clang {
     /// \brief Retrieve the template argument at a given depth and index.
     const TemplateArgument &operator()(unsigned Depth, unsigned Index) const {
       assert(Depth < TemplateArgumentLists.size());
-      assert(Index < TemplateArgumentLists[getNumLevels() - Depth - 1]->size());
-      return TemplateArgumentLists[getNumLevels() - Depth - 1]->get(Index);
+      assert(Index < TemplateArgumentLists[getNumLevels() - Depth - 1].second);
+      return TemplateArgumentLists[getNumLevels() - Depth - 1].first[Index];
     }
     
     /// \brief Determine whether there is a non-NULL template argument at the
@@ -69,7 +73,7 @@ namespace clang {
     bool hasTemplateArgument(unsigned Depth, unsigned Index) const {
       assert(Depth < TemplateArgumentLists.size());
       
-      if (Index >= TemplateArgumentLists[getNumLevels() - Depth - 1]->size())
+      if (Index >= TemplateArgumentLists[getNumLevels() - Depth - 1].second)
         return false;
       
       return !(*this)(Depth, Index).isNull();
@@ -78,12 +82,21 @@ namespace clang {
     /// \brief Add a new outermost level to the multi-level template argument 
     /// list.
     void addOuterTemplateArguments(const TemplateArgumentList *TemplateArgs) {
-      TemplateArgumentLists.push_back(TemplateArgs);
+      TemplateArgumentLists.push_back(
+                                    ArgList(TemplateArgs->getFlatArgumentList(),
+                                            TemplateArgs->flat_size()));
+    }
+    
+    /// \brief Add a new outmost level to the multi-level template argument
+    /// list.
+    void addOuterTemplateArguments(const TemplateArgument *Args, 
+                                   unsigned NumArgs) {
+      TemplateArgumentLists.push_back(ArgList(Args, NumArgs));
     }
     
     /// \brief Retrieve the innermost template argument list.
-    const TemplateArgumentList &getInnermost() const {
-      return *TemplateArgumentLists.front();
+    const ArgList &getInnermost() const { 
+      return TemplateArgumentLists.front(); 
     }
   };
   

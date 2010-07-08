@@ -96,7 +96,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
           // injected class name of the named class template, we're entering
           // into that class template definition.
           QualType Injected
-            = ClassTemplate->getInjectedClassNameSpecialization(Context);
+            = ClassTemplate->getInjectedClassNameSpecialization();
           if (Context.hasSameType(Injected, ContextType))
             return ClassTemplate->getTemplatedDecl();
 

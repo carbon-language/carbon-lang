@@ -1476,7 +1476,7 @@ public:
   ///   typedef array this_type; // "array" is equivalent to "array<T, N>"
   /// };
   /// \endcode
-  QualType getInjectedClassNameSpecialization(ASTContext &Context);
+  QualType getInjectedClassNameSpecialization();
 
   /// \brief Retrieve the member class template that this class template was
   /// derived from.

@@ -3317,9 +3317,10 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       MultiLevelTemplateArgumentList ArgList
         = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);
 
-      InstantiatingTemplate Inst(*this, CallLoc, Param,
-                                 ArgList.getInnermost().getFlatArgumentList(),
-                                 ArgList.getInnermost().flat_size());
+      std::pair<const TemplateArgument *, unsigned> Innermost 
+        = ArgList.getInnermost();
+      InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
+                                 Innermost.second);
 
       OwningExprResult Result = SubstExpr(UninstExpr, ArgList);
       if (Result.isInvalid())

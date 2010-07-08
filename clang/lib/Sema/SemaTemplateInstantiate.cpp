@@ -63,7 +63,8 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
     if (ClassTemplateSpecializationDecl *Spec
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       // We're done when we hit an explicit specialization.
-      if (Spec->getSpecializationKind() == TSK_ExplicitSpecialization)
+      if (Spec->getSpecializationKind() == TSK_ExplicitSpecialization &&
+          !isa<ClassTemplatePartialSpecializationDecl>(Spec))
         break;
 
       Result.addOuterTemplateArguments(&Spec->getTemplateInstantiationArgs());
@@ -103,6 +104,15 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
         Ctx = Function->getLexicalDeclContext();
         RelativeToPrimary = false;
         continue;
+      }
+    } else if (CXXRecordDecl *Rec = dyn_cast<CXXRecordDecl>(Ctx)) {
+      if (ClassTemplateDecl *ClassTemplate = Rec->getDescribedClassTemplate()) {
+        QualType T = ClassTemplate->getInjectedClassNameSpecialization();
+        const TemplateSpecializationType *TST
+          = cast<TemplateSpecializationType>(Context.getCanonicalType(T));
+        Result.addOuterTemplateArguments(TST->getArgs(), TST->getNumArgs());
+        if (ClassTemplate->isMemberSpecialization())
+          break;
       }
     }
 

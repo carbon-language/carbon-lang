@@ -156,3 +156,36 @@ namespace PR6239 {
   };
 
 }
+
+namespace PR7587 {
+  template<typename> class X0;
+  template<typename> struct X1;
+  template<typename> class X2;
+
+  template<typename T> class X3
+  {
+    template<
+      template<typename> class TT,
+      typename U = typename X1<T>::type
+    > 
+    struct Inner {
+      typedef X2<TT<typename X1<T>::type> > Type;
+    };
+
+    const typename Inner<X0>::Type minCoeff() const;
+  };
+
+  template<typename T> class X3<T*>
+  {
+    template<
+      template<typename> class TT,
+      typename U = typename X1<T>::type
+    > 
+    struct Inner {
+      typedef X2<TT<typename X1<T>::type> > Type;
+    };
+
+    const typename Inner<X0>::Type minCoeff() const;
+  };
+
+}
