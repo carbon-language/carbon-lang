@@ -464,7 +464,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
   case X86II::MRMDestMem:
-    NumOps = CurOp = X86AddrNumOperands;
+    NumOps = CurOp = X86::AddrNumOperands;
   case X86II::MRMSrcMem:
   case X86II::MRMSrcReg:
     if (MI.getNumOperands() > CurOp && MI.getOperand(CurOp).isReg() &&
@@ -606,7 +606,7 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
   case X86II::MRMDestMem: {
-    unsigned e = (isTwoAddr ? X86AddrNumOperands+1 : X86AddrNumOperands);
+    unsigned e = (isTwoAddr ? X86::AddrNumOperands+1 : X86::AddrNumOperands);
     i = isTwoAddr ? 1 : 0;
     if (NumOps > e && MI.getOperand(e).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(e).getReg()))
@@ -659,7 +659,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         // FIXME: This is disgusting.
         MI.getOpcode() != X86::LEA64r && MI.getOpcode() != X86::LEA64_32r &&
         MI.getOpcode() != X86::LEA16r && MI.getOpcode() != X86::LEA32r) {
-      switch (MI.getOperand(MemOperand+X86AddrSegment).getReg()) {
+      switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
       default: assert(0 && "Unknown segment register!");
       case 0: break;
       case X86::CS: EmitByte(0x2E, CurByte, OS); break;
@@ -814,9 +814,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRMDestMem:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp,
-                     GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
+                     GetX86RegNum(MI.getOperand(CurOp + X86::AddrNumOperands)),
                      TSFlags, CurByte, OS, Fixups);
-    CurOp += X86AddrNumOperands + 1;
+    CurOp += X86::AddrNumOperands + 1;
     break;
       
   case X86II::MRMSrcReg:
@@ -832,7 +832,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
     
   case X86II::MRMSrcMem: {
-    int AddrOperands = X86AddrNumOperands;
+    int AddrOperands = X86::AddrNumOperands;
     unsigned FirstMemOp = CurOp+1;
     if (HasVEX_4V) {
       ++AddrOperands;
@@ -870,7 +870,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
                      TSFlags, CurByte, OS, Fixups);
-    CurOp += X86AddrNumOperands;
+    CurOp += X86::AddrNumOperands;
     break;
   case X86II::MRM_C1:
     EmitByte(BaseOpcode, CurByte, OS);

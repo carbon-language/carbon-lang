@@ -863,7 +863,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
   if (isFrameStoreOpcode(MI->getOpcode()))
     if (isFrameOperand(MI, 0, FrameIndex))
-      return MI->getOperand(X86AddrNumOperands).getReg();
+      return MI->getOperand(X86::AddrNumOperands).getReg();
   return 0;
 }
 
@@ -2616,7 +2616,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   } else if (Ops.size() != 1)
     return NULL;
 
-  SmallVector<MachineOperand,X86AddrNumOperands> MOs;
+  SmallVector<MachineOperand,X86::AddrNumOperands> MOs;
   switch (LoadMI->getOpcode()) {
   case X86::V_SET0PS:
   case X86::V_SET0PD:
@@ -2670,7 +2670,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   default: {
     // Folding a normal load. Just copy the load's address operands.
     unsigned NumOps = LoadMI->getDesc().getNumOperands();
-    for (unsigned i = NumOps - X86AddrNumOperands; i != NumOps; ++i)
+    for (unsigned i = NumOps - X86::AddrNumOperands; i != NumOps; ++i)
       MOs.push_back(LoadMI->getOperand(i));
     break;
   }
@@ -2764,13 +2764,13 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     // conservatively assume the address is unaligned. That's bad for
     // performance.
     return false;
-  SmallVector<MachineOperand, X86AddrNumOperands> AddrOps;
+  SmallVector<MachineOperand, X86::AddrNumOperands> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
   SmallVector<MachineOperand,2> AfterOps;
   SmallVector<MachineOperand,4> ImpOps;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &Op = MI->getOperand(i);
-    if (i >= Index && i < Index + X86AddrNumOperands)
+    if (i >= Index && i < Index + X86::AddrNumOperands)
       AddrOps.push_back(Op);
     else if (Op.isReg() && Op.isImplicit())
       ImpOps.push_back(Op);
@@ -2789,7 +2789,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     loadRegFromAddr(MF, Reg, AddrOps, RC, MMOs.first, MMOs.second, NewMIs);
     if (UnfoldStore) {
       // Address operands cannot be marked isKill.
-      for (unsigned i = 1; i != 1 + X86AddrNumOperands; ++i) {
+      for (unsigned i = 1; i != 1 + X86::AddrNumOperands; ++i) {
         MachineOperand &MO = NewMIs[0]->getOperand(i);
         if (MO.isReg())
           MO.setIsKill(false);
@@ -2886,7 +2886,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   unsigned NumOps = N->getNumOperands();
   for (unsigned i = 0; i != NumOps-1; ++i) {
     SDValue Op = N->getOperand(i);
-    if (i >= Index-NumDefs && i < Index-NumDefs + X86AddrNumOperands)
+    if (i >= Index-NumDefs && i < Index-NumDefs + X86::AddrNumOperands)
       AddrOps.push_back(Op);
     else if (i < Index-NumDefs)
       BeforeOps.push_back(Op);
@@ -3218,7 +3218,7 @@ unsigned X86InstrInfo::determineREX(const MachineInstr &MI) {
     case X86II::MRM4m: case X86II::MRM5m:
     case X86II::MRM6m: case X86II::MRM7m:
     case X86II::MRMDestMem: {
-      unsigned e = (isTwoAddr ? X86AddrNumOperands+1 : X86AddrNumOperands);
+      unsigned e = (isTwoAddr ? X86::AddrNumOperands+1 : X86::AddrNumOperands);
       i = isTwoAddr ? 1 : 0;
       if (NumOps > e && isX86_64ExtendedReg(MI.getOperand(e)))
         REX |= 1 << 2;
@@ -3570,7 +3570,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::MRMDestMem: {
     ++FinalSize;
     FinalSize += getMemModRMByteSize(MI, CurOp, IsPIC, Is64BitMode);
-    CurOp +=  X86AddrNumOperands + 1;
+    CurOp +=  X86::AddrNumOperands + 1;
     if (CurOp != NumOps) {
       ++CurOp;
       FinalSize += sizeConstant(X86II::getSizeOfImm(Desc->TSFlags));
@@ -3592,9 +3592,9 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     int AddrOperands;
     if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
         Opcode == X86::LEA16r || Opcode == X86::LEA32r)
-      AddrOperands = X86AddrNumOperands - 1; // No segment register
+      AddrOperands = X86::AddrNumOperands - 1; // No segment register
     else
-      AddrOperands = X86AddrNumOperands;
+      AddrOperands = X86::AddrNumOperands;
 
     ++FinalSize;
     FinalSize += getMemModRMByteSize(MI, CurOp+1, IsPIC, Is64BitMode);
@@ -3652,7 +3652,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     
     ++FinalSize;
     FinalSize += getMemModRMByteSize(MI, CurOp, IsPIC, Is64BitMode);
-    CurOp += X86AddrNumOperands;
+    CurOp += X86::AddrNumOperands;
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);

@@ -24,6 +24,24 @@ namespace llvm {
   class X86TargetMachine;
 
 namespace X86 {
+  // Enums for memory operand decoding.  Each memory operand is represented with
+  // a 5 operand sequence in the form:
+  //   [BaseReg, ScaleAmt, IndexReg, Disp, Segment]
+  // These enums help decode this.
+  enum {
+    AddrBaseReg = 0,
+    AddrScaleAmt = 1,
+    AddrIndexReg = 2,
+    AddrDisp = 3,
+    
+    /// AddrSegmentReg - The operand # of the segment in the memory operand.
+    AddrSegmentReg = 4,
+
+    /// AddrNumOperands - Total number of operands in a memory reference.
+    AddrNumOperands = 5
+  };
+  
+  
   // X86 specific condition code. These correspond to X86_*_COND in
   // X86InstrInfo.td. They must be kept in synch.
   enum CondCode {
@@ -541,12 +559,6 @@ namespace X86II {
     }
   }
 }
-
-// FIXME: Move into X86II namespace.
-enum {
-  X86AddrSegment = 4,
-  X86AddrNumOperands = 5
-};
 
 inline static bool isScale(const MachineOperand &MO) {
   return MO.isImm() &&

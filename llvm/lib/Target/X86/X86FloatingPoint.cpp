@@ -633,7 +633,7 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
   unsigned NumOps = MI->getDesc().getNumOperands();
-  assert((NumOps == X86AddrNumOperands + 1 || NumOps == 1) &&
+  assert((NumOps == X86::AddrNumOperands + 1 || NumOps == 1) &&
          "Can only handle fst* & ftst instructions!");
 
   // Is this the last use of the source register?
