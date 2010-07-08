@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=CHECKV4
-; RUN: llc < %s -march=arm -mattr=+v5t | FileCheck %s -check-prefix=CHECKV5
+; RUN: llc < %s -mtriple=arm-apple-darwin -march=arm | FileCheck %s -check-prefix=CHECKV4
+; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin -mattr=+v5t | FileCheck %s -check-prefix=CHECKV5
 ; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi\
 ; RUN:   -relocation-model=pic | FileCheck %s -check-prefix=CHECKELF
 
@@ -36,4 +36,13 @@ BB0:
   %9 = bitcast i32* %8 to i32* (i32, i32*, i32, i32*, i32*, i32*)* ; <i32* (i32, i32*, i32, i32*, i32*, i32*)*> [#uses=1]
   %10 = call i32* %9(i32 %0, i32* null, i32 %1, i32* %2, i32* %3, i32* %4) ; <i32*> [#uses=1]
   ret i32* %10
+}
+
+define void @t4() {
+; CHECKV4: t4:
+; CHECKV4: b _t2  @ TAILCALL
+; CHECKV5: t4:
+; CHECKV5: b _t2  @ TAILCALL
+        tail call void @t2( )            ; <i32> [#uses=0]
+        ret void
 }

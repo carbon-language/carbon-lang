@@ -25,3 +25,13 @@ define void @h() {
         %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
 }
+
+define void @j() {
+; DARWIN: j:
+; DARWIN: b.w _f  @ TAILCALL
+
+; LINUX: j:
+; LINUX: b.w f  @ TAILCALL
+        tail call void @f()
+        ret void
+}

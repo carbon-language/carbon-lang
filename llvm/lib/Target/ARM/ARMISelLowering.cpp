@@ -1338,13 +1338,7 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
       if (!TII->isLoadFromStackSlot(Def, FI))
         return false;
     } else {
-//      unsigned Opcode = Def->getOpcode();
-//      if ((Opcode == X86::LEA32r || Opcode == X86::LEA64r) &&
-//          Def->getOperand(1).isFI()) {
-//        FI = Def->getOperand(1).getIndex();
-//        Bytes = Flags.getByValSize();
-//      } else
-        return false;
+      return false;
     }
   } else if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg)) {
     if (Flags.isByVal())
@@ -1400,6 +1394,12 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 
   // FIXME: Completely disable sibcall for Thumb1 since Thumb1RegisterInfo::
   // emitEpilogue is not ready for them.
+  // Doing this is tricky, since the LDM/POP instruction on Thumb doesn't take
+  // LR.  This means if we need to reload LR, it takes an extra instructions,
+  // which outweighs the value of the tail call; but here we don't know yet
+  // whether LR is going to be used.  Probably the right approach is to
+  // generate the tail call here and turn it back into CALL/RET in 
+  // emitEpilogue if LR is used.
   if (Subtarget->isThumb1Only())
     return false;
 
@@ -1409,6 +1409,13 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // (We could do this by loading the address of the callee into a register;
   // that is an extra instruction over the direct call and burns a register
   // as well, so is not likely to be a win.)
+
+  // It might be safe to remove this restriction on non-Darwin.
+
+  // Thumb1 PIC calls to external symbols use BX, so they can be tail calls,
+  // but we need to make sure there are enough registers; the only valid
+  // registers are the 4 used for parameters.  We don't currently do this
+  // case.
   if (isa<ExternalSymbolSDNode>(Callee))
       return false;
 
