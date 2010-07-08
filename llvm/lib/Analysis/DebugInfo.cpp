@@ -1107,19 +1107,14 @@ DIVariable DIFactory::CreateComplexVariable(unsigned Tag, DIDescriptor Context,
 /// CreateBlock - This creates a descriptor for a lexical block with the
 /// specified parent VMContext.
 DILexicalBlock DIFactory::CreateLexicalBlock(DIDescriptor Context,
-                                             DIFile F, unsigned LineNo,
-                                             unsigned Col) {
-  // Defeat MDNode uniqing for lexical blocks.
-  static unsigned int unique_id = 0;
+                                             unsigned LineNo, unsigned Col) {
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_lexical_block),
     Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Col),
-    F,
-    ConstantInt::get(Type::getInt32Ty(VMContext), unique_id++)
+    ConstantInt::get(Type::getInt32Ty(VMContext), Col)
   };
-  return DILexicalBlock(MDNode::get(VMContext, &Elts[0], 6));
+  return DILexicalBlock(MDNode::get(VMContext, &Elts[0], 4));
 }
 
 /// CreateNameSpace - This creates new descriptor for a namespace
