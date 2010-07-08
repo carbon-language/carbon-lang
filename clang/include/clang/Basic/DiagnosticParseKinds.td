@@ -53,7 +53,7 @@ def ext_c99_compound_literal : Extension<
   "compound literals are a C99-specific feature">;
 def ext_enumerator_list_comma : ExtWarn<
   "commas at the end of enumerator lists are a %select{C99|C++0x}0-specific "
-  "feature">;
+  "feature">, InGroup<EnumeratorListComma>;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
