@@ -153,11 +153,11 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 
 // Pseudo 256-bit registers to represent pairs of Q registers. These should
 // never be present in the emitted code.
-// These are used for NEON load / store instructions, e.g. vld4, vst3.
-// NOTE: It's possible to define more QQ registers since technical the
-// starting D register number doesn't have to be multiple of 4. e.g. 
-// D1, D2, D3, D4 would be a legal quad. But that would make the sub-register
-// stuffs very messy.
+// These are used for NEON load / store instructions, e.g., vld4, vst3.
+// NOTE: It's possible to define more QQ registers since technically the
+// starting D register number doesn't have to be multiple of 4, e.g.,
+// D1, D2, D3, D4 would be a legal quad, but that would make the subregister
+// stuff very messy.
 let SubRegIndices = [qsub_0, qsub_1] in {
 let CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1),
                         (ssub_4 qsub_1, ssub_0), (ssub_5 qsub_1, ssub_1),
