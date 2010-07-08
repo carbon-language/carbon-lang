@@ -300,7 +300,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       for (MachineBasicBlock::const_iterator
              II = MBB->begin(), IE = MBB->end(); II != IE; ++II) {
         const TargetInstrDesc &TID = TM.getInstrInfo()->get(II->getOpcode());
-        if (II->isInlineAsm() || (TID.isCall() && !TID.isReturn())) {
+        if ((II->isInlineAsm() && II->getOperand(1).getImm()) ||
+            (TID.isCall() && !TID.isReturn())) {
           MFI->setHasCalls(true);
           goto done;
         }
