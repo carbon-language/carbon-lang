@@ -856,7 +856,8 @@ void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
 void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   VisitNamedDecl(D);
 
-  NamedDecl *TemplatedDecl = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+  NamedDecl *TemplatedDecl
+    = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   TemplateParameterList* TemplateParams
       = Reader.ReadTemplateParameterList(Record, Idx); 
   D->init(TemplatedDecl, TemplateParams);
@@ -1020,7 +1021,14 @@ void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
 }
 
 void PCHDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
-  assert(false && "cannot read TemplateTemplateParmDecl");
+  VisitTemplateDecl(D);
+  // TemplateParmPosition.
+  D->setDepth(Record[Idx++]);
+  D->setPosition(Record[Idx++]);
+  // Rest of TemplateTemplateParmDecl.
+  TemplateArgumentLoc Arg = Reader.ReadTemplateArgumentLoc(Record, Idx);
+  bool IsInherited = Record[Idx++];
+  D->setDefaultArgument(Arg, IsInherited);
 }
 
 void PCHDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
@@ -1382,7 +1390,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                         QualType(),0);
     break;
   case pch::DECL_TEMPLATE_TEMPLATE_PARM:
-    assert(false && "cannot read TemplateTemplateParmDecl");
+    D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(),0,0,0,0);
     break;
   case pch::DECL_STATIC_ASSERT:
     assert(false && "cannot read StaticAssertDecl");

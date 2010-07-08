@@ -963,7 +963,14 @@ void PCHDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
 }
 
 void PCHDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
-  assert(false && "cannot write TemplateTemplateParmDecl");
+  VisitTemplateDecl(D);
+  // TemplateParmPosition.
+  Record.push_back(D->getDepth());
+  Record.push_back(D->getPosition());
+  // Rest of TemplateTemplateParmDecl.
+  Writer.AddTemplateArgumentLoc(D->getDefaultArgument(), Record);
+  Record.push_back(D->defaultArgumentWasInherited());
+  Code = pch::DECL_TEMPLATE_TEMPLATE_PARM;
 }
 
 void PCHDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {

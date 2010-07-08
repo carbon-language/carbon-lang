@@ -908,6 +908,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == TemplateTemplateParm; }
+
+  friend class PCHDeclReader;
+  friend class PCHDeclWriter;
 };
 
 /// \brief Represents a class template specialization, which refers to
