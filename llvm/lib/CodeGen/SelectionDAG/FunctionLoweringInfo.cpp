@@ -46,9 +46,11 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
   if (isa<PHINode>(I)) return true;
   const BasicBlock *BB = I->getParent();
   for (Value::const_use_iterator UI = I->use_begin(), E = I->use_end();
-        UI != E; ++UI)
-    if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI))
+        UI != E; ++UI) {
+    const User *U = *UI;
+    if (cast<Instruction>(U)->getParent() != BB || isa<PHINode>(U))
       return true;
+  }
   return false;
 }
 
@@ -63,9 +65,11 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool EnableFastISel) {
 
   const BasicBlock *Entry = A->getParent()->begin();
   for (Value::const_use_iterator UI = A->use_begin(), E = A->use_end();
-       UI != E; ++UI)
-    if (cast<Instruction>(*UI)->getParent() != Entry || isa<SwitchInst>(*UI))
+       UI != E; ++UI) {
+    const User *U = *UI;
+    if (cast<Instruction>(U)->getParent() != Entry || isa<SwitchInst>(U))
       return false;  // Use not in entry block.
+  }
   return true;
 }
 
