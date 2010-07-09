@@ -411,6 +411,8 @@ def fno_operator_names : Flag<"-fno-operator-names">,
   HelpText<"Do not treat C++ operator name keywords as synonyms for operators">;
 def fno_signed_char : Flag<"-fno-signed-char">,
   HelpText<"Char is unsigned">;
+def fno_spell_checking : Flag<"-fno-spell-checking">,
+  HelpText<"Disable spell-checking">;  
 def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">,
   HelpText<"Don't use __cxa_atexit for calling destructors">;
 def fconstant_string_class : Separate<"-fconstant-string-class">,

@@ -102,6 +102,8 @@ public:
   unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
                                        // hidden visibility by default.  
 
+  unsigned SpellChecking : 1; // Whether to perform spell-checking for error
+                              // recovery.
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
 
@@ -179,6 +181,7 @@ public:
     CatchUndefined = 0;
     DumpRecordLayouts = 0;
     DumpVTableLayouts = 0;
+    SpellChecking = 1;
     NoBitFieldTypeAlign = 0;
   }
 

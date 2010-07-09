@@ -1401,6 +1401,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_show_source_location))
     CmdArgs.push_back("-fno-show-source-location");
 
+  if (!Args.hasFlag(options::OPT_fspell_checking,
+                    options::OPT_fno_spell_checking))
+    CmdArgs.push_back("-fno-spell-checking");
+  
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
 

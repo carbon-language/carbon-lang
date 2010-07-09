@@ -2726,7 +2726,7 @@ DeclarationName Sema::CorrectTypo(LookupResult &Res, Scope *S, CXXScopeSpec *SS,
                                   bool EnteringContext,
                                   CorrectTypoContext CTC,
                                   const ObjCObjectPointerType *OPT) {
-  if (Diags.hasFatalErrorOccurred())
+  if (Diags.hasFatalErrorOccurred() || !getLangOptions().SpellChecking)
     return DeclarationName();
 
   // Provide a stop gap for files that are just seriously broken.  Trying

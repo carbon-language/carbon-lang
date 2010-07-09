@@ -869,6 +869,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.OpenCL);
   Record.push_back(LangOpts.CatchUndefined);
   Record.push_back(LangOpts.ElideConstructors);
+  Record.push_back(LangOpts.SpellChecking);
   Stream.EmitRecord(pch::LANGUAGE_OPTIONS, Record);
 }
 

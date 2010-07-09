@@ -1184,6 +1184,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     // in the actual argument list.
     if (source_filename)
       Args.push_back(source_filename);
+    Args.push_back("-fno-spell-checking");
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
     Args.push_back("-Xclang");
@@ -1247,6 +1248,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   argv.push_back("-o");
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
+  argv.push_back("-fno-spell-checking");
 
   // Remap any unsaved files to temporary files.
   std::vector<llvm::sys::Path> TemporaryFiles;
