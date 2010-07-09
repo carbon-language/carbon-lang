@@ -106,11 +106,12 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
   // If AllowIdenticalEdges is true, then we allow this edge to be considered
   // non-critical iff all preds come from TI's block.
   while (I != E) {
-    if (*I != FirstPred)
+    const BasicBlock *P = *I;
+    if (P != FirstPred)
       return true;
     // Note: leave this as is until no one ever compiles with either gcc 4.0.1
     // or Xcode 2. This seems to work around the pred_iterator assert in PR 2207
-    E = pred_end(*I);
+    E = pred_end(P);
     ++I;
   }
   return false;
