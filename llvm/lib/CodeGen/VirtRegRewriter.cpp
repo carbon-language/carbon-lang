@@ -2443,6 +2443,24 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         // Also check if it's copying from an "undef", if so, we can't
         // eliminate this or else the undef marker is lost and it will
         // confuses the scavenger. This is extremely rare.
+        if (MI.isIdentityCopy() && !MI.getOperand(1).isUndef() &&
+            MI.getNumOperands() == 2) {
+          ++NumDCE;
+          DEBUG(dbgs() << "Removing now-noop copy: " << MI);
+          SmallVector<unsigned, 2> KillRegs;
+          InvalidateKills(MI, TRI, RegKills, KillOps, &KillRegs);
+          if (MO.isDead() && !KillRegs.empty()) {
+            // Source register or an implicit super/sub-register use is killed.
+            assert(TRI->regsOverlap(KillRegs[0], MI.getOperand(0).getReg()));
+            // Last def is now dead.
+            TransferDeadness(MI.getOperand(1).getReg(), RegKills, KillOps);
+          }
+          VRM->RemoveMachineInstrFromMaps(&MI);
+          MBB->erase(&MI);
+          Erased = true;
+          Spills.disallowClobberPhysReg(VirtReg);
+          goto ProcessNextInst;
+        }
         unsigned Src, Dst, SrcSR, DstSR;
         if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) &&
             Src == Dst && SrcSR == DstSR &&
@@ -2532,6 +2550,16 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
 
         // Check to see if this is a noop copy.  If so, eliminate the
         // instruction before considering the dest reg to be changed.
+        if (MI.isIdentityCopy()) {
+          ++NumDCE;
+          DEBUG(dbgs() << "Removing now-noop copy: " << MI);
+          InvalidateKills(MI, TRI, RegKills, KillOps);
+          VRM->RemoveMachineInstrFromMaps(&MI);
+          MBB->erase(&MI);
+          Erased = true;
+          UpdateKills(*LastStore, TRI, RegKills, KillOps);
+          goto ProcessNextInst;
+        }
         {
           unsigned Src, Dst, SrcSR, DstSR;
           if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) &&
