@@ -482,6 +482,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     // extended to the end of the existing live range defined by the copy.
     SlotIndex DefIdx = UseIdx.getDefIndex();
     const LiveRange *DLR = IntB.getLiveRangeContaining(DefIdx);
+    if (!DLR)
+      continue;
     BHasPHIKill |= DLR->valno->hasPHIKill();
     assert(DLR->valno->def == DefIdx);
     BDeadValNos.push_back(DLR->valno);
@@ -949,8 +951,8 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // Live-in to the function but dead. Remove it from entry live-in set.
     if (mf_->begin()->isLiveIn(li.reg))
       mf_->begin()->removeLiveIn(li.reg);
-    const LiveRange *LR = li.getLiveRangeContaining(CopyIdx);
-    removeRange(li, LR->start, LR->end, li_, tri_);
+    if (const LiveRange *LR = li.getLiveRangeContaining(CopyIdx))
+      removeRange(li, LR->start, LR->end, li_, tri_);
     return removeIntervalIfEmpty(li, li_, tri_);
   }
 
