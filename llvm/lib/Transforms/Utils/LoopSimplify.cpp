@@ -142,9 +142,11 @@ ReprocessLoop:
     if (*BB == L->getHeader()) continue;
 
     SmallPtrSet<BasicBlock *, 4> BadPreds;
-    for (pred_iterator PI = pred_begin(*BB), PE = pred_end(*BB); PI != PE; ++PI)
-      if (!L->contains(*PI))
-        BadPreds.insert(*PI);
+    for (pred_iterator PI = pred_begin(*BB), PE = pred_end(*BB); PI != PE; ++PI){
+      BasicBlock *P = *PI;
+      if (!L->contains(P))
+        BadPreds.insert(P);
+    }
 
     // Delete each unique out-of-loop (and thus dead) predecessor.
     for (SmallPtrSet<BasicBlock *, 4>::iterator I = BadPreds.begin(),
@@ -353,16 +355,18 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   // Compute the set of predecessors of the loop that are not in the loop.
   SmallVector<BasicBlock*, 8> OutsideBlocks;
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
-       PI != PE; ++PI)
-    if (!L->contains(*PI)) {         // Coming in from outside the loop?
+       PI != PE; ++PI) {
+    BasicBlock *P = *PI;
+    if (!L->contains(P)) {         // Coming in from outside the loop?
       // If the loop is branched to from an indirect branch, we won't
       // be able to fully transform the loop, because it prohibits
       // edge splitting.
-      if (isa<IndirectBrInst>((*PI)->getTerminator())) return 0;
+      if (isa<IndirectBrInst>(P->getTerminator())) return 0;
 
       // Keep track of it.
-      OutsideBlocks.push_back(*PI);
+      OutsideBlocks.push_back(P);
     }
+  }
 
   // Split out the loop pre-header.
   BasicBlock *NewBB =
@@ -385,13 +389,15 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// outside of the loop.
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   SmallVector<BasicBlock*, 8> LoopBlocks;
-  for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
-    if (L->contains(*I)) {
+  for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I) {
+    BasicBlock *P = *I;
+    if (L->contains(P)) {
       // Don't do this if the loop is exited via an indirect branch.
-      if (isa<IndirectBrInst>((*I)->getTerminator())) return 0;
+      if (isa<IndirectBrInst>(P->getTerminator())) return 0;
 
-      LoopBlocks.push_back(*I);
+      LoopBlocks.push_back(P);
     }
+  }
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
   BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0], 
@@ -559,10 +565,11 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
   // Determine which blocks should stay in L and which should be moved out to
   // the Outer loop now.
   std::set<BasicBlock*> BlocksInL;
-  for (pred_iterator PI = pred_begin(Header), E = pred_end(Header); PI!=E; ++PI)
-    if (DT->dominates(Header, *PI))
-      AddBlockAndPredsToSet(*PI, Header, BlocksInL);
-
+  for (pred_iterator PI=pred_begin(Header), E = pred_end(Header); PI!=E; ++PI) {
+    BasicBlock *P = *PI;
+    if (DT->dominates(Header, P))
+      AddBlockAndPredsToSet(P, Header, BlocksInL);
+  }
 
   // Scan all of the loop children of L, moving them to OuterLoop if they are
   // not part of the inner loop.
