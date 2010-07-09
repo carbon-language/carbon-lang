@@ -300,6 +300,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       for (MachineBasicBlock::const_iterator
              II = MBB->begin(), IE = MBB->end(); II != IE; ++II) {
         const TargetInstrDesc &TID = TM.getInstrInfo()->get(II->getOpcode());
+
+        // Operand 1 of an inline asm instruction indicates whether the asm
+        // needs stack or not.
         if ((II->isInlineAsm() && II->getOperand(1).getImm()) ||
             (TID.isCall() && !TID.isReturn())) {
           MFI->setHasCalls(true);
