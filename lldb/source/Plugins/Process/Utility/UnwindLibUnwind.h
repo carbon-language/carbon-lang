@@ -15,7 +15,7 @@
 #include <vector>
 
 // Other libraries and framework includes
-#include "libunwind.h"
+#include "libunwind/include/libunwind.h"
 
 // Project includes
 #include "lldb/lldb-private.h"

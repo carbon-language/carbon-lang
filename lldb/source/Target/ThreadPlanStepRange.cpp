@@ -34,12 +34,12 @@ using namespace lldb_private;
 
 ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind, const char *name, Thread &thread, const AddressRange &range, const SymbolContext &addr_context, lldb::RunMode stop_others) :
     ThreadPlan (ThreadPlan::eKindGeneric, name, thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_address_range (range),
     m_addr_context (addr_context),
+    m_address_range (range),
     m_stop_others (stop_others),
     m_stack_depth (0),
-    m_no_more_plans (false),
     m_stack_id (),
+    m_no_more_plans (false),
     m_first_run_event (true)
 {
     m_stack_depth = m_thread.GetStackFrameCount();

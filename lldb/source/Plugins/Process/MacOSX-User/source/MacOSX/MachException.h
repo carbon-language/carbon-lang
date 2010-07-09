@@ -131,7 +131,7 @@ public:
     enum
     {
         e_actionForward,    // Forward signal to inferior process
-        e_actionStop,        // Stop when this signal is received
+        e_actionStop        // Stop when this signal is received
     };
     struct Action
     {

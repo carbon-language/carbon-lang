@@ -53,7 +53,7 @@ public:
     ///     \b true if the breakpoint was in the list.
     //------------------------------------------------------------------
     bool
-    Remove (lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    Remove (lldb::break_id_t break_id, lldb::break_id_t break_loc_id);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with id \a
@@ -70,7 +70,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    FindByIDPair (lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    FindByIDPair (lldb::break_id_t break_id, lldb::break_id_t break_loc_id);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with id \a
@@ -87,7 +87,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
-    FindByIDPair (lldb::user_id_t break_id, lldb::user_id_t break_loc_id) const;
+    FindByIDPair (lldb::break_id_t break_id, lldb::break_id_t break_loc_id) const;
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with index
@@ -187,10 +187,10 @@ private:
     typedef std::vector<lldb::BreakpointLocationSP> collection;
 
     collection::iterator
-    GetIDPairIterator(lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+    GetIDPairIterator(lldb::break_id_t break_id, lldb::break_id_t break_loc_id);
 
     collection::const_iterator
-    GetIDPairConstIterator(lldb::user_id_t break_id, lldb::user_id_t break_loc_id) const;
+    GetIDPairConstIterator(lldb::break_id_t break_id, lldb::break_id_t break_loc_id) const;
 
     collection m_break_loc_collection;
 

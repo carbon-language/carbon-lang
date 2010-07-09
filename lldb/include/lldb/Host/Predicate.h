@@ -53,9 +53,9 @@ public:
     /// constructors.
     //------------------------------------------------------------------
     Predicate () :
+        m_value(),
         m_mutex(),
-        m_condition(),
-        m_value()
+        m_condition()
     {
     }
 
@@ -69,9 +69,9 @@ public:
     ///     The initial value for our T object.
     //------------------------------------------------------------------
     Predicate (T initial_value)  :
+        m_value(initial_value),
         m_mutex(),
-        m_condition(),
-        m_value(initial_value)
+        m_condition()
     {
     }
 

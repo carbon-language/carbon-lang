@@ -40,7 +40,8 @@ BreakpointSite::BreakpointSite
 BreakpointSite::~BreakpointSite()
 {
     BreakpointLocationSP bp_loc_sp;
-    for (int i = 0; i < m_owners.GetSize(); i++)
+    const size_t owner_count = m_owners.GetSize();
+    for (size_t i = 0; i < owner_count; i++)
     {
         m_owners.GetByIndex(i)->ClearBreakpointSite();
     }
@@ -66,7 +67,8 @@ BreakpointSite::ShouldStop (StoppointCallbackContext *context)
 bool
 BreakpointSite::IsBreakpointAtThisSite (lldb::break_id_t bp_id)
 {
-    for (int i = 0; i < m_owners.GetSize(); i++)
+    const size_t owner_count = m_owners.GetSize();
+    for (size_t i = 0; i < owner_count; i++)
     {
         if (m_owners.GetByIndex(i)->GetBreakpoint().GetID() == bp_id)
             return true;
@@ -158,7 +160,7 @@ BreakpointSite::AddOwner (BreakpointLocationSP &owner)
 }
 
 uint32_t
-BreakpointSite::RemoveOwner (lldb::user_id_t break_id, lldb::user_id_t break_loc_id)
+BreakpointSite::RemoveOwner (lldb::break_id_t break_id, lldb::break_id_t break_loc_id)
 {
     m_owners.Remove(break_id, break_loc_id);
     return m_owners.GetSize();

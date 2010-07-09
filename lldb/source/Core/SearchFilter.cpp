@@ -154,9 +154,9 @@ SearchFilter::SearchInModuleList (Searcher &searcher, ModuleList &modules)
         searcher.SearchCallback (*this, empty_sc, NULL, false);
     else
     {
-        size_t numModules = modules.GetSize();
+        const size_t numModules = modules.GetSize();
 
-        for (int i = 0; i < numModules; i++)
+        for (size_t i = 0; i < numModules; i++)
         {
             ModuleSP module_sp(modules.GetModuleAtIndex(i));
             if (ModulePasses(module_sp))
@@ -186,7 +186,7 @@ SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searche
         if (!context.module_sp)
         {
             size_t n_modules = m_target_sp->GetImages().GetSize();
-            for (int i = 0; i < n_modules; i++)
+            for (size_t i = 0; i < n_modules; i++)
             {
                 // If this is the last level supplied, then call the callback directly,
                 // otherwise descend.
@@ -395,8 +395,8 @@ SearchFilterByModule::Search (Searcher &searcher)
     // find the ones that match the file name.
 
     ModuleList matching_modules;
-    // const size_t num_matching_modules = m_target_sp->GetImages().FindModules(&m_module_spec, NULL, NULL, NULL, matching_modules);
-    for (int i = 0; i < m_target_sp->GetImages().GetSize (); i++)
+    const size_t num_modules = m_target_sp->GetImages().GetSize ();
+    for (size_t i = 0; i < num_modules; i++)
     {
         Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
         if (FileSpec::Compare (m_module_spec, module->GetFileSpec(), false) == 0)

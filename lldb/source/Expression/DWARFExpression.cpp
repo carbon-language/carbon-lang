@@ -303,6 +303,9 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 
         switch (level)
         {
+        default:
+            break;
+
         case lldb::eDescriptionLevelBrief:
             if (offset > start_offset)
                 s->PutChar(' ');

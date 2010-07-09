@@ -195,9 +195,12 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
 ClangExpression::ClangExpression(const char *target_triple,
                                  ClangExpressionDeclMap *decl_map) :
     m_target_triple (),
-    m_jit_mm_ptr (NULL),
+    m_decl_map (decl_map),
+    m_clang_ap (),
     m_code_generator_ptr (NULL),
-    m_decl_map (decl_map)
+    m_jit_mm_ptr (NULL),
+    m_execution_engine (),
+    m_jitted_functions ()
 {
     if (target_triple && target_triple[0])
         m_target_triple = target_triple;

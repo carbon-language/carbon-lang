@@ -68,7 +68,7 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
 
     const LineInfo *line_info  = el_line(m_edit_line);
     SBStringList completions;
-    size_t page_size = 40;
+    int page_size = 40;
 
     int num_completions = m_driver->GetDebugger().GetCommandInterpreter().HandleCompletion (line_info->buffer,
                                                                                             line_info->cursor,
@@ -161,9 +161,12 @@ IOChannel::IOChannel
     m_read_thread_should_exit (false),
     m_out_file (out),
     m_err_file (err),
+    m_command_queue (),
+    m_completion_key ("\t"),
     m_edit_line (::el_init (SBHostOS::GetProgramFileSpec().GetFileName(), in, out, err)),
     m_history (history_init()),
-    m_completion_key ("\t")
+    m_history_event(),
+    m_getting_command (false)
 {
     assert (m_edit_line);
     ::el_set (m_edit_line, EL_PROMPT, el_prompt);
@@ -211,7 +214,7 @@ IOChannel::HistorySaveLoad (bool save)
     {
         char history_path[PATH_MAX];
         ::snprintf (history_path, sizeof(history_path), "~/.%s-history", SBHostOS::GetProgramFileSpec().GetFileName());
-        if (SBFileSpec::ResolvePath (history_path, history_path, sizeof(history_path)) < sizeof(history_path) - 1)
+        if ((size_t)SBFileSpec::ResolvePath (history_path, history_path, sizeof(history_path)) < sizeof(history_path) - 1)
         {
             const char *path_ptr = history_path;
             if (save)

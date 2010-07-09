@@ -68,7 +68,7 @@ lldb_private::Initialize ()
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
         ProcessGDBRemote::Initialize();
-        ProcessMacOSX::Initialize();
+//      ProcessMacOSX::Initialize();
 #endif
     }
 }
@@ -96,7 +96,7 @@ lldb_private::Terminate ()
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessGDBRemote::Terminate();
-    ProcessMacOSX::Terminate();
+//  ProcessMacOSX::Terminate();
 #endif
 }
 

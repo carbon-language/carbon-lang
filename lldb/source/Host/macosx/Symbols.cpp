@@ -19,20 +19,23 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 // Project includes
-#include "CFCReleaser.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 
+#include "Host/macosx/cfcpp/CFCReleaser.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
 extern "C" {
+
 CFURLRef DBGCopyFullDSYMURLForUUID (CFUUIDRef uuid, CFURLRef exec_url);
 CFDictionaryRef DBGCopyDSYMPropertyLists (CFURLRef dsym_url);
-};
+
+}
 
 static bool
 SkinnyMachOFileContainsArchAndUUID

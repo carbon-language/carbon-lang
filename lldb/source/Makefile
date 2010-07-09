@@ -1,0 +1,20 @@
+##===- source/Makefile -------------------------------------*- Makefile -*-===##
+# 
+#                     The LLVM Compiler Infrastructure
+#
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+# 
+##===----------------------------------------------------------------------===##
+
+LLDB_LEVEL := ..
+DIRS := API Breakpoint Commands Core Expression Host Interpreter Plugins Symbol Target Utility
+LIBRARYNAME := lldbInitAndLog
+BUILD_ARCHIVE = 1
+
+BUILT_SOURCES = LLDB_vers.c
+
+include $(LLDB_LEVEL)/Makefile
+
+LLDB_vers.c: $(LLDB_LEVEL)/scripts/generate-vers.pl $(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj
+	$(LLDB_LEVEL)/scripts/generate-vers.pl $(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj > LLDB_vers.c

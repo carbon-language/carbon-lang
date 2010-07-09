@@ -37,6 +37,9 @@ GetScalarTypeForClangType (clang::ASTContext &ast_context, clang::QualType clang
 
     switch (clang_type->getTypeClass())
     {
+    default:
+        break;
+
     case clang::Type::FunctionNoProto:
     case clang::Type::FunctionProto:
         break;
@@ -135,8 +138,8 @@ lldb_private::ClangStmtVisitor::ClangStmtVisitor
     lldb_private::StreamString &strm
 ) :
     m_ast_context (ast_context),
-    m_variable_list (variable_list),
     m_decl_map (decl_map),
+    m_variable_list (variable_list),
     m_stream (strm)
 {
 }
@@ -477,22 +480,10 @@ lldb_private::ClangStmtVisitor::VisitStringLiteral (clang::StringLiteral *Str)
     bool is_wide = Str->isWide();
     
     size_t new_length = byte_length + (is_wide ? 1 : 2);
+
+    std::string null_terminated_string (Str->getStrData(), byte_length);
     
-    uint8_t null_terminated_string[new_length];
-    
-    memcpy(&null_terminated_string[0], Str->getStrData(), byte_length);
-    
-    if(is_wide)
-    {
-        null_terminated_string[byte_length] = '\0';
-        null_terminated_string[byte_length + 1] = '\0';
-    }
-    else 
-    {
-        null_terminated_string[byte_length] = '\0';
-    }
-    
-    Value *val = new Value(null_terminated_string, new_length);
+    Value *val = new Value((uint8_t*)null_terminated_string.c_str(), new_length);
     val->SetContext(Value::eContextTypeOpaqueClangQualType, Str->getType().getAsOpaquePtr());
     
     uint32_t val_idx = m_variable_list.AppendValue(val);

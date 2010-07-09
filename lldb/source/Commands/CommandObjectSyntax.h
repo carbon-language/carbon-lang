@@ -30,17 +30,10 @@ public:
 
     virtual
     ~CommandObjectSyntax ();
-
-    bool
-    OldExecute (Args& command,
-             Debugger *context,
-             CommandInterpreter *interpreter,
-             CommandReturnObject &result);
     
     virtual bool
-    Execute (Args& command,
-             Debugger *context,
-             CommandInterpreter *interpreter,
+    Execute (CommandInterpreter &interpreter,
+             Args& command,
              CommandReturnObject &result);
 
 

@@ -243,8 +243,8 @@ private:
     ///    \a break_loc_id is the Breakpoint Location to remove.
     //------------------------------------------------------------------
     uint32_t
-    RemoveOwner (lldb::user_id_t break_id,
-                 lldb::user_id_t break_loc_id);
+    RemoveOwner (lldb::break_id_t break_id,
+                 lldb::break_id_t break_loc_id);
 
     BreakpointSite::Type m_type;///< The type of this breakpoint site.
     uint8_t m_saved_opcode[8];  ///< The saved opcode bytes if this breakpoint site uses trap opcodes.

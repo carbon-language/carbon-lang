@@ -166,6 +166,9 @@ LibUnwindRegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
             break;
         }
         break;
+
+    default:
+        break;
     }
     return false;
 }
@@ -197,9 +200,12 @@ LibUnwindRegisterContext::WriteRegisterValue (uint32_t reg, const Scalar &value)
     const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
     if (reg_info == NULL)
         return false;
-    unw_word_t reg_value;
+    unw_word_t reg_value = 0;
     switch (value.GetType())
     {
+    case Scalar::e_void:
+        return false;
+
     case Scalar::e_sint:        reg_value = value.SInt(); break;
     case Scalar::e_uint:        reg_value = value.UInt(); break;
     case Scalar::e_slong:       reg_value = value.SLong(); break;
@@ -294,6 +300,9 @@ LibUnwindRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
         default:
             return false;
         }
+
+    default:
+        return false;
     }        
     return WriteRegisterValue (reg, value);
 }

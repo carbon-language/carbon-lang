@@ -146,6 +146,9 @@ AddressRange::Dump(Stream *s, Process *process, Address::DumpStyle style, Addres
 
     switch (style)
     {
+    default:
+        break;
+
     case Address::DumpStyleSectionNameOffset:
     case Address::DumpStyleSectionPointerOffset:
         s->PutChar ('[');

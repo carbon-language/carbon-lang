@@ -2773,7 +2773,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -2826,7 +2826,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 				ZERO_LINK = NO;
 			};
@@ -2935,7 +2935,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 				ZERO_LINK = NO;
 			};

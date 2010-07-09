@@ -119,7 +119,7 @@ public:
     /// @return
     ///     The number of breakpoint hits to be ignored.
     //------------------------------------------------------------------
-    int32_t
+    uint32_t
     GetIgnoreCount ();
 
     //------------------------------------------------------------------
@@ -129,7 +129,7 @@ public:
     ///    The number of breakpoint hits to ignore.
     //------------------------------------------------------------------
     void
-    SetIgnoreCount (int32_t n);
+    SetIgnoreCount (uint32_t n);
 
     //------------------------------------------------------------------
     /// Set the callback action invoked when the breakpoint is hit.

@@ -241,24 +241,28 @@ ReadCStringFromMemory (ExecutionContextScope *exe_scope, const Address &address,
 }
 
 Address::Address () :
+    SymbolContextScope(),
     m_section (NULL),
     m_offset (LLDB_INVALID_ADDRESS)
 {
 }
 
 Address::Address (const Address& rhs) :
+    SymbolContextScope(rhs),
     m_section (rhs.m_section),
     m_offset (rhs.m_offset)
 {
 }
 
 Address::Address (const Section* section, addr_t offset) :
+    SymbolContextScope(),
     m_section (section),
     m_offset (offset)
 {
 }
 
 Address::Address (addr_t address, const SectionList * sections) :
+    SymbolContextScope(),
     m_section (NULL),
     m_offset (LLDB_INVALID_ADDRESS)
 {
@@ -430,6 +434,9 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     lldb_private::Address so_addr;
     switch (style)
     {
+    case DumpStyleInvalid:
+        return false;
+
     case DumpStyleSectionNameOffset:
         if (m_section != NULL)
         {
@@ -636,6 +643,9 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                             }
                         }
                     }
+                    break;
+
+                default:
                     break;
                 }
             }

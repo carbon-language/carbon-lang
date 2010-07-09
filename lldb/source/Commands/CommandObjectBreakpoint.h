@@ -104,9 +104,9 @@ public:
         std::string m_func_name;
         uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
-        lldb::addr_t m_load_addr;
         STLStringArray m_modules;
-        int32_t m_ignore_count;
+        lldb::addr_t m_load_addr;
+        uint32_t m_ignore_count;
         lldb::tid_t m_thread_id;
         uint32_t m_thread_index;
         std::string m_thread_name;
@@ -164,7 +164,7 @@ public:
 
         // Instance variables to hold the values for command options.
 
-        int32_t m_ignore_count;
+        uint32_t m_ignore_count;
         lldb::tid_t m_thread_id;
         uint32_t m_thread_index;
         std::string m_thread_name;

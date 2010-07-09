@@ -161,7 +161,7 @@ DiskFilesOrDirectories
             // but for completeness sake we'll resolve the user name and only put a slash
             // on the end if it exists.
             char resolved_username[PATH_MAX];
-            int resolved_username_len = FileSpec::ResolveUsername (partial_name_copy, resolved_username, 
+            size_t resolved_username_len = FileSpec::ResolveUsername (partial_name_copy, resolved_username, 
                                                           sizeof (resolved_username));
                                                           
            // Not sure how this would happen, a username longer than PATH_MAX?  Still...
@@ -238,7 +238,7 @@ DiskFilesOrDirectories
     
     if (*partial_name_copy == '~')
     {
-        int resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
+        size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
         // User name doesn't exist, we're not getting any further...
         if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
@@ -591,7 +591,7 @@ CommandCompletions::SymbolCompleter::SearchCallback (
 
         SymbolContext sc;
         // Now add the functions & symbols to the list - only add if unique:
-        for (int i = 0; i < func_list.GetSize(); i++)
+        for (uint32_t i = 0; i < func_list.GetSize(); i++)
         {
             if (func_list.GetContextAtIndex(i, sc))
             {
@@ -602,7 +602,7 @@ CommandCompletions::SymbolCompleter::SearchCallback (
             }
         }
 
-        for (int i = 0; i < sym_list.GetSize(); i++)
+        for (uint32_t i = 0; i < sym_list.GetSize(); i++)
         {
             if (sym_list.GetContextAtIndex(i, sc))
             {

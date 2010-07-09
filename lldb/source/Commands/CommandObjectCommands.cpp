@@ -205,14 +205,14 @@ public:
         CommandReturnObject &result
     )
     {
-        const int argc = args.GetArgumentCount();
+        const size_t argc = args.GetArgumentCount();
 
         if (argc < 2)
-          {
+        {
             result.AppendError ("'alias' requires at least two arguments");
             result.SetStatus (eReturnStatusFailed);
             return false;
-          }
+        }
 
         const std::string alias_command = args.GetArgumentAtIndex(0);
         const std::string actual_command = args.GetArgumentAtIndex(1);
@@ -236,7 +236,7 @@ public:
              if (command_obj_sp.get())
              {
                  CommandObject *cmd_obj = command_obj_sp.get();
-                 CommandObject *sub_cmd_obj;
+                 CommandObject *sub_cmd_obj = NULL;
                  OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
                  OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
 
@@ -299,7 +299,7 @@ public:
                      }
                      else
                      {
-                         for (int i = 0; i < args.GetArgumentCount(); ++i)
+                         for (size_t i = 0; i < argc; ++i)
                              option_arg_vector->push_back (OptionArgPair ("<argument>",
                                                                           std::string (args.GetArgumentAtIndex (i))));
                      }

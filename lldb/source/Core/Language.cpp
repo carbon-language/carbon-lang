@@ -48,7 +48,7 @@ g_languages[] =
     { { "python"  , NULL          , "Python"              } }
 };
 
-static const uint32_t
+static const size_t
 g_num_languages = sizeof(g_languages)/sizeof(LanguageStrings);
 
 Language::Language(Language::Type language) :

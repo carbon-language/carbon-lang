@@ -68,7 +68,7 @@ StringList::AppendList (StringList strings)
 {
     uint32_t len = strings.GetSize();
 
-    for (int i = 0; i < len; ++i)
+    for (uint32_t i = 0; i < len; ++i)
         m_strings.push_back (strings.GetStringAtIndex(i));
 }
 
@@ -106,7 +106,7 @@ StringList::LongestCommonPrefix (std::string &common_prefix)
 
     for (++pos; pos != end; ++pos)
     {
-        int new_size = strlen (m_strings[pos].c_str());
+        size_t new_size = strlen (m_strings[pos].c_str());
 
         // First trim common_prefix if it is longer than the current element:
         if (common_prefix.size() > new_size)
@@ -114,7 +114,7 @@ StringList::LongestCommonPrefix (std::string &common_prefix)
 
         // Then trim it at the first disparity:
 
-        for (int i = 0; i < common_prefix.size(); i++)
+        for (size_t i = 0; i < common_prefix.size(); i++)
         {
             if (m_strings[pos][i]  != common_prefix[i])
             {
@@ -189,7 +189,7 @@ StringList::RemoveBlankLines ()
     if (GetSize() == 0)
         return;
 
-    int idx = 0;
+    size_t idx = 0;
     while (idx < m_strings.size())
     {
         if (m_strings[idx].empty())            

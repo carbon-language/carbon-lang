@@ -38,7 +38,7 @@ public:
     {
         eNone = 0,
         eAvoidInlines = (1 << 0),
-        eAvoidNoDebug = (1 << 1),
+        eAvoidNoDebug = (1 << 1)
     };
 
     //------------------------------------------------------------------

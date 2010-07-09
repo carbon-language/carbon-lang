@@ -1088,7 +1088,7 @@ DataExtractor::GetSLEB128 (uint32_t *offset_ptr) const
         int size = sizeof (uint32_t) * 8;
         const uint8_t *src = m_start + *offset_ptr;
 
-        uint8_t byte;
+        uint8_t byte = 0;
         int bytecount = 0;
 
         while (src < m_end)
@@ -1316,6 +1316,8 @@ DataExtractor::Dump
             s->Address(GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset), sizeof (addr_t));
             break;
 
+        default:
+        case eFormatDefault:
         case eFormatHex:
             if (item_byte_size <= 8)
             {

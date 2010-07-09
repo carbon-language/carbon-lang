@@ -341,7 +341,7 @@ ProcessMacOSX::DoLaunch
 }
 
 Error
-ProcessMacOSX::DoAttach (lldb::pid_t attach_pid)
+ProcessMacOSX::DoAttachToProcessWithID (lldb::pid_t attach_pid)
 {
     Error error;
 
@@ -493,10 +493,17 @@ ProcessMacOSX::DidAttach ()
 }
 
 Error
-ProcessMacOSX::WillAttach (lldb::pid_t pid)
+ProcessMacOSX::WillAttachToProcessWithID (lldb::pid_t pid)
 {
     return WillLaunchOrAttach ();
 }
+
+Error
+ProcessMacOSX::WillAttachToProcessWithName (const char *process_name, bool wait_for_launch) 
+{
+    return WillLaunchOrAttach ();
+}
+
 
 Error
 ProcessMacOSX::DoResume ()

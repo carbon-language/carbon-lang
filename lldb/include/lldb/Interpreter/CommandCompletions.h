@@ -52,7 +52,7 @@ public:
 
     struct CommonCompletionElement
     {
-        CommonCompletionTypes type;
+        uint32_t type;
         CompletionCallback callback;
     };
 

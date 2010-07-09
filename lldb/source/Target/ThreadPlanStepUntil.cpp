@@ -39,13 +39,15 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     bool stop_others
 ) :
     ThreadPlan (ThreadPlan::eKindStepUntil, "Step until", thread, eVoteNoOpinion, eVoteNoOpinion),
+    m_stack_depth (0),
     m_step_from_insn (LLDB_INVALID_ADDRESS),
-    m_return_addr (LLDB_INVALID_ADDRESS),
     m_return_bp_id(LLDB_INVALID_BREAK_ID),
+    m_return_addr (LLDB_INVALID_ADDRESS),
     m_stepped_out(false),
     m_should_stop(false),
-    m_explains_stop(false),
     m_ran_analyze (false),
+    m_explains_stop(false),
+    m_until_points(),
     m_stop_others (stop_others)
 {
 

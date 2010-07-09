@@ -321,14 +321,14 @@ public:
     ///    The number of breakpoint hits to ignore.
     //------------------------------------------------------------------
     void
-    SetIgnoreCount (int32_t count);
+    SetIgnoreCount (uint32_t count);
 
     //------------------------------------------------------------------
     /// Return the current Ignore Count.
     /// @return
     ///     The number of breakpoint hits to be ignored.
     //------------------------------------------------------------------
-    int32_t
+    uint32_t
     GetIgnoreCount () const;
 
     //------------------------------------------------------------------

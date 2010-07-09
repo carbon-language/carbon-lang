@@ -17,7 +17,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Target/RegisterContext.h"
 
-#include "libunwind.h"
+#include "libunwind/include/libunwind.h"
 
 class LibUnwindRegisterContext : public lldb_private::RegisterContext
 {

@@ -35,11 +35,11 @@ public:
     bool
     IsEnabled ();
 
-    int32_t
+    uint32_t
     GetIgnoreCount ();
 
     void
-    SetIgnoreCount (int32_t n);
+    SetIgnoreCount (uint32_t n);
 
     void
     SetThreadID (lldb::tid_t sb_thread_id);

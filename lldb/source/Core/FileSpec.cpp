@@ -58,7 +58,7 @@ GetCachedGlobTildeSlash()
 // Returns 0 if there WAS a ~ in the path but the username couldn't be resolved.
 // Otherwise returns the number of characters copied into dst_path.  If the return
 // is >= dst_len, then the resolved path is too long...
-int
+size_t
 FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
 {
     char user_home[PATH_MAX];
@@ -70,7 +70,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     // If there's no ~, then just copy src_path straight to dst_path (they may be the same string...)
     if (src_path[0] != '~')
     {
-        int len = strlen (src_path);
+        size_t len = strlen (src_path);
         if (len >= dst_len)
         {
             ::bcopy (src_path, dst_path, dst_len - 1);
@@ -106,7 +106,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     // User name of "" means the current user...
     
     struct passwd *user_entry;
-    const char *home_dir;
+    const char *home_dir = NULL;
     
     if (user_name[0] == '\0')
     {
@@ -125,7 +125,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
         return ::snprintf (dst_path, dst_len, "%s%s", home_dir, remainder);
 }
 
-int
+size_t
 FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
 {
     if (src_path == NULL || src_path[0] == '\0')
@@ -135,7 +135,7 @@ FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
     char unglobbed_path[PATH_MAX];
     if (src_path[0] == '~')
     {
-        int return_count = ResolveUsername(src_path, unglobbed_path, sizeof(unglobbed_path));
+        size_t return_count = ResolveUsername(src_path, unglobbed_path, sizeof(unglobbed_path));
         
         // If we couldn't find the user referred to, or the resultant path was too long,
         // then just copy over the src_path.
@@ -509,16 +509,16 @@ FileSpec::GetPath(char *path, size_t max_path_length) const
     {
         if (filename && filename[0])
         {
-            return snprintf (path, max_path_length, "%s/%s", dirname, filename) < max_path_length;
+            return (size_t)::snprintf (path, max_path_length, "%s/%s", dirname, filename) < max_path_length;
         }
         else
         {
-            strncpy (path, dirname, max_path_length);
+            ::strncpy (path, dirname, max_path_length);
         }
     }
     else if (filename)
     {
-        strncpy (path, filename, max_path_length);
+        ::strncpy (path, filename, max_path_length);
     }
     else
     {
@@ -660,7 +660,7 @@ FileSpec::ReadFileContents (off_t file_offset, size_t file_size) const
                             {
                                 // Make sure we read exactly what we asked for and if we got
                                 // less, adjust the array
-                                if (bytesRead < data_heap_ap->GetByteSize())
+                                if ((size_t)bytesRead < data_heap_ap->GetByteSize())
                                     data_heap_ap->SetByteSize(bytesRead);
                                 data_sp.reset(data_heap_ap.release());
                             }

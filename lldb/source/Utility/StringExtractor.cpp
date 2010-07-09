@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "StringExtractor.h"
+#include "Utility/StringExtractor.h"
 
 // C Includes
 // C++ Includes

@@ -21,9 +21,10 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
-#include "lldb-enumerations.h"
-#include "libunwind.h"
+#include "lldb/lldb-enumerations.h"
 #include "llvm-c/EnhancedDisassembly.h"
+
+#include "libunwind/include/libunwind.h"
 
 using namespace lldb;
 
@@ -191,7 +192,15 @@ access_raw (lldb_private::unw_addr_space_t as, lldb_private::unw_word_t addr, ll
 
 
 static int 
-reg_info (lldb_private::unw_addr_space_t as, lldb_private::unw_regnum_t regnum, lldb_private::unw_regtype_t *type, char *buf, size_t buflen, void *arg)
+reg_info 
+(
+    lldb_private::unw_addr_space_t as, 
+    lldb_private::unw_regnum_t regnum, 
+    lldb_private::unw_regtype_t *type, 
+    char *buf, 
+    size_t buflen, 
+    void *arg
+)
 {
     if (arg == 0)
         return -1;

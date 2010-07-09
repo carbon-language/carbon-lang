@@ -22,21 +22,21 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, bool hardware) :
     m_loc_id(bid),
-    m_byte_size(0),
     m_addr(addr),
-    m_hit_count(0),
     m_hw_preferred(hardware),
-    m_hw_index(LLDB_INVALID_INDEX32)
+    m_hw_index(LLDB_INVALID_INDEX32),
+    m_byte_size(0),
+    m_hit_count(0)
 {
 }
 
 StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, size_t size, bool hardware) :
     m_loc_id(bid),
-    m_byte_size(size),
     m_addr(addr),
-    m_hit_count(0),
     m_hw_preferred(hardware),
-    m_hw_index(LLDB_INVALID_INDEX32)
+    m_hw_index(LLDB_INVALID_INDEX32),
+    m_byte_size(size),
+    m_hit_count(0)
 {
 }
 

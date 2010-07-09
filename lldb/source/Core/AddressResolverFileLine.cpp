@@ -54,7 +54,7 @@ AddressResolverFileLine::SearchCallback
 
     sc_list_size = cu->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything,
                                              sc_list);
-    for (int i = 0; i < sc_list_size; i++)
+    for (uint32_t i = 0; i < sc_list_size; i++)
     {
         SymbolContext sc;
         if (sc_list.GetContextAtIndex(i, sc))

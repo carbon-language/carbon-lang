@@ -69,9 +69,9 @@ public:
     IsEnabled ();
 
     void
-    SetIgnoreCount (int32_t count);
+    SetIgnoreCount (uint32_t count);
 
-    int32_t
+    uint32_t
     GetIgnoreCount () const;
 
     void

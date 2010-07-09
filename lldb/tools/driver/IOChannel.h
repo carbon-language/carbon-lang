@@ -86,7 +86,8 @@ public:
     const char *
     GetPrompt ();
 
-    static unsigned char ElCompletionFn (EditLine *e, int ch);
+    static unsigned char 
+    ElCompletionFn (EditLine *e, int ch);
 
     bool
     IsGettingCommand () const;
@@ -105,9 +106,12 @@ private:
     History *m_history;
     HistEvent m_history_event;
     bool m_getting_command;
+
     void
     HistorySaveLoad (bool save);
-    unsigned char HandleCompletion (EditLine *e, int ch);
+
+    unsigned char
+    HandleCompletion (EditLine *e, int ch);
 };
 
 #endif  // lldb_IOChannel_h_

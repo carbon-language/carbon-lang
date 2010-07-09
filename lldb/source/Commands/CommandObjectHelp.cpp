@@ -27,8 +27,8 @@ using namespace lldb_private;
 
 CommandObjectHelp::CommandObjectHelp () :
     CommandObject ("help",
-                     "Shows a list of all debugger commands, or give details about specific commands.",
-                     "help [<cmd-name>]")
+                   "Shows a list of all debugger commands, or give details about specific commands.",
+                   "help [<cmd-name>]")
 {
 }
 
@@ -123,7 +123,8 @@ CommandObjectHelp::Execute (CommandInterpreter &interpreter, Args& command, Comm
         {
             Stream &output_strm = result.GetOutputStream();
             output_strm.Printf("Help requested with ambiguous command name, possible completions:\n");
-            for (int i = 0; i < matches.GetSize(); i++)
+            const uint32_t match_count = matches.GetSize();
+            for (uint32_t i = 0; i < match_count; i++)
             {
                 output_strm.Printf("\t%s\n", matches.GetStringAtIndex(i));
             }

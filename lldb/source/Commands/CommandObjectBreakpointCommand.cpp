@@ -244,7 +244,8 @@ CommandObjectBreakpointCommandAdd::Execute
 
     if (result.Succeeded())
     {
-        for (int i = 0; i < valid_bp_ids.Size(); ++i)
+        const size_t count = valid_bp_ids.GetSize();
+        for (size_t i = 0; i < count; ++i)
         {
             BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
             if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
@@ -441,7 +442,8 @@ CommandObjectBreakpointCommandRemove::Execute
 
     if (result.Succeeded())
     {
-        for (int i = 0; i < valid_bp_ids.Size(); ++i)
+        const size_t count = valid_bp_ids.GetSize();
+        for (size_t i = 0; i < count; ++i)
         {
             BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
             if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
@@ -526,7 +528,8 @@ CommandObjectBreakpointCommandList::Execute
 
     if (result.Succeeded())
     {
-        for (int i = 0; i < valid_bp_ids.Size(); ++i)
+        const size_t count = valid_bp_ids.GetSize();
+        for (size_t i = 0; i < count; ++i)
         {
             BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
             if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)

@@ -70,30 +70,26 @@ ObjCObjectPrinter::PrintObject (ConstString &str, Value &object_ptr, ExecutionCo
     
     // poor man's strcpy
     
-    size_t len = 0;
-    bool keep_reading = true;
     Error error;
-    while (keep_reading)
+    std::vector<char> desc;
+    while (1)
     {
-        char byte;
+        char byte = '\0';
+        if (exe_ctx.process->ReadMemory(result_ptr + desc.size(), &byte, 1, error) != 1)
+            break;
         
-        if (exe_ctx.process->ReadMemory(result_ptr + len, &byte, 1, error) != 1)
-            return false;
-        
+        desc.push_back(byte);
+
         if (byte == '\0')
-            keep_reading = false;
-        else
-            ++len;
+            break;
     }
     
-    char desc[len + 1];
-    
-    if (exe_ctx.process->ReadMemory(result_ptr, &desc[0], len + 1, error) != len + 1)
-        return false;
-    
-    str.SetCString(desc);
-    
-    return true;
+    if (!desc.empty())
+    {
+        str.SetCString(desc.data());
+        return true;
+    }
+    return false;
 }
 
 Address *

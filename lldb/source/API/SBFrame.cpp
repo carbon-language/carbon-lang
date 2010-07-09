@@ -187,7 +187,7 @@ SBFrame::LookupVar (const char *var_name)
         const uint32_t num_variables = variable_list.GetSize();
 
         bool found = false;
-        for (int i = 0; i < num_variables && !found; ++i)
+        for (uint32_t i = 0; i < num_variables && !found; ++i)
         {
             var_sp = variable_list.GetVariableAtIndex(i);
             if (var_sp
@@ -231,7 +231,7 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
             const uint32_t num_variables = variable_list.GetSize();
 
             bool found = false;
-            for (int i = 0; i < num_variables && !found; ++i)
+            for (uint32_t i = 0; i < num_variables && !found; ++i)
             {
                 var_sp = variable_list.GetVariableAtIndex(i);
                 if (var_sp
@@ -330,6 +330,9 @@ SBFrame::GetVariables (bool arguments,
 
                         case eValueTypeVariableLocal:
                             add_variable = locals;
+                            break;
+
+                        default:
                             break;
                         }
                         if (add_variable)

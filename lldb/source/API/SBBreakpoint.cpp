@@ -235,13 +235,13 @@ SBBreakpoint::IsEnabled ()
 }
 
 void
-SBBreakpoint::SetIgnoreCount (int32_t count)
+SBBreakpoint::SetIgnoreCount (uint32_t count)
 {
     if (m_opaque_sp)
         m_opaque_sp->SetIgnoreCount (count);
 }
 
-int32_t
+uint32_t
 SBBreakpoint::GetIgnoreCount () const
 {
     if (m_opaque_sp)

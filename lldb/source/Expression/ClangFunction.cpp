@@ -43,14 +43,19 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_context, void *return_qualtype, const Address& functionAddress, const ValueList &arg_value_list) :
     ClangExpression (target_triple, NULL),
-    m_function_addr (functionAddress),
     m_function_ptr (NULL),
-    m_arg_values (arg_value_list),
-    m_clang_ast_context (ast_context),
+    m_function_addr (functionAddress),
     m_function_return_qual_type(return_qualtype),
+    m_clang_ast_context (ast_context),
     m_wrapper_function_name ("__lldb_caller_function"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
+    m_wrapper_function_addr (),
+    m_wrapper_args_addrs (),
+    m_struct_layout (NULL),
+    m_arg_values (arg_value_list),
+    m_value_struct_size (0),
     m_return_offset(0),
+    m_return_size (0),
     m_compiled (false),
     m_JITted (false)
 {
@@ -59,12 +64,18 @@ ClangFunction::ClangFunction(const char *target_triple, ClangASTContext *ast_con
 ClangFunction::ClangFunction(const char *target_triple, Function &function, ClangASTContext *ast_context, const ValueList &arg_value_list) :
     ClangExpression (target_triple, NULL),
     m_function_ptr (&function),
-    m_arg_values (arg_value_list),
+    m_function_addr (),
+    m_function_return_qual_type (),
     m_clang_ast_context (ast_context),
-    m_function_return_qual_type (NULL),
     m_wrapper_function_name ("__lldb_function_caller"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
-    m_return_offset(0),
+    m_wrapper_function_addr (),
+    m_wrapper_args_addrs (),
+    m_struct_layout (NULL),
+    m_arg_values (arg_value_list),
+    m_value_struct_size (0),
+    m_return_offset (0),
+    m_return_size (0),
     m_compiled (false),
     m_JITted (false)
 {
@@ -109,22 +120,24 @@ ClangFunction::CompileFunction (Stream &errors)
         // to pull the defined arguments out of the function, then add the types from the
         // arguments list for the variable arguments.
 
-        size_t num_args = -1;
+        uint32_t num_args = UINT32_MAX;
         bool trust_function = false;
         // GetArgumentCount returns -1 for an unprototyped function.
         if (m_function_ptr)
         {
-            num_args = m_function_ptr->GetArgumentCount();
-            if (num_args != -1)
+            int num_func_args = m_function_ptr->GetArgumentCount();
+            if (num_func_args >= 0)
                 trust_function = true;
+            else
+                num_args = num_func_args;
         }
 
-        if (num_args == -1)
+        if (num_args == UINT32_MAX)
             num_args = m_arg_values.GetSize();
 
         std::string args_buffer;  // This one stores the definition of all the args in "struct caller".
         std::string args_list_buffer;  // This one stores the argument list called from the structure.
-        for (int i = 0; i < num_args; i++)
+        for (size_t i = 0; i < num_args; i++)
         {
             const char *type_string;
             std::string type_stdstr;
@@ -157,7 +170,7 @@ ClangFunction::CompileFunction (Stream &errors)
             char arg_buf[32];
             args_buffer.append ("    ");
             args_buffer.append (type_string);
-            snprintf(arg_buf, 31, "arg_%d", i);
+            snprintf(arg_buf, 31, "arg_%zd", i);
             args_buffer.push_back (' ');
             args_buffer.append (arg_buf);
             args_buffer.append (";\n");
@@ -253,8 +266,8 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exc_context, Stream &erro
     }
 
     // Next get the call address for the function:
-    m_wrapper_fun_addr = GetFunctionAddress (m_wrapper_function_name.c_str());
-    if (m_wrapper_fun_addr == LLDB_INVALID_ADDRESS)
+    m_wrapper_function_addr = GetFunctionAddress (m_wrapper_function_name.c_str());
+    if (m_wrapper_function_addr == LLDB_INVALID_ADDRESS)
         return false;
 
     return true;
@@ -322,7 +335,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
         return false;
     }
     
-    for (int i = 0; i < num_args; i++)
+    for (size_t i = 0; i < num_args; i++)
     {
         // FIXME: We should sanity check sizes.
 
@@ -366,7 +379,7 @@ ClangFunction::InsertFunction (ExecutionContext &exc_context, lldb::addr_t &args
 
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
     if (log)
-        log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_wrapper_fun_addr, args_addr_ref);
+        log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_wrapper_function_addr, args_addr_ref);
         
     return true;
 }
@@ -386,7 +399,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exc_context, lldb:
 
     // Okay, now run the function:
 
-    Address wrapper_address (NULL, m_wrapper_fun_addr);
+    Address wrapper_address (NULL, m_wrapper_function_addr);
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*exc_context.thread, 
                                           wrapper_address,
                                           args_addr,

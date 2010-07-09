@@ -616,7 +616,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         data.SetData(data_sp);
     }
 
-    uint8_t* dst = (uint8_t*)data.PeekData (data_offset, byte_size);
+    uint8_t* dst = const_cast<uint8_t*>(data.PeekData (data_offset, byte_size));
     if (dst != NULL)
     {
         if (address_type == eAddressTypeHost)
@@ -675,6 +675,10 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
         switch (m_value_type)
         {
         case eValueTypeScalar:               // raw scalar value
+            break;
+
+        case eContextTypeValue:
+            m_value.Clear();    // TODO: Sean, fill this in
             break;
 
         default:
@@ -757,6 +761,7 @@ Value::GetContextTypeAsCString (ContextType context_type)
     case eContextTypeDCRegisterInfo:        return "RegisterInfo *";
     case eContextTypeDCType:                return "Type *";
     case eContextTypeDCVariable:            return "Variable *";
+    case eContextTypeValue:                 return "Value"; // TODO: Sean, more description here?
     };
     return "???";
 }

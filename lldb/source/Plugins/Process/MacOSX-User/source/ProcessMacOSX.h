@@ -22,8 +22,8 @@
 #include "lldb/Target/Thread.h"
 
 // Project includes
-#include "MachTask.h"
-#include "MachException.h"
+#include "MacOSX/MachTask.h"
+#include "MacOSX/MachException.h"
 
 typedef enum PDLaunch
 {
@@ -33,6 +33,7 @@ typedef enum PDLaunch
 #if defined (__arm__)
     eLaunchSpringBoard,
 #endif
+	kNumPDLaunchTypes
 } PDLaunchType;
 
 
@@ -99,10 +100,13 @@ public:
     DidLaunch ();
 
     virtual lldb_private::Error
-    WillAttach (lldb::pid_t pid);
+    WillAttachToProcessWithID (lldb::pid_t pid);
 
     virtual lldb_private::Error
-    DoAttach (lldb::pid_t pid);
+    WillAttachToProcessWithName (const char *process_name, bool wait_for_launch);
+
+    virtual lldb_private::Error
+    DoAttachToProcessWithID (lldb::pid_t pid);
 
     virtual void
     DidAttach ();

@@ -239,6 +239,7 @@ ArchSpec::AsCString (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t su
 
     switch (arch_type)
     {
+    case kNumArchTypes:
     case eArchTypeInvalid:
         break;
 
@@ -334,6 +335,7 @@ ArchSpec::GetGenericCPUType () const
 {
     switch (m_type)
     {
+    case kNumArchTypes:
     case eArchTypeInvalid:
         break;
 
@@ -990,7 +992,7 @@ enum
     eRegNumPPC_GCC_vscr     = 110,
     eRegNumPPC_GCC_spe_acc  = 111,
     eRegNumPPC_GCC_spefscr  = 112,
-    eRegNumPPC_GCC_sfp      = 113,
+    eRegNumPPC_GCC_sfp      = 113
 };
 
 static const char * g_arm_gcc_reg_names[] = {
@@ -1605,6 +1607,7 @@ ArchSpec::GetAddressByteSize() const
 {
     switch (m_type)
     {
+    case kNumArchTypes:
     case eArchTypeInvalid:
         break;
 
@@ -1701,6 +1704,9 @@ ArchSpec::SetArch (const char *arch_name)
                     return true;
                 }
             }
+            break;
+
+        case kNumArchTypes:
             break;
         }
 

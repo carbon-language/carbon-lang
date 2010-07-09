@@ -137,14 +137,14 @@ BreakpointLocation::ClearCallback ()
     GetLocationOptions()->ClearCallback();
 }
 
-int32_t
+uint32_t
 BreakpointLocation::GetIgnoreCount ()
 {
     return GetOptionsNoCreate()->GetIgnoreCount();
 }
 
 void
-BreakpointLocation::SetIgnoreCount (int32_t n)
+BreakpointLocation::SetIgnoreCount (uint32_t n)
 {
     GetLocationOptions()->SetIgnoreCount(n);
 }

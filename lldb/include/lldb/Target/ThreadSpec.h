@@ -93,7 +93,7 @@ public:
     bool 
     IndexMatches (uint32_t index) const
     {
-        if (m_index == -1 || index == -1)
+        if (m_index == UINT32_MAX || index == UINT32_MAX)
             return true;
         else
             return index == m_index;

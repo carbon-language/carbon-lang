@@ -31,7 +31,7 @@ BreakpointSiteList::~BreakpointSiteList()
 // Add breakpoint site to the list.  However, if the element already exists in the
 // list, then we don't add it, and return LLDB_INVALID_BREAK_ID.
 
-lldb::user_id_t
+lldb::break_id_t
 BreakpointSiteList::Add(const BreakpointSiteSP &bp)
 {
     lldb::addr_t bp_site_load_addr = bp->GetLoadAddress();
@@ -49,7 +49,7 @@ BreakpointSiteList::Add(const BreakpointSiteSP &bp)
 }
 
 bool
-BreakpointSiteList::ShouldStop (StoppointCallbackContext *context, lldb::user_id_t break_id)
+BreakpointSiteList::ShouldStop (StoppointCallbackContext *context, lldb::break_id_t break_id)
 {
     BreakpointSiteSP bp = FindByID (break_id);
     if (bp)
@@ -63,7 +63,7 @@ BreakpointSiteList::ShouldStop (StoppointCallbackContext *context, lldb::user_id
     // doesn't exist.
     return true;
 }
-lldb::user_id_t
+lldb::break_id_t
 BreakpointSiteList::FindIDByAddress (lldb::addr_t addr)
 {
     BreakpointSiteSP bp = FindByAddress (addr);
@@ -77,7 +77,7 @@ BreakpointSiteList::FindIDByAddress (lldb::addr_t addr)
 }
 
 bool
-BreakpointSiteList::Remove (lldb::user_id_t break_id)
+BreakpointSiteList::Remove (lldb::break_id_t break_id)
 {
     collection::iterator pos = GetIDIterator(break_id);    // Predicate
     if (pos != m_bp_site_list.end())
@@ -103,7 +103,7 @@ BreakpointSiteList::RemoveByAddress (lldb::addr_t address)
 class BreakpointSiteIDMatches
 {
 public:
-    BreakpointSiteIDMatches (lldb::user_id_t break_id) :
+    BreakpointSiteIDMatches (lldb::break_id_t break_id) :
         m_break_id(break_id)
     {
     }
@@ -114,25 +114,25 @@ public:
     }
 
 private:
-   const lldb::user_id_t m_break_id;
+   const lldb::break_id_t m_break_id;
 };
 
 BreakpointSiteList::collection::iterator
-BreakpointSiteList::GetIDIterator (lldb::user_id_t break_id)
+BreakpointSiteList::GetIDIterator (lldb::break_id_t break_id)
 {
     return std::find_if(m_bp_site_list.begin(), m_bp_site_list.end(),   // Search full range
                         BreakpointSiteIDMatches(break_id));             // Predicate
 }
 
 BreakpointSiteList::collection::const_iterator
-BreakpointSiteList::GetIDConstIterator (lldb::user_id_t break_id) const
+BreakpointSiteList::GetIDConstIterator (lldb::break_id_t break_id) const
 {
     return std::find_if(m_bp_site_list.begin(), m_bp_site_list.end(),   // Search full range
                         BreakpointSiteIDMatches(break_id));             // Predicate
 }
 
 BreakpointSiteSP
-BreakpointSiteList::FindByID (lldb::user_id_t break_id)
+BreakpointSiteList::FindByID (lldb::break_id_t break_id)
 {
     BreakpointSiteSP stop_sp;
     collection::iterator pos = GetIDIterator(break_id);
@@ -143,7 +143,7 @@ BreakpointSiteList::FindByID (lldb::user_id_t break_id)
 }
 
 const BreakpointSiteSP
-BreakpointSiteList::FindByID (lldb::user_id_t break_id) const
+BreakpointSiteList::FindByID (lldb::break_id_t break_id) const
 {
     BreakpointSiteSP stop_sp;
     collection::const_iterator pos = GetIDConstIterator(break_id);
@@ -210,7 +210,7 @@ BreakpointSiteList::GetByIndex (uint32_t i) const
 }
 
 void
-BreakpointSiteList::SetEnabledForAll (const bool enabled, const lldb::user_id_t except_id)
+BreakpointSiteList::SetEnabledForAll (const bool enabled, const lldb::break_id_t except_id)
 {
     collection::iterator end = m_bp_site_list.end();
     collection::iterator pos;

@@ -26,9 +26,9 @@
 #include "lldb/Target/Thread.h"
 
 #include "GDBRemoteCommunication.h"
-#include "StringExtractor.h"
+#include "Utility/StringExtractor.h"
 #include "GDBRemoteRegisterContext.h"
-#include "libunwind.h"
+#include "libunwind/include/libunwind.h"
 
 class ThreadGDBRemote;
 
@@ -94,10 +94,10 @@ public:
     WillLaunchOrAttach ();
 
     virtual lldb_private::Error
-    DoAttach (lldb::pid_t pid);
+    DoAttachToProcessWithID (lldb::pid_t pid);
     
     virtual lldb_private::Error
-    DoAttach (const char *process_name, bool wait_for_launch);
+    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch);
 
     virtual void
     DidAttach ();

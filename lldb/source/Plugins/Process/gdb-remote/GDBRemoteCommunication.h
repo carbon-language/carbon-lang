@@ -26,7 +26,7 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Predicate.h"
 
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 
 class ProcessGDBRemote;
 

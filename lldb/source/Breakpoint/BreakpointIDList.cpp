@@ -31,14 +31,14 @@ BreakpointIDList::~BreakpointIDList ()
 {
 }
 
-int
-BreakpointIDList::Size()
+size_t
+BreakpointIDList::GetSize()
 {
     return m_breakpoint_ids.size();
 }
 
 BreakpointID &
-BreakpointIDList::GetBreakpointIDAtIndex (int index)
+BreakpointIDList::GetBreakpointIDAtIndex (uint32_t index)
 {
     if (index < m_breakpoint_ids.size())
         return m_breakpoint_ids[index];
@@ -47,23 +47,13 @@ BreakpointIDList::GetBreakpointIDAtIndex (int index)
 }
 
 bool
-BreakpointIDList::RemoveBreakpointIDAtIndex (int index)
+BreakpointIDList::RemoveBreakpointIDAtIndex (uint32_t index)
 {
-    bool success = false;
-    if (index < m_breakpoint_ids.size())
-    {
-        BreakpointIDArray::iterator pos;
-        int i;
+    if (index >= m_breakpoint_ids.size())
+        return false;
 
-        for (pos = m_breakpoint_ids.begin(), i = 0; i != index && pos != m_breakpoint_ids.end(); ++pos, ++i);
-        assert (i == index);
-        if (pos != m_breakpoint_ids.end())
-        {
-            m_breakpoint_ids.erase (pos);
-            success = true;
-        }
-    }
-    return success;
+    m_breakpoint_ids.erase (m_breakpoint_ids.begin() + index);
+    return true;
 }
 
 void
@@ -99,12 +89,12 @@ BreakpointIDList::AddBreakpointID (const char *bp_id_str)
 }
 
 bool
-BreakpointIDList::FindBreakpointID (BreakpointID &bp_id, int *position)
+BreakpointIDList::FindBreakpointID (BreakpointID &bp_id, uint32_t *position)
 {
     bool success = false;
     BreakpointIDArray::iterator tmp_pos;
 
-    for (int i = 0; i <  m_breakpoint_ids.size(); ++i)
+    for (size_t i = 0; i < m_breakpoint_ids.size(); ++i)
     {
         BreakpointID tmp_id = m_breakpoint_ids[i];
         if (tmp_id.GetBreakpointID() == bp_id.GetBreakpointID()
@@ -120,7 +110,7 @@ BreakpointIDList::FindBreakpointID (BreakpointID &bp_id, int *position)
 }
 
 bool
-BreakpointIDList::FindBreakpointID (const char *bp_id_str, int *position)
+BreakpointIDList::FindBreakpointID (const char *bp_id_str, uint32_t *position)
 {
     BreakpointID temp_bp_id;
     break_id_t bp_id;
@@ -136,12 +126,12 @@ BreakpointIDList::FindBreakpointID (const char *bp_id_str, int *position)
 }
 
 void
-BreakpointIDList::InsertStringArray (const char **string_array, int array_size, CommandReturnObject &result)
+BreakpointIDList::InsertStringArray (const char **string_array, uint32_t array_size, CommandReturnObject &result)
 {
     if (string_array == NULL)
         return;
 
-    for (int i = 0; i < array_size; ++i)
+    for (uint32_t i = 0; i < array_size; ++i)
     {
         break_id_t bp_id;
         break_id_t loc_id;
@@ -176,24 +166,23 @@ void
 BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, CommandReturnObject &result,
                                           Args &new_args)
 {
-    char *range_start;
+    std::string range_start;
     const char *range_end;
     const char *current_arg;
-    int num_old_args = old_args.GetArgumentCount();
+    const size_t num_old_args = old_args.GetArgumentCount();
 
-    for (int i = 0; i < num_old_args; ++i)
+    for (size_t i = 0; i < num_old_args; ++i)
     {
         bool is_range = false;
         current_arg = old_args.GetArgumentAtIndex (i);
 
-        int range_start_len = 0;
-        int range_end_pos = 0;
+        uint32_t range_start_len = 0;
+        uint32_t range_end_pos = 0;
         if (BreakpointIDList::StringContainsIDRangeExpression (current_arg, &range_start_len, &range_end_pos))
         {
             is_range = true;
             range_start = (char *) malloc (range_start_len + 1);
-            strncpy (range_start, current_arg, range_start_len);
-            range_start[range_start_len] = '\0';
+            range_start.assign (current_arg, range_start_len);
             range_end = current_arg + range_end_pos;
         }
         else if ((i + 2 < num_old_args)
@@ -201,7 +190,7 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
                  && BreakpointID::IsValidIDExpression (current_arg)
                  && BreakpointID::IsValidIDExpression (old_args.GetArgumentAtIndex (i+2)))
         {
-            range_start = (char *) current_arg;
+            range_start.assign (current_arg);
             range_end = old_args.GetArgumentAtIndex (i+2);
             is_range = true;
             i = i+2;
@@ -214,14 +203,14 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
             break_id_t start_loc_id;
             break_id_t end_loc_id;
 
-            BreakpointID::ParseCanonicalReference (range_start, &start_bp_id, &start_loc_id);
+            BreakpointID::ParseCanonicalReference (range_start.c_str(), &start_bp_id, &start_loc_id);
             BreakpointID::ParseCanonicalReference (range_end, &end_bp_id, &end_loc_id);
 
             if ((start_bp_id == LLDB_INVALID_BREAK_ID)
                 || (! target->GetBreakpointByID (start_bp_id)))
             {
                 new_args.Clear();
-                result.AppendErrorWithFormat ("'%s' is not a valid breakpoint ID.\n", range_start);
+                result.AppendErrorWithFormat ("'%s' is not a valid breakpoint ID.\n", range_start.c_str());
                 result.SetStatus (eReturnStatusFailed);
                 return;
             }
@@ -239,8 +228,8 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
             // target and find all the breakpoints that fit into this range, and add them to new_args.
 
             const BreakpointList& breakpoints = target->GetBreakpointList();
-            size_t num_breakpoints = breakpoints.GetSize();
-            for (int j = 0; j < num_breakpoints; ++j)
+            const size_t num_breakpoints = breakpoints.GetSize();
+            for (size_t j = 0; j < num_breakpoints; ++j)
             {
                 Breakpoint *breakpoint = breakpoints.GetBreakpointByIndex (j).get();
                 break_id_t cur_bp_id = breakpoint->GetID();
@@ -248,11 +237,11 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
                 if ((cur_bp_id < start_bp_id) || (cur_bp_id > end_bp_id))
                     continue;
 
-                size_t num_locations = breakpoint->GetNumLocations();
+                const size_t num_locations = breakpoint->GetNumLocations();
 
                 if ((cur_bp_id == start_bp_id) && (start_loc_id != LLDB_INVALID_BREAK_ID))
                 {
-                    for (int k = 0; k < num_locations; ++k)
+                    for (size_t k = 0; k < num_locations; ++k)
                     {
                         BreakpointLocation * bp_loc = breakpoint->GetLocationAtIndex(k).get();
                         if (bp_loc->GetID() >= start_loc_id)
@@ -265,7 +254,7 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
                 }
                 else if ((cur_bp_id == end_bp_id) && (end_loc_id != LLDB_INVALID_BREAK_ID))
                 {
-                    for (int k = 0; k < num_locations; ++k)
+                    for (size_t k = 0; k < num_locations; ++k)
                     {
                         BreakpointLocation * bp_loc = breakpoint->GetLocationAtIndex(k).get();
                         if (bp_loc->GetID() <= end_loc_id)
@@ -294,19 +283,14 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
     return;
 }
 
-//bool
-//BreakpointIDList::StringContainsIDRangeExpression (const char *in_string, const char **range_start,
-//                                                     const **range_end)
 bool
-BreakpointIDList::StringContainsIDRangeExpression (const char *in_string, int *range_start_len, int *range_end_pos)
+BreakpointIDList::StringContainsIDRangeExpression (const char *in_string, uint32_t *range_start_len, uint32_t *range_end_pos)
 {
     bool is_range_expression = false;
     std::string arg_str = in_string;
     std::string::size_type idx;
     std::string::size_type start_pos = 0;
 
-    //*range_start = NULL;
-    //*range_end = NULL;
     *range_start_len = 0;
     *range_end_pos = 0;
 

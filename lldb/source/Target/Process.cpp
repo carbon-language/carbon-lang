@@ -45,15 +45,11 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
     }
     else
     {
-        for (uint32_t idx = 0; create_callback = PluginManager::GetProcessCreateCallbackAtIndex(idx); ++idx)
+        for (uint32_t idx = 0; (create_callback = PluginManager::GetProcessCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            create_callback = PluginManager::GetProcessCreateCallbackAtIndex (idx);
-            if (create_callback)
-            {
-                std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
-                if (debugger_ap->CanDebug(target))
-                    return debugger_ap.release();
-            }
+            std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
+            if (debugger_ap->CanDebug(target))
+                return debugger_ap.release();
         }
     }
     return NULL;
@@ -702,7 +698,8 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
         if (break_op_size > 0)
         {
             // Clear a software breakoint instruction
-            uint8_t curr_break_op[break_op_size];
+            uint8_t curr_break_op[8];
+            assert (sizeof(curr_break_op) < break_op_size);
             bool break_op_found = false;
 
             // Read the breakpoint opcode
@@ -731,7 +728,8 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 
                 if (verify)
                 {
-                    uint8_t verify_opcode[break_op_size];
+                    uint8_t verify_opcode[8];
+                    assert (sizeof(verify_opcode) < break_op_size);
                     // Verify that our original opcode made it back to the inferior
                     if (DoReadMemory (bp_addr, verify_opcode, break_op_size, error) == break_op_size)
                     {
@@ -840,9 +838,9 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 
     BreakpointSiteList::collection::const_iterator pos;
     size_t bytes_written = 0;
-    addr_t intersect_addr;
-    size_t intersect_size;
-    size_t opcode_offset;
+    addr_t intersect_addr = 0;
+    size_t intersect_size = 0;
+    size_t opcode_offset = 0;
     const uint8_t *ubuf = (const uint8_t *)buf;
 
     for (pos = iter; pos != end; ++pos)
@@ -1069,10 +1067,10 @@ Process::Attach (lldb::pid_t attach_pid)
     m_target_triple.Clear();
     m_abi_sp.reset();
 
-    Error error(WillAttach (attach_pid));
+    Error error (WillAttachToProcessWithID(attach_pid));
     if (error.Success())
     {
-        error = DoAttach (attach_pid);
+        error = DoAttachToProcessWithID (attach_pid);
         if (error.Success())
         {
             error = CompleteAttach();
@@ -1099,11 +1097,11 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     m_target_triple.Clear();
     m_abi_sp.reset();
 
-    Error error (WillAttach (process_name, wait_for_launch));
+    Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
     if (error.Success())
     {
         StartPrivateStateThread();
-        error = DoAttach (process_name, wait_for_launch);
+        error = DoAttachToProcessWithName (process_name, wait_for_launch);
         if (error.Fail())
         {
             if (GetID() != LLDB_INVALID_PROCESS_ID)
@@ -1629,8 +1627,8 @@ Process::ProcessEventData::ProcessEventData () :
     EventData (),
     m_process_sp (),
     m_state (eStateInvalid),
-    m_update_state (false),
-    m_restarted (false)
+    m_restarted (false),
+    m_update_state (false)
 {
 }
 
@@ -1638,8 +1636,8 @@ Process::ProcessEventData::ProcessEventData (const ProcessSP &process_sp, StateT
     EventData (),
     m_process_sp (process_sp),
     m_state (state),
-    m_update_state (false),
-    m_restarted (false)
+    m_restarted (false),
+    m_update_state (false)
 {
 }
 

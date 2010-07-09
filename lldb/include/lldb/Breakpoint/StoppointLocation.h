@@ -82,9 +82,9 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from StoppointLocation can see and modify these
     //------------------------------------------------------------------
-    lldb::break_id_t  m_loc_id;      // Break ID
-    lldb::addr_t      m_addr;     // The load address of this stop point. The base Stoppoint doesn't
-                            // store a full Address since that's not needed for the breakpoint sites.
+    lldb::break_id_t  m_loc_id;     // Break ID
+    lldb::addr_t      m_addr;       // The load address of this stop point. The base Stoppoint doesn't
+                                    // store a full Address since that's not needed for the breakpoint sites.
     bool        m_hw_preferred;     // 1 if this point has been requested to be set using hardware (which may fail due to lack of resources)
     uint32_t    m_hw_index;         // The hardware resource index for this breakpoint/watchpoint
     uint32_t    m_byte_size;        // The size in bytes of stop location.  e.g. the length of the trap opcode for

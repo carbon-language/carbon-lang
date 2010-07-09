@@ -393,23 +393,27 @@ lldb_private::Type::DumpSummary
         {
             uint32_t offset = data_byte_offset;
             lldb::addr_t pointer_addresss = data.GetMaxU64(&offset, data_byte_size);
-            const size_t k_max_buf_size = length ? length : 256;
-            uint8_t buf[k_max_buf_size + 1];
-            lldb_private::DataExtractor data(buf, k_max_buf_size, exe_ctx->process->GetByteOrder(), 4);
-            buf[k_max_buf_size] = '\0';
+            std::vector<uint8_t> buf;
+            if (length > 0)
+                buf.resize (length);
+            else
+                buf.resize (256);
+
+            lldb_private::DataExtractor data(buf.data(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
+            buf.back() = '\0';
             size_t bytes_read;
             size_t total_cstr_len = 0;
             Error error;
-            while ((bytes_read = exe_ctx->process->ReadMemory (pointer_addresss, buf, k_max_buf_size, error)) > 0)
+            while ((bytes_read = exe_ctx->process->ReadMemory (pointer_addresss, buf.data(), buf.size(), error)) > 0)
             {
-                const size_t len = strlen((const char *)buf);
+                const size_t len = strlen((const char *)buf.data());
                 if (len == 0)
                     break;
                 if (total_cstr_len == 0)
                     s->PutCString (" \"");
                 data.Dump(s, 0, lldb::eFormatChar, 1, len, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
                 total_cstr_len += len;
-                if (len < k_max_buf_size)
+                if (len < buf.size())
                     break;
                 pointer_addresss += total_cstr_len;
             }
@@ -507,8 +511,6 @@ lldb_private::Type::DumpValue
                     ++child_idx;
                 }
             }
-            const unsigned num_fields = record_layout.getFieldCount();
-
             uint32_t field_idx = 0;
             clang::RecordDecl::field_iterator field, field_end;
             for (field = record_decl->field_begin(), field_end = record_decl->field_end(); field != field_end; ++field, ++field_idx, ++child_idx)
@@ -529,7 +531,7 @@ lldb_private::Type::DumpValue
                 // Figure out the type byte size (field_type_info.first) and
                 // alignment (field_type_info.second) from the AST context.
                 std::pair<uint64_t, unsigned> field_type_info = ast_context->getTypeInfo(field_type);
-                assert(field_idx < num_fields);
+                assert(field_idx < record_layout.getFieldCount());
                 // Figure out the field offset within the current struct/union/class type
                 field_bit_offset = record_layout.getFieldOffset (field_idx);
                 field_byte_offset = field_bit_offset / 8;

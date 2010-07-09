@@ -516,6 +516,9 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                         }
                     }
                     break;
+                    
+                default:
+                    break;
                 }
             }
         }
@@ -579,7 +582,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
         {
             const size_t byte_size = GetByteSize();
             const off_t byte_offset = GetByteOffset();
-            uint8_t *dst = (uint8_t *)m_data.PeekData(byte_offset, byte_size);
+            uint8_t *dst = const_cast<uint8_t *>(m_data.PeekData(byte_offset, byte_size));
             if (dst != NULL)
             {
                 // We are decoding a float into host byte order below, so make

@@ -74,7 +74,8 @@ CommandObjectCrossref::GenerateHelpText (CommandReturnObject &result)
 {
     result.AppendMessage ("This command can be called on the following types of objects:");
 
-    for (int i = 0; i < m_crossref_object_types.GetArgumentCount(); ++i)
+    const size_t count = m_crossref_object_types.GetArgumentCount();
+    for (size_t i = 0; i < count; ++i)
     {
         const char *obj_name = m_crossref_object_types.GetArgumentAtIndex(i);
         result.AppendMessageWithFormat ("    %s    (e.g.  '%s %s')\n", obj_name,

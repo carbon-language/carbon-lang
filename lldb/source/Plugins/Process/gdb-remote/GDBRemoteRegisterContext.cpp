@@ -17,11 +17,11 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 // Project includes
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
 #include "ThreadGDBRemote.h"
-#include "ARM_GCC_Registers.h"
-#include "ARM_DWARF_Registers.h"
+#include "Utility/ARM_GCC_Registers.h"
+#include "Utility/ARM_DWARF_Registers.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -171,7 +171,10 @@ GDBRemoteRegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
                 return true;
             }
             break;
-        }
+
+        default:
+            break;
+        }        
     }
     return false;
 }
@@ -219,10 +222,10 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                 else
                 {
                     // Get each register individually
-                    packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg, false);
+                    packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
                     assert (packet_len < (sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
-                        if (response.GetHexBytes ((uint8_t*)m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size), reg_info->byte_size, '\xcc') == reg_info->byte_size)
+                        if (response.GetHexBytes (const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size)), reg_info->byte_size, '\xcc') == reg_info->byte_size)
                             m_reg_valid[reg] = true;
                 }
             }
@@ -276,7 +279,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
     if (reg_info)
     {
         // Grab a pointer to where we are going to put this register
-        uint8_t *dst = (uint8_t *)m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size);
+        uint8_t *dst = const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size));
 
         if (dst == NULL)
             return false;

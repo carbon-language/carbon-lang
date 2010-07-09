@@ -41,8 +41,8 @@ public:
 
     bool        WatchpointRead () const;
     bool        WatchpointWrite () const;
-    int32_t     GetIgnoreCount () const;
-    void        SetIgnoreCount (int32_t n);
+    uint32_t    GetIgnoreCount () const;
+    void        SetIgnoreCount (uint32_t n);
     void        SetWatchpointType (uint32_t type);
     bool        BreakpointWasHit (StoppointCallbackContext *context);
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
@@ -54,7 +54,7 @@ private:
                 m_watch_write:1,    // 1 if we stop when the watched data is written to
                 m_watch_was_read:1, // Set to 1 when watchpoint is hit for a read access
                 m_watch_was_written:1;  // Set to 1 when watchpoint is hit for a write access
-    int32_t     m_ignore_count;     // Number of times to ignore this breakpoint
+    uint32_t    m_ignore_count;     // Number of times to ignore this breakpoint
     WatchpointHitCallback m_callback;
     void *      m_callback_baton;   // Callback user data to pass to callback
 

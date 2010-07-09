@@ -512,7 +512,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "./source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
 			name = BuildAndIntegration;
@@ -543,7 +543,7 @@
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
-				USER_HEADER_SEARCH_PATHS = "./source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
 			name = Debug;
@@ -573,7 +573,7 @@
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
-				USER_HEADER_SEARCH_PATHS = "./source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
 			name = Release;

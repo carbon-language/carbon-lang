@@ -22,7 +22,7 @@
 #include "LibUnwindRegisterContext.h"
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 #include "UnwindLibUnwind.h"
 #include "UnwindMacOSXFrameBackchain.h"
 
@@ -103,6 +103,9 @@ ThreadGDBRemote::WillResume (StateType resume_state)
             GetGDBProcess().m_continue_packet.Printf(";S%2.2x:%4.4x", signo, GetID());
         else
             GetGDBProcess().m_continue_packet.Printf(";s:%4.4x", GetID());
+        break;
+
+    default:
         break;
     }
     Thread::WillResume(resume_state);
@@ -272,8 +275,7 @@ ThreadGDBRemote::GetRawStopReason (StopInfo *stop_info)
     if (m_stop_info_stop_id != m_process.GetStopID())
     {
         char packet[256];
-        const int packet_len = snprintf(packet, sizeof(packet), "qThreadStopInfo%x", GetID());
-        assert (packet_len < (sizeof(packet) - 1));
+        ::snprintf(packet, sizeof(packet), "qThreadStopInfo%x", GetID());
         StringExtractorGDBRemote stop_packet;
         if (GetGDBProcess().GetGDBRemote().SendPacketAndWaitForResponse(packet, stop_packet, 1, false))
         {

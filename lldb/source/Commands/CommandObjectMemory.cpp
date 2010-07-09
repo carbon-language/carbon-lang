@@ -462,10 +462,19 @@ public:
             return false;
         }
 
-        size_t item_byte_size = m_options.m_byte_size ? m_options.m_byte_size : 1;
         StreamString buffer (Stream::eBinary,
                              process->GetAddressByteSize(),
                              process->GetByteOrder());
+
+        size_t item_byte_size = m_options.m_byte_size;
+        
+        if (m_options.m_byte_size == 0)
+        {
+            if (m_options.m_format == eFormatPointer)
+                item_byte_size = buffer.GetAddressByteSize();
+            else
+                item_byte_size = 1;
+        }
 
         lldb::addr_t addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
 
@@ -513,6 +522,8 @@ public:
             case eFormatDefault:
             case eFormatBytes:
             case eFormatHex:
+            case eFormatPointer:
+                
                 // Decode hex bytes
                 uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 16, &success);
                 if (!success)

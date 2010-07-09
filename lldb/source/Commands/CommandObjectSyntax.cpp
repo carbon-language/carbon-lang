@@ -40,54 +40,12 @@ CommandObjectSyntax::~CommandObjectSyntax()
 
 
 bool
-CommandObjectSyntax::OldExecute
+CommandObjectSyntax::Execute
 (
+    CommandInterpreter &interpreter,
     Args& command,
-    Debugger *context,
-    CommandInterpreter *interpreter,
     CommandReturnObject &result
 )
-{
-    CommandObject *cmd_obj;
-
-    if (command.GetArgumentCount() != 0)
-    {
-        cmd_obj = interpreter->GetCommandObject(command.GetArgumentAtIndex(0));
-        if (cmd_obj)
-        {
-            Stream &output_strm = result.GetOutputStream();
-            if (cmd_obj->GetOptions() != NULL)
-            {
-                output_strm.Printf ("\nSyntax: %s\n", cmd_obj->GetSyntax());
-                //cmd_obj->GetOptions()->GenerateOptionUsage (output_strm, cmd_obj);
-                output_strm.Printf ("(Try 'help %s' for more information on command options syntax.)\n",
-                                    cmd_obj->GetCommandName());
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
-            else
-            {
-                output_strm.Printf ("\nSyntax: %s\n", cmd_obj->GetSyntax());
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
-        }
-        else
-        {
-            result.AppendErrorWithFormat ("'%s' is not a known command.\n", command.GetArgumentAtIndex(0));
-            result.AppendError ("Try 'help' to see a current list of commands.");
-            result.SetStatus (eReturnStatusFailed);
-        }
-    }
-    else
-    {
-        result.AppendError ("Must call 'syntax' with a valid command.");
-        result.SetStatus (eReturnStatusFailed);
-    }
-    return result.Succeeded();
-}
-
-bool
-CommandObjectSyntax::Execute (Args &command, Debugger *context, CommandInterpreter *interpreter, 
-                              CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;
@@ -95,7 +53,7 @@ CommandObjectSyntax::Execute (Args &command, Debugger *context, CommandInterpret
 
     if (argc > 0)
     {
-        cmd_obj = interpreter->GetCommandObject (command.GetArgumentAtIndex(0));
+        cmd_obj = interpreter.GetCommandObject (command.GetArgumentAtIndex(0));
         bool all_okay = true;
         for (int i = 1; i < argc; ++i)
         {

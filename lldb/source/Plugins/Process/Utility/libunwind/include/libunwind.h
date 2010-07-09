@@ -56,7 +56,7 @@ enum unw_as_type { UNW_LOCAL, UNW_REMOTE };
 struct unw_addr_space
 { 
 	enum unw_as_type type; 
-	uint8_t data[]; 
+	uint8_t data[1]; 
 };
 typedef struct unw_addr_space* unw_addr_space_t;
 
@@ -345,7 +345,7 @@ extern int               unw_end_of_prologue_setup(unw_cursor_t*, unw_word_t sta
 // architecture independent register numbers 
 enum {
     UNW_REG_IP = -1,        // instruction pointer
-    UNW_REG_SP = -2,        // stack pointer
+    UNW_REG_SP = -2         // stack pointer
 };
 
 
@@ -502,7 +502,7 @@ enum {
 };
 
 
-}; // namespace lldb_private
+} // namespace lldb_private
 
 
 #endif

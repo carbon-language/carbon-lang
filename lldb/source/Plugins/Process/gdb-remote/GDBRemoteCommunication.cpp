@@ -21,7 +21,7 @@
 #include "lldb/Host/TimeValue.h"
 
 // Project includes
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 
@@ -78,7 +78,7 @@ GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_
     // We only need to compute the checksum if we are sending acks
     if (m_send_acks)
     {
-        for (int i = 0; i < payload_length; ++i)
+        for (size_t i = 0; i < payload_length; ++i)
             checksum += payload[i];
     }
     return checksum & 255;
@@ -365,7 +365,10 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         if (bytes_written == packet.GetSize())
         {
             if (m_send_acks)
-                GetAck (1) == '+';
+            {
+                if (GetAck (1) != '+')
+                    return 0;
+            }
         }
         return bytes_written;
    }

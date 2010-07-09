@@ -16,7 +16,6 @@
 #include <string>
 // Other libraries and framework includes
 // Project includes
-#include "lldb.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Host/Mutex.h"
@@ -128,6 +127,6 @@ private:
     
 };
 
-};  // using namespace lldb_private
+}  // using namespace lldb_private
 
 #endif	// lldb_ObjCTrampolineHandler_h_

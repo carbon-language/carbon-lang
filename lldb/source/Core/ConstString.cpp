@@ -85,10 +85,7 @@ public:
             Mutex::Locker locker (m_mutex);
             llvm::StringRef string_ref (cstr, cstr_len);
             llvm::StringMapEntry<uint32_t>& entry = m_string_map.GetOrCreateValue (string_ref);
-            const char *ccstr = entry.getKeyData();
-            llvm::StringMapEntry<uint32_t>&reconstituted_entry = GetStringMapEntryFromKeyData (ccstr);
-            assert (&entry == &reconstituted_entry);
-            return ccstr;
+            return entry.getKeyData();
         }
         return NULL;
     }

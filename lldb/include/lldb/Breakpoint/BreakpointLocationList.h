@@ -72,7 +72,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    FindByID (lldb::user_id_t breakID);
+    FindByID (lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with id
@@ -86,7 +86,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
-    FindByID (lldb::user_id_t breakID) const;
+    FindByID (lldb::break_id_t breakID) const;
 
     //------------------------------------------------------------------
     /// Returns the breakpoint location id to the breakpoint location
@@ -98,7 +98,7 @@ public:
     /// @result
     ///     The ID of the breakpoint location, or LLDB_INVALID_BREAK_ID.
     //------------------------------------------------------------------
-    lldb::user_id_t
+    lldb::break_id_t
     FindIDByAddress (Address &addr);
 
     //------------------------------------------------------------------
@@ -183,7 +183,7 @@ public:
     ///     \b true if the breakpoint \a breakID was in the list.
     //------------------------------------------------------------------
     bool
-    Remove (lldb::user_id_t breakID);
+    Remove (lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Enquires of the breakpoint location in this list with ID \a
@@ -200,7 +200,7 @@ public:
     //------------------------------------------------------------------
     bool
     ShouldStop (StoppointCallbackContext *context,
-                lldb::user_id_t breakID);
+                lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Returns the number of elements in this breakpoint location list.
@@ -252,7 +252,7 @@ protected:
     /// @result
     ///     Returns breakpoint location id.
     //------------------------------------------------------------------
-    virtual lldb::user_id_t
+    virtual lldb::break_id_t
     Add (lldb::BreakpointLocationSP& bp_loc_sp);
 
     typedef std::vector<lldb::BreakpointLocationSP> collection;
@@ -269,10 +269,10 @@ protected:
     GetNextID();
 
     collection::iterator
-    GetIDIterator(lldb::user_id_t breakID);
+    GetIDIterator(lldb::break_id_t breakID);
 
     collection::const_iterator
-    GetIDConstIterator(lldb::user_id_t breakID) const;
+    GetIDConstIterator(lldb::break_id_t breakID) const;
 
     collection m_locations;
     addr_map m_address_to_location;

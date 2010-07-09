@@ -76,7 +76,7 @@ SBBreakpointLocation::IsEnabled ()
         return false;
 }
 
-int32_t
+uint32_t
 SBBreakpointLocation::GetIgnoreCount ()
 {
     if (m_opaque_sp)
@@ -86,7 +86,7 @@ SBBreakpointLocation::GetIgnoreCount ()
 }
 
 void
-SBBreakpointLocation::SetIgnoreCount (int32_t n)
+SBBreakpointLocation::SetIgnoreCount (uint32_t n)
 {
     if (m_opaque_sp)
         m_opaque_sp->SetIgnoreCount (n);

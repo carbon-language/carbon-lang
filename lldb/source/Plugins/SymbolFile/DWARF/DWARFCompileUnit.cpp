@@ -153,7 +153,6 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
 
     // Set the offset to that of the first DIE
     uint32_t offset = GetFirstDIEOffset();
-    const dw_offset_t next_cu_offset = GetNextCompileUnitOffset();
     DWARFDebugInfoEntry die;
         // Keep a flat array of the DIE for binary lookup by DIE offset
     Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
@@ -206,7 +205,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
                 break;  // We are done with this compile unit!
         }
 
-        assert(offset <= next_cu_offset);
+        assert(offset <= GetNextCompileUnitOffset());
     }
     SetDIERelations();
     return m_die_array.size();

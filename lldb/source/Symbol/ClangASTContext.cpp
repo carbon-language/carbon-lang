@@ -904,12 +904,6 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
 {
     if (class_clang_type)
     {
-        ASTContext *ast_context = getASTContext();
-        IdentifierTable *identifier_table = getIdentifierTable();
-
-        assert (ast_context != NULL);
-        assert (identifier_table != NULL);
-
         Type *clang_type = QualType::getFromOpaquePtr(class_clang_type).getTypePtr();
         if (clang_type)
         {
@@ -1157,8 +1151,6 @@ ClangASTContext::GetChildClangTypeAtIndex
                         ++child_idx;
                     }
                 }
-                const unsigned num_fields = record_layout.getFieldCount();
-
                 // Make sure index is in range...
                 uint32_t field_idx = 0;
                 RecordDecl::field_iterator field, field_end;
@@ -1173,7 +1165,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                         // Figure out the type byte size (field_type_info.first) and
                         // alignment (field_type_info.second) from the AST context.
                         std::pair<uint64_t, unsigned> field_type_info = ast_context->getTypeInfo(field->getType());
-                        assert(field_idx < num_fields);
+                        assert(field_idx < record_layout.getFieldCount());
 
                         child_byte_size = field_type_info.first / 8;
 

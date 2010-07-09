@@ -69,7 +69,7 @@ public:
         DWARFDebugAranges::Range range;
         range.offset = set.GetCompileUnitDIEOffset();
 
-        for (uint32_t i=0; arange_desc_ptr = set.GetDescriptor(i); ++i)
+        for (uint32_t i=0; (arange_desc_ptr = set.GetDescriptor(i)) != NULL; ++i)
         {
             range.lo_pc = arange_desc_ptr->address;
             range.hi_pc = arange_desc_ptr->address + arange_desc_ptr->length;

@@ -56,11 +56,11 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
     m_func_regexp (),
     m_modules (),
     m_load_addr(),
+    m_ignore_count (0),
     m_thread_id(LLDB_INVALID_THREAD_ID),
-    m_thread_index (-1),
+    m_thread_index (UINT32_MAX),
     m_thread_name(),
-    m_queue_name(),
-    m_ignore_count (-1)
+    m_queue_name()
 {
 }
 
@@ -190,8 +190,8 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             }
         case 'k':
         {
-            m_ignore_count = Args::StringToSInt32(optarg, -1, 0);
-            if (m_ignore_count == -1)
+            m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            if (m_ignore_count == UINT32_MAX)
                error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
         }
         break;
@@ -210,8 +210,8 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             break;
         case 'x':
         {
-            m_thread_index = Args::StringToUInt64(optarg, -1, 0);
-            if (m_thread_id == -1)
+            m_thread_index = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            if (m_thread_id == UINT32_MAX)
                error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
             
         }
@@ -237,9 +237,9 @@ CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
     m_func_regexp.clear();
     m_load_addr = LLDB_INVALID_ADDRESS;
     m_modules.clear();
-    m_ignore_count = -1;
+    m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;
-    m_thread_index = -1;
+    m_thread_index = UINT32_MAX;
     m_thread_name.clear();
     m_queue_name.clear();
 }
@@ -469,7 +469,7 @@ CommandObjectBreakpointSet::Execute
         if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
             bp->SetThreadID (m_options.m_thread_id);
             
-        if (m_options.m_thread_index != -1)
+        if (m_options.m_thread_index != UINT32_MAX)
             bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
         
         if (!m_options.m_thread_name.empty())
@@ -478,7 +478,7 @@ CommandObjectBreakpointSet::Execute
         if (!m_options.m_queue_name.empty())
             bp->GetOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
             
-        if (m_options.m_ignore_count != -1)
+        if (m_options.m_ignore_count != 0)
             bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
     }
     
@@ -558,7 +558,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
 
     // NOW, convert the list of breakpoint id strings in TEMP_ARGS into an actual BreakpointIDList:
 
-    valid_ids->InsertStringArray ((const char **) temp_args.GetArgumentVector(), temp_args.GetArgumentCount(), result);
+    valid_ids->InsertStringArray (temp_args.GetConstArgumentVector(), temp_args.GetArgumentCount(), result);
 
     // At this point,  all of the breakpoint ids that the user passed in have been converted to breakpoint IDs
     // and put into valid_ids.
@@ -568,7 +568,8 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
         // Now that we've converted everything from args into a list of breakpoint ids, go through our tentative list
         // of breakpoint id's and verify that they correspond to valid/currently set breakpoints.
 
-        for (int i = 0; i < valid_ids->Size(); ++i)
+        const size_t count = valid_ids->GetSize();
+        for (size_t i = 0; i < count; ++i)
         {
             BreakpointID cur_bp_id = valid_ids->GetBreakpointIDAtIndex (i);
             Breakpoint *breakpoint = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
@@ -578,9 +579,10 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
                 if (cur_bp_id.GetLocationID() > num_locations)
                 {
                     StreamString id_str;
-                    BreakpointID::GetCanonicalReference (&id_str, cur_bp_id.GetBreakpointID(),
-                                                           cur_bp_id.GetLocationID());
-                    i = valid_ids->Size() + 1;
+                    BreakpointID::GetCanonicalReference (&id_str, 
+                                                         cur_bp_id.GetBreakpointID(),
+                                                         cur_bp_id.GetLocationID());
+                    i = valid_ids->GetSize() + 1;
                     result.AppendErrorWithFormat ("'%s' is not a currently valid breakpoint/location id.\n",
                                                  id_str.GetData());
                     result.SetStatus (eReturnStatusFailed);
@@ -588,7 +590,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
             }
             else
             {
-                i = valid_ids->Size() + 1;
+                i = valid_ids->GetSize() + 1;
                 result.AppendErrorWithFormat ("'%d' is not a currently valid breakpoint id.\n", cur_bp_id.GetBreakpointID());
                 result.SetStatus (eReturnStatusFailed);
             }
@@ -731,7 +733,7 @@ CommandObjectBreakpointList::Execute
     {
         // No breakpoint selected; show info about all currently set breakpoints.
         result.AppendMessage ("Current breakpoints:");
-        for (int i = 0; i < num_breakpoints; ++i)
+        for (size_t i = 0; i < num_breakpoints; ++i)
         {
             Breakpoint *breakpoint = breakpoints.GetBreakpointByIndex (i).get();
             AddBreakpointDescription (&output_stream, breakpoint, m_options.m_level);
@@ -746,7 +748,7 @@ CommandObjectBreakpointList::Execute
 
         if (result.Succeeded())
         {
-            for (int i = 0; i < valid_bp_ids.Size(); ++i)
+            for (size_t i = 0; i < valid_bp_ids.GetSize(); ++i)
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
                 Breakpoint *breakpoint = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
@@ -834,7 +836,8 @@ CommandObjectBreakpointEnable::Execute
         {
             int enable_count = 0;
             int loc_count = 0;
-            for (int i = 0; i < valid_bp_ids.Size(); ++i)
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
 
@@ -933,7 +936,8 @@ CommandObjectBreakpointDisable::Execute
         {
             int disable_count = 0;
             int loc_count = 0;
-            for (int i = 0; i < valid_bp_ids.Size(); ++i)
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
 
@@ -1035,7 +1039,8 @@ CommandObjectBreakpointDelete::Execute
         {
             int delete_count = 0;
             int disable_count = 0;
-            for (int i = 0; i < valid_bp_ids.Size(); ++i)
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
 
@@ -1074,12 +1079,15 @@ CommandObjectBreakpointDelete::Execute
 
 CommandObjectBreakpointModify::CommandOptions::CommandOptions() :
     Options (),
+    m_ignore_count (0),
     m_thread_id(LLDB_INVALID_THREAD_ID),
-    m_thread_index (-1),
+    m_thread_index (UINT32_MAX),
     m_thread_name(),
     m_queue_name(),
-    m_ignore_count (-1),
-    m_enable_passed (false)
+    m_enable_passed (false),
+    m_enable_value (false),
+    m_name_passed (false),
+    m_queue_passed (false)
 {
 }
 
@@ -1139,8 +1147,8 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             break;
         case 'k':
         {
-            m_ignore_count = Args::StringToSInt32(optarg, -1, 0);
-            if (m_ignore_count == -1)
+            m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            if (m_ignore_count == UINT32_MAX)
                error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
         }
         break;
@@ -1167,8 +1175,8 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             break;
         case 'x':
         {
-            m_thread_index = Args::StringToUInt64(optarg, -1, 0);
-            if (m_thread_id == -1)
+            m_thread_index = Args::StringToUInt32 (optarg, UINT32_MAX, 0);
+            if (m_thread_id == UINT32_MAX)
                error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
             
         }
@@ -1186,9 +1194,9 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 {
     Options::ResetOptionValues();
 
-    m_ignore_count = -1;
+    m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;
-    m_thread_index = -1;
+    m_thread_index = UINT32_MAX;
     m_thread_name.clear();
     m_queue_name.clear();
     m_enable_passed = false;
@@ -1249,7 +1257,8 @@ CommandObjectBreakpointModify::Execute
 
     if (result.Succeeded())
     {
-        for (int i = 0; i < valid_bp_ids.Size(); ++i)
+        const size_t count = valid_bp_ids.GetSize(); 
+        for (size_t i = 0; i < count; ++i)
         {
             BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
 
@@ -1264,7 +1273,7 @@ CommandObjectBreakpointModify::Execute
                         if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
                             location->SetThreadID (m_options.m_thread_id);
                             
-                        if (m_options.m_thread_index != -1)
+                        if (m_options.m_thread_index != UINT32_MAX)
                             location->GetLocationOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
                         
                         if (m_options.m_name_passed)
@@ -1273,7 +1282,7 @@ CommandObjectBreakpointModify::Execute
                         if (m_options.m_queue_passed)
                             location->GetLocationOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
                             
-                        if (m_options.m_ignore_count != -1)
+                        if (m_options.m_ignore_count != 0)
                             location->GetLocationOptions()->SetIgnoreCount(m_options.m_ignore_count);
                             
                         if (m_options.m_enable_passed)
@@ -1285,7 +1294,7 @@ CommandObjectBreakpointModify::Execute
                     if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
                         bp->SetThreadID (m_options.m_thread_id);
                         
-                    if (m_options.m_thread_index != -1)
+                    if (m_options.m_thread_index != UINT32_MAX)
                         bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
                     
                     if (m_options.m_name_passed)
@@ -1294,7 +1303,7 @@ CommandObjectBreakpointModify::Execute
                     if (m_options.m_queue_passed)
                         bp->GetOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
                         
-                    if (m_options.m_ignore_count != -1)
+                    if (m_options.m_ignore_count != 0)
                         bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
                         
                     if (m_options.m_enable_passed)

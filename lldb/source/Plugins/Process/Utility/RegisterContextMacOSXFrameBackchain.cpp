@@ -18,7 +18,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/Thread.h"
 // Project includes
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 
 using namespace lldb;
 using namespace lldb_private;

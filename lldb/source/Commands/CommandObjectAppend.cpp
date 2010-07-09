@@ -73,7 +73,7 @@ CommandObjectAppend::Execute
         {
             if (var->GetType() == StateVariable::eTypeString)
             {
-                for (int i = 0; i < command.GetArgumentCount(); ++i)
+                for (size_t i = 0; i < command.GetArgumentCount(); ++i)
                     var->AppendStringValue (command.GetArgumentAtIndex(i));
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }

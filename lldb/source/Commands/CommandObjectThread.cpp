@@ -173,7 +173,7 @@ lldb_private::DisplayFramesForExecutionContext
     strm.IndentMore();
 
     StackFrameSP frame_sp;
-    int frame_idx = 0;
+    uint32_t frame_idx = 0;
 
     if (ascending)
     {

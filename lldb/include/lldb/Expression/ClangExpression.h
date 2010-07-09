@@ -15,6 +15,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes

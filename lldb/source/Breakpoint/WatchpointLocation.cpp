@@ -123,14 +123,14 @@ WatchpointLocation::WatchpointWrite () const
 {
     return m_watch_write != 0;
 }
-int32_t
+uint32_t
 WatchpointLocation::GetIgnoreCount () const
 {
     return m_ignore_count;
 }
 
 void
-WatchpointLocation::SetIgnoreCount (int32_t n)
+WatchpointLocation::SetIgnoreCount (uint32_t n)
 {
     m_ignore_count = n;
 }

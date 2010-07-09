@@ -376,8 +376,7 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     char triple[256];
     if (TripleForArchSpec (arch, triple, sizeof(triple)))
     {
-        EDAssemblySyntax_t syntax = SyntaxForArchSpec (arch);
-        assert(!EDGetDisassembler(&m_disassembler, triple, syntax) && "No disassembler created!");
+        assert(!EDGetDisassembler(&m_disassembler, triple, SyntaxForArchSpec (arch)) && "No disassembler created!");
     }
 }
 

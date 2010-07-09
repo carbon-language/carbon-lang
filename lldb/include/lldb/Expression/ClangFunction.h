@@ -224,10 +224,10 @@ private:
 
    std::string m_wrapper_function_name;
    std::string m_wrapper_struct_name;
+   lldb::addr_t m_wrapper_function_addr;
+   std::list<lldb::addr_t> m_wrapper_args_addrs;
    const clang::ASTRecordLayout *m_struct_layout;
    ValueList m_arg_values;
-   lldb::addr_t m_wrapper_fun_addr;
-   std::list<lldb::addr_t> m_wrapper_args_addrs;
    
    size_t m_value_struct_size;
    size_t m_return_offset;

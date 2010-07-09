@@ -50,7 +50,7 @@ public:
     /// @return
     ///    The ID of the BreakpointSite in the list.
     //------------------------------------------------------------------
-    lldb::user_id_t
+    lldb::break_id_t
     Add (const lldb::BreakpointSiteSP& bp_site_sp);
 
     //------------------------------------------------------------------
@@ -86,7 +86,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointSiteSP
-    FindByID (lldb::user_id_t breakID);
+    FindByID (lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint site with id \a breakID - const version.
@@ -99,7 +99,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointSiteSP
-    FindByID (lldb::user_id_t breakID) const;
+    FindByID (lldb::break_id_t breakID) const;
 
     //------------------------------------------------------------------
     /// Returns the breakpoint site id to the breakpoint site at address \a addr.
@@ -110,7 +110,7 @@ public:
     /// @result
     ///   The ID of the breakpoint site, or LLDB_INVALID_BREAK_ID.
     //------------------------------------------------------------------
-    lldb::user_id_t
+    lldb::break_id_t
     FindIDByAddress (lldb::addr_t addr);
 
     //------------------------------------------------------------------
@@ -149,7 +149,7 @@ public:
     ///   \b true if the breakpoint site \a breakID was in the list.
     //------------------------------------------------------------------
     bool
-    Remove (lldb::user_id_t breakID);
+    Remove (lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Removes the breakpoint site at address \a addr from this list.
@@ -164,7 +164,7 @@ public:
     RemoveByAddress (lldb::addr_t addr);
 
     void
-    SetEnabledForAll(const bool enable, const lldb::user_id_t except_id = LLDB_INVALID_BREAK_ID);
+    SetEnabledForAll(const bool enable, const lldb::break_id_t except_id = LLDB_INVALID_BREAK_ID);
 
     typedef void (*BreakpointSiteSPMapFunc) (lldb::BreakpointSiteSP &bp, void *baton);
 
@@ -182,7 +182,7 @@ public:
     ///    \b true if we should stop, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ShouldStop (StoppointCallbackContext *context, lldb::user_id_t breakID);
+    ShouldStop (StoppointCallbackContext *context, lldb::break_id_t breakID);
 
     //------------------------------------------------------------------
     /// Returns the number of elements in the list.
@@ -197,10 +197,10 @@ protected:
     typedef std::map<lldb::addr_t, lldb::BreakpointSiteSP> collection;
 
     collection::iterator
-    GetIDIterator(lldb::user_id_t breakID);
+    GetIDIterator(lldb::break_id_t breakID);
 
     collection::const_iterator
-    GetIDConstIterator(lldb::user_id_t breakID) const;
+    GetIDConstIterator(lldb::break_id_t breakID) const;
 
     // This function exposes the m_bp_site_list.  I use the in Process because there
     // are places there where you want to iterate over the list, and it is less efficient

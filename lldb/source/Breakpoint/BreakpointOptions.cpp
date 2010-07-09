@@ -32,8 +32,8 @@ BreakpointOptions::NullCallback (void *baton, StoppointCallbackContext *context,
 //----------------------------------------------------------------------
 BreakpointOptions::BreakpointOptions() :
     m_callback (BreakpointOptions::NullCallback),
-    m_callback_is_synchronous (false),
     m_callback_baton_sp (),
+    m_callback_is_synchronous (false),
     m_enabled (true),
     m_ignore_count (0),
     m_thread_spec_ap (NULL)
@@ -160,14 +160,14 @@ BreakpointOptions::SetEnabled (bool enabled)
     m_enabled = enabled;
 }
 
-int32_t
+uint32_t
 BreakpointOptions::GetIgnoreCount () const
 {
     return m_ignore_count;
 }
 
 void
-BreakpointOptions::SetIgnoreCount (int32_t n)
+BreakpointOptions::SetIgnoreCount (uint32_t n)
 {
     m_ignore_count = n;
 }

@@ -154,12 +154,16 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, off_t offset, size_t l
         {
             if ((stat.st_mode & S_IFREG) && (stat.st_size > offset))
             {
+                const size_t max_bytes_available = stat.st_size - offset;
                 if (length == SIZE_MAX)
-                    length = stat.st_size - offset;
-
-                // Cap the length if too much data was requested
-                if (length > stat.st_size - offset)
-                    length = stat.st_size - offset;
+                {
+                    length = max_bytes_available;
+                }
+                else if (length > max_bytes_available)
+                {
+                    // Cap the length if too much data was requested
+                    length = max_bytes_available;
+                }
 
                 if (length > 0)
                 {

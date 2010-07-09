@@ -24,32 +24,32 @@ using namespace lldb_private;
 StreamFile::StreamFile () :
     Stream (),
     m_file (NULL),
-    m_path_name (),
-    m_close_file (false)
+    m_close_file (false),
+    m_path_name ()
 {
 }
 
 StreamFile::StreamFile(uint32_t flags, uint32_t addr_size, ByteOrder byte_order, FILE *f) :
     Stream (flags, addr_size, byte_order),
     m_file(f),
-    m_path_name (),
-    m_close_file(false)
+    m_close_file(false),
+    m_path_name ()
 {
 }
 
 StreamFile::StreamFile(FILE *f) :
     Stream (),
     m_file(f),
-    m_path_name (),
-    m_close_file(false)
+    m_close_file(false),
+    m_path_name ()
 {
 }
 
 StreamFile::StreamFile(uint32_t flags, uint32_t addr_size, ByteOrder byte_order, const char *path, const char *permissions) :
     Stream (flags, addr_size, byte_order),
     m_file (NULL),
-    m_path_name (path),
-    m_close_file(false)
+    m_close_file(false),
+    m_path_name (path)
 {
     Open(path, permissions);
 }
@@ -57,8 +57,8 @@ StreamFile::StreamFile(uint32_t flags, uint32_t addr_size, ByteOrder byte_order,
 StreamFile::StreamFile(const char *path, const char *permissions) :
     Stream (),
     m_file (NULL),
-    m_path_name (path),
-    m_close_file(false)
+    m_close_file(false),
+    m_path_name (path)
 {
     Open(path, permissions);
 }

@@ -46,7 +46,7 @@ BreakpointLocationCollection::Add(const BreakpointLocationSP &bp_loc)
 }
 
 bool
-BreakpointLocationCollection::Remove (lldb::user_id_t bp_id, lldb::user_id_t bp_loc_id)
+BreakpointLocationCollection::Remove (lldb::break_id_t bp_id, lldb::break_id_t bp_loc_id)
 {
     collection::iterator pos = GetIDPairIterator(bp_id, bp_loc_id);    // Predicate
     if (pos != m_break_loc_collection.end())
@@ -61,7 +61,7 @@ BreakpointLocationCollection::Remove (lldb::user_id_t bp_id, lldb::user_id_t bp_
 class BreakpointIDPairMatches
 {
 public:
-    BreakpointIDPairMatches (lldb::user_id_t break_id, lldb::user_id_t break_loc_id) :
+    BreakpointIDPairMatches (lldb::break_id_t break_id, lldb::break_id_t break_loc_id) :
         m_break_id(break_id),
         m_break_loc_id (break_loc_id)
     {
@@ -74,26 +74,26 @@ public:
     }
 
 private:
-   const lldb::user_id_t m_break_id;
-   const lldb::user_id_t m_break_loc_id;
+   const lldb::break_id_t m_break_id;
+   const lldb::break_id_t m_break_loc_id;
 };
 
 BreakpointLocationCollection::collection::iterator
-BreakpointLocationCollection::GetIDPairIterator (lldb::user_id_t break_id, lldb::user_id_t break_loc_id)
+BreakpointLocationCollection::GetIDPairIterator (lldb::break_id_t break_id, lldb::break_id_t break_loc_id)
 {
     return std::find_if(m_break_loc_collection.begin(), m_break_loc_collection.end(),   // Search full range
                         BreakpointIDPairMatches(break_id, break_loc_id));               // Predicate
 }
 
 BreakpointLocationCollection::collection::const_iterator
-BreakpointLocationCollection::GetIDPairConstIterator (lldb::user_id_t break_id, lldb::user_id_t break_loc_id) const
+BreakpointLocationCollection::GetIDPairConstIterator (lldb::break_id_t break_id, lldb::break_id_t break_loc_id) const
 {
     return std::find_if(m_break_loc_collection.begin(), m_break_loc_collection.end(),   // Search full range
                         BreakpointIDPairMatches(break_id, break_loc_id));               // Predicate
 }
 
 BreakpointLocationSP
-BreakpointLocationCollection::FindByIDPair (lldb::user_id_t break_id, lldb::user_id_t break_loc_id)
+BreakpointLocationCollection::FindByIDPair (lldb::break_id_t break_id, lldb::break_id_t break_loc_id)
 {
     BreakpointLocationSP stop_sp;
     collection::iterator pos = GetIDPairIterator(break_id, break_loc_id);
@@ -104,7 +104,7 @@ BreakpointLocationCollection::FindByIDPair (lldb::user_id_t break_id, lldb::user
 }
 
 const BreakpointLocationSP
-BreakpointLocationCollection::FindByIDPair (lldb::user_id_t break_id, lldb::user_id_t break_loc_id) const
+BreakpointLocationCollection::FindByIDPair (lldb::break_id_t break_id, lldb::break_id_t break_loc_id) const
 {
     BreakpointLocationSP stop_sp;
     collection::const_iterator pos = GetIDPairConstIterator(break_id, break_loc_id);
@@ -118,7 +118,7 @@ BreakpointLocationSP
 BreakpointLocationCollection::GetByIndex (uint32_t i)
 {
     BreakpointLocationSP stop_sp;
-    if (i >= 0 && i < m_break_loc_collection.size())
+    if (i < m_break_loc_collection.size())
         stop_sp = m_break_loc_collection[i];
 
     return stop_sp;
@@ -128,7 +128,7 @@ const BreakpointLocationSP
 BreakpointLocationCollection::GetByIndex (uint32_t i) const
 {
     BreakpointLocationSP stop_sp;
-    if (i >= 0 && i < m_break_loc_collection.size())
+    if (i < m_break_loc_collection.size())
         stop_sp = m_break_loc_collection[i];
 
     return stop_sp;
@@ -139,7 +139,8 @@ BreakpointLocationCollection::ShouldStop (StoppointCallbackContext *context)
 {
     bool shouldStop = false;
 
-    for (int i = 0; i < GetSize(); i++) {
+    const size_t count = GetSize();
+    for (size_t i = 0; i < count; i++) {
         bool one_result = GetByIndex(i)->ShouldStop(context);
         if (one_result)
             shouldStop = true;

@@ -67,12 +67,10 @@ Stream::PutSLEB128 (int64_t sval)
     if (m_flags.IsSet(eBinary))
     {
         bool more = true;
-        bool negative = (sval < 0);
         while (more)
         {
             uint8_t byte = sval & 0x7fu;
             sval >>= 7;
-            assert((!negative && sval >= 0) || (negative && sval < 0));
             /* sign bit of byte is 2nd high order bit (0x40) */
             if ((sval ==  0 && !(byte & 0x40)) ||
                 (sval == -1 &&  (byte & 0x40)) )
@@ -209,7 +207,7 @@ Stream::PrintfVarArg (const char *format, va_list args)
 
     int bytes_written = 0;
     // Try and format our string into a fixed buffer first and see if it fits
-    int length = vsnprintf (str, sizeof(str), format, args);
+    size_t length = ::vsnprintf (str, sizeof(str), format, args);
     if (length < sizeof(str))
     {
         va_end (args);
@@ -479,16 +477,15 @@ Stream::PrintfAsRawHex8 (const char *format, ...)
     va_start (args, format);
     va_copy (args, args_copy); // Copy this so we
 
-    int i;
     char str[1024];
     int bytes_written = 0;
     // Try and format our string into a fixed buffer first and see if it fits
-    int length = vsnprintf (str, sizeof(str), format, args);
+    size_t length = ::vsnprintf (str, sizeof(str), format, args);
     if (length < sizeof(str))
     {
         // The formatted string fit into our stack based buffer, so we can just
         // append that to our packet
-        for (i=0; i<length; ++i)
+        for (size_t i=0; i<length; ++i)
             bytes_written += _PutHex8 (str[i], false);
     }
     else
@@ -499,7 +496,7 @@ Stream::PrintfAsRawHex8 (const char *format, ...)
         length = ::vasprintf (&str_ptr, format, args_copy);
         if (str_ptr)
         {
-            for (i=0; i<length; ++i)
+            for (size_t i=0; i<length; ++i)
                 bytes_written += _PutHex8 (str_ptr[i], false);
             ::free (str_ptr);
         }
@@ -514,7 +511,7 @@ int
 Stream::PutNHex8 (size_t n, uint8_t uvalue)
 {
     int bytes_written = 0;
-    for (int i=0; i<n; ++i)
+    for (size_t i=0; i<n; ++i)
         bytes_written += _PutHex8 (uvalue, m_flags.IsSet(eAddPrefix));
     return bytes_written;
 }
@@ -555,15 +552,14 @@ Stream::PutHex16 (uint16_t uvalue, ByteOrder byte_order)
 
     bool add_prefix = m_flags.IsSet(eAddPrefix);
     int bytes_written = 0;
-    int byte;
     if (byte_order == eByteOrderLittle)
     {
-        for (byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
+        for (size_t byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     else
     {
-        for (byte = sizeof(uvalue)-1; byte >= 0; --byte, add_prefix = false)
+        for (size_t byte = sizeof(uvalue)-1; byte < sizeof(uvalue); --byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     return bytes_written;
@@ -577,15 +573,14 @@ Stream::PutHex32(uint32_t uvalue, ByteOrder byte_order)
 
     bool add_prefix = m_flags.IsSet(eAddPrefix);
     int bytes_written = 0;
-    int byte;
     if (byte_order == eByteOrderLittle)
     {
-        for (byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
+        for (size_t byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     else
     {
-        for (byte = sizeof(uvalue)-1; byte >= 0; --byte, add_prefix = false)
+        for (size_t byte = sizeof(uvalue)-1; byte < sizeof(uvalue); --byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     return bytes_written;
@@ -599,15 +594,14 @@ Stream::PutHex64(uint64_t uvalue, ByteOrder byte_order)
 
     bool add_prefix = m_flags.IsSet(eAddPrefix);
     int bytes_written = 0;
-    int byte;
     if (byte_order == eByteOrderLittle)
     {
-        for (byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
+        for (size_t byte = 0; byte < sizeof(uvalue); ++byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     else
     {
-        for (byte = sizeof(uvalue)-1; byte >= 0; --byte, add_prefix = false)
+        for (size_t byte = sizeof(uvalue)-1; byte < sizeof(uvalue); --byte, add_prefix = false)
             bytes_written += _PutHex8 (uvalue >> (byte * 8), add_prefix);
     }
     return bytes_written;
@@ -675,17 +669,16 @@ Stream::PutRawBytes (const void *s, size_t src_len, ByteOrder src_byte_order, By
 
     int bytes_written = 0;
     const uint8_t *src = (const uint8_t *)s;
-    int i;
     bool binary_is_clear = m_flags.IsClear (eBinary);
     m_flags.Set (eBinary);
     if (src_byte_order == dst_byte_order)
     {
-        for (i=0;i<src_len; ++i)
+        for (size_t i = 0; i < src_len; ++i)
             bytes_written += _PutHex8 (src[i], false);
     }
     else
     {
-        for (i=src_len-1;i>=0; --i)
+        for (size_t i = src_len-1; i < src_len; --i)
             bytes_written += _PutHex8 (src[i], false);
     }
     if (binary_is_clear)
@@ -705,17 +698,16 @@ Stream::PutBytesAsRawHex8 (const void *s, size_t src_len, ByteOrder src_byte_ord
 
     int bytes_written = 0;
     const uint8_t *src = (const uint8_t *)s;
-    int i;
     bool binary_is_set = m_flags.IsSet(eBinary);
     m_flags.Clear(eBinary);
     if (src_byte_order == dst_byte_order)
     {
-        for (i=0;i<src_len; ++i)
+        for (size_t i = 0; i < src_len; ++i)
             bytes_written += _PutHex8 (src[i], false);
     }
     else
     {
-        for (i=src_len-1;i>=0; --i)
+        for (size_t i = src_len-1; i < src_len; --i)
             bytes_written += _PutHex8 (src[i], false);
     }
     if (binary_is_set)

@@ -289,7 +289,7 @@ SBTarget::ListAllBreakpoints ()
     {
         const BreakpointList &bp_list = m_opaque_sp->GetBreakpointList();
         size_t num_bps = bp_list.GetSize();
-        for (int i = 0; i < num_bps; ++i)
+        for (size_t i = 0; i < num_bps; ++i)
         {
             SBBreakpoint sb_breakpoint (bp_list.GetBreakpointByIndex (i));
             sb_breakpoint.GetDescription (out_file, "full");

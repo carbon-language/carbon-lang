@@ -147,7 +147,10 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                         stop_desc = exc_desc;
                         stop_desc_len = sizeof(exc_desc); // Include the NULL byte for size
                     }
-                    break;                        
+                    break;          
+
+                default:
+                    break;
                 }
                 
                 if (stop_desc && stop_desc[0])
@@ -225,7 +228,7 @@ SBThread::DisplayFramesForCurrentContext (FILE *out,
     {
         uint32_t num_stack_frames = m_opaque_sp->GetStackFrameCount ();
         StackFrameSP frame_sp;
-        int frame_idx = 0;
+        uint32_t frame_idx = 0;
 
         for (frame_idx = first_frame; frame_idx < first_frame + num_frames; ++frame_idx)
         {

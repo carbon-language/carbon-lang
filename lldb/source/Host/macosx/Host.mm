@@ -23,9 +23,9 @@
 
 #include <Foundation/Foundation.h>
 
-#include "CFCBundle.h"
-#include "CFCReleaser.h"
-#include "CFCString.h"
+#include "cfcpp/CFCBundle.h"
+#include "cfcpp/CFCReleaser.h"
+#include "cfcpp/CFCString.h"
 
 #include "lldb/Host/Host.h"
 #include "lldb/Core/ArchSpec.h"
@@ -434,7 +434,7 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
     // Set the pthread name if possible
     if (pid == curr_pid && tid == curr_tid)
     {
-        ::pthread_setname_np (name) == 0;
+        ::pthread_setname_np (name);
     }
 #endif
     ThreadNameAccessor (false, pid, tid, name);
@@ -446,21 +446,22 @@ Host::GetProgramFileSpec ()
     static FileSpec g_program_filepsec;
     if (!g_program_filepsec)
     {
-        std::string program_fullpath;
-        program_fullpath.resize (PATH_MAX);
+        char program_fullpath[PATH_MAX];
         // If DST is NULL, then return the number of bytes needed.
-        uint32_t len = program_fullpath.size();
-        int err = _NSGetExecutablePath ((char *)program_fullpath.data(), &len);
-        if (err < 0)
-        {
-            // The path didn't fit in the buffer provided, increase its size
-            // and try again
-            program_fullpath.resize(len);
-            len = program_fullpath.size();
-            err = _NSGetExecutablePath ((char *)program_fullpath.data(), &len);
-        }
+        uint32_t len = sizeof(program_fullpath);
+        int err = _NSGetExecutablePath (program_fullpath, &len);
         if (err == 0)
-            g_program_filepsec.SetFile(program_fullpath.data());
+            g_program_filepsec.SetFile (program_fullpath);
+        else if (err == -1)
+        {
+            char *large_program_fullpath = (char *)::malloc (len + 1);
+
+            err = _NSGetExecutablePath (large_program_fullpath, &len);
+            if (err == 0)
+                g_program_filepsec.SetFile (large_program_fullpath);
+
+            ::free (large_program_fullpath);
+        }
     }
     return g_program_filepsec;
 }
@@ -505,7 +506,7 @@ Host::ResolveExecutableInBundle (FileSpec *file)
 
 struct MonitorInfo
 {
-    int handle;
+    uint32_t handle;
     pthread_t thread;
     Host::MonitorChildProcessCallback callback;
     void *callback_baton;

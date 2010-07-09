@@ -14,8 +14,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb-types.h"
-#include "lldb-enumerations.h"
+#include "lldb/lldb-types.h"
+#include "lldb/lldb-enumerations.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "ObjCTrampolineHandler.h"
 
@@ -90,5 +90,6 @@ private:
     lldb::addr_t m_sel_ptr;
 };
 
-}; // namespace lldb_private
+} // namespace lldb_private
+
 #endif	// lldb_ThreadPlanStepThroughObjCTrampoline_h_

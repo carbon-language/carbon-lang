@@ -153,12 +153,12 @@ Breakpoint::IsEnabled ()
 }
 
 void
-Breakpoint::SetIgnoreCount (int32_t n)
+Breakpoint::SetIgnoreCount (uint32_t n)
 {
     m_options.SetIgnoreCount(n);
 }
 
-int32_t
+uint32_t
 Breakpoint::GetIgnoreCount () const
 {
     return m_options.GetIgnoreCount();
@@ -255,7 +255,7 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
                                    // them after the locations pass.  Have to do it this way because
                                    // resolving breakpoints will add new locations potentially.
 
-        for (int i = 0; i < module_list.GetSize(); i++)
+        for (size_t i = 0; i < module_list.GetSize(); i++)
         {
             bool seen = false;
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
@@ -263,9 +263,9 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
-            for (int i = 0; i < m_locations.GetSize(); i++)
+            for (size_t j = 0; j < m_locations.GetSize(); j++)
             {
-                BreakpointLocationSP break_loc = m_locations.GetByIndex(i);
+                BreakpointLocationSP break_loc = m_locations.GetByIndex(j);
                 const Section *section = break_loc->GetAddress().GetSection();
                 if (section == NULL || section->GetModule() == module)
                 {
@@ -300,15 +300,15 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
         // the same?  Or do we need to do an equality on modules that is an
         // "equivalence"???
 
-        for (int i = 0; i < module_list.GetSize(); i++)
+        for (size_t i = 0; i < module_list.GetSize(); i++)
         {
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
-            for (int i = 0; i < m_locations.GetSize(); i++)
+            for (size_t j = 0; j < m_locations.GetSize(); j++)
             {
-                BreakpointLocationSP break_loc = m_locations.GetByIndex(i);
+                BreakpointLocationSP break_loc = m_locations.GetByIndex(j);
                 const Section *section = break_loc->GetAddress().GetSection();
                 if (section)
                 {
@@ -353,8 +353,8 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     GetResolverDescription (s);
     GetFilterDescription (s);
 
-    const uint32_t num_locations = GetNumLocations ();
-    const uint32_t num_resolved_locations = GetNumResolvedLocations ();
+    const size_t num_locations = GetNumLocations ();
+    const size_t num_resolved_locations = GetNumResolvedLocations ();
 
     switch (level)
     {
@@ -362,9 +362,9 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     case lldb::eDescriptionLevelFull:
         if (num_locations > 0)
         {
-            s->Printf(", locations = %u", num_locations);
+            s->Printf(", locations = %zu", num_locations);
             if (num_resolved_locations > 0)
-                s->Printf(", resolved = %u", num_resolved_locations);
+                s->Printf(", resolved = %zu", num_resolved_locations);
         }
         else
         {
@@ -387,12 +387,15 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
         s->Indent();
         GetOptions()->GetDescription(s, level);
         break;
+
+    default: 
+        break;
     }
 
     if (show_locations)
     {
         s->IndentMore();
-        for (int i = 0; i < GetNumLocations(); ++i)
+        for (size_t i = 0; i < num_locations; ++i)
         {
             BreakpointLocation *loc = GetLocationAtIndex(i).get();
             loc->GetDescription(s, level);

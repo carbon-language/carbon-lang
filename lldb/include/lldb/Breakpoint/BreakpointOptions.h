@@ -108,14 +108,14 @@ public:
     SetEnabled (bool enabled);
 
     void
-    SetIgnoreCount (int32_t n);
+    SetIgnoreCount (uint32_t n);
 
     //------------------------------------------------------------------
     /// Return the current Ignore Count.
     /// @return
     ///     The number of breakpoint hits to be ignored.
     //------------------------------------------------------------------
-    int32_t
+    uint32_t
     GetIgnoreCount () const;
 
     //------------------------------------------------------------------
@@ -216,7 +216,7 @@ private:
     lldb::BatonSP m_callback_baton_sp; // This is the client data for the callback
     bool m_callback_is_synchronous;
     bool m_enabled;
-    int32_t m_ignore_count; // Number of times to ignore this breakpoint
+    uint32_t m_ignore_count; // Number of times to ignore this breakpoint
     std::auto_ptr<ThreadSpec> m_thread_spec_ap; // Thread for which this breakpoint will take
 
 };

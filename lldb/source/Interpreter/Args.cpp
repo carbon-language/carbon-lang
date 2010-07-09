@@ -779,7 +779,7 @@ Args::LongestCommonPrefix (std::string &common_prefix)
 
     for (++pos; pos != end; ++pos)
     {
-        int new_size = (*pos).size();
+        size_t new_size = (*pos).size();
 
         // First trim common_prefix if it is longer than the current element:
         if (common_prefix.size() > new_size)
@@ -787,7 +787,7 @@ Args::LongestCommonPrefix (std::string &common_prefix)
 
         // Then trim it at the first disparity:
 
-        for (int i = 0; i < common_prefix.size(); i++)
+        for (size_t i = 0; i < common_prefix.size(); i++)
         {
             if ((*pos)[i]  != common_prefix[i])
             {
@@ -998,7 +998,7 @@ Args::ParseArgsForCompletion
     // So we have to build another Arg and pass that to getopt_long so it doesn't
     // change the one we have.
 
-    std::vector<const char *> dummy_vec(GetArgumentVector(), GetArgumentVector() + GetArgumentCount() + 1);
+    std::vector<const char *> dummy_vec (GetArgumentVector(), GetArgumentVector() + GetArgumentCount() + 1);
 
     bool failed_once = false;
     uint32_t dash_dash_pos = -1;
@@ -1009,7 +1009,10 @@ Args::ParseArgsForCompletion
         int parse_start = optind;
         int long_options_index = -1;
         
-        val = ::getopt_long (dummy_vec.size() - 1,(char *const *) dummy_vec.data(), sstr.GetData(), long_options,
+        val = ::getopt_long (dummy_vec.size() - 1,
+                             (char *const *) dummy_vec.data(), 
+                             sstr.GetData(), 
+                             long_options,
                              &long_options_index);
 
         if (val == -1)

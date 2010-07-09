@@ -110,18 +110,18 @@ Driver::CloseIOChannelFile ()
     }
 }
 
-// This function takes INDENT, which tells how many spaces to output at the front of each line; SPACES, which is
-// a string that is output_max_columns long, containing spaces; and TEXT, which is the text that is to be output.
-// It outputs the text, on multiple lines if necessary, to RESULT, with INDENT spaces at the front of each line.  It
-// breaks lines on spaces, tabs or newlines, shortening the line if necessary to not break in the middle of a word.
-// It assumes that each output line should contain a maximum of OUTPUT_MAX_COLUMNS characters.
+// This function takes INDENT, which tells how many spaces to output at the front
+// of each line; TEXT, which is the text that is to be output. It outputs the 
+// text, on multiple lines if necessary, to RESULT, with INDENT spaces at the 
+// front of each line.  It breaks lines on spaces, tabs or newlines, shortening 
+// the line if necessary to not break in the middle of a word. It assumes that 
+// each output line should contain a maximum of OUTPUT_MAX_COLUMNS characters.
 
 void
-OutputFormattedUsageText (FILE *out, int indent, char *spaces, const char *text, int output_max_columns)
+OutputFormattedUsageText (FILE *out, int indent, const char *text, int output_max_columns)
 {
     int len = strlen (text);
     std::string text_string (text);
-    std::string spaces_string (spaces);
 
     // Force indentation to be reasonable.
     if (indent >= output_max_columns)
@@ -131,7 +131,7 @@ OutputFormattedUsageText (FILE *out, int indent, char *spaces, const char *text,
 
     if (len + indent < output_max_columns)
         // Output as a single line
-        fprintf (out, "%s%s\n", spaces_string.substr (0, indent).c_str(), text);
+        fprintf (out, "%*s%s\n", indent, "", text);
     else
     {
         // We need to break it up into multiple lines.
@@ -159,7 +159,7 @@ OutputFormattedUsageText (FILE *out, int indent, char *spaces, const char *text,
               }
               sub_len = end - start;
               std::string substring = text_string.substr (start, sub_len);
-              fprintf (out, "%s%s\n", spaces_string.substr(0, indent).c_str(), substring.c_str());
+              fprintf (out, "%*s%s\n", indent, "", substring.c_str());
               start = end + 1;
         }
     }
@@ -171,15 +171,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
     uint32_t screen_width = 80;
     uint32_t indent_level = 0;
     const char *name = "lldb";
-    char spaces[screen_width+1];
-    uint32_t i;
     
-    for (i = 0; i < screen_width; ++i)
-      spaces[i] = ' ';
-    spaces[i] = '\n';
-
-    std::string spaces_string (spaces);
-
     fprintf (out, "\nUsage:\n\n");
 
     indent_level += 2;
@@ -202,7 +194,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         }
         else
         {
-            for (int j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
+            for (uint32_t j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
             {
                 if (this_usage_mask & 1 << j)
                 {
@@ -221,7 +213,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         
         if (opt_set > 0)
             fprintf (out, "\n");
-        fprintf (out, "%s%s", spaces_string.substr(0, indent_level).c_str(), name);
+        fprintf (out, "%*s%s", indent_level, "", name);
         
         for (uint32_t i = 0; i < num_options; ++i)
         {
@@ -271,16 +263,16 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         if (pos == options_seen.end())
         {
             options_seen.insert (option_table[i].short_option);
-            fprintf (out, "%s-%c ", spaces_string.substr(0, indent_level).c_str(), option_table[i].short_option);
+            fprintf (out, "%*s-%c ", indent_level, "", option_table[i].short_option);
             if (option_table[i].argument_name != NULL)
                 fprintf (out, "%s", option_table[i].argument_name);
             fprintf (out, "\n");
-            fprintf (out, "%s--%s ", spaces_string.substr(0, indent_level).c_str(), option_table[i].long_option);
+            fprintf (out, "%*s--%s ", indent_level, "", option_table[i].long_option);
             if (option_table[i].argument_name != NULL)
                 fprintf (out, "%s", option_table[i].argument_name);
             fprintf (out, "\n");
             indent_level += 5;
-            OutputFormattedUsageText (out, indent_level, spaces, option_table[i].usage_text, screen_width);
+            OutputFormattedUsageText (out, indent_level, option_table[i].usage_text, screen_width);
             indent_level -= 5;
             fprintf (out, "\n");
         }
@@ -288,12 +280,12 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
 
     indent_level -= 5;
 
-    fprintf (out, "\n%s('%s <filename>' also works, to specify the file to be debugged.)\n\n",
-             spaces_string.substr(0, indent_level).c_str(), name);
+    fprintf (out, "\n%*s('%s <filename>' also works, to specify the file to be debugged.)\n\n",
+             indent_level, "", name);
 }
 
 void
-BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option **getopt_table, int num_options)
+BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option **getopt_table, uint32_t num_options)
 {
     if (num_options == 0)
         return;
@@ -303,19 +295,19 @@ BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option *
     std::bitset<256> option_seen;
 
     for (i = 0, j = 0; i < num_options; ++i)
-      {
+    {
         char short_opt = expanded_option_table[i].short_option;
-
+        
         if (option_seen.test(short_opt) == false)
-          {
+        {
             (*getopt_table)[j].name    = expanded_option_table[i].long_option;
             (*getopt_table)[j].has_arg = expanded_option_table[i].option_has_arg;
             (*getopt_table)[j].flag    = NULL;
             (*getopt_table)[j].val     = expanded_option_table[i].short_option;
             option_seen.set(short_opt);
             ++j;
-          }
-      }
+        }
+    }
 
     (*getopt_table)[j].name    = NULL;
     (*getopt_table)[j].has_arg = 0;
@@ -327,11 +319,12 @@ BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, struct option *
 Driver::OptionData::OptionData () :
     m_filename(),
     m_script_lang (lldb::eScriptLanguageDefault),
+    m_crash_log (),
     m_source_command_files (),
     m_debug_mode (false),
+    m_print_version (false),
     m_print_help (false),
-    m_print_version (false)
-
+    m_seen_options()
 {
 }
 
@@ -414,9 +407,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     SBError error;
     std::string option_string;
     struct option *long_options = NULL;
-    int num_options;
+    uint32_t num_options;
 
-    for (num_options = 0; g_options[num_options].long_option != NULL; ++num_options);
+    for (num_options = 0; g_options[num_options].long_option != NULL; ++num_options)
+        /* Do Nothing. */;
 
     if (num_options == 0)
     {
@@ -468,7 +462,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long (argc, (char * const *) argv, option_string.c_str(), long_options, &long_options_index);
+        val = ::getopt_long (argc, const_cast<char **>(argv), option_string.c_str(), long_options, &long_options_index);
 
         if (val == -1)
             break;
@@ -787,7 +781,7 @@ Driver::HandleIOEvent (const SBEvent &event)
 
         const char *command_string = SBEvent::GetCStringFromEvent(event);
         if (command_string == NULL)
-            command_string == "";
+            command_string = "";
         SBCommandReturnObject result;
         if (m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true) != lldb::eReturnStatusQuit)
         {

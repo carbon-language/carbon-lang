@@ -25,7 +25,7 @@
 #include "RNBContext.h"
 #include "RNBServices.h"
 #include "RNBSocket.h"
-#include "StringExtractor.h"
+#include "Utility/StringExtractor.h"
 
 #include <iomanip>
 #include <sstream>

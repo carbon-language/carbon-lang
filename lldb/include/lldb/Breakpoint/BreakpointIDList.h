@@ -37,14 +37,14 @@ public:
     virtual
     ~BreakpointIDList ();
 
-    int
-    Size();
+    size_t
+    GetSize();
 
     BreakpointID &
-    GetBreakpointIDAtIndex (int index);
+    GetBreakpointIDAtIndex (uint32_t index);
 
     bool
-    RemoveBreakpointIDAtIndex (int index);
+    RemoveBreakpointIDAtIndex (uint32_t index);
 
     void
     Clear();
@@ -56,16 +56,16 @@ public:
     AddBreakpointID (const char *bp_id);
 
     bool
-    FindBreakpointID (BreakpointID &bp_id, int *position);
+    FindBreakpointID (BreakpointID &bp_id, uint32_t *position);
 
     bool
-    FindBreakpointID (const char *bp_id, int *position);
+    FindBreakpointID (const char *bp_id, uint32_t *position);
 
     void
-    InsertStringArray (const char **string_array, int array_size, CommandReturnObject &result);
+    InsertStringArray (const char **string_array, uint32_t array_size, CommandReturnObject &result);
 
     static bool
-    StringContainsIDRangeExpression (const char *in_string, int *range_start_len, int *range_end_pos);
+    StringContainsIDRangeExpression (const char *in_string, uint32_t *range_start_len, uint32_t *range_end_pos);
 
     static void
     FindAndReplaceIDRanges (Args &old_args, Target *target, CommandReturnObject &result, Args &new_args);

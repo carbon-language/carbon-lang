@@ -46,12 +46,11 @@
 
 // Project includes
 #include "lldb/Host/Host.h"
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 #include "GDBRemoteRegisterContext.h"
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
-#include "libunwind.h"
 #include "MacOSXLibunwindCallbacks.h"
 
 #if defined (__i386__) || defined (__x86_64__)
@@ -116,28 +115,29 @@ ProcessGDBRemote::CanDebug(Target &target)
 ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
     m_dynamic_loader_ap (),
-    m_byte_order (eByteOrderHost),
     m_flags (0),
     m_stdio_communication ("gdb-remote.stdio"),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_arch_spec (),
+    m_byte_order (eByteOrderHost),
     m_gdb_comm(),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_debugserver_monitor (0),
+    m_last_stop_packet (),
     m_register_info (),
-    m_curr_tid (LLDB_INVALID_THREAD_ID),
-    m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_curr_tid (LLDB_INVALID_THREAD_ID),
+    m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_z0_supported (1),
     m_continue_packet(),
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
+    m_packet_timeout (1),
+    m_max_memory_size (512),
     m_libunwind_target_type (UNW_TARGET_UNSPECIFIED),
     m_libunwind_addr_space (NULL),
-    m_waiting_for_attach (false),
-    m_packet_timeout (1),
-    m_max_memory_size (512)
+    m_waiting_for_attach (false)
 {
 }
 
@@ -616,7 +616,7 @@ ProcessGDBRemote::DidLaunch ()
 }
 
 Error
-ProcessGDBRemote::DoAttach (lldb::pid_t attach_pid)
+ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
 {
     Error error;
     // Clear out and clean up from any current state
@@ -716,7 +716,7 @@ ProcessGDBRemote::AttachInputReaderCallback
 }
 
 Error
-ProcessGDBRemote::DoAttach (const char *process_name, bool wait_for_launch)
+ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch)
 {
     Error error;
     // Clear out and clean up from any current state

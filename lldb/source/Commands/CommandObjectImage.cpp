@@ -469,7 +469,7 @@ public:
                               OptionElementVector &opt_element_vector,
                               int match_start_point,
                               int max_return_elements,
-                              bool word_complete,
+                              bool &word_complete,
                               StringList &matches)
     {
         // Arguments are the standard source file completer.

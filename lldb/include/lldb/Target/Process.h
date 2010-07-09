@@ -466,7 +466,7 @@ public:
     ///     Returns an error object.
     //------------------------------------------------------------------
     virtual Error
-    WillAttach (lldb::pid_t pid) 
+    WillAttachToProcessWithID (lldb::pid_t pid) 
     {
         return Error(); 
     }
@@ -481,7 +481,7 @@ public:
     ///     Returns an error object.
     //------------------------------------------------------------------
     virtual Error
-    WillAttach (const char *process_name, bool wait_for_launch) 
+    WillAttachToProcessWithName (const char *process_name, bool wait_for_launch) 
     { 
         return Error(); 
     }
@@ -497,7 +497,7 @@ public:
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    DoAttach (lldb::pid_t pid) = 0;
+    DoAttachToProcessWithID (lldb::pid_t pid) = 0;
 
     //------------------------------------------------------------------
     /// Attach to an existing process using a partial process name.
@@ -515,7 +515,7 @@ public:
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    DoAttach (const char *process_name, bool wait_for_launch) 
+    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch) 
     {
         Error error;
         error.SetErrorString("attach by name is not supported");

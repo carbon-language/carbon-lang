@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "StringExtractorGDBRemote.h"
+#include "Utility/StringExtractorGDBRemote.h"
 
 // C Includes
 // C++ Includes

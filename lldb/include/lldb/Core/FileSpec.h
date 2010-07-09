@@ -451,7 +451,7 @@ public:
     ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
     ///     be written to \a dst_path, but the actual required length will still be returned.
     //------------------------------------------------------------------
-    static int
+    static size_t
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
     
     //------------------------------------------------------------------
@@ -475,7 +475,7 @@ public:
     ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
     ///     be written to \a dst_path, but the actual required length will still be returned.
     //------------------------------------------------------------------
-    static int
+    static size_t
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
 
 
