@@ -21,10 +21,10 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-/// ReuseOrCreateCast - Arange for there to be a cast of V to Ty at IP,
+/// ReuseOrCreateCast - Arrange for there to be a cast of V to Ty at IP,
 /// reusing an existing cast if a suitable one exists, moving an existing
 /// cast if a suitable one exists but isn't in the right place, or
-/// or creating a new one.
+/// creating a new one.
 Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
                                        Instruction::CastOps Op,
                                        BasicBlock::iterator IP) {
@@ -33,7 +33,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
        UI != E; ++UI) {
     User *U = *UI;
     if (U->getType() == Ty)
-      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(U)))
+      if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
           // If the cast isn't where we want it, fix it.
           if (BasicBlock::iterator(CI) != IP) {
