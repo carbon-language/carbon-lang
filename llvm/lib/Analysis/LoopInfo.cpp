@@ -266,15 +266,16 @@ unsigned Loop::getSmallConstantTripMultiple() const {
 bool Loop::isLCSSAForm(DominatorTree &DT) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
-  SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());
+  SmallPtrSet<BasicBlock*, 16> LoopBBs(block_begin(), block_end());
 
   for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
     BasicBlock *BB = *BI;
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;++I)
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
-        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode *P = dyn_cast<PHINode>(*UI))
+        User *U = *UI;
+        BasicBlock *UserBB = cast<Instruction>(U)->getParent();
+        if (PHINode *P = dyn_cast<PHINode>(U))
           UserBB = P->getIncomingBlock(UI);
 
         // Check the current block, as a fast-path, before checking whether
