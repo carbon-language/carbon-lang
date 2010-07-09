@@ -435,32 +435,27 @@ namespace X86II {
     SSEDomainShift = 22,
 
     OpcodeShift   = 24,
-    OpcodeMask    = 0xFF << OpcodeShift
+    OpcodeMask    = 0xFF << OpcodeShift,
 
-  };
-  
-  // FIXME: The enum opcode space is over and more bits are needed. Anywhere
-  // those enums below are used, TSFlags must be shifted right by 32 first.
-  enum {
     //===------------------------------------------------------------------===//
-    // VEX - A prefix used by AVX instructions
-    VEX         = 1,
+    // VEX - The opcode prefix used by AVX instructions
+    VEX         = 1ULL << 32,
 
-    // VEX_W is has a opcode specific functionality, but is used in the same
+    // VEX_W - Has a opcode specific functionality, but is used in the same
     // way as REX_W is for regular SSE instructions.
-    VEX_W       = 1 << 1,
+    VEX_W       = 1ULL << 33,
 
-    // VEX_4V is used to specify an additional AVX/SSE register. Several 2
+    // VEX_4V - Used to specify an additional AVX/SSE register. Several 2
     // address instructions in SSE are represented as 3 address ones in AVX
     // and the additional register is encoded in VEX_VVVV prefix.
-    VEX_4V      = 1 << 2,
+    VEX_4V      = 1ULL << 34,
 
-    // VEX_I8IMM specifies that the last register used in a AVX instruction,
+    // VEX_I8IMM - Specifies that the last register used in a AVX instruction,
     // must be encoded in the i8 immediate field. This usually happens in
     // instructions with 4 operands.
-    VEX_I8IMM   = 1 << 3
+    VEX_I8IMM   = 1ULL << 35
   };
-
+  
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified machine instruction.
   //
@@ -525,7 +520,7 @@ namespace X86II {
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem: {
-      bool HasVEX_4V = (TSFlags >> 32) & X86II::VEX_4V;
+      bool HasVEX_4V = TSFlags & X86II::VEX_4V;
       unsigned FirstMemOp = 1;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).

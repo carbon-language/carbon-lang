@@ -364,7 +364,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                            const TargetInstrDesc &Desc,
                                            raw_ostream &OS) const {
   bool HasVEX_4V = false;
-  if ((TSFlags >> 32) & X86II::VEX_4V)
+  if (TSFlags & X86II::VEX_4V)
     HasVEX_4V = true;
 
   // VEX_R: opcode externsion equivalent to REX.R in
@@ -428,7 +428,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if (TSFlags & X86II::OpSize)
     VEX_PP = 0x01;
 
-  if ((TSFlags >> 32) & X86II::VEX_W)
+  if (TSFlags & X86II::VEX_W)
     VEX_W = 1;
 
   switch (TSFlags & X86II::Op0Mask) {
@@ -482,7 +482,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
     // If the last register should be encoded in the immediate field
     // do not use any bit from VEX prefix to this register, ignore it
-    if ((TSFlags >> 32) & X86II::VEX_I8IMM)
+    if (TSFlags & X86II::VEX_I8IMM)
       NumOps--;
 
     for (; CurOp != NumOps; ++CurOp) {
@@ -780,9 +780,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the VEX.VVVV field?
   bool HasVEX_4V = false;
 
-  if ((TSFlags >> 32) & X86II::VEX)
+  if (TSFlags & X86II::VEX)
     HasVEXPrefix = true;
-  if ((TSFlags >> 32) & X86II::VEX_4V)
+  if (TSFlags & X86II::VEX_4V)
     HasVEX_4V = true;
 
   // Determine where the memory operand starts, if present.
@@ -921,7 +921,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (CurOp != NumOps) {
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte, and bits[3:0] are ignored.
-    if ((TSFlags >> 32) & X86II::VEX_I8IMM) {
+    if (TSFlags & X86II::VEX_I8IMM) {
       const MCOperand &MO = MI.getOperand(CurOp++);
       bool IsExtReg =
         X86InstrInfo::isX86_64ExtendedReg(MO.getReg());
