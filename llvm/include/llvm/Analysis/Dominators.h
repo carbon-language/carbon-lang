@@ -258,9 +258,9 @@ protected:
     for (typename InvTraits::ChildIteratorType PI =
          InvTraits::child_begin(NewBBSucc),
          E = InvTraits::child_end(NewBBSucc); PI != E; ++PI) {
-      typename InvTraits::NodeType *N = *PI;
-      if (N != NewBB && !DT.dominates(NewBBSucc, N) &&
-          DT.isReachableFromEntry(N)) {
+      typename InvTraits::NodeType *ND = *PI;
+      if (ND != NewBB && !DT.dominates(NewBBSucc, ND) &&
+          DT.isReachableFromEntry(ND)) {
         NewBBDominatesNewBBSucc = false;
         break;
       }
