@@ -781,6 +781,17 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
           ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg, 0,
                                   UseMI))
         continue;
+
+      if (UseMI->isCopy() &&
+          !UseMI->getOperand(1).getSubReg() &&
+          !UseMI->getOperand(0).getSubReg() &&
+          UseMI->getOperand(1).getReg() == SrcReg &&
+          UseMI->getOperand(0).getReg() != SrcReg &&
+          UseMI->getOperand(0).getReg() != DstReg &&
+          !JoinedCopies.count(UseMI) &&
+          ReMaterializeTrivialDef(li_->getInterval(SrcReg),
+                                  UseMI->getOperand(0).getReg(), 0, UseMI))
+        continue;
     }
 
     SmallVector<unsigned,8> Ops;
