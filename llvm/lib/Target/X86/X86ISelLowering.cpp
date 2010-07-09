@@ -6755,7 +6755,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   Store = DAG.getStore(Op.getOperand(0), dl,
                        DAG.getConstant(FuncInfo->getVarArgsFPOffset(),
                                        MVT::i32),
-                       FIN, SV, 0, false, false, 0);
+                       FIN, SV, 4, false, false, 0);
   MemOps.push_back(Store);
 
   // Store ptr to overflow_arg_area
@@ -6763,7 +6763,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                     FIN, DAG.getIntPtrConstant(4));
   SDValue OVFIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
                                     getPointerTy());
-  Store = DAG.getStore(Op.getOperand(0), dl, OVFIN, FIN, SV, 0,
+  Store = DAG.getStore(Op.getOperand(0), dl, OVFIN, FIN, SV, 8,
                        false, false, 0);
   MemOps.push_back(Store);
 
@@ -6772,7 +6772,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                     FIN, DAG.getIntPtrConstant(8));
   SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(),
                                     getPointerTy());
-  Store = DAG.getStore(Op.getOperand(0), dl, RSFIN, FIN, SV, 0,
+  Store = DAG.getStore(Op.getOperand(0), dl, RSFIN, FIN, SV, 16,
                        false, false, 0);
   MemOps.push_back(Store);
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
