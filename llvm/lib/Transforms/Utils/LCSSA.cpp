@@ -190,14 +190,15 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
   
   for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
        UI != E; ++UI) {
-    BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-    if (PHINode *PN = dyn_cast<PHINode>(*UI))
+    User *U = *UI;
+    BasicBlock *UserBB = cast<Instruction>(U)->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(U))
       UserBB = PN->getIncomingBlock(UI);
     
     if (InstBB != UserBB && !inLoop(UserBB))
       UsesToRewrite.push_back(&UI.getUse());
   }
-  
+
   // If there are no uses outside the loop, exit with no change.
   if (UsesToRewrite.empty()) return false;
   
