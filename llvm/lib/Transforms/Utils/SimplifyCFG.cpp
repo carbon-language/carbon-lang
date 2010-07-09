@@ -1697,10 +1697,11 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       SmallVector<BasicBlock*, 8> UncondBranchPreds;
       SmallVector<BranchInst*, 8> CondBranchPreds;
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-        TerminatorInst *PTI = (*PI)->getTerminator();
+        BasicBlock *P = *PI;
+        TerminatorInst *PTI = P->getTerminator();
         if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
           if (BI->isUnconditional())
-            UncondBranchPreds.push_back(*PI);
+            UncondBranchPreds.push_back(P);
           else
             CondBranchPreds.push_back(BI);
         }
