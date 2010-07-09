@@ -771,8 +771,9 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     bool UsedInLoop = false;
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
          UI != UE; ++UI) {
-      BasicBlock *UseBB = cast<Instruction>(UI)->getParent();
-      if (PHINode *P = dyn_cast<PHINode>(UI)) {
+      User *U = *UI;
+      BasicBlock *UseBB = cast<Instruction>(U)->getParent();
+      if (PHINode *P = dyn_cast<PHINode>(U)) {
         unsigned i =
           PHINode::getIncomingValueNumForOperand(UI.getOperandNo());
         UseBB = P->getIncomingBlock(i);
