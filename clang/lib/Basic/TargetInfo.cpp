@@ -284,6 +284,8 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       Info.setAllowsRegister();
       Info.setAllowsMemory();
       break;
+    case ',': // FIXME: Until we handle multiple alternative constraints,
+      return true;  // ignore everything after the first comma.
     }
 
     Name++;
@@ -377,6 +379,8 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       Info.setAllowsRegister();
       Info.setAllowsMemory();
       break;
+    case ',': // FIXME: Until we handle multiple alternative constraints,
+      return true;  // ignore everything after the first comma.
     }
 
     Name++;
