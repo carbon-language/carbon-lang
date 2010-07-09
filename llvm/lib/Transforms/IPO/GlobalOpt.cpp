@@ -160,13 +160,12 @@ static bool SafeToDestroyConstant(const Constant *C) {
 static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
                           SmallPtrSet<const PHINode*, 16> &PHIUsers) {
   for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;
-       ++UI)
-    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+       ++UI) {
+    const User *U = *UI;
+    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       GS.HasNonInstructionUser = true;
-
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
-
-    } else if (const Instruction *I = dyn_cast<Instruction>(*UI)) {
+    } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
       if (!GS.HasMultipleAccessingFunctions) {
         const Function *F = I->getParent()->getParent();
         if (GS.AccessingFunction == 0)
@@ -235,7 +234,7 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
       } else {
         return true;  // Any other non-load instruction might take address!
       }
-    } else if (const Constant *C = dyn_cast<Constant>(*UI)) {
+    } else if (const Constant *C = dyn_cast<Constant>(U)) {
       GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
       if (!SafeToDestroyConstant(C))
@@ -245,6 +244,7 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
       // Otherwise must be some other user.
       return true;
     }
+  }
 
   return false;
 }
