@@ -67,10 +67,11 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   if (BB)
     for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB);
          SI != SE; ++SI) {
+      BasicBlock *P = *SI;
       // Does Node immediately dominate this predecessor?
-      DomTreeNode *SINode = DT[*SI];
+      DomTreeNode *SINode = DT[P];
       if (SINode && SINode->getIDom() != Node)
-        S.insert(*SI);
+        S.insert(P);
     }
 
   // At this point, S is DFlocal.  Now we union in DFup's of our children...
