@@ -1238,7 +1238,7 @@ struct __command
         __zero_marked_exprs,
     };
 
-    typedef __state<_CharT> __state;
+    typedef _STD::__state<_CharT> __state;
 
     int __do_;
     const __state* first;
@@ -1275,7 +1275,7 @@ class __state
     __state(const __state&);
     __state& operator=(const __state&);
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     __state() {}
     virtual ~__state() {}
@@ -1296,7 +1296,7 @@ class __end_state
     : public __state<_CharT>
 {
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     __end_state() {}
 
@@ -1366,7 +1366,7 @@ class __empty_state
     typedef __owns_one_state<_CharT> base;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __empty_state(__state<_CharT>* __s)
         : base(__s) {}
@@ -1399,7 +1399,7 @@ class __empty_non_own_state
     typedef __has_one_state<_CharT> base;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __empty_non_own_state(__state<_CharT>* __s)
         : base(__s) {}
@@ -1463,7 +1463,7 @@ class __loop
     bool __greedy_;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __loop(unsigned __loop_id,
                           __state<_CharT>* __s1, __owns_one_state<_CharT>* __s2,
@@ -1524,7 +1524,7 @@ class __zero_loop_count
     size_t __loop_id_;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __zero_loop_count(size_t __loop_id,
                           __state<_CharT>* __s1)
@@ -1565,7 +1565,7 @@ class __increment_loop_count
     size_t __loop_id_;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __increment_loop_count(size_t __loop_id,
                           __state<_CharT>* __s1)
@@ -1607,7 +1607,7 @@ class __zero_marked_exprs
     size_t __end_;
 
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __zero_marked_exprs(size_t __begin, size_t __end,
                           __state<_CharT>* __s1)
@@ -1653,7 +1653,7 @@ class __begin_marked_subexpression
 
     unsigned __mexp_;
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __begin_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
@@ -1693,7 +1693,7 @@ class __end_marked_subexpression
 
     unsigned __mexp_;
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     explicit __end_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
@@ -1724,26 +1724,22 @@ __end_marked_subexpression<_CharT>::__test(const _CharT*, const _CharT* __c, con
     return __command(__command::__accept_but_not_consume, this->first());
 }
 
-// __state_arg
+// __r_anchor
 
 template <class _CharT>
-class __state_arg
+class __r_anchor
     : public __owns_one_state<_CharT>
 {
     typedef __owns_one_state<_CharT> base;
 
-    unsigned __arg_;
-
-    __state_arg(const __state_arg&);
-    __state_arg& operator=(const __state_arg&);
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
-    __state_arg(unsigned __a, __state<_CharT>* __s)
-        : base(__s), __arg_(__a) {}
+    __r_anchor(__state<_CharT>* __s)
+        : base(__s) {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
+    virtual __command __test(const _CharT*, const _CharT* __c,
+                             const _CharT* __l,
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const;
@@ -1751,19 +1747,20 @@ public:
     virtual string speak() const
     {
         ostringstream os;
-        os << "state arg " << __arg_;
+        os << "right anchor";
         return os.str();
     }
 };
 
 template <class _CharT>
 __command<_CharT>
-__state_arg<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT*,
+__r_anchor<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT* __l,
                              vector<size_t>&,
                              sub_match<const _CharT*>*,
                              regex_constants::match_flag_type) const
 {
-    return __command(__arg_, this->first());
+    return __c == __l ?
+        __command(__command::__accept_but_not_consume, this->first()) : __command();
 }
 
 // __match_char
@@ -1779,7 +1776,7 @@ class __match_char
     __match_char(const __match_char&);
     __match_char& operator=(const __match_char&);
 public:
-    typedef __command<_CharT> __command;
+    typedef _STD::__command<_CharT> __command;
 
     __match_char(_CharT __c, __state<_CharT>* __s)
         : base(__s), __c_(__c) {}
@@ -1829,9 +1826,10 @@ private:
     int __open_count_;
     shared_ptr<__empty_state<_CharT> > __start_;
     __owns_one_state<_CharT>* __end_;
+    bool __left_anchor_;
 
-    typedef __command<_CharT> __command;
-    typedef __state<_CharT> __state;
+    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
 public:
     // constants:
@@ -1848,13 +1846,16 @@ public:
 
     // construct/copy/destroy:
     basic_regex()
-        : __flags_(), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {}
     explicit basic_regex(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
-        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {__parse(__p, __p + __traits_.length(__p));}
     basic_regex(const value_type* __p, size_t __len, flag_type __f)
-        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {__parse(__p, __p + __len);}
     basic_regex(const basic_regex&);
 #ifdef _LIBCPP_MOVE
@@ -1863,16 +1864,19 @@ public:
     template <class _ST, class _SA>
         explicit basic_regex(const basic_string<value_type, _ST, _SA>& __p,
                              flag_type __f = regex_constants::ECMAScript)
-        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {__parse(__p.begin(), __p.end());}
     template <class _ForwardIterator>
         basic_regex(_ForwardIterator __first, _ForwardIterator __last,
                     flag_type __f = regex_constants::ECMAScript)
-        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {__parse(__first, __last);}
     basic_regex(initializer_list<value_type> __il,
                 flag_type __f = regex_constants::ECMAScript)
-        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0), __end_(0)
+        : __flags_(__f), __marked_count_(0), __loop_count_(0), __open_count_(0),
+          __end_(0), __left_anchor_(false)
         {__parse(__il.begin(), __il.end());}
 
     ~basic_regex();
@@ -2002,8 +2006,8 @@ private:
         _ForwardIterator
         __parse_QUOTED_CHAR_ERE(_ForwardIterator __first, _ForwardIterator __last);
 
-    void __push_l_anchor() {}
-    void __push_r_anchor() {}
+    void __push_l_anchor() {__left_anchor_ = true;}
+    void __push_r_anchor();
     void __push_match_any() {}
     void __push_greedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s,
                                   unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
@@ -2945,6 +2949,15 @@ basic_regex<_CharT, _Traits>::__push_end_marked_subexpression(unsigned __sub)
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_r_anchor()
+{
+    __end_->first() = new __r_anchor<_CharT>(__end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
+
+
 typedef basic_regex<char>    regex;
 typedef basic_regex<wchar_t> wregex;
 
@@ -3698,6 +3711,8 @@ basic_regex<_CharT, _Traits>::__search(
         match_results<_BidirectionalIterator, _Allocator>& __m,
         regex_constants::match_flag_type __flags) const
 {
+    if (__left_anchor_)
+        __flags |= regex_constants::match_continuous;
     __m.__init(1 + mark_count(), __first, __last);
     vector<size_t> __lc(__loop_count());
     if (__match_at_start(__first, __last, __m, __lc, __flags))
