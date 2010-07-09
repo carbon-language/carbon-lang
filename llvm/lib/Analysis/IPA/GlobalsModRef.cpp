@@ -233,33 +233,34 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
                                          GlobalValue *OkayStoreDest) {
   if (!V->getType()->isPointerTy()) return true;
 
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+  for (Value::use_iterator UI = V->use_begin(), E=V->use_end(); UI != E; ++UI) {
+    User *U = *UI;
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       Readers.push_back(LI->getParent()->getParent());
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (V == SI->getOperand(1)) {
         Writers.push_back(SI->getParent()->getParent());
       } else if (SI->getOperand(1) != OkayStoreDest) {
         return true;  // Storing the pointer
       }
-    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
       if (AnalyzeUsesOfPointer(GEP, Readers, Writers)) return true;
-    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
+    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       if (AnalyzeUsesOfPointer(BCI, Readers, Writers, OkayStoreDest))
         return true;
-    } else if (isFreeCall(*UI)) {
-      Writers.push_back(cast<Instruction>(*UI)->getParent()->getParent());
-    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+    } else if (isFreeCall(U)) {
+      Writers.push_back(cast<Instruction>(U)->getParent()->getParent());
+    } else if (CallInst *CI = dyn_cast<CallInst>(U)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
       for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
         if (CI->getArgOperand(i) == V) return true;
-    } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
       for (unsigned i = 0, e = II->getNumArgOperands(); i != e; ++i)
         if (II->getArgOperand(i) == V) return true;
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr ||
           CE->getOpcode() == Instruction::BitCast) {
         if (AnalyzeUsesOfPointer(CE, Readers, Writers))
@@ -267,12 +268,14 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       } else {
         return true;
       }
-    } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
+    } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(U)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return true;  // Allow comparison against null.
     } else {
       return true;
     }
+  }
+
   return false;
 }
 
