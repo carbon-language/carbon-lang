@@ -403,11 +403,13 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
           bool HasPredOutsideOfLoop = false;
           BasicBlock *Exit = ExitBlocks[i];
           for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit);
-               I != E; ++I)
-            if (TIL->contains(*I))
-              Preds.push_back(*I);
+               I != E; ++I) {
+            BasicBlock *P = *I;
+            if (TIL->contains(P))
+              Preds.push_back(P);
             else
               HasPredOutsideOfLoop = true;
+          }
           // If there are any preds not in the loop, we'll need to split
           // the edges. The Preds.empty() check is needed because a block
           // may appear multiple times in the list. We can't use
