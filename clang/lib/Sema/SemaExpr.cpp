@@ -1748,22 +1748,25 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                                             ExprTy, Loc, false,
                                                             constAdded);
     QualType T = VD->getType();
-    if (getLangOptions().CPlusPlus && !T->isDependentType() &&
-        !T->isReferenceType()) {
-      Expr *E = new (Context) 
-                  DeclRefExpr(const_cast<ValueDecl*>(BDRE->getDecl()), T,
-                                         SourceLocation());
+    if (getLangOptions().CPlusPlus) {
+      if (!T->isDependentType() && !T->isReferenceType()) {
+        Expr *E = new (Context) 
+                    DeclRefExpr(const_cast<ValueDecl*>(BDRE->getDecl()), T,
+                                          SourceLocation());
       
-      OwningExprResult Res = PerformCopyInitialization(
-                      InitializedEntity::InitializeBlock(VD->getLocation(), 
+        OwningExprResult Res = PerformCopyInitialization(
+                          InitializedEntity::InitializeBlock(VD->getLocation(), 
                                                          T, false),
-                      SourceLocation(),
-                      Owned(E));
-      if (!Res.isInvalid()) {
-        Res = MaybeCreateCXXExprWithTemporaries(move(Res));
-        Expr *Init = Res.takeAs<Expr>();
-        BDRE->setCopyConstructorExpr(Init);
+                                                         SourceLocation(),
+                                                         Owned(E));
+        if (!Res.isInvalid()) {
+          Res = MaybeCreateCXXExprWithTemporaries(move(Res));
+          Expr *Init = Res.takeAs<Expr>();
+          BDRE->setCopyConstructorExpr(Init);
+        }
       }
+      else if (T->isDependentType())
+        BDRE->setTypeDependent(true);
     }
     return Owned(BDRE);
   }
