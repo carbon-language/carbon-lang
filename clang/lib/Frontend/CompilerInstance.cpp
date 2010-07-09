@@ -37,7 +37,7 @@
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
-  : Invocation(new CompilerInvocation()) {
+  : Invocation(new CompilerInvocation()), Reader(0) {
 }
 
 CompilerInstance::~CompilerInstance() {
