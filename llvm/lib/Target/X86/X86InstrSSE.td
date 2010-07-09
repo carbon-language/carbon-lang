@@ -2117,6 +2117,28 @@ let isAsmParserOnly = 1 in {
                         "movntdq\t{$src, $dst|$dst, $src}",
                         [(alignednontemporalstore (v4f32 VR128:$src),
                                                   addr:$dst)]>, VEX;
+
+    def VMOVNTPSYmr : VPSI<0x2B, MRMDestMem, (outs),
+                         (ins f256mem:$dst, VR256:$src),
+                         "movntps\t{$src, $dst|$dst, $src}",
+                         [(alignednontemporalstore (v8f32 VR256:$src),
+                                                   addr:$dst)]>, VEX;
+    def VMOVNTPDYmr : VPDI<0x2B, MRMDestMem, (outs),
+                         (ins f256mem:$dst, VR256:$src),
+                         "movntpd\t{$src, $dst|$dst, $src}",
+                         [(alignednontemporalstore (v4f64 VR256:$src),
+                                                   addr:$dst)]>, VEX;
+    def VMOVNTDQY_64mr : VPDI<0xE7, MRMDestMem, (outs),
+                          (ins f256mem:$dst, VR256:$src),
+                          "movntdq\t{$src, $dst|$dst, $src}",
+                          [(alignednontemporalstore (v4f64 VR256:$src),
+                                                    addr:$dst)]>, VEX;
+    let ExeDomain = SSEPackedInt in
+    def VMOVNTDQYmr : VPDI<0xE7, MRMDestMem, (outs),
+                        (ins f256mem:$dst, VR256:$src),
+                        "movntdq\t{$src, $dst|$dst, $src}",
+                        [(alignednontemporalstore (v8f32 VR256:$src),
+                                                  addr:$dst)]>, VEX;
   }
 }
 

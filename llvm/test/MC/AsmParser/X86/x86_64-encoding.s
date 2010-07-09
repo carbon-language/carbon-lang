@@ -2460,3 +2460,15 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x1d,0x14,0x54,0xcb,0xfc]
           vunpcklpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
 
+// CHECK: vmovntdq  %ymm11, (%rax)
+// CHECK: encoding: [0xc5,0x7d,0xe7,0x18]
+          vmovntdq  %ymm11, (%rax)
+
+// CHECK: vmovntpd  %ymm11, (%rax)
+// CHECK: encoding: [0xc5,0x7d,0x2b,0x18]
+          vmovntpd  %ymm11, (%rax)
+
+// CHECK: vmovntps  %ymm11, (%rax)
+// CHECK: encoding: [0xc5,0x7c,0x2b,0x18]
+          vmovntps  %ymm11, (%rax)
+

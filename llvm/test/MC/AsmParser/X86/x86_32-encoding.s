@@ -12386,3 +12386,16 @@
 // CHECK: encoding: [0xc5,0xed,0x14,0x6c,0xcb,0xfc]
           vunpcklpd  -4(%ebx,%ecx,8), %ymm2, %ymm5
 
+// CHECK: vmovntdq  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfd,0xe7,0x08]
+          vmovntdq  %ymm1, (%eax)
+
+// CHECK: vmovntpd  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfd,0x2b,0x08]
+          vmovntpd  %ymm1, (%eax)
+
+// CHECK: vmovntps  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfc,0x2b,0x08]
+          vmovntps  %ymm1, (%eax)
+
+
