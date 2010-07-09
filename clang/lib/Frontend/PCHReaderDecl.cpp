@@ -966,7 +966,7 @@ void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
         cast_or_null<ClassTemplatePartialSpecializationDecl>(
                                                 Reader.GetDecl(Record[Idx++])));
     if (Record[Idx++])
-      D->isMemberSpecialization();
+      D->setMemberSpecialization();
   }
 }
 
