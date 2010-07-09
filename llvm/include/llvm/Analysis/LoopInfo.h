@@ -285,12 +285,14 @@ public:
     typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
     for (typename InvBlockTraits::ChildIteratorType PI =
          InvBlockTraits::child_begin(Header),
-         PE = InvBlockTraits::child_end(Header); PI != PE; ++PI)
-      if (!contains(*PI)) {     // If the block is not in the loop...
-        if (Out && Out != *PI)
+         PE = InvBlockTraits::child_end(Header); PI != PE; ++PI) {
+      typename InvBlockTraits::NodeType *N = *PI;
+      if (!contains(N)) {     // If the block is not in the loop...
+        if (Out && Out != N)
           return 0;             // Multiple predecessors outside the loop
-        Out = *PI;
+        Out = N;
       }
+    }
 
     // Make sure there is only one exit out of the preheader.
     assert(Out && "Header of loop has no predecessors from outside loop?");
