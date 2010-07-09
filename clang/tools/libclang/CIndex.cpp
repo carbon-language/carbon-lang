@@ -1184,7 +1184,15 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     // in the actual argument list.
     if (source_filename)
       Args.push_back(source_filename);
+    
+    // Since the Clang C library is primarily used by batch tools dealing with
+    // (often very broken) source code, where spell-checking can have a
+    // significant negative impact on performance (particularly when 
+    // precompiled headers are involved), we disable it by default.
+    // Note that we place this argument early in the list, so that it can be
+    // overridden by the caller with "-fspell-checking".
     Args.push_back("-fno-spell-checking");
+    
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
     Args.push_back("-Xclang");
@@ -1248,6 +1256,13 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   argv.push_back("-o");
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
+  
+  // Since the Clang C library is primarily used by batch tools dealing with
+  // (often very broken) source code, where spell-checking can have a
+  // significant negative impact on performance (particularly when 
+  // precompiled headers are involved), we disable it by default.
+  // Note that we place this argument early in the list, so that it can be
+  // overridden by the caller with "-fspell-checking".
   argv.push_back("-fno-spell-checking");
 
   // Remap any unsaved files to temporary files.
