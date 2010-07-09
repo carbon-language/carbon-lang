@@ -294,7 +294,8 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
   // Walk the user list of the global.  If we find anything other than a direct
   // load or store, bail out.
   for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I){
-    if (LoadInst *LI = dyn_cast<LoadInst>(*I)) {
+    User *U = *I;
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // The pointer loaded from the global can only be used in simple ways:
       // we allow addressing of it and loading storing to it.  We do *not* allow
       // storing the loaded pointer somewhere else or passing to a function.
@@ -302,7 +303,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       if (AnalyzeUsesOfPointer(LI, ReadersWriters, ReadersWriters))
         return false;  // Loaded pointer escapes.
       // TODO: Could try some IP mod/ref of the loaded pointer.
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(*I)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // Storing the global itself.
       if (SI->getOperand(0) == GV) return false;
 
