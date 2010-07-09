@@ -715,9 +715,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 static bool IsOnlyNullComparedAndFreed(const Value &V) {
   for (Value::const_use_iterator UI = V.use_begin(), UE = V.use_end();
        UI != UE; ++UI) {
-    if (isFreeCall(*UI))
+    const User *U = *UI;
+    if (isFreeCall(U))
       continue;
-    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(*UI))
+    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(U))
       if (ICI->isEquality() && isa<ConstantPointerNull>(ICI->getOperand(1)))
         continue;
     return false;
