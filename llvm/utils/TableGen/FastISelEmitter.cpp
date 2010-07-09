@@ -432,7 +432,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               
               for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
                 if ((*Memo.PhysRegs)[i] != "")
-                  OS << "  TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, "
+                  OS << "  TII.copyRegToReg(*MBB, MBB->end(), "
                      << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
                      << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
                      << (*Memo.PhysRegs)[i] << "), "
@@ -526,7 +526,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
             
              for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
                 if ((*Memo.PhysRegs)[i] != "")
-                  OS << "  TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, "
+                  OS << "  TII.copyRegToReg(*MBB, MBB->end(), "
                      << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
                      << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
                      << (*Memo.PhysRegs)[i] << "), "

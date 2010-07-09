@@ -519,13 +519,13 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
     return;
 
   MachineBasicBlock *BB = Emitter.getBlock();
-  if (Emitter.getInsertPos() == BB->begin() || BB->back().isPHI()) {
+  if (BB->empty() || BB->back().isPHI()) {
     // Did not insert any instruction.
     Orders.push_back(std::make_pair(Order, (MachineInstr*)0));
     return;
   }
 
-  Orders.push_back(std::make_pair(Order, prior(Emitter.getInsertPos())));
+  Orders.push_back(std::make_pair(Order, &BB->back()));
   if (!N->getHasDebugValue())
     return;
   // Opportunistically insert immediate dbg_value uses, i.e. those with source
@@ -564,7 +564,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     for (; PDI != PDE; ++PDI) {
       MachineInstr *DbgMI= Emitter.EmitDbgValue(*PDI, VRBaseMap);
       if (DbgMI)
-        BB->insert(InsertPos, DbgMI);
+        BB->push_back(DbgMI);
     }
   }
 
@@ -608,7 +608,9 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
   // Insert all the dbg_values which have not already been inserted in source
   // order sequence.
   if (HasDbg) {
-    MachineBasicBlock::iterator BBBegin = BB->getFirstNonPHI();
+    MachineBasicBlock::iterator BBBegin = BB->empty() ? BB->end() : BB->begin();
+    while (BBBegin != BB->end() && BBBegin->isPHI())
+      ++BBBegin;
 
     // Sort the source order instructions and use the order to insert debug
     // values.
@@ -624,6 +626,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
       // Insert all SDDbgValue's whose order(s) are before "Order".
       if (!MI)
         continue;
+      MachineBasicBlock *MIBB = MI->getParent();
 #ifndef NDEBUG
       unsigned LastDIOrder = 0;
 #endif
@@ -643,7 +646,7 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
             BB->insert(BBBegin, DbgMI);
           else {
             MachineBasicBlock::iterator Pos = MI;
-            BB->insert(llvm::next(Pos), DbgMI);
+            MIBB->insert(llvm::next(Pos), DbgMI);
           }
         }
       }

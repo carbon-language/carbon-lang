@@ -5,7 +5,7 @@
 ; CHECK: foo:
 ; CHECK-NEXT: movq  %rdi, -8(%rsp)
 ; CHECK-NEXT: movq  %rsi, -16(%rsp)
-; CHECK-NEXT: movsd 128(%rsi,%rdi,8), %xmm0
+; CHECK: movsd 128(%rsi,%rdi,8), %xmm0
 ; CHECK-NEXT: ret
 
 define double @foo(i64 %x, double* %p) nounwind {
