@@ -2498,7 +2498,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   }
   
   // No fusion 
-  if (PrintFailedFusing)
+  if (PrintFailedFusing && !MI->isCopy())
     dbgs() << "We failed to fuse operand " << i << " in " << *MI;
   return NULL;
 }
