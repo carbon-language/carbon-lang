@@ -277,11 +277,13 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
         OtherPreds.push_back(PN->getIncomingBlock(i));
   } else {
     for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB);
-         I != E; ++I)
-      if (*I != NewBB)
-        OtherPreds.push_back(*I);
+         I != E; ++I) {
+      BasicBlock *P = *I;
+      if (P != NewBB)
+          OtherPreds.push_back(P);
+    }
   }
-  
+
   bool NewBBDominatesDestBB = true;
   
   // Should we update DominatorTree information?
