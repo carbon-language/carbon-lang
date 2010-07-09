@@ -460,7 +460,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR == IntA.end() || ULR->valno != AValNo)
       continue;
-    UseMO.setReg(NewReg);
+    if (TargetRegisterInfo::isPhysicalRegister(NewReg))
+      UseMO.substPhysReg(NewReg, *tri_);
+    else
+      UseMO.setReg(NewReg);
     if (UseMI == CopyMI)
       continue;
     if (UseMO.isKill()) {
