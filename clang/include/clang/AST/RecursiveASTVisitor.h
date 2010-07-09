@@ -747,8 +747,22 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseQualifiedTypeLoc(
     QualifiedTypeLoc TL) {
-  // Move this over to the 'main' typeloc tree.
-  return getDerived().TraverseTypeLoc(TL.getUnqualifiedLoc());
+  // Move this over to the 'main' typeloc tree.  Note that this is a
+  // move -- we pretend that we were really looking at the unqualified
+  // typeloc all along -- rather than a recursion, so we don't follow
+  // the normal CRTP plan of going through
+  // getDerived().TraverseTypeLoc.  If we did, we'd be traversing
+  // twice for the same type (once as a QualifiedTypeLoc version of
+  // the type, once as an UnqualifiedTypeLoc version of the type),
+  // which in effect means we'd call VisitTypeLoc twice with the
+  // 'same' type.  This solves that problem, at the cost of never
+  // seeing the qualified version of the type (unless the client
+  // subclasses TraverseQualifiedTypeLoc themselves).  It's not a
+  // perfect solution.  A perfect solution probably requires making
+  // QualifiedTypeLoc a wrapper around TypeLoc -- like QualType is a
+  // wrapper around Type* -- rather than being its own class in the
+  // type hierarchy.
+  return TraverseTypeLoc(TL.getUnqualifiedLoc());
 }
 
 DEF_TRAVERSE_TYPELOC(BuiltinType, { })
