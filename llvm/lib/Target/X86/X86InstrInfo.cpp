@@ -784,7 +784,9 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV32rm:
+  case X86::MOV32rm_TC:
   case X86::MOV64rm:
+  case X86::MOV64rm_TC:
   case X86::LD_Fp64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
@@ -805,7 +807,9 @@ static bool isFrameStoreOpcode(int Opcode) {
   case X86::MOV8mr:
   case X86::MOV16mr:
   case X86::MOV32mr:
+  case X86::MOV32mr_TC:
   case X86::MOV64mr:
+  case X86::MOV64mr_TC:
   case X86::ST_FpP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
