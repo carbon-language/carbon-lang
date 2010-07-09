@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s -stats -info-output-file - | grep machine-licm | grep 2
+; RUN: llc -mtriple=x86_64-apple-darwin -march=x86-64 < %s -stats -info-output-file - | grep machine-licm | grep 2
 
 ; MachineLICM should be able to hoist the symbolic addresses out of
 ; the inner loops.
