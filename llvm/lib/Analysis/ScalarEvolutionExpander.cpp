@@ -30,9 +30,10 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
                                        BasicBlock::iterator IP) {
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI)
-    if ((*UI)->getType() == Ty)
-      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
+       UI != E; ++UI) {
+    User *U = *UI;
+    if (U->getType() == Ty)
+      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(U)))
         if (CI->getOpcode() == Op) {
           // If the cast isn't where we want it, fix it.
           if (BasicBlock::iterator(CI) != IP) {
@@ -49,6 +50,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, const Type *Ty,
           rememberInstruction(CI);
           return CI;
         }
+  }
 
   // Create a new cast.
   Instruction *I = CastInst::Create(Op, V, Ty, V->getName(), IP);
