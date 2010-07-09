@@ -307,7 +307,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
       unsigned DRegLo = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_0);
       unsigned DRegHi = TM.getRegisterInfo()->getSubReg(Reg, ARM::dsub_1);
       O << '{'
-        << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
+        << getRegisterName(DRegLo) << ", " << getRegisterName(DRegHi)
         << '}';
     } else if (Modifier && strcmp(Modifier, "lane") == 0) {
       unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
