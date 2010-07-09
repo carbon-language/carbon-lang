@@ -757,9 +757,11 @@ public:
     typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
     for (typename InvBlockTraits::ChildIteratorType I =
          InvBlockTraits::child_begin(BB), E = InvBlockTraits::child_end(BB);
-         I != E; ++I)
-      if (DT.dominates(BB, *I))   // If BB dominates its predecessor...
-        TodoStack.push_back(*I);
+         I != E; ++I) {
+      typename InvBlockTraits::NodeType *N = *I;
+      if (DT.dominates(BB, N))   // If BB dominates its predecessor...
+          TodoStack.push_back(N);
+    }
 
     if (TodoStack.empty()) return 0;  // No backedges to this block...
 
