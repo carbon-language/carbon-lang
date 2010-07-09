@@ -10,7 +10,7 @@ target triple = "thumbv7-apple-darwin10"
 ; %reg1028 gets allocated %Q0, and if %reg1030 is reloaded for the partial
 ; redef, it cannot also get %Q0.
 
-; CHECK: vld1.64 {d0, d1}, [r0]
+; CHECK: vld1.64 {d0, d1}, [r{{.}}]
 ; CHECK-NOT: vld1.64 {d0, d1}
 ; CHECK: vmov.f64 d3, d0
 
