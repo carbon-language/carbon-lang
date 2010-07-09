@@ -3147,6 +3147,8 @@ bool X86InstrInfo::isX86_64ExtendedReg(unsigned RegNo) {
   case X86::R12B:  case X86::R13B:  case X86::R14B:  case X86::R15B:
   case X86::XMM8:  case X86::XMM9:  case X86::XMM10: case X86::XMM11:
   case X86::XMM12: case X86::XMM13: case X86::XMM14: case X86::XMM15:
+  case X86::YMM8:  case X86::YMM9:  case X86::YMM10: case X86::YMM11:
+  case X86::YMM12: case X86::YMM13: case X86::YMM14: case X86::YMM15:
     return true;
   }
   return false;

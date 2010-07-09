@@ -80,6 +80,10 @@ public:
     O << "XMMWORD PTR ";
     printMemReference(MI, OpNo, O);
   }
+  void printf256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "YMMWORD PTR ";
+    printMemReference(MI, OpNo, O);
+  }
 };
   
 }

@@ -106,6 +106,12 @@ def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
+// FIXME: move this to a more appropriate place after all AVX is done.
+def loadv8f32    : PatFrag<(ops node:$ptr), (v8f32 (load node:$ptr))>;
+def loadv4f64    : PatFrag<(ops node:$ptr), (v4f64 (load node:$ptr))>;
+def loadv8i32    : PatFrag<(ops node:$ptr), (v8i32 (load node:$ptr))>;
+def loadv4i64    : PatFrag<(ops node:$ptr), (v4i64 (load node:$ptr))>;
+
 // Like 'store', but always requires vector alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
                            (store node:$val, node:$ptr), [{
@@ -129,6 +135,16 @@ def alignedloadv4i32 : PatFrag<(ops node:$ptr),
                                (v4i32 (alignedload node:$ptr))>;
 def alignedloadv2i64 : PatFrag<(ops node:$ptr),
                                (v2i64 (alignedload node:$ptr))>;
+
+// FIXME: move this to a more appropriate place after all AVX is done.
+def alignedloadv8f32 : PatFrag<(ops node:$ptr),
+                               (v8f32 (alignedload node:$ptr))>;
+def alignedloadv4f64 : PatFrag<(ops node:$ptr),
+                               (v4f64 (alignedload node:$ptr))>;
+def alignedloadv8i32 : PatFrag<(ops node:$ptr),
+                               (v8i32 (alignedload node:$ptr))>;
+def alignedloadv4i64 : PatFrag<(ops node:$ptr),
+                               (v4i64 (alignedload node:$ptr))>;
 
 // Like 'load', but uses special alignment checks suitable for use in
 // memory operands in most SSE instructions, which are required to
@@ -583,6 +599,15 @@ defm VMOVUPS : sse12_mov_packed<0x10, VR128, f128mem, loadv4f32,
                               "movups", SSEPackedSingle>, VEX;
 defm VMOVUPD : sse12_mov_packed<0x10, VR128, f128mem, loadv2f64,
                               "movupd", SSEPackedDouble, 0>, OpSize, VEX;
+
+defm VMOVAPSY : sse12_mov_packed<0x28, VR256, f256mem, alignedloadv8f32,
+                              "movaps", SSEPackedSingle>, VEX;
+defm VMOVAPDY : sse12_mov_packed<0x28, VR256, f256mem, alignedloadv4f64,
+                              "movapd", SSEPackedDouble>, OpSize, VEX;
+defm VMOVUPSY : sse12_mov_packed<0x10, VR256, f256mem, loadv8f32,
+                              "movups", SSEPackedSingle>, VEX;
+defm VMOVUPDY : sse12_mov_packed<0x10, VR256, f256mem, loadv4f64,
+                              "movupd", SSEPackedDouble, 0>, OpSize, VEX;
 }
 defm MOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
                               "movaps", SSEPackedSingle>, TB;
@@ -606,6 +631,18 @@ def VMOVUPSmr : VPSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 def VMOVUPDmr : VPDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(store (v2f64 VR128:$src), addr:$dst)]>, VEX;
+def VMOVAPSYmr : VPSI<0x29, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
+                   "movaps\t{$src, $dst|$dst, $src}",
+                   [(alignedstore (v8f32 VR256:$src), addr:$dst)]>, VEX;
+def VMOVAPDYmr : VPDI<0x29, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
+                   "movapd\t{$src, $dst|$dst, $src}",
+                   [(alignedstore (v4f64 VR256:$src), addr:$dst)]>, VEX;
+def VMOVUPSYmr : VPSI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
+                   "movups\t{$src, $dst|$dst, $src}",
+                   [(store (v8f32 VR256:$src), addr:$dst)]>, VEX;
+def VMOVUPDYmr : VPDI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
+                   "movupd\t{$src, $dst|$dst, $src}",
+                   [(store (v4f64 VR256:$src), addr:$dst)]>, VEX;
 }
 def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}",

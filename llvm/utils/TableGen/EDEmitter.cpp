@@ -306,6 +306,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   REG("RFP64");
   REG("RFP80");
   REG("VR128");
+  REG("VR256");
   REG("RST");
   REG("SEGMENT_REG");
   REG("DEBUG_REG");
@@ -339,6 +340,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   MEM("opaque80mem");
   MEM("i128mem");
   MEM("f128mem");
+  MEM("f256mem");
   MEM("opaque512mem");
   
   // all R, I, R, I

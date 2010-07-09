@@ -12305,3 +12305,52 @@
 // CHECK: vcmpps  $31, %xmm1, %xmm2, %xmm3
 // CHECK: encoding: [0xc5,0xe8,0xc2,0xd9,0x1f]
           vcmptrue_usps %xmm1, %xmm2, %xmm3
+
+// CHECK: vmovaps  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x28,0x10]
+          vmovaps  (%eax), %ymm2
+
+// CHECK: vmovaps  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x28,0xd1]
+          vmovaps  %ymm1, %ymm2
+
+// CHECK: vmovaps  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfc,0x29,0x08]
+          vmovaps  %ymm1, (%eax)
+
+// CHECK: vmovapd  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x28,0x10]
+          vmovapd  (%eax), %ymm2
+
+// CHECK: vmovapd  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x28,0xd1]
+          vmovapd  %ymm1, %ymm2
+
+// CHECK: vmovapd  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfd,0x29,0x08]
+          vmovapd  %ymm1, (%eax)
+
+// CHECK: vmovups  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x10,0x10]
+          vmovups  (%eax), %ymm2
+
+// CHECK: vmovups  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x10,0xd1]
+          vmovups  %ymm1, %ymm2
+
+// CHECK: vmovups  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfc,0x11,0x08]
+          vmovups  %ymm1, (%eax)
+
+// CHECK: vmovupd  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x10,0x10]
+          vmovupd  (%eax), %ymm2
+
+// CHECK: vmovupd  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x10,0xd1]
+          vmovupd  %ymm1, %ymm2
+
+// CHECK: vmovupd  %ymm1, (%eax)
+// CHECK: encoding: [0xc5,0xfd,0x11,0x08]
+          vmovupd  %ymm1, (%eax)
+

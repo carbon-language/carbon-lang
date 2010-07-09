@@ -75,7 +75,8 @@ public:
                                               unsigned OpNum) {
     unsigned SrcReg = MI.getOperand(OpNum).getReg();
     unsigned SrcRegNum = GetX86RegNum(MI.getOperand(OpNum));
-    if (SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15)
+    if ((SrcReg >= X86::XMM8 && SrcReg <= X86::XMM15) ||
+        (SrcReg >= X86::YMM8 && SrcReg <= X86::YMM15))
       SrcRegNum += 8;
 
     // The registers represented through VEX_VVVV should
@@ -452,6 +453,15 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::TB:  // Bypass: Not used by VEX
   case 0:
     break;  // No prefix!
+  }
+
+  // Set the vector length to 256-bit if YMM0-YMM15 is used
+  for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
+    if (!MI.getOperand(i).isReg())
+      continue;
+    unsigned SrcReg = MI.getOperand(i).getReg();
+    if (SrcReg >= X86::YMM0 && SrcReg <= X86::YMM15)
+      VEX_L = 1;
   }
 
   unsigned NumOps = MI.getNumOperands();
