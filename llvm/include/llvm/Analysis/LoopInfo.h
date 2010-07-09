@@ -309,11 +309,13 @@ public:
     typename InvBlockTraits::ChildIteratorType PE =
                                               InvBlockTraits::child_end(Header);
     BlockT *Latch = 0;
-    for (; PI != PE; ++PI)
-      if (contains(*PI)) {
+    for (; PI != PE; ++PI) {
+      typename InvBlockTraits::NodeType *N = *PI;
+      if (contains(N)) {
         if (Latch) return 0;
-        Latch = *PI;
+        Latch = N;
       }
+    }
 
     return Latch;
   }
@@ -425,10 +427,11 @@ public:
       for (typename InvBlockTraits::ChildIteratorType PI =
            InvBlockTraits::child_begin(BB), PE = InvBlockTraits::child_end(BB);
            PI != PE; ++PI) {
-        if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *PI))
+        typename InvBlockTraits::NodeType *N = *PI;
+        if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), N))
           HasInsideLoopPreds = true;
         else
-          OutsideLoopPreds.push_back(*PI);
+          OutsideLoopPreds.push_back(N);
       }
 
       if (BB == getHeader()) {
