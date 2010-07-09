@@ -7074,7 +7074,10 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BlockDecl *Block = BlockDecl::Create(Context, CurContext, CaretLoc);
   PushBlockScope(BlockScope, Block);
   CurContext->addDecl(Block);
-  PushDeclContext(BlockScope, Block);
+  if (BlockScope)
+    PushDeclContext(BlockScope, Block);
+  else
+    CurContext = Block;
 }
 
 void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
@@ -7199,7 +7202,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     Diag(CaretLoc, diag::err_blocks_disable);
 
   BlockScopeInfo *BSI = cast<BlockScopeInfo>(FunctionScopes.back());
-
+  
   PopDeclContext();
 
   QualType RetTy = Context.VoidTy;

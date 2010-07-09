@@ -4198,6 +4198,10 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   if (!ND)
     return SemaRef.ExprError();
 
+  // Set DeclContext if inside a Block.
+  if (BlockScopeInfo *CurBlock = SemaRef.getCurBlock())
+    ND->setDeclContext(CurBlock->TheDecl);
+  
   if (!getDerived().AlwaysRebuild() && 
       Qualifier == E->getQualifier() &&
       ND == E->getDecl() &&
@@ -6217,17 +6221,75 @@ TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform block expressions yet");
-  return SemaRef.Owned(E->Retain());
+  SourceLocation CaretLoc(E->getExprLoc());
+  
+  SemaRef.ActOnBlockStart(CaretLoc, /*Scope=*/0);
+  BlockScopeInfo *CurBlock = SemaRef.getCurBlock();
+  CurBlock->TheDecl->setIsVariadic(E->getBlockDecl()->isVariadic());
+  llvm::SmallVector<ParmVarDecl*, 4> Params;
+  llvm::SmallVector<QualType, 4> ParamTypes;
+  
+  // Parameter substitution.
+  const BlockDecl *BD = E->getBlockDecl();
+  for (BlockDecl::param_const_iterator P = BD->param_begin(),
+       EN = BD->param_end(); P != EN; ++P) {
+    ParmVarDecl *OldParm = (*P);
+    ParmVarDecl *NewParm = getDerived().TransformFunctionTypeParam(OldParm);
+    QualType NewType = NewParm->getType();
+    Params.push_back(NewParm);
+    ParamTypes.push_back(NewParm->getType());
+  }
+  
+  const FunctionType *BExprFunctionType = E->getFunctionType();
+  QualType BExprResultType = BExprFunctionType->getResultType();
+  if (!BExprResultType.isNull()) {
+    if (!BExprResultType->isDependentType())
+      CurBlock->ReturnType = BExprResultType;
+    else if (BExprResultType != SemaRef.Context.DependentTy)
+      CurBlock->ReturnType = getDerived().TransformType(BExprResultType);
+  }
+    
+  // Transform the body
+  OwningStmtResult Body = getDerived().TransformStmt(E->getBody());
+  if (Body.isInvalid())
+    return SemaRef.ExprError();
+  // Set the parameters on the block decl.
+  if (!Params.empty())
+    CurBlock->TheDecl->setParams(Params.data(), Params.size());
+    
+  QualType FunctionType = getDerived().RebuildFunctionProtoType(
+                                                        CurBlock->ReturnType,
+                                                        ParamTypes.data(),
+                                                        ParamTypes.size(),
+                                                        BD->isVariadic(),
+                                                        0);
+  
+  CurBlock->FunctionType = FunctionType;
+  return SemaRef.ActOnBlockStmtExpr(CaretLoc, move(Body), /*Scope=*/0);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  // FIXME: Implement this!
-  assert(false && "Cannot transform block-related expressions yet");
-  return SemaRef.Owned(E->Retain());
+  NestedNameSpecifier *Qualifier = 0;
+    
+  ValueDecl *ND
+  = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getLocation(),
+                                                       E->getDecl()));
+  if (!ND)
+    return SemaRef.ExprError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      ND == E->getDecl()) {
+    // Mark it referenced in the new context regardless.
+    // FIXME: this is a bit instantiation-specific.
+    SemaRef.MarkDeclarationReferenced(E->getLocation(), ND);
+    
+    return SemaRef.Owned(E->Retain());
+  }
+  
+  return getDerived().RebuildDeclRefExpr(Qualifier, SourceLocation(),
+                                         ND, E->getLocation(), 0);
 }
 
 //===----------------------------------------------------------------------===//

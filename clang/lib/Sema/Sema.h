@@ -158,7 +158,7 @@ struct BlockScopeInfo : FunctionScopeInfo {
   bool hasBlockDeclRefExprs;
 
   BlockDecl *TheDecl;
-
+  
   /// TheScope - This is the scope for the block itself, which contains
   /// arguments etc.
   Scope *TheScope;
