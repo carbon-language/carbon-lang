@@ -199,9 +199,14 @@ FunctionPass *llvm::createMachineLICMPass(bool PreRegAlloc) {
 /// LoopIsOuterMostWithPredecessor - Test if the given loop is the outer-most
 /// loop that has a unique predecessor.
 static bool LoopIsOuterMostWithPredecessor(MachineLoop *CurLoop) {
+  // Check whether this loop even has a unique predecessor.
+  if (!CurLoop->getLoopPredecessor())
+    return false;
+  // Ok, now check to see if any of its outer loops do.
   for (MachineLoop *L = CurLoop->getParentLoop(); L; L = L->getParentLoop())
     if (L->getLoopPredecessor())
       return false;
+  // None of them did, so this is the outermost with a unique predecessor.
   return true;
 }
 
@@ -224,14 +229,17 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   DT  = &getAnalysis<MachineDominatorTree>();
   AA  = &getAnalysis<AliasAnalysis>();
 
-  for (MachineLoopInfo::iterator I = MLI->begin(), E = MLI->end(); I != E; ++I){
-    CurLoop = *I;
+  SmallVector<MachineLoop *, 8> Worklist(MLI->begin(), MLI->end());
+  while (!Worklist.empty()) {
+    CurLoop = Worklist.pop_back_val();
     CurPreheader = 0;
 
     // If this is done before regalloc, only visit outer-most preheader-sporting
     // loops.
-    if (PreRegAlloc && !LoopIsOuterMostWithPredecessor(CurLoop))
+    if (PreRegAlloc && !LoopIsOuterMostWithPredecessor(CurLoop)) {
+      Worklist.append(CurLoop->begin(), CurLoop->end());
       continue;
+    }
 
     if (!PreRegAlloc)
       HoistRegionPostRA();
