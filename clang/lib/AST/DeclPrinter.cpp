@@ -654,7 +654,11 @@ void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
 
   Out << "> ";
 
-  Visit(D->getTemplatedDecl());
+  if (isa<TemplateTemplateParmDecl>(D)) {
+    Out << "class " << D->getName();
+  } else {
+    Visit(D->getTemplatedDecl());
+  }
 }
 
 //----------------------------------------------------------------------------
