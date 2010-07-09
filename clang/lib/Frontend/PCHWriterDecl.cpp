@@ -233,7 +233,8 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   case FunctionDecl::TK_FunctionTemplateSpecialization: {
     FunctionTemplateSpecializationInfo *
       FTSInfo = D->getTemplateSpecializationInfo();
-    Writer.AddDeclRef(FTSInfo->getTemplate(), Record);
+    // We want it canonical to guarantee that it has a Common*.
+    Writer.AddDeclRef(FTSInfo->getTemplate()->getCanonicalDecl(), Record);
     Record.push_back(FTSInfo->getTemplateSpecializationKind());
     
     // Template arguments.
@@ -826,6 +827,10 @@ void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
   Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
 }
 
+static bool IsKeptInFoldingSet(ClassTemplateSpecializationDecl *D) {
+  return D->getTypeForDecl()->getAsCXXRecordDecl() == D;
+}
+
 void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitTemplateDecl(D);
 
@@ -833,27 +838,22 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   if (D->getPreviousDeclaration() == 0) {
     // This ClassTemplateDecl owns the CommonPtr; write it.
+    assert(D->isCanonicalDecl());
 
     typedef llvm::FoldingSet<ClassTemplateSpecializationDecl> CTSDSetTy;
     CTSDSetTy &CTSDSet = D->getSpecializations();
     Record.push_back(CTSDSet.size());
     for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I) {
-      ClassTemplateSpecializationDecl *CTSD = &*I; 
-      Writer.AddDeclRef(CTSD, Record);
-      // Write the argument list here because we may get it uninitialized when
-      // reading it back. 
-      Writer.AddTemplateArgumentList(&CTSD->getTemplateArgs(), Record);
+      assert(IsKeptInFoldingSet(&*I));
+      Writer.AddDeclRef(&*I, Record);
     }
 
     typedef llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> CTPSDSetTy;
     CTPSDSetTy &CTPSDSet = D->getPartialSpecializations();
     Record.push_back(CTPSDSet.size());
     for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E=CTPSDSet.end(); I!=E; ++I) {
-      ClassTemplatePartialSpecializationDecl *CTPSD = &*I; 
-      Writer.AddDeclRef(CTPSD, Record);
-      // Write the argument list here because we may get it uninitialized when
-      // reading it back. 
-      Writer.AddTemplateArgumentList(&CTPSD->getTemplateArgs(), Record);
+      assert(IsKeptInFoldingSet(&*I));
+      Writer.AddDeclRef(&*I, Record); 
     }
 
     // InjectedClassNameType is computed, no need to write it.
@@ -890,6 +890,13 @@ void PCHDeclWriter::VisitClassTemplateSpecializationDecl(
   Writer.AddTemplateArgumentList(&D->getTemplateArgs(), Record);
   Writer.AddSourceLocation(D->getPointOfInstantiation(), Record);
   Record.push_back(D->getSpecializationKind());
+
+  bool IsInInFoldingSet = IsKeptInFoldingSet(D);
+  Record.push_back(IsInInFoldingSet);
+  if (IsInInFoldingSet) {
+    // When reading, we'll add it to the folding set of this one. 
+    Writer.AddDeclRef(D->getSpecializedTemplate()->getCanonicalDecl(), Record);
+  }
 
   Code = pch::DECL_CLASS_TEMPLATE_SPECIALIZATION;
 }

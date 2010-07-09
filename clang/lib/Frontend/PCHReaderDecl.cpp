@@ -873,36 +873,15 @@ void PCHDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   if (PrevDecl == 0) {
     // This ClassTemplateDecl owns a CommonPtr; read it.
 
+    // FoldingSets are filled in VisitClassTemplateSpecializationDecl.
     unsigned size = Record[Idx++];
-    while (size--) {
-      ClassTemplateSpecializationDecl *CTSD
-         = cast<ClassTemplateSpecializationDecl>(Reader.GetDecl(Record[Idx++]));
-      llvm::SmallVector<TemplateArgument, 8> TemplArgs;
-      Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
-      llvm::FoldingSetNodeID ID;
-      void *InsertPos = 0;
-      ClassTemplateSpecializationDecl::Profile(ID, TemplArgs.data(),
-                                               TemplArgs.size(),
-                                               *Reader.getContext());
-      D->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-      D->getSpecializations().InsertNode(CTSD, InsertPos);
-    }
+    while (size--)
+      cast<ClassTemplateSpecializationDecl>(Reader.GetDecl(Record[Idx++]));
 
     size = Record[Idx++];
-    while (size--) {
-      ClassTemplatePartialSpecializationDecl *CTSD
-         = cast<ClassTemplatePartialSpecializationDecl>(
+    while (size--)
+      cast<ClassTemplatePartialSpecializationDecl>(
                                                  Reader.GetDecl(Record[Idx++]));
-      llvm::SmallVector<TemplateArgument, 8> TemplArgs;
-      Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
-      llvm::FoldingSetNodeID ID;
-      void *InsertPos = 0;
-      ClassTemplatePartialSpecializationDecl::Profile(ID, TemplArgs.data(),
-                                                      TemplArgs.size(),
-                                                      *Reader.getContext());
-      D->getPartialSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-      D->getPartialSpecializations().InsertNode(CTSD, InsertPos);
-    }
 
     // InjectedClassNameType is computed.
 
@@ -944,6 +923,21 @@ void PCHDeclReader::VisitClassTemplateSpecializationDecl(
   if (POI.isValid())
     D->setPointOfInstantiation(POI);
   D->setSpecializationKind((TemplateSpecializationKind)Record[Idx++]);
+
+  if (Record[Idx++]) { // IsKeptInFoldingSet.
+    ClassTemplateDecl *CanonPattern
+                       = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
+    if (ClassTemplatePartialSpecializationDecl *Partial
+            = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
+      ClassTemplatePartialSpecializationDecl *Inserted
+          = CanonPattern->getPartialSpecializations().GetOrInsertNode(Partial);
+      assert(Inserted == Partial && "Already inserted!");
+    } else {
+      ClassTemplateSpecializationDecl *Inserted
+          = CanonPattern->getSpecializations().GetOrInsertNode(D);
+      assert(Inserted == D && "Already inserted!");
+    }
+  }
 }
 
 void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
