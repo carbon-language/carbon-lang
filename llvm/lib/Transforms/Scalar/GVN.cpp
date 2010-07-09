@@ -2128,26 +2128,27 @@ bool GVN::performPRE(Function &F) {
 
       for (pred_iterator PI = pred_begin(CurrentBlock),
            PE = pred_end(CurrentBlock); PI != PE; ++PI) {
+        BasicBlock *P = *PI;
         // We're not interested in PRE where the block is its
         // own predecessor, or in blocks with predecessors
         // that are not reachable.
-        if (*PI == CurrentBlock) {
+        if (P == CurrentBlock) {
           NumWithout = 2;
           break;
-        } else if (!localAvail.count(*PI))  {
+        } else if (!localAvail.count(P))  {
           NumWithout = 2;
           break;
         }
 
         DenseMap<uint32_t, Value*>::iterator predV =
-                                            localAvail[*PI]->table.find(ValNo);
-        if (predV == localAvail[*PI]->table.end()) {
-          PREPred = *PI;
+                                            localAvail[P]->table.find(ValNo);
+        if (predV == localAvail[P]->table.end()) {
+          PREPred = P;
           ++NumWithout;
         } else if (predV->second == CurInst) {
           NumWithout = 2;
         } else {
-          predMap[*PI] = predV->second;
+          predMap[P] = predV->second;
           ++NumWith;
         }
       }
