@@ -381,7 +381,7 @@ IOChannel::Start ()
 bool
 IOChannel::Stop ()
 {
-    if (m_read_thread == NULL)
+    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
         return true;
 
     BroadcastEventByType (eBroadcastBitThreadShouldExit);

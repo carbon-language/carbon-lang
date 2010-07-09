@@ -24,8 +24,8 @@ public:
     typedef struct ValueTypeTag
     {
         ValueTypeTag() :
-            data(NULL),
-            value()
+            value(),
+            data(NULL)
         {
             value.uval = 0;
         }

@@ -28,7 +28,7 @@ using namespace lldb_private;
 Communication::Communication(const char *name) :
     Broadcaster (name),
     m_connection_ap (),
-    m_read_thread (NULL),
+    m_read_thread (LLDB_INVALID_HOST_THREAD),
     m_read_thread_enabled (false),
     m_bytes(),
     m_bytes_mutex (Mutex::eMutexTypeRecursive),
@@ -120,7 +120,7 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
                                  "%p Communication::Write (dst = %p, dst_len = %zu, timeout_usec = %u) connection = %p",
                                  this, dst, dst_len, timeout_usec, m_connection_ap.get());
 
-    if (m_read_thread != NULL)
+    if (m_read_thread != LLDB_INVALID_HOST_THREAD)
     {
         // We have a dedicated read thread that is getting data for us
         size_t cached_bytes = GetCachedBytes (dst, dst_len);
@@ -219,7 +219,7 @@ Communication::StartReadThread (Error *error_ptr)
 bool
 Communication::StopReadThread (Error *error_ptr)
 {
-    if (m_read_thread == NULL)
+    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
         return true;
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
@@ -290,7 +290,7 @@ Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &
 bool
 Communication::ReadThreadIsRunning ()
 {
-    return m_read_thread != NULL;
+    return m_read_thread != LLDB_INVALID_HOST_THREAD;
 }
 
 void *

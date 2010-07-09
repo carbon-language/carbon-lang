@@ -280,7 +280,7 @@ SBThread::DisplaySingleFrameForCurrentContext (FILE *out,
                        "     frame #%u: tid = 0x%4.4x, pc = 0x%llx ",
                        frame_idx,
                        GetThreadID(),
-                       pc);
+                       (long long)pc);
             sc->DumpStopContext (&str, &m_opaque_sp->GetProcess(), *frame.GetPCAddress());
             fprintf (out, "\n");
             success = true;
