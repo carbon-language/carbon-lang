@@ -66,14 +66,14 @@ $(RecursiveTargets)::
 	fi
 endif
 
-test::
-	@ $(MAKE) -C test
+#test::
+#	@ $(MAKE) -C test
 
-report::
-	@ $(MAKE) -C test report
+#report::
+#	@ $(MAKE) -C test report
 
-clean::
-	@ $(MAKE) -C test clean
+#clean::
+#	@ $(MAKE) -C test clean
 
 tags::
 	$(Verb) etags `find . -type f -name '*.h' -or -name '*.cpp' | \
