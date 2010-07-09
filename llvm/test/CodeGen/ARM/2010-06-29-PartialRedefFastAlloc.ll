@@ -4,19 +4,22 @@ target triple = "thumbv7-apple-darwin10"
 
 ; This tests the fast register allocator's handling of partial redefines:
 ;
-;	%reg1026<def> = VMOVv16i8 0, pred:14, pred:%reg0
-;	%reg1028:dsub_1<def> = EXTRACT_SUBREG %reg1026<kill>, 1
+;      %reg1028:dsub_0<def>, %reg1028:dsub_1<def> = VLD1q64 %reg1025...
+;      %reg1030:dsub_1<def> = COPY %reg1028:dsub_0<kill>
 ;
-; %reg1026 gets allocated %Q0, and if %reg1028 is reloaded for the partial redef,
-; it cannot also get %Q0.
+; %reg1028 gets allocated %Q0, and if %reg1030 is reloaded for the partial
+; redef, it cannot also get %Q0.
 
-; CHECK: vmov.i8 q0, #0x0
-; CHECK-NOT: vld1.64 {d0,d1}
+; CHECK: vld1.64 {d0, d1}, [r0]
+; CHECK-NOT: vld1.64 {d0, d1}
 ; CHECK: vmov.f64 d3, d0
 
-define i32 @main(i32 %argc, i8** %argv) nounwind {
+define i32 @test(i8* %arg) nounwind {
 entry:
- %0 = shufflevector <2 x i64> undef, <2 x i64> zeroinitializer, <2 x i32> <i32 1, i32 2> ; <<2 x i64>> [#uses=1]
- store <2 x i64> %0, <2 x i64>* undef, align 16
+ %0 = call <2 x i64> @llvm.arm.neon.vld1.v2i64(i8* %arg)
+ %1 = shufflevector <2 x i64> undef, <2 x i64> %0, <2 x i32> <i32 1, i32 2>
+ store <2 x i64> %1, <2 x i64>* undef, align 16
  ret i32 undef
 }
+
+declare <2 x i64> @llvm.arm.neon.vld1.v2i64(i8*) nounwind readonly

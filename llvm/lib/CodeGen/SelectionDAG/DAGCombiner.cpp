@@ -6309,8 +6309,6 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
-  return SDValue();
-  
   EVT VT = N->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
 
