@@ -89,7 +89,7 @@ public:
 static void PrintRange(const DWARFDebugAranges::Range& range)
 {
     // Cast the address values in case the address type is compiled as 32 bit
-    printf("0x%8.8x: [0x%8.8llx - 0x%8.8llx)\n", range.offset, (uint64_t)range.lo_pc, (uint64_t)range.hi_pc);
+    printf("0x%8.8x: [0x%8.8llx - 0x%8.8llx)\n", range.offset, (long long)range.lo_pc, (long long)range.hi_pc);
 }
 
 //----------------------------------------------------------------------

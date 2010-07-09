@@ -81,8 +81,8 @@ StateVariable::StateVariable
  ) :
     m_name (name),
     m_type (eTypeStringArray),
-    m_help_text (help),
     m_string_values(),
+    m_help_text (help),
     m_verification_func_ptr (func_ptr)
 {
     if (args)

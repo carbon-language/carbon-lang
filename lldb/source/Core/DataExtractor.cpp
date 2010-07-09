@@ -1485,10 +1485,10 @@ DataExtractor::PutToLog
         return start_offset;
 
     uint32_t offset;
-    uint32_t end_offset = offset + length;
+    uint32_t end_offset;
     uint32_t count;
     StreamString sstr;
-    for (offset = start_offset, count = 0; ValidOffset(offset) && offset < end_offset; ++count)
+    for (offset = start_offset, end_offset = offset + length, count = 0; ValidOffset(offset) && offset < end_offset; ++count)
     {
         if ((count % num_per_line) == 0)
         {
