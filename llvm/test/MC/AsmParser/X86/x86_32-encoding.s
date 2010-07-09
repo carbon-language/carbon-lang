@@ -12354,3 +12354,35 @@
 // CHECK: encoding: [0xc5,0xfd,0x11,0x08]
           vmovupd  %ymm1, (%eax)
 
+// CHECK: vunpckhps  %ymm1, %ymm2, %ymm4
+// CHECK: encoding: [0xc5,0xec,0x15,0xe1]
+          vunpckhps  %ymm1, %ymm2, %ymm4
+
+// CHECK: vunpckhpd  %ymm1, %ymm2, %ymm4
+// CHECK: encoding: [0xc5,0xed,0x15,0xe1]
+          vunpckhpd  %ymm1, %ymm2, %ymm4
+
+// CHECK: vunpcklps  %ymm1, %ymm2, %ymm4
+// CHECK: encoding: [0xc5,0xec,0x14,0xe1]
+          vunpcklps  %ymm1, %ymm2, %ymm4
+
+// CHECK: vunpcklpd  %ymm1, %ymm2, %ymm4
+// CHECK: encoding: [0xc5,0xed,0x14,0xe1]
+          vunpcklpd  %ymm1, %ymm2, %ymm4
+
+// CHECK: vunpckhps  -4(%ebx,%ecx,8), %ymm2, %ymm5
+// CHECK: encoding: [0xc5,0xec,0x15,0x6c,0xcb,0xfc]
+          vunpckhps  -4(%ebx,%ecx,8), %ymm2, %ymm5
+
+// CHECK: vunpckhpd  -4(%ebx,%ecx,8), %ymm2, %ymm5
+// CHECK: encoding: [0xc5,0xed,0x15,0x6c,0xcb,0xfc]
+          vunpckhpd  -4(%ebx,%ecx,8), %ymm2, %ymm5
+
+// CHECK: vunpcklps  -4(%ebx,%ecx,8), %ymm2, %ymm5
+// CHECK: encoding: [0xc5,0xec,0x14,0x6c,0xcb,0xfc]
+          vunpcklps  -4(%ebx,%ecx,8), %ymm2, %ymm5
+
+// CHECK: vunpcklpd  -4(%ebx,%ecx,8), %ymm2, %ymm5
+// CHECK: encoding: [0xc5,0xed,0x14,0x6c,0xcb,0xfc]
+          vunpcklpd  -4(%ebx,%ecx,8), %ymm2, %ymm5
+

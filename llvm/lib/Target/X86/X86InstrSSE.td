@@ -165,6 +165,10 @@ def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
 def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 
+// FIXME: move this to a more appropriate place after all AVX is done.
+def memopv8f32 : PatFrag<(ops node:$ptr), (v8f32 (memop node:$ptr))>;
+def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
+
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
 // FIXME: 8 byte alignment for mmx reads is not required
@@ -1538,6 +1542,19 @@ let AddedComplexity = 10 in {
                          SSEPackedSingle>, VEX_4V;
     defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
           VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+
+    defm VUNPCKHPSY: sse12_unpack_interleave<0x15, unpckh, v8f32, memopv8f32,
+          VR256, f256mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKHPDY: sse12_unpack_interleave<0x15, unpckh, v4f64, memopv4f64,
+          VR256, f256mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedDouble>, OpSize, VEX_4V;
+    defm VUNPCKLPSY: sse12_unpack_interleave<0x14, unpckl, v8f32, memopv8f32,
+          VR256, f256mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                         SSEPackedSingle>, VEX_4V;
+    defm VUNPCKLPDY: sse12_unpack_interleave<0x14, unpckl, v4f64, memopv4f64,
+          VR256, f256mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                          SSEPackedDouble>, OpSize, VEX_4V;
   }
 
