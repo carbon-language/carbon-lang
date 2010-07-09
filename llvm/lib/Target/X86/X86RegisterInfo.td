@@ -181,8 +181,7 @@ let Namespace = "X86" in {
   }
 
   // YMM Registers, used by AVX instructions
-  // The sub_ss and sub_sd subregs are the same registers with another regclass.
-  let CompositeIndices = [(sub_ss), (sub_sd)], SubRegIndices = [sub_xmm] in {
+  let SubRegIndices = [sub_xmm] in {
   def YMM0: RegisterWithSubRegs<"ymm0", [XMM0]>, DwarfRegNum<[17, 21, 21]>;
   def YMM1: RegisterWithSubRegs<"ymm1", [XMM1]>, DwarfRegNum<[18, 22, 22]>;
   def YMM2: RegisterWithSubRegs<"ymm2", [XMM2]>, DwarfRegNum<[19, 23, 23]>;
