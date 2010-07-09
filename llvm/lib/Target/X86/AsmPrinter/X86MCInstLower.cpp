@@ -614,7 +614,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  
   OutStreamer.EmitInstruction(TmpInst);
 }
 

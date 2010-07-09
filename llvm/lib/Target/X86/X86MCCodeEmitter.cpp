@@ -358,11 +358,6 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                             const MCInst &MI, const TargetInstrDesc &Desc,
                             raw_ostream &OS) const {
-
-  // Pseudo instructions never have a VEX prefix.
-  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
-    return;
-
   bool HasVEX_4V = false;
   if ((TSFlags >> 32) & X86II::VEX_4V)
     HasVEX_4V = true;
@@ -544,10 +539,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 /// size, and 3) use of X86-64 extended registers.
 static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
                                    const TargetInstrDesc &Desc) {
-  // Pseudo instructions never have a rex byte.
-  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
-    return 0;
-
   unsigned REX = 0;
   if (TSFlags & X86II::REX_W)
     REX |= 1 << 3; // set REX.W
@@ -750,6 +741,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   const TargetInstrDesc &Desc = TII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
 
+  // Pseudo instructions don't get encoded.
+  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
+    return;
 
   // If this is a two-address instruction, skip one of the register operands.
   // FIXME: This should be handled during MCInst lowering.
@@ -792,7 +786,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     assert(0 && "FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
     assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
-  case X86II::Pseudo: return; // Pseudo instructions encode to nothing.
+  case X86II::Pseudo:
+    assert(0 && "Pseudo instruction shouldn't be emitted");
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
     break;
