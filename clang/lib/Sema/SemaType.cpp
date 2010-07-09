@@ -1320,18 +1320,19 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     // for a nonstatic member function, the function type to which a pointer
     // to member refers, or the top-level function type of a function typedef
     // declaration.
+    bool FreeFunction = (D.getContext() != Declarator::MemberContext &&
+        (!D.getCXXScopeSpec().isSet() ||
+         !computeDeclContext(D.getCXXScopeSpec(), /*FIXME:*/true)->isRecord()));
     if (FnTy->getTypeQuals() != 0 &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
-        ((D.getContext() != Declarator::MemberContext &&
-          (!D.getCXXScopeSpec().isSet() ||
-           !computeDeclContext(D.getCXXScopeSpec(), /*FIXME:*/true)
-              ->isRecord())) ||
+        (FreeFunction ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
       if (D.isFunctionDeclarator())
         Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
       else
         Diag(D.getIdentifierLoc(),
-             diag::err_invalid_qualified_typedef_function_type_use);
+             diag::err_invalid_qualified_typedef_function_type_use)
+          << FreeFunction;
 
       // Strip the cv-quals from the type.
       T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),

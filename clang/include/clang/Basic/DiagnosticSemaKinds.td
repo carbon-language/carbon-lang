@@ -2158,8 +2158,8 @@ def err_invalid_member_use_in_static_method : Error<
 def err_invalid_qualified_function_type : Error<
   "type qualifier is not allowed on this function">;
 def err_invalid_qualified_typedef_function_type_use : Error<
-  "a qualified function type cannot be used to declare a nonmember function "
-  "or a static member function">;
+  "a qualified function type cannot be used to declare a "
+  "%select{static member|nonmember}0 function">;
 
 def err_invalid_non_static_member_use : Error<
   "invalid use of nonstatic data member %0">;

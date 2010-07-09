@@ -3,13 +3,13 @@
 void f() const; // expected-error {{type qualifier is not allowed on this function}}
 
 typedef void cfn() const; 
-cfn f2; // expected-error {{a qualified function type cannot be used to declare a nonmember function or a static member function}}
+cfn f2; // expected-error {{a qualified function type cannot be used to declare a nonmember function}}
 
 class C {
   void f() const;
   cfn f2;
   static void f3() const; // expected-error {{type qualifier is not allowed on this function}}
-  static cfn f4; // expected-error {{a qualified function type cannot be used to declare a nonmember function or a static member function}}
+  static cfn f4; // expected-error {{a qualified function type cannot be used to declare a static member function}}
 
   void m1() {
     x = 0;
