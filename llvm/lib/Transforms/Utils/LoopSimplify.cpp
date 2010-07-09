@@ -617,8 +617,10 @@ LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
 
   // Figure out which basic blocks contain back-edges to the loop header.
   std::vector<BasicBlock*> BackedgeBlocks;
-  for (pred_iterator I = pred_begin(Header), E = pred_end(Header); I != E; ++I)
-    if (*I != Preheader) BackedgeBlocks.push_back(*I);
+  for (pred_iterator I = pred_begin(Header), E = pred_end(Header); I != E; ++I){
+    BasicBlock *P = *I;
+    if (P != Preheader) BackedgeBlocks.push_back(P);
+  }
 
   // Create and insert the new backedge block...
   BasicBlock *BEBlock = BasicBlock::Create(Header->getContext(),
