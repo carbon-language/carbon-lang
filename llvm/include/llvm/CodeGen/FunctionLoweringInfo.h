@@ -25,6 +25,7 @@
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CallSite.h"
 #include <vector>
 
@@ -79,6 +80,15 @@ public:
   /// ArgDbgValues - A list of DBG_VALUE instructions created during isel for
   /// function arguments that are inserted after scheduling is completed.
   SmallVector<MachineInstr*, 8> ArgDbgValues;
+
+  /// RegFixups - Registers which need to be replaced after isel is done.
+  DenseMap<unsigned, unsigned> RegFixups;
+
+  /// MBB - The current block.
+  MachineBasicBlock *MBB;
+
+  /// MBB - The current insert position inside the current block.
+  MachineBasicBlock::iterator InsertPt;
 
 #ifndef NDEBUG
   SmallSet<const Instruction *, 8> CatchInfoLost;

@@ -78,6 +78,13 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   MF = &mf;
   RegInfo = &MF->getRegInfo();
 
+  // Check whether the function can return without sret-demotion.
+  SmallVector<ISD::OutputArg, 4> Outs;
+  GetReturnInfo(Fn->getReturnType(),
+                Fn->getAttributes().getRetAttributes(), Outs, TLI);
+  CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), Fn->isVarArg(),
+                                      Outs, Fn->getContext());
+
   // Create a vreg for each argument register that is not dead and is used
   // outside of the entry block for the function.
   for (Function::const_arg_iterator AI = Fn->arg_begin(), E = Fn->arg_end();
@@ -170,6 +177,7 @@ void FunctionLoweringInfo::clear() {
 #endif
   LiveOutRegInfo.clear();
   ArgDbgValues.clear();
+  RegFixups.clear();
 }
 
 /// CreateReg - Allocate a single virtual register for the given type.

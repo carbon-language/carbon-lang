@@ -280,15 +280,14 @@ private:
   SDNode *MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTs,
                     const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
   
-  void PrepareEHLandingPad(MachineBasicBlock *BB);
+  void PrepareEHLandingPad();
   void SelectAllBasicBlocks(const Function &Fn);
-  void FinishBasicBlock(MachineBasicBlock *BB);
+  void FinishBasicBlock();
 
-  MachineBasicBlock *SelectBasicBlock(MachineBasicBlock *BB,
-                                      BasicBlock::const_iterator Begin,
-                                      BasicBlock::const_iterator End,
-                                      bool &HadTailCall);
-  MachineBasicBlock *CodeGenAndEmitDAG(MachineBasicBlock *BB);
+  void SelectBasicBlock(BasicBlock::const_iterator Begin,
+                        BasicBlock::const_iterator End,
+                        bool &HadTailCall);
+  void CodeGenAndEmitDAG();
   void LowerArguments(const BasicBlock *BB);
   
   void ComputeLiveOutVRegInfo();
