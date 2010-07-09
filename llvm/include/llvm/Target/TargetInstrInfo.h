@@ -478,9 +478,7 @@ public:
   /// folding is possible.
   virtual
   bool canFoldMemoryOperand(const MachineInstr *MI,
-                            const SmallVectorImpl<unsigned> &Ops) const {
-    return false;
-  }
+                            const SmallVectorImpl<unsigned> &Ops) const =0;
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
@@ -643,6 +641,8 @@ public:
                                            bool NewMI = false) const;
   virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                      unsigned &SrcOpIdx2) const;
+  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
+                                    const SmallVectorImpl<unsigned> &Ops) const;
   virtual bool PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const;
   virtual void reMaterialize(MachineBasicBlock &MBB,

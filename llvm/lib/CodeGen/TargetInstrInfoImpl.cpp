@@ -190,6 +190,47 @@ TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
   return FnSize;
 }
 
+// If the COPY instruction in MI can be folded to a stack operation, return
+// the register class to use.
+static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
+                                              unsigned FoldIdx) {
+  assert(MI->isCopy() && "MI must be a COPY instruction");
+  if (MI->getNumOperands() != 2)
+    return 0;
+  assert(FoldIdx<2 && "FoldIdx refers no nonexistent operand");
+
+  const MachineOperand &FoldOp = MI->getOperand(FoldIdx);
+  const MachineOperand &LiveOp = MI->getOperand(1-FoldIdx);
+
+  if (FoldOp.getSubReg() || LiveOp.getSubReg())
+    return 0;
+
+  unsigned FoldReg = FoldOp.getReg();
+  unsigned LiveReg = LiveOp.getReg();
+
+  assert(TargetRegisterInfo::isVirtualRegister(FoldReg) &&
+         "Cannot fold physregs");
+
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+  const TargetRegisterClass *RC = MRI.getRegClass(FoldReg);
+
+  if (TargetRegisterInfo::isPhysicalRegister(LiveOp.getReg()))
+    return RC->contains(LiveOp.getReg()) ? RC : 0;
+
+  const TargetRegisterClass *LiveRC = MRI.getRegClass(LiveReg);
+  if (RC == LiveRC || RC->hasSubClass(LiveRC))
+    return RC;
+
+  // FIXME: Allow folding when register classes are memory compatible.
+  return 0;
+}
+
+bool TargetInstrInfoImpl::
+canFoldMemoryOperand(const MachineInstr *MI,
+                     const SmallVectorImpl<unsigned> &Ops) const {
+  return MI->isCopy() && Ops.size() == 1 && canFoldCopy(MI, Ops[0]);
+}
+
 /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
 /// slot into the specified machine instruction for the specified operand(s).
 /// If this is possible, a new instruction is returned with the specified
@@ -199,7 +240,7 @@ TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
 MachineInstr*
 TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                    const SmallVectorImpl<unsigned> &Ops,
-                                   int FrameIndex) const {
+                                   int FI) const {
   unsigned Flags = 0;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     if (MI->getOperand(Ops[i]).isDef())
@@ -207,14 +248,39 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
     else
       Flags |= MachineMemOperand::MOLoad;
 
-  MachineBasicBlock &MBB = *MI->getParent();
-  MachineFunction &MF = *MBB.getParent();
+  MachineBasicBlock *MBB = MI->getParent();
+  assert(MBB && "foldMemoryOperand needs an inserted instruction");
+  MachineFunction &MF = *MBB->getParent();
 
   // Ask the target to do the actual folding.
-  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FrameIndex);
+  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI);
+
+  // Straight COPY may fold as load/store.
+  if (!NewMI) {
+    if (!MI->isCopy() || Ops.size() != 1)
+      return 0;
+
+    const TargetRegisterClass *RC = canFoldCopy(MI, Ops[0]);
+    if (!RC)
+      return 0;
+
+    const MachineOperand &MO = MI->getOperand(1-Ops[0]);
+    MachineBasicBlock::iterator Pos = MI;
+    const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+
+    if (Flags == MachineMemOperand::MOStore)
+      storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
+    else
+      loadRegFromStackSlot(*MBB, Pos, MO.getReg(), FI, RC, TRI);
+
+    NewMI = --Pos;
+  } else {
+    // FIXME: change foldMemoryOperandImpl semantics to also insert NewMI.
+    NewMI = MBB->insert(MI, NewMI);
+  }
+
   if (!NewMI) return 0;
 
-  NewMI = MBB.insert(MI, NewMI);
 
   assert((!(Flags & MachineMemOperand::MOStore) ||
           NewMI->getDesc().mayStore()) &&
@@ -223,12 +289,12 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
           NewMI->getDesc().mayLoad()) &&
          "Folded a use to a non-load!");
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
-  assert(MFI.getObjectOffset(FrameIndex) != -1);
+  assert(MFI.getObjectOffset(FI) != -1);
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIndex),
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
                             Flags, /*Offset=*/0,
-                            MFI.getObjectSize(FrameIndex),
-                            MFI.getObjectAlignment(FrameIndex));
+                            MFI.getObjectSize(FI),
+                            MFI.getObjectAlignment(FI));
   NewMI->addMemOperand(MF, MMO);
 
   return NewMI;

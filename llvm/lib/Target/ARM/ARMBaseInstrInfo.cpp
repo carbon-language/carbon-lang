@@ -1204,7 +1204,7 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 
   // FIXME: VMOVQQ and VMOVQQQQ?
 
-  return false;
+  return TargetInstrInfoImpl::canFoldMemoryOperand(MI, Ops);
 }
 
 /// Create a copy of a const pool value. Update CPI to the new index and return

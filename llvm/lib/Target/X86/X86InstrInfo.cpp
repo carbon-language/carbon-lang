@@ -2733,7 +2733,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     if (I != OpcodeTablePtr->end())
       return true;
   }
-  return false;
+  return TargetInstrInfoImpl::canFoldMemoryOperand(MI, Ops);
 }
 
 bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
