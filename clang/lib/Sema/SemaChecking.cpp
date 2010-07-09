@@ -202,9 +202,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_bool_compare_and_swap:
   case Builtin::BI__sync_lock_test_and_set:
   case Builtin::BI__sync_lock_release:
-    if (SemaBuiltinAtomicOverloaded(TheCall))
-      return ExprError();
-    break;
+    return SemaBuiltinAtomicOverloaded(move(TheCallResult));
   }
   
   // Since the target specific builtins for each arch overlap, only check those
@@ -382,32 +380,40 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
 ///
 /// This function goes through and does final semantic checking for these
 /// builtins,
-bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
+Sema::OwningExprResult
+Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
+  CallExpr *TheCall = (CallExpr *)TheCallResult.get();
   DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
   FunctionDecl *FDecl = cast<FunctionDecl>(DRE->getDecl());
 
   // Ensure that we have at least one argument to do type inference from.
-  if (TheCall->getNumArgs() < 1)
-    return Diag(TheCall->getLocEnd(),
-              diag::err_typecheck_call_too_few_args_at_least)
-              << 0 << 1 << TheCall->getNumArgs()
-              << TheCall->getCallee()->getSourceRange();
+  if (TheCall->getNumArgs() < 1) {
+    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args_at_least)
+      << 0 << 1 << TheCall->getNumArgs()
+      << TheCall->getCallee()->getSourceRange();
+    return ExprError();
+  }
 
   // Inspect the first argument of the atomic builtin.  This should always be
   // a pointer type, whose element is an integral scalar or pointer type.
   // Because it is a pointer type, we don't have to worry about any implicit
   // casts here.
+  // FIXME: We don't allow floating point scalars as input.
   Expr *FirstArg = TheCall->getArg(0);
-  if (!FirstArg->getType()->isPointerType())
-    return Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
-             << FirstArg->getType() << FirstArg->getSourceRange();
+  if (!FirstArg->getType()->isPointerType()) {
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
+      << FirstArg->getType() << FirstArg->getSourceRange();
+    return ExprError();
+  }
 
-  QualType ValType = FirstArg->getType()->getAs<PointerType>()->getPointeeType();
+  QualType ValType =
+    FirstArg->getType()->getAs<PointerType>()->getPointeeType();
   if (!ValType->isIntegerType() && !ValType->isPointerType() &&
-      !ValType->isBlockPointerType())
-    return Diag(DRE->getLocStart(),
-                diag::err_atomic_builtin_must_be_pointer_intptr)
-             << FirstArg->getType() << FirstArg->getSourceRange();
+      !ValType->isBlockPointerType()) {
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer_intptr)
+      << FirstArg->getType() << FirstArg->getSourceRange();
+    return ExprError();
+  }
 
   // We need to figure out which concrete builtin this maps onto.  For example,
   // __sync_fetch_and_add with a 2 byte object turns into
@@ -445,8 +451,9 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   case 8: SizeIndex = 3; break;
   case 16: SizeIndex = 4; break;
   default:
-    return Diag(DRE->getLocStart(), diag::err_atomic_builtin_pointer_size)
-             << FirstArg->getType() << FirstArg->getSourceRange();
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_pointer_size)
+      << FirstArg->getType() << FirstArg->getSourceRange();
+    return ExprError();
   }
 
   // Each of these builtins has one pointer argument, followed by some number of
@@ -486,12 +493,12 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 
   // Now that we know how many fixed arguments we expect, first check that we
   // have at least that many.
-  if (TheCall->getNumArgs() < 1+NumFixed)
-    return Diag(TheCall->getLocEnd(),
-            diag::err_typecheck_call_too_few_args_at_least)
-            << 0 << 1+NumFixed << TheCall->getNumArgs()
-            << TheCall->getCallee()->getSourceRange();
-
+  if (TheCall->getNumArgs() < 1+NumFixed) {
+    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args_at_least)
+      << 0 << 1+NumFixed << TheCall->getNumArgs()
+      << TheCall->getCallee()->getSourceRange();
+    return ExprError();
+  }
 
   // Get the decl for the concrete builtin from this, we can tell what the
   // concrete integer type we should convert to is.
@@ -503,6 +510,8 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
                                            TUScope, false, DRE->getLocStart()));
   const FunctionProtoType *BuiltinFT =
     NewBuiltinDecl->getType()->getAs<FunctionProtoType>();
+
+  QualType OrigValType = ValType;
   ValType = BuiltinFT->getArgType(0)->getAs<PointerType>()->getPointeeType();
 
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
@@ -529,7 +538,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     CXXBaseSpecifierArray BasePath;
     if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind, BasePath))
-      return true;
+      return ExprError();
 
     // Okay, we have something that *can* be converted to the right type.  Check
     // to see if there is a potentially weird extension going on here.  This can
@@ -551,10 +560,31 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   UsualUnaryConversions(PromotedCall);
   TheCall->setCallee(PromotedCall);
 
-
   // Change the result type of the call to match the result type of the decl.
   TheCall->setType(NewBuiltinDecl->getResultType());
-  return false;
+
+  // If the value type was converted to an integer when processing the
+  // arguments (e.g. void* -> int), we need to convert the result back.
+  if (!Context.hasSameUnqualifiedType(ValType, OrigValType)) {
+    Expr *E = TheCallResult.takeAs<Expr>();
+
+    assert(ValType->isIntegerType() &&
+           "We always convert atomic operation values to integers.");
+    CastExpr::CastKind Kind;
+    if (OrigValType->isIntegerType())
+      Kind = CastExpr::CK_IntegralCast;
+    else if (OrigValType->hasPointerRepresentation())
+      Kind = CastExpr::CK_IntegralToPointer;
+    else if (OrigValType->isRealFloatingType())
+      Kind = CastExpr::CK_IntegralToFloating;
+    else
+      llvm_unreachable("Unhandled original value type!");
+
+    ImpCastExprToType(E, OrigValType, Kind);
+    return Owned(E);
+  }
+
+  return move(TheCallResult);
 }
 
 

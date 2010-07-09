@@ -4612,7 +4612,7 @@ private:
   bool SemaBuiltinPrefetch(CallExpr *TheCall);
   bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
-  bool SemaBuiltinAtomicOverloaded(CallExpr *TheCall);
+  OwningExprResult SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult);
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
