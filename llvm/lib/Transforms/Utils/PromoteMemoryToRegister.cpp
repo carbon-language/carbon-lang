@@ -69,11 +69,12 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
 
   // Only allow direct and non-volatile loads and stores...
   for (Value::const_use_iterator UI = AI->use_begin(), UE = AI->use_end();
-       UI != UE; ++UI)     // Loop over all of the uses of the alloca
-    if (const LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+       UI != UE; ++UI) {   // Loop over all of the uses of the alloca
+    const User *U = *UI;
+    if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (LI->isVolatile())
         return false;
-    } else if (const StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+    } else if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == AI)
         return false;   // Don't allow a store OF the AI, only INTO the AI.
       if (SI->isVolatile())
@@ -81,6 +82,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
     } else {
       return false;
     }
+  }
 
   return true;
 }
