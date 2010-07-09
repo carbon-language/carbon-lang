@@ -859,7 +859,8 @@ def err_attribute_address_space_too_high : Error<
 def err_attribute_address_multiple_qualifiers : Error<
   "multiple address spaces specified for type">;
 def err_implicit_pointer_address_space_cast : Error<
-  "illegal implicit cast between two pointers with different address spaces">;
+  "illegal implicit conversion between two pointers with different address "
+  "spaces">;
 def err_as_qualified_auto_decl : Error<
   "automatic variable qualified with an address space">;
 def err_arg_with_address_space : Error<
@@ -928,28 +929,28 @@ def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "regparm}1 attribute">;
 
 def warn_impcast_vector_scalar : Warning<
-  "implicit cast turns vector to scalar: %0 to %1">,
+  "implicit conversion turns vector to scalar: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_complex_scalar : Warning<
-  "implicit cast discards imaginary component: %0 to %1">,
+  "implicit conversion discards imaginary component: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_float_precision : Warning<
-  "implicit cast loses floating-point precision: %0 to %1">,
+  "implicit conversion loses floating-point precision: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_float_integer : Warning<
-  "implicit cast turns floating-point number into integer: %0 to %1">,
+  "implicit conversion turns floating-point number into integer: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_sign : Warning<
-  "implicit cast changes signedness: %0 to %1">,
+  "implicit conversion changes signedness: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_sign_conditional : Warning<
   "operand of ? changes signedness: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_precision : Warning<
-  "implicit cast loses integer precision: %0 to %1">,
+  "implicit conversion loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 def warn_impcast_integer_64_32 : Warning<
-  "implicit cast loses integer precision: %0 to %1">,
+  "implicit conversion loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"shorten-64-to-32">>, DefaultIgnore;
 
 def warn_attribute_ignored_for_field_of_type : Warning<

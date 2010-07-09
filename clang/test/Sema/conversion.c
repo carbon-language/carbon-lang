@@ -6,17 +6,17 @@
 
 void test0(char c, short s, int i, long l, long long ll) {
   c = c;
-  c = s; // expected-warning {{implicit cast loses integer precision}}
-  c = i; // expected-warning {{implicit cast loses integer precision}}
-  c = l; // expected-warning {{implicit cast loses integer precision}}
+  c = s; // expected-warning {{implicit conversion loses integer precision}}
+  c = i; // expected-warning {{implicit conversion loses integer precision}}
+  c = l; // expected-warning {{implicit conversion loses integer precision}}
   s = c;
   s = s;
-  s = i; // expected-warning {{implicit cast loses integer precision}}
-  s = l; // expected-warning {{implicit cast loses integer precision}}
+  s = i; // expected-warning {{implicit conversion loses integer precision}}
+  s = l; // expected-warning {{implicit conversion loses integer precision}}
   i = c;
   i = s;
   i = i;
-  i = l; // expected-warning {{implicit cast loses integer precision}}
+  i = l; // expected-warning {{implicit conversion loses integer precision}}
   l = c;
   l = s;
   l = i;
@@ -40,17 +40,17 @@ void test0(char c, short s, int i, long l, long long ll) {
   l = (long) 0;
 
   c = (char) BIG;
-  c = (short) BIG; // expected-warning {{implicit cast loses integer precision}}
-  c = (int) BIG; // expected-warning {{implicit cast loses integer precision}}
-  c = (long) BIG; // expected-warning {{implicit cast loses integer precision}}
+  c = (short) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  c = (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  c = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
   s = (char) BIG;
   s = (short) BIG;
-  s = (int) BIG; // expected-warning {{implicit cast loses integer precision}}
-  s = (long) BIG; // expected-warning {{implicit cast loses integer precision}}
+  s = (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  s = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
   i = (char) BIG;
   i = (short) BIG;
   i = (int) BIG;
-  i = (long) BIG; // expected-warning {{implicit cast loses integer precision}}
+  i = (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
   l = (char) BIG;
   l = (short) BIG;
   l = (int) BIG;
@@ -58,39 +58,39 @@ void test0(char c, short s, int i, long l, long long ll) {
 }
 
 char test1(long long ll) {
-  return (long long) ll; // expected-warning {{implicit cast loses integer precision}}
-  return (long) ll; // expected-warning {{implicit cast loses integer precision}}
-  return (int) ll; // expected-warning {{implicit cast loses integer precision}}
-  return (short) ll; // expected-warning {{implicit cast loses integer precision}}
+  return (long long) ll; // expected-warning {{implicit conversion loses integer precision}}
+  return (long) ll; // expected-warning {{implicit conversion loses integer precision}}
+  return (int) ll; // expected-warning {{implicit conversion loses integer precision}}
+  return (short) ll; // expected-warning {{implicit conversion loses integer precision}}
   return (char) ll;
-  return (long long) BIG; // expected-warning {{implicit cast loses integer precision}}
-  return (long) BIG; // expected-warning {{implicit cast loses integer precision}}
-  return (int) BIG; // expected-warning {{implicit cast loses integer precision}}
-  return (short) BIG; // expected-warning {{implicit cast loses integer precision}}
+  return (long long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  return (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  return (int) BIG; // expected-warning {{implicit conversion loses integer precision}}
+  return (short) BIG; // expected-warning {{implicit conversion loses integer precision}}
   return (char) BIG;
 }
 
 short test2(long long ll) {
-  return (long long) ll; // expected-warning {{implicit cast loses integer precision}}
-  return (long) ll; // expected-warning {{implicit cast loses integer precision}}
-  return (int) ll; // expected-warning {{implicit cast loses integer precision}}
+  return (long long) ll; // expected-warning {{implicit conversion loses integer precision}}
+  return (long) ll; // expected-warning {{implicit conversion loses integer precision}}
+  return (int) ll; // expected-warning {{implicit conversion loses integer precision}}
   return (short) ll;
   return (char) ll;
-  return (long long) BIG;  // expected-warning {{implicit cast loses integer precision}}
-  return (long) BIG;  // expected-warning {{implicit cast loses integer precision}}
-  return (int) BIG;  // expected-warning {{implicit cast loses integer precision}}
+  return (long long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
+  return (long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
+  return (int) BIG;  // expected-warning {{implicit conversion loses integer precision}}
   return (short) BIG;
   return (char) BIG;
 }
 
 int test3(long long ll) {
-  return (long long) ll;  // expected-warning {{implicit cast loses integer precision}}
-  return (long) ll;  // expected-warning {{implicit cast loses integer precision}}
+  return (long long) ll;  // expected-warning {{implicit conversion loses integer precision}}
+  return (long) ll;  // expected-warning {{implicit conversion loses integer precision}}
   return (int) ll;
   return (short) ll;
   return (char) ll;
-  return (long long) BIG;  // expected-warning {{implicit cast loses integer precision}}
-  return (long) BIG; // expected-warning {{implicit cast loses integer precision}}
+  return (long long) BIG;  // expected-warning {{implicit conversion loses integer precision}}
+  return (long) BIG; // expected-warning {{implicit conversion loses integer precision}}
   return (int) BIG;
   return (short) BIG;
   return (char) BIG;
@@ -143,7 +143,7 @@ void test6(char v) {
 }
 
 void test7(short v) {
-  takes_char(v); // expected-warning {{implicit cast loses integer precision}}
+  takes_char(v); // expected-warning {{implicit conversion loses integer precision}}
   takes_short(v);
   takes_int(v);
   takes_long(v);
@@ -154,8 +154,8 @@ void test7(short v) {
 }
 
 void test8(int v) {
-  takes_char(v); // expected-warning {{implicit cast loses integer precision}}
-  takes_short(v); // expected-warning {{implicit cast loses integer precision}}
+  takes_char(v); // expected-warning {{implicit conversion loses integer precision}}
+  takes_short(v); // expected-warning {{implicit conversion loses integer precision}}
   takes_int(v);
   takes_long(v);
   takes_longlong(v);
@@ -165,9 +165,9 @@ void test8(int v) {
 }
 
 void test9(long v) {
-  takes_char(v); // expected-warning {{implicit cast loses integer precision}}
-  takes_short(v); // expected-warning {{implicit cast loses integer precision}}
-  takes_int(v); // expected-warning {{implicit cast loses integer precision}}
+  takes_char(v); // expected-warning {{implicit conversion loses integer precision}}
+  takes_short(v); // expected-warning {{implicit conversion loses integer precision}}
+  takes_int(v); // expected-warning {{implicit conversion loses integer precision}}
   takes_long(v);
   takes_longlong(v);
   takes_float(v);
@@ -176,9 +176,9 @@ void test9(long v) {
 }
 
 void test10(long long v) {
-  takes_char(v); // expected-warning {{implicit cast loses integer precision}}
-  takes_short(v); // expected-warning {{implicit cast loses integer precision}}
-  takes_int(v); // expected-warning {{implicit cast loses integer precision}}
+  takes_char(v); // expected-warning {{implicit conversion loses integer precision}}
+  takes_short(v); // expected-warning {{implicit conversion loses integer precision}}
+  takes_int(v); // expected-warning {{implicit conversion loses integer precision}}
   takes_long(v);
   takes_longlong(v);
   takes_float(v);
@@ -187,35 +187,35 @@ void test10(long long v) {
 }
 
 void test11(float v) {
-  takes_char(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_short(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_int(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_long(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_longlong(v); // expected-warning {{implicit cast turns floating-point number into integer}}
+  takes_char(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_short(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_int(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_long(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_longlong(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
   takes_float(v);
   takes_double(v);
   takes_longdouble(v);
 }
 
 void test12(double v) {
-  takes_char(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_short(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_int(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_long(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_longlong(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_float(v); // expected-warning {{implicit cast loses floating-point precision}}
+  takes_char(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_short(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_int(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_long(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_longlong(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_float(v); // expected-warning {{implicit conversion loses floating-point precision}}
   takes_double(v);
   takes_longdouble(v);
 }
 
 void test13(long double v) {
-  takes_char(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_short(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_int(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_long(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_longlong(v); // expected-warning {{implicit cast turns floating-point number into integer}}
-  takes_float(v); // expected-warning {{implicit cast loses floating-point precision}}
-  takes_double(v); // expected-warning {{implicit cast loses floating-point precision}}
+  takes_char(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_short(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_int(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_long(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_longlong(v); // expected-warning {{implicit conversion turns floating-point number into integer}}
+  takes_float(v); // expected-warning {{implicit conversion loses floating-point precision}}
+  takes_double(v); // expected-warning {{implicit conversion loses floating-point precision}}
   takes_longdouble(v);
 }
 
@@ -229,13 +229,13 @@ void test14(long l) {
 
 void test15(char c) {
   c = c + 1 + c * 2;
-  c = (short) c + 1 + c * 2; // expected-warning {{implicit cast loses integer precision}}
+  c = (short) c + 1 + c * 2; // expected-warning {{implicit conversion loses integer precision}}
 }
 
 // PR 5422
 extern void *test16_external;
 void test16(void) {
-  int a = (unsigned long) &test16_external; // expected-warning {{implicit cast loses integer precision}}
+  int a = (unsigned long) &test16_external; // expected-warning {{implicit conversion loses integer precision}}
 }
 
 // PR 5938
@@ -249,7 +249,7 @@ void test17() {
   unsigned int x;
   x = U.a;
   x = U.b;
-  x = U.c; // expected-warning {{implicit cast loses integer precision}} 
+  x = U.c; // expected-warning {{implicit conversion loses integer precision}} 
 }
 
 // PR 5939
@@ -277,7 +277,7 @@ unsigned char test19(unsigned long u64) {
 // <rdar://problem/7631400>
 void test_7631400(void) {
   // This should show up despite the caret being inside a macro substitution
-  char s = LONG_MAX; // expected-warning {{implicit cast loses integer precision: 'long' to 'char'}}
+  char s = LONG_MAX; // expected-warning {{implicit conversion loses integer precision: 'long' to 'char'}}
 }
 
 // <rdar://problem/7676608>: assertion for compound operators with non-integral RHS
@@ -291,9 +291,9 @@ void test_7676608(void) {
 // <rdar://problem/7904686>
 void test_7904686(void) {
   const int i = -1;
-  unsigned u1 = i; // expected-warning {{implicit cast changes signedness}}  
-  u1 = i; // expected-warning {{implicit cast changes signedness}}  
+  unsigned u1 = i; // expected-warning {{implicit conversion changes signedness}}  
+  u1 = i; // expected-warning {{implicit conversion changes signedness}}  
 
-  unsigned u2 = -1; // expected-warning {{implicit cast changes signedness}}  
-  u2 = -1; // expected-warning {{implicit cast changes signedness}}  
+  unsigned u2 = -1; // expected-warning {{implicit conversion changes signedness}}  
+  u2 = -1; // expected-warning {{implicit conversion changes signedness}}  
 }
