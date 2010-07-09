@@ -6,6 +6,8 @@ set(LLVM_USED_LIBS
   clangDriver
   clangSema
   clangAnalysis
+  clangChecker
+  clangRewrite
   clangAST
   clangParse
   clangLex
