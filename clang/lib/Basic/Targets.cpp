@@ -449,6 +449,8 @@ public:
                                      TargetInfo::ConstraintInfo &Info) const {
     switch (*Name) {
     default: return false;
+    case ',': // Ignore ','s
+      break;
     case 'O': // Zero
       break;
     case 'b': // Base register
