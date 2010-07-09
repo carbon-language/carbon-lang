@@ -946,22 +946,22 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   if (DefMI && (MRInfo & VirtRegMap::isMod))
     return false;
 
-  MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(*mf_, MI, FoldOps, Slot)
-                           : tii_->foldMemoryOperand(*mf_, MI, FoldOps, DefMI);
+  MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(MI, FoldOps, Slot)
+                           : tii_->foldMemoryOperand(MI, FoldOps, DefMI);
   if (fmi) {
     // Remember this instruction uses the spill slot.
     if (isSS) vrm.addSpillSlotUse(Slot, fmi);
 
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
-    MachineBasicBlock &MBB = *MI->getParent();
     if (isSS && !mf_->getFrameInfo()->isImmutableObjectIndex(Slot))
       vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);
     vrm.transferSpillPts(MI, fmi);
     vrm.transferRestorePts(MI, fmi);
     vrm.transferEmergencySpills(MI, fmi);
     ReplaceMachineInstrInMaps(MI, fmi);
-    MI = MBB.insert(MBB.erase(MI), fmi);
+    MI->eraseFromParent();
+    MI = fmi;
     ++numFolds;
     return true;
   }

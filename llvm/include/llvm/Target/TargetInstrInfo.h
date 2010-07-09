@@ -438,19 +438,17 @@ public:
   /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
   /// slot into the specified machine instruction for the specified operand(s).
   /// If this is possible, a new instruction is returned with the specified
-  /// operand folded, otherwise NULL is returned. The client is responsible for
-  /// removing the old instruction and adding the new one in the instruction
-  /// stream.
-  MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                  MachineInstr* MI,
+  /// operand folded, otherwise NULL is returned.
+  /// The new instruction is inserted before MI, and the client is responsible
+  /// for removing the old instruction.
+  MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
                                   const SmallVectorImpl<unsigned> &Ops,
                                   int FrameIndex) const;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
-  MachineInstr* foldMemoryOperand(MachineFunction &MF,
-                                  MachineInstr* MI,
+  MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
                                   const SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const;
 

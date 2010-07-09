@@ -1409,25 +1409,25 @@ OptimizeByUnfold(MachineBasicBlock::iterator &MII,
     if (TII->unfoldMemoryOperand(MF, &MI, UnfoldVR, false, false, NewMIs)) {
       assert(NewMIs.size() == 1);
       MachineInstr *NewMI = NewMIs.back();
+      MBB->insert(MII, NewMI);
       NewMIs.clear();
       int Idx = NewMI->findRegisterUseOperandIdx(VirtReg, false);
       assert(Idx != -1);
       SmallVector<unsigned, 1> Ops;
       Ops.push_back(Idx);
-      MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, NewMI, Ops, SS);
+      MachineInstr *FoldedMI = TII->foldMemoryOperand(NewMI, Ops, SS);
+      NewMI->eraseFromParent();
       if (FoldedMI) {
         VRM->addSpillSlotUse(SS, FoldedMI);
         if (!VRM->hasPhys(UnfoldVR))
           VRM->assignVirt2Phys(UnfoldVR, UnfoldPR);
         VRM->virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
-        MII = MBB->insert(MII, FoldedMI);
+        MII = FoldedMI;
         InvalidateKills(MI, TRI, RegKills, KillOps);
         VRM->RemoveMachineInstrFromMaps(&MI);
         MBB->erase(&MI);
-        MF.DeleteMachineInstr(NewMI);
         return true;
       }
-      MF.DeleteMachineInstr(NewMI);
     }
   }
 
@@ -1479,7 +1479,6 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
   if (MII == MBB->begin() || !MII->killsRegister(SrcReg))
     return false;
 
-  MachineFunction &MF = *MBB->getParent();
   MachineInstr &MI = *MII;
   MachineBasicBlock::iterator DefMII = prior(MII);
   MachineInstr *DefMI = DefMII;
@@ -1510,11 +1509,12 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
     MachineInstr *CommutedMI = TII->commuteInstruction(DefMI, true);
     if (!CommutedMI)
       return false;
+    MBB->insert(MII, CommutedMI);
     SmallVector<unsigned, 1> Ops;
     Ops.push_back(NewDstIdx);
-    MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, CommutedMI, Ops, SS);
+    MachineInstr *FoldedMI = TII->foldMemoryOperand(CommutedMI, Ops, SS);
     // Not needed since foldMemoryOperand returns new MI.
-    MF.DeleteMachineInstr(CommutedMI);
+    CommutedMI->eraseFromParent();
     if (!FoldedMI)
       return false;
 
@@ -1527,7 +1527,7 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
     MachineInstr *StoreMI = MII;
     VRM->addSpillSlotUse(SS, StoreMI);
     VRM->virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
-    MII = MBB->insert(MII, FoldedMI);  // Update MII to backtrack.
+    MII = FoldedMI;  // Update MII to backtrack.
 
     // Delete all 3 old instructions.
     InvalidateKills(*ReloadMI, TRI, RegKills, KillOps);

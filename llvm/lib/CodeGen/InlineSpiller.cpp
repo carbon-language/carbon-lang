@@ -282,13 +282,12 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
       FoldOps.push_back(Idx);
   }
 
-  MachineInstr *FoldMI = tii_.foldMemoryOperand(mf_, MI, FoldOps, stackSlot_);
+  MachineInstr *FoldMI = tii_.foldMemoryOperand(MI, FoldOps, stackSlot_);
   if (!FoldMI)
     return false;
-  MachineBasicBlock &MBB = *MI->getParent();
   lis_.ReplaceMachineInstrInMaps(MI, FoldMI);
   vrm_.addSpillSlotUse(stackSlot_, FoldMI);
-  MBB.insert(MBB.erase(MI), FoldMI);
+  MI->eraseFromParent();
   DEBUG(dbgs() << "\tfolded: " << *FoldMI);
   return true;
 }

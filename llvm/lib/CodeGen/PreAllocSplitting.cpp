@@ -863,12 +863,11 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
     SS = MFI->CreateSpillStackObject(RC->getSize(), RC->getAlignment());
   }
   
-  MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
-                                             FoldPt, Ops, SS);
+  MachineInstr* FMI = TII->foldMemoryOperand(FoldPt, Ops, SS);
   
   if (FMI) {
     LIs->ReplaceMachineInstrInMaps(FoldPt, FMI);
-    FMI = MBB->insert(MBB->erase(FoldPt), FMI);
+    FoldPt->eraseFromParent();
     ++NumFolds;
     
     IntervalSSMap[vreg] = SS;
@@ -944,12 +943,11 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
   if (!TII->canFoldMemoryOperand(FoldPt, Ops))
     return 0;
   
-  MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
-                                             FoldPt, Ops, SS);
+  MachineInstr* FMI = TII->foldMemoryOperand(FoldPt, Ops, SS);
   
   if (FMI) {
     LIs->ReplaceMachineInstrInMaps(FoldPt, FMI);
-    FMI = MBB->insert(MBB->erase(FoldPt), FMI);
+    FoldPt->eraseFromParent();
     ++NumRestoreFolds;
   }
   
@@ -1255,9 +1253,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         Ops.push_back(OpIdx);
         if (!TII->canFoldMemoryOperand(use, Ops)) continue;
 
-        MachineInstr* NewMI =
-                          TII->foldMemoryOperand(*use->getParent()->getParent(),  
-                                                 use, Ops, FrameIndex);
+        MachineInstr* NewMI = TII->foldMemoryOperand(use, Ops, FrameIndex);
 
         if (!NewMI) continue;
 
@@ -1267,10 +1263,9 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
         (*LI)->removeValNo(CurrVN);
 
         DefMI->eraseFromParent();
-        MachineBasicBlock* MBB = use->getParent();
-        NewMI = MBB->insert(MBB->erase(use), NewMI);
+        use->eraseFromParent();
         VNUseCount[CurrVN].erase(use);
-        
+
         // Remove deleted instructions.  Note that we need to remove them from 
         // the VNInfo->use map as well, just to be safe.
         for (SmallPtrSet<MachineInstr*, 4>::iterator II = 

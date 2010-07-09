@@ -197,8 +197,7 @@ TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
 /// removing the old instruction and adding the new one in the instruction
 /// stream.
 MachineInstr*
-TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                   MachineInstr* MI,
+TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                    const SmallVectorImpl<unsigned> &Ops,
                                    int FrameIndex) const {
   unsigned Flags = 0;
@@ -208,9 +207,14 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
     else
       Flags |= MachineMemOperand::MOLoad;
 
+  MachineBasicBlock &MBB = *MI->getParent();
+  MachineFunction &MF = *MBB.getParent();
+
   // Ask the target to do the actual folding.
   MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FrameIndex);
   if (!NewMI) return 0;
+
+  NewMI = MBB.insert(MI, NewMI);
 
   assert((!(Flags & MachineMemOperand::MOStore) ||
           NewMI->getDesc().mayStore()) &&
@@ -234,8 +238,7 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
 /// of any load and store from / to any address, not just from a specific
 /// stack slot.
 MachineInstr*
-TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
-                                   MachineInstr* MI,
+TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                    const SmallVectorImpl<unsigned> &Ops,
                                    MachineInstr* LoadMI) const {
   assert(LoadMI->getDesc().canFoldAsLoad() && "LoadMI isn't foldable!");
@@ -243,10 +246,14 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     assert(MI->getOperand(Ops[i]).isUse() && "Folding load into def!");
 #endif
+  MachineBasicBlock &MBB = *MI->getParent();
+  MachineFunction &MF = *MBB.getParent();
 
   // Ask the target to do the actual folding.
   MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
   if (!NewMI) return 0;
+
+  NewMI = MBB.insert(MI, NewMI);
 
   // Copy the memoperands from the load to the folded instruction.
   NewMI->setMemRefs(LoadMI->memoperands_begin(),
