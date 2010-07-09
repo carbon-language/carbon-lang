@@ -365,10 +365,11 @@ DbgDeclareInst *InstCombiner::hasOneUsePlusDeclare(Value *V) {
     return 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ++UI) {
-    if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(UI))
+    User *U = *UI;
+    if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(U))
       return DI;
-    if (isa<BitCastInst>(UI) && UI->hasOneUse()) {
-      if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(UI->use_begin()))
+    if (isa<BitCastInst>(U) && U->hasOneUse()) {
+      if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(U->use_begin()))
         return DI;
       }
   }
