@@ -23,23 +23,17 @@ USEDLIBS = lldbAPI.a \
 	lldbCommands.a \
 	lldbCore.a \
 	lldbExpression.a \
-	lldbHostMacOSX.a \
 	lldbHostPosix.a \
 	lldbInitAndLog.a \
 	lldbInterpreter.a \
 	lldbPluginABIMacOSX_i386.a \
 	lldbPluginABISysV_x86_64.a \
 	lldbPluginDisassemblerLLVM.a \
-	lldbPluginDynamicLoaderMacOSX.a \
 	lldbPluginObjectContainerBSDArchive.a \
-	lldbPluginObjectContainerUniversalMachO.a \
 	lldbPluginObjectFileELF.a \
-	lldbPluginObjectFileMachO.a \
-	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
 	lldbPluginSymbolVendorMacOSX.a \
-	lldbPluginUtility.a \
 	lldbSymbol.a \
 	lldbTarget.a \
 	lldbUtility.a \
@@ -58,47 +52,30 @@ USEDLIBS = lldbAPI.a \
 	clangSema.a \
 	CompilerDriver.a \
 	EnhancedDisassembly.a \
-	LLVMAnalysis.a \
-	LLVMArchive.a \
-	LLVMARMAsmParser.a \
-	LLVMARMAsmPrinter.a \
-	LLVMARMCodeGen.a \
-	LLVMARMDisassembler.a \
-	LLVMARMInfo.a \
-	LLVMAsmParser.a \
-	LLVMAsmPrinter.a \
-	LLVMBitReader.a \
-	LLVMBitWriter.a \
-	LLVMCodeGen.a \
-	LLVMCore.a \
-	LLVMExecutionEngine.a \
-	LLVMInstCombine.a \
-	LLVMInstrumentation.a \
-	LLVMipa.a \
-	LLVMInterpreter.a \
-	LLVMipo.a \
-	LLVMJIT.a \
-	LLVMLinker.a \
-	LLVMMC.a \
-	LLVMMCParser.a \
-	LLVMScalarOpts.a \
-	LLVMSelectionDAG.a \
-	LLVMSupport.a \
-	LLVMSystem.a \
-	LLVMTarget.a \
-	LLVMTransformUtils.a \
-	LLVMX86AsmParser.a \
-	LLVMX86AsmPrinter.a \
-	LLVMX86CodeGen.a \
-	LLVMX86Disassembler.a \
-	LLVMX86Info.a \
 	clangChecker.a
+
+include $(LLDB_LEVEL)/../../Makefile.config
+
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
+                   ipo selectiondag jit
+
+ifeq ($(HOST_OS),Darwin)
+  USEDLIBS += lldbHostMacOSX.a \
+              lldbPluginDynamicLoaderMacOSX.a \
+              lldbPluginObjectContainerUniversalMachO.a \
+              lldbPluginObjectFileMachO.a \
+              lldbPluginProcessGDBRemote.a \
+              lldbPluginUtility.a
+endif
+
+ifeq ($(HOST_OS),Linux)
+  USEDLIBS += lldbHostLinux.a
+endif
 
 include $(LEVEL)/Makefile.common
 
-LLVMLibsOptions += -Wl,-all_load -v
-
 ifeq ($(HOST_OS),Darwin)
+    LLVMLibsOptions += -Wl,-all_load
     # set dylib internal version number to llvmCore submission number
     ifdef LLDB_SUBMIT_VERSION
         LLVMLibsOptions += -Wl,-current_version \
@@ -121,8 +98,10 @@ endif
 
 ifeq ($(HOST_OS), Linux)
     # Include everything from the .a's into the shared library.
-    LLVMLibsOptions := -Wl,--whole-archive $(LLDBLibsOptions) \
+    ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
                        -Wl,--no-whole-archive
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
+    # Link in python
+    LD.Flags += -lpython2.6
 endif

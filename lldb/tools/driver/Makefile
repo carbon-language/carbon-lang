@@ -22,4 +22,8 @@ ifeq ($(HOST_OS),Darwin)
 	LD.Flags += -Wl,-sectcreate -Wl,__TEXT -Wl,__info_plist -Wl,lldb-Info.plist
 endif
 
+ifeq ($(HOST_OS),Linux)
+	LD.Flags += -Wl,-rpath,$(LibDir)
+endif
+
 include $(LLDB_LEVEL)/Makefile
