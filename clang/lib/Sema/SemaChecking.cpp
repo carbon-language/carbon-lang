@@ -570,13 +570,12 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
 
     assert(ValType->isIntegerType() &&
            "We always convert atomic operation values to integers.");
+    // FIXME: Handle floating point value type here too.
     CastExpr::CastKind Kind;
     if (OrigValType->isIntegerType())
       Kind = CastExpr::CK_IntegralCast;
     else if (OrigValType->hasPointerRepresentation())
       Kind = CastExpr::CK_IntegralToPointer;
-    else if (OrigValType->isRealFloatingType())
-      Kind = CastExpr::CK_IntegralToFloating;
     else
       llvm_unreachable("Unhandled original value type!");
 
