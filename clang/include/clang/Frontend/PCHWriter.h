@@ -220,7 +220,7 @@ private:
   void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context, const char *isysroot);
+  void WriteMetadata(ASTContext &Context, const PCHReader *Chain, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls, const char* isysroot);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,

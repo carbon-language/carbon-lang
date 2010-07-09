@@ -20,6 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/Frontend/PCHReader.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
@@ -742,30 +743,34 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
 }
 
 /// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
-void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
+void PCHWriter::WriteMetadata(ASTContext &Context, const PCHReader *Chain,
+                              const char *isysroot) {
   using namespace llvm;
 
   // Metadata
   const TargetInfo &Target = Context.Target;
   BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
-  MetaAbbrev->Add(BitCodeAbbrevOp(pch::METADATA));
+  MetaAbbrev->Add(BitCodeAbbrevOp(
+                    Chain ? pch::CHAINED_METADATA : pch::METADATA));
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Relocatable
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
+  // Target triple or chained PCH name
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
 
   RecordData Record;
-  Record.push_back(pch::METADATA);
+  Record.push_back(Chain ? pch::CHAINED_METADATA : pch::METADATA);
   Record.push_back(pch::VERSION_MAJOR);
   Record.push_back(pch::VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
   Record.push_back(isysroot != 0);
-  const std::string &TripleStr = Target.getTriple().getTriple();
-  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, TripleStr);
+  // FIXME: This writes the absolute path for chained headers.
+  const std::string &BlobStr = Chain ? Chain->getFileName() : Target.getTriple().getTriple();
+  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, BlobStr);
 
   // Original file name
   SourceManager &SM = Context.getSourceManager();
@@ -2153,8 +2158,9 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
-  WriteMetadata(Context, isysroot);
-  WriteLanguageOptions(Context.getLangOptions());
+  WriteMetadata(Context, Chain, isysroot);
+  if (!Chain)
+    WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls, isysroot);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);

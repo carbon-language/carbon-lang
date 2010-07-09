@@ -583,7 +583,7 @@ public:
   void InitializeContext(ASTContext &Context);
 
   /// \brief Retrieve the name of the PCH file
-  const std::string &getFileName() { return FileName; }
+  const std::string &getFileName() const { return FileName; }
 
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }

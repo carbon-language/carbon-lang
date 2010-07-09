@@ -111,11 +111,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   /// action.
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
-    CI.setASTConsumer(CreateASTConsumer(CI, Filename));
-    if (!CI.hasASTConsumer())
-      goto failure;
 
-    /// Use PCH?
+    /// Use PCH? If so, we want the PCHReader active before the consumer
+    /// is created, because the consumer might be interested in the reader
+    /// (e.g. the PCH writer for chaining).
     if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
       assert(hasPCHSupport() && "This action does not have PCH support!");
       CI.createPCHExternalASTSource(
@@ -123,6 +122,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       if (!CI.getASTContext().getExternalSource())
         goto failure;
     }
+
+    CI.setASTConsumer(CreateASTConsumer(CI, Filename));
+    if (!CI.hasASTConsumer())
+      goto failure;
   }
 
   // Initialize builtin info as long as we aren't using an external AST
