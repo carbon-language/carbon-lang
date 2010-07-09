@@ -192,9 +192,10 @@ bool LiveIntervals::conflictsWithPhysReg(const LiveInterval &li,
     if (tii_->isMoveInstr(MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       if (SrcReg == li.reg || DstReg == li.reg)
         continue;
-    if (MI.isCopy() && MI.getOperand(0).getReg() == li.reg &&
-        MI.getOperand(1).getReg() == li.reg)
-      continue;
+    if (MI.isCopy())
+      if (MI.getOperand(0).getReg() == li.reg ||
+          MI.getOperand(1).getReg() == li.reg)
+        continue;
 
     // Check for operands using reg
     for (unsigned i = 0, e = MI.getNumOperands(); i != e;  ++i) {
