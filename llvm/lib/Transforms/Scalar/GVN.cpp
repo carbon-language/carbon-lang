@@ -2214,8 +2214,10 @@ bool GVN::performPRE(Function &F) {
                                      CurInst->getName() + ".pre-phi",
                                      CurrentBlock->begin());
       for (pred_iterator PI = pred_begin(CurrentBlock),
-           PE = pred_end(CurrentBlock); PI != PE; ++PI)
-        Phi->addIncoming(predMap[*PI], *PI);
+           PE = pred_end(CurrentBlock); PI != PE; ++PI) {
+        BasicBlock *P = *PI;
+        Phi->addIncoming(predMap[P], P);
+      }
 
       VN.add(Phi, ValNo);
       localAvail[CurrentBlock]->table[ValNo] = Phi;
