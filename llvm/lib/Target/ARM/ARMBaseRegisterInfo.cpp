@@ -724,6 +724,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   SmallVector<unsigned, 4> UnspilledCS1GPRs;
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Spill R4 if Thumb2 function requires stack realignment - it will be used as
   // scratch register.
@@ -820,9 +821,16 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // offset, make sure a register (or a spill slot) is available for the
   // register scavenger. Note that if we're indexing off the frame pointer, the
   // effective stack size is 4 bytes larger since the FP points to the stack
-  // slot of the previous FP.
+  // slot of the previous FP. Also, if we have variable sized objects in the
+  // function, stack slot references will often be negative, and some of
+  // our instructions are positive-offset only, so conservatively consider
+  // that case to want a spill slot (or register) as well.
+  // FIXME: We could add logic to be more precise about negative offsets
+  //        and which instructions will need a scratch register for them. Is it
+  //        worth the effort and added fragility?
   bool BigStack = RS &&
-    estimateStackSize(MF) + (hasFP(MF) ? 4 : 0) >= estimateRSStackSizeLimit(MF);
+    (estimateStackSize(MF) + (hasFP(MF) ? 4:0) >= estimateRSStackSizeLimit(MF))
+    || MFI->hasVarSizedObjects();
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
@@ -915,7 +923,6 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         // note: Thumb1 functions spill to R12, not the stack.  Reserve a slot
         // closest to SP or frame pointer.
         const TargetRegisterClass *RC = ARM::GPRRegisterClass;
-        MachineFrameInfo *MFI = MF.getFrameInfo();
         RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                            RC->getAlignment(),
                                                            false));
