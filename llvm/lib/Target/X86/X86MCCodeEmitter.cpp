@@ -129,9 +129,13 @@ public:
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
 
-  void EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
+  void EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
                            const MCInst &MI, const TargetInstrDesc &Desc,
                            raw_ostream &OS) const;
+
+  void EmitSegmentOverridePrefix(uint64_t TSFlags, unsigned &CurByte,
+                                 int MemOperand, const MCInst &MI,
+                                 raw_ostream &OS) const;
 
   void EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
                         const MCInst &MI, const TargetInstrDesc &Desc,
@@ -356,8 +360,9 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 /// EmitVEXOpcodePrefix - AVX instructions are encoded using a opcode prefix
 /// called VEX.
 void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
-                            const MCInst &MI, const TargetInstrDesc &Desc,
-                            raw_ostream &OS) const {
+                                           int MemOperand, const MCInst &MI,
+                                           const TargetInstrDesc &Desc,
+                                           raw_ostream &OS) const {
   bool HasVEX_4V = false;
   if ((TSFlags >> 32) & X86II::VEX_4V)
     HasVEX_4V = true;
@@ -509,6 +514,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     assert(0 && "Not implemented!");
   }
 
+  // Emit segment override opcode prefix as needed.
+  EmitSegmentOverridePrefix(TSFlags, CurByte, MemOperand, MI, OS);
+
   // VEX opcode prefix can have 2 or 3 bytes
   //
   //  3 bytes:
@@ -628,20 +636,11 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   return REX;
 }
 
-/// EmitOpcodePrefix - Emit all instruction prefixes prior to the opcode.
-///
-/// MemOperand is the operand # of the start of a memory operand if present.  If
-/// Not present, it is -1.
-void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
-                                        int MemOperand, const MCInst &MI,
-                                        const TargetInstrDesc &Desc,
+/// EmitSegmentOverridePrefix - Emit segment override opcode prefix as needed
+void X86MCCodeEmitter::EmitSegmentOverridePrefix(uint64_t TSFlags,
+                                        unsigned &CurByte, int MemOperand,
+                                        const MCInst &MI,
                                         raw_ostream &OS) const {
-
-  // Emit the lock opcode prefix as needed.
-  if (TSFlags & X86II::LOCK)
-    EmitByte(0xF0, CurByte, OS);
-
-  // Emit segment override opcode prefix as needed.
   switch (TSFlags & X86II::SegOvrMask) {
   default: assert(0 && "Invalid segment!");
   case 0:
@@ -666,6 +665,23 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     EmitByte(0x65, CurByte, OS);
     break;
   }
+}
+
+/// EmitOpcodePrefix - Emit all instruction prefixes prior to the opcode.
+///
+/// MemOperand is the operand # of the start of a memory operand if present.  If
+/// Not present, it is -1.
+void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
+                                        int MemOperand, const MCInst &MI,
+                                        const TargetInstrDesc &Desc,
+                                        raw_ostream &OS) const {
+
+  // Emit the lock opcode prefix as needed.
+  if (TSFlags & X86II::LOCK)
+    EmitByte(0xF0, CurByte, OS);
+
+  // Emit segment override opcode prefix as needed.
+  EmitSegmentOverridePrefix(TSFlags, CurByte, MemOperand, MI, OS);
 
   // Emit the repeat opcode prefix as needed.
   if ((TSFlags & X86II::Op0Mask) == X86II::REP)
@@ -776,8 +792,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (!HasVEXPrefix)
     EmitOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, OS);
   else
-    // FIXME: Segment overrides??
-    EmitVEXOpcodePrefix(TSFlags, CurByte, MI, Desc, OS);
+    EmitVEXOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, OS);
 
   unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
   unsigned SrcRegNum = 0;
