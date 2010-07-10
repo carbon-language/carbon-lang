@@ -210,12 +210,8 @@ unsigned MBlazeInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   GlobalBaseReg = RegInfo.createVirtualRegister(MBlaze::CPURegsRegisterClass);
-  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, MBlaze::R20,
-                              MBlaze::CPURegsRegisterClass,
-                              MBlaze::CPURegsRegisterClass,
-                              DebugLoc());
-  assert(Ok && "Couldn't assign to global base register!");
-  Ok = Ok; // Silence warning when assertions are turned off.
+  BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
+          GlobalBaseReg).addReg(MBlaze::R20);
   RegInfo.addLiveIn(MBlaze::R20);
 
   MBlazeFI->setGlobalBaseReg(GlobalBaseReg);

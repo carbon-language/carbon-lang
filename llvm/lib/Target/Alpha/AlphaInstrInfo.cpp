@@ -427,11 +427,8 @@ unsigned AlphaInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   GlobalBaseReg = RegInfo.createVirtualRegister(&Alpha::GPRCRegClass);
-  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, Alpha::R29,
-                              &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
-                              DebugLoc());
-  assert(Ok && "Couldn't assign to global base register!");
-  Ok = Ok; // Silence warning when assertions are turned off.
+  BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
+          GlobalBaseReg).addReg(Alpha::R29);
   RegInfo.addLiveIn(Alpha::R29);
 
   AlphaFI->setGlobalBaseReg(GlobalBaseReg);
@@ -455,11 +452,8 @@ unsigned AlphaInstrInfo::getGlobalRetAddr(MachineFunction *MF) const {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   GlobalRetAddr = RegInfo.createVirtualRegister(&Alpha::GPRCRegClass);
-  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalRetAddr, Alpha::R26,
-                              &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
-                              DebugLoc());
-  assert(Ok && "Couldn't assign to global return address register!");
-  Ok = Ok; // Silence warning when assertions are turned off.
+  BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
+          GlobalRetAddr).addReg(Alpha::R26);
   RegInfo.addLiveIn(Alpha::R26);
 
   AlphaFI->setGlobalRetAddr(GlobalRetAddr);

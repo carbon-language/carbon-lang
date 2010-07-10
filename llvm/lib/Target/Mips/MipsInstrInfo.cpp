@@ -620,12 +620,8 @@ unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   GlobalBaseReg = RegInfo.createVirtualRegister(Mips::CPURegsRegisterClass);
-  bool Ok = TII->copyRegToReg(FirstMBB, MBBI, GlobalBaseReg, Mips::GP,
-                              Mips::CPURegsRegisterClass,
-                              Mips::CPURegsRegisterClass,
-                              DebugLoc());
-  assert(Ok && "Couldn't assign to global base register!");
-  Ok = Ok; // Silence warning when assertions are turned off.
+  BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
+          GlobalBaseReg).addReg(Mips::GP);
   RegInfo.addLiveIn(Mips::GP);
 
   MipsFI->setGlobalBaseReg(GlobalBaseReg);
