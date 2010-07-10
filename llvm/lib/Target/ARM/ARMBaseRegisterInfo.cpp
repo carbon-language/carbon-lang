@@ -828,9 +828,9 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // FIXME: We could add logic to be more precise about negative offsets
   //        and which instructions will need a scratch register for them. Is it
   //        worth the effort and added fragility?
-  bool BigStack = RS &&
-    (estimateStackSize(MF) + (hasFP(MF) ? 4:0) >= estimateRSStackSizeLimit(MF))
-    || MFI->hasVarSizedObjects();
+  bool BigStack =
+    (RS && (estimateStackSize(MF) + (hasFP(MF) ? 4:0) >=
+            estimateRSStackSizeLimit(MF))) || MFI->hasVarSizedObjects();
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
