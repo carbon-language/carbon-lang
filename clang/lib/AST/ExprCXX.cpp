@@ -569,14 +569,6 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
   }
 }
 
-CXXConstructExpr::CXXConstructExpr(EmptyShell Empty, ASTContext &C, 
-                                   unsigned numargs)
-  : Expr(CXXConstructExprClass, Empty), Args(0), NumArgs(numargs) 
-{
-  if (NumArgs)
-    Args = new (C) Stmt*[NumArgs];
-}
-
 void CXXConstructExpr::DoDestroy(ASTContext &C) {
   DestroyChildren(C);
   if (Args)

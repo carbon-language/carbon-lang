@@ -118,6 +118,7 @@ namespace clang {
 
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
+    void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
     void VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
     void VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
@@ -131,6 +132,7 @@ namespace clang {
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
+    void VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E);
     
     void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
@@ -146,6 +148,8 @@ namespace clang {
     void VisitOverloadExpr(OverloadExpr *E);
     void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
+
+    void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   };
 }
 
@@ -927,8 +931,9 @@ void PCHStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
 
 void PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   VisitExpr(E);
-  assert(Record[Idx] == E->getNumArgs() &&"Read wrong record during creation?");
-  ++Idx; // NumArgs;
+  E->NumArgs = Record[Idx++];
+  if (E->NumArgs)
+    E->Args = new (*Reader.getContext()) Stmt*[E->NumArgs];
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
   E->setConstructor(cast<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
@@ -936,6 +941,12 @@ void PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   E->setElidable(Record[Idx++]);  
   E->setRequiresZeroInitialization(Record[Idx++]);
   E->setConstructionKind((CXXConstructExpr::ConstructionKind)Record[Idx++]);
+}
+
+void PCHStmtReader::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+  VisitCXXConstructExpr(E);
+  E->TyBeginLoc = Reader.ReadSourceLocation(Record, Idx);
+  E->RParenLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void PCHStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
@@ -1013,6 +1024,13 @@ void PCHStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   E->setTemporary(Reader.ReadCXXTemporary(Record, Idx));
   E->setSubExpr(Reader.ReadSubExpr());
+}
+
+void PCHStmtReader::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
+  VisitExpr(E);
+  E->SubExpr = Reader.ReadSubExpr();
+  E->ExtendsLifetime = Record[Idx++];
+  E->RequiresTemporaryCopy = Record[Idx++];
 }
 
 void PCHStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
@@ -1178,6 +1196,15 @@ void PCHStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   E->setRequiresADL(Record[Idx++]);
   E->setOverloaded(Record[Idx++]);
   E->setNamingClass(cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++])));
+}
+
+void PCHStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  VisitExpr(E);
+  E->UTT = (UnaryTypeTrait)Record[Idx++];
+  SourceRange Range = Reader.ReadSourceRange(Record, Idx);
+  E->Loc = Range.getBegin();
+  E->RParen = Range.getEnd();
+  E->QueriedType = Reader.GetType(Record[Idx++]);
 }
 
 Stmt *PCHReader::ReadStmt() {
@@ -1566,8 +1593,11 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
         
     case pch::EXPR_CXX_CONSTRUCT:
-      S = new (Context) CXXConstructExpr(Empty, *Context,
-                                      Record[PCHStmtReader::NumExprFields]);
+      S = new (Context) CXXConstructExpr(Empty);
+      break;
+      
+    case pch::EXPR_CXX_TEMPORARY_OBJECT:
+      S = new (Context) CXXTemporaryObjectExpr(Empty);
       break;
 
     case pch::EXPR_CXX_STATIC_CAST:
@@ -1621,6 +1651,9 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
     case pch::EXPR_CXX_BIND_TEMPORARY:
       S = new (Context) CXXBindTemporaryExpr(Empty);
       break;
+    case pch::EXPR_CXX_BIND_REFERENCE:
+      S = new (Context) CXXBindReferenceExpr(Empty);
+      break;
 
     case pch::EXPR_CXX_SCALAR_VALUE_INIT:
       S = new (Context) CXXScalarValueInitExpr(Empty);
@@ -1663,8 +1696,12 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       S = UnresolvedLookupExpr::CreateEmpty(*Context,
                       /*NumTemplateArgs=*/Record[PCHStmtReader::NumExprFields]);
       break;
+      
+    case pch::EXPR_CXX_UNARY_TYPE_TRAIT:
+      S = new (Context) UnaryTypeTraitExpr(Empty);
+      break;
     }
-
+    
     // We hit a STMT_STOP, so we're done with this expression.
     if (Finished)
       break;

@@ -118,6 +118,7 @@ namespace clang {
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
+    void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
     void VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
     void VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
@@ -131,6 +132,7 @@ namespace clang {
     void VisitCXXThrowExpr(CXXThrowExpr *E);
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
+    void VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E);
 
     void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
     void VisitCXXNewExpr(CXXNewExpr *E);
@@ -145,6 +147,8 @@ namespace clang {
     void VisitOverloadExpr(OverloadExpr *E);
     void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
+
+    void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   };
 }
 
@@ -949,6 +953,13 @@ void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Code = pch::EXPR_CXX_CONSTRUCT;
 }
 
+void PCHStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
+  VisitCXXConstructExpr(E);
+  Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = pch::EXPR_CXX_TEMPORARY_OBJECT;
+}
+
 void PCHStmtWriter::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   VisitExplicitCastExpr(E);
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
@@ -1039,6 +1050,14 @@ void PCHStmtWriter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   Writer.AddCXXTemporary(E->getTemporary(), Record);
   Writer.AddStmt(E->getSubExpr());
   Code = pch::EXPR_CXX_BIND_TEMPORARY;
+}
+
+void PCHStmtWriter::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *E) {
+  VisitExpr(E);
+  Writer.AddStmt(E->getSubExpr());
+  Record.push_back(E->extendsLifetime());
+  Record.push_back(E->requiresTemporaryCopy());
+  Code = pch::EXPR_CXX_BIND_REFERENCE;
 }
 
 void PCHStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
@@ -1224,6 +1243,14 @@ void PCHStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   Record.push_back(E->isOverloaded());
   Writer.AddDeclRef(E->getNamingClass(), Record);
   Code = pch::EXPR_CXX_UNRESOLVED_LOOKUP;
+}
+
+void PCHStmtWriter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getTrait());
+  Writer.AddSourceRange(E->getSourceRange(), Record);
+  Writer.AddTypeRef(E->getQueriedType(), Record);
+  Code = pch::EXPR_CXX_UNARY_TYPE_TRAIT;
 }
 
 //===----------------------------------------------------------------------===//

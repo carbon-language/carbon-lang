@@ -762,6 +762,8 @@ namespace clang {
       EXPR_CXX_MEMBER_CALL,
       /// \brief A CXXConstructExpr record.
       EXPR_CXX_CONSTRUCT,
+      /// \brief A CXXTemporaryObjectExpr record.
+      EXPR_CXX_TEMPORARY_OBJECT,
       // \brief A CXXStaticCastExpr record.
       EXPR_CXX_STATIC_CAST,
       // \brief A CXXDynamicCastExpr record.
@@ -781,7 +783,8 @@ namespace clang {
       EXPR_CXX_THROW,             // CXXThrowExpr
       EXPR_CXX_DEFAULT_ARG,       // CXXDefaultArgExpr
       EXPR_CXX_BIND_TEMPORARY,    // CXXBindTemporaryExpr
-      //
+      EXPR_CXX_BIND_REFERENCE,    // CXXBindReferenceExpr
+
       EXPR_CXX_SCALAR_VALUE_INIT, // CXXScalarValueInitExpr
       EXPR_CXX_NEW,               // CXXNewExpr
       EXPR_CXX_DELETE,            // CXXDeleteExpr
@@ -793,7 +796,9 @@ namespace clang {
       EXPR_CXX_DEPENDENT_SCOPE_DECL_REF,   // DependentScopeDeclRefExpr
       EXPR_CXX_UNRESOLVED_CONSTRUCT, // CXXUnresolvedConstructExpr
       EXPR_CXX_UNRESOLVED_MEMBER,    // UnresolvedMemberExpr
-      EXPR_CXX_UNRESOLVED_LOOKUP     // UnresolvedLookupExpr
+      EXPR_CXX_UNRESOLVED_LOOKUP,     // UnresolvedLookupExpr
+
+      EXPR_CXX_UNARY_TYPE_TRAIT   // UnaryTypeTraitExpr  
     };
 
     /// \brief The kinds of designators that can occur in a

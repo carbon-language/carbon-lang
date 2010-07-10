@@ -648,6 +648,9 @@ public:
   static CXXBindReferenceExpr *Create(ASTContext &C, Expr *SubExpr,
                                       bool ExtendsLifetime, 
                                       bool RequiresTemporaryCopy);
+  
+  explicit CXXBindReferenceExpr(EmptyShell Empty)
+    : Expr(CXXBindReferenceExprClass, Empty) { }
 
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
@@ -663,7 +666,7 @@ public:
 
   // extendsLifetime - Whether binding this reference extends the lifetime of
   // the expression being bound. FIXME: Add C++ reference.
-  bool extendsLifetime() { return ExtendsLifetime; }
+  bool extendsLifetime() const { return ExtendsLifetime; }
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {
@@ -674,6 +677,8 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  friend class PCHStmtReader;
 };
 
 /// CXXConstructExpr - Represents a call to a C++ constructor.
@@ -704,13 +709,20 @@ protected:
                    ConstructionKind ConstructKind = CK_Complete);
   ~CXXConstructExpr() { }
 
+  /// \brief Construct an empty C++ construction expression.
+  CXXConstructExpr(StmtClass SC, EmptyShell Empty)
+    : Expr(SC, Empty), Constructor(0), Elidable(0), ZeroInitialization(0),
+      ConstructKind(0), Args(0), NumArgs(0) { }
+
   virtual void DoDestroy(ASTContext &C);
 
 public:
-  /// \brief Construct an empty C++ construction expression that will store
-  /// \p numargs arguments.
-  CXXConstructExpr(EmptyShell Empty, ASTContext &C, unsigned numargs);
-  
+  /// \brief Construct an empty C++ construction expression.
+  explicit CXXConstructExpr(EmptyShell Empty)
+    : Expr(CXXConstructExprClass, Empty), Constructor(0),
+      Elidable(0), ZeroInitialization(0),
+      ConstructKind(0), Args(0), NumArgs(0) { }
+
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   SourceLocation Loc,
                                   CXXConstructorDecl *D, bool Elidable,
@@ -783,6 +795,8 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
 };
 
 /// CXXFunctionalCastExpr - Represents an explicit C++ type conversion
@@ -842,6 +856,8 @@ public:
                          Expr **Args,unsigned NumArgs,
                          SourceLocation rParenLoc,
                          bool ZeroInitialization = false);
+  explicit CXXTemporaryObjectExpr(EmptyShell Empty)
+    : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty) { }
 
   ~CXXTemporaryObjectExpr() { }
 
@@ -855,6 +871,8 @@ public:
     return T->getStmtClass() == CXXTemporaryObjectExprClass;
   }
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
+
+  friend class PCHStmtReader;
 };
 
 /// CXXScalarValueInitExpr - [C++ 5.2.3p2]
@@ -1338,6 +1356,9 @@ public:
     : Expr(UnaryTypeTraitExprClass, ty, false, queried->isDependentType()),
       UTT(utt), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
+  explicit UnaryTypeTraitExpr(EmptyShell Empty)
+    : Expr(UnaryTypeTraitExprClass, Empty), UTT((UnaryTypeTrait)0) { }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
 
   UnaryTypeTrait getTrait() const { return UTT; }
@@ -1354,6 +1375,8 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
 };
 
 /// \brief A reference to an overloaded function set, either an
