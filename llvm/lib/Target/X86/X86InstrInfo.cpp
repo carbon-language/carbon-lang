@@ -2642,7 +2642,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       if (TM.getSubtarget<X86Subtarget>().is64Bit())
         PICBase = X86::RIP;
       else
-        // FIXME: PICBase = TM.getInstrInfo()->getGlobalBaseReg(&MF);
+        // FIXME: PICBase = getGlobalBaseReg(&MF);
         // This doesn't work for several reasons.
         // 1. GlobalBaseReg may have been spilled.
         // 2. It may not be live at MI.
@@ -3717,6 +3717,8 @@ unsigned X86InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
 /// the global base register value. Output instructions required to
 /// initialize the register in the function entry block, if necessary.
 ///
+/// TODO: Eliminate this and move the code to X86MachineFunctionInfo.
+///
 unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   assert(!TM.getSubtarget<X86Subtarget>().is64Bit() &&
          "X86-64 PIC uses RIP relative addressing");
@@ -3726,30 +3728,10 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   if (GlobalBaseReg != 0)
     return GlobalBaseReg;
 
-  // Insert the set of GlobalBaseReg into the first MBB of the function
-  MachineBasicBlock &FirstMBB = MF->front();
-  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-  DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
+  // Create the register. The code to initialize it is inserted
+  // later, by the CGBR pass (below).
   MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  unsigned PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
-  
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  // Operand of MovePCtoStack is completely ignored by asm printer. It's
-  // only used in JIT code emission as displacement to pc.
-  BuildMI(FirstMBB, MBBI, DL, TII->get(X86::MOVPC32r), PC).addImm(0);
-  
-  // If we're using vanilla 'GOT' PIC style, we should use relative addressing
-  // not to pc, but to _GLOBAL_OFFSET_TABLE_ external.
-  if (TM.getSubtarget<X86Subtarget>().isPICStyleGOT()) {
-    GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
-    // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
-    BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)
-      .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_",
-                                    X86II::MO_GOT_ABSOLUTE_ADDRESS);
-  } else {
-    GlobalBaseReg = PC;
-  }
-
+  GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
   X86FI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
 }
@@ -3806,3 +3788,66 @@ void X86InstrInfo::SetSSEDomain(MachineInstr *MI, unsigned Domain) const {
 void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
 }
+
+namespace {
+  /// CGBR - Create Global Base Reg pass. This initializes the PIC
+  /// global base register for x86-32.
+  struct CGBR : public MachineFunctionPass {
+    static char ID;
+    CGBR() : MachineFunctionPass(&ID) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      const X86TargetMachine *TM =
+        static_cast<const X86TargetMachine *>(&MF.getTarget());
+
+      assert(!TM->getSubtarget<X86Subtarget>().is64Bit() &&
+             "X86-64 PIC uses RIP relative addressing");
+
+      // Only emit a global base reg in PIC mode.
+      if (TM->getRelocationModel() != Reloc::PIC_)
+        return false;
+
+      // Insert the set of GlobalBaseReg into the first MBB of the function
+      MachineBasicBlock &FirstMBB = MF.front();
+      MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+      DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
+      MachineRegisterInfo &RegInfo = MF.getRegInfo();
+      const X86InstrInfo *TII = TM->getInstrInfo();
+
+      unsigned PC;
+      if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT())
+        PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
+      else
+        PC = TII->getGlobalBaseReg(&MF);
+  
+      // Operand of MovePCtoStack is completely ignored by asm printer. It's
+      // only used in JIT code emission as displacement to pc.
+      BuildMI(FirstMBB, MBBI, DL, TII->get(X86::MOVPC32r), PC).addImm(0);
+  
+      // If we're using vanilla 'GOT' PIC style, we should use relative addressing
+      // not to pc, but to _GLOBAL_OFFSET_TABLE_ external.
+      if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT()) {
+        unsigned GlobalBaseReg = TII->getGlobalBaseReg(&MF);
+        // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
+        BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)
+          .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_",
+                                        X86II::MO_GOT_ABSOLUTE_ADDRESS);
+      }
+
+      return true;
+    }
+
+    virtual const char *getPassName() const {
+      return "X86 PIC Global Base Reg Initialization";
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+  };
+}
+
+char CGBR::ID = 0;
+FunctionPass*
+llvm::createGlobalBaseRegPass() { return new CGBR(); }

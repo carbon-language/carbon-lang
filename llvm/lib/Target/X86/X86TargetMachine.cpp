@@ -173,6 +173,10 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM,
   // Install an instruction selector.
   PM.add(createX86ISelDag(*this, OptLevel));
 
+  // For 32-bit, prepend instructions to set the "global base reg" for PIC.
+  if (!Subtarget.is64Bit())
+    PM.add(createGlobalBaseRegPass());
+
   return false;
 }
 

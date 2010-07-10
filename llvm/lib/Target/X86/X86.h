@@ -35,6 +35,10 @@ class formatted_raw_ostream;
 FunctionPass *createX86ISelDag(X86TargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 
+/// createGlobalBaseRegPass - This pass initializes a global base
+/// register for PIC on x86-32.
+FunctionPass* createGlobalBaseRegPass();
+
 /// createX86FloatingPointStackifierPass - This function returns a pass which
 /// converts floating point register references and pseudo instructions into
 /// floating point stack references and physical instructions.

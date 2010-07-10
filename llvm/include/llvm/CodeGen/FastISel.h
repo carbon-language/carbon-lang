@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallSet.h"
 #endif
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 
 namespace llvm {
 
@@ -44,7 +45,6 @@ class TargetRegisterInfo;
 /// lowering, but runs quickly.
 class FastISel {
 protected:
-  MachineBasicBlock *MBB;
   DenseMap<const Value *, unsigned> LocalValueMap;
   FunctionLoweringInfo &FuncInfo;
   MachineRegisterInfo &MRI;
@@ -56,23 +56,21 @@ protected:
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
   const TargetRegisterInfo &TRI;
-  bool IsBottomUp;
+  MachineInstr *LastLocalValue;
 
 public:
+  /// getLastLocalValue - Return the position of the last instruction
+  /// emitted for materializing constants for use in the current block.
+  MachineInstr *getLastLocalValue() { return LastLocalValue; }
+
+  /// setLastLocalValue - Update the position of the last instruction
+  /// emitted for materializing constants for use in the current block.
+  void setLastLocalValue(MachineInstr *I) { LastLocalValue = I; }
+
   /// startNewBlock - Set the current block to which generated machine
   /// instructions will be appended, and clear the local CSE map.
   ///
-  void startNewBlock(MachineBasicBlock *mbb) {
-    setCurrentBlock(mbb);
-    LocalValueMap.clear();
-  }
-
-  /// setCurrentBlock - Set the current block to which generated machine
-  /// instructions will be appended.
-  ///
-  void setCurrentBlock(MachineBasicBlock *mbb) {
-    MBB = mbb;
-  }
+  void startNewBlock();
 
   /// getCurDebugLoc() - Return current debug location information.
   DebugLoc getCurDebugLoc() const { return DL; }
@@ -103,6 +101,17 @@ public:
   /// takes care of truncating or sign-extending the given getelementptr
   /// index value.
   std::pair<unsigned, bool> getRegForGEPIndex(const Value *V);
+
+  /// recomputeInsertPt - Reset InsertPt to prepare for insterting instructions
+  /// into the current block.
+  void recomputeInsertPt();
+
+  /// enterLocalValueArea - Prepare InsertPt to begin inserting instructions
+  /// into the local value area and return the old insert position.
+  MachineBasicBlock::iterator enterLocalValueArea();
+
+  /// leaveLocalValueArea - Reset InsertPt to the given old insert position
+  void leaveLocalValueArea(MachineBasicBlock::iterator OldInsertPt);
 
   virtual ~FastISel();
 
