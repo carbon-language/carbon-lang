@@ -100,10 +100,10 @@ TYPED_TEST(ValueMapTest, OperationsWork) {
 
   // Erase:
   VM.erase(InsertResult2.first);
-  EXPECT_EQ(false, VM.count(this->AddV.get()));
-  EXPECT_EQ(true, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0U, VM.count(this->AddV.get()));
+  EXPECT_EQ(1U, VM.count(this->BitcastV.get()));
   VM.erase(this->BitcastV.get());
-  EXPECT_EQ(false, VM.count(this->BitcastV.get()));
+  EXPECT_EQ(0U, VM.count(this->BitcastV.get()));
   EXPECT_EQ(0U, VM.size());
 
   // Range insert:
