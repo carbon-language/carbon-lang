@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 -relocation-model=pic
+; RUN: llc -march=x86 -relocation-model=pic < %s
 
 ; This should use flds to set the return value.
 ; CHECK: test0:
@@ -28,6 +28,6 @@ define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
 ; CHECK: ret
 @HHH = external global i32
 define i32 @test2() nounwind {
-  %t = load i32* @H
+  %t = load i32* @HHH
   ret i32 %t
 }
