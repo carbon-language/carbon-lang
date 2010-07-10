@@ -642,8 +642,10 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
             // Insert to start of the BB (after PHIs).
             BB->insert(BBBegin, DbgMI);
           else {
+            // Insert at the instruction, which may be in a different
+            // block, if the block was split by a custom inserter.
             MachineBasicBlock::iterator Pos = MI;
-            BB->insert(llvm::next(Pos), DbgMI);
+            MI->getParent()->insert(llvm::next(Pos), DbgMI);
           }
         }
       }
