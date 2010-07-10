@@ -5292,6 +5292,16 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return LHSTy;
 }
 
+static bool IsWithinTemplateSpecialization(Decl *D) {
+  if (DeclContext *DC = D->getDeclContext()) {
+    if (isa<ClassTemplateSpecializationDecl>(DC))
+      return true;
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DC))
+      return FD->isFunctionTemplateSpecialization();
+  }
+  return false;
+}
+
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     unsigned OpaqueOpc, bool isRelational) {
@@ -5310,13 +5320,17 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
     // NOTE: Don't warn about comparisons of enum constants. These can arise
-    //  from macro expansions, and are usually quite deliberate.
+    //  from macro expansions, and are usually quite deliberate. Also don't
+    //  warn about comparisons which are only self comparisons within
+    //  a template specialization. The warnings should catch obvious cases in
+    //  the definition of the template anyways.
     Expr *LHSStripped = lex->IgnoreParens();
     Expr *RHSStripped = rex->IgnoreParens();
-    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped))
+    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
-            !isa<EnumConstantDecl>(DRL->getDecl())) {
+            !isa<EnumConstantDecl>(DRL->getDecl()) &&
+            !IsWithinTemplateSpecialization(DRL->getDecl())) {
           DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
                               << 0 // self-
                               << (Opc == BinaryOperator::EQ
@@ -5344,6 +5358,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                 << always_evals_to);
         }
       }
+    }
 
     if (isa<CastExpr>(LHSStripped))
       LHSStripped = LHSStripped->IgnoreParenCasts();
