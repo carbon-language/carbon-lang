@@ -1898,6 +1898,42 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                 const TargetRegisterClass *SrcRC,
                                 DebugLoc DL) const {
 
+  // Moving from ST(0) turns into FpGET_ST0_32 etc.
+  if (SrcReg == X86::ST0 || SrcReg == X86::ST1) {
+    // Copying from ST(0)/ST(1).
+    bool isST0 = SrcReg == X86::ST0;
+    unsigned Opc;
+    if (DestRC == &X86::RFP32RegClass)
+      Opc = isST0 ? X86::FpGET_ST0_32 : X86::FpGET_ST1_32;
+    else if (DestRC == &X86::RFP64RegClass)
+      Opc = isST0 ? X86::FpGET_ST0_64 : X86::FpGET_ST1_64;
+    else {
+      if (DestRC != &X86::RFP80RegClass)
+        return false;
+      Opc = isST0 ? X86::FpGET_ST0_80 : X86::FpGET_ST1_80;
+    }
+    BuildMI(MBB, MI, DL, get(Opc), DestReg);
+    return true;
+  }
+
+  // Moving to ST(0) turns into FpSET_ST0_32 etc.
+  if (DestReg == X86::ST0 || DestReg == X86::ST1) {
+    // Copying to ST(0) / ST(1).
+    bool isST0 = DestReg == X86::ST0;
+    unsigned Opc;
+    if (SrcRC == &X86::RFP32RegClass)
+      Opc = isST0 ? X86::FpSET_ST0_32 : X86::FpSET_ST1_32;
+    else if (SrcRC == &X86::RFP64RegClass)
+      Opc = isST0 ? X86::FpSET_ST0_64 : X86::FpSET_ST1_64;
+    else {
+      if (SrcRC != &X86::RFP80RegClass)
+        return false;
+      Opc = isST0 ? X86::FpSET_ST0_80 : X86::FpSET_ST1_80;
+    }
+    BuildMI(MBB, MI, DL, get(Opc)).addReg(SrcReg);
+    return true;
+  }  
+
   // Determine if DstRC and SrcRC have a common superclass in common.
   const TargetRegisterClass *CommonRC = DestRC;
   if (DestRC == SrcRC)
@@ -1968,7 +2004,7 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = X86::MOV32rr_TC;
     } else if (CommonRC == &X86::RFP32RegClass) {
       Opc = X86::MOV_Fp3232;
-    } else if (CommonRC == &X86::RFP64RegClass || CommonRC == &X86::RSTRegClass) {
+    } else if (CommonRC == &X86::RFP64RegClass) {
       Opc = X86::MOV_Fp6464;
     } else if (CommonRC == &X86::RFP80RegClass) {
       Opc = X86::MOV_Fp8080;
@@ -2016,48 +2052,6 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     }
   }
 
-  // Moving from ST(0) turns into FpGET_ST0_32 etc.
-  if (SrcRC == &X86::RSTRegClass) {
-    // Copying from ST(0)/ST(1).
-    if (SrcReg != X86::ST0 && SrcReg != X86::ST1)
-      // Can only copy from ST(0)/ST(1) right now
-      return false;
-    bool isST0 = SrcReg == X86::ST0;
-    unsigned Opc;
-    if (DestRC == &X86::RFP32RegClass)
-      Opc = isST0 ? X86::FpGET_ST0_32 : X86::FpGET_ST1_32;
-    else if (DestRC == &X86::RFP64RegClass)
-      Opc = isST0 ? X86::FpGET_ST0_64 : X86::FpGET_ST1_64;
-    else {
-      if (DestRC != &X86::RFP80RegClass)
-        return false;
-      Opc = isST0 ? X86::FpGET_ST0_80 : X86::FpGET_ST1_80;
-    }
-    BuildMI(MBB, MI, DL, get(Opc), DestReg);
-    return true;
-  }
-
-  // Moving to ST(0) turns into FpSET_ST0_32 etc.
-  if (DestRC == &X86::RSTRegClass) {
-    // Copying to ST(0) / ST(1).
-    if (DestReg != X86::ST0 && DestReg != X86::ST1)
-      // Can only copy to TOS right now
-      return false;
-    bool isST0 = DestReg == X86::ST0;
-    unsigned Opc;
-    if (SrcRC == &X86::RFP32RegClass)
-      Opc = isST0 ? X86::FpSET_ST0_32 : X86::FpSET_ST1_32;
-    else if (SrcRC == &X86::RFP64RegClass)
-      Opc = isST0 ? X86::FpSET_ST0_64 : X86::FpSET_ST1_64;
-    else {
-      if (SrcRC != &X86::RFP80RegClass)
-        return false;
-      Opc = isST0 ? X86::FpSET_ST0_80 : X86::FpSET_ST1_80;
-    }
-    BuildMI(MBB, MI, DL, get(Opc)).addReg(SrcReg);
-    return true;
-  }
-  
   // Not yet supported!
   return false;
 }
