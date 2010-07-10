@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
@@ -695,9 +696,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
         // Insert copy from curr.second to a temporary at
         // the Phi defining curr.second
         MachineBasicBlock::iterator PI = MRI.getVRegDef(curr.second);
-        TII->copyRegToReg(*PI->getParent(), PI, t,
-                          curr.second, RC, RC, DebugLoc());
-        
+        BuildMI(*PI->getParent(), PI, DebugLoc(), TII->get(TargetOpcode::COPY),
+                t).addReg(curr.second);
         DEBUG(dbgs() << "Inserted copy from " << curr.second << " to " << t
                      << "\n");
         
@@ -712,8 +712,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       }
       
       // Insert copy from map[curr.first] to curr.second
-      TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), curr.second,
-                        map[curr.first], RC, RC, DebugLoc());
+      BuildMI(*MBB, MBB->getFirstTerminator(), DebugLoc(),
+             TII->get(TargetOpcode::COPY), curr.second).addReg(map[curr.first]);
       map[curr.first] = curr.second;
       DEBUG(dbgs() << "Inserted copy from " << curr.first << " to "
                    << curr.second << "\n");
@@ -761,8 +761,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
         
         // Insert a copy from dest to a new temporary t at the end of b
         unsigned t = MF->getRegInfo().createVirtualRegister(RC);
-        TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), t,
-                          curr.second, RC, RC, DebugLoc());
+        BuildMI(*MBB, MBB->getFirstTerminator(), DebugLoc(),
+                TII->get(TargetOpcode::COPY), t).addReg(curr.second);
         map[curr.second] = t;
         
         MachineBasicBlock::iterator TI = MBB->getFirstTerminator();
@@ -956,9 +956,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         } else {
           // Insert a last-minute copy if a conflict was detected.
           const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
-          const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(I->first);
-          TII->copyRegToReg(*SI->second, SI->second->getFirstTerminator(),
-                            I->first, SI->first, RC, RC, DebugLoc());
+          BuildMI(*SI->second, SI->second->getFirstTerminator(), DebugLoc(),
+                  TII->get(TargetOpcode::COPY), I->first).addReg(SI->first);
           
           LI.renumber();
           

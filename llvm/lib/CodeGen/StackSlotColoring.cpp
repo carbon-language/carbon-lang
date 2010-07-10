@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -609,8 +610,8 @@ StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       DEBUG(MI->dump());
       ++NumLoadElim;
     } else {
-      TII->copyRegToReg(*MBB, MI, DstReg, Reg, RC, RC,
-                        MI->getDebugLoc());
+      BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(TargetOpcode::COPY),
+              DstReg).addReg(Reg);
       ++NumRegRepl;
     }
 
@@ -626,8 +627,8 @@ StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
       DEBUG(MI->dump());
       ++NumStoreElim;
     } else {
-      TII->copyRegToReg(*MBB, MI, Reg, SrcReg, RC, RC,
-                        MI->getDebugLoc());
+      BuildMI(*MBB, MI, MI->getDebugLoc(), TII->get(TargetOpcode::COPY), Reg)
+        .addReg(SrcReg);
       ++NumRegRepl;
     }
 

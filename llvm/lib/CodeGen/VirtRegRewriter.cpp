@@ -1758,7 +1758,6 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
     bool DoReMat = VRM->isReMaterialized(VirtReg);
     int SSorRMId = DoReMat
       ? VRM->getReMatId(VirtReg) : VRM->getStackSlot(VirtReg);
-    const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
     unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
     if (InReg == Phys) {
       // If the value is already available in the expected register, save
@@ -1792,20 +1791,16 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
       MachineBasicBlock::iterator InsertLoc =
         ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat, SSorRMId, TII,
                          *MBB->getParent());
-
-      TII->copyRegToReg(*MBB, InsertLoc, Phys, InReg, RC, RC,
-                        MI->getDebugLoc());
+      MachineInstr *CopyMI = BuildMI(*MBB, InsertLoc, MI->getDebugLoc(),
+                                     TII->get(TargetOpcode::COPY), Phys)
+                               .addReg(InReg, RegState::Kill);
 
       // This invalidates Phys.
       Spills.ClobberPhysReg(Phys);
       // Remember it's available.
       Spills.addAvailable(SSorRMId, Phys);
 
-      // Mark is killed.
-      MachineInstr *CopyMI = prior(InsertLoc);
       CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
-      MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
-      KillOpnd->setIsKill();
       UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
       DEBUG(dbgs() << '\t' << *CopyMI);
@@ -2149,7 +2144,6 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           continue;
         }
 
-        const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
         MRI->setPhysRegUsed(DesignatedReg);
         ReusedOperands.markClobbered(DesignatedReg);
 
@@ -2157,11 +2151,9 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
         MachineBasicBlock::iterator InsertLoc =
           ComputeReloadLoc(&MI, MBB->begin(), PhysReg, TRI, DoReMat,
                            SSorRMId, TII, MF);
-
-        TII->copyRegToReg(*MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC,
-                          MI.getDebugLoc());
-
-        MachineInstr *CopyMI = prior(InsertLoc);
+        MachineInstr *CopyMI = BuildMI(*MBB, InsertLoc, MI.getDebugLoc(),
+                                       TII->get(TargetOpcode::COPY),
+                                       DesignatedReg).addReg(PhysReg);
         CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
         UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
@@ -2282,27 +2274,16 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           if (unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SS)) {
             DEBUG(dbgs() << "Promoted Load To Copy: " << MI);
             if (DestReg != InReg) {
-              const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-              TII->copyRegToReg(*MBB, &MI, DestReg, InReg, RC, RC,
-                                MI.getDebugLoc());
               MachineOperand *DefMO = MI.findRegisterDefOperand(DestReg);
-              unsigned SubIdx = DefMO->getSubReg();
+              MachineInstr *CopyMI = BuildMI(*MBB, &MI, MI.getDebugLoc(),
+                                             TII->get(TargetOpcode::COPY))
+                .addReg(DestReg, RegState::Define, DefMO->getSubReg())
+                .addReg(InReg, RegState::Kill);
               // Revisit the copy so we make sure to notice the effects of the
               // operation on the destreg (either needing to RA it if it's
               // virtual or needing to clobber any values if it's physical).
-              NextMII = &MI;
-              --NextMII;  // backtrack to the copy.
+              NextMII = CopyMI;
               NextMII->setAsmPrinterFlag(MachineInstr::ReloadReuse);
-              // Propagate the sub-register index over.
-              if (SubIdx) {
-                DefMO = NextMII->findRegisterDefOperand(DestReg);
-                DefMO->setSubReg(SubIdx);
-              }
-
-              // Mark is killed.
-              MachineOperand *KillOpnd = NextMII->findRegisterUseOperand(InReg);
-              KillOpnd->setIsKill();
-
               BackTracked = true;
             } else {
               DEBUG(dbgs() << "Removing now-noop copy: " << MI);

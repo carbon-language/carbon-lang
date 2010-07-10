@@ -194,12 +194,9 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
         --i; --e;
       } else {
         // Emit a copy.
-        const TargetRegisterClass *RC = getRegClass(LiveIns[i].second);
-        bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
-                                        LiveIns[i].second, LiveIns[i].first,
-                                        RC, RC, DebugLoc());
-        assert(Emitted && "Unable to issue a live-in copy instruction!\n");
-        (void) Emitted;
+        BuildMI(*EntryMBB, EntryMBB->begin(), DebugLoc(),
+                TII.get(TargetOpcode::COPY), LiveIns[i].second)
+          .addReg(LiveIns[i].first);
 
         // Add the register to the entry block live-in set.
         EntryMBB->addLiveIn(LiveIns[i].first);

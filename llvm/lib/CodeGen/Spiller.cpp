@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -337,10 +338,9 @@ private:
       // Insert a copy at the start of the MBB. The range proceeding the
       // copy will be attached to the original LiveInterval.
       MachineBasicBlock *defMBB = lis->getMBBFromIndex(newVNI->def);
-      tii->copyRegToReg(*defMBB, defMBB->begin(), newVReg, li->reg, trc, trc,
-                        DebugLoc());
-      MachineInstr *copyMI = defMBB->begin();
-      copyMI->addRegisterKilled(li->reg, tri);
+      MachineInstr *copyMI = BuildMI(*defMBB, defMBB->begin(), DebugLoc(),
+                                     tii->get(TargetOpcode::COPY), newVReg)
+                               .addReg(li->reg, RegState::Kill);
       SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
       VNInfo *phiDefVNI = li->getNextValue(lis->getMBBStartIdx(defMBB),
                                            0, false, lis->getVNInfoAllocator());
@@ -390,11 +390,10 @@ private:
 
       if (isTwoAddr && !twoAddrUseIsUndef) {
         MachineBasicBlock *defMBB = defInst->getParent();
-        tii->copyRegToReg(*defMBB, defInst, newVReg, li->reg, trc, trc,
-                          DebugLoc());
-        MachineInstr *copyMI = prior(MachineBasicBlock::iterator(defInst));
+        MachineInstr *copyMI = BuildMI(*defMBB, defInst, DebugLoc(),
+                                       tii->get(TargetOpcode::COPY), newVReg)
+                                 .addReg(li->reg, RegState::Kill);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
-        copyMI->addRegisterKilled(li->reg, tri);
         LiveRange *origUseRange =
           li->getLiveRangeContaining(newVNI->def.getUseIndex());
         origUseRange->end = copyIdx.getDefIndex();
@@ -440,10 +439,9 @@ private:
         // reg.
         MachineBasicBlock *useMBB = useInst->getParent();
         MachineBasicBlock::iterator useItr(useInst);
-        tii->copyRegToReg(*useMBB, llvm::next(useItr), li->reg, newVReg, trc,
-                          trc, DebugLoc());
-        MachineInstr *copyMI = llvm::next(useItr);
-        copyMI->addRegisterKilled(newVReg, tri);
+        MachineInstr *copyMI = BuildMI(*useMBB, llvm::next(useItr), DebugLoc(),
+                                       tii->get(TargetOpcode::COPY), newVReg)
+                                 .addReg(li->reg, RegState::Kill);
         SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
 
         // Change the old two-address defined range & vni to start at
@@ -471,12 +469,10 @@ private:
         continue;
       SlotIndex killIdx = LRI->end;
       MachineBasicBlock *killMBB = lis->getMBBFromIndex(killIdx);
-
-      tii->copyRegToReg(*killMBB, killMBB->getFirstTerminator(),
-                        li->reg, newVReg, trc, trc,
-                        DebugLoc());
-      MachineInstr *copyMI = prior(killMBB->getFirstTerminator());
-      copyMI->addRegisterKilled(newVReg, tri);
+      MachineInstr *copyMI = BuildMI(*killMBB, killMBB->getFirstTerminator(),
+                                     DebugLoc(), tii->get(TargetOpcode::COPY),
+                                     li->reg)
+                               .addReg(newVReg, RegState::Kill);
       SlotIndex copyIdx = lis->InsertMachineInstrInMaps(copyMI);
 
       // Save the current end. We may need it to add a new range if the

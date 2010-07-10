@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineSSAUpdater.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -559,11 +560,9 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     }
     MachineBasicBlock::iterator Loc = PredBB->getFirstTerminator();
     for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
-      const TargetRegisterClass *RC = MRI->getRegClass(CopyInfos[i].first);
-      TII->copyRegToReg(*PredBB, Loc, CopyInfos[i].first,
-                        CopyInfos[i].second, RC,RC, DebugLoc());
-      MachineInstr *CopyMI = prior(Loc);
-      Copies.push_back(CopyMI);
+      Copies.push_back(BuildMI(*PredBB, Loc, DebugLoc(),
+                               TII->get(TargetOpcode::COPY),
+                               CopyInfos[i].first).addReg(CopyInfos[i].second));
     }
     NumInstrDups += TailBB->size() - 1; // subtract one for removed branch
 
@@ -618,11 +617,10 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
       }
       MachineBasicBlock::iterator Loc = PrevBB->getFirstTerminator();
       for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
-        const TargetRegisterClass *RC = MRI->getRegClass(CopyInfos[i].first);
-        TII->copyRegToReg(*PrevBB, Loc, CopyInfos[i].first,
-                          CopyInfos[i].second, RC, RC, DebugLoc());
-        MachineInstr *CopyMI = prior(Loc);
-        Copies.push_back(CopyMI);
+        Copies.push_back(BuildMI(*PrevBB, Loc, DebugLoc(),
+                                 TII->get(TargetOpcode::COPY),
+                                 CopyInfos[i].first)
+                           .addReg(CopyInfos[i].second));
       }
     } else {
       // No PHIs to worry about, just splice the instructions over.
