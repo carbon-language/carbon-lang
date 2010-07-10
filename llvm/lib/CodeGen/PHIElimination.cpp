@@ -183,7 +183,6 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
   // Create a new register for the incoming PHI arguments.
   MachineFunction &MF = *MBB.getParent();
-  const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(DestReg);
   unsigned IncomingReg = 0;
   bool reusedIncoming = false;  // Is IncomingReg reused from an earlier PHI?
 
@@ -207,10 +206,12 @@ void llvm::PHIElimination::LowerAtomicPHINode(
       ++NumReused;
       DEBUG(dbgs() << "Reusing %reg" << IncomingReg << " for " << *MPhi);
     } else {
+      const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(DestReg);
       entry = IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
     }
-    TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC,
-                      MPhi->getDebugLoc());
+    BuildMI(MBB, AfterPHIsIt, MPhi->getDebugLoc(),
+            TII->get(TargetOpcode::COPY), DestReg)
+      .addReg(IncomingReg);
   }
 
   // Update live variable information if there is any.
@@ -292,8 +293,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Insert the copy.
     if (!reusedIncoming && IncomingReg)
-      TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC,
-                        MPhi->getDebugLoc());
+      BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
+              TII->get(TargetOpcode::COPY), IncomingReg).addReg(SrcReg);
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;
