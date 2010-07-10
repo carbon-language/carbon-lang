@@ -16,9 +16,9 @@
 //     transformation from taking place, though currently the analysis cannot
 //     support moving any really useful instructions (only dead ones).
 //  2. This pass transforms functions that are prevented from being tail
-//     recursive by an associative expression to use an accumulator variable,
-//     thus compiling the typical naive factorial or 'fib' implementation into
-//     efficient code.
+//     recursive by an associative and commutative expression to use an
+//     accumulator variable, thus compiling the typical naive factorial or
+//     'fib' implementation into efficient code.
 //  3. TRE is performed if the function returns void, if the return
 //     returns the result returned by the call, or if the function returns a
 //     run-time constant on all exits from the function.  It is possible, though
@@ -302,9 +302,9 @@ static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
 ///
 Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
                                                       CallInst *CI) {
-  if (!I->isAssociative()) return 0;
+  if (!I->isAssociative() || !I->isCommutative()) return 0;
   assert(I->getNumOperands() == 2 &&
-         "Associative operations should have 2 args!");
+         "Associative/commutative operations should have 2 args!");
 
   // Exactly one operand should be the result of the call instruction...
   if ((I->getOperand(0) == CI && I->getOperand(1) == CI) ||
@@ -369,11 +369,11 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
       return false;
   }
 
-  // If we are introducing accumulator recursion to eliminate associative
-  // operations after the call instruction, this variable contains the initial
-  // value for the accumulator.  If this value is set, we actually perform
-  // accumulator recursion elimination instead of simple tail recursion
-  // elimination.
+  // If we are introducing accumulator recursion to eliminate operations after
+  // the call instruction that are both associative and commutative, the initial
+  // value for the accumulator is placed in this variable.  If this value is set
+  // then we actually perform accumulator recursion elimination instead of
+  // simple tail recursion elimination.
   Value *AccumulatorRecursionEliminationInitVal = 0;
   Instruction *AccumulatorRecursionInstr = 0;
 
@@ -384,9 +384,9 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   for (BBI = CI, ++BBI; &*BBI != Ret; ++BBI)
     if (!CanMoveAboveCall(BBI, CI)) {
       // If we can't move the instruction above the call, it might be because it
-      // is an associative operation that could be tranformed using accumulator
-      // recursion elimination.  Check to see if this is the case, and if so,
-      // remember the initial accumulator value for later.
+      // is an associative and commutative operation that could be tranformed
+      // using accumulator recursion elimination.  Check to see if this is the
+      // case, and if so, remember the initial accumulator value for later.
       if ((AccumulatorRecursionEliminationInitVal =
                              CanTransformAccumulatorRecursion(BBI, CI))) {
         // Yes, this is accumulator recursion.  Remember which instruction
@@ -483,7 +483,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     }
 
     // Add an incoming argument for the current block, which is computed by our
-    // associative accumulator instruction.
+    // associative and commutative accumulator instruction.
     AccPN->addIncoming(AccRecInstr, BB);
 
     // Next, rewrite the accumulator recursion instruction so that it does not
