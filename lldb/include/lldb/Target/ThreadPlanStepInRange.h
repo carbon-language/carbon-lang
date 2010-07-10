@@ -36,6 +36,8 @@ public:
     virtual bool
     ShouldStop (Event *event_ptr);
 
+    void SetAvoidRegexp(const char *name);
+
     static ThreadPlan *
     DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton);
 
@@ -51,6 +53,9 @@ protected:
 
     virtual void
     SetFlagsToDefault ();
+    
+    bool
+    FrameMatchesAvoidRegexp ();
 
 private:
 
@@ -67,6 +72,7 @@ private:
     // from step in.
 
     static uint32_t s_default_flag_values;
+    std::auto_ptr<RegularExpression> m_avoid_regexp_ap;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInRange);
 

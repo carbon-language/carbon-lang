@@ -17,11 +17,13 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Target/ThreadPlanStepThrough.h"
+#include "lldb/Core/RegularExpression.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -44,6 +46,7 @@ ThreadPlanStepInRange::ThreadPlanStepInRange
     ThreadPlanShouldStopHere (this, ThreadPlanStepInRange::DefaultShouldStopHereCallback, NULL)
 {
     SetFlagsToDefault ();
+    // SetAvoidRegexp("^std\\:\\:.*");
 }
 
 ThreadPlanStepInRange::~ThreadPlanStepInRange ()
@@ -129,6 +132,15 @@ ThreadPlanStepInRange::SetFlagsToDefault ()
     GetFlags().Set(ThreadPlanStepInRange::s_default_flag_values);
 }
 
+void 
+ThreadPlanStepInRange::SetAvoidRegexp(const char *name)
+{
+    if (m_avoid_regexp_ap.get() == NULL)
+        m_avoid_regexp_ap.reset (new RegularExpression(name));
+
+    m_avoid_regexp_ap->Compile (name);
+}
+
 void
 ThreadPlanStepInRange::SetDefaultFlagValue (uint32_t new_value)
 {
@@ -136,18 +148,52 @@ ThreadPlanStepInRange::SetDefaultFlagValue (uint32_t new_value)
     ThreadPlanStepInRange::s_default_flag_values = new_value;
 }
 
+bool
+ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
+{
+    StackFrame *frame = GetThread().GetStackFrameAtIndex(0).get();
+
+    if (m_avoid_regexp_ap.get() != NULL)
+    {
+        SymbolContext sc = frame->GetSymbolContext(eSymbolContextSymbol);
+        if (sc.symbol != NULL)
+        {
+            const char *unnamed_symbol = "<UNKNOWN>";
+            const char *sym_name = sc.symbol->GetMangled().GetName().AsCString(unnamed_symbol);
+            if (strcmp (sym_name, unnamed_symbol) != 0)
+               return m_avoid_regexp_ap->Execute(sym_name);
+        }
+    }
+    return false;
+}
+
 ThreadPlan *
 ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton)
 {
+    bool should_step_out = false;
+    StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
+
     if (flags.IsSet(eAvoidNoDebug))
     {
-        StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
-
         if (!frame->HasDebugInformation())
+            should_step_out = true;
+    }
+    
+    if (!should_step_out)
+    {
+        if (current_plan->GetKind() == eKindStepInRange)
         {
-            // FIXME: Make sure the ThreadPlanForStepOut does the right thing with inlined functions.
-            return current_plan->GetThread().QueueThreadPlanForStepOut (false, NULL, true, current_plan->StopOthers(), eVoteNo, eVoteNoOpinion);
+            ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (current_plan);
+            should_step_out = step_in_range_plan->FrameMatchesAvoidRegexp ();
         }
+    }
+    
+    if (should_step_out)
+    {
+        // FIXME: Make sure the ThreadPlanForStepOut does the right thing with inlined functions.
+        return current_plan->GetThread().QueueThreadPlanForStepOut (false, NULL, true, 
+                                                                    current_plan->StopOthers(), 
+                                                                    eVoteNo, eVoteNoOpinion);
     }
 
     return NULL;

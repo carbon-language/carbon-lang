@@ -383,6 +383,12 @@ public:
                         error.SetErrorStringWithFormat("Invalid enumeration value for option '%c'.\n", short_option);
                 }
                 break;
+                case 'r':
+                {
+                    m_avoid_regexp.clear();
+                    m_avoid_regexp.assign(option_arg);
+                }
+                break;
                 default:
                     error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
                     break;
@@ -397,6 +403,7 @@ public:
             Options::ResetOptionValues();
             m_avoid_no_debug = true;
             m_run_mode = eOnlyDuringStepping;
+            m_avoid_regexp.clear();
         }
 
         const lldb::OptionDefinition*
@@ -412,6 +419,7 @@ public:
         // Instance variables to hold the values for command options.
         bool m_avoid_no_debug;
         RunMode m_run_mode;
+        std::string m_avoid_regexp;
     };
 
     CommandObjectThreadStepWithTypeAndScope (const char *name,
@@ -514,6 +522,11 @@ public:
                                                                     frame->GetSymbolContext(eSymbolContextEverything), 
                                                                     stop_other_threads,
                                                                     m_options.m_avoid_no_debug);
+                    if (new_plan && !m_options.m_avoid_regexp.empty())
+                    {
+                        ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (new_plan);
+                        step_in_range_plan->SetAvoidRegexp(m_options.m_avoid_regexp.c_str());
+                    }
                 }
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
@@ -621,6 +634,7 @@ CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "avoid_no_debug", 'a', required_argument, NULL,               0, "<avoid_no_debug>", "Should step-in step over functions with no debug information"},
 { LLDB_OPT_SET_1, false, "run_mode",       'm', required_argument, g_tri_running_mode, 0, "<run_mode>",       "Determine how to run other threads while stepping this one"},
+{ LLDB_OPT_SET_1, false, "regexp_to_avoid",'r', required_argument, NULL, 0, "<avoid_regexp>",       "Should step-in step over functions matching this regexp"},
 { 0, false, NULL, 0, 0, NULL, 0, NULL, NULL }
 };
 
