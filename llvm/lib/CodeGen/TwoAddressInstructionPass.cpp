@@ -1434,7 +1434,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       IsImpDef = false;
 
       // Remember COPY sources. These might be candidate for coalescing.
-      if (DefMI->isCopy())
+      if (DefMI->isCopy() && DefMI->getOperand(1).getSubReg())
         RealSrcs.push_back(DefMI->getOperand(1).getReg());
 
       if (!Seen.insert(SrcReg) ||
