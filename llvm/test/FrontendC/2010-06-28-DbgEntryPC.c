@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -O2 -g %s -o - | llc -O2 | FileCheck %s
+// RUN: %llvmgcc -S -O2 -g %s -o - | llc -O2 -mtriple=i386-apple-darwin | FileCheck %s
 // Use DW_FORM_addr for DW_AT_entry_pc.
 // Radar 8094785
 
