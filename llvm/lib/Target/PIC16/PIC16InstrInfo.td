@@ -146,7 +146,7 @@ class BinOpFW<bits<6> OpCode, string OpcStr, SDNode OpNode>:
 // F = F Op W : Load the value from F, do op with W and store in F.
 // This insn class is not marked as TwoAddress because the reg is
 // being used as a source operand only. (Remember a TwoAddress insn
-// needs a copyRegToReg.)
+// needs a copy.)
 let mayStore = 1 in
 class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs),
@@ -234,8 +234,8 @@ def set_pclath:
              [(set PCLATHR:$dst , (MTPCLATH GPR:$val))]>;
 
 //----------------------------
-// copyRegToReg 
-// copyRegToReg insns. These are dummy. They should always be deleted
+// copyPhysReg 
+// copyPhysReg insns. These are dummy. They should always be deleted
 // by the optimizer and never be present in the final generated code.
 // if they are, then we have to write correct macros for these insns.
 //----------------------------
