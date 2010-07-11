@@ -757,13 +757,11 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     unsigned SrcReg = Reg + VA.getValNo();
     unsigned DstReg = VA.getLocReg();
     const TargetRegisterClass* SrcRC = MRI.getRegClass(SrcReg);
-    const TargetRegisterClass* DstRC = TRI.getMinimalPhysRegClass(DstReg);
-    bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                    DstReg, SrcReg, DstRC, SrcRC, DL);
-
-    // If the target couldn't make the copy for some reason, bail.
-    if (!Emitted)
+    // Avoid a cross-class copy. This is very unlikely.
+    if (!SrcRC->contains(DstReg))
       return false;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            DstReg).addReg(SrcReg);
 
     // Mark the register as live out of the function.
     MRI.addLiveOut(VA.getLocReg());
