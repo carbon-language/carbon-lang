@@ -117,29 +117,21 @@ SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   return 1;
 }
 
-bool SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC,
-                                  DebugLoc DL) const {
-  if (DestRC != SrcRC) {
-    // Not yet supported!
-    return false;
-  }
-
-  if (DestRC == SP::IntRegsRegisterClass)
-    BuildMI(MBB, I, DL, get(SP::ORrr), DestReg).addReg(SP::G0).addReg(SrcReg);
-  else if (DestRC == SP::FPRegsRegisterClass)
-    BuildMI(MBB, I, DL, get(SP::FMOVS), DestReg).addReg(SrcReg);
-  else if (DestRC == SP::DFPRegsRegisterClass)
-    BuildMI(MBB, I, DL, get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD),DestReg)
-      .addReg(SrcReg);
+void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I, DebugLoc DL,
+                                 unsigned DestReg, unsigned SrcReg,
+                                 bool KillSrc) const {
+  if (SP::IntRegsRegClass.contains(DestReg, SrcReg))
+    BuildMI(MBB, I, DL, get(SP::ORrr), DestReg).addReg(SP::G0)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (SP::FPRegsRegClass.contains(DestReg, SrcReg))
+    BuildMI(MBB, I, DL, get(SP::FMOVS), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (SP::DFPRegsRegClass.contains(DestReg, SrcReg))
+    BuildMI(MBB, I, DL, get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
   else
-    // Can't copy this register
-    return false;
-
-  return true;
+    llvm_unreachable("Impossible reg-to-reg copy");
 }
 
 void SparcInstrInfo::
