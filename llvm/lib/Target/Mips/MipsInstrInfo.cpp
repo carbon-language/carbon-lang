@@ -127,61 +127,75 @@ insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const
   BuildMI(MBB, MI, DL, get(Mips::NOP));
 }
 
-bool MipsInstrInfo::
-copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-             unsigned DestReg, unsigned SrcReg,
-             const TargetRegisterClass *DestRC,
-             const TargetRegisterClass *SrcRC,
-             DebugLoc DL) const {
+void MipsInstrInfo::
+copyPhysReg(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator I, DebugLoc DL,
+            unsigned DestReg, unsigned SrcReg,
+            bool KillSrc) const {
+  bool DestCPU = Mips::CPURegsRegClass.contains(DestReg);
+  bool SrcCPU  = Mips::CPURegsRegClass.contains(SrcReg);
 
-  if (DestRC != SrcRC) {
-
-    // Copy to/from FCR31 condition register
-    if ((DestRC == Mips::CPURegsRegisterClass) && 
-        (SrcRC == Mips::CCRRegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::CFC1), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::CCRRegisterClass) && 
-        (SrcRC == Mips::CPURegsRegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::CTC1), DestReg).addReg(SrcReg);
-
-    // Moves between coprocessors and cpu
-    else if ((DestRC == Mips::CPURegsRegisterClass) && 
-        (SrcRC == Mips::FGR32RegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::MFC1), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::FGR32RegisterClass) &&
-             (SrcRC == Mips::CPURegsRegisterClass))
-      BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg).addReg(SrcReg);
-
-    // Move from/to Hi/Lo registers
-    else if ((DestRC == Mips::HILORegisterClass) &&
-             (SrcRC == Mips::CPURegsRegisterClass)) {
-      unsigned Opc = (DestReg == Mips::HI) ? Mips::MTHI : Mips::MTLO;
-      BuildMI(MBB, I, DL, get(Opc), DestReg);
-    } else if ((SrcRC == Mips::HILORegisterClass) &&
-               (DestRC == Mips::CPURegsRegisterClass)) {
-      unsigned Opc = (SrcReg == Mips::HI) ? Mips::MFHI : Mips::MFLO;
-      BuildMI(MBB, I, DL, get(Opc), DestReg);
-    } else 
-      // Can't copy this register
-      return false; 
-
-    return true;
+  // CPU-CPU is the most common.
+  if (DestCPU && SrcCPU) {
+    BuildMI(MBB, I, DL, get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
   }
 
-  if (DestRC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
-      .addReg(SrcReg);
-  else if (DestRC == Mips::FGR32RegisterClass) 
-    BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg).addReg(SrcReg);
-  else if (DestRC == Mips::AFGR64RegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg).addReg(SrcReg);
-  else if (DestRC == Mips::CCRRegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::MOVCCRToCCR), DestReg).addReg(SrcReg);
-  else
-    // Can't copy this register
-    return false;
+  // Copy to CPU from other registers.
+  if (DestCPU) {
+    if (Mips::CCRRegClass.contains(SrcReg))
+      BuildMI(MBB, I, DL, get(Mips::CFC1), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else if (Mips::FGR32RegClass.contains(SrcReg))
+      BuildMI(MBB, I, DL, get(Mips::MFC1), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else if (SrcReg == Mips::HI)
+      BuildMI(MBB, I, DL, get(Mips::MFHI), DestReg);
+    else if (SrcReg == Mips::LO)
+      BuildMI(MBB, I, DL, get(Mips::MFLO), DestReg);
+    else
+      llvm_unreachable("Copy to CPU from invalid register");
+    return;
+  }
+
+  // Copy to other registers from CPU.
+  if (SrcCPU) {
+    if (Mips::CCRRegClass.contains(DestReg))
+      BuildMI(MBB, I, DL, get(Mips::CTC1), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else if (Mips::FGR32RegClass.contains(DestReg))
+      BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else if (DestReg == Mips::HI)
+      BuildMI(MBB, I, DL, get(Mips::MTHI))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else if (DestReg == Mips::LO)
+      BuildMI(MBB, I, DL, get(Mips::MTLO))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    else
+      llvm_unreachable("Copy from CPU to invalid register");
+    return;
+  }
+
+  if (Mips::FGR32RegClass.contains(DestReg, SrcReg)) {
+    BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
   
-  return true;
+  if (Mips::AFGR64RegClass.contains(DestReg, SrcReg)) {
+    BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
+  if (Mips::CCRRegClass.contains(DestReg, SrcReg)) {
+    BuildMI(MBB, I, DL, get(Mips::MOVCCRToCCR), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+  llvm_unreachable("Cannot copy registers");
 }
 
 void MipsInstrInfo::
