@@ -356,37 +356,31 @@ XCoreInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return 2;
 }
 
-bool XCoreInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC,
-                                  DebugLoc DL) const {
+void XCoreInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I, DebugLoc DL,
+                                 unsigned DestReg, unsigned SrcReg,
+                                 bool KillSrc) const {
+  bool GRDest = XCore::GRRegsRegClass.contains(DestReg);
+  bool GRSrc  = XCore::GRRegsRegClass.contains(SrcReg);
 
-  if (DestRC == SrcRC) {
-    if (DestRC == XCore::GRRegsRegisterClass) {
-      BuildMI(MBB, I, DL, get(XCore::ADD_2rus), DestReg)
-        .addReg(SrcReg)
-        .addImm(0);
-      return true;
-    } else {
-      return false;
-    }
+  if (GRDest && GRSrc) {
+    BuildMI(MBB, I, DL, get(XCore::ADD_2rus), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc))
+      .addImm(0);
+    return;
   }
   
-  if (SrcRC == XCore::RRegsRegisterClass && SrcReg == XCore::SP &&
-    DestRC == XCore::GRRegsRegisterClass) {
-    BuildMI(MBB, I, DL, get(XCore::LDAWSP_ru6), DestReg)
-      .addImm(0);
-    return true;
+  if (GRDest && SrcReg == XCore::SP) {
+    BuildMI(MBB, I, DL, get(XCore::LDAWSP_ru6), DestReg).addImm(0);
+    return;
   }
-  if (DestRC == XCore::RRegsRegisterClass && DestReg == XCore::SP &&
-    SrcRC == XCore::GRRegsRegisterClass) {
+
+  if (DestReg == XCore::SP && GRSrc) {
     BuildMI(MBB, I, DL, get(XCore::SETSP_1r))
-      .addReg(SrcReg);
-    return true;
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
   }
-  return false;
+  llvm_unreachable("Impossible reg-to-reg copy");
 }
 
 void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
