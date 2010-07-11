@@ -110,15 +110,13 @@ insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const {
   BuildMI(MBB, MI, DL, get(MBlaze::NOP));
 }
 
-bool MBlazeInstrInfo::
-copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-             unsigned DestReg, unsigned SrcReg,
-             const TargetRegisterClass *DestRC,
-             const TargetRegisterClass *SrcRC,
-             DebugLoc DL) const {
+void MBlazeInstrInfo::
+copyPhysReg(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator I, DebugLoc DL,
+            unsigned DestReg, unsigned SrcReg,
+            bool KillSrc) const {
   llvm::BuildMI(MBB, I, DL, get(MBlaze::ADD), DestReg)
-      .addReg(SrcReg).addReg(MBlaze::R0);
-  return true;
+    .addReg(SrcReg, getKillRegState(KillSrc)).addReg(MBlaze::R0);
 }
 
 void MBlazeInstrInfo::
