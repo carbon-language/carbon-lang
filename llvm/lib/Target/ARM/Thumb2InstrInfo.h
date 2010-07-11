@@ -43,12 +43,10 @@ public:
   bool isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTInstrs,
                            MachineBasicBlock &FMBB, unsigned NumFInstrs) const;
 
-  bool copyRegToReg(MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator I,
-                    unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *DestRC,
-                    const TargetRegisterClass *SrcRC,
-                    DebugLoc DL) const;
+  void copyPhysReg(MachineBasicBlock &MBB,
+                   MachineBasicBlock::iterator I, DebugLoc DL,
+                   unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI,

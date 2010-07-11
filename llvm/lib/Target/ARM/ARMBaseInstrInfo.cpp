@@ -693,85 +693,44 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-bool
-ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator I,
-                               unsigned DestReg, unsigned SrcReg,
-                               const TargetRegisterClass *DestRC,
-                               const TargetRegisterClass *SrcRC,
-                               DebugLoc DL) const {
-  // tGPR or tcGPR is used sometimes in ARM instructions that need to avoid
-  // using certain registers.  Just treat them as GPR here.
-  if (DestRC == ARM::tGPRRegisterClass || DestRC == ARM::tcGPRRegisterClass)
-    DestRC = ARM::GPRRegisterClass;
-  if (SrcRC == ARM::tGPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass)
-    SrcRC = ARM::GPRRegisterClass;
+void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I, DebugLoc DL,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   bool KillSrc) const {
+  bool GPRDest = ARM::GPRRegClass.contains(DestReg);
+  bool GPRSrc  = ARM::GPRRegClass.contains(SrcReg);
 
-  if (DestRC == ARM::SPR_8RegisterClass)
-    DestRC = ARM::SPRRegisterClass;
-  if (SrcRC == ARM::SPR_8RegisterClass)
-    SrcRC = ARM::SPRRegisterClass;
-
-  // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
-  if (DestRC == ARM::DPR_8RegisterClass)
-    DestRC = ARM::DPR_VFP2RegisterClass;
-  if (SrcRC == ARM::DPR_8RegisterClass)
-    SrcRC = ARM::DPR_VFP2RegisterClass;
-
-  // NEONMoveFixPass will convert VFP moves to NEON moves when profitable.
-  if (DestRC == ARM::DPR_VFP2RegisterClass)
-    DestRC = ARM::DPRRegisterClass;
-  if (SrcRC == ARM::DPR_VFP2RegisterClass)
-    SrcRC = ARM::DPRRegisterClass;
-
-  // Allow QPR / QPR_VFP2 / QPR_8 cross-class copies.
-  if (DestRC == ARM::QPR_VFP2RegisterClass ||
-      DestRC == ARM::QPR_8RegisterClass)
-    DestRC = ARM::QPRRegisterClass;
-  if (SrcRC == ARM::QPR_VFP2RegisterClass ||
-      SrcRC == ARM::QPR_8RegisterClass)
-    SrcRC = ARM::QPRRegisterClass;
-
-  // Allow QQPR / QQPR_VFP2 cross-class copies.
-  if (DestRC == ARM::QQPR_VFP2RegisterClass)
-    DestRC = ARM::QQPRRegisterClass;
-  if (SrcRC == ARM::QQPR_VFP2RegisterClass)
-    SrcRC = ARM::QQPRRegisterClass;
-
-  // Disallow copies of unequal sizes.
-  if (DestRC != SrcRC && DestRC->getSize() != SrcRC->getSize())
-    return false;
-
-  if (DestRC == ARM::GPRRegisterClass) {
-    if (SrcRC == ARM::SPRRegisterClass)
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVRS), DestReg)
-                     .addReg(SrcReg));
-    else
-      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr),
-                                          DestReg).addReg(SrcReg)));
-  } else {
-    unsigned Opc;
-
-    if (DestRC == ARM::SPRRegisterClass)
-      Opc = (SrcRC == ARM::GPRRegisterClass ? ARM::VMOVSR : ARM::VMOVS);
-    else if (DestRC == ARM::DPRRegisterClass)
-      Opc = ARM::VMOVD;
-    else if (DestRC == ARM::QPRRegisterClass)
-      Opc = ARM::VMOVQ;
-    else if (DestRC == ARM::QQPRRegisterClass)
-      Opc = ARM::VMOVQQ;
-    else if (DestRC == ARM::QQQQPRRegisterClass)
-      Opc = ARM::VMOVQQQQ;
-    else
-      return false;
-
-    MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
-    MIB.addReg(SrcReg);
-    if (Opc != ARM::VMOVQQ && Opc != ARM::VMOVQQQQ)
-      AddDefaultPred(MIB);
+  if (GPRDest && GPRSrc) {
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr), DestReg)
+                                  .addReg(SrcReg, getKillRegState(KillSrc))));
+    return;
   }
 
-  return true;
+  bool SPRDest = ARM::SPRRegClass.contains(DestReg);
+  bool SPRSrc  = ARM::SPRRegClass.contains(SrcReg);
+
+  unsigned Opc;
+  if (SPRDest && SPRSrc)
+    Opc = ARM::VMOVS;
+  else if (GPRDest && SPRSrc)
+    Opc = ARM::VMOVRS;
+  else if (SPRDest && GPRSrc)
+    Opc = ARM::VMOVSR;
+  else if (ARM::DPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVD;
+  else if (ARM::QPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVQ;
+  else if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVQQ;
+  else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg))
+    Opc = ARM::VMOVQQQQ;
+  else
+    llvm_unreachable("Impossible reg-to-reg copy");
+
+  MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
+  MIB.addReg(SrcReg, getKillRegState(KillSrc));
+  if (Opc != ARM::VMOVQQ && Opc != ARM::VMOVQQQQ)
+    AddDefaultPred(MIB);
 }
 
 static const

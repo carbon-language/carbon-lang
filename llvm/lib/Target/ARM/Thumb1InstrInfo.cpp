@@ -33,31 +33,24 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-bool Thumb1InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC,
-                                   DebugLoc DL) const {
-  if (DestRC == ARM::GPRRegisterClass || DestRC == ARM::tcGPRRegisterClass) {
-    if (SrcRC == ARM::GPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
-      return true;
-    } else if (SrcRC == ARM::tGPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVtgpr2gpr), DestReg).addReg(SrcReg);
-      return true;
-    }
-  } else if (DestRC == ARM::tGPRRegisterClass) {
-    if (SrcRC == ARM::GPRRegisterClass || SrcRC == ARM::tcGPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2tgpr), DestReg).addReg(SrcReg);
-      return true;
-    } else if (SrcRC == ARM::tGPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg).addReg(SrcReg);
-      return true;
-    }
-  }
+void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I, DebugLoc DL,
+                                  unsigned DestReg, unsigned SrcReg,
+                                  bool KillSrc) const {
+  bool tDest = ARM::tGPRRegClass.contains(DestReg);
+  bool tSrc  = ARM::tGPRRegClass.contains(SrcReg);
+  unsigned Opc = ARM::tMOVgpr2gpr;
+  if (tDest && tSrc)
+    Opc = ARM::tMOVr;
+  else if (tSrc)
+    Opc = ARM::tMOVtgpr2gpr;
+  else if (tDest)
+    Opc = ARM::tMOVgpr2tgpr;
 
-  return false;
+  BuildMI(MBB, I, DL, get(Opc), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc));
+  assert(ARM::GPRRegClass.contains(DestReg, SrcReg) &&
+         "Thumb1 can only copy GPR registers");
 }
 
 bool Thumb1InstrInfo::
