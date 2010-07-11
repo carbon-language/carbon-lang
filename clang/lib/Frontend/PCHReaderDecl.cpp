@@ -20,7 +20,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 
 
@@ -930,12 +929,14 @@ void PCHDeclReader::VisitClassTemplateSpecializationDecl(
                        = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
     if (ClassTemplatePartialSpecializationDecl *Partial
             = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
-      ClassTemplatePartialSpecializationDecl *Inserted ATTRIBUTE_UNUSED
+      ClassTemplatePartialSpecializationDecl *Inserted
           = CanonPattern->getPartialSpecializations().GetOrInsertNode(Partial);
+      (void)Inserted;
       assert(Inserted == Partial && "Already inserted!");
     } else {
-      ClassTemplateSpecializationDecl *Inserted ATTRIBUTE_UNUSED
+      ClassTemplateSpecializationDecl *Inserted
           = CanonPattern->getSpecializations().GetOrInsertNode(D);
+      (void)Inserted;
       assert(Inserted == D && "Already inserted!");
     }
   }
