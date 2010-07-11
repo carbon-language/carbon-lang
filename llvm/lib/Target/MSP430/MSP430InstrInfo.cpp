@@ -83,27 +83,20 @@ void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     llvm_unreachable("Cannot store this register to stack slot!");
 }
 
-bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC,
-                                   DebugLoc DL) const {
-  if (DestRC == SrcRC) {
-    unsigned Opc;
-    if (DestRC == &MSP430::GR16RegClass) {
-      Opc = MSP430::MOV16rr;
-    } else if (DestRC == &MSP430::GR8RegClass) {
-      Opc = MSP430::MOV8rr;
-    } else {
-      return false;
-    }
+void MSP430InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I, DebugLoc DL,
+                                  unsigned DestReg, unsigned SrcReg,
+                                  bool KillSrc) const {
+  unsigned Opc;
+  if (MSP430::GR16RegClass.contains(DestReg, SrcReg))
+    Opc = MSP430::MOV16rr;
+  else if (MSP430::GR8RegClass.contains(DestReg, SrcReg))
+    Opc = MSP430::MOV8rr;
+  else
+    llvm_unreachable("Impossible reg-to-reg copy");
 
-    BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg);
-    return true;
-  }
-
-  return false;
+  BuildMI(MBB, I, DL, get(Opc), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 bool
