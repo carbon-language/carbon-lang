@@ -432,11 +432,9 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               
               for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
                 if ((*Memo.PhysRegs)[i] != "")
-                  OS << "  TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, "
-                     << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
-                     << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
-                     << (*Memo.PhysRegs)[i] << "), "
-                     << "MRI.getRegClass(Op" << i << "), DL);\n";
+                  OS << "  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, "
+                     << "TII.get(TargetOpcode::COPY), "
+                     << (*Memo.PhysRegs)[i] << ").addReg(Op" << i << ");\n";
               }
               
               OS << "  return FastEmitInst_";
@@ -524,14 +522,12 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
               HasPred = true;
             }
             
-             for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
-                if ((*Memo.PhysRegs)[i] != "")
-                  OS << "  TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, "
-                     << (*Memo.PhysRegs)[i] << ", Op" << i << ", "
-                     << "TM.getRegisterInfo()->getPhysicalRegisterRegClass("
-                     << (*Memo.PhysRegs)[i] << "), "
-                     << "MRI.getRegClass(Op" << i << "), DL);\n";
-              }
+            for (unsigned i = 0; i < Memo.PhysRegs->size(); ++i) {
+              if ((*Memo.PhysRegs)[i] != "")
+                OS << "  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, "
+                   << "TII.get(TargetOpcode::COPY), "
+                   << (*Memo.PhysRegs)[i] << ").addReg(Op" << i << ");\n";
+            }
             
             OS << "  return FastEmitInst_";
             
