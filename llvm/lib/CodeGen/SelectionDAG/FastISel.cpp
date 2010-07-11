@@ -1077,11 +1077,8 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   else {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
 
   return ResultReg;
@@ -1102,11 +1099,8 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
   return ResultReg;
 }
@@ -1126,11 +1120,8 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
   return ResultReg;
 }
@@ -1150,11 +1141,8 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addFPImm(FPImm);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
   return ResultReg;
 }
@@ -1177,11 +1165,8 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
       .addReg(Op0, Op0IsKill * RegState::Kill)
       .addReg(Op1, Op1IsKill * RegState::Kill)
       .addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
   return ResultReg;
 }
@@ -1196,11 +1181,8 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg).addImm(Imm);
   else {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II).addImm(Imm);
-    bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                         ResultReg, II.ImplicitDefs[0],
-                                         RC, RC, DL);
-    if (!InsertedCopy)
-      ResultReg = 0;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
   }
   return ResultReg;
 }
