@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=bfin
 
 ; This test tries to use a JustCC register as a data operand for MOVEcc.  It
-; calls copyRegToReg(JustCC -> DP), failing because JustCC can only be copied to
-; D.  The proper solution would be to restrict the virtual register to D only.
+; copies (JustCC -> DP), failing because JustCC can only be copied to D.
+; The proper solution would be to restrict the virtual register to D only.
 
 define i32 @main() {
 entry:

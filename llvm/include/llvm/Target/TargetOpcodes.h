@@ -62,8 +62,7 @@ namespace TargetOpcode {
     /// used between instruction selection and MachineInstr creation, before
     /// virtual registers have been created for all the instructions, and it's
     /// only needed in cases where the register classes implied by the
-    /// instructions are insufficient. The actual MachineInstrs to perform
-    /// the copy are emitted with the TargetInstrInfo::copyRegToReg hook.
+    /// instructions are insufficient. It is emitted as a COPY MachineInstr.
     COPY_TO_REGCLASS = 10,
 
     /// DBG_VALUE - a mapping of the llvm.dbg.value intrinsic

@@ -357,7 +357,9 @@ public:
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const =0;
+                           bool KillSrc) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::copyPhysReg!");
+  }
 
   /// storeRegToStackSlot - Store the specified register of the given register
   /// class to the specified stack frame index. The store instruction is to be
@@ -648,22 +650,6 @@ public:
 
   virtual ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData&) const;
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
-  /// copyRegToReg - Legacy hook going away soon. Targets should implement
-  /// copyPhysReg instead.
-  virtual bool copyRegToReg(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI,
-                            unsigned DestReg, unsigned SrcReg,
-                            const TargetRegisterClass *DestRC,
-                            const TargetRegisterClass *SrcRC,
-                            DebugLoc DL) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::copyPhysReg!");
-    return false;
-  }
-
 };
 
 } // End llvm namespace
