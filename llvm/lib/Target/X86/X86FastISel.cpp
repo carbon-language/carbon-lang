@@ -791,15 +791,15 @@ bool X86FastISel::X86SelectLoad(const Instruction *I)  {
   return false;
 }
 
-static unsigned X86ChooseCmpOpcode(EVT VT) {
+static unsigned X86ChooseCmpOpcode(EVT VT, const X86Subtarget *Subtarget) {
   switch (VT.getSimpleVT().SimpleTy) {
   default:       return 0;
   case MVT::i8:  return X86::CMP8rr;
   case MVT::i16: return X86::CMP16rr;
   case MVT::i32: return X86::CMP32rr;
   case MVT::i64: return X86::CMP64rr;
-  case MVT::f32: return X86::UCOMISSrr;
-  case MVT::f64: return X86::UCOMISDrr;
+  case MVT::f32: return Subtarget->hasSSE1() ? X86::UCOMISSrr : X86::UCOM_Fpr32;
+  case MVT::f64: return Subtarget->hasSSE2() ? X86::UCOMISDrr : X86::UCOM_Fpr64;
   }
 }
 
@@ -843,7 +843,7 @@ bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
     }
   }
   
-  unsigned CompareOpc = X86ChooseCmpOpcode(VT);
+  unsigned CompareOpc = X86ChooseCmpOpcode(VT, Subtarget);
   if (CompareOpc == 0) return false;
     
   unsigned Op1Reg = getRegForValue(Op1);
