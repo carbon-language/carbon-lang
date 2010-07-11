@@ -139,44 +139,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       .addImm(0).addFrameIndex(FI);
 }
 
-MachineInstr *MBlazeInstrInfo::
-foldMemoryOperandImpl(MachineFunction &MF,
-                      MachineInstr* MI,
-                      const SmallVectorImpl<unsigned> &Ops, int FI) const {
-  if (Ops.size() != 1) return NULL;
-
-  MachineInstr *NewMI = NULL;
-
-  switch (MI->getOpcode()) {
-  case MBlaze::OR:
-  case MBlaze::ADD:
-    if ((MI->getOperand(0).isReg()) &&
-        (MI->getOperand(2).isReg()) &&
-        (MI->getOperand(2).getReg() == MBlaze::R0) &&
-        (MI->getOperand(1).isReg())) {
-      if (Ops[0] == 0) {    // COPY -> STORE
-        unsigned SrcReg = MI->getOperand(1).getReg();
-        bool isKill = MI->getOperand(1).isKill();
-        bool isUndef = MI->getOperand(1).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(MBlaze::SW))
-          .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
-          .addImm(0).addFrameIndex(FI);
-      } else {              // COPY -> LOAD
-        unsigned DstReg = MI->getOperand(0).getReg();
-        bool isDead = MI->getOperand(0).isDead();
-        bool isUndef = MI->getOperand(0).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(MBlaze::LW))
-          .addReg(DstReg, RegState::Define | getDeadRegState(isDead) |
-                  getUndefRegState(isUndef))
-          .addImm(0).addFrameIndex(FI);
-      }
-    }
-    break;
-  }
-
-  return NewMI;
-}
-
 //===----------------------------------------------------------------------===//
 // Branch Analysis
 //===----------------------------------------------------------------------===//

@@ -23,19 +23,6 @@ namespace llvm {
   class SPUInstrInfo : public TargetInstrInfoImpl {
     SPUTargetMachine &TM;
     const SPURegisterInfo RI;
-  protected:
-    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                            MachineInstr* MI,
-                                            const SmallVectorImpl<unsigned> &Ops,
-                                            int FrameIndex) const;
-
-    virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                                MachineInstr* MI,
-                                                const SmallVectorImpl<unsigned> &Ops,
-                                                MachineInstr* LoadMI) const {
-      return 0;
-    }
-
   public:
     explicit SPUInstrInfo(SPUTargetMachine &tm);
 
@@ -74,11 +61,6 @@ namespace llvm {
                                       unsigned DestReg, int FrameIndex,
                                       const TargetRegisterClass *RC,
                                       const TargetRegisterInfo *TRI) const;
-
-    //! Return true if the specified load or store can be folded
-    virtual
-    bool canFoldMemoryOperand(const MachineInstr *MI,
-                              const SmallVectorImpl<unsigned> &Ops) const;
 
     //! Reverses a branch's condition, returning false on success.
     virtual
