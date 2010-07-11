@@ -435,6 +435,9 @@ namespace {
       if (MBBLocations.size() <= (unsigned)MBB->getNumber())
         MBBLocations.resize((MBB->getNumber()+1)*2);
       MBBLocations[MBB->getNumber()] = getCurrentPCValue();
+      if (MBB->hasAddressTaken())
+        TheJIT->addPointerToBasicBlock(MBB->getBasicBlock(),
+                                       (void*)getCurrentPCValue());
       DEBUG(dbgs() << "JIT: Emitting BB" << MBB->getNumber() << " at ["
                    << (void*) getCurrentPCValue() << "]\n");
     }
@@ -442,7 +445,7 @@ namespace {
     virtual uintptr_t getConstantPoolEntryAddress(unsigned Entry) const;
     virtual uintptr_t getJumpTableEntryAddress(unsigned Entry) const;
 
-    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const{
       assert(MBBLocations.size() > (unsigned)MBB->getNumber() &&
              MBBLocations[MBB->getNumber()] && "MBB not emitted!");
       return MBBLocations[MBB->getNumber()];
@@ -1310,6 +1313,11 @@ void JITEmitter::retryWithMoreMemory(MachineFunction &F) {
   deallocateMemForFunction(F.getFunction());
   // Try again with at least twice as much free space.
   SizeEstimate = (uintptr_t)(2 * (BufferEnd - BufferBegin));
+
+  for (MachineFunction::iterator MBB = F.begin(), E = F.end(); MBB != E; ++MBB){
+    if (MBB->hasAddressTaken())
+      TheJIT->clearPointerToBasicBlock(MBB->getBasicBlock());
+  }
 }
 
 /// deallocateMemForFunction - Deallocate all memory for the specified

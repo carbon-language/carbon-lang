@@ -51,6 +51,10 @@ public:
 
 
 class JIT : public ExecutionEngine {
+  /// types
+  typedef ValueMap<const BasicBlock *, void *>
+      BasicBlockAddressMapTy;
+  /// data
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
   JITCodeEmitter *JCE;     // JCE object
@@ -66,6 +70,12 @@ class JIT : public ExecutionEngine {
   bool isAlreadyCodeGenerating;
 
   JITState *jitstate;
+
+  /// BasicBlockAddressMap - A mapping between LLVM basic blocks and their
+  /// actualized version, only filled for basic blocks that have their address
+  /// taken.
+  BasicBlockAddressMapTy BasicBlockAddressMap;
+
 
   JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
       JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
@@ -127,10 +137,15 @@ public:
   ///
   void *getPointerToFunction(Function *F);
 
-  void *getPointerToBasicBlock(BasicBlock *BB) {
-    assert(0 && "JIT does not support address-of-label yet!");
-    return 0;
-  }
+  /// addPointerToBasicBlock - Adds address of the specific basic block.
+  void addPointerToBasicBlock(const BasicBlock *BB, void *Addr);
+
+  /// clearPointerToBasicBlock - Removes address of specific basic block.
+  void clearPointerToBasicBlock(const BasicBlock *BB);
+
+  /// getPointerToBasicBlock - This returns the address of the specified basic
+  /// block, assuming function is compiled.
+  void *getPointerToBasicBlock(BasicBlock *BB);
   
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
@@ -197,11 +212,18 @@ public:
       const JITEvent_EmittedFunctionDetails &Details);
   void NotifyFreeingMachineCode(void *OldPtr);
 
+  BasicBlockAddressMapTy &
+  getBasicBlockAddressMap(const MutexGuard &) {
+    return BasicBlockAddressMap;
+  }
+
+
 private:
   static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM,
                                        TargetMachine &tm);
   void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
   void updateFunctionStub(Function *F);
+  void jitTheFunction(Function *F, const MutexGuard &locked);
 
 protected:
 

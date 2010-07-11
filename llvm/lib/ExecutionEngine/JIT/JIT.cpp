@@ -626,10 +626,7 @@ void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
 void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
   assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
 
-  // JIT the function
-  isAlreadyCodeGenerating = true;
-  jitstate->getPM(locked).run(*F);
-  isAlreadyCodeGenerating = false;
+  jitTheFunction(F, locked);
 
   // If the function referred to another function that had not yet been
   // read from bitcode, and we are jitting non-lazily, emit it now.
@@ -640,15 +637,21 @@ void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
     assert(!PF->hasAvailableExternallyLinkage() &&
            "Externally-defined function should not be in pending list.");
 
-    // JIT the function
-    isAlreadyCodeGenerating = true;
-    jitstate->getPM(locked).run(*PF);
-    isAlreadyCodeGenerating = false;
+    jitTheFunction(PF, locked);
     
     // Now that the function has been jitted, ask the JITEmitter to rewrite
     // the stub with real address of the function.
     updateFunctionStub(PF);
   }
+}
+
+void JIT::jitTheFunction(Function *F, const MutexGuard &locked) {
+  isAlreadyCodeGenerating = true;
+  jitstate->getPM(locked).run(*F);
+  isAlreadyCodeGenerating = false;
+
+  // clear basic block addresses after this function is done
+  getBasicBlockAddressMap(locked).clear();
 }
 
 /// getPointerToFunction - This method is used to get the address of the
@@ -685,6 +688,41 @@ void *JIT::getPointerToFunction(Function *F) {
   void *Addr = getPointerToGlobalIfAvailable(F);
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
   return Addr;
+}
+
+void JIT::addPointerToBasicBlock(const BasicBlock *BB, void *Addr) {
+  MutexGuard locked(lock);
+  
+  BasicBlockAddressMapTy::iterator I =
+    getBasicBlockAddressMap(locked).find(BB);
+  if (I == getBasicBlockAddressMap(locked).end()) {
+    getBasicBlockAddressMap(locked)[BB] = Addr;
+  } else {
+    // ignore repeats: some BBs can be split into few MBBs?
+  }
+}
+
+void JIT::clearPointerToBasicBlock(const BasicBlock *BB) {
+  MutexGuard locked(lock);
+  getBasicBlockAddressMap(locked).erase(BB);
+}
+
+void *JIT::getPointerToBasicBlock(BasicBlock *BB) {
+  // make sure it's function is compiled by JIT
+  (void)getPointerToFunction(BB->getParent());
+
+  // resolve basic block address
+  MutexGuard locked(lock);
+  
+  BasicBlockAddressMapTy::iterator I =
+    getBasicBlockAddressMap(locked).find(BB);
+  if (I != getBasicBlockAddressMap(locked).end()) {
+    return I->second;
+  } else {
+    assert(0 && "JIT does not have BB address for address-of-label, was"
+           " it eliminated by optimizer?");
+    return 0;
+  }
 }
 
 /// getOrEmitGlobalVariable - Return the address of the specified global
