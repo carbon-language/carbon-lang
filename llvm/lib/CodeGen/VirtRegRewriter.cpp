@@ -768,7 +768,7 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
          I = PhysRegsAvailable.begin(), E = PhysRegsAvailable.end();
        I != E; ++I) {
     unsigned Reg = I->first;
-    const TargetRegisterClass* RC = TRI->getPhysicalRegisterRegClass(Reg);
+    const TargetRegisterClass* RC = TRI->getMinimalPhysRegClass(Reg);
     // FIXME: A temporary workaround. We can't reuse available value if it's
     // not safe to move the def of the virtual register's class. e.g.
     // X86::RFP* register classes. Do not add it as a live-in.
@@ -1021,7 +1021,7 @@ static unsigned FindFreeRegister(MachineBasicBlock::iterator MII,
     for (unsigned i = 0, e = Kills.size(); i != e; ++i) {
       unsigned Kill = Kills[i];
       if (!Defs[Kill] && !Uses[Kill] &&
-          TRI->getPhysicalRegisterRegClass(Kill) == RC)
+          RC->contains(Kill))
         return Kill;
     }
     for (unsigned i = 0, e = LocalUses.size(); i != e; ++i) {
