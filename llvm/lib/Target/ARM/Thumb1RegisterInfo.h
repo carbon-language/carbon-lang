@@ -38,9 +38,6 @@ public:
                         unsigned PredReg = 0) const;
 
   /// Code Generation virtual methods...
-  const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
-
   bool hasReservedCallFrame(MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

@@ -321,7 +321,7 @@ public:
   /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
   /// register of the given type. If type is EVT::Other, then just return any
   /// register class the register belongs to.
-  virtual const TargetRegisterClass *
+  const TargetRegisterClass *
     getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
   /// getMinimalPhysRegClass - Returns the Register Class of a physical

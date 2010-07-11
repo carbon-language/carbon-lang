@@ -41,9 +41,6 @@ namespace llvm {
       return &BF::PRegClass;
     }
 
-    const TargetRegisterClass *getPhysicalRegisterRegClass(unsigned reg,
-                                                           EVT VT) const;
-
     bool hasFP(const MachineFunction &MF) const;
 
     // bool hasReservedCallFrame(MachineFunction &MF) const;

@@ -75,25 +75,6 @@ BlackfinRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-const TargetRegisterClass*
-BlackfinRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
-  assert(isPhysicalRegister(reg) && "reg must be a physical register");
-
-  // Pick the smallest register class of the right type that contains
-  // this physreg.
-  const TargetRegisterClass* BestRC = 0;
-  for (regclass_iterator I = regclass_begin(), E = regclass_end();
-       I != E; ++I) {
-    const TargetRegisterClass* RC = *I;
-    if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
-        (!BestRC || RC->getNumRegs() < BestRC->getNumRegs()))
-      BestRC = RC;
-  }
-
-  assert(BestRC && "Couldn't find the register class");
-  return BestRC;
-}
-
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
