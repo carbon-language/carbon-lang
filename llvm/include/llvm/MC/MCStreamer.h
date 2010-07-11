@@ -347,6 +347,12 @@ namespace llvm {
                                   raw_ostream &OS, MCCodeEmitter *CE,
                                   bool RelaxAll = false);
 
+  /// createWinCOFFStreamer - Create a machine code streamer which will
+  /// generate Microsoft COFF format object files.
+  MCStreamer *createWinCOFFStreamer(MCContext &Ctx,
+                                    TargetAsmBackend &TAB,
+                                    MCCodeEmitter &CE, raw_ostream &OS);
+
   /// createLoggingStreamer - Create a machine code streamer which just logs the
   /// API calls and then dispatches to another streamer.
   ///
