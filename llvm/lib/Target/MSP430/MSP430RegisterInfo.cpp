@@ -228,8 +228,8 @@ MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
                                                                          const {
   // Create a frame entry for the FPW register that must be saved.
   if (hasFP(MF)) {
-    int ATTRIBUTE_UNUSED FrameIdx =
-      MF.getFrameInfo()->CreateFixedObject(2, -4, true);
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true);
+    (void)FrameIdx;
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
            "Slot for FPW register must be last in order to be found!");
   }
