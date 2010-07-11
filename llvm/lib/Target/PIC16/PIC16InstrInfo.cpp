@@ -151,25 +151,20 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     llvm_unreachable("Can't load this register from stack slot");
 }
 
-bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC,
-                                   DebugLoc DL) const {
+void PIC16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I, DebugLoc DL,
+                                 unsigned DestReg, unsigned SrcReg,
+                                 bool KillSrc) const {
+  unsigned Opc;
+  if (PIC16::FSR16RegClass.contains(DestReg, SrcReg))
+    Opc = PIC16::copy_fsr;
+  else if (PIC16::GPRRegClass.contains(DestReg, SrcReg))
+    Opc = PIC16::copy_w;
+  else
+    llvm_unreachable("Impossible reg-to-reg copy");
 
-  if (DestRC == PIC16::FSR16RegisterClass) {
-    BuildMI(MBB, I, DL, get(PIC16::copy_fsr), DestReg).addReg(SrcReg);
-    return true;
-  }
-
-  if (DestRC == PIC16::GPRRegisterClass) {
-    BuildMI(MBB, I, DL, get(PIC16::copy_w), DestReg).addReg(SrcReg);
-    return true;
-  }
-
-  // Not yet supported.
-  return false;
+  BuildMI(MBB, I, DL, get(Opc), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
