@@ -249,40 +249,18 @@ SPUInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-bool SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC,
-                                   DebugLoc DL) const
+void SPUInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator I, DebugLoc DL,
+                               unsigned DestReg, unsigned SrcReg,
+                               bool KillSrc) const
 {
   // We support cross register class moves for our aliases, such as R3 in any
   // reg class to any other reg class containing R3.  This is required because
   // we instruction select bitconvert i64 -> f64 as a noop for example, so our
   // types have no specific meaning.
 
-  if (DestRC == SPU::R8CRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRr8), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::R16CRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRr16), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::R32CRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRr32), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::R32FPRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRf32), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::R64CRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRr64), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::R64FPRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRf64), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::GPRCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRr128), DestReg).addReg(SrcReg);
-  } else if (DestRC == SPU::VECREGRegisterClass) {
-    BuildMI(MBB, MI, DL, get(SPU::LRv16i8), DestReg).addReg(SrcReg);
-  } else {
-    // Attempt to copy unknown/unsupported register class!
-    return false;
-  }
-
-  return true;
+  BuildMI(MBB, I, DL, get(SPU::LRr128), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 void

@@ -56,12 +56,10 @@ namespace llvm {
     unsigned isStoreToStackSlot(const MachineInstr *MI,
                                 int &FrameIndex) const;
 
-    virtual bool copyRegToReg(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator MI,
-                              unsigned DestReg, unsigned SrcReg,
-                              const TargetRegisterClass *DestRC,
-                              const TargetRegisterClass *SrcRC,
-                              DebugLoc DL) const;
+    virtual void copyPhysReg(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator I, DebugLoc DL,
+                             unsigned DestReg, unsigned SrcReg,
+                             bool KillSrc) const;
 
     //! Store a register to a stack slot, based on its register class.
     virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
