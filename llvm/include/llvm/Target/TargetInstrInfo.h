@@ -353,19 +353,6 @@ public:
     return false;
   }
   
-  /// copyRegToReg - Emit instructions to copy between a pair of registers. It
-  /// returns false if the target does not how to copy between the specified
-  /// registers.
-  virtual bool copyRegToReg(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI,
-                            unsigned DestReg, unsigned SrcReg,
-                            const TargetRegisterClass *DestRC,
-                            const TargetRegisterClass *SrcRC,
-                            DebugLoc DL) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::copyRegToReg!");
-    return false;
-  }
-
   /// copyPhysReg - Emit instructions to copy a pair of physical registers.
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
@@ -665,6 +652,18 @@ public:
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
+  /// copyRegToReg - Legacy hook going away soon. Targets should implement
+  /// copyPhysReg instead.
+  virtual bool copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC,
+                            DebugLoc DL) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::copyPhysReg!");
+    return false;
+  }
+
 };
 
 } // End llvm namespace
