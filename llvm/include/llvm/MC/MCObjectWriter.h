@@ -162,6 +162,8 @@ public:
   /// @}
 };
 
+MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS);
+
 } // End llvm namespace
 
 #endif

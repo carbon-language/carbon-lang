@@ -25,5 +25,6 @@ add_llvm_library(LLVMMC
   MCValue.cpp
   MachObjectWriter.cpp
   WinCOFFStreamer.cpp
+  WinCOFFObjectWriter.cpp
   TargetAsmBackend.cpp
   )
