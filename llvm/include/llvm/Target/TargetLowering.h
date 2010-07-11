@@ -686,6 +686,12 @@ public:
     return JumpBufAlignment;
   }
 
+  /// getMinStackArgumentAlignment - return the minimum stack alignment of an
+  /// argument.
+  unsigned getMinStackArgumentAlignment() const {
+    return MinStackArgumentAlignment;
+  }
+
   /// getPrefLoopAlignment - return the preferred loop alignment.
   ///
   unsigned getPrefLoopAlignment() const {
@@ -1080,6 +1086,12 @@ protected:
   /// alignment is zero, it means the target does not care about loop alignment.
   void setPrefLoopAlignment(unsigned Align) {
     PrefLoopAlignment = Align;
+  }
+
+  /// setMinStackArgumentAlignment - Set the minimum stack alignment of an
+  /// argument.
+  void setMinStackArgumentAlignment(unsigned Align) {
+    MinStackArgumentAlignment = Align;
   }
 
   /// setShouldFoldAtomicFences - Set if the target's implementation of the
@@ -1514,6 +1526,11 @@ private:
   /// JumpBufAlignment - The alignment, in bytes, of the target's jmp_buf
   /// buffers
   unsigned JumpBufAlignment;
+
+  /// MinStackArgumentAlignment - The minimum alginment that any argument
+  /// on the stack needs to have.
+  ///
+  unsigned MinStackArgumentAlignment;
 
   /// PrefLoopAlignment - The perferred loop alignment.
   ///

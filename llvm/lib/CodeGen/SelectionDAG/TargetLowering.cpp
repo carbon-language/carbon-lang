@@ -580,6 +580,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   JumpBufSize = 0;
   JumpBufAlignment = 0;
   PrefLoopAlignment = 0;
+  MinStackArgumentAlignment = 1;
   ShouldFoldAtomicFences = false;
 
   InitLibcallNames(LibcallRoutineNames);

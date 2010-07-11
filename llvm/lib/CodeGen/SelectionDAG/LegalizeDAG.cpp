@@ -2658,7 +2658,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                      false, false, 0);
     SDValue VAList = VAListLoad;
 
-    if (Align != 0 ) {
+    if (Align > TLI.getMinStackArgumentAlignment()) {
+      assert(((Align & (Align-1)) == 0) && "Expected Align to be a power of 2");
+
       VAList = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
                            DAG.getConstant(Align - 1,
                                            TLI.getPointerTy()));
