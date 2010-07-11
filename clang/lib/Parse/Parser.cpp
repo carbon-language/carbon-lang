@@ -521,12 +521,17 @@ bool Parser::isDeclarationAfterDeclarator() const {
 
 /// \brief Determine whether the current token, if it occurs after a
 /// declarator, indicates the start of a function definition.
-bool Parser::isStartOfFunctionDefinition() {
+bool Parser::isStartOfFunctionDefinition(const ParsingDeclarator &Declarator) {
+  assert(Declarator.getTypeObject(0).Kind == DeclaratorChunk::Function &&
+         "Isn't a function declarator");
   if (Tok.is(tok::l_brace))   // int X() {}
     return true;
   
-  if (!getLang().CPlusPlus)
-    return isDeclarationSpecifier();   // int X(f) int f; {}
+  // Handle K&R C argument lists: int X(f) int f; {}
+  if (!getLang().CPlusPlus &&
+      Declarator.getTypeObject(0).Fun.isKNRPrototype()) 
+    return isDeclarationSpecifier();
+  
   return Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
          Tok.is(tok::kw_try);          // X() try { ... }
 }
@@ -649,7 +654,7 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // If this declaration was formed with a K&R-style identifier list for the
   // arguments, parse declarations for all of the args next.
   // int foo(a,b) int a; float b; {}
-  if (!FTI.hasPrototype && FTI.NumArgs != 0)
+  if (FTI.isKNRPrototype())
     ParseKNRParamDeclarations(D);
 
   // We should have either an opening brace or, in a C++ constructor,

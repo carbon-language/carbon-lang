@@ -402,7 +402,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       // start of a function definition in GCC-extended K&R C.
       !isDeclarationAfterDeclarator()) {
     
-    if (isStartOfFunctionDefinition()) {
+    if (isStartOfFunctionDefinition(D)) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
         Diag(Tok, diag::err_function_declared_typedef);
 
@@ -412,6 +412,14 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
       DeclPtrTy TheDecl = ParseFunctionDefinition(D);
       return Actions.ConvertDeclToDeclGroup(TheDecl);
+    }
+    
+    if (isDeclarationSpecifier()) {
+      // If there is an invalid declaration specifier right after the function
+      // prototype, then we must be in a missing semicolon case where this isn't
+      // actually a body.  Just fall through into the code that handles it as a
+      // prototype, and let the top-level code handle the erroneous declspec
+      // where it would otherwise expect a comma or semicolon.
     } else {
       Diag(Tok, diag::err_expected_fn_body);
       SkipUntil(tok::semi);
@@ -463,9 +471,14 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
                        Context == Declarator::FileContext
                          ? diag::err_invalid_token_after_toplevel_declarator
                          : diag::err_expected_semi_declaration)) {
-    SkipUntil(tok::r_brace, true, true);
-    if (Tok.is(tok::semi))
-      ConsumeToken();
+    // Okay, there was no semicolon and one was expected.  If we see a
+    // declaration specifier, just assume it was missing and continue parsing.
+    // Otherwise things are very confused and we skip to recover.
+    if (!isDeclarationSpecifier()) {
+      SkipUntil(tok::r_brace, true, true);
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+    }
   }
 
   return Actions.FinalizeDeclaratorGroup(getCurScope(), DS,

@@ -888,6 +888,13 @@ struct DeclaratorChunk {
       delete[] Exceptions;
     }
 
+    /// isKNRPrototype - Return true if this is a K&R style identifier list,
+    /// like "void foo(a,b,c)".  In a function definition, this will be followed
+    /// by the argument type definitions.
+    bool isKNRPrototype() const {
+      return !hasPrototype && NumArgs != 0;
+    }
+    
     SourceLocation getEllipsisLoc() const {
       return SourceLocation::getFromRawEncoding(EllipsisLoc);
     }

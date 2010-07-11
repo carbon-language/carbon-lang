@@ -834,7 +834,7 @@ private:
   // C99 6.9: External Definitions.
   DeclGroupPtrTy ParseExternalDeclaration(CXX0XAttributeList Attr);
   bool isDeclarationAfterDeclarator() const;
-  bool isStartOfFunctionDefinition();
+  bool isStartOfFunctionDefinition(const ParsingDeclarator &Declarator);
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
             AccessSpecifier AS = AS_none);
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,

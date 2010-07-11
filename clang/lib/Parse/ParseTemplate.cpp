@@ -238,7 +238,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
   }
 
   if (DeclaratorInfo.isFunctionDeclarator() &&
-      isStartOfFunctionDefinition()) {
+      isStartOfFunctionDefinition(DeclaratorInfo)) {
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 
