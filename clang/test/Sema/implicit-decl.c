@@ -10,7 +10,6 @@ void func() {
    if (_CFCalendarDecomposeAbsoluteTimeV(compDesc, vector, compCount)) { // expected-note {{previous implicit declaration is here}} \
          expected-warning {{implicit declaration of function '_CFCalendarDecomposeAbsoluteTimeV' is invalid in C99}}
    }
-   return ((void *)0); // expected-warning {{void function 'func' should not return a value}}
 }
 Boolean _CFCalendarDecomposeAbsoluteTimeV(const char *componentDesc, int32_t **vector, int32_t count) { // expected-error{{conflicting types for '_CFCalendarDecomposeAbsoluteTimeV'}}
  return 0;

@@ -39,11 +39,11 @@ template struct X3<int>;
 
 template <typename T> struct X4 {
   T f() const {
-    return; // expected-warning{{non-void function 'f' should return a value}}
+    return; // expected-error{{non-void function 'f' should return a value}}
   }
   
   T g() const {
-    return 1; // expected-warning{{void function 'g' should not return a value}}
+    return 1; // expected-error{{void function 'g' should not return a value}}
   }
 };
 

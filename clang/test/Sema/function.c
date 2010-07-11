@@ -34,10 +34,10 @@ void t12(int) {}  // expected-error{{parameter name omitted}}
 
 // PR2790
 void t13() {
-  return 0; // expected-warning {{void function 't13' should not return a value}}
+  return 0; // expected-error {{void function 't13' should not return a value}}
 }
 int t14() {
-  return; // expected-warning {{non-void function 't14' should return a value}}
+  return; // expected-error {{non-void function 't14' should return a value}}
 }
 
 // <rdar://problem/6097326>

@@ -9,9 +9,9 @@ typedef __declspec(dllimport) int CB(void);
 // diagnostics we expect.
 void bar() { return 1; }
 
-// CHECK-NEG: warning: void function 'bar' should not return a value
-// CHECK-NEG: 1 warning generated
+// CHECK-NEG: error: void function 'bar' should not return a value
+// CHECK-NEG: 1 error generated
 // CHECK-POS: warning: 'dllimport' attribute only applies to variable and function type
-// CHECK-POS: warning: void function 'bar' should not return a value
-// CHECK-POS: 2 warnings generated
+// CHECK-POS: error: void function 'bar' should not return a value
+// CHECK-POS: 1 warning and 1 error generated
 

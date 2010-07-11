@@ -3053,13 +3053,13 @@ def err_first_argument_to_va_arg_not_of_type_va_list : Error<
   "first argument to 'va_arg' is of type %0 and not 'va_list'">;
 
 def warn_return_missing_expr : Warning<
-  "non-void %select{function|method}1 %0 should return a value">,
+  "non-void %select{function|method}1 %0 should return a value">, DefaultError,
   InGroup<ReturnType>;
 def ext_return_missing_expr : ExtWarn<
-  "non-void %select{function|method}1 %0 should return a value">,
+  "non-void %select{function|method}1 %0 should return a value">, DefaultError,
   InGroup<ReturnType>;
 def ext_return_has_expr : ExtWarn<
-  "void %select{function|method}1 %0 should not return a value">,
+  "void %select{function|method}1 %0 should not return a value">, DefaultError,
   InGroup<ReturnType>;
 def ext_return_has_void_expr : Extension<
   "void %select{function|method}1 %0 should not return void expression">;
