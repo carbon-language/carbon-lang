@@ -141,36 +141,25 @@ unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   return 2;
 }
 
-bool AlphaInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator MI,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC,
-                                  DebugLoc DL) const {
-  //cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
-  if (DestRC != SrcRC) {
-    // Not yet supported!
-    return false;
-  }
-
-  if (DestRC == Alpha::GPRCRegisterClass) {
+void AlphaInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI, DebugLoc DL,
+                                 unsigned DestReg, unsigned SrcReg,
+                                 bool KillSrc) const {
+  if (Alpha::GPRCRegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, MI, DL, get(Alpha::BISr), DestReg)
       .addReg(SrcReg)
-      .addReg(SrcReg);
-  } else if (DestRC == Alpha::F4RCRegisterClass) {
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if (Alpha::F4RCRegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, MI, DL, get(Alpha::CPYSS), DestReg)
       .addReg(SrcReg)
-      .addReg(SrcReg);
-  } else if (DestRC == Alpha::F8RCRegisterClass) {
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if (Alpha::F8RCRegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, MI, DL, get(Alpha::CPYST), DestReg)
       .addReg(SrcReg)
-      .addReg(SrcReg);
+      .addReg(SrcReg, getKillRegState(KillSrc));
   } else {
-    // Attempt to copy register that is not GPR or FPR
-    return false;
+    llvm_unreachable("Attempt to copy register that is not GPR or FPR");
   }
-  
-  return true;
 }
 
 void
