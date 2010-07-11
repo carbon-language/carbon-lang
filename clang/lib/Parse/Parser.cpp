@@ -509,7 +509,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
 
 /// \brief Determine whether the current token, if it occurs after a
 /// declarator, continues a declaration or declaration list.
-bool Parser::isDeclarationAfterDeclarator() {
+bool Parser::isDeclarationAfterDeclarator() const {
   return Tok.is(tok::equal) ||      // int X()=  -> not a function def
     Tok.is(tok::comma) ||           // int X(),  -> not a function def
     Tok.is(tok::semi)  ||           // int X();  -> not a function def

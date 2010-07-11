@@ -395,12 +395,14 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     return DeclGroupPtrTy();
   }
 
-  if (AllowFunctionDefinitions && D.isFunctionDeclarator()) {
-    if (isDeclarationAfterDeclarator()) {
-      // Fall though.  We have to check this first, though, because
-      // __attribute__ might be the start of a function definition in
-      // (extended) K&R C.
-    } else if (isStartOfFunctionDefinition()) {
+  // Check to see if we have a function *definition* which must have a body.
+  if (AllowFunctionDefinitions && D.isFunctionDeclarator() &&
+      // Look at the next token to make sure that this isn't a function
+      // declaration.  We have to check this because __attribute__ might be the
+      // start of a function definition in GCC-extended K&R C.
+      !isDeclarationAfterDeclarator()) {
+    
+    if (isStartOfFunctionDefinition()) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
         Diag(Tok, diag::err_function_declared_typedef);
 
