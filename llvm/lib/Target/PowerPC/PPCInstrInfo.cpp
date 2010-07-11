@@ -340,36 +340,32 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
-bool PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC,
-                                   DebugLoc DL) const {
-  if (DestRC != SrcRC) {
-    // Not yet supported!
-    return false;
-  }
+void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator I, DebugLoc DL,
+                               unsigned DestReg, unsigned SrcReg,
+                               bool KillSrc) const {
+  unsigned Opc;
+  if (PPC::GPRCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::OR;
+  else if (PPC::G8RCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::OR8;
+  else if (PPC::F4RCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::FMR;
+  else if (PPC::CRRCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::MCRF;
+  else if (PPC::VRRCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::VOR;
+  else if (PPC::CRBITRCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::CROR;
+  else
+    llvm_unreachable("Impossible reg-to-reg copy");
 
-  if (DestRC == PPC::GPRCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::OR), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (DestRC == PPC::G8RCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::OR8), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (DestRC == PPC::F4RCRegisterClass ||
-             DestRC == PPC::F8RCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::FMR), DestReg).addReg(SrcReg);
-  } else if (DestRC == PPC::CRRCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::MCRF), DestReg).addReg(SrcReg);
-  } else if (DestRC == PPC::VRRCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::VOR), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (DestRC == PPC::CRBITRCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::CROR), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else {
-    // Attempt to copy register that is not GPR or FPR
-    return false;
-  }
-  
-  return true;
+  const TargetInstrDesc &TID = get(Opc);
+  if (TID.getNumOperands() == 3)
+    BuildMI(MBB, I, DL, TID, DestReg)
+      .addReg(SrcReg).addReg(SrcReg, getKillRegState(KillSrc));
+  else
+    BuildMI(MBB, I, DL, TID, DestReg).addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 bool
