@@ -89,16 +89,6 @@ Perhaps use pxor / xorp* to clear a XMM register first?
 
 //===---------------------------------------------------------------------===//
 
-X86RegisterInfo::copyRegToReg() returns X86::MOVAPSrr for VR128. Is it possible
-to choose between movaps, movapd, and movdqa based on types of source and
-destination?
-
-How about andps, andpd, and pand? Do we really care about the type of the packed
-elements? If not, why not always use the "ps" variants which are likely to be
-shorter.
-
-//===---------------------------------------------------------------------===//
-
 External test Nurbs exposed some problems. Look for
 __ZN15Nurbs_SSE_Cubic17TessellateSurfaceE, bb cond_next140. This is what icc
 emits:
