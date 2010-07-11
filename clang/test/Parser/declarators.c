@@ -90,7 +90,7 @@ struct X<foo::int> { }; // expected-error{{expected identifier or '('}}
 
 // PR7617 - error recovery on missing ;.
 
-void test14()  // expected-error {{invalid token after top level declarator}}
+void test14()  // expected-error {{expected ';' after top level declarator}}
 
 void test14a();
 void *test14b = (void*)test14a; // Make sure test14a didn't get skipped.

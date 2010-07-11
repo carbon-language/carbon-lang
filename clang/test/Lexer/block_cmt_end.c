@@ -17,7 +17,7 @@ next comment ends with normal escaped newline:
 /* expected-warning {{escaped newline}} expected-warning {{backslash and newline}}  *\  
 /
 
-int bar /* expected-error {{invalid token after top level declarator}} */
+int bar /* expected-error {{expected ';' after top level declarator}} */
 
 /* xyz
 
