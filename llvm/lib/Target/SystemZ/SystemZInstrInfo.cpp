@@ -130,8 +130,6 @@ void SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = SystemZ::MOV64rrP;
   else if (SystemZ::GR128RegClass.contains(DestReg, SrcReg))
     Opc = SystemZ::MOV128rr;
-  else if (SystemZ::GR32RegClass.contains(DestReg, SrcReg))
-    Opc = SystemZ::MOV32rr;
   else if (SystemZ::FP32RegClass.contains(DestReg, SrcReg))
     Opc = SystemZ::FMOV32rr;
   else if (SystemZ::FP64RegClass.contains(DestReg, SrcReg))
