@@ -401,12 +401,20 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
       return false;
     // Note that it is not safe to speculate into a malloc'd region because
     // malloc may return null.
-    if (isa<AllocaInst>(getOperand(0)))
+    // It's also not safe to follow a bitcast, for example:
+    //   bitcast i8* (alloca i8) to i32*
+    // would result in a 4-byte load from a 1-byte alloca.
+    Value *Op0 = getOperand(0);
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op0)) {
+      // TODO: it's safe to do this for any GEP with constant indices that
+      // compute inside the allocated type, but not for any inbounds gep.
+      if (GEP->hasAllZeroIndices())
+        Op0 = GEP->getPointerOperand();
+    }
+    if (isa<AllocaInst>(Op0))
       return true;
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(getOperand(0)))
       return !GV->hasExternalWeakLinkage();
-    // FIXME: Handle cases involving GEPs.  We have to be careful because
-    // a load of a out-of-bounds GEP has undefined behavior.
     return false;
   }
   case Call:
