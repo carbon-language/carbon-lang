@@ -117,59 +117,30 @@ void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
 }
 
-bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator I,
-                                    unsigned DestReg, unsigned SrcReg,
-                                    const TargetRegisterClass *DestRC,
-                                    const TargetRegisterClass *SrcRC,
-                                    DebugLoc DL) const {
+void SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I, DebugLoc DL,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   bool KillSrc) const {
+  unsigned Opc;
+  if (SystemZ::GR64RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::MOV64rr;
+  else if (SystemZ::GR32RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::MOV32rr;
+  else if (SystemZ::GR64PRegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::MOV64rrP;
+  else if (SystemZ::GR128RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::MOV128rr;
+  else if (SystemZ::GR32RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::MOV32rr;
+  else if (SystemZ::FP32RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::FMOV32rr;
+  else if (SystemZ::FP64RegClass.contains(DestReg, SrcReg))
+    Opc = SystemZ::FMOV64rr;
+  else
+    llvm_unreachable("Impossible reg-to-reg copy");
 
-  // Determine if DstRC and SrcRC have a common superclass.
-  const TargetRegisterClass *CommonRC = DestRC;
-  if (DestRC == SrcRC)
-    /* Same regclass for source and dest */;
-  else if (CommonRC->hasSuperClass(SrcRC))
-    CommonRC = SrcRC;
-  else if (!CommonRC->hasSubClass(SrcRC))
-    CommonRC = 0;
-
-  if (CommonRC) {
-    if (CommonRC == &SystemZ::GR64RegClass ||
-        CommonRC == &SystemZ::ADDR64RegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::MOV64rr), DestReg).addReg(SrcReg);
-    } else if (CommonRC == &SystemZ::GR32RegClass ||
-               CommonRC == &SystemZ::ADDR32RegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::MOV32rr), DestReg).addReg(SrcReg);
-    } else if (CommonRC == &SystemZ::GR64PRegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::MOV64rrP), DestReg).addReg(SrcReg);
-    } else if (CommonRC == &SystemZ::GR128RegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::MOV128rr), DestReg).addReg(SrcReg);
-    } else if (CommonRC == &SystemZ::FP32RegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::FMOV32rr), DestReg).addReg(SrcReg);
-    } else if (CommonRC == &SystemZ::FP64RegClass) {
-      BuildMI(MBB, I, DL, get(SystemZ::FMOV64rr), DestReg).addReg(SrcReg);
-    } else {
-      return false;
-    }
-
-    return true;
-  }
-
-  if ((SrcRC == &SystemZ::GR64RegClass &&
-       DestRC == &SystemZ::ADDR64RegClass) ||
-      (DestRC == &SystemZ::GR64RegClass &&
-       SrcRC == &SystemZ::ADDR64RegClass)) {
-    BuildMI(MBB, I, DL, get(SystemZ::MOV64rr), DestReg).addReg(SrcReg);
-    return true;
-  } else if ((SrcRC == &SystemZ::GR32RegClass &&
-              DestRC == &SystemZ::ADDR32RegClass) ||
-             (DestRC == &SystemZ::GR32RegClass &&
-              SrcRC == &SystemZ::ADDR32RegClass)) {
-    BuildMI(MBB, I, DL, get(SystemZ::MOV32rr), DestReg).addReg(SrcReg);
-    return true;
-  }
-
-  return false;
+  BuildMI(MBB, I, DL, get(Opc), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 bool
