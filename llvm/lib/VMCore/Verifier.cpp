@@ -1357,7 +1357,7 @@ void Verifier::visitLoadInst(LoadInst &LI) {
 
 void Verifier::visitStoreInst(StoreInst &SI) {
   const PointerType *PTy = dyn_cast<PointerType>(SI.getOperand(1)->getType());
-  Assert1(PTy, "Load operand must be a pointer.", &SI);
+  Assert1(PTy, "Store operand must be a pointer.", &SI);
   const Type *ElTy = PTy->getElementType();
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value type does not match pointer operand type!",
