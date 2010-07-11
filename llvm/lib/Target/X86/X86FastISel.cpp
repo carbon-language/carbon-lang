@@ -1167,8 +1167,8 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
   
   unsigned Op1Reg = getRegForValue(I->getOperand(1));
   if (Op1Reg == 0) return false;
-  TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                   CReg, Op1Reg, RC, RC, DL);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+          CReg).addReg(Op1Reg);
 
   // The shift instruction uses X86::CL. If we defined a super-register
   // of X86::CL, emit a subreg KILL to precisely describe what we're doing here.
@@ -1619,11 +1619,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     }
     
     if (VA.isRegLoc()) {
-      TargetRegisterClass* RC = TLI.getRegClassFor(ArgVT);
-      bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                      VA.getLocReg(), Arg, RC, RC, DL);
-      assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
-      Emitted = true;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              VA.getLocReg()).addReg(Arg);
       RegArgs.push_back(VA.getLocReg());
     } else {
       unsigned LocMemOffset = VA.getLocMemOffset();
@@ -1645,12 +1642,9 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.  
   if (Subtarget->isPICStyleGOT()) {
-    TargetRegisterClass *RC = X86::GR32RegisterClass;
     unsigned Base = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
-    bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                    X86::EBX, Base, RC, RC, DL);
-    assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
-    Emitted = true;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            X86::EBX).addReg(Base);
   }
   
   // Issue the call.
@@ -1716,7 +1710,6 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
     EVT CopyVT = RVLocs[0].getValVT();
     TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
-    TargetRegisterClass *SrcRC = DstRC;
     
     // If this is a call to a function that returns an fp value on the x87 fp
     // stack, but where we prefer to use the value in xmm registers, copy it
@@ -1725,15 +1718,12 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
          RVLocs[0].getLocReg() == X86::ST1) &&
         isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
       CopyVT = MVT::f80;
-      SrcRC = X86::RSTRegisterClass;
       DstRC = X86::RFP80RegisterClass;
     }
 
     unsigned ResultReg = createResultReg(DstRC);
-    bool Emitted = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt, ResultReg,
-                                    RVLocs[0].getLocReg(), DstRC, SrcRC, DL);
-    assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
-    Emitted = true;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(RVLocs[0].getLocReg());
     UsedRegs.push_back(RVLocs[0].getLocReg());
 
     if (CopyVT != RVLocs[0].getValVT()) {

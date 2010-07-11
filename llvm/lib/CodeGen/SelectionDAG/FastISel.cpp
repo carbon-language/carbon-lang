@@ -527,10 +527,8 @@ bool FastISel::SelectCall(const User *I) {
       unsigned Reg = TLI.getExceptionAddressRegister();
       const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
       unsigned ResultReg = createResultReg(RC);
-      bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                           ResultReg, Reg, RC, RC, DL);
-      assert(InsertedCopy && "Can't copy address registers!");
-      InsertedCopy = InsertedCopy;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              ResultReg).addReg(Reg);
       UpdateValueMap(I, ResultReg);
       return true;
     }
@@ -557,10 +555,8 @@ bool FastISel::SelectCall(const User *I) {
       EVT SrcVT = TLI.getPointerTy();
       const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
       unsigned ResultReg = createResultReg(RC);
-      bool InsertedCopy = TII.copyRegToReg(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                           ResultReg, Reg, RC, RC, DL);
-      assert(InsertedCopy && "Can't copy address registers!");
-      InsertedCopy = InsertedCopy;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+              ResultReg).addReg(Reg);
 
       bool ResultRegIsKill = hasTrivialKill(I);
 
