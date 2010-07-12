@@ -372,6 +372,17 @@ void Decl::swapAttrs(Decl *RHS) {
   RHS->HasAttrs = true;
 }
 
+void Decl::copyAttrs(Decl *SRC) {
+  if (!SRC->hasAttrs())
+    return;
+  ASTContext &Context = getASTContext();
+  for (const Attr *attr = SRC->getAttrs(); attr; attr = attr->getNext()) {
+    Attr *NewAttr = attr->clone(Context);
+    addAttr(const_cast<Attr*>(NewAttr));
+  }
+  HasAttrs = true;
+}
+
 
 void Decl::Destroy(ASTContext &C) {
   // Free attributes for this decl.

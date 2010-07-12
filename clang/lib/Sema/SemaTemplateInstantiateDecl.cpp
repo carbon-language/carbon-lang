@@ -2591,7 +2591,10 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
       ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
     // declarations to their instantiations.
-    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
+    NamedDecl *ND = 
+      cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
+    ND->copyAttrs(D);
+    return ND;
   }
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {

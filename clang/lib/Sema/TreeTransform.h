@@ -6279,11 +6279,6 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
   if (!ND)
     return SemaRef.ExprError();
   
-  // Is this instantiation of a __block variable?
-  ValueDecl *V = E->getDecl();
-  if (V->getAttr<BlocksAttr>())
-    ND->addAttr(::new (SemaRef.Context) BlocksAttr(BlocksAttr::ByRef));
-  
   if (!getDerived().AlwaysRebuild() &&
       ND == E->getDecl()) {
     // Mark it referenced in the new context regardless.
