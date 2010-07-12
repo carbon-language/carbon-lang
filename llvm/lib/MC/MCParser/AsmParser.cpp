@@ -66,6 +66,8 @@ public:
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 
+    Parser.AddDirectiveHandler(this, ".desc", MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveDesc));
     Parser.AddDirectiveHandler(this, ".lsym", MCAsmParser::DirectiveHandler(
                                  &DarwinAsmParser::ParseDirectiveLsym));
     Parser.AddDirectiveHandler(this, ".subsections_via_symbols",
@@ -83,6 +85,7 @@ public:
                              &DarwinAsmParser::ParseDirectiveSecureLogReset));
   }
 
+  bool ParseDirectiveDesc(StringRef, SMLoc);
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
   bool ParseDirectiveLsym(StringRef, SMLoc);
   bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
@@ -837,8 +840,6 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveComm(/*IsLocal=*/true);
     if (IDVal == ".zerofill")
       return ParseDirectiveDarwinZerofill();
-    if (IDVal == ".desc")
-      return ParseDirectiveDarwinSymbolDesc();
     if (IDVal == ".tbss")
       return ParseDirectiveDarwinTBSS();
 
@@ -1431,22 +1432,22 @@ bool AsmParser::ParseDirectiveELFType() {
   return false;
 }
 
-/// ParseDirectiveDarwinSymbolDesc
+/// ParseDirectiveDesc
 ///  ::= .desc identifier , expression
-bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
+bool DarwinAsmParser::ParseDirectiveDesc(StringRef, SMLoc) {
   StringRef Name;
-  if (ParseIdentifier(Name))
+  if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.desc' directive");
   Lex();
 
   int64_t DescValue;
-  if (ParseAbsoluteExpression(DescValue))
+  if (getParser().ParseAbsoluteExpression(DescValue))
     return true;
 
   if (getLexer().isNot(AsmToken::EndOfStatement))

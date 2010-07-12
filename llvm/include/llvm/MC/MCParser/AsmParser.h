@@ -137,7 +137,6 @@ private:
   /// accepts a single symbol (which should be a label or an external).
   bool ParseDirectiveSymbolAttribute(MCSymbolAttr Attr);
   bool ParseDirectiveELFType(); // ELF specific ".type"
-  bool ParseDirectiveDarwinSymbolDesc(); // Darwin specific ".desc"
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
