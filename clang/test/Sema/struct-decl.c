@@ -41,3 +41,8 @@ struct s0 {
 };
 
 struct s0 f0(void) {}
+
+// <rdar://problem/8177927> - This previously triggered an assertion failure.
+struct x0 {
+  unsigned int x1;
+};
