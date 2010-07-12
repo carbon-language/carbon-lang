@@ -476,10 +476,11 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     // it will not show up as a predecessor.
     for (pred_iterator PI = pred_begin(OldEntry), PE = pred_end(OldEntry);
          PI != PE; ++PI) {
-      if (*PI == &F->getEntryBlock())
-        AccPN->addIncoming(AccumulatorRecursionEliminationInitVal, *PI);
+      BasicBlock *P = *PI;
+      if (P == &F->getEntryBlock())
+        AccPN->addIncoming(AccumulatorRecursionEliminationInitVal, P);
       else
-        AccPN->addIncoming(AccPN, *PI);
+        AccPN->addIncoming(AccPN, P);
     }
 
     // Add an incoming argument for the current block, which is computed by our

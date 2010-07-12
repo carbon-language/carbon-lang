@@ -286,9 +286,10 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
   for (const_use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
     // PHI nodes uses values in the corresponding predecessor block.  For other
     // instructions, just check to see whether the parent of the use matches up.
-    const PHINode *PN = dyn_cast<PHINode>(*UI);
+    const User *U = *UI;
+    const PHINode *PN = dyn_cast<PHINode>(U);
     if (PN == 0) {
-      if (cast<Instruction>(*UI)->getParent() != BB)
+      if (cast<Instruction>(U)->getParent() != BB)
         return true;
       continue;
     }
