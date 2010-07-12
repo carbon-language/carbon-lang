@@ -289,14 +289,15 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       // Perhaps getConstantOnEdge should be smart enough to do this?
       
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        BasicBlock *P = *PI;
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.
-        Constant *PredCst = LVI->getConstantOnEdge(V, *PI, BB);
+        Constant *PredCst = LVI->getConstantOnEdge(V, P, BB);
         if (PredCst == 0 ||
             (!isa<ConstantInt>(PredCst) && !isa<UndefValue>(PredCst)))
           continue;
         
-        Result.push_back(std::make_pair(dyn_cast<ConstantInt>(PredCst), *PI));
+        Result.push_back(std::make_pair(dyn_cast<ConstantInt>(PredCst), P));
       }
       
       return !Result.empty();
@@ -421,20 +422,21 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         (!isa<Instruction>(Cmp->getOperand(0)) ||
          cast<Instruction>(Cmp->getOperand(0))->getParent() != BB)) {
       Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
-      
+
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        BasicBlock *P = *PI;
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.
         LazyValueInfo::Tristate
           Res = LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
-                                        RHSCst, *PI, BB);
+                                        RHSCst, P, BB);
         if (Res == LazyValueInfo::Unknown)
           continue;
 
         Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
-        Result.push_back(std::make_pair(cast<ConstantInt>(ResC), *PI));
+        Result.push_back(std::make_pair(cast<ConstantInt>(ResC), P));
       }
-      
+
       return !Result.empty();
     }
   }
@@ -550,18 +552,22 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       (CondInst == 0 || CondInst->getParent() != BB)) { // Non-local definition.
     pred_iterator PI = pred_begin(BB), E = pred_end(BB);
     if (isa<BranchInst>(BB->getTerminator())) {
-      for (; PI != E; ++PI)
-        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+      for (; PI != E; ++PI) {
+        BasicBlock *P = *PI;
+        if (BranchInst *PBI = dyn_cast<BranchInst>(P->getTerminator()))
           if (PBI->isConditional() && PBI->getCondition() == Condition &&
-              ProcessBranchOnDuplicateCond(*PI, BB))
+              ProcessBranchOnDuplicateCond(P, BB))
             return true;
+      }
     } else {
       assert(isa<SwitchInst>(BB->getTerminator()) && "Unknown jump terminator");
-      for (; PI != E; ++PI)
-        if (SwitchInst *PSI = dyn_cast<SwitchInst>((*PI)->getTerminator()))
+      for (; PI != E; ++PI) {
+        BasicBlock *P = *PI;
+        if (SwitchInst *PSI = dyn_cast<SwitchInst>(P->getTerminator()))
           if (PSI->getCondition() == Condition &&
-              ProcessSwitchOnDuplicateCond(*PI, BB))
+              ProcessSwitchOnDuplicateCond(P, BB))
             return true;
+      }
     }
   }
 
@@ -581,19 +587,21 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       // If we have a comparison, loop over the predecessors to see if there is
       // a condition with a lexically identical value.
       pred_iterator PI = pred_begin(BB), E = pred_end(BB);
-      for (; PI != E; ++PI)
-        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
-          if (PBI->isConditional() && *PI != BB) {
+      for (; PI != E; ++PI) {
+        BasicBlock *P = *PI;
+        if (BranchInst *PBI = dyn_cast<BranchInst>(P->getTerminator()))
+          if (PBI->isConditional() && P != BB) {
             if (CmpInst *CI = dyn_cast<CmpInst>(PBI->getCondition())) {
               if (CI->getOperand(0) == CondCmp->getOperand(0) &&
                   CI->getOperand(1) == CondCmp->getOperand(1) &&
                   CI->getPredicate() == CondCmp->getPredicate()) {
                 // TODO: Could handle things like (x != 4) --> (x == 17)
-                if (ProcessBranchOnDuplicateCond(*PI, BB))
+                if (ProcessBranchOnDuplicateCond(P, BB))
                   return true;
               }
             }
           }
+      }
     }
   }
 
@@ -882,12 +890,13 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     // Add all the unavailable predecessors to the PredsToSplit list.
     for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
          PI != PE; ++PI) {
+      BasicBlock *P = *PI;
       // If the predecessor is an indirect goto, we can't split the edge.
-      if (isa<IndirectBrInst>((*PI)->getTerminator()))
+      if (isa<IndirectBrInst>(P->getTerminator()))
         return false;
       
-      if (!AvailablePredSet.count(*PI))
-        PredsToSplit.push_back(*PI);
+      if (!AvailablePredSet.count(P))
+        PredsToSplit.push_back(P);
     }
     
     // Split them out to their own block.
@@ -920,11 +929,12 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   // have multiple entries here.
   for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB); PI != E;
        ++PI) {
+    BasicBlock *P = *PI;
     AvailablePredsTy::iterator I = 
       std::lower_bound(AvailablePreds.begin(), AvailablePreds.end(),
-                       std::make_pair(*PI, (Value*)0));
+                       std::make_pair(P, (Value*)0));
     
-    assert(I != AvailablePreds.end() && I->first == *PI &&
+    assert(I != AvailablePreds.end() && I->first == P &&
            "Didn't find entry for predecessor!");
     
     PN->addIncoming(I->second, I->first);
