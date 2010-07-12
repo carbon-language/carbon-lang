@@ -2006,6 +2006,14 @@ unsigned CastInst::isEliminableCastPair(
     { 99,99,99,99,99,99,99,99,99,13,99,12 }, // IntToPtr    |
     {  5, 5, 5, 6, 6, 5, 5, 6, 6,11, 5, 1 }, // BitCast    -+
   };
+  
+  // If either of the casts are a bitcast from scalar to vector, disallow the
+  // merging.
+  if ((firstOp == Instruction::BitCast &&
+       isa<VectorType>(SrcTy) != isa<VectorType>(MidTy)) ||
+      (secondOp == Instruction::BitCast &&
+       isa<VectorType>(MidTy) != isa<VectorType>(DstTy)))
+    return 0; // Disallowed
 
   int ElimCase = CastResults[firstOp-Instruction::CastOpsBegin]
                             [secondOp-Instruction::CastOpsBegin];

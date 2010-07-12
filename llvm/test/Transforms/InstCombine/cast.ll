@@ -638,3 +638,14 @@ define <4 x i32> @test62(<3 x float> %call4) nounwind {
 ; CHECK-NEXT: ret
 }
 
+; PR7311 - Don't create invalid IR on scalar->vector cast.
+define <2 x float> @test63(i64 %tmp8) nounwind {
+entry:
+  %a = bitcast i64 %tmp8 to <2 x i32>           
+  %vcvt.i = uitofp <2 x i32> %a to <2 x float>  
+  ret <2 x float> %vcvt.i
+; CHECK: @test63
+; CHECK: bitcast
+; CHECK: uitofp
+}
+
