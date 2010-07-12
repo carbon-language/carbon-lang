@@ -1960,7 +1960,8 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       bool load) {
   if (RC == &X86::GR64RegClass || RC == &X86::GR64_NOSPRegClass) {
     return load ? X86::MOV64rm : X86::MOV64mr;
-  } else if (RC == &X86::GR32RegClass || RC == &X86::GR32_NOSPRegClass) {
+  } else if (RC == &X86::GR32RegClass || RC == &X86::GR32_NOSPRegClass ||
+             RC == &X86::GR32_ADRegClass) {
     return load ? X86::MOV32rm : X86::MOV32mr;
   } else if (RC == &X86::GR16RegClass) {
     return load ? X86::MOV16rm : X86::MOV16mr;

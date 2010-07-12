@@ -1703,7 +1703,7 @@ bool LocalRewriter::InsertEmergencySpills(MachineInstr *MI) {
   std::vector<unsigned> &EmSpills = VRM->getEmergencySpills(MI);
   for (unsigned i = 0, e = EmSpills.size(); i != e; ++i) {
     unsigned PhysReg = EmSpills[i];
-    const TargetRegisterClass *RC = TRI->getPhysicalRegisterRegClass(PhysReg);
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(PhysReg);
     assert(RC && "Unable to determine register class!");
     int SS = VRM->getEmergencySpillSlot(RC);
     if (UsedSS.count(SS))
