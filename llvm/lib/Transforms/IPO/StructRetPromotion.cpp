@@ -171,16 +171,16 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
     // Check FirstArg's users.
     for (Value::use_iterator ArgI = FirstArg->use_begin(), 
            ArgE = FirstArg->use_end(); ArgI != ArgE; ++ArgI) {
-
+      User *U = *ArgI;
       // If FirstArg user is a CallInst that does not correspond to current
       // call site then this function F is not suitable for sret promotion.
-      if (CallInst *CI = dyn_cast<CallInst>(ArgI)) {
+      if (CallInst *CI = dyn_cast<CallInst>(U)) {
         if (CI != Call)
           return false;
       }
       // If FirstArg user is a GEP whose all users are not LoadInst then
       // this function F is not suitable for sret promotion.
-      else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(ArgI)) {
+      else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
         // TODO : Use dom info and insert PHINodes to collect get results
         // from multiple call sites for this GEP.
         if (GEP->getParent() != Call->getParent())
