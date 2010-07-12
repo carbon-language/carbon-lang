@@ -60,13 +60,10 @@ void Preprocessor::CachingLex(Token &Result) {
     return;
   }
 
-  // We should cache the lexed token.
-
+  // Cache the lexed token.
   EnterCachingLexMode();
-  if (Result.isNot(tok::eof)) {
-    CachedTokens.push_back(Result);
-    ++CachedLexPos;
-  }
+  CachedTokens.push_back(Result);
+  ++CachedLexPos;
 }
 
 void Preprocessor::EnterCachingLexMode() {
