@@ -798,8 +798,8 @@ static unsigned X86ChooseCmpOpcode(EVT VT, const X86Subtarget *Subtarget) {
   case MVT::i16: return X86::CMP16rr;
   case MVT::i32: return X86::CMP32rr;
   case MVT::i64: return X86::CMP64rr;
-  case MVT::f32: return Subtarget->hasSSE1() ? X86::UCOMISSrr : X86::UCOM_Fpr32;
-  case MVT::f64: return Subtarget->hasSSE2() ? X86::UCOMISDrr : X86::UCOM_Fpr64;
+  case MVT::f32: return Subtarget->hasSSE1() ? X86::UCOMISSrr : 0;
+  case MVT::f64: return Subtarget->hasSSE2() ? X86::UCOMISDrr : 0;
   }
 }
 
