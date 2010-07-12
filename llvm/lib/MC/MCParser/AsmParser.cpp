@@ -18,6 +18,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -101,6 +102,35 @@ public:
   bool ParseDirectiveZerofill(StringRef, SMLoc);
 };
 
+class ELFAsmParser : public MCAsmParserExtension {
+  bool ParseSectionSwitch(StringRef Section, unsigned Type,
+                          unsigned Flags, SectionKind Kind);
+
+public:
+  ELFAsmParser() {}
+
+  virtual void Initialize(MCAsmParser &Parser) {
+    // Call the base implementation.
+    this->MCAsmParserExtension::Initialize(Parser);
+
+    Parser.AddDirectiveHandler(this, ".data", MCAsmParser::DirectiveHandler(
+                                 &ELFAsmParser::ParseSectionDirectiveData));
+    Parser.AddDirectiveHandler(this, ".text", MCAsmParser::DirectiveHandler(
+                                 &ELFAsmParser::ParseSectionDirectiveText));
+  }
+
+  bool ParseSectionDirectiveData(StringRef, SMLoc) {
+    return ParseSectionSwitch(".data", MCSectionELF::SHT_PROGBITS,
+                              MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                              SectionKind::getDataRel());
+  }
+  bool ParseSectionDirectiveText(StringRef, SMLoc) {
+    return ParseSectionSwitch(".text", MCSectionELF::SHT_PROGBITS,
+                              MCSectionELF::SHF_EXECINSTR |
+                              MCSectionELF::SHF_ALLOC, SectionKind::getText());
+  }
+};
+
 }
 
 enum { DEFAULT_ADDRSPACE = 0 };
@@ -121,6 +151,9 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
   // created.
   if (_MAI.hasSubsectionsViaSymbols()) {
     PlatformParser = new DarwinAsmParser;
+    PlatformParser->Initialize(*this);
+  } else {
+    PlatformParser = new ELFAsmParser;
     PlatformParser->Initialize(*this);
   }
 }
@@ -1047,6 +1080,18 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   // values into the implicitly aligned sections.
   if (Align)
     getStreamer().EmitValueToAlignment(Align, 0, 1, 0);
+
+  return false;
+}
+
+bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
+                                      unsigned Flags, SectionKind Kind) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in section switching directive");
+  Lex();
+
+  getStreamer().SwitchSection(getContext().getELFSection(
+                                Section, Type, Flags, Kind));
 
   return false;
 }
