@@ -407,13 +407,14 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   // Okay, we need to materialize a negated version of V with an instruction.
   // Scan the use lists of V to see if we have one already.
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    if (!BinaryOperator::isNeg(*UI)) continue;
+    User *U = *UI;
+    if (!BinaryOperator::isNeg(U)) continue;
 
     // We found one!  Now we have to make sure that the definition dominates
     // this use.  We do this by moving it to the entry block (if it is a
     // non-instruction value) or right after the definition.  These negates will
     // be zapped by reassociate later, so we don't need much finesse here.
-    BinaryOperator *TheNeg = cast<BinaryOperator>(*UI);
+    BinaryOperator *TheNeg = cast<BinaryOperator>(U);
 
     // Verify that the negate is in this function, V might be a constant expr.
     if (TheNeg->getParent()->getParent() != BI->getParent()->getParent())
