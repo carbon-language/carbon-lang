@@ -246,11 +246,6 @@ bool AsmParser::ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   return false;
 }
 
-MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
-  // FIXME: Inline into callers.
-  return Ctx.GetOrCreateSymbol(Name);
-}
-
 /// ParsePrimaryExpr - Parse a primary expression and return it.
 ///  primaryexpr ::= (parenexpr
 ///  primaryexpr ::= symbol
@@ -271,7 +266,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::Identifier: {
     // This is a symbol reference.
     std::pair<StringRef, StringRef> Split = getTok().getIdentifier().split('@');
-    MCSymbol *Sym = CreateSymbol(Split.first);
+    MCSymbol *Sym = getContext().GetOrCreateSymbol(Split.first);
 
     // Mark the symbol as used in an expression.
     Sym->setUsedInExpr(true);
@@ -581,7 +576,7 @@ bool AsmParser::ParseStatement() {
     // implicitly marked as external.
     MCSymbol *Sym;
     if (LocalLabelVal == -1)
-      Sym = CreateSymbol(IDVal);
+      Sym = getContext().GetOrCreateSymbol(IDVal);
     else
       Sym = Ctx.CreateDirectionalLocalSymbol(LocalLabelVal);
     if (!Sym->isUndefined() || Sym->isVariable())
@@ -938,7 +933,7 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
       return Error(EqualLoc, "invalid reassignment of non-absolute variable '" +
                    Name + "'");
   } else
-    Sym = CreateSymbol(Name);
+    Sym = getContext().GetOrCreateSymbol(Name);
 
   // FIXME: Handle '.'.
 
@@ -1373,7 +1368,7 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
       if (ParseIdentifier(Name))
         return TokError("expected identifier in directive");
       
-      MCSymbol *Sym = CreateSymbol(Name);
+      MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
       getStreamer().EmitSymbolAttribute(Sym, Attr);
 
@@ -1398,7 +1393,7 @@ bool AsmParser::ParseDirectiveELFType() {
     return TokError("expected identifier in directive");
 
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.type' directive");
@@ -1474,7 +1469,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");

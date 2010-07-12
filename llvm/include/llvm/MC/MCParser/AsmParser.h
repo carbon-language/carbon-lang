@@ -98,10 +98,8 @@ public:
   /// }
 
 private:
-  MCSymbol *CreateSymbol(StringRef Name);
-
   bool ParseStatement();
-  
+
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
     
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
