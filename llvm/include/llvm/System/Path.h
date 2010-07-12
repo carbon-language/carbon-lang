@@ -292,14 +292,6 @@ namespace sys {
     /// @name Disk Accessors
     /// @{
     public:
-      /// This function determines if the path name in this object references
-      /// the root (top level directory) of the file system. The details of what
-      /// is considered the "root" may vary from system to system so this method
-      /// will do the necessary checking.
-      /// @returns true iff the path name references the root directory.
-      /// @brief Determines if the path references the root directory.
-      bool isRootDirectory() const;
-
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.

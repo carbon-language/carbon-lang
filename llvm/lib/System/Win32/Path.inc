@@ -281,12 +281,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 // FIXME: the above set of functions don't map to Windows very well.
 
 
-bool
-Path::isRootDirectory() const {
-  size_t len = path.size();
-  return len > 0 && path[len-1] == '/';
-}
-
 StringRef Path::getDirname() const {
   return getDirnameCharSep(path, "/");
 }
