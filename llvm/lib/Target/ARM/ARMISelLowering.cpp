@@ -1284,11 +1284,6 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       ? (isLocalARMFunc ? ARMISD::CALL_PRED : ARMISD::CALL)
       : ARMISD::CALL_NOLINK;
   }
-  if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb1Only()) {
-    // implicit def LR - LR mustn't be allocated as GRP:$dst of CALL_NOLINK
-    Chain = DAG.getCopyToReg(Chain, dl, ARM::LR, DAG.getUNDEF(MVT::i32),InFlag);
-    InFlag = Chain.getValue(1);
-  }
 
   std::vector<SDValue> Ops;
   Ops.push_back(Chain);
