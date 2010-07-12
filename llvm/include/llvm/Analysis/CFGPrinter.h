@@ -1,4 +1,4 @@
-//===-- CFGPrinter.h - CFG printer external interface ------------*- C++ -*-===//
+//===-- CFGPrinter.h - CFG printer external interface -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,8 +43,8 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return OS.str();
   }
 
-  static std::string getCompleteNodeLabel(const BasicBlock *Node,
-		                          const Function *Graph) {
+  static std::string getCompleteNodeLabel(const BasicBlock *Node, 
+                                          const Function *Graph) {
     std::string Str;
     raw_string_ostream OS(Str);
 
