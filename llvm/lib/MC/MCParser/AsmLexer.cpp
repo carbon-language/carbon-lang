@@ -23,7 +23,6 @@ using namespace llvm;
 AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
   CurBuf = NULL;
   CurPtr = NULL;
-  TokStart = 0;
 }
 
 AsmLexer::~AsmLexer() {
@@ -38,10 +37,6 @@ void AsmLexer::setBuffer(const MemoryBuffer *buf, const char *ptr) {
     CurPtr = CurBuf->getBufferStart();
   
   TokStart = 0;
-}
-
-SMLoc AsmLexer::getLoc() const {
-  return SMLoc::getFromPointer(TokStart);
 }
 
 /// ReturnError - Set the error to the specified string at the specified

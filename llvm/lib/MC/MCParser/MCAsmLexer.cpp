@@ -12,10 +12,14 @@
 
 using namespace llvm;
 
-MCAsmLexer::MCAsmLexer() : CurTok(AsmToken::Error, StringRef()) {
+MCAsmLexer::MCAsmLexer() : CurTok(AsmToken::Error, StringRef()), TokStart(0) {
 }
 
 MCAsmLexer::~MCAsmLexer() {
+}
+
+SMLoc MCAsmLexer::getLoc() const {
+  return SMLoc::getFromPointer(TokStart);
 }
 
 SMLoc AsmToken::getLoc() const {
