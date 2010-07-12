@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/Support/SourceMgr.h"
@@ -21,6 +22,11 @@ MCAsmParser::~MCAsmParser() {
 
 const AsmToken &MCAsmParser::getTok() {
   return getLexer().getTok();
+}
+
+bool MCAsmParser::TokError(const char *Msg) {
+  Error(getLexer().getLoc(), Msg);
+  return true;
 }
 
 bool MCAsmParser::ParseExpression(const MCExpr *&Res) {

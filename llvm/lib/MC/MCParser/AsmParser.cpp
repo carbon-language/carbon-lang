@@ -56,11 +56,6 @@ bool AsmParser::Error(SMLoc L, const Twine &Msg) {
   return true;
 }
 
-bool AsmParser::TokError(const char *Msg) {
-  PrintMessage(Lexer.getLoc(), Msg, "error");
-  return true;
-}
-
 void AsmParser::PrintMessage(SMLoc Loc, const std::string &Msg, 
                              const char *Type) const {
   SrcMgr.PrintMessage(Loc, Msg, Type);

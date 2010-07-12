@@ -28,7 +28,7 @@ class MCAsmParser {
   void operator=(const MCAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
   MCAsmParser();
- 
+
 public:
   virtual ~MCAsmParser();
 
@@ -43,7 +43,7 @@ public:
   /// Msg.
   virtual void Warning(SMLoc L, const Twine &Msg) = 0;
 
-  /// Warning - Emit an error at the location \arg L, with the message \arg
+  /// Error - Emit an error at the location \arg L, with the message \arg
   /// Msg.
   ///
   /// \return The return value is always true, as an idiomatic convenience to
@@ -53,10 +53,13 @@ public:
   /// Lex - Get the next AsmToken in the stream, possibly handling file
   /// inclusion first.
   virtual const AsmToken &Lex() = 0;
-  
+
   /// getTok - Get the current AsmToken from the stream.
   const AsmToken &getTok();
-  
+
+  /// \brief Report an error at the current lexer location.
+  bool TokError(const char *Msg);
+
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined
@@ -64,7 +67,7 @@ public:
   /// @result - False on success.
   virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
   bool ParseExpression(const MCExpr *&Res);
-  
+
   /// ParseParenExpression - Parse an arbitrary expression, assuming that an
   /// initial '(' has already been consumed.
   ///

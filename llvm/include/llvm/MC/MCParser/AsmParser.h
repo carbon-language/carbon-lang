@@ -96,8 +96,6 @@ private:
   MCSymbol *CreateSymbol(StringRef Name);
 
   bool ParseStatement();
-
-  bool TokError(const char *Msg);
   
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
     
