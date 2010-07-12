@@ -20,6 +20,7 @@ class MCContext;
 class MCExpr;
 class MCStreamer;
 class SMLoc;
+class SourceMgr;
 class StringRef;
 class Twine;
 
@@ -41,6 +42,8 @@ public:
   virtual void AddDirectiveHandler(MCAsmParserExtension *Object,
                                    StringRef Directive,
                                    DirectiveHandler Handler) = 0;
+
+  virtual SourceMgr &getSourceManager() = 0;
 
   virtual MCAsmLexer &getLexer() = 0;
 

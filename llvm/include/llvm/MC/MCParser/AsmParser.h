@@ -80,6 +80,7 @@ public:
   /// @name MCAsmParser Interface
   /// {
 
+  virtual SourceMgr &getSourceManager() { return SrcMgr; }
   virtual MCAsmLexer &getLexer() { return Lexer; }
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
