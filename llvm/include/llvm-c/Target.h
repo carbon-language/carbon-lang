@@ -32,7 +32,8 @@ typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
 typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 
 /* Declare all of the target-initialization functions that are available. */
-#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo(void);
+#define LLVM_TARGET(TargetName) \
+  void LLVMInitialize##TargetName##TargetInfo(void);
 #include "llvm/Config/Targets.def"
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
   

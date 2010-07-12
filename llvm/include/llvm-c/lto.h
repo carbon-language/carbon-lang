@@ -102,7 +102,7 @@ lto_module_is_object_file_in_memory(const void* mem, size_t length);
  */
 extern bool
 lto_module_is_object_file_in_memory_for_target(const void* mem, size_t length, 
-                                               const char* target_triple_prefix);
+                                              const char* target_triple_prefix);
 
 
 /**
