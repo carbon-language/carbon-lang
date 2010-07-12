@@ -85,15 +85,16 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 
   unsigned NumNonconstant = 0;
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
+    User *U = *UI;
     // Ignore blockaddress uses.
-    if (isa<BlockAddress>(*UI)) continue;
+    if (isa<BlockAddress>(U)) continue;
     
     // Used by a non-instruction, or not the callee of a function, do not
     // transform.
-    if (!isa<CallInst>(*UI) && !isa<InvokeInst>(*UI))
+    if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
       return false;
     
-    CallSite CS = CallSite::get(cast<Instruction>(*UI));
+    CallSite CS = CallSite::get(cast<Instruction>(U));
     if (!CS.isCallee(UI))
       return false;
 
