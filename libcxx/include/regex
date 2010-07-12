@@ -1680,6 +1680,128 @@ __back_ref<_CharT>::__exec(__state& __s) const
     }
 }
 
+// __back_ref_icase
+
+template <class _CharT, class _Traits>
+class __back_ref_icase
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+    _Traits __traits_;
+    unsigned __mexp_;
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    explicit __back_ref_icase(const _Traits& __traits, unsigned __mexp,
+                              __node<_CharT>* __s)
+        : base(__s), __traits_(__traits), __mexp_(__mexp) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "__back_ref_icase " << __mexp_;
+        return os.str();
+    }
+};
+
+template <class _CharT, class _Traits>
+void
+__back_ref_icase<_CharT, _Traits>::__exec(__state& __s) const
+{
+    sub_match<const _CharT*>& __sm = __s.__sub_matches_[__mexp_-1];
+    if (__sm.matched)
+    {
+        ptrdiff_t __len = __sm.second - __sm.first;
+        if (__s.__last_ - __s.__current_ >= __len)
+        {
+            for (ptrdiff_t __i = 0; __i < __len; ++__i)
+            {
+                if (__traits_.translate_nocase(__sm.first[__i]) !=
+                                __traits_.translate_nocase(__s.__current_[__i]))
+                    goto __not_equal;
+            }
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__current_ += __len;
+            __s.__node_ = this->first();
+        }
+        else
+        {
+            __s.__do_ = __state::__reject;
+            __s.__node_ = nullptr;
+        }
+    }
+    else
+    {
+__not_equal:
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+// __back_ref_collate
+
+template <class _CharT, class _Traits>
+class __back_ref_collate
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+    _Traits __traits_;
+    unsigned __mexp_;
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    explicit __back_ref_collate(const _Traits& __traits, unsigned __mexp,
+                              __node<_CharT>* __s)
+        : base(__s), __traits_(__traits), __mexp_(__mexp) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "__back_ref_collate " << __mexp_;
+        return os.str();
+    }
+};
+
+template <class _CharT, class _Traits>
+void
+__back_ref_collate<_CharT, _Traits>::__exec(__state& __s) const
+{
+    sub_match<const _CharT*>& __sm = __s.__sub_matches_[__mexp_-1];
+    if (__sm.matched)
+    {
+        ptrdiff_t __len = __sm.second - __sm.first;
+        if (__s.__last_ - __s.__current_ >= __len)
+        {
+            for (ptrdiff_t __i = 0; __i < __len; ++__i)
+            {
+                if (__traits_.translate(__sm.first[__i]) !=
+                                       __traits_.translate(__s.__current_[__i]))
+                    goto __not_equal;
+            }
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__current_ += __len;
+            __s.__node_ = this->first();
+        }
+        else
+        {
+            __s.__do_ = __state::__reject;
+            __s.__node_ = nullptr;
+        }
+    }
+    else
+    {
+__not_equal:
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
 // __r_anchor
 
 template <class _CharT>
@@ -1794,6 +1916,100 @@ void
 __match_char<_CharT>::__exec(__state& __s) const
 {
     if (__s.__current_ != __s.__last_ && *__s.__current_ == __c_)
+    {
+        __s.__do_ = __state::__accept_and_consume;
+        ++__s.__current_;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+// __match_char_icase
+
+template <class _CharT, class _Traits>
+class __match_char_icase
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+    _Traits __traits_;
+    _CharT __c_;
+
+    __match_char_icase(const __match_char_icase&);
+    __match_char_icase& operator=(const __match_char_icase&);
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    __match_char_icase(const _Traits& __traits, _CharT __c, __node<_CharT>* __s)
+        : base(__s), __traits_(__traits), __c_(__traits.translate_nocase(__c)) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "match char icase " << __c_;
+        return os.str();
+    }
+};
+
+template <class _CharT, class _Traits>
+void
+__match_char_icase<_CharT, _Traits>::__exec(__state& __s) const
+{
+    if (__s.__current_ != __s.__last_ &&
+        __traits_.translate_nocase(*__s.__current_) == __c_)
+    {
+        __s.__do_ = __state::__accept_and_consume;
+        ++__s.__current_;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+// __match_char_collate
+
+template <class _CharT, class _Traits>
+class __match_char_collate
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+    _Traits __traits_;
+    _CharT __c_;
+
+    __match_char_collate(const __match_char_collate&);
+    __match_char_collate& operator=(const __match_char_collate&);
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    __match_char_collate(const _Traits& __traits, _CharT __c, __node<_CharT>* __s)
+        : base(__s), __traits_(__traits), __c_(__traits.translate(__c)) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "match char icase " << __c_;
+        return os.str();
+    }
+};
+
+template <class _CharT, class _Traits>
+void
+__match_char_collate<_CharT, _Traits>::__exec(__state& __s) const
+{
+    if (__s.__current_ != __s.__last_ &&
+        __traits_.translate(*__s.__current_) == __c_)
     {
         __s.__do_ = __state::__accept_and_consume;
         ++__s.__current_;
@@ -2913,7 +3129,14 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_char(value_type __c)
 {
-    __end_->first() = new __match_char<_CharT>(__c, __end_->first());
+    if (flags() & regex_constants::icase)
+        __end_->first() = new __match_char_icase<_CharT, _Traits>
+                                              (__traits_, __c, __end_->first());
+    else if (flags() & regex_constants::collate)
+        __end_->first() = new __match_char_collate<_CharT, _Traits>
+                                              (__traits_, __c, __end_->first());
+    else
+        __end_->first() = new __match_char<_CharT>(__c, __end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
@@ -2955,7 +3178,14 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_back_ref(int __i)
 {
-    __end_->first() = new __back_ref<_CharT>(__i, __end_->first());
+    if (flags() & regex_constants::icase)
+        __end_->first() = new __back_ref_icase<_CharT, _Traits>
+                                              (__traits_, __i, __end_->first());
+    else if (flags() & regex_constants::collate)
+        __end_->first() = new __back_ref_collate<_CharT, _Traits>
+                                              (__traits_, __i, __end_->first());
+    else
+        __end_->first() = new __back_ref<_CharT>(__i, __end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 

@@ -472,4 +472,30 @@ int main()
         assert(!std::regex_search(s, m, std::regex("^\\(ab*\\)*\\1$", std::regex_constants::basic)));
         assert(m.size() == 0);
     }
+    {
+        std::cmatch m;
+        const char s[] = "aBAbbAbB";
+        assert(std::regex_search(s, m, std::regex("^\\(Ab*\\)*\\1$",
+                   std::regex_constants::basic | std::regex_constants::icase)));
+        assert(m.size() == 2);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == std::char_traits<char>::length(s));
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
+        assert(m.length(1) == 3);
+        assert(m.position(1) == 2);
+        assert(m.str(1) == "Abb");
+    }
+    {
+        std::cmatch m;
+        const char s[] = "aBAbbAbB";
+        assert(!std::regex_search(s, m, std::regex("^\\(Ab*\\)*\\1$",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 0);
+    }
 }
