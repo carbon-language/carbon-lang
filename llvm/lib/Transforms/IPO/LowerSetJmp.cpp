@@ -406,12 +406,14 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
     // Loop over all of the uses of instruction.  If any of them are after the
     // call, "spill" the value to the stack.
     for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
-         UI != E; ++UI)
-      if (cast<Instruction>(*UI)->getParent() != ABlock ||
-          InstrsAfterCall.count(cast<Instruction>(*UI))) {
+         UI != E; ++UI) {
+      User *U = *UI;
+      if (cast<Instruction>(U)->getParent() != ABlock ||
+          InstrsAfterCall.count(cast<Instruction>(U))) {
         DemoteRegToStack(*II);
         break;
       }
+    }
   InstrsAfterCall.clear();
 
   // Change the setjmp call into a branch statement. We'll remove the
