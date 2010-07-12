@@ -1600,13 +1600,15 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       GVElType->isFloatingPointTy() ||
       GVElType->isPointerTy() || GVElType->isVectorTy())
     return false;
-  
+
   // Walk the use list of the global seeing if all the uses are load or store.
   // If there is anything else, bail out.
-  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I)
-    if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
+  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I){
+    User *U = *I;
+    if (!isa<LoadInst>(U) && !isa<StoreInst>(U))
       return false;
-  
+  }
+
   DEBUG(dbgs() << "   *** SHRINKING TO BOOL: " << *GV);
   
   // Create the new global, initializing it to false.
