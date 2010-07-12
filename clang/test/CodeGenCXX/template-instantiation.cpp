@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -O1 -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
 // CHECK-NOT: @_ZTVN5test118stdio_sync_filebufIwEE = constant
 // CHECK-NOT: _ZTVN5test315basic_fstreamXXIcEE

@@ -817,14 +817,22 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
     if (Method->isVirtual())
       getVTables().EmitThunks(GD);
 
-  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
-    return EmitCXXConstructor(CD, GD.getCtorType());
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    // At -O0, don't generate IR for functions with available_externally 
+    // linkage.
+    if (CodeGenOpts.OptimizationLevel == 0 &&
+        getFunctionLinkage(Function) 
+                                  == llvm::Function::AvailableExternallyLinkage)
+      return;
+    
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(Function))
+      return EmitCXXConstructor(CD, GD.getCtorType());
   
-  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
-    return EmitCXXDestructor(DD, GD.getDtorType());
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(Function))
+      return EmitCXXDestructor(DD, GD.getDtorType());
 
-  if (isa<FunctionDecl>(D))
     return EmitGlobalFunctionDefinition(GD);
+  }
   
   if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     return EmitGlobalVarDefinition(VD);
