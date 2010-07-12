@@ -626,8 +626,12 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   // order. If that register is available, and the corresponding
   // registers are available for the other group subregisters, then we
   // can use those registers to rename.
+
+  // FIXME: Using getMinimalPhysRegClass is very conservative. We should
+  // check every use of the register and find the largest register class
+  // that can be used in all of them.
   const TargetRegisterClass *SuperRC =
-    TRI->getPhysicalRegisterRegClass(SuperReg, MVT::Other);
+    TRI->getMinimalPhysRegClass(SuperReg, MVT::Other);
 
   const TargetRegisterClass::iterator RB = SuperRC->allocation_order_begin(MF);
   const TargetRegisterClass::iterator RE = SuperRC->allocation_order_end(MF);

@@ -318,12 +318,6 @@ public:
     return Reg >= FirstVirtualRegister;
   }
 
-  /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
-  /// register of the given type. If type is EVT::Other, then just return any
-  /// register class the register belongs to.
-  const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
-
   /// getMinimalPhysRegClass - Returns the Register Class of a physical
   /// register of the given type, picking the most sub register class of
   /// the right type that contains this physreg.
