@@ -1627,6 +1627,59 @@ __end_marked_subexpression<_CharT>::__exec(__state& __s) const
     __s.__node_ = this->first();
 }
 
+// __back_ref
+
+template <class _CharT>
+class __back_ref
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+    unsigned __mexp_;
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    explicit __back_ref(unsigned __mexp, __node<_CharT>* __s)
+        : base(__s), __mexp_(__mexp) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "__back_ref " << __mexp_;
+        return os.str();
+    }
+};
+
+template <class _CharT>
+void
+__back_ref<_CharT>::__exec(__state& __s) const
+{
+    sub_match<const _CharT*>& __sm = __s.__sub_matches_[__mexp_-1];
+    if (__sm.matched)
+    {
+        ptrdiff_t __len = __sm.second - __sm.first;
+        if (__s.__last_ - __s.__current_ >= __len &&
+            _STD::equal(__sm.first, __sm.second, __s.__current_))
+        {
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__current_ += __len;
+            __s.__node_ = this->first();
+        }
+        else
+        {
+            __s.__do_ = __state::__reject;
+            __s.__node_ = nullptr;
+        }
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
 // __r_anchor
 
 template <class _CharT>
@@ -1971,7 +2024,7 @@ private:
     void __push_char(const typename _Traits::string_type& __c) {}
     void __push_range() {}
     void __push_class_type(typename _Traits::char_class_type) {}
-    void __push_back_ref(int __i) {}
+    void __push_back_ref(int __i);
     void __push_alternation() {}
     void __push_begin_marked_subexpression();
     void __push_end_marked_subexpression(unsigned);
@@ -2528,7 +2581,8 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     __temp = __parse_Back_close_brace(__first, __last);
                     if (__temp == __first)
                         throw regex_error(regex_constants::error_brace);
-                    __push_exact_repeat(__min);
+                    __push_loop(__min, __min, __s, __mexp_begin, __mexp_end,
+                                    true);
                     __first = __temp;
                 }
                 else
@@ -2545,7 +2599,8 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     {
                         if (__max < __min)
                             throw regex_error(regex_constants::error_badbrace);
-                        __push_loop(__min, __max, __s);
+                        __push_loop(__min, __max, __s, __mexp_begin, __mexp_end,
+                                    true);
                     }
                     __first = __temp;
                 }
@@ -2893,6 +2948,14 @@ void
 basic_regex<_CharT, _Traits>::__push_match_any()
 {
     __end_->first() = new __match_any<_CharT>(__end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
+
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_back_ref(int __i)
+{
+    __end_->first() = new __back_ref<_CharT>(__i, __end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
@@ -3606,14 +3669,8 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
                 }
                 break;
             case __state::__accept_and_consume:
-                // needs to be changed for the case that this state
-                // consumed more than one character.  This will adjust
-                // __current based on __s.__current_
-                if (__current != __last)
-                {
-                    ++__current;
-                    ++__j;
-                }
+                __j += __s.__current_ - __current;
+                __current = __s.__current_;
                 break;
             case __state::__repeat:
             case __state::__accept_but_not_consume:
