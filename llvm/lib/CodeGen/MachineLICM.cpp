@@ -127,8 +127,8 @@ namespace {
     void AddToLiveIns(unsigned Reg);
 
     /// IsLICMCandidate - Returns true if the instruction may be a suitable
-    /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
-    /// not safe to hoist it.
+    /// candidate for LICM. e.g. If the instruction is a call, then it's
+    /// obviously not safe to hoist it.
     bool IsLICMCandidate(MachineInstr &I);
 
     /// IsLoopInvariantInst - Returns true if the instruction is loop
@@ -497,26 +497,16 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
 /// not safe to hoist it.
 bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
+  // It is not profitable to hoist implicitdefs.  FIXME: Why not?  what if they
+  // are an argument to some other otherwise-hoistable instruction?
   if (I.isImplicitDef())
     return false;
-
-  const TargetInstrDesc &TID = I.getDesc();
   
-  // Ignore stuff that we obviously can't hoist.
-  if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
-      TID.hasUnmodeledSideEffects())
+  // Check if it's safe to move the instruction.
+  bool DontMoveAcrossStore = true;
+  if (!I.isSafeToMove(TII, AA, DontMoveAcrossStore))
     return false;
-
-  if (TID.mayLoad()) {
-    // Okay, this instruction does a load. As a refinement, we allow the target
-    // to decide whether the loaded value is actually a constant. If so, we can
-    // actually use it as a load.
-    if (!I.isInvariantLoad(AA))
-      // FIXME: we should be able to hoist loads with no other side effects if
-      // there are no other instructions which can change memory in this loop.
-      // This is a trivial form of alias analysis.
-      return false;
-  }
+  
   return true;
 }
 
