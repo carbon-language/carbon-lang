@@ -83,6 +83,12 @@ public:
     Parser.AddDirectiveHandler(this, ".secure_log_reset",
                                MCAsmParser::DirectiveHandler(
                              &DarwinAsmParser::ParseDirectiveSecureLogReset));
+    Parser.AddDirectiveHandler(this, ".tbss",
+                               MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveTBSS));
+    Parser.AddDirectiveHandler(this, ".zerofill",
+                               MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveZerofill));
   }
 
   bool ParseDirectiveDesc(StringRef, SMLoc);
@@ -91,6 +97,8 @@ public:
   bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
   bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
   bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
+  bool ParseDirectiveTBSS(StringRef, SMLoc);
+  bool ParseDirectiveZerofill(StringRef, SMLoc);
 };
 
 }
@@ -838,10 +846,6 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveComm(/*IsLocal=*/false);
     if (IDVal == ".lcomm")
       return ParseDirectiveComm(/*IsLocal=*/true);
-    if (IDVal == ".zerofill")
-      return ParseDirectiveDarwinZerofill();
-    if (IDVal == ".tbss")
-      return ParseDirectiveDarwinTBSS();
 
     if (IDVal == ".abort")
       return ParseDirectiveAbort();
@@ -1532,12 +1536,12 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   return false;
 }
 
-/// ParseDirectiveDarwinZerofill
+/// ParseDirectiveZerofill
 ///  ::= .zerofill segname , sectname [, identifier , size_expression [
 ///      , align_expression ]]
-bool AsmParser::ParseDirectiveDarwinZerofill() {
+bool DarwinAsmParser::ParseDirectiveZerofill(StringRef, SMLoc) {
   StringRef Segment;
-  if (ParseIdentifier(Segment))
+  if (getParser().ParseIdentifier(Segment))
     return TokError("expected segment name after '.zerofill' directive");
 
   if (getLexer().isNot(AsmToken::Comma))
@@ -1545,7 +1549,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   Lex();
 
   StringRef Section;
-  if (ParseIdentifier(Section))
+  if (getParser().ParseIdentifier(Section))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
 
@@ -1553,9 +1557,9 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // the section but with no symbol.
   if (getLexer().is(AsmToken::EndOfStatement)) {
     // Create the zerofill section but no symbol
-    getStreamer().EmitZerofill(Ctx.getMachOSection(Segment, Section,
-                                         MCSectionMachO::S_ZEROFILL, 0,
-                                         SectionKind::getBSS()));
+    getStreamer().EmitZerofill(getContext().getMachOSection(
+                                 Segment, Section, MCSectionMachO::S_ZEROFILL,
+                                 0, SectionKind::getBSS()));
     return false;
   }
 
@@ -1565,11 +1569,11 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
 
   SMLoc IDLoc = getLexer().getLoc();
   StringRef IDStr;
-  if (ParseIdentifier(IDStr))
+  if (getParser().ParseIdentifier(IDStr))
     return TokError("expected identifier in directive");
   
   // handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(IDStr);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(IDStr);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -1577,7 +1581,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
 
   int64_t Size;
   SMLoc SizeLoc = getLexer().getLoc();
-  if (ParseAbsoluteExpression(Size))
+  if (getParser().ParseAbsoluteExpression(Size))
     return true;
 
   int64_t Pow2Alignment = 0;
@@ -1585,7 +1589,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
     Pow2AlignmentLoc = getLexer().getLoc();
-    if (ParseAbsoluteExpression(Pow2Alignment))
+    if (getParser().ParseAbsoluteExpression(Pow2Alignment))
       return true;
   }
   
@@ -1611,24 +1615,24 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // Create the zerofill Symbol with Size and Pow2Alignment
   //
   // FIXME: Arch specific.
-  getStreamer().EmitZerofill(Ctx.getMachOSection(Segment, Section,
-                                       MCSectionMachO::S_ZEROFILL, 0,
-                                       SectionKind::getBSS()),
-                   Sym, Size, 1 << Pow2Alignment);
+  getStreamer().EmitZerofill(getContext().getMachOSection(
+                               Segment, Section, MCSectionMachO::S_ZEROFILL,
+                               0, SectionKind::getBSS()),
+                             Sym, Size, 1 << Pow2Alignment);
 
   return false;
 }
 
-/// ParseDirectiveDarwinTBSS
+/// ParseDirectiveTBSS
 ///  ::= .tbss identifier, size, align
-bool AsmParser::ParseDirectiveDarwinTBSS() {
+bool DarwinAsmParser::ParseDirectiveTBSS(StringRef, SMLoc) {
   SMLoc IDLoc = getLexer().getLoc();
   StringRef Name;
-  if (ParseIdentifier(Name))
+  if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
     
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -1636,7 +1640,7 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
 
   int64_t Size;
   SMLoc SizeLoc = getLexer().getLoc();
-  if (ParseAbsoluteExpression(Size))
+  if (getParser().ParseAbsoluteExpression(Size))
     return true;
 
   int64_t Pow2Alignment = 0;
@@ -1644,7 +1648,7 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
     Pow2AlignmentLoc = getLexer().getLoc();
-    if (ParseAbsoluteExpression(Pow2Alignment))
+    if (getParser().ParseAbsoluteExpression(Pow2Alignment))
       return true;
   }
   
@@ -1665,7 +1669,7 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
   if (!Sym->isUndefined())
     return Error(IDLoc, "invalid symbol redefinition");
   
-  getStreamer().EmitTBSSSymbol(Ctx.getMachOSection(
+  getStreamer().EmitTBSSSymbol(getContext().getMachOSection(
                                  "__DATA", "__thread_bss",
                                  MCSectionMachO::S_THREAD_LOCAL_ZEROFILL,
                                  0, SectionKind::getThreadBSS()),

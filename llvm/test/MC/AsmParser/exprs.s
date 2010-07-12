@@ -70,5 +70,3 @@ L0:
 L1:
         jmp A
         .long . - L1
-
-        .zerofill __DATA,_bss,A,0

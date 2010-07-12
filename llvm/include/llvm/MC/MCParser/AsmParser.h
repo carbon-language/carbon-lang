@@ -139,8 +139,6 @@ private:
   bool ParseDirectiveELFType(); // ELF specific ".type"
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
-  bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
-  bool ParseDirectiveDarwinTBSS(); // Darwin specific ".tbss"
 
   bool ParseDirectiveAbort(); // ".abort"
   bool ParseDirectiveInclude(); // ".include"
