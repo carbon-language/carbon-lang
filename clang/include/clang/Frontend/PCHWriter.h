@@ -222,7 +222,7 @@ private:
   void WriteBlockInfoBlock();
   void WriteMetadata(ASTContext &Context, const PCHReader *Chain, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
-  void WriteStatCache(MemorizeStatCalls &StatCalls, const char* isysroot);
+  void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
                                const char* isysroot);

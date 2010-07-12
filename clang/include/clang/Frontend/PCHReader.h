@@ -321,7 +321,7 @@ private:
   /// file.
   llvm::SmallVector<uint64_t, 16> TentativeDefinitions;
       
-  /// \brief The set of tentative definitions stored in the the PCH
+  /// \brief The set of unused static functions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> UnusedStaticFuncs;
 

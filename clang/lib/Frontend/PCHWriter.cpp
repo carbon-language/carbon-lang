@@ -934,8 +934,7 @@ public:
 } // end anonymous namespace
 
 /// \brief Write the stat() system call cache to the PCH file.
-void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls,
-                               const char *isysroot) {
+void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   // Build the on-disk hash table containing information about every
   // stat() call.
   OnDiskChainedHashTableGenerator<PCHStatCacheTrait> Generator;
@@ -944,7 +943,6 @@ void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls,
                                 StatEnd = StatCalls.end();
        Stat != StatEnd; ++Stat, ++NumStatEntries) {
     const char *Filename = Stat->first();
-    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
     Generator.insert(Filename, Stat->second);
   }
 
@@ -2169,7 +2167,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteMetadata(Context, 0, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
-    WriteStatCache(*StatCalls, isysroot);
+    WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
   // Write the record of special types.
   Record.clear();
