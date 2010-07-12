@@ -1744,10 +1744,11 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     // Variable will be bound by-copy, make it const within the closure.
 
     ExprTy.addConst();
+    QualType T = VD->getType();
     BlockDeclRefExpr *BDRE = new (Context) BlockDeclRefExpr(VD, 
                                                             ExprTy, Loc, false,
-                                                            constAdded);
-    QualType T = VD->getType();
+                                                            constAdded, 0,
+                          (getLangOptions().CPlusPlus && T->isDependentType()));
     if (getLangOptions().CPlusPlus) {
       if (!T->isDependentType() && !T->isReferenceType()) {
         Expr *E = new (Context) 
@@ -1765,8 +1766,6 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
           BDRE->setCopyConstructorExpr(Init);
         }
       }
-      else if (T->isDependentType())
-        BDRE->setTypeDependent(true);
     }
     return Owned(BDRE);
   }

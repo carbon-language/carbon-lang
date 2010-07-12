@@ -3398,8 +3398,10 @@ public:
   // FIXME: Fix type/value dependence!
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef,
                    bool constAdded = false,
-                   Stmt *copyConstructorVal = 0)
-  : Expr(BlockDeclRefExprClass, t, false, false), D(d), Loc(l), IsByRef(ByRef),
+                   Stmt *copyConstructorVal = 0,
+                   bool hasDependentType = false)
+  : Expr(BlockDeclRefExprClass, t, hasDependentType, false), 
+    D(d), Loc(l), IsByRef(ByRef),
     ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
 
   // \brief Build an empty reference to a declared variable in a
