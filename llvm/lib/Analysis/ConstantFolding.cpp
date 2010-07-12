@@ -439,7 +439,7 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     // Replace load with immediate integer if the result is an integer or fp
     // value.
     if ((NumBits >> 3) == StrLen + 1 && (NumBits & 7) == 0 &&
-        isa<IntegerType>(Ty) || Ty->isFloatingPointTy()) {
+        (isa<IntegerType>(Ty) || Ty->isFloatingPointTy())) {
       APInt StrVal(NumBits, 0);
       APInt SingleChar(NumBits, 0);
       if (TD->isLittleEndian()) {
