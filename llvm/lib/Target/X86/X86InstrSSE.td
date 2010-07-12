@@ -393,75 +393,103 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
 
 /// sse12_fp_scalar - SSE 1 & 2 scalar instructions class
 multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                           RegisterClass RC, X86MemOperand x86memop> {
+                           RegisterClass RC, X86MemOperand x86memop,
+                           bit Is2Addr = 1> {
   let isCommutable = 1 in {
     def rr : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpNode RC:$src1, RC:$src2))]>;
   }
   def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-              OpcodeStr, [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))]>;
 }
 
 /// sse12_fp_scalar_int - SSE 1 & 2 scalar instructions intrinsics class
 multiclass sse12_fp_scalar_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                               string asm, string SSEVer, string FPSizeStr,
-                               Operand memopr, ComplexPattern mem_cpat> {
+                             string asm, string SSEVer, string FPSizeStr,
+                             Operand memopr, ComplexPattern mem_cpat,
+                             bit Is2Addr = 1> {
   def rr_Int : SI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, RC:$src2))]>;
+       !if(Is2Addr,
+           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
+                       !strconcat(SSEVer, !strconcat("_",
+                       !strconcat(OpcodeStr, FPSizeStr))))
+             RC:$src1, RC:$src2))]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, mem_cpat:$src2))]>;
+       !if(Is2Addr,
+           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
+                       !strconcat(SSEVer, !strconcat("_",
+                       !strconcat(OpcodeStr, FPSizeStr))))
+             RC:$src1, mem_cpat:$src2))]>;
 }
 
 /// sse12_fp_packed - SSE 1 & 2 packed instructions class
 multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            RegisterClass RC, ValueType vt,
                            X86MemOperand x86memop, PatFrag mem_frag,
-                           Domain d, bit MayLoad = 0> {
+                           Domain d, bit Is2Addr = 1> {
   let isCommutable = 1 in
     def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                OpcodeStr, [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))],d>;
-  let mayLoad = MayLoad in
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], d>;
+  let mayLoad = 1 in
     def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-                OpcodeStr, [(set RC:$dst, (OpNode RC:$src1,
-                                                  (mem_frag addr:$src2)))],d>;
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpNode RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
 /// sse12_fp_packed_logical_rm - SSE 1 & 2 packed instructions class
 multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
                                       string OpcodeStr, X86MemOperand x86memop,
-                                      list<dag> pat_rr, list<dag> pat_rm> {
+                                      list<dag> pat_rr, list<dag> pat_rm,
+                                      bit Is2Addr = 1> {
   let isCommutable = 1 in
-    def rr : PI<opc, MRMSrcReg, (outs RC:$dst),
-                (ins RC:$src1, RC:$src2), OpcodeStr, pat_rr, d>;
-  def rm : PI<opc, MRMSrcMem, (outs RC:$dst),
-                (ins RC:$src1, x86memop:$src2), OpcodeStr, pat_rm, d>;
+    def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       pat_rr, d>;
+  def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       pat_rm, d>;
 }
 
 /// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
 multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                               string asm, string SSEVer, string FPSizeStr,
-                               X86MemOperand x86memop, PatFrag mem_frag,
-                               Domain d> {
+                           string asm, string SSEVer, string FPSizeStr,
+                           X86MemOperand x86memop, PatFrag mem_frag,
+                           Domain d, bit Is2Addr = 1> {
   def rr_Int : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, RC:$src2))], d>;
-  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-                  asm, [(set RC:$dst, (
-                                !nameconcat<Intrinsic>("int_x86_sse",
-                                !strconcat(SSEVer, !strconcat("_",
-                                !strconcat(OpcodeStr, FPSizeStr))))
-                         RC:$src1, (mem_frag addr:$src2)))], d>;
+       !if(Is2Addr,
+           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+           [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
+                           !strconcat(SSEVer, !strconcat("_",
+                           !strconcat(OpcodeStr, FPSizeStr))))
+                 RC:$src1, RC:$src2))], d>;
+  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1,x86memop:$src2),
+       !if(Is2Addr,
+           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (!nameconcat<Intrinsic>("int_x86_sse",
+                       !strconcat(SSEVer, !strconcat("_",
+                       !strconcat(OpcodeStr, FPSizeStr))))
+             RC:$src1, (mem_frag addr:$src2)))], d>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1652,36 +1680,33 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
 /// sse12_fp_alias_pack_logical - SSE 1 & 2 aliased packed FP logical ops
 ///
 multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
-                                       SDNode OpNode, bit MayLoad = 0> {
+                                       SDNode OpNode> {
   let isAsmParserOnly = 1 in {
-    defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode, FR32,
-                f32, f128mem, memopfsf32, SSEPackedSingle, MayLoad>, VEX_4V;
+    defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
+                FR32, f32, f128mem, memopfsf32, SSEPackedSingle, 0>, VEX_4V;
 
-    defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode, FR64,
-                f64, f128mem, memopfsf64, SSEPackedDouble, MayLoad>, OpSize,
-                VEX_4V;
+    defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
+          FR64, f64, f128mem, memopfsf64, SSEPackedDouble, 0>, OpSize, VEX_4V;
   }
 
   let Constraints = "$src1 = $dst" in {
-    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "ps\t{$src2, $dst|$dst, $src2}"), OpNode, FR32, f32,
-                f128mem, memopfsf32, SSEPackedSingle, MayLoad>, TB;
+    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, FR32,
+                f32, f128mem, memopfsf32, SSEPackedSingle>, TB;
 
-    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "pd\t{$src2, $dst|$dst, $src2}"), OpNode, FR64, f64,
-                f128mem, memopfsf64, SSEPackedDouble, MayLoad>, TB, OpSize;
+    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, FR64,
+                f64, f128mem, memopfsf64, SSEPackedDouble>, TB, OpSize;
   }
 }
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
-defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand>;
-defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for>;
-defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor>;
+let mayLoad = 0 in {
+  defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand>;
+  defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for>;
+  defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor>;
+}
 
 let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
-  defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef, 1>;
+  defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", undef>;
 
 /// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
 ///
@@ -1690,31 +1715,29 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                  list<list<dag>> Pattern = []> {
   let isAsmParserOnly = 1 in {
     defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-         f128mem,
+         !strconcat(OpcodeStr, "ps"), f128mem,
          !if(HasPat, Pattern[0], // rr
                      [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
                                                       VR128:$src2)))]),
          !if(HasPat, Pattern[2], // rm
                      [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
+                                               (memopv2i64 addr:$src2)))]), 0>,
                                                VEX_4V;
 
     defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-         f128mem,
+         !strconcat(OpcodeStr, "pd"), f128mem,
          !if(HasPat, Pattern[1], // rr
                      [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
                                                (bc_v2i64 (v2f64
                                                VR128:$src2))))]),
          !if(HasPat, Pattern[3], // rm
                      [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
+                                               (memopv2i64 addr:$src2)))]), 0>,
                                                                OpSize, VEX_4V;
   }
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !strconcat(OpcodeStr, "ps"), f128mem,
          !if(HasPat, Pattern[0], // rr
                      [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
                                                       VR128:$src2)))]),
@@ -1723,7 +1746,7 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                                (memopv2i64 addr:$src2)))])>, TB;
 
     defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"), f128mem,
+         !strconcat(OpcodeStr, "pd"), f128mem,
          !if(HasPat, Pattern[1], // rr
                      [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
                                                (bc_v2i64 (v2f64
@@ -1759,7 +1782,7 @@ let isCommutable = 0 in
 // SSE 1 & 2 - Arithmetic Instructions
 //===----------------------------------------------------------------------===//
 
-/// basic_sse12_fp_binop_rm - SSE 1 & 2 binops come in both scalar and
+/// basic_sse12_fp_binop_xxx - SSE 1 & 2 binops come in both scalar and
 /// vector forms.
 ///
 /// In addition, we also have a special variant of the scalar form here to
@@ -1769,158 +1792,86 @@ let isCommutable = 0 in
 ///
 /// These three forms can each be reg+reg or reg+mem.
 ///
-multiclass basic_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                   SDNode OpNode> {
+multiclass basic_sse12_fp_binop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                  bit Is2Addr = 1> {
+  defm SS : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "ss"),
+                            OpNode, FR32, f32mem, Is2Addr>, XS;
+  defm SD : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "sd"),
+                            OpNode, FR64, f64mem, Is2Addr>, XD;
+}
 
-  let isAsmParserOnly = 1 in {
-    defm V#NAME#SS : sse12_fp_scalar<opc,
-        !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR32, f32mem>, XS, VEX_4V;
-
-    defm V#NAME#SD : sse12_fp_scalar<opc,
-        !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   OpNode, FR64, f64mem>, XD, VEX_4V;
-
-    defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                      "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode,
-                      VR128, v4f32, f128mem, memopv4f32, SSEPackedSingle>,
-                      VEX_4V;
-
-    defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                      "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode,
-                      VR128, v2f64, f128mem, memopv2f64, SSEPackedDouble>,
-                      OpSize, VEX_4V;
-
-    defm V#NAME#SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "", "_ss", ssmem, sse_load_f32>, XS, VEX_4V;
-
-    defm V#NAME#SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "2", "_sd", sdmem, sse_load_f64>, XD, VEX_4V;
+multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                   bit Is2Addr = 1> {
+  let mayLoad = 0 in {
+  defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,
+              v4f32, f128mem, memopv4f32, SSEPackedSingle, Is2Addr>, TB;
+  defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR128,
+              v2f64, f128mem, memopv2f64, SSEPackedDouble, Is2Addr>, TB, OpSize;
   }
+}
 
-  let Constraints = "$src1 = $dst" in {
-    defm SS : sse12_fp_scalar<opc,
-                    !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                    OpNode, FR32, f32mem>, XS;
+multiclass basic_sse12_fp_binop_s_int<bits<8> opc, string OpcodeStr,
+                                   bit Is2Addr = 1> {
+  defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+     !strconcat(OpcodeStr, "ss"), "", "_ss", ssmem, sse_load_f32, Is2Addr>, XS;
+  defm SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+     !strconcat(OpcodeStr, "sd"), "2", "_sd", sdmem, sse_load_f64, Is2Addr>, XD;
+}
 
-    defm SD : sse12_fp_scalar<opc,
-                    !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                    OpNode, FR64, f64mem>, XD;
+multiclass basic_sse12_fp_binop_p_int<bits<8> opc, string OpcodeStr,
+                                   bit Is2Addr = 1> {
+  defm PS : sse12_fp_packed_int<opc, OpcodeStr, VR128,
+     !strconcat(OpcodeStr, "ps"), "", "_ps", f128mem, memopv4f32,
+                                              SSEPackedSingle, Is2Addr>, TB;
 
-    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "ps\t{$src2, $dst|$dst, $src2}"), OpNode, VR128, v4f32,
-                f128mem, memopv4f32, SSEPackedSingle>, TB;
-
-    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "pd\t{$src2, $dst|$dst, $src2}"), OpNode, VR128, v2f64,
-                f128mem, memopv2f64, SSEPackedDouble>, TB, OpSize;
-
-    defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                  "", "_ss", ssmem, sse_load_f32>, XS;
-
-    defm SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                  "2", "_sd", sdmem, sse_load_f64>, XD;
-  }
+  defm PD : sse12_fp_packed_int<opc, OpcodeStr, VR128,
+     !strconcat(OpcodeStr, "pd"), "2", "_pd", f128mem, memopv2f64,
+                                      SSEPackedDouble, Is2Addr>, TB, OpSize;
 }
 
 // Arithmetic instructions
-defm ADD : basic_sse12_fp_binop_rm<0x58, "add", fadd>;
-defm MUL : basic_sse12_fp_binop_rm<0x59, "mul", fmul>;
+let isAsmParserOnly = 1, Predicates = [HasAVX] in {
+  defm VADD : basic_sse12_fp_binop_s<0x58, "add", fadd, 0>,
+              basic_sse12_fp_binop_p<0x58, "add", fadd, 0>, VEX_4V;
+  defm VMUL : basic_sse12_fp_binop_s<0x59, "mul", fmul, 0>,
+              basic_sse12_fp_binop_p<0x59, "mul", fmul, 0>, VEX_4V;
 
-let isCommutable = 0 in {
-  defm SUB : basic_sse12_fp_binop_rm<0x5C, "sub", fsub>;
-  defm DIV : basic_sse12_fp_binop_rm<0x5E, "div", fdiv>;
-}
-
-/// sse12_fp_binop_rm - Other SSE 1 & 2 binops
-///
-/// This multiclass is like basic_sse12_fp_binop_rm, with the addition of
-/// instructions for a full-vector intrinsic form.  Operations that map
-/// onto C operators don't use this form since they just use the plain
-/// vector form instead of having a separate vector intrinsic form.
-///
-multiclass sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                             SDNode OpNode> {
-
-  let isAsmParserOnly = 1 in {
-    // Scalar operation, reg+reg.
-    defm V#NAME#SS : sse12_fp_scalar<opc,
-      !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 OpNode, FR32, f32mem>, XS, VEX_4V;
-
-    defm V#NAME#SD : sse12_fp_scalar<opc,
-      !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 OpNode, FR64, f64mem>, XD, VEX_4V;
-
-    defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                      "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode,
-                      VR128, v4f32, f128mem, memopv4f32, SSEPackedSingle>,
-                      VEX_4V;
-
-    defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                      "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), OpNode,
-                      VR128, v2f64, f128mem, memopv2f64, SSEPackedDouble>,
-                      OpSize, VEX_4V;
-
-    defm V#NAME#SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "", "_ss", ssmem, sse_load_f32>, XS, VEX_4V;
-
-    defm V#NAME#SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "2", "_sd", sdmem, sse_load_f64>, XD, VEX_4V;
-
-    defm V#NAME#PS : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "", "_ps", f128mem, memopv4f32, SSEPackedSingle>, VEX_4V;
-
-    defm V#NAME#PD : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  "2", "_pd", f128mem, memopv2f64, SSEPackedDouble>, OpSize,
-                  VEX_4V;
-  }
-
-  let Constraints = "$src1 = $dst" in {
-    // Scalar operation, reg+reg.
-    defm SS : sse12_fp_scalar<opc,
-                    !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                    OpNode, FR32, f32mem>, XS;
-    defm SD : sse12_fp_scalar<opc,
-                    !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                    OpNode, FR64, f64mem>, XD;
-    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "ps\t{$src2, $dst|$dst, $src2}"), OpNode, VR128, v4f32,
-                f128mem, memopv4f32, SSEPackedSingle>, TB;
-
-    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr,
-                "pd\t{$src2, $dst|$dst, $src2}"), OpNode, VR128, v2f64,
-                f128mem, memopv2f64, SSEPackedDouble>, TB, OpSize;
-
-    defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                  "", "_ss", ssmem, sse_load_f32>, XS;
-
-    defm SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "sd\t{$src2, $dst|$dst, $src2}"),
-                  "2", "_sd", sdmem, sse_load_f64>, XD;
-
-    defm PS : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"),
-                  "", "_ps", f128mem, memopv4f32, SSEPackedSingle>, TB;
-
-    defm PD : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-       !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"),
-                  "2", "_pd", f128mem, memopv2f64, SSEPackedDouble>, TB, OpSize;
+  let isCommutable = 0 in {
+    defm VSUB : basic_sse12_fp_binop_s<0x5C, "sub", fsub, 0>,
+                basic_sse12_fp_binop_p<0x5C, "sub", fsub, 0>, VEX_4V;
+    defm VDIV : basic_sse12_fp_binop_s<0x5E, "div", fdiv, 0>,
+                basic_sse12_fp_binop_p<0x5E, "div", fdiv, 0>, VEX_4V;
+    defm VMAX : basic_sse12_fp_binop_s<0x5F, "max", X86fmax, 0>,
+                basic_sse12_fp_binop_p<0x5F, "max", X86fmax, 0>, VEX_4V;
+    defm VMIN : basic_sse12_fp_binop_s<0x5D, "min", X86fmin, 0>,
+                basic_sse12_fp_binop_p<0x5D, "min", X86fmin, 0>, VEX_4V;
   }
 }
 
-let isCommutable = 0 in {
-  defm MAX : sse12_fp_binop_rm<0x5F, "max", X86fmax>;
-  defm MIN : sse12_fp_binop_rm<0x5D, "min", X86fmin>;
+let Constraints = "$src1 = $dst" in {
+  defm ADD : basic_sse12_fp_binop_s<0x58, "add", fadd>,
+             basic_sse12_fp_binop_p<0x58, "add", fadd>,
+             basic_sse12_fp_binop_s_int<0x58, "add">;
+  defm MUL : basic_sse12_fp_binop_s<0x59, "mul", fmul>,
+             basic_sse12_fp_binop_p<0x59, "mul", fmul>,
+             basic_sse12_fp_binop_s_int<0x59, "mul">;
+
+  let isCommutable = 0 in {
+    defm SUB : basic_sse12_fp_binop_s<0x5C, "sub", fsub>,
+               basic_sse12_fp_binop_p<0x5C, "sub", fsub>,
+               basic_sse12_fp_binop_s_int<0x5C, "sub">;
+    defm DIV : basic_sse12_fp_binop_s<0x5E, "div", fdiv>,
+               basic_sse12_fp_binop_p<0x5E, "div", fdiv>,
+               basic_sse12_fp_binop_s_int<0x5E, "div">;
+    defm MAX : basic_sse12_fp_binop_s<0x5F, "max", X86fmax>,
+               basic_sse12_fp_binop_p<0x5F, "max", X86fmax>,
+               basic_sse12_fp_binop_s_int<0x5F, "max">,
+               basic_sse12_fp_binop_p_int<0x5F, "max">;
+    defm MIN : basic_sse12_fp_binop_s<0x5D, "min", X86fmin>,
+               basic_sse12_fp_binop_p<0x5D, "min", X86fmin>,
+               basic_sse12_fp_binop_s_int<0x5D, "min">,
+               basic_sse12_fp_binop_p_int<0x5D, "min">;
+  }
 }
 
 /// Unop Arithmetic
