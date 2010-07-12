@@ -1810,6 +1810,16 @@ multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }
 }
 
+multiclass basic_sse12_fp_binop_p_y<bits<8> opc, string OpcodeStr,
+                                    SDNode OpNode> {
+  let mayLoad = 0 in {
+    defm PSY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR256,
+                v8f32, f256mem, memopv8f32, SSEPackedSingle, 0>, TB;
+    defm PDY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR256,
+                v4f64, f256mem, memopv4f64, SSEPackedDouble, 0>, TB, OpSize;
+  }
+}
+
 multiclass basic_sse12_fp_binop_s_int<bits<8> opc, string OpcodeStr,
                                    bit Is2Addr = 1> {
   defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
@@ -1829,22 +1839,28 @@ multiclass basic_sse12_fp_binop_p_int<bits<8> opc, string OpcodeStr,
                                       SSEPackedDouble, Is2Addr>, TB, OpSize;
 }
 
-// Arithmetic instructions
+// Binary Arithmetic instructions
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
   defm VADD : basic_sse12_fp_binop_s<0x58, "add", fadd, 0>,
-              basic_sse12_fp_binop_p<0x58, "add", fadd, 0>, VEX_4V;
+              basic_sse12_fp_binop_p<0x58, "add", fadd, 0>,
+              basic_sse12_fp_binop_p_y<0x58, "add", fadd>, VEX_4V;
   defm VMUL : basic_sse12_fp_binop_s<0x59, "mul", fmul, 0>,
-              basic_sse12_fp_binop_p<0x59, "mul", fmul, 0>, VEX_4V;
+              basic_sse12_fp_binop_p<0x59, "mul", fmul, 0>,
+              basic_sse12_fp_binop_p_y<0x59, "mul", fmul>, VEX_4V;
 
   let isCommutable = 0 in {
     defm VSUB : basic_sse12_fp_binop_s<0x5C, "sub", fsub, 0>,
-                basic_sse12_fp_binop_p<0x5C, "sub", fsub, 0>, VEX_4V;
+                basic_sse12_fp_binop_p<0x5C, "sub", fsub, 0>,
+                basic_sse12_fp_binop_p_y<0x5C, "sub", fsub>, VEX_4V;
     defm VDIV : basic_sse12_fp_binop_s<0x5E, "div", fdiv, 0>,
-                basic_sse12_fp_binop_p<0x5E, "div", fdiv, 0>, VEX_4V;
+                basic_sse12_fp_binop_p<0x5E, "div", fdiv, 0>,
+                basic_sse12_fp_binop_p_y<0x5E, "div", fdiv>, VEX_4V;
     defm VMAX : basic_sse12_fp_binop_s<0x5F, "max", X86fmax, 0>,
-                basic_sse12_fp_binop_p<0x5F, "max", X86fmax, 0>, VEX_4V;
+                basic_sse12_fp_binop_p<0x5F, "max", X86fmax, 0>,
+                basic_sse12_fp_binop_p_y<0x5F, "max", X86fmax>, VEX_4V;
     defm VMIN : basic_sse12_fp_binop_s<0x5D, "min", X86fmin, 0>,
-                basic_sse12_fp_binop_p<0x5D, "min", X86fmin, 0>, VEX_4V;
+                basic_sse12_fp_binop_p<0x5D, "min", X86fmin, 0>,
+                basic_sse12_fp_binop_p_y<0x5D, "min", X86fmin>, VEX_4V;
   }
 }
 
