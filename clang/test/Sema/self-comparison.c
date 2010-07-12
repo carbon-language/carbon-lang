@@ -34,12 +34,10 @@ int bar2(float x) {
   return x != x; // no-warning
 }
 
-// Motivated by <rdar://problem/6703892>, self-comparisons of enum constants
-// should not be warned about.  These can be expanded from macros, and thus
-// are usually deliberate.
-int compare_enum() {
-  enum { A };
-  return A == A; // no-warning
+#define IS_THE_ANSWER(x) (x == 42)
+
+int macro_comparison() {
+  return IS_THE_ANSWER(42);
 }
 
 // Don't complain in unevaluated contexts.

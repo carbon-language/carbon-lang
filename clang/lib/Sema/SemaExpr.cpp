@@ -5319,17 +5319,18 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
-    // NOTE: Don't warn about comparisons of enum constants. These can arise
-    //  from macro expansions, and are usually quite deliberate. Also don't
-    //  warn about comparisons which are only self comparisons within
-    //  a template specialization. The warnings should catch obvious cases in
-    //  the definition of the template anyways.
+    //
+    // NOTE: Don't warn about comparison expressions resulting from macro
+    // expansion. Also don't warn about comparisons which are only self
+    // comparisons within a template specialization. The warnings should catch
+    // obvious cases in the definition of the template anyways. The idea is to
+    // warn when the typed comparison operator will always evaluate to the same
+    // result.
     Expr *LHSStripped = lex->IgnoreParens();
     Expr *RHSStripped = rex->IgnoreParens();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
-        if (DRL->getDecl() == DRR->getDecl() &&
-            !isa<EnumConstantDecl>(DRL->getDecl()) &&
+        if (DRL->getDecl() == DRR->getDecl() && !Loc.isMacroID() &&
             !IsWithinTemplateSpecialization(DRL->getDecl())) {
           DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
                               << 0 // self-
