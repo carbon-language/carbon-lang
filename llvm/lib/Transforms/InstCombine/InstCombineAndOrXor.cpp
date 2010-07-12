@@ -1584,6 +1584,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if ((match(A, m_Not(m_Specific(B))) &&
          match(D, m_Not(m_Specific(C)))))
       return BinaryOperator::CreateXor(C, B);
+
+    // (A & ~C) | (B & C) -> ((B ^ A) & C) ^ A
+    if (Op0->hasOneUse() && Op1->hasOneUse() &&
+        match(C, m_Not(m_Specific(D)))) {
+      Value *Xor = Builder->CreateXor(B, A, "xor");
+      Value *And = Builder->CreateAnd(Xor, D, "and");
+      return BinaryOperator::CreateXor(And, A);
+    }
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
@@ -1919,6 +1927,15 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         Value *NewOp = Builder->CreateXor(Y, Z, Op0->getName());
         return BinaryOperator::CreateAnd(NewOp, X);
       }
+    }
+
+    // (A & ~C) ^ (B & C) -> ((B ^ A) & C) ^ A
+    if (Op0->hasOneUse() && Op1->hasOneUse() &&
+        match(Op0I, m_And(m_Value(A), m_Not(m_Value(D)))) &&
+        match(Op1I, m_And(m_Value(B), m_Value(D)))) {
+      Value *Xor = Builder->CreateXor(B, A, "xor");
+      Value *And = Builder->CreateAnd(Xor, D, "and");
+      return BinaryOperator::CreateXor(And, A);
     }
   }
     

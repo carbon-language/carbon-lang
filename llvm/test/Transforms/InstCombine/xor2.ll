@@ -51,3 +51,17 @@ define i32 @test4(i32 %A, i32 %B) {
 ; CHECK: %1 = ashr i32 %A, %B
 ; CHECK: ret i32 %1
 }
+
+; PR6773
+define i32 @test5(i32 %x, i32 %y, i32 %z) nounwind readnone {
+  %and = and i32 %y, %x
+  %not = xor i32 %x, -1
+  %and2 = and i32 %z, %not
+  %or = or i32 %and2, %and
+  ret i32 %or
+; CHECK: @test5
+; CHECK: xor i32
+; CHECK: and i32
+; CHECK: xor i32
+; CHECK: ret i32
+}

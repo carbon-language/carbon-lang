@@ -350,3 +350,17 @@ define <4 x i32> @test32(<4 x i1> %and.i1352, <4 x i32> %vecinit6.i176, <4 x i32
 ; CHECK: or <4 x i32> %and.i, %and.i129
 }
 
+; PR6773
+define i32 @test33(i32 %x, i32 %y, i32 %z) nounwind readnone {
+  %and = and i32 %y, %x
+  %not = xor i32 %x, -1
+  %and2 = and i32 %z, %not
+  %xor = xor i32 %and2, %and
+  ret i32 %xor
+; CHECK: @test33
+; CHECK: xor i32
+; CHECK: and i32
+; CHECK: xor i32
+; CHECK: ret i32
+}
+
