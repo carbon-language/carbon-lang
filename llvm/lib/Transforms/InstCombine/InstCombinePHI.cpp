@@ -230,8 +230,9 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
     bool isAddressTaken = false;
     for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
          UI != E; ++UI) {
-      if (isa<LoadInst>(UI)) continue;
-      if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+      User *U = *UI;
+      if (isa<LoadInst>(U)) continue;
+      if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
         // If storing TO the alloca, then the address isn't taken.
         if (SI->getOperand(1) == AI) continue;
       }
