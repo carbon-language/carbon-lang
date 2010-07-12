@@ -1,14 +1,14 @@
-; RUN: opt < %s -instcombine -S | grep load | count 1
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; Instcombine should be able to do trivial CSE of loads.
 
-declare void @use(double %n)
-define void @bar(double* %p) {
-  %t0 = getelementptr double* %p, i32 1
-  %y = load double* %t0
-  %t1 = getelementptr double* %p, i32 1
-  %x = load double* %t1
-  call void @use(double %x)
-  call void @use(double %y)
-  ret void
+define i32 @test1(i32* %p) {
+  %t0 = getelementptr i32* %p, i32 1
+  %y = load i32* %t0
+  %t1 = getelementptr i32* %p, i32 1
+  %x = load i32* %t1
+  %a = sub i32 %y, %x
+  ret i32 %a
+; CHECK: @test1
+; CHECK: ret i32 0
 }
