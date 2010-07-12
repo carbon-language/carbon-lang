@@ -432,9 +432,11 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // Use that list to make another list of common predecessors of BB and Succ
   BlockSet CommonPreds;
   for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
-        PI != PE; ++PI)
-    if (BBPreds.count(*PI))
-      CommonPreds.insert(*PI);
+       PI != PE; ++PI) {
+    BasicBlock *P = *PI;
+    if (BBPreds.count(P))
+      CommonPreds.insert(P);
+  }
 
   // Shortcut, if there are no common predecessors, merging is always safe
   if (CommonPreds.empty())
