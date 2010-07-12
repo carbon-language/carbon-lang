@@ -1958,14 +1958,19 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
                                       bool isStackAligned,
                                       const TargetMachine &TM,
                                       bool load) {
-  if (RC == &X86::GR64RegClass || RC == &X86::GR64_NOSPRegClass) {
+  switch (RC->getID()) {
+  default:
+    llvm_unreachable("Unknown regclass");
+  case X86::GR64RegClassID:
+  case X86::GR64_NOSPRegClassID:
     return load ? X86::MOV64rm : X86::MOV64mr;
-  } else if (RC == &X86::GR32RegClass || RC == &X86::GR32_NOSPRegClass ||
-             RC == &X86::GR32_ADRegClass) {
+  case X86::GR32RegClassID:
+  case X86::GR32_NOSPRegClassID:
+  case X86::GR32_ADRegClassID:
     return load ? X86::MOV32rm : X86::MOV32mr;
-  } else if (RC == &X86::GR16RegClass) {
+  case X86::GR16RegClassID:
     return load ? X86::MOV16rm : X86::MOV16mr;
-  } else if (RC == &X86::GR8RegClass) {
+  case X86::GR8RegClassID:
     // Copying to or from a physical H register on x86-64 requires a NOREX
     // move.  Otherwise use a normal move.
     if (isHReg(Reg) &&
@@ -1973,52 +1978,50 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
       return load ? X86::MOV8rm_NOREX : X86::MOV8mr_NOREX;
     else
       return load ? X86::MOV8rm : X86::MOV8mr;
-  } else if (RC == &X86::GR64_ABCDRegClass) {
+  case X86::GR64_ABCDRegClassID:
     return load ? X86::MOV64rm : X86::MOV64mr;
-  } else if (RC == &X86::GR32_ABCDRegClass) {
+  case X86::GR32_ABCDRegClassID:
     return load ? X86::MOV32rm : X86::MOV32mr;
-  } else if (RC == &X86::GR16_ABCDRegClass) {
+  case X86::GR16_ABCDRegClassID:
     return load ? X86::MOV16rm : X86::MOV16mr;
-  } else if (RC == &X86::GR8_ABCD_LRegClass) {
+  case X86::GR8_ABCD_LRegClassID:
     return load ? X86::MOV8rm :X86::MOV8mr;
-  } else if (RC == &X86::GR8_ABCD_HRegClass) {
+  case X86::GR8_ABCD_HRegClassID:
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return load ? X86::MOV8rm_NOREX : X86::MOV8mr_NOREX;
     else
       return load ? X86::MOV8rm : X86::MOV8mr;
-  } else if (RC == &X86::GR64_NOREXRegClass ||
-             RC == &X86::GR64_NOREX_NOSPRegClass) {
+  case X86::GR64_NOREXRegClassID:
+  case X86::GR64_NOREX_NOSPRegClassID:
     return load ? X86::MOV64rm : X86::MOV64mr;
-  } else if (RC == &X86::GR32_NOREXRegClass) {
+  case X86::GR32_NOREXRegClassID:
     return load ? X86::MOV32rm : X86::MOV32mr;
-  } else if (RC == &X86::GR16_NOREXRegClass) {
+  case X86::GR16_NOREXRegClassID:
     return load ? X86::MOV16rm : X86::MOV16mr;
-  } else if (RC == &X86::GR8_NOREXRegClass) {
+  case X86::GR8_NOREXRegClassID:
     return load ? X86::MOV8rm : X86::MOV8mr;
-  } else if (RC == &X86::GR64_TCRegClass) {
+  case X86::GR64_TCRegClassID:
     return load ? X86::MOV64rm_TC : X86::MOV64mr_TC;
-  } else if (RC == &X86::GR32_TCRegClass) {
+  case X86::GR32_TCRegClassID:
     return load ? X86::MOV32rm_TC : X86::MOV32mr_TC;
-  } else if (RC == &X86::RFP80RegClass) {
+  case X86::RFP80RegClassID:
     return load ? X86::LD_Fp80m : X86::ST_FpP80m;
-  } else if (RC == &X86::RFP64RegClass) {
+  case X86::RFP64RegClassID:
     return load ? X86::LD_Fp64m : X86::ST_Fp64m;
-  } else if (RC == &X86::RFP32RegClass) {
+  case X86::RFP32RegClassID:
     return load ? X86::LD_Fp32m : X86::ST_Fp32m;
-  } else if (RC == &X86::FR32RegClass) {
+  case X86::FR32RegClassID:
     return load ? X86::MOVSSrm : X86::MOVSSmr;
-  } else if (RC == &X86::FR64RegClass) {
+  case X86::FR64RegClassID:
     return load ? X86::MOVSDrm : X86::MOVSDmr;
-  } else if (RC == &X86::VR128RegClass) {
+  case X86::VR128RegClassID:
     // If stack is realigned we can use aligned stores.
     if (isStackAligned)
       return load ? X86::MOVAPSrm : X86::MOVAPSmr;
     else
       return load ? X86::MOVUPSrm : X86::MOVUPSmr;
-  } else if (RC == &X86::VR64RegClass) {
+  case X86::VR64RegClassID:
     return load ? X86::MMX_MOVQ64rm : X86::MMX_MOVQ64mr;
-  } else {
-    llvm_unreachable("Unknown regclass");
   }
 }
 
