@@ -12398,4 +12398,11 @@
 // CHECK: encoding: [0xc5,0xfc,0x2b,0x08]
           vmovntps  %ymm1, (%eax)
 
+// CHECK: vmovmskps  %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf8,0x50,0xc2]
+          vmovmskps  %xmm2, %eax
+
+// CHECK: vmovmskpd  %xmm2, %eax
+// CHECK: encoding: [0xc5,0xf9,0x50,0xc2]
+          vmovmskpd  %xmm2, %eax
 

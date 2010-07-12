@@ -1598,6 +1598,12 @@ let isAsmParserOnly = 1 in {
   defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
                                         "movmskpd", SSEPackedDouble>, OpSize,
                                         VEX;
+  // FIXME: merge with multiclass above when the intrinsics come.
+  def VMOVMSKPSYrr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR256:$src),
+             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
+  def VMOVMSKPDYrr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR256:$src),
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
+                                                                        VEX;
 }
 
 //===----------------------------------------------------------------------===//

@@ -2472,3 +2472,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x7c,0x2b,0x18]
           vmovntps  %ymm11, (%rax)
 
+// CHECK: vmovmskps  %xmm12, %eax
+// CHECK: encoding: [0xc4,0xc1,0x78,0x50,0xc4]
+          vmovmskps  %xmm12, %eax
+
+// CHECK: vmovmskpd  %xmm12, %eax
+// CHECK: encoding: [0xc4,0xc1,0x79,0x50,0xc4]
+          vmovmskpd  %xmm12, %eax
+
