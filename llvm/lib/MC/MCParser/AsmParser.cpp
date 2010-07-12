@@ -18,7 +18,6 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -55,40 +54,12 @@ public:
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
 };
 
-class ELFAsmParser : public MCAsmParserExtension {
-  bool ParseSectionSwitch(StringRef Section, unsigned Type,
-                          unsigned Flags, SectionKind Kind);
-
-public:
-  ELFAsmParser() {}
-
-  virtual void Initialize(MCAsmParser &Parser) {
-    // Call the base implementation.
-    this->MCAsmParserExtension::Initialize(Parser);
-
-    Parser.AddDirectiveHandler(this, ".data", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseSectionDirectiveData));
-    Parser.AddDirectiveHandler(this, ".text", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseSectionDirectiveText));
-  }
-
-  bool ParseSectionDirectiveData(StringRef, SMLoc) {
-    return ParseSectionSwitch(".data", MCSectionELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
-                              SectionKind::getDataRel());
-  }
-  bool ParseSectionDirectiveText(StringRef, SMLoc) {
-    return ParseSectionSwitch(".text", MCSectionELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_EXECINSTR |
-                              MCSectionELF::SHF_ALLOC, SectionKind::getText());
-  }
-};
-
 }
 
 namespace llvm {
 
 extern MCAsmParserExtension *createDarwinAsmParser();
+extern MCAsmParserExtension *createELFAsmParser();
 
 }
 
@@ -112,7 +83,7 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
     PlatformParser = createDarwinAsmParser();
     PlatformParser->Initialize(*this);
   } else {
-    PlatformParser = new ELFAsmParser;
+    PlatformParser = createELFAsmParser();
     PlatformParser->Initialize(*this);
   }
 }
@@ -813,18 +784,6 @@ bool AsmParser::ParseDirectiveSet() {
   Lex();
 
   return ParseAssignment(Name);
-}
-
-bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
-                                      unsigned Flags, SectionKind Kind) {
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in section switching directive");
-  Lex();
-
-  getStreamer().SwitchSection(getContext().getELFSection(
-                                Section, Type, Flags, Kind));
-
-  return false;
 }
 
 bool AsmParser::ParseEscapedString(std::string &Data) {
