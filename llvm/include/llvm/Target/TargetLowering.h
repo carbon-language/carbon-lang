@@ -1527,7 +1527,7 @@ private:
   /// buffers
   unsigned JumpBufAlignment;
 
-  /// MinStackArgumentAlignment - The minimum alginment that any argument
+  /// MinStackArgumentAlignment - The minimum alignment that any argument
   /// on the stack needs to have.
   ///
   unsigned MinStackArgumentAlignment;
