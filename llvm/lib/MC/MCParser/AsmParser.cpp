@@ -56,6 +56,18 @@ public:
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
 };
 
+/// \brief Implementation of directive handling which is shared across all
+/// Darwin targets.
+class DarwinAsmParser : public MCAsmParserExtension {
+public:
+  DarwinAsmParser() {}
+
+  virtual void Initialize(MCAsmParser &Parser) {
+    // Call the base implementation.
+    this->MCAsmParserExtension::Initialize(Parser);
+  }
+};
+
 }
 
 enum { DEFAULT_ADDRSPACE = 0 };
@@ -63,14 +75,25 @@ enum { DEFAULT_ADDRSPACE = 0 };
 AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
-    GenericParser(new GenericAsmParser), TargetParser(0), CurBuffer(0) {
+    GenericParser(new GenericAsmParser), PlatformParser(0),
+    TargetParser(0), CurBuffer(0) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
   // Initialize the generic parser.
   GenericParser->Initialize(*this);
+
+  // Initialize the platform / file format parser.
+  //
+  // FIXME: This is a hack, we need to (majorly) cleanup how these objects are
+  // created.
+  if (_MAI.hasSubsectionsViaSymbols()) {
+    PlatformParser = new DarwinAsmParser;
+    PlatformParser->Initialize(*this);
+  }
 }
 
 AsmParser::~AsmParser() {
+  delete PlatformParser;
   delete GenericParser;
 }
 

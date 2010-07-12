@@ -45,6 +45,7 @@ private:
   MCStreamer &Out;
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
+  MCAsmParserExtension *PlatformParser;
   TargetAsmParser *TargetParser;
   
   /// This is the current buffer index we're lexing from as managed by the
