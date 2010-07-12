@@ -1597,14 +1597,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       Instruction *Ret = FoldOrWithConstants(I, Op0, A, V1, D);
       if (Ret) return Ret;
     }
-
-    // (A & ~C) | (B & C) -> ((B ^ A) & C) ^ A
-    if (Op0->hasOneUse() && Op1->hasOneUse() &&
-        match(C, m_Not(m_Specific(D)))) {
-      Value *Xor = Builder->CreateXor(B, A, "xor");
-      Value *And = Builder->CreateAnd(Xor, D, "and");
-      return BinaryOperator::CreateXor(And, A);
-    }
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
@@ -1927,15 +1919,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         Value *NewOp = Builder->CreateXor(Y, Z, Op0->getName());
         return BinaryOperator::CreateAnd(NewOp, X);
       }
-    }
-
-    // (A & ~C) ^ (B & C) -> ((B ^ A) & C) ^ A
-    if (Op0->hasOneUse() && Op1->hasOneUse() &&
-        match(Op0I, m_And(m_Value(A), m_Not(m_Value(D)))) &&
-        match(Op1I, m_And(m_Value(B), m_Specific(D)))) {
-      Value *Xor = Builder->CreateXor(B, A, "xor");
-      Value *And = Builder->CreateAnd(Xor, D, "and");
-      return BinaryOperator::CreateXor(And, A);
     }
   }
     
