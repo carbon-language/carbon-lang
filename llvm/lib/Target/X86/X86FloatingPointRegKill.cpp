@@ -72,18 +72,15 @@ static bool isFPStackVReg(unsigned RegNo, const MachineRegisterInfo &MRI) {
 /// stack code, and thus needs an FP_REG_KILL.
 static bool ContainsFPStackCode(MachineBasicBlock *MBB,
                                 const MachineRegisterInfo &MRI) {
-  // Scan the block, looking for instructions that define fp stack vregs.
+  // Scan the block, looking for instructions that define or use fp stack vregs.
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
-    if (I->getNumOperands() == 0 || !I->getOperand(0).isReg())
-      continue;
-    
     for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-      if (!I->getOperand(op).isReg() || !I->getOperand(op).isDef())
+      if (!I->getOperand(op).isReg())
         continue;
-      
-      if (isFPStackVReg(I->getOperand(op).getReg(), MRI))
-        return true;
+      if (unsigned Reg = I->getOperand(op).getReg())
+        if (isFPStackVReg(Reg, MRI))
+          return true;
     }
   }
   
@@ -108,8 +105,8 @@ static bool ContainsFPStackCode(MachineBasicBlock *MBB,
 
 bool FPRegKiller::runOnMachineFunction(MachineFunction &MF) {
   // If we are emitting FP stack code, scan the basic block to determine if this
-  // block defines any FP values.  If so, put an FP_REG_KILL instruction before
-  // the terminator of the block.
+  // block defines or uses any FP values.  If so, put an FP_REG_KILL instruction
+  // before the terminator of the block.
 
   // Note that FP stack instructions are used in all modes for long double,
   // so we always need to do this check.
