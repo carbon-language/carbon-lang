@@ -346,8 +346,19 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         }
       for (unsigned i = 0, e = RHSVals.size(); i != e; ++i)
         if (RHSVals[i].first == InterestingVal || RHSVals[i].first == 0) {
-          Result.push_back(RHSVals[i]);
-          Result.back().first = InterestingVal;
+          // If we already inferred a value for this block on the LHS, don't
+          // re-add it.
+          bool HasValue = false;
+          for (unsigned r = 0, e = Result.size(); r != e; ++r)
+            if (Result[r].second == RHSVals[i].second) {
+              HasValue = true;
+              break;
+            }
+          
+          if (!HasValue) {
+            Result.push_back(RHSVals[i]);
+            Result.back().first = InterestingVal;
+          }
         }
       return !Result.empty();
     }
