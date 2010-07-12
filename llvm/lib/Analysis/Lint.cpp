@@ -225,6 +225,10 @@ void Lint::visitCallSite(CallSite CS) {
             "Undefined behavior: Call argument count mismatches callee "
             "argument count", &I);
 
+    Assert1(FT->getReturnType() == I.getType(),
+            "Undefined behavior: Call return type mismatches "
+            "callee return type", &I);
+
     // Check argument types (in case the callee was casted) and attributes.
     // TODO: Verify that caller and callee attributes are compatible.
     Function::arg_iterator PI = F->arg_begin(), PE = F->arg_end();

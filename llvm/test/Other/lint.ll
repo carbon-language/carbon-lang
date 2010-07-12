@@ -154,3 +154,12 @@ exit:
   %x = volatile load i32* %t3
   br label %exit
 }
+
+; CHECK: Call return type mismatches callee return type
+%struct = type { double, double }
+declare i32 @nonstruct_callee() nounwind
+define void @struct_caller() nounwind {
+entry:
+  call %struct bitcast (i32 ()* @foo to %struct ()*)()
+  ret void
+}
