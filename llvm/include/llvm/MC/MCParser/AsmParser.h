@@ -118,7 +118,6 @@ private:
   bool ParseIdentifier(StringRef &Res);
   
   // Directive Parsing.
-  bool ParseDirectiveDarwinSection(); // Darwin specific ".section".
   bool ParseDirectiveAscii(bool ZeroTerminated); // ".ascii", ".asciiz"
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveFill(); // ".fill"

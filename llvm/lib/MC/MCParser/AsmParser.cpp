@@ -82,6 +82,8 @@ public:
                                  &DarwinAsmParser::ParseDirectiveDumpOrLoad));
     Parser.AddDirectiveHandler(this, ".load", MCAsmParser::DirectiveHandler(
                                  &DarwinAsmParser::ParseDirectiveDumpOrLoad));
+    Parser.AddDirectiveHandler(this, ".section", MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveSection));
     Parser.AddDirectiveHandler(this, ".secure_log_unique",
                                MCAsmParser::DirectiveHandler(
                              &DarwinAsmParser::ParseDirectiveSecureLogUnique));
@@ -230,6 +232,7 @@ public:
   bool ParseDirectiveDesc(StringRef, SMLoc);
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
   bool ParseDirectiveLsym(StringRef, SMLoc);
+  bool ParseDirectiveSection();
   bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
   bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
   bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
@@ -947,10 +950,6 @@ bool AsmParser::ParseStatement() {
   
   // Otherwise, we have a normal instruction or directive.  
   if (IDVal[0] == '.') {
-    // FIXME: This should be driven based on a hash lookup and callback.
-    if (IDVal == ".section")
-      return ParseDirectiveDarwinSection();
-
     // Assembler features
     if (IDVal == ".set")
       return ParseDirectiveSet();
@@ -1168,13 +1167,11 @@ bool AsmParser::ParseDirectiveSet() {
 
 /// ParseDirectiveSection:
 ///   ::= .section identifier (',' identifier)*
-/// FIXME: This should actually parse out the segment, section, attributes and
-/// sizeof_stub fields.
-bool AsmParser::ParseDirectiveDarwinSection() {
+bool DarwinAsmParser::ParseDirectiveSection() {
   SMLoc Loc = getLexer().getLoc();
 
   StringRef SectionName;
-  if (ParseIdentifier(SectionName))
+  if (getParser().ParseIdentifier(SectionName))
     return Error(Loc, "expected identifier after '.section' directive");
 
   // Verify there is a following comma.
@@ -1186,7 +1183,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
 
   // Add all the tokens until the end of the line, ParseSectionSpecifier will
   // handle this.
-  StringRef EOL = Lexer.LexUntilEndOfStatement();
+  StringRef EOL = getLexer().LexUntilEndOfStatement();
   SectionSpec.append(EOL.begin(), EOL.end());
 
   Lex();
@@ -1197,16 +1194,16 @@ bool AsmParser::ParseDirectiveDarwinSection() {
 
   StringRef Segment, Section;
   unsigned TAA, StubSize;
-  std::string ErrorStr = 
+  std::string ErrorStr =
     MCSectionMachO::ParseSectionSpecifier(SectionSpec, Segment, Section,
                                           TAA, StubSize);
-  
+
   if (!ErrorStr.empty())
     return Error(Loc, ErrorStr.c_str());
-  
+
   // FIXME: Arch specific.
   bool isText = Segment == "__TEXT";  // FIXME: Hack.
-  getStreamer().SwitchSection(Ctx.getMachOSection(
+  getStreamer().SwitchSection(getContext().getMachOSection(
                                 Segment, Section, TAA, StubSize,
                                 isText ? SectionKind::getText()
                                 : SectionKind::getDataRel()));
