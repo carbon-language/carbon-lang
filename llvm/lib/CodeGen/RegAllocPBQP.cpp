@@ -396,28 +396,23 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       if (srcRegIsPhysical && dstRegIsPhysical)
         continue;
 
-      // If it's a copy that includes a virtual register but the source and
-      // destination classes differ then we can't coalesce, so continue with
-      // the next instruction.
-      const TargetRegisterClass *srcRegClass = srcRegIsPhysical ?
-          tri->getPhysicalRegisterRegClass(srcReg) : mri->getRegClass(srcReg);
-
-      const TargetRegisterClass *dstRegClass = dstRegIsPhysical ?
-          tri->getPhysicalRegisterRegClass(dstReg) : mri->getRegClass(dstReg);
-
-      if (srcRegClass != dstRegClass)
+      // If it's a copy that includes two virtual register but the source and
+      // destination classes differ then we can't coalesce.
+      if (!srcRegIsPhysical && !dstRegIsPhysical &&
+          mri->getRegClass(srcReg) != mri->getRegClass(dstReg))
         continue;
 
-      // We also need any physical regs to be allocable, coalescing with
-      // a non-allocable register is invalid.
-      if (srcRegIsPhysical) {
+      // If one is physical and one is virtual, check that the physical is
+      // allocatable in the class of the virtual.
+      if (srcRegIsPhysical && !dstRegIsPhysical) {
+        const TargetRegisterClass *dstRegClass = mri->getRegClass(dstReg);
         if (std::find(dstRegClass->allocation_order_begin(*mf),
                       dstRegClass->allocation_order_end(*mf), srcReg) ==
             dstRegClass->allocation_order_end(*mf))
           continue;
       }
-
-      if (dstRegIsPhysical) {
+      if (!srcRegIsPhysical && dstRegIsPhysical) {
+        const TargetRegisterClass *srcRegClass = mri->getRegClass(srcReg);
         if (std::find(srcRegClass->allocation_order_begin(*mf),
                       srcRegClass->allocation_order_end(*mf), dstReg) ==
             srcRegClass->allocation_order_end(*mf))
