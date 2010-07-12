@@ -2157,6 +2157,8 @@ def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<
   "type qualifier is not allowed on this function">;
+def err_invalid_qualified_function_pointer : Error<
+  "type qualifier is not allowed on this function %select{pointer|reference}0">;
 def err_invalid_qualified_typedef_function_type_use : Error<
   "a qualified function type cannot be used to declare a "
   "%select{static member|nonmember}0 function">;

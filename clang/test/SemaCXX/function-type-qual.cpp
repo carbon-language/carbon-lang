@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void f() const; // expected-error {{type qualifier is not allowed on this function}}
+void (*pf)() const; // expected-error {{type qualifier is not allowed on this function pointer}}
+void (&rf)() const = f; // expected-error {{type qualifier is not allowed on this function reference}}
 
 typedef void cfn() const; 
 cfn f2; // expected-error {{a qualified function type cannot be used to declare a nonmember function}}
@@ -21,3 +23,6 @@ class C {
 
   int x;
 };
+
+void (C::*mpf)() const;
+cfn C::*mpg;
