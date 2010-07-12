@@ -54,10 +54,7 @@ void Preprocessor::CachingLex(Token &Result) {
   }
 
   ExitCachingLexMode();
-  // True if we consumed everything already.
-  bool PastEOF =  CurPPLexer == 0 && CurTokenLexer == 0;
-  if (!PastEOF)
-    Lex(Result);
+  Lex(Result);
 
   if (!isBacktrackEnabled()) {
     // All cached tokens were consumed.
@@ -66,12 +63,10 @@ void Preprocessor::CachingLex(Token &Result) {
     return;
   }
 
-  // Cache the lexed token if it's not a repeated tok::eof.
+  // Cache the lexed token.
   EnterCachingLexMode();
-  if (!PastEOF) {
-    CachedTokens.push_back(Result);
-    ++CachedLexPos;
-  }
+  CachedTokens.push_back(Result);
+  ++CachedLexPos;
 }
 
 void Preprocessor::EnterCachingLexMode() {
