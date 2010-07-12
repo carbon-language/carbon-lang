@@ -87,7 +87,7 @@ ifeq ($(HOST_OS),Darwin)
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
 	LLVMLibsOptions += -framework Foundation -framework CoreFoundation 
 	LLVMLibsOptions += -framework DebugSymbols -lpython2.6 -lobjc
-	LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,$(LLDB_LEVEL)/resources/lldb-framework-exports 
+	LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/resources/lldb-framework-exports" 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)

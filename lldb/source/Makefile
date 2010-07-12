@@ -16,5 +16,5 @@ BUILT_SOURCES = LLDB_vers.c
 
 include $(LLDB_LEVEL)/Makefile
 
-LLDB_vers.c: $(LLDB_LEVEL)/scripts/generate-vers.pl $(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj
-	$(LLDB_LEVEL)/scripts/generate-vers.pl $(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj > LLDB_vers.c
+LLDB_vers.c: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/generate-vers.pl $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj
+	"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/generate-vers.pl" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/lldb.xcodeproj/project.pbxproj" > LLDB_vers.c

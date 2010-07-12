@@ -27,10 +27,11 @@ using namespace clang;
 using namespace lldb_private;
 
 ClangResultSynthesizer::ClangResultSynthesizer(ASTConsumer *passthrough) :
-    m_passthrough(passthrough),
-    m_passthrough_sema(NULL),
-    m_sema(NULL),
-    m_ast_context(NULL)
+    m_ast_context (NULL),
+    m_passthrough (passthrough),
+    m_passthrough_sema (NULL),
+    m_sema (NULL),
+    m_action (NULL)
 {
     if (!m_passthrough)
         return;

@@ -19,7 +19,7 @@ include $(LLDB_LEVEL)/../../Makefile.config
 
 ifeq ($(HOST_OS),Darwin)
 	LD.Flags += -Wl,-rpath,@loader_path/../lib/
-	LD.Flags += -Wl,-sectcreate -Wl,__TEXT -Wl,__info_plist -Wl,lldb-Info.plist
+	LD.Flags += -Wl,-sectcreate -Wl,__TEXT -Wl,__info_plist -Wl,"$(PROJ_SRC_DIR)/lldb-Info.plist"
 endif
 
 ifeq ($(HOST_OS),Linux)

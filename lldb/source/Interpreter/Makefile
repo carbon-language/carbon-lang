@@ -20,5 +20,5 @@ LLDB_BIN_DIR := $(PROJ_OBJ_ROOT)/$(BuildMode)/bin
 PYTHON_DIR := $(LLDB_BIN_DIR)
 
 LLDBWrapPython.cpp:
-	swig -c++ -shadow -python -I"$(LLDB_LEVEL)/include" -I./. -outdir "$(LLDB_BIN_DIR)" -o LLDBWrapPython.cpp "$(LLDB_LEVEL)/scripts/lldb.swig"
-	cp embedded_interpreter.py "$(PYTHON_DIR)"
+	swig -c++ -shadow -python -I"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include" -I./. -outdir "$(LLDB_BIN_DIR)" -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig"
+	cp "$(PROJ_SRC_DIR)/embedded_interpreter.py" "$(PYTHON_DIR)"
