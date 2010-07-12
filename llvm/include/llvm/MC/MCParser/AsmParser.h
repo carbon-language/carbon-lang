@@ -63,7 +63,6 @@ public:
   ~AsmParser();
 
   bool Run(bool NoInitialTextSection, bool NoFinalize = false);
-
   
   void AddDirectiveHandler(StringRef Directive,
                            bool (AsmParser::*Handler)(StringRef, SMLoc)) {
@@ -71,7 +70,7 @@ public:
   }
 public:
   TargetAsmParser &getTargetParser() const { return *TargetParser; }
-  void setTargetParser(TargetAsmParser &P) { TargetParser = &P; }
+  void setTargetParser(TargetAsmParser &P);
 
   /// @name MCAsmParser Interface
   /// {

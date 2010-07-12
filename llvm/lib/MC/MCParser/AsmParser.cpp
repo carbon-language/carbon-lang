@@ -47,6 +47,12 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
 AsmParser::~AsmParser() {
 }
 
+void AsmParser::setTargetParser(TargetAsmParser &P) {
+  assert(!TargetParser && "Target parser is already initialized!");
+  TargetParser = &P;
+  TargetParser->Initialize(*this);
+}
+
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
   PrintMessage(L, Msg.str(), "warning");
 }

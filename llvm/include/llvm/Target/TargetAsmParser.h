@@ -10,6 +10,8 @@
 #ifndef LLVM_TARGET_TARGETPARSER_H
 #define LLVM_TARGET_TARGETPARSER_H
 
+#include "llvm/MC/MCParser/MCAsmParserExtension.h"
+
 namespace llvm {
 class MCInst;
 class StringRef;
@@ -20,7 +22,7 @@ class MCParsedAsmOperand;
 template <typename T> class SmallVectorImpl;
 
 /// TargetAsmParser - Generic interface to target specific assembly parsers.
-class TargetAsmParser {
+class TargetAsmParser : public MCAsmParserExtension {
   TargetAsmParser(const TargetAsmParser &);   // DO NOT IMPLEMENT
   void operator=(const TargetAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.

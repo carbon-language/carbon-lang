@@ -3,5 +3,6 @@ add_llvm_library(LLVMMCParser
   AsmParser.cpp
   MCAsmLexer.cpp
   MCAsmParser.cpp
+  MCAsmParserExtension.cpp
   TargetAsmParser.cpp
   )
