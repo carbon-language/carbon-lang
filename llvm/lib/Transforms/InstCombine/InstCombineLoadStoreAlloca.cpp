@@ -525,17 +525,20 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // Determine whether Dest has exactly two predecessors and, if so, compute
   // the other predecessor.
   pred_iterator PI = pred_begin(DestBB);
+  BasicBlock *P = *PI;
   BasicBlock *OtherBB = 0;
-  if (*PI != StoreBB)
-    OtherBB = *PI;
-  ++PI;
-  if (PI == pred_end(DestBB))
+
+  if (P != StoreBB)
+    OtherBB = P;
+
+  if (++PI == pred_end(DestBB))
     return false;
   
-  if (*PI != StoreBB) {
+  P = *PI;
+  if (P != StoreBB) {
     if (OtherBB)
       return false;
-    OtherBB = *PI;
+    OtherBB = P;
   }
   if (++PI != pred_end(DestBB))
     return false;
