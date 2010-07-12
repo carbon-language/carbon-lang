@@ -65,7 +65,26 @@ public:
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
+
+    Parser.AddDirectiveHandler(this, ".subsections_via_symbols",
+                               MCAsmParser::DirectiveHandler(
+                        &DarwinAsmParser::ParseDirectiveSubsectionsViaSymbols));
+    Parser.AddDirectiveHandler(this, ".dump", MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveDumpOrLoad));
+    Parser.AddDirectiveHandler(this, ".load", MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveDumpOrLoad));
+    Parser.AddDirectiveHandler(this, ".secure_log_unique",
+                               MCAsmParser::DirectiveHandler(
+                             &DarwinAsmParser::ParseDirectiveSecureLogUnique));
+    Parser.AddDirectiveHandler(this, ".secure_log_reset",
+                               MCAsmParser::DirectiveHandler(
+                             &DarwinAsmParser::ParseDirectiveSecureLogReset));
   }
+
+  bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
+  bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
+  bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
+  bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
 };
 
 }
@@ -822,20 +841,10 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".tbss")
       return ParseDirectiveDarwinTBSS();
 
-    if (IDVal == ".subsections_via_symbols")
-      return ParseDirectiveDarwinSubsectionsViaSymbols();
     if (IDVal == ".abort")
       return ParseDirectiveAbort();
     if (IDVal == ".include")
       return ParseDirectiveInclude();
-    if (IDVal == ".dump")
-      return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsDump=*/true);
-    if (IDVal == ".load")
-      return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsLoad=*/false);
-    if (IDVal == ".secure_log_unique")
-      return ParseDirectiveDarwinSecureLogUnique(IDLoc);
-    if (IDVal == ".secure_log_reset")
-      return ParseDirectiveDarwinSecureLogReset(IDLoc);
 
     // Look up the handler in the handler table.
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
@@ -1663,9 +1672,9 @@ bool AsmParser::ParseDirectiveDarwinTBSS() {
   return false;
 }
 
-/// ParseDirectiveDarwinSubsectionsViaSymbols
+/// ParseDirectiveSubsectionsViaSymbols
 ///  ::= .subsections_via_symbols
-bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
+bool DarwinAsmParser::ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.subsections_via_symbols' directive");
   
@@ -1764,9 +1773,11 @@ bool AsmParser::ParseDirectiveInclude() {
   return false;
 }
 
-/// ParseDirectiveDarwinDumpOrLoad
+/// ParseDirectiveDumpOrLoad
 ///  ::= ( .dump | .load ) "filename"
-bool AsmParser::ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump) {
+bool DarwinAsmParser::ParseDirectiveDumpOrLoad(StringRef Directive,
+                                               SMLoc IDLoc) {
+  bool IsDump = Directive == ".dump";
   if (getLexer().isNot(AsmToken::String))
     return TokError("expected string in '.dump' or '.load' directive");
   
@@ -1787,19 +1798,19 @@ bool AsmParser::ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump) {
   return false;
 }
 
-/// ParseDirectiveDarwinSecureLogUnique
+/// ParseDirectiveSecureLogUnique
 ///  ::= .secure_log_unique "log message"
-bool AsmParser::ParseDirectiveDarwinSecureLogUnique(SMLoc IDLoc) {
+bool DarwinAsmParser::ParseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
   std::string LogMessage;
 
-  if (Lexer.isNot(AsmToken::String))
+  if (getLexer().isNot(AsmToken::String))
     LogMessage = "";
   else{
     LogMessage = getTok().getString();
     Lex();
   }
 
-  if (Lexer.isNot(AsmToken::EndOfStatement))
+  if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.secure_log_unique' directive");
   
   if (getContext().getSecureLogUsed() != false)
@@ -1822,9 +1833,9 @@ bool AsmParser::ParseDirectiveDarwinSecureLogUnique(SMLoc IDLoc) {
     getContext().setSecureLog(OS);
   }
 
-  int CurBuf = SrcMgr.FindBufferContainingLoc(IDLoc);
-  *OS << SrcMgr.getBufferInfo(CurBuf).Buffer->getBufferIdentifier() << ":"
-      << SrcMgr.FindLineNumber(IDLoc, CurBuf) << ":"
+  int CurBuf = getSourceManager().FindBufferContainingLoc(IDLoc);
+  *OS << getSourceManager().getBufferInfo(CurBuf).Buffer->getBufferIdentifier()
+      << ":" << getSourceManager().FindLineNumber(IDLoc, CurBuf) << ":"
       << LogMessage + "\n";
 
   getContext().setSecureLogUsed(true);
@@ -1832,9 +1843,9 @@ bool AsmParser::ParseDirectiveDarwinSecureLogUnique(SMLoc IDLoc) {
   return false;
 }
 
-/// ParseDirectiveDarwinSecureLogReset
+/// ParseDirectiveSecureLogReset
 ///  ::= .secure_log_reset
-bool AsmParser::ParseDirectiveDarwinSecureLogReset(SMLoc IDLoc) {
+bool DarwinAsmParser::ParseDirectiveSecureLogReset(StringRef, SMLoc IDLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.secure_log_reset' directive");
   

@@ -144,15 +144,6 @@ private:
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
   bool ParseDirectiveDarwinTBSS(); // Darwin specific ".tbss"
 
-  // Darwin specific ".subsections_via_symbols"
-  bool ParseDirectiveDarwinSubsectionsViaSymbols();
-  // Darwin specific .dump and .load
-  bool ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump);
-  // Darwin specific .secure_log_unique
-  bool ParseDirectiveDarwinSecureLogUnique(SMLoc IDLoc);
-  // Darwin specific .secure_log_reset
-  bool ParseDirectiveDarwinSecureLogReset(SMLoc IDLoc);
-
   bool ParseDirectiveAbort(); // ".abort"
   bool ParseDirectiveInclude(); // ".include"
 
