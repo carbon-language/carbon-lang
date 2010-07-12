@@ -62,7 +62,7 @@ struct Elf32_Ehdr {
   Elf32_Half    e_shentsize; // Size of an entry in the section header table
   Elf32_Half    e_shnum;     // Number of entries in the section header table
   Elf32_Half    e_shstrndx;  // Sect hdr table index of sect name string table
-  bool checkMagic () const {
+  bool checkMagic() const {
     return (memcmp (e_ident, ElfMagic, strlen (ElfMagic))) == 0;
   }
   unsigned char getFileClass () const { return e_ident[4]; }
