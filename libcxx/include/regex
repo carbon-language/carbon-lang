@@ -717,6 +717,7 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 } // std
 */
 
+// temporary!
 #include <sstream>
 #include <cassert>
 
@@ -729,7 +730,7 @@ typedef regex_token_iterator<wstring::const_iterator> wsregex_token_iterator;
 #include <string>
 #include <memory>
 #include <vector>
-#include <__split_buffer>
+#include <deque>
 
 #pragma GCC system_header
 
@@ -1218,10 +1219,12 @@ regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
     return __value(static_cast<unsigned char>(__ct_->narrow(__ch, char_type())), __radix);
 }
 
-template <class _CharT> class __state;
+template <class _CharT> class __node;
+
+template <class _BidirectionalIterator> class sub_match;
 
 template <class _CharT>
-struct __command
+struct __state
 {
     enum
     {
@@ -1233,107 +1236,93 @@ struct __command
         __accept_and_consume,  // -995
         __accept_but_not_consume,  // -994
         __reject,                  // -993
-        __zero_loop_count,
-        __increment_loop_count,
-        __zero_marked_exprs,
+        __split,
+        __repeat
     };
 
-    typedef _STD::__state<_CharT> __state;
-
     int __do_;
-    const __state* first;
-    const __state* second;
+    const _CharT* __first_;
+    const _CharT* __current_;
+    const _CharT* __last_;
+    vector<sub_match<const _CharT*> > __sub_matches_;
+    vector<pair<size_t, const _CharT*> > __loop_data_;
+    const __node<_CharT>* __node_;
+    regex_constants::match_flag_type __flags_;
 
-    __command() : __do_(__reject), first(nullptr), second(nullptr) {}
-    explicit __command(int __do)
-        : __do_(__do), first(nullptr), second(nullptr) {}
-    __command(int __do, const __state* __s1, const __state* __s2 = nullptr)
-        : __do_(__do), first(__s1), second(__s2) {}
-    explicit __command(const __state* __s1, const __state* __s2 = nullptr)
-        : __do_(0), first(__s1), second(__s2) {}
+    __state()
+        : __do_(0), __first_(nullptr), __current_(nullptr), __last_(nullptr),
+          __node_(nullptr), __flags_() {}
 };
 
 template <class _CharT>
 ostream&
-operator<<(ostream& os, const __command<_CharT>& c)
+operator<<(ostream& os, const __state<_CharT>& c)
 {
     os << c.__do_;
-    if (c.first)
-        os << ", " << c.first->speak();
-    if (c.second)
-        os << ", " << c.second->speak();
+    if (c.__node_)
+        os << ", " << c.__node_->speak();
+else
+        os << ", null";
     return os;
 }
 
-template <class _BidirectionalIterator> class sub_match;
 
-// __state
+// __node
 
 template <class _CharT>
-class __state
+class __node
 {
-    __state(const __state&);
-    __state& operator=(const __state&);
+    __node(const __node&);
+    __node& operator=(const __node&);
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    __state() {}
-    virtual ~__state() {}
+    __node() {}
+    virtual ~__node() {}
 
-    virtual __command __test(const _CharT* __first, const _CharT* __current,
-                             const _CharT* __last,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>* __m,
-                             regex_constants::match_flag_type __flags) const = 0;
+    virtual void __exec(__state&) const {};
+    virtual void __exec_split(bool, __state&) const {};
 
-    virtual string speak() const = 0;
+    virtual string speak() const {return "__node";}
 };
 
 // __end_state
 
 template <class _CharT>
 class __end_state
-    : public __state<_CharT>
+    : public __node<_CharT>
 {
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
     __end_state() {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const {return "end state";}
 };
 
 template <class _CharT>
-__command<_CharT>
-__end_state<_CharT>::__test(const _CharT*, const _CharT*,
-                            const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                            regex_constants::match_flag_type) const
+void
+__end_state<_CharT>::__exec(__state& __s) const
 {
-    return __command(__command::__end_state);
+    __s.__do_ = __state::__end_state;
 }
 
 // __has_one_state
 
 template <class _CharT>
 class __has_one_state
-    : public __state<_CharT>
+    : public __node<_CharT>
 {
-    __state<_CharT>* __first_;
+    __node<_CharT>* __first_;
 
 public:
-    explicit __has_one_state(__state<_CharT>* __s)
+    explicit __has_one_state(__node<_CharT>* __s)
         : __first_(__s) {}
 
-    __state<_CharT>*  first() const {return __first_;}
-    __state<_CharT>*& first()       {return __first_;}
+    __node<_CharT>*  first() const {return __first_;}
+    __node<_CharT>*& first()       {return __first_;}
 };
 
 // __owns_one_state
@@ -1345,7 +1334,7 @@ class __owns_one_state
     typedef __has_one_state<_CharT> base;
 
 public:
-    explicit __owns_one_state(__state<_CharT>* __s)
+    explicit __owns_one_state(__node<_CharT>* __s)
         : base(__s) {}
 
     virtual ~__owns_one_state();
@@ -1366,28 +1355,22 @@ class __empty_state
     typedef __owns_one_state<_CharT> base;
 
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    explicit __empty_state(__state<_CharT>* __s)
+    explicit __empty_state(__node<_CharT>* __s)
         : base(__s) {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const {return "empty state";}
 };
 
 template <class _CharT>
-__command<_CharT>
-__empty_state<_CharT>::__test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
+void
+__empty_state<_CharT>::__exec(__state& __s) const
 {
-    return __command(__command::__accept_but_not_consume, this->first());
+    __s.__do_ = __state::__accept_but_not_consume;
+    __s.__node_ = this->first();
 }
 
 // __empty_non_own_state
@@ -1399,28 +1382,49 @@ class __empty_non_own_state
     typedef __has_one_state<_CharT> base;
 
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    explicit __empty_non_own_state(__state<_CharT>* __s)
+    explicit __empty_non_own_state(__node<_CharT>* __s)
         : base(__s) {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const {return "empty non-owning state";}
 };
 
 template <class _CharT>
-__command<_CharT>
-__empty_non_own_state<_CharT>::__test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
+void
+__empty_non_own_state<_CharT>::__exec(__state& __s) const
 {
-    return __command(__command::__accept_but_not_consume, this->first());
+    __s.__do_ = __state::__accept_but_not_consume;
+    __s.__node_ = this->first();
+}
+
+// __repeat_one_loop
+
+template <class _CharT>
+class __repeat_one_loop
+    : public __has_one_state<_CharT>
+{
+    typedef __has_one_state<_CharT> base;
+
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    explicit __repeat_one_loop(__node<_CharT>* __s)
+        : base(__s) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const {return "repeat loop";}
+};
+
+template <class _CharT>
+void
+__repeat_one_loop<_CharT>::__exec(__state& __s) const
+{
+    __s.__do_ = __state::__repeat;
+    __s.__node_ = this->first();
 }
 
 // __owns_two_states
@@ -1434,7 +1438,7 @@ class __owns_two_states
     base* __second_;
 
 public:
-    explicit __owns_two_states(__state<_CharT>* __s1, base* __s2)
+    explicit __owns_two_states(__node<_CharT>* __s1, base* __s2)
         : base(__s1), __second_(__s2) {}
 
     virtual ~__owns_two_states();
@@ -1460,187 +1464,98 @@ class __loop
     size_t __min_;
     size_t __max_;
     unsigned __loop_id_;
+    unsigned __mexp_begin_;
+    unsigned __mexp_end_;
     bool __greedy_;
 
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
     explicit __loop(unsigned __loop_id,
-                          __state<_CharT>* __s1, __owns_one_state<_CharT>* __s2,
+                          __node<_CharT>* __s1, __owns_one_state<_CharT>* __s2,
+                          unsigned __mexp_begin, unsigned __mexp_end,
                           bool __greedy = true,
                           size_t __min = 0,
                           size_t __max = numeric_limits<size_t>::max())
         : base(__s1, __s2), __min_(__min), __max_(__max), __loop_id_(__loop_id),
+          __mexp_begin_(__mexp_begin), __mexp_end_(__mexp_end),
           __greedy_(__greedy) {}
 
-    virtual __command __test(const _CharT* __first, const _CharT* __current,
-                             const _CharT* __last,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type __flags) const;
+    virtual void __exec(__state& __s) const;
+    virtual void __exec_split(bool __second, __state& __s) const;
 
     virtual string speak() const
     {
         ostringstream os;
-        os << "loop {" << __min_ << ',' << __max_ << "}";
+        os << "loop "<< __loop_id_ << " {" << __min_ << ',' << __max_ << "}";
         if (!__greedy_)
             os << " not";
         os << " greedy";
         return os.str();
     }
+
+private:
+    void __init_repeat(__state& __s) const
+    {
+        __s.__loop_data_[__loop_id_].second = __s.__current_;
+        for (size_t __i = __mexp_begin_-1; __i != __mexp_end_-1; ++__i)
+        {
+            __s.__sub_matches_[__i].first = __s.__last_;
+            __s.__sub_matches_[__i].second = __s.__last_;
+            __s.__sub_matches_[__i].matched = false;
+        }
+    }
 };
 
 template <class _CharT>
-__command<_CharT>
-__loop<_CharT>::__test(const _CharT* __first, const _CharT* __current,
-                             const _CharT* __last,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>* __m,
-                             regex_constants::match_flag_type __flags) const
+void
+__loop<_CharT>::__exec(__state& __s) const
 {
-    size_t __count = __lc[__loop_id_];
-    if (__min_ <= __count && __count < __max_)
-        if (__greedy_)
-            return __command(__command::__accept_but_not_consume, this->first(),
-                                                                  this->second());
+    if (__s.__do_ == __state::__repeat)
+    {
+        bool __do_repeat = ++__s.__loop_data_[__loop_id_].first < __max_;
+        bool __do_alt = __s.__loop_data_[__loop_id_].first >= __min_;
+        if (__do_repeat && __do_alt &&
+                               __s.__loop_data_[__loop_id_].second == __s.__current_)
+            __do_repeat = false;
+        if (__do_repeat && __do_alt)
+            __s.__do_ = __state::__split;
+        else if (__do_repeat)
+        {
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__node_ = this->first();
+            __init_repeat(__s);
+        }
         else
-            return __command(__command::__accept_but_not_consume, this->second(),
-                                                                  this->first());
-    if (__min_ <= __count)
-        return __command(__command::__accept_but_not_consume, this->second());
-    if (__count < __max_)
-        return __command(__command::__accept_but_not_consume, this->first());
-    throw regex_error(regex_constants::error_temp);
+        {
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__node_ = this->second();
+        }
+    }
+    else
+    {
+        if (__max_ > 0)
+            __s.__do_ = __state::__split;
+        else
+        {
+            __s.__do_ = __state::__accept_but_not_consume;
+            __s.__node_ = this->second();
+        }
+    }
 }
 
-// __zero_loop_count
-
 template <class _CharT>
-class __zero_loop_count
-    : public __owns_one_state<_CharT>
+void
+__loop<_CharT>::__exec_split(bool __second, __state& __s) const
 {
-    typedef __owns_one_state<_CharT> base;
-
-    size_t __loop_id_;
-
-public:
-    typedef _STD::__command<_CharT> __command;
-
-    explicit __zero_loop_count(size_t __loop_id,
-                          __state<_CharT>* __s1)
-        : base(__s1), __loop_id_(__loop_id) {}
-
-    virtual __command __test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
-
-    virtual string speak() const
+    __s.__do_ = __state::__accept_but_not_consume;
+    if (__greedy_ != __second)
     {
-        ostringstream os;
-        os << "zero loop " << __loop_id_;
-        return os.str();
+        __s.__node_ = this->first();
+        __init_repeat(__s);
     }
-};
-
-template <class _CharT>
-__command<_CharT>
-__zero_loop_count<_CharT>::__test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
-{
-    __lc[__loop_id_] = 0;
-    return __command(__command::__accept_but_not_consume, this->first());
-}
-
-// __increment_loop_count
-
-template <class _CharT>
-class __increment_loop_count
-    : public __has_one_state<_CharT>
-{
-    typedef __has_one_state<_CharT> base;
-
-    size_t __loop_id_;
-
-public:
-    typedef _STD::__command<_CharT> __command;
-
-    explicit __increment_loop_count(size_t __loop_id,
-                          __state<_CharT>* __s1)
-        : base(__s1), __loop_id_(__loop_id) {}
-
-    virtual __command __test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "increment loop " << __loop_id_;
-        return os.str();
-    }
-};
-
-template <class _CharT>
-__command<_CharT>
-__increment_loop_count<_CharT>::__test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>& __lc,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
-{
-    ++__lc[__loop_id_];
-    return __command(__command::__accept_but_not_consume, this->first());
-}
-
-// __zero_marked_exprs
-
-template <class _CharT>
-class __zero_marked_exprs
-    : public __owns_one_state<_CharT>
-{
-    typedef __owns_one_state<_CharT> base;
-
-    size_t __begin_;
-    size_t __end_;
-
-public:
-    typedef _STD::__command<_CharT> __command;
-
-    explicit __zero_marked_exprs(size_t __begin, size_t __end,
-                          __state<_CharT>* __s1)
-        : base(__s1), __begin_(__begin), __end_(__end) {}
-
-    virtual __command __test(const _CharT*, const _CharT*, const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>* __sm,
-                             regex_constants::match_flag_type) const;
-
-    virtual string speak() const
-    {
-        ostringstream os;
-        os << "zero marked exprs [" << __begin_ << ',' << __end_ << ')';
-        return os.str();
-    }
-};
-
-template <class _CharT>
-__command<_CharT>
-__zero_marked_exprs<_CharT>::__test(const _CharT*, const _CharT*,
-                             const _CharT* __last,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>* __sm,
-                             regex_constants::match_flag_type) const
-{
-    for (size_t __i = __begin_; __i != __end_; ++__i)
-    {
-        __sm[__i].first = __last;
-        __sm[__i].second = __last;
-        __sm[__i].matched = false;
-    }
-    return __command(__command::__accept_but_not_consume, this->first());
+    else
+        __s.__node_ = this->second();
 }
 
 // __begin_marked_subexpression
@@ -1653,16 +1568,12 @@ class __begin_marked_subexpression
 
     unsigned __mexp_;
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    explicit __begin_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
+    explicit __begin_marked_subexpression(unsigned __mexp, __node<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const
     {
@@ -1673,14 +1584,12 @@ public:
 };
 
 template <class _CharT>
-__command<_CharT>
-__begin_marked_subexpression<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>* __s,
-                             regex_constants::match_flag_type) const
+void
+__begin_marked_subexpression<_CharT>::__exec(__state& __s) const
 {
-    __s[__mexp_].first = __c;
-    return __command(__command::__accept_but_not_consume, this->first());
+    __s.__do_ = __state::__accept_but_not_consume;
+    __s.__sub_matches_[__mexp_-1].first = __s.__current_;
+    __s.__node_ = this->first();
 }
 
 // __end_marked_subexpression
@@ -1693,16 +1602,12 @@ class __end_marked_subexpression
 
     unsigned __mexp_;
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    explicit __end_marked_subexpression(unsigned __mexp, __state<_CharT>* __s)
+    explicit __end_marked_subexpression(unsigned __mexp, __node<_CharT>* __s)
         : base(__s), __mexp_(__mexp) {}
 
-    virtual __command __test(const _CharT*, const _CharT*,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const
     {
@@ -1713,15 +1618,13 @@ public:
 };
 
 template <class _CharT>
-__command<_CharT>
-__end_marked_subexpression<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>* __s,
-                             regex_constants::match_flag_type) const
+void
+__end_marked_subexpression<_CharT>::__exec(__state& __s) const
 {
-    __s[__mexp_].second = __c;
-    __s[__mexp_].matched = true;
-    return __command(__command::__accept_but_not_consume, this->first());
+    __s.__do_ = __state::__accept_but_not_consume;
+    __s.__sub_matches_[__mexp_-1].second = __s.__current_;
+    __s.__sub_matches_[__mexp_-1].matched = true;
+    __s.__node_ = this->first();
 }
 
 // __r_anchor
@@ -1733,16 +1636,12 @@ class __r_anchor
     typedef __owns_one_state<_CharT> base;
 
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    __r_anchor(__state<_CharT>* __s)
+    __r_anchor(__node<_CharT>* __s)
         : base(__s) {}
 
-    virtual __command __test(const _CharT*, const _CharT* __c,
-                             const _CharT* __l,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const
     {
@@ -1753,14 +1652,60 @@ public:
 };
 
 template <class _CharT>
-__command<_CharT>
-__r_anchor<_CharT>::__test(const _CharT*, const _CharT* __c, const _CharT* __l,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
+void
+__r_anchor<_CharT>::__exec(__state& __s) const
 {
-    return __c == __l ?
-        __command(__command::__accept_but_not_consume, this->first()) : __command();
+    if (__s.__current_ == __s.__last_)
+    {
+        __s.__do_ = __state::__accept_but_not_consume;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
+// __match_any
+
+template <class _CharT>
+class __match_any
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    __match_any(__node<_CharT>* __s)
+        : base(__s) {}
+
+    virtual void __exec(__state&) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "match any";
+        return os.str();
+    }
+};
+
+template <class _CharT>
+void
+__match_any<_CharT>::__exec(__state& __s) const
+{
+    if (__s.__current_ != __s.__last_ && *__s.__current_ != 0)
+    {
+        __s.__do_ = __state::__accept_and_consume;
+        ++__s.__current_;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
 }
 
 // __match_char
@@ -1776,16 +1721,12 @@ class __match_char
     __match_char(const __match_char&);
     __match_char& operator=(const __match_char&);
 public:
-    typedef _STD::__command<_CharT> __command;
+    typedef _STD::__state<_CharT> __state;
 
-    __match_char(_CharT __c, __state<_CharT>* __s)
+    __match_char(_CharT __c, __node<_CharT>* __s)
         : base(__s), __c_(__c) {}
 
-    virtual __command __test(const _CharT*, const _CharT* __c,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const;
+    virtual void __exec(__state&) const;
 
     virtual string speak() const
     {
@@ -1796,15 +1737,20 @@ public:
 };
 
 template <class _CharT>
-__command<_CharT>
-__match_char<_CharT>::__test(const _CharT*, const _CharT* __c,
-                             const _CharT*,
-                             vector<size_t>&,
-                             sub_match<const _CharT*>*,
-                             regex_constants::match_flag_type) const
+void
+__match_char<_CharT>::__exec(__state& __s) const
 {
-    return __c_ == *__c ?
-        __command(__command::__accept_and_consume, this->first()) : __command();
+    if (__s.__current_ != __s.__last_ && *__s.__current_ == __c_)
+    {
+        __s.__do_ = __state::__accept_and_consume;
+        ++__s.__current_;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
 }
 
 template <class, class> class match_results;
@@ -1828,8 +1774,8 @@ private:
     __owns_one_state<_CharT>* __end_;
     bool __left_anchor_;
 
-    typedef _STD::__command<_CharT> __command;
     typedef _STD::__state<_CharT> __state;
+    typedef _STD::__node<_CharT> __node;
 
 public:
     // constants:
@@ -2008,7 +1954,7 @@ private:
 
     void __push_l_anchor() {__left_anchor_ = true;}
     void __push_r_anchor();
-    void __push_match_any() {}
+    void __push_match_any();
     void __push_greedy_inf_repeat(size_t __min, __owns_one_state<_CharT>* __s,
                                   unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
         {__push_loop(__min, numeric_limits<size_t>::max(), __s,
@@ -2080,7 +2026,7 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
                                       _ForwardIterator __last)
 {
     {
-        unique_ptr<__state> __h(new __end_state<_CharT>);
+        unique_ptr<__node> __h(new __end_state<_CharT>);
         __start_.reset(new __empty_state<_CharT>(__h.get()));
         __h.release();
         __end_ = __start_.get();
@@ -2897,29 +2843,14 @@ basic_regex<_CharT, _Traits>::__push_loop(size_t __min, size_t __max,
 {
     unique_ptr<__empty_state<_CharT> > __e1(new __empty_state<_CharT>(__end_->first()));
     __end_->first() = nullptr;
-    unique_ptr<__loop<_CharT> > __e2;
-    if (__mexp_begin != __mexp_end)
-    {
-        unique_ptr<__zero_marked_exprs<_CharT> >
-                __e3(new __zero_marked_exprs<_CharT>(__mexp_begin, __mexp_end,
-                                                     __s->first()));
-        __s->first() = nullptr;
-        __e2.reset(new __loop<_CharT>(__loop_count_, __e3.get(), __e1.get(),
-                                      __greedy, __min, __max));
-        __e3.release();
-        __e1.release();
-    }
-    else
-    {
-        __e2.reset(new __loop<_CharT>(__loop_count_, __s->first(), __e1.get(),
-                                      __greedy, __min, __max));
-        __s->first() = nullptr;
-        __e1.release();
-    }
-    __end_->first() = new __increment_loop_count<_CharT>(__loop_count_, __e2.get());
+    unique_ptr<__loop<_CharT> > __e2(new __loop<_CharT>(__loop_count_,
+                __s->first(), __e1.get(), __mexp_begin, __mexp_end, __greedy,
+                __min, __max));
+    __s->first() = nullptr;
+    __e1.release();
+    __end_->first() = new __repeat_one_loop<_CharT>(__e2.get());
     __end_ = __e2->second();
-    __s->first() = new __zero_loop_count<_CharT>(__loop_count_, __e2.get());
-    __e2.release();
+    __s->first() = __e2.release();
     ++__loop_count_;
 }
 
@@ -2957,6 +2888,13 @@ basic_regex<_CharT, _Traits>::__push_r_anchor()
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_match_any()
+{
+    __end_->first() = new __match_any<_CharT>(__end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
 
 typedef basic_regex<char>    regex;
 typedef basic_regex<wchar_t> wregex;
@@ -3539,50 +3477,73 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
         regex_constants::match_flag_type __flags) const
 {
     typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
-    __split_buffer<__command> __commands;
+    deque<__state> __states;
     difference_type __j = 0;
     difference_type __highest_j = 0;
     difference_type _N = _STD::distance(__first, __last);
-    __state* __st = __start_.get();
+    __node* __st = __start_.get();
     if (__st)
     {
-        __commands.push_front(__command(__st));
-        __commands.push_front(__command(__command::__consume_input));
+        __states.push_back(__state());
+        __states.back().__do_ = __state::__consume_input;
+        __states.push_back(__state());
+        __states.back().__do_ = 0;
+        __states.back().__first_ = __first;
+        __states.back().__current_ = __first;
+        __states.back().__last_ = __last;
+        __states.back().__loop_data_.resize(__loop_count());
+        __states.back().__node_ = __st;
+        __states.back().__flags_ = __flags;
         _BidirectionalIterator __current = __first;
         do
         {
-            __command __cmd = __commands.back();
-            __commands.pop_back();
-            if (__cmd.first != nullptr)
-                __cmd = __cmd.first->__test(__first, __current, __last, __lc,
-                                            __m.__matches_.data(), __flags);
-            switch (__cmd.__do_)
+            __state& __s = __states.back();
+            if (__s.__node_)
+                __s.__node_->__exec(__s);
+            switch (__s.__do_)
             {
-            case __command::__end_state:
+            case __state::__end_state:
                 __highest_j = _STD::max(__highest_j, __j);
+                if (__highest_j == _N)
+                    __states.clear();
+                else
+                    __states.pop_back();
                 break;
-            case __command::__consume_input:
+            case __state::__consume_input:
                 if (__j == _N)
                     return false;
                 ++__current;
-                if (++__j != _N && !__commands.empty())
-                    __commands.push_front(__command(__command::__consume_input));
+                if (++__j != _N && __states.size() > 1)
+                    __states.push_front(_STD::move(__s));
+                __states.pop_back();
                 break;
-            case __command::__accept_and_consume:
-                __commands.push_front(__command(__cmd.first));
+            case __state::__accept_and_consume:
+                // needs to be changed for the case that this state
+                // consumed more than one character.  This will scan
+                // down the deque and insert extra __consume_input
+                // states as necessary
+                __states.push_front(_STD::move(__s));
+                __states.pop_back();
                 break;
-            case __command::__accept_but_not_consume:
-                __commands.push_back(__command(__cmd.first));
-                if (__cmd.second != nullptr)
-                    __commands.push_back(__command(__cmd.second));
+            case __state::__repeat:
+            case __state::__accept_but_not_consume:
                 break;
-            case __command::__reject:
+            case __state::__split:
+                {
+                __state __snext = __s;
+                __s.__node_->__exec_split(true, __s);
+                __snext.__node_->__exec_split(false, __snext);
+                __states.push_back(_STD::move(__snext));
+                }
+                break;
+            case __state::__reject:
+                __states.pop_back();
                 break;
             default:
                 throw regex_error(regex_constants::error_temp);
                 break;
             }
-        } while (!__commands.empty());
+        } while (!__states.empty());
         if (__highest_j != 0)
         {
             __m.__matches_[0].first = __first;
@@ -3604,83 +3565,82 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
         regex_constants::match_flag_type __flags) const
 {
     typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
-    vector<__command> __commands;
+    vector<__state> __states;
     vector<_BidirectionalIterator> __current_stack;
     vector<sub_match<_BidirectionalIterator> > __saved_matches;
-    vector<sub_match<_BidirectionalIterator> > __best_matches;
+    __state __best_state;
     difference_type __j = 0;
     difference_type __highest_j = 0;
     difference_type _N = _STD::distance(__first, __last);
-    __state* __st = __start_.get();
+    __node* __st = __start_.get();
     if (__st)
     {
-        __commands.push_back(__command(__st));
+        __states.push_back(__state());
+        __states.back().__do_ = 0;
+        __states.back().__first_ = __first;
+        __states.back().__current_ = __first;
+        __states.back().__last_ = __last;
+        __states.back().__sub_matches_.resize(mark_count());
+        __states.back().__loop_data_.resize(__loop_count());
+        __states.back().__node_ = __st;
+        __states.back().__flags_ = __flags;
         _BidirectionalIterator __current = __first;
+        bool __matched = false;
         do
         {
-            __command __cmd = __commands.back();
-            __commands.pop_back();
-            if (__cmd.first != nullptr)
-                __cmd = __cmd.first->__test(__first, __current, __last, __lc,
-                                            __m.__matches_.data(), __flags);
-            switch (__cmd.__do_)
+            __state& __s = __states.back();
+            if (__s.__node_)
+                __s.__node_->__exec(__s);
+            switch (__s.__do_)
             {
-            case __command::__end_state:
-                if (__highest_j < __j)
+            case __state::__end_state:
+                if (__j == 0 || __highest_j < __j)
                 {
+                    __matched = true;
                     __highest_j = __j;
-                    for (unsigned __i = 1; __i < __m.__matches_.size(); ++__i)
-                        __best_matches.push_back(__m.__matches_[__i]);
+                    __best_state = __s;
+                    if (__highest_j == _N || __highest_j == 0)
+                        __states.clear();
+                    else
+                        __states.pop_back();
                 }
                 break;
-            case __command::__pop_state:
-                for (unsigned __i = __m.__matches_.size(); __i > 1;)
-                {
-                    assert(!__saved_matches.empty());
-                    __m.__matches_[--__i] = __saved_matches.back();
-                    __saved_matches.pop_back();
-                }
-                assert(!__current_stack.empty());
-                __current = __current_stack.back();
-                __current_stack.pop_back();
-                break;
-            case __command::__accept_and_consume:
-                __commands.push_back(__command(__cmd.first));
+            case __state::__accept_and_consume:
+                // needs to be changed for the case that this state
+                // consumed more than one character.  This will adjust
+                // __current based on __s.__current_
                 if (__current != __last)
                 {
                     ++__current;
                     ++__j;
                 }
                 break;
-            case __command::__accept_but_not_consume:
-                if (__cmd.second != nullptr)
-                {
-                    __commands.push_back(__command(__cmd.second));
-                    __commands.push_back(__command(__command::__pop_state));
-                    __current_stack.push_back(__current);
-                    for (unsigned __i = 1; __i < __m.__matches_.size(); ++__i)
-                        __saved_matches.push_back(__m.__matches_[__i]);
-                }
-                __commands.push_back(__command(__cmd.first));
+            case __state::__repeat:
+            case __state::__accept_but_not_consume:
                 break;
-            case __command::__reject:
+            case __state::__split:
+                {
+                __state __snext = __s;
+                __s.__node_->__exec_split(true, __s);
+                __snext.__node_->__exec_split(false, __snext);
+                __states.push_back(_STD::move(__snext));
+                }
+                break;
+            case __state::__reject:
+                __states.pop_back();
                 break;
             default:
                 throw regex_error(regex_constants::error_temp);
                 break;
             }
-        } while (!__commands.empty());
-        if (__highest_j != 0)
+        } while (!__states.empty());
+        if (__matched)
         {
             __m.__matches_[0].first = __first;
             __m.__matches_[0].second = _STD::next(__first, __highest_j);
             __m.__matches_[0].matched = true;
-            for (unsigned __i = __m.__matches_.size(); __i > 1;)
-            {
-                assert(!__best_matches.empty());
-                __m.__matches_[--__i] = __best_matches.back();
-                __best_matches.pop_back();
-            }
+            for (unsigned __i = 0; __i < __best_state.__sub_matches_.size(); ++__i)
+                __m.__matches_[__i+1] = __best_state.__sub_matches_[__i];
             return true;
         }
     }
