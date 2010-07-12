@@ -3398,9 +3398,8 @@ public:
   // FIXME: Fix type/value dependence!
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef,
                    bool constAdded = false,
-                   Stmt *copyConstructorVal = 0,
-                   bool hasDependentType = false)
-  : Expr(BlockDeclRefExprClass, t, hasDependentType, false), 
+                   Stmt *copyConstructorVal = 0)
+  : Expr(BlockDeclRefExprClass, t, (!t.isNull() && t->isDependentType()),false), 
     D(d), Loc(l), IsByRef(ByRef),
     ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
 

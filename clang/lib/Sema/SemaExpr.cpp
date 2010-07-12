@@ -1747,8 +1747,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     QualType T = VD->getType();
     BlockDeclRefExpr *BDRE = new (Context) BlockDeclRefExpr(VD, 
                                                             ExprTy, Loc, false,
-                                                            constAdded, 0,
-                          (getLangOptions().CPlusPlus && T->isDependentType()));
+                                                            constAdded);
     if (getLangOptions().CPlusPlus) {
       if (!T->isDependentType() && !T->isReferenceType()) {
         Expr *E = new (Context) 
