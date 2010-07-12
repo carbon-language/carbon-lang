@@ -127,16 +127,7 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
   }
   Diag(Tok, DID);
   Diag(LHSLoc, diag::note_matching) << LHSName;
-  if (!SkipUntil(RHSTok)) {
-    // We stopped before finding a RHS token, e.g. we encountered a ';'.
-    // Balance Paren/Brace/Bracket counting. 
-    switch (RHSTok) {
-    default: break;
-    case tok::r_paren : assert(ParenCount > 0); --ParenCount; break;
-    case tok::r_brace : assert(BraceCount > 0); --BraceCount; break;
-    case tok::r_square: assert(BracketCount > 0); --BracketCount; break;
-    }
-  }
+  SkipUntil(RHSTok);
   return R;
 }
 
