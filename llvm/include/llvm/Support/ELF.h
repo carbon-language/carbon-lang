@@ -63,10 +63,10 @@ struct Elf32_Ehdr {
   Elf32_Half    e_shnum;     // Number of entries in the section header table
   Elf32_Half    e_shstrndx;  // Sect hdr table index of sect name string table
   bool checkMagic() const {
-    return (memcmp (e_ident, ElfMagic, strlen (ElfMagic))) == 0;
+    return (memcmp(e_ident, ElfMagic, strlen(ElfMagic))) == 0;
   }
-  unsigned char getFileClass () const { return e_ident[4]; }
-  unsigned char getDataEncoding () { return e_ident[5]; }
+  unsigned char getFileClass() const { return e_ident[4]; }
+  unsigned char getDataEncoding() { return e_ident[5]; }
 };
 
 // 64-bit ELF header. Fields are the same as for ELF32, but with different
@@ -273,11 +273,11 @@ struct Elf32_Sym {
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
-  unsigned char getBinding () const { return st_info >> 4; }
-  unsigned char getType () const { return st_info & 0x0f; }
-  void setBinding (unsigned char b) { setBindingAndType (b, getType ()); }
-  void setType (unsigned char t) { setBindingAndType (getBinding (), t); }
-  void setBindingAndType (unsigned char b, unsigned char t) {
+  unsigned char getBinding() const { return st_info >> 4; }
+  unsigned char getType() const { return st_info & 0x0f; }
+  void setBinding(unsigned char b) { setBindingAndType(b, getType()); }
+  void setType(unsigned char t) { setBindingAndType(getBinding(), t); }
+  void setBindingAndType(unsigned char b, unsigned char t) {
     st_info = (b << 4) + (t & 0x0f);
   }
 };
@@ -309,11 +309,11 @@ struct Elf32_Rel {
 
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
-  Elf32_Word getSymbol () const { return (r_info >> 8); }
-  unsigned char getType () const { return (unsigned char) (r_info & 0x0ff); }
-  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
-  void setSymbolAndType (Elf32_Word s, unsigned char t) {
+  Elf32_Word getSymbol() const { return (r_info >> 8); }
+  unsigned char getType() const { return (unsigned char) (r_info & 0x0ff); }
+  void setSymbol(Elf32_Word s) { setSymbolAndType(s, getType()); }
+  void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
+  void setSymbolAndType(Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
   };
 };
@@ -326,11 +326,11 @@ struct Elf32_Rela {
 
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
-  Elf32_Word getSymbol () const { return (r_info >> 8); }
-  unsigned char getType () const { return (unsigned char) (r_info & 0x0ff); }
-  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
-  void setSymbolAndType (Elf32_Word s, unsigned char t) {
+  Elf32_Word getSymbol() const { return (r_info >> 8); }
+  unsigned char getType() const { return (unsigned char) (r_info & 0x0ff); }
+  void setSymbol(Elf32_Word s) { setSymbolAndType(s, getType()); }
+  void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
+  void setSymbolAndType(Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
   };
 };
@@ -342,13 +342,13 @@ struct Elf64_Rel {
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
-  Elf64_Xword getSymbol () const { return (r_info >> 32); }
-  unsigned char getType () const {
+  Elf64_Xword getSymbol() const { return (r_info >> 32); }
+  unsigned char getType() const {
     return (unsigned char) (r_info & 0xffffffffL);
   }
-  void setSymbol (Elf32_Word s) { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
-  void setSymbolAndType (Elf64_Xword s, unsigned char t) {
+  void setSymbol(Elf32_Word s) { setSymbolAndType(s, getType()); }
+  void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
+  void setSymbolAndType(Elf64_Xword s, unsigned char t) {
     r_info = (s << 32) + (t&0xffffffffL);
   };
 };
@@ -361,13 +361,13 @@ struct Elf64_Rela {
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
-  Elf64_Xword getSymbol () const { return (r_info >> 32); }
-  unsigned char getType () const {
+  Elf64_Xword getSymbol() const { return (r_info >> 32); }
+  unsigned char getType() const {
     return (unsigned char) (r_info & 0xffffffffL);
   }
-  void setSymbol (Elf64_Xword s) { setSymbolAndType (s, getType ()); }
-  void setType (unsigned char t) { setSymbolAndType (getSymbol(), t); }
-  void setSymbolAndType (Elf64_Xword s, unsigned char t) {
+  void setSymbol(Elf64_Xword s) { setSymbolAndType(s, getType()); }
+  void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
+  void setSymbolAndType(Elf64_Xword s, unsigned char t) {
     r_info = (s << 32) + (t&0xffffffffL);
   };
 };
