@@ -436,8 +436,10 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     unsigned StrLen = Str.length();
     const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
     unsigned NumBits = Ty->getPrimitiveSizeInBits();
-    // Replace LI with immediate integer store.
-    if ((NumBits >> 3) == StrLen + 1) {
+    // Replace load with immediate integer if the result is an integer or fp
+    // value.
+    if ((NumBits >> 3) == StrLen + 1 && (NumBits & 7) == 0 &&
+        isa<IntegerType>(Ty) || Ty->isFloatingPointTy()) {
       APInt StrVal(NumBits, 0);
       APInt SingleChar(NumBits, 0);
       if (TD->isLittleEndian()) {
@@ -454,7 +456,11 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
         SingleChar = 0;
         StrVal = (StrVal << 8) | SingleChar;
       }
-      return ConstantInt::get(CE->getContext(), StrVal);
+      
+      Constant *Res = ConstantInt::get(CE->getContext(), StrVal);
+      if (Ty->isFloatingPointTy())
+        Res = ConstantExpr::getBitCast(Res, Ty);
+      return Res;
     }
   }
   
