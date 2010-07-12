@@ -138,7 +138,6 @@ private:
   bool ParseDirectiveSymbolAttribute(MCSymbolAttr Attr);
   bool ParseDirectiveELFType(); // ELF specific ".type"
   bool ParseDirectiveDarwinSymbolDesc(); // Darwin specific ".desc"
-  bool ParseDirectiveDarwinLsym(); // Darwin specific ".lsym"
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"

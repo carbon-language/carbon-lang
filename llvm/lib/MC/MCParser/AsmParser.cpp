@@ -66,6 +66,8 @@ public:
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 
+    Parser.AddDirectiveHandler(this, ".lsym", MCAsmParser::DirectiveHandler(
+                                 &DarwinAsmParser::ParseDirectiveLsym));
     Parser.AddDirectiveHandler(this, ".subsections_via_symbols",
                                MCAsmParser::DirectiveHandler(
                         &DarwinAsmParser::ParseDirectiveSubsectionsViaSymbols));
@@ -81,10 +83,11 @@ public:
                              &DarwinAsmParser::ParseDirectiveSecureLogReset));
   }
 
-  bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
-  bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
+  bool ParseDirectiveLsym(StringRef, SMLoc);
   bool ParseDirectiveSecureLogReset(StringRef, SMLoc);
+  bool ParseDirectiveSecureLogUnique(StringRef, SMLoc);
+  bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
 };
 
 }
@@ -836,8 +839,6 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveDarwinZerofill();
     if (IDVal == ".desc")
       return ParseDirectiveDarwinSymbolDesc();
-    if (IDVal == ".lsym")
-      return ParseDirectiveDarwinLsym();
     if (IDVal == ".tbss")
       return ParseDirectiveDarwinTBSS();
 
@@ -1717,20 +1718,20 @@ bool AsmParser::ParseDirectiveAbort() {
 
 /// ParseDirectiveLsym
 ///  ::= .lsym identifier , expression
-bool AsmParser::ParseDirectiveDarwinLsym() {
+bool DarwinAsmParser::ParseDirectiveLsym(StringRef, SMLoc) {
   StringRef Name;
-  if (ParseIdentifier(Name))
+  if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
   
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = CreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.lsym' directive");
   Lex();
 
   const MCExpr *Value;
-  if (ParseExpression(Value))
+  if (getParser().ParseExpression(Value))
     return true;
 
   if (getLexer().isNot(AsmToken::EndOfStatement))

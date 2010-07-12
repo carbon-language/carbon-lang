@@ -73,6 +73,10 @@ public:
   /// \brief Report an error at the current lexer location.
   bool TokError(const char *Msg);
 
+  /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
+  /// and set \arg Res to the identifier contents.
+  virtual bool ParseIdentifier(StringRef &Res) = 0;
+
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined
