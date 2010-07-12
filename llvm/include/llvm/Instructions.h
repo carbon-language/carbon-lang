@@ -922,6 +922,7 @@ public:
   static Instruction *CreateMalloc(Instruction *InsertBefore,
                                    const Type *IntPtrTy, const Type *AllocTy,
                                    Value *AllocSize, Value *ArraySize = 0,
+                                   Function* MallocF = 0,
                                    const Twine &Name = "");
   static Instruction *CreateMalloc(BasicBlock *InsertAtEnd,
                                    const Type *IntPtrTy, const Type *AllocTy,
@@ -929,7 +930,7 @@ public:
                                    Function* MallocF = 0,
                                    const Twine &Name = "");
   /// CreateFree - Generate the IR for a call to the builtin free function.
-  static void CreateFree(Value* Source, Instruction *InsertBefore);
+  static Instruction* CreateFree(Value* Source, Instruction *InsertBefore);
   static Instruction* CreateFree(Value* Source, BasicBlock *InsertAtEnd);
 
   ~CallInst();

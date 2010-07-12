@@ -471,9 +471,10 @@ static Instruction *createMalloc(Instruction *InsertBefore,
 Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
                                     const Type *IntPtrTy, const Type *AllocTy,
                                     Value *AllocSize, Value *ArraySize,
+				    Function * MallocF,
                                     const Twine &Name) {
   return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, AllocSize,
-                      ArraySize, NULL, Name);
+                      ArraySize, MallocF, Name);
 }
 
 /// CreateMalloc - Generate the IR for a call to malloc:
@@ -525,8 +526,8 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
 }
 
 /// CreateFree - Generate the IR for a call to the builtin free function.
-void CallInst::CreateFree(Value* Source, Instruction *InsertBefore) {
-  createFree(Source, InsertBefore, NULL);
+Instruction * CallInst::CreateFree(Value* Source, Instruction *InsertBefore) {
+  return createFree(Source, InsertBefore, NULL);
 }
 
 /// CreateFree - Generate the IR for a call to the builtin free function.
