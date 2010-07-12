@@ -929,15 +929,9 @@ void PCHDeclReader::VisitClassTemplateSpecializationDecl(
                        = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
     if (ClassTemplatePartialSpecializationDecl *Partial
             = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
-      ClassTemplatePartialSpecializationDecl *Inserted
-          = CanonPattern->getPartialSpecializations().GetOrInsertNode(Partial);
-      (void)Inserted;
-      assert(Inserted == Partial && "Already inserted!");
+      CanonPattern->getPartialSpecializations().InsertNode(Partial);
     } else {
-      ClassTemplateSpecializationDecl *Inserted
-          = CanonPattern->getSpecializations().GetOrInsertNode(D);
-      (void)Inserted;
-      assert(Inserted == D && "Already inserted!");
+      CanonPattern->getSpecializations().InsertNode(D);
     }
   }
 }
