@@ -1062,11 +1062,6 @@ DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
 
 DEF_TRAVERSE_DECL(UsingDecl, {
     TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameDecl()));
-    // FIXME: should we be iterating over the shadows?
-    for (UsingDecl::shadow_iterator I = D->shadow_begin(), E = D->shadow_end();
-         I != E; ++I) {
-      TRY_TO(TraverseDecl(*I));
-    }
   })
 
 DEF_TRAVERSE_DECL(UsingDirectiveDecl, {
