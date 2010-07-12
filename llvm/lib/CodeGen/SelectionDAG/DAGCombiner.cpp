@@ -3573,24 +3573,24 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
       if (VT.getSizeInBits() == N0VT.getSizeInBits())
-	return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
-			     N0.getOperand(1),
-			     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+        return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+                             N0.getOperand(1),
+                             cast<CondCodeSDNode>(N0.getOperand(2))->get());
       // If the desired elements are smaller or larger than the source
       // elements we can use a matching integer vector type and then
       // truncate/sign extend
       else {
-	EVT MatchingElementType =
-	  EVT::getIntegerVT(*DAG.getContext(),
-			    N0VT.getScalarType().getSizeInBits());
-	EVT MatchingVectorType =
-	  EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-			   N0VT.getVectorNumElements());
-	SDValue VsetCC =
-	  DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
-			N0.getOperand(1),
-			cast<CondCodeSDNode>(N0.getOperand(2))->get());
-	return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
+        EVT MatchingElementType =
+          EVT::getIntegerVT(*DAG.getContext(),
+                            N0VT.getScalarType().getSizeInBits());
+        EVT MatchingVectorType =
+          EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+                           N0VT.getVectorNumElements());
+        SDValue VsetCC =
+          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+                        N0.getOperand(1),
+                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
+        return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
       }
     }
 
@@ -3964,24 +3964,24 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
       if (VT.getSizeInBits() == N0VT.getSizeInBits())
-	return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
-			     N0.getOperand(1),
-			     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+        return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+                             N0.getOperand(1),
+                             cast<CondCodeSDNode>(N0.getOperand(2))->get());
       // If the desired elements are smaller or larger than the source
       // elements we can use a matching integer vector type and then
       // truncate/sign extend
       else {
-	EVT MatchingElementType =
-	  EVT::getIntegerVT(*DAG.getContext(),
-			    N0VT.getScalarType().getSizeInBits());
-	EVT MatchingVectorType =
-	  EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-			   N0VT.getVectorNumElements());
-	SDValue VsetCC =
-	  DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
-			N0.getOperand(1),
-			cast<CondCodeSDNode>(N0.getOperand(2))->get());
-	return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
+        EVT MatchingElementType =
+          EVT::getIntegerVT(*DAG.getContext(),
+                            N0VT.getScalarType().getSizeInBits());
+        EVT MatchingVectorType =
+          EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+                           N0VT.getVectorNumElements());
+        SDValue VsetCC =
+          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+                        N0.getOperand(1),
+                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
+        return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
       }
     }
 

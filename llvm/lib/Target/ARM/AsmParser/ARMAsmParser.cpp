@@ -425,7 +425,7 @@ bool ARMAsmParser::ParseMemory(OwningPtr<ARMOperand> &Op) {
     const AsmToken &NextTok = Parser.getTok();
     if (NextTok.isNot(AsmToken::EndOfStatement)) {
       if (NextTok.isNot(AsmToken::Comma))
-	return Error(NextTok.getLoc(), "',' expected");
+        return Error(NextTok.getLoc(), "',' expected");
       Parser.Lex(); // Eat comma token.
       if(ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType,
                               ShiftAmount, Offset, OffsetIsReg, OffsetRegNum, 
@@ -488,7 +488,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
 
       const AsmToken &Tok = Parser.getTok();
       if (ParseShift(ShiftType, ShiftAmount, E))
-	return Error(Tok.getLoc(), "shift expected");
+        return Error(Tok.getLoc(), "shift expected");
       OffsetRegShifted = true;
     }
   }

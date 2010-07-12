@@ -1397,11 +1397,11 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     } else if (MO.isGlobal()) {
       MCSymbol *Symbol = MCInstLowering.GetGlobalAddressSymbol(MO);
       const MCSymbolRefExpr *SymRef1 =
-	MCSymbolRefExpr::Create(Symbol,
-				MCSymbolRefExpr::VK_ARM_LO16, OutContext);
+        MCSymbolRefExpr::Create(Symbol,
+                                MCSymbolRefExpr::VK_ARM_LO16, OutContext);
       const MCSymbolRefExpr *SymRef2 =
-	MCSymbolRefExpr::Create(Symbol,
-				MCSymbolRefExpr::VK_ARM_HI16, OutContext);
+        MCSymbolRefExpr::Create(Symbol,
+                                MCSymbolRefExpr::VK_ARM_HI16, OutContext);
       V1 = MCOperand::CreateExpr(SymRef1);
       V2 = MCOperand::CreateExpr(SymRef2);
     } else {

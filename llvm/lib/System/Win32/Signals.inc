@@ -283,7 +283,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
 #ifdef _MSC_VER
   if (ExitOnUnhandledExceptions)
-  	_exit(-3);
+    _exit(-3);
 #endif
 
   // Allow dialog box to pop up allowing choice to start debugger.

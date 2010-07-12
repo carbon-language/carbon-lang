@@ -34,7 +34,7 @@
 /// Uses and Defs by this instr.  For the Uses part, the pred:$p operand is
 /// defined with two components:
 ///
-/// def pred {	// Operand PredicateOperand
+/// def pred { // Operand PredicateOperand
 ///   ValueType Type = OtherVT;
 ///   string PrintMethod = "printPredicateOperand";
 ///   string AsmOperandLowerMethod = ?;
@@ -54,7 +54,7 @@
 ///
 /// For the Defs part, in the simple case of only cc_out:$s, we have:
 ///
-/// def cc_out {	// Operand OptionalDefOperand
+/// def cc_out { // Operand OptionalDefOperand
 ///   ValueType Type = OtherVT;
 ///   string PrintMethod = "printSBitModifierOperand";
 ///   string AsmOperandLowerMethod = ?;

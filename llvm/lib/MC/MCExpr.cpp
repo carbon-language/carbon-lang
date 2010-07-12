@@ -40,7 +40,7 @@ void MCExpr::print(raw_ostream &OS) const {
     const MCSymbol &Sym = SRE.getSymbol();
 
     if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_HI16 ||
-	SRE.getKind() == MCSymbolRefExpr::VK_ARM_LO16)
+        SRE.getKind() == MCSymbolRefExpr::VK_ARM_LO16)
       OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
 
     // Parenthesize names that start with $ so that they don't look like
@@ -51,8 +51,8 @@ void MCExpr::print(raw_ostream &OS) const {
       OS << Sym;
 
     if (SRE.getKind() != MCSymbolRefExpr::VK_None &&
-	SRE.getKind() != MCSymbolRefExpr::VK_ARM_HI16 &&
-	SRE.getKind() != MCSymbolRefExpr::VK_ARM_LO16)
+        SRE.getKind() != MCSymbolRefExpr::VK_ARM_HI16 &&
+        SRE.getKind() != MCSymbolRefExpr::VK_ARM_LO16)
       OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
 
     return;

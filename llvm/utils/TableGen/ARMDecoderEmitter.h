@@ -31,7 +31,7 @@ public:
   ~ARMDecoderEmitter() {
     shutdownBackend();
   }
-	
+
   // run - Output the code emitter
   void run(raw_ostream &o);
     

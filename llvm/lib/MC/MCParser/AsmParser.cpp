@@ -453,8 +453,8 @@ bool AsmParser::ParseStatement() {
       IDVal = getTok().getString();
       Lex(); // Consume the integer token to be used as an identifier token.
       if (Lexer.getKind() != AsmToken::Colon) {
-	  if (!TheCondState.Ignore)
-	    return TokError("unexpected token at start of statement");
+        if (!TheCondState.Ignore)
+          return TokError("unexpected token at start of statement");
       }
     }
   }

@@ -505,7 +505,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_VAARG(SDNode *N) {
 
   SDValue NewVAARG;
   NewVAARG = DAG.getVAArg(NVT, dl, Chain, Ptr, N->getOperand(2),
-			  N->getConstantOperandVal(3));
+                          N->getConstantOperandVal(3));
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.

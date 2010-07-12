@@ -958,11 +958,11 @@ bool LoopIndexSplit::splitLoop() {
       continue;
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-	 BI != BE; ++BI) {
+         BI != BE; ++BI) {
       Instruction *Inst = BI;
 
       if (!Inst->isSafeToSpeculativelyExecute() && !isa<PHINode>(Inst)
-	  && !isa<BranchInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst))
+          && !isa<BranchInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst))
         return false;
     }
   }

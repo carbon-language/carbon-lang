@@ -230,7 +230,7 @@ class ABCD : public FunctionPass {
       DenseMapIterator<Value*, MemoizedResultChart> begin = map.begin();
       DenseMapIterator<Value*, MemoizedResultChart> end = map.end();
       for (; begin != end; ++begin) {
-	begin->second.clear();
+        begin->second.clear();
       }
       map.clear();
     }
@@ -396,8 +396,8 @@ class ABCD : public FunctionPass {
   /// this case the method returns true, otherwise false. It also obtains the
   /// Instruction and ConstantInt from the BinaryOperator and returns it.
   bool createBinaryOperatorInfo(BinaryOperator *BO, Instruction **I1,
-				Instruction **I2, ConstantInt **C1,
-				ConstantInt **C2);
+                                Instruction **I2, ConstantInt **C1,
+                                ConstantInt **C2);
 
   /// This method creates a constraint between a Sigma and an Instruction.
   /// These constraints are created as soon as we find a comparator that uses a

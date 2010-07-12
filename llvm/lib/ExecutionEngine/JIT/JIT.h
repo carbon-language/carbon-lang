@@ -100,9 +100,9 @@ public:
                                  CodeGenOpt::Level OptLevel =
                                    CodeGenOpt::Default,
                                  bool GVsWithCode = true,
-				 CodeModel::Model CMM = CodeModel::Default) {
+                                 CodeModel::Model CMM = CodeModel::Default) {
     return ExecutionEngine::createJIT(M, Err, JMM, OptLevel, GVsWithCode,
-				      CMM);
+                                      CMM);
   }
 
   virtual void addModule(Module *M);

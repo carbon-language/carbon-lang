@@ -269,7 +269,7 @@ public:
   /// recreate the failure. This returns true if a compiler error is found.
   ///
   bool runManyPasses(const std::vector<const PassInfo*> &AllPasses,
-		     std::string &ErrMsg);
+                     std::string &ErrMsg);
 
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bitcode file.  If an error occurs, true is returned.

@@ -43,10 +43,10 @@ struct DOTGraphTraits<DomTreeNode*> : public DefaultDOTGraphTraits {
 
     if (isSimple())
       return DOTGraphTraits<const Function*>
-	       ::getSimpleNodeLabel(BB, BB->getParent());
+        ::getSimpleNodeLabel(BB, BB->getParent());
     else
       return DOTGraphTraits<const Function*>
-	       ::getCompleteNodeLabel(BB, BB->getParent());
+        ::getCompleteNodeLabel(BB, BB->getParent());
   }
 };
 

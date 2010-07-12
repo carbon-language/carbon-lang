@@ -174,8 +174,8 @@ public:
                                     CodeGenOpt::Level OptLevel =
                                       CodeGenOpt::Default,
                                     bool GVsWithCode = true,
-				    CodeModel::Model CMM =
-				      CodeModel::Default);
+                                    CodeModel::Model CMM =
+                                      CodeModel::Default);
 
   /// addModule - Add a Module to the list of modules that we can JIT from.
   /// Note that this takes ownership of the Module: when the ExecutionEngine is

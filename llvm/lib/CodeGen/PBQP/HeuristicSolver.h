@@ -406,7 +406,7 @@ namespace PBQP {
 
       // Create node data objects.
       for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
-	       nItr != nEnd; ++nItr) {
+           nItr != nEnd; ++nItr) {
         nodeDataList.push_back(NodeData());
         g.setNodeData(nItr, &nodeDataList.back());
       }

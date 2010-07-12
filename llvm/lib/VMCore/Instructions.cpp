@@ -471,7 +471,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
 Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
                                     const Type *IntPtrTy, const Type *AllocTy,
                                     Value *AllocSize, Value *ArraySize,
-				    Function * MallocF,
+                                    Function * MallocF,
                                     const Twine &Name) {
   return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, AllocSize,
                       ArraySize, MallocF, Name);

@@ -1446,7 +1446,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         }
         break;
       default:
-      	break;
+        break;
       }
     }
   }

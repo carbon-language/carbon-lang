@@ -64,7 +64,7 @@ public:
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
-		     std::string *Error = 0,
+                     std::string *Error = 0,
                      const std::vector<std::string> &GCCArgs =
                          std::vector<std::string>(), 
                      unsigned Timeout = 0,

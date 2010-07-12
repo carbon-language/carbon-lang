@@ -2036,7 +2036,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 }
 
 static void WriteMDNodeComment(const MDNode *Node,
-			       formatted_raw_ostream &Out) {
+                               formatted_raw_ostream &Out) {
   if (Node->getNumOperands() < 1)
     return;
   ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));

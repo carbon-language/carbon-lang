@@ -97,14 +97,14 @@ MCSymbol *MCContext::CreateDirectionalLocalSymbol(int64_t LocalLabelVal) {
   return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
                            Twine(LocalLabelVal) +
                            "\2" +
-			   Twine(NextInstance(LocalLabelVal)));
+                           Twine(NextInstance(LocalLabelVal)));
 }
 MCSymbol *MCContext::GetDirectionalLocalSymbol(int64_t LocalLabelVal,
                                                int bORf) {
   return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
                            Twine(LocalLabelVal) +
                            "\2" +
-			   Twine(GetInstance(LocalLabelVal) + bORf));
+                           Twine(GetInstance(LocalLabelVal) + bORf));
 }
 
 MCSymbol *MCContext::LookupSymbol(StringRef Name) const {

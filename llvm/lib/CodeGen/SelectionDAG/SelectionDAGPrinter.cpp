@@ -278,7 +278,7 @@ std::string ScheduleDAGSDNodes::getGraphNodeLabel(const SUnit *SU) const {
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
       O << DOTGraphTraits<SelectionDAG*>
-	     ::getSimpleNodeLabel(FlaggedNodes.back(), DAG);
+        ::getSimpleNodeLabel(FlaggedNodes.back(), DAG);
       FlaggedNodes.pop_back();
       if (!FlaggedNodes.empty())
         O << "\n    ";

@@ -407,9 +407,9 @@ public:
     default:
       // This class preceeds the RHS if it is a proper subset of the RHS.
       if (isSubsetOf(RHS))
-	return true;
+        return true;
       if (RHS.isSubsetOf(*this))
-	return false;
+        return false;
 
       // Otherwise, order by name to ensure we have a total ordering.
       return ValueName < RHS.ValueName;

@@ -183,8 +183,8 @@ Backjump:
             --i;  // Don't skip an element of the list
             Changed = true;
           }
-	  if (!Error.empty())
-	    return true;
+          if (!Error.empty())
+            return true;
         }
         // This can take a long time if left uncontrolled.  For now, don't
         // iterate.
