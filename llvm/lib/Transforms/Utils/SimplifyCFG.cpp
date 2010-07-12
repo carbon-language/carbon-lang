@@ -1513,17 +1513,19 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
       // Okay, we're going to insert the PHI node.  Since PBI is not the only
       // predecessor, compute the PHI'd conditional value for all of the preds.
       // Any predecessor where the condition is not computable we keep symbolic.
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-        if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        BasicBlock *P = *PI;
+        if ((PBI = dyn_cast<BranchInst>(P->getTerminator())) &&
             PBI != BI && PBI->isConditional() &&
             PBI->getCondition() == BI->getCondition() &&
             PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
           bool CondIsTrue = PBI->getSuccessor(0) == BB;
           NewPN->addIncoming(ConstantInt::get(Type::getInt1Ty(BB->getContext()), 
-                                              CondIsTrue), *PI);
+                                              CondIsTrue), P);
         } else {
-          NewPN->addIncoming(BI->getCondition(), *PI);
+          NewPN->addIncoming(BI->getCondition(), P);
         }
+      }
       
       BI->setCondition(NewPN);
       return true;
