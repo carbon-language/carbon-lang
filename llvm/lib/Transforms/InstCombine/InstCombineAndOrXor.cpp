@@ -1584,6 +1584,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if ((match(A, m_Not(m_Specific(B))) &&
          match(D, m_Not(m_Specific(C)))))
       return BinaryOperator::CreateXor(C, B);
+
+    // ((A|B)&1)|(B&-2) -> (A&1) | B
+    if (match(A, m_Or(m_Value(V1), m_Specific(B))) ||
+        match(A, m_Or(m_Specific(B), m_Value(V1)))) {
+      Instruction *Ret = FoldOrWithConstants(I, Op1, V1, B, C);
+      if (Ret) return Ret;
+    }
+    // (B&-2)|((A|B)&1) -> (A&1) | B
+    if (match(B, m_Or(m_Specific(A), m_Value(V1))) ||
+        match(B, m_Or(m_Value(V1), m_Specific(A)))) {
+      Instruction *Ret = FoldOrWithConstants(I, Op0, A, V1, D);
+      if (Ret) return Ret;
+    }
   }
   
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
@@ -1597,19 +1610,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return BinaryOperator::Create(SI1->getOpcode(), NewOp, 
                                       SI1->getOperand(1));
       }
-  }
-
-  // ((A|B)&1)|(B&-2) -> (A&1) | B
-  if (match(Op0, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
-      match(Op0, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
-    Instruction *Ret = FoldOrWithConstants(I, Op1, A, B, C);
-    if (Ret) return Ret;
-  }
-  // (B&-2)|((A|B)&1) -> (A&1) | B
-  if (match(Op1, m_And(m_Or(m_Value(A), m_Value(B)), m_Value(C))) ||
-      match(Op1, m_And(m_Value(C), m_Or(m_Value(A), m_Value(B))))) {
-    Instruction *Ret = FoldOrWithConstants(I, Op0, A, B, C);
-    if (Ret) return Ret;
   }
 
   // (~A | ~B) == (~(A & B)) - De Morgan's Law
