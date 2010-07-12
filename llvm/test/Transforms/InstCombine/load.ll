@@ -7,6 +7,9 @@
 @Y = constant [2 x { i32, float }] [ { i32, float } { i32 12, float 1.000000e+00 }, { i32, float } { i32 37, float 0x3FF3B2FEC0000000 } ]		; <[2 x { i32, float }]*> [#uses=2]
 @Z = constant [2 x { i32, float }] zeroinitializer		; <[2 x { i32, float }]*> [#uses=1]
 
+@GLOBAL = internal constant [4 x i32] zeroinitializer
+
+
 define i32 @test1() {
 	%B = load i32* @X		; <i32> [#uses=1]
 	ret i32 %B
@@ -85,3 +88,11 @@ define i32 @test12(i32* %P) {
         %V = load i32* %Q
         ret i32 %V
 }
+
+define <16 x i8> @test13(<2 x i64> %x) {
+entry:
+	%tmp = load <16 x i8> * bitcast ([4 x i32]* @GLOBAL to <16 x i8>*)
+	ret <16 x i8> %tmp
+}
+
+
