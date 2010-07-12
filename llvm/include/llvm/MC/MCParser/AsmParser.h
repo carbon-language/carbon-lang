@@ -26,6 +26,7 @@
 namespace llvm {
 class AsmCond;
 class AsmToken;
+class MCAsmParserExtension;
 class MCContext;
 class MCExpr;
 class MCInst;
@@ -43,6 +44,7 @@ private:
   MCContext &Ctx;
   MCStreamer &Out;
   SourceMgr &SrcMgr;
+  MCAsmParserExtension *GenericParser;
   TargetAsmParser *TargetParser;
   
   /// This is the current buffer index we're lexing from as managed by the
@@ -56,18 +58,20 @@ private:
   /// invoked after the directive identifier is read and is responsible for
   /// parsing and validating the rest of the directive.  The handler is passed
   /// in the directive name and the location of the directive keyword.
-  StringMap<bool(AsmParser::*)(StringRef, SMLoc)> DirectiveMap;
+  StringMap<std::pair<MCAsmParserExtension*, DirectiveHandler> > DirectiveMap;
 public:
   AsmParser(const Target &T, SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
   ~AsmParser();
 
   bool Run(bool NoInitialTextSection, bool NoFinalize = false);
-  
-  void AddDirectiveHandler(StringRef Directive,
-                           bool (AsmParser::*Handler)(StringRef, SMLoc)) {
-    DirectiveMap[Directive] = Handler;
+
+  void AddDirectiveHandler(MCAsmParserExtension *Object,
+                           StringRef Directive,
+                           DirectiveHandler Handler) {
+    DirectiveMap[Directive] = std::make_pair(Object, Handler);
   }
+
 public:
   TargetAsmParser &getTargetParser() const { return *TargetParser; }
   void setTargetParser(TargetAsmParser &P);
@@ -154,10 +158,6 @@ private:
   bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
   bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
-
-  bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc); // ".file"
-  bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc); // ".line"
-  bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
 
   /// ParseEscapedString - Parse the current token as a string which may include
   /// escaped characters and return the string contents.

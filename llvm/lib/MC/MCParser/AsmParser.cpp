@@ -30,21 +30,48 @@
 using namespace llvm;
 
 
+namespace {
+
+/// \brief Generic implementations of directive handling, etc. which is shared
+/// (or the default, at least) for all assembler parser.
+class GenericAsmParser : public MCAsmParserExtension {
+public:
+  GenericAsmParser() {}
+
+  virtual void Initialize(MCAsmParser &Parser) {
+    // Call the base implementation.
+    this->MCAsmParserExtension::Initialize(Parser);
+
+    // Debugging directives.
+    Parser.AddDirectiveHandler(this, ".file", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveFile));
+    Parser.AddDirectiveHandler(this, ".line", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveLine));
+    Parser.AddDirectiveHandler(this, ".loc", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveLoc));
+  }
+
+  bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc); // ".file"
+  bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc); // ".line"
+  bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
+};
+
+}
+
 enum { DEFAULT_ADDRSPACE = 0 };
 
 AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
-  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
-    CurBuffer(0) {
+  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
+    GenericParser(new GenericAsmParser), TargetParser(0), CurBuffer(0) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
-  
-  // Debugging directives.
-  AddDirectiveHandler(".file", &AsmParser::ParseDirectiveFile);
-  AddDirectiveHandler(".line", &AsmParser::ParseDirectiveLine);
-  AddDirectiveHandler(".loc", &AsmParser::ParseDirectiveLoc);
+
+  // Initialize the generic parser.
+  GenericParser->Initialize(*this);
 }
 
 AsmParser::~AsmParser() {
+  delete GenericParser;
 }
 
 void AsmParser::setTargetParser(TargetAsmParser &P) {
@@ -787,11 +814,12 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".secure_log_reset")
       return ParseDirectiveDarwinSecureLogReset(IDLoc);
 
-    // Look up the handler in the handler table, 
-    bool(AsmParser::*Handler)(StringRef, SMLoc) = DirectiveMap[IDVal];
-    if (Handler)
-      return (this->*Handler)(IDVal, IDLoc);
-    
+    // Look up the handler in the handler table.
+    std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
+      DirectiveMap.lookup(IDVal);
+    if (Handler.first)
+      return (Handler.first->*Handler.second)(IDVal, IDLoc);
+
     // Target hook for parsing target specific directives.
     if (!getTargetParser().ParseDirective(ID))
       return false;
@@ -1895,7 +1923,7 @@ bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
 
 /// ParseDirectiveFile
 /// ::= .file [number] string
-bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
+bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   // FIXME: I'm not sure what this is.
   int64_t FileNumber = -1;
   if (getLexer().is(AsmToken::Integer)) {
@@ -1926,7 +1954,7 @@ bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
 
 /// ParseDirectiveLine
 /// ::= .line [number]
-bool AsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
+bool GenericAsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     if (getLexer().isNot(AsmToken::Integer))
       return TokError("unexpected token in '.line' directive");
@@ -1947,7 +1975,7 @@ bool AsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
 
 /// ParseDirectiveLoc
 /// ::= .loc number [number [number]]
-bool AsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
+bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::Integer))
     return TokError("unexpected token in '.loc' directive");
 

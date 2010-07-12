@@ -15,15 +15,21 @@
 namespace llvm {
 class AsmToken;
 class MCAsmLexer;
+class MCAsmParserExtension;
 class MCContext;
 class MCExpr;
 class MCStreamer;
 class SMLoc;
+class StringRef;
 class Twine;
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
 /// assembly parsers.
 class MCAsmParser {
+public:
+  typedef bool (MCAsmParserExtension::*DirectiveHandler)(StringRef, SMLoc);
+
+private:
   MCAsmParser(const MCAsmParser &);   // DO NOT IMPLEMENT
   void operator=(const MCAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
@@ -32,11 +38,15 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCAsmParser();
 
+  virtual void AddDirectiveHandler(MCAsmParserExtension *Object,
+                                   StringRef Directive,
+                                   DirectiveHandler Handler) = 0;
+
   virtual MCAsmLexer &getLexer() = 0;
 
   virtual MCContext &getContext() = 0;
 
-  /// getSteamer - Return the output streamer for the assembler.
+  /// getStreamer - Return the output streamer for the assembler.
   virtual MCStreamer &getStreamer() = 0;
 
   /// Warning - Emit a warning at the location \arg L, with the message \arg
