@@ -166,6 +166,14 @@ public:
   /// FindNodeOrInsertPos.
   void InsertNode(Node *N, void *InsertPos);
 
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.
+  void InsertNode(Node *N) {
+    Node *Inserted = GetOrInsertNode(N);
+    (void)Inserted;
+    assert(Inserted == N && "Node already inserted!");
+  }
+
   /// size - Returns the number of nodes in the folding set.
   unsigned size() const { return NumNodes; }
 
