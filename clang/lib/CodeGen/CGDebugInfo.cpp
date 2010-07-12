@@ -598,7 +598,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodLinkageName,
                                   MethodDefUnit, MethodLine,
                                   MethodTy, /*isLocalToUnit=*/false, 
-                                  Method->isThisDeclarationADefinition(),
+                                  /* isDefintion=*/ false,
                                   Virtuality, VIndex, ContainingType);
   
   // Don't cache ctors or dtors since we have to emit multiple functions for
