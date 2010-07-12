@@ -143,6 +143,8 @@ public:
     return CurTok = LexToken();
   }
 
+  virtual StringRef LexUntilEndOfStatement() = 0;
+
   /// getLoc - Get the current source location.
   SMLoc getLoc() const;
 
