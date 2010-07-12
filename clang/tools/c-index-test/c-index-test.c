@@ -799,7 +799,7 @@ void print_completion_result(CXCompletionResult *completion_result,
           clang_getCompletionPriority(completion_result->CompletionString));
 }
 
-int perform_code_completion(int argc, const char **argv) {
+int perform_code_completion(int argc, const char **argv, int timing_only) {
   const char *input = argv[1];
   char *filename = 0;
   unsigned line;
@@ -810,7 +810,11 @@ int perform_code_completion(int argc, const char **argv) {
   int num_unsaved_files = 0;
   CXCodeCompleteResults *results = 0;
 
-  input += strlen("-code-completion-at=");
+  if (timing_only)
+    input += strlen("-code-completion-timing=");
+  else
+    input += strlen("-code-completion-at=");
+
   if ((errorCode = parse_file_line_column(input, &filename, &line, &column,
                                           0, 0)))
     return errorCode;
@@ -827,8 +831,9 @@ int perform_code_completion(int argc, const char **argv) {
 
   if (results) {
     unsigned i, n = results->NumResults;
-    for (i = 0; i != n; ++i)
-      print_completion_result(results->Results + i, stdout);
+    if (!timing_only)
+      for (i = 0; i != n; ++i)
+        print_completion_result(results->Results + i, stdout);
     n = clang_codeCompleteGetNumDiagnostics(results);
     for (i = 0; i != n; ++i) {
       CXDiagnostic diag = clang_codeCompleteGetDiagnostic(results, i);
@@ -1204,6 +1209,7 @@ static CXCursorVisitor GetVisitor(const char *s) {
 static void print_usage(void) {
   fprintf(stderr,
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
+    "       c-index-test -code-completion-timing=<site> <compiler arguments>\n"
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n"
@@ -1211,9 +1217,9 @@ static void print_usage(void) {
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu-usrs <AST file> <symbol filter> "
            "[FileCheck prefix]\n"
-    "       c-index-test -test-load-source <symbol filter> {<args>}*\n"
-    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n");
+    "       c-index-test -test-load-source <symbol filter> {<args>}*\n");
   fprintf(stderr,
+    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n"
     "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
     "       c-index-test -test-inclusion-stack-tu <AST file>\n"
@@ -1235,7 +1241,9 @@ static void print_usage(void) {
 int main(int argc, const char **argv) {
   clang_enableStackTraces();
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
-    return perform_code_completion(argc, argv);
+    return perform_code_completion(argc, argv, 0);
+  if (argc > 2 && strstr(argv[1], "-code-completion-timing=") == argv[1])
+    return perform_code_completion(argc, argv, 1);
   if (argc > 2 && strstr(argv[1], "-cursor-at=") == argv[1])
     return inspect_cursor_at(argc, argv);
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
