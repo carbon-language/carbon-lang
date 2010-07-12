@@ -2060,7 +2060,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   MachineInstr::mmo_iterator MMOBegin,
                                   MachineInstr::mmo_iterator MMOEnd,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = *MMOBegin && (*MMOBegin)->getAlignment() >= 16;
+  bool isAligned = MMOBegin != MMOEnd && (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
@@ -2090,7 +2090,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  MachineInstr::mmo_iterator MMOBegin,
                                  MachineInstr::mmo_iterator MMOEnd,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = *MMOBegin && (*MMOBegin)->getAlignment() >= 16;
+  bool isAligned = MMOBegin != MMOEnd && (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
