@@ -206,14 +206,13 @@ static BasicBlock *FindObviousSharedDomOf(BasicBlock *SrcBlock,
   // there is only one other pred, get it, otherwise we can't handle it.
   PI = pred_begin(DstBlock); PE = pred_end(DstBlock);
   BasicBlock *DstOtherPred = 0;
-  BasicBlock *P = *PI;
-  if (P == SrcBlock) {
+  if (*PI == SrcBlock) {
     if (++PI == PE) return 0;
-    DstOtherPred = P;
+    DstOtherPred = *PI;
     if (++PI != PE) return 0;
   } else {
-    DstOtherPred = P;
-    if (++PI == PE || P != SrcBlock || ++PI != PE) return 0;
+    DstOtherPred = *PI;
+    if (++PI == PE || *PI != SrcBlock || ++PI != PE) return 0;
   }
 
   // We can handle two situations here: "if then" and "if then else" blocks.  An
