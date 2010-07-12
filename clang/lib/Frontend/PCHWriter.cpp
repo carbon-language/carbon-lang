@@ -2083,11 +2083,6 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const PCHReader *Chain, const char *isysroot) {
-  using namespace llvm;
-
-  ASTContext &Context = SemaRef.Context;
-  Preprocessor &PP = SemaRef.PP;
-
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'P', 8);
@@ -2095,6 +2090,19 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.Emit((unsigned)'H', 8);
 
   WriteBlockInfoBlock();
+
+  if (Chain)
+    WritePCHChain(SemaRef, StatCalls, Chain, isysroot);
+  else
+    WritePCHCore(SemaRef, StatCalls, isysroot);
+}
+
+void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                             const char *isysroot) {
+  using namespace llvm;
+
+  ASTContext &Context = SemaRef.Context;
+  Preprocessor &PP = SemaRef.PP;
 
   // The translation unit is the first declaration we'll emit.
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
@@ -2158,9 +2166,8 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
-  WriteMetadata(Context, Chain, isysroot);
-  if (!Chain)
-    WriteLanguageOptions(Context.getLangOptions());
+  WriteMetadata(Context, 0, isysroot);
+  WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls, isysroot);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
@@ -2266,6 +2273,64 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Record.push_back(NumLexicalDeclContexts);
   Record.push_back(NumVisibleDeclContexts);
   Stream.EmitRecord(pch::STATISTICS, Record);
+  Stream.ExitBlock();
+}
+
+void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                              const PCHReader *Chain, const char *isysroot) {
+  using namespace llvm;
+
+  ASTContext &Context = SemaRef.Context;
+  Preprocessor &PP = SemaRef.PP;
+  (void)PP;
+  
+  RecordData Record;
+  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
+  WriteMetadata(Context, Chain, isysroot);
+  // FIXME: StatCache
+  // FIXME: Source manager block
+
+  // The special types are in the chained PCH.
+
+  // We don't start with the translation unit, but with its decls that
+  // don't come from the other PCH.
+  const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
+  // FIXME: We don't want to iterate over everything here, because it needlessly
+  // deserializes the entire original PCH. Instead we only want to iterate over
+  // the stuff that's already there.
+  // All in good time, though.
+  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
+       I != E; ++I) {
+    if ((*I)->getPCHLevel() == 0) {
+      (*I)->dump();
+      DeclTypesToEmit.push(*I);
+    }
+  }
+
+  Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
+  WriteDeclsBlockAbbrevs();
+  while (!DeclTypesToEmit.empty()) {
+    DeclOrType DOT = DeclTypesToEmit.front();
+    DeclTypesToEmit.pop();
+    if (DOT.isType())
+      WriteType(DOT.getType());
+    else
+      WriteDecl(Context, DOT.getDecl());
+  }
+  Stream.ExitBlock();
+
+  // FIXME: Preprocessor
+  // FIXME: Method pool
+  // FIXME: Identifier table
+  // FIXME: Type offsets
+  // FIXME: Declaration offsets
+  // FIXME: External unnamed definitions
+  // FIXME: Tentative definitions
+  // FIXME: Unused static functions
+  // FIXME: Locally-scoped external definitions
+  // FIXME: ext_vector type names
+  // FIXME: Dynamic classes declarations
+  // FIXME: Statistics
   Stream.ExitBlock();
 }
 

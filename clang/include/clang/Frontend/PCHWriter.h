@@ -238,6 +238,11 @@ private:
   unsigned ParmVarDeclAbbrev;
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
+
+  void WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                    const char* isysroot);
+  void WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                     const PCHReader *Chain, const char* isysroot);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
