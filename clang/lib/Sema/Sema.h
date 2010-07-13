@@ -118,7 +118,8 @@ struct FunctionScopeInfo {
 
   /// \brief Set true when a function, method contains a VLA or ObjC try block,
   /// which introduce scopes that need to be checked for goto conditions.  If a
-  /// function does not contain this, then it need not have the jump checker run on it.
+  /// function does not contain this, then it need not have the jump checker run
+  /// on it.
   bool NeedsScopeChecking;
 
   /// \brief The number of errors that had occurred before starting this
@@ -1540,7 +1541,7 @@ public:
 
   // Decl attributes - this routine is the top level dispatcher.
   void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD);
-  void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList);
+  void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AL);
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl, unsigned DiagID);
@@ -3021,7 +3022,7 @@ public:
                                             Declarator &D);
 
   virtual DeclPtrTy ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
-                                                    MultiTemplateParamsArg TemplateParameterLists,
+                                  MultiTemplateParamsArg TemplateParameterLists,
                                                     Declarator &D);
 
   bool
@@ -3029,7 +3030,7 @@ public:
                                          TemplateSpecializationKind NewTSK,
                                          NamedDecl *PrevDecl,
                                          TemplateSpecializationKind PrevTSK,
-                                         SourceLocation PrevPointOfInstantiation,
+                                         SourceLocation PrevPtOfInstantiation,
                                          bool &SuppressNew);
 
   bool CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
@@ -3969,7 +3970,7 @@ public:
                                                  SourceLocation *IdentLocs,
                                                  unsigned NumElts);
 
-  virtual DeclPtrTy ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
+  virtual DeclPtrTy ActOnForwardProtocolDeclaration(SourceLocation AtProtoclLoc,
                                             const IdentifierLocPair *IdentList,
                                                   unsigned NumElts,
                                                   AttributeList *attrList);
@@ -4326,7 +4327,7 @@ public:
                                  bool IgnoreBaseAccess = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
-                                 AssignmentAction Action, bool IgnoreBaseAccess);
+                                 AssignmentAction Action,bool IgnoreBaseAccess);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).
@@ -4347,7 +4348,8 @@ public:
   QualType CheckShiftOperands( // C99 6.5.7
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckCompareOperands( // C99 6.5.8/9
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc, bool isRelational);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc,
+                                bool isRelational);
   QualType CheckBitwiseOperands( // C99 6.5.[10...12]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckLogicalOperands( // C99 6.5.[13,14]
