@@ -52,18 +52,22 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
     cast<ObjCContainerDecl>(ClassCategory.getAs<Decl>());
 
   if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
-    if (CDecl->IsClassExtension())
-      return HandlePropertyInClassExtension(S, CDecl, AtLoc,
-                                            FD, GetterSel, SetterSel,
-                                            isAssign, isReadWrite,
-                                            Attributes,
-                                            isOverridingProperty, TSI,
-                                            MethodImplKind);
-
+    if (CDecl->IsClassExtension()) {
+      DeclPtrTy Res = HandlePropertyInClassExtension(S, CDecl, AtLoc,
+                                           FD, GetterSel, SetterSel,
+                                           isAssign, isReadWrite,
+                                           Attributes,
+                                           isOverridingProperty, TSI,
+                                           MethodImplKind);
+      if (Res)
+        CheckObjCPropertyAttributes(Res, AtLoc, Attributes);
+      return Res;
+    }
+  
   DeclPtrTy Res =  DeclPtrTy::make(CreatePropertyDecl(S, ClassDecl, AtLoc, FD,
-                                            GetterSel, SetterSel,
-                                            isAssign, isReadWrite,
-                                            Attributes, TSI, MethodImplKind));
+                                              GetterSel, SetterSel,
+                                              isAssign, isReadWrite,
+                                              Attributes, TSI, MethodImplKind));
   // Validate the attributes on the @property.
   CheckObjCPropertyAttributes(Res, AtLoc, Attributes);
   return Res;

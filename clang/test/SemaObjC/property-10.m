@@ -20,3 +20,9 @@
 @property(nonatomic,copy) int (*includeMailboxCondition2)(); // expected-error {{property with 'copy' attribute must be of object type}}
 
 @end
+
+@interface I0()
+@property (retain) int PROP;	// expected-error {{property with 'retain' attribute must be of object type}}
+@property(nonatomic,copy) int (*PROP1)(); // expected-error {{property with 'copy' attribute must be of object type}}
+@end
+
