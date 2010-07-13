@@ -5522,10 +5522,12 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         break;
       }
 
-      if (OpInfo.ConstraintType == TargetLowering::C_Other) {
-        assert(!OpInfo.isIndirect &&
-               "Don't know how to handle indirect other inputs yet!");
+      // Treat indirect 'X' constraint as memory.
+      if (OpInfo.ConstraintType == TargetLowering::C_Other && 
+          OpInfo.isIndirect) 
+        OpInfo.ConstraintType = TargetLowering::C_Memory;
 
+      if (OpInfo.ConstraintType == TargetLowering::C_Other) {
         std::vector<SDValue> Ops;
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          Ops, DAG);
