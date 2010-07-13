@@ -1135,17 +1135,34 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           (!getLangOptions().CPlusPlus ||
            (!T->isDependentType() && !T->isRecordType()))) {
         unsigned Quals = D.getDeclSpec().getTypeQualifiers();
+        std::string QualStr;
+        unsigned NumQuals = 0;
         SourceLocation Loc;
-        if (Quals & Qualifiers::Const)
+        if (Quals & Qualifiers::Const) {
           Loc = D.getDeclSpec().getConstSpecLoc();
-        else if (Quals & Qualifiers::Volatile)
-          Loc = D.getDeclSpec().getVolatileSpecLoc();
-        else {
-          assert((Quals & Qualifiers::Restrict) && "Unknown type qualifier");
-          Loc = D.getDeclSpec().getRestrictSpecLoc();
+          ++NumQuals;
+          QualStr = "const";
         }
-        
+        if (Quals & Qualifiers::Volatile) {
+          if (NumQuals == 0) {
+            Loc = D.getDeclSpec().getVolatileSpecLoc();
+            QualStr = "volatile";
+          } else
+            QualStr += " volatile";
+          ++NumQuals;
+        }
+        if (Quals & Qualifiers::Restrict) {
+          if (NumQuals == 0) {
+            Loc = D.getDeclSpec().getRestrictSpecLoc();
+            QualStr = "restrict";
+          } else
+            QualStr += " restrict";
+          ++NumQuals;
+        }
+        assert(NumQuals > 0 && "No known qualifiers?");
+            
         SemaDiagnosticBuilder DB = Diag(Loc, diag::warn_qual_return_type);
+        DB << QualStr << NumQuals;
         if (Quals & Qualifiers::Const)
           DB << FixItHint::CreateRemoval(D.getDeclSpec().getConstSpecLoc());
         if (Quals & Qualifiers::Volatile)

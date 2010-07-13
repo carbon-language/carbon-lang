@@ -292,10 +292,15 @@ namespace PR7598 {
     return v;
   }
 
+  const volatile Enum g2() { // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
+    return v;
+  }
+
   void f() {
     const Enum v2 = v;
     Enum e = false ? g() : v;
     Enum e2 = false ? v2 : v;
+    Enum e3 = false ? g2() : v;
   }
 
 }
