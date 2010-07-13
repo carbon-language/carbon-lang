@@ -1539,6 +1539,14 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       return DeclPtrTy::make(Tag);
   }
   
+  if (getLangOptions().CPlusPlus && 
+      DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
+    if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Tag))
+      if (Enum->enumerator_begin() == Enum->enumerator_end() &&
+          !Enum->getIdentifier() && !Enum->isInvalidDecl())
+        Diag(Enum->getLocation(), diag::ext_no_declarators)
+          << DS.getSourceRange();
+      
   if (!DS.isMissingDeclaratorOk() &&
       DS.getTypeSpecType() != DeclSpec::TST_error) {
     // Warn about typedefs of enums without names, since this is an

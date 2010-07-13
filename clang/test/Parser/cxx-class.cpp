@@ -7,7 +7,7 @@ protected:
   static int sf(), u;
 
   struct S {};
-  enum {};
+  enum {}; // expected-warning{{declaration does not declare anything}}
   int; // expected-warning {{declaration does not declare anything}}
   int : 1, : 2;
 

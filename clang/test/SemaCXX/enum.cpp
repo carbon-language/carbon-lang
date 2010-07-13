@@ -81,3 +81,7 @@ namespace PR7051 {
     e |= 1; // expected-error{{assigning to 'PR7051::E' from incompatible type 'int'}}
   }
 }
+
+// PR7466
+enum { }; // expected-warning{{declaration does not declare anything}}
+typedef enum { }; // expected-warning{{typedef requires a name}}
