@@ -612,6 +612,8 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
       return Error(NameLoc, "popfl cannot be encoded in 64-bit mode");
     else if (Name == "pushfl")
       return Error(NameLoc, "pushfl cannot be encoded in 64-bit mode");
+    else if (Name == "pusha")
+      return Error(NameLoc, "pusha cannot be encoded in 64-bit mode");
   } else {
     if (Name == "popfq")
       return Error(NameLoc, "popfq cannot be encoded in 32-bit mode");
