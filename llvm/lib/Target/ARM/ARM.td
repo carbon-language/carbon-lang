@@ -48,6 +48,8 @@ def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
                                      "Enable divide instructions">;
 def FeatureT2ExtractPack: SubtargetFeature<"t2xtpk", "HasT2ExtractPack", "true",
                                  "Enable Thumb2 extract and pack instructions">;
+def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
+                                         "FP compare + branch is slow">;
 
 // Some processors have multiply-accumulate instructions that don't
 // play nicely with other VFP instructions, and it's generally better
@@ -129,7 +131,7 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
-                 FeatureNEONForFP, FeatureT2ExtractPack]>;
+                 FeatureSlowFPBrcc, FeatureNEONForFP, FeatureT2ExtractPack]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
                 [ArchV7A, FeatureThumb2, FeatureNEON, FeatureT2ExtractPack]>;
 def : ProcNoItin<"cortex-m3",       [ArchV7M, FeatureThumb2, FeatureHWDiv]>;

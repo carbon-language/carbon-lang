@@ -54,6 +54,9 @@ protected:
   /// the VML[AS] instructions are slow (if so, don't use them).
   bool SlowVMLx;
 
+  /// SlowFPBrcc - True if floating point compare + branch is slow.
+  bool SlowFPBrcc;
+
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
 
@@ -133,6 +136,7 @@ protected:
   bool hasDivide() const { return HasHardwareDivide; }
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
+  bool isFPBrccSlow() const { return SlowFPBrcc; }
 
   bool hasFP16() const { return HasFP16; }
 
