@@ -354,7 +354,7 @@ public:
   typedef FragmentListType::reverse_iterator reverse_iterator;
 
 private:
-  iplist<MCFragment> Fragments;
+  FragmentListType Fragments;
   const MCSection *Section;
 
   /// Ordinal - The section index in the assemblers section list.
