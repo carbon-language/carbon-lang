@@ -20,8 +20,8 @@ namespace {
 TEST(APIntTest, ShiftLeftByZero) {
   APInt One = APInt::getNullValue(65) + 1;
   APInt Shl = One.shl(0);
-  EXPECT_EQ(true, Shl[0]);
-  EXPECT_EQ(false, Shl[1]);
+  EXPECT_TRUE(Shl[0]);
+  EXPECT_FALSE(Shl[1]);
 }
 
 TEST(APIntTest, i128_NegativeCount) {

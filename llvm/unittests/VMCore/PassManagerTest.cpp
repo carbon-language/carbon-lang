@@ -105,8 +105,8 @@ namespace llvm {
       static bool finalized;
       int allocated;
       void run() {
-        EXPECT_EQ(true, initialized);
-        EXPECT_EQ(false, finalized);
+        EXPECT_TRUE(initialized);
+        EXPECT_FALSE(finalized);
         EXPECT_EQ(0, allocated);
         allocated++;
         runc++;
@@ -115,8 +115,8 @@ namespace llvm {
       static char ID;
       static void finishedOK(int run) {
         EXPECT_GT(runc, 0);
-        EXPECT_EQ(true, initialized);
-        EXPECT_EQ(true, finalized);
+        EXPECT_TRUE(initialized);
+        EXPECT_TRUE(finalized);
         EXPECT_EQ(run, runc);
       }
       PassTestBase() : P(&ID), allocated(0) {
@@ -140,12 +140,12 @@ namespace llvm {
     struct PassTest : public PassTestBase<P> {
     public:
       virtual bool doInitialization(T &t) {
-        EXPECT_EQ(false, PassTestBase<P>::initialized);
+        EXPECT_FALSE(PassTestBase<P>::initialized);
         PassTestBase<P>::initialized = true;
         return false;
       }
       virtual bool doFinalization(T &t) {
-        EXPECT_EQ(false, PassTestBase<P>::finalized);
+        EXPECT_FALSE(PassTestBase<P>::finalized);
         PassTestBase<P>::finalized = true;
         EXPECT_EQ(0, PassTestBase<P>::allocated);
         return false;
@@ -180,7 +180,7 @@ namespace llvm {
     public:
       LPass() {
         initcount = 0; fincount=0;
-        EXPECT_EQ(false, initialized);
+        EXPECT_FALSE(initialized);
       }
       static void finishedOK(int run, int finalized) {
         PassTestBase<LoopPass>::finishedOK(run);
@@ -222,7 +222,7 @@ namespace llvm {
         fin = 0;
       }
       virtual bool doInitialization(Module &M) {
-        EXPECT_EQ(false, initialized);
+        EXPECT_FALSE(initialized);
         initialized = true;
         return false;
       }
@@ -240,7 +240,7 @@ namespace llvm {
         return false;
       }
       virtual bool doFinalization(Module &M) {
-        EXPECT_EQ(false, finalized);
+        EXPECT_FALSE(finalized);
         finalized = true;
         EXPECT_EQ(0, allocated);
         return false;
