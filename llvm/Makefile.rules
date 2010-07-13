@@ -42,7 +42,7 @@ VPATH=$(PROJ_SRC_DIR)
 # Reset the list of suffixes we know how to build.
 #--------------------------------------------------------------------
 .SUFFIXES:
-.SUFFIXES: .c .cpp .cc .h .hpp .o .a .bc .td .ps .dot .ll
+.SUFFIXES: .c .cpp .cc .h .hpp .o .a .bc .td .ps .dot .ll .m .mm
 .SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
 
 #--------------------------------------------------------------------
@@ -1442,6 +1442,11 @@ $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
+$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+	$(Echo) "Compiling $*.mm for $(BuildMode) build" $(PIC_FLAG)
+	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	        $(DEPEND_MOVEFILE)
+
 $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
@@ -1449,6 +1454,11 @@ $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
+	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	        $(DEPEND_MOVEFILE)
+
+$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
+	$(Echo) "Compiling $*.m for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
@@ -1470,6 +1480,12 @@ $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
                               $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
 	        $(BC_DEPEND_MOVEFILE)
 
+$(ObjDir)/%.ll: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
+	$(Echo) "Compiling $*.mm for $(BuildMode) build (bytecode)"
+	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
+                              $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
+	        $(BC_DEPEND_MOVEFILE)
+
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
@@ -1482,11 +1498,21 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
                               $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
 	        $(BC_DEPEND_MOVEFILE)
 
+$(ObjDir)/%.ll: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
+	$(Echo) "Compiling $*.m for $(BuildMode) build (bytecode)"
+	$(Verb) if $(BCCompile.C) $(BC_DEPEND_OPTIONS) \
+                              $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
+	        $(BC_DEPEND_MOVEFILE)
+
 # Provide alternate rule sets if dependencies are disabled
 else
 
 $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
+	$(Compile.CXX) $< -o $@
+
+$(ObjDir)/%.o: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.mm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@
 
 $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
@@ -1497,8 +1523,16 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@
 
+$(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.m for $(BuildMode) build" $(PIC_FLAG)
+	$(Compile.C) $< -o $@
+
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
+	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
+
+$(ObjDir)/%.ll: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
+	$(Echo) "Compiling $*.mm for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
@@ -1509,12 +1543,20 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
 
+$(ObjDir)/%.ll: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
+	$(Echo) "Compiling $*.m for $(BuildMode) build (bytecode)"
+	$(BCCompile.C) $< -o $@ -S -emit-llvm
+
 endif
 
 
 ## Rules for building preprocessed (.i/.ii) outputs.
 $(BuildMode)/%.ii: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build to .ii file"
+	$(Verb) $(Preprocess.CXX) $< -o $@
+
+$(BuildMode)/%.ii: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.mm for $(BuildMode) build to .ii file"
 	$(Verb) $(Preprocess.CXX) $< -o $@
 
 $(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
@@ -1525,9 +1567,17 @@ $(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build to .i file"
 	$(Verb) $(Preprocess.C) $< -o $@
 
+$(BuildMode)/%.i: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.m for $(BuildMode) build to .i file"
+	$(Verb) $(Preprocess.C) $< -o $@
+
 
 $(ObjDir)/%.s: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp to asm for $(BuildMode) build" $(PIC_FLAG)
+	$(Compile.CXX) $< -o $@ -S
+
+$(ObjDir)/%.s: %.mm $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.mm to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.CXX) $< -o $@ -S
 
 $(ObjDir)/%.s: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
@@ -1536,6 +1586,10 @@ $(ObjDir)/%.s: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 
 $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c to asm for $(BuildMode) build" $(PIC_FLAG)
+	$(Compile.C) $< -o $@ -S
+
+$(ObjDir)/%.s: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.m to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@ -S
 
 
@@ -1750,7 +1804,7 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 ifndef IS_CLEANING_TARGET
 
 # Get the list of dependency files
-DependSourceFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
+DependSourceFiles := $(basename $(filter %.cpp %.c %.cc %.m %.mm, $(Sources)))
 DependFiles := $(DependSourceFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
 
 # Include bitcode dependency files if using bitcode libraries
