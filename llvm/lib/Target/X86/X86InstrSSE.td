@@ -1422,6 +1422,25 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
   }
 }
 
+/// sse12_fp_packed_logical_y - AVX 256-bit SSE 1 & 2 logical ops forms
+///
+let isAsmParserOnly = 1 in {
+multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr> {
+    defm PSY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedSingle,
+          !strconcat(OpcodeStr, "ps"), f256mem, [], [], 0>, VEX_4V;
+
+    defm PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
+          !strconcat(OpcodeStr, "pd"), f256mem, [], [], 0>, OpSize, VEX_4V;
+}
+}
+
+// AVX 256-bit packed logical ops forms
+defm VAND : sse12_fp_packed_logical_y<0x54, "and">;
+defm VOR  : sse12_fp_packed_logical_y<0x56, "or">;
+defm VXOR : sse12_fp_packed_logical_y<0x57, "xor">;
+let isCommutable = 0 in
+  defm VANDN : sse12_fp_packed_logical_y<0x55, "andn">;
+
 defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
 defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
 defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;

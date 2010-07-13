@@ -2608,3 +2608,67 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0x7c,0x53,0x20]
           vrcpps  (%rax), %ymm12
 
+// CHECK: vandps  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0c,0x54,0xdc]
+          vandps  %ymm12, %ymm14, %ymm11
+
+// CHECK: vandpd  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0d,0x54,0xdc]
+          vandpd  %ymm12, %ymm14, %ymm11
+
+// CHECK: vandps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1c,0x54,0x54,0xcb,0xfc]
+          vandps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vandpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1d,0x54,0x54,0xcb,0xfc]
+          vandpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vorps  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0c,0x56,0xdc]
+          vorps  %ymm12, %ymm14, %ymm11
+
+// CHECK: vorpd  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0d,0x56,0xdc]
+          vorpd  %ymm12, %ymm14, %ymm11
+
+// CHECK: vorps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1c,0x56,0x54,0xcb,0xfc]
+          vorps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vorpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1d,0x56,0x54,0xcb,0xfc]
+          vorpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vxorps  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0c,0x57,0xdc]
+          vxorps  %ymm12, %ymm14, %ymm11
+
+// CHECK: vxorpd  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0d,0x57,0xdc]
+          vxorpd  %ymm12, %ymm14, %ymm11
+
+// CHECK: vxorps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1c,0x57,0x54,0xcb,0xfc]
+          vxorps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vxorpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1d,0x57,0x54,0xcb,0xfc]
+          vxorpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vandnps  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0c,0x55,0xdc]
+          vandnps  %ymm12, %ymm14, %ymm11
+
+// CHECK: vandnpd  %ymm12, %ymm14, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x0d,0x55,0xdc]
+          vandnpd  %ymm12, %ymm14, %ymm11
+
+// CHECK: vandnps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1c,0x55,0x54,0xcb,0xfc]
+          vandnps  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
+// CHECK: vandnpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+// CHECK: encoding: [0xc5,0x1d,0x55,0x54,0xcb,0xfc]
+          vandnpd  -4(%rbx,%rcx,8), %ymm12, %ymm10
+
