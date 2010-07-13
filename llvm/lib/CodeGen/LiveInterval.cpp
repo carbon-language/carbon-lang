@@ -119,6 +119,7 @@ bool LiveInterval::killedInRange(SlotIndex Start, SlotIndex End) const {
 //
 bool LiveInterval::overlapsFrom(const LiveInterval& other,
                                 const_iterator StartPos) const {
+  assert(!empty() && "empty interval");
   const_iterator i = begin();
   const_iterator ie = end();
   const_iterator j = StartPos;
