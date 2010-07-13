@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PostRAHazardRecognizer.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -253,51 +254,44 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   MachineFunction &MF = *MBB->getParent();
 
   // Ask the target to do the actual folding.
-  MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI);
+  if (MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI)) {
+    // Add a memory operand, foldMemoryOperandImpl doesn't do that.
+    assert((!(Flags & MachineMemOperand::MOStore) ||
+            NewMI->getDesc().mayStore()) &&
+           "Folded a def to a non-store!");
+    assert((!(Flags & MachineMemOperand::MOLoad) ||
+            NewMI->getDesc().mayLoad()) &&
+           "Folded a use to a non-load!");
+    const MachineFrameInfo &MFI = *MF.getFrameInfo();
+    assert(MFI.getObjectOffset(FI) != -1);
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+                              Flags, /*Offset=*/0,
+                              MFI.getObjectSize(FI),
+                              MFI.getObjectAlignment(FI));
+    NewMI->addMemOperand(MF, MMO);
 
-  // Straight COPY may fold as load/store.
-  if (!NewMI) {
-    if (!MI->isCopy() || Ops.size() != 1)
-      return 0;
-
-    const TargetRegisterClass *RC = canFoldCopy(MI, Ops[0]);
-    if (!RC)
-      return 0;
-
-    const MachineOperand &MO = MI->getOperand(1-Ops[0]);
-    MachineBasicBlock::iterator Pos = MI;
-    const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
-
-    if (Flags == MachineMemOperand::MOStore)
-      storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
-    else
-      loadRegFromStackSlot(*MBB, Pos, MO.getReg(), FI, RC, TRI);
-
-    NewMI = --Pos;
-  } else {
     // FIXME: change foldMemoryOperandImpl semantics to also insert NewMI.
-    NewMI = MBB->insert(MI, NewMI);
+    return MBB->insert(MI, NewMI);
   }
 
-  if (!NewMI) return 0;
+  // Straight COPY may fold as load/store.
+  if (!MI->isCopy() || Ops.size() != 1)
+    return 0;
 
+  const TargetRegisterClass *RC = canFoldCopy(MI, Ops[0]);
+  if (!RC)
+    return 0;
 
-  assert((!(Flags & MachineMemOperand::MOStore) ||
-          NewMI->getDesc().mayStore()) &&
-         "Folded a def to a non-store!");
-  assert((!(Flags & MachineMemOperand::MOLoad) ||
-          NewMI->getDesc().mayLoad()) &&
-         "Folded a use to a non-load!");
-  const MachineFrameInfo &MFI = *MF.getFrameInfo();
-  assert(MFI.getObjectOffset(FI) != -1);
-  MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
-                            Flags, /*Offset=*/0,
-                            MFI.getObjectSize(FI),
-                            MFI.getObjectAlignment(FI));
-  NewMI->addMemOperand(MF, MMO);
+  const MachineOperand &MO = MI->getOperand(1-Ops[0]);
+  MachineBasicBlock::iterator Pos = MI;
+  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
 
-  return NewMI;
+  if (Flags == MachineMemOperand::MOStore)
+    storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
+  else
+    loadRegFromStackSlot(*MBB, Pos, MO.getReg(), FI, RC, TRI);
+  return --Pos;
 }
 
 /// foldMemoryOperand - Same as the previous version except it allows folding
