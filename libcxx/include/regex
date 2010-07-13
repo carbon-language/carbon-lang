@@ -2022,6 +2022,235 @@ __match_char_collate<_CharT, _Traits>::__exec(__state& __s) const
     }
 }
 
+// __bracket_expression
+
+template <class _CharT, class _Traits>
+class __bracket_expression
+    : public __owns_one_state<_CharT>
+{
+    typedef __owns_one_state<_CharT> base;
+    typedef typename _Traits::string_type string_type;
+
+    _Traits __traits_;
+    vector<_CharT> __chars_;
+    vector<pair<string_type, string_type> > __ranges_;
+    vector<pair<_CharT, _CharT> > __digraphs_;
+    vector<string_type> __equivalences_;
+    ctype_base::mask __mask_;
+    bool __negate_;
+    bool __icase_;
+    bool __collate_;
+
+    __bracket_expression(const __bracket_expression&);
+    __bracket_expression& operator=(const __bracket_expression&);
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    __bracket_expression(const _Traits& __traits, __node<_CharT>* __s,
+                                 bool __negate, bool __icase, bool __collate)
+        : base(__s), __traits_(__traits), __mask_(), __negate_(__negate),
+          __icase_(__icase), __collate_(__collate) {}
+
+    virtual void __exec(__state&) const;
+
+    void __add_char(_CharT __c)
+        {
+            if (__icase_)
+                __chars_.push_back(__traits_.translate_nocase(__c));
+            else if (__collate_)
+                __chars_.push_back(__traits_.translate(__c));
+            else
+                __chars_.push_back(__c);
+        }
+    void __add_range(string_type __b, string_type __e)
+        {
+            if (__collate_)
+            {
+                if (__icase_)
+                {
+                    for (size_t __i = 0; __i < __b.size(); ++__i)
+                        __b[__i] = __traits_.translate_nocase(__b[__i]);
+                    for (size_t __i = 0; __i < __e.size(); ++__i)
+                        __e[__i] = __traits_.translate_nocase(__e[__i]);
+                }
+                else
+                {
+                    for (size_t __i = 0; __i < __b.size(); ++__i)
+                        __b[__i] = __traits_.translate(__b[__i]);
+                    for (size_t __i = 0; __i < __e.size(); ++__i)
+                        __e[__i] = __traits_.translate(__e[__i]);
+                }
+                __ranges_.push_back(make_pair(
+                                  __traits_.transform(__b.begin(), __b.end()),
+                                  __traits_.transform(__e.begin(), __e.end())));
+            }
+            else
+            {
+                if (__b.size() != 1 || __e.size() != 1)
+                    throw regex_error(regex_constants::error_collate);
+                if (__icase_)
+                {
+                    __b[0] = __traits_.translate_nocase(__b[0]);
+                    __e[0] = __traits_.translate_nocase(__e[0]);
+                }
+                __ranges_.push_back(make_pair(_STD::move(__b), _STD::move(__e)));
+            }
+        }
+    void __add_digraph(_CharT __c1, _CharT __c2)
+        {
+            if (__icase_)
+                __digraphs_.push_back(make_pair(__traits_.translate_nocase(__c1),
+                                                __traits_.translate_nocase(__c2)));
+            else if (__collate_)
+                __digraphs_.push_back(make_pair(__traits_.translate(__c1),
+                                                __traits_.translate(__c2)));
+            else
+                __digraphs_.push_back(make_pair(__c1, __c2));
+        }
+    void __add_equivalence(const string_type& __s)
+        {__equivalences_.push_back(__s);}
+    void __add_class(ctype_base::mask __mask)
+        {__mask_ |= __mask;}
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "__bracket_expression ";
+        return os.str();
+    }
+};
+
+template <class _CharT, class _Traits>
+void
+__bracket_expression<_CharT, _Traits>::__exec(__state& __s) const
+{
+    bool __found = false;
+    unsigned __consumed = 0;
+    if (__s.__current_ != __s.__last_)
+    {
+        ++__consumed;
+        const _CharT* __next = next(__s.__current_);
+        if (__next != __s.__last_)
+        {
+            pair<_CharT, _CharT> __ch2(*__s.__current_, *__next);
+            if (__icase_)
+            {
+                __ch2.first = __traits_.translate_nocase(__ch2.first);
+                __ch2.second = __traits_.translate_nocase(__ch2.second);
+            }
+            else if (__collate_)
+            {
+                __ch2.first = __traits_.translate(__ch2.first);
+                __ch2.second = __traits_.translate(__ch2.second);
+            }
+            if (!__traits_.lookup_collatename(&__ch2.first, &__ch2.first+2).empty())
+            {
+                // __ch2 is a digraph in this locale
+                ++__consumed;
+                for (size_t __i = 0; __i < __digraphs_.size(); ++__i)
+                {
+                    if (__ch2 == __digraphs_[__i])
+                    {
+                        __found = true;
+                        goto __exit;
+                    }
+                }
+                if (__collate_ && !__ranges_.empty())
+                {
+                    string_type __s2 = __traits_.transform(&__ch2.first,
+                                                           &__ch2.first + 2);
+                    for (size_t __i = 0; __i < __ranges_.size(); ++__i)
+                    {
+                        if (__ranges_[__i].first <= __s2 &&
+                            __s2 <= __ranges_[__i].second)
+                        {
+                            __found = true;
+                            goto __exit;
+                        }
+                    }
+                }
+                if (!__equivalences_.empty())
+                {
+                    string_type __s2 = __traits_.transform_primary(&__ch2.first,
+                                                                   &__ch2.first + 2);
+                    for (size_t __i = 0; __i < __equivalences_.size(); ++__i)
+                    {
+                        if (__s2 == __equivalences_[__i])
+                        {
+                            __found = true;
+                            goto __exit;
+                        }
+                    }
+                }
+                if (__traits_.isctype(__ch2.first, __mask_) &&
+                    __traits_.isctype(__ch2.second, __mask_))
+                {
+                    __found = true;
+                    goto __exit;
+                }
+                goto __exit;
+            }
+        }
+        // test *__s.__current_ as not a digraph
+        _CharT __ch = *__s.__current_;
+        if (__icase_)
+            __ch = __traits_.translate_nocase(__ch);
+        else if (__collate_)
+            __ch = __traits_.translate(__ch);
+        for (size_t __i = 0; __i < __chars_.size(); ++__i)
+        {
+            if (__ch == __chars_[__i])
+            {
+                __found = true;
+                goto __exit;
+            }
+        }
+        if (!__ranges_.empty())
+        {
+            string_type __s2 = __collate_ ?
+                                   __traits_.transform(&__ch, &__ch + 1) :
+                                   string_type(1, __ch);
+            for (size_t __i = 0; __i < __ranges_.size(); ++__i)
+            {
+                if (__ranges_[__i].first <= __s2 && __s2 <= __ranges_[__i].second)
+                {
+                    __found = true;
+                    goto __exit;
+                }
+            }
+        }
+        if (!__equivalences_.empty())
+        {
+            string_type __s2 = __traits_.transform_primary(&__ch, &__ch + 1);
+            for (size_t __i = 0; __i < __equivalences_.size(); ++__i)
+            {
+                if (__s2 == __equivalences_[__i])
+                {
+                    __found = true;
+                    goto __exit;
+                }
+            }
+        }
+        if (__traits_.isctype(__ch, __mask_))
+            __found = true;
+    }
+    else
+        __found = __negate_;  // force reject
+__exit:
+    if (__found != __negate_)
+    {
+        _CharT __ch = *__s.__current_;
+        __s.__do_ = __state::__accept_and_consume;
+        __s.__current_ += __consumed;
+        __s.__node_ = this->first();
+    }
+    else
+    {
+        __s.__do_ = __state::__reject;
+        __s.__node_ = nullptr;
+    }
+}
+
 template <class, class> class match_results;
 
 template <class _CharT, class _Traits = regex_traits<_CharT> >
@@ -2186,19 +2415,24 @@ private:
         __parse_bracket_expression(_ForwardIterator __first, _ForwardIterator __last);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_follow_list(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_follow_list(_ForwardIterator __first, _ForwardIterator __last,
+                            __bracket_expression<_CharT, _Traits>* __ml);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_expression_term(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_expression_term(_ForwardIterator __first, _ForwardIterator __last,
+                                __bracket_expression<_CharT, _Traits>* __ml);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_equivalence_class(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_equivalence_class(_ForwardIterator __first, _ForwardIterator __last,
+                                  __bracket_expression<_CharT, _Traits>* __ml);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_character_class(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_character_class(_ForwardIterator __first, _ForwardIterator __last,
+                                __bracket_expression<_CharT, _Traits>* __ml);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_collating_symbol(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_collating_symbol(_ForwardIterator __first, _ForwardIterator __last,
+                                 basic_string<_CharT>& __col_sym);
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_DUP_COUNT(_ForwardIterator __first, _ForwardIterator __last, int& __c);
@@ -2232,14 +2466,8 @@ private:
     void __push_loop(size_t __min, size_t __max, __owns_one_state<_CharT>* __s,
                      size_t __mexp_begin = 0, size_t __mexp_end = 0,
                      bool __greedy = true);
-    void __start_nonmatching_list() {}
-    void __start_matching_list() {}
-    void __end_nonmatching_list() {}
-    void __end_matching_list() {}
+    __bracket_expression<_CharT, _Traits>* __start_matching_list(bool __negate);
     void __push_char(value_type __c);
-    void __push_char(const typename _Traits::string_type& __c) {}
-    void __push_range() {}
-    void __push_class_type(typename _Traits::char_class_type) {}
     void __push_back_ref(int __i);
     void __push_alternation() {}
     void __push_begin_marked_subexpression();
@@ -2905,36 +3133,31 @@ basic_regex<_CharT, _Traits>::__parse_bracket_expression(_ForwardIterator __firs
     {
         if (++__first == __last)
             throw regex_error(regex_constants::error_brack);
-        bool __non_matching = false;
+        bool __negate = false;
         if (*__first == '^')
         {
             ++__first;
-            __non_matching = true;
-            __start_nonmatching_list();
+            __negate = true;
         }
-        else
-            __start_matching_list();
+        __bracket_expression<_CharT, _Traits>* __ml = __start_matching_list(__negate);
+        // __ml owned by *this
         if (__first == __last)
             throw regex_error(regex_constants::error_brack);
         if (*__first == ']')
         {
-            __push_char(']');
+            __ml->__add_char(']');
             ++__first;
         }
-        __first = __parse_follow_list(__first, __last);
+        __first = __parse_follow_list(__first, __last, __ml);
         if (__first == __last)
             throw regex_error(regex_constants::error_brack);
         if (*__first == '-')
         {
-            __push_char('-');
+            __ml->__add_char('-');
             ++__first;
         }
         if (__first == __last || *__first != ']')
             throw regex_error(regex_constants::error_brack);
-        if (__non_matching)
-            __end_nonmatching_list();
-        else
-            __end_matching_list();
         ++__first;
     }
     return __first;
@@ -2944,13 +3167,15 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_follow_list(_ForwardIterator __first,
-                                                  _ForwardIterator __last)
+                                    _ForwardIterator __last,
+                                    __bracket_expression<_CharT, _Traits>* __ml)
 {
     if (__first != __last)
     {
         while (true)
         {
-            _ForwardIterator __temp = __parse_expression_term(__first, __last);
+            _ForwardIterator __temp = __parse_expression_term(__first, __last,
+                                                              __ml);
             if (__temp == __first)
                 break;
             __first = __temp;
@@ -2963,27 +3188,29 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
-                                                      _ForwardIterator __last)
+                                    _ForwardIterator __last,
+                                    __bracket_expression<_CharT, _Traits>* __ml)
 {
     if (__first != __last && *__first != ']')
     {
         bool __parsed_one = false;
         _ForwardIterator __temp = next(__first);
+        basic_string<_CharT> __start_range;
         if (__temp != __last && *__first == '[')
         {
             if (*__temp == '=')
-                return __parse_equivalence_class(++__temp, __last);
+                return __parse_equivalence_class(++__temp, __last, __ml);
             else if (*__temp == ':')
-                return __parse_character_class(++__temp, __last);
+                return __parse_character_class(++__temp, __last, __ml);
             else if (*__temp == '.')
             {
-                __first = __parse_collating_symbol(++__temp, __last);
+                __first = __parse_collating_symbol(++__temp, __last, __start_range);
                 __parsed_one = true;
             }
         }
         if (!__parsed_one)
         {
-            __push_char(*__first);
+            __start_range = *__first;
             ++__first;
         }
         if (__first != __last && *__first != ']')
@@ -2992,17 +3219,32 @@ basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
             if (__temp != __last && *__first == '-' && *__temp != ']')
             {
                 // parse a range
+                basic_string<_CharT> __end_range;
                 __first = __temp;
                 ++__temp;
                 if (__temp != __last && *__first == '[' && *__temp == '.')
-                    __first = __parse_collating_symbol(++__temp, __last);
+                    __first = __parse_collating_symbol(++__temp, __last, __end_range);
                 else
                 {
-                    __push_char(*__first);
+                    __end_range = *__first;
                     ++__first;
                 }
-                __push_range();
+                __ml->__add_range(_STD::move(__start_range), _STD::move(__end_range));
             }
+            else
+            {
+                if (__start_range.size() == 1)
+                    __ml->__add_char(__start_range[0]);
+                else
+                    __ml->__add_digraph(__start_range[0], __start_range[1]);
+            }
+        }
+        else
+        {
+            if (__start_range.size() == 1)
+                __ml->__add_char(__start_range[0]);
+            else
+                __ml->__add_digraph(__start_range[0], __start_range[1]);
         }
     }
     return __first;
@@ -3012,7 +3254,8 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first,
-                                                        _ForwardIterator __last)
+                                    _ForwardIterator __last,
+                                    __bracket_expression<_CharT, _Traits>* __ml)
 {
     // Found [=
     //   This means =] must exist
@@ -3026,14 +3269,26 @@ basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first
     string_type __collate_name =
         __traits_.lookup_collatename(__first, __temp);
     if (__collate_name.empty())
-        throw regex_error(regex_constants::error_brack);
+        throw regex_error(regex_constants::error_collate);
     string_type __equiv_name =
         __traits_.transform_primary(__collate_name.begin(),
                                     __collate_name.end());
     if (!__equiv_name.empty())
-        __push_char(__equiv_name);
+        __ml->__add_equivalence(__equiv_name);
     else
-        __push_char(__collate_name);
+    {
+        switch (__collate_name.size())
+        {
+        case 1:
+            __ml->__add_char(__collate_name[0]);
+            break;
+        case 2:
+            __ml->__add_digraph(__collate_name[0], __collate_name[1]);
+            break;
+        default:
+            throw regex_error(regex_constants::error_collate);
+        }
+    }
     __first = next(__temp, 2);
     return __first;
 }
@@ -3042,7 +3297,8 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_character_class(_ForwardIterator __first,
-                                                      _ForwardIterator __last)
+                                    _ForwardIterator __last,
+                                    __bracket_expression<_CharT, _Traits>* __ml)
 {
     // Found [:
     //   This means :] must exist
@@ -3057,7 +3313,7 @@ basic_regex<_CharT, _Traits>::__parse_character_class(_ForwardIterator __first,
         __traits_.lookup_classname(__first, __temp, __flags_ & icase);
     if (__class_type == 0)
         throw regex_error(regex_constants::error_brack);
-    __push_class_type(__class_type);
+    __ml->__add_class(__class_type);
     __first = next(__temp, 2);
     return __first;
 }
@@ -3066,7 +3322,8 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
-                                                       _ForwardIterator __last)
+                                                _ForwardIterator __last,
+                                                basic_string<_CharT>& __col_sym)
 {
     // Found [.
     //   This means .] must exist
@@ -3077,11 +3334,15 @@ basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
         throw regex_error(regex_constants::error_brack);
     // [__first, __temp) contains all text in [. ... .]
     typedef typename _Traits::string_type string_type;
-    string_type __collate_name =
-        __traits_.lookup_collatename(__first, __temp);
-    if (__collate_name.empty())
-        throw regex_error(regex_constants::error_brack);
-    __push_char(__collate_name);
+    __col_sym = __traits_.lookup_collatename(__first, __temp);
+    switch (__col_sym.size())
+    {
+    case 1:
+    case 2:
+        break;
+    default:
+        throw regex_error(regex_constants::error_collate);
+    }
     __first = next(__temp, 2);
     return __first;
 }
@@ -3129,10 +3390,10 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_char(value_type __c)
 {
-    if (flags() & regex_constants::icase)
+    if (flags() & icase)
         __end_->first() = new __match_char_icase<_CharT, _Traits>
                                               (__traits_, __c, __end_->first());
-    else if (flags() & regex_constants::collate)
+    else if (flags() & collate)
         __end_->first() = new __match_char_collate<_CharT, _Traits>
                                               (__traits_, __c, __end_->first());
     else
@@ -3178,15 +3439,28 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_back_ref(int __i)
 {
-    if (flags() & regex_constants::icase)
+    if (flags() & icase)
         __end_->first() = new __back_ref_icase<_CharT, _Traits>
                                               (__traits_, __i, __end_->first());
-    else if (flags() & regex_constants::collate)
+    else if (flags() & collate)
         __end_->first() = new __back_ref_collate<_CharT, _Traits>
                                               (__traits_, __i, __end_->first());
     else
         __end_->first() = new __back_ref<_CharT>(__i, __end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
+
+template <class _CharT, class _Traits>
+__bracket_expression<_CharT, _Traits>*
+basic_regex<_CharT, _Traits>::__start_matching_list(bool __negate)
+{
+    __bracket_expression<_CharT, _Traits>* __r =
+        new __bracket_expression<_CharT, _Traits>(__traits_, __end_->first(),
+                                                  __negate, __flags_ & icase,
+                                                  __flags_ & collate);
+    __end_->first() = __r;
+    __end_ = __r;
+    return __r;
 }
 
 typedef basic_regex<char>    regex;

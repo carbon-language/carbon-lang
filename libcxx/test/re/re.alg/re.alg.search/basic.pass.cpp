@@ -498,4 +498,105 @@ int main()
                                                  std::regex_constants::basic)));
         assert(m.size() == 0);
     }
+    {
+        std::cmatch m;
+        const char s[] = "a";
+        assert(std::regex_search(s, m, std::regex("^[a]$",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == 1);
+        assert(m.position(0) == 0);
+        assert(m.str(0) == "a");
+    }
+    {
+        std::cmatch m;
+        const char s[] = "a";
+        assert(std::regex_search(s, m, std::regex("^[ab]$",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == 1);
+        assert(m.position(0) == 0);
+        assert(m.str(0) == "a");
+    }
+    {
+        std::cmatch m;
+        const char s[] = "c";
+        assert(std::regex_search(s, m, std::regex("^[a-f]$",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == 1);
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "g";
+        assert(!std::regex_search(s, m, std::regex("^[a-f]$",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 0);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "Iraqi";
+        assert(std::regex_search(s, m, std::regex("q[^u]",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 1);
+        assert(m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == 2);
+        assert(m.position(0) == 3);
+        assert(m.str(0) == "qi");
+    }
+    {
+        std::cmatch m;
+        const char s[] = "Iraq";
+        assert(!std::regex_search(s, m, std::regex("q[^u]",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 0);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "AmB";
+        assert(std::regex_search(s, m, std::regex("A[[:lower:]]B",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == std::char_traits<char>::length(s));
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "AMB";
+        assert(!std::regex_search(s, m, std::regex("A[[:lower:]]B",
+                                                 std::regex_constants::basic)));
+        assert(m.size() == 0);
+    }
 }
