@@ -3727,7 +3727,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
   // allocator).
   CallExpr Call(Context, &ConversionFn, 0, 0,
-                Conversion->getConversionType().getNonReferenceType(),
+                Conversion->getConversionType().getNonLValueExprType(Context),
                 From->getLocStart());
   ImplicitConversionSequence ICS =
     TryCopyInitialization(*this, &Call, ToType,

@@ -475,6 +475,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
     if (isa<NonTypeTemplateParmDecl>(VD)) {
       // Non-type template parameters can be referenced anywhere they are
       // visible.
+      Ty = Ty.getNonLValueExprType(Context);
     } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (const FunctionDecl *FD = MD->getParent()->isLocalClass()) {
         if (VD->hasLocalStorage() && VD->getDeclContext() != CurContext) {
@@ -4008,7 +4009,8 @@ Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
     return ExprError();
 
   Op.release();
-  return Owned(new (Context) CStyleCastExpr(Ty->getType().getNonReferenceType(),
+  return Owned(new (Context) CStyleCastExpr(
+                                    Ty->getType().getNonLValueExprType(Context),
                                             Kind, castExpr, BasePath, Ty,
                                             LParenLoc, RParenLoc));
 }
@@ -4904,7 +4906,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // The getNonReferenceType() call makes sure that the resulting expression
   // does not have reference type.
   if (result != Incompatible && rExpr->getType() != lhsType)
-    ImpCastExprToType(rExpr, lhsType.getNonReferenceType(),
+    ImpCastExprToType(rExpr, lhsType.getNonLValueExprType(Context),
                       CastExpr::CK_Unknown);
   return result;
 }
@@ -7348,7 +7350,8 @@ Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
   // FIXME: Warn if a non-POD type is passed in.
 
   expr.release();
-  return Owned(new (Context) VAArgExpr(BuiltinLoc, E, T.getNonReferenceType(),
+  return Owned(new (Context) VAArgExpr(BuiltinLoc, E, 
+                                       T.getNonLValueExprType(Context),
                                        RPLoc));
 }
 

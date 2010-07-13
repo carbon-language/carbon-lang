@@ -629,13 +629,15 @@ public:
   bool isAtLeastAsQualifiedAs(QualType Other) const;
   QualType getNonReferenceType() const;
 
-  /// \brief Determine the type of an expression that calls a function of
-  /// with the given result type.
+  /// \brief Determine the type of a (typically non-lvalue) expression with the
+  /// specified result type.
   ///                       
-  /// This routine removes a top-level reference (since there are no 
+  /// This routine should be used for expressions for which the return type is
+  /// explicitly specified (e.g., in a cast or call) and isn't necessarily
+  /// an lvalue. It removes a top-level reference (since there are no 
   /// expressions of reference type) and deletes top-level cvr-qualifiers
   /// from non-class types (in C++) or all types (in C).
-  QualType getCallResultType(ASTContext &Context) const;
+  QualType getNonLValueExprType(ASTContext &Context) const;
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -1907,7 +1909,7 @@ public:
   /// \brief Determine the type of an expression that calls a function of
   /// this type.
   QualType getCallResultType(ASTContext &Context) const { 
-    return getResultType().getCallResultType(Context);
+    return getResultType().getNonLValueExprType(Context);
   }
 
   static llvm::StringRef getNameForCallConv(CallingConv CC);

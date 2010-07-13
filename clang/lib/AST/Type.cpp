@@ -992,7 +992,7 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
 
 void FunctionType::ANCHOR() {} // Key function for FunctionType.
 
-QualType QualType::getCallResultType(ASTContext &Context) const {
+QualType QualType::getNonLValueExprType(ASTContext &Context) const {
   if (const ReferenceType *RefType = getTypePtr()->getAs<ReferenceType>())
     return RefType->getPointeeType();
   

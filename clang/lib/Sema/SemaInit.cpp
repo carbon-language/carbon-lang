@@ -523,8 +523,9 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
   StructuredList->setSyntacticForm(IList);
   CheckListElementTypes(Entity, IList, T, /*SubobjectIsDesignatorContext=*/true, 
                         Index, StructuredList, StructuredIndex, TopLevelObject);
-  IList->setType(T.getNonReferenceType());
-  StructuredList->setType(T.getNonReferenceType());
+  QualType ExprTy = T.getNonLValueExprType(SemaRef.Context);
+  IList->setType(ExprTy);
+  StructuredList->setType(ExprTy);
   if (hadError)
     return;
 
@@ -1716,7 +1717,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
                                          InitRange.getBegin(), 0, 0,
                                          InitRange.getEnd());
 
-  Result->setType(CurrentObjectType.getNonReferenceType());
+  Result->setType(CurrentObjectType.getNonLValueExprType(SemaRef.Context));
 
   // Pre-allocate storage for the structured initializer list.
   unsigned NumElements = 0;
@@ -2370,13 +2371,14 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
 
   // Add the user-defined conversion step.
   Sequence.AddUserConversionStep(Function, Best->FoundDecl,
-                                 T2.getNonReferenceType());
+                                 T2.getNonLValueExprType(S.Context));
 
   // Determine whether we need to perform derived-to-base or 
   // cv-qualification adjustments.
   bool NewDerivedToBase = false;
   Sema::ReferenceCompareResult NewRefRelationship
-    = S.CompareReferenceRelationship(DeclLoc, T1, T2.getNonReferenceType(),
+    = S.CompareReferenceRelationship(DeclLoc, T1, 
+                                     T2.getNonLValueExprType(S.Context),
                                      NewDerivedToBase);
   if (NewRefRelationship == Sema::Ref_Incompatible) {
     // If the type we've converted to is not reference-related to the

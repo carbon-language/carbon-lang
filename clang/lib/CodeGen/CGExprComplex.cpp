@@ -572,8 +572,8 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   TestAndClearIgnoreImag();
   bool ignreal = TestAndClearIgnoreRealAssign();
   bool ignimag = TestAndClearIgnoreImagAssign();
-  assert(CGF.getContext().getCanonicalType(E->getLHS()->getType()) ==
-         CGF.getContext().getCanonicalType(E->getRHS()->getType()) &&
+  assert(CGF.getContext().hasSameUnqualifiedType(E->getLHS()->getType(), 
+                                                 E->getRHS()->getType()) &&
          "Invalid assignment");
   // Emit the RHS.
   ComplexPairTy Val = Visit(E->getRHS());

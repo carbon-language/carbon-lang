@@ -540,7 +540,8 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 
     exprs.release();
 
-    return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
+    return Owned(new (Context) CXXFunctionalCastExpr(
+                                              Ty.getNonLValueExprType(Context),
                                                      TInfo, TyBeginLoc, Kind,
                                                      Exprs[0], BasePath,
                                                      RParenLoc));
@@ -1879,7 +1880,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   case ICK_Qualification:
     // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
     // references.
-    ImpCastExprToType(From, ToType.getNonReferenceType(),
+    ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
                       CastExpr::CK_NoOp, ToType->isLValueReferenceType());
 
     if (SCS.DeprecatedStringLiteralToCharPtr)
