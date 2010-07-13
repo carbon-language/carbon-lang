@@ -294,7 +294,7 @@ namespace llvm {
   /// option is specified on the command line. If this returns false (default),
   /// the code generator is not allowed to assume that FP arithmetic arguments
   /// and results are never NaNs or +-Infs.
-  bool FiniteOnlyFPMath() { return UnsafeFPMath || FiniteOnlyFPMathOption; }
+  bool FiniteOnlyFPMath() { return FiniteOnlyFPMathOption; }
   
   /// HonorSignDependentRoundingFPMath - Return true if the codegen must assume
   /// that the rounding mode of the FPU can change from its default.

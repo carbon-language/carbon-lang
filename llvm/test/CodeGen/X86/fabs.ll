@@ -1,7 +1,7 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
 ; RUN: llc < %s -march=x86 -mattr=-sse2,-sse3,-sse | grep fabs\$ | \
 ; RUN:   count 2
-; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math | \
+; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math -enable-finite-only-fp-math | \
 ; RUN:   grep fabs\$ | count 3
 
 declare float @fabsf(float)
