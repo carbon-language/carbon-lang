@@ -1400,18 +1400,18 @@ void CppWriter::printInstruction(const Instruction *I,
       Out << "std::vector<Value*> " << iName << "_params;";
       nl(Out);
       for (unsigned i = 0; i < call->getNumArgOperands(); ++i) {
-        Out << iName << "_params.push_back(" << opNames[i+1] << ");";
+        Out << iName << "_params.push_back(" << opNames[i] << ");";
         nl(Out);
       }
       Out << "CallInst* " << iName << " = CallInst::Create("
-          << opNames[0] << ", " << iName << "_params.begin(), "
+          << opNames[call->getNumArgOperands()] << ", " << iName << "_params.begin(), "
           << iName << "_params.end(), \"";
     } else if (call->getNumArgOperands() == 1) {
       Out << "CallInst* " << iName << " = CallInst::Create("
-          << opNames[0] << ", " << opNames[1] << ", \"";
+          << opNames[call->getNumArgOperands()] << ", " << opNames[0] << ", \"";
     } else {
-      Out << "CallInst* " << iName << " = CallInst::Create(" << opNames[0]
-          << ", \"";
+      Out << "CallInst* " << iName << " = CallInst::Create("
+          << opNames[call->getNumArgOperands()] << ", \"";
     }
     printEscapedString(call->getName());
     Out << "\", " << bbname << ");";
