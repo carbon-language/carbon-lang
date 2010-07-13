@@ -125,18 +125,23 @@ public:
     }
   };
 
-  /// A lazy cleanup.  These will be allocated on the cleanup stack
-  /// and so must be trivially copyable.  We "enforce" this by
-  /// providing no virtual destructor so that subclasses will be
-  /// encouraged to contain no non-POD types.
+  /// A lazy cleanup.  Subclasses must be POD-like:  cleanups will
+  /// not be destructed, and they will be allocated on the cleanup
+  /// stack and freely copied and moved around.
   ///
   /// LazyCleanup implementations should generally be declared in an
   /// anonymous namespace.
   class LazyCleanup {
-    // Anchor the construction vtable.
-    virtual void _anchor();
-
   public:
+    // Anchor the construction vtable.  We use the destructor because
+    // gcc gives an obnoxious warning if there are virtual methods
+    // with an accessible non-virtual destructor.  Unfortunately,
+    // declaring this destructor makes it non-trivial, but there
+    // doesn't seem to be any other way around this warning.
+    //
+    // This destructor will never be called.
+    virtual ~LazyCleanup();
+
     /// Emit the cleanup.  For normal cleanups, this is run in the
     /// same EH context as when the cleanup was pushed, i.e. the
     /// immediately-enclosing context of the cleanup scope.  For

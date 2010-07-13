@@ -1541,4 +1541,6 @@ CodeGenFunction::CleanupBlock::~CleanupBlock() {
   CGF.Builder.restoreIP(SavedIP);
 }
 
-void EHScopeStack::LazyCleanup::_anchor() {}
+EHScopeStack::LazyCleanup::~LazyCleanup() {
+  llvm_unreachable("LazyCleanup is indestructable");
+}
