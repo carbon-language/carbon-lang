@@ -536,6 +536,13 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
     Context.getPointerType(Context.getTagDeclType(Method->getParent()));
   llvm::DIType ThisPtrType = 
     DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
+
+  if (Method->getTypeQualifiers() && Qualifiers::Const)
+    ThisPtrType = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_const_type, 
+                                     Unit, "", Unit,
+                                     0, 0, 0, 0, 0, ThisPtrType);
+
   TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;  
   Elts.push_back(ThisPtrType);
 
