@@ -31,3 +31,29 @@ void test2(void)
 {
     foo(100, 'a');
 }
+
+namespace rdar6182276 {
+extern "C" {
+int printf(const char *, ...);
+}
+
+template <typename T> T foo(T t)
+{
+    void (^testing)(int) = ^(int bar) { printf("bar is %d\n", bar); };
+    printf("bar is\n");
+    return 1;
+}
+
+template <typename T> void gorf(T t)
+{
+    foo(t);
+}
+
+
+void test(void)
+{
+    gorf(2);
+}
+}
+
+

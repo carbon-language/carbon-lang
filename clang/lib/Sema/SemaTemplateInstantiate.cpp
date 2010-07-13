@@ -1067,6 +1067,10 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
 
   CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
+  // Set DeclContext if inside a Block.
+  if (BlockScopeInfo *CurBlock = getCurBlock())
+    NewParm->setDeclContext(CurBlock->TheDecl);
+  
   return NewParm;  
 }
 

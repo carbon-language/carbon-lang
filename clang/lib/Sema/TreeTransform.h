@@ -4198,10 +4198,6 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   if (!ND)
     return SemaRef.ExprError();
 
-  // Set DeclContext if inside a Block.
-  if (BlockScopeInfo *CurBlock = SemaRef.getCurBlock())
-    ND->setDeclContext(CurBlock->TheDecl);
-  
   if (!getDerived().AlwaysRebuild() && 
       Qualifier == E->getQualifier() &&
       ND == E->getDecl() &&
