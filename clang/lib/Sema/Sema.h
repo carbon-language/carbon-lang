@@ -4353,7 +4353,7 @@ public:
   QualType CheckBitwiseOperands( // C99 6.5.[10...12]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckLogicalOperands( // C99 6.5.[13,14]
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc);
   // CheckAssignmentOperands is used for both simple and compound assignment.
   // For simple assignment, pass both expressions and a null converted type.
   // For compound assignment, pass both expressions and the converted type.

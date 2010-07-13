@@ -1986,6 +1986,10 @@ def note_precedence_bitwise_first : Note<
   "place parentheses around the %0 expression to evaluate it first">;
 def note_precedence_bitwise_silence : Note<
   "place parentheses around the %0 expression to silence this warning">;
+
+def warn_logical_instead_of_bitwise : Warning<
+  "use of logical %0 with constant operand; switch to bitwise %1 or "
+  "remove constant">, InGroup<DiagGroup<"logical-bitwise-confusion">>;
   
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "

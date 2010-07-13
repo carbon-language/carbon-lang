@@ -5735,7 +5735,21 @@ inline QualType Sema::CheckBitwiseOperands(
 }
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
-  Expr *&lex, Expr *&rex, SourceLocation Loc) {
+  Expr *&lex, Expr *&rex, SourceLocation Loc, unsigned Opc) {
+  
+  // Diagnose cases where the user write a logical and/or but probably meant a
+  // bitwise one.  We do this when the LHS is a non-bool integer and the RHS
+  // is a constant.
+  if (lex->getType()->isIntegerType() && !lex->getType()->isBooleanType() &&
+      rex->getType()->isIntegerType() && rex->isEvaluatable(Context) &&
+      !Loc.isMacroID())
+    Diag(Loc, diag::warn_logical_instead_of_bitwise)
+     << rex->getSourceRange()
+      << (Opc == BinaryOperator::LAnd ? "&&" : "||")
+      << (Opc == BinaryOperator::LAnd ? "&" : "|");
+  
+  
+  
   if (!Context.getLangOptions().CPlusPlus) {
     UsualUnaryConversions(lex);
     UsualUnaryConversions(rex);
@@ -6363,7 +6377,7 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BinaryOperator::LAnd:
   case BinaryOperator::LOr:
-    ResultTy = CheckLogicalOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckLogicalOperands(lhs, rhs, OpLoc, Opc);
     break;
   case BinaryOperator::MulAssign:
   case BinaryOperator::DivAssign:
