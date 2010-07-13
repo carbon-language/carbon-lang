@@ -9,6 +9,7 @@ define void @foo() {
 declare void @llvm.zonk(metadata, i64, metadata) nounwind readnone
 
 !named = !{!0}
+!another_named = !{}
 !0 = metadata !{i8** null}
 !1 = metadata !{i8* null, metadata !2}
 !2 = metadata !{}
