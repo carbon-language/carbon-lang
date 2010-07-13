@@ -211,9 +211,11 @@ void StmtProfiler::VisitExpr(Expr *S) {
 
 void StmtProfiler::VisitDeclRefExpr(DeclRefExpr *S) {
   VisitExpr(S);
-  VisitNestedNameSpecifier(S->getQualifier());
+  if (!Canonical)
+    VisitNestedNameSpecifier(S->getQualifier());
   VisitDecl(S->getDecl());
-  VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
+  if (!Canonical)
+    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
 void StmtProfiler::VisitPredefinedExpr(PredefinedExpr *S) {
@@ -307,7 +309,8 @@ void StmtProfiler::VisitCallExpr(CallExpr *S) {
 void StmtProfiler::VisitMemberExpr(MemberExpr *S) {
   VisitExpr(S);
   VisitDecl(S->getMemberDecl());
-  VisitNestedNameSpecifier(S->getQualifier());
+  if (!Canonical)
+    VisitNestedNameSpecifier(S->getQualifier());
   ID.AddBoolean(S->isArrow());
 }
 
