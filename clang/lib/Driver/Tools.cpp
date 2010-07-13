@@ -2356,8 +2356,15 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined);
   Args.AddAllArgs(CmdArgs, options::OPT_multiply__defined__unused);
 
-  if (Args.hasArg(options::OPT_fpie))
-    CmdArgs.push_back("-pie");
+  if (const Arg *A = Args.getLastArg(options::OPT_fpie, options::OPT_fPIE,
+                                     options::OPT_fno_pie,
+                                     options::OPT_fno_PIE)) {
+    if (A->getOption().matches(options::OPT_fpie) ||
+        A->getOption().matches(options::OPT_fPIE))
+      CmdArgs.push_back("-pie");
+    else
+      CmdArgs.push_back("-no_pie");
+  }
 
   Args.AddLastArg(CmdArgs, options::OPT_prebind);
   Args.AddLastArg(CmdArgs, options::OPT_noprebind);

@@ -179,6 +179,8 @@ namespace driver {
     Arg *getLastArg(OptSpecifier Id) const;
     Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1) const;
     Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2,
+                    OptSpecifier Id3) const;
 
     /// getArgString - Return the input argument string at \arg Index.
     virtual const char *getArgString(unsigned Index) const = 0;

@@ -70,3 +70,15 @@
 // LINK_IPHONE_3_1: ld"
 // LINK_IPHONE_3_1-NOT: -lbundle1.o
 // LINK_IPHONE_3_1: -lSystem
+
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -fpie %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_EXPLICIT_PIE %s < %t.log
+//
+// LINK_EXPLICIT_PIE: ld"
+// LINK_EXPLICIT_PIE: "-pie"
+
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -fno-pie %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_EXPLICIT_NO_PIE %s < %t.log
+//
+// LINK_EXPLICIT_NO_PIE: ld"
+// LINK_EXPLICIT_NO_PIE: "-no_pie"
