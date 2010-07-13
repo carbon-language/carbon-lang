@@ -928,7 +928,7 @@ class CXXNewExpr : public Expr {
   // Do we allocate an array? If so, the first SubExpr is the size expression.
   bool Array : 1;
   // The number of placement new arguments.
-  unsigned NumPlacementArgs : 14;
+  unsigned NumPlacementArgs : 15;
   // The number of constructor arguments. This may be 1 even for non-class
   // types; use the pseudo copy constructor.
   unsigned NumConstructorArgs : 14;
