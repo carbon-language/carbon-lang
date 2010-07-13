@@ -38,7 +38,8 @@ using namespace lldb_private;
 using namespace clang;
 
 ClangExpressionDeclMap::ClangExpressionDeclMap(ExecutionContext *exe_ctx) :
-    m_exe_ctx(exe_ctx)
+    m_exe_ctx(exe_ctx),
+    m_struct_laid_out(false)
 {
     if (exe_ctx && exe_ctx->frame)
         m_sym_ctx = new SymbolContext(exe_ctx->frame->GetSymbolContext(lldb::eSymbolContextEverything));
@@ -75,6 +76,105 @@ ClangExpressionDeclMap::GetIndexForDecl (uint32_t &index,
     }
     
     return false;
+}
+
+// Interface for IRForTarget
+
+bool 
+ClangExpressionDeclMap::AddValueToStruct (llvm::Value *value,
+                                          const clang::NamedDecl *decl,
+                                          size_t size,
+                                          off_t alignment)
+{
+    m_struct_laid_out = false;
+    
+    StructMemberIterator iter;
+    
+    for (iter = m_members.begin();
+         iter != m_members.end();
+         ++iter)
+    {
+        if (iter->m_decl == decl)
+            return true;
+    }
+
+    StructMember member;
+    
+    member.m_value      = value;
+    member.m_decl       = decl;
+    member.m_offset     = 0;
+    member.m_size       = size;
+    member.m_alignment  = alignment;
+    
+    m_members.push_back(member);
+    
+    return true;
+}
+
+bool
+ClangExpressionDeclMap::DoStructLayout ()
+{
+    if (m_struct_laid_out)
+        return true;
+    
+    StructMemberIterator iter;
+    
+    off_t cursor = 0;
+    
+    m_struct_alignment = 0;
+    m_struct_size = 0;
+    
+    for (iter = m_members.begin();
+         iter != m_members.end();
+         ++iter)
+    {
+        if (iter == m_members.begin())
+            m_struct_alignment = iter->m_alignment;
+        
+        if (cursor % iter->m_alignment)
+            cursor += (iter->m_alignment - (cursor % iter->m_alignment));
+        
+        iter->m_offset = cursor;
+        cursor += iter->m_size;
+    }
+    
+    m_struct_size = cursor;
+    
+    m_struct_laid_out = true;
+    return true;
+}
+
+bool ClangExpressionDeclMap::GetStructInfo (uint32_t &num_elements,
+                                            size_t &size,
+                                            off_t &alignment)
+{
+    if (!m_struct_laid_out)
+        return false;
+    
+    num_elements = m_members.size();
+    size = m_struct_size;
+    alignment = m_struct_alignment;
+    
+    return true;
+}
+
+bool 
+ClangExpressionDeclMap::GetStructElement (const clang::NamedDecl *&decl,
+                                          llvm::Value *&value,
+                                          off_t &offset,
+                                          uint32_t index)
+{
+    if (!m_struct_laid_out)
+        return false;
+    
+    if (index >= m_members.size())
+        return false;
+    
+    decl = m_members[index].m_decl;
+    value = m_members[index].m_value;
+    offset = m_members[index].m_offset;
+    
+    return true;
 }
 
 // Interface for DwarfExpression

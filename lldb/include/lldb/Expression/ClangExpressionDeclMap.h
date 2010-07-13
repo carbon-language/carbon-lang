@@ -27,6 +27,10 @@ namespace clang {
     class DeclContext;
 }
 
+namespace llvm {
+    class Value;
+}
+
 namespace lldb_private {
 
 class Function;
@@ -43,6 +47,20 @@ public:
     bool GetIndexForDecl (uint32_t &index,
                           const clang::Decl *decl);
     
+    // Interface for IRForTarget
+    bool AddValueToStruct (llvm::Value *value,
+                           const clang::NamedDecl *decl,
+                           size_t size,
+                           off_t alignment);
+    bool DoStructLayout ();
+    bool GetStructInfo (uint32_t &num_elements,
+                        size_t &size,
+                        off_t &alignment);
+    bool GetStructElement (const clang::NamedDecl *&decl,
+                           llvm::Value *&value,
+                           off_t &offset,
+                           uint32_t index);
+    
     // Interface for DwarfExpression
     Value *GetValueForIndex (uint32_t index);
     
@@ -57,12 +75,28 @@ private:
         Value                   *m_value; /* owned by ClangExpressionDeclMap */
     };
     
+    struct StructMember
+    {
+        const clang::NamedDecl  *m_decl;
+        llvm::Value             *m_value;
+        off_t                   m_offset;
+        size_t                  m_size;
+        off_t                   m_alignment;
+    };
+    
     typedef std::vector<Tuple> TupleVector;
     typedef TupleVector::iterator TupleIterator;
     
+    typedef std::vector<StructMember> StructMemberVector;
+    typedef StructMemberVector::iterator StructMemberIterator;
+    
     TupleVector         m_tuples;
+    StructMemberVector  m_members;
     ExecutionContext   *m_exe_ctx;
     SymbolContext      *m_sym_ctx; /* owned by ClangExpressionDeclMap */
+    off_t               m_struct_alignment;
+    size_t              m_struct_size;
+    bool                m_struct_laid_out;
     
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun);

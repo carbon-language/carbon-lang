@@ -11,11 +11,13 @@
 #define liblldb_IRForTarget_h_
 
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 
 namespace llvm {
     class BasicBlock;
+    class Function;
     class Module;
+    class TargetData;
+    class Value;
 }
 
 namespace lldb_private {
@@ -26,16 +28,25 @@ class IRForTarget : public llvm::ModulePass
 {
 public:
     IRForTarget(const void *pid,
-                lldb_private::ClangExpressionDeclMap *decl_map);
+                lldb_private::ClangExpressionDeclMap *decl_map,
+                const llvm::TargetData *target_data);
     ~IRForTarget();
     bool runOnModule(llvm::Module &M);
     void assignPassManager(llvm::PMStack &PMS,
                            llvm::PassManagerType T = llvm::PMT_ModulePassManager);
     llvm::PassManagerType getPotentialPassManagerType() const;
 private:
-    bool runOnBasicBlock(llvm::BasicBlock &BB);
+    bool MaybeHandleVariable(llvm::Module &M, 
+                             lldb_private::ClangExpressionDeclMap *DM,
+                             llvm::Value *V,
+                             bool Store);
+    bool runOnBasicBlock(llvm::Module &M,
+                         llvm::BasicBlock &BB);
+    bool replaceVariables(llvm::Module &M,
+                          llvm::Function *F);
     
     lldb_private::ClangExpressionDeclMap *m_decl_map;
+    const llvm::TargetData *m_target_data;
 };
 
 #endif

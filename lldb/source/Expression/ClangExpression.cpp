@@ -50,6 +50,7 @@
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 
 // Project includes
@@ -240,6 +241,9 @@ ClangExpression::CreateCompilerInstance (bool &IsAST)
     m_clang_ap->getLangOpts().CPlusPlus = true;
     m_clang_ap->getLangOpts().ObjC1 = true;
     m_clang_ap->getLangOpts().ThreadsafeStatics = false;
+    
+    // Set CodeGen options
+    m_clang_ap->getCodeGenOpts().EmitDeclMetadata = true;
 
     // Disable some warnings.
     m_clang_ap->getDiagnosticOpts().Warnings.push_back("no-unused-value");
@@ -250,7 +254,6 @@ ClangExpression::CreateCompilerInstance (bool &IsAST)
     // 3. Set up various important bits of infrastructure.
     
     m_clang_ap->createDiagnostics(0, 0);
-    m_clang_ap->getLangOpts().CPlusPlus = true;
 
     // Create the target instance.
     m_clang_ap->setTarget(TargetInfo::CreateTargetInfo(m_clang_ap->getDiagnostics(),
@@ -294,7 +297,7 @@ ClangExpression::ParseExpression (const char *expr_text,
 {
     // HACK: for now we have to make a function body around our expression
     // since there is no way to parse a single expression line in LLVM/Clang.
-    std::string func_expr("extern \"C\" void ___clang_expr()\n{\n\t");
+    std::string func_expr("extern \"C\" void ___clang_expr(void *___clang_arg)\n{\n\t");
     func_expr.append(expr_text);
     func_expr.append(";\n}");
     return ParseBareExpression (func_expr, stream, add_result_var);
@@ -513,7 +516,23 @@ ClangExpression::PrepareIRForTarget (ClangExpressionVariableList &expr_local_var
         return 1;
     }
     
-    IRForTarget ir_for_target("IR for target", m_decl_map);
+    llvm::Triple target_triple = m_clang_ap->getTarget().getTriple();
+    
+    std::string err;
+    
+    const llvm::Target *target = llvm::TargetRegistry::lookupTarget(m_target_triple, err);
+    
+    if (!target)
+    {
+        if (log)
+            log->Printf("Couldn't find a target for %s", m_target_triple.c_str());
+        
+        return 1;
+    }
+    
+    std::auto_ptr<llvm::TargetMachine> target_machine(target->createTargetMachine(m_target_triple, ""));
+    
+    IRForTarget ir_for_target("IR for target", m_decl_map, target_machine->getTargetData());
     
     return ir_for_target.runOnModule(*module);
 }
