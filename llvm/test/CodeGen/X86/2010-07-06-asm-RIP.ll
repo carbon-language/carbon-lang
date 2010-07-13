@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
-; PR 7528
+; PR 4752
 
 @n = global i32 0                                 ; <i32*> [#uses=2]
 
