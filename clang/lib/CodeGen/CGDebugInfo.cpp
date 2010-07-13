@@ -537,9 +537,15 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   llvm::DIType ThisPtrType = 
     DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
 
-  if (Method->getTypeQualifiers() && Qualifiers::Const)
+  unsigned Quals = Method->getTypeQualifiers();
+  if (Quals & Qualifiers::Const)
     ThisPtrType = 
       DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_const_type, 
+                                     Unit, "", Unit,
+                                     0, 0, 0, 0, 0, ThisPtrType);
+  if (Quals & Qualifiers::Volatile)
+    ThisPtrType = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_volatile_type, 
                                      Unit, "", Unit,
                                      0, 0, 0, 0, 0, ThisPtrType);
 
