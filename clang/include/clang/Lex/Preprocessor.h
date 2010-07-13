@@ -340,13 +340,19 @@ public:
   /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
   /// If 'Namespace' is non-null, then it is a token required to exist on the
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
-  void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
+  void AddPragmaHandler(llvm::StringRef Namespace, PragmaHandler *Handler);
+  void AddPragmaHandler(PragmaHandler *Handler) {
+    AddPragmaHandler(llvm::StringRef(), Handler);
+  }
 
   /// RemovePragmaHandler - Remove the specific pragma handler from
   /// the preprocessor. If \arg Namespace is non-null, then it should
   /// be the namespace that \arg Handler was added to. It is an error
   /// to remove a handler that has not been registered.
-  void RemovePragmaHandler(const char *Namespace, PragmaHandler *Handler);
+  void RemovePragmaHandler(llvm::StringRef Namespace, PragmaHandler *Handler);
+  void RemovePragmaHandler(PragmaHandler *Handler) {
+    RemovePragmaHandler(llvm::StringRef(), Handler);
+  }
 
   /// \brief Add the specified comment handler to the preprocessor.
   void AddCommentHandler(CommentHandler *Handler);

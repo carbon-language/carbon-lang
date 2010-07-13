@@ -159,7 +159,7 @@ void PreprocessOnlyAction::ExecuteAction() {
   Preprocessor &PP = getCompilerInstance().getPreprocessor();
 
   // Ignore unknown pragmas.
-  PP.AddPragmaHandler(0, new EmptyPragmaHandler());
+  PP.AddPragmaHandler(new EmptyPragmaHandler());
 
   Token Tok;
   // Start parsing the specified input file.

@@ -391,7 +391,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
   PrintPPOutputPPCallbacks *Callbacks;
 
   UnknownPragmaHandler(const char *prefix, PrintPPOutputPPCallbacks *callbacks)
-    : PragmaHandler(0), Prefix(prefix), Callbacks(callbacks) {}
+    : Prefix(prefix), Callbacks(callbacks) {}
   virtual void HandlePragma(Preprocessor &PP, Token &PragmaTok) {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
@@ -475,7 +475,7 @@ static int MacroIDCompare(const void* a, const void* b) {
 
 static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
   // Ignore unknown pragmas.
-  PP.AddPragmaHandler(0, new EmptyPragmaHandler());
+  PP.AddPragmaHandler(new EmptyPragmaHandler());
 
   // -dM mode just scans and ignores all tokens in the files, then dumps out
   // the macro table at the end.
@@ -517,7 +517,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
   PrintPPOutputPPCallbacks *Callbacks =
       new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
                                    Opts.ShowMacros);
-  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
+  PP.AddPragmaHandler(new UnknownPragmaHandler("#pragma", Callbacks));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                       Callbacks));
 

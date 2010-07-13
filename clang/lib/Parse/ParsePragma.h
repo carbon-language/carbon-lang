@@ -23,8 +23,8 @@ namespace clang {
 class PragmaOptionsHandler : public PragmaHandler {
   Action &Actions;
 public:
-  PragmaOptionsHandler(const IdentifierInfo *N, Action &A) : PragmaHandler(N),
-                                                             Actions(A) {}
+  explicit PragmaOptionsHandler(Action &A) : PragmaHandler("options"),
+                                             Actions(A) {}
 
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
 };
@@ -32,8 +32,8 @@ public:
 class PragmaPackHandler : public PragmaHandler {
   Action &Actions;
 public:
-  PragmaPackHandler(const IdentifierInfo *N, Action &A) : PragmaHandler(N),
-                                                          Actions(A) {}
+  explicit PragmaPackHandler(Action &A) : PragmaHandler("pack"),
+                                          Actions(A) {}
 
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
 };
@@ -42,8 +42,8 @@ class PragmaUnusedHandler : public PragmaHandler {
   Action &Actions;
   Parser &parser;
 public:
-  PragmaUnusedHandler(const IdentifierInfo *N, Action &A, Parser& p)
-    : PragmaHandler(N), Actions(A), parser(p) {}
+  PragmaUnusedHandler(Action &A, Parser& p)
+    : PragmaHandler("unused"), Actions(A), parser(p) {}
 
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
 };
@@ -51,8 +51,8 @@ public:
 class PragmaWeakHandler : public PragmaHandler {
   Action &Actions;
 public:
-  PragmaWeakHandler(const IdentifierInfo *N, Action &A)
-    : PragmaHandler(N), Actions(A) {}
+  explicit PragmaWeakHandler(Action &A)
+    : PragmaHandler("weak"), Actions(A) {}
 
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
 };

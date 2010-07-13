@@ -33,23 +33,17 @@ Parser::Parser(Preprocessor &pp, Action &actions)
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
-  OptionsHandler.reset(new
-          PragmaOptionsHandler(&PP.getIdentifierTable().get("options"),
-                               actions));
-  PP.AddPragmaHandler(0, OptionsHandler.get());
+  OptionsHandler.reset(new PragmaOptionsHandler(actions));
+  PP.AddPragmaHandler(OptionsHandler.get());
 
-  PackHandler.reset(new
-          PragmaPackHandler(&PP.getIdentifierTable().get("pack"), actions));
-  PP.AddPragmaHandler(0, PackHandler.get());
+  PackHandler.reset(new PragmaPackHandler(actions));
+  PP.AddPragmaHandler(PackHandler.get());
 
-  UnusedHandler.reset(new
-          PragmaUnusedHandler(&PP.getIdentifierTable().get("unused"), actions,
-                              *this));
-  PP.AddPragmaHandler(0, UnusedHandler.get());
+  UnusedHandler.reset(new PragmaUnusedHandler(actions, *this));
+  PP.AddPragmaHandler(UnusedHandler.get());
 
-  WeakHandler.reset(new
-          PragmaWeakHandler(&PP.getIdentifierTable().get("weak"), actions));
-  PP.AddPragmaHandler(0, WeakHandler.get());
+  WeakHandler.reset(new PragmaWeakHandler(actions));
+  PP.AddPragmaHandler(WeakHandler.get());
 }
 
 /// If a crash happens while the parser is active, print out a line indicating
@@ -304,13 +298,13 @@ Parser::~Parser() {
     delete ScopeCache[i];
 
   // Remove the pragma handlers we installed.
-  PP.RemovePragmaHandler(0, OptionsHandler.get());
+  PP.RemovePragmaHandler(OptionsHandler.get());
   OptionsHandler.reset();
-  PP.RemovePragmaHandler(0, PackHandler.get());
+  PP.RemovePragmaHandler(PackHandler.get());
   PackHandler.reset();
-  PP.RemovePragmaHandler(0, UnusedHandler.get());
+  PP.RemovePragmaHandler(UnusedHandler.get());
   UnusedHandler.reset();
-  PP.RemovePragmaHandler(0, WeakHandler.get());
+  PP.RemovePragmaHandler(WeakHandler.get());
   WeakHandler.reset();
 }
 

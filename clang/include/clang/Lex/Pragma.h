@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_PRAGMA_H
 #define LLVM_CLANG_PRAGMA_H
 
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <vector>
 
@@ -33,12 +35,13 @@ namespace clang {
 /// we treat "#pragma STDC" and "#pragma GCC" as namespaces that contain other
 /// pragmas.
 class PragmaHandler {
-  const IdentifierInfo *Name;
+  std::string Name;
 public:
-  PragmaHandler(const IdentifierInfo *name) : Name(name) {}
+  explicit PragmaHandler(llvm::StringRef name) : Name(name) {}
+  PragmaHandler() {}
   virtual ~PragmaHandler();
 
-  const IdentifierInfo *getName() const { return Name; }
+  llvm::StringRef getName() const { return Name; }
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken) = 0;
 
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
@@ -60,25 +63,24 @@ public:
 /// are "#pragma GCC", "#pragma STDC", and "#pragma omp", but any namespaces may
 /// be (potentially recursively) defined.
 class PragmaNamespace : public PragmaHandler {
-  /// Handlers - This is the list of handlers in this namespace.
+  /// Handlers - This is a map of the handlers in this namespace with their name
+  /// as key.
   ///
-  std::vector<PragmaHandler*> Handlers;
+  llvm::StringMap<PragmaHandler*> Handlers;
 public:
-  PragmaNamespace(const IdentifierInfo *Name) : PragmaHandler(Name) {}
+  explicit PragmaNamespace(llvm::StringRef Name) : PragmaHandler(Name) {}
   virtual ~PragmaNamespace();
 
   /// FindHandler - Check to see if there is already a handler for the
-  /// specified name.  If not, return the handler for the null identifier if it
+  /// specified name.  If not, return the handler for the null name if it
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then
   /// the null handler isn't returned on failure to match.
-  PragmaHandler *FindHandler(const IdentifierInfo *Name,
+  PragmaHandler *FindHandler(llvm::StringRef Name,
                              bool IgnoreNull = true) const;
 
   /// AddPragma - Add a pragma to this namespace.
   ///
-  void AddPragma(PragmaHandler *Handler) {
-    Handlers.push_back(Handler);
-  }
+  void AddPragma(PragmaHandler *Handler);
 
   /// RemovePragmaHandler - Remove the given handler from the
   /// namespace.

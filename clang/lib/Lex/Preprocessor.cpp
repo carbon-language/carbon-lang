@@ -87,7 +87,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
 
   // Initialize the pragma handlers.
-  PragmaHandlers = new PragmaNamespace(0);
+  PragmaHandlers = new PragmaNamespace(llvm::StringRef());
   RegisterBuiltinPragmas();
 
   // Initialize builtin macros like __LINE__ and friends.

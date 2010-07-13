@@ -30,7 +30,7 @@ PragmaHandler::~PragmaHandler() {
 // EmptyPragmaHandler Implementation.
 //===----------------------------------------------------------------------===//
 
-EmptyPragmaHandler::EmptyPragmaHandler() : PragmaHandler(0) {}
+EmptyPragmaHandler::EmptyPragmaHandler() {}
 
 void EmptyPragmaHandler::HandlePragma(Preprocessor &PP, Token &FirstToken) {}
 
@@ -40,36 +40,34 @@ void EmptyPragmaHandler::HandlePragma(Preprocessor &PP, Token &FirstToken) {}
 
 
 PragmaNamespace::~PragmaNamespace() {
-  for (unsigned i = 0, e = Handlers.size(); i != e; ++i)
-    delete Handlers[i];
+  for (llvm::StringMap<PragmaHandler*>::iterator
+         I = Handlers.begin(), E = Handlers.end(); I != E; ++I)
+    delete I->second;
 }
 
 /// FindHandler - Check to see if there is already a handler for the
 /// specified name.  If not, return the handler for the null identifier if it
 /// exists, otherwise return null.  If IgnoreNull is true (the default) then
 /// the null handler isn't returned on failure to match.
-PragmaHandler *PragmaNamespace::FindHandler(const IdentifierInfo *Name,
+PragmaHandler *PragmaNamespace::FindHandler(llvm::StringRef Name,
                                             bool IgnoreNull) const {
-  PragmaHandler *NullHandler = 0;
-  for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    if (Handlers[i]->getName() == Name)
-      return Handlers[i];
+  if (PragmaHandler *Handler = Handlers.lookup(Name))
+    return Handler;
+  return IgnoreNull ? 0 : Handlers.lookup(llvm::StringRef());
+}
 
-    if (Handlers[i]->getName() == 0)
-      NullHandler = Handlers[i];
-  }
-  return IgnoreNull ? 0 : NullHandler;
+void PragmaNamespace::AddPragma(PragmaHandler *Handler) {
+  assert(!Handlers.lookup(Handler->getName()) &&
+         "A handler with this name is already registered in this namespace");
+  llvm::StringMapEntry<PragmaHandler *> &Entry =
+    Handlers.GetOrCreateValue(Handler->getName());
+  Entry.setValue(Handler);
 }
 
 void PragmaNamespace::RemovePragmaHandler(PragmaHandler *Handler) {
-  for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-    if (Handlers[i] == Handler) {
-      Handlers[i] = Handlers.back();
-      Handlers.pop_back();
-      return;
-    }
-  }
-  assert(0 && "Handler not registered in this namespace");
+  assert(Handlers.lookup(Handler->getName()) &&
+         "Handler not registered in this namespace");
+  Handlers.erase(Handler->getName());
 }
 
 void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
@@ -78,7 +76,10 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
   PP.LexUnexpandedToken(Tok);
 
   // Get the handler for this token.  If there is no handler, ignore the pragma.
-  PragmaHandler *Handler = FindHandler(Tok.getIdentifierInfo(), false);
+  PragmaHandler *Handler
+    = FindHandler(Tok.getIdentifierInfo() ? Tok.getIdentifierInfo()->getName()
+                                          : llvm::StringRef(),
+                  /*IgnoreNull=*/false);
   if (Handler == 0) {
     PP.Diag(Tok, diag::warn_pragma_ignored);
     return;
@@ -486,25 +487,23 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
 /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
-void Preprocessor::AddPragmaHandler(const char *Namespace,
+void Preprocessor::AddPragmaHandler(llvm::StringRef Namespace,
                                     PragmaHandler *Handler) {
   PragmaNamespace *InsertNS = PragmaHandlers;
 
   // If this is specified to be in a namespace, step down into it.
-  if (Namespace) {
-    IdentifierInfo *NSID = getIdentifierInfo(Namespace);
-
+  if (!Namespace.empty()) {
     // If there is already a pragma handler with the name of this namespace,
     // we either have an error (directive with the same name as a namespace) or
     // we already have the namespace to insert into.
-    if (PragmaHandler *Existing = PragmaHandlers->FindHandler(NSID)) {
+    if (PragmaHandler *Existing = PragmaHandlers->FindHandler(Namespace)) {
       InsertNS = Existing->getIfNamespace();
       assert(InsertNS != 0 && "Cannot have a pragma namespace and pragma"
              " handler with the same name!");
     } else {
       // Otherwise, this namespace doesn't exist yet, create and insert the
       // handler for it.
-      InsertNS = new PragmaNamespace(NSID);
+      InsertNS = new PragmaNamespace(Namespace);
       PragmaHandlers->AddPragma(InsertNS);
     }
   }
@@ -519,14 +518,13 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
 /// preprocessor. If \arg Namespace is non-null, then it should be the
 /// namespace that \arg Handler was added to. It is an error to remove
 /// a handler that has not been registered.
-void Preprocessor::RemovePragmaHandler(const char *Namespace,
+void Preprocessor::RemovePragmaHandler(llvm::StringRef Namespace,
                                        PragmaHandler *Handler) {
   PragmaNamespace *NS = PragmaHandlers;
 
   // If this is specified to be in a namespace, step down into it.
-  if (Namespace) {
-    IdentifierInfo *NSID = getIdentifierInfo(Namespace);
-    PragmaHandler *Existing = PragmaHandlers->FindHandler(NSID);
+  if (!Namespace.empty()) {
+    PragmaHandler *Existing = PragmaHandlers->FindHandler(Namespace);
     assert(Existing && "Namespace containing handler does not exist!");
 
     NS = Existing->getIfNamespace();
@@ -544,7 +542,7 @@ void Preprocessor::RemovePragmaHandler(const char *Namespace,
 namespace {
 /// PragmaOnceHandler - "#pragma once" marks the file as atomically included.
 struct PragmaOnceHandler : public PragmaHandler {
-  PragmaOnceHandler(const IdentifierInfo *OnceID) : PragmaHandler(OnceID) {}
+  PragmaOnceHandler() : PragmaHandler("once") {}
   virtual void HandlePragma(Preprocessor &PP, Token &OnceTok) {
     PP.CheckEndOfDirective("pragma once");
     PP.HandlePragmaOnce(OnceTok);
@@ -554,7 +552,7 @@ struct PragmaOnceHandler : public PragmaHandler {
 /// PragmaMarkHandler - "#pragma mark ..." is ignored by the compiler, and the
 /// rest of the line is not lexed.
 struct PragmaMarkHandler : public PragmaHandler {
-  PragmaMarkHandler(const IdentifierInfo *MarkID) : PragmaHandler(MarkID) {}
+  PragmaMarkHandler() : PragmaHandler("mark") {}
   virtual void HandlePragma(Preprocessor &PP, Token &MarkTok) {
     PP.HandlePragmaMark();
   }
@@ -562,7 +560,7 @@ struct PragmaMarkHandler : public PragmaHandler {
 
 /// PragmaPoisonHandler - "#pragma poison x" marks x as not usable.
 struct PragmaPoisonHandler : public PragmaHandler {
-  PragmaPoisonHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaPoisonHandler() : PragmaHandler("poison") {}
   virtual void HandlePragma(Preprocessor &PP, Token &PoisonTok) {
     PP.HandlePragmaPoison(PoisonTok);
   }
@@ -571,14 +569,14 @@ struct PragmaPoisonHandler : public PragmaHandler {
 /// PragmaSystemHeaderHandler - "#pragma system_header" marks the current file
 /// as a system header, which silences warnings in it.
 struct PragmaSystemHeaderHandler : public PragmaHandler {
-  PragmaSystemHeaderHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaSystemHeaderHandler() : PragmaHandler("system_header") {}
   virtual void HandlePragma(Preprocessor &PP, Token &SHToken) {
     PP.HandlePragmaSystemHeader(SHToken);
     PP.CheckEndOfDirective("pragma");
   }
 };
 struct PragmaDependencyHandler : public PragmaHandler {
-  PragmaDependencyHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaDependencyHandler() : PragmaHandler("dependency") {}
   virtual void HandlePragma(Preprocessor &PP, Token &DepToken) {
     PP.HandlePragmaDependency(DepToken);
   }
@@ -592,9 +590,9 @@ struct PragmaDiagnosticHandler : public PragmaHandler {
 private:
   const bool ClangMode;
 public:
-  PragmaDiagnosticHandler(const IdentifierInfo *ID,
-                          const bool clangMode) : PragmaHandler(ID),
-                                                  ClangMode(clangMode) {}
+  explicit PragmaDiagnosticHandler(const bool clangMode)
+    : PragmaHandler("diagnostic"), ClangMode(clangMode) {}
+
   virtual void HandlePragma(Preprocessor &PP, Token &DiagToken) {
     Token Tok;
     PP.LexUnexpandedToken(Tok);
@@ -687,7 +685,7 @@ public:
 
 /// PragmaCommentHandler - "#pragma comment ...".
 struct PragmaCommentHandler : public PragmaHandler {
-  PragmaCommentHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaCommentHandler() : PragmaHandler("comment") {}
   virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
     PP.HandlePragmaComment(CommentTok);
   }
@@ -695,7 +693,7 @@ struct PragmaCommentHandler : public PragmaHandler {
 
 /// PragmaMessageHandler - "#pragma message("...")".
 struct PragmaMessageHandler : public PragmaHandler {
-  PragmaMessageHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaMessageHandler() : PragmaHandler("message") {}
   virtual void HandlePragma(Preprocessor &PP, Token &CommentTok) {
     PP.HandlePragmaMessage(CommentTok);
   }
@@ -737,7 +735,7 @@ static STDCSetting LexOnOffSwitch(Preprocessor &PP) {
 
 /// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
 struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
-  PragmaSTDC_FP_CONTRACTHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaSTDC_FP_CONTRACTHandler() : PragmaHandler("FP_CONTRACT") {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
     // We just ignore the setting of FP_CONTRACT. Since we don't do contractions
     // at all, our default is OFF and setting it to ON is an optimization hint
@@ -749,7 +747,7 @@ struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
 
 /// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
-  PragmaSTDC_FENV_ACCESSHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
+  PragmaSTDC_FENV_ACCESSHandler() : PragmaHandler("FENV_ACCESS") {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
     if (LexOnOffSwitch(PP) == STDC_ON)
       PP.Diag(Tok, diag::warn_stdc_fenv_access_not_supported);
@@ -758,8 +756,8 @@ struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
 
 /// PragmaSTDC_CX_LIMITED_RANGEHandler - "#pragma STDC CX_LIMITED_RANGE ...".
 struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
-  PragmaSTDC_CX_LIMITED_RANGEHandler(const IdentifierInfo *ID)
-    : PragmaHandler(ID) {}
+  PragmaSTDC_CX_LIMITED_RANGEHandler()
+    : PragmaHandler("CX_LIMITED_RANGE") {}
   virtual void HandlePragma(Preprocessor &PP, Token &Tok) {
     LexOnOffSwitch(PP);
   }
@@ -767,7 +765,7 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
 
 /// PragmaSTDC_UnknownHandler - "#pragma STDC ...".
 struct PragmaSTDC_UnknownHandler : public PragmaHandler {
-  PragmaSTDC_UnknownHandler() : PragmaHandler(0) {}
+  PragmaSTDC_UnknownHandler() {}
   virtual void HandlePragma(Preprocessor &PP, Token &UnknownTok) {
     // C99 6.10.6p2, unknown forms are not allowed.
     PP.Diag(UnknownTok, diag::ext_stdc_pragma_ignored);
@@ -780,40 +778,28 @@ struct PragmaSTDC_UnknownHandler : public PragmaHandler {
 /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
 /// #pragma GCC poison/system_header/dependency and #pragma once.
 void Preprocessor::RegisterBuiltinPragmas() {
-  AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
-  AddPragmaHandler(0, new PragmaMarkHandler(getIdentifierInfo("mark")));
+  AddPragmaHandler(new PragmaOnceHandler());
+  AddPragmaHandler(new PragmaMarkHandler());
 
   // #pragma GCC ...
-  AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
-  AddPragmaHandler("GCC", new PragmaSystemHeaderHandler(
-                                          getIdentifierInfo("system_header")));
-  AddPragmaHandler("GCC", new PragmaDependencyHandler(
-                                          getIdentifierInfo("dependency")));
-  AddPragmaHandler("GCC", new PragmaDiagnosticHandler(
-                                              getIdentifierInfo("diagnostic"),
-                                              false));
+  AddPragmaHandler("GCC", new PragmaPoisonHandler());
+  AddPragmaHandler("GCC", new PragmaSystemHeaderHandler());
+  AddPragmaHandler("GCC", new PragmaDependencyHandler());
+  AddPragmaHandler("GCC", new PragmaDiagnosticHandler(false));
   // #pragma clang ...
-  AddPragmaHandler("clang", new PragmaPoisonHandler(
-                                          getIdentifierInfo("poison")));
-  AddPragmaHandler("clang", new PragmaSystemHeaderHandler(
-                                          getIdentifierInfo("system_header")));
-  AddPragmaHandler("clang", new PragmaDependencyHandler(
-                                          getIdentifierInfo("dependency")));
-  AddPragmaHandler("clang", new PragmaDiagnosticHandler(
-                                          getIdentifierInfo("diagnostic"),
-                                          true));
+  AddPragmaHandler("clang", new PragmaPoisonHandler());
+  AddPragmaHandler("clang", new PragmaSystemHeaderHandler());
+  AddPragmaHandler("clang", new PragmaDependencyHandler());
+  AddPragmaHandler("clang", new PragmaDiagnosticHandler(true));
 
-  AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler(
-                                             getIdentifierInfo("FP_CONTRACT")));
-  AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler(
-                                             getIdentifierInfo("FENV_ACCESS")));
-  AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler(
-                                        getIdentifierInfo("CX_LIMITED_RANGE")));
+  AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler());
+  AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler());
+  AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_UnknownHandler());
 
   // MS extensions.
   if (Features.Microsoft) {
-    AddPragmaHandler(0, new PragmaCommentHandler(getIdentifierInfo("comment")));
-    AddPragmaHandler(0, new PragmaMessageHandler(getIdentifierInfo("message")));
+    AddPragmaHandler(new PragmaCommentHandler());
+    AddPragmaHandler(new PragmaMessageHandler());
   }
 }
