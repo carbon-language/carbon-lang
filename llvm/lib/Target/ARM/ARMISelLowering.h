@@ -53,6 +53,8 @@ namespace llvm {
       CMOV,         // ARM conditional move instructions.
       CNEG,         // ARM conditional negate instructions.
 
+      BCC_i64,
+
       RBIT,         // ARM bitreverse instruction
 
       FTOSI,        // FP to sint within a FP register.
@@ -363,9 +365,11 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG) const;
 
     SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
-                      SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl) const;
-    SDValue getVFPCmp(SDValue &LHS, SDValue &RHS, ISD::CondCode CC,
-                      SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl) const;
+                      SDValue &ARMcc, SelectionDAG &DAG, DebugLoc dl) const;
+    SDValue getVFPCmp(SDValue LHS, SDValue RHS,
+                      SelectionDAG &DAG, DebugLoc dl) const;
+
+    SDValue OptimizeVFPBrcond(SDValue Op, SelectionDAG &DAG) const;
 
     MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI,
                                          MachineBasicBlock *BB,

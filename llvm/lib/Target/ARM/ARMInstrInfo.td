@@ -38,6 +38,12 @@ def SDT_ARMBr2JT   : SDTypeProfile<0, 4,
                                   [SDTCisPtrTy<0>, SDTCisVT<1, i32>,
                                    SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
 
+def SDT_ARMBCC_i64 : SDTypeProfile<0, 6,
+                                  [SDTCisVT<0, i32>,
+                                   SDTCisVT<1, i32>, SDTCisVT<2, i32>,
+                                   SDTCisVT<3, i32>, SDTCisVT<4, i32>,
+                                   SDTCisVT<5, OtherVT>]>;
+
 def SDT_ARMCmp     : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 
 def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
@@ -88,6 +94,9 @@ def ARMbrcond        : SDNode<"ARMISD::BRCOND", SDT_ARMBrcond,
 def ARMbrjt          : SDNode<"ARMISD::BR_JT", SDT_ARMBrJT,
                               [SDNPHasChain]>;
 def ARMbr2jt         : SDNode<"ARMISD::BR2_JT", SDT_ARMBr2JT,
+                              [SDNPHasChain]>;
+
+def ARMBcci64        : SDNode<"ARMISD::BCC_i64", SDT_ARMBCC_i64,
                               [SDNPHasChain]>;
 
 def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
@@ -2278,6 +2287,22 @@ defm CMNz  : AI1_cmp_irs<0b1011, "cmn",
 
 def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
              (CMNzri  GPR:$src, so_imm_neg:$imm)>;
+
+// Pseudo i64 compares for some floating point compares.
+let usesCustomInserter = 1, isBranch = 1, isTerminator = 1,
+    Defs = [CPSR] in {
+def BCCi64 : PseudoInst<(outs),
+     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, brtarget:$dst),
+      IIC_Br,
+     "${:comment} B\t$dst GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, imm:$cc",
+    [(ARMBcci64 imm:$cc, GPR:$lhs1, GPR:$lhs2, GPR:$rhs1, GPR:$rhs2, bb:$dst)]>;
+
+def BCCZi64 : PseudoInst<(outs),
+     (ins i32imm:$cc, GPR:$lhs1, GPR:$lhs2, brtarget:$dst),
+      IIC_Br,
+     "${:comment} B\t$dst GPR:$lhs1, GPR:$lhs2, 0, 0, imm:$cc",
+    [(ARMBcci64 imm:$cc, GPR:$lhs1, GPR:$lhs2, 0, 0, bb:$dst)]>;
+} // usesCustomInserter
 
 
 // Conditional moves
