@@ -312,7 +312,6 @@ public:
     return getAttrsImpl();    // Uncommon case, out of line hash lookup.
   }
   void swapAttrs(Decl *D);
-  void copyAttrs(Decl *D);
   void invalidateAttrs();
 
   template<typename T> const T *getAttr() const {

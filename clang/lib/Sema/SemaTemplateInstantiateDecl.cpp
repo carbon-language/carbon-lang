@@ -396,11 +396,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     Owner->makeDeclVisibleInContext(Var);
   } else {
     Owner->addDecl(Var);
-    
     if (Owner->isFunctionOrMethod())
       SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
-
+  InstantiateAttrs(D, Var);
+  
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
   if (Var->isStaticDataMember())
@@ -2591,10 +2591,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
       ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
     // declarations to their instantiations.
-    NamedDecl *ND = 
-      cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
-    ND->copyAttrs(D);
-    return ND;
+    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
   }
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
