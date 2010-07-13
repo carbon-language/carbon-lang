@@ -235,8 +235,7 @@ class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
 // SI - SSE 1 & 2 scalar instructions
 class SI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern> {
-  let Predicates = !if(hasVEXPrefix /* VEX_4V */,
-            !if(!eq(Prefix, 11 /* XD */), [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
+  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
             !if(!eq(Prefix, 12 /* XS */), [HasSSE1], [HasSSE2]));
 
   // AVX instructions have a 'v' prefix in the mnemonic
@@ -247,8 +246,7 @@ class SI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
 class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern> {
-  let Predicates = !if(hasVEXPrefix /* VEX_4V */,
-            !if(!eq(Prefix, 11 /* XD */), [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
+  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
             !if(!eq(Prefix, 12 /* XS */), [HasSSE1], [HasSSE2]));
 
   // AVX instructions have a 'v' prefix in the mnemonic
@@ -259,8 +257,7 @@ class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
          Domain d>
       : I<o, F, outs, ins, asm, pattern, d> {
-  let Predicates = !if(hasVEXPrefix /* VEX_4V */,
-        !if(hasOpSizePrefix /* OpSize */, [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
+  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
         !if(hasOpSizePrefix /* OpSize */, [HasSSE2], [HasSSE1]));
 
   // AVX instructions have a 'v' prefix in the mnemonic
@@ -271,8 +268,7 @@ class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
 class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, Domain d>
       : Ii8<o, F, outs, ins, asm, pattern, d> {
-  let Predicates = !if(hasVEX_4VPrefix /* VEX_4V */,
-        !if(hasOpSizePrefix /* OpSize */, [HasAVX, HasSSE2], [HasAVX, HasSSE1]),
+  let Predicates = !if(hasVEX_4VPrefix /* VEX */, [HasAVX],
         !if(hasOpSizePrefix /* OpSize */, [HasSSE2], [HasSSE1]));
 
   // AVX instructions have a 'v' prefix in the mnemonic
@@ -302,11 +298,11 @@ class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XS,
-        Requires<[HasAVX, HasSSE1]>;
+        Requires<[HasAVX]>;
 class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>,
-        Requires<[HasAVX, HasSSE1]>;
+        Requires<[HasAVX]>;
 
 // SSE2 Instruction Templates:
 // 
@@ -336,11 +332,11 @@ class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern>, XD,
-        Requires<[HasAVX, HasSSE2]>;
+        Requires<[HasAVX]>;
 class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedDouble>,
-        OpSize, Requires<[HasAVX, HasSSE2]>;
+        OpSize, Requires<[HasAVX]>;
 
 // SSE3 Instruction Templates:
 // 
