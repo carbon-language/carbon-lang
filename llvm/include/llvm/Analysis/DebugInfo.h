@@ -580,7 +580,8 @@ namespace llvm {
                                     unsigned RunTimeVer = 0);
 
     /// CreateFile -  Create a new descriptor for the specified file.
-    DIFile CreateFile(StringRef Filename, StringRef Directory, DICompileUnit CU);
+    DIFile CreateFile(StringRef Filename, StringRef Directory,
+                      DICompileUnit CU);
 
     /// CreateEnumerator - Create a single enumerator value.
     DIEnumerator CreateEnumerator(StringRef Name, uint64_t Val);

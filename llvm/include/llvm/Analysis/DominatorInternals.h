@@ -152,8 +152,9 @@ void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
 }
 
 template<class GraphT>
-typename GraphT::NodeType* Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                typename GraphT::NodeType *V) {
+typename GraphT::NodeType* 
+Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
+     typename GraphT::NodeType *V) {
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
                                                                      DT.Info[V];
 #if !BALANCE_IDOM_TREE
