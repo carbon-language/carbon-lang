@@ -1070,7 +1070,6 @@ void PCHStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
 void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalNew());
-  Record.push_back(E->isParenTypeId());
   Record.push_back(E->hasInitializer());
   Record.push_back(E->isArray());
   Record.push_back(E->getNumPlacementArgs());
@@ -1078,6 +1077,7 @@ void PCHStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   Writer.AddDeclRef(E->getOperatorNew(), Record);
   Writer.AddDeclRef(E->getOperatorDelete(), Record);
   Writer.AddDeclRef(E->getConstructor(), Record);
+  Writer.AddSourceRange(E->getTypeIdParens(), Record);
   Writer.AddSourceLocation(E->getStartLoc(), Record);
   Writer.AddSourceLocation(E->getEndLoc(), Record);
   for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), e = E->raw_arg_end();

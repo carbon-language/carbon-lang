@@ -819,7 +819,8 @@ namespace {
                                          SourceLocation PlacementLParen,
                                          MultiExprArg PlacementArgs,
                                          SourceLocation PlacementRParen,
-                                         bool ParenTypeId, Declarator &D,
+                                         SourceRange TypeIdParens, 
+                                         Declarator &D,
                                          SourceLocation ConstructorLParen,
                                          MultiExprArg ConstructorArgs,
                                          SourceLocation ConstructorRParen) {

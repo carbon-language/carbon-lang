@@ -2366,7 +2366,7 @@ public:
                                        SourceLocation PlacementLParen,
                                        MultiExprArg PlacementArgs,
                                        SourceLocation PlacementRParen,
-                                       bool ParenTypeId, Declarator &D,
+                                       SourceRange TypeIdParens, Declarator &D,
                                        SourceLocation ConstructorLParen,
                                        MultiExprArg ConstructorArgs,
                                        SourceLocation ConstructorRParen);
@@ -2374,7 +2374,7 @@ public:
                                SourceLocation PlacementLParen,
                                MultiExprArg PlacementArgs,
                                SourceLocation PlacementRParen,
-                               bool ParenTypeId,
+                               SourceRange TypeIdParens,
                                QualType AllocType,
                                SourceLocation TypeLoc,
                                SourceRange TypeRange,

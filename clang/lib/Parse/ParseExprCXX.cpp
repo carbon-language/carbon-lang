@@ -1572,7 +1572,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
   ExprVector PlacementArgs(Actions);
   SourceLocation PlacementLParen, PlacementRParen;
 
-  bool ParenTypeId;
+  SourceRange TypeIdParens;
   DeclSpec DS;
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   if (Tok.is(tok::l_paren)) {
@@ -1591,17 +1591,17 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
 
     if (PlacementArgs.empty()) {
       // Reset the placement locations. There was no placement.
+      TypeIdParens = SourceRange(PlacementLParen, PlacementRParen);
       PlacementLParen = PlacementRParen = SourceLocation();
-      ParenTypeId = true;
     } else {
       // We still need the type.
       if (Tok.is(tok::l_paren)) {
-        SourceLocation LParen = ConsumeParen();
+        TypeIdParens.setBegin(ConsumeParen());
         ParseSpecifierQualifierList(DS);
         DeclaratorInfo.SetSourceRange(DS.getSourceRange());
         ParseDeclarator(DeclaratorInfo);
-        MatchRHSPunctuation(tok::r_paren, LParen);
-        ParenTypeId = true;
+        TypeIdParens.setEnd(MatchRHSPunctuation(tok::r_paren, 
+                                                TypeIdParens.getBegin()));
       } else {
         if (ParseCXXTypeSpecifierSeq(DS))
           DeclaratorInfo.setInvalidType(true);
@@ -1610,7 +1610,6 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
           ParseDeclaratorInternal(DeclaratorInfo,
                                   &Parser::ParseDirectNewDeclarator);
         }
-        ParenTypeId = false;
       }
     }
   } else {
@@ -1623,7 +1622,6 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       ParseDeclaratorInternal(DeclaratorInfo,
                               &Parser::ParseDirectNewDeclarator);
     }
-    ParenTypeId = false;
   }
   if (DeclaratorInfo.isInvalidType()) {
     SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
@@ -1651,7 +1649,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
                              move_arg(PlacementArgs), PlacementRParen,
-                             ParenTypeId, DeclaratorInfo, ConstructorLParen,
+                             TypeIdParens, DeclaratorInfo, ConstructorLParen,
                              move_arg(ConstructorArgs), ConstructorRParen);
 }
 

@@ -589,7 +589,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 Action::OwningExprResult
 Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen, MultiExprArg PlacementArgs,
-                  SourceLocation PlacementRParen, bool ParenTypeId,
+                  SourceLocation PlacementRParen, SourceRange TypeIdParens, 
                   Declarator &D, SourceLocation ConstructorLParen,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
@@ -604,17 +604,6 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     if (!Chunk.Arr.NumElts)
       return ExprError(Diag(Chunk.Loc, diag::err_array_new_needs_size)
         << D.getSourceRange());
-
-    if (ParenTypeId) {
-      // Can't have dynamic array size when the type-id is in parentheses.
-      Expr *NumElts = (Expr *)Chunk.Arr.NumElts;
-      if (!NumElts->isTypeDependent() && !NumElts->isValueDependent() &&
-          !NumElts->isIntegerConstantExpr(Context)) {
-        Diag(D.getTypeObject(0).Loc, diag::err_new_paren_array_nonconst)
-          << NumElts->getSourceRange();
-        return ExprError();
-      }
-    }
 
     ArraySize = static_cast<Expr*>(Chunk.Arr.NumElts);
     D.DropFirstTypeObject();
@@ -649,7 +638,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      PlacementLParen,
                      move(PlacementArgs),
                      PlacementRParen,
-                     ParenTypeId,
+                     TypeIdParens,
                      AllocType,
                      D.getSourceRange().getBegin(),
                      R,
@@ -664,7 +653,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen,
                   MultiExprArg PlacementArgs,
                   SourceLocation PlacementRParen,
-                  bool ParenTypeId,
+                  SourceRange TypeIdParens,
                   QualType AllocType,
                   SourceLocation TypeLoc,
                   SourceRange TypeRange,
@@ -728,6 +717,14 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
           return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
                            diag::err_typecheck_negative_array_size)
             << ArraySize->getSourceRange());
+      } else if (TypeIdParens.isValid()) {
+        // Can't have dynamic array size when the type-id is in parentheses.
+        Diag(ArraySize->getLocStart(), diag::ext_new_paren_array_nonconst)
+          << ArraySize->getSourceRange()
+          << FixItHint::CreateRemoval(TypeIdParens.getBegin())
+          << FixItHint::CreateRemoval(TypeIdParens.getEnd());
+          
+        TypeIdParens = SourceRange();
       }
     }
     
@@ -845,7 +842,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   
   // FIXME: The TypeSourceInfo should also be included in CXXNewExpr.
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
-                                        PlaceArgs, NumPlaceArgs, ParenTypeId,
+                                        PlaceArgs, NumPlaceArgs, TypeIdParens,
                                         ArraySize, Constructor, Init,
                                         ConsArgs, NumConsArgs, OperatorDelete,
                                         ResultType, StartLoc,

@@ -68,7 +68,7 @@ void bad_news(int *ip)
   (void)new int[1.1]; // expected-error {{array size expression must have integral or enumerated type, not 'double'}}
   (void)new int[1][i]; // expected-error {{only the first dimension}}
   (void)new (int[1][i]); // expected-error {{only the first dimension}}
-  (void)new (int[i]); // expected-error {{when type is in parentheses}}
+  (void)new (int[i]); // expected-warning {{when type is in parentheses}}
   (void)new int(*(S*)0); // expected-error {{no viable conversion from 'S' to 'int'}}
   (void)new int(1, 2); // expected-error {{excess elements in scalar initializer}}
   (void)new S(1); // expected-error {{no matching constructor}}
@@ -288,3 +288,25 @@ void test(S1* s1, S2* s2) {
 }
 }
 
+namespace rdar8018245 {
+  struct X0 {
+    static const int value = 17;
+  };
+
+  const int X0::value;
+
+  struct X1 {
+    static int value;
+  };
+
+  int X1::value;
+
+  template<typename T>
+  int *f() {
+    return new (int[T::value]); // expected-warning{{when type is in parentheses, array cannot have dynamic size}}
+  }
+
+  template int *f<X0>();
+  template int *f<X1>(); // expected-note{{in instantiation of}}
+
+}

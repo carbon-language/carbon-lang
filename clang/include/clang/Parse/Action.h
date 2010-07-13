@@ -1651,16 +1651,39 @@ public:
     return move(SubExpr);
   }
   
-  /// ActOnCXXNew - Parsed a C++ 'new' expression. UseGlobal is true if the
-  /// new was qualified (::new). In a full new like
-  /// @code new (p1, p2) type(c1, c2) @endcode
-  /// the p1 and p2 expressions will be in PlacementArgs and the c1 and c2
-  /// expressions in ConstructorArgs. The type is passed as a declarator.
+  /// \brief Parsed a C++ 'new' expression.
+  ///
+  /// \param StartLoc The start of the new expression, which is either the
+  /// "new" keyword or the "::" preceding it, depending on \p UseGlobal.
+  ///
+  /// \param UseGlobal True if the "new" was qualified with "::".
+  ///
+  /// \param PlacementLParen The location of the opening parenthesis ('(') for
+  /// the placement arguments, if any.
+  /// 
+  /// \param PlacementArgs The placement arguments, if any.
+  ///
+  /// \param PlacementRParen The location of the closing parenthesis (')') for
+  /// the placement arguments, if any.
+  ///
+  /// \param TypeIdParens If the type was expressed as a type-id in parentheses,
+  /// the source range covering the parenthesized type-id.
+  ///
+  /// \param D The parsed declarator, which may include an array size (for 
+  /// array new) as the first declarator.
+  ///
+  /// \param ConstructorLParen The location of the opening parenthesis ('(') for
+  /// the constructor arguments, if any.
+  ///
+  /// \param ConstructorArgs The constructor arguments, if any.
+  ///
+  /// \param ConstructorRParen The location of the closing parenthesis (')') for
+  /// the constructor arguments, if any.
   virtual OwningExprResult ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                        SourceLocation PlacementLParen,
                                        MultiExprArg PlacementArgs,
                                        SourceLocation PlacementRParen,
-                                       bool ParenTypeId, Declarator &D,
+                                       SourceRange TypeIdParens, Declarator &D,
                                        SourceLocation ConstructorLParen,
                                        MultiExprArg ConstructorArgs,
                                        SourceLocation ConstructorRParen) {

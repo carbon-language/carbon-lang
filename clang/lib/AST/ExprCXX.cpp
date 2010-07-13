@@ -85,16 +85,16 @@ Stmt::child_iterator CXXScalarValueInitExpr::child_end() {
 // CXXNewExpr
 CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        Expr **placementArgs, unsigned numPlaceArgs,
-                       bool parenTypeId, Expr *arraySize,
+                       SourceRange TypeIdParens, Expr *arraySize,
                        CXXConstructorDecl *constructor, bool initializer,
                        Expr **constructorArgs, unsigned numConsArgs,
                        FunctionDecl *operatorDelete, QualType ty,
                        SourceLocation startLoc, SourceLocation endLoc)
   : Expr(CXXNewExprClass, ty, ty->isDependentType(), ty->isDependentType()),
-    GlobalNew(globalNew), ParenTypeId(parenTypeId),
+    GlobalNew(globalNew),
     Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
-    StartLoc(startLoc), EndLoc(endLoc) {
+    TypeIdParens(TypeIdParens), StartLoc(startLoc), EndLoc(endLoc) {
       
   AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;

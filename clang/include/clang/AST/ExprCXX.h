@@ -922,8 +922,6 @@ public:
 class CXXNewExpr : public Expr {
   // Was the usage ::new, i.e. is the global new to be used?
   bool GlobalNew : 1;
-  // Was the form (type-id) used? Otherwise, it was new-type-id.
-  bool ParenTypeId : 1;
   // Is there an initializer? If not, built-ins are uninitialized, else they're
   // value-initialized.
   bool Initializer : 1;
@@ -947,12 +945,18 @@ class CXXNewExpr : public Expr {
   // Must be null for all other types.
   CXXConstructorDecl *Constructor;
 
+  /// \brief If the allocated type was expressed as a parenthesized type-id, 
+  /// the source range covering the parenthesized type-id.
+  SourceRange TypeIdParens;
+  
   SourceLocation StartLoc;
   SourceLocation EndLoc;
 
+  friend class PCHStmtReader;
 public:
   CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
-             Expr **placementArgs, unsigned numPlaceArgs, bool ParenTypeId,
+             Expr **placementArgs, unsigned numPlaceArgs,
+             SourceRange TypeIdParens,
              Expr *arraySize, CXXConstructorDecl *constructor, bool initializer,
              Expr **constructorArgs, unsigned numConsArgs,
              FunctionDecl *operatorDelete, QualType ty,
@@ -995,10 +999,11 @@ public:
     return cast<Expr>(SubExprs[Array + i]);
   }
 
+  bool isParenTypeId() const { return TypeIdParens.isValid(); }
+  SourceRange getTypeIdParens() const { return TypeIdParens; }
+
   bool isGlobalNew() const { return GlobalNew; }
   void setGlobalNew(bool V) { GlobalNew = V; }
-  bool isParenTypeId() const { return ParenTypeId; }
-  void setParenTypeId(bool V) { ParenTypeId = V; }
   bool hasInitializer() const { return Initializer; }
   void setHasInitializer(bool V) { Initializer = V; }
 

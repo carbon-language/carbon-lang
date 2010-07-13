@@ -1042,7 +1042,6 @@ void PCHStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
 void PCHStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   E->setGlobalNew(Record[Idx++]);
-  E->setParenTypeId(Record[Idx++]);
   E->setHasInitializer(Record[Idx++]);
   bool isArray = Record[Idx++];
   unsigned NumPlacementArgs = Record[Idx++];
@@ -1052,6 +1051,10 @@ void PCHStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
                     cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   E->setConstructor(
                cast_or_null<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
+  SourceRange TypeIdParens;
+  TypeIdParens.setBegin(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TypeIdParens.setEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->TypeIdParens = TypeIdParens;
   E->setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   
