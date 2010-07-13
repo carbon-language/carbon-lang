@@ -68,7 +68,7 @@ namespace llvm {
   /// this flag is off (the default), the code generator is not allowed to
   /// produce results that are "less precise" than IEEE allows.  This includes
   /// use of X86 instructions like FSIN and FCOS instead of libcalls.
-  /// UnsafeFPMath implies FiniteOnlyFPMath and LessPreciseFPMAD.
+  /// UnsafeFPMath implies LessPreciseFPMAD.
   extern bool UnsafeFPMath;
 
   /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
