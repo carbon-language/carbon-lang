@@ -2576,3 +2576,35 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc5,0xdd,0x59,0x30]
           vmulpd  (%rax), %ymm4, %ymm6
 
+// CHECK: vsqrtpd  %ymm11, %ymm12
+// CHECK: encoding: [0xc4,0x41,0x7d,0x51,0xe3]
+          vsqrtpd  %ymm11, %ymm12
+
+// CHECK: vsqrtpd  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7d,0x51,0x20]
+          vsqrtpd  (%rax), %ymm12
+
+// CHECK: vsqrtps  %ymm11, %ymm12
+// CHECK: encoding: [0xc4,0x41,0x7c,0x51,0xe3]
+          vsqrtps  %ymm11, %ymm12
+
+// CHECK: vsqrtps  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7c,0x51,0x20]
+          vsqrtps  (%rax), %ymm12
+
+// CHECK: vrsqrtps  %ymm11, %ymm12
+// CHECK: encoding: [0xc4,0x41,0x7c,0x52,0xe3]
+          vrsqrtps  %ymm11, %ymm12
+
+// CHECK: vrsqrtps  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7c,0x52,0x20]
+          vrsqrtps  (%rax), %ymm12
+
+// CHECK: vrcpps  %ymm11, %ymm12
+// CHECK: encoding: [0xc4,0x41,0x7c,0x53,0xe3]
+          vrcpps  %ymm11, %ymm12
+
+// CHECK: vrcpps  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7c,0x53,0x20]
+          vrcpps  (%rax), %ymm12
+

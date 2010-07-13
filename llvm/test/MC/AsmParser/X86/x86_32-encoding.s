@@ -12502,3 +12502,35 @@
 // CHECK: encoding: [0xc5,0xdd,0x59,0x30]
           vmulpd  (%eax), %ymm4, %ymm6
 
+// CHECK: vsqrtpd  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x51,0xd1]
+          vsqrtpd  %ymm1, %ymm2
+
+// CHECK: vsqrtpd  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfd,0x51,0x10]
+          vsqrtpd  (%eax), %ymm2
+
+// CHECK: vsqrtps  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x51,0xd1]
+          vsqrtps  %ymm1, %ymm2
+
+// CHECK: vsqrtps  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x51,0x10]
+          vsqrtps  (%eax), %ymm2
+
+// CHECK: vrsqrtps  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x52,0xd1]
+          vrsqrtps  %ymm1, %ymm2
+
+// CHECK: vrsqrtps  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x52,0x10]
+          vrsqrtps  (%eax), %ymm2
+
+// CHECK: vrcpps  %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x53,0xd1]
+          vrcpps  %ymm1, %ymm2
+
+// CHECK: vrcpps  (%eax), %ymm2
+// CHECK: encoding: [0xc5,0xfc,0x53,0x10]
+          vrcpps  (%eax), %ymm2
+
