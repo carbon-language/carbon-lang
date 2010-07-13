@@ -252,13 +252,8 @@ static bool translateRMRegister(MCInst &mcInst,
 /// @param mcInst       - The MCInst to append to.
 /// @param insn         - The instruction to extract Mod, R/M, and SIB fields
 ///                       from.
-/// @param sr           - Whether or not to emit the segment register.  The
-///                       LEA instruction does not expect a segment-register
-///                       operand.
 /// @return             - 0 on success; nonzero otherwise
-static bool translateRMMemory(MCInst &mcInst,
-                              InternalInstruction &insn,
-                              bool sr) {
+static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn) {
   // Addresses in an MCInst are represented as five operands:
   //   1. basereg       (register)  The R/M base, or (if there is a SIB) the 
   //                                SIB base
@@ -385,10 +380,7 @@ static bool translateRMMemory(MCInst &mcInst,
   mcInst.addOperand(scaleAmount);
   mcInst.addOperand(indexReg);
   mcInst.addOperand(displacement);
-  
-  if (sr)
-    mcInst.addOperand(segmentReg);
-  
+  mcInst.addOperand(segmentReg);
   return false;
 }
 
@@ -439,9 +431,8 @@ static bool translateRM(MCInst &mcInst,
   case TYPE_M1616:
   case TYPE_M1632:
   case TYPE_M1664:
-    return translateRMMemory(mcInst, insn, true);
   case TYPE_LEA:
-    return translateRMMemory(mcInst, insn, false);
+    return translateRMMemory(mcInst, insn);
   }
 }
   
