@@ -3983,6 +3983,10 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'null' | TypeAndValue
 bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
                                  PerFunctionState *PFS) {
+  // Check for an empty list.
+  if (Lex.getKind() == lltok::rbrace)
+    return false;
+
   do {
     // Null is a special case since it is typeless.
     if (EatIfPresent(lltok::kw_null)) {

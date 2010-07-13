@@ -78,7 +78,8 @@ void MDNodeOperand::allUsesReplacedWith(Value *NV) {
 /// getOperandPtr - Helper function to get the MDNodeOperand's coallocated on
 /// the end of the MDNode.
 static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
-  assert(Op < N->getNumOperands() && "Invalid operand number");
+  // Use <= instead of < to permit a one-past-the-end address.
+  assert(Op <= N->getNumOperands() && "Invalid operand number");
   return reinterpret_cast<MDNodeOperand*>(N+1)+Op;
 }
 

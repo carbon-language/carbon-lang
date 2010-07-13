@@ -820,7 +820,7 @@ bool BitcodeReader::ParseMetadata() {
       IsFunctionLocal = true;
       // fall-through
     case bitc::METADATA_NODE: {
-      if (Record.empty() || Record.size() % 2 == 1)
+      if (Record.size() % 2 == 1)
         return Error("Invalid METADATA_NODE record");
 
       unsigned Size = Record.size();
@@ -834,7 +834,8 @@ bool BitcodeReader::ParseMetadata() {
         else
           Elts.push_back(NULL);
       }
-      Value *V = MDNode::getWhenValsUnresolved(Context, &Elts[0], Elts.size(),
+      Value *V = MDNode::getWhenValsUnresolved(Context,
+                                               Elts.data(), Elts.size(),
                                                IsFunctionLocal);
       IsFunctionLocal = false;
       MDValueList.AssignValue(V, NextMDValueNo++);
