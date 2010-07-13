@@ -4549,12 +4549,20 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
 }
 
 /// \brief Check the scope of an explicit instantiation.
-static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
+///
+/// \returns true if a serious error occurs, false otherwise.
+static bool CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
                                             SourceLocation InstLoc,
                                             bool WasQualifiedName) {
   DeclContext *ExpectedContext
     = D->getDeclContext()->getEnclosingNamespaceContext()->getLookupContext();
   DeclContext *CurContext = S.CurContext->getLookupContext();
+  
+  if (CurContext->isRecord()) {
+    S.Diag(InstLoc, diag::err_explicit_instantiation_in_class)
+      << D;
+    return true;
+  }
   
   // C++0x [temp.explicit]p2:
   //   An explicit instantiation shall appear in an enclosing namespace of its 
@@ -4576,7 +4584,7 @@ static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
                : diag::warn_explicit_instantiation_out_of_scope_0x)
         << D;
     S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
-    return;
+    return false;
   }
   
   // C++0x [temp.explicit]p2:
@@ -4585,10 +4593,10 @@ static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
   //   its template is declared or, if that namespace is inline (7.3.1), any
   //   namespace from its enclosing namespace set.
   if (WasQualifiedName)
-    return;
+    return false;
   
   if (CurContext->Equals(ExpectedContext))
-    return;
+    return false;
   
   S.Diag(InstLoc, 
          S.getLangOptions().CPlusPlus0x?
@@ -4596,6 +4604,7 @@ static void CheckExplicitInstantiationScope(Sema &S, NamedDecl *D,
            : diag::warn_explicit_instantiation_unqualified_wrong_namespace_0x)
     << D << ExpectedContext;
   S.Diag(D->getLocation(), diag::note_explicit_instantiation_here);
+  return false;
 }
 
 /// \brief Determine whether the given scope specifier has a template-id in it.
@@ -4698,8 +4707,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   //   namespace of its template. [...]
   //
   // This is C++ DR 275.
-  CheckExplicitInstantiationScope(*this, ClassTemplate, TemplateNameLoc,
-                                  SS.isSet());
+  if (CheckExplicitInstantiationScope(*this, ClassTemplate, TemplateNameLoc,
+                                      SS.isSet()))
+    return true;
   
   ClassTemplateSpecializationDecl *Specialization = 0;
 

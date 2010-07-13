@@ -1575,6 +1575,8 @@ def err_explicit_instantiation_nontemplate_type : Error<
     "explicit instantiation of non-templated type %0">;
 def note_nontemplate_decl_here : Note<
     "non-templated declaration is here">;
+def err_explicit_instantiation_in_class : Error<
+  "explicit instantiation of %0 in class scope">;
 def err_explicit_instantiation_out_of_scope : Error<
   "explicit instantiation of %0 not in a namespace enclosing %1">;
 def err_explicit_instantiation_must_be_global : Error<

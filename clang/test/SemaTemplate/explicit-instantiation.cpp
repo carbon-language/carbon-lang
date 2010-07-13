@@ -83,3 +83,16 @@ namespace explicit_instantiation_after_implicit_instantiation {
   void test1() { (void)&X0<1>::x; }
   template struct X0<1>;
 }
+
+namespace PR7622 { // expected-note{{to match this}}
+  template<typename,typename=int>
+  struct basic_streambuf;
+
+  // FIXME: Very poor recovery here.
+  template<typename,typename>
+  struct basic_streambuf{friend bob<>()}; // expected-error{{unknown type name 'bob'}} \
+  // expected-error{{ expected member name or ';' after declaration specifiers}}
+  template struct basic_streambuf<int>; // expected-error{{explicit instantiation of 'basic_streambuf' in class scope}}
+}  // expected-error{{expected ';' after struct}}
+  
+//expected-error{{expected '}'}}
