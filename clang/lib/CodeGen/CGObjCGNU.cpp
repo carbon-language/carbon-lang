@@ -1871,8 +1871,7 @@ void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Register an all-paths cleanup to release the lock.
   {
-    CodeGenFunction::CleanupBlock
-      ReleaseScope(CGF, CodeGenFunction::NormalAndEHCleanup);
+    CodeGenFunction::CleanupBlock ReleaseScope(CGF, NormalAndEHCleanup);
 
     llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
     SyncArg = CGF.Builder.CreateBitCast(SyncArg, IdTy);

@@ -388,6 +388,58 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   return Info.first;
 }
 
+namespace {
+  struct CallArrayDtor : EHScopeStack::LazyCleanup {
+    CallArrayDtor(const CXXDestructorDecl *Dtor, 
+                  const ConstantArrayType *Type,
+                  llvm::Value *Loc)
+      : Dtor(Dtor), Type(Type), Loc(Loc) {}
+
+    const CXXDestructorDecl *Dtor;
+    const ConstantArrayType *Type;
+    llvm::Value *Loc;
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      QualType BaseElementTy = CGF.getContext().getBaseElementType(Type);
+      const llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
+      BasePtr = llvm::PointerType::getUnqual(BasePtr);
+      llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(Loc, BasePtr);
+      CGF.EmitCXXAggrDestructorCall(Dtor, Type, BaseAddrPtr);
+    }
+  };
+
+  struct CallVarDtor : EHScopeStack::LazyCleanup {
+    CallVarDtor(const CXXDestructorDecl *Dtor,
+                llvm::Value *NRVOFlag,
+                llvm::Value *Loc)
+      : Dtor(Dtor), NRVOFlag(NRVOFlag), Loc(Loc) {}
+
+    const CXXDestructorDecl *Dtor;
+    llvm::Value *NRVOFlag;
+    llvm::Value *Loc;
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // Along the exceptions path we always execute the dtor.
+      bool NRVO = !IsForEH && NRVOFlag;
+
+      llvm::BasicBlock *SkipDtorBB = 0;
+      if (NRVO) {
+        // If we exited via NRVO, we skip the destructor call.
+        llvm::BasicBlock *RunDtorBB = CGF.createBasicBlock("nrvo.unused");
+        SkipDtorBB = CGF.createBasicBlock("nrvo.skipdtor");
+        llvm::Value *DidNRVO = CGF.Builder.CreateLoad(NRVOFlag, "nrvo.val");
+        CGF.Builder.CreateCondBr(DidNRVO, SkipDtorBB, RunDtorBB);
+        CGF.EmitBlock(RunDtorBB);
+      }
+          
+      CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
+                                /*ForVirtualBase=*/false, Loc);
+
+      if (NRVO) CGF.EmitBlock(SkipDtorBB);
+    }
+  };
+}
+
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -686,53 +738,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
         
         if (const ConstantArrayType *Array = 
               getContext().getAsConstantArrayType(Ty)) {
-          CleanupBlock Scope(*this, NormalCleanup);
-
-          QualType BaseElementTy = getContext().getBaseElementType(Array);
-          const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-          BasePtr = llvm::PointerType::getUnqual(BasePtr);
-          llvm::Value *BaseAddrPtr =
-            Builder.CreateBitCast(Loc, BasePtr);
-          EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
-
-          if (Exceptions) {
-            Scope.beginEHCleanup();
-
-            QualType BaseElementTy = getContext().getBaseElementType(Array);
-            const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-            BasePtr = llvm::PointerType::getUnqual(BasePtr);
-            llvm::Value *BaseAddrPtr =
-              Builder.CreateBitCast(Loc, BasePtr);
-            EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
-          }
+          EHStack.pushLazyCleanup<CallArrayDtor>(NormalAndEHCleanup,
+                                                 D, Array, Loc);
         } else {
-          // Normal destruction. 
-          CleanupBlock Scope(*this, NormalCleanup);
-
-          llvm::BasicBlock *SkipDtor = 0;
-          if (NRVO) {
-            // If we exited via NRVO, we skip the destructor call.
-            llvm::BasicBlock *NoNRVO = createBasicBlock("nrvo.unused");
-            SkipDtor = createBasicBlock("nrvo.skipdtor");
-            Builder.CreateCondBr(Builder.CreateLoad(NRVOFlag, "nrvo.val"),
-                                 SkipDtor,
-                                 NoNRVO);
-            EmitBlock(NoNRVO);
-          }
-          
-          // We don't call the destructor along the normal edge if we're
-          // applying the NRVO.
-          EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
-                                Loc);
-
-          if (NRVO) EmitBlock(SkipDtor);
-
-          // Along the exceptions path we always execute the dtor.
-          if (Exceptions) {
-            Scope.beginEHCleanup();
-            EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false,
-                                  Loc);
-          }
+          EHStack.pushLazyCleanup<CallVarDtor>(NormalAndEHCleanup,
+                                               D, NRVOFlag, Loc);
         }
       }
   }

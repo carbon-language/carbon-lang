@@ -2697,8 +2697,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Push a normal cleanup to leave the try scope.
   {
-    CodeGenFunction::CleanupBlock
-      FinallyScope(CGF, CodeGenFunction::NormalCleanup);
+    CodeGenFunction::CleanupBlock FinallyScope(CGF, NormalCleanup);
 
     // Check whether we need to call objc_exception_try_exit.
     // In optimized code, this branch will always be folded.
@@ -5693,8 +5692,7 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Register an all-paths cleanup to release the lock.
   {
-    CodeGenFunction::CleanupBlock
-      ReleaseScope(CGF, CodeGenFunction::NormalAndEHCleanup);
+    CodeGenFunction::CleanupBlock ReleaseScope(CGF, NormalAndEHCleanup);
 
     CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg)
       ->setDoesNotThrow();
@@ -5804,8 +5802,7 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 
     // Add a cleanup to leave the catch.
     {
-      CodeGenFunction::CleanupBlock
-        EndCatchBlock(CGF, CodeGenFunction::NormalAndEHCleanup);
+      CodeGenFunction::CleanupBlock EndCatchBlock(CGF, NormalAndEHCleanup);
 
       // __objc_end_catch never throws.
       CGF.Builder.CreateCall(ObjCTypes.getObjCEndCatchFn())

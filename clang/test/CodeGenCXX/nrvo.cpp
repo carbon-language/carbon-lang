@@ -57,20 +57,15 @@ X test2(bool B) {
 
   // CHECK-EH:      call void @_ZN1XC1Ev
   // CHECK-EH-NEXT: invoke void @_ZN1XC1Ev
-  // -> %invoke.cont1, %lpad
+  // -> %invoke.cont, %lpad
 
-  // %invoke.cont1:
+  // %invoke.cont:
   // CHECK-EH:      br i1
   // -> %if.then, %if.end
 
   // %if.then: returning 'x'
   // CHECK-EH:      invoke void @_ZN1XC1ERKS_
-  // -> %cleanup, %lpad5
-
-  // %invoke.cont: rethrow block for %eh.cleanup.
-  // This really should be elsewhere in the function.
-  // CHECK-EH:      call void @_Unwind_Resume_or_Rethrow
-  // CHECK-EH-NEXT: unreachable
+  // -> %cleanup, %lpad1
 
   // %lpad: landing pad for ctor of 'y', dtor of 'y'
   // CHECK-EH:      call i8* @llvm.eh.exception()
@@ -78,25 +73,30 @@ X test2(bool B) {
   // CHECK-EH-NEXT: br label
   // -> %eh.cleanup
 
-  // %invoke.cont2: normal cleanup for 'x'
-  // CHECK-EH:      call void @_ZN1XD1Ev
-  // CHECK-EH-NEXT: ret void
-
-  // %lpad5: landing pad for return copy ctors, EH cleanup for 'y'
+  // %lpad1: landing pad for return copy ctors, EH cleanup for 'y'
   // CHECK-EH: invoke void @_ZN1XD1Ev
   // -> %eh.cleanup, %terminate.lpad
 
   // %if.end: returning 'y'
   // CHECK-EH: invoke void @_ZN1XC1ERKS_
-  // -> %cleanup, %lpad5
+  // -> %cleanup, %lpad1
 
   // %cleanup: normal cleanup for 'y'
   // CHECK-EH: invoke void @_ZN1XD1Ev
-  // -> %invoke.cont2, %lpad
+  // -> %invoke.cont11, %lpad
+
+  // %invoke.cont11: normal cleanup for 'x'
+  // CHECK-EH:      call void @_ZN1XD1Ev
+  // CHECK-EH-NEXT: ret void
 
   // %eh.cleanup:  EH cleanup for 'x'
   // CHECK-EH: invoke void @_ZN1XD1Ev
-  // -> %invoke.cont, %terminate.lpad
+  // -> %invoke.cont17, %terminate.lpad
+
+  // %invoke.cont17: rethrow block for %eh.cleanup.
+  // This really should be elsewhere in the function.
+  // CHECK-EH:      call void @_Unwind_Resume_or_Rethrow
+  // CHECK-EH-NEXT: unreachable
 
   // %terminate.lpad: terminate landing pad.
   // CHECK-EH:      call i8* @llvm.eh.exception()

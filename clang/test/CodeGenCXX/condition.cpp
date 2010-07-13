@@ -26,6 +26,7 @@ struct Y {
 
 X getX();
 
+// CHECK: define void @_Z11if_destructi(
 void if_destruct(int z) {
   // Verify that the condition variable is destroyed at the end of the
   // "if" statement.

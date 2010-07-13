@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -fexceptions -o %t %s
 // RUN: FileCheck -check-prefix=CHECK-X86_64 < %t %s
 // RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3
 

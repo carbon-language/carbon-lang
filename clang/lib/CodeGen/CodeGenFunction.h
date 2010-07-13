@@ -95,6 +95,8 @@ struct BranchFixup {
   unsigned LatestBranchIndex;
 };
 
+enum CleanupKind { NormalAndEHCleanup, EHCleanup, NormalCleanup };
+
 /// A stack of scopes which respond to exceptions, including cleanups
 /// and catch blocks.
 class EHScopeStack {
@@ -121,6 +123,28 @@ public:
     friend bool operator!=(stable_iterator A, stable_iterator B) {
       return A.Size != B.Size;
     }
+  };
+
+  /// A lazy cleanup.  These will be allocated on the cleanup stack
+  /// and so must be trivially copyable.  We "enforce" this by
+  /// providing no virtual destructor so that subclasses will be
+  /// encouraged to contain no non-POD types.
+  ///
+  /// LazyCleanup implementations should generally be declared in an
+  /// anonymous namespace.
+  class LazyCleanup {
+    // Anchor the construction vtable.
+    virtual void _anchor();
+
+  public:
+    /// Emit the cleanup.  For normal cleanups, this is run in the
+    /// same EH context as when the cleanup was pushed, i.e. the
+    /// immediately-enclosing context of the cleanup scope.  For
+    /// EH cleanups, this is run in a terminate context.
+    ///
+    // \param IsForEHCleanup true if this is for an EH cleanup, false
+    ///  if for a normal cleanup.
+    virtual void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) = 0;
   };
 
 private:
@@ -171,12 +195,40 @@ private:
 
   void popNullFixups();
 
+  void *pushLazyCleanup(CleanupKind K, size_t DataSize);
+
 public:
   EHScopeStack() : StartOfBuffer(0), EndOfBuffer(0), StartOfData(0),
                    InnermostNormalCleanup(stable_end()),
                    InnermostEHCleanup(stable_end()),
                    CatchDepth(0) {}
   ~EHScopeStack() { delete[] StartOfBuffer; }
+
+  // Variadic templates would make this not terrible.
+
+  /// Push a lazily-created cleanup on the stack.
+  template <class T, class A0, class A1>
+  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1) {
+    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
+    LazyCleanup *Obj = new(Buffer) T(a0, a1);
+    (void) Obj;
+  }
+
+  /// Push a lazily-created cleanup on the stack.
+  template <class T, class A0, class A1, class A2>
+  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2) {
+    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
+    LazyCleanup *Obj = new(Buffer) T(a0, a1, a2);
+    (void) Obj;
+  }
+
+  /// Push a lazily-created cleanup on the stack.
+  template <class T, class A0, class A1, class A2, class A3>
+  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
+    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
+    LazyCleanup *Obj = new(Buffer) T(a0, a1, a2, a3);
+    (void) Obj;
+  }
 
   /// Push a cleanup on the stack.
   void pushCleanup(llvm::BasicBlock *NormalEntry,
@@ -374,8 +426,6 @@ public:
                                 llvm::Constant *EndCatchFn,
                                 llvm::Constant *RethrowFn);
   void ExitFinallyBlock(FinallyInfo &FinallyInfo);
-
-  enum CleanupKind { NormalAndEHCleanup, EHCleanup, NormalCleanup };
 
   /// PushDestructorCleanup - Push a cleanup to call the
   /// complete-object destructor of an object of the given type at the

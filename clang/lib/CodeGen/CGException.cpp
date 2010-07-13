@@ -62,11 +62,36 @@ EHScopeStack::getEnclosingEHCleanup(iterator it) const {
         return stabilize(it);
       return cast<EHCleanupScope>(*it).getEnclosingEHCleanup();
     }
+    if (isa<EHLazyCleanupScope>(*it)) {
+      if (cast<EHLazyCleanupScope>(*it).isEHCleanup())
+        return stabilize(it);
+      return cast<EHLazyCleanupScope>(*it).getEnclosingEHCleanup();
+    }
     ++it;
   } while (it != end());
   return stable_end();
 }
 
+
+void *EHScopeStack::pushLazyCleanup(CleanupKind Kind, size_t Size) {
+  assert(((Size % sizeof(void*)) == 0) && "cleanup type is misaligned");
+  char *Buffer = allocate(EHLazyCleanupScope::getSizeForCleanupSize(Size));
+  bool IsNormalCleanup = Kind != EHCleanup;
+  bool IsEHCleanup = Kind != NormalCleanup;
+  EHLazyCleanupScope *Scope =
+    new (Buffer) EHLazyCleanupScope(IsNormalCleanup,
+                                    IsEHCleanup,
+                                    Size,
+                                    BranchFixups.size(),
+                                    InnermostNormalCleanup,
+                                    InnermostEHCleanup);
+  if (IsNormalCleanup)
+    InnermostNormalCleanup = stable_begin();
+  if (IsEHCleanup)
+    InnermostEHCleanup = stable_begin();
+
+  return Scope->getCleanupBuffer();
+}
 
 void EHScopeStack::pushCleanup(llvm::BasicBlock *NormalEntry,
                                llvm::BasicBlock *NormalExit,
@@ -86,11 +111,18 @@ void EHScopeStack::pushCleanup(llvm::BasicBlock *NormalEntry,
 void EHScopeStack::popCleanup() {
   assert(!empty() && "popping exception stack when not empty");
 
-  assert(isa<EHCleanupScope>(*begin()));
-  EHCleanupScope &Cleanup = cast<EHCleanupScope>(*begin());
-  InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
-  InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
-  StartOfData += EHCleanupScope::getSize();
+  if (isa<EHLazyCleanupScope>(*begin())) {
+    EHLazyCleanupScope &Cleanup = cast<EHLazyCleanupScope>(*begin());
+    InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
+    InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
+    StartOfData += Cleanup.getAllocatedSize();
+  } else {
+    assert(isa<EHCleanupScope>(*begin()));
+    EHCleanupScope &Cleanup = cast<EHCleanupScope>(*begin());
+    InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
+    InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
+    StartOfData += EHCleanupScope::getSize();
+  }
 
   // Check whether we can shrink the branch-fixups stack.
   if (!BranchFixups.empty()) {
@@ -144,7 +176,11 @@ void EHScopeStack::popNullFixups() {
   assert(hasNormalCleanups());
 
   EHScopeStack::iterator it = find(InnermostNormalCleanup);
-  unsigned MinSize = cast<EHCleanupScope>(*it).getFixupDepth();
+  unsigned MinSize;
+  if (isa<EHCleanupScope>(*it))
+    MinSize = cast<EHCleanupScope>(*it).getFixupDepth();
+  else
+    MinSize = cast<EHLazyCleanupScope>(*it).getFixupDepth();
   assert(BranchFixups.size() >= MinSize && "fixup stack out of order");
 
   while (BranchFixups.size() > MinSize &&
@@ -391,7 +427,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
   // FIXME: StmtExprs probably force this to include a non-EH
   // handler.
   {
-    CodeGenFunction::CleanupBlock Cleanup(CGF, CodeGenFunction::EHCleanup);
+    CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
     llvm::BasicBlock *FreeBB = CGF.createBasicBlock("free-exnobj");
     llvm::BasicBlock *DoneBB = CGF.createBasicBlock("free-exnobj.done");
 
@@ -598,12 +634,27 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
 /// affect exception handling.  Currently, the only non-EH scopes are
 /// normal-only cleanup scopes.
 static bool isNonEHScope(const EHScope &S) {
-  return isa<EHCleanupScope>(S) && !cast<EHCleanupScope>(S).isEHCleanup();
+  switch (S.getKind()) {
+  case EHScope::Cleanup:
+    return !cast<EHCleanupScope>(S).isEHCleanup();
+  case EHScope::LazyCleanup:
+    return !cast<EHLazyCleanupScope>(S).isEHCleanup();
+  case EHScope::Filter:
+  case EHScope::Catch:
+  case EHScope::Terminate:
+    return false;
+  }
+
+  // Suppress warning.
+  return false;
 }
 
 llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   assert(EHStack.requiresLandingPad());
   assert(!EHStack.empty());
+
+  if (!Exceptions)
+    return 0;
 
   // Check the innermost scope for a cached landing pad.  If this is
   // a non-EH cleanup, we'll check enclosing scopes in EmitLandingPad.
@@ -713,6 +764,12 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
          I != E; ++I) {
 
     switch (I->getKind()) {
+    case EHScope::LazyCleanup:
+      if (!HasEHCleanup)
+        HasEHCleanup = cast<EHLazyCleanupScope>(*I).isEHCleanup();
+      // We otherwise don't care about cleanups.
+      continue;
+
     case EHScope::Cleanup:
       if (!HasEHCleanup)
         HasEHCleanup = cast<EHCleanupScope>(*I).isEHCleanup();
@@ -954,8 +1011,7 @@ static llvm::Value *CallBeginCatch(CodeGenFunction &CGF, llvm::Value *Exn) {
   Call->setDoesNotThrow();
 
   {
-    CodeGenFunction::CleanupBlock EndCatchCleanup(CGF,
-                                  CodeGenFunction::NormalAndEHCleanup);
+    CodeGenFunction::CleanupBlock EndCatchCleanup(CGF, NormalAndEHCleanup);
 
     // __cxa_end_catch never throws, so this can just be a call.
     CGF.Builder.CreateCall(getEndCatchFn(CGF))->setDoesNotThrow();
@@ -1213,13 +1269,11 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
 
   // Enter a normal cleanup which will perform the @finally block.
   {
-    CodeGenFunction::CleanupBlock
-      NormalCleanup(*this, CodeGenFunction::NormalCleanup);
+    CodeGenFunction::CleanupBlock Cleanup(*this, NormalCleanup);
 
     // Enter a cleanup to call the end-catch function if one was provided.
     if (EndCatchFn) {
-      CodeGenFunction::CleanupBlock
-        FinallyExitCleanup(CGF, CodeGenFunction::NormalAndEHCleanup);
+      CodeGenFunction::CleanupBlock FinallyExitCleanup(CGF, NormalAndEHCleanup);
 
       llvm::BasicBlock *EndCatchBB = createBasicBlock("finally.endcatch");
       llvm::BasicBlock *CleanupContBB = createBasicBlock("finally.cleanup.cont");
@@ -1435,3 +1489,4 @@ CodeGenFunction::CleanupBlock::~CleanupBlock() {
   CGF.Builder.restoreIP(SavedIP);
 }
 
+void EHScopeStack::LazyCleanup::_anchor() {}

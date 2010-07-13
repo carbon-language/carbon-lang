@@ -340,7 +340,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   
   if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor()) {
     // FIXME: Is this OK for C++0x delegating constructors?
-    CodeGenFunction::CleanupBlock Cleanup(CGF, CodeGenFunction::EHCleanup);
+    CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
 
     CXXDestructorDecl *DD = BaseClassDecl->getDestructor();
     CGF.EmitCXXDestructorCall(DD, Dtor_Base, isBaseVirtual, V);
@@ -534,7 +534,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     if (!RD->hasTrivialDestructor()) {
       // FIXME: Is this OK for C++0x delegating constructors?
-      CodeGenFunction::CleanupBlock Cleanup(CGF, CodeGenFunction::EHCleanup);
+      CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
       
       llvm::Value *ThisPtr = CGF.LoadCXXThis();
       LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
