@@ -1952,7 +1952,7 @@ public:
     Expr **Subs = (Expr **)SubExprs.release();
     CallExpr *TheCall = new (SemaRef.Context) CallExpr(SemaRef.Context, Callee,
                                                        Subs, NumSubExprs,
-                                                       Builtin->getResultType(),
+                                                   Builtin->getCallResultType(),
                                                        RParenLoc);
     OwningExprResult OwnedCall(SemaRef.Owned(TheCall));
 

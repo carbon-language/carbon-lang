@@ -5,7 +5,8 @@ struct S {
  int two;
 };
 
-struct S const foo(void);
+struct S const foo(void);  // expected-warning{{type qualifier on return type has no effect}}
+
 
 struct S tmp;
 

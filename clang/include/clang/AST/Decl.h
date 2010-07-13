@@ -1382,6 +1382,12 @@ public:
   QualType getResultType() const {
     return getType()->getAs<FunctionType>()->getResultType();
   }
+  
+  /// \brief Determine the type of an expression that calls this function.
+  QualType getCallResultType() const {
+    return getType()->getAs<FunctionType>()->getCallResultType(getASTContext());
+  }
+                       
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   void setStorageClass(StorageClass SC) { SClass = SC; }
 

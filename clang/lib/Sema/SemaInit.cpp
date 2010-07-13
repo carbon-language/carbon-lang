@@ -2942,7 +2942,7 @@ static void TryUserDefinedConversion(Sema &S,
   }
 
   // Add the user-defined conversion step that calls the conversion function.
-  QualType ConvType = Function->getResultType().getNonReferenceType();
+  QualType ConvType = Function->getCallResultType();
   if (ConvType->getAs<RecordType>()) {
     // If we're converting to a class type, there may be an copy if
     // the resulting temporary object (possible to create an object of

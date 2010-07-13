@@ -3032,7 +3032,7 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
   MemberExpr *ME = 
       new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method, 
                                SourceLocation(), Method->getType());
-  QualType ResultType = Method->getResultType().getNonReferenceType();
+  QualType ResultType = Method->getCallResultType();
   MarkDeclarationReferenced(Exp->getLocStart(), Method);
   CXXMemberCallExpr *CE =
     new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType,

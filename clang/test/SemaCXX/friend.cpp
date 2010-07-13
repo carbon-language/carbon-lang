@@ -44,7 +44,8 @@ namespace test2 {
 // PR5134
 namespace test3 {
   class Foo {
-    friend const int getInt(int inInt = 0);
+    friend const int getInt(int inInt = 0);   // expected-warning{{type qualifier on return type has no effect}}
+
   };
 }
 

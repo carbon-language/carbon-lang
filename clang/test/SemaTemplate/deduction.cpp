@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Template argument deduction with template template parameters.
 template<typename T, template<T> class A> 
@@ -97,4 +97,11 @@ namespace PR6257 {
   void f(A& a);
   void f(const X<A>& a);
   void test(A& a) { (void)f(a); }
+}
+
+// PR7463
+namespace PR7463 {
+  const int f (); // expected-warning{{type qualifier on return type has no effect}}
+  template <typename T_> void g (T_&); // expected-note{{T_ = int}}
+  void h (void) { g(f()); } // expected-error{{no matching function for call}}
 }

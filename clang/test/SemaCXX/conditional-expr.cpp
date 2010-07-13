@@ -282,3 +282,20 @@ namespace rdar7998817 {
            : X());
   }
 }
+
+namespace PR7598 {
+  enum Enum {
+    v = 1,
+  };
+
+  const Enum g() { // expected-warning{{type qualifier on return type has no effect}}
+    return v;
+  }
+
+  void f() {
+    const Enum v2 = v;
+    Enum e = false ? g() : v;
+    Enum e2 = false ? v2 : v;
+  }
+
+}

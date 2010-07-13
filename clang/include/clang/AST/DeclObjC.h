@@ -239,6 +239,12 @@ public:
   QualType getResultType() const { return MethodDeclType; }
   void setResultType(QualType T) { MethodDeclType = T; }
 
+  /// \brief Determine the type of an expression that sends a message to this 
+  /// function.
+  QualType getSendResultType() const {
+    return getResultType().getCallResultType(getASTContext());
+  }
+  
   TypeSourceInfo *getResultTypeSourceInfo() const { return ResultTInfo; }
   void setResultTypeSourceInfo(TypeSourceInfo *TInfo) { ResultTInfo = TInfo; }
 

@@ -2113,8 +2113,8 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
   CallExpr *Exp =  
-    new (Context) CallExpr(*Context, ICE, args, nargs, FT->getResultType(),
-                                EndLoc);
+    new (Context) CallExpr(*Context, ICE, args, nargs, 
+                           FT->getCallResultType(*Context), EndLoc);
   return Exp;
 }
 

@@ -567,11 +567,11 @@ static QualType getDeclUsageType(ASTContext &C, NamedDecl *ND) {
   
   QualType T;
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
-    T = Function->getResultType();
+    T = Function->getCallResultType();
   else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
-    T = Method->getResultType();
+    T = Method->getSendResultType();
   else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND))
-    T = FunTmpl->getTemplatedDecl()->getResultType();
+    T = FunTmpl->getTemplatedDecl()->getCallResultType();
   else if (EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
     T = C.getTypeDeclType(cast<EnumDecl>(Enumerator->getDeclContext()));
   else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))

@@ -561,7 +561,7 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
   TheCall->setCallee(PromotedCall);
 
   // Change the result type of the call to match the result type of the decl.
-  TheCall->setType(NewBuiltinDecl->getResultType());
+  TheCall->setType(NewBuiltinDecl->getCallResultType());
 
   // If the value type was converted to an integer when processing the
   // arguments (e.g. void* -> int), we need to convert the result back.

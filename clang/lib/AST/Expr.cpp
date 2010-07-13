@@ -576,7 +576,10 @@ QualType CallExpr::getCallReturnType() const {
     CalleeType = FnTypePtr->getPointeeType();
   else if (const BlockPointerType *BPT = CalleeType->getAs<BlockPointerType>())
     CalleeType = BPT->getPointeeType();
-
+  else if (const MemberPointerType *MPT
+                                      = CalleeType->getAs<MemberPointerType>())
+    CalleeType = MPT->getPointeeType();
+    
   const FunctionType *FnType = CalleeType->getAs<FunctionType>();
   return FnType->getResultType();
 }

@@ -207,7 +207,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     return false;
   }
 
-  ReturnType = Method->getResultType().getNonReferenceType();
+  ReturnType = Method->getSendResultType();
 
   unsigned NumNamedArgs = Sel.getNumArgs();
   // Method might have more arguments than selector indicates. This is due
@@ -346,7 +346,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
     if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))
-      ResTy = Getter->getResultType();
+      ResTy = Getter->getSendResultType();
     return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
                                                    MemberLoc, BaseExpr));
   }
@@ -402,7 +402,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
   if (Getter) {
     QualType PType;
-    PType = Getter->getResultType();
+    PType = Getter->getSendResultType();
     return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
                                     Setter, MemberLoc, BaseExpr));
   }
@@ -510,7 +510,7 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
     QualType PType;
 
     if (Getter)
-      PType = Getter->getResultType();
+      PType = Getter->getSendResultType();
     else {
       for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
            E = Setter->param_end(); PI != E; ++PI)

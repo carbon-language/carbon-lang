@@ -6668,7 +6668,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
 
       // Determine the result type
-      QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
+      QualType ResultTy = FnDecl->getCallResultType();
 
       // Build the actual expression node.
       Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -6875,8 +6875,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         // Determine the result type
         QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
-        ResultTy = ResultTy.getNonReferenceType();
+          = FnDecl->getType()->getAs<FunctionType>()
+                                                ->getCallResultType(Context);
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -7032,8 +7032,8 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 
         // Determine the result type
         QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
-        ResultTy = ResultTy.getNonReferenceType();
+          = FnDecl->getType()->getAs<FunctionType>()
+                                                  ->getCallResultType(Context);
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -7221,7 +7221,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   ExprOwningPtr<CXXMemberCallExpr>
     TheCall(this, new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
                                                   NumArgs,
-                                  Method->getResultType().getNonReferenceType(),
+                                  Method->getCallResultType(),
                                   RParenLoc));
 
   // Check for a valid return type.
@@ -7436,7 +7436,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   // Once we've built TheCall, all of the expressions are properly
   // owned.
-  QualType ResultTy = Method->getResultType().getNonReferenceType();
+  QualType ResultTy = Method->getCallResultType();
   ExprOwningPtr<CXXOperatorCallExpr>
     TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn,
                                                     MethodArgs, NumArgs + 1,
@@ -7592,7 +7592,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
                                            SourceLocation());
   UsualUnaryConversions(FnExpr);
   
-  QualType ResultTy = Method->getResultType().getNonReferenceType();
+  QualType ResultTy = Method->getCallResultType();
   ExprOwningPtr<CXXOperatorCallExpr> 
     TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, 
                                                     &Base, 1, ResultTy, OpLoc));

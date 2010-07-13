@@ -120,6 +120,8 @@ def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
+def warn_qual_return_type : Warning< 
+  "type qualifier on return type has no effect">;
 
 def warn_decl_shadow :
   Warning<"declaration shadows a %select{"

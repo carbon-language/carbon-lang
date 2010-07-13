@@ -818,7 +818,7 @@ QualType Sema::BuildFunctionType(QualType T,
       << T->isFunctionType() << T;
     return QualType();
   }
-
+       
   bool Invalid = false;
   for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
     QualType ParamType = adjustParameterType(ParamTypes[Idx]);
@@ -1129,6 +1129,31 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         D.setInvalidType(true);
       }
 
+      // cv-qualifiers on return types are pointless except when the type is a
+      // class type in C++.
+      if (T.getCVRQualifiers() && D.getDeclSpec().getTypeQualifiers() &&
+          (!getLangOptions().CPlusPlus ||
+           (!T->isDependentType() && !T->isRecordType()))) {
+        unsigned Quals = D.getDeclSpec().getTypeQualifiers();
+        SourceLocation Loc;
+        if (Quals & Qualifiers::Const)
+          Loc = D.getDeclSpec().getConstSpecLoc();
+        else if (Quals & Qualifiers::Volatile)
+          Loc = D.getDeclSpec().getVolatileSpecLoc();
+        else {
+          assert((Quals & Qualifiers::Restrict) && "Unknown type qualifier");
+          Loc = D.getDeclSpec().getRestrictSpecLoc();
+        }
+        
+        SemaDiagnosticBuilder DB = Diag(Loc, diag::warn_qual_return_type);
+        if (Quals & Qualifiers::Const)
+          DB << FixItHint::CreateRemoval(D.getDeclSpec().getConstSpecLoc());
+        if (Quals & Qualifiers::Volatile)
+          DB << FixItHint::CreateRemoval(D.getDeclSpec().getVolatileSpecLoc());
+        if (Quals & Qualifiers::Restrict)
+          DB << FixItHint::CreateRemoval(D.getDeclSpec().getRestrictSpecLoc());
+      }
+      
       if (getLangOptions().CPlusPlus && D.getDeclSpec().isTypeSpecOwned()) {
         // C++ [dcl.fct]p6:
         //   Types shall not be defined in return or parameter types.

@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -emit-llvm < %s -o %t
-// RUN: grep volatile %t | count 29
+// RUN: grep volatile %t | count 28
 // RUN: grep memcpy %t | count 7
 
-// The number 29 comes from the current codegen for volatile loads;
+// The number 28 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
 // something has changed to affect volatile load/store codegen
 
@@ -64,7 +64,7 @@ int main() {
   i=vV[3];
   i=VE.yx[1];
   i=vVE.zy[1];
-  i = aggFct().x;
+  i = aggFct().x; // Note: not volatile
   i=vtS;
 
 

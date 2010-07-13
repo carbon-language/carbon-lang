@@ -3004,7 +3004,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         QualType PType;
 
         if (Getter)
-          PType = Getter->getResultType();
+          PType = Getter->getSendResultType();
         else
           // Get the expression type from Setter's incoming parameter.
           PType = (*(Setter->param_end() -1))->getType();
@@ -3180,7 +3180,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           return ExprError();
 
         return Owned(ObjCMessageExpr::Create(Context,
-                                     OMD->getResultType().getNonReferenceType(),
+                                             OMD->getSendResultType(),
                                              OpLoc, BaseExpr, Sel,
                                              OMD, NULL, 0, MemberLoc));
       }
@@ -3575,7 +3575,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
           BO->getOpcode() == BinaryOperator::PtrMemI) {
         if (const FunctionProtoType *FPT
                                 = BO->getType()->getAs<FunctionProtoType>()) {
-          QualType ResultTy = FPT->getResultType().getNonReferenceType();
+          QualType ResultTy = FPT->getCallResultType(Context);
 
           ExprOwningPtr<CXXMemberCallExpr>
             TheCall(this, new (Context) CXXMemberCallExpr(Context, BO, Args,
@@ -3665,7 +3665,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     return ExprError();
 
   // We know the result type of the call, set it.
-  TheCall->setType(FuncT->getResultType().getNonReferenceType());
+  TheCall->setType(FuncT->getCallResultType(Context));
 
   if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FuncT)) {
     if (ConvertArgumentsForCall(&*TheCall, Fn, FDecl, Proto, Args, NumArgs,
