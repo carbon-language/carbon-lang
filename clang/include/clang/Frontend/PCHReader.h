@@ -602,6 +602,16 @@ public:
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
 
+  /// \brief Returns the number of types found in this file.
+  unsigned getTotalNumTypes() const {
+    return static_cast<unsigned>(TypesLoaded.size());
+  }
+
+  /// \brief Returns the number of declarations found in this file.
+  unsigned getTotalNumDecls() const {
+    return static_cast<unsigned>(DeclsLoaded.size());
+  }
+
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
