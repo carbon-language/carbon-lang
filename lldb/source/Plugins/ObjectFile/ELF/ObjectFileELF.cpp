@@ -1,4 +1,4 @@
-//===-- ObjectFileELF.cpp ---------------------------------------*- C++ -*-===//
+//===-- ObjectFileELF.cpp ------------------------------------- -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,109 +9,144 @@
 
 #include "ObjectFileELF.h"
 
-#include <assert.h>
-
+#include <cassert>
 #include <algorithm>
 
-#include <stdint.h>
-#include "elf.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/ObjectFile.h"
 
-#define CASE_AND_STREAM(s, def, width)  case def: s->Printf("%-*s", width, #def); break;
+#define CASE_AND_STREAM(s, def, width)                  \
+    case def: s->Printf("%-*s", width, #def); break;
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace std;
+using namespace elf;
+using namespace llvm::ELF;
 
-
+//------------------------------------------------------------------
+// Static methods.
+//------------------------------------------------------------------
 void
 ObjectFileELF::Initialize()
 {
-    PluginManager::RegisterPlugin (GetPluginNameStatic(),
-                                   GetPluginDescriptionStatic(),
-                                   CreateInstance);
+    PluginManager::RegisterPlugin(GetPluginNameStatic(),
+                                  GetPluginDescriptionStatic(),
+                                  CreateInstance);
 }
 
 void
 ObjectFileELF::Terminate()
 {
-    PluginManager::UnregisterPlugin (CreateInstance);
+    PluginManager::UnregisterPlugin(CreateInstance);
 }
-
 
 const char *
 ObjectFileELF::GetPluginNameStatic()
 {
-    return "object-file.elf32";
+    return "object-file.elf";
 }
 
 const char *
 ObjectFileELF::GetPluginDescriptionStatic()
 {
-    return "ELF object file reader (32-bit).";
+    return "ELF object file reader.";
 }
 
-
 ObjectFile *
-ObjectFileELF::CreateInstance (Module* module, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFileELF::CreateInstance(Module *module,
+                              DataBufferSP &data_sp,
+                              const FileSpec *file, addr_t offset,
+                              addr_t length)
 {
-    if (ObjectFileELF::MagicBytesMatch(dataSP))
+    if (data_sp && data_sp->GetByteSize() > (llvm::ELF::EI_NIDENT + offset))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileELF (module, dataSP, file, offset, length));
-        if (objfile_ap.get() && objfile_ap->ParseHeader())
-            return objfile_ap.release();
+        const uint8_t *magic = data_sp->GetBytes() + offset;
+        if (ELFHeader::MagicBytesMatch(magic))
+        {
+            unsigned address_size = ELFHeader::AddressSizeInBytes(magic);
+            if (address_size == 4 || address_size == 8)
+            {
+                std::auto_ptr<ObjectFile> objfile_ap(
+                    new ObjectFileELF(module, data_sp, file, offset, length));
+                if (objfile_ap->ParseHeader())
+                    return objfile_ap.release();
+            }
+        }
     }
     return NULL;
 }
 
-bool
-ObjectFileELF::MagicBytesMatch (DataBufferSP& data_sp)
+//------------------------------------------------------------------
+// PluginInterface protocol
+//------------------------------------------------------------------
+const char *
+ObjectFileELF::GetPluginName()
 {
-    if (data_sp && data_sp->GetByteSize() > EI_PAD)
-    {
-        const uint8_t* magic = data_sp->GetBytes();
-        if (magic != NULL)
-        {
-            bool have_magic = (magic[EI_MAG0] == 0x7f &&
-                               magic[EI_MAG1] == 'E'  &&
-                               magic[EI_MAG2] == 'L'  &&
-                               magic[EI_MAG3] == 'F');
-        
-            bool have_32bit = magic[EI_CLASS] == ELFCLASS32;
-        
-            return have_magic && have_32bit;
-        }
-    }
-    return false;
+    return "ObjectFileELF";
 }
 
+const char *
+ObjectFileELF::GetShortPluginName()
+{
+    return GetPluginNameStatic();
+}
 
-ObjectFileELF::ObjectFileELF(Module* module, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length) :
-    ObjectFile (module, file, offset, length, dataSP),
-    m_header(),
-    m_program_headers(),
-    m_section_headers(),
-    m_sections_ap(),
-    m_symtab_ap(),
-    m_shstr_data()
+uint32_t
+ObjectFileELF::GetPluginVersion()
+{
+    return m_plugin_version;
+}
+
+void
+ObjectFileELF::GetPluginCommandHelp(const char *command, Stream *strm)
+{
+}
+
+Error
+ObjectFileELF::ExecutePluginCommand(Args &command, Stream *strm)
+{
+    Error error;
+    error.SetErrorString("No plug-in commands are currently supported.");
+    return error;
+}
+
+Log *
+ObjectFileELF::EnablePluginLogging(Stream *strm, Args &command)
+{
+    return NULL;
+}
+
+//------------------------------------------------------------------
+// ObjectFile protocol
+//------------------------------------------------------------------
+
+ObjectFileELF::ObjectFileELF(Module* module, DataBufferSP& dataSP,
+                             const FileSpec* file, addr_t offset,
+                             addr_t length)
+    : ObjectFile(module, file, offset, length, dataSP),
+      m_header(),
+      m_program_headers(),
+      m_section_headers(),
+      m_sections_ap(),
+      m_symtab_ap(),
+      m_filespec_ap(),
+      m_shstr_data()
 {
     if (file)
         m_file = *file;
-    ::bzero (&m_header, sizeof(m_header));
+    ::memset(&m_header, 0, sizeof(m_header));
 }
-
 
 ObjectFileELF::~ObjectFileELF()
 {
 }
 
 ByteOrder
-ObjectFileELF::GetByteOrder () const
+ObjectFileELF::GetByteOrder() const
 {
     if (m_header.e_ident[EI_DATA] == ELFDATA2MSB)
         return eByteOrderBig;
@@ -121,46 +156,120 @@ ObjectFileELF::GetByteOrder () const
 }
 
 size_t
-ObjectFileELF::GetAddressByteSize () const
+ObjectFileELF::GetAddressByteSize() const
 {
     return m_data.GetAddressByteSize();
 }
 
-bool
-ObjectFileELF::ParseHeader ()
+unsigned
+ObjectFileELF::SectionIndex(const SectionHeaderCollIter &I)
 {
-    m_data.SetAddressByteSize(4);
-    uint32_t offset = GetOffset();
-    if (m_data.GetU8(&offset, m_header.e_ident, EI_NIDENT) == NULL)
-        return false;
+    return std::distance(m_section_headers.begin(), I) + 1;
+}
 
-    m_data.SetByteOrder(GetByteOrder());
-
-    // Read e_type and e_machine
-    if (m_data.GetU16(&offset, &m_header.e_type, 2) == NULL)
-        return false;
-
-    // read e_version, e_entry, e_phoff, e_shoff, e_flags
-    if (m_data.GetU32(&offset, &m_header.e_version, 5) == NULL)
-        return false;
-
-    // Read e_ehsize, e_phentsize, e_phnum, e_shentsize, e_shnum, e_shstrndx
-    if (m_data.GetU16(&offset, &m_header.e_ehsize, 6) == NULL)
-        return false;
-
-    return true;
+unsigned
+ObjectFileELF::SectionIndex(const SectionHeaderCollConstIter &I) const
+{
+    return std::distance(m_section_headers.begin(), I) + 1;
 }
 
 bool
-ObjectFileELF::GetUUID (UUID* uuid)
+ObjectFileELF::ParseHeader()
 {
+    uint32_t offset = GetOffset();
+    return m_header.Parse(m_data, &offset);
+}
+
+bool
+ObjectFileELF::GetUUID(UUID* uuid)
+{
+    // FIXME: Return MD5 sum here.  See comment in ObjectFile.h.
     return false;
 }
 
 uint32_t
-ObjectFileELF::GetDependentModules(FileSpecList& files)
+ObjectFileELF::GetDependentModules(FileSpecList &files)
 {
-    return 0;
+    size_t num_modules = ParseDependentModules();
+    uint32_t num_specs = 0;
+
+    for (unsigned i = 0; i < num_modules; ++i)
+    {
+        if (files.AppendIfUnique(m_filespec_ap->GetFileSpecAtIndex(i)))
+            num_specs++;
+    }
+
+    return num_specs;
+}
+
+//----------------------------------------------------------------------
+// ParseDependentModules
+//----------------------------------------------------------------------
+size_t
+ObjectFileELF::ParseDependentModules()
+{
+    if (m_filespec_ap.get())
+        return m_filespec_ap->GetSize();
+
+    m_filespec_ap.reset(new FileSpecList());
+
+    if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
+        return 0;
+
+    // Locate the dynamic table.
+    user_id_t dynsym_id = 0;
+    user_id_t dynstr_id = 0;
+    for (SectionHeaderCollIter I = m_section_headers.begin();
+         I != m_section_headers.end(); ++I)
+    {
+        if (I->sh_type == SHT_DYNAMIC)
+        {
+            dynsym_id = SectionIndex(I);
+            dynstr_id = I->sh_link + 1; // Section ID's are 1 based.
+            break;
+        }
+    }
+
+    if (!(dynsym_id && dynstr_id))
+        return 0;
+
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return 0;
+
+    // Resolve and load the dynamic table entries and corresponding string
+    // table.
+    Section *dynsym = section_list->FindSectionByID(dynsym_id).get();
+    Section *dynstr = section_list->FindSectionByID(dynstr_id).get();
+    if (!(dynsym && dynstr))
+        return 0;
+
+    DataExtractor dynsym_data;
+    DataExtractor dynstr_data;
+    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data) &&
+        dynstr->ReadSectionDataFromObjectFile(this, dynstr_data))
+    {
+        ELFDynamic symbol;
+        const unsigned section_size = dynsym_data.GetByteSize();
+        unsigned offset = 0;
+
+        // The only type of entries we are concerned with are tagged DT_NEEDED,
+        // yielding the name of a required library.
+        while (offset < section_size)
+        {
+            if (!symbol.Parse(dynsym_data, &offset))
+                break;
+
+            if (symbol.d_tag != DT_NEEDED)
+                continue;
+
+            uint32_t str_index = static_cast<uint32_t>(symbol.d_val);
+            const char *lib_name = dynstr_data.PeekCStr(str_index);
+            m_filespec_ap->Append(FileSpec(lib_name));
+        }
+    }
+
+    return m_filespec_ap->GetSize();
 }
 
 //----------------------------------------------------------------------
@@ -173,35 +282,37 @@ ObjectFileELF::ParseProgramHeaders()
     if (!m_program_headers.empty())
         return m_program_headers.size();
 
-    uint32_t offset = 0;
-    if (m_header.e_phnum > 0)
+    // If there are no program headers to read we are done.
+    if (m_header.e_phnum == 0)
+        return 0;
+
+    m_program_headers.resize(m_header.e_phnum);
+    if (m_program_headers.size() != m_header.e_phnum)
+        return 0;
+
+    const size_t ph_size = m_header.e_phnum * m_header.e_phentsize;
+    const elf_off ph_offset = m_offset + m_header.e_phoff;
+    DataBufferSP buffer_sp(m_file.ReadFileContents(ph_offset, ph_size));
+
+    if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != ph_size)
+        return 0;
+
+    DataExtractor data(buffer_sp, m_data.GetByteOrder(),
+                       m_data.GetAddressByteSize());
+
+    uint32_t idx;
+    uint32_t offset;
+    for (idx = 0, offset = 0; idx < m_header.e_phnum; ++idx)
     {
-        m_program_headers.resize(m_header.e_phnum);
-
-        if (m_program_headers.size() != m_header.e_phnum)
-            return 0;
-
-        const size_t byte_size = m_header.e_phnum * m_header.e_phentsize;
-        DataBufferSP buffer_sp(m_file.ReadFileContents(m_offset + m_header.e_phoff, byte_size));
-
-        if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != byte_size)
-            return 0;
-
-        DataExtractor data(buffer_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
-
-        uint32_t idx;
-        for (idx = 0; idx < m_header.e_phnum; ++idx)
-        {
-            if (data.GetU32(&offset, &m_program_headers[idx].p_type, 8) == NULL)
-                return 0;
-        }
-        if (idx < m_program_headers.size())
-            m_program_headers.resize(idx);
+        if (m_program_headers[idx].Parse(data, &offset) == false)
+            break;
     }
+
+    if (idx < m_program_headers.size())
+        m_program_headers.resize(idx);
 
     return m_program_headers.size();
 }
-
 
 //----------------------------------------------------------------------
 // ParseSectionHeaders
@@ -213,32 +324,34 @@ ObjectFileELF::ParseSectionHeaders()
     if (!m_section_headers.empty())
         return m_section_headers.size();
 
-    if (m_header.e_shnum > 0)
+    // If there are no section headers we are done.
+    if (m_header.e_shnum == 0)
+        return 0;
+
+    m_section_headers.resize(m_header.e_shnum);
+    if (m_section_headers.size() != m_header.e_shnum)
+        return 0;
+
+    const size_t sh_size = m_header.e_shnum * m_header.e_shentsize;
+    const elf_off sh_offset = m_offset + m_header.e_shoff;
+    DataBufferSP buffer_sp(m_file.ReadFileContents(sh_offset, sh_size));
+
+    if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != sh_size)
+        return 0;
+
+    DataExtractor data(buffer_sp,
+                       m_data.GetByteOrder(),
+                       m_data.GetAddressByteSize());
+
+    uint32_t idx;
+    uint32_t offset;
+    for (idx = 0, offset = 0; idx < m_header.e_shnum; ++idx)
     {
-        uint32_t offset = 0;
-
-        m_section_headers.resize(m_header.e_shnum);
-
-        if (m_section_headers.size() != m_header.e_shnum)
-            return 0;
-
-        const size_t byte_size = m_header.e_shnum * m_header.e_shentsize;
-        DataBufferSP buffer_sp(m_file.ReadFileContents(m_offset + m_header.e_shoff, byte_size));
-
-        if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != byte_size)
-            return 0;
-
-        DataExtractor data(buffer_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
-
-        uint32_t idx;
-        for (idx = 0; idx < m_header.e_shnum; ++idx)
-        {
-            if (data.GetU32(&offset, &m_section_headers[idx].sh_name, 10) == NULL)
-                break;
-        }
-        if (idx < m_section_headers.size())
-            m_section_headers.resize(idx);
+        if (m_section_headers[idx].Parse(data, &offset) == false)
+            break;
     }
+    if (idx < m_section_headers.size())
+        m_section_headers.resize(idx);
 
     return m_section_headers.size();
 }
@@ -248,10 +361,14 @@ ObjectFileELF::GetSectionHeaderStringTable()
 {
     if (m_shstr_data.GetByteSize() == 0)
     {
-        if (m_header.e_shstrndx && m_header.e_shstrndx < m_section_headers.size())
+        const unsigned strtab_idx = m_header.e_shstrndx;
+
+        if (strtab_idx && strtab_idx < m_section_headers.size())
         {
-            const size_t byte_size = m_section_headers[m_header.e_shstrndx].sh_size;
-            DataBufferSP buffer_sp(m_file.ReadFileContents(m_offset + m_section_headers[m_header.e_shstrndx].sh_offset, byte_size));
+            const ELFSectionHeader &sheader = m_section_headers[strtab_idx];
+            const size_t byte_size = sheader.sh_size;
+            const Elf64_Off offset = m_offset + sheader.sh_offset;
+            DataBufferSP buffer_sp(m_file.ReadFileContents(offset, byte_size));
 
             if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != byte_size)
                 return 0;
@@ -262,83 +379,78 @@ ObjectFileELF::GetSectionHeaderStringTable()
     return m_shstr_data.GetByteSize();
 }
 
-uint32_t
+lldb::user_id_t
 ObjectFileELF::GetSectionIndexByName(const char *name)
 {
-    if (ParseSectionHeaders() && GetSectionHeaderStringTable())
+    if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
+        return 0;
+
+    // Search the collection of section headers for one with a matching name.
+    for (SectionHeaderCollIter I = m_section_headers.begin();
+         I != m_section_headers.end(); ++I)
     {
-        uint32_t offset = 1;    // Skip leading NULL string at offset 0;
-        while (m_shstr_data.ValidOffset(offset))
-        {
-            uint32_t sh_name = offset;  // Save offset in case we find a match
-            const char* sectionHeaderName = m_shstr_data.GetCStr(&offset);
-            if (sectionHeaderName)
-            {
-                if (strcmp(name, sectionHeaderName) == 0)
-                {
-                    SectionHeaderCollIter pos;
-                    for (pos = m_section_headers.begin(); pos != m_section_headers.end(); ++pos)
-                    {
-                        if ( (*pos).sh_name == sh_name )
-                        {
-                            // section indexes are 1 based
-                            return std::distance(m_section_headers.begin(), pos) + 1;
-                        }
-                    }
-                    return UINT32_MAX;
-                }
-            }
-            else
-            {
-                return UINT32_MAX;
-            }
-        }
+        const char *sectionName = m_shstr_data.PeekCStr(I->sh_name);
+
+        if (!sectionName)
+            return 0;
+
+        if (strcmp(name, sectionName) != 0)
+            continue;
+
+        return SectionIndex(I);
     }
 
-    return UINT32_MAX;
+    return 0;
 }
 
 SectionList *
 ObjectFileELF::GetSectionList()
 {
-    if (m_sections_ap.get() == NULL)
+    if (m_sections_ap.get())
+        return m_sections_ap.get();
+
+    if (ParseSectionHeaders() && GetSectionHeaderStringTable())
     {
         m_sections_ap.reset(new SectionList());
-        if (ParseSectionHeaders() && GetSectionHeaderStringTable())
-        {
-            uint32_t sh_idx = 0;
-            const size_t num_sections = m_section_headers.size();
-            for (sh_idx = 0; sh_idx < num_sections; ++sh_idx)
-            {
-                ConstString section_name(m_shstr_data.PeekCStr(m_section_headers[sh_idx].sh_name));
-                uint64_t section_file_size = m_section_headers[sh_idx].sh_type == SHT_NOBITS ? 0 : m_section_headers[sh_idx].sh_size;
-                SectionSP section_sp(new Section(NULL,                                  // Parent section
-                                                 GetModule(),                           // Module to which this section belongs
-                                                 sh_idx + 1,                            // Section ID is the 1 based
-                                                 section_name,                          // Name of this section
-                                                 eSectionTypeOther,  // TODO: fill this in appropriately for ELF...
-                                                 m_section_headers[sh_idx].sh_addr,     // File VM address
-                                                 m_section_headers[sh_idx].sh_size,     // VM size in bytes of this section
-                                                 m_section_headers[sh_idx].sh_offset,   // Offset to the data for this section in the file
-                                                 section_file_size,                     // Size in bytes of this section as found in the the file
-                                                 m_section_headers[sh_idx].sh_flags));  // Flags for this section
-                if (section_sp.get())
-                    m_sections_ap->AddSection(section_sp);
 
-            }
+        for (SectionHeaderCollIter I = m_section_headers.begin();
+             I != m_section_headers.end(); ++I)
+        {
+            const ELFSectionHeader &header = *I;
+
+            ConstString name(m_shstr_data.PeekCStr(header.sh_name));
+            uint64_t size = header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
+
+            SectionSP section(new Section(
+                0,                 // Parent section.
+                GetModule(),       // Module to which this section belongs.
+                SectionIndex(I),   // Section ID.
+                name,              // Section name.
+                eSectionTypeOther, // FIXME: Fill in as appropriate.
+                header.sh_addr,    // VM address.
+                header.sh_size,    // VM size in bytes of this section.
+                header.sh_offset,  // Offset of this section in the file.
+                size,              // Size of the section as found in the file.
+                header.sh_flags)); // Flags for this section.
+
+            m_sections_ap->AddSection(section);
         }
     }
+
     return m_sections_ap.get();
 }
 
 static void
-ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symtab_shdr, const DataExtractor& symtab_data, const DataExtractor& strtab_data)
+ParseSymbols(Symtab *symtab, SectionList *section_list,
+             const ELFSectionHeader &symtab_shdr,
+             const DataExtractor &symtab_data,
+             const DataExtractor &strtab_data)
 {
-    assert (sizeof(Elf32_Sym) == symtab_shdr.sh_entsize);
-    const uint32_t num_symbols = symtab_data.GetByteSize() / sizeof(Elf32_Sym);
+    ELFSymbol symbol;
     uint32_t offset = 0;
-    Elf32_Sym symbol;
-    uint32_t i;
+    const unsigned numSymbols = 
+        symtab_data.GetByteSize() / symtab_shdr.sh_entsize;
+
     static ConstString text_section_name(".text");
     static ConstString init_section_name(".init");
     static ConstString fini_section_name(".fini");
@@ -351,25 +463,16 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
     static ConstString data2_section_name(".data1");
     static ConstString bss_section_name(".bss");
 
-    for (i=0; i<num_symbols; ++i)
+    for (unsigned i = 0; i < numSymbols; ++i)
     {
-    //  if (symtab_data.GetU32(&offset, &symbol.st_name, 3) == 0)
-    //      break;
-
-        if (!symtab_data.ValidOffsetForDataOfSize(offset, sizeof(Elf32_Sym)))
+        if (symbol.Parse(symtab_data, &offset) == false)
             break;
 
-        symbol.st_name  = symtab_data.GetU32 (&offset);
-        symbol.st_value = symtab_data.GetU32 (&offset);
-        symbol.st_size  = symtab_data.GetU32 (&offset);
-        symbol.st_info  = symtab_data.GetU8  (&offset);
-        symbol.st_other = symtab_data.GetU8  (&offset);
-        symbol.st_shndx = symtab_data.GetU16 (&offset);
-
-        Section * symbol_section = NULL;
+        Section *symbol_section = NULL;
         SymbolType symbol_type = eSymbolTypeInvalid;
+        Elf64_Half symbol_idx = symbol.st_shndx;
 
-        switch (symbol.st_shndx)
+        switch (symbol_idx)
         {
         case SHN_ABS:
             symbol_type = eSymbolTypeAbsolute;
@@ -378,11 +481,11 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
             symbol_type = eSymbolTypeUndefined;
             break;
         default:
-            symbol_section = section_list->GetSectionAtIndex (symbol.st_shndx).get();
+            symbol_section = section_list->GetSectionAtIndex(symbol_idx).get();
             break;
         }
 
-        switch (ELF_ST_BIND (symbol.st_info))
+        switch (symbol.getType())
         {
         default:
         case STT_NOTYPE:
@@ -390,13 +493,14 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
             break;
 
         case STT_OBJECT:
-            // The symbol is associated with a data object, such as a variable, an array, etc.
-            symbol_type == eSymbolTypeData;
+            // The symbol is associated with a data object, such as a variable,
+            // an array, etc.
+            symbol_type = eSymbolTypeData;
             break;
 
         case STT_FUNC:
             // The symbol is associated with a function or other executable code.
-            symbol_type == eSymbolTypeCode;
+            symbol_type = eSymbolTypeCode;
             break;
 
         case STT_SECTION:
@@ -410,7 +514,7 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
             // file associated with the object file. A file symbol has STB_LOCAL
             // binding, its section index is SHN_ABS, and it precedes the other
             // STB_LOCAL symbols for the file, if it is present.
-            symbol_type == eSymbolTypeObjectFile;
+            symbol_type = eSymbolTypeObjectFile;
             break;
         }
 
@@ -427,12 +531,11 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
                 {
                     symbol_type = eSymbolTypeCode;
                 }
-                else
-                if (sect_name == data_section_name ||
-                    sect_name == data2_section_name ||
-                    sect_name == rodata_section_name ||
-                    sect_name == rodata1_section_name ||
-                    sect_name == bss_section_name)
+                else if (sect_name == data_section_name ||
+                         sect_name == data2_section_name ||
+                         sect_name == rodata_section_name ||
+                         sect_name == rodata1_section_name ||
+                         sect_name == bss_section_name)
                 {
                     symbol_type = eSymbolTypeData;
                 }
@@ -443,112 +546,84 @@ ParseSymbols (Symtab *symtab, SectionList *section_list, const Elf32_Shdr &symta
         if (symbol_section != NULL)
             symbol_value -= symbol_section->GetFileAddress();
         const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
+        bool is_global = symbol.getBinding() == STB_GLOBAL;
+        uint32_t flags = symbol.st_other << 8 | symbol.st_info;
 
-        Symbol dc_symbol(i,             // ID is the original symbol table index
-                        symbol_name,    // symbol name
-                        false,          // Is the symbol name mangled?
-                        symbol_type,    // type of this symbol
-                        ELF_ST_BIND (symbol.st_info) == STB_GLOBAL,   // Is this globally visible?
-                        false,          // Is this symbol debug info?
-                        false,          // Is this symbol a trampoline?
-                        false,          // Is this symbol artificial?
-                        symbol_section, // section pointer if symbol_value is an offset within a section, else NULL
-                        symbol_value,   // offset from section if section is non-NULL, else the value for this symbol
-                        symbol.st_size, // size in bytes of this symbol
-                        symbol.st_other << 8 | symbol.st_info); // symbol flags
+        Symbol dc_symbol(
+            i,               // ID is the original symbol table index.
+            symbol_name,     // Symbol name.
+            false,           // Is the symbol name mangled?
+            symbol_type,     // Type of this symbol
+            is_global,       // Is this globally visible?
+            false,           // Is this symbol debug info?
+            false,           // Is this symbol a trampoline?
+            false,           // Is this symbol artificial?
+            symbol_section,  // Section in which this symbol is defined or null.
+            symbol_value,    // Offset in section or symbol value.
+            symbol.st_size,  // Size in bytes of this symbol.
+            flags);          // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
 }
 
+void
+ObjectFileELF::ParseSymbolTable(Symtab *symbol_table,
+                                const ELFSectionHeader &symtab_hdr,
+                                user_id_t symtab_id)
+{
+    assert(symtab_hdr.sh_type == SHT_SYMTAB || 
+           symtab_hdr.sh_type == SHT_DYNSYM);
+
+    // Parse in the section list if needed.
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return;
+
+    // Section ID's are ones based.
+    user_id_t strtab_id = symtab_hdr.sh_link + 1;
+
+    Section *symtab = section_list->FindSectionByID(symtab_id).get();
+    Section *strtab = section_list->FindSectionByID(strtab_id).get();
+    if (symtab && strtab)
+    {
+        DataExtractor symtab_data;
+        DataExtractor strtab_data;
+        if (symtab->ReadSectionDataFromObjectFile(this, symtab_data) &&
+            strtab->ReadSectionDataFromObjectFile(this, strtab_data))
+        {
+            ParseSymbols(symbol_table, section_list, symtab_hdr,
+                         symtab_data, strtab_data);
+        }
+    }
+}
 
 Symtab *
 ObjectFileELF::GetSymtab()
 {
-    if (m_symtab_ap.get() == NULL)
+    if (m_symtab_ap.get())
+        return m_symtab_ap.get();
+
+    Symtab *symbol_table = new Symtab(this);
+    m_symtab_ap.reset(symbol_table);
+
+    if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
+        return symbol_table;
+
+    // Locate and parse all linker symbol tables.
+    for (SectionHeaderCollIter I = m_section_headers.begin();
+         I != m_section_headers.end(); ++I)
     {
-        m_symtab_ap.reset(new Symtab(this));
-
-        if (ParseSectionHeaders() && GetSectionHeaderStringTable())
+        if (I->sh_type == SHT_SYMTAB)
         {
-            uint32_t symtab_idx = UINT32_MAX;
-            uint32_t dynsym_idx = UINT32_MAX;
-            uint32_t sh_idx = 0;
-            const size_t num_sections = m_section_headers.size();
-            for (sh_idx = 0; sh_idx < num_sections; ++sh_idx)
-            {
-                if (m_section_headers[sh_idx].sh_type == SHT_SYMTAB)
-                {
-                    symtab_idx = sh_idx;
-                    break;
-                }
-                if (m_section_headers[sh_idx].sh_type == SHT_DYNSYM)
-                {
-                    dynsym_idx = sh_idx;
-                }
-            }
-
-            SectionList *section_list = NULL;
-            static ConstString g_symtab(".symtab");
-            static ConstString g_strtab(".strtab");
-            static ConstString g_dynsym(".dynsym");
-            static ConstString g_dynstr(".dynstr");
-            // Check if we found a full symbol table?
-            if (symtab_idx < num_sections)
-            {
-                section_list = GetSectionList();
-                if (section_list)
-                {
-                    Section *symtab_section = section_list->FindSectionByName(g_symtab).get();
-                    Section *strtab_section = section_list->FindSectionByName(g_strtab).get();
-                    if (symtab_section && strtab_section)
-                    {
-                        DataExtractor symtab_data;
-                        DataExtractor strtab_data;
-                        if (symtab_section->ReadSectionDataFromObjectFile (this, symtab_data) > 0 &&
-                            strtab_section->ReadSectionDataFromObjectFile (this, strtab_data) > 0)
-                        {
-                            ParseSymbols (m_symtab_ap.get(), section_list, m_section_headers[symtab_idx], symtab_data, strtab_data);
-                        }
-                    }
-                }
-            }
-            // Check if we found a reduced symbol table that gets used for dynamic linking?
-            else if (dynsym_idx < num_sections)
-            {
-                section_list = GetSectionList();
-                if (section_list)
-                {
-                    Section *dynsym_section = section_list->FindSectionByName(g_dynsym).get();
-                    Section *dynstr_section = section_list->FindSectionByName(g_dynstr).get();
-                    if (dynsym_section && dynstr_section)
-                    {
-                        DataExtractor dynsym_data;
-                        DataExtractor dynstr_data;
-                        if (dynsym_section->ReadSectionDataFromObjectFile (this, dynsym_data) > 0 &&
-                            dynstr_section->ReadSectionDataFromObjectFile (this, dynstr_data) > 0)
-                        {
-                            ParseSymbols (m_symtab_ap.get(), section_list, m_section_headers[dynsym_idx], dynsym_data, dynstr_data);
-                        }
-                    }
-                }
-            }
+            const ELFSectionHeader &symtab_section = *I;
+            user_id_t section_id = SectionIndex(I);
+            ParseSymbolTable(symbol_table, symtab_section, section_id);
         }
     }
-    return m_symtab_ap.get();
+
+    return symbol_table;
 }
 
-//
-////----------------------------------------------------------------------
-//// GetNListSymtab
-////----------------------------------------------------------------------
-//bool
-//ELF32RuntimeFileParser::GetNListSymtab(BinaryDataRef& stabs_data, BinaryDataRef& stabstr_data, bool locals_only, uint32_t& value_size)
-//{
-//  value_size = 4; // Size in bytes of the nlist n_value member
-//  return  GetSectionInfo(GetSectionIndexByName(".stab"), NULL, NULL, NULL, NULL, NULL, NULL, &stabs_data, NULL) &&
-//          GetSectionInfo(GetSectionIndexByName(".stabstr"), NULL, NULL, NULL, NULL, NULL, NULL, &stabstr_data, NULL);
-//}
-//
 //===----------------------------------------------------------------------===//
 // Dump
 //
@@ -571,6 +646,8 @@ ObjectFileELF::Dump(Stream *s)
     if (symtab)
         symtab->Dump(s, NULL);
     s->EOL();
+    DumpDependentModules(s);
+    s->EOL();
 }
 
 //----------------------------------------------------------------------
@@ -579,16 +656,19 @@ ObjectFileELF::Dump(Stream *s)
 // Dump the ELF header to the specified output stream
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFHeader(Stream *s, const Elf32_Ehdr& header)
+ObjectFileELF::DumpELFHeader(Stream *s, const ELFHeader &header)
 {
+    s->PutCString("ELF Header\n");
+    s->Printf("e_ident[EI_MAG0   ] = 0x%2.2x\n", header.e_ident[EI_MAG0]);
+    s->Printf("e_ident[EI_MAG1   ] = 0x%2.2x '%c'\n",
+              header.e_ident[EI_MAG1], header.e_ident[EI_MAG1]);
+    s->Printf("e_ident[EI_MAG2   ] = 0x%2.2x '%c'\n",
+              header.e_ident[EI_MAG2], header.e_ident[EI_MAG2]);
+    s->Printf("e_ident[EI_MAG3   ] = 0x%2.2x '%c'\n",
+              header.e_ident[EI_MAG3], header.e_ident[EI_MAG3]);
 
-    s->PutCString ("ELF Header\n");
-    s->Printf ("e_ident[EI_MAG0   ] = 0x%2.2x\n", header.e_ident[EI_MAG0]);
-    s->Printf ("e_ident[EI_MAG1   ] = 0x%2.2x '%c'\n", header.e_ident[EI_MAG1], header.e_ident[EI_MAG1]);
-    s->Printf ("e_ident[EI_MAG2   ] = 0x%2.2x '%c'\n", header.e_ident[EI_MAG2], header.e_ident[EI_MAG2]);
-    s->Printf ("e_ident[EI_MAG3   ] = 0x%2.2x '%c'\n", header.e_ident[EI_MAG3], header.e_ident[EI_MAG3]);
-    s->Printf ("e_ident[EI_CLASS  ] = 0x%2.2x\n", header.e_ident[EI_CLASS]);
-    s->Printf ("e_ident[EI_DATA   ] = 0x%2.2x ", header.e_ident[EI_DATA]);
+    s->Printf("e_ident[EI_CLASS  ] = 0x%2.2x\n", header.e_ident[EI_CLASS]);
+    s->Printf("e_ident[EI_DATA   ] = 0x%2.2x ", header.e_ident[EI_DATA]);
     DumpELFHeader_e_ident_EI_DATA(s, header.e_ident[EI_DATA]);
     s->Printf ("\ne_ident[EI_VERSION] = 0x%2.2x\n", header.e_ident[EI_VERSION]);
     s->Printf ("e_ident[EI_PAD    ] = 0x%2.2x\n", header.e_ident[EI_PAD]);
@@ -597,9 +677,9 @@ ObjectFileELF::DumpELFHeader(Stream *s, const Elf32_Ehdr& header)
     DumpELFHeader_e_type(s, header.e_type);
     s->Printf("\ne_machine   = 0x%4.4x\n", header.e_machine);
     s->Printf("e_version   = 0x%8.8x\n", header.e_version);
-    s->Printf("e_entry     = 0x%8.8x\n", header.e_entry);
-    s->Printf("e_phoff     = 0x%8.8x\n", header.e_phoff);
-    s->Printf("e_shoff     = 0x%8.8x\n", header.e_shoff);
+    s->Printf("e_entry     = 0x%8.8lx\n", header.e_entry);
+    s->Printf("e_phoff     = 0x%8.8lx\n", header.e_phoff);
+    s->Printf("e_shoff     = 0x%8.8lx\n", header.e_shoff);
     s->Printf("e_flags     = 0x%8.8x\n", header.e_flags);
     s->Printf("e_ehsize    = 0x%4.4x\n", header.e_ehsize);
     s->Printf("e_phentsize = 0x%4.4x\n", header.e_phentsize);
@@ -615,7 +695,7 @@ ObjectFileELF::DumpELFHeader(Stream *s, const Elf32_Ehdr& header)
 // Dump an token value for the ELF header member e_type
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFHeader_e_type(Stream *s, uint16_t e_type)
+ObjectFileELF::DumpELFHeader_e_type(Stream *s, elf_half e_type)
 {
     switch (e_type)
     {
@@ -635,7 +715,7 @@ ObjectFileELF::DumpELFHeader_e_type(Stream *s, uint16_t e_type)
 // Dump an token value for the ELF header member e_ident[EI_DATA]
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFHeader_e_ident_EI_DATA(Stream *s, uint16_t ei_data)
+ObjectFileELF::DumpELFHeader_e_ident_EI_DATA(Stream *s, unsigned char ei_data)
 {
     switch (ei_data)
     {
@@ -654,10 +734,12 @@ ObjectFileELF::DumpELFHeader_e_ident_EI_DATA(Stream *s, uint16_t ei_data)
 // Dump a single ELF program header to the specified output stream
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFProgramHeader(Stream *s, const Elf32_Phdr& ph)
+ObjectFileELF::DumpELFProgramHeader(Stream *s, const ELFProgramHeader &ph)
 {
     DumpELFProgramHeader_p_type(s, ph.p_type);
-    s->Printf(" %8.8x %8.8x %8.8x %8.8x %8.8x %8.8x (", ph.p_offset, ph.p_vaddr, ph.p_paddr, ph.p_filesz, ph.p_memsz, ph.p_flags);
+    s->Printf(" %8.8lx %8.8lx %8.8lx", ph.p_offset, ph.p_vaddr, ph.p_paddr);
+    s->Printf(" %8.8lx %8.8lx %8.8lx (", ph.p_filesz, ph.p_memsz, ph.p_flags);
+
     DumpELFProgramHeader_p_flags(s, ph.p_flags);
     s->Printf(") %8.8x", ph.p_align);
 }
@@ -667,9 +749,9 @@ ObjectFileELF::DumpELFProgramHeader(Stream *s, const Elf32_Phdr& ph)
 //
 // Dump an token value for the ELF program header member p_type which
 // describes the type of the program header
-//----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFProgramHeader_p_type(Stream *s, Elf32_Word p_type)
+ObjectFileELF::DumpELFProgramHeader_p_type(Stream *s, elf_word p_type)
 {
     const int kStrWidth = 10;
     switch (p_type)
@@ -694,7 +776,7 @@ ObjectFileELF::DumpELFProgramHeader_p_type(Stream *s, Elf32_Word p_type)
 // Dump an token value for the ELF program header member p_flags
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFProgramHeader_p_flags(Stream *s, Elf32_Word p_flags)
+ObjectFileELF::DumpELFProgramHeader_p_flags(Stream *s, elf_word p_flags)
 {
     *s  << ((p_flags & PF_X) ? "PF_X" : "    ")
         << (((p_flags & PF_X) && (p_flags & PF_W)) ? '+' : ' ')
@@ -714,21 +796,21 @@ ObjectFileELF::DumpELFProgramHeaders(Stream *s)
     if (ParseProgramHeaders())
     {
         s->PutCString("Program Headers\n");
-        s->PutCString("IDX  p_type     p_offset p_vaddr  p_paddr  p_filesz p_memsz  p_flags                   p_align\n");
-        s->PutCString("==== ---------- -------- -------- -------- -------- -------- ------------------------- --------\n");
+        s->PutCString("IDX  p_type     p_offset p_vaddr  p_paddr  "
+                      "p_filesz p_memsz  p_flags                   p_align\n");
+        s->PutCString("==== ---------- -------- -------- -------- "
+                      "-------- -------- ------------------------- --------\n");
 
         uint32_t idx = 0;
-        ProgramHeaderCollConstIter pos;
-
-        for (pos = m_program_headers.begin(); pos != m_program_headers.end(); ++pos, ++idx)
+        for (ProgramHeaderCollConstIter I = m_program_headers.begin();
+             I != m_program_headers.end(); ++I, ++idx)
         {
-            s->Printf ("[%2u] ", idx);
-            ObjectFileELF::DumpELFProgramHeader(s, *pos);
+            s->Printf("[%2u] ", idx);
+            ObjectFileELF::DumpELFProgramHeader(s, *I);
             s->EOL();
         }
     }
 }
-
 
 //----------------------------------------------------------------------
 // DumpELFSectionHeader
@@ -736,14 +818,15 @@ ObjectFileELF::DumpELFProgramHeaders(Stream *s)
 // Dump a single ELF section header to the specified output stream
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFSectionHeader(Stream *s, const Elf32_Shdr& sh)
+ObjectFileELF::DumpELFSectionHeader(Stream *s, const ELFSectionHeader &sh)
 {
-    s->Printf ("%8.8x ", sh.sh_name);
+    s->Printf("%8.8x ", sh.sh_name);
     DumpELFSectionHeader_sh_type(s, sh.sh_type);
-    s->Printf (" %8.8x (", sh.sh_flags);
+    s->Printf(" %8.8lx (", sh.sh_flags);
     DumpELFSectionHeader_sh_flags(s, sh.sh_flags);
-    s->Printf (") %8.8x %8.8x %8.8x %8.8x %8.8x %8.8x %8.8x",
-                sh.sh_addr, sh.sh_offset, sh.sh_size, sh.sh_link, sh.sh_info, sh.sh_addralign, sh.sh_entsize);
+    s->Printf(") %8.8lx %8.8lx %8.8lx", sh.sh_addr, sh.sh_offset, sh.sh_size);
+    s->Printf(" %8.8x %8.8x", sh.sh_link, sh.sh_info);
+    s->Printf(" %8.8lx %8.8lx", sh.sh_addralign, sh.sh_entsize);
 }
 
 //----------------------------------------------------------------------
@@ -753,7 +836,7 @@ ObjectFileELF::DumpELFSectionHeader(Stream *s, const Elf32_Shdr& sh)
 // describes the type of the section
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFSectionHeader_sh_type(Stream *s, Elf32_Word sh_type)
+ObjectFileELF::DumpELFSectionHeader_sh_type(Stream *s, elf_word sh_type)
 {
     const int kStrWidth = 12;
     switch (sh_type)
@@ -780,14 +863,13 @@ ObjectFileELF::DumpELFSectionHeader_sh_type(Stream *s, Elf32_Word sh_type)
     }
 }
 
-
 //----------------------------------------------------------------------
 // DumpELFSectionHeader_sh_flags
 //
 // Dump an token value for the ELF section header member sh_flags
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, Elf32_Word sh_flags)
+ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, elf_word sh_flags)
 {
     *s  << ((sh_flags & SHF_WRITE) ? "WRITE" : "     ")
         << (((sh_flags & SHF_WRITE) && (sh_flags & SHF_ALLOC)) ? '+' : ' ')
@@ -795,6 +877,7 @@ ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, Elf32_Word sh_flags)
         << (((sh_flags & SHF_ALLOC) && (sh_flags & SHF_EXECINSTR)) ? '+' : ' ')
         << ((sh_flags & SHF_EXECINSTR) ? "EXECINSTR" : "         ");
 }
+
 //----------------------------------------------------------------------
 // DumpELFSectionHeaders
 //
@@ -803,100 +886,80 @@ ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, Elf32_Word sh_flags)
 void
 ObjectFileELF::DumpELFSectionHeaders(Stream *s)
 {
-    if (ParseSectionHeaders() && GetSectionHeaderStringTable())
+    if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
+        return;
+
+    s->PutCString("Section Headers\n");
+    s->PutCString("IDX  name     type         flags                            "
+                  "addr     offset   size     link     info     addralgn "
+                  "entsize  Name\n");
+    s->PutCString("==== -------- ------------ -------------------------------- "
+                  "-------- -------- -------- -------- -------- -------- "
+                  "-------- ====================\n");
+
+    uint32_t idx = 0;
+    for (SectionHeaderCollConstIter I = m_section_headers.begin();
+         I != m_section_headers.end(); ++I, ++idx)
     {
-        s->PutCString("Section Headers\n");
-        s->PutCString("IDX  name     type         flags                            addr     offset   size     link     info     addralgn entsize  Name\n");
-        s->PutCString("==== -------- ------------ -------------------------------- -------- -------- -------- -------- -------- -------- -------- ====================\n");
+        s->Printf("[%2u] ", idx);
+        ObjectFileELF::DumpELFSectionHeader(s, *I);
+        const char* section_name = m_shstr_data.PeekCStr(I->sh_name);
+        if (section_name)
+            *s << ' ' << section_name << "\n";
+    }
+}
 
-        uint32_t idx = 0;
-        SectionHeaderCollConstIter pos;
+void
+ObjectFileELF::DumpDependentModules(lldb_private::Stream *s)
+{
+    size_t num_modules = ParseDependentModules();
 
-        for (pos = m_section_headers.begin(); pos != m_section_headers.end(); ++pos, ++idx)
+    if (num_modules > 0)
+    {
+        s->PutCString("Dependent Modules:\n");
+        for (unsigned i = 0; i < num_modules; ++i)
         {
-            s->Printf ("[%2u] ", idx);
-            ObjectFileELF::DumpELFSectionHeader(s, *pos);
-            const char* section_name = m_shstr_data.PeekCStr(pos->sh_name);
-            if (section_name)
-                *s << ' ' << section_name << "\n";
+            const FileSpec &spec = m_filespec_ap->GetFileSpecAtIndex(i);
+            s->Printf("   %s\n", spec.GetFilename().GetCString());
         }
     }
 }
 
 bool
-ObjectFileELF::GetTargetTriple (ConstString &target_triple)
+ObjectFileELF::GetTargetTriple(ConstString &target_triple)
 {
     static ConstString g_target_triple;
 
     if (g_target_triple)
     {
         target_triple = g_target_triple;
+        return true;
     }
-    else
+
+    std::string triple;
+    switch (m_header.e_machine)
     {
-        std::string triple;
-        switch (m_header.e_machine)
-        {
-        case EM_SPARC:  triple.assign("sparc-"); break;
-        case EM_386:    triple.assign("i386-"); break;
-        case EM_68K:    triple.assign("68k-"); break;
-        case EM_88K:    triple.assign("88k-"); break;
-        case EM_860:    triple.assign("i860-"); break;
-        case EM_MIPS:   triple.assign("mips-"); break;
-        case EM_PPC:    triple.assign("powerpc-"); break;
-        case EM_PPC64:  triple.assign("powerpc64-"); break;
-        case EM_ARM:    triple.assign("arm-"); break;
-        }
-        // TODO: determine if there is a vendor in the ELF? Default to "linux" for now
-        triple += "linux-";
-        // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
-        triple += "gnu";
-        g_target_triple.SetCString(triple.c_str());
-        target_triple = g_target_triple;
+    default:
+        assert(false && "Unexpected machine type.");
+        break;
+    case EM_SPARC:  triple.assign("sparc-"); break;
+    case EM_386:    triple.assign("i386-"); break;
+    case EM_68K:    triple.assign("68k-"); break;
+    case EM_88K:    triple.assign("88k-"); break;
+    case EM_860:    triple.assign("i860-"); break;
+    case EM_MIPS:   triple.assign("mips-"); break;
+    case EM_PPC:    triple.assign("powerpc-"); break;
+    case EM_PPC64:  triple.assign("powerpc64-"); break;
+    case EM_ARM:    triple.assign("arm-"); break;
+    case EM_X86_64: triple.assign("x86_64-"); break;
     }
-    return !target_triple.IsEmpty();
+    // TODO: determine if there is a vendor in the ELF? Default to "linux" for now
+    triple += "linux-";
+    // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
+    triple += "gnu";
+    g_target_triple.SetCString(triple.c_str());
+    target_triple = g_target_triple;
+
+    return true;
 }
-
-
-//------------------------------------------------------------------
-// PluginInterface protocol
-//------------------------------------------------------------------
-const char *
-ObjectFileELF::GetPluginName()
-{
-    return "ObjectFileELF";
-}
-
-const char *
-ObjectFileELF::GetShortPluginName()
-{
-    return GetPluginNameStatic();
-}
-
-uint32_t
-ObjectFileELF::GetPluginVersion()
-{
-    return 1;
-}
-
-void
-ObjectFileELF::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ObjectFileELF::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ObjectFileELF::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-
 

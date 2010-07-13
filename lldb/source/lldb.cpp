@@ -19,7 +19,6 @@
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
-#include "Plugins/ObjectFile/ELF/ObjectFileELF64.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
@@ -56,7 +55,6 @@ lldb_private::Initialize ()
         DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
-        ObjectFileELF64::Initialize();
         SymbolVendorMacOSX::Initialize();
         SymbolFileDWARF::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
@@ -86,7 +84,6 @@ lldb_private::Terminate ()
     DisassemblerLLVM::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
-    ObjectFileELF64::Terminate();
     SymbolVendorMacOSX::Terminate();
     SymbolFileDWARF::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
