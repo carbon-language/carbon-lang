@@ -373,7 +373,12 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // the call instruction that are both associative and commutative, the initial
   // value for the accumulator is placed in this variable.  If this value is set
   // then we actually perform accumulator recursion elimination instead of
-  // simple tail recursion elimination.
+  // simple tail recursion elimination.  If the operation is an LLVM instruction
+  // (eg: "add") then it is recorded in AccumulatorRecursionInstr.  If not, then
+  // we are handling the case when the return instruction returns a constant C
+  // which is different to the constant returned by other return instructions
+  // (which is recorded in AccumulatorRecursionEliminationInitVal).  This is a
+  // special case of accumulator recursion, the operation being "return C".
   Value *AccumulatorRecursionEliminationInitVal = 0;
   Instruction *AccumulatorRecursionInstr = 0;
 
@@ -404,8 +409,18 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (Ret->getNumOperands() == 1 && Ret->getReturnValue() != CI &&
       !isa<UndefValue>(Ret->getReturnValue()) &&
       AccumulatorRecursionEliminationInitVal == 0 &&
-      !getCommonReturnValue(0, CI))
-    return false;
+      !getCommonReturnValue(0, CI)) {
+    // One case remains that we are able to handle: the current return
+    // instruction returns a constant, and all other return instructions
+    // return a different constant.
+    if (!isDynamicConstant(Ret->getReturnValue(), CI, Ret))
+      return false; // Current return instruction does not return a constant.
+    // Check that all other return instructions return a common constant.  If
+    // so, record it in AccumulatorRecursionEliminationInitVal.
+    AccumulatorRecursionEliminationInitVal = getCommonReturnValue(Ret, CI);
+    if (!AccumulatorRecursionEliminationInitVal)
+      return false;
+  }
 
   // OK! We can transform this tail call.  If this is the first one found,
   // create the new entry block, allowing us to branch back to the old entry.
@@ -465,8 +480,9 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (AccumulatorRecursionEliminationInitVal) {
     Instruction *AccRecInstr = AccumulatorRecursionInstr;
     // Start by inserting a new PHI node for the accumulator.
-    PHINode *AccPN = PHINode::Create(AccRecInstr->getType(), "accumulator.tr",
-                                     OldEntry->begin());
+    PHINode *AccPN =
+      PHINode::Create(AccumulatorRecursionEliminationInitVal->getType(),
+                      "accumulator.tr", OldEntry->begin());
 
     // Loop over all of the predecessors of the tail recursion block.  For the
     // real entry into the function we seed the PHI with the initial value,
@@ -483,14 +499,20 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
         AccPN->addIncoming(AccPN, P);
     }
 
-    // Add an incoming argument for the current block, which is computed by our
-    // associative and commutative accumulator instruction.
-    AccPN->addIncoming(AccRecInstr, BB);
+    if (AccRecInstr) {
+      // Add an incoming argument for the current block, which is computed by
+      // our associative and commutative accumulator instruction.
+      AccPN->addIncoming(AccRecInstr, BB);
 
-    // Next, rewrite the accumulator recursion instruction so that it does not
-    // use the result of the call anymore, instead, use the PHI node we just
-    // inserted.
-    AccRecInstr->setOperand(AccRecInstr->getOperand(0) != CI, AccPN);
+      // Next, rewrite the accumulator recursion instruction so that it does not
+      // use the result of the call anymore, instead, use the PHI node we just
+      // inserted.
+      AccRecInstr->setOperand(AccRecInstr->getOperand(0) != CI, AccPN);
+    } else {
+      // Add an incoming argument for the current block, which is just the
+      // constant returned by the current return instruction.
+      AccPN->addIncoming(Ret->getReturnValue(), BB);
+    }
 
     // Finally, rewrite any return instructions in the program to return the PHI
     // node instead of the "initval" that they do currently.  This loop will
