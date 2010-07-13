@@ -432,6 +432,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if (TSFlags & X86II::VEX_W)
     VEX_W = 1;
 
+  if (TSFlags & X86II::VEX_L)
+    VEX_L = 1;
+
   switch (TSFlags & X86II::Op0Mask) {
   default: assert(0 && "Invalid prefix!");
   case X86II::T8:  // 0F 38

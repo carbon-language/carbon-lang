@@ -453,7 +453,13 @@ namespace X86II {
     // VEX_I8IMM - Specifies that the last register used in a AVX instruction,
     // must be encoded in the i8 immediate field. This usually happens in
     // instructions with 4 operands.
-    VEX_I8IMM   = 1ULL << 35
+    VEX_I8IMM   = 1ULL << 35,
+
+    // VEX_L - Stands for a bit in the VEX opcode prefix meaning the current
+    // instruction uses 256-bit wide registers. This is usually auto detected if
+    // a VR256 register is used, but some AVX instructions also have this field
+    // marked when using a f256 memory references.
+    VEX_L       = 1ULL << 36
   };
   
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

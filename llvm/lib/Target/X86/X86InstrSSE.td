@@ -666,6 +666,9 @@ defm VCVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
 defm VCVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
                             SSEPackedSingle>, TB, VEX;
+defm VCVTDQ2PSY : sse12_cvt_p<0x5B, VR256, VR256, undef, f256mem, load,
+                            "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                            SSEPackedSingle>, TB, VEX;
 }
 let Pattern = []<dag> in {
 defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
@@ -806,9 +809,13 @@ def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
 // Convert packed single/double fp to doubleword
 let isAsmParserOnly = 1 in {
 def VCVTPS2DQrr : VPDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+                       "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTPS2DQrm : VPDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                     "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+                       "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPS2DQYrr : VPDI<0x5B, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                        "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPS2DQYrm : VPDI<0x5B, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
+                        "cvtps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "cvtps2dq\t{$src, $dst|$dst, $src}", []>;
@@ -862,6 +869,10 @@ def VCVTTPS2DQrr : VSSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTTPS2DQrm : VSSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTTPS2DQYrr : VSSI<0x5B, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTTPS2DQYrm : VSSI<0x5B, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
@@ -912,14 +923,39 @@ def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
                           [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
                                              (memop addr:$src)))]>;
 
+let isAsmParserOnly = 1 in {
+// The assembler can recognize rr 256-bit instructions by seeing a ymm
+// register, but the same isn't true when using memory operands instead.
+// Provide other assembly rr and rm forms to address this explicitly.
+def VCVTTPD2DQrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                        "cvttpd2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTTPD2DQXrYr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                          "cvttpd2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// XMM only
+def VCVTTPD2DQXrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                         "cvttpd2dqx\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTTPD2DQXrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                         "cvttpd2dqx\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// YMM only
+def VCVTTPD2DQYrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                         "cvttpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTTPD2DQYrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
+                         "cvttpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX, VEX_L;
+}
+
 // Convert packed single to packed double
-let isAsmParserOnly = 1 in { // SSE2 instructions without OpSize prefix
+let isAsmParserOnly = 1, Predicates = [HasAVX] in {
+                  // SSE2 instructions without OpSize prefix
 def VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX,
-                       Requires<[HasAVX]>;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX,
-                       Requires<[HasAVX]>;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPS2PDYrr : I<0x5A, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPS2PDYrm : I<0x5A, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
@@ -949,10 +985,25 @@ def Int_CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
 
 // Convert packed double to packed single
 let isAsmParserOnly = 1 in {
+// The assembler can recognize rr 256-bit instructions by seeing a ymm
+// register, but the same isn't true when using memory operands instead.
+// Provide other assembly rr and rm forms to address this explicitly.
 def VCVTPD2PSrr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>, VEX;
-// FIXME: the memory form of this instruction should described using
-// use extra asm syntax
+                       "cvtpd2ps\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2PSXrYr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                         "cvtpd2ps\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// XMM only
+def VCVTPD2PSXrr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                        "cvtpd2psx\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2PSXrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                        "cvtpd2psx\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// YMM only
+def VCVTPD2PSYrr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                        "cvtpd2psy\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2PSYrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
+                        "cvtpd2psy\t{$src, $dst|$dst, $src}", []>, VEX, VEX_L;
 }
 def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
@@ -2935,19 +2986,46 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // SSE3 - Conversion Instructions
 //===---------------------------------------------------------------------===//
 
+// Convert Packed Double FP to Packed DW Integers
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
+// The assembler can recognize rr 256-bit instructions by seeing a ymm
+// register, but the same isn't true when using memory operands instead.
+// Provide other assembly rr and rm forms to address this explicitly.
 def VCVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "vcvtpd2dq\t{$src, $dst|$dst, $src}", []>, VEX;
-def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
-def VCVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2DQXrYr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                       "vcvtpd2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// XMM only
+def VCVTPD2DQXrr : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                      "vcvtpd2dqx\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2DQXrm : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                      "vcvtpd2dqx\t{$src, $dst|$dst, $src}", []>, VEX;
+
+// YMM only
+def VCVTPD2DQYrr : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
+                      "vcvtpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTPD2DQYrm : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
+                      "vcvtpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX, VEX_L;
 }
 
 def CVTPD2DQrm  : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "cvtpd2dq\t{$src, $dst|$dst, $src}", []>;
 def CVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtpd2dq\t{$src, $dst|$dst, $src}", []>;
+
+// Convert Packed DW Integers to Packed Double FP
+let isAsmParserOnly = 1, Predicates = [HasAVX] in {
+def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTDQ2PDYrm  : S3SI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+def VCVTDQ2PDYrr  : S3SI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
+                       "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+}
+
 def CVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", []>;
 def CVTDQ2PDrr  : S3SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
