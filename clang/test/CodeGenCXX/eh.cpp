@@ -136,9 +136,6 @@ namespace test7 {
 // CHECK-NEXT: invoke void @__cxa_throw(i8* [[EXNALLOC]], i8* bitcast (i8** @_ZTIi to i8*), i8* null
         throw 1;
       }
-// This cleanup ends up here for no good reason.  It's actually unused.
-// CHECK:      load i8** [[EXNALLOCVAR]]
-// CHECK-NEXT: call void @__cxa_free_exception(
 
 // CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]

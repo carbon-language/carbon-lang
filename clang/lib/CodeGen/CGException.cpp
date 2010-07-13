@@ -400,6 +400,33 @@ static llvm::Constant *getCleanupValue(CodeGenFunction &CGF) {
   return llvm::ConstantInt::get(CGF.Builder.getInt32Ty(), 0);
 }
 
+namespace {
+  /// A cleanup to free the exception object if its initialization
+  /// throws.
+  struct FreeExceptionCleanup : EHScopeStack::LazyCleanup {
+    FreeExceptionCleanup(llvm::Value *ShouldFreeVar,
+                         llvm::Value *ExnLocVar)
+      : ShouldFreeVar(ShouldFreeVar), ExnLocVar(ExnLocVar) {}
+
+    llvm::Value *ShouldFreeVar;
+    llvm::Value *ExnLocVar;
+    
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      llvm::BasicBlock *FreeBB = CGF.createBasicBlock("free-exnobj");
+      llvm::BasicBlock *DoneBB = CGF.createBasicBlock("free-exnobj.done");
+
+      llvm::Value *ShouldFree = CGF.Builder.CreateLoad(ShouldFreeVar,
+                                                       "should-free-exnobj");
+      CGF.Builder.CreateCondBr(ShouldFree, FreeBB, DoneBB);
+      CGF.EmitBlock(FreeBB);
+      llvm::Value *ExnLocLocal = CGF.Builder.CreateLoad(ExnLocVar, "exnobj");
+      CGF.Builder.CreateCall(getFreeExceptionFn(CGF), ExnLocLocal)
+        ->setDoesNotThrow();
+      CGF.EmitBlock(DoneBB);
+    }
+  };
+}
+
 // Emits an exception expression into the given location.  This
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
 // call is required, an exception within that copy ctor causes
@@ -424,22 +451,11 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
 
   // Make sure the exception object is cleaned up if there's an
   // exception during initialization.
-  // FIXME: StmtExprs probably force this to include a non-EH
-  // handler.
-  {
-    CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
-    llvm::BasicBlock *FreeBB = CGF.createBasicBlock("free-exnobj");
-    llvm::BasicBlock *DoneBB = CGF.createBasicBlock("free-exnobj.done");
-
-    llvm::Value *ShouldFree = CGF.Builder.CreateLoad(ShouldFreeVar,
-                                                     "should-free-exnobj");
-    CGF.Builder.CreateCondBr(ShouldFree, FreeBB, DoneBB);
-    CGF.EmitBlock(FreeBB);
-    llvm::Value *ExnLocLocal = CGF.Builder.CreateLoad(ExnLocVar, "exnobj");
-    CGF.Builder.CreateCall(getFreeExceptionFn(CGF), ExnLocLocal)
-      ->setDoesNotThrow();
-    CGF.EmitBlock(DoneBB);
-  }
+  // FIXME: stmt expressions might require this to be a normal
+  // cleanup, too.
+  CGF.EHStack.pushLazyCleanup<FreeExceptionCleanup>(EHCleanup,
+                                                    ShouldFreeVar,
+                                                    ExnLocVar);
   EHScopeStack::stable_iterator Cleanup = CGF.EHStack.stable_begin();
 
   CGF.Builder.CreateStore(ExnLoc, ExnLocVar);
