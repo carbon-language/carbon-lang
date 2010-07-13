@@ -2438,6 +2438,7 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
   case CastExpr::CK_Unknown:
   case CastExpr::CK_ArrayToPointerDecay:
   case CastExpr::CK_BitCast:
+  case CastExpr::CK_LValueBitCast:
   case CastExpr::CK_IntegralCast:
   case CastExpr::CK_IntegralToPointer:
   case CastExpr::CK_PointerToIntegral:

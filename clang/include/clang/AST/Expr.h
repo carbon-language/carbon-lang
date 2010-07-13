@@ -1854,6 +1854,10 @@ public:
     /// CK_BitCast - Used for reinterpret_cast.
     CK_BitCast,
 
+    /// CK_LValueBitCast - Used for reinterpret_cast of expressions to
+    /// a reference type.
+    CK_LValueBitCast,
+    
     /// CK_NoOp - Used for const_cast.
     CK_NoOp,
 
@@ -1957,6 +1961,7 @@ private:
     // These should not have an inheritance path.
     case CK_Unknown:
     case CK_BitCast:
+    case CK_LValueBitCast:
     case CK_NoOp:
     case CK_Dynamic:
     case CK_ToUnion:

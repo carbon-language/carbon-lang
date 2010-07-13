@@ -1816,7 +1816,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     return LValue::MakeAddr(Derived, MakeQualifiers(E->getType()));
   }
-  case CastExpr::CK_BitCast: {
+  case CastExpr::CK_BitCast: 
+  case CastExpr::CK_LValueBitCast: {
     // This must be a reinterpret_cast (or c-style equivalent).
     const ExplicitCastExpr *CE = cast<ExplicitCastExpr>(E);
     

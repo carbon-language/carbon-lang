@@ -1052,6 +1052,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
                                         const SourceRange &OpRange,
                                         unsigned &msg,
                                         CastExpr::CastKind &Kind) {
+  bool IsLValueCast = false;
+  
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
@@ -1069,6 +1071,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     // This code does this transformation for the checked types.
     DestType = Self.Context.getPointerType(DestTypeTmp->getPointeeType());
     SrcType = Self.Context.getPointerType(SrcType);
+    IsLValueCast = true;
   }
 
   // Canonicalize source for comparison.
@@ -1095,7 +1098,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     }
 
     // A valid member pointer cast.
-    Kind = CastExpr::CK_BitCast;
+    Kind = IsLValueCast? CastExpr::CK_LValueBitCast : CastExpr::CK_BitCast;
     return TC_Success;
   }
 
@@ -1212,7 +1215,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     
   // Not casting away constness, so the only remaining check is for compatible
   // pointer categories.
-  Kind = CastExpr::CK_BitCast;
+  Kind = IsLValueCast? CastExpr::CK_LValueBitCast : CastExpr::CK_BitCast;
 
   if (SrcType->isFunctionPointerType()) {
     if (DestType->isFunctionPointerType()) {

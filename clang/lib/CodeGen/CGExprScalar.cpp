@@ -925,6 +925,15 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     //assert(0 && "Unknown cast kind!");
     break;
 
+  case CastExpr::CK_LValueBitCast: {
+    Value *V = EmitLValue(E).getAddress();
+    V = Builder.CreateBitCast(V, 
+                          ConvertType(CGF.getContext().getPointerType(DestTy)));
+    // FIXME: Are the qualifiers correct here?
+    return EmitLoadOfLValue(LValue::MakeAddr(V, CGF.MakeQualifiers(DestTy)), 
+                            DestTy);
+  }
+      
   case CastExpr::CK_AnyPointerToObjCPointerCast:
   case CastExpr::CK_AnyPointerToBlockPointerCast:
   case CastExpr::CK_BitCast: {

@@ -307,6 +307,10 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
       
+  case CastExpr::CK_LValueBitCast:
+    llvm_unreachable("there are no lvalue bit-casts on aggregates");
+    break;
+      
   case CastExpr::CK_BitCast: {
     // This must be a member function pointer cast.
     Visit(E->getSubExpr());

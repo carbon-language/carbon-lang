@@ -563,6 +563,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
 
   case CastExpr::CK_NoOp:
   case CastExpr::CK_BitCast:
+  case CastExpr::CK_LValueBitCast:
   case CastExpr::CK_AnyPointerToObjCPointerCast:
   case CastExpr::CK_AnyPointerToBlockPointerCast:
     return Visit(SubExpr);
