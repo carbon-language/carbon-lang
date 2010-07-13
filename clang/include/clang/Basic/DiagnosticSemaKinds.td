@@ -225,6 +225,7 @@ def err_main_arg_wrong : Error<"%select{first|second|third|fourth}0 "
 
 /// parser diagnostics
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;
+def err_typedef_not_identifier : Error<"typedef name must be an identifier">;
 def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<

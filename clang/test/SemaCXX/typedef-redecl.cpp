@@ -48,3 +48,9 @@ namespace PR6923 {
 
   struct A;
 }
+
+namespace PR7462 {
+  struct A {};
+  typedef int operator! (A); // expected-error{{typedef name must be an identifier}}
+  int i = !A(); // expected-error{{invalid argument type}}
+}

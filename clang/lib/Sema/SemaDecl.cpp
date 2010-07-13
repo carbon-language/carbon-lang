@@ -2370,6 +2370,12 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
+  if (D.getName().Kind != UnqualifiedId::IK_Identifier) {
+    Diag(D.getName().StartLocation, diag::err_typedef_not_identifier)
+      << D.getName().getSourceRange();
+    return 0;
+  }
+
   TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, TInfo);
   if (!NewTD) return 0;
 
