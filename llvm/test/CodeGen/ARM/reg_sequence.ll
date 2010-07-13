@@ -239,7 +239,7 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; CHECK:        t9:
 ; CHECK:        vldr.64
 ; CHECK-NOT:    vmov d{{.*}}, d0
-; CHECK:        vmov.i8 d1
+; CHECK:        vmov.i32 d1
 ; CHECK-NEXT:   vstmia r0, {d0, d1}
 ; CHECK-NEXT:   vstmia r0, {d0, d1}
   %3 = bitcast double 0.000000e+00 to <2 x float> ; <<2 x float>> [#uses=2]

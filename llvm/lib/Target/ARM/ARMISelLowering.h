@@ -125,6 +125,7 @@ namespace llvm {
       VGETLANEs,    // sign-extend vector extract element
 
       // Vector duplicate:
+      VMOVIMM,
       VDUP,
       VDUPLANE,
 
@@ -152,13 +153,6 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace ARM {
-    /// getNEONModImm - If this is a valid vector constant for a NEON
-    /// instruction with a "modified immediate" operand (e.g., VMOV) of the
-    /// specified element size, return the encoded value for that immediate.
-    /// The ByteSize field indicates the number of bytes of each element [1248].
-    SDValue getNEONModImm(SDNode *N, unsigned ByteSize, bool isVMOV,
-                          SelectionDAG &DAG);
-
     /// getVFPf32Imm / getVFPf64Imm - If the given fp immediate can be
     /// materialized with a VMOV.f32 / VMOV.f64 (i.e. fconsts / fconstd)
     /// instruction, returns its 8-bit integer representation. Otherwise,

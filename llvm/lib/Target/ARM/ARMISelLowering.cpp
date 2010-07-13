@@ -624,6 +624,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VQRSHRNsu:     return "ARMISD::VQRSHRNsu";
   case ARMISD::VGETLANEu:     return "ARMISD::VGETLANEu";
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
+  case ARMISD::VMOVIMM:       return "ARMISD::VMOVIMM";
   case ARMISD::VDUP:          return "ARMISD::VDUP";
   case ARMISD::VDUPLANE:      return "ARMISD::VDUPLANE";
   case ARMISD::VEXT:          return "ARMISD::VEXT";
@@ -2644,51 +2645,18 @@ static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
 }
 
 /// getZeroVector - Returns a vector of specified type with all zero elements.
-///
+/// Zero vectors are used to represent vector negation and in those cases
+/// will be implemented with the NEON VNEG instruction.  However, VNEG does
+/// not support i64 elements, so sometimes the zero vectors will need to be
+/// explicitly constructed.  Regardless, use a canonical VMOV to create the
+/// zero vector.
 static SDValue getZeroVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
-
-  // Zero vectors are used to represent vector negation and in those cases
-  // will be implemented with the NEON VNEG instruction.  However, VNEG does
-  // not support i64 elements, so sometimes the zero vectors will need to be
-  // explicitly constructed.  For those cases, and potentially other uses in
-  // the future, always build zero vectors as <16 x i8> or <8 x i8> bitcasted
-  // to their dest type.  This ensures they get CSE'd.
-  SDValue Vec;
-  SDValue Cst = DAG.getTargetConstant(0, MVT::i8);
-  SmallVector<SDValue, 8> Ops;
-  MVT TVT;
-
-  if (VT.getSizeInBits() == 64) {
-    Ops.assign(8, Cst); TVT = MVT::v8i8;
-  } else {
-    Ops.assign(16, Cst); TVT = MVT::v16i8;
-  }
-  Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, TVT, &Ops[0], Ops.size());
-
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
-}
-
-/// getOnesVector - Returns a vector of specified type with all bits set.
-///
-static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
-  assert(VT.isVector() && "Expected a vector type");
-
-  // Always build ones vectors as <16 x i8> or <8 x i8> bitcasted to their
-  // dest type. This ensures they get CSE'd.
-  SDValue Vec;
-  SDValue Cst = DAG.getTargetConstant(0xFF, MVT::i8);
-  SmallVector<SDValue, 8> Ops;
-  MVT TVT;
-
-  if (VT.getSizeInBits() == 64) {
-    Ops.assign(8, Cst); TVT = MVT::v8i8;
-  } else {
-    Ops.assign(16, Cst); TVT = MVT::v16i8;
-  }
-  Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, TVT, &Ops[0], Ops.size());
-
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
+  // The canonical modified immediate encoding of a zero vector is....0!
+  SDValue EncodedVal = DAG.getTargetConstant(0, MVT::i32);
+  EVT VmovVT = VT.is128BitVector() ? MVT::v4i32 : MVT::v2i32;
+  SDValue Vmov = DAG.getNode(ARMISD::VMOVIMM, dl, VmovVT, EncodedVal);
+  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
 }
 
 /// LowerShiftRightParts - Lower SRA_PARTS, which returns two
@@ -2941,13 +2909,11 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
 /// isNEONModifiedImm - Check if the specified splat value corresponds to a
 /// valid vector constant for a NEON instruction with a "modified immediate"
-/// operand (e.g., VMOV).  If so, return either the constant being
-/// splatted or the encoded value, depending on the DoEncode parameter.
+/// operand (e.g., VMOV).  If so, return the encoded value.
 static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
                                  unsigned SplatBitSize, SelectionDAG &DAG,
-                                 bool isVMOV, bool DoEncode) {
+                                 EVT &VT, bool is128Bits, bool isVMOV) {
   unsigned OpCmode, Imm;
-  EVT VT;
 
   // SplatBitSize is set to the smallest size that splats the vector, so a
   // zero vector will always have SplatBitSize == 8.  However, NEON modified
@@ -2963,12 +2929,12 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     assert((SplatBits & ~0xff) == 0 && "one byte splat value is too big");
     OpCmode = 0xe;
     Imm = SplatBits;
-    VT = MVT::i8;
+    VT = is128Bits ? MVT::v16i8 : MVT::v8i8;
     break;
 
   case 16:
     // NEON's 16-bit VMOV supports splat values where only one byte is nonzero.
-    VT = MVT::i16;
+    VT = is128Bits ? MVT::v8i16 : MVT::v4i16;
     if ((SplatBits & ~0xff) == 0) {
       // Value = 0x00nn: Op=x, Cmode=100x.
       OpCmode = 0x8;
@@ -2988,7 +2954,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     // * only one byte is nonzero, or
     // * the least significant byte is 0xff and the second byte is nonzero, or
     // * the least significant 2 bytes are 0xff and the third is nonzero.
-    VT = MVT::i32;
+    VT = is128Bits ? MVT::v4i32 : MVT::v2i32;
     if ((SplatBits & ~0xff) == 0) {
       // Value = 0x000000nn: Op=x, Cmode=000x.
       OpCmode = 0;
@@ -3060,7 +3026,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     // Op=1, Cmode=1110.
     OpCmode = 0x1e;
     SplatBits = Val;
-    VT = MVT::i64;
+    VT = is128Bits ? MVT::v2i64 : MVT::v1i64;
     break;
   }
 
@@ -3069,32 +3035,8 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     return SDValue();
   }
 
-  if (DoEncode) {
-    unsigned EncodedVal = ARM_AM::createNEONModImm(OpCmode, Imm);
-    return DAG.getTargetConstant(EncodedVal, MVT::i32);
-  }
-  return DAG.getTargetConstant(SplatBits, VT);
-}
-
-/// getNEONModImm - If this is a valid vector constant for a NEON instruction
-/// with a "modified immediate" operand (e.g., VMOV) of the specified element
-/// size, return the encoded value for that immediate.  The ByteSize field
-/// indicates the number of bytes of each element [1248].
-SDValue ARM::getNEONModImm(SDNode *N, unsigned ByteSize, bool isVMOV,
-                           SelectionDAG &DAG) {
-  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N);
-  APInt SplatBits, SplatUndef;
-  unsigned SplatBitSize;
-  bool HasAnyUndefs;
-  if (! BVN || ! BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize,
-                                      HasAnyUndefs, ByteSize * 8))
-    return SDValue();
-
-  if (SplatBitSize > ByteSize * 8)
-    return SDValue();
-
-  return isNEONModifiedImm(SplatBits.getZExtValue(), SplatUndef.getZExtValue(),
-                           SplatBitSize, DAG, isVMOV, true);
+  unsigned EncodedVal = ARM_AM::createNEONModImm(OpCmode, Imm);
+  return DAG.getTargetConstant(EncodedVal, MVT::i32);
 }
 
 static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
@@ -3285,43 +3227,6 @@ static bool isVZIP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
-
-static SDValue BuildSplat(SDValue Val, EVT VT, SelectionDAG &DAG, DebugLoc dl) {
-  // Canonicalize all-zeros and all-ones vectors.
-  ConstantSDNode *ConstVal = cast<ConstantSDNode>(Val.getNode());
-  if (ConstVal->isNullValue())
-    return getZeroVector(VT, DAG, dl);
-  if (ConstVal->isAllOnesValue())
-    return getOnesVector(VT, DAG, dl);
-
-  EVT CanonicalVT;
-  if (VT.is64BitVector()) {
-    switch (Val.getValueType().getSizeInBits()) {
-    case 8:  CanonicalVT = MVT::v8i8; break;
-    case 16: CanonicalVT = MVT::v4i16; break;
-    case 32: CanonicalVT = MVT::v2i32; break;
-    case 64: CanonicalVT = MVT::v1i64; break;
-    default: llvm_unreachable("unexpected splat element type"); break;
-    }
-  } else {
-    assert(VT.is128BitVector() && "unknown splat vector size");
-    switch (Val.getValueType().getSizeInBits()) {
-    case 8:  CanonicalVT = MVT::v16i8; break;
-    case 16: CanonicalVT = MVT::v8i16; break;
-    case 32: CanonicalVT = MVT::v4i32; break;
-    case 64: CanonicalVT = MVT::v2i64; break;
-    default: llvm_unreachable("unexpected splat element type"); break;
-    }
-  }
-
-  // Build a canonical splat for this value.
-  SmallVector<SDValue, 8> Ops;
-  Ops.assign(CanonicalVT.getVectorNumElements(), Val);
-  SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, dl, CanonicalVT, &Ops[0],
-                            Ops.size());
-  return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Res);
-}
-
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.
 static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
@@ -3335,11 +3240,14 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
     if (SplatBitSize <= 64) {
       // Check if an immediate VMOV works.
+      EVT VmovVT;
       SDValue Val = isNEONModifiedImm(SplatBits.getZExtValue(),
-                                      SplatUndef.getZExtValue(),
-                                      SplatBitSize, DAG, true, false);
-      if (Val.getNode())
-        return BuildSplat(Val, VT, DAG, dl);
+                                      SplatUndef.getZExtValue(), SplatBitSize,
+                                      DAG, VmovVT, VT.is128BitVector(), true);
+      if (Val.getNode()) {
+        SDValue Vmov = DAG.getNode(ARMISD::VMOVIMM, dl, VmovVT, Val);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
+      }
     }
   }
 
