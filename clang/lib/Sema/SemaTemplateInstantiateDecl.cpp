@@ -400,9 +400,6 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
   InstantiateAttrs(D, Var);
-  // Set DeclContext if inside a Block.
-  if (BlockScopeInfo *CurBlock = SemaRef.getCurBlock())
-    D->setDeclContext(CurBlock->TheDecl);
   
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
