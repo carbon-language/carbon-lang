@@ -1202,6 +1202,14 @@ static void BeginCatch(CodeGenFunction &CGF,
   CGF.EmitLocalBlockVarDecl(*CatchParam, &InitCatchParam);
 }
 
+namespace {
+  struct CallRethrow : EHScopeStack::LazyCleanup {
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      CGF.EmitCallOrInvoke(getReThrowFn(CGF), 0, 0);
+    }
+  };
+}
+
 void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
   unsigned NumHandlers = S.getNumHandlers();
   EHCatchScope &CatchScope = cast<EHCatchScope>(*EHStack.begin());
@@ -1242,12 +1250,10 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
     BeginCatch(*this, C);
 
     // If there's an implicit rethrow, push a normal "cleanup" to call
-    // _cxa_rethrow.  This needs to happen before _cxa_end_catch is
-    // called.
-    if (ImplicitRethrow) {
-      CleanupBlock Rethrow(*this, NormalCleanup);
-      EmitCallOrInvoke(getReThrowFn(*this), 0, 0);
-    }
+    // _cxa_rethrow.  This needs to happen before __cxa_end_catch is
+    // called, and so it is pushed after BeginCatch.
+    if (ImplicitRethrow)
+      EHStack.pushLazyCleanup<CallRethrow>(NormalCleanup);
 
     // Perform the body of the catch.
     EmitStmt(C->getHandlerBlock());
