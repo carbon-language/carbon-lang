@@ -2756,7 +2756,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Release+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -2809,7 +2809,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Release+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",

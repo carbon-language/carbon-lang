@@ -395,6 +395,10 @@ sub create_single_llvm_arhive_for_arch
                 print FILES "$archive_fullpath\n";
             }
 		}
+        else
+        {
+            print "warning: archive doesn't exist: '$archive_fullpath'\n";
+        }
 	}
 	close (FILES);
     do_command ("libtool -static -o '$arch_output_file' -filelist '$files'");

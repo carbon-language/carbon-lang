@@ -86,8 +86,6 @@ IRForTarget::MaybeHandleVariable(Module &M,
                                  llvm::Value *V,
                                  bool Store)
 {
-    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
-
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(V))
     {        
         clang::NamedDecl *named_decl = DeclForGlobalValue(M, global_variable);
