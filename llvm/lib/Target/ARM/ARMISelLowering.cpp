@@ -2851,13 +2851,11 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 /// isNEONModifiedImm - Check if the specified splat value corresponds to a
 /// valid vector constant for a NEON instruction with a "modified immediate"
 /// operand (e.g., VMOV).  If so, return either the constant being
-/// splatted or the encoded value, depending on the DoEncode parameter.  The
-/// format of the encoded value is: bit12=Op, bits11-8=Cmode,
-/// bits7-0=Immediate.
+/// splatted or the encoded value, depending on the DoEncode parameter.
 static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
                                  unsigned SplatBitSize, SelectionDAG &DAG,
                                  bool isVMOV, bool DoEncode) {
-  unsigned Op, Cmode, Imm;
+  unsigned OpCmode, Imm;
   EVT VT;
 
   // SplatBitSize is set to the smallest size that splats the vector, so a
@@ -2868,12 +2866,11 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
   if (SplatBits == 0)
     SplatBitSize = 32;
 
-  Op = 0;
   switch (SplatBitSize) {
   case 8:
     // Any 1-byte value is OK.  Op=0, Cmode=1110.
     assert((SplatBits & ~0xff) == 0 && "one byte splat value is too big");
-    Cmode = 0xe;
+    OpCmode = 0xe;
     Imm = SplatBits;
     VT = MVT::i8;
     break;
@@ -2883,13 +2880,13 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     VT = MVT::i16;
     if ((SplatBits & ~0xff) == 0) {
       // Value = 0x00nn: Op=x, Cmode=100x.
-      Cmode = 0x8;
+      OpCmode = 0x8;
       Imm = SplatBits;
       break;
     }
     if ((SplatBits & ~0xff00) == 0) {
       // Value = 0xnn00: Op=x, Cmode=101x.
-      Cmode = 0xa;
+      OpCmode = 0xa;
       Imm = SplatBits >> 8;
       break;
     }
@@ -2903,25 +2900,25 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     VT = MVT::i32;
     if ((SplatBits & ~0xff) == 0) {
       // Value = 0x000000nn: Op=x, Cmode=000x.
-      Cmode = 0;
+      OpCmode = 0;
       Imm = SplatBits;
       break;
     }
     if ((SplatBits & ~0xff00) == 0) {
       // Value = 0x0000nn00: Op=x, Cmode=001x.
-      Cmode = 0x2;
+      OpCmode = 0x2;
       Imm = SplatBits >> 8;
       break;
     }
     if ((SplatBits & ~0xff0000) == 0) {
       // Value = 0x00nn0000: Op=x, Cmode=010x.
-      Cmode = 0x4;
+      OpCmode = 0x4;
       Imm = SplatBits >> 16;
       break;
     }
     if ((SplatBits & ~0xff000000) == 0) {
       // Value = 0xnn000000: Op=x, Cmode=011x.
-      Cmode = 0x6;
+      OpCmode = 0x6;
       Imm = SplatBits >> 24;
       break;
     }
@@ -2929,7 +2926,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     if ((SplatBits & ~0xffff) == 0 &&
         ((SplatBits | SplatUndef) & 0xff) == 0xff) {
       // Value = 0x0000nnff: Op=x, Cmode=1100.
-      Cmode = 0xc;
+      OpCmode = 0xc;
       Imm = SplatBits >> 8;
       SplatBits |= 0xff;
       break;
@@ -2938,7 +2935,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     if ((SplatBits & ~0xffffff) == 0 &&
         ((SplatBits | SplatUndef) & 0xffff) == 0xffff) {
       // Value = 0x00nnffff: Op=x, Cmode=1101.
-      Cmode = 0xd;
+      OpCmode = 0xd;
       Imm = SplatBits >> 16;
       SplatBits |= 0xffff;
       break;
@@ -2970,8 +2967,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
       ImmMask <<= 1;
     }
     // Op=1, Cmode=1110.
-    Op = 1;
-    Cmode = 0xe;
+    OpCmode = 0x1e;
     SplatBits = Val;
     VT = MVT::i64;
     break;
@@ -2982,11 +2978,12 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     return SDValue();
   }
 
-  if (DoEncode)
-    return DAG.getTargetConstant((Op << 12) | (Cmode << 8) | Imm, MVT::i32);
+  if (DoEncode) {
+    unsigned EncodedVal = ARM_AM::createNEONModImm(OpCmode, Imm);
+    return DAG.getTargetConstant(EncodedVal, MVT::i32);
+  }
   return DAG.getTargetConstant(SplatBits, VT);
 }
-
 
 /// getNEONModImm - If this is a valid vector constant for a NEON instruction
 /// with a "modified immediate" operand (e.g., VMOV) of the specified element

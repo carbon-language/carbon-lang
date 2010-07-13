@@ -781,34 +781,8 @@ void ARMInstPrinter::printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
-  unsigned Imm = MI->getOperand(OpNum).getImm();
-  unsigned OpCmode = (Imm >> 8) & 0x1f;
-  unsigned Imm8 = Imm & 0xff;
-  uint64_t Val = 0;
-
-  if (OpCmode == 0xe) {
-    // 8-bit vector elements
-    Val = Imm8;
-  } else if ((OpCmode & 0xc) == 0x8) {
-    // 16-bit vector elements
-    unsigned ByteNum = (OpCmode & 0x6) >> 1;
-    Val = Imm8 << (8 * ByteNum);
-  } else if ((OpCmode & 0x8) == 0) {
-    // 32-bit vector elements, zero with one byte set
-    unsigned ByteNum = (OpCmode & 0x6) >> 1;
-    Val = Imm8 << (8 * ByteNum);
-  } else if ((OpCmode & 0xe) == 0xc) {
-    // 32-bit vector elements, one byte with low bits set
-    unsigned ByteNum = 1 + (OpCmode & 0x1);
-    Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (2 - ByteNum)));
-  } else if (OpCmode == 0x1e) {
-    // 64-bit vector elements
-    for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
-      if ((Imm >> ByteNum) & 1)
-        Val |= (uint64_t)0xff << (8 * ByteNum);
-    }
-  } else {
-    assert(false && "Unsupported NEON immediate");
-  }
+  unsigned EncodedImm = MI->getOperand(OpNum).getImm();
+  unsigned EltBits;
+  uint64_t Val = ARM_AM::decodeNEONModImm(EncodedImm, EltBits);
   O << "#0x" << utohexstr(Val);
 }

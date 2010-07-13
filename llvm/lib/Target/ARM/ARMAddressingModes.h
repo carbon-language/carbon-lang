@@ -523,6 +523,68 @@ namespace ARM_AM {
   // Valid alignments are: 0, 8, 16, and 32 bytes, depending on the specific
   // instruction.
 
+  //===--------------------------------------------------------------------===//
+  // NEON Modified Immediates
+  //===--------------------------------------------------------------------===//
+  //
+  // Several NEON instructions (e.g., VMOV) take a "modified immediate"
+  // vector operand, where a small immediate encoded in the instruction
+  // specifies a full NEON vector value.  These modified immediates are
+  // represented here as encoded integers.  The low 8 bits hold the immediate
+  // value; bit 12 holds the "Op" field of the instruction, and bits 11-8 hold
+  // the "Cmode" field of the instruction.  The interfaces below treat the
+  // Op and Cmode values as a single 5-bit value.
+
+  static inline unsigned createNEONModImm(unsigned OpCmode, unsigned Val) {
+    return (OpCmode << 8) | Val;
+  }
+  static inline unsigned getNEONModImmOpCmode(unsigned ModImm) {
+    return (ModImm >> 8) & 0x1f;
+  }
+  static inline unsigned getNEONModImmVal(unsigned ModImm) {
+    return ModImm & 0xff;
+  }
+
+  /// decodeNEONModImm - Decode a NEON modified immediate value into the
+  /// element value and the element size in bits.  (If the element size is
+  /// smaller than the vector, it is splatted into all the elements.)
+  static inline uint64_t decodeNEONModImm(unsigned ModImm, unsigned &EltBits) {
+    unsigned OpCmode = getNEONModImmOpCmode(ModImm);
+    unsigned Imm8 = getNEONModImmVal(ModImm);
+    uint64_t Val = 0;
+
+    if (OpCmode == 0xe) {
+      // 8-bit vector elements
+      Val = Imm8;
+      EltBits = 8;
+    } else if ((OpCmode & 0xc) == 0x8) {
+      // 16-bit vector elements
+      unsigned ByteNum = (OpCmode & 0x6) >> 1;
+      Val = Imm8 << (8 * ByteNum);
+      EltBits = 16;
+    } else if ((OpCmode & 0x8) == 0) {
+      // 32-bit vector elements, zero with one byte set
+      unsigned ByteNum = (OpCmode & 0x6) >> 1;
+      Val = Imm8 << (8 * ByteNum);
+      EltBits = 32;
+    } else if ((OpCmode & 0xe) == 0xc) {
+      // 32-bit vector elements, one byte with low bits set
+      unsigned ByteNum = 1 + (OpCmode & 0x1);
+      Val = (Imm8 << (8 * ByteNum)) | (0xffff >> (8 * (2 - ByteNum)));
+      EltBits = 32;
+    } else if (OpCmode == 0x1e) {
+      // 64-bit vector elements
+      for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
+        if ((ModImm >> ByteNum) & 1)
+          Val |= (uint64_t)0xff << (8 * ByteNum);
+      }
+      EltBits = 64;
+    } else {
+      assert(false && "Unsupported NEON immediate");
+    }
+    return Val;
+  }
+
 } // end namespace ARM_AM
 } // end namespace llvm
 
