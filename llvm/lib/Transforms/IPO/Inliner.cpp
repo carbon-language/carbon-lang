@@ -399,7 +399,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         // We can only inline direct calls to non-declarations.
         if (Callee == 0 || Callee->isDeclaration()) continue;
       
-        // If this call sites was obtained by inlining another function, verify
+        // If this call site was obtained by inlining another function, verify
         // that the include path for the function did not include the callee
         // itself.  If so, we'd be recursively inlinling the same function,
         // which would provide the same callsites, which would cause us to
