@@ -32,6 +32,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include <cstdio>
@@ -5712,6 +5713,22 @@ namespace {
     llvm::BasicBlock *Block;
     llvm::Value *TypeInfo;
   };
+
+  struct CallObjCEndCatch : EHScopeStack::LazyCleanup {
+    CallObjCEndCatch(bool MightThrow, llvm::Value *Fn) :
+      MightThrow(MightThrow), Fn(Fn) {}
+    bool MightThrow;
+    llvm::Value *Fn;
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      if (!MightThrow) {
+        CGF.Builder.CreateCall(Fn)->setDoesNotThrow();
+        return;
+      }
+
+      CGF.EmitCallOrInvoke(Fn, 0, 0);
+    }
+  };
 }
 
 void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
@@ -5801,13 +5818,10 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
     Exn->setDoesNotThrow();
 
     // Add a cleanup to leave the catch.
-    {
-      CodeGenFunction::CleanupBlock EndCatchBlock(CGF, NormalAndEHCleanup);
-
-      // __objc_end_catch never throws.
-      CGF.Builder.CreateCall(ObjCTypes.getObjCEndCatchFn())
-        ->setDoesNotThrow();
-    }
+    bool EndCatchMightThrow = (Handler.Variable == 0);
+    CGF.EHStack.pushLazyCleanup<CallObjCEndCatch>(NormalAndEHCleanup,
+                                                  EndCatchMightThrow,
+                                                  ObjCTypes.getObjCEndCatchFn());
 
     // Bind the catch parameter if it exists.
     if (const VarDecl *CatchParam = Handler.Variable) {

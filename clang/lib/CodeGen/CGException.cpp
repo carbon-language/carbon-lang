@@ -1020,18 +1020,45 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   return LP;
 }
 
+namespace {
+  /// A cleanup to call __cxa_end_catch.  In many cases, the caught
+  /// exception type lets us state definitively that the thrown exception
+  /// type does not have a destructor.  In particular:
+  ///   - Catch-alls tell us nothing, so we have to conservatively
+  ///     assume that the thrown exception might have a destructor.
+  ///   - Catches by reference behave according to their base types.
+  ///   - Catches of non-record types will only trigger for exceptions
+  ///     of non-record types, which never have destructors.
+  ///   - Catches of record types can trigger for arbitrary subclasses
+  ///     of the caught type, so we have to assume the actual thrown
+  ///     exception type might have a throwing destructor, even if the
+  ///     caught type's destructor is trivial or nothrow.
+  struct CallEndCatch : EHScopeStack::LazyCleanup {
+    CallEndCatch(bool MightThrow) : MightThrow(MightThrow) {}
+    bool MightThrow;
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      if (!MightThrow) {
+        CGF.Builder.CreateCall(getEndCatchFn(CGF))->setDoesNotThrow();
+        return;
+      }
+
+      CGF.EmitCallOrInvoke(getEndCatchFn(CGF), 0, 0);
+    }
+  };
+}
+
 /// Emits a call to __cxa_begin_catch and enters a cleanup to call
 /// __cxa_end_catch.
-static llvm::Value *CallBeginCatch(CodeGenFunction &CGF, llvm::Value *Exn) {
+///
+/// \param EndMightThrow - true if __cxa_end_catch might throw
+static llvm::Value *CallBeginCatch(CodeGenFunction &CGF,
+                                   llvm::Value *Exn,
+                                   bool EndMightThrow) {
   llvm::CallInst *Call = CGF.Builder.CreateCall(getBeginCatchFn(CGF), Exn);
   Call->setDoesNotThrow();
 
-  {
-    CodeGenFunction::CleanupBlock EndCatchCleanup(CGF, NormalAndEHCleanup);
-
-    // __cxa_end_catch never throws, so this can just be a call.
-    CGF.Builder.CreateCall(getEndCatchFn(CGF))->setDoesNotThrow();
-  }
+  CGF.EHStack.pushLazyCleanup<CallEndCatch>(NormalAndEHCleanup, EndMightThrow);
 
   return Call;
 }
@@ -1051,8 +1078,11 @@ static void InitCatchParam(CodeGenFunction &CGF,
   // If we're catching by reference, we can just cast the object
   // pointer to the appropriate pointer.
   if (isa<ReferenceType>(CatchType)) {
+    bool EndCatchMightThrow = cast<ReferenceType>(CatchType)->getPointeeType()
+      ->isRecordType();
+
     // __cxa_begin_catch returns the adjusted object pointer.
-    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn);
+    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, EndCatchMightThrow);
     llvm::Value *ExnCast =
       CGF.Builder.CreateBitCast(AdjustedExn, LLVMCatchTy, "exn.byref");
     CGF.Builder.CreateStore(ExnCast, ParamAddr);
@@ -1063,7 +1093,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
   bool IsComplex = false;
   if (!CGF.hasAggregateLLVMType(CatchType) ||
       (IsComplex = CatchType->isAnyComplexType())) {
-    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn);
+    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, false);
     
     // If the catch type is a pointer type, __cxa_begin_catch returns
     // the pointer by value.
@@ -1098,7 +1128,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
   const llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
 
   if (RD->hasTrivialCopyConstructor()) {
-    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn);
+    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, true);
     llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
     CGF.EmitAggregateCopy(ParamAddr, Cast, CatchType);
     return;
@@ -1131,7 +1161,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
   CGF.EHStack.popTerminate();
 
   // Finally we can call __cxa_begin_catch.
-  CallBeginCatch(CGF, Exn);
+  CallBeginCatch(CGF, Exn, true);
 }
 
 /// Begins a catch statement by initializing the catch variable and
@@ -1164,7 +1194,7 @@ static void BeginCatch(CodeGenFunction &CGF,
   VarDecl *CatchParam = S->getExceptionDecl();
   if (!CatchParam) {
     llvm::Value *Exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot(), "exn");
-    CallBeginCatch(CGF, Exn);
+    CallBeginCatch(CGF, Exn, true);
     return;
   }
 
@@ -1298,7 +1328,7 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
         Builder.CreateLoad(ForEHVar, "finally.endcatch");
       Builder.CreateCondBr(ShouldEndCatch, EndCatchBB, CleanupContBB);
       EmitBlock(EndCatchBB);
-      Builder.CreateCall(EndCatchFn)->setDoesNotThrow();
+      EmitCallOrInvoke(EndCatchFn, 0, 0); // catch-all, so might throw
       EmitBlock(CleanupContBB);
     }
 

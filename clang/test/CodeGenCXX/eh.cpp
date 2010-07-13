@@ -181,11 +181,7 @@ namespace test8 {
       // CHECK-NEXT: invoke void @_ZN5test81AC1ERKS0_(
       // CHECK:      call i8* @__cxa_begin_catch
       // CHECK-NEXT: invoke void @_ZN5test81AD1Ev(
-
       // CHECK:      call void @__cxa_end_catch()
-      // CHECK-NEXT: load
-      // CHECK-NEXT: switch
-
       // CHECK:      ret void
     }
   }
@@ -216,4 +212,40 @@ namespace test9 {
   // landing pad from first call to invoke
   // CHECK:      call i8* @llvm.eh.exception
   // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+}
+
+// __cxa_end_catch can throw for some kinds of caught exceptions.
+namespace test10 {
+  void opaque();
+
+  struct A { ~A(); };
+  struct B { int x; };
+
+  // CHECK: define void @_ZN6test103fooEv()
+  void foo() {
+    A a; // force a cleanup context
+
+    try {
+    // CHECK:      invoke void @_ZN6test106opaqueEv()
+      opaque();
+    } catch (int i) {
+    // CHECK:      call i8* @__cxa_begin_catch
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: load i32*
+    // CHECK-NEXT: store i32
+    // CHECK-NEXT: call void @__cxa_end_catch() nounwind
+    } catch (B a) {
+    // CHECK:      call i8* @__cxa_begin_catch
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: call void @llvm.memcpy
+    // CHECK-NEXT: invoke void @__cxa_end_catch()
+    } catch (...) {
+    // CHECK:      call i8* @__cxa_begin_catch
+    // CHECK-NEXT: invoke void @__cxa_end_catch()
+    }
+
+    // CHECK: call void @_ZN6test101AD1Ev(
+  }
 }

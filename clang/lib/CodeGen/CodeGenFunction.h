@@ -207,6 +207,22 @@ public:
   // Variadic templates would make this not terrible.
 
   /// Push a lazily-created cleanup on the stack.
+  template <class T>
+  void pushLazyCleanup(CleanupKind Kind) {
+    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
+    LazyCleanup *Obj = new(Buffer) T();
+    (void) Obj;
+  }
+
+  /// Push a lazily-created cleanup on the stack.
+  template <class T, class A0>
+  void pushLazyCleanup(CleanupKind Kind, A0 a0) {
+    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
+    LazyCleanup *Obj = new(Buffer) T(a0);
+    (void) Obj;
+  }
+
+  /// Push a lazily-created cleanup on the stack.
   template <class T, class A0, class A1>
   void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1) {
     void *Buffer = pushLazyCleanup(Kind, sizeof(T));
