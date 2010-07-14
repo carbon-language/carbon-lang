@@ -101,8 +101,11 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     
     ThreadPlan* new_plan = NULL;
 
+    // Stepping through should be done stopping other threads in general, since we're setting a breakpoint and
+    // continuing...
+    
     bool stop_others;
-    if (m_stop_others == lldb::eOnlyThisThread)
+    if (m_stop_others != lldb::eAllThreads)
         stop_others = true;
     else
         stop_others = false;
