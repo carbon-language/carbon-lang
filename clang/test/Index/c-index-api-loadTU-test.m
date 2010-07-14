@@ -66,6 +66,10 @@ int main (int argc, const char * argv[]) {
 - (IBAction) actionMethod:(id)arg;
 @end
 
+typedef struct X0 X1;
+struct X0;
+struct X0  {};
+
 // CHECK: c-index-api-loadTU-test.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 12:5]
 // CHECK: c-index-api-loadTU-test.m:6:32: ObjCIvarDecl=myoutlet:6:32 (Definition) Extent=[6:32 - 6:40]
 // CHECK: <invalid loc>:0:0: attribute(iboutlet)=
