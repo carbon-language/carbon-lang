@@ -497,11 +497,6 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// candidate for LICM. e.g. If the instruction is a call, then it's obviously
 /// not safe to hoist it.
 bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
-  // It is not profitable to hoist implicitdefs.  FIXME: Why not?  what if they
-  // are an argument to some other otherwise-hoistable instruction?
-  if (I.isImplicitDef())
-    return false;
-  
   // Check if it's safe to move the instruction.
   bool DontMoveAcrossStore = true;
   if (!I.isSafeToMove(TII, AA, DontMoveAcrossStore))
@@ -717,7 +712,9 @@ MachineLICM::LookForDuplicate(const MachineInstr *MI,
 
 bool MachineLICM::EliminateCSE(MachineInstr *MI,
           DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator &CI) {
-  if (CI == CSEMap.end())
+  // Do not CSE implicit_def so ProcessImplicitDefs can properly propagate
+  // the undef property onto uses.
+  if (CI == CSEMap.end() || MI->isImplicitDef())
     return false;
 
   if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second)) {

@@ -41,19 +41,49 @@ void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
-                                                 unsigned Reg, unsigned OpIdx,
-                                                 const TargetInstrInfo *tii_) {
+bool
+ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
+                                            unsigned Reg, unsigned OpIdx,
+                                            const TargetInstrInfo *tii_,
+                                            SmallSet<unsigned, 8> &ImpDefRegs) {
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
   if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-      Reg == SrcReg && DstSubReg == 0)
+      Reg == SrcReg &&
+      (DstSubReg == 0 || ImpDefRegs.count(DstReg)))
     return true;
 
   switch(OpIdx) {
-    case 1: return MI->isCopy() && MI->getOperand(0).getSubReg() == 0;
-    case 2: return MI->isSubregToReg() && MI->getOperand(0).getSubReg() == 0;
-    default: return false;
+  case 1:
+    return MI->isCopy() && (MI->getOperand(0).getSubReg() == 0 ||
+                            ImpDefRegs.count(MI->getOperand(0).getReg()));
+  case 2:
+    return MI->isSubregToReg() && (MI->getOperand(0).getSubReg() == 0 ||
+                                  ImpDefRegs.count(MI->getOperand(0).getReg()));
+  default: return false;
   }
+}
+
+static bool isUndefCopy(MachineInstr *MI, unsigned Reg,
+                        const TargetInstrInfo *tii_,
+                        SmallSet<unsigned, 8> &ImpDefRegs) {
+  if (MI->isCopy()) {
+    MachineOperand &MO0 = MI->getOperand(0);
+    MachineOperand &MO1 = MI->getOperand(1);
+    if (MO1.getReg() != Reg)
+      return false;
+    if (!MO0.getSubReg() || ImpDefRegs.count(MO0.getReg()))
+      return true;
+    return false;
+  }
+
+  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+  if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
+    if (Reg != SrcReg)
+      return false;
+    if (DstSubReg == 0 || ImpDefRegs.count(DstReg))
+      return true;
+  }
+  return false;
 }
 
 /// processImplicitDefs - Process IMPLICIT_DEF instructions and make sure
@@ -104,7 +134,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       // Eliminate %reg1032:sub<def> = COPY undef.
       if (MI->isCopy() && MI->getOperand(0).getSubReg()) {
         MachineOperand &MO = MI->getOperand(1);
-        if (ImpDefRegs.count(MO.getReg())) {
+        if (MO.isUndef() || ImpDefRegs.count(MO.getReg())) {
           if (MO.isKill()) {
             LiveVariables::VarInfo& vi = lv_->getVarInfo(MO.getReg());
             vi.removeKill(MI);
@@ -126,7 +156,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         if (!ImpDefRegs.count(Reg))
           continue;
         // Use is a copy, just turn it into an implicit_def.
-        if (CanTurnIntoImplicitDef(MI, Reg, i, tii_)) {
+        if (CanTurnIntoImplicitDef(MI, Reg, i, tii_, ImpDefRegs)) {
           bool isKill = MO.isKill();
           MI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
           for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
@@ -223,11 +253,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         MachineInstr *RMI = RUses[i];
 
         // Turn a copy use into an implicit_def.
-        unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-        if ((RMI->isCopy() && RMI->getOperand(1).getReg() == Reg &&
-             RMI->getOperand(0).getSubReg() == 0) ||
-            (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-             Reg == SrcReg && DstSubReg == 0)) {
+        if (isUndefCopy(RMI, Reg, tii_, ImpDefRegs)) {
           RMI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
 
           bool isKill = false;

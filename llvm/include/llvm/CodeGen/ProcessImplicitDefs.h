@@ -12,6 +12,7 @@
 #define LLVM_CODEGEN_PROCESSIMPLICITDEFS_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
 
@@ -24,7 +25,8 @@ namespace llvm {
   private:
 
     bool CanTurnIntoImplicitDef(MachineInstr *MI, unsigned Reg,
-                                unsigned OpIdx, const TargetInstrInfo *tii_);
+                                unsigned OpIdx, const TargetInstrInfo *tii_,
+                                SmallSet<unsigned, 8> &ImpDefRegs);
 
   public:
     static char ID;
