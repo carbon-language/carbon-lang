@@ -92,7 +92,7 @@ public:
   /// These are meant as bitmasks, so that searches in
   /// C++ can look into the "tag" namespace during ordinary lookup.
   ///
-  /// Decl currently provides 16 bits of IDNS bits.
+  /// Decl currently provides 15 bits of IDNS bits.
   enum IdentifierNamespace {
     /// Labels, declared with 'x:' and referenced with 'goto x'.
     IDNS_Label               = 0x0001,
@@ -225,10 +225,10 @@ protected:
   
   // PCHLevel - the "level" of precompiled header/AST file from which this
   // declaration was built.
-  unsigned PCHLevel : 2;
+  unsigned PCHLevel : 3;
   
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
-  unsigned IdentifierNamespace : 16;
+  unsigned IdentifierNamespace : 15;
 
 private:
 #ifndef NDEBUG
@@ -358,14 +358,14 @@ public:
   unsigned getPCHLevel() const { return PCHLevel; }
 
   /// \brief The maximum PCH level that any declaration may have.
-  static const unsigned MaxPCHLevel = 3;
-  
+  static const unsigned MaxPCHLevel = 7;
+
   /// \brief Set the PCH level of this declaration.
   void setPCHLevel(unsigned Level) { 
-    assert(Level < MaxPCHLevel && "PCH level exceeds the maximum");
+    assert(Level <= MaxPCHLevel && "PCH level exceeds the maximum");
     PCHLevel = Level;
   }
-  
+
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
   }

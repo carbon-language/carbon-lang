@@ -786,25 +786,36 @@ private:
   
   /// \brief Linkage of this type.
   mutable unsigned CachedLinkage : 2;
-  
+
+  /// \brief FromPCH - Whether this type comes from a PCH file.
+  mutable bool FromPCH : 1;
+
+  /// \brief Set whether this type comes from a PCH file.
+  void setFromPCH(bool V = true) const { 
+    FromPCH = V;
+  }
+
 protected:
   /// \brief Compute the linkage of this type.
   virtual Linkage getLinkageImpl() const;
   
-  enum { BitsRemainingInType = 20 };
+  enum { BitsRemainingInType = 19 };
 
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool dependent)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
       TC(tc), Dependent(dependent), LinkageKnown(false), 
-      CachedLinkage(NoLinkage) {}
+      CachedLinkage(NoLinkage), FromPCH(false) {}
   virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;
 
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
+
+  /// \brief Whether this type comes from a PCH file.
+  bool isFromPCH() const { return FromPCH; }
 
   bool isCanonicalUnqualified() const {
     return CanonicalType.getTypePtr() == this;

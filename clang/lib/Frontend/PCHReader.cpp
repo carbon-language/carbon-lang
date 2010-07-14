@@ -2626,8 +2626,10 @@ QualType PCHReader::GetType(pch::TypeID ID) {
 
   Index -= pch::NUM_PREDEF_TYPE_IDS;
   //assert(Index < TypesLoaded.size() && "Type index out-of-range");
-  if (TypesLoaded[Index].isNull())
+  if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
+    TypesLoaded[Index]->setFromPCH();
+  }
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
 }
