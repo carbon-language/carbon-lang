@@ -1694,13 +1694,19 @@ def RSCSrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
 }
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
+// The assume-no-carry-in form uses the negation of the input since add/sub
+// assume opposite meanings of the carry flag (i.e., carry == !borrow).
+// See the definition of AddWithCarry() in the ARM ARM A2.2.1 for the gory
+// details.
 def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
              (SUBri  GPR:$src, so_imm_neg:$imm)>;
-
-//def : ARMPat<(addc   GPR:$src, so_imm_neg:$imm),
-//             (SUBSri GPR:$src, so_imm_neg:$imm)>;
-//def : ARMPat<(adde   GPR:$src, so_imm_neg:$imm),
-//             (SBCri  GPR:$src, so_imm_neg:$imm)>;
+def : ARMPat<(addc   GPR:$src, so_imm_neg:$imm),
+             (SUBSri GPR:$src, so_imm_neg:$imm)>;
+// The with-carry-in form matches bitwise not instead of the negation.
+// Effectively, the inverse interpretation of the carry flag already accounts
+// for part of the negation.
+def : ARMPat<(adde   GPR:$src, so_imm_not:$imm),
+             (SBCri  GPR:$src, so_imm_not:$imm)>;
 
 // Note: These are implemented in C++ code, because they have to generate
 // ADD/SUBrs instructions, which use a complex pattern that a xform function

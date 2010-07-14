@@ -122,6 +122,10 @@ def imm0_255_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)(-N->getZExtValue()) < 255;
 }], imm_neg_XFORM>;
 
+def imm0_255_not : PatLeaf<(i32 imm), [{
+  return (uint32_t)(~N->getZExtValue()) < 255;
+}], imm_comp_XFORM>;
+
 // Define Thumb2 specific addressing modes.
 
 // t2addrmode_imm12  := reg + imm12
@@ -1391,13 +1395,32 @@ defm t2RSBS : T2I_rbin_s_is <0b1110, "rsb",
                              BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
+// The assume-no-carry-in form uses the negation of the input since add/sub
+// assume opposite meanings of the carry flag (i.e., carry == !borrow).
+// See the definition of AddWithCarry() in the ARM ARM A2.2.1 for the gory
+// details.
+// The AddedComplexity preferences the first variant over the others since
+// it can be shrunk to a 16-bit wide encoding, while the others cannot.
 let AddedComplexity = 1 in
-def : T2Pat<(add       GPR:$src, imm0_255_neg:$imm),
-            (t2SUBri   GPR:$src, imm0_255_neg:$imm)>;
-def : T2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
-            (t2SUBri   GPR:$src, t2_so_imm_neg:$imm)>;
-def : T2Pat<(add       GPR:$src, imm0_4095_neg:$imm),
-            (t2SUBri12 GPR:$src, imm0_4095_neg:$imm)>;
+def : T2Pat<(add        GPR:$src, imm0_255_neg:$imm),
+            (t2SUBri    GPR:$src, imm0_255_neg:$imm)>;
+def : T2Pat<(add        GPR:$src, t2_so_imm_neg:$imm),
+            (t2SUBri    GPR:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(add        GPR:$src, imm0_4095_neg:$imm),
+            (t2SUBri12  GPR:$src, imm0_4095_neg:$imm)>;
+let AddedComplexity = 1 in
+def : T2Pat<(addc       GPR:$src, imm0_255_neg:$imm),
+            (t2SUBSri   GPR:$src, imm0_255_neg:$imm)>;
+def : T2Pat<(addc       GPR:$src, t2_so_imm_neg:$imm),
+            (t2SUBSri   GPR:$src, t2_so_imm_neg:$imm)>;
+// The with-carry-in form matches bitwise not instead of the negation.
+// Effectively, the inverse interpretation of the carry flag already accounts
+// for part of the negation.
+let AddedComplexity = 1 in
+def : T2Pat<(adde       GPR:$src, imm0_255_not:$imm),
+            (t2SBCSri   GPR:$src, imm0_255_not:$imm)>;
+def : T2Pat<(adde       GPR:$src, t2_so_imm_not:$imm),
+            (t2SBCSri   GPR:$src, t2_so_imm_not:$imm)>;
 
 // Select Bytes -- for disassembly only
 
