@@ -1233,7 +1233,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                           TemplateParameterList **ParamLists,
                                               unsigned NumParamLists,
                                               bool IsFriend,
-                                              bool &IsExplicitSpecialization) {
+                                              bool &IsExplicitSpecialization,
+                                              bool &Invalid) {
   IsExplicitSpecialization = false;
   
   // Find the template-ids that occur within the nested-name-specifier. These
@@ -1311,6 +1312,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
              diag::err_template_spec_needs_template_parameters)
           << TemplateId
           << SS.getRange();
+        Invalid = true;
       } else {
         Diag(SS.getRange().getBegin(), diag::err_template_spec_needs_header)
           << SS.getRange()
@@ -1373,7 +1375,13 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           << ExplicitSpecializationsInSpecifier.back();
         ExplicitSpecializationsInSpecifier.pop_back();
       }
-        
+
+      // We have a template parameter list with no corresponding scope, which 
+      // means that the resulting template declaration can't be instantiated
+      // properly (we'll end up with dependent nodes when we shouldn't).
+      if (!isExplicitSpecHeader)
+        Invalid = true;
+      
       ++Idx;
     }
   }
@@ -3622,12 +3630,17 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // template.
   // FIXME: We probably shouldn't complain about these headers for
   // friend declarations.
+  bool Invalid = false;
   TemplateParameterList *TemplateParams
     = MatchTemplateParametersToScopeSpecifier(TemplateNameLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size(),
                                               TUK == TUK_Friend,
-                                              isExplicitSpecialization);
+                                              isExplicitSpecialization,
+                                              Invalid);
+  if (Invalid)
+    return true;
+    
   unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
   if (TemplateParams)
     --NumMatchedTemplateParamLists;

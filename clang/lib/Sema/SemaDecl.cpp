@@ -2572,6 +2572,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // determine whether we have a template or a template specialization.
   bool isExplicitSpecialization = false;
   unsigned NumMatchedTemplateParamLists = TemplateParamLists.size();
+  bool Invalid = false;
   if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
@@ -2579,7 +2580,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                         (TemplateParameterList**)TemplateParamLists.get(),
                                                    TemplateParamLists.size(),
                                                   /*never a friend*/ false,
-                                                  isExplicitSpecialization)) {
+                                                  isExplicitSpecialization,
+                                                  Invalid)) {
     // All but one template parameter lists have been matching.
     --NumMatchedTemplateParamLists;
 
@@ -2606,7 +2608,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   VarDecl *NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
                                    II, R, TInfo, SC, SCAsWritten);
 
-  if (D.isInvalidType())
+  if (D.isInvalidType() || Invalid)
     NewVD->setInvalidDecl();
 
   SetNestedNameSpecifier(NewVD, D);
@@ -3156,6 +3158,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isExplicitSpecialization = false;
   bool isFunctionTemplateSpecialization = false;
   unsigned NumMatchedTemplateParamLists = TemplateParamLists.size();
+  bool Invalid = false;
   if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
@@ -3163,7 +3166,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                            (TemplateParameterList**)TemplateParamLists.get(),
                                                   TemplateParamLists.size(),
                                                   isFriend,
-                                                  isExplicitSpecialization)) {
+                                                  isExplicitSpecialization,
+                                                  Invalid)) {
     // All but one template parameter lists have been matching.
     --NumMatchedTemplateParamLists;
 
@@ -3214,6 +3218,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                         (TemplateParameterList**)TemplateParamLists.release());
   }
 
+  if (Invalid) {
+    NewFD->setInvalidDecl();
+    if (FunctionTemplate)
+      FunctionTemplate->setInvalidDecl();
+  }
+  
   // C++ [dcl.fct.spec]p5:
   //   The virtual specifier shall only be used in declarations of
   //   nonstatic class member functions that appear within a
@@ -5037,19 +5047,24 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // FIXME: Check explicit specializations more carefully.
   bool isExplicitSpecialization = false;
   unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
+  bool Invalid = false;
   if (TUK != TUK_Reference) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size(),
                                                     TUK == TUK_Friend,
-                                                    isExplicitSpecialization)) {
+                                                    isExplicitSpecialization,
+                                                    Invalid)) {
       // All but one template parameter lists have been matching.
       --NumMatchedTemplateParamLists;
 
       if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
+        if (Invalid)
+          return DeclPtrTy();
+        
         OwnedDecl = false;
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
@@ -5069,7 +5084,6 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   bool isStdBadAlloc = false;
-  bool Invalid = false;
 
   RedeclarationKind Redecl = ForRedeclaration;
   if (TUK == TUK_Friend || TUK == TUK_Reference)

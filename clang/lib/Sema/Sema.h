@@ -2956,7 +2956,8 @@ public:
                                           TemplateParameterList **ParamLists,
                                           unsigned NumParamLists,
                                           bool IsFriend,
-                                          bool &IsExplicitSpecialization);
+                                          bool &IsExplicitSpecialization,
+                                          bool &Invalid);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 SourceLocation KWLoc, CXXScopeSpec &SS,
