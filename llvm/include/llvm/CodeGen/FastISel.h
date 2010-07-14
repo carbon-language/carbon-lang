@@ -307,8 +307,6 @@ protected:
   }
 
 private:
-  bool SelectLoad(const User *I);
-
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
   bool SelectFNeg(const User *I);

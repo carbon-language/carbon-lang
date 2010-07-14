@@ -782,39 +782,8 @@ FastISel::SelectFNeg(const User *I) {
 }
 
 bool
-FastISel::SelectLoad(const User *I) {
-  LoadInst *LI = const_cast<LoadInst *>(cast<LoadInst>(I));
-
-  // For a load from an alloca, make a limited effort to find the value
-  // already available in a register, avoiding redundant loads.
-  if (!LI->isVolatile() && isa<AllocaInst>(LI->getPointerOperand())) {
-    BasicBlock::iterator ScanFrom = LI;
-    if (const Value *V = FindAvailableLoadedValue(LI->getPointerOperand(),
-                                                  LI->getParent(), ScanFrom)) {
-      if (!V->use_empty() &&
-          (!isa<Instruction>(V) ||
-           cast<Instruction>(V)->getParent() == LI->getParent() ||
-           (isa<AllocaInst>(V) &&
-            FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(V)))) &&
-          (!isa<Argument>(V) ||
-           LI->getParent() == &LI->getParent()->getParent()->getEntryBlock())) {
-      unsigned ResultReg = getRegForValue(V);
-      if (ResultReg != 0) {
-        UpdateValueMap(I, ResultReg);
-        return true;
-      }
-      }
-    }
-  }
-
-  return false;
-}
-
-bool
 FastISel::SelectOperator(const User *I, unsigned Opcode) {
   switch (Opcode) {
-  case Instruction::Load:
-    return SelectLoad(I);
   case Instruction::Add:
     return SelectBinaryOp(I, ISD::ADD);
   case Instruction::FAdd:
