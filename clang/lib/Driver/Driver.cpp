@@ -75,6 +75,11 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
   P.appendComponent("clang");
   P.appendComponent(CLANG_VERSION_STRING);
   ResourceDir = P.str();
+
+  // Save the original clang executable path.
+  P = Dir;
+  P.appendComponent(Name);
+  ClangExecutable = P.str();
 }
 
 Driver::~Driver() {

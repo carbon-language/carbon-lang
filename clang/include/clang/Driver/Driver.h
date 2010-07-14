@@ -62,6 +62,9 @@ public:
   /// command line.
   std::string Dir;
 
+  /// The original path to the clang executable.
+  std::string ClangExecutable;
+
   /// The path to the compiler resource directory.
   std::string ResourceDir;
 
@@ -162,6 +165,11 @@ public:
 
   const std::string &getTitle() { return DriverTitle; }
   void setTitle(std::string Value) { DriverTitle = Value; }
+
+  /// \brief Get the path to the main clang executable.
+  std::string getClangProgramPath() const {
+    return ClangExecutable;
+  }
 
   /// @}
   /// @name Primary Functionality
