@@ -40,7 +40,7 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
   AddReplaceDelta(OrigOffset, -Size);
 }
 
-void RewriteBuffer::InsertText(unsigned OrigOffset, const llvm::StringRef &Str,
+void RewriteBuffer::InsertText(unsigned OrigOffset, llvm::StringRef Str,
                                bool InsertAfter) {
 
   // Nothing to insert, exit early.
@@ -57,7 +57,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset, const llvm::StringRef &Str,
 /// buffer with a new string.  This is effectively a combined "remove+insert"
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
-                                const llvm::StringRef &NewStr) {
+                                llvm::StringRef NewStr) {
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
   Buffer.erase(RealOffset, OrigLength);
   Buffer.insert(RealOffset, NewStr.begin(), NewStr.end());
@@ -185,7 +185,7 @@ RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
 
 /// InsertText - Insert the specified string at the specified location in the
 /// original buffer.
-bool Rewriter::InsertText(SourceLocation Loc, const llvm::StringRef &Str,
+bool Rewriter::InsertText(SourceLocation Loc, llvm::StringRef Str,
                           bool InsertAfter) {
   if (!isRewritable(Loc)) return true;
   FileID FID;
@@ -207,7 +207,7 @@ bool Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
 /// buffer with a new string.  This is effectively a combined "remove/insert"
 /// operation.
 bool Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
-                           const llvm::StringRef &NewStr) {
+                           llvm::StringRef NewStr) {
   if (!isRewritable(Start)) return true;
   FileID StartFileID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, StartFileID);

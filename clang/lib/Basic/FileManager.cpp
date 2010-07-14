@@ -331,8 +331,8 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 }
 
 const FileEntry *
-FileManager::getVirtualFile(const llvm::StringRef &Filename,
-                            off_t Size, time_t ModificationTime) {
+FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
+                            time_t ModificationTime) {
   const char *NameStart = Filename.begin(), *NameEnd = Filename.end();
 
   ++NumFileLookups;

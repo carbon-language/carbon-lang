@@ -189,7 +189,7 @@ public:
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   ///
-  const DirectoryEntry *getDirectory(const llvm::StringRef &Filename) {
+  const DirectoryEntry *getDirectory(llvm::StringRef Filename) {
     return getDirectory(Filename.begin(), Filename.end());
   }
   const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd);
@@ -197,7 +197,7 @@ public:
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   ///
-  const FileEntry *getFile(const llvm::StringRef &Filename) {
+  const FileEntry *getFile(llvm::StringRef Filename) {
     return getFile(Filename.begin(), Filename.end());
   }
   const FileEntry *getFile(const char *FilenameStart,
@@ -206,8 +206,8 @@ public:
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file
   /// itself is not accessed.
-  const FileEntry *getVirtualFile(const llvm::StringRef &Filename,
-                                  off_t Size, time_t ModificationTime);
+  const FileEntry *getVirtualFile(llvm::StringRef Filename, off_t Size,
+                                  time_t ModificationTime);
   void PrintStats() const;
 };
 

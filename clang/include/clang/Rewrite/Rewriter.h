@@ -64,7 +64,7 @@ public:
   /// the buffer is specified relative to the original SourceBuffer.  The
   /// text is inserted after the specified location.
   ///
-  void InsertText(unsigned OrigOffset, const llvm::StringRef &Str,
+  void InsertText(unsigned OrigOffset, llvm::StringRef Str,
                   bool InsertAfter = true);
 
 
@@ -72,14 +72,14 @@ public:
   /// offset in the buffer is specified relative to the original
   /// SourceBuffer. The text is inserted before the specified location.  This is
   /// method is the same as InsertText with "InsertAfter == false".
-  void InsertTextBefore(unsigned OrigOffset, const llvm::StringRef &Str) {
+  void InsertTextBefore(unsigned OrigOffset, llvm::StringRef Str) {
     InsertText(OrigOffset, Str, false);
   }
 
   /// InsertTextAfter - Insert some text at the specified point, where the
   /// offset in the buffer is specified relative to the original SourceBuffer.
   /// The text is inserted after the specified location.
-  void InsertTextAfter(unsigned OrigOffset, const llvm::StringRef &Str) {
+  void InsertTextAfter(unsigned OrigOffset, llvm::StringRef Str) {
     InsertText(OrigOffset, Str);
   }
 
@@ -87,7 +87,7 @@ public:
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
   void ReplaceText(unsigned OrigOffset, unsigned OrigLength,
-                   const llvm::StringRef &NewStr);
+                   llvm::StringRef NewStr);
 
 private:  // Methods only usable by Rewriter.
 
@@ -164,7 +164,7 @@ public:
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input
   /// location was not rewritable, false otherwise.
-  bool InsertText(SourceLocation Loc, const llvm::StringRef &Str,
+  bool InsertText(SourceLocation Loc, llvm::StringRef Str,
                   bool InsertAfter = true);
 
   /// InsertTextAfter - Insert the specified string at the specified location in
@@ -172,7 +172,7 @@ public:
   ///  the input location was not rewritable, false otherwise.  Text is
   ///  inserted after any other text that has been previously inserted
   ///  at the some point (the default behavior for InsertText).
-  bool InsertTextAfter(SourceLocation Loc, const llvm::StringRef &Str) {
+  bool InsertTextAfter(SourceLocation Loc, llvm::StringRef Str) {
     return InsertText(Loc, Str);
   }
 
@@ -181,7 +181,7 @@ public:
   /// location was not rewritable, false otherwise.  Text is
   /// inserted before any other text that has been previously inserted
   /// at the some point.
-  bool InsertTextBefore(SourceLocation Loc, const llvm::StringRef &Str) {
+  bool InsertTextBefore(SourceLocation Loc, llvm::StringRef Str) {
     return InsertText(Loc, Str, false);
   }
 
@@ -192,7 +192,7 @@ public:
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
   bool ReplaceText(SourceLocation Start, unsigned OrigLength,
-                   const llvm::StringRef &NewStr);
+                   llvm::StringRef NewStr);
 
   /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
   /// printer to generate the replacement code.  This returns true if the input

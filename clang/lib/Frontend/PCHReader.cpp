@@ -141,7 +141,7 @@ bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
 }
 
 struct EmptyStringRef {
-  bool operator ()(const llvm::StringRef &r) const { return r.empty(); }
+  bool operator ()(llvm::StringRef r) const { return r.empty(); }
 };
 struct EmptyBlock {
   bool operator ()(const PCHPredefinesBlock &r) const { return r.Data.empty(); }
