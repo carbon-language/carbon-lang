@@ -43,3 +43,23 @@ namespace PR5949 {
     return Foo<T>(b, quuz);
   }
 }
+
+// PR7641
+namespace PR7641 {
+  namespace N2
+  {
+    template<class>
+    int f0(int);
+  }
+  namespace N
+  {
+    using N2::f0;
+  }
+
+  template<class R,class B1>
+  int
+  f1(R(a)(B1));
+
+  void f2()
+  { f1(N::f0<int>); }
+}
