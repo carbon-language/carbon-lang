@@ -253,7 +253,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       CodeGenTypes &Types = CGM.getTypes();
       const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, Args,
                                                        FunctionType::ExtInfo());
-      if (CGM.ReturnTypeUsesSret(FnInfo))
+      if (CGM.ReturnTypeUsesSRet(FnInfo))
         flags |= BLOCK_USE_STRET;
     }
     const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(

@@ -564,8 +564,26 @@ static void CreateCoercedStore(llvm::Value *Src,
 
 /***/
 
-bool CodeGenModule::ReturnTypeUsesSret(const CGFunctionInfo &FI) {
+bool CodeGenModule::ReturnTypeUsesSRet(const CGFunctionInfo &FI) {
   return FI.getReturnInfo().isIndirect();
+}
+
+bool CodeGenModule::ReturnTypeUsesFPRet(QualType ResultType) {
+  if (const BuiltinType *BT = ResultType->getAs<BuiltinType>()) {
+    switch (BT->getKind()) {
+    default:
+      return false;
+    case BuiltinType::Float:
+      return getContext().Target.useObjCFPRetForRealType(TargetInfo::Float);
+    case BuiltinType::Double:
+      return getContext().Target.useObjCFPRetForRealType(TargetInfo::Double);
+    case BuiltinType::LongDouble:
+      return getContext().Target.useObjCFPRetForRealType(
+        TargetInfo::LongDouble);
+    }
+  }
+
+  return false;
 }
 
 const llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
@@ -841,7 +859,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   llvm::Function::arg_iterator AI = Fn->arg_begin();
 
   // Name the struct return argument.
-  if (CGM.ReturnTypeUsesSret(FI)) {
+  if (CGM.ReturnTypeUsesSRet(FI)) {
     AI->setName("agg.result");
     ++AI;
   }
@@ -1116,7 +1134,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // If the call returns a temporary with struct return, create a temporary
   // alloca to hold the result, unless one is given to us.
-  if (CGM.ReturnTypeUsesSret(CallInfo)) {
+  if (CGM.ReturnTypeUsesSRet(CallInfo)) {
     llvm::Value *Value = ReturnValue.getValue();
     if (!Value)
       Value = CreateMemTemp(RetTy);

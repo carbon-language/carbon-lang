@@ -1650,29 +1650,17 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
            "Result type mismatch!");
 
   llvm::Constant *Fn = NULL;
-  if (CGM.ReturnTypeUsesSret(FnInfo)) {
+  if (CGM.ReturnTypeUsesSRet(FnInfo)) {
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
-  } else if (ResultType->isRealFloatingType()) {
-    if (ObjCABI == 2) {
-      if (const BuiltinType *BT = ResultType->getAs<BuiltinType>()) {
-        BuiltinType::Kind k = BT->getKind();
-        Fn = (k == BuiltinType::LongDouble) ? ObjCTypes.getSendFpretFn2(IsSuper)
-          : ObjCTypes.getSendFn2(IsSuper);
-      } else {
-        Fn = ObjCTypes.getSendFn2(IsSuper);
-      }
-    } else
-      // FIXME. This currently matches gcc's API for x86-32. May need to change
-      // for others if we have their API.
-      Fn = ObjCTypes.getSendFpretFn(IsSuper);
+  } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
+    Fn = (ObjCABI == 2) ? ObjCTypes.getSendFpretFn2(IsSuper)
+      : ObjCTypes.getSendFpretFn(IsSuper);
   } else {
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
       : ObjCTypes.getSendFn(IsSuper);
   }
-  assert(Fn && "EmitLegacyMessageSend - unknown API");
-  Fn = llvm::ConstantExpr::getBitCast(Fn,
-                                      llvm::PointerType::getUnqual(FTy));
+  Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
 }
 
@@ -5295,7 +5283,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                               FunctionType::ExtInfo());
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
-  if (CGM.ReturnTypeUsesSret(FnInfo)) {
+  if (CGM.ReturnTypeUsesSRet(FnInfo)) {
 #if 0
     // unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
@@ -5312,14 +5300,9 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
         Fn = ObjCTypes.getMessageSendStretFixupFn();
         Name += "objc_msgSend_stret_fixup";
       }
-  } else if (!IsSuper && ResultType->isRealFloatingType()) {
-    if (ResultType->isSpecificBuiltinType(BuiltinType::LongDouble)) {
-      Fn = ObjCTypes.getMessageSendFpretFixupFn();
-      Name += "objc_msgSend_fpret_fixup";
-    } else {
-      Fn = ObjCTypes.getMessageSendFixupFn();
-      Name += "objc_msgSend_fixup";
-    }
+  } else if (!IsSuper && CGM.ReturnTypeUsesFPRet(ResultType)) {
+    Fn = ObjCTypes.getMessageSendFpretFixupFn();
+    Name += "objc_msgSend_fpret_fixup";
   } else {
 #if 0
 // unlike what is documented. gcc never generates this API!!

@@ -61,6 +61,7 @@ protected:
   std::string CXXABI;
 
   unsigned HasAlignMac68kSupport : 1;
+  unsigned RealTypeUsesObjCFPRet : 3;
 
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const std::string &T);
@@ -87,6 +88,13 @@ public:
     SignedLongLong,
     UnsignedLongLong
   };
+
+  enum RealType {
+    Float = 0,
+    Double,
+    LongDouble
+  };
+
 protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
@@ -232,6 +240,12 @@ public:
   /// getTypeConstantSuffix - Return the constant suffix for the specified
   /// integer type enum. For example, SignedLong -> "L".
   static const char *getTypeConstantSuffix(IntType T);
+
+  /// \brief Check whether the given real type should use the "fpret" flavor of
+  /// Obj-C message passing on this target.
+  bool useObjCFPRetForRealType(RealType T) const {
+    return RealTypeUsesObjCFPRet & (1 << T);
+  }
 
   ///===---- Other target property query methods --------------------------===//
 

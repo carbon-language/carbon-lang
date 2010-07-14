@@ -444,9 +444,13 @@ public:
   /// which only apply to a function definintion.
   void SetLLVMFunctionAttributesForDefinition(const Decl *D, llvm::Function *F);
 
-  /// ReturnTypeUsesSret - Return true iff the given type uses 'sret' when used
+  /// ReturnTypeUsesSRet - Return true iff the given type uses 'sret' when used
   /// as a return type.
-  bool ReturnTypeUsesSret(const CGFunctionInfo &FI);
+  bool ReturnTypeUsesSRet(const CGFunctionInfo &FI);
+
+  /// ReturnTypeUsesSret - Return true iff the given type uses 'fpret' when used
+  /// as a return type.
+  bool ReturnTypeUsesFPRet(QualType ResultType);
 
   /// ConstructAttributeList - Get the LLVM attributes and calling convention to
   /// use for a particular function type.

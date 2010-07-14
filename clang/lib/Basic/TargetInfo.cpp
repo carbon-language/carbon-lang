@@ -55,6 +55,9 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
                       "i64:64:64-f32:32:32-f64:64:64-n32";
   UserLabelPrefix = "_";
   HasAlignMac68kSupport = false;
+
+  // Default to no types using fpret.
+  RealTypeUsesObjCFPRet = 0;
 }
 
 // Out of line virtual dtor for TargetInfo.
