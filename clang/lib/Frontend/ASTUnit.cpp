@@ -74,11 +74,13 @@ public:
     return false;
   }
 
-  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
-                                    FileID PCHBufferID,
+  virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines) {
-    Predefines = PCHPredef;
+    Predefines = Buffers[0].Data;
+    for (unsigned I = 1, N = Buffers.size(); I != N; ++I) {
+      Predefines += Buffers[I].Data;
+    }
     return false;
   }
 
