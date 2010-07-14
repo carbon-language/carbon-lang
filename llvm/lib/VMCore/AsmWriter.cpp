@@ -855,8 +855,9 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   }
 }
 
-static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
-                             TypePrinting &TypePrinter, SlotTracker *Machine) {
+static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
+                                  TypePrinting &TypePrinter,
+                                  SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType()->isIntegerTy(1)) {
       Out << (CI->getZExtValue() ? "true" : "false");
@@ -1147,7 +1148,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   const Constant *CV = dyn_cast<Constant>(V);
   if (CV && !isa<GlobalValue>(CV)) {
     assert(TypePrinter && "Constants require TypePrinting!");
-    WriteConstantInt(Out, CV, *TypePrinter, Machine);
+    WriteConstantInternal(Out, CV, *TypePrinter, Machine);
     return;
   }
 
@@ -2138,7 +2139,7 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
     OS << ' ';
-    WriteConstantInt(OS, C, TypePrinter, 0);
+    WriteConstantInternal(OS, C, TypePrinter, 0);
   } else if (isa<InlineAsm>(this) || isa<MDString>(this) ||
              isa<Argument>(this)) {
     WriteAsOperand(OS, this, true, 0);
