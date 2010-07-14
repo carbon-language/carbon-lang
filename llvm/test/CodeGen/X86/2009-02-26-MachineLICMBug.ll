@@ -1,6 +1,5 @@
-; RUN: true
-; llc < %s -march=x86-64 -mattr=+sse3 -stats |& grep {7 machine-licm}
-; llc < %s -march=x86-64 -mattr=+sse3 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse3,+sse41 -stats |& grep {7 machine-licm}
+; RUN: llc < %s -march=x86-64 -mattr=+sse3,+sse41 | FileCheck %s
 ; rdar://6627786
 ; rdar://7792037
 
