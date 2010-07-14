@@ -2244,7 +2244,6 @@ __bracket_expression<_CharT, _Traits>::__exec(__state& __s) const
 __exit:
     if (__found != __negate_)
     {
-        _CharT __ch = *__s.__current_;
         __s.__do_ = __state::__accept_and_consume;
         __s.__current_ += __consumed;
         __s.__node_ = this->first();
@@ -2478,16 +2477,16 @@ private:
     void __push_begin_marked_subexpression();
     void __push_end_marked_subexpression(unsigned);
 
-    template <class _BidirectionalIterator, class _Allocator>
+    template <class _Allocator>
         bool
-        __search(_BidirectionalIterator __first, _BidirectionalIterator __last,
-                 match_results<_BidirectionalIterator, _Allocator>& __m,
+        __search(const _CharT* __first, const _CharT* __last,
+                 match_results<const _CharT*, _Allocator>& __m,
                  regex_constants::match_flag_type __flags) const;
 
-    template <class _BidirectionalIterator, class _Allocator>
+    template <class _Allocator>
         bool
-        __match_at_start(_BidirectionalIterator __first, _BidirectionalIterator __last,
-                 match_results<_BidirectionalIterator, _Allocator>& __m,
+        __match_at_start(const _CharT* __first, const _CharT* __last,
+                 match_results<const _CharT*, _Allocator>& __m,
                  vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
     template <class _BidirectionalIterator, class _Allocator>
@@ -2495,16 +2494,16 @@ private:
         __match_at_start_ecma(_BidirectionalIterator __first, _BidirectionalIterator __last,
                  match_results<_BidirectionalIterator, _Allocator>& __m,
                  regex_constants::match_flag_type __flags) const;
-    template <class _BidirectionalIterator, class _Allocator>
+    template <class _Allocator>
         bool
         __match_at_start_posix_nosubs(const _CharT* __first, const _CharT* __last,
-                 match_results<_BidirectionalIterator, _Allocator>& __m,
+                 match_results<const _CharT*, _Allocator>& __m,
                  vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
-    template <class _BidirectionalIterator, class _Allocator>
+    template <class _Allocator>
         bool
-        __match_at_start_posix_subs(_BidirectionalIterator __first, _BidirectionalIterator __last,
-                 match_results<_BidirectionalIterator, _Allocator>& __m,
+        __match_at_start_posix_subs(const _CharT* __first, const _CharT* __last,
+                 match_results<const _CharT*, _Allocator>& __m,
                  vector<size_t>& __lc,
                  regex_constants::match_flag_type __flags) const;
 
@@ -2514,6 +2513,44 @@ private:
     regex_search(_B, _B, match_results<_B, _A>&, const basic_regex<_C, _T>&,
                  regex_constants::match_flag_type);
 
+    template <class _A, class _C, class _T>
+    friend
+    bool
+    regex_search(const _C*, const _C*, match_results<const _C*, _A>&,
+                 const basic_regex<_C, _T>&, regex_constants::match_flag_type);
+
+    template <class _B, class _C, class _T>
+    friend
+    bool
+    regex_search(_B, _B, const basic_regex<_C, _T>&,
+                 regex_constants::match_flag_type);
+
+    template <class _C, class _T>
+    friend
+    bool
+    regex_search(const _C*, const _C*,
+                 const basic_regex<_C, _T>&, regex_constants::match_flag_type);
+
+    template <class _C, class _A, class _T>
+    friend
+    bool
+    regex_search(const _C*, match_results<const _C*, _A>&, const basic_regex<_C, _T>&,
+                 regex_constants::match_flag_type);
+
+    template <class _ST, class _SA, class _C, class _T>
+    friend
+    bool
+    regex_search(const basic_string<_C, _ST, _SA>& __s,
+                 const basic_regex<_C, _T>& __e,
+                 regex_constants::match_flag_type __flags);
+
+    template <class _ST, class _SA, class _A, class _C, class _T>
+    friend
+    bool
+    regex_search(const basic_string<_C, _ST, _SA>& __s,
+                 match_results<typename basic_string<_C, _ST, _SA>::const_iterator, _A>&, 
+                 const basic_regex<_C, _T>& __e,
+                 regex_constants::match_flag_type __flags);
 };
 
 template <class _CharT, class _Traits>
@@ -3975,6 +4012,29 @@ public:
     // swap:
     void swap(match_results& __m);
 
+    template <class _B, class _A>
+        void __assign(_BidirectionalIterator __f, _BidirectionalIterator __l,
+                      const match_results<_B, _A>& __m)
+    {
+        _B __mf = __m.prefix().first;
+        __matches_.resize(__m.size());
+        for (size_type __i = 0; __i < __matches_.size(); ++__i)
+        {
+            __matches_[__i].first = next(__f, _STD::distance(__mf, __m[__i].first));
+            __matches_[__i].second = next(__f, _STD::distance(__mf, __m[__i].second));
+            __matches_[__i].matched = __m[__i].matched;
+        }
+        __unmatched_.first   = __l;
+        __unmatched_.second  = __l;
+        __unmatched_.matched = false;
+        __prefix_.first = next(__f, _STD::distance(__mf, __m.prefix().first));
+        __prefix_.second = next(__f, _STD::distance(__mf, __m.prefix().second));
+        __prefix_.matched = __m.prefix().matched;
+        __suffix_.first = next(__f, _STD::distance(__mf, __m.suffix().first));
+        __suffix_.second = next(__f, _STD::distance(__mf, __m.suffix().second));
+        __suffix_.matched = __m.suffix().matched;
+    }
+
 private:
     void __init(unsigned __s,
                 _BidirectionalIterator __f, _BidirectionalIterator __l);
@@ -4047,18 +4107,17 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
 }
 
 template <class _CharT, class _Traits>
-template <class _BidirectionalIterator, class _Allocator>
+template <class _Allocator>
 bool
 basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
         const _CharT* __first, const _CharT* __last,
-        match_results<_BidirectionalIterator, _Allocator>& __m,
+        match_results<const _CharT*, _Allocator>& __m,
         vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
-    typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
     deque<__state> __states;
-    difference_type __highest_j = 0;
-    difference_type _N = _STD::distance(__first, __last);
+    ptrdiff_t __highest_j = 0;
+    ptrdiff_t _N = _STD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -4126,22 +4185,21 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
 }
 
 template <class _CharT, class _Traits>
-template <class _BidirectionalIterator, class _Allocator>
+template <class _Allocator>
 bool
 basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
-        _BidirectionalIterator __first, _BidirectionalIterator __last,
-        match_results<_BidirectionalIterator, _Allocator>& __m,
+        const _CharT* __first, const _CharT* __last,
+        match_results<const _CharT*, _Allocator>& __m,
         vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
-    typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
     vector<__state> __states;
-    vector<_BidirectionalIterator> __current_stack;
-    vector<sub_match<_BidirectionalIterator> > __saved_matches;
+    vector<const _CharT*> __current_stack;
+    vector<sub_match<const _CharT*> > __saved_matches;
     __state __best_state;
-    difference_type __j = 0;
-    difference_type __highest_j = 0;
-    difference_type _N = _STD::distance(__first, __last);
+    ptrdiff_t __j = 0;
+    ptrdiff_t __highest_j = 0;
+    ptrdiff_t _N = _STD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -4154,7 +4212,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
         __states.back().__loop_data_.resize(__loop_count());
         __states.back().__node_ = __st;
         __states.back().__flags_ = __flags;
-        _BidirectionalIterator __current = __first;
+        const _CharT* __current = __first;
         bool __matched = false;
         do
         {
@@ -4212,11 +4270,11 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
 }
 
 template <class _CharT, class _Traits>
-template <class _BidirectionalIterator, class _Allocator>
+template <class _Allocator>
 bool
 basic_regex<_CharT, _Traits>::__match_at_start(
-        _BidirectionalIterator __first, _BidirectionalIterator __last,
-        match_results<_BidirectionalIterator, _Allocator>& __m,
+        const _CharT* __first, const _CharT* __last,
+        match_results<const _CharT*, _Allocator>& __m,
         vector<size_t>& __lc,
         regex_constants::match_flag_type __flags) const
 {
@@ -4228,11 +4286,11 @@ basic_regex<_CharT, _Traits>::__match_at_start(
 }
 
 template <class _CharT, class _Traits>
-template <class _BidirectionalIterator, class _Allocator>
+template <class _Allocator>
 bool
 basic_regex<_CharT, _Traits>::__search(
-        _BidirectionalIterator __first, _BidirectionalIterator __last,
-        match_results<_BidirectionalIterator, _Allocator>& __m,
+        const _CharT* __first, const _CharT* __last,
+        match_results<const _CharT*, _Allocator>& __m,
         regex_constants::match_flag_type __flags) const
 {
     if (__left_anchor_)
@@ -4275,6 +4333,21 @@ regex_search(_BidirectionalIterator __first, _BidirectionalIterator __last,
              const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
+    basic_string<_CharT> __s(__first, __last);
+    match_results<const _CharT*> __mc;
+    bool __r = __e.__search(__s.data(), __s.data() + __s.size(), __mc, __flags);
+    __m.__assign(__first, __last, __mc);
+    return __r;
+}
+
+template <class _Allocator, class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const _CharT* __first, const _CharT* __last,
+             match_results<const _CharT*, _Allocator>& __m,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
     return __e.__search(__first, __last, __m, __flags);
 }
 
@@ -4285,8 +4358,20 @@ regex_search(_BidirectionalIterator __first, _BidirectionalIterator __last,
              const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
-    match_results<_BidirectionalIterator> __m;
-    return _STD::regex_search(__first, __last, __m, __e, __flags);
+    basic_string<_CharT> __s(__first, __last);
+    match_results<const _CharT*> __mc;
+    return __e.__search(__s.data(), __s.data() + __s.size(), __mc, __flags);
+}
+
+template <class _CharT, class _Traits>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+regex_search(const _CharT* __first, const _CharT* __last,
+             const basic_regex<_CharT, _Traits>& __e,
+             regex_constants::match_flag_type __flags = regex_constants::match_default)
+{
+    match_results<const _CharT*> __mc;
+    return __e.__search(__first, __last, __mc, __flags);
 }
 
 template <class _CharT, class _Allocator, class _Traits>
@@ -4296,7 +4381,7 @@ regex_search(const _CharT* __str, match_results<const _CharT*, _Allocator>& __m,
              const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
-    return _STD::regex_search(__str, __str + _Traits::length(__str), __m, __e, __flags);
+    return __e.__search(__str, __str + _Traits::length(__str), __m, __flags);
 }
 
 template <class _CharT, class _Traits>
@@ -4305,7 +4390,8 @@ bool
 regex_search(const _CharT* __str, const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
-    return _STD::regex_search(__str, __str + _Traits::length(__str), __e, __flags);
+    match_results<const _CharT*> __m;
+    return _STD::regex_search(__str, __m, __e, __flags);
 }
 
 template <class _ST, class _SA, class _CharT, class _Traits>
@@ -4315,7 +4401,8 @@ regex_search(const basic_string<_CharT, _ST, _SA>& __s,
              const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
-    return _STD::regex_search(__s.begin(), __s.end(), __e, __flags);
+    match_results<const _CharT*> __mc;
+    return __e.__search(__s.data(), __s.data() + __s.size(), __mc, __flags);
 }
 
 template <class _ST, class _SA, class _Allocator, class _CharT, class _Traits>
@@ -4326,7 +4413,10 @@ regex_search(const basic_string<_CharT, _ST, _SA>& __s,
              const basic_regex<_CharT, _Traits>& __e,
              regex_constants::match_flag_type __flags = regex_constants::match_default)
 {
-    return _STD::regex_search(__s.begin(), __s.end(), __m, __e, __flags);
+    match_results<const _CharT*> __mc;
+    bool __r = __e.__search(__s.data(), __s.data() + __s.size(), __mc, __flags);
+    __m.__assign(__s.begin(), __s.end(), __mc);
+    return __r;
 }
 
 // regex_match

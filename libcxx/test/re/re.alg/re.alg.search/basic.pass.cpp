@@ -19,6 +19,8 @@
 #include <regex>
 #include <cassert>
 
+#include "../../iterators.h"
+
 int main()
 {
     {
@@ -740,5 +742,26 @@ int main()
         assert(m.length(0) == 6);
         assert(m.position(0) == 1);
         assert(m.str(0) == "1a45ce");
+    }
+    {
+        const char r[] = "^[-+]\\{0,1\\}[0-9]\\{1,\\}[CF]$";
+        std::ptrdiff_t sr = std::char_traits<char>::length(r);
+        typedef forward_iterator<const char*> FI;
+        typedef bidirectional_iterator<const char*> BI;
+        std::regex regex(FI(r), FI(r+sr), std::regex_constants::basic);
+        std::match_results<BI> m;
+        const char s[] = "-40C";
+        std::ptrdiff_t ss = std::char_traits<char>::length(s);
+        assert(std::regex_search(BI(s), BI(s+ss), m, regex));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == BI(s));
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == 4);
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
     }
 }
