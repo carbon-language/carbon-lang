@@ -2022,33 +2022,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
-  case lltok::exclaim:   // !{...} MDNode, !"foo" MDString
-    Lex.Lex();
-    
-    if (EatIfPresent(lltok::lbrace)) {
-      SmallVector<Value*, 16> Elts;
-      if (ParseMDNodeVector(Elts, PFS) ||
-          ParseToken(lltok::rbrace, "expected end of metadata node"))
-        return true;
-
-      ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
-      ID.Kind = ValID::t_MDNode;
-      return false;
-    }
-
-    // Standalone metadata reference
-    // !{ ..., !42, ... }
-    if (Lex.getKind() == lltok::APSInt) {
-      if (ParseMDNodeID(ID.MDNodeVal)) return true;
-      ID.Kind = ValID::t_MDNode;
-      return false;
-    }
-    
-    // MDString:
-    //   ::= '!' STRINGCONSTANT
-    if (ParseMDString(ID.MDStringVal)) return true;
-    ID.Kind = ValID::t_MDString;
-    return false;
+  case lltok::exclaim:   // !42, !{...}, or !"foo"
+    return ParseMetadataValue(ID, PFS);
   case lltok::APSInt:
     ID.APSIntVal = Lex.getAPSIntVal();
     ID.Kind = ValID::t_APSInt;
@@ -2526,6 +2501,42 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts) {
     Elts.push_back(C);
   }
 
+  return false;
+}
+
+/// ParseMetadataValue
+///  ::= !42
+///  ::= !{...}
+///  ::= !"string"
+bool LLParser::ParseMetadataValue(ValID &ID, PerFunctionState *PFS) {
+  assert(Lex.getKind() == lltok::exclaim);
+  Lex.Lex();
+
+  // MDNode:
+  // !{ ... }
+  if (EatIfPresent(lltok::lbrace)) {
+    SmallVector<Value*, 16> Elts;
+    if (ParseMDNodeVector(Elts, PFS) ||
+        ParseToken(lltok::rbrace, "expected end of metadata node"))
+      return true;
+
+    ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
+    ID.Kind = ValID::t_MDNode;
+    return false;
+  }
+
+  // Standalone metadata reference
+  // !42
+  if (Lex.getKind() == lltok::APSInt) {
+    if (ParseMDNodeID(ID.MDNodeVal)) return true;
+    ID.Kind = ValID::t_MDNode;
+    return false;
+  }
+
+  // MDString:
+  //   ::= '!' STRINGCONSTANT
+  if (ParseMDString(ID.MDStringVal)) return true;
+  ID.Kind = ValID::t_MDString;
   return false;
 }
 
