@@ -345,9 +345,9 @@ chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
 
 ################################################################################
-# Remove tar ball from docs directory
+# Remove the docs directory
 
-find $DEST_DIR -name html.tar.gz -exec rm {} \;
+rm -rf $DEST_DIR$DEST_ROOT/docs
 
 ################################################################################
 # symlinks so that B&I can find things
