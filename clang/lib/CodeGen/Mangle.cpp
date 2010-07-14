@@ -169,7 +169,9 @@ public:
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
   void mangleCallOffset(int64_t NonVirtual, int64_t Virtual);
+  void mangleNumber(const llvm::APSInt &I);
   void mangleNumber(int64_t Number);
+  void mangleFloat(const llvm::APFloat &F);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
   void mangleType(QualType T);
@@ -524,6 +526,21 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
   
   mangleSourceName(Dependent->getIdentifier());
   addSubstitution(Template);
+}
+
+void CXXNameMangler::mangleFloat(const llvm::APFloat &F) {
+  // TODO: avoid this copy with careful stream management.
+  llvm::SmallString<20> Buffer;
+  F.bitcastToAPInt().toString(Buffer, 16, false);
+  Out.write(Buffer.data(), Buffer.size());
+}
+
+void CXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
+  if (Value.isSigned() && Value.isNegative()) {
+    Out << 'n';
+    Value.abs().print(Out, true);
+  } else
+    Value.print(Out, Value.isSigned());
 }
 
 void CXXNameMangler::mangleNumber(int64_t Number) {
@@ -1467,11 +1484,7 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
     // Boolean values are encoded as 0/1.
     Out << (Value.getBoolValue() ? '1' : '0');
   } else {
-    if (Value.isSigned() && Value.isNegative()) {
-      Out << 'n';
-      Value.abs().print(Out, true);
-    } else
-      Value.print(Out, Value.isSigned());
+    mangleNumber(Value);
   }
   Out << 'E';
 
@@ -1535,10 +1548,44 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 #define STMT(Type, Base) \
   case Expr::Type##Class:
 #include "clang/AST/StmtNodes.inc"
+    // fallthrough
+
+  // These all can only appear in local or variable-initialization
+  // contexts and so should never appear in a mangling.
+  case Expr::AddrLabelExprClass:
+  case Expr::BlockDeclRefExprClass:
+  case Expr::CXXThisExprClass:
+  case Expr::DesignatedInitExprClass:
+  case Expr::ImplicitValueInitExprClass:
+  case Expr::InitListExprClass:
+  case Expr::ParenListExprClass:
+  case Expr::CXXScalarValueInitExprClass:
     llvm_unreachable("unexpected statement kind");
     break;
 
-  default: {
+  // FIXME: invent manglings for all these.
+  case Expr::BlockExprClass:
+  case Expr::CXXPseudoDestructorExprClass:
+  case Expr::ChooseExprClass:
+  case Expr::CompoundLiteralExprClass:
+  case Expr::ExtVectorElementExprClass:
+  case Expr::ObjCEncodeExprClass:
+  case Expr::ObjCImplicitSetterGetterRefExprClass:
+  case Expr::ObjCIsaExprClass:
+  case Expr::ObjCIvarRefExprClass:
+  case Expr::ObjCMessageExprClass:
+  case Expr::ObjCPropertyRefExprClass:
+  case Expr::ObjCProtocolExprClass:
+  case Expr::ObjCSelectorExprClass:
+  case Expr::ObjCStringLiteralClass:
+  case Expr::ObjCSuperExprClass:
+  case Expr::OffsetOfExprClass:
+  case Expr::PredefinedExprClass:
+  case Expr::ShuffleVectorExprClass:
+  case Expr::StmtExprClass:
+  case Expr::TypesCompatibleExprClass:
+  case Expr::UnaryTypeTraitExprClass:
+  case Expr::VAArgExprClass: {
     // As bad as this diagnostic is, it's better than crashing.
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
@@ -1550,12 +1597,37 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::CXXDefaultArgExprClass:
+    mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr());
+    break;
+
+  case Expr::CXXMemberCallExprClass: // fallthrough
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
     Out << "cl";
     mangleCalledExpression(CE->getCallee(), CE->getNumArgs());
     for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
       mangleExpression(CE->getArg(I));
+    Out << 'E';
+    break;
+  }
+
+  case Expr::CXXNewExprClass: {
+    // Proposal from David Vandervoorde, 2010.06.30
+    const CXXNewExpr *New = cast<CXXNewExpr>(E);
+    if (New->isGlobalNew()) Out << "gs";
+    Out << (New->isArray() ? "na" : "nw");
+    for (CXXNewExpr::const_arg_iterator I = New->placement_arg_begin(),
+           E = New->placement_arg_end(); I != E; ++I)
+      mangleExpression(*I);
+    Out << '_';
+    mangleType(New->getAllocatedType());
+    if (New->hasInitializer()) {
+      Out << "pi";
+      for (CXXNewExpr::const_arg_iterator I = New->constructor_arg_begin(),
+             E = New->constructor_arg_end(); I != E; ++I)
+        mangleExpression(*I);
+    }
     Out << 'E';
     break;
   }
@@ -1633,6 +1705,43 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::CXXThrowExprClass: {
+    const CXXThrowExpr *TE = cast<CXXThrowExpr>(E);
+
+    // Proposal from David Vandervoorde, 2010.06.30
+    if (TE->getSubExpr()) {
+      Out << "tw";
+      mangleExpression(TE->getSubExpr());
+    } else {
+      Out << "tr";
+    }
+    break;
+  }
+
+  case Expr::CXXTypeidExprClass: {
+    const CXXTypeidExpr *TIE = cast<CXXTypeidExpr>(E);
+
+    // Proposal from David Vandervoorde, 2010.06.30
+    if (TIE->isTypeOperand()) {
+      Out << "ti";
+      mangleType(TIE->getTypeOperand());
+    } else {
+      Out << "te";
+      mangleExpression(TIE->getExprOperand());
+    }
+    break;
+  }
+
+  case Expr::CXXDeleteExprClass: {
+    const CXXDeleteExpr *DE = cast<CXXDeleteExpr>(E);
+
+    // Proposal from David Vandervoorde, 2010.06.30
+    if (DE->isGlobalDelete()) Out << "gs";
+    Out << (DE->isArrayForm() ? "da" : "dl");
+    mangleExpression(DE->getArgument());
+    break;
+  }
+
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *UO = cast<UnaryOperator>(E);
     mangleOperatorName(UnaryOperator::getOverloadedOperator(UO->getOpcode()),
@@ -1641,6 +1750,18 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::ArraySubscriptExprClass: {
+    const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(E);
+
+    // Array subscript is treated as a syntactically wierd form of
+    // binary operator.
+    Out << "ix";
+    mangleExpression(AE->getLHS());
+    mangleExpression(AE->getRHS());
+    break;
+  }
+
+  case Expr::CompoundAssignOperatorClass: // fallthrough
   case Expr::BinaryOperatorClass: {
     const BinaryOperator *BO = cast<BinaryOperator>(E);
     mangleOperatorName(BinaryOperator::getOverloadedOperator(BO->getOpcode()),
@@ -1757,12 +1878,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     const FloatingLiteral *FL = cast<FloatingLiteral>(E);
     Out << 'L';
     mangleType(FL->getType());
-
-    // TODO: avoid this copy with careful stream management.
-    llvm::SmallString<20> Buffer;
-    FL->getValue().bitcastToAPInt().toString(Buffer, 16, false);
-    Out.write(Buffer.data(), Buffer.size());
-
+    mangleFloat(FL->getValue());
     Out << 'E';
     break;
   }
@@ -1780,10 +1896,59 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     Out << 'E';
     break;
 
-  case Expr::IntegerLiteralClass:
-    mangleIntegerLiteral(E->getType(),
-                         llvm::APSInt(cast<IntegerLiteral>(E)->getValue()));
+  case Expr::IntegerLiteralClass: {
+    llvm::APSInt Value(cast<IntegerLiteral>(E)->getValue());
+    if (E->getType()->isSignedIntegerType())
+      Value.setIsSigned(true);
+    mangleIntegerLiteral(E->getType(), Value);
     break;
+  }
+
+  case Expr::ImaginaryLiteralClass: {
+    const ImaginaryLiteral *IE = cast<ImaginaryLiteral>(E);
+    // Mangle as if a complex literal.
+    // Proposal from David Vandervoorde, 2010.06.30.
+    Out << 'L';
+    mangleType(E->getType());
+    if (const FloatingLiteral *Imag =
+          dyn_cast<FloatingLiteral>(IE->getSubExpr())) {
+      // Mangle a floating-point zero of the appropriate type.
+      mangleFloat(llvm::APFloat(Imag->getValue().getSemantics()));
+      Out << '_';
+      mangleFloat(Imag->getValue());
+    } else {
+      Out << '0' << '_';
+      llvm::APSInt Value(cast<IntegerLiteral>(IE->getSubExpr())->getValue());
+      if (IE->getSubExpr()->getType()->isSignedIntegerType())
+        Value.setIsSigned(true);
+      mangleNumber(Value);
+    }
+    Out << 'E';
+    break;
+  }
+
+  case Expr::StringLiteralClass: {
+    // Proposal from David Vandervoorde, 2010.06.30.
+    // I've sent a comment off asking whether this needs to also
+    // represent the length of the string.
+    Out << 'L';
+    const ConstantArrayType *T = cast<ConstantArrayType>(E->getType());
+    QualType CharTy = T->getElementType().getUnqualifiedType();
+    mangleType(CharTy);
+    Out << 'E';
+    break;
+  }
+
+  case Expr::GNUNullExprClass:
+    // FIXME: should this really be mangled the same as nullptr?
+    // fallthrough
+
+  case Expr::CXXNullPtrLiteralExprClass: {
+    // Proposal from David Vandervoorde, 2010.06.30, as
+    // modified by ABI list discussion.
+    Out << "LDnE";
+    break;
+  }
 
   }
 }
