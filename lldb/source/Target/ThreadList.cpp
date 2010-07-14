@@ -314,15 +314,44 @@ ThreadList::WillResume ()
     m_process->UpdateThreadListIfNeeded();
 
     collection::iterator pos, end = m_threads.end();
-    
-    // Give all the threads a last chance to set up their state before we
-    // negotiate who is actually going to get a chance to run...
 
-    for (pos = m_threads.begin(); pos != end; ++pos)
-        (*pos)->SetupForResume ();
+    // See if any thread wants to run stopping others.  If it does, then we won't
+    // setup the other threads for resume, since they aren't going to get a chance
+    // to run.  This is necessary because the SetupForResume might add "StopOthers"
+    // plans which would then get to be part of the who-gets-to-run negotiation, but
+    // they're coming in after the fact, and the threads that are already set up should
+    // take priority.
     
+    bool wants_solo_run = false;
+    
+    for (pos = m_threads.begin(); pos != end; ++pos)
+    {
+        if ((*pos)->GetResumeState() != eStateSuspended &&
+                 (*pos)->GetCurrentPlan()->StopOthers())
+        {
+            wants_solo_run = true;
+            break;
+        }
+    }   
+
+    
+    // Give all the threads that are likely to run a last chance to set up their state before we
+    // negotiate who is actually going to get a chance to run...
+    // Don't set to resume suspended threads, and if any thread wanted to stop others, only
+    // call setup on the threads that request StopOthers...
+    
+    for (pos = m_threads.begin(); pos != end; ++pos)
+    {
+        if ((*pos)->GetResumeState() != eStateSuspended
+            && (!wants_solo_run || (*pos)->GetCurrentPlan()->StopOthers()))
+        {
+            (*pos)->SetupForResume ();
+        }
+    }
+
     // Now go through the threads and see if any thread wants to run just itself.
     // if so then pick one and run it.
+    
     ThreadList run_me_only_list (m_process);
     
     run_me_only_list.SetStopID(m_process->GetStopID());
