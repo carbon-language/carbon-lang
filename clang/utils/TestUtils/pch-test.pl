@@ -17,7 +17,7 @@ sub testfiles($$) {
   @files = `ls test/*/*.$suffix`;
   foreach $file (@files) {
     chomp($file);
-    my $code = system("clang- -fsyntax-only -x $language $file > /dev/null 2>&1");
+    my $code = system("clang -fsyntax-only -x $language $file > /dev/null 2>&1");
     if ($code == 0) {
       print(".");
       $code = system("clang -cc1 -emit-pch -x $language -o $file.pch $file > /dev/null 2>&1");
