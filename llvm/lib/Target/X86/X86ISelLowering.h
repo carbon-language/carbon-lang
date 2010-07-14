@@ -764,7 +764,6 @@ namespace llvm {
                                                     unsigned immOpc,
                                                     unsigned loadOpc,
                                                     unsigned cxchgOpc,
-                                                    unsigned copyOpc,
                                                     unsigned notOpc,
                                                     unsigned EAXreg,
                                                     TargetRegisterClass *RC,
