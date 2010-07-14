@@ -59,6 +59,7 @@ class GotoStmt;
 class LabelStmt;
 class MacroDefinition;
 class NamedDecl;
+class PCHDeserializationListener;
 class Preprocessor;
 class Sema;
 class SwitchCase;
@@ -100,10 +101,7 @@ public:
 
   /// \brief Receives the contents of the predefines buffer.
   ///
-  /// \param PCHPredef The start of the predefines buffer in the PCH
-  /// file.
-  ///
-  /// \param PCHBufferID The FileID for the PCH predefines buffer.
+  /// \param Buffers Information about the predefines buffers.
   ///
   /// \param OriginalFileName The original file name for the PCH, which will
   /// appear as an entry in the predefines buffer.
@@ -172,8 +170,11 @@ public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
   friend class PCHValidator;
 private:
-  /// \ brief The receiver of some callbacks invoked by PCHReader.
+  /// \brief The receiver of some callbacks invoked by PCHReader.
   llvm::OwningPtr<PCHReaderListener> Listener;
+
+  /// \brief The receiver of deserialization events.
+  PCHDeserializationListener *DeserializationListener;
 
   SourceManager &SourceMgr;
   FileManager &FileMgr;
@@ -575,6 +576,10 @@ public:
   /// \brief Set the PCH callbacks listener.
   void setListener(PCHReaderListener *listener) {
     Listener.reset(listener);
+  }
+
+  void setDeserializationListener(PCHDeserializationListener *Listener) {
+    DeserializationListener = Listener;
   }
 
   /// \brief Set the Preprocessor to use.

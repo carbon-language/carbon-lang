@@ -743,8 +743,7 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
 }
 
 /// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
-void PCHWriter::WriteMetadata(ASTContext &Context, const PCHReader *Chain,
-                              const char *isysroot) {
+void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   using namespace llvm;
 
   // Metadata
@@ -2074,13 +2073,16 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   SelectorOffsets[ID - 1] = Offset;
 }
 
-PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), NextTypeID(pch::NUM_PREDEF_TYPE_IDS),
+PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain)
+  : Stream(Stream), Chain(Chain), NextTypeID(pch::NUM_PREDEF_TYPE_IDS),
     CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
-    NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) { }
+    NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) {
+  if (Chain)
+    Chain->setDeserializationListener(this);
+}
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                         const PCHReader *Chain, const char *isysroot) {
+                         const char *isysroot) {
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'P', 8);
@@ -2090,7 +2092,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteBlockInfoBlock();
 
   if (Chain)
-    WritePCHChain(SemaRef, StatCalls, Chain, isysroot);
+    WritePCHChain(SemaRef, StatCalls, isysroot);
   else
     WritePCHCore(SemaRef, StatCalls, isysroot);
 }
@@ -2164,7 +2166,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
-  WriteMetadata(Context, 0, isysroot);
+  WriteMetadata(Context, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls);
@@ -2275,7 +2277,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 }
 
 void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                              const PCHReader *Chain, const char *isysroot) {
+                              const char *isysroot) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -2284,7 +2286,7 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
-  WriteMetadata(Context, Chain, isysroot);
+  WriteMetadata(Context, isysroot);
   // FIXME: StatCache
   // FIXME: Source manager block
 
@@ -2737,3 +2739,10 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   AddTypeRef(Base.getType(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
 }
+
+void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
+}
+
+void PCHWriter::DeclRead(pch::DeclID ID, const Decl *D) {
+}
+

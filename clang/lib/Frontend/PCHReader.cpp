@@ -13,6 +13,7 @@
 
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/PCHDeserializationListener.h"
 #include "clang/Frontend/Utils.h"
 #include "../Sema/Sema.h" // FIXME: move Sema headers elsewhere
 #include "clang/AST/ASTConsumer.h"
@@ -413,10 +414,10 @@ void PCHValidator::ReadCounter(unsigned Value) {
 
 PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
                      const char *isysroot)
-  : Listener(new PCHValidator(PP, *this)), SourceMgr(PP.getSourceManager()),
-    FileMgr(PP.getFileManager()), Diags(PP.getDiagnostics()),
-    SemaObj(0), PP(&PP), Context(Context), StatCache(0), Consumer(0),
-    IdentifierTableData(0), IdentifierLookupTable(0),
+  : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
+    SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
+    Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
+    StatCache(0), Consumer(0), IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
@@ -432,8 +433,8 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
 
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot)
-  : SourceMgr(SourceMgr), FileMgr(FileMgr), Diags(Diags),
-    SemaObj(0), PP(0), Context(0), StatCache(0), Consumer(0),
+  : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
+    Diags(Diags), SemaObj(0), PP(0), Context(0), StatCache(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
@@ -2629,6 +2630,8 @@ QualType PCHReader::GetType(pch::TypeID ID) {
   if (TypesLoaded[Index].isNull()) {
     TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
     TypesLoaded[Index]->setFromPCH();
+    if (DeserializationListener)
+      DeserializationListener->TypeRead(ID, TypesLoaded[Index]);
   }
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
@@ -2675,8 +2678,11 @@ Decl *PCHReader::GetExternalDecl(uint32_t ID) {
 }
 
 TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
-  if (!DeclsLoaded[0])
+  if (!DeclsLoaded[0]) {
     ReadDeclRecord(DeclOffsets[0], 0);
+    if (DeserializationListener)
+      DeserializationListener->DeclRead(0, DeclsLoaded[0]);
+  }
 
   return cast<TranslationUnitDecl>(DeclsLoaded[0]);
 }
@@ -2691,8 +2697,11 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
   }
 
   unsigned Index = ID - 1;
-  if (!DeclsLoaded[Index])
+  if (!DeclsLoaded[Index]) {
     ReadDeclRecord(DeclOffsets[Index], Index);
+    if (DeserializationListener)
+      DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
+  }
 
   return DeclsLoaded[Index];
 }

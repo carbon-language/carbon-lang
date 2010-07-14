@@ -19,6 +19,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Frontend/PCHBitCodes.h"
+#include "clang/Frontend/PCHDeserializationListener.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
@@ -71,13 +72,16 @@ struct UnsafeQualTypeDenseMapInfo {
 /// representation of a given abstract syntax tree and its supporting
 /// data structures. This bitstream can be de-serialized via an
 /// instance of the PCHReader class.
-class PCHWriter {
+class PCHWriter : public PCHDeserializationListener {
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
 private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
+
+  /// \brief The reader of existing PCH files, if we're chaining.
+  PCHReader *Chain;
 
   /// \brief Stores a declaration or a type to be written to the PCH file.
   class DeclOrType {
@@ -220,7 +224,7 @@ private:
   void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context, const PCHReader *Chain, const char *isysroot);
+  void WriteMetadata(ASTContext &Context, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
@@ -242,12 +246,12 @@ private:
   void WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                     const char* isysroot);
   void WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                     const PCHReader *Chain, const char* isysroot);
+                     const char* isysroot);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  PCHWriter(llvm::BitstreamWriter &Stream);
+  PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain);
 
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
@@ -263,7 +267,7 @@ public:
   /// \param PPRec Record of the preprocessing actions that occurred while
   /// preprocessing this file, e.g., macro instantiations
   void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                const PCHReader *Chain, const char* isysroot);
+                const char* isysroot);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);
@@ -393,6 +397,10 @@ public:
   unsigned GetLabelID(LabelStmt *S);
 
   unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
+
+  // PCHDeserializationListener implementation
+  void TypeRead(pch::TypeID ID, QualType T);
+  void DeclRead(pch::DeclID ID, const Decl *D);
 };
 
 } // end namespace clang

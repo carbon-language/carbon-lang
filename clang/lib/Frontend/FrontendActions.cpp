@@ -80,7 +80,7 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   if (!OS)
     return 0;
 
-  const PCHReader *Chain = CI.getInvocation().getFrontendOpts().ChainedPCH ?
+  PCHReader *Chain = CI.getInvocation().getFrontendOpts().ChainedPCH ?
                                CI.getPCHReader() : 0;
   const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
                              Sysroot.c_str() : 0;

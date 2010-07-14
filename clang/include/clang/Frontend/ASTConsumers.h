@@ -63,7 +63,7 @@ ASTConsumer *CreateDeclContextPrinter();
 // times.
 ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
                                 llvm::raw_ostream *OS,
-                                const PCHReader *Chain,
+                                PCHReader *Chain,
                                 const char *isysroot = 0);
 
 // Inheritance viewer: for C++ code, creates a graph of the inheritance
