@@ -2853,11 +2853,11 @@ def VMOVv8i16 : N1ModImm<1, 0b000, {1,0,?,0}, 0, 1, 0, 1, (outs QPR:$dst),
                          "vmov", "i16", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v8i16 (NEONvmovImm timm:$SIMM)))]>;
 
-def VMOVv2i32 : N1ModImm<1, 0b000, {0,?,?,0}, 0, 0, 0, 1, (outs DPR:$dst),
+def VMOVv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, 0, 1, (outs DPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v2i32 (NEONvmovImm timm:$SIMM)))]>;
-def VMOVv4i32 : N1ModImm<1, 0b000, {0,?,?,0}, 0, 1, 0, 1, (outs QPR:$dst),
+def VMOVv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, 0, 1, (outs QPR:$dst),
                          (ins nModImm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v4i32 (NEONvmovImm timm:$SIMM)))]>;
