@@ -131,14 +131,14 @@ public:
 
   // FIXME: CompoundLiteralExpr
 
-  ComplexPairTy EmitCast(Expr *Op, QualType DestTy);
+  ComplexPairTy EmitCast(CastExpr::CastKind CK, Expr *Op, QualType DestTy);
   ComplexPairTy VisitImplicitCastExpr(ImplicitCastExpr *E) {
     // Unlike for scalars, we don't have to worry about function->ptr demotion
     // here.
-    return EmitCast(E->getSubExpr(), E->getType());
+    return EmitCast(E->getCastKind(), E->getSubExpr(), E->getType());
   }
   ComplexPairTy VisitCastExpr(CastExpr *E) {
-    return EmitCast(E->getSubExpr(), E->getType());
+    return EmitCast(E->getCastKind(), E->getSubExpr(), E->getType());
   }
   ComplexPairTy VisitCallExpr(const CallExpr *E);
   ComplexPairTy VisitStmtExpr(const StmtExpr *E);
@@ -339,11 +339,22 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
   return Val;
 }
 
-ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
+ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op, 
+                                           QualType DestTy) {
   // Two cases here: cast from (complex to complex) and (scalar to complex).
   if (Op->getType()->isAnyComplexType())
     return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
 
+  // FIXME: We should be looking at all of the cast kinds here, not
+  // cherry-picking the ones we have test cases for.
+  if (CK == CastExpr::CK_LValueBitCast) {
+    llvm::Value *V = CGF.EmitLValue(Op).getAddress();
+    V = Builder.CreateBitCast(V, 
+                      CGF.ConvertType(CGF.getContext().getPointerType(DestTy)));
+    // FIXME: Are the qualifiers correct here?
+    return EmitLoadOfComplex(V, DestTy.isVolatileQualified());
+  }
+  
   // C99 6.3.1.7: When a value of real type is converted to a complex type, the
   // real part of the complex result value is determined by the rules of
   // conversion to the corresponding real type and the imaginary part of the
@@ -521,7 +532,7 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
   // improve codegen a little.  It is possible for the RHS to be complex or
   // scalar.
   OpInfo.Ty = E->getComputationResultType();
-  OpInfo.RHS = EmitCast(E->getRHS(), OpInfo.Ty);
+  OpInfo.RHS = EmitCast(CastExpr::CK_Unknown, E->getRHS(), OpInfo.Ty);
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
   // We know the LHS is a complex lvalue.

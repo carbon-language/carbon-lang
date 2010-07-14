@@ -29,6 +29,22 @@ void reinterpret_cast_test(int &ir, float &fr, X &xr) {
   // CHECK: bitcast float*
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
   xr = reinterpret_cast<X&>(fr);
+  _Complex float cf;
+  _Complex float &cfr = cf;
+  // CHECK: load i32**
+  // CHECK: bitcast i32*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = reinterpret_cast<_Complex float&>(ir);
+  // CHECK: load float**
+  // CHECK: bitcast float*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = reinterpret_cast<_Complex float&>(fr);
+  // CHECK: bitcast
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = reinterpret_cast<_Complex float&>(xr);
   // CHECK: ret void
 }
 
@@ -58,6 +74,22 @@ void c_cast(int &ir, float &fr, X &xr) {
   // CHECK: bitcast float*
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
   xr = (X&)fr;
+  _Complex float cf;
+  _Complex float &cfr = cf;
+  // CHECK: load i32**
+  // CHECK: bitcast i32*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = (_Complex float&)ir;
+  // CHECK: load float**
+  // CHECK: bitcast float*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = (_Complex float&)fr;
+  // CHECK: bitcast
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = (_Complex float&)xr;
   // CHECK: ret void
 }
 
@@ -90,6 +122,23 @@ void functional_cast(int &ir, float &fr, X &xr) {
   // CHECK: bitcast float*
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
   xr = Xref(fr);
+  typedef _Complex float &complex_float_ref;
+  _Complex float cf;
+  _Complex float &cfr = cf;
+  // CHECK: load i32**
+  // CHECK: bitcast i32*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = complex_float_ref(ir);
+  // CHECK: load float**
+  // CHECK: bitcast float*
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = complex_float_ref(fr);
+  // CHECK: bitcast
+  // CHECK: load float*
+  // CHECK: load float*
+  cfr = complex_float_ref(xr);
   // CHECK: ret void
 }
 
