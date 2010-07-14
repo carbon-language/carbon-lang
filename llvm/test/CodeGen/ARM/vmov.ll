@@ -18,6 +18,18 @@ define <4 x i16> @v_movi16b() nounwind {
 	ret <4 x i16> < i16 4096, i16 4096, i16 4096, i16 4096 >
 }
 
+define <4 x i16> @v_mvni16a() nounwind {
+;CHECK: v_mvni16a:
+;CHECK: vmvn.i16 d0, #0x10
+	ret <4 x i16> < i16 65519, i16 65519, i16 65519, i16 65519 >
+}
+
+define <4 x i16> @v_mvni16b() nounwind {
+;CHECK: v_mvni16b:
+;CHECK: vmvn.i16 d0, #0x1000
+	ret <4 x i16> < i16 61439, i16 61439, i16 61439, i16 61439 >
+}
+
 define <2 x i32> @v_movi32a() nounwind {
 ;CHECK: v_movi32a:
 ;CHECK: vmov.i32 d0, #0x20
@@ -52,6 +64,42 @@ define <2 x i32> @v_movi32f() nounwind {
 ;CHECK: v_movi32f:
 ;CHECK: vmov.i32 d0, #0x20FFFF
 	ret <2 x i32> < i32 2162687, i32 2162687 >
+}
+
+define <2 x i32> @v_mvni32a() nounwind {
+;CHECK: v_mvni32a:
+;CHECK: vmvn.i32 d0, #0x20
+	ret <2 x i32> < i32 4294967263, i32 4294967263 >
+}
+
+define <2 x i32> @v_mvni32b() nounwind {
+;CHECK: v_mvni32b:
+;CHECK: vmvn.i32 d0, #0x2000
+	ret <2 x i32> < i32 4294959103, i32 4294959103 >
+}
+
+define <2 x i32> @v_mvni32c() nounwind {
+;CHECK: v_mvni32c:
+;CHECK: vmvn.i32 d0, #0x200000
+	ret <2 x i32> < i32 4292870143, i32 4292870143 >
+}
+
+define <2 x i32> @v_mvni32d() nounwind {
+;CHECK: v_mvni32d:
+;CHECK: vmvn.i32 d0, #0x20000000
+	ret <2 x i32> < i32 3758096383, i32 3758096383 >
+}
+
+define <2 x i32> @v_mvni32e() nounwind {
+;CHECK: v_mvni32e:
+;CHECK: vmvn.i32 d0, #0x20FF
+	ret <2 x i32> < i32 4294958848, i32 4294958848 >
+}
+
+define <2 x i32> @v_mvni32f() nounwind {
+;CHECK: v_mvni32f:
+;CHECK: vmvn.i32 d0, #0x20FFFF
+	ret <2 x i32> < i32 4292804608, i32 4292804608 >
 }
 
 define <1 x i64> @v_movi64() nounwind {

@@ -124,8 +124,11 @@ namespace llvm {
       VGETLANEu,    // zero-extend vector extract element
       VGETLANEs,    // sign-extend vector extract element
 
-      // Vector duplicate:
+      // Vector move immediate and move negated immediate:
       VMOVIMM,
+      VMVNIMM,
+
+      // Vector duplicate:
       VDUP,
       VDUPLANE,
 

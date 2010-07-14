@@ -625,6 +625,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VGETLANEu:     return "ARMISD::VGETLANEu";
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
   case ARMISD::VMOVIMM:       return "ARMISD::VMOVIMM";
+  case ARMISD::VMVNIMM:       return "ARMISD::VMVNIMM";
   case ARMISD::VDUP:          return "ARMISD::VDUP";
   case ARMISD::VDUPLANE:      return "ARMISD::VDUPLANE";
   case ARMISD::VEXT:          return "ARMISD::VEXT";
@@ -2925,6 +2926,8 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
 
   switch (SplatBitSize) {
   case 8:
+    if (!isVMOV)
+      return SDValue();
     // Any 1-byte value is OK.  Op=0, Cmode=1110.
     assert((SplatBits & ~0xff) == 0 && "one byte splat value is too big");
     OpCmode = 0xe;
@@ -3006,9 +3009,9 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     return SDValue();
 
   case 64: {
-    // NEON has a 64-bit VMOV splat where each byte is either 0 or 0xff.
     if (!isVMOV)
       return SDValue();
+    // NEON has a 64-bit VMOV splat where each byte is either 0 or 0xff.
     uint64_t BitMask = 0xff;
     uint64_t Val = 0;
     unsigned ImmMask = 1;
@@ -3246,6 +3249,17 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
                                       DAG, VmovVT, VT.is128BitVector(), true);
       if (Val.getNode()) {
         SDValue Vmov = DAG.getNode(ARMISD::VMOVIMM, dl, VmovVT, Val);
+        return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
+      }
+
+      // Try an immediate VMVN.
+      uint64_t NegatedImm = (SplatBits.getZExtValue() ^
+                             ((1LL << SplatBitSize) - 1));
+      Val = isNEONModifiedImm(NegatedImm,
+                                      SplatUndef.getZExtValue(), SplatBitSize,
+                                      DAG, VmovVT, VT.is128BitVector(), false);
+      if (Val.getNode()) {
+        SDValue Vmov = DAG.getNode(ARMISD::VMVNIMM, dl, VmovVT, Val);
         return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vmov);
       }
     }
@@ -4232,14 +4246,15 @@ static SDValue PerformVMOVRRDCombine(SDNode *N,
 /// ARMISD::VDUPLANE.
 static SDValue PerformVDUPLANECombine(SDNode *N,
                                       TargetLowering::DAGCombinerInfo &DCI) {
-  // If the source is already a VMOVIMM splat, the VDUPLANE is redundant.
+  // If the source is already a VMOVIMM or VMVNIMM splat, the VDUPLANE is
+  // redundant.
   SDValue Op = N->getOperand(0);
   EVT VT = N->getValueType(0);
 
   // Ignore bit_converts.
   while (Op.getOpcode() == ISD::BIT_CONVERT)
     Op = Op.getOperand(0);
-  if (Op.getOpcode() != ARMISD::VMOVIMM)
+  if (Op.getOpcode() != ARMISD::VMOVIMM && Op.getOpcode() != ARMISD::VMVNIMM)
     return SDValue();
 
   // Make sure the VMOV element size is not bigger than the VDUPLANE elements.
