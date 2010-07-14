@@ -3192,7 +3192,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         void *pointee_clang_type = pointee_type->GetOpaqueClangQualType();
                         void *class_clang_type = class_type->GetOpaqueClangQualType();
 
-                        void *clang_type = type_list->GetClangASTContext().CreateMemberPointerType(pointee_clang_type, class_clang_type);
+                        clang_type = type_list->GetClangASTContext().CreateMemberPointerType(pointee_clang_type, class_clang_type);
 
                         size_t byte_size = ClangASTContext::GetTypeBitSize(type_list->GetClangASTContext().getASTContext(), clang_type) / 8;
 

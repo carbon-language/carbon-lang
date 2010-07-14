@@ -505,7 +505,6 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
     {
         Mutex::Locker locker(m_mutex);
         uint32_t idx;
-        Error error;
         uint32_t i = 0;
         DYLDImageInfo::collection old_dyld_all_image_infos;
         old_dyld_all_image_infos.swap(m_dyld_image_infos);

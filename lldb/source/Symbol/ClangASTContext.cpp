@@ -1493,7 +1493,6 @@ ClangASTContext::GetIndexOfChildMemberWithName
                                                        decl_name.getAsOpaquePtr(),
                                                        paths))
                     {
-                        uint32_t child_idx;
                         CXXBasePaths::const_paths_iterator path, path_end = paths.end();
                         for (path = paths.begin(); path != path_end; ++path)
                         {

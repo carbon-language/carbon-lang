@@ -570,9 +570,9 @@ Options::HandleOptionCompletion
                 // within the option group they belong to.
                 char opt_str[3] = {'-', 'a', '\0'};
                 
-                for (int i = 0 ; opt_defs[i].short_option != 0 ; i++)
+                for (int j = 0 ; opt_defs[j].short_option != 0 ; j++)
                 {   
-                    opt_str[1] = opt_defs[i].short_option;
+                    opt_str[1] = opt_defs[j].short_option;
                     matches.AppendString (opt_str);
                 }
                 return true;
@@ -580,10 +580,10 @@ Options::HandleOptionCompletion
             else if (opt_defs_index == OptionArgElement::eBareDoubleDash)
             {
                 std::string full_name ("--");
-                for (int i = 0 ; opt_defs[i].short_option != 0 ; i++)
+                for (int j = 0 ; opt_defs[j].short_option != 0 ; j++)
                 {   
                     full_name.erase(full_name.begin() + 2, full_name.end());
-                    full_name.append (opt_defs[i].long_option);
+                    full_name.append (opt_defs[j].long_option);
                     matches.AppendString (full_name.c_str());
                 }
                 return true;
@@ -619,18 +619,18 @@ Options::HandleOptionCompletion
                 if (cur_opt_str && strlen (cur_opt_str) > 2
                     && cur_opt_str[0] == '-' && cur_opt_str[1] == '-')
                 {
-                    for (int i = 0 ; opt_defs[i].short_option != 0 ; i++)
+                    for (int j = 0 ; opt_defs[j].short_option != 0 ; j++)
                     {
-                        if (strstr(opt_defs[i].long_option, cur_opt_str + 2) == opt_defs[i].long_option)
+                        if (strstr(opt_defs[j].long_option, cur_opt_str + 2) == opt_defs[j].long_option)
                         {
                             std::string full_name ("--");
-                            full_name.append (opt_defs[i].long_option);
+                            full_name.append (opt_defs[j].long_option);
                             // The options definitions table has duplicates because of the
                             // way the grouping information is stored, so only add once.
                             bool duplicate = false;
-                            for (int j = 0; j < matches.GetSize(); j++)
+                            for (int k = 0; k < matches.GetSize(); k++)
                             {
-                                if (matches.GetStringAtIndex(j) == full_name)
+                                if (matches.GetStringAtIndex(k) == full_name)
                                 {
                                     duplicate = true;
                                     break;

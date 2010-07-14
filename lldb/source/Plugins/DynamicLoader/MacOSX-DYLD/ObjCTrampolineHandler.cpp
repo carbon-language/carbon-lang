@@ -245,7 +245,7 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
             StreamString errors;
             { 
                 // Scope for mutex locker:
-                Mutex::Locker (m_impl_function_mutex);
+                Mutex::Locker locker(m_impl_function_mutex);
                 if (!m_impl_function.get())
                 {
                      m_impl_function.reset(new ClangFunction(process->GetTargetTriple().GetCString(), 
@@ -257,7 +257,6 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
                     unsigned num_errors = m_impl_function->CompileFunction(errors);
                     if (num_errors)
                     {
-                        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
                         if (log)
                             log->Printf ("Error compiling function: \"%s\".", errors.GetData());
                         return ret_plan_sp;
@@ -266,7 +265,6 @@ ObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool stop_oth
                     errors.Clear();
                     if (!m_impl_function->WriteFunctionWrapper(exec_ctx, errors))
                     {
-                        Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP);
                         if (log)
                             log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
                         return ret_plan_sp;

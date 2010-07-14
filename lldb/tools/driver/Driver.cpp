@@ -1220,7 +1220,7 @@ Driver::MainLoop ()
 
             if (!iochannel_thread_exited)
             {
-                SBEvent event;
+                event.Clear();
                 listener.GetNextEventForBroadcasterWithType (*m_io_channel_ap,
                                                              IOChannel::eBroadcastBitThreadDidExit,
                                                              event);

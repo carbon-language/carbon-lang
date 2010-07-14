@@ -45,7 +45,7 @@ ThreadList::operator = (const ThreadList& rhs)
     {
         // Lock both mutexes to make sure neither side changes anyone on us
         // while the assignement occurs
-        Mutex::Locker locker_this(m_threads_mutex);
+        Mutex::Locker locker_lhs(m_threads_mutex);
         Mutex::Locker locker_rhs(rhs.m_threads_mutex);
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;

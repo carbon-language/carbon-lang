@@ -196,7 +196,6 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
         {
             const char *line_start = bytes;
             const char *end_line = NULL;
-            const char *end = bytes + bytes_len;
             while (p < end)
             {
                 const char ch = *p;

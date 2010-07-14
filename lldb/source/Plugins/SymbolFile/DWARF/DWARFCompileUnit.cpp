@@ -25,8 +25,8 @@ using namespace std;
 
 extern int g_verbose;
 
-DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* m_dwarf2Data) :
-    m_dwarf2Data    ( m_dwarf2Data ),
+DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
+    m_dwarf2Data    ( dwarf2Data ),
     m_offset        ( DW_INVALID_OFFSET ),
     m_length        ( 0 ),
     m_version       ( 0 ),
@@ -603,8 +603,6 @@ DWARFCompileUnit::Index
         if (num_attributes > 0)
         {
             uint32_t i;
-
-            dw_tag_t tag = die.Tag();
             
             is_variable = tag == DW_TAG_variable;
 
@@ -733,8 +731,8 @@ DWARFCompileUnit::Index
                     bool is_method = false;
                     if (parent)
                     {
-                        dw_tag_t tag = parent->Tag();
-                        if (tag == DW_TAG_class_type || tag == DW_TAG_structure_type)
+                        dw_tag_t parent_tag = parent->Tag();
+                        if (parent_tag == DW_TAG_class_type || parent_tag == DW_TAG_structure_type)
                         {
                             is_method = true;
                         }
@@ -748,9 +746,9 @@ DWARFCompileUnit::Index
                                     parent = specification_die->GetParent();
                                     if (parent)
                                     {
-                                        tag = parent->Tag();
+                                        parent_tag = parent->Tag();
                                     
-                                        if (tag == DW_TAG_class_type || tag == DW_TAG_structure_type)
+                                        if (parent_tag == DW_TAG_class_type || parent_tag == DW_TAG_structure_type)
                                             is_method = true;
                                     }
                                 }

@@ -101,7 +101,7 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
         {
             for (int i = 1; i < num_elements; i++)
             {
-                const char *completion_str = completions.GetStringAtIndex(i);
+                completion_str = completions.GetStringAtIndex(i);
                 OutWrite("\n\t", 2);
                 OutWrite(completion_str, strlen (completion_str));
             }
@@ -119,7 +119,7 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
                     endpoint = num_elements;
                 for (; cur_pos < endpoint; cur_pos++)
                 {
-                    const char *completion_str = completions.GetStringAtIndex(cur_pos);
+                    completion_str = completions.GetStringAtIndex(cur_pos);
                     OutWrite("\n\t", 2);
                     OutWrite(completion_str, strlen (completion_str));
                 }

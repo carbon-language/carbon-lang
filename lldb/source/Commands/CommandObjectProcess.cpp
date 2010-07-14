@@ -536,7 +536,7 @@ public:
                 result.AppendMessageWithFormat ("Resuming process %i\n", process->GetID());
                 if (synchronous_execution)
                 {
-                    StateType state = process->WaitForProcessToStop (NULL);
+                    state = process->WaitForProcessToStop (NULL);
 
                     result.SetDidChangeProcessState (true);
                     result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));

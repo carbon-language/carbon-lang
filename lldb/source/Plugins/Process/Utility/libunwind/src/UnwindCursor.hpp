@@ -551,12 +551,12 @@ bool UnwindCursor<A,R>::getInfoFromCompactEncodingSection(pint_t pc, pint_t mh, 
 	const UnwindSectionIndexArray<A> topIndex(fAddressSpace, unwindSectionStart + sectionHeader.indexSectionOffset());
 	uint32_t low = 0;
 	uint32_t high = sectionHeader.indexCount();
-	const uint32_t last = high - 1;
+	const uint32_t last_section_header = high - 1;
 	while ( low < high ) {
 		uint32_t mid = (low + high)/2;
 		//if ( log ) fprintf(stderr, "\tmid=%d, low=%d, high=%d, *mid=0x%08X\n", mid, low, high, topIndex.functionOffset(mid));
 		if ( topIndex.functionOffset(mid) <= targetFunctionOffset ) {
-			if ( (mid == last) || (topIndex.functionOffset(mid+1) > targetFunctionOffset) ) {
+			if ( (mid == last_section_header) || (topIndex.functionOffset(mid+1) > targetFunctionOffset) ) {
 				low = mid;
 				break;
 			}
@@ -589,8 +589,8 @@ bool UnwindCursor<A,R>::getInfoFromCompactEncodingSection(pint_t pc, pint_t mh, 
 		// binary search looks for entry with e where index[e].offset <= pc < index[e+1].offset
 		if ( log ) fprintf(stderr, "\tbinary search for targetFunctionOffset=0x%08llX in regular page starting at secondLevelAddr=0x%llX\n", 
 			(uint64_t)targetFunctionOffset, (uint64_t)secondLevelAddr);
-		uint32_t low = 0;
-		uint32_t high = pageHeader.entryCount();
+		low = 0;
+		high = pageHeader.entryCount();
 		while ( low < high ) {
 			uint32_t mid = (low + high)/2;
 			if ( pageIndex.functionOffset(mid) <= targetFunctionOffset ) {
@@ -632,13 +632,13 @@ bool UnwindCursor<A,R>::getInfoFromCompactEncodingSection(pint_t pc, pint_t mh, 
 		const uint32_t targetFunctionPageOffset = targetFunctionOffset - firstLevelFunctionOffset;
 		// binary search looks for entry with e where index[e].offset <= pc < index[e+1].offset
 		if ( log ) fprintf(stderr, "\tbinary search of compressed page starting at secondLevelAddr=0x%llX\n", (uint64_t)secondLevelAddr);
-		uint32_t low = 0;
-		const uint32_t last = pageHeader.entryCount() - 1;
-		uint32_t high = pageHeader.entryCount();
+		low = 0;
+		const uint32_t last_page_header = pageHeader.entryCount() - 1;
+		high = pageHeader.entryCount();
 		while ( low < high ) {
 			uint32_t mid = (low + high)/2;
 			if ( pageIndex.functionOffset(mid) <= targetFunctionPageOffset ) {
-				if ( (mid == last) || (pageIndex.functionOffset(mid+1) > targetFunctionPageOffset) ) {
+				if ( (mid == last_page_header) || (pageIndex.functionOffset(mid+1) > targetFunctionPageOffset) ) {
 					low = mid;
 					break;
 				}
@@ -651,7 +651,7 @@ bool UnwindCursor<A,R>::getInfoFromCompactEncodingSection(pint_t pc, pint_t mh, 
 			}
 		}
 		funcStart = pageIndex.functionOffset(low) + firstLevelFunctionOffset + mh;
-		if ( low < last )
+		if ( low < last_page_header )
 			funcEnd = pageIndex.functionOffset(low+1) + firstLevelFunctionOffset + mh;
 		else
 			funcEnd = firstLevelNextPageFunctionOffset + mh;
@@ -683,8 +683,8 @@ bool UnwindCursor<A,R>::getInfoFromCompactEncodingSection(pint_t pc, pint_t mh, 
 	if ( encoding & UNWIND_HAS_LSDA ) {
 		UnwindSectionLsdaArray<A>  lsdaIndex(fAddressSpace, lsdaArrayStartAddr);
 		uint32_t funcStartOffset = funcStart - mh;
-		uint32_t low = 0;
-		uint32_t high = (lsdaArrayEndAddr-lsdaArrayStartAddr)/sizeof(unwind_info_section_header_lsda_index_entry);
+		low = 0;
+		high = (lsdaArrayEndAddr-lsdaArrayStartAddr)/sizeof(unwind_info_section_header_lsda_index_entry);
 		// binary search looks for entry with exact match for functionOffset
 		if ( log ) fprintf(stderr, "\tbinary search of lsda table for targetFunctionOffset=0x%08X\n", funcStartOffset);
 		while ( low < high ) {
@@ -904,6 +904,9 @@ template <typename A, typename R>
 class RemoteUnwindCursor : UnwindCursor<A,R>
 {
 public:
+    using UnwindCursor<A,R>::getReg;
+    using UnwindCursor<A,R>::getFloatReg;
+
 	typedef typename A::pint_t	pint_t;
                         RemoteUnwindCursor(A& as, unw_context_t* regs, void* arg);
     virtual bool        validReg(int);

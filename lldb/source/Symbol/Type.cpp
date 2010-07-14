@@ -399,7 +399,7 @@ lldb_private::Type::DumpSummary
             else
                 buf.resize (256);
 
-            lldb_private::DataExtractor data(buf.data(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
+            lldb_private::DataExtractor cstr_data(buf.data(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
             buf.back() = '\0';
             size_t bytes_read;
             size_t total_cstr_len = 0;
@@ -411,7 +411,7 @@ lldb_private::Type::DumpSummary
                     break;
                 if (total_cstr_len == 0)
                     s->PutCString (" \"");
-                data.Dump(s, 0, lldb::eFormatChar, 1, len, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                cstr_data.Dump(s, 0, lldb::eFormatChar, 1, len, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
                 total_cstr_len += len;
                 if (len < buf.size())
                     break;

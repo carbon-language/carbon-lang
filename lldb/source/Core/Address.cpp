@@ -628,7 +628,6 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                             if (so_addr.IsSectionOffset())
                             {
                                 lldb_private::SymbolContext pointer_sc;
-                                Target *target = exe_scope->CalculateTarget();
                                 if (target)
                                 {
                                     target->GetImages().ResolveSymbolContextForAddress (so_addr,

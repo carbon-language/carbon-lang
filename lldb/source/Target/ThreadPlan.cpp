@@ -66,21 +66,21 @@ ThreadPlan::GetThread() const
 bool
 ThreadPlan::IsPlanComplete ()
 {
-    Mutex::Locker (m_plan_complete_mutex);
+    Mutex::Locker locker(m_plan_complete_mutex);
     return m_plan_complete;
 }
 
 void
 ThreadPlan::SetPlanComplete ()
 {
-    Mutex::Locker (m_plan_complete_mutex);
+    Mutex::Locker locker(m_plan_complete_mutex);
     m_plan_complete = true;
 }
 
 bool
 ThreadPlan::MischiefManaged ()
 {
-    Mutex::Locker (m_plan_complete_mutex);
+    Mutex::Locker locker(m_plan_complete_mutex);
     m_plan_complete = true;
     return true;
 }

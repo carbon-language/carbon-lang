@@ -100,7 +100,6 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
             }
             else
             {
-                const char *stop_desc = NULL;
                 size_t stop_desc_len = 0;
                 switch (thread_stop_info.GetStopReason())
                 {

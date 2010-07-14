@@ -21,10 +21,10 @@ class ClangASTSource : public clang::ExternalSemaSource {
 public:
     friend struct NameSearchContext;
     
-	ClangASTSource(clang::ASTContext &Context,
-                   ClangExpressionDeclMap &DeclMap) : 
-        Context(Context),
-        DeclMap(DeclMap) {}
+	ClangASTSource(clang::ASTContext &context,
+                   ClangExpressionDeclMap &declMap) : 
+        Context(context),
+        DeclMap(declMap) {}
 	~ClangASTSource();
 	
     clang::Decl *GetExternalDecl(uint32_t);
@@ -49,14 +49,14 @@ struct NameSearchContext {
     clang::DeclarationName &Name;
     const clang::DeclContext *DC;
     
-    NameSearchContext (ClangASTSource &ASTSource,
-                       llvm::SmallVectorImpl<clang::NamedDecl*> &Decls,
-                       clang::DeclarationName &Name,
-                       const clang::DeclContext *DC) :
-        ASTSource(ASTSource),
-        Decls(Decls),
-        Name(Name),
-        DC(DC) {}
+    NameSearchContext (ClangASTSource &astSource,
+                       llvm::SmallVectorImpl<clang::NamedDecl*> &decls,
+                       clang::DeclarationName &name,
+                       const clang::DeclContext *dc) :
+        ASTSource(astSource),
+        Decls(decls),
+        Name(name),
+        DC(dc) {}
     
     clang::ASTContext *GetASTContext();
     clang::NamedDecl *AddVarDecl(void *type);

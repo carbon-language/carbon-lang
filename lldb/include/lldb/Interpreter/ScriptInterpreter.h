@@ -73,8 +73,9 @@ public:
     }
 
     virtual void 
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                            CommandReturnObject &result);
+    CollectDataForBreakpointCommandCallback (CommandInterpreter &interpreter,
+                                             BreakpointOptions *bp_options,
+                                             CommandReturnObject &result);
 
     const char *
     GetScriptInterpreterPtyName ();

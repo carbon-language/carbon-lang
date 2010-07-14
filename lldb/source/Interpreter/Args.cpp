@@ -454,7 +454,6 @@ Error
 Args::ParseOptions (Options &options)
 {
     StreamString sstr;
-    int i;
     Error error;
     struct option *long_options = options.GetLongOptions();
     if (long_options == NULL)
@@ -463,7 +462,7 @@ Args::ParseOptions (Options &options)
         return error;
     }
 
-    for (i=0; long_options[i].name != NULL; ++i)
+    for (int i=0; long_options[i].name != NULL; ++i)
     {
         if (long_options[i].flag == NULL)
         {
@@ -950,7 +949,6 @@ Args::ParseArgsForCompletion
 )
 {
     StreamString sstr;
-    int i;
     struct option *long_options = options.GetLongOptions();
     option_element_vector.clear();
 
@@ -963,7 +961,7 @@ Args::ParseArgsForCompletion
     // to suppress error messages.
 
     sstr << ":";
-    for (i = 0; long_options[i].name != NULL; ++i)
+    for (int i = 0; long_options[i].name != NULL; ++i)
     {
         if (long_options[i].flag == NULL)
         {

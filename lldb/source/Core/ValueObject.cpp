@@ -540,7 +540,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
     lldb::Encoding encoding = Type::GetEncoding (GetOpaqueClangQualType(), count);
 
     char *end = NULL;
-    size_t byte_size = GetByteSize();
+    const size_t byte_size = GetByteSize();
     switch (encoding)
     {
     case eEncodingInvalid:
@@ -580,7 +580,6 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
 
     case eEncodingIEEE754:
         {
-            const size_t byte_size = GetByteSize();
             const off_t byte_offset = GetByteOffset();
             uint8_t *dst = const_cast<uint8_t *>(m_data.PeekData(byte_offset, byte_size));
             if (dst != NULL)

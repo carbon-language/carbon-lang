@@ -258,12 +258,15 @@ CommandObjectBreakpointCommandAdd::Execute
                     {
                         if (m_options.m_use_script_language)
                         {
-                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_loc_sp->GetLocationOptions(),
-                                                                                                          result);
+                            interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
+                                                                                                         bp_loc_sp->GetLocationOptions(),
+                                                                                                         result);
                         }
                         else
                         {
-                            CollectDataForBreakpointCommandCallback (interpreter, bp_loc_sp->GetLocationOptions(), result);
+                            CollectDataForBreakpointCommandCallback (interpreter, 
+                                                                     bp_loc_sp->GetLocationOptions(), 
+                                                                     result);
                         }
                     }
                 }
@@ -271,12 +274,15 @@ CommandObjectBreakpointCommandAdd::Execute
                 {
                     if (m_options.m_use_script_language)
                     {
-                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp->GetOptions(),
-                                                                                                      result);
+                        interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (interpreter,
+                                                                                                     bp->GetOptions(),
+                                                                                                     result);
                     }
                     else
                     {
-                        CollectDataForBreakpointCommandCallback (interpreter, bp->GetOptions(), result);
+                        CollectDataForBreakpointCommandCallback (interpreter, 
+                                                                 bp->GetOptions(), 
+                                                                 result);
                     }
                 }
             }

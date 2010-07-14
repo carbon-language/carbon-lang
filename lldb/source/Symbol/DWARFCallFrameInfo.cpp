@@ -664,8 +664,7 @@ DWARFCallFrameInfo::Index ()
         while (m_cfi_data.ValidOffsetForDataOfSize(offset, 8))
         {
             const dw_offset_t curr_offset = offset;
-            const uint32_t length = m_cfi_data.GetU32(&offset);
-            const dw_offset_t next_offset = offset + length;
+            const dw_offset_t next_offset = offset + m_cfi_data.GetU32(&offset);
             const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
 
             bool is_fde = for_eh_frame ?  cie_id != 0 : cie_id != UINT32_MAX;

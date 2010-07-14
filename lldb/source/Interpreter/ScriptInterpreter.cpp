@@ -54,6 +54,7 @@ ScriptInterpreter::GetMasterFileDescriptor ()
 void 
 ScriptInterpreter::CollectDataForBreakpointCommandCallback 
 (
+    CommandInterpreter &interpreter,
     BreakpointOptions *bp_options,
     CommandReturnObject &result
 )

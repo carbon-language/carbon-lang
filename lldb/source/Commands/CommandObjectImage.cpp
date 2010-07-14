@@ -1395,9 +1395,9 @@ public:
                     
                     if (num_matching_modules > 0)
                     {
-                        for (size_t i=0; i<num_matching_modules; ++i)
+                        for (size_t j=0; j<num_matching_modules; ++j)
                         {
-                            Module * image_module = matching_modules.GetModulePointerAtIndex(i);
+                            Module * image_module = matching_modules.GetModulePointerAtIndex(j);
                             if (image_module)
                             {
                                 if (LookupInModule (interpreter, image_module, result, syntax_error))

@@ -583,15 +583,15 @@ ClangExpression::WriteJITCode (const ExecutionContext &exc_context)
     // For now I only write functions with no stubs, globals, exception tables,
     // etc.  So I only need to write the functions.
 
-    size_t size = 0;
+    size_t alloc_size = 0;
     std::map<uint8_t *, uint8_t *>::iterator fun_pos, fun_end = m_jit_mm_ptr->m_functions.end();
     for (fun_pos = m_jit_mm_ptr->m_functions.begin(); fun_pos != fun_end; fun_pos++)
     {
-        size += (*fun_pos).second - (*fun_pos).first;
+        alloc_size += (*fun_pos).second - (*fun_pos).first;
     }
 
     Error error;
-    lldb::addr_t target_addr = exc_context.process->AllocateMemory (size, lldb::ePermissionsReadable|lldb::ePermissionsExecutable, error);
+    lldb::addr_t target_addr = exc_context.process->AllocateMemory (alloc_size, lldb::ePermissionsReadable|lldb::ePermissionsExecutable, error);
 
     if (target_addr == LLDB_INVALID_ADDRESS)
         return false;

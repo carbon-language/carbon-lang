@@ -552,7 +552,7 @@ ClangFunction::ExecuteFunction(
             {
                 timeout_ptr = NULL;
                 
-                lldb::StateType stop_state =  process->WaitForStateChangedEvents (timeout_ptr, event_sp);
+                stop_state =  process->WaitForStateChangedEvents (timeout_ptr, event_sp);
                 if (stop_state == lldb::eStateInvalid)
                 {
                     errors.Printf ("Got an invalid stop state after halt.");

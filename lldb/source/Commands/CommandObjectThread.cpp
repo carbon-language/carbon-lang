@@ -760,7 +760,7 @@ public:
                 result.AppendMessageWithFormat ("Resuming process %i\n", process->GetID());
                 if (synchronous_execution)
                 {
-                    StateType state = process->WaitForProcessToStop (NULL);
+                    state = process->WaitForProcessToStop (NULL);
 
                     result.SetDidChangeProcessState (true);
                     result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
@@ -827,7 +827,7 @@ public:
             {
                 case 't':
                 {
-                    uint32_t m_thread_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_INDEX32);
+                    m_thread_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_INDEX32);
                     if (m_thread_idx == LLDB_INVALID_INDEX32)
                     {
                         error.SetErrorStringWithFormat ("Invalid thread index '%s'.\n", option_arg);
