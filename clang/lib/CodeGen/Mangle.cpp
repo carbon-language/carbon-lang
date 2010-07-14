@@ -232,6 +232,7 @@ private:
 #include "clang/AST/TypeNodes.def"
 
   void mangleType(const TagType*);
+  void mangleType(TemplateName);
   void mangleBareFunctionType(const FunctionType *T,
                               bool MangleReturnType);
 
@@ -954,6 +955,53 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND->getTemplatedDecl());
   addSubstitution(ND);
+}
+
+/// Mangles a template name under the production <type>.  Required for
+/// template template arguments.
+///   <type> ::= <class-enum-type>
+///          ::= <template-param>
+///          ::= <substitution>
+void CXXNameMangler::mangleType(TemplateName TN) {
+  if (mangleSubstitution(TN))
+    return;
+      
+  TemplateDecl *TD = 0;
+
+  switch (TN.getKind()) {
+  case TemplateName::QualifiedTemplate:
+    TD = TN.getAsQualifiedTemplateName()->getTemplateDecl();
+    goto HaveDecl;
+
+  case TemplateName::Template:
+    TD = TN.getAsTemplateDecl();
+    goto HaveDecl;
+
+  HaveDecl:
+    if (isa<TemplateTemplateParmDecl>(TD))
+      mangleTemplateParameter(cast<TemplateTemplateParmDecl>(TD)->getIndex());
+    else
+      mangleName(TD);
+    break;
+
+  case TemplateName::OverloadedTemplate:
+    llvm_unreachable("can't mangle an overloaded template name as a <type>");
+    break;
+
+  case TemplateName::DependentTemplate: {
+    const DependentTemplateName *Dependent = TN.getAsDependentTemplateName();
+    assert(Dependent->isIdentifier());
+
+    // <class-enum-type> ::= <name>
+    // <name> ::= <nested-name>
+    mangleUnresolvedScope(Dependent->getQualifier());
+    mangleSourceName(Dependent->getIdentifier());
+    break;
+  }
+
+  }
+
+  addSubstitution(TN);
 }
 
 void
@@ -2034,9 +2082,8 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     mangleType(A.getAsType());
     break;
   case TemplateArgument::Template:
-    assert(A.getAsTemplate().getAsTemplateDecl() &&
-           "Can't get dependent template names here");
-    mangleName(A.getAsTemplate().getAsTemplateDecl());
+    // This is mangled as <type>.
+    mangleType(A.getAsTemplate());
     break;
   case TemplateArgument::Expression:
     Out << 'X';

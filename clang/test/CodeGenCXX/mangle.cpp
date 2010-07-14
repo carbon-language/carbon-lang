@@ -496,3 +496,14 @@ namespace test12 {
   template <unsigned short> struct A { };
   void f(A<33000>) { }
 }
+
+// PR7446
+namespace test13 {
+  template <template <class> class T> class A {};
+  template <class U> class B {};
+
+  template <template<class> class T> void foo(const A<T> &a) {}
+
+  // CHECK: define weak_odr void @_ZN6test133fooINS_1BEEEvRKNS_1AIT_EE(
+  template void foo(const A<B> &a);
+}
