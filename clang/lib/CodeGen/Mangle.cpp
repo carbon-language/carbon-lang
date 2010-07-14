@@ -1318,8 +1318,6 @@ void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
   mangleTemplateParameter(T->getIndex());
 }
 
-// FIXME: <type> ::= <template-template-param> <template-args>
-
 // <type> ::= P <type>   # pointer-to
 void CXXNameMangler::mangleType(const PointerType *T) {
   Out << 'P';
@@ -1952,9 +1950,6 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
   }
 }
-
-// FIXME: <type> ::= G <type>   # imaginary (C 2000)
-// FIXME: <type> ::= U <source-name> <type>     # vendor extended type qualifier
 
 void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   // <ctor-dtor-name> ::= C1  # complete object constructor
