@@ -1279,12 +1279,11 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
     return false;
 
   // First issue a copy to GR16_ABCD or GR32_ABCD.
-  unsigned CopyOpc = (SrcVT == MVT::i16) ? X86::MOV16rr : X86::MOV32rr;
   const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
     ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
   unsigned CopyReg = createResultReg(CopyRC);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CopyOpc), CopyReg)
-    .addReg(InputReg);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+          CopyReg).addReg(InputReg);
 
   // Then issue an extract_subreg.
   unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
