@@ -1377,8 +1377,9 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
 bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
-  if (Cond == 0) return false;
-
+  if (Cond == 0 || (!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
+    Cond->getParent() != BB || !Cond->hasOneUse())
+  return false;
   
   // Only allow this if the condition is a simple instruction that can be
   // executed unconditionally.  It must be in the same block as the branch, and
@@ -1387,10 +1388,23 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   // Ignore dbg intrinsics.
   while(isa<DbgInfoIntrinsic>(FrontIt))
     ++FrontIt;
-  if ((!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
-      Cond->getParent() != BB || &*FrontIt != Cond || !Cond->hasOneUse()) {
-    return false;
+    
+  // Allow a single instruction to be hoisted in addition to the compare
+  // that feeds the branch.  We later ensure that any values that _it_ uses
+  // were also live in the predecessor, so that we don't unnecessarily create
+  // register pressure or inhibit out-of-order execution.
+  Instruction *BonusInst = 0;
+  if (&*FrontIt != Cond &&
+      (*FrontIt).hasOneUse() && *(*FrontIt).use_begin() == Cond &&
+      (*FrontIt).isSafeToSpeculativelyExecute() &&
+      !(*FrontIt).mayReadFromMemory()) {
+    BonusInst = &*FrontIt;
+    ++FrontIt;
   }
+  
+  // Only a single bonus inst is allowed.
+  if (&*FrontIt != Cond)
+    return false;
   
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
@@ -1429,6 +1443,44 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
         !SafeToMergeTerminators(BI, PBI))
       continue;
     
+    // Ensure that any values used in the bonus instruction are also used
+    // by the terminator of the predecessor.  This means that those values
+    // must already have been resolved, so we won't be inhibiting the 
+    // out-of-order core by speculating them earlier.
+    if (BonusInst) {
+      // Collect the values used by the bonus inst
+      SmallPtrSet<Value*, 4> UsedValues;
+      for (Instruction::op_iterator OI = BonusInst->op_begin(),
+           OE = BonusInst->op_end(); OI != OE; ++OI) {
+        Value* V = *OI;
+        if (!isa<Constant>(V))
+          UsedValues.insert(V);
+      }
+
+      SmallVector<std::pair<Value*, unsigned>, 4> Worklist;
+      Worklist.push_back(std::make_pair(PBI->getOperand(0), 0));
+      
+      // Walk up to four levels back up the use-def chain of the predecessor's
+      // terminator to see if all those values were used.  The choice of four
+      // levels is arbitrary, to provide a compile-time-cost bound.
+      while (!Worklist.empty()) {
+        std::pair<Value*, unsigned> Pair = Worklist.back();
+        Worklist.pop_back();
+        
+        if (Pair.second >= 4) continue;
+        UsedValues.erase(Pair.first);
+        if (UsedValues.empty()) break;
+        
+        if (Instruction* I = dyn_cast<Instruction>(Pair.first)) {
+          for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
+               OI != OE; ++OI)
+            Worklist.push_back(std::make_pair(OI->get(), Pair.second+1));
+        }       
+      }
+      
+      if (!UsedValues.empty()) return false;
+    }
+    
     Instruction::BinaryOps Opc;
     bool InvertPredCond = false;
 
@@ -1457,9 +1509,19 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       PBI->setSuccessor(1, OldTrue);
     }
     
+    // If we have a bonus inst, clone it into the predecessor block.
+    Instruction *NewBonus = 0;
+    if (BonusInst) {
+      NewBonus = BonusInst->clone();
+      PredBlock->getInstList().insert(PBI, NewBonus);
+      NewBonus->takeName(BonusInst);
+      BonusInst->setName(BonusInst->getName()+".old");
+    }
+    
     // Clone Cond into the predecessor basic block, and or/and the
     // two conditions together.
     Instruction *New = Cond->clone();
+    if (BonusInst) New->replaceUsesOfWith(BonusInst, NewBonus);
     PredBlock->getInstList().insert(PBI, New);
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
