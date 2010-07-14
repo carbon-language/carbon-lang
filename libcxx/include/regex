@@ -2040,6 +2040,7 @@ class __bracket_expression
     bool __negate_;
     bool __icase_;
     bool __collate_;
+    bool __might_have_digraph_;
 
     __bracket_expression(const __bracket_expression&);
     __bracket_expression& operator=(const __bracket_expression&);
@@ -2049,7 +2050,8 @@ public:
     __bracket_expression(const _Traits& __traits, __node<_CharT>* __s,
                                  bool __negate, bool __icase, bool __collate)
         : base(__s), __traits_(__traits), __mask_(), __negate_(__negate),
-          __icase_(__icase), __collate_(__collate) {}
+          __icase_(__icase), __collate_(__collate),
+          __might_have_digraph_(__traits_.getloc().name() != "C") {}
 
     virtual void __exec(__state&) const;
 
@@ -2129,66 +2131,69 @@ __bracket_expression<_CharT, _Traits>::__exec(__state& __s) const
     if (__s.__current_ != __s.__last_)
     {
         ++__consumed;
-        const _CharT* __next = next(__s.__current_);
-        if (__next != __s.__last_)
+        if (__might_have_digraph_)
         {
-            pair<_CharT, _CharT> __ch2(*__s.__current_, *__next);
-            if (__icase_)
+            const _CharT* __next = next(__s.__current_);
+            if (__next != __s.__last_)
             {
-                __ch2.first = __traits_.translate_nocase(__ch2.first);
-                __ch2.second = __traits_.translate_nocase(__ch2.second);
-            }
-            else if (__collate_)
-            {
-                __ch2.first = __traits_.translate(__ch2.first);
-                __ch2.second = __traits_.translate(__ch2.second);
-            }
-            if (!__traits_.lookup_collatename(&__ch2.first, &__ch2.first+2).empty())
-            {
-                // __ch2 is a digraph in this locale
-                ++__consumed;
-                for (size_t __i = 0; __i < __digraphs_.size(); ++__i)
+                pair<_CharT, _CharT> __ch2(*__s.__current_, *__next);
+                if (__icase_)
                 {
-                    if (__ch2 == __digraphs_[__i])
+                    __ch2.first = __traits_.translate_nocase(__ch2.first);
+                    __ch2.second = __traits_.translate_nocase(__ch2.second);
+                }
+                else if (__collate_)
+                {
+                    __ch2.first = __traits_.translate(__ch2.first);
+                    __ch2.second = __traits_.translate(__ch2.second);
+                }
+                if (!__traits_.lookup_collatename(&__ch2.first, &__ch2.first+2).empty())
+                {
+                    // __ch2 is a digraph in this locale
+                    ++__consumed;
+                    for (size_t __i = 0; __i < __digraphs_.size(); ++__i)
+                    {
+                        if (__ch2 == __digraphs_[__i])
+                        {
+                            __found = true;
+                            goto __exit;
+                        }
+                    }
+                    if (__collate_ && !__ranges_.empty())
+                    {
+                        string_type __s2 = __traits_.transform(&__ch2.first,
+                                                               &__ch2.first + 2);
+                        for (size_t __i = 0; __i < __ranges_.size(); ++__i)
+                        {
+                            if (__ranges_[__i].first <= __s2 &&
+                                __s2 <= __ranges_[__i].second)
+                            {
+                                __found = true;
+                                goto __exit;
+                            }
+                        }
+                    }
+                    if (!__equivalences_.empty())
+                    {
+                        string_type __s2 = __traits_.transform_primary(&__ch2.first,
+                                                                       &__ch2.first + 2);
+                        for (size_t __i = 0; __i < __equivalences_.size(); ++__i)
+                        {
+                            if (__s2 == __equivalences_[__i])
+                            {
+                                __found = true;
+                                goto __exit;
+                            }
+                        }
+                    }
+                    if (__traits_.isctype(__ch2.first, __mask_) &&
+                        __traits_.isctype(__ch2.second, __mask_))
                     {
                         __found = true;
                         goto __exit;
                     }
-                }
-                if (__collate_ && !__ranges_.empty())
-                {
-                    string_type __s2 = __traits_.transform(&__ch2.first,
-                                                           &__ch2.first + 2);
-                    for (size_t __i = 0; __i < __ranges_.size(); ++__i)
-                    {
-                        if (__ranges_[__i].first <= __s2 &&
-                            __s2 <= __ranges_[__i].second)
-                        {
-                            __found = true;
-                            goto __exit;
-                        }
-                    }
-                }
-                if (!__equivalences_.empty())
-                {
-                    string_type __s2 = __traits_.transform_primary(&__ch2.first,
-                                                                   &__ch2.first + 2);
-                    for (size_t __i = 0; __i < __equivalences_.size(); ++__i)
-                    {
-                        if (__s2 == __equivalences_[__i])
-                        {
-                            __found = true;
-                            goto __exit;
-                        }
-                    }
-                }
-                if (__traits_.isctype(__ch2.first, __mask_) &&
-                    __traits_.isctype(__ch2.second, __mask_))
-                {
-                    __found = true;
                     goto __exit;
                 }
-                goto __exit;
             }
         }
         // test *__s.__current_ as not a digraph
@@ -3405,18 +3410,25 @@ template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_begin_marked_subexpression()
 {
-    __end_->first() = new __begin_marked_subexpression<_CharT>(++__marked_count_,
-                                                               __end_->first());
-    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+    if (!(__flags_ & nosubs))
+    {
+        __end_->first() =
+                new __begin_marked_subexpression<_CharT>(++__marked_count_,
+                                                         __end_->first());
+        __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+    }
 }
 
 template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_end_marked_subexpression(unsigned __sub)
 {
-    __end_->first() = new __end_marked_subexpression<_CharT>(__sub,
-                                                             __end_->first());
-    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+    if (!(__flags_ & nosubs))
+    {
+        __end_->first() =
+                new __end_marked_subexpression<_CharT>(__sub, __end_->first());
+        __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+    }
 }
 
 template <class _CharT, class _Traits>
@@ -4045,14 +4057,11 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
 {
     typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;
     deque<__state> __states;
-    difference_type __j = 0;
     difference_type __highest_j = 0;
     difference_type _N = _STD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
-        __states.push_back(__state());
-        __states.back().__do_ = __state::__consume_input;
         __states.push_back(__state());
         __states.back().__do_ = 0;
         __states.back().__first_ = __first;
@@ -4061,7 +4070,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
         __states.back().__loop_data_.resize(__loop_count());
         __states.back().__node_ = __st;
         __states.back().__flags_ = __flags;
-        _BidirectionalIterator __current = __first;
+        bool __matched = false;
         do
         {
             __state& __s = __states.back();
@@ -4070,25 +4079,19 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
             switch (__s.__do_)
             {
             case __state::__end_state:
-                __highest_j = _STD::max(__highest_j, __j);
+                if (__highest_j < __s.__current_ - __s.__first_)
+                {
+                    __highest_j = __s.__current_ - __s.__first_;
+                    __matched = true;
+                }
                 if (__highest_j == _N)
                     __states.clear();
                 else
                     __states.pop_back();
                 break;
             case __state::__consume_input:
-                if (__j == _N)
-                    return false;
-                ++__current;
-                if (++__j != _N && __states.size() > 1)
-                    __states.push_front(_STD::move(__s));
-                __states.pop_back();
                 break;
             case __state::__accept_and_consume:
-                // needs to be changed for the case that this state
-                // consumed more than one character.  This will scan
-                // down the deque and insert extra __consume_input
-                // states as necessary
                 __states.push_front(_STD::move(__s));
                 __states.pop_back();
                 break;
@@ -4111,7 +4114,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
                 break;
             }
         } while (!__states.empty());
-        if (__highest_j != 0)
+        if (__matched)
         {
             __m.__matches_[0].first = __first;
             __m.__matches_[0].second = _STD::next(__first, __highest_j);
