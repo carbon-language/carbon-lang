@@ -407,13 +407,16 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
       return false;
     
     // Filter out names reserved for the implementation (C99 7.1.3, 
-    // C++ [lib.global.names]). Users don't need to see those.
+    // C++ [lib.global.names]) if they come from a system header.
     //
     // FIXME: Add predicate for this.
     if (Id->getLength() >= 2) {
       const char *Name = Id->getNameStart();
       if (Name[0] == '_' &&
-          (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z')))
+          (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z')) &&
+          (ND->getLocation().isInvalid() ||
+           SemaRef.SourceMgr.isInSystemHeader(
+                          SemaRef.SourceMgr.getSpellingLoc(ND->getLocation()))))
         return false;
     }
   }
