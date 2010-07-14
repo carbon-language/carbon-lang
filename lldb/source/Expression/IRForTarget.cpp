@@ -129,7 +129,8 @@ IRForTarget::runOnBasicBlock(Module &M, BasicBlock &BB)
     return true;
 }
 
-static std::string PrintValue(llvm::Value *V, bool truncate = false)
+static std::string 
+PrintValue(llvm::Value *V, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
@@ -138,6 +139,109 @@ static std::string PrintValue(llvm::Value *V, bool truncate = false)
     if (truncate)
         s.resize(s.length() - 1);
     return s;
+}
+
+// UnfoldConstant operates on a constant [C] which has just been replaced with a value
+// [new_value].  We assume that new_value has been properly placed early in the function,
+// most likely somewhere in front of the first instruction in the entry basic block 
+// [first_entry_instruction].  
+//
+// UnfoldConstant reads through the uses of C and replaces C in those uses with new_value.
+// Where those uses are constants, the function generates new instructions to compute the
+// result of the new, non-constant expression and places them before first_entry_instruction.  
+// These instructions replace the constant uses, so UnfoldConstant calls itself recursively
+// for those.
+
+static bool
+UnfoldConstant(llvm::Constant *C, llvm::Value *new_value, llvm::Instruction *first_entry_instruction)
+{
+    lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
+    Value::use_iterator ui;
+    
+    for (ui = C->use_begin();
+         ui != C->use_end();
+         ++ui)
+    {
+        User *user = *ui;
+        
+        if (Constant *constant = dyn_cast<Constant>(user))
+        {
+            // synthesize a new non-constant equivalent of the constant
+            
+            if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(constant))
+            {
+                switch (constant_expr->getOpcode())
+                {
+                default:
+                    if (log)
+                        log->Printf("Unhandled constant expression type: %s", PrintValue(constant_expr).c_str());
+                    return false;
+                case Instruction::BitCast:
+                    {
+                        // UnaryExpr
+                        //   OperandList[0] is value
+                        
+                        Value *s = constant_expr->getOperand(0);
+                        
+                        if (s == C)
+                            s = new_value;
+                        
+                        BitCastInst *bit_cast(new BitCastInst(s, C->getType(), "", first_entry_instruction));
+                        
+                        UnfoldConstant(constant_expr, bit_cast, first_entry_instruction);
+                    }
+                    break;
+                case Instruction::GetElementPtr:
+                    {
+                        // GetElementPtrConstantExpr
+                        //   OperandList[0] is base
+                        //   OperandList[1]... are indices
+                        
+                        Value *ptr = constant_expr->getOperand(0);
+                        
+                        if (ptr == C)
+                            ptr = new_value;
+                        
+                        SmallVector<Value*, 16> indices;
+                        
+                        unsigned operand_index;
+                        unsigned num_operands = constant_expr->getNumOperands();
+                        
+                        for (operand_index = 1;
+                             operand_index < num_operands;
+                             ++operand_index)
+                        {
+                            Value *operand = constant_expr->getOperand(operand_index);
+                            
+                            if (operand == C)
+                                operand = new_value;
+                            
+                            indices.push_back(operand);
+                        }
+                        
+                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", first_entry_instruction));
+                        
+                        UnfoldConstant(constant_expr, get_element_ptr, first_entry_instruction);
+                    }
+                    break;
+                }
+            }
+            else
+            {
+                if (log)
+                    log->Printf("Unhandled constant type: %s", PrintValue(constant).c_str());
+                return false;
+            }
+        }
+        else
+        {
+            // simple fall-through case for non-constants
+            user->replaceUsesOfWith(C, new_value);
+        }
+    }
+    
+    return true;
 }
 
 bool 
@@ -203,7 +307,10 @@ IRForTarget::replaceVariables(Module &M, Function *F)
         GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", first_entry_instruction);
         BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", first_entry_instruction);
         
-        value->replaceAllUsesWith(bit_cast);
+        if (Constant *constant = dyn_cast<Constant>(value))
+            UnfoldConstant(constant, bit_cast, first_entry_instruction);
+        else
+            value->replaceAllUsesWith(bit_cast);
     }
     
     if (log)
