@@ -288,9 +288,10 @@ void FastISel::recomputeInsertPt() {
 
 FastISel::SavePoint FastISel::enterLocalValueArea() {
   MachineBasicBlock::iterator OldInsertPt = FuncInfo.InsertPt;
+  DebugLoc OldDL = DL;
   recomputeInsertPt();
   DL = DebugLoc();
-  SavePoint SP = { OldInsertPt, DL };
+  SavePoint SP = { OldInsertPt, OldDL };
   return SP;
 }
 
