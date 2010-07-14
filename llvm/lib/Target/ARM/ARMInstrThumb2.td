@@ -2435,7 +2435,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
   def t2LDM_RET : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                          reglist:$dsts, variable_ops), IIC_Br,
-                        "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts",
+                        "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
                         "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
