@@ -103,3 +103,15 @@
 @implementation C (Category) // expected-note 2 {{implementation is here}}
 @end
 
+// Don't complain if a property is already @synthesized by usr.
+@interface D
+{
+}
+@property int PROP;
+@end
+
+@implementation D
+- (int) Meth { return self.PROP; }
+@synthesize PROP=IVAR;
+@end
+
