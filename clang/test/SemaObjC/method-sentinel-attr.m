@@ -15,6 +15,12 @@
 - (void) foo10 : (int)x, ... __attribute__ ((__sentinel__(1,1)));
 - (void) foo11 : (int)x, ... __attribute__ ((__sentinel__(1,1,3)));  // expected-error {{attribute requires 0, 1 or 2 argument(s)}}
 - (void) foo12 : (int)x, ... ATTR; // expected-note {{method has been explicitly marked sentinel here}}
+
+// rdar:// 7975788
+- (id) foo13 : (id)firstObj, ... __attribute__((sentinel(0,1)));
+- (id) foo14 : (id)firstObj :  (Class)secondObj, ... __attribute__((sentinel(0,1)));
+- (id) foo15 : (id*)firstObj, ... __attribute__((sentinel(0,1)));
+- (id) foo16 : (id**)firstObj, ... __attribute__((sentinel(0,1)));
 @end
 
 int main ()
@@ -33,5 +39,11 @@ int main ()
   [p foo7:1, NULL]; // ok
 
   [p foo12:1]; // expected-warning {{not enough variable arguments in 'foo12:' declaration to fit a sentinel}}
+
+  // rdar:// 7975788
+  [ p foo13 : NULL]; 
+  [ p foo14 : 0 : NULL]; 
+  [ p foo16 : NULL]; 
+  [ p foo15 : NULL];
 }
  
