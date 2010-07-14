@@ -267,3 +267,15 @@ entry:
   %0 = shufflevector <2 x double> %arg0_int64x1_t, <2 x double> undef, <2 x i32> <i32 0, i32 0>
   ret <2 x double> %0
 }
+
+; Radar 7373643
+;CHECK: redundantVdup:
+;CHECK: vmov.i8
+;CHECK-NOT: vdup.8
+;CHECK: vstr.64
+define void @redundantVdup(<8 x i8>* %ptr) nounwind {
+  %1 = insertelement <8 x i8> undef, i8 -128, i32 0
+  %2 = shufflevector <8 x i8> %1, <8 x i8> undef, <8 x i32> zeroinitializer
+  store <8 x i8> %2, <8 x i8>* %ptr, align 8
+  ret void
+}

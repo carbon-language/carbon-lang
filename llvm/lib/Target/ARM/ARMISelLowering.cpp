@@ -4228,6 +4228,34 @@ static SDValue PerformVMOVRRDCombine(SDNode *N,
   return SDValue();
 }
 
+/// PerformVDUPLANECombine - Target-specific dag combine xforms for
+/// ARMISD::VDUPLANE.
+static SDValue PerformVDUPLANECombine(SDNode *N,
+                                      TargetLowering::DAGCombinerInfo &DCI) {
+  // If the source is already a VMOVIMM splat, the VDUPLANE is redundant.
+  SDValue Op = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // Ignore bit_converts.
+  while (Op.getOpcode() == ISD::BIT_CONVERT)
+    Op = Op.getOperand(0);
+  if (Op.getOpcode() != ARMISD::VMOVIMM)
+    return SDValue();
+
+  // Make sure the VMOV element size is not bigger than the VDUPLANE elements.
+  unsigned EltSize = Op.getValueType().getVectorElementType().getSizeInBits();
+  // The canonical VMOV for a zero vector uses a 32-bit element size.
+  unsigned Imm = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  unsigned EltBits;
+  if (ARM_AM::decodeNEONModImm(Imm, EltBits) == 0)
+    EltSize = 8;
+  if (EltSize > VT.getVectorElementType().getSizeInBits())
+    return SDValue();
+
+  SDValue Res = DCI.DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(), VT, Op);
+  return DCI.CombineTo(N, Res, false);
+}
+
 /// getVShiftImm - Check if this is a valid build_vector for the immediate
 /// operand of a vector shift operation, where all the elements of the
 /// build_vector must have the same constant integer value.
@@ -4606,6 +4634,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
+  case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
   case ISD::SRA:
