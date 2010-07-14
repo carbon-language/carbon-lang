@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-BlackfinMCAsmInfo::BlackfinMCAsmInfo(const Target &T, const StringRef &TT) {
+BlackfinMCAsmInfo::BlackfinMCAsmInfo(const Target &T, StringRef TT) {
   GlobalPrefix = "_";
   CommentString = "//";
   HasSetDirective = false;

@@ -25,7 +25,7 @@ namespace llvm {
     const char *RomData16bitsDirective;
     const char *RomData32bitsDirective;
   public:    
-    PIC16MCAsmInfo(const Target &T, const StringRef &TT);
+    PIC16MCAsmInfo(const Target &T, StringRef TT);
     
     virtual const char *getDataASDirective(unsigned size, unsigned AS) const;
   };

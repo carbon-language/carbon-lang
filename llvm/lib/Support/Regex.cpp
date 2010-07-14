@@ -19,7 +19,7 @@
 #include <string>
 using namespace llvm;
 
-Regex::Regex(const StringRef &regex, unsigned Flags) {
+Regex::Regex(StringRef regex, unsigned Flags) {
   unsigned flags = 0;
   preg = new llvm_regex();
   preg->re_endp = regex.end();
@@ -52,7 +52,7 @@ unsigned Regex::getNumMatches() const {
   return preg->re_nsub;
 }
 
-bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches){
+bool Regex::match(StringRef String, SmallVectorImpl<StringRef> *Matches){
   unsigned nmatch = Matches ? preg->re_nsub+1 : 0;
 
   // pmatch needs to have at least one element.

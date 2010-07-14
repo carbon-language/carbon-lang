@@ -107,7 +107,7 @@ private:
   
   void EatToEndOfStatement();
   
-  bool ParseAssignment(const StringRef &Name);
+  bool ParseAssignment(StringRef Name);
 
   bool ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res, SMLoc &EndLoc);

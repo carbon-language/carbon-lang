@@ -20,7 +20,7 @@
 #include "PIC16ISelLowering.h"
 using namespace llvm;
 
-PIC16MCAsmInfo::PIC16MCAsmInfo(const Target &T, const StringRef &TT) {
+PIC16MCAsmInfo::PIC16MCAsmInfo(const Target &T, StringRef TT) {
   CommentString = ";";
   GlobalPrefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
   GlobalDirective = "\tglobal\t";

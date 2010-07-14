@@ -36,7 +36,7 @@ namespace llvm {
     /// Compiles the given POSIX Extended Regular Expression \arg Regex.
     /// This implementation supports regexes and matching strings with embedded
     /// NUL characters.
-    Regex(const StringRef &Regex, unsigned Flags = NoFlags);
+    Regex(StringRef Regex, unsigned Flags = NoFlags);
     ~Regex();
 
     /// isValid - returns the error encountered during regex compilation, or
@@ -55,7 +55,7 @@ namespace llvm {
     /// the first group is always the entire pattern.
     ///
     /// This returns true on a successful match.
-    bool match(const StringRef &String, SmallVectorImpl<StringRef> *Matches=0);
+    bool match(StringRef String, SmallVectorImpl<StringRef> *Matches = 0);
 
     /// sub - Return the result of replacing the first match of the regex in
     /// \arg String with the \arg Repl string. Backreferences like "\0" in the

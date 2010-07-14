@@ -14,7 +14,7 @@
 #include "MSP430MCAsmInfo.h"
 using namespace llvm;
 
-MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, const StringRef &TT) {
+MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, StringRef TT) {
   PrivateGlobalPrefix = ".L";
   WeakRefDirective ="\t.weak\t";
   PCSymbol=".";

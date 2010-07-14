@@ -179,7 +179,7 @@ namespace llvm {
 
     // Constructors.
     APFloat(const fltSemantics &); // Default construct to 0.0
-    APFloat(const fltSemantics &, const StringRef &);
+    APFloat(const fltSemantics &, StringRef);
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative);
     APFloat(const fltSemantics &, uninitializedTag);
@@ -282,7 +282,7 @@ namespace llvm {
                                             bool, roundingMode);
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
-    opStatus convertFromString(const StringRef&, roundingMode);
+    opStatus convertFromString(StringRef, roundingMode);
     APInt bitcastToAPInt() const;
     double convertToDouble() const;
     float convertToFloat() const;
@@ -386,8 +386,8 @@ namespace llvm {
                                           roundingMode, bool *) const;
     opStatus convertFromUnsignedParts(const integerPart *, unsigned int,
                                       roundingMode);
-    opStatus convertFromHexadecimalString(const StringRef&, roundingMode);
-    opStatus convertFromDecimalString (const StringRef&, roundingMode);
+    opStatus convertFromHexadecimalString(StringRef, roundingMode);
+    opStatus convertFromDecimalString(StringRef, roundingMode);
     char *convertNormalToHexString(char *, unsigned int, bool,
                                    roundingMode) const;
     opStatus roundSignificandWithExponent(const integerPart *, unsigned int,

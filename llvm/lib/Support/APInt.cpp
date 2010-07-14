@@ -102,7 +102,7 @@ APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
   clearUnusedBits();
 }
 
-APInt::APInt(unsigned numbits, const StringRef& Str, uint8_t radix)
+APInt::APInt(unsigned numbits, StringRef Str, uint8_t radix)
   : BitWidth(numbits), VAL(0) {
   assert(BitWidth && "Bitwidth too small");
   fromString(numbits, Str, radix);
@@ -613,7 +613,7 @@ APInt& APInt::flip(unsigned bitPosition) {
   return *this;
 }
 
-unsigned APInt::getBitsNeeded(const StringRef& str, uint8_t radix) {
+unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   assert(!str.empty() && "Invalid string length");
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
@@ -2046,7 +2046,7 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
 }
 
-void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
+void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
   // Check our assumptions here
   assert(!str.empty() && "Invalid string length");
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&

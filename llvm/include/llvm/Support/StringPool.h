@@ -64,7 +64,7 @@ namespace llvm {
     /// intern - Adds a string to the pool and returns a reference-counted
     /// pointer to it. No additional memory is allocated if the string already
     /// exists in the pool.
-    PooledStringPtr intern(const StringRef &Str);
+    PooledStringPtr intern(StringRef Str);
 
     /// empty - Checks whether the pool is empty. Returns true if so.
     ///

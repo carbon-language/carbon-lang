@@ -712,7 +712,7 @@ bool AsmParser::ParseStatement() {
   return HadError;
 }
 
-bool AsmParser::ParseAssignment(const StringRef &Name) {
+bool AsmParser::ParseAssignment(StringRef Name) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 

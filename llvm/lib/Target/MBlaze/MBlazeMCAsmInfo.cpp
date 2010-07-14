@@ -14,7 +14,7 @@
 #include "MBlazeMCAsmInfo.h"
 using namespace llvm;
 
-MBlazeMCAsmInfo::MBlazeMCAsmInfo(const Target &T, const StringRef &TT) {
+MBlazeMCAsmInfo::MBlazeMCAsmInfo(const Target &T, StringRef TT) {
   AlignmentIsInBytes          = false;
   Data16bitsDirective         = "\t.half\t";
   Data32bitsDirective         = "\t.word\t";

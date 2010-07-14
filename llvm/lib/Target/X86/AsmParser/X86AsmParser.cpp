@@ -65,7 +65,7 @@ public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser)
     : TargetAsmParser(T), Parser(_Parser) {}
 
-  virtual bool ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+  virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
@@ -602,7 +602,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 }
 
 bool X86ATTAsmParser::
-ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // The various flavors of pushf and popf use Requires<In32BitMode> and
   // Requires<In64BitMode>, but the assembler doesn't yet implement that.

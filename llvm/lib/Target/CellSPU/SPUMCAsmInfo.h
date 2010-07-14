@@ -14,14 +14,14 @@
 #ifndef SPUTARGETASMINFO_H
 #define SPUTARGETASMINFO_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
-  class StringRef;
   
   struct SPULinuxMCAsmInfo : public MCAsmInfo {
-    explicit SPULinuxMCAsmInfo(const Target &T, const StringRef &TT);
+    explicit SPULinuxMCAsmInfo(const Target &T, StringRef TT);
   };
 } // namespace llvm
 

@@ -246,7 +246,7 @@ namespace llvm {
 
     const char* getLibraryName(const GlobalVariable* GV); 
     
-    const char* getLibraryForSymbol(const StringRef &Name, bool isFunction,
+    const char* getLibraryForSymbol(StringRef Name, bool isFunction,
                                     CallingConv::ID CallingConv);
 
     void printExternals();

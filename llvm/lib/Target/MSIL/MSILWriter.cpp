@@ -1621,8 +1621,7 @@ const char* MSILWriter::getLibraryName(const GlobalVariable* GV) {
 }
 
 
-const char* MSILWriter::getLibraryForSymbol(const StringRef &Name, 
-                                            bool isFunction,
+const char* MSILWriter::getLibraryForSymbol(StringRef Name, bool isFunction,
                                             CallingConv::ID CallingConv) {
   // TODO: Read *.def file with function and libraries definitions.
   return "MSVCRT.DLL";  

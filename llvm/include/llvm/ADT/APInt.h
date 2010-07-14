@@ -162,7 +162,7 @@ class APInt {
   ///
   /// @param radix 2, 8, 10, or 16
   /// @brief Convert a char array into an APInt
-  void fromString(unsigned numBits, const StringRef &str, uint8_t radix);
+  void fromString(unsigned numBits, StringRef str, uint8_t radix);
 
   /// This is used by the toString method to divide by the radix. It simply
   /// provides a more convenient form of divide for internal use since KnuthDiv
@@ -248,7 +248,7 @@ public:
   /// @param str the string to be interpreted
   /// @param radix the radix to use for the conversion 
   /// @brief Construct an APInt from a string representation.
-  APInt(unsigned numBits, const StringRef &str, uint8_t radix);
+  APInt(unsigned numBits, StringRef str, uint8_t radix);
 
   /// Simply makes *this a copy of that.
   /// @brief Copy Constructor.
@@ -1153,7 +1153,7 @@ public:
   /// This method determines how many bits are required to hold the APInt
   /// equivalent of the string given by \arg str.
   /// @brief Get bits required for string value.
-  static unsigned getBitsNeeded(const StringRef& str, uint8_t radix);
+  static unsigned getBitsNeeded(StringRef str, uint8_t radix);
 
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number

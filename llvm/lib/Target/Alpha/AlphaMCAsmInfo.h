@@ -14,14 +14,14 @@
 #ifndef ALPHATARGETASMINFO_H
 #define ALPHATARGETASMINFO_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
-  class StringRef;
 
   struct AlphaMCAsmInfo : public MCAsmInfo {
-    explicit AlphaMCAsmInfo(const Target &T, const StringRef &TT);
+    explicit AlphaMCAsmInfo(const Target &T, StringRef TT);
   };
 
 } // namespace llvm

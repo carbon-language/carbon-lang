@@ -16,7 +16,7 @@
 #include "llvm/MC/MCSectionELF.h"
 using namespace llvm;
 
-SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT) {
+SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, StringRef TT) {
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   PCSymbol = ".";

@@ -14,14 +14,14 @@
 #ifndef BLACKFINTARGETASMINFO_H
 #define BLACKFINTARGETASMINFO_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
-  class StringRef;
 
   struct BlackfinMCAsmInfo : public MCAsmInfo {
-    explicit BlackfinMCAsmInfo(const Target &T, const StringRef &TT);
+    explicit BlackfinMCAsmInfo(const Target &T, StringRef TT);
   };
 
 } // namespace llvm

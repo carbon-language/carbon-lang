@@ -14,13 +14,14 @@
 #ifndef MSP430TARGETASMINFO_H
 #define MSP430TARGETASMINFO_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
   class Target;
-  class StringRef;
+
   struct MSP430MCAsmInfo : public MCAsmInfo {
-    explicit MSP430MCAsmInfo(const Target &T, const StringRef &TT);
+    explicit MSP430MCAsmInfo(const Target &T, StringRef TT);
   };
 
 } // namespace llvm

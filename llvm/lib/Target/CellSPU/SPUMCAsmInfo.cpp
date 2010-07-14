@@ -14,7 +14,7 @@
 #include "SPUMCAsmInfo.h"
 using namespace llvm;
 
-SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
+SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, StringRef TT) {
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = "\t.quad\t";
   AlignmentIsInBytes = false;

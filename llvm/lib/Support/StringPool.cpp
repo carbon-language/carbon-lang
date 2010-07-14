@@ -22,7 +22,7 @@ StringPool::~StringPool() {
   assert(InternTable.empty() && "PooledStringPtr leaked!");
 }
 
-PooledStringPtr StringPool::intern(const StringRef &Key) {
+PooledStringPtr StringPool::intern(StringRef Key) {
   table_t::iterator I = InternTable.find(Key);
   if (I != InternTable.end())
     return PooledStringPtr(&*I);

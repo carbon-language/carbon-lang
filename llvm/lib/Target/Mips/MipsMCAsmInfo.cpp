@@ -14,7 +14,7 @@
 #include "MipsMCAsmInfo.h"
 using namespace llvm;
 
-MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
+MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
   AlignmentIsInBytes          = false;
   Data16bitsDirective         = "\t.half\t";
   Data32bitsDirective         = "\t.word\t";

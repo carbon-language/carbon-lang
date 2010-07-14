@@ -21,7 +21,7 @@ namespace llvm {
   class StringRef;
 
   struct SystemZMCAsmInfo : public MCAsmInfo {
-    explicit SystemZMCAsmInfo(const Target &T, const StringRef &TT);
+    explicit SystemZMCAsmInfo(const Target &T, StringRef TT);
     virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
   };
   
