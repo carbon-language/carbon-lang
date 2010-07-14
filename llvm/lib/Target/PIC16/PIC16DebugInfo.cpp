@@ -416,7 +416,7 @@ void PIC16DbgInfo::EmitAuxEntry(const std::string VarName, int Aux[], int Num,
   if (!TagName.empty()) Tmp += ", " + TagName;
   
   for (int i = 0; i<Num; i++)
-    Tmp += "," + utostr(Aux[i] && 0xff);
+    Tmp += "," + utostr(Aux[i] & 0xff);
   
   OS.EmitRawText("\n\t.dim " + Twine(VarName) + ", 1" + Tmp);
 }
