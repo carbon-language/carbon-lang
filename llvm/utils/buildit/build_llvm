@@ -63,15 +63,6 @@ DIR=`pwd`
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
-DEVELOPER_DIR="${DEVELOPER_DIR-Developer}"
-if [ "$ARM_HOSTED_BUILD" = yes ]; then
-    DT_HOME="$DEST_DIR/usr"
-else
-    DT_HOME="$DEST_DIR/$DEVELOPER_DIR/usr"
-fi
-
-DEST_ROOT="/$DEVELOPER_DIR$DEST_ROOT"
-
 ################################################################################
 # Run the build.
 
@@ -131,16 +122,14 @@ elif [ $DARWIN_VERS -gt 9 ]; then
 fi
 
 if [ "$ARM_HOSTED_BUILD" = yes ]; then
-  configure_prefix=$DT_HOME
   configure_opts="--enable-targets=arm --host=arm-apple-darwin10 \
                   --target=arm-apple-darwin10 --build=i686-apple-darwin10"
 else
-  configure_prefix=$DT_HOME/local
   configure_opts="--enable-targets=arm,x86,powerpc,cbe"
 fi
 
 if [ \! -f Makefile.config ]; then
-  $SRC_DIR/configure --prefix=$configure_prefix $configure_opts \
+  $SRC_DIR/configure --prefix=$DEST_DIR$DEST_ROOT $configure_opts \
     --enable-assertions=$LLVM_ASSERTIONS \
     --enable-optimized=$LLVM_OPTIMIZED \
     --disable-bindings \
@@ -254,7 +243,7 @@ if [ "x$LLVM_DEBUG" != "x1" ]; then
 fi
 
 # Copy over the tblgen utility.
-cp `find $DIR -name tblgen` $DT_HOME/local/bin
+cp `find $DIR -name tblgen` $DEST_DIR$DEST_ROOT/bin
 
 # Remove .dir files 
 cd $DEST_DIR$DEST_ROOT
@@ -274,7 +263,7 @@ else
 fi
 
 # The Hello dylib is an example of how to build a pass. No need to install it.
-rm $DEST_DIR$DEST_ROOT/lib/libLLVMHello.dylib
+rm $DEST_DIR$DEST_ROOT/lib/LLVMHello.dylib
 
 # Compress manpages
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
@@ -324,12 +313,15 @@ find obj-* -name \*.\[chy\] -o -name \*.cpp -print \
 
 cd $DEST_DIR$DEST_ROOT
 if [ "$INSTALL_LIBLTO" = "yes" ]; then
+  DT_HOME="$DEST_DIR/Developer/usr"
   mkdir -p $DT_HOME/lib
   mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
 
   # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
   # PPC objects!
   strip -arch all -Sl $DT_HOME/lib/libLTO.dylib
+else
+  rm -f lib/libLTO.dylib
 fi
 rm -f lib/libLTO.a lib/libLTO.la
 
@@ -363,7 +355,7 @@ find $DEST_DIR -name html.tar.gz -exec rm {} \;
 if [ "$INSTALL_LIBLTO" = "yes" ]; then
   mkdir -p $DEST_DIR/usr/lib/
   cd $DEST_DIR/usr/lib && \
-    ln -s ../../$DEVELOPER_DIR/usr/lib/libLTO.dylib ./libLTO.dylib
+    ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
 fi
 
 ################################################################################

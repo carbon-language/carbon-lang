@@ -32,7 +32,7 @@ DSTROOT = $(OBJROOT)/../dst
 
 #######################################################################
 
-PREFIX = /usr/local
+PREFIX = /Developer/usr/local
 
 # Unless assertions are forced on in the GMAKE command line, disable them.
 ifndef ENABLE_ASSERTIONS
@@ -70,7 +70,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 EmbeddedHosted:
-	$(MAKE) ARM_HOSTED_BUILD=yes install
+	$(MAKE) ARM_HOSTED_BUILD=yes PREFIX=/usr install
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
