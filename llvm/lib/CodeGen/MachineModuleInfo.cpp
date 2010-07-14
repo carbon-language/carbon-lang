@@ -563,3 +563,26 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   return 0;
 }
 
+namespace {
+  /// VariableDebugSorter - Comparison to sort the VariableDbgInfo map
+  /// by source location, to avoid depending on the arbitrary order that
+  /// instruction selection visits variables in.
+  struct VariableDebugSorter {
+    bool operator()(const MachineModuleInfo::VariableDbgInfoMapTy::value_type &A,
+                    const MachineModuleInfo::VariableDbgInfoMapTy::value_type &B)
+                  const {
+       if (A.second.second.getLine() != B.second.second.getLine())
+         return A.second.second.getLine() < B.second.second.getLine();
+       if (A.second.second.getCol() != B.second.second.getCol())
+         return A.second.second.getCol() < B.second.second.getCol();
+       return false;
+    }
+  };
+}
+
+MachineModuleInfo::VariableDbgInfoMapTy &
+MachineModuleInfo::getVariableDbgInfo() {
+  std::stable_sort(VariableDbgInfo.begin(), VariableDbgInfo.end(),
+                   VariableDebugSorter());
+  return VariableDbgInfo;
+}
