@@ -20,10 +20,12 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ENABLE_PIC),1)
+  ifneq ($(DISABLE_EDIS),1)
     ifneq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
 	LINK_LIBS_IN_SHARED = 1
 	SHARED_LIBRARY = 1
     endif
+  endif
 endif
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) x86asmprinter x86disassembler
