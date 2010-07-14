@@ -442,7 +442,7 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
   O << "[" << getRegisterName(MO1.getReg());
   if (MO2.getImm()) {
     // FIXME: Both darwin as and GNU as violate ARM docs here.
-    O << ", :" << MO2.getImm();
+    O << ", :" << (MO2.getImm() << 3);
   }
   O << "]";
 }
