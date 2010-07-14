@@ -106,12 +106,17 @@ public:
   /// into the current block.
   void recomputeInsertPt();
 
+  struct SavePoint {
+    MachineBasicBlock::iterator InsertPt;
+    DebugLoc DL;
+  };
+
   /// enterLocalValueArea - Prepare InsertPt to begin inserting instructions
   /// into the local value area and return the old insert position.
-  MachineBasicBlock::iterator enterLocalValueArea();
+  SavePoint enterLocalValueArea();
 
-  /// leaveLocalValueArea - Reset InsertPt to the given old insert position
-  void leaveLocalValueArea(MachineBasicBlock::iterator OldInsertPt);
+  /// leaveLocalValueArea - Reset InsertPt to the given old insert position.
+  void leaveLocalValueArea(SavePoint Old);
 
   virtual ~FastISel();
 

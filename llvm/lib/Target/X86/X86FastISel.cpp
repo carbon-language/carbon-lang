@@ -540,7 +540,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
       StubAM.GVOpFlags = GVFlags;
 
       // Prepare for inserting code in the local-value area.
-      MachineBasicBlock::iterator SaveInsertPt = enterLocalValueArea();
+      SavePoint SaveInsertPt = enterLocalValueArea();
 
       if (TLI.getPointerTy() == MVT::i64) {
         Opc = X86::MOV64rm;

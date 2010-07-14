@@ -135,7 +135,7 @@ unsigned FastISel::getRegForValue(const Value *V) {
        !FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(V))))
     return FuncInfo.InitializeRegForValue(V);
 
-  MachineBasicBlock::iterator SaveInsertPt = enterLocalValueArea();
+  SavePoint SaveInsertPt = enterLocalValueArea();
 
   // Materialize the value in a register. Emit any instructions in the
   // local value area.
@@ -286,18 +286,21 @@ void FastISel::recomputeInsertPt() {
     ++FuncInfo.InsertPt;
 }
 
-MachineBasicBlock::iterator FastISel::enterLocalValueArea() {
+FastISel::SavePoint FastISel::enterLocalValueArea() {
   MachineBasicBlock::iterator OldInsertPt = FuncInfo.InsertPt;
   recomputeInsertPt();
-  return OldInsertPt;
+  DL = DebugLoc();
+  SavePoint SP = { OldInsertPt, DL };
+  return SP;
 }
 
-void FastISel::leaveLocalValueArea(MachineBasicBlock::iterator OldInsertPt) {
+void FastISel::leaveLocalValueArea(SavePoint OldInsertPt) {
   if (FuncInfo.InsertPt != FuncInfo.MBB->begin())
     LastLocalValue = llvm::prior(FuncInfo.InsertPt);
 
   // Restore the previous insert position.
-  FuncInfo.InsertPt = OldInsertPt;
+  FuncInfo.InsertPt = OldInsertPt.InsertPt;
+  DL = OldInsertPt.DL;
 }
 
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
