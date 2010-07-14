@@ -590,3 +590,44 @@ than the Z bit, we'll need additional logic to reverse the conditionals
 associated with the comparison. Perhaps a pseudo-instruction for the comparison,
 with a post-codegen pass to clean up and handle the condition codes?
 See PR5694 for testcase.
+
+//===---------------------------------------------------------------------===//
+
+Given the following on armv5:
+int test1(int A, int B) {
+  return (A&-8388481)|(B&8388480);
+}
+
+We currently generate:
+	ldr	r2, .LCPI0_0
+	and	r0, r0, r2
+	ldr	r2, .LCPI0_1
+	and	r1, r1, r2
+	orr	r0, r1, r0
+	bx	lr
+
+We should be able to replace the second ldr+and with a bic (i.e. reuse the
+constant which was already loaded).  Not sure what's necessary to do that.
+
+//===---------------------------------------------------------------------===//
+
+Given the following on ARMv7:
+int test1(int A, int B) {
+  return (A&-8388481)|(B&8388480);
+}
+
+We currently generate:
+	bfc	r0, #7, #16
+	movw	r2, #:lower16:8388480
+	movt	r2, #:upper16:8388480
+	and	r1, r1, r2
+	orr	r0, r1, r0
+	bx	lr
+
+The following is much shorter:
+	lsr	r1, r1, #7
+	bfi	r0, r1, #7, #16
+	bx	lr
+
+
+//===---------------------------------------------------------------------===//
