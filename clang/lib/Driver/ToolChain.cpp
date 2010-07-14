@@ -26,14 +26,11 @@ const Driver &ToolChain::getDriver() const {
  return Host.getDriver();
 }
 
-std::string ToolChain::GetFilePath(const Compilation &C,
-                                   const char *Name) const {
+std::string ToolChain::GetFilePath(const char *Name) const {
   return Host.getDriver().GetFilePath(Name, *this);
 
 }
 
-std::string ToolChain::GetProgramPath(const Compilation &C,
-                                      const char *Name,
-                                      bool WantFile) const {
+std::string ToolChain::GetProgramPath(const char *Name, bool WantFile) const {
   return Host.getDriver().GetProgramPath(Name, *this, WantFile);
 }

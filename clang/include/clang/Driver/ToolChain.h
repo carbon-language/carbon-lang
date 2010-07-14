@@ -84,9 +84,8 @@ public:
 
   // Helper methods
 
-  std::string GetFilePath(const Compilation &C, const char *Name) const;
-  std::string GetProgramPath(const Compilation &C, const char *Name,
-                             bool WantFile = false) const;
+  std::string GetFilePath(const char *Name) const;
+  std::string GetProgramPath(const char *Name, bool WantFile = false) const;
 
   // Platform defaults information
 

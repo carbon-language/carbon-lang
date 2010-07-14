@@ -1490,7 +1490,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang"));
+    Args.MakeArgString(getToolChain().GetProgramPath("clang"));
 
   // Optionally embed the -cc1 level arguments into the debug info, for build
   // analysis.
@@ -1590,7 +1590,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang"));
+    Args.MakeArgString(getToolChain().GetProgramPath("clang"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -1691,7 +1691,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *GCCName = getToolChain().getDriver().CCCGenericGCCName.c_str();
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, GCCName));
+    Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2098,7 +2098,7 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name));
+    Args.MakeArgString(getToolChain().GetProgramPath(CC1Name));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2198,7 +2198,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name));
+    Args.MakeArgString(getToolChain().GetProgramPath(CC1Name));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2253,7 +2253,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   // asm_final spec is empty.
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2512,7 +2512,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
         Args.hasArg(options::OPT_shared_libgcc) &&
         getDarwinToolChain().isMacosxVersionLT(10, 5)) {
       const char *Str =
-        Args.MakeArgString(getToolChain().GetFilePath(C, "crt3.o"));
+        Args.MakeArgString(getToolChain().GetFilePath("crt3.o"));
       CmdArgs.push_back(Str);
     }
   }
@@ -2572,7 +2572,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_F);
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2596,7 +2596,7 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
   }
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "lipo"));
+    Args.MakeArgString(getToolChain().GetProgramPath("lipo"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2616,7 +2616,7 @@ void darwin::Dsymutil::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Output.getFilename());
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil"));
+    Args.MakeArgString(getToolChain().GetProgramPath("dsymutil"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2646,7 +2646,7 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "gas"));
+    Args.MakeArgString(getToolChain().GetProgramPath("gas"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2692,17 +2692,17 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crt1.o")));
+                                getToolChain().GetFilePath("crt1.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crti.o")));
+                                getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crtbegin.o")));
+                                getToolChain().GetFilePath("crtbegin.o")));
     } else {
       CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crti.o")));
+                                getToolChain().GetFilePath("crti.o")));
     }
     CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crtn.o")));
+                                getToolChain().GetFilePath("crtn.o")));
   }
 
   CmdArgs.push_back(Args.MakeArgString("-L/opt/gcc4/lib/gcc/"
@@ -2748,11 +2748,11 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back(Args.MakeArgString(
-                                getToolChain().GetFilePath(C, "crtend.o")));
+                                getToolChain().GetFilePath("crtend.o")));
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2782,7 +2782,7 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2827,12 +2827,12 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crt0.o")));
+                              getToolChain().GetFilePath("crt0.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtbegin.o")));
+                              getToolChain().GetFilePath("crtbegin.o")));
     } else {
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtbeginS.o")));
+                              getToolChain().GetFilePath("crtbeginS.o")));
     }
   }
 
@@ -2881,14 +2881,14 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtend.o")));
+                              getToolChain().GetFilePath("crtend.o")));
     else
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtendS.o")));
+                              getToolChain().GetFilePath("crtendS.o")));
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2930,7 +2930,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -2975,16 +2975,16 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crt1.o")));
+                              getToolChain().GetFilePath("crt1.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crti.o")));
+                              getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtbegin.o")));
+                              getToolChain().GetFilePath("crtbegin.o")));
     } else {
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crti.o")));
+                              getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtbeginS.o")));
+                              getToolChain().GetFilePath("crtbeginS.o")));
     }
   }
 
@@ -3044,17 +3044,17 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
                                                                   "crtend.o")));
     else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
                                                                  "crtendS.o")));
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
                                                                     "crtn.o")));
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -3084,7 +3084,7 @@ void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "gas"));
+    Args.MakeArgString(getToolChain().GetProgramPath("gas"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -3108,7 +3108,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles))
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
                                                       "/usr/gnu/lib/crtso.o")));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
@@ -3152,12 +3152,12 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C,
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
                                               "/usr/gnu/lib/libend.a")));
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "/usr/gnu/bin/gld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("/usr/gnu/bin/gld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -3196,7 +3196,7 @@ void dragonfly::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -3240,16 +3240,16 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(
-            Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
+            Args.MakeArgString(getToolChain().GetFilePath("crt1.o")));
       CmdArgs.push_back(
-            Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+            Args.MakeArgString(getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(
-            Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
+            Args.MakeArgString(getToolChain().GetFilePath("crtbegin.o")));
     } else {
       CmdArgs.push_back(
-            Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+            Args.MakeArgString(getToolChain().GetFilePath("crti.o")));
       CmdArgs.push_back(
-            Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
+            Args.MakeArgString(getToolChain().GetFilePath("crtbeginS.o")));
     }
   }
 
@@ -3320,15 +3320,15 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtend.o")));
+                              getToolChain().GetFilePath("crtend.o")));
     else
       CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtendS.o")));
+                              getToolChain().GetFilePath("crtendS.o")));
     CmdArgs.push_back(Args.MakeArgString(
-                              getToolChain().GetFilePath(C, "crtn.o")));
+                              getToolChain().GetFilePath("crtn.o")));
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
