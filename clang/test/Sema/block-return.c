@@ -109,10 +109,9 @@ void foo6() {
 
 void foo7()
 {
- const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'int const (^)(void)' with an expression of type 'int (^)(void)'}} \
- // expected-warning{{type qualifier on return type has no effect}}
+ const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'int const (^)(void)' with an expression of type 'int (^)(void)'}}
 
- const int (^CC) (void)  = ^const int{ const int i = 1; return i; }; // expected-warning{{type qualifier on return type has no effect}}
+ const int (^CC) (void)  = ^const int{ const int i = 1; return i; };
 
 
   int i;

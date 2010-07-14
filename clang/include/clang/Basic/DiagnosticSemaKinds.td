@@ -121,7 +121,8 @@ def warn_use_out_of_scope_declaration : Warning<
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
 def warn_qual_return_type : Warning< 
-  "'%0' type qualifier%s1 on return type %plural{1:has|:have}1 no effect">;
+  "'%0' type qualifier%s1 on return type %plural{1:has|:have}1 no effect">,
+  InGroup<IgnoredQualifiers>, DefaultIgnore;
 
 def warn_decl_shadow :
   Warning<"declaration shadows a %select{"

@@ -101,7 +101,7 @@ namespace PR6257 {
 
 // PR7463
 namespace PR7463 {
-  const int f (); // expected-warning{{type qualifier on return type has no effect}}
+  const int f ();
   template <typename T_> void g (T_&); // expected-note{{T_ = int}}
   void h (void) { g(f()); } // expected-error{{no matching function for call}}
 }

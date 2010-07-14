@@ -13,10 +13,9 @@ int main() {
   int (^IFP) () = PFR; // OK
 
 
-  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int const (^)()' with an expression of type 'int (^)()'}} \
-  // expected-warning{{type qualifier on return type has no effect}}
+  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int const (^)()' with an expression of type 'int (^)()'}}
 
-  const int (^CICC) () = CIC;   // expected-warning{{type qualifier on return type has no effect}}
+  const int (^CICC) () = CIC;
 
 
   int * const (^IPCC) () = 0;

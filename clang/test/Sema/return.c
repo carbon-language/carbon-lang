@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Wreturn-type -Xclang -verify -fblocks -Wno-unreachable-code -Wno-unused-value
+// RUN: %clang %s -fsyntax-only -Wignored-qualifiers -Wreturn-type -Xclang -verify -fblocks -Wno-unreachable-code -Wno-unused-value
 
 // clang emits the following warning by default.
 // With GCC, -pedantic, -Wreturn-type or -Wall are required to produce the 
@@ -239,3 +239,6 @@ int test_static_inline(int x) {
 }
 static inline int si_forward() {} // expected-warning{{control reaches end of non-void function}}
 
+// Test warnings on ignored qualifiers on return types.
+const int ignored_c_quals(); // expected-warning{{'const' type qualifier on return type has no effect}}
+const volatile int ignored_cv_quals(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}

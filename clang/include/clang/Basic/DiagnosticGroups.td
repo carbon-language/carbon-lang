@@ -48,6 +48,7 @@ def CXXHexFloats : DiagGroup<"c++-hex-floats">;
 def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def : DiagGroup<"idiomatic-parentheses">;
+def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
@@ -167,6 +168,7 @@ def Format2 : DiagGroup<"format=2",
 
 def Extra : DiagGroup<"extra", [
     MissingFieldInitializers,
+    IgnoredQualifiers,
     InitializerOverrides,
     SemiBeforeMethodBody,
     SignCompare,

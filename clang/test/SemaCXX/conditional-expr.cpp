@@ -288,11 +288,11 @@ namespace PR7598 {
     v = 1,
   };
 
-  const Enum g() { // expected-warning{{type qualifier on return type has no effect}}
+  const Enum g() {
     return v;
   }
 
-  const volatile Enum g2() { // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
+  const volatile Enum g2() {
     return v;
   }
 
