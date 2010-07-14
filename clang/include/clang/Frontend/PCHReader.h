@@ -65,6 +65,15 @@ class SwitchCase;
 class PCHReader;
 struct HeaderFileInfo;
 
+struct PCHPredefinesBlock {
+  /// \brief The file ID for this predefines buffer in a PCH file.
+  FileID BufferID;
+
+  /// \brief This predefines buffer in a PCH file.
+  llvm::StringRef Data;
+};
+typedef llvm::SmallVector<PCHPredefinesBlock, 2> PCHPredefinesBlocks;
+
 /// \brief Abstract interface for callback invocations by the PCHReader.
 ///
 /// While reading a PCH file, the PCHReader will call the methods of the
@@ -103,8 +112,7 @@ public:
   /// here.
   ///
   /// \returns true to indicate the predefines are invalid or false otherwise.
-  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
-                                    FileID PCHBufferID,
+  virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines) {
     return false;
@@ -131,8 +139,7 @@ public:
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts);
   virtual bool ReadTargetTriple(llvm::StringRef Triple);
-  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
-                                    FileID PCHBufferID,
+  virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                     llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID);
@@ -483,15 +490,9 @@ private:
     ~ReadingKindTracker() { Reader.ReadingKind = PrevKind; }
   };
 
-  /// \brief The file ID for the predefines buffer in the PCH file.
-  FileID PCHPredefinesBufferID;
-
-  /// \brief Pointer to the beginning of the predefines buffer in the
-  /// PCH file.
-  const char *PCHPredefines;
-
-  /// \brief Length of the predefines buffer in the PCH file.
-  unsigned PCHPredefinesLen;
+  /// \brief All predefines buffers in all PCH files, to be treated as if
+  /// concatenated.
+  PCHPredefinesBlocks PCHPredefinesBuffers;
 
   /// \brief Suggested contents of the predefines buffer, after this
   /// PCH file has been processed.
@@ -509,7 +510,7 @@ private:
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
   PCHReadResult ReadPCHBlock();
-  bool CheckPredefinesBuffer(llvm::StringRef PCHPredef, FileID PCHBufferID);
+  bool CheckPredefinesBuffers();
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   PCHReadResult ReadSourceManagerBlock();
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
