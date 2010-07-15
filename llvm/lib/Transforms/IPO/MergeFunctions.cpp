@@ -603,6 +603,10 @@ static void ThunkGToF(Function *F, Function *G) {
 }
 
 static void AliasGToF(Function *F, Function *G) {
+  // Darwin will trigger llvm_unreachable if asked to codegen an alias
+  return ThunkGToF(F, G);
+
+#if 0
   if (!G->hasExternalLinkage() && !G->hasLocalLinkage() && !G->hasWeakLinkage())
     return ThunkGToF(F, G);
 
@@ -614,6 +618,7 @@ static void AliasGToF(Function *F, Function *G) {
   GA->setVisibility(G->getVisibility());
   G->replaceAllUsesWith(GA);
   G->eraseFromParent();
+#endif
 }
 
 static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
