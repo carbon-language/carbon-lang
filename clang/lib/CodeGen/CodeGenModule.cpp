@@ -816,7 +816,8 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // At -O0, don't generate IR for functions with available_externally 
     // linkage.
-    if (CodeGenOpts.OptimizationLevel == 0 &&
+    if (CodeGenOpts.OptimizationLevel == 0 && 
+        !Function->hasAttr<AlwaysInlineAttr>() &&
         getFunctionLinkage(Function) 
                                   == llvm::Function::AvailableExternallyLinkage)
       return;
