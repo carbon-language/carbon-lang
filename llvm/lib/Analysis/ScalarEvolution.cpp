@@ -845,6 +845,13 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
+  // As a special case, fold trunc(undef) to undef. We don't want to
+  // know too much about SCEVUnknowns, but this special case is handy
+  // and harmless.
+  if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Op))
+    if (isa<UndefValue>(U->getValue()))
+      return getSCEV(UndefValue::get(Ty));
+
   // The cast wasn't folded; create an explicit cast node. We can reuse
   // the existing insert position since if we get here, we won't have
   // made any changes which would invalidate it.
@@ -1162,6 +1169,13 @@ const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
       Ops.push_back(getAnyExtendExpr(*I, Ty));
     return getAddRecExpr(Ops, AR->getLoop());
   }
+
+  // As a special case, fold anyext(undef) to undef. We don't want to
+  // know too much about SCEVUnknowns, but this special case is handy
+  // and harmless.
+  if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Op))
+    if (isa<UndefValue>(U->getValue()))
+      return getSCEV(UndefValue::get(Ty));
 
   // If the expression is obviously signed, use the sext cast value.
   if (isa<SCEVSMaxExpr>(Op))
