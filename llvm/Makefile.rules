@@ -632,7 +632,12 @@ ifdef TOOLNAME
   endif
 endif
 endif
+else
+ifneq ($(DARWIN_MAJVERS),4)
+  LD.Flags += $(RPATH) -Wl,@executable_path/../lib
 endif
+endif
+
 
 #----------------------------------------------------------
 # Options To Invoke Tools
