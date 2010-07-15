@@ -443,9 +443,7 @@ void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
   // FromHandle - This keeps a weakvh on the from value so that we can know if
   // it gets deleted out from under us in a recursive simplification.
   WeakVH FromHandle(From);
-  // Double-check that To isn't deleted.
-  AssertingVH<> CheckedTo = To;
-
+  
   while (!From->use_empty()) {
     // Update the instruction to use the new value.
     Use &U = From->use_begin().getUse();
