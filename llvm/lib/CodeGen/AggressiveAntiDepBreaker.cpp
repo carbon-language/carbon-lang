@@ -41,11 +41,11 @@ DebugMod("agg-antidep-debugmod",
 
 AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
                                                MachineBasicBlock *BB) :
-  NumTargetRegs(TargetRegs), GroupNodes(TargetRegs, 0) {
-  GroupNodeIndices.reserve(TargetRegs);
-  KillIndices.reserve(TargetRegs);
-  DefIndices.reserve(TargetRegs);
-
+  NumTargetRegs(TargetRegs), GroupNodes(TargetRegs, 0),
+  GroupNodeIndices(TargetRegs, 0),
+  KillIndices(TargetRegs, 0),
+  DefIndices(TargetRegs, 0)
+{
   const unsigned BBSize = BB->size();
   for (unsigned i = 0; i < NumTargetRegs; ++i) {
     // Initialize all registers to be in their own group. Initially we

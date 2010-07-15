@@ -32,21 +32,23 @@ CriticalAntiDepBreaker(MachineFunction& MFi) :
   MRI(MF.getRegInfo()),
   TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
-  AllocatableSet(TRI->getAllocatableSet(MF))
-{
-}
+  AllocatableSet(TRI->getAllocatableSet(MF)),
+  Classes(TRI->getNumRegs(), static_cast<const TargetRegisterClass *>(0)),
+  KillIndices(TRI->getNumRegs(), 0),
+  DefIndices(TRI->getNumRegs(), 0) {}
 
 CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 }
 
 void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
-  // Clear out the register class data.
-  std::fill(Classes, array_endof(Classes),
-            static_cast<const TargetRegisterClass *>(0));
+  Classes.clear();
 
-  // Initialize the indices to indicate that no registers are live.
   const unsigned BBSize = BB->size();
-  for (unsigned i = 0; i < TRI->getNumRegs(); ++i) {
+  for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i) {
+    // Clear out the register class data.
+    Classes[i] = static_cast<const TargetRegisterClass *>(0);
+
+    // Initialize the indices to indicate that no registers are live.
     KillIndices[i] = ~0u;
     DefIndices[i] = BBSize;
   }
@@ -65,6 +67,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
       KillIndices[Reg] = BB->size();
       DefIndices[Reg] = ~0u;
+
       // Repeat, for all aliases.
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
@@ -86,6 +89,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
       KillIndices[Reg] = BB->size();
       DefIndices[Reg] = ~0u;
+
       // Repeat, for all aliases.
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
@@ -106,6 +110,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
     KillIndices[Reg] = BB->size();
     DefIndices[Reg] = ~0u;
+
     // Repeat, for all aliases.
     for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
@@ -134,8 +139,10 @@ void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
   for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg)
     if (DefIndices[Reg] < InsertPosIndex && DefIndices[Reg] >= Count) {
       assert(KillIndices[Reg] == ~0u && "Clobbered register is live!");
+
       // Mark this register to be non-renamable.
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+
       // Move the def index to the end of the previous region, to reflect
       // that the def could theoretically have been scheduled at the end.
       DefIndices[Reg] = InsertPosIndex;
@@ -433,7 +440,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
   // fix that remaining critical edge too. This is a little more involved,
   // because unlike the most recent register, less recent registers should
   // still be considered, though only if no other registers are available.
-  unsigned LastNewReg[TargetRegisterInfo::FirstVirtualRegister] = {};
+  std::vector<unsigned> LastNewReg(TRI->getNumRegs(), 0);
 
   // Attempt to break anti-dependence edges on the critical path. Walk the
   // instructions from the bottom up, tracking information about liveness
