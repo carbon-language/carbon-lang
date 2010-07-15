@@ -1081,13 +1081,14 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   bool UseCodeAlign = false;
   if (const MCSectionMachO *S = dyn_cast<MCSectionMachO>(
         getStreamer().getCurrentSection()))
-      UseCodeAlign = S->hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+    UseCodeAlign = S->hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
   if ((!HasFillExpr || Lexer.getMAI().getTextAlignFillValue() == FillExpr) &&
       ValueSize == 1 && UseCodeAlign) {
     getStreamer().EmitCodeAlignment(Alignment, MaxBytesToFill);
   } else {
     // FIXME: Target specific behavior about how the "extra" bytes are filled.
-    getStreamer().EmitValueToAlignment(Alignment, FillExpr, ValueSize, MaxBytesToFill);
+    getStreamer().EmitValueToAlignment(Alignment, FillExpr, ValueSize,
+                                       MaxBytesToFill);
   }
 
   return false;
