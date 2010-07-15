@@ -789,7 +789,7 @@ basic_filebuf<_CharT, _Traits>::seekoff(off_type __off, ios_base::seekdir __way,
 
 template <class _CharT, class _Traits>
 typename basic_filebuf<_CharT, _Traits>::pos_type
-basic_filebuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode __wch)
+basic_filebuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode)
 {
     if (__file_ == 0 || sync())
         return pos_type(off_type(-1));
