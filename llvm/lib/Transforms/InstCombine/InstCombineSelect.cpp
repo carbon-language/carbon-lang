@@ -699,34 +699,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     SI.setOperand(2, TrueVal);
     return &SI;
   }
-  
-  // select (A == 0 | B == 0), T, F--> select (A != 0 & B != 0), F, T
-  // Note: This is a canonicalization rather than an optimization, and is used
-  // to expose opportunities to other instcombine transforms.
-  Instruction* CondInst = dyn_cast<Instruction>(CondVal);
-  if (CondInst && CondInst->hasOneUse() && 
-      CondInst->getOpcode() == Instruction::Or) {
-    ICmpInst *LHSCmp = dyn_cast<ICmpInst>(CondInst->getOperand(0));
-    ICmpInst *RHSCmp = dyn_cast<ICmpInst>(CondInst->getOperand(1));
-    if (LHSCmp && LHSCmp->hasOneUse() &&
-                  LHSCmp->getPredicate() == ICmpInst::ICMP_EQ &&
-        RHSCmp && RHSCmp->hasOneUse() &&
-                  RHSCmp->getPredicate() == ICmpInst::ICMP_EQ) {
-      ConstantInt* C1 = dyn_cast<ConstantInt>(LHSCmp->getOperand(1));
-      ConstantInt* C2 = dyn_cast<ConstantInt>(RHSCmp->getOperand(1));
-      if (C1 && C1->isZero() && C2 && C2->isZero()) {
-        LHSCmp->setPredicate(ICmpInst::ICMP_NE);
-        RHSCmp->setPredicate(ICmpInst::ICMP_NE);
-        Value *And =
-          InsertNewInstBefore(BinaryOperator::CreateAnd(LHSCmp, RHSCmp,
-                                             "and."+CondVal->getName()), SI);
-        SI.setOperand(0, And);
-        SI.setOperand(1, FalseVal);
-        SI.setOperand(2, TrueVal);
-        return &SI;
-      }
-    }
-  }
 
   return 0;
 }
