@@ -672,6 +672,15 @@ ClangASTContext::CopyType(clang::ASTContext *dest_context,
     return ret.getAsOpaquePtr();
 }
 
+static bool
+AreTypesSame(clang::ASTContext *ast_context,
+             void *type1,
+             void *type2)
+{
+    return ast_context->hasSameType(QualType::getFromOpaquePtr(type1),
+                                    QualType::getFromOpaquePtr(type2));
+}
+
 #pragma mark CVR modifiers
 
 void *

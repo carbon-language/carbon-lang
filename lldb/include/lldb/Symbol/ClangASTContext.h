@@ -109,6 +109,18 @@ public:
              clang::ASTContext *source_context,
              void * clang_type);
     
+    static bool
+    AreTypesSame(clang::ASTContext *ast_context,
+                 void *type1,
+                 void *type2);
+    
+    bool
+    AreTypesSame(void *type1,
+                 void *type2)
+    {
+        return ClangASTContext::AreTypesSame(m_ast_context_ap.get(), type1, type2);
+    }
+    
     //------------------------------------------------------------------
     // CVR modifiers
     //------------------------------------------------------------------
