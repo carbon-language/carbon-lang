@@ -130,7 +130,7 @@ namespace {
 
     /// KillIndices - The index of the most recent kill (proceding bottom-up),
     /// or ~0u if the register is not live.
-    unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<unsigned> KillIndices;
 
   public:
     SchedulePostRATDList(MachineFunction &MF,
@@ -140,7 +140,8 @@ namespace {
                          AntiDepBreaker *ADB,
                          AliasAnalysis *aa)
       : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits),
-      HazardRec(HR), AntiDepBreak(ADB), AA(aa) {}
+        HazardRec(HR), AntiDepBreak(ADB), AA(aa),
+        KillIndices(TRI->getNumRegs()) {}
 
     ~SchedulePostRATDList() {
     }
