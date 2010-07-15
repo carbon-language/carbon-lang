@@ -2365,7 +2365,6 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
     case llvm::Triple::DragonFly:
     case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
-    case llvm::Triple::Minix:
       return *(TheTargetCodeGenInfo =
                new X86_32TargetCodeGenInfo(Context, false, true));
 
