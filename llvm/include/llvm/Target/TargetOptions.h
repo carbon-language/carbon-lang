@@ -71,13 +71,18 @@ namespace llvm {
   /// UnsafeFPMath implies LessPreciseFPMAD.
   extern bool UnsafeFPMath;
 
-  /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
-  /// option is specified on the command line. If this returns false (default),
-  /// the code generator is not allowed to assume that FP arithmetic arguments
-  /// and results are never NaNs or +-Infs.
-  extern bool FiniteOnlyFPMathOption;
-  extern bool FiniteOnlyFPMath();
-  
+  /// NoInfsFPMath - This flag is enabled when the
+  /// -enable-no-infs-fp-math flag is specified on the command line. When
+  /// this flag is off (the default), the code generator is not allowed to
+  /// assume the FP arithmetic arguments and results are never +-Infs.
+  extern bool NoInfsFPMath;
+
+  /// NoNaNsFPMath - This flag is enabled when the
+  /// -enable-no-nans-fp-math flag is specified on the command line. When
+  /// this flag is off (the default), the code generator is not allowed to
+  /// assume the FP arithmetic arguments and results are never NaNs.
+  extern bool NoNaNsFPMath;
+
   /// HonorSignDependentRoundingFPMath - This returns true when the
   /// -enable-sign-dependent-rounding-fp-math is specified.  If this returns
   /// false (the default), the code generator is allowed to assume that the

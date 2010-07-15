@@ -1174,7 +1174,7 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
                               Twine(ARMBuildAttrs::ABI_FP_exceptions) + ", 1");
     }
     
-    if (FiniteOnlyFPMath())
+    if (NoInfsFPMath && NoNaNsFPMath)
       OutStreamer.EmitRawText("\t.eabi_attribute " +
                               Twine(ARMBuildAttrs::ABI_FP_number_model)+ ", 1");
     else

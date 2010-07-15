@@ -30,7 +30,8 @@ namespace llvm {
   bool NoFramePointerElimNonLeaf;
   bool NoExcessFPPrecision;
   bool UnsafeFPMath;
-  bool FiniteOnlyFPMathOption;
+  bool NoInfsFPMath;
+  bool NoNaNsFPMath;
   bool HonorSignDependentRoundingFPMathOption;
   bool UseSoftFloat;
   FloatABI::ABIType FloatABIType;
@@ -80,9 +81,14 @@ EnableUnsafeFPMath("enable-unsafe-fp-math",
   cl::location(UnsafeFPMath),
   cl::init(false));
 static cl::opt<bool, true>
-EnableFiniteOnlyFPMath("enable-finite-only-fp-math",
-  cl::desc("Enable optimizations that assumes non- NaNs / +-Infs"),
-  cl::location(FiniteOnlyFPMathOption),
+EnableNoInfsFPMath("enable-no-infs-fp-math",
+  cl::desc("Enable FP math optimizations that assume no +-Infs"),
+  cl::location(NoInfsFPMath),
+  cl::init(false));
+static cl::opt<bool, true>
+EnableNoNaNsFPMath("enable-no-nans-fp-math",
+  cl::desc("Enable FP math optimizations that assume no NaNs"),
+  cl::location(NoNaNsFPMath),
   cl::init(false));
 static cl::opt<bool, true>
 EnableHonorSignDependentRoundingFPMath("enable-sign-dependent-rounding-fp-math",
@@ -290,12 +296,6 @@ namespace llvm {
   /// result is "less precise" than doing those operations individually.
   bool LessPreciseFPMAD() { return UnsafeFPMath || LessPreciseFPMADOption; }
 
-  /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
-  /// option is specified on the command line. If this returns false (default),
-  /// the code generator is not allowed to assume that FP arithmetic arguments
-  /// and results are never NaNs or +-Infs.
-  bool FiniteOnlyFPMath() { return FiniteOnlyFPMathOption; }
-  
   /// HonorSignDependentRoundingFPMath - Return true if the codegen must assume
   /// that the rounding mode of the FPU can change from its default.
   bool HonorSignDependentRoundingFPMath() {

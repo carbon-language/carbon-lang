@@ -171,7 +171,7 @@ ISD::CondCode llvm::getFCmpCondCode(FCmpInst::Predicate Pred) {
     FOC = FPC = ISD::SETFALSE;
     break;
   }
-  if (FiniteOnlyFPMath())
+  if (NoNaNsFPMath)
     return FOC;
   else
     return FPC;

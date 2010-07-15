@@ -9087,8 +9087,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // Converting this to a min would handle NaNs incorrectly, and swapping
         // the operands would cause it to handle comparisons between positive
         // and negative zero incorrectly.
-        if (!FiniteOnlyFPMath() &&
-            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))) {
+        if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)) {
           if (!UnsafeFPMath &&
               !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
             break;
@@ -9126,8 +9125,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // Converting this to a max would handle NaNs incorrectly, and swapping
         // the operands would cause it to handle comparisons between positive
         // and negative zero incorrectly.
-        if (!FiniteOnlyFPMath() &&
-            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))) {
+        if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)) {
           if (!UnsafeFPMath &&
               !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
             break;
@@ -9156,8 +9154,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // cause it to handle NaNs incorrectly.
         if (!UnsafeFPMath &&
             !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS))) {
-          if (!FiniteOnlyFPMath() &&
-              (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+          if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))
             break;
           std::swap(LHS, RHS);
         }
@@ -9182,8 +9179,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
       case ISD::SETULT:
         // Converting this to a max would handle NaNs incorrectly.
-        if (!FiniteOnlyFPMath() &&
-            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+        if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))
           break;
         Opcode = X86ISD::FMAX;
         break;
@@ -9193,8 +9189,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // cause it to handle NaNs incorrectly.
         if (!UnsafeFPMath &&
             !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS)) {
-          if (!FiniteOnlyFPMath() &&
-              (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+          if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))
             break;
           std::swap(LHS, RHS);
         }

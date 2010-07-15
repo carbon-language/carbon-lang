@@ -2403,8 +2403,9 @@ ARMTargetLowering::OptimizeVFPBrcond(SDValue Op, SelectionDAG &DAG) const {
   bool SeenZero = false;
   if (canChangeToInt(LHS, SeenZero, Subtarget) &&
       canChangeToInt(RHS, SeenZero, Subtarget) &&
-      // If one of the operand is zero, it's safe to ignore the NaN case.
-      (FiniteOnlyFPMath() || SeenZero)) {
+      // If one of the operand is zero, it's safe to ignore the NaN case since
+      // we only care about equality comparisons.
+      (SeenZero || (DAG.isKnownNeverNaN(LHS) && DAG.isKnownNeverNaN(RHS)))) {
     // If unsafe fp math optimization is enabled and there are no othter uses of
     // the CMP operands, and the condition code is EQ oe NE, we can optimize it
     // to an integer comparison.
@@ -4561,7 +4562,7 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
                                        const ARMSubtarget *ST) {
   // If the target supports NEON, try to use vmax/vmin instructions for f32
-  // selects like "x < y ? x : y".  Unless the FiniteOnlyFPMath option is set,
+  // selects like "x < y ? x : y".  Unless the NoNaNsFPMath option is set,
   // be careful about NaNs:  NEON's vmax/vmin return NaN if either operand is
   // a NaN; only do the transformation when it matches that behavior.
 

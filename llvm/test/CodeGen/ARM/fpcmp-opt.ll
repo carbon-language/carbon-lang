@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math -enable-finite-only-fp-math | FileCheck -check-prefix=FINITE %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=FINITE %s
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math | FileCheck -check-prefix=NAN %s
 ; rdar://7461510
 

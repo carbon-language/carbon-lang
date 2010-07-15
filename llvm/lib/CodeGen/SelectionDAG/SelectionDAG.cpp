@@ -2236,7 +2236,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 
 bool SelectionDAG::isKnownNeverNaN(SDValue Op) const {
   // If we're told that NaNs won't happen, assume they won't.
-  if (FiniteOnlyFPMath())
+  if (NoNaNsFPMath)
     return true;
 
   // If the value is a constant, we can obviously see if it is a NaN or not.
