@@ -22,7 +22,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -42,6 +41,8 @@ DebugMod("agg-antidep-debugmod",
 AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
                                                MachineBasicBlock *BB) :
   NumTargetRegs(TargetRegs), GroupNodes(TargetRegs, 0) {
+  KillIndices.reserve(TargetRegs);
+  DefIndices.reserve(TargetRegs);
 
   const unsigned BBSize = BB->size();
   for (unsigned i = 0; i < NumTargetRegs; ++i) {
@@ -145,8 +146,8 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   State = new AggressiveAntiDepState(TRI->getNumRegs(), BB);
 
   bool IsReturnBlock = (!BB->empty() && BB->back().getDesc().isReturn());
-  unsigned *KillIndices = State->GetKillIndices();
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &KillIndices = State->GetKillIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
 
   // Determine the live-out physregs for this block.
   if (IsReturnBlock) {
@@ -226,7 +227,7 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
   DEBUG(MI->dump());
   DEBUG(dbgs() << "\tRegs:");
 
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
   for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg) {
     // If Reg is current live, then mark that it can't be renamed as
     // we don't know the extent of its live-range anymore (now that it
@@ -328,8 +329,8 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
                                              const char *tag,
                                              const char *header,
                                              const char *footer) {
-  unsigned *KillIndices = State->GetKillIndices();
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &KillIndices = State->GetKillIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
@@ -364,7 +365,7 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
 void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
                                                   unsigned Count,
                                              std::set<unsigned>& PassthruRegs) {
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
@@ -560,8 +561,8 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
                                 unsigned AntiDepGroupIndex,
                                 RenameOrderType& RenameOrder,
                                 std::map<unsigned, unsigned> &RenameMap) {
-  unsigned *KillIndices = State->GetKillIndices();
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &KillIndices = State->GetKillIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
@@ -733,8 +734,8 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
                               MachineBasicBlock::iterator Begin,
                               MachineBasicBlock::iterator End,
                               unsigned InsertPosIndex) {
-  unsigned *KillIndices = State->GetKillIndices();
-  unsigned *DefIndices = State->GetDefIndices();
+  std::vector<unsigned> &KillIndices = State->GetKillIndices();
+  std::vector<unsigned> &DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
