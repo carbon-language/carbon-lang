@@ -371,7 +371,7 @@ public:
                                    unsigned SrcReg, bool isKill, int FrameIndex,
                                    const TargetRegisterClass *RC,
                                    const TargetRegisterInfo *TRI) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::storeRegToStackSlot!");
+  assert(0 && "Target didn't implement TargetInstrInfo::storeRegToStackSlot!");
   }
 
   /// loadRegFromStackSlot - Load the specified register of the given register
@@ -383,7 +383,7 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromStackSlot!");
+  assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromStackSlot!");
   }
   
   /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
@@ -392,7 +392,7 @@ public:
   /// storeRegToStackSlot(). Returns false otherwise.
   virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
-                                         const std::vector<CalleeSavedInfo> &CSI,
+                                        const std::vector<CalleeSavedInfo> &CSI,
                                          const TargetRegisterInfo *TRI) const {
     return false;
   }
@@ -457,7 +457,7 @@ protected:
   /// take care of adding a MachineMemOperand to the newly created instruction.
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,
-                                              const SmallVectorImpl<unsigned> &Ops,
+                                          const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const {
     return 0;
   }
@@ -501,7 +501,7 @@ public:
   /// only differences between the two addresses are the offset. It also returns
   /// the offsets by reference.
   virtual bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
-                                       int64_t &Offset1, int64_t &Offset2) const {
+                                    int64_t &Offset1, int64_t &Offset2) const {
     return false;
   }
 
