@@ -24,13 +24,12 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include <map>
-#include <vector>
 
 namespace llvm {
-  class TargetRegisterInfo;
   /// Class AggressiveAntiDepState
   /// Contains all the state necessary for anti-dep breaking.
   class AggressiveAntiDepState {
@@ -60,27 +59,27 @@ namespace llvm {
     /// currently representing the group that the register belongs to.
     /// Register 0 is always represented by the 0 group, a group
     /// composed of registers that are not eligible for anti-aliasing.
-    std::vector<unsigned> GroupNodeIndices;
+    unsigned GroupNodeIndices[TargetRegisterInfo::FirstVirtualRegister];
 
     /// RegRefs - Map registers to all their references within a live range.
     std::multimap<unsigned, RegisterReference> RegRefs;
 
     /// KillIndices - The index of the most recent kill (proceding bottom-up),
     /// or ~0u if the register is not live.
-    std::vector<unsigned> KillIndices;
+    unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
 
     /// DefIndices - The index of the most recent complete def (proceding bottom
     /// up), or ~0u if the register is live.
-    std::vector<unsigned> DefIndices;
+    unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
 
   public:
     AggressiveAntiDepState(const unsigned TargetRegs, MachineBasicBlock *BB);
 
     /// GetKillIndices - Return the kill indices.
-    std::vector<unsigned> &GetKillIndices() { return KillIndices; }
+    unsigned *GetKillIndices() { return KillIndices; }
 
     /// GetDefIndices - Return the define indices.
-    std::vector<unsigned> &GetDefIndices() { return DefIndices; }
+    unsigned *GetDefIndices() { return DefIndices; }
 
     /// GetRegRefs - Return the RegRefs map.
     std::multimap<unsigned, RegisterReference>& GetRegRefs() { return RegRefs; }

@@ -25,7 +25,6 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include <map>
-#include <vector>
 
 namespace llvm {
 class TargetInstrInfo;
@@ -47,18 +46,19 @@ class TargetRegisterInfo;
     /// corresponding value is null. If the register is live but used in
     /// multiple register classes, the corresponding value is -1 casted to a
     /// pointer.
-    std::vector<const TargetRegisterClass *> Classes;
+    const TargetRegisterClass *
+      Classes[TargetRegisterInfo::FirstVirtualRegister];
 
     /// RegRegs - Map registers to all their references within a live range.
     std::multimap<unsigned, MachineOperand *> RegRefs;
 
     /// KillIndices - The index of the most recent kill (proceding bottom-up),
     /// or ~0u if the register is not live.
-    std::vector<unsigned> KillIndices;
+    unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
 
     /// DefIndices - The index of the most recent complete def (proceding bottom
     /// up), or ~0u if the register is live.
-    std::vector<unsigned> DefIndices;
+    unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
 
     /// KeepRegs - A set of registers which are live and cannot be changed to
     /// break anti-dependencies.

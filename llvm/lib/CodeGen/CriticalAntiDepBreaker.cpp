@@ -34,9 +34,6 @@ CriticalAntiDepBreaker(MachineFunction& MFi) :
   TRI(MF.getTarget().getRegisterInfo()),
   AllocatableSet(TRI->getAllocatableSet(MF))
 {
-  Classes.reserve(TRI->getNumRegs());
-  KillIndices.reserve(TRI->getNumRegs());
-  DefIndices.reserve(TRI->getNumRegs());
 }
 
 CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
@@ -44,7 +41,8 @@ CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 
 void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Clear out the register class data.
-  Classes.clear();
+  std::fill(Classes, array_endof(Classes),
+            static_cast<const TargetRegisterClass *>(0));
 
   // Initialize the indices to indicate that no registers are live.
   const unsigned BBSize = BB->size();
