@@ -306,7 +306,7 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD) {
       WeakVH BIHandle(BI);
       ReplaceAndSimplifyAllUses(Inst, V, TD);
       MadeChange = true;
-      if (BIHandle == 0)
+      if (BIHandle != BI)
         BI = BB->begin();
       continue;
     }
@@ -354,12 +354,13 @@ void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
     // value into all of its uses.
     assert(PNV != PN && "hasConstantValue broken");
     
+    Value *OldPhiIt = PhiIt;
     ReplaceAndSimplifyAllUses(PN, PNV, TD);
     
     // If recursive simplification ended up deleting the next PHI node we would
     // iterate to, then our iterator is invalid, restart scanning from the top
     // of the block.
-    if (PhiIt == 0) PhiIt = &BB->front();
+    if (PhiIt != OldPhiIt) PhiIt = &BB->front();
   }
 }
 
