@@ -1974,13 +1974,10 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
   }
 
   case Expr::StringLiteralClass: {
-    // Proposal from David Vandervoorde, 2010.06.30.
-    // I've sent a comment off asking whether this needs to also
-    // represent the length of the string.
+    // Revised proposal from David Vandervoorde, 2010.07.15.
     Out << 'L';
-    const ConstantArrayType *T = cast<ConstantArrayType>(E->getType());
-    QualType CharTy = T->getElementType().getUnqualifiedType();
-    mangleType(CharTy);
+    assert(isa<ConstantArrayType>(E->getType()));
+    mangleType(E->getType());
     Out << 'E';
     break;
   }
