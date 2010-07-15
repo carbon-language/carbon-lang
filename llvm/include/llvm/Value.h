@@ -266,6 +266,10 @@ public:
     SubclassOptionalData &= V->SubclassOptionalData;
   }
 
+  /// hasValueHandle - Return true if there is a value handle associated with
+  /// this value.
+  bool hasValueHandle() const { return HasValueHandle; }
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *) {
     return true; // Values are always values.
