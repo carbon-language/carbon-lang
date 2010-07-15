@@ -2362,7 +2362,7 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
                                           Formula Base) {
   // TODO: For now, just add the min and max offset, because it usually isn't
   // worthwhile looking at everything inbetween.
-  SmallVector<int64_t, 4> Worklist;
+  SmallVector<int64_t, 2> Worklist;
   Worklist.push_back(LU.MinOffset);
   if (LU.MaxOffset != LU.MinOffset)
     Worklist.push_back(LU.MaxOffset);
@@ -2376,7 +2376,14 @@ void LSRInstance::GenerateConstantOffsets(LSRUse &LU, unsigned LUIdx,
       F.AM.BaseOffs = (uint64_t)Base.AM.BaseOffs - *I;
       if (isLegalUse(F.AM, LU.MinOffset - *I, LU.MaxOffset - *I,
                      LU.Kind, LU.AccessTy, TLI)) {
-        F.BaseRegs[i] = SE.getAddExpr(G, SE.getConstant(G->getType(), *I));
+        // Add the offset to the base register.
+        const SCEV *NewG = SE.getAddExpr(G, SE.getConstant(G->getType(), *I));
+        // If it cancelled out, drop the base register, otherwise update it.
+        if (NewG->isZero()) {
+          std::swap(F.BaseRegs[i], F.BaseRegs.back());
+          F.BaseRegs.pop_back();
+        } else
+          F.BaseRegs[i] = NewG;
 
         (void)InsertFormula(LU, LUIdx, F);
       }
