@@ -11,7 +11,7 @@ int B[sizeof((a.c)) == 17 ? 1 : -1];
 
 
 // comma does array/function promotion in c99.
-int X[sizeof(0, (foo().c)) == sizeof(char*) ? 1 : -1]; // expected-warning {{expression result unused}}
-int Y[sizeof(0, (a,b).c) == sizeof(char*) ? 1 : -1];   // expected-warning {{expression result unused}} expected-warning {{expression result unused}}
-int Z[sizeof(0, (a=b).c) == sizeof(char*) ? 1 : -1];  // expected-warning {{expression result unused}}
+int X[sizeof(0, (foo().c)) == sizeof(char*) ? 1 : -1];
+int Y[sizeof(0, (a,b).c) == sizeof(char*) ? 1 : -1];
+int Z[sizeof(0, (a=b).c) == sizeof(char*) ? 1 : -1];
 

@@ -3,7 +3,7 @@
 // PR5290
 int const f0();
 void f0_test() {
-  decltype(0, f0()) i = 0; // expected-warning{{expression result unused}}
+  decltype(0, f0()) i = 0;
   i = 0;
 }
 

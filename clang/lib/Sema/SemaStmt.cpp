@@ -141,7 +141,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     }
   }
 
-  Diag(Loc, DiagID) << R1 << R2;
+  DiagRuntimeBehavior(Loc, PDiag(DiagID) << R1 << R2);
 }
 
 Action::OwningStmtResult
