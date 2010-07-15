@@ -183,7 +183,7 @@ llvm::GlobalVariable *
 CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
                                                     llvm::GlobalVariable *GV) {
   llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
-  
+
   // If constant emission failed, then this should be a C++ static
   // initializer.
   if (!Init) {
@@ -198,7 +198,7 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
     }
     return GV;
   }
-  
+
   // The initializer may differ in type from the global. Rewrite
   // the global to match the initializer.  (We have to do this
   // because some types, like unions, can't be completely represented

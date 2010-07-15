@@ -792,6 +792,14 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     EmitGlobalDefinition(GD);
     return;
   }
+
+  // If we're deferring emission of a C++ variable with an
+  // initializer, remember the order in which it appeared in the file.
+  if (getLangOptions().CPlusPlus && isa<VarDecl>(Global) &&
+      cast<VarDecl>(Global)->hasInit()) {
+    DelayedCXXInitPosition[Global] = CXXGlobalInits.size();
+    CXXGlobalInits.push_back(0);
+  }
   
   // If the value has already been used, add it directly to the
   // DeferredDeclsToEmit list.
@@ -1175,6 +1183,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
         ErrorUnsupported(D, "static initializer");
         Init = llvm::UndefValue::get(getTypes().ConvertType(T));
       }
+    } else {
+      // We don't need an initializer, so remove the entry for the delayed
+      // initializer position (just in case this entry was delayed).
+      if (getLangOptions().CPlusPlus)
+        DelayedCXXInitPosition.erase(D);
     }
   }
 

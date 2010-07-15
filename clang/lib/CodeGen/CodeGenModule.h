@@ -162,6 +162,12 @@ class CodeGenModule : public BlockModule {
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
   std::vector<llvm::Constant*> CXXGlobalInits;
+
+  /// When a C++ decl with an initializer is deferred, null is
+  /// appended to CXXGlobalInits, and the index of that null is placed
+  /// here so that the initializer will be performed in the correct
+  /// order.
+  llvm::DenseMap<const Decl*, unsigned> DelayedCXXInitPosition;
   
   /// - Global variables with initializers whose order of initialization
   /// is set by init_priority attribute.

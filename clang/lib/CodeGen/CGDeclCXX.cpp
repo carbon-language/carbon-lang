@@ -174,13 +174,26 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
     OrderGlobalInits Key(order, PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
+    DelayedCXXInitPosition.erase(D);
   }
-  else
-    CXXGlobalInits.push_back(Fn);
+  else {
+    llvm::DenseMap<const Decl *, unsigned>::iterator I =
+      DelayedCXXInitPosition.find(D);
+    if (I == DelayedCXXInitPosition.end()) {
+      CXXGlobalInits.push_back(Fn);
+    } else {
+      assert(CXXGlobalInits[I->second] == 0);
+      CXXGlobalInits[I->second] = Fn;
+      DelayedCXXInitPosition.erase(I);
+    }
+  }
 }
 
 void
 CodeGenModule::EmitCXXGlobalInitFunc() {
+  while (!CXXGlobalInits.empty() && !CXXGlobalInits.back())
+    CXXGlobalInits.pop_back();
+
   if (CXXGlobalInits.empty() && PrioritizedCXXGlobalInits.empty())
     return;
 
@@ -200,8 +213,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
       llvm::Function *Fn = PrioritizedCXXGlobalInits[i].second;
       LocalCXXGlobalInits.push_back(Fn);
     }
-    for (unsigned i = 0; i < CXXGlobalInits.size(); i++)
-      LocalCXXGlobalInits.push_back(CXXGlobalInits[i]);
+    LocalCXXGlobalInits.append(CXXGlobalInits.begin(), CXXGlobalInits.end());
     CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
                                                     &LocalCXXGlobalInits[0],
                                                     LocalCXXGlobalInits.size());
@@ -247,7 +259,8 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                 SourceLocation());
 
   for (unsigned i = 0; i != NumDecls; ++i)
-    Builder.CreateCall(Decls[i]);
+    if (Decls[i])
+      Builder.CreateCall(Decls[i]);
 
   FinishFunction();
 }

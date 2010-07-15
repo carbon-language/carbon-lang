@@ -29,7 +29,29 @@ C c;
 // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1DD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @d, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
 D d;
 
+// <rdar://problem/7458115>
+namespace test1 {
+  int f();
+  const int x = f();   // This has side-effects and gets emitted immediately.
+  const int y = x - 1; // This gets deferred.
+  const int z = ~y;    // This also gets deferred, but gets "undeferred" before y.
+  int test() { return z; }
+// CHECK:      define i32 @_ZN5test14testEv() {
+// CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
+// CHECK:        load i32* @_ZN5test1L1yE
+// CHECK-NEXT:   xor
+// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1zE
+// CHECK:      define internal void [[TEST1_Y_INIT:@.*]]()
+// CHECK:        load i32* @_ZN5test1L1xE
+// CHECK-NEXT:   sub
+// CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
+
+// Later on, we check that y is initialized before z.
+}
+
 // CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
+// CHECK:   call void [[TEST1_Y_INIT]]
+// CHECK:   call void [[TEST1_Z_INIT]]
 
 // rdar://problem/8090834: this should be nounwind
 // CHECK-NOEXC: define internal void @_GLOBAL__I_a() nounwind section "__TEXT,__StaticInit,regular,pure_instructions" {
