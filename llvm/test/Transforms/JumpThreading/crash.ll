@@ -387,3 +387,50 @@ if.end:                                           ; preds = %land.end69
   ret void
 }
 
+; PR7647
+define void @test15() nounwind {
+entry:
+  ret void
+  
+if.then237:
+  br label %lbl_664
+
+lbl_596:                                          ; preds = %lbl_664, %for.end37
+  volatile store i64 undef, i64* undef, align 4
+  br label %for.cond111
+
+for.cond111:                                      ; preds = %safe_sub_func_int64_t_s_s.exit, %lbl_596
+  %storemerge = phi i8 [ undef, %cond.true.i100 ], [ 22, %lbl_596 ] ; <i8> [#uses=1]
+  %l_678.5 = phi i64 [ %l_678.3, %cond.true.i100 ], [ undef, %lbl_596 ] ; <i64> [#uses=2]
+  %cmp114 = icmp slt i8 %storemerge, -2           ; <i1> [#uses=1]
+  br i1 %cmp114, label %lbl_664, label %if.end949
+
+lbl_664:                                          ; preds = %for.end1058, %if.then237, %for.cond111
+  %l_678.3 = phi i64 [ %l_678.5, %for.cond111 ], [ %l_678.2, %for.cond1035 ], [ 5, %if.then237 ] ; <i64> [#uses=1]
+  %tobool118 = icmp eq i32 undef, 0               ; <i1> [#uses=1]
+  br i1 %tobool118, label %cond.true.i100, label %lbl_596
+
+cond.true.i100:                                   ; preds = %for.inc120
+  br label %for.cond111
+
+lbl_709:
+  br label %if.end949
+  
+for.cond603:                                      ; preds = %for.body607, %if.end336
+  br i1 undef, label %for.cond603, label %if.end949
+
+if.end949:                                        ; preds = %for.cond603, %lbl_709, %for.cond111
+  %l_678.2 = phi i64 [ %l_678.5, %for.cond111 ], [ undef, %lbl_709 ], [ 5, %for.cond603 ] ; <i64> [#uses=1]
+  br label %for.body1016
+
+for.body1016:                                     ; preds = %for.cond1012
+  br label %for.body1016
+
+for.cond1035:                                     ; preds = %for.inc1055, %if.then1026
+  br i1 undef, label %for.cond1040, label %lbl_664
+
+for.cond1040:                                     ; preds = %for.body1044, %for.cond1035
+  ret void
+}
+
+
