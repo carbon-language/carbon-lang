@@ -603,7 +603,7 @@ static void ThunkGToF(Function *F, Function *G) {
 }
 
 static void AliasGToF(Function *F, Function *G) {
-  // Darwin will trigger llvm_unreachable if asked to codegen an alias
+  // Darwin will trigger llvm_unreachable if asked to codegen an alias.
   return ThunkGToF(F, G);
 
 #if 0
