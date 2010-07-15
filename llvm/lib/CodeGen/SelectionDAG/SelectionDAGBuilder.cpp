@@ -796,7 +796,6 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     case Instruction::OPCODE: visit##OPCODE((CLASS&)I); break;
 #include "llvm/Instruction.def"
-#undef HANDLE_INST
   }
 
   // Assign the ordering to the freshly created DAG nodes.
@@ -2193,19 +2192,6 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
   DAG.setRoot(DAG.getNode(ISD::BRIND, getCurDebugLoc(),
                           MVT::Other, getControlRoot(),
                           getValue(I.getAddress())));
-}
-
-void SelectionDAGBuilder::visitUnreachable(const UnreachableInst &I) {
-  // If the function consists of a single "unreachable" instruction, emit a
-  // "trap". This prevents the back-ends from generating empty functions or
-  // functions which have a prologue, but no epilogue.
-  const BasicBlock *BB = I.getParent();
-  const Function *F = BB->getParent();
-
-  if (F->size() == 1 && BB->size() == 1 &&
-      isa<UnreachableInst>(BB->getTerminator()))
-      DAG.setRoot(DAG.getNode(ISD::TRAP, getCurDebugLoc(),
-                              MVT::Other, getRoot()));
 }
 
 void SelectionDAGBuilder::visitFSub(const User &I) {
