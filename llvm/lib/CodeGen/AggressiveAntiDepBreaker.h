@@ -31,7 +31,6 @@
 
 namespace llvm {
   class TargetRegisterInfo;
-
   /// Class AggressiveAntiDepState
   /// Contains all the state necessary for anti-dep breaking.
   class AggressiveAntiDepState {
