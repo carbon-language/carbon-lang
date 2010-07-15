@@ -965,6 +965,12 @@ public:
   /// may be used.
   bool AllFixupsOutsideLoop;
 
+  /// WidestFixupType - This records the widest use type for any fixup using
+  /// this LSRUse. FindUseWithSimilarFormula can't consider uses with different
+  /// max fixup widths to be equivalent, because the narrower one may be relying
+  /// on the implicit truncation to truncate away bogus bits.
+  const Type *WidestFixupType;
+
   /// Formulae - A list of ways to build a value that can satisfy this user.
   /// After the list is populated, one of these is selected heuristically and
   /// used to formulate a replacement for OperandValToReplace in UserInst.
@@ -976,7 +982,8 @@ public:
   LSRUse(KindType K, const Type *T) : Kind(K), AccessTy(T),
                                       MinOffset(INT64_MAX),
                                       MaxOffset(INT64_MIN),
-                                      AllFixupsOutsideLoop(true) {}
+                                      AllFixupsOutsideLoop(true),
+                                      WidestFixupType(0) {}
 
   bool HasFormulaWithSameRegs(const Formula &F) const;
   bool InsertFormula(const Formula &F);
@@ -1083,6 +1090,9 @@ void LSRUse::print(raw_ostream &OS) const {
 
   if (AllFixupsOutsideLoop)
     OS << ", all-fixups-outside-loop";
+
+  if (WidestFixupType)
+    OS << ", widest fixup type: " << *WidestFixupType;
 }
 
 void LSRUse::dump() const {
@@ -1928,6 +1938,7 @@ LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
     if (&LU != &OrigLU &&
         LU.Kind != LSRUse::ICmpZero &&
         LU.Kind == OrigLU.Kind && OrigLU.AccessTy == LU.AccessTy &&
+        LU.WidestFixupType == OrigLU.WidestFixupType &&
         LU.HasFormulaWithSameRegs(OrigF)) {
       for (SmallVectorImpl<Formula>::const_iterator I = LU.Formulae.begin(),
            E = LU.Formulae.end(); I != E; ++I) {
@@ -2066,6 +2077,10 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
     LF.Offset = P.second;
     LSRUse &LU = Uses[LF.LUIdx];
     LU.AllFixupsOutsideLoop &= LF.isUseFullyOutsideLoop(L);
+    if (!LU.WidestFixupType ||
+        SE.getTypeSizeInBits(LU.WidestFixupType) <
+        SE.getTypeSizeInBits(LF.OperandValToReplace->getType()))
+      LU.WidestFixupType = LF.OperandValToReplace->getType();
 
     // If this is the first use of this LSRUse, give it a formula.
     if (LU.Formulae.empty()) {
@@ -2195,6 +2210,10 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
         LF.Offset = P.second;
         LSRUse &LU = Uses[LF.LUIdx];
         LU.AllFixupsOutsideLoop &= LF.isUseFullyOutsideLoop(L);
+        if (!LU.WidestFixupType ||
+            SE.getTypeSizeInBits(LU.WidestFixupType) <
+            SE.getTypeSizeInBits(LF.OperandValToReplace->getType()))
+          LU.WidestFixupType = LF.OperandValToReplace->getType();
         InsertSupplementalFormula(U, LU, LF.LUIdx);
         CountRegisters(LU.Formulae.back(), Uses.size() - 1);
         break;
