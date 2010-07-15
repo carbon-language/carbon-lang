@@ -647,6 +647,11 @@ public:
 
   bool operator()(std::pair<const Loop *, const SCEV *> LHS,
                   std::pair<const Loop *, const SCEV *> RHS) const {
+    // Keep pointer operands sorted at the end.
+    if (LHS.second->getType()->isPointerTy() !=
+        RHS.second->getType()->isPointerTy())
+      return LHS.second->getType()->isPointerTy();
+
     // Compare loops with PickMostRelevantLoop.
     if (LHS.first != RHS.first)
       return PickMostRelevantLoop(LHS.first, RHS.first, DT) != LHS.first;
@@ -699,8 +704,15 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
       // The running sum expression is a pointer. Try to form a getelementptr
       // at this level with that as the base.
       SmallVector<const SCEV *, 4> NewOps;
-      for (; I != E && I->first == CurLoop; ++I)
-        NewOps.push_back(I->second);
+      for (; I != E && I->first == CurLoop; ++I) {
+        // If the operand is SCEVUnknown and not instructions, peek through
+        // it, to enable more of it to be folded into the GEP.
+        const SCEV *X = I->second;
+        if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(X))
+          if (!isa<Instruction>(U->getValue()))
+            X = SE.getSCEV(U->getValue());
+        NewOps.push_back(X);
+      }
       Sum = expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, Sum);
     } else if (const PointerType *PTy = dyn_cast<PointerType>(Op->getType())) {
       // The running sum is an integer, and there's a pointer at this level.
