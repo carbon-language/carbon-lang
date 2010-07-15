@@ -18,6 +18,7 @@ inline int __attribute__((always_inline)) f1(int x) {
   return blarg; 
 }
 
+// CHECK: @test1
 int test1(int x) { 
   // CHECK: br i1
   // CHECK-NOT: call
