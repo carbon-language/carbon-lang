@@ -1749,8 +1749,48 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
 /// cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   switch (E->getCastKind()) {
-  default:
+  case CastExpr::CK_ToVoid:
     return EmitUnsupportedLValue(E, "unexpected cast lvalue");
+   
+  case CastExpr::CK_NoOp:
+    if (E->getSubExpr()->Classify(getContext()).getKind() 
+                                          != Expr::Classification::CL_PRValue) {
+      LValue LV = EmitLValue(E->getSubExpr());
+      if (LV.isPropertyRef()) {
+        QualType QT = E->getSubExpr()->getType();
+        RValue RV = EmitLoadOfPropertyRefLValue(LV, QT);
+        assert(!RV.isScalar() && "EmitCastLValue-scalar cast of property ref");
+        llvm::Value *V = RV.getAggregateAddr();
+        return LValue::MakeAddr(V, MakeQualifiers(QT));
+      }
+      return LV;
+    }
+    // Fall through to synthesize a temporary.
+      
+  case CastExpr::CK_Unknown:
+  case CastExpr::CK_BitCast:
+  case CastExpr::CK_ArrayToPointerDecay:
+  case CastExpr::CK_FunctionToPointerDecay:
+  case CastExpr::CK_NullToMemberPointer:
+  case CastExpr::CK_IntegralToPointer:
+  case CastExpr::CK_PointerToIntegral:
+  case CastExpr::CK_VectorSplat:
+  case CastExpr::CK_IntegralCast:
+  case CastExpr::CK_IntegralToFloating:
+  case CastExpr::CK_FloatingToIntegral:
+  case CastExpr::CK_FloatingCast:
+  case CastExpr::CK_DerivedToBaseMemberPointer:
+  case CastExpr::CK_BaseToDerivedMemberPointer:
+  case CastExpr::CK_MemberPointerToBoolean:
+  case CastExpr::CK_AnyPointerToBlockPointerCast: {
+    // These casts only produce lvalues when we're binding a reference to a 
+    // temporary realized from a (converted) pure rvalue. Emit the expression
+    // as a value, copy it into a temporary, and return an lvalue referring to
+    // that temporary.
+    llvm::Value *V = CreateMemTemp(E->getType(), "ref.temp");
+    EmitAnyExprToMem(E, V, false, false);
+    return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  }
 
   case CastExpr::CK_Dynamic: {
     LValue LV = EmitLValue(E->getSubExpr());
@@ -1760,17 +1800,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                             MakeQualifiers(E->getType()));
   }
 
-  case CastExpr::CK_NoOp: {
-    LValue LV = EmitLValue(E->getSubExpr());
-    if (LV.isPropertyRef()) {
-      QualType QT = E->getSubExpr()->getType();
-      RValue RV = EmitLoadOfPropertyRefLValue(LV, QT);
-      assert(!RV.isScalar() && "EmitCastLValue - scalar cast of property ref");
-      llvm::Value *V = RV.getAggregateAddr();
-      return LValue::MakeAddr(V, MakeQualifiers(QT));
-    }
-    return LV;
-  }
   case CastExpr::CK_ConstructorConversion:
   case CastExpr::CK_UserDefinedConversion:
   case CastExpr::CK_AnyPointerToObjCPointerCast:
@@ -1826,6 +1855,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
   }
   }
+  
+  llvm_unreachable("Unhandled lvalue cast kind?");
 }
 
 LValue CodeGenFunction::EmitNullInitializationLValue(
