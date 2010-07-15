@@ -2988,7 +2988,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
                 if (Fixup.LUIdx == LUIdx) {
                   Fixup.LUIdx = LUThatHas - &Uses.front();
                   Fixup.Offset += F.AM.BaseOffs;
-                  DEBUG(errs() << "New fixup has offset "
+                  DEBUG(dbgs() << "New fixup has offset "
                                << Fixup.Offset << '\n');
                 }
                 if (Fixup.LUIdx == NumUses-1)
