@@ -600,7 +600,8 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodDefUnit, MethodLine,
                                   MethodTy, /*isLocalToUnit=*/false, 
                                   /* isDefintion=*/ false,
-                                  Virtuality, VIndex, ContainingType);
+                                  Virtuality, VIndex, ContainingType,
+                                  Method->isImplicit());
   
   // Don't cache ctors or dtors since we have to emit multiple functions for
   // a single ctor or dtor.
