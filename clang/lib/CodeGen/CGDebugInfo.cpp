@@ -601,7 +601,8 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                   MethodTy, /*isLocalToUnit=*/false, 
                                   /* isDefintion=*/ false,
                                   Virtuality, VIndex, ContainingType,
-                                  Method->isImplicit());
+                                  Method->isImplicit(),
+                                  CGM.getLangOptions().Optimize);
   
   // Don't cache ctors or dtors since we have to emit multiple functions for
   // a single ctor or dtor.
@@ -1335,7 +1336,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(FnType, Unit),
-                                  Fn->hasInternalLinkage(), true/*definition*/);
+                                  Fn->hasInternalLinkage(), true/*definition*/,
+                                  0, 0, llvm::DIType(),
+                                  D->isImplicit(),
+                                  CGM.getLangOptions().Optimize, Fn);
 
   // Push function on region stack.
   llvm::MDNode *SPN = SP;
