@@ -165,18 +165,8 @@ public:
   }
 
   /// getInt8 - Get a constant 8-bit value.
-  ConstantInt *getInt8(int8_t C) {
-    return ConstantInt::getSigned(getInt8Ty(), C);
-  }
-
-  /// getInt8 - Get a constant 8-bit value.
   ConstantInt *getInt8(uint8_t C) {
     return ConstantInt::get(getInt8Ty(), C);
-  }
-
-  /// getInt16 - Get a constant 16-bit value.
-  ConstantInt *getInt16(int16_t C) {
-    return ConstantInt::getSigned(getInt16Ty(), C);
   }
 
   /// getInt16 - Get a constant 16-bit value.
@@ -185,20 +175,10 @@ public:
   }
 
   /// getInt32 - Get a constant 32-bit value.
-  ConstantInt *getInt32(int32_t C) {
-    return ConstantInt::getSigned(getInt32Ty(), C);
-  }
-
-  /// getInt32 - Get a constant 32-bit value.
   ConstantInt *getInt32(uint32_t C) {
     return ConstantInt::get(getInt32Ty(), C);
   }
   
-  /// getInt64 - Get a constant 64-bit value.
-  ConstantInt *getInt64(int64_t C) {
-    return ConstantInt::getSigned(getInt64Ty(), C);
-  }
-
   /// getInt64 - Get a constant 64-bit value.
   ConstantInt *getInt64(uint64_t C) {
     return ConstantInt::get(getInt64Ty(), C);
