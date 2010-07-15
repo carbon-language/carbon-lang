@@ -164,7 +164,7 @@ let neverHasSideEffects = 1 in
 def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMSrcReg, (outs FR64:$dst), (ins VR64:$src),
                            "movq2dq\t{$src, $dst|$dst, $src}", []>;
 
-def MMX_MOVFR642Qrr: SSDIi8<0xD6, MRMSrcReg, (outs VR64:$dst), (ins FR64:$src),
+def MMX_MOVFR642Qrr: SDIi8<0xD6, MRMSrcReg, (outs VR64:$dst), (ins FR64:$src),
                            "movdq2q\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
