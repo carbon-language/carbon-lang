@@ -66,20 +66,20 @@ namespace llvm {
 
     /// KillIndices - The index of the most recent kill (proceding bottom-up),
     /// or ~0u if the register is not live.
-    unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<unsigned> KillIndices;
 
     /// DefIndices - The index of the most recent complete def (proceding bottom
     /// up), or ~0u if the register is live.
-    unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<unsigned> DefIndices;
 
   public:
     AggressiveAntiDepState(const unsigned TargetRegs, MachineBasicBlock *BB);
 
     /// GetKillIndices - Return the kill indices.
-    unsigned *GetKillIndices() { return KillIndices; }
+    std::vector<unsigned> &GetKillIndices() { return KillIndices; }
 
     /// GetDefIndices - Return the define indices.
-    unsigned *GetDefIndices() { return DefIndices; }
+    std::vector<unsigned> &GetDefIndices() { return DefIndices; }
 
     /// GetRegRefs - Return the RegRefs map.
     std::multimap<unsigned, RegisterReference>& GetRegRefs() { return RegRefs; }
