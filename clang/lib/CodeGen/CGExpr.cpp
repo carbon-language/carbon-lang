@@ -1753,8 +1753,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return EmitUnsupportedLValue(E, "unexpected cast lvalue");
    
   case CastExpr::CK_NoOp:
-    if (E->getSubExpr()->getType()->isRecordType() ||
-        E->getSubExpr()->isLvalue(getContext()) == Expr::LV_Valid) {
+    if (!E->getSubExpr()->Classify(getContext()).isPRValue()) {
       LValue LV = EmitLValue(E->getSubExpr());
       if (LV.isPropertyRef()) {
         QualType QT = E->getSubExpr()->getType();
