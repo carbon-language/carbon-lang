@@ -1345,6 +1345,27 @@ ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD))
 endif
 endif
 
+#---------------------------------------------------------
+# Tool Version Info Support
+#---------------------------------------------------------
+
+ifeq ($(HOST_OS),Darwin)
+ifdef TOOL_INFO_PLIST
+
+LD.Flags += -Wl,-sectcreate,__TEXT,__info_plist,$(ObjDir)/$(TOOL_INFO_PLIST)
+
+$(ToolBuildPath): $(ObjDir)/$(TOOL_INFO_PLIST)
+
+$(ObjDir)/$(TOOL_INFO_PLIST): $(PROJ_SRC_DIR)/$(TOOL_INFO_PLIST).in
+	$(Echo) "Creating $(TOOLNAME) '$(TOOL_INFO_PLIST)' file..."
+	$(Verb)sed -e "s#@TOOL_INFO_UTI@#$(TOOL_INFO_UTI)#g" \
+	           -e "s#@TOOL_INFO_NAME@#$(TOOL_INFO_NAME)#g" \
+	           -e "s#@TOOL_INFO_VERSION@#$(TOOL_INFO_VERSION)#g" \
+	         -e "s#@TOOL_INFO_BUILD_VERSION@#$(TOOL_INFO_BUILD_VERSION)#g" \
+	           $< > $@
+
+endif
+endif
 
 #---------------------------------------------------------
 # Provide targets for building the tools
