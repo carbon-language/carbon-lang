@@ -42,6 +42,9 @@ DebugMod("agg-antidep-debugmod",
 AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
                                                MachineBasicBlock *BB) :
   NumTargetRegs(TargetRegs), GroupNodes(TargetRegs, 0) {
+  GroupNodeIndices.reserve(TargetRegs);
+  KillIndices.reserve(TargetRegs);
+  DefIndices.reserve(TargetRegs);
 
   const unsigned BBSize = BB->size();
   for (unsigned i = 0; i < NumTargetRegs; ++i) {
@@ -54,8 +57,7 @@ AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
   }
 }
 
-unsigned AggressiveAntiDepState::GetGroup(unsigned Reg)
-{
+unsigned AggressiveAntiDepState::GetGroup(unsigned Reg) {
   unsigned Node = GroupNodeIndices[Reg];
   while (GroupNodes[Node] != Node)
     Node = GroupNodes[Node];
