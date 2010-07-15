@@ -144,4 +144,6 @@ void test19() {
 
 int test20(int x) {
   return x && 4; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+
+  return x && sizeof(int) == 4;  // no warning.
 }

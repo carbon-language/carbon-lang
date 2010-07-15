@@ -5742,6 +5742,10 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   // is a constant.
   if (lex->getType()->isIntegerType() && !lex->getType()->isBooleanType() &&
       rex->getType()->isIntegerType() && rex->isEvaluatable(Context) &&
+      // Don't warn if the RHS is a (constant folded) boolean expression like
+      // "sizeof(int) == 4".
+      !rex->isKnownToHaveBooleanValue() &&
+      // Don't warn in macros.
       !Loc.isMacroID())
     Diag(Loc, diag::warn_logical_instead_of_bitwise)
      << rex->getSourceRange()
