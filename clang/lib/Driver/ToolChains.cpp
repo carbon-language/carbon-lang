@@ -469,19 +469,10 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       iPhoneVersion = DAL->MakeJoinedArg(0, O, iPhoneOSTarget);
       DAL->append(iPhoneVersion);
     } else {
-      // Otherwise, choose a default platform based on the tool chain.
-      //
-      // FIXME: Don't hardcode default here.
-      if (getTriple().getArch() == llvm::Triple::arm ||
-          getTriple().getArch() == llvm::Triple::thumb) {
-        const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-        iPhoneVersion = DAL->MakeJoinedArg(0, O, "3.0");
-        DAL->append(iPhoneVersion);
-      } else {
-        const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-        OSXVersion = DAL->MakeJoinedArg(0, O, MacosxVersionMin);
-        DAL->append(OSXVersion);
-      }
+      // Otherwise, assume we are targeting OS X.
+      const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+      OSXVersion = DAL->MakeJoinedArg(0, O, MacosxVersionMin);
+      DAL->append(OSXVersion);
     }
   }
 

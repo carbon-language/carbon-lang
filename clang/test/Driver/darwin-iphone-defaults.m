@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-host-triple i386-apple-darwin9 -arch armv7 -flto -S -o - %s | FileCheck %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -miphoneos-version-min=3.0 -arch armv7 -flto -S -o - %s | FileCheck %s
 
 // CHECK: @f0
 // CHECK-NOT: ssp
