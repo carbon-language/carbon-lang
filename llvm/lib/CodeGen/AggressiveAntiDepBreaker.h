@@ -59,7 +59,7 @@ namespace llvm {
     /// currently representing the group that the register belongs to.
     /// Register 0 is always represented by the 0 group, a group
     /// composed of registers that are not eligible for anti-aliasing.
-    unsigned GroupNodeIndices[TargetRegisterInfo::FirstVirtualRegister];
+    std::vector<unsigned> GroupNodeIndices;
 
     /// RegRefs - Map registers to all their references within a live range.
     std::multimap<unsigned, RegisterReference> RegRefs;
