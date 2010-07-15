@@ -159,8 +159,9 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   std::map<const Value *, std::vector<SUnit *> > AliasMemUses, NonAliasMemUses;
 
   // Keep track of dangling debug references to registers.
-  std::pair<MachineInstr*, unsigned>
-        DanglingDebugValue[TargetRegisterInfo::FirstVirtualRegister];
+  std::vector<std::pair<MachineInstr*, unsigned> >
+    DanglingDebugValue(TRI->getNumRegs(),
+    std::make_pair(static_cast<MachineInstr*>(0), 0));
 
   // Check to see if the scheduler cares about latencies.
   bool UnitLatencies = ForceUnitLatencies();
@@ -172,7 +173,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   // Remove any stale debug info; sometimes BuildSchedGraph is called again
   // without emitting the info from the previous call.
   DbgValueVec.clear();
-  std::memset(DanglingDebugValue, 0, sizeof(DanglingDebugValue));
 
   // Walk the list of instructions, from bottom moving up.
   for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
