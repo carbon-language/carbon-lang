@@ -472,6 +472,25 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
+    
+    // (icmp ne (A & C1), 0) & (icmp ne (A & C2), 0) -->
+    // (icmp eq (A & (C1|C2)), (C1|C2))
+    if (LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
+      Instruction *I1 = dyn_cast<Instruction>(Val);
+      Instruction *I2 = dyn_cast<Instruction>(Val2);
+      if (I1 && I1->getOpcode() == Instruction::And &&
+          I2 && I2->getOpcode() == Instruction::And &&
+          I1->getOperand(0) == I1->getOperand(0)) {
+        ConstantInt *CI1 = dyn_cast<ConstantInt>(I1->getOperand(1));
+        ConstantInt *CI2 = dyn_cast<ConstantInt>(I2->getOperand(1));
+        if (CI1 && !CI1->isZero() && CI2 && !CI2->isZero() &&
+            CI1->getValue().operator&(CI2->getValue()) == 0) {
+          Constant *ConstOr = ConstantExpr::getOr(CI1, CI2);
+          Value *NewAnd = Builder->CreateAnd(I1->getOperand(0), ConstOr);
+          return Builder->CreateICmp(ICmpInst::ICMP_EQ, NewAnd, ConstOr);
+        }
+      }
+    }
   }
   
   // From here on, we only handle:
