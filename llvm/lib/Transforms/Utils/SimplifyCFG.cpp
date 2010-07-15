@@ -1395,9 +1395,8 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   // register pressure or inhibit out-of-order execution.
   Instruction *BonusInst = 0;
   if (&*FrontIt != Cond &&
-      (*FrontIt).hasOneUse() && *(*FrontIt).use_begin() == Cond &&
-      (*FrontIt).isSafeToSpeculativelyExecute() &&
-      !(*FrontIt).mayReadFromMemory()) {
+      FrontIt->hasOneUse() && *FrontIt->use_begin() == Cond &&
+      FrontIt->isSafeToSpeculativelyExecute()) {
     BonusInst = &*FrontIt;
     ++FrontIt;
   }
