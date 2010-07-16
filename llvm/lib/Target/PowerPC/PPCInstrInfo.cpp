@@ -18,8 +18,11 @@
 #include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -524,6 +527,14 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
+
+  const MachineFrameInfo &MFI = *MF.getFrameInfo();
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
+                            MachineMemOperand::MOStore, /*Offset=*/0,
+                            MFI.getObjectSize(FrameIdx),
+                            MFI.getObjectAlignment(FrameIdx));
+  NewMIs.back()->addMemOperand(MF, MMO);
 }
 
 void
@@ -637,6 +648,14 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs);
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
+
+  const MachineFrameInfo &MFI = *MF.getFrameInfo();
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
+                            MachineMemOperand::MOLoad, /*Offset=*/0,
+                            MFI.getObjectSize(FrameIdx),
+                            MFI.getObjectAlignment(FrameIdx));
+  NewMIs.back()->addMemOperand(MF, MMO);
 }
 
 MachineInstr*
