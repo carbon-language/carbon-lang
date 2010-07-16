@@ -9,4 +9,4 @@ void f1(char *a, char *b) {
 	__clear_cache(a,b);
 }
 
-// CHECK: call void @__clear_cache
+// CHECK: call {{.*}} @__clear_cache
