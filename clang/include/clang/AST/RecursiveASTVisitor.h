@@ -353,6 +353,7 @@ private:
   bool TraverseTemplateParameterListHelper(TemplateParameterList *TPL);
   bool TraverseTemplateArgumentLocsHelper(const TemplateArgumentLoc *TAL,
                                           unsigned Count);
+  bool TraverseArrayTypeLocHelper(ArrayTypeLoc TL);
   bool TraverseRecordHelper(RecordDecl *D);
   bool TraverseCXXRecordHelper(CXXRecordDecl *D);
   bool TraverseDeclaratorHelper(DeclaratorDecl *D);
@@ -796,23 +797,31 @@ DEF_TRAVERSE_TYPELOC(MemberPointerType, {
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
   })
 
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseArrayTypeLocHelper(ArrayTypeLoc TL) {
+  // This isn't available for ArrayType, but is for the ArrayTypeLoc.
+  TRY_TO(TraverseStmt(TL.getSizeExpr()));
+  return true;
+}
+
 DEF_TRAVERSE_TYPELOC(ConstantArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+    return TraverseArrayTypeLocHelper(TL);
   })
 
 DEF_TRAVERSE_TYPELOC(IncompleteArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
+    return TraverseArrayTypeLocHelper(TL);
   })
 
 DEF_TRAVERSE_TYPELOC(VariableArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
-    TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
+    return TraverseArrayTypeLocHelper(TL);
   })
 
 DEF_TRAVERSE_TYPELOC(DependentSizedArrayType, {
     TRY_TO(TraverseTypeLoc(TL.getElementLoc()));
-    if (TL.getTypePtr()->getSizeExpr())
-      TRY_TO(TraverseStmt(TL.getTypePtr()->getSizeExpr()));
+    return TraverseArrayTypeLocHelper(TL);
   })
 
 // FIXME: order? why not size expr first?
@@ -1303,7 +1312,39 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
     return true;
   }
 
+  // If we're an explicit template specialization, iterate over the
+  // template args that were explicitly specified.
+  if (const FunctionTemplateSpecializationInfo *FTSI =
+      D->getTemplateSpecializationInfo()) {
+    if (FTSI->getTemplateSpecializationKind() != TSK_Undeclared &&
+        FTSI->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
+      const TemplateArgumentListInfo *TALI = FTSI->TemplateArgumentsAsWritten;
+      TRY_TO(TraverseTemplateArgumentLocsHelper(TALI->getArgumentArray(),
+                                                TALI->size()));
+    }
+  }
+
   TRY_TO(TraverseType(D->getResultType()));
+
+  // FIXME: put this after the function parameters but before the body.
+  if (FunctionProtoType *FuncProto = dyn_cast<FunctionProtoType>(FuncType)) {
+    if (D->isThisDeclarationADefinition()) {
+      // This would be visited if we called TraverseType(D->getType())
+      // above, but we don't (at least, not in the
+      // declaration-is-a-definition case), in order to avoid duplicate
+      // visiting for parameters.  (We need to check parameters here,
+      // rather than letting D->getType() do it, so we visit default
+      // parameter values).  So we need to re-do some of the work the
+      // type would do.
+      for (FunctionProtoType::exception_iterator
+               E = FuncProto->exception_begin(),
+               EEnd = FuncProto->exception_end();
+           E != EEnd; ++E) {
+        TRY_TO(TraverseType(*E));
+      }
+    }
+  }
+
   TRY_TO(TraverseDeclContextHelper(D));  // Parameters.
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
@@ -1565,6 +1606,30 @@ DEF_TRAVERSE_STMT(CXXNewExpr, {
     TRY_TO(TraverseType(S->getAllocatedType()));
   })
 
+DEF_TRAVERSE_STMT(OffsetOfExpr, {
+    // The child-iterator will pick up the expression representing
+    // the field.
+    // FIMXE: for code like offsetof(Foo, a.b.c), should we get
+    // making a MemberExpr callbacks for Foo.a, Foo.a.b, and Foo.a.b.c?
+    TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
+  })
+
+DEF_TRAVERSE_STMT(SizeOfAlignOfExpr, {
+    // The child-iterator will pick up the arg if it's an expression,
+    // but not if it's a type.
+    if (S->isArgumentType())
+      TRY_TO(TraverseTypeLoc(S->getArgumentTypeInfo()->getTypeLoc()));
+  })
+
+DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
+    TRY_TO(TraverseType(S->getArgType1()));
+    TRY_TO(TraverseType(S->getArgType2()));
+  })
+
+DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
+    TRY_TO(TraverseType(S->getQueriedType()));
+  })
+
 // These exprs (most of them), do not need any action except iterating
 // over the children.
 DEF_TRAVERSE_STMT(AddrLabelExpr, { })
@@ -1598,15 +1663,11 @@ DEF_TRAVERSE_STMT(ObjCPropertyRefExpr, { })
 DEF_TRAVERSE_STMT(ObjCProtocolExpr, { })
 DEF_TRAVERSE_STMT(ObjCSelectorExpr, { })
 DEF_TRAVERSE_STMT(ObjCSuperExpr, { })
-DEF_TRAVERSE_STMT(OffsetOfExpr, { })
 DEF_TRAVERSE_STMT(ParenExpr, { })
 DEF_TRAVERSE_STMT(ParenListExpr, { })
 DEF_TRAVERSE_STMT(PredefinedExpr, { })
 DEF_TRAVERSE_STMT(ShuffleVectorExpr, { })
-DEF_TRAVERSE_STMT(SizeOfAlignOfExpr, { })
 DEF_TRAVERSE_STMT(StmtExpr, { })
-DEF_TRAVERSE_STMT(TypesCompatibleExpr, { })
-DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedLookupExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedMemberExpr, { })
 DEF_TRAVERSE_STMT(VAArgExpr, { })
