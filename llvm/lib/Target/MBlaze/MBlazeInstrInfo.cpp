@@ -30,41 +30,6 @@ static bool isZeroImm(const MachineOperand &op) {
   return op.isImm() && op.getImm() == 0;
 }
 
-/// Return true if the instruction is a register to register move and
-/// leave the source and dest operands in the passed parameters.
-bool MBlazeInstrInfo::
-isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
-            unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
-
-  // add $dst, $src, $zero || addu $dst, $zero, $src
-  // or  $dst, $src, $zero || or   $dst, $zero, $src
-  if ((MI.getOpcode() == MBlaze::ADD) || (MI.getOpcode() == MBlaze::OR)) {
-    if (MI.getOperand(1).isReg() && MI.getOperand(1).getReg() == MBlaze::R0) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-      return true;
-    } else if (MI.getOperand(2).isReg() && 
-               MI.getOperand(2).getReg() == MBlaze::R0) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  }
-
-  // addi $dst, $src, 0
-  // ori  $dst, $src, 0
-  if ((MI.getOpcode() == MBlaze::ADDI) || (MI.getOpcode() == MBlaze::ORI)) {
-    if ((MI.getOperand(1).isReg()) && (isZeroImm(MI.getOperand(2)))) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  }
-
-  return false;
-}
-
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of
 /// the destination along with the FrameIndex of the loaded stack slot.  If

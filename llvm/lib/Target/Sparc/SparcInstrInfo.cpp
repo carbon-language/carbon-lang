@@ -28,46 +28,6 @@ SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
     RI(ST, *this), Subtarget(ST) {
 }
 
-static bool isZeroImm(const MachineOperand &op) {
-  return op.isImm() && op.getImm() == 0;
-}
-
-/// Return true if the instruction is a register to register move and
-/// leave the source and dest operands in the passed parameters.
-///
-bool SparcInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DstReg,
-                                 unsigned &SrcSR, unsigned &DstSR) const {
-  SrcSR = DstSR = 0; // No sub-registers.
-
-  // We look for 3 kinds of patterns here:
-  // or with G0 or 0
-  // add with G0 or 0
-  // fmovs or FpMOVD (pseudo double move).
-  if (MI.getOpcode() == SP::ORrr || MI.getOpcode() == SP::ADDrr) {
-    if (MI.getOperand(1).getReg() == SP::G0) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-      return true;
-    } else if (MI.getOperand(2).getReg() == SP::G0) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  } else if ((MI.getOpcode() == SP::ORri || MI.getOpcode() == SP::ADDri) &&
-             isZeroImm(MI.getOperand(2)) && MI.getOperand(1).isReg()) {
-    DstReg = MI.getOperand(0).getReg();
-    SrcReg = MI.getOperand(1).getReg();
-    return true;
-  } else if (MI.getOpcode() == SP::FMOVS || MI.getOpcode() == SP::FpMOVD ||
-             MI.getOpcode() == SP::FMOVD) {
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    return true;
-  }
-  return false;
-}
-
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of
 /// the destination along with the FrameIndex of the loaded stack slot.  If

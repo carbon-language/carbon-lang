@@ -30,10 +30,6 @@ namespace llvm {
     /// always be able to get register info as well (through this method).
     virtual const BlackfinRegisterInfo &getRegisterInfo() const { return RI; }
 
-    virtual bool isMoveInstr(const MachineInstr &MI,
-                             unsigned &SrcReg, unsigned &DstReg,
-                             unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
-
     virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                          int &FrameIndex) const;
 

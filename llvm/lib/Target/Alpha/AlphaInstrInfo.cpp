@@ -27,32 +27,6 @@ AlphaInstrInfo::AlphaInstrInfo()
     RI(*this) { }
 
 
-bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
-                                 unsigned& sourceReg, unsigned& destReg,
-                                 unsigned& SrcSR, unsigned& DstSR) const {
-  unsigned oc = MI.getOpcode();
-  if (oc == Alpha::BISr   || 
-      oc == Alpha::CPYSS  || 
-      oc == Alpha::CPYST  ||
-      oc == Alpha::CPYSSt || 
-      oc == Alpha::CPYSTs) {
-    // or r1, r2, r2 
-    // cpys(s|t) r1 r2 r2
-    assert(MI.getNumOperands() >= 3 &&
-           MI.getOperand(0).isReg() &&
-           MI.getOperand(1).isReg() &&
-           MI.getOperand(2).isReg() &&
-           "invalid Alpha BIS instruction!");
-    if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
-      sourceReg = MI.getOperand(1).getReg();
-      destReg = MI.getOperand(0).getReg();
-      SrcSR = DstSR = 0;
-      return true;
-    }
-  }
-  return false;
-}
-
 unsigned 
 AlphaInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                     int &FrameIndex) const {

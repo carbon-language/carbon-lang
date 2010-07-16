@@ -573,48 +573,6 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   return 0; // Not reached
 }
 
-/// Return true if the instruction is a register to register move and
-/// leave the source and dest operands in the passed parameters.
-///
-bool
-ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
-                              unsigned &SrcReg, unsigned &DstReg,
-                              unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
-  switch (MI.getOpcode()) {
-  default: break;
-  case ARM::VMOVS:
-  case ARM::VMOVD:
-  case ARM::VMOVDneon:
-  case ARM::VMOVQ:
-  case ARM::VMOVQQ : {
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    SrcSubIdx = MI.getOperand(1).getSubReg();
-    DstSubIdx = MI.getOperand(0).getSubReg();
-    return true;
-  }
-  case ARM::MOVr:
-  case ARM::MOVr_TC:
-  case ARM::tMOVr:
-  case ARM::tMOVgpr2tgpr:
-  case ARM::tMOVtgpr2gpr:
-  case ARM::tMOVgpr2gpr:
-  case ARM::t2MOVr: {
-    assert(MI.getDesc().getNumOperands() >= 2 &&
-           MI.getOperand(0).isReg() &&
-           MI.getOperand(1).isReg() &&
-           "Invalid ARM MOV instruction");
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    SrcSubIdx = MI.getOperand(1).getSubReg();
-    DstSubIdx = MI.getOperand(0).getSubReg();
-    return true;
-  }
-  }
-
-  return false;
-}
-
 unsigned
 ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {

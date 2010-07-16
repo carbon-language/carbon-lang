@@ -28,34 +28,6 @@ BlackfinInstrInfo::BlackfinInstrInfo(BlackfinSubtarget &ST)
     RI(ST, *this),
     Subtarget(ST) {}
 
-/// Return true if the instruction is a register to register move and
-/// leave the source and dest operands in the passed parameters.
-bool BlackfinInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                    unsigned &SrcReg,
-                                    unsigned &DstReg,
-                                    unsigned &SrcSR,
-                                    unsigned &DstSR) const {
-  SrcSR = DstSR = 0; // No sub-registers.
-  switch (MI.getOpcode()) {
-  case BF::MOVE:
-  case BF::MOVE_ncccc:
-  case BF::MOVE_ccncc:
-  case BF::MOVECC_zext:
-  case BF::MOVECC_nz:
-    DstReg = MI.getOperand(0).getReg();
-    SrcReg = MI.getOperand(1).getReg();
-    return true;
-  case BF::SLL16i:
-    if (MI.getOperand(2).getImm()!=0)
-      return false;
-    DstReg = MI.getOperand(0).getReg();
-    SrcReg = MI.getOperand(1).getReg();
-    return true;
-  default:
-    return false;
-  }
-}
-
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of
 /// the destination along with the FrameIndex of the loaded stack slot.  If

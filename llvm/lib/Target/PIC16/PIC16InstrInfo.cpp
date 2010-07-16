@@ -167,21 +167,6 @@ void PIC16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-bool PIC16InstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DestReg,
-                                 unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
-
-  if (MI.getOpcode() == PIC16::copy_fsr
-      || MI.getOpcode() == PIC16::copy_w) {
-    DestReg = MI.getOperand(0).getReg();
-    SrcReg = MI.getOperand(1).getReg();
-    return true;
-  }
-
-  return false;
-}
-
 /// InsertBranch - Insert a branch into the end of the specified
 /// MachineBasicBlock.  This operands to this method are the same as those
 /// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch

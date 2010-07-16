@@ -30,53 +30,6 @@ static bool isZeroImm(const MachineOperand &op) {
   return op.isImm() && op.getImm() == 0;
 }
 
-/// Return true if the instruction is a register to register move and
-/// leave the source and dest operands in the passed parameters.
-bool MipsInstrInfo::
-isMoveInstr(const MachineInstr &MI, unsigned &SrcReg, unsigned &DstReg,
-            unsigned &SrcSubIdx, unsigned &DstSubIdx) const 
-{
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
-
-  // addu $dst, $src, $zero || addu $dst, $zero, $src
-  // or   $dst, $src, $zero || or   $dst, $zero, $src
-  if ((MI.getOpcode() == Mips::ADDu) || (MI.getOpcode() == Mips::OR)) {
-    if (MI.getOperand(1).getReg() == Mips::ZERO) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-      return true;
-    } else if (MI.getOperand(2).getReg() == Mips::ZERO) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  }
-
-  // mov $fpDst, $fpSrc
-  // mfc $gpDst, $fpSrc
-  // mtc $fpDst, $gpSrc
-  if (MI.getOpcode() == Mips::FMOV_S32 || 
-      MI.getOpcode() == Mips::FMOV_D32 || 
-      MI.getOpcode() == Mips::MFC1 || 
-      MI.getOpcode() == Mips::MTC1 ||
-      MI.getOpcode() == Mips::MOVCCRToCCR) {
-    DstReg = MI.getOperand(0).getReg();
-    SrcReg = MI.getOperand(1).getReg();
-    return true;
-  }
-
-  // addiu $dst, $src, 0
-  if (MI.getOpcode() == Mips::ADDiu) {
-    if ((MI.getOperand(1).isReg()) && (isZeroImm(MI.getOperand(2)))) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  }
-
-  return false;
-}
-
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of
 /// the destination along with the FrameIndex of the loaded stack slot.  If

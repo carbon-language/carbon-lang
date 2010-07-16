@@ -141,31 +141,6 @@ void SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-bool
-SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
-                              unsigned &SrcReg, unsigned &DstReg,
-                              unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  switch (MI.getOpcode()) {
-  default:
-    return false;
-  case SystemZ::MOV32rr:
-  case SystemZ::MOV64rr:
-  case SystemZ::MOV64rrP:
-  case SystemZ::MOV128rr:
-  case SystemZ::FMOV32rr:
-  case SystemZ::FMOV64rr:
-    assert(MI.getNumOperands() >= 2 &&
-           MI.getOperand(0).isReg() &&
-           MI.getOperand(1).isReg() &&
-           "invalid register-register move instruction");
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    SrcSubIdx = MI.getOperand(1).getSubReg();
-    DstSubIdx = MI.getOperand(0).getSubReg();
-    return true;
-  }
-}
-
 unsigned SystemZInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                                int &FrameIndex) const {
   switch (MI->getOpcode()) {

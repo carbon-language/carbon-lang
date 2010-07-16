@@ -100,27 +100,6 @@ void MSP430InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 }
 
 bool
-MSP430InstrInfo::isMoveInstr(const MachineInstr& MI,
-                             unsigned &SrcReg, unsigned &DstReg,
-                             unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers yet.
-
-  switch (MI.getOpcode()) {
-  default:
-    return false;
-  case MSP430::MOV8rr:
-  case MSP430::MOV16rr:
-   assert(MI.getNumOperands() >= 2 &&
-           MI.getOperand(0).isReg() &&
-           MI.getOperand(1).isReg() &&
-           "invalid register-register move instruction");
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    return true;
-  }
-}
-
-bool
 MSP430InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
