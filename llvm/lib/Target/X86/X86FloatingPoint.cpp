@@ -157,6 +157,14 @@ namespace {
       return Slot < StackTop && Stack[Slot] == RegNo;
     }
 
+    // getScratchReg - Return an FP register that is not currently in use.
+    unsigned getScratchReg() {
+      for (int i = 7; i >= 0; --i)
+        if (!isLive(i))
+          return i;
+      llvm_unreachable("Ran out of scratch FP registers");
+    }
+
     // getStackEntry - Return the X86::FP<n> register in register ST(i).
     unsigned getStackEntry(unsigned STi) const {
       assert(STi < StackTop && "Access past stack top!");
@@ -994,7 +1002,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
        MI->getOpcode() == X86::ISTT_Fp32m80 ||
        MI->getOpcode() == X86::ISTT_Fp64m80 ||
        MI->getOpcode() == X86::ST_FpP80m)) {
-    duplicateToTop(Reg, 7 /*temp register*/, I);
+    duplicateToTop(Reg, getScratchReg(), I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
@@ -1347,8 +1355,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
     if (!MI->killsRegister(X86::FP0 + Op0)) {
       // Duplicate Op0 into a temporary on the stack top.
-      // This actually assumes that FP7 is dead.
-      duplicateToTop(Op0, 7, I);
+      duplicateToTop(Op0, getScratchReg(), I);
     } else {
       // Op0 is killed, so just swap it into position.
       moveToTop(Op0, I);
@@ -1368,8 +1375,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     ++StackTop;
     unsigned RegOnTop = getStackEntry(0); // This reg must remain in st(0).
     if (!MI->killsRegister(X86::FP0 + Op0)) {
-      // Assume FP6 is not live, use it as a scratch register.
-      duplicateToTop(Op0, 6, I);
+      duplicateToTop(Op0, getScratchReg(), I);
       moveToTop(RegOnTop, I);
     } else if (getSTReg(Op0) != X86::ST1) {
       // We have the wrong value at st(1). Shuffle! Untested!
@@ -1513,7 +1519,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       
       // Duplicate the TOS so that we return it twice.  Just pick some other FPx
       // register to hold it.
-      unsigned NewReg = (FirstFPRegOp+1)%7;
+      unsigned NewReg = getScratchReg();
       duplicateToTop(FirstFPRegOp, NewReg, MI);
       FirstFPRegOp = NewReg;
     }
