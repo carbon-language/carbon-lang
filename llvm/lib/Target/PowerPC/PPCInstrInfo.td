@@ -1022,9 +1022,7 @@ let Uses = [RM] in {
   }
 }
 
-/// FMR is split into 2 versions, one for 4/8 byte FP, and one for extending.
-///
-/// Note that these are defined as pseudo-ops on the PPC970 because they are
+/// Note that FMR is defined as pseudo-ops on the PPC970 because they are
 /// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
@@ -1032,10 +1030,6 @@ def FMR   : XForm_26<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
                      "fmr $frD, $frB", FPGeneral,
                      []>,  // (set F4RC:$frD, F4RC:$frB)
                      PPC970_Unit_Pseudo;
-def FMRSD  : XForm_26<63, 72, (outs F8RC:$frD), (ins F4RC:$frB),
-                      "fmr $frD, $frB", FPGeneral,
-                      [(set F8RC:$frD, (fextend F4RC:$frB))]>,
-                      PPC970_Unit_Pseudo;
 
 let PPC970_Unit = 3 in {  // FPU Operations.
 // These are artificially split into two different forms, for 4/8 byte FP.
@@ -1476,10 +1470,13 @@ def : Pat<(extloadi16 iaddr:$src),
           (LHZ iaddr:$src)>;
 def : Pat<(extloadi16 xaddr:$src),
           (LHZX xaddr:$src)>;
-def : Pat<(extloadf32 iaddr:$src),
-          (FMRSD (LFS iaddr:$src))>;
-def : Pat<(extloadf32 xaddr:$src),
-          (FMRSD (LFSX xaddr:$src))>;
+def : Pat<(f64 (extloadf32 iaddr:$src)),
+          (COPY_TO_REGCLASS (LFS iaddr:$src), F8RC)>;
+def : Pat<(f64 (extloadf32 xaddr:$src)),
+          (COPY_TO_REGCLASS (LFSX xaddr:$src), F8RC)>;
+
+def : Pat<(f64 (fextend F4RC:$src)),
+          (COPY_TO_REGCLASS F4RC:$src, F8RC)>;
 
 // Memory barriers
 def : Pat<(membarrier (i32 imm /*ll*/),

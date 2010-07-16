@@ -80,7 +80,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC::FMR || oc == PPC::FMRSD) { // fmr r1, r2
+  } else if (oc == PPC::FMR) { // fmr r1, r2
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
