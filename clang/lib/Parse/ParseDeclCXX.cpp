@@ -1218,7 +1218,8 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         '=' constant-expression
 ///
 void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
-                                       const ParsedTemplateInfo &TemplateInfo) {
+                                       const ParsedTemplateInfo &TemplateInfo,
+                                       ParsingDeclRAIIObject *TemplateDiags) {
   // Access declarations.
   if (!TemplateInfo.Kind &&
       (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
@@ -1281,7 +1282,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
-    return ParseCXXClassMemberDeclaration(AS, TemplateInfo);
+    return ParseCXXClassMemberDeclaration(AS, TemplateInfo, TemplateDiags);
   }
 
   // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
@@ -1317,7 +1318,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   SourceLocation DSStart = Tok.getLocation();
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
-  ParsingDeclSpec DS(*this);
+  ParsingDeclSpec DS(*this, TemplateDiags);
   DS.AddAttributes(AttrList.AttrList);
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
 
@@ -1327,7 +1328,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-    Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
+    DeclPtrTy TheDecl =
+      Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
+    DS.complete(TheDecl);
     return;
   }
 

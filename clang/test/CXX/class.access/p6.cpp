@@ -119,3 +119,23 @@ namespace test4 {
     foo(a, 0);
   }
 }
+
+// PR7644
+namespace test5 {
+  class A {
+    enum Enum { E0, E1, E2 }; // expected-note 4 {{declared private here}}
+    template <Enum> void foo();
+    template <Enum> class bar;
+  };
+
+  template <A::Enum en> void A::foo() {}
+  template <A::Enum en> class A::bar {};
+
+  template <A::Enum en> void foo() {} // expected-error {{'Enum' is a private member of 'test5::A'}}
+  template <A::Enum en> class bar {}; // expected-error {{'Enum' is a private member of 'test5::A'}}
+
+  class B {
+    template <A::Enum en> void foo() {} // expected-error {{'Enum' is a private member of 'test5::A'}}
+    template <A::Enum en> class bar {}; // expected-error {{'Enum' is a private member of 'test5::A'}}
+  };
+}

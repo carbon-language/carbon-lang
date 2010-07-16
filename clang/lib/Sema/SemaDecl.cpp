@@ -1562,7 +1562,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       << DS.getSourceRange();
   }
 
-  return DeclPtrTy::make(Tag);
+  return DeclPtrTy::make(TagD);
 }
 
 /// We are trying to inject an anonymous member into the given scope;

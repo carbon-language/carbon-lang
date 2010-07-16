@@ -80,6 +80,10 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // Enter template-parameter scope.
   ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
 
+  // Tell the action that names should be checked in the context of
+  // the declaration to come.
+  ParsingDeclRAIIObject ParsingTemplateParams(*this);
+
   // Parse multiple levels of template headers within this template
   // parameter scope, e.g.,
   //
@@ -152,6 +156,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                              ParsedTemplateInfo(&ParamLists,
                                                              isSpecialization,
                                                          LastParamListWasEmpty),
+                                             ParsingTemplateParams,
                                              DeclEnd, AS);
 }
 
@@ -179,6 +184,7 @@ Parser::DeclPtrTy
 Parser::ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
                                        const ParsedTemplateInfo &TemplateInfo,
+                                       ParsingDeclRAIIObject &DiagsFromTParams,
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS) {
   assert(TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
@@ -186,12 +192,13 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   if (Context == Declarator::MemberContext) {
     // We are parsing a member template.
-    ParseCXXClassMemberDeclaration(AS, TemplateInfo);
+    ParseCXXClassMemberDeclaration(AS, TemplateInfo, &DiagsFromTParams);
     return DeclPtrTy::make((void*)0);
   }
 
-  // Parse the declaration specifiers.
-  ParsingDeclSpec DS(*this);
+  // Parse the declaration specifiers, stealing the accumulated
+  // diagnostics from the template parameters.
+  ParsingDeclSpec DS(DiagsFromTParams);
 
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     DS.AddAttributes(ParseCXX0XAttributes().AttrList);
@@ -1057,8 +1064,12 @@ Parser::DeclPtrTy
 Parser::ParseExplicitInstantiation(SourceLocation ExternLoc,
                                    SourceLocation TemplateLoc,
                                    SourceLocation &DeclEnd) {
+  // This isn't really required here.
+  ParsingDeclRAIIObject ParsingTemplateParams(*this);
+
   return ParseSingleDeclarationAfterTemplate(Declarator::FileContext,
                                              ParsedTemplateInfo(ExternLoc,
                                                                 TemplateLoc),
+                                             ParsingTemplateParams,
                                              DeclEnd, AS_none);
 }

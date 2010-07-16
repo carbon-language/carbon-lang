@@ -654,10 +654,23 @@ private:
     Action &Actions;
     Action::ParsingDeclStackState State;
     bool Popped;
-    
+
   public:
     ParsingDeclRAIIObject(Parser &P) : Actions(P.Actions) {
       push();
+    }
+
+    ParsingDeclRAIIObject(Parser &P, ParsingDeclRAIIObject *Other)
+        : Actions(P.Actions) {
+      if (Other) steal(*Other);
+      else push();
+    }
+
+    /// Creates a RAII object which steals the state from a different
+    /// object instead of pushing.
+    ParsingDeclRAIIObject(ParsingDeclRAIIObject &Other)
+        : Actions(Other.Actions) {
+      steal(Other);
     }
 
     ~ParsingDeclRAIIObject() {
@@ -682,6 +695,12 @@ private:
     }
 
   private:
+    void steal(ParsingDeclRAIIObject &Other) {
+      State = Other.State;
+      Popped = Other.Popped;
+      Other.Popped = true;
+    }
+    
     void push() {
       State = Actions.PushParsingDeclaration();
       Popped = false;
@@ -700,8 +719,10 @@ private:
     ParsingDeclRAIIObject ParsingRAII;
 
   public:
-    ParsingDeclSpec(Parser &P) : ParsingRAII(P) {
-    }
+    ParsingDeclSpec(Parser &P) : ParsingRAII(P) {}
+    ParsingDeclSpec(ParsingDeclRAIIObject &RAII) : ParsingRAII(RAII) {}
+    ParsingDeclSpec(Parser &P, ParsingDeclRAIIObject *RAII)
+      : ParsingRAII(P, RAII) {}
 
     void complete(DeclPtrTy D) {
       ParsingRAII.complete(D);
@@ -1414,7 +1435,8 @@ private:
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclPtrTy TagDecl);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
-                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
+                                 ParsingDeclRAIIObject *DiagsFromTParams = 0);
   void ParseConstructorInitializer(DeclPtrTy ConstructorDecl);
   MemInitResult ParseMemInitializer(DeclPtrTy ConstructorDecl);
   void HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
@@ -1457,6 +1479,7 @@ private:
   DeclPtrTy ParseSingleDeclarationAfterTemplate(
                                        unsigned Context,
                                        const ParsedTemplateInfo &TemplateInfo,
+                                       ParsingDeclRAIIObject &DiagsFromParams,
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth,
