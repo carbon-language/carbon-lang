@@ -147,14 +147,14 @@ private:
   void Error(const char *Msg);
 };
 
-/// \brief Reads a precompiled head containing the contents of a
+/// \brief Reads a precompiled header chain containing the contents of a
 /// translation unit.
 ///
-/// The PCHReader class reads a bitstream (produced by the PCHWriter
+/// The PCHReader class reads bitstreams (produced by the PCHWriter
 /// class) containing the serialized representation of a given
 /// abstract syntax tree and its supporting data structures. An
 /// instance of the PCHReader can be attached to an ASTContext object,
-/// which will provide access to the contents of the PCH file.
+/// which will provide access to the contents of the PCH files.
 ///
 /// The PCH reader provides lazy de-serialization of declarations, as
 /// required when traversing the AST. Only those AST nodes that are
@@ -181,65 +181,86 @@ private:
   Diagnostic &Diags;
 
   /// \brief The semantic analysis object that will be processing the
-  /// PCH file and the translation unit that uses it.
+  /// PCH files and the translation unit that uses it.
   Sema *SemaObj;
 
   /// \brief The preprocessor that will be loading the source file.
   Preprocessor *PP;
 
-  /// \brief The AST context into which we'll read the PCH file.
+  /// \brief The AST context into which we'll read the PCH files.
   ASTContext *Context;
-
-  /// \brief The PCH stat cache installed by this PCHReader, if any.
-  ///
-  /// The dynamic type of this stat cache is always PCHStatCache
-  void *StatCache;
       
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
 
-  /// \brief The bitstream reader from which we'll read the PCH file.
-  llvm::BitstreamReader StreamFile;
-  llvm::BitstreamCursor Stream;
+  /// \brief Information that is needed for every file in the chain.
+  struct PerFileData {
+    PerFileData();
 
-  /// \brief The cursor to the start of the preprocessor block, which stores
-  /// all of the macro definitions.
-  llvm::BitstreamCursor MacroCursor;
+    /// \brief The PCH stat cache installed for this file, if any.
+    ///
+    /// The dynamic type of this stat cache is always PCHStatCache
+    void *StatCache;
+
+    /// \brief The bitstream reader from which we'll read the PCH file.
+    llvm::BitstreamReader StreamFile;
+    llvm::BitstreamCursor Stream;
+
+    /// \brief The cursor to the start of the preprocessor block, which stores
+    /// all of the macro definitions.
+    llvm::BitstreamCursor MacroCursor;
       
-  /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block.  It
-  /// has read all the abbreviations at the start of the block and is ready to
-  /// jump around with these in context.
-  llvm::BitstreamCursor DeclsCursor;
+    /// DeclsCursor - This is a cursor to the start of the DECLS_BLOCK block. It
+    /// has read all the abbreviations at the start of the block and is ready to
+    /// jump around with these in context.
+    llvm::BitstreamCursor DeclsCursor;
 
-  /// \brief The file name of the PCH file.
-  std::string FileName;
+    /// \brief The file name of the PCH file.
+    std::string FileName;
 
-  /// \brief The memory buffer that stores the data associated with
-  /// this PCH file.
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+    /// \brief The memory buffer that stores the data associated with
+    /// this PCH file.
+    llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
 
-  /// \brief Offset type for all of the source location entries in the
-  /// PCH file.
+    /// \brief Cursor used to read source location entries.
+    llvm::BitstreamCursor SLocEntryCursor;
+
+    /// \brief The number of source location entries in this PCH file.
+    unsigned LocalNumSLocEntries;
+
+    /// \brief The number of types in this PCH file.
+    unsigned LocalNumTypes;
+
+    /// \brief The number of declarations in this PCH file.
+    unsigned LocalNumDecls;
+  };
+
+  /// \brief The chain of PCH files. The first entry is the one named by the
+  /// user, the last one is the one that doesn't depend on anything further.
+  llvm::SmallVector<PerFileData*, 2> Chain;
+
+  /// \brief Offsets for all of the source location entries in the
+  /// PCH files. The offsets are relative to a particular file; the correct
+  /// file is chosen using their IDs.
   const uint32_t *SLocOffsets;
 
-  /// \brief The number of source location entries in the PCH file.
+  /// \brief The number of source location entries in all PCH files.
   unsigned TotalNumSLocEntries;
 
-  /// \brief Cursor used to read source location entries.
-  llvm::BitstreamCursor SLocEntryCursor;
-
   /// \brief Offset of each type within the bitstream, indexed by the
-  /// type ID, or the representation of a Type*.
+  /// type ID, or the representation of a Type*. The offset is local to the
+  /// containing file; the file is chosen using the ID.
   const uint32_t *TypeOffsets;
 
   /// \brief Types that have already been loaded from the PCH file.
   ///
   /// When the pointer at index I is non-NULL, the type with
-  /// ID = (I + 1) << 3 has already been loaded from the PCH file.
+  /// ID = (I + 1) << FastQual::Width has already been loaded from the PCH chain
   std::vector<QualType> TypesLoaded;
 
   /// \brief Offset of each declaration within the bitstream, indexed
-  /// by the declaration ID (-1).
+  /// by the declaration ID (-1). The offset is local to the containing file;
+  /// the file is chosen using the ID.
   const uint32_t *DeclOffsets;
 
   /// \brief Declarations that have already been loaded from the PCH file.
@@ -588,8 +609,8 @@ public:
   /// \brief Sets and initializes the given Context.
   void InitializeContext(ASTContext &Context);
 
-  /// \brief Retrieve the name of the PCH file
-  const std::string &getFileName() const { return FileName; }
+  /// \brief Retrieve the name of the named (primary) PCH file
+  const std::string &getFileName() const { return Chain[0]->FileName; }
 
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }
@@ -844,8 +865,8 @@ public:
   Sema *getSema() { return SemaObj; }
 
   /// \brief Retrieve the stream that this PCH reader is reading from.
-  llvm::BitstreamCursor &getStream() { return Stream; }
-  llvm::BitstreamCursor &getDeclsCursor() { return DeclsCursor; }
+  llvm::BitstreamCursor &getStream() { return Chain[0]->Stream; }
+  llvm::BitstreamCursor &getDeclsCursor() { return Chain[0]->DeclsCursor; }
 
   /// \brief Retrieve the identifier table associated with the
   /// preprocessor.

@@ -1215,7 +1215,7 @@ Stmt *PCHReader::ReadStmt() {
   case Read_Decl:
   case Read_Type:
     // Read a statement from the current DeclCursor.
-    return ReadStmtFromStream(DeclsCursor);
+    return ReadStmtFromStream(Chain[0]->DeclsCursor);
   case Read_Stmt:
     return ReadSubStmt();
   }

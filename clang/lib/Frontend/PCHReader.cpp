@@ -418,7 +418,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    StatCache(0), Consumer(0), IdentifierTableData(0), IdentifierLookupTable(0),
+    Consumer(0), IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
@@ -435,7 +435,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
-    Diags(Diags), SemaObj(0), PP(0), Context(0), StatCache(0), Consumer(0),
+    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
@@ -450,7 +450,14 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
   RelocatablePCH = false;
 }
 
-PCHReader::~PCHReader() {}
+PCHReader::~PCHReader() {
+  for (unsigned i = 0, e = Chain.size(); i != e; ++i)
+    delete Chain[e - i - 1];
+}
+
+PCHReader::PerFileData::PerFileData()
+  : StatCache(0)
+{}
 
 
 namespace {
@@ -878,14 +885,16 @@ public:
 PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
   using namespace SrcMgr;
 
+  llvm::BitstreamCursor &SLocEntryCursor = Chain[0]->SLocEntryCursor;
+
   // Set the source-location entry cursor to the current position in
   // the stream. This cursor will be used to read the contents of the
   // source manager block initially, and then lazily read
   // source-location entries as needed.
-  SLocEntryCursor = Stream;
+  SLocEntryCursor = Chain[0]->Stream;
 
   // The stream itself is going to skip over the source manager block.
-  if (Stream.SkipBlock()) {
+  if (Chain[0]->Stream.SkipBlock()) {
     Error("malformed block record in PCH file");
     return Failure;
   }
@@ -953,6 +962,8 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     Error("source location entry ID out-of-range for PCH file");
     return Failure;
   }
+
+  llvm::BitstreamCursor &SLocEntryCursor = Chain[0]->SLocEntryCursor;
 
   ++NumSLocEntriesRead;
   SLocEntryCursor.JumpToBit(SLocOffsets[ID - 1]);
@@ -1088,6 +1099,8 @@ bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
 
 void PCHReader::ReadMacroRecord(uint64_t Offset) {
   assert(PP && "Forgot to set Preprocessor ?");
+
+  llvm::BitstreamCursor &Stream = Chain[0]->Stream;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this macro.
@@ -1258,6 +1271,8 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
 }
 
 void PCHReader::ReadDefinedMacros() {
+  llvm::BitstreamCursor &MacroCursor = Chain[0]->MacroCursor;
+
   // If there was no preprocessor block, do nothing.
   if (!MacroCursor.getBitStreamReader())
     return;
@@ -1354,6 +1369,9 @@ void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
 
 PCHReader::PCHReadResult
 PCHReader::ReadPCHBlock() {
+  PerFileData &F = *Chain[0];
+  llvm::BitstreamCursor &Stream = F.Stream;
+
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
     Error("malformed block record in PCH file");
     return Failure;
@@ -1379,17 +1397,17 @@ PCHReader::ReadPCHBlock() {
         // DeclsCursor cursor to point into it.  Clone our current bitcode
         // cursor to it, enter the block and read the abbrevs in that block.
         // With the main cursor, we just skip over it.
-        DeclsCursor = Stream;
+        F.DeclsCursor = Stream;
         if (Stream.SkipBlock() ||  // Skip with the main cursor.
             // Read the abbrevs.
-            ReadBlockAbbrevs(DeclsCursor, pch::DECLTYPES_BLOCK_ID)) {
+            ReadBlockAbbrevs(F.DeclsCursor, pch::DECLTYPES_BLOCK_ID)) {
           Error("malformed block record in PCH file");
           return Failure;
         }
         break;
 
       case pch::PREPROCESSOR_BLOCK_ID:
-        MacroCursor = Stream;
+        F.MacroCursor = Stream;
         if (PP)
           PP->setExternalSource(this);
 
@@ -1578,7 +1596,7 @@ PCHReader::ReadPCHBlock() {
                          (const unsigned char *)BlobStart,
                          NumStatHits, NumStatMisses);
       FileMgr.addStatCache(MyStatCache);
-      StatCache = MyStatCache;
+      F.StatCache = MyStatCache;
       break;
     }
 
@@ -1641,23 +1659,27 @@ PCHReader::ReadPCHBlock() {
 }
 
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
+  Chain.push_back(new PerFileData());
+  PerFileData &F = *Chain.back();
+
   // Set the PCH file name.
-  this->FileName = FileName;
+  F.FileName = FileName;
 
   // Open the PCH file.
   //
   // FIXME: This shouldn't be here, we should just take a raw_ostream.
   std::string ErrStr;
-  Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
-  if (!Buffer) {
+  F.Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
+  if (!F.Buffer) {
     Error(ErrStr.c_str());
     return IgnorePCH;
   }
 
   // Initialize the stream
-  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
-  Stream.init(StreamFile);
+  F.StreamFile.init((const unsigned char *)F.Buffer->getBufferStart(),
+                    (const unsigned char *)F.Buffer->getBufferEnd());
+  llvm::BitstreamCursor &Stream = F.Stream;
+  Stream.init(F.StreamFile);
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||
@@ -1704,8 +1726,8 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
         SourceMgr.ClearPreallocatedSLocEntries();
 
         // Remove the stat cache.
-        if (StatCache)
-          FileMgr.removeStatCache((PCHStatCache*)StatCache);
+        if (F.StatCache)
+          FileMgr.removeStatCache((PCHStatCache*)F.StatCache);
 
         return IgnorePCH;
       }
@@ -2049,6 +2071,8 @@ void PCHReader::ReadPreprocessedEntities() {
 /// at the given offset in the bitstream. It is a helper routine for
 /// GetType, which deals with reading type IDs.
 QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
+  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
+
   // Keep track of where we are in the stream, then jump back there
   // after reading this type.
   SavedStreamPosition SavedPosition(DeclsCursor);
@@ -2716,8 +2740,8 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 Stmt *PCHReader::GetExternalDeclStmt(uint64_t Offset) {
   // Since we know tha this statement is part of a decl, make sure to use the
   // decl cursor to read it.
-  DeclsCursor.JumpToBit(Offset);
-  return ReadStmtFromStream(DeclsCursor);
+  Chain[0]->DeclsCursor.JumpToBit(Offset);
+  return ReadStmtFromStream(Chain[0]->DeclsCursor);
 }
 
 bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
@@ -2730,6 +2754,8 @@ bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
     Error("DeclContext has no lexical decls in storage");
     return true;
   }
+
+  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.
@@ -2764,6 +2790,8 @@ PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     return DeclContext::lookup_result(DeclContext::lookup_iterator(),
                                       DeclContext::lookup_iterator());
   }
+
+  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.

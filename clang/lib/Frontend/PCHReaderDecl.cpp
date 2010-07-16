@@ -1038,6 +1038,7 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 
 /// \brief Reads attributes from the current stream position.
 Attr *PCHReader::ReadAttributes() {
+  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
   unsigned Code = DeclsCursor.ReadCode();
   assert(Code == llvm::bitc::UNABBREV_RECORD &&
          "Expected unabbreviated record"); (void)Code;
@@ -1252,6 +1253,7 @@ static bool isConsumerInterestedIn(Decl *D) {
 
 /// \brief Read the declaration at the given offset from the PCH file.
 Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
+  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
   SavedStreamPosition SavedPosition(DeclsCursor);
