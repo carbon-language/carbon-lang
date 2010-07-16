@@ -264,15 +264,13 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream O(Str);
-  
+
   // Check for mov mnemonic
-  unsigned src, dst, srcSR, dstSR;
-  if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {
-    O << "\tmov " << getRegisterName(dst) << ", ";
-    O << getRegisterName(src);
-  } else {
+  if (MI->getOpcode() == XCore::ADD_2rus && !MI->getOperand(2).getImm())
+    O << "\tmov " << getRegisterName(MI->getOperand(0).getReg()) << ", "
+      << getRegisterName(MI->getOperand(1).getReg());
+  else
     printInstruction(MI, O);
-  }
   OutStreamer.EmitRawText(O.str());
 }
 
