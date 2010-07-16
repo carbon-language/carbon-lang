@@ -3003,7 +3003,8 @@ def err_ret_local_block : Error<
 // should result in a warning, since these always evaluate to a constant.
 // Array comparisons have similar warnings
 def warn_comparison_always : Warning<
-  "%select{self-|array }0comparison always evaluates to %select{false|true|a constant}1">;
+  "%select{self-|array }0comparison always evaluates to %select{false|true|a constant}1">,
+  InGroup<DiagGroup<"tautological-compare">>;
 
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
