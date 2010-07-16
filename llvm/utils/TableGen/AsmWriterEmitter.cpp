@@ -115,7 +115,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
   
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const AsmWriterInst *Inst = getAsmWriterInstByID(i);
-    if (Inst == 0) continue;  // PHI, INLINEASM, DBG_LABEL, etc.
+    if (Inst == 0) continue;  // PHI, INLINEASM, PROLOG_LABEL, etc.
     
     std::string Command;
     if (Inst->Operands.empty())
