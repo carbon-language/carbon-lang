@@ -1558,6 +1558,50 @@ __loop<_CharT>::__exec_split(bool __second, __state& __s) const
         __s.__node_ = this->second();
 }
 
+// __alternate
+
+template <class _CharT>
+class __alternate
+    : public __owns_two_states<_CharT>
+{
+    typedef __owns_two_states<_CharT> base;
+
+public:
+    typedef _STD::__state<_CharT> __state;
+
+    explicit __alternate(__owns_one_state<_CharT>* __s1,
+                         __owns_one_state<_CharT>* __s2)
+        : base(__s1, __s2) {}
+
+    virtual void __exec(__state& __s) const;
+    virtual void __exec_split(bool __second, __state& __s) const;
+
+    virtual string speak() const
+    {
+        ostringstream os;
+        os << "__alternate";
+        return os.str();
+    }
+};
+
+template <class _CharT>
+void
+__alternate<_CharT>::__exec(__state& __s) const
+{
+    __s.__do_ = __state::__split;
+}
+
+template <class _CharT>
+void
+__alternate<_CharT>::__exec_split(bool __second, __state& __s) const
+{
+    __s.__do_ = __state::__accept_but_not_consume;
+    if (!__second)
+        __s.__node_ = this->first();
+    else
+        __s.__node_ = this->second();
+}
+
 // __begin_marked_subexpression
 
 template <class _CharT>
@@ -2413,7 +2457,9 @@ private:
                                unsigned __mexp_begin, unsigned __mexp_end);
     template <class _ForwardIterator>
         _ForwardIterator
-        __parse_ERE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last);
+        __parse_ERE_dupl_symbol(_ForwardIterator __first, _ForwardIterator __last,
+                                __owns_one_state<_CharT>* __s,
+                                unsigned __mexp_begin, unsigned __mexp_end);
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_bracket_expression(_ForwardIterator __first, _ForwardIterator __last);
@@ -2466,14 +2512,14 @@ private:
                                   unsigned __mexp_begin = 0, unsigned __mexp_end = 0)
         {__push_loop(__min, numeric_limits<size_t>::max(), __s,
                      __mexp_begin, __mexp_end);}
-    void __push_exact_repeat(int __count) {}
     void __push_loop(size_t __min, size_t __max, __owns_one_state<_CharT>* __s,
                      size_t __mexp_begin = 0, size_t __mexp_end = 0,
                      bool __greedy = true);
     __bracket_expression<_CharT, _Traits>* __start_matching_list(bool __negate);
     void __push_char(value_type __c);
     void __push_back_ref(int __i);
-    void __push_alternation() {}
+    void __push_alternation(__owns_one_state<_CharT>* __sa,
+                            __owns_one_state<_CharT>* __sb);
     void __push_begin_marked_subexpression();
     void __push_end_marked_subexpression(unsigned);
 
@@ -2629,18 +2675,19 @@ _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_extended_reg_exp(_ForwardIterator __first,
                                                        _ForwardIterator __last)
 {
-    while (true)
+    __owns_one_state<_CharT>* __sa = __end_;
+    _ForwardIterator __temp = __parse_ERE_branch(__first, __last);
+    if (__temp == __first)
+        throw regex_error(regex_constants::error_temp);
+    __first = __temp;
+    while (__first != __last && *__first == '|')
     {
-        _ForwardIterator __temp = __parse_ERE_branch(__first, __last);
+        __owns_one_state<_CharT>* __sb = __end_;
+        __temp = __parse_ERE_branch(++__first, __last);
         if (__temp == __first)
             throw regex_error(regex_constants::error_temp);
+        __push_alternation(__sa, __sb);
         __first = __temp;
-        if (__first == __last)
-            break;
-        if (*__first != '|')
-            throw regex_error(regex_constants::error_temp);
-        __push_alternation();
-        ++__first;
     }
     return __first;
 }
@@ -2668,6 +2715,8 @@ _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_ERE_expression(_ForwardIterator __first,
                                                      _ForwardIterator __last)
 {
+    __owns_one_state<_CharT>* __e = __end_;
+    unsigned __mexp_begin = __marked_count_;
     _ForwardIterator __temp = __parse_one_char_or_coll_elem_ERE(__first, __last);
     if (__temp == __first && __temp != __last)
     {
@@ -2695,7 +2744,8 @@ basic_regex<_CharT, _Traits>::__parse_ERE_expression(_ForwardIterator __first,
         }
     }
     if (__temp != __first)
-        __temp = __parse_ERE_dupl_symbol(__temp, __last);
+        __temp = __parse_ERE_dupl_symbol(__temp, __last, __e, __mexp_begin+1,
+                                         __marked_count_+1);
     __first = __temp;
     return __first;
 }
@@ -3080,7 +3130,7 @@ basic_regex<_CharT, _Traits>::__parse_RE_dupl_symbol(_ForwardIterator __first,
                     if (__temp == __first)
                         throw regex_error(regex_constants::error_brace);
                     if (__max == -1)
-                        __push_greedy_inf_repeat(__min, __s, __mexp_end, __mexp_end);
+                        __push_greedy_inf_repeat(__min, __s, __mexp_begin, __mexp_end);
                     else
                     {
                         if (__max < __min)
@@ -3100,28 +3150,31 @@ template <class _CharT, class _Traits>
 template <class _ForwardIterator>
 _ForwardIterator
 basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
-                                                      _ForwardIterator __last)
+                                                      _ForwardIterator __last,
+                                                      __owns_one_state<_CharT>* __s,
+                                                      unsigned __mexp_begin,
+                                                      unsigned __mexp_end)
 {
     if (__first != __last)
     {
         switch (*__first)
         {
         case '*':
-            __push_greedy_inf_repeat(0, nullptr);
+            __push_greedy_inf_repeat(0, __s, __mexp_begin, __mexp_end);
             ++__first;
             break;
         case '+':
-            __push_greedy_inf_repeat(1, nullptr);
+            __push_greedy_inf_repeat(1, __s, __mexp_begin, __mexp_end);
             ++__first;
             break;
         case '?':
-            __push_loop(0, 1, nullptr);
+            __push_loop(0, 1, __s, __mexp_begin, __mexp_end);
             ++__first;
             break;
         case '{':
             {
                 int __min;
-                _ForwardIterator __temp = __parse_DUP_COUNT(__first, __last, __min);
+                _ForwardIterator __temp = __parse_DUP_COUNT(++__first, __last, __min);
                 if (__temp == __first)
                     throw regex_error(regex_constants::error_badbrace);
                 __first = __temp;
@@ -3130,7 +3183,7 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                 switch (*__first)
                 {
                 case '}':
-                    __push_exact_repeat(__min);
+                    __push_loop(__min, __min, __s, __mexp_begin, __mexp_end);
                     ++__first;
                     break;
                 case ',':
@@ -3138,12 +3191,12 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                         throw regex_error(regex_constants::error_badbrace);
                     if (*__first == '}')
                     {
-                        __push_greedy_inf_repeat(__min, nullptr);
+                        __push_greedy_inf_repeat(__min, __s, __mexp_begin, __mexp_end);
                         ++__first;
                     }
                     else
                     {
-                        int __max;
+                        int __max = -1;
                         __temp = __parse_DUP_COUNT(__first, __last, __max);
                         if (__temp == __first)
                             throw regex_error(regex_constants::error_brace);
@@ -3153,8 +3206,9 @@ basic_regex<_CharT, _Traits>::__parse_ERE_dupl_symbol(_ForwardIterator __first,
                         ++__first;
                         if (__max < __min)
                             throw regex_error(regex_constants::error_badbrace);
-                        __push_loop(__min, __max, nullptr);
+                        __push_loop(__min, __max, __s, __mexp_begin, __mexp_end);
                     }
+                    break;
                 default:
                     throw regex_error(regex_constants::error_badbrace);
                 }
@@ -3497,6 +3551,21 @@ basic_regex<_CharT, _Traits>::__push_back_ref(int __i)
     else
         __end_->first() = new __back_ref<_CharT>(__i, __end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
+
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_alternation(__owns_one_state<_CharT>* __sa,
+                                                 __owns_one_state<_CharT>* __ea)
+{
+    __sa->first() = new __alternate<_CharT>(
+                         static_cast<__owns_one_state<_CharT>*>(__sa->first()),
+                         static_cast<__owns_one_state<_CharT>*>(__ea->first()));
+    __ea->first() = nullptr;
+    __ea->first() = new __empty_state<_CharT>(__end_->first());
+    __end_->first() = nullptr;
+    __end_->first() = new __empty_non_own_state<_CharT>(__ea->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__ea->first());
 }
 
 template <class _CharT, class _Traits>
