@@ -50,7 +50,12 @@ STATISTIC(NumFP  , "Number of floating point instructions");
 namespace {
   struct FPS : public MachineFunctionPass {
     static char ID;
-    FPS() : MachineFunctionPass(&ID) {}
+    FPS() : MachineFunctionPass(&ID) {
+      // This is really only to keep valgrind quiet.
+      // The logic in isLive() is too much for it.
+      memset(Stack, 0, sizeof(Stack));
+      memset(RegMap, 0, sizeof(RegMap));
+    }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
