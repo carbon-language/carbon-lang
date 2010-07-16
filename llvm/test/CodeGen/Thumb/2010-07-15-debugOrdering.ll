@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumbv6-apple-darwin10 %s -o - | FileCheck %s
-; RUN: opt -strip-debug < %s -o - | llc -mtriple=thumbv6-apple-darwin10 %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumbv6-apple-darwin10 < %s | FileCheck %s
+; RUN: opt -strip-debug < %s | llc -mtriple=thumbv6-apple-darwin10 | FileCheck %s
 ; Stripping out debug info formerly caused the last two multiplies to be emitted in
 ; the other order.  7797940 (part of it dated 6/29/2010..7/15/2010).
 
