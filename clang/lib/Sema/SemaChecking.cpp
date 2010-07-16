@@ -1617,7 +1617,15 @@ public:
   bool HandleScanfSpecifier(const analyze_scanf::ScanfSpecifier &FS,
                             const char *startSpecifier,
                             unsigned specifierLen);
+
+  void HandleIncompleteScanList(const char *start, const char *end);
 };
+}
+
+void CheckScanfHandler::HandleIncompleteScanList(const char *start,
+                                                 const char *end) {
+  S.Diag(getLocationOfByte(end), diag::warn_scanf_scanlist_incomplete)
+    << getSpecifierRange(start, end - start);
 }
 
 bool CheckScanfHandler::HandleScanfSpecifier(

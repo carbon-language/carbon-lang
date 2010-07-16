@@ -41,7 +41,7 @@ static bool ParseScanList(FormatStringHandler &H,
   // Special case: ']' is the first character.
   if (*I == ']') {
     if (++I == E) {
-      H.HandleIncompleteScanList(start, I);
+      H.HandleIncompleteScanList(start, I - 1);
       return true;
     }
   }
@@ -49,7 +49,7 @@ static bool ParseScanList(FormatStringHandler &H,
   // Look for a ']' character which denotes the end of the scan list.
   while (*I != ']') {
     if (++I == E) {
-      H.HandleIncompleteScanList(start, I);
+      H.HandleIncompleteScanList(start, I - 1);
       return true;
     }
   }    

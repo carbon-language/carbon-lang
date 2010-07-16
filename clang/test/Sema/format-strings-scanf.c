@@ -11,4 +11,5 @@ void test(const char *s, int *i) {
   scanf(s, i); // expected-warning{{ormat string is not a string literal}}
   scanf("%0d", i); // expected-warning{{zero field width in scanf format string is unused}}
   scanf("%00d", i); // expected-warning{{zero field width in scanf format string is unused}}
+  scanf("%d%[asdfasdfd", i, s); // expected-warning{{no closing ‘]’ for ‘%[’ in scanf format string}}
 }
