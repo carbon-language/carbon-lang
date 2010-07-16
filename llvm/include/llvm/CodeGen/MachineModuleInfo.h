@@ -344,7 +344,7 @@ public:
     VariableDbgInfo.push_back(std::make_pair(N, std::make_pair(Slot, Loc)));
   }
 
-  VariableDbgInfoMapTy &getVariableDbgInfo();
+  VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfo; }
 
 }; // End class MachineModuleInfo
 

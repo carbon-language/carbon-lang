@@ -4009,20 +4009,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
       Address = BCI->getOperand(0);
     const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
-    if (AI) {
-      // Don't handle byval arguments or VLAs, for example.
-      // Non-byval arguments are handled here (they refer to the stack temporary
-      // alloca at this point).
-      DenseMap<const AllocaInst*, int>::iterator SI =
-        FuncInfo.StaticAllocaMap.find(AI);
-      if (SI == FuncInfo.StaticAllocaMap.end())
-        return 0; // VLAs.
-      int FI = SI->second;
-
-      MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-      if (!DI.getDebugLoc().isUnknown() && MMI.hasDebugInfo())
-        MMI.setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
-    }
 
     // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
     // but do not always have a corresponding SDNode built.  The SDNodeOrder

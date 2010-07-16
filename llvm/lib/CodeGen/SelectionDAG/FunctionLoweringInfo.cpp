@@ -20,6 +20,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -116,11 +117,42 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
       }
 
   for (; BB != EB; ++BB)
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      // Mark values used outside their block as exported, by allocating
+      // a virtual register for them.
       if (isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
           InitializeRegForValue(I);
+
+      // Collect llvm.dbg.declare information. This is done now instead of
+      // during the initial isel pass through the IR so that it is done
+      // in a predictable order.
+      if (const DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(I)) {
+        MachineModuleInfo &MMI = MF->getMMI();
+        if (MMI.hasDebugInfo() &&
+            DIVariable(DI->getVariable()).Verify() &&
+            !DI->getDebugLoc().isUnknown()) {
+          // Don't handle byval struct arguments or VLAs, for example.
+          // Non-byval arguments are handled here (they refer to the stack
+          // temporary alloca at this point).
+          const Value *Address = DI->getAddress();
+          if (Address) {
+            if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
+              Address = BCI->getOperand(0);
+            if (const AllocaInst *AI = dyn_cast<AllocaInst>(Address)) {
+              DenseMap<const AllocaInst *, int>::iterator SI =
+                StaticAllocaMap.find(AI);
+              if (SI != StaticAllocaMap.end()) { // Check for VLAs.
+                int FI = SI->second;
+                MMI.setVariableDbgInfo(DI->getVariable(),
+                                       FI, DI->getDebugLoc());
+              }
+            }
+          }
+        }
+      }
+    }
 
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
   // also creates the initial PHI MachineInstrs, though none of the input

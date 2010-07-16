@@ -579,10 +579,3 @@ namespace {
     }
   };
 }
-
-MachineModuleInfo::VariableDbgInfoMapTy &
-MachineModuleInfo::getVariableDbgInfo() {
-  std::stable_sort(VariableDbgInfo.begin(), VariableDbgInfo.end(),
-                   VariableDebugSorter());
-  return VariableDbgInfo;
-}
