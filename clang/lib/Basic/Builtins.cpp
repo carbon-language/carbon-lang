@@ -93,3 +93,23 @@ Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
   return true;
 }
 
+// FIXME: Refactor with isPrintfLike.
+bool
+Builtin::Context::isScanfLike(unsigned ID, unsigned &FormatIdx,
+                              bool &HasVAListArg) {
+  const char *Scanf = strpbrk(GetRecord(ID).Attributes, "sS");
+  if (!Scanf)
+    return false;
+
+  HasVAListArg = (*Scanf == 'S');
+
+  ++Scanf;
+  assert(*Scanf == ':' && "s or S specifier must have be followed by a ':'");
+  ++Scanf;
+
+  assert(strchr(Scanf, ':') && "printf specifier must end with a ':'");
+  FormatIdx = strtol(Scanf, 0, 10);
+  return true;
+}
+
+

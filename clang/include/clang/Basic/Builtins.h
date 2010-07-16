@@ -119,6 +119,11 @@ public:
   /// argument and whether this function as a va_list argument.
   bool isPrintfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
 
+  /// \brief Determine whether this builtin is like scanf in its
+  /// formatting rules and, if so, set the index to the format string
+  /// argument and whether this function as a va_list argument.
+  bool isScanfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
+
   /// hasVAListUse - Return true of the specified builtin uses __builtin_va_list
   /// as an operand or return type.
   bool hasVAListUse(unsigned ID) const {

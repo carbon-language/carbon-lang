@@ -4905,6 +4905,12 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
         FD->addAttr(::new (Context) FormatAttr(Context, "printf", FormatIdx+1,
                                                HasVAListArg ? 0 : FormatIdx+2));
     }
+    if (Context.BuiltinInfo.isScanfLike(BuiltinID, FormatIdx,
+                                             HasVAListArg)) {
+     if (!FD->getAttr<FormatAttr>())
+       FD->addAttr(::new (Context) FormatAttr(Context, "scanf", FormatIdx+1,
+                                              HasVAListArg ? 0 : FormatIdx+2));
+    }
 
     // Mark const if we don't care about errno and that is the only
     // thing preventing the function from being const. This allows

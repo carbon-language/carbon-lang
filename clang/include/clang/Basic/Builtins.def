@@ -66,6 +66,11 @@
 //  P:N: -> similar to the p:N: attribute, but the function is like vprintf
 //          in that it accepts its arguments as a va_list rather than
 //          through an ellipsis
+//  s:N: -> this is a scanf-like function whose Nth argument is the format
+//          string.
+//  S:N: -> similar to the s:N: attribute, but the function is like vscanf
+//          in that it accepts its arguments as a va_list rather than
+//          through an ellipsis
 //  e -> const, but only when -fmath-errno=0
 //  FIXME: gcc has nonnull
 
@@ -516,6 +521,7 @@ LIBBUILTIN(vprintf, "icC*a",      "fP:0:", "stdio.h")
 LIBBUILTIN(vfprintf, "i.",        "fP:1:", "stdio.h")
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h")
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
+LIBBUILTIN(scanf, "icC*.",       "fs:0:", "stdio.h")
 // C99
 LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h")
 
