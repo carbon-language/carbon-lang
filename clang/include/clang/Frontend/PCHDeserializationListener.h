@@ -24,7 +24,7 @@ class QualType;
 
 class PCHDeserializationListener {
 protected:
-  ~PCHDeserializationListener() {}
+  virtual ~PCHDeserializationListener() {}
 
 public:
   /// \brief A type was deserialized from the PCH. The ID here has the qualifier
