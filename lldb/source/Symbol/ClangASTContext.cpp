@@ -672,8 +672,8 @@ ClangASTContext::CopyType(clang::ASTContext *dest_context,
     return ret.getAsOpaquePtr();
 }
 
-static bool
-AreTypesSame(clang::ASTContext *ast_context,
+bool
+ClangASTContext::AreTypesSame(clang::ASTContext *ast_context,
              void *type1,
              void *type2)
 {
