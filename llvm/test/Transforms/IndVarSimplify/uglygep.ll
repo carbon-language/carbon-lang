@@ -1,4 +1,4 @@
-; RUN: opt -indvars -S | not grep uglygep
+; RUN: opt -indvars -S < %s | not grep uglygep
 ; rdar://8197217
 
 ; Indvars should be able to emit a clean GEP here, not an uglygep.
