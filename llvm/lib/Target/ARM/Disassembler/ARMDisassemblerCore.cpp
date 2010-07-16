@@ -989,10 +989,12 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   // Special-case handling of BFC/BFI/SBFX/UBFX.
   if (Opcode == ARM::BFC || Opcode == ARM::BFI) {
-    // TIED_TO operand skipped for BFC and Inst{3-0} (Reg) for BFI.
-    MI.addOperand(MCOperand::CreateReg(Opcode == ARM::BFC ? 0
-                                       : getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(0));
+    if (Opcode == ARM::BFI) {
+      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                          decodeRm(insn))));
+      ++OpIdx;
+    }
     uint32_t mask = 0;
     if (!getBFCInvMask(insn, mask))
       return false;

@@ -530,6 +530,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::MUL);
 
+  if (Subtarget->hasV6T2Ops())
+    setTargetDAGCombine(ISD::OR);
+
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
   if (UseSoftFloat || Subtarget->isThumb1Only() || !Subtarget->hasVFP2())
@@ -4232,6 +4235,53 @@ static SDValue PerformMULCombine(SDNode *N,
   return SDValue();
 }
 
+/// PerformORCombine - Target-specific dag combine xforms for ISD::OR
+static SDValue PerformORCombine(SDNode *N,
+                                TargetLowering::DAGCombinerInfo &DCI,
+                                const ARMSubtarget *Subtarget) {
+  // BFI is only available on V6T2+
+  if (Subtarget->isThumb1Only() || !Subtarget->hasV6T2Ops())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
+  // or (and A, mask), val => ARMbfi A, val, mask
+  //   iff (val & mask) == val
+  if (N0->getOpcode() != ISD::AND)
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  if (VT != MVT::i32)
+    return SDValue();
+
+  // The value and the mask need to be constants so we can verify this is
+  // actually a bitfield set. If the mask is 0xffff, we can do better
+  // via a movt instruction, so don't use BFI in that case.
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+  if (!C)
+    return SDValue();
+  unsigned Mask = C->getZExtValue();
+  if (Mask == 0xffff)
+    return SDValue();
+  C = dyn_cast<ConstantSDNode>(N1);
+  if (!C)
+    return SDValue();
+  unsigned Val = C->getZExtValue();
+  if (ARM::isBitFieldInvertedMask(Mask) && (Val & ~Mask) != Val)
+    return SDValue();
+  Val >>= CountTrailingZeros_32(~Mask);
+
+  DebugLoc DL = N->getDebugLoc();
+  SDValue Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0),
+                            DAG.getConstant(Val, MVT::i32),
+                            DAG.getConstant(Mask, MVT::i32));
+
+  // Do not add new nodes to DAG combiner worklist.
+  DCI.CombineTo(N, Res, false);
+
+  return SDValue();
+}
+
 /// PerformVMOVRRDCombine - Target-specific dag combine xforms for
 /// ARMISD::VMOVRRD.
 static SDValue PerformVMOVRRDCombine(SDNode *N,
@@ -4649,6 +4699,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ADD:        return PerformADDCombine(N, DCI);
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
+  case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
@@ -5378,6 +5429,21 @@ int ARM::getVFPf64Imm(const APFloat &FPImm) {
   Exp = ((Exp+3) & 0x7) ^ 4;
 
   return ((int)Sign << 7) | (Exp << 4) | Mantissa;
+}
+
+bool ARM::isBitFieldInvertedMask(unsigned v) {
+  if (v == 0xffffffff)
+    return 0;
+  // there can be 1's on either or both "outsides", all the "inside"
+  // bits must be 0's
+  unsigned int lsb = 0, msb = 31;
+  while (v & (1 << msb)) --msb;
+  while (v & (1 << lsb)) ++lsb;
+  for (unsigned int i = lsb; i <= msb; ++i) {
+    if (v & (1 << i))
+      return 0;
+  }
+  return 1;
 }
 
 /// isFPImmLegal - Returns true if the target can instruction select the

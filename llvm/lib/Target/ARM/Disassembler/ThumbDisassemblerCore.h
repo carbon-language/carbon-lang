@@ -1555,6 +1555,13 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
     ++OpIdx;
   }
 
+  if (Opcode == ARM::t2BFI) {
+    // Add val reg operand.
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRn(insn))));
+    ++OpIdx;
+  }
+
   assert(OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
          && !OpInfo[OpIdx].isOptionalDef()
          && "Pure imm operand expected");
@@ -1567,7 +1574,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
     MI.addOperand(MCOperand::CreateImm(getIImm3Imm8(insn)));
   else if (Opcode == ARM::t2MOVi16 || Opcode == ARM::t2MOVTi16)
     MI.addOperand(MCOperand::CreateImm(getImm16(insn)));
-  else if (Opcode == ARM::t2BFC) {
+  else if (Opcode == ARM::t2BFC || Opcode == ARM::t2BFI) {
     uint32_t mask = 0;
     if (getBitfieldInvMask(insn, mask))
       MI.addOperand(MCOperand::CreateImm(mask));
@@ -1575,17 +1582,10 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
       return false;
   } else {
     // Handle the case of: lsb width
-    assert((Opcode == ARM::t2SBFX || Opcode == ARM::t2UBFX ||
-            Opcode == ARM::t2BFI) && "Unexpected opcode");
+    assert((Opcode == ARM::t2SBFX || Opcode == ARM::t2UBFX)
+            && "Unexpected opcode");
     MI.addOperand(MCOperand::CreateImm(getLsb(insn)));
-    if (Opcode == ARM::t2BFI) {
-      if (getMsb(insn) < getLsb(insn)) {
-        DEBUG(errs() << "Encoding error: msb < lsb\n");
-        return false;
-      }
-      MI.addOperand(MCOperand::CreateImm(getMsb(insn) - getLsb(insn) + 1));
-    } else
-      MI.addOperand(MCOperand::CreateImm(getWidthMinus1(insn) + 1));
+    MI.addOperand(MCOperand::CreateImm(getWidthMinus1(insn) + 1));
 
     ++OpIdx;
   }
