@@ -1553,8 +1553,9 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     // extension in both Microsoft an GNU.
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
         Tag && isa<EnumDecl>(Tag)) {
-      Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
-        << DS.getSourceRange();
+      if (!getLangOptions().Microsoft)
+        Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
+          << DS.getSourceRange();
       return DeclPtrTy::make(Tag);
     }
 

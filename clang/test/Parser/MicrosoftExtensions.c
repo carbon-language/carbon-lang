@@ -34,3 +34,4 @@ typedef bool (__stdcall __stdcall *blarg)(int);
 #define FOO(x) #@x
 char x = FOO(a);
 
+typedef enum E { e1 };
