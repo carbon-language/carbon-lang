@@ -1368,8 +1368,7 @@ void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
 }
 
 PCHReader::PCHReadResult
-PCHReader::ReadPCHBlock() {
-  PerFileData &F = *Chain[0];
+PCHReader::ReadPCHBlock(PerFileData &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
@@ -1659,36 +1658,13 @@ PCHReader::ReadPCHBlock() {
 }
 
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
-  Chain.push_back(new PerFileData());
+  switch(OpenPCH(FileName)) {
+  case Failure: return Failure;
+  case IgnorePCH: return IgnorePCH;
+  case Success: break;
+  }
   PerFileData &F = *Chain.back();
-
-  // Set the PCH file name.
-  F.FileName = FileName;
-
-  // Open the PCH file.
-  //
-  // FIXME: This shouldn't be here, we should just take a raw_ostream.
-  std::string ErrStr;
-  F.Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
-  if (!F.Buffer) {
-    Error(ErrStr.c_str());
-    return IgnorePCH;
-  }
-
-  // Initialize the stream
-  F.StreamFile.init((const unsigned char *)F.Buffer->getBufferStart(),
-                    (const unsigned char *)F.Buffer->getBufferEnd());
   llvm::BitstreamCursor &Stream = F.Stream;
-  Stream.init(F.StreamFile);
-
-  // Sniff for the signature.
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
-    Diag(diag::err_not_a_pch_file) << FileName;
-    return Failure;
-  }
 
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
@@ -1709,7 +1685,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       }
       break;
     case pch::PCH_BLOCK_ID:
-      switch (ReadPCHBlock()) {
+      switch (ReadPCHBlock(F)) {
       case Success:
         break;
 
@@ -1741,7 +1717,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     }
   }
 
-  // Check the predefines buffer.
+  // Check the predefines buffers.
   if (CheckPredefinesBuffers())
     return IgnorePCH;
 
@@ -1783,6 +1759,49 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   if (Context)
     InitializeContext(*Context);
 
+  return Success;
+}
+
+PCHReader::PCHReadResult PCHReader::OpenPCH(llvm::StringRef FileName) {
+  Chain.push_back(new PerFileData());
+  PerFileData &F = *Chain.back();
+
+  // Set the PCH file name.
+  F.FileName = FileName;
+
+  // Open the PCH file.
+  //
+  // FIXME: This shouldn't be here, we should just take a raw_ostream.
+  std::string ErrStr;
+  F.Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
+  if (!F.Buffer) {
+    Error(ErrStr.c_str());
+    return IgnorePCH;
+  }
+
+  // Initialize the stream
+  F.StreamFile.init((const unsigned char *)F.Buffer->getBufferStart(),
+                    (const unsigned char *)F.Buffer->getBufferEnd());
+  llvm::BitstreamCursor &Stream = F.Stream;
+  Stream.init(F.StreamFile);
+
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'P' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'H') {
+    Diag(diag::err_not_a_pch_file) << FileName;
+    return Failure;
+  }
+  return Success;
+}
+
+PCHReader::PCHReadResult PCHReader::ReadChainedPCH(llvm::StringRef FileName) {
+  switch(OpenPCH(FileName)) {
+  case Failure: return Failure;
+  case IgnorePCH: return IgnorePCH;
+  case Success: break;
+  }
   return Success;
 }
 
