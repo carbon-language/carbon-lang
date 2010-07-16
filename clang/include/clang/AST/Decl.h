@@ -2037,6 +2037,8 @@ class EnumDecl : public TagDecl {
            IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL)
     : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
       IntegerType = QualType();
+      NumNegativeBits = 0;
+      NumPositiveBits = 0;
     }
 public:
   EnumDecl *getCanonicalDecl() {
