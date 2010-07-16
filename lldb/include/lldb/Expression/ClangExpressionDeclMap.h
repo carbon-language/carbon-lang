@@ -25,6 +25,7 @@
 namespace clang {
     class DeclarationName;
     class DeclContext;
+    class QualType;
 }
 
 namespace llvm {
@@ -33,6 +34,7 @@ namespace llvm {
 
 namespace lldb_private {
 
+class Error;
 class Function;
 class NameSearchContext;
 class Variable;
@@ -50,6 +52,8 @@ public:
     // Interface for IRForTarget
     bool AddValueToStruct (llvm::Value *value,
                            const clang::NamedDecl *decl,
+                           std::string &name,
+                           void *type,
                            size_t size,
                            off_t alignment);
     bool DoStructLayout ();
@@ -64,6 +68,10 @@ public:
     // Interface for DwarfExpression
     Value *GetValueForIndex (uint32_t index);
     
+    // Interface for CommandObjectExpression
+    lldb::addr_t Materialize(ExecutionContext *exe_ctx,
+                             Error &error);
+    
     // Interface for ClangASTSource
     void GetDecls (NameSearchContext &context,
                    const char *name);
@@ -72,13 +80,17 @@ private:
     struct Tuple
     {
         const clang::NamedDecl  *m_decl;
+        clang::ASTContext       *m_ast_context;
+        void                    *m_orig_type;
         Value                   *m_value; /* owned by ClangExpressionDeclMap */
     };
     
     struct StructMember
     {
-        const clang::NamedDecl  *m_decl;
-        llvm::Value             *m_value;
+        const clang::NamedDecl *m_decl;
+        llvm::Value            *m_value;
+        std::string             m_name;
+        void                   *m_type;
         off_t                   m_offset;
         size_t                  m_size;
         off_t                   m_alignment;
@@ -97,9 +109,17 @@ private:
     off_t               m_struct_alignment;
     size_t              m_struct_size;
     bool                m_struct_laid_out;
-    
+    lldb::addr_t        m_materialized_location;
+        
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun);
+    
+    bool MaterializeOneVariable(ExecutionContext &exe_ctx,
+                                const SymbolContext &sym_ctx,
+                                const char *name,
+                                void *type,
+                                clang::ASTContext *ast_context,
+                                lldb::addr_t addr);
 };
     
 } // namespace lldb_private

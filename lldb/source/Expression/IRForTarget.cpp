@@ -90,12 +90,26 @@ IRForTarget::MaybeHandleVariable(Module &M,
     {        
         clang::NamedDecl *named_decl = DeclForGlobalValue(M, global_variable);
         
+        std::string name = named_decl->getName().str();
+        
+        void *qual_type = NULL;
+        
+        if (clang::ValueDecl *value_decl = dyn_cast<clang::ValueDecl>(named_decl))
+            qual_type = value_decl->getType().getAsOpaquePtr();
+        else
+            return false;
+        
         const llvm::Type *value_type = global_variable->getType();
         
         size_t value_size = m_target_data->getTypeStoreSize(value_type);
         off_t value_alignment = m_target_data->getPrefTypeAlignment(value_type);
         
-        if (named_decl && !DM->AddValueToStruct(V, named_decl, value_size, value_alignment))
+        if (named_decl && !DM->AddValueToStruct(V, 
+                                                named_decl,
+                                                name,
+                                                qual_type,
+                                                value_size, 
+                                                value_alignment))
             return false;
     }
     

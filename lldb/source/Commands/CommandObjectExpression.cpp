@@ -304,8 +304,22 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
                 return false;
             }
             
-            log->Printf("Function is at 0x%llx", (uint64_t)function_address);
+            Error err;
+                        
+            lldb::addr_t struct_address = expr_decl_map.Materialize(&m_exe_ctx, err);
+            
+            if (struct_address == LLDB_INVALID_ADDRESS)
+            {
+                error_stream.Printf ("Couldn't materialize struct: %s\n", err.AsCString("unknown error"));
+                return false;
+            }
+            
+            log->Printf("Function address  : 0x%llx", (uint64_t)function_address);
+            log->Printf("Structure address : 0x%llx", (uint64_t)struct_address);
         }
+        
+        return true;
+        
     }
     else
     {
