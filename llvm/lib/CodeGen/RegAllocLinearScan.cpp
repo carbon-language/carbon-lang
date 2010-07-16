@@ -419,20 +419,15 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   unsigned CandReg;
   {
     MachineInstr *CopyMI;
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (vni->def != SlotIndex() && vni->isDefAccurate() &&
-        (CopyMI = li_->getInstructionFromIndex(vni->def)) &&
-        (CopyMI->isCopy() ||
-         tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg)))
+        (CopyMI = li_->getInstructionFromIndex(vni->def)) && CopyMI->isCopy())
       // Defined by a copy, try to extend SrcReg forward
-      CandReg = CopyMI->isCopy() ? CopyMI->getOperand(1).getReg() : SrcReg;
+      CandReg = CopyMI->getOperand(1).getReg();
     else if (TrivCoalesceEnds &&
-             (CopyMI =
-              li_->getInstructionFromIndex(range.end.getBaseIndex())) &&
-             tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-             cur.reg == SrcReg)
+            (CopyMI = li_->getInstructionFromIndex(range.end.getBaseIndex())) &&
+             CopyMI->isCopy() && cur.reg == CopyMI->getOperand(1).getReg())
       // Only used by a copy, try to extend DstReg backwards
-      CandReg = DstReg;
+      CandReg = CopyMI->getOperand(0).getReg();
     else
       return Reg;
   }
@@ -978,27 +973,10 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     if ((vni->def != SlotIndex()) && !vni->isUnused() &&
          vni->isDefAccurate()) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (CopyMI &&
-          tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
-        unsigned Reg = 0;
-        if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
-          Reg = SrcReg;
-        else if (vrm_->isAssignedReg(SrcReg))
-          Reg = vrm_->getPhys(SrcReg);
-        if (Reg) {
-          if (SrcSubReg)
-            Reg = tri_->getSubReg(Reg, SrcSubReg);
-          if (DstSubReg)
-            Reg = tri_->getMatchingSuperReg(Reg, DstSubReg, RC);
-          if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
-            mri_->setRegAllocationHint(cur->reg, 0, Reg);
-        }
-      } else if (CopyMI && CopyMI->isCopy()) {
-        DstReg = CopyMI->getOperand(0).getReg();
-        DstSubReg = CopyMI->getOperand(0).getSubReg();
-        SrcReg = CopyMI->getOperand(1).getReg();
-        SrcSubReg = CopyMI->getOperand(1).getSubReg();
+      if (CopyMI && CopyMI->isCopy()) {
+        unsigned DstSubReg = CopyMI->getOperand(0).getSubReg();
+        unsigned SrcReg = CopyMI->getOperand(1).getReg();
+        unsigned SrcSubReg = CopyMI->getOperand(1).getSubReg();
         unsigned Reg = 0;
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
           Reg = SrcReg;

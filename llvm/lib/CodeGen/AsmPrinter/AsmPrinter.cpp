@@ -510,12 +510,8 @@ static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   }
   
   // Check for spill-induced copies
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
-                                     SrcSubIdx, DstSubIdx)) {
-    if (MI.getAsmPrinterFlag(MachineInstr::ReloadReuse))
-      CommentOS << " Reload Reuse\n";
-  }
+  if (MI.getAsmPrinterFlag(MachineInstr::ReloadReuse))
+    CommentOS << " Reload Reuse\n";
 }
 
 /// EmitImplicitDef - This method emits the specified machine instruction

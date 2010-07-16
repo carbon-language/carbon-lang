@@ -188,10 +188,6 @@ bool LiveIntervals::conflictsWithPhysReg(const LiveInterval &li,
     const MachineInstr &MI = *I;
 
     // Allow copies to and from li.reg
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (tii_->isMoveInstr(MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
-      if (SrcReg == li.reg || DstReg == li.reg)
-        continue;
     if (MI.isCopy())
       if (MI.getOperand(0).getReg() == li.reg ||
           MI.getOperand(1).getReg() == li.reg)
@@ -324,9 +320,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       mi->addRegisterDefined(interval.reg);
 
     MachineInstr *CopyMI = NULL;
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (mi->isCopyLike() ||
-        tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
+    if (mi->isCopyLike()) {
       CopyMI = mi;
     }
 
@@ -454,9 +448,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       OldValNo->setCopy(0);
 
       // A re-def may be a copy. e.g. %reg1030:6<def> = VMOVD %reg1026, ...
-      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (PartReDef && (mi->isCopyLike() ||
-          tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg)))
+      if (PartReDef && mi->isCopyLike())
         OldValNo->setCopy(&*mi);
       
       // Add the new live interval which replaces the range for the input copy.
@@ -485,9 +477,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
-      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (mi->isCopyLike() ||
-          tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
+      if (mi->isCopyLike())
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, true, VNInfoAllocator);
       
@@ -602,9 +592,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
                              getOrCreateInterval(MO.getReg()));
   else if (allocatableRegs_[MO.getReg()]) {
     MachineInstr *CopyMI = NULL;
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (MI->isCopyLike() ||
-        tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
+    if (MI->isCopyLike())
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
                               getOrCreateInterval(MO.getReg()), CopyMI);

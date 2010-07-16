@@ -54,9 +54,8 @@ bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
     DstSub = compose(MI->getOperand(0).getSubReg(), MI->getOperand(3).getImm());
     Src = MI->getOperand(2).getReg();
     SrcSub = MI->getOperand(2).getSubReg();
-  } else if (!tii_.isMoveInstr(*MI, Src, Dst, SrcSub, DstSub)) {
+  } else
     return false;
-  }
   return true;
 }
 

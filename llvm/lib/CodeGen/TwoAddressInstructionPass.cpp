@@ -380,26 +380,18 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
                         bool &IsSrcPhys, bool &IsDstPhys) {
   SrcReg = 0;
   DstReg = 0;
-  unsigned SrcSubIdx, DstSubIdx;
-  if (!TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-    if (MI.isCopy()) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-    } else if (MI.isInsertSubreg()) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-    } else if (MI.isSubregToReg()) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-    }
-  }
+  if (MI.isCopy()) {
+    DstReg = MI.getOperand(0).getReg();
+    SrcReg = MI.getOperand(1).getReg();
+  } else if (MI.isInsertSubreg() || MI.isSubregToReg()) {
+    DstReg = MI.getOperand(0).getReg();
+    SrcReg = MI.getOperand(2).getReg();
+  } else
+    return false;
 
-  if (DstReg) {
-    IsSrcPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
-    IsDstPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
-    return true;
-  }
-  return false;
+  IsSrcPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
+  IsDstPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
+  return true;
 }
 
 /// isKilled - Test if the given register value, which is used by the given

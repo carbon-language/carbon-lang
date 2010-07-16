@@ -101,16 +101,10 @@ bool OptimizePHIs::IsSingleValuePHICycle(MachineInstr *MI,
     MachineInstr *SrcMI = MRI->getVRegDef(SrcReg);
 
     // Skip over register-to-register moves.
-    unsigned MvSrcReg, MvDstReg, SrcSubIdx, DstSubIdx;
-    if (SrcMI &&
-        TII->isMoveInstr(*SrcMI, MvSrcReg, MvDstReg, SrcSubIdx, DstSubIdx) &&
-        SrcSubIdx == 0 && DstSubIdx == 0 &&
-        TargetRegisterInfo::isVirtualRegister(MvSrcReg))
-      SrcMI = MRI->getVRegDef(MvSrcReg);
-    else if (SrcMI && SrcMI->isCopy() &&
-             !SrcMI->getOperand(0).getSubReg() &&
-             !SrcMI->getOperand(1).getSubReg() &&
-           TargetRegisterInfo::isVirtualRegister(SrcMI->getOperand(1).getReg()))
+    if (SrcMI && SrcMI->isCopy() &&
+        !SrcMI->getOperand(0).getSubReg() &&
+        !SrcMI->getOperand(1).getSubReg() &&
+        TargetRegisterInfo::isVirtualRegister(SrcMI->getOperand(1).getReg()))
       SrcMI = MRI->getVRegDef(SrcMI->getOperand(1).getReg());
     if (!SrcMI)
       return false;

@@ -676,11 +676,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     VNInfo* NewVN = LI->getNextValue(DefIdx, 0, true, Alloc);
     
     // If the def is a move, set the copy field.
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (TII->isMoveInstr(*DI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-      if (DstReg == LI->reg)
-        NewVN->setCopy(&*DI);
-    } else if (DI->isCopyLike() && DI->getOperand(0).getReg() == LI->reg)
+    if (DI->isCopyLike() && DI->getOperand(0).getReg() == LI->reg)
       NewVN->setCopy(&*DI);
 
     NewVNs[&*DI] = NewVN;

@@ -46,12 +46,6 @@ ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
                                             unsigned Reg, unsigned OpIdx,
                                             const TargetInstrInfo *tii_,
                                             SmallSet<unsigned, 8> &ImpDefRegs) {
-  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-  if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-      Reg == SrcReg &&
-      (DstSubReg == 0 || ImpDefRegs.count(DstReg)))
-    return true;
-
   switch(OpIdx) {
   case 1:
     return MI->isCopy() && (MI->getOperand(0).getSubReg() == 0 ||
@@ -74,14 +68,6 @@ static bool isUndefCopy(MachineInstr *MI, unsigned Reg,
     if (!MO0.getSubReg() || ImpDefRegs.count(MO0.getReg()))
       return true;
     return false;
-  }
-
-  unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-  if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg)) {
-    if (Reg != SrcReg)
-      return false;
-    if (DstSubReg == 0 || ImpDefRegs.count(DstReg))
-      return true;
   }
   return false;
 }

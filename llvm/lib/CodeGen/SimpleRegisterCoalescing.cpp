@@ -470,16 +470,12 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
       if (Extended)
         UseMO.setIsKill(false);
     }
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (UseMI->isCopy()) {
-      if (UseMI->getOperand(0).getReg() != IntB.reg ||
-          UseMI->getOperand(0).getSubReg())
-        continue;
-    } else if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
-      if (DstReg != IntB.reg || DstSubIdx)
-        continue;
-    } else
+    if (!UseMI->isCopy())
       continue;
+    if (UseMI->getOperand(0).getReg() != IntB.reg ||
+        UseMI->getOperand(0).getSubReg())
+      continue;
+        
     // This copy will become a noop. If it's defining a new val#,
     // remove that val# as well. However this live range is being
     // extended to the end of the existing live range defined by the copy.
@@ -628,14 +624,6 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
       if (DefMO.getReg() == li.reg && !DefMO.getSubReg())
         DefMO.setIsDead();
     }
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        DstReg == li.reg && DstSubIdx == 0) {
-      // Last use is itself an identity code.
-      int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg,
-                                                         false, false, tri_);
-      LastUseMI->getOperand(DeadIdx).setIsDead();
-    }
     return true;
   }
 
@@ -772,16 +760,6 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
     // A PhysReg copy that won't be coalesced can perhaps be rematerialized
     // instead.
     if (DstIsPhys) {
-      unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
-      if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
-                            CopySrcSubIdx, CopyDstSubIdx) &&
-          CopySrcSubIdx == 0 && CopyDstSubIdx == 0 &&
-          CopySrcReg != CopyDstReg && CopySrcReg == SrcReg &&
-          CopyDstReg != DstReg && !JoinedCopies.count(UseMI) &&
-          ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg, 0,
-                                  UseMI))
-        continue;
-
       if (UseMI->isCopy() &&
           !UseMI->getOperand(1).getSubReg() &&
           !UseMI->getOperand(0).getSubReg() &&
@@ -834,28 +812,6 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
           dbgs() << li_->getInstructionIndex(UseMI) << "\t";
         dbgs() << *UseMI;
       });
-
-
-    // After updating the operand, check if the machine instruction has
-    // become a copy. If so, update its val# information.
-    const TargetInstrDesc &TID = UseMI->getDesc();
-    if (DstIsPhys || TID.getNumDefs() != 1 || TID.getNumOperands() <= 2)
-      continue;
-
-    unsigned CopySrcReg, CopyDstReg, CopySrcSubIdx, CopyDstSubIdx;
-    if (tii_->isMoveInstr(*UseMI, CopySrcReg, CopyDstReg,
-                          CopySrcSubIdx, CopyDstSubIdx) &&
-        CopySrcReg != CopyDstReg &&
-        (TargetRegisterInfo::isVirtualRegister(CopyDstReg) ||
-         allocatableRegs_[CopyDstReg])) {
-      LiveInterval &LI = li_->getInterval(CopyDstReg);
-      SlotIndex DefIdx =
-        li_->getInstructionIndex(UseMI).getDefIndex();
-      if (const LiveRange *DLR = LI.getLiveRangeContaining(DefIdx)) {
-        if (DLR->valno->def == DefIdx)
-          DLR->valno->setCopy(UseMI);
-      }
-    }
   }
 }
 
@@ -1543,21 +1499,19 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     MachineInstr *Inst = MII++;
 
     // If this isn't a copy nor a extract_subreg, we can't join intervals.
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    bool isInsUndef = false;
+    unsigned SrcReg, DstReg;
     if (Inst->isCopy()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
     } else if (Inst->isSubregToReg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(2).getReg();
-    } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+    } else
       continue;
 
     bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
     bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
-    if (isInsUndef ||
-        (li_->hasInterval(SrcReg) && li_->getInterval(SrcReg).empty()))
+    if (li_->hasInterval(SrcReg) && li_->getInterval(SrcReg).empty())
       ImpDefCopies.push_back(CopyRec(Inst, 0));
     else if (SrcIsPhys || DstIsPhys)
       PhysCopies.push_back(CopyRec(Inst, 0));
@@ -1679,11 +1633,6 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
       MachineInstr *UseMI = Use.getParent();
       if (UseMI->isIdentityCopy())
         continue;
-      unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-      if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-          SrcReg == DstReg && SrcSubIdx == DstSubIdx)
-        // Ignore identity copies.
-        continue;
       SlotIndex Idx = li_->getInstructionIndex(UseMI);
       // FIXME: Should this be Idx != UseIdx? SlotIndex() will return something
       // that compares higher than any other interval.
@@ -1708,10 +1657,7 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
       return NULL;
 
     // Ignore identity copies.
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (!MI->isIdentityCopy() &&
-        !(tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-          SrcReg == DstReg && SrcSubIdx == DstSubIdx))
+    if (!MI->isIdentityCopy())
       for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
         MachineOperand &Use = MI->getOperand(i);
         if (Use.isReg() && Use.isUse() && Use.getReg() &&
@@ -1775,21 +1721,19 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {
       MachineInstr *MI = mii;
-      unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
       if (JoinedCopies.count(MI)) {
         // Delete all coalesced copies.
         bool DoDelete = true;
-        if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-          assert(MI->isCopyLike() && "Unrecognized copy instruction");
-          SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
-          if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
-            // Do not delete extract_subreg, insert_subreg of physical
-            // registers unless the definition is dead. e.g.
-            // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
-            // or else the scavenger may complain. LowerSubregs will
-            // delete them later.
-            DoDelete = false;
-        }
+        assert(MI->isCopyLike() && "Unrecognized copy instruction");
+        unsigned SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
+        if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
+          // Do not delete extract_subreg, insert_subreg of physical
+          // registers unless the definition is dead. e.g.
+          // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
+          // or else the scavenger may complain. LowerSubregs will
+          // delete them later.
+          DoDelete = false;
+        
         if (MI->allDefsAreDead()) {
           LiveInterval &li = li_->getInterval(SrcReg);
           if (!ShortenDeadCopySrcLiveRange(li, MI))
@@ -1840,9 +1784,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       }
 
       // If the move will be an identity move delete it
-      bool isMove= tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
-      if (MI->isIdentityCopy() ||
-          (isMove && SrcReg == DstReg && SrcSubIdx == DstSubIdx)) {
+      if (MI->isIdentityCopy()) {
+        unsigned SrcReg = MI->getOperand(1).getReg();
         if (li_->hasInterval(SrcReg)) {
           LiveInterval &RegInt = li_->getInterval(SrcReg);
           // If def of this move instruction is dead, remove its live range
