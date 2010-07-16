@@ -238,13 +238,10 @@ void Sema::LookupTemplateName(LookupResult &Found,
       //   expression. If the identifier is not found, it is then looked up in
       //   the context of the entire postfix-expression and shall name a class
       //   or function template.
-      //
-      // FIXME: When we're instantiating a template, do we actually have to
-      // look in the scope of the template? Seems fishy...
       if (S) LookupName(Found, S);
       ObjectTypeSearchedInScope = true;
     }
-  } else if (isDependent) {
+  } else if (isDependent && (!S || ObjectType.isNull())) {
     // We cannot look into a dependent object type or nested nme
     // specifier.
     MemberOfUnknownSpecialization = true;
@@ -282,8 +279,11 @@ void Sema::LookupTemplateName(LookupResult &Found,
   }
 
   FilterAcceptableTemplateNames(Context, Found);
-  if (Found.empty())
+  if (Found.empty()) {
+    if (isDependent)
+      MemberOfUnknownSpecialization = true;
     return;
+  }
 
   if (S && !ObjectType.isNull() && !ObjectTypeSearchedInScope) {
     // C++ [basic.lookup.classref]p1:

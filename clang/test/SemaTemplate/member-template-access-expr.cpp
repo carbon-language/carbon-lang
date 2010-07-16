@@ -123,3 +123,22 @@ namespace PR6021 {
     };
   };
 }
+
+namespace rdar8198511 {
+  template<int, typename U>
+  struct Base { 
+    void f();
+  };
+
+  template<typename T>
+  struct X0 : Base<1, T> { };
+
+  template<typename T>
+  struct X1 {
+    X0<int> x0;
+
+    void f() {
+      this->x0.Base<1, int>::f();
+    }
+  };
+}
