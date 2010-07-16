@@ -1467,7 +1467,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                TargetData *TD) {
   if (!TD)
     return false;
-          
+  
   // If this is a malloc of an abstract type, don't touch it.
   if (!AllocTy->isSized())
     return false;

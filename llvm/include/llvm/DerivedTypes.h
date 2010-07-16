@@ -52,10 +52,6 @@ protected:
   ///
   void dropAllTypeUses();
 
-  /// unlockedRefineAbstractTypeTo - Internal version of refineAbstractTypeTo
-  /// that performs no locking.  Only used for internal recursion.
-  void unlockedRefineAbstractTypeTo(const Type *NewType);
-  
 public:
 
   //===--------------------------------------------------------------------===//

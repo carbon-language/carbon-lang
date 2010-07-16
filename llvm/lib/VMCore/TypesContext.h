@@ -370,7 +370,7 @@ public:
         // We already have this type in the table.  Get rid of the newly refined
         // type.
         TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-        Ty->unlockedRefineAbstractTypeTo(NewTy);
+        Ty->refineAbstractTypeTo(NewTy);
         return;
       }
     } else {
@@ -406,7 +406,7 @@ public:
               }
               TypesByHash.erase(Entry);
             }
-            Ty->unlockedRefineAbstractTypeTo(NewTy);
+            Ty->refineAbstractTypeTo(NewTy);
             return;
           }
         }

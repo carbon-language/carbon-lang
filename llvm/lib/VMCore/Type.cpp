@@ -1128,13 +1128,13 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   
 }
 
-// unlockedRefineAbstractTypeTo - This function is used when it is discovered
+// refineAbstractTypeTo - This function is used when it is discovered
 // that the 'this' abstract type is actually equivalent to the NewType
 // specified. This causes all users of 'this' to switch to reference the more 
 // concrete type NewType and for 'this' to be deleted.  Only used for internal
 // callers.
 //
-void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
+void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
   assert(ForwardType == 0 && "This type has already been refined!");
@@ -1197,15 +1197,6 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // deleted when the last PATypeHolder is destroyed or updated from this type.
   // This may occur on exit of this function, as the CurrentTy object is
   // destroyed.
-}
-
-// refineAbstractTypeTo - This function is used by external callers to notify
-// us that this abstract type is equivalent to another type.
-//
-void DerivedType::refineAbstractTypeTo(const Type *NewType) {
-  // All recursive calls will go through unlockedRefineAbstractTypeTo,
-  // to avoid deadlock problems.
-  unlockedRefineAbstractTypeTo(NewType);
 }
 
 // notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type that
