@@ -216,11 +216,17 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
     return true;
   }
 
-  case Type::ArrayTyID:
+  case Type::ArrayTyID: {
+    const ArrayType *ATy1 = cast<ArrayType>(Ty1);
+    const ArrayType *ATy2 = cast<ArrayType>(Ty2);
+    return ATy1->getNumElements() == ATy2->getNumElements() &&
+           isEquivalentType(ATy1->getElementType(), ATy2->getElementType());
+  }
   case Type::VectorTyID: {
-    const SequentialType *STy1 = cast<SequentialType>(Ty1);
-    const SequentialType *STy2 = cast<SequentialType>(Ty2);
-    return isEquivalentType(STy1->getElementType(), STy2->getElementType());
+    const VectorType *VTy1 = cast<VectorType>(Ty1);
+    const VectorType *VTy2 = cast<VectorType>(Ty2);
+    return VTy1->getNumElements() == VTy2->getNumElements() &&
+           isEquivalentType(VTy1->getElementType(), VTy2->getElementType());
   }
   }
 }
