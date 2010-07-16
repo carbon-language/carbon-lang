@@ -2985,7 +2985,7 @@ def warn_printf_ignored_flag: Warning<
   "flag '%0' is ignored when flag '%1' is present">,
   InGroup<Format>;
 def warn_scanf_scanlist_incomplete : Warning<
-  "no closing ‘]’ for ‘%%[’ in scanf format string">,
+  "no closing ']' for '%%[' in scanf format string">,
   InGroup<Format>;
   
 // CHECK: returning address/reference of stack memory
