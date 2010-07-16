@@ -86,11 +86,11 @@ unsigned r6268365Aux();
 
 void r6268365() {
   unsigned x = 0;
-  x &= r6268365Aux();
+  x &= r6268365Aux(); // expected-warning{{idempotent operation}}
   unsigned j = 0;
     
   if (x == 0) ++j;
-  if (x == 0) x = x / j; // no-warning
+  if (x == 0) x = x / j; // expected-warning{{idempotent operation}} expected-warning{{idempotent operation}}
 }
 
 void divzeroassume(unsigned x, unsigned j) {  

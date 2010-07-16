@@ -30,6 +30,7 @@ void RegisterCastSizeChecker(GRExprEngine &Eng);
 void RegisterDereferenceChecker(GRExprEngine &Eng);
 void RegisterDivZeroChecker(GRExprEngine &Eng);
 void RegisterFixedAddressChecker(GRExprEngine &Eng);
+void RegisterIdempotentOperationChecker(GRExprEngine &Eng);
 void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
 void RegisterPointerArithChecker(GRExprEngine &Eng);
 void RegisterPointerSubChecker(GRExprEngine &Eng);

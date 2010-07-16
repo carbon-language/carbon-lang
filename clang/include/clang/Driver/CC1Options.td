@@ -81,8 +81,6 @@ def analyzer_display_progress : Flag<"-analyzer-display-progress">,
   HelpText<"Emit verbose output about the analyzer's progress">;
 def analyzer_experimental_checks : Flag<"-analyzer-experimental-checks">,
   HelpText<"Use experimental path-sensitive checks">;
-def analyzer_idempotent_operation : Flag<"-analyzer-idempotent-operation">,
-  HelpText<"Use experimental path-sensitive idempotent operation checker">;
 def analyzer_experimental_internal_checks :
   Flag<"-analyzer-experimental-internal-checks">,
   HelpText<"Use new default path-sensitive checks currently in testing">;

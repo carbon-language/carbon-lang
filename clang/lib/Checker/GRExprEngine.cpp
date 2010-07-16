@@ -361,6 +361,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterDereferenceChecker(Eng);
   RegisterVLASizeChecker(Eng);
   RegisterDivZeroChecker(Eng);
+  RegisterIdempotentOperationChecker(Eng);
   RegisterReturnUndefChecker(Eng);
   RegisterUndefinedArraySubscriptChecker(Eng);
   RegisterUndefinedAssignmentChecker(Eng);

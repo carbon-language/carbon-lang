@@ -23,7 +23,6 @@ void RegisterCStringChecker(GRExprEngine &Eng);
 void RegisterPthreadLockChecker(GRExprEngine &Eng);
 void RegisterMallocChecker(GRExprEngine &Eng);
 void RegisterStreamChecker(GRExprEngine &Eng);
-void RegisterIdempotentOperationChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

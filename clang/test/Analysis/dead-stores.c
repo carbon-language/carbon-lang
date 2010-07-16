@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 // RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 // RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 // RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
@@ -158,7 +158,7 @@ int f16(int x) {
 // Self-assignments should not be flagged as dead stores.
 void f17() {
   int x = 1;
-  x = x; // no-warning
+  x = x; // expected-warning{{idempotent operation}}
 }
 
 // <rdar://problem/6506065>
@@ -458,7 +458,7 @@ void rdar8014335() {
     // Note that the next value stored to 'i' is never executed
     // because the next statement to be executed is the 'break'
     // in the increment code of the first loop.
-    i = i * 3; // expected-warning{{Value stored to 'i' is never read}}
+    i = i * 3; // expected-warning{{Value stored to 'i' is never read}} expected-warning{{idempotent operation}}
   }
 }
 

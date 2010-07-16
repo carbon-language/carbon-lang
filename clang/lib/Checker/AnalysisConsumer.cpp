@@ -341,9 +341,6 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
 
-  if (C.Opts.EnableIdempotentOperationChecker)
-    RegisterIdempotentOperationChecker(Eng);
-
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
   if (mgr.shouldVisualizeUbigraph()) {

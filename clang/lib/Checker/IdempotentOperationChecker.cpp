@@ -48,7 +48,7 @@
 // - Handle mixed assumptions (which assumptions can belong together?)
 // - Finer grained false positive control (levels)
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "GRExprEngineInternalChecks.h"
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/SVals.h"
@@ -78,6 +78,10 @@ class IdempotentOperationChecker
     ///   element somewhere. Used in static analysis to reduce false positives.
     static bool containsMacro(const Stmt *S);
     static bool containsEnum(const Stmt *S);
+    static bool containsStaticLocal(const Stmt *S);
+    static bool isParameterSelfAssign(const Expr *LHS, const Expr *RHS);
+    static bool isTruncationExtensionAssignment(const Expr *LHS,
+                                                const Expr *RHS);
     static bool containsBuiltinOffsetOf(const Stmt *S);
     static bool containsZeroConstant(const Stmt *S);
     static bool containsOneConstant(const Stmt *S);
@@ -128,7 +132,7 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
   // Skip binary operators containing common false positives
   if (containsMacro(B) || containsEnum(B) || containsStmt<SizeOfAlignOfExpr>(B)
       || containsZeroConstant(B) || containsOneConstant(B)
-      || containsBuiltinOffsetOf(B)) {
+      || containsBuiltinOffsetOf(B) || containsStaticLocal(B)) {
     A = Impossible;
     return;
   }
@@ -181,12 +185,19 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
     break; // We don't care about any other operators.
 
   // Fall through intentional
+  case BinaryOperator::Assign:
+    // x Assign x has a few more false positives we can check for
+    if (isParameterSelfAssign(RHS, LHS)
+        || isTruncationExtensionAssignment(RHS, LHS)) {
+      A = Impossible;
+      return;
+    }
+
   case BinaryOperator::SubAssign:
   case BinaryOperator::DivAssign:
   case BinaryOperator::AndAssign:
   case BinaryOperator::OrAssign:
   case BinaryOperator::XorAssign:
-  case BinaryOperator::Assign:
   case BinaryOperator::Sub:
   case BinaryOperator::Div:
   case BinaryOperator::And:
@@ -399,6 +410,70 @@ bool IdempotentOperationChecker::containsEnum(const Stmt *S) {
   return false;
 }
 
+// Recursively find any substatements containing static vars
+bool IdempotentOperationChecker::containsStaticLocal(const Stmt *S) {
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
+
+  if (DR)
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+      if (VD->isStaticLocal())
+        return true;
+
+  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
+      ++I)
+    if (const Stmt *child = *I)
+      if (containsStaticLocal(child))
+        return true;
+
+  return false;
+}
+
+// Check for a statement were a parameter is self assigned (to avoid an unused
+// variable warning)
+bool IdempotentOperationChecker::isParameterSelfAssign(const Expr *LHS,
+                                                       const Expr *RHS) {
+  LHS = LHS->IgnoreParenCasts();
+  RHS = RHS->IgnoreParenCasts();
+
+  const DeclRefExpr *LHS_DR = dyn_cast<DeclRefExpr>(LHS);
+  if (!LHS_DR)
+    return false;
+
+  const ParmVarDecl *PD = dyn_cast<ParmVarDecl>(LHS_DR->getDecl());
+  if (!PD)
+    return false;
+
+  const DeclRefExpr *RHS_DR = dyn_cast<DeclRefExpr>(RHS);
+  if (!RHS_DR)
+    return false;
+
+  return PD == RHS_DR->getDecl();
+}
+
+// Check for self casts truncating/extending a variable
+bool IdempotentOperationChecker::isTruncationExtensionAssignment(
+                                                              const Expr *LHS,
+                                                              const Expr *RHS) {
+
+  const DeclRefExpr *LHS_DR = dyn_cast<DeclRefExpr>(LHS->IgnoreParenCasts());
+  if (!LHS_DR)
+    return false;
+
+  const VarDecl *VD = dyn_cast<VarDecl>(LHS_DR->getDecl());
+  if (!VD)
+    return false;
+
+  const DeclRefExpr *RHS_DR = dyn_cast<DeclRefExpr>(RHS->IgnoreParenCasts());
+  if (!RHS_DR)
+    return false;
+
+  if (VD != RHS_DR->getDecl())
+     return false;
+
+  return dyn_cast<DeclRefExpr>(RHS->IgnoreParens()) == NULL;
+}
+
+
 // Recursively find any substatements containing __builtin_offset_of
 bool IdempotentOperationChecker::containsBuiltinOffsetOf(const Stmt *S) {
   const UnaryOperator *UO = dyn_cast<UnaryOperator>(S);
@@ -415,6 +490,7 @@ bool IdempotentOperationChecker::containsBuiltinOffsetOf(const Stmt *S) {
   return false;
 }
 
+// Check for a integer or float constant of 0
 bool IdempotentOperationChecker::containsZeroConstant(const Stmt *S) {
   const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
   if (IL && IL->getValue() == 0)
@@ -433,6 +509,7 @@ bool IdempotentOperationChecker::containsZeroConstant(const Stmt *S) {
   return false;
 }
 
+// Check for an integer or float constant of 1
 bool IdempotentOperationChecker::containsOneConstant(const Stmt *S) {
   const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(S);
   if (IL && IL->getValue() == 1)
