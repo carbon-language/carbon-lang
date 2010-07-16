@@ -91,35 +91,53 @@ static void TrackDefUses(MachineInstr *MI,
   }
 }
 
+static bool isCopy(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  default:
+    return false;
+  case ARM::MOVr:
+  case ARM::MOVr_TC:
+  case ARM::tMOVr:
+  case ARM::tMOVgpr2tgpr:
+  case ARM::tMOVtgpr2gpr:
+  case ARM::tMOVgpr2gpr:
+  case ARM::t2MOVr:
+    return true;
+  }
+}
+
 bool
 Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
                                       ARMCC::CondCodes CC, ARMCC::CondCodes OCC,
                                         SmallSet<unsigned, 4> &Defs,
                                         SmallSet<unsigned, 4> &Uses) {
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-    assert(SrcSubIdx == 0 && DstSubIdx == 0 &&
-           "Sub-register indices still around?");
-    // llvm models select's as two-address instructions. That means a copy
-    // is inserted before a t2MOVccr, etc. If the copy is scheduled in
-    // between selects we would end up creating multiple IT blocks.
+  if (!isCopy(MI))
+    return false;
+  // llvm models select's as two-address instructions. That means a copy
+  // is inserted before a t2MOVccr, etc. If the copy is scheduled in
+  // between selects we would end up creating multiple IT blocks.
+  assert(MI->getOperand(0).getSubReg() == 0 &&
+         MI->getOperand(1).getSubReg() == 0 &&
+         "Sub-register indices still around?");
 
-    // First check if it's safe to move it.
-    if (Uses.count(DstReg) || Defs.count(SrcReg))
-      return false;
+  unsigned DstReg = MI->getOperand(0).getReg();
+  unsigned SrcReg = MI->getOperand(1).getReg();
 
-    // Then peek at the next instruction to see if it's predicated on CC or OCC.
-    // If not, then there is nothing to be gained by moving the copy.
-    MachineBasicBlock::iterator I = MI; ++I;
-    MachineBasicBlock::iterator E = MI->getParent()->end();
-    while (I != E && I->isDebugValue())
-      ++I;
-    if (I != E) {
-      unsigned NPredReg = 0;
-      ARMCC::CondCodes NCC = llvm::getITInstrPredicate(I, NPredReg);
-      if (NCC == CC || NCC == OCC)
-        return true;
-    }
+  // First check if it's safe to move it.
+  if (Uses.count(DstReg) || Defs.count(SrcReg))
+    return false;
+
+  // Then peek at the next instruction to see if it's predicated on CC or OCC.
+  // If not, then there is nothing to be gained by moving the copy.
+  MachineBasicBlock::iterator I = MI; ++I;
+  MachineBasicBlock::iterator E = MI->getParent()->end();
+  while (I != E && I->isDebugValue())
+    ++I;
+  if (I != E) {
+    unsigned NPredReg = 0;
+    ARMCC::CondCodes NCC = llvm::getITInstrPredicate(I, NPredReg);
+    if (NCC == CC || NCC == OCC)
+      return true;
   }
   return false;
 }
