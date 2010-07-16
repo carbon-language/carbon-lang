@@ -21,3 +21,10 @@ struct s2 {
 };
 extern int a[sizeof(struct s2) == 5 ? 1 : -1];
 #pragma options align=reset
+
+#pragma pack(1)
+struct s3_0 { unsigned char f0; unsigned int f1; };
+int t3_0[sizeof(struct s3_0) == 5 ? 1 : -1];
+#pragma options align=reset
+struct s3_1 { unsigned char f0; unsigned int f1; };
+int t3_1[sizeof(struct s3_1) == 8 ? 1 : -1];

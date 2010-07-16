@@ -62,18 +62,30 @@ namespace {
     /// alignment to the previous value. If \arg Name is non-zero then
     /// the first such named record is popped, otherwise the top record
     /// is popped. Returns true if the pop succeeded.
-    bool pop(IdentifierInfo *Name);
+    bool pop(IdentifierInfo *Name, bool IsReset);
   };
 }  // end anonymous namespace.
 
-bool PragmaPackStack::pop(IdentifierInfo *Name) {
-  if (Stack.empty())
-    return false;
-
+bool PragmaPackStack::pop(IdentifierInfo *Name, bool IsReset) {
   // If name is empty just pop top.
   if (!Name) {
-    Alignment = Stack.back().Alignment;
-    Stack.pop_back();
+    // An empty stack is a special case...
+    if (Stack.empty()) {
+      // If this isn't a reset, it is always an error.
+      if (!IsReset)
+        return false;
+
+      // Otherwise, it is an error only if some alignment has been set.
+      if (!Alignment)
+        return false;
+
+      // Otherwise, reset to the default alignment.
+      Alignment = 0;
+    } else {
+      Alignment = Stack.back().Alignment;
+      Stack.pop_back();
+    }
+
     return true;
   }
 
@@ -122,13 +134,10 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
 
   PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
 
-  // Reset just pops the top of the stack.
+  // Reset just pops the top of the stack, or resets the current alignment to
+  // default.
   if (Kind == Action::POAK_Reset) {
-    // Do the pop.
-    if (!Context->pop(0)) {
-      // If a name was specified then failure indicates the name
-      // wasn't found. Otherwise failure indicates the stack was
-      // empty.
+    if (!Context->pop(0, /*IsReset=*/true)) {
       Diag(PragmaLoc, diag::warn_pragma_options_align_reset_failed)
         << "stack empty";
     }
@@ -232,7 +241,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
       Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifer_and_alignment);
 
     // Do the pop.
-    if (!Context->pop(Name)) {
+    if (!Context->pop(Name, /*IsReset=*/false)) {
       // If a name was specified then failure indicates the name
       // wasn't found. Otherwise failure indicates the stack was
       // empty.
