@@ -75,10 +75,10 @@ namespace {
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      AU.addRequiredID(LoopSimplifyID);
-      AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
+      AU.addRequired<LoopInfo>();
+      AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominanceFrontier>();

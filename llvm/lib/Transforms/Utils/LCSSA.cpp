@@ -64,22 +64,18 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
 
+      AU.addRequiredTransitive<DominatorTree>();
+      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
+      AU.addRequiredTransitive<LoopInfo>();
+      AU.addPreserved<LoopInfo>();
+
       // LCSSA doesn't actually require LoopSimplify, but the PassManager
       // doesn't know how to schedule LoopSimplify by itself.
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
-      AU.addRequiredTransitive<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
-      AU.addRequiredTransitive<DominatorTree>();
-      AU.addPreserved<ScalarEvolution>();
-      AU.addPreserved<DominatorTree>();
 
-      // Request DominanceFrontier now, even though LCSSA does
-      // not use it. This allows Pass Manager to schedule Dominance
-      // Frontier early enough such that one LPPassManager can handle
-      // multiple loop transformation passes.
-      AU.addRequired<DominanceFrontier>(); 
-      AU.addPreserved<DominanceFrontier>();
+      AU.addPreserved<ScalarEvolution>();
     }
   private:
     bool ProcessInstruction(Instruction *Inst,
