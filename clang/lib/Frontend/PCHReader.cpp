@@ -170,6 +170,7 @@ static bool EqualConcatenations(llvm::SmallVector<llvm::StringRef, 2> L,
   // Do it the hard way. At this point, both vectors must be non-empty.
   llvm::StringRef LR = L[0], RR = R[0].Data;
   unsigned LI = 0, RI = 0, LN = L.size(), RN = R.size();
+  (void) RN;
   for (;;) {
     // Compare the current pieces.
     if (LR.size() == RR.size()) {
