@@ -111,20 +111,6 @@ BuildDescriptorBlockDecl(const BlockExpr *BE, bool BlockHasCopyDispose, CharUnit
   return C;
 }
 
-llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
-  if (NSConcreteGlobalBlock == 0)
-    NSConcreteGlobalBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty,
-                                                      "_NSConcreteGlobalBlock");
-  return NSConcreteGlobalBlock;
-}
-
-llvm::Constant *BlockModule::getNSConcreteStackBlock() {
-  if (NSConcreteStackBlock == 0)
-    NSConcreteStackBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty,
-                                                     "_NSConcreteStackBlock");
-  return NSConcreteStackBlock;
-}
-
 static void CollectBlockDeclRefInfo(const Stmt *S, CGBlockInfo &Info) {
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I != E; ++I)
@@ -700,7 +686,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
          && "no imports allowed for global block");
 
   // isa
-  LiteralFields[0] = getNSConcreteGlobalBlock();
+  LiteralFields[0] = CGM.getNSConcreteGlobalBlock();
 
   // Flags
   LiteralFields[1] =
@@ -1012,7 +998,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
         Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
 
         llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
-        llvm::Value *F = getBlockObjectAssign();
+        llvm::Value *F = CGM.getBlockObjectAssign();
         Builder.CreateCall3(F, Dstv, Srcv, N);
       }
     }
@@ -1164,7 +1150,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   flag |= BLOCK_BYREF_CALLER;
 
   llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
-  llvm::Value *F = getBlockObjectAssign();
+  llvm::Value *F = CGM.getBlockObjectAssign();
   Builder.CreateCall3(F, DstObj, SrcObj, N);
 
   CGF.FinishFunction();
@@ -1259,37 +1245,8 @@ llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
   return Entry=CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, Flag);
 }
 
-llvm::Value *BlockFunction::getBlockObjectDispose() {
-  if (CGM.BlockObjectDispose == 0) {
-    const llvm::FunctionType *FTy;
-    std::vector<const llvm::Type*> ArgTys;
-    const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-    ArgTys.push_back(PtrToInt8Ty);
-    ArgTys.push_back(CGF.Int32Ty);
-    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
-    CGM.BlockObjectDispose
-      = CGM.CreateRuntimeFunction(FTy, "_Block_object_dispose");
-  }
-  return CGM.BlockObjectDispose;
-}
-
-llvm::Value *BlockFunction::getBlockObjectAssign() {
-  if (CGM.BlockObjectAssign == 0) {
-    const llvm::FunctionType *FTy;
-    std::vector<const llvm::Type*> ArgTys;
-    const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-    ArgTys.push_back(PtrToInt8Ty);
-    ArgTys.push_back(PtrToInt8Ty);
-    ArgTys.push_back(CGF.Int32Ty);
-    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
-    CGM.BlockObjectAssign
-      = CGM.CreateRuntimeFunction(FTy, "_Block_object_assign");
-  }
-  return CGM.BlockObjectAssign;
-}
-
 void BlockFunction::BuildBlockRelease(llvm::Value *V, int flag) {
-  llvm::Value *F = getBlockObjectDispose();
+  llvm::Value *F = CGM.getBlockObjectDispose();
   llvm::Value *N;
   V = Builder.CreateBitCast(V, PtrToInt8Ty);
   N = llvm::ConstantInt::get(CGF.Int32Ty, flag);

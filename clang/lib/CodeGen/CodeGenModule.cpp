@@ -50,9 +50,10 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
     VTables(*this), Runtime(0), ABI(0),
-    CFConstantStringClassRef(0),
-    NSConstantStringClassRef(0),
-    VMContext(M.getContext()) {
+    CFConstantStringClassRef(0), NSConstantStringClassRef(0),
+    VMContext(M.getContext()),
+    NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
+    BlockObjectAssign(0), BlockObjectDispose(0){
 
   if (!Features.ObjC1)
     Runtime = 0;
@@ -2132,3 +2133,54 @@ void CodeGenFunction::EmitDeclMetadata() {
     }
   }
 }
+
+///@name Custom Runtime Function Interfaces
+///@{
+//
+// FIXME: These can be eliminated once we can have clients just get the required
+// AST nodes from the builtin tables.
+
+llvm::Constant *CodeGenModule::getBlockObjectDispose() {
+  if (BlockObjectDispose)
+    return BlockObjectDispose;
+
+  const llvm::FunctionType *FTy;
+  std::vector<const llvm::Type*> ArgTys;
+  const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
+  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+  return BlockObjectDispose =
+    CreateRuntimeFunction(FTy, "_Block_object_dispose");
+}
+
+llvm::Constant *CodeGenModule::getBlockObjectAssign() {
+  if (BlockObjectAssign)
+    return BlockObjectAssign;
+
+  const llvm::FunctionType *FTy;
+  std::vector<const llvm::Type*> ArgTys;
+  const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
+  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+  return BlockObjectAssign =
+    CreateRuntimeFunction(FTy, "_Block_object_assign");
+}
+
+llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
+  if (NSConcreteGlobalBlock)
+    return NSConcreteGlobalBlock;
+  return NSConcreteGlobalBlock = CreateRuntimeVariable(
+    PtrToInt8Ty, "_NSConcreteGlobalBlock");
+}
+
+llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
+  if (NSConcreteStackBlock)
+    return NSConcreteStackBlock;
+  return NSConcreteStackBlock = CreateRuntimeVariable(
+    PtrToInt8Ty, "_NSConcreteStackBlock");
+}
+
+///@}

@@ -73,22 +73,12 @@ class BlockModule : public BlockBase {
   CodeGenTypes &getTypes() { return Types; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
 public:
-  llvm::Constant *getNSConcreteGlobalBlock();
-  llvm::Constant *getNSConcreteStackBlock();
   int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
   const llvm::Type *getBlockDescriptorType();
 
   const llvm::Type *getGenericBlockLiteralType();
 
   llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
-
-  /// NSConcreteGlobalBlock - Cached reference to the class pointer for global
-  /// blocks.
-  llvm::Constant *NSConcreteGlobalBlock;
-
-  /// NSConcreteStackBlock - Cached reference to the class poinnter for stack
-  /// blocks.
-  llvm::Constant *NSConcreteStackBlock;
 
   const llvm::Type *BlockDescriptorType;
   const llvm::Type *GenericBlockLiteralType;
@@ -97,8 +87,6 @@ public:
     int GlobalUniqueCount;
   } Block;
 
-  llvm::Value *BlockObjectAssign;
-  llvm::Value *BlockObjectDispose;
   const llvm::PointerType *PtrToInt8Ty;
 
   std::map<uint64_t, llvm::Constant *> AssignCache;
@@ -108,9 +96,7 @@ public:
               CodeGenTypes &T, CodeGenModule &CodeGen)
     : Context(C), TheModule(M), TheTargetData(TD), Types(T),
       CGM(CodeGen), VMContext(M.getContext()),
-      NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockDescriptorType(0),
-      GenericBlockLiteralType(0),
-      BlockObjectAssign(0), BlockObjectDispose(0) {
+      BlockDescriptorType(0), GenericBlockLiteralType(0) {
     Block.GlobalUniqueCount = 0;
     PtrToInt8Ty = llvm::Type::getInt8PtrTy(M.getContext());
   }
@@ -207,8 +193,6 @@ public:
   llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag,
                                           unsigned Align);
 
-  llvm::Value *getBlockObjectAssign();
-  llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
 
   bool BlockRequiresCopying(QualType Ty)

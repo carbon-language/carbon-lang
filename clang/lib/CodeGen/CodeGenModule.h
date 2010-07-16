@@ -193,6 +193,16 @@ class CodeGenModule : public BlockModule {
   void createCXXABI();
 
   llvm::LLVMContext &VMContext;
+
+  /// @name Cache for Blocks Runtime Globals
+  /// @{
+
+  llvm::Constant *NSConcreteGlobalBlock;
+  llvm::Constant *NSConcreteStackBlock;
+  llvm::Constant *BlockObjectAssign;
+  llvm::Constant *BlockObjectDispose;
+
+  /// @}
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
                 llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
@@ -397,6 +407,16 @@ public:
   /// specified type and name.
   llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
                                         llvm::StringRef Name);
+
+  ///@name Custom Blocks Runtime Interfaces
+  ///@{
+
+  llvm::Constant *getNSConcreteGlobalBlock();
+  llvm::Constant *getNSConcreteStackBlock();
+  llvm::Constant *getBlockObjectAssign();
+  llvm::Constant *getBlockObjectDispose();
+
+  ///@}
 
   void UpdateCompletedType(const TagDecl *TD) {
     // Make sure that this type is translated.
