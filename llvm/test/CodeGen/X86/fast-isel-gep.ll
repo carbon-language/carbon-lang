@@ -9,7 +9,7 @@ define i32 @test1(i32 %t3, i32* %t1) nounwind {
        %t15 = load i32* %t9            ; <i32> [#uses=1]
        ret i32 %t15
 ; X32: test1:
-; X32:  	movl	(%ecx,%eax,4), %eax
+; X32:  	movl	(%eax,%ecx,4), %eax
 ; X32:  	ret
 
 ; X64: test1:
@@ -23,7 +23,7 @@ define i32 @test2(i64 %t3, i32* %t1) nounwind {
        %t15 = load i32* %t9            ; <i32> [#uses=1]
        ret i32 %t15
 ; X32: test2:
-; X32:  	movl	(%eax,%ecx,4), %eax
+; X32:  	movl	(%edx,%ecx,4), %eax
 ; X32:  	ret
 
 ; X64: test2:

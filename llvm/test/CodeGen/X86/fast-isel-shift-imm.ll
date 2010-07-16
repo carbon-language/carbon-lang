@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -O0 | grep {sarl	\$80, %eax}
+; RUN: llc < %s -march=x86 -O0 | grep {sarl	\$80, %e}
 ; PR3242
 
 define void @foo(i32 %x, i32* %p) nounwind {

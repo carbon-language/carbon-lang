@@ -132,7 +132,7 @@ namespace llvm {
     const TargetLowering &TLI = IS->getTargetLowering();
 
     if (OptLevel == CodeGenOpt::None)
-      return createFastDAGScheduler(IS, OptLevel);
+      return createSourceListDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::Latency)
       return createTDListDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::RegPressure)
