@@ -36,9 +36,9 @@ using namespace lldb_private;
 
 Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
+    m_process (process),
     m_index_id (process.GetNextThreadIndexID ()),
     m_reg_context_sp (),
-    m_process (process),
     m_state (eStateUnloaded),
     m_plan_stack (),
     m_immediate_plan_stack(),
@@ -90,8 +90,8 @@ Thread::SetResumeState (StateType state)
 
 Thread::StopInfo::StopInfo(Thread *thread) :
     m_reason (eStopReasonInvalid),
-    m_description (),
     m_thread (thread),
+    m_description (),
     m_details ()
 {
     m_description[0] = '\0';

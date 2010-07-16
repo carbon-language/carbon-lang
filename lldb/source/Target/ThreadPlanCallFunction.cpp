@@ -36,12 +36,12 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 bool stop_other_threads,
                                                 bool discard_on_error) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_valid(false),
-    m_process(thread.GetProcess()),
+    m_valid (false),
+    m_stop_other_threads (stop_other_threads),
     m_arg_addr (arg),
     m_args (NULL),
-    m_thread(thread),
-    m_stop_other_threads(stop_other_threads)
+    m_process (thread.GetProcess()),
+    m_thread (thread)
 {
 
     SetOkayToDiscard (discard_on_error);
@@ -90,12 +90,12 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 bool stop_other_threads,
                                                 bool discard_on_error) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_valid(false),
-    m_process(thread.GetProcess()),
+    m_valid (false),
+    m_stop_other_threads (stop_other_threads),
     m_arg_addr (0),
     m_args (&args),
-    m_thread(thread),
-    m_stop_other_threads(stop_other_threads)
+    m_process (thread.GetProcess()),
+    m_thread (thread)
 {
     
     SetOkayToDiscard (discard_on_error);

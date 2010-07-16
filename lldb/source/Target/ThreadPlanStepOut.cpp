@@ -39,9 +39,9 @@ ThreadPlanStepOut::ThreadPlanStepOut
     ThreadPlan (ThreadPlan::eKindStepOut, "Step out", thread, stop_vote, run_vote),
     m_step_from_context (context),
     m_step_from_insn (LLDB_INVALID_ADDRESS),
+    m_return_bp_id (LLDB_INVALID_BREAK_ID),
     m_return_addr (LLDB_INVALID_ADDRESS),
     m_first_insn (first_insn),
-    m_return_bp_id(LLDB_INVALID_BREAK_ID),
     m_stop_others (stop_others)
 {
     m_step_from_insn = m_thread.GetRegisterContext()->GetPC(0);

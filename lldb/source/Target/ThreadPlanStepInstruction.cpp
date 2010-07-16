@@ -39,9 +39,10 @@ ThreadPlanStepInstruction::ThreadPlanStepInstruction
 ) :
     ThreadPlan (ThreadPlan::eKindStepInstruction, "Step over single instruction", thread, stop_vote, run_vote),
     m_instruction_addr (0),
+    m_stop_other_threads (stop_other_threads),
     m_step_over (step_over),
-    m_stack_depth(0),
-    m_stop_other_threads (stop_other_threads){
+    m_stack_depth (0)
+{
     m_instruction_addr = m_thread.GetRegisterContext()->GetPC(0);
     m_stack_depth = m_thread.GetStackFrameCount();
 }

@@ -24,14 +24,14 @@ using namespace lldb_private;
 // ThreadPlan constructor
 //----------------------------------------------------------------------
 ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vote stop_vote, Vote run_vote) :
-    m_kind (kind),
-    m_name (name),
     m_thread (thread),
-    m_plan_complete(false),
-    m_plan_complete_mutex (Mutex::eMutexTypeRecursive),
-    m_plan_private (false),
     m_stop_vote (stop_vote),
     m_run_vote (run_vote),
+    m_kind (kind),
+    m_name (name),
+    m_plan_complete_mutex (Mutex::eMutexTypeRecursive),
+    m_plan_complete (false),
+    m_plan_private (false),
     m_okay_to_discard (false)
 {
     SetID (GetNextID());
