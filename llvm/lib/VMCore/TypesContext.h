@@ -385,31 +385,33 @@ public:
         if (I->second == Ty) {
           // Remember the position of the old type if we see it in our scan.
           Entry = I;
-        } else {
-          if (TypesEqual(Ty, I->second)) {
-            TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-
-            // Remove the old entry form TypesByHash.  If the hash values differ
-            // now, remove it from the old place.  Otherwise, continue scanning
-            // withing this hashcode to reduce work.
-            if (NewTypeHash != OldTypeHash) {
-              RemoveFromTypesByHash(OldTypeHash, Ty);
-            } else {
-              if (Entry == E) {
-                // Find the location of Ty in the TypesByHash structure if we
-                // haven't seen it already.
-                while (I->second != Ty) {
-                  ++I;
-                  assert(I != E && "Structure doesn't contain type??");
-                }
-                Entry = I;
-              }
-              TypesByHash.erase(Entry);
-            }
-            Ty->refineAbstractTypeTo(NewTy);
-            return;
-          }
+          continue;
         }
+        
+        if (!TypesEqual(Ty, I->second))
+          continue;
+        
+        TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
+
+        // Remove the old entry form TypesByHash.  If the hash values differ
+        // now, remove it from the old place.  Otherwise, continue scanning
+        // withing this hashcode to reduce work.
+        if (NewTypeHash != OldTypeHash) {
+          RemoveFromTypesByHash(OldTypeHash, Ty);
+        } else {
+          if (Entry == E) {
+            // Find the location of Ty in the TypesByHash structure if we
+            // haven't seen it already.
+            while (I->second != Ty) {
+              ++I;
+              assert(I != E && "Structure doesn't contain type??");
+            }
+            Entry = I;
+          }
+          TypesByHash.erase(Entry);
+        }
+        Ty->refineAbstractTypeTo(NewTy);
+        return;
       }
 
       // If there is no existing type of the same structure, we reinsert an

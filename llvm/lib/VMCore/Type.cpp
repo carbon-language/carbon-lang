@@ -603,8 +603,8 @@ namespace llvm {
     static inline ChildIteratorType child_begin(NodeType *N) {
       if (N->isAbstract())
         return N->subtype_begin();
-      else           // No need to process children of concrete types.
-        return N->subtype_end();
+      // No need to process children of concrete types.
+      return N->subtype_end();
     }
     static inline ChildIteratorType child_end(NodeType *N) {
       return N->subtype_end();
@@ -627,35 +627,35 @@ void Type::PromoteAbstractToConcrete() {
 
     // Concrete types are leaves in the tree.  Since an SCC will either be all
     // abstract or all concrete, we only need to check one type.
-    if (SCC[0]->isAbstract()) {
-      if (SCC[0]->isOpaqueTy())
-        return;     // Not going to be concrete, sorry.
+    if (!SCC[0]->isAbstract()) continue;
+    
+    if (SCC[0]->isOpaqueTy())
+      return;     // Not going to be concrete, sorry.
 
-      // If all of the children of all of the types in this SCC are concrete,
-      // then this SCC is now concrete as well.  If not, neither this SCC, nor
-      // any parent SCCs will be concrete, so we might as well just exit.
-      for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-        for (Type::subtype_iterator CI = SCC[i]->subtype_begin(),
-               E = SCC[i]->subtype_end(); CI != E; ++CI)
-          if ((*CI)->isAbstract())
-            // If the child type is in our SCC, it doesn't make the entire SCC
-            // abstract unless there is a non-SCC abstract type.
-            if (std::find(SCC.begin(), SCC.end(), *CI) == SCC.end())
-              return;               // Not going to be concrete, sorry.
+    // If all of the children of all of the types in this SCC are concrete,
+    // then this SCC is now concrete as well.  If not, neither this SCC, nor
+    // any parent SCCs will be concrete, so we might as well just exit.
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+      for (Type::subtype_iterator CI = SCC[i]->subtype_begin(),
+             E = SCC[i]->subtype_end(); CI != E; ++CI)
+        if ((*CI)->isAbstract())
+          // If the child type is in our SCC, it doesn't make the entire SCC
+          // abstract unless there is a non-SCC abstract type.
+          if (std::find(SCC.begin(), SCC.end(), *CI) == SCC.end())
+            return;               // Not going to be concrete, sorry.
 
-      // Okay, we just discovered this whole SCC is now concrete, mark it as
-      // such!
-      for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-        assert(SCC[i]->isAbstract() && "Why are we processing concrete types?");
+    // Okay, we just discovered this whole SCC is now concrete, mark it as
+    // such!
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+      assert(SCC[i]->isAbstract() && "Why are we processing concrete types?");
 
-        SCC[i]->setAbstract(false);
-      }
+      SCC[i]->setAbstract(false);
+    }
 
-      for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-        assert(!SCC[i]->isAbstract() && "Concrete type became abstract?");
-        // The type just became concrete, notify all users!
-        cast<DerivedType>(SCC[i])->notifyUsesThatTypeBecameConcrete();
-      }
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+      assert(!SCC[i]->isAbstract() && "Concrete type became abstract?");
+      // The type just became concrete, notify all users!
+      cast<DerivedType>(SCC[i])->notifyUsesThatTypeBecameConcrete();
     }
   }
 }
@@ -693,11 +693,15 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
     const IntegerType *ITy2 = cast<IntegerType>(Ty2);
     return ITy->getBitWidth() == ITy2->getBitWidth();
-  } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+  }
+  
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     const PointerType *PTy2 = cast<PointerType>(Ty2);
     return PTy->getAddressSpace() == PTy2->getAddressSpace() &&
            TypesEqual(PTy->getElementType(), PTy2->getElementType(), EqTypes);
-  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+  }
+  
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const StructType *STy2 = cast<StructType>(Ty2);
     if (STy->getNumElements() != STy2->getNumElements()) return false;
     if (STy->isPacked() != STy2->isPacked()) return false;
@@ -705,22 +709,30 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
       if (!TypesEqual(STy->getElementType(i), STy2->getElementType(i), EqTypes))
         return false;
     return true;
-  } else if (const UnionType *UTy = dyn_cast<UnionType>(Ty)) {
+  }
+  
+  if (const UnionType *UTy = dyn_cast<UnionType>(Ty)) {
     const UnionType *UTy2 = cast<UnionType>(Ty2);
     if (UTy->getNumElements() != UTy2->getNumElements()) return false;
     for (unsigned i = 0, e = UTy2->getNumElements(); i != e; ++i)
       if (!TypesEqual(UTy->getElementType(i), UTy2->getElementType(i), EqTypes))
         return false;
     return true;
-  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  }
+  
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     const ArrayType *ATy2 = cast<ArrayType>(Ty2);
     return ATy->getNumElements() == ATy2->getNumElements() &&
            TypesEqual(ATy->getElementType(), ATy2->getElementType(), EqTypes);
-  } else if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
+  }
+  
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     const VectorType *PTy2 = cast<VectorType>(Ty2);
     return PTy->getNumElements() == PTy2->getNumElements() &&
            TypesEqual(PTy->getElementType(), PTy2->getElementType(), EqTypes);
-  } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+  }
+  
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy->isVarArg() != FTy2->isVarArg() ||
         FTy->getNumParams() != FTy2->getNumParams() ||
@@ -731,10 +743,10 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
         return false;
     }
     return true;
-  } else {
-    llvm_unreachable("Unknown derived type!");
-    return false;
   }
+  
+  llvm_unreachable("Unknown derived type!");
+  return false;
 }
 
 namespace llvm { // in namespace llvm so findable by ADL
@@ -808,13 +820,13 @@ const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
 
   // Check for the built-in integer types
   switch (NumBits) {
-    case  1: return cast<IntegerType>(Type::getInt1Ty(C));
-    case  8: return cast<IntegerType>(Type::getInt8Ty(C));
-    case 16: return cast<IntegerType>(Type::getInt16Ty(C));
-    case 32: return cast<IntegerType>(Type::getInt32Ty(C));
-    case 64: return cast<IntegerType>(Type::getInt64Ty(C));
-    default: 
-      break;
+  case  1: return cast<IntegerType>(Type::getInt1Ty(C));
+  case  8: return cast<IntegerType>(Type::getInt8Ty(C));
+  case 16: return cast<IntegerType>(Type::getInt16Ty(C));
+  case 32: return cast<IntegerType>(Type::getInt32Ty(C));
+  case 64: return cast<IntegerType>(Type::getInt64Ty(C));
+  default: 
+    break;
   }
 
   LLVMContextImpl *pImpl = C.pImpl;
@@ -902,8 +914,8 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 }
 
 bool ArrayType::isValidElementType(const Type *ElemTy) {
-  return ElemTy->getTypeID() != VoidTyID && ElemTy->getTypeID() != LabelTyID &&
-         ElemTy->getTypeID() != MetadataTyID && !ElemTy->isFunctionTy();
+  return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
+         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy();
 }
 
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
@@ -1060,9 +1072,8 @@ const PointerType *Type::getPointerTo(unsigned addrs) const {
 }
 
 bool PointerType::isValidElementType(const Type *ElemTy) {
-  return ElemTy->getTypeID() != VoidTyID &&
-         ElemTy->getTypeID() != LabelTyID &&
-         ElemTy->getTypeID() != MetadataTyID;
+  return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
+         !ElemTy->isMetadataTy();
 }
 
 
@@ -1071,8 +1082,7 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
 //
 
 OpaqueType *OpaqueType::get(LLVMContext &C) {
-  OpaqueType *OT = new OpaqueType(C);           // All opaque types are distinct
-  
+  OpaqueType *OT = new OpaqueType(C);       // All opaque types are distinct.
   LLVMContextImpl *pImpl = C.pImpl;
   pImpl->OpaqueTypes.insert(OT);
   return OT;
@@ -1123,9 +1133,8 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
                  << ">[" << (void*)this << "]" << "\n");
 #endif
   
-  this->destroy();
+    this->destroy();
   }
-  
 }
 
 // refineAbstractTypeTo - This function is used when it is discovered
