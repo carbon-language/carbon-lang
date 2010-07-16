@@ -471,14 +471,22 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(Nest);
       HANDLE_ATTR(ReadNone);
       HANDLE_ATTR(ReadOnly);
-      HANDLE_ATTR(InlineHint);
       HANDLE_ATTR(NoInline);
       HANDLE_ATTR(AlwaysInline);
       HANDLE_ATTR(OptimizeForSize);
       HANDLE_ATTR(StackProtect);
       HANDLE_ATTR(StackProtectReq);
       HANDLE_ATTR(NoCapture);
+      HANDLE_ATTR(NoRedZone);
+      HANDLE_ATTR(NoImplicitFloat);
+      HANDLE_ATTR(Naked);
+      HANDLE_ATTR(InlineHint);
 #undef HANDLE_ATTR
+      if (attrs & Attribute::StackAlignment)
+        Out << " | Attribute::constructStackAlignmentFromInt("
+            << Attribute::getStackAlignmentFromAttrs(attrs)
+            << ")"; 
+      attrs &= ~Attribute::StackAlignment;
       assert(attrs == 0 && "Unhandled attribute!");
       Out << ";";
       nl(Out);
