@@ -64,6 +64,7 @@ class PHINode;
 class PtrToIntInst;
 class ReturnInst;
 class SDISelAsmOperandInfo;
+class SDDbgValue;
 class SExtInst;
 class SelectInst;
 class ShuffleVectorInst;
@@ -92,6 +93,24 @@ class SelectionDAGBuilder {
   /// UnusedArgNodeMap - Maps argument value for unused arguments. This is used
   /// to preserve debug information for incoming arguments.
   DenseMap<const Value*, SDValue> UnusedArgNodeMap;
+
+  /// DanglingDebugInfo - Helper type for DanglingDebugInfoMap.
+  class DanglingDebugInfo {
+    const DbgValueInst* DI;
+    DebugLoc dl;
+    unsigned SDNodeOrder;
+  public:
+    DanglingDebugInfo() : DI(0), dl(DebugLoc()), SDNodeOrder(0) { }
+    DanglingDebugInfo(const DbgValueInst *di, DebugLoc DL, unsigned SDNO) :
+      DI(di), dl(DL), SDNodeOrder(SDNO) { }
+    const DbgValueInst* getDI() { return DI; }
+    DebugLoc getdl() { return dl; }
+    unsigned getSDNodeOrder() { return SDNodeOrder; }
+  };
+
+  /// DanglingDebugInfoMap - Keeps track of dbg_values for which we have not
+  /// yet seen the referent.  We defer handling these until we do see it.
+  DenseMap<const Value*, DanglingDebugInfo> DanglingDebugInfoMap;
 
 public:
   /// PendingLoads - Loads are not emitted to the program immediately.  We bunch
@@ -345,6 +364,9 @@ public:
 
   void visit(unsigned Opcode, const User &I);
 
+  // resolveDanglingDebugInfo - if we saw an earlier dbg_value referring to V,
+  // generate the debug data structures now that we've seen its definition.
+  void resolveDanglingDebugInfo(const Value *V, SDValue Val);
   SDValue getValue(const Value *V);
   SDValue getNonRegisterValue(const Value *V);
   SDValue getValueImpl(const Value *V);
