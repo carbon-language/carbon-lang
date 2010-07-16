@@ -72,6 +72,7 @@ def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"non-virtual-dtor">;
 def : DiagGroup<"old-style-definition">;
+def OutOfLineDeclaration : DiagGroup<"out-of-line-declaration">;
 def : DiagGroup<"overflow">;
 def : DiagGroup<"overloaded-virtual">;
 def : DiagGroup<"packed">;

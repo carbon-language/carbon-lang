@@ -2048,8 +2048,9 @@ def err_qualified_typedef_declarator : Error<
   "typedef declarator cannot be qualified">;
 def err_qualified_param_declarator : Error<
   "parameter declarator cannot be qualified">;
-def err_out_of_line_declaration : Error<
-  "out-of-line declaration of a member must be a definition">;
+def ext_out_of_line_declaration : ExtWarn<
+  "out-of-line declaration of a member must be a definition">,
+  InGroup<OutOfLineDeclaration>;
 def note_member_def_close_match : Note<"member declaration nearly matches">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;

@@ -3479,14 +3479,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // definition (C++ [dcl.meaning]p1).
     // Note that this is not the case for explicit specializations of
     // function templates or member functions of class templates, per
-    // C++ [temp.expl.spec]p2.
+    // C++ [temp.expl.spec]p2. We also allow these declarations as an extension
+    // for compatibility with old SWIG code which likes to generate them.
     if (!IsFunctionDefinition && !isFriend &&
         !isFunctionTemplateSpecialization && !isExplicitSpecialization) {
-      Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
+      Diag(NewFD->getLocation(), diag::ext_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
-      NewFD->setInvalidDecl();
-    } else if (!Redeclaration && 
-               !(isFriend && CurContext->isDependentContext())) {
+    }
+    if (!Redeclaration && !(isFriend && CurContext->isDependentContext())) {
       // The user tried to provide an out-of-line definition for a
       // function that is a member of a class or namespace, but there
       // was no such member function declared (C++ [class.mfct]p2,
