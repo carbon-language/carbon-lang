@@ -113,22 +113,6 @@ public:
     return false;
   }
 
-  /// isIdentityCopy - Return true if the instruction is a copy (or
-  /// extract_subreg, insert_subreg, subreg_to_reg) where the source and
-  /// destination registers are the same.
-  bool isIdentityCopy(const MachineInstr &MI) const {
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        SrcReg == DstReg)
-      return true;
-
-    if ((MI.getOpcode() == TargetOpcode::INSERT_SUBREG ||
-         MI.getOpcode() == TargetOpcode::SUBREG_TO_REG) &&
-        MI.getOperand(0).getReg() == MI.getOperand(2).getReg())
-      return true;
-    return false;
-  }
-  
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of
   /// the destination along with the FrameIndex of the loaded stack slot.  If
