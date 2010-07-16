@@ -1664,14 +1664,6 @@ bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   return !isPredicated(MI);
 }
 
-// For purposes of branch analysis do not count FP_REG_KILL as a terminator.
-static bool isBrAnalysisUnpredicatedTerminator(const MachineInstr *MI,
-                                               const X86InstrInfo &TII) {
-  if (MI->getOpcode() == X86::FP_REG_KILL)
-    return false;
-  return TII.isUnpredicatedTerminator(MI);
-}
-
 bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
@@ -1688,7 +1680,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // Working from the bottom, when we see a non-terminator instruction, we're
     // done.
-    if (!isBrAnalysisUnpredicatedTerminator(I, *this))
+    if (!isUnpredicatedTerminator(I))
       break;
 
     // A terminator that isn't a branch can't easily be handled by this
@@ -3341,7 +3333,6 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       break;
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
-    case X86::FP_REG_KILL:
       break;
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.

@@ -19,14 +19,10 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static cl::opt<bool>
-LiveX87("live-x87", cl::desc("Allow live X87 registers across blocks"));
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
@@ -186,10 +182,6 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM,
 
 bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
-  // Install a pass to insert x87 FP_REG_KILL instructions, as needed.
-  if (!LiveX87)
-    PM.add(createX87FPRegKillInserterPass());
-
   PM.add(createX86MaxStackAlignmentHeuristicPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }

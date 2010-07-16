@@ -49,11 +49,6 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// crossings.
 FunctionPass *createSSEDomainFixPass();
 
-/// createX87FPRegKillInserterPass - This function returns a pass which
-/// inserts FP_REG_KILL instructions where needed.
-///
-FunctionPass *createX87FPRegKillInserterPass();
-
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,

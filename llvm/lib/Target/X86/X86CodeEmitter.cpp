@@ -622,7 +622,6 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
         
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
-    case X86::FP_REG_KILL:
       break;
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.

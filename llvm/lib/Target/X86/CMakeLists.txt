@@ -22,7 +22,6 @@ set(sources
   X86COFFMachineModuleInfo.cpp
   X86ELFWriterInfo.cpp
   X86FloatingPoint.cpp
-  X86FloatingPointRegKill.cpp
   X86ISelDAGToDAG.cpp
   X86ISelLowering.cpp
   X86InstrInfo.cpp
