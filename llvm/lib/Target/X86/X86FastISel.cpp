@@ -1058,10 +1058,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
           const MachineInstr &MI = *RI;
 
           if (MI.definesRegister(Reg)) {
-            unsigned Src, Dst, SrcSR, DstSR;
-
-            if (getInstrInfo()->isMoveInstr(MI, Src, Dst, SrcSR, DstSR)) {
-              Reg = Src;
+            if (MI.isCopy()) {
+              Reg = MI.getOperand(1).getReg();
               continue;
             }
 
