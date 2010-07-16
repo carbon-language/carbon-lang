@@ -888,38 +888,48 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
   return Result;
 }
 
-llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
-                                         const TargetInfo::ConstraintInfo &Info,
-                                           const Expr *InputExpr,
-                                           std::string &ConstraintStr) {
+llvm::Value*
+CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
+                                    const TargetInfo::ConstraintInfo &Info,
+                                    LValue InputValue, QualType InputType,
+                                    std::string &ConstraintStr) {
   llvm::Value *Arg;
   if (Info.allowsRegister() || !Info.allowsMemory()) {
-    if (!CodeGenFunction::hasAggregateLLVMType(InputExpr->getType())) {
-      Arg = EmitScalarExpr(InputExpr);
+    if (!CodeGenFunction::hasAggregateLLVMType(InputType)) {
+      Arg = EmitLoadOfLValue(InputValue, InputType).getScalarVal();
     } else {
-      InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
-      LValue Dest = EmitLValue(InputExpr);
-
-      const llvm::Type *Ty = ConvertType(InputExpr->getType());
+      const llvm::Type *Ty = ConvertType(InputType);
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
       if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
         Ty = llvm::IntegerType::get(VMContext, Size);
         Ty = llvm::PointerType::getUnqual(Ty);
 
-        Arg = Builder.CreateLoad(Builder.CreateBitCast(Dest.getAddress(), Ty));
+        Arg = Builder.CreateLoad(Builder.CreateBitCast(InputValue.getAddress(),
+                                                       Ty));
       } else {
-        Arg = Dest.getAddress();
+        Arg = InputValue.getAddress();
         ConstraintStr += '*';
       }
     }
   } else {
-    InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
-    LValue Dest = EmitLValue(InputExpr);
-    Arg = Dest.getAddress();
+    Arg = InputValue.getAddress();
     ConstraintStr += '*';
   }
 
   return Arg;
+}
+
+llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
+                                         const TargetInfo::ConstraintInfo &Info,
+                                           const Expr *InputExpr,
+                                           std::string &ConstraintStr) {
+  if (Info.allowsRegister() || !Info.allowsMemory())
+    if (!CodeGenFunction::hasAggregateLLVMType(InputExpr->getType()))
+      return EmitScalarExpr(InputExpr);
+
+  InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
+  LValue Dest = EmitLValue(InputExpr);
+  return EmitAsmInputLValue(S, Info, Dest, InputExpr->getType(), ConstraintStr);
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
@@ -1031,7 +1041,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       InOutConstraints += ',';
 
       const Expr *InputExpr = S.getOutputExpr(i);
-      llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, InOutConstraints);
+      llvm::Value *Arg = EmitAsmInputLValue(S, Info, Dest, InputExpr->getType(),
+                                            InOutConstraints);
 
       if (Info.allowsRegister())
         InOutConstraints += llvm::utostr(i);

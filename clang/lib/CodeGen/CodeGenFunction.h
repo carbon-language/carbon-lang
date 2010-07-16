@@ -1575,6 +1575,11 @@ private:
                             const TargetInfo::ConstraintInfo &Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
 
+  llvm::Value* EmitAsmInputLValue(const AsmStmt &S,
+                                  const TargetInfo::ConstraintInfo &Info,
+                                  LValue InputValue, QualType InputType,
+                                  std::string &ConstraintStr);
+
   /// EmitCallArgs - Emit call arguments for a function.
   /// The CallArgTypeInfo parameter is used for iterating over the known
   /// argument types of the function being called.
