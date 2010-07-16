@@ -52,7 +52,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     VTables(*this), Runtime(0), ABI(0),
     CFConstantStringClassRef(0), NSConstantStringClassRef(0),
     VMContext(M.getContext()),
+    NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
+    BlockObjectAssignDecl(0), BlockObjectDisposeDecl(0),
     BlockObjectAssign(0), BlockObjectDispose(0){
 
   if (!Features.ObjC1)
@@ -775,12 +777,31 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
+    if (FD->getIdentifier()) {
+      llvm::StringRef Name = FD->getName();
+      if (Name == "_Block_object_assign") {
+        BlockObjectAssignDecl = FD;
+      } else if (Name == "_Block_object_dispose") {
+        BlockObjectDisposeDecl = FD;
+      }
+    }
+
     // Forward declarations are emitted lazily on first use.
     if (!FD->isThisDeclarationADefinition())
       return;
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
+
+    if (VD->getIdentifier()) {
+      llvm::StringRef Name = VD->getName();
+      if (Name == "_NSConcreteGlobalBlock") {
+        NSConcreteGlobalBlockDecl = VD;
+      } else if (Name == "_NSConcreteStackBlock") {
+        NSConcreteStackBlockDecl = VD;
+      }
+    }
+
 
     if (VD->isThisDeclarationADefinition() != VarDecl::Definition)
       return;
@@ -2144,6 +2165,14 @@ llvm::Constant *CodeGenModule::getBlockObjectDispose() {
   if (BlockObjectDispose)
     return BlockObjectDispose;
 
+  // If we saw an explicit decl, use that.
+  if (BlockObjectDisposeDecl) {
+    return BlockObjectDispose = GetAddrOfFunction(
+      BlockObjectDisposeDecl,
+      getTypes().GetFunctionType(BlockObjectDisposeDecl));
+  }
+
+  // Otherwise construct the function by hand.
   const llvm::FunctionType *FTy;
   std::vector<const llvm::Type*> ArgTys;
   const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
@@ -2158,6 +2187,14 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
   if (BlockObjectAssign)
     return BlockObjectAssign;
 
+  // If we saw an explicit decl, use that.
+  if (BlockObjectAssignDecl) {
+    return BlockObjectAssign = GetAddrOfFunction(
+      BlockObjectAssignDecl,
+      getTypes().GetFunctionType(BlockObjectAssignDecl));
+  }
+
+  // Otherwise construct the function by hand.
   const llvm::FunctionType *FTy;
   std::vector<const llvm::Type*> ArgTys;
   const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
@@ -2172,6 +2209,15 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
 llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
   if (NSConcreteGlobalBlock)
     return NSConcreteGlobalBlock;
+
+  // If we saw an explicit decl, use that.
+  if (NSConcreteGlobalBlockDecl) {
+    return NSConcreteGlobalBlock = GetAddrOfGlobalVar(
+      NSConcreteGlobalBlockDecl,
+      getTypes().ConvertType(NSConcreteGlobalBlockDecl->getType()));
+  }
+
+  // Otherwise construct the variable by hand.
   return NSConcreteGlobalBlock = CreateRuntimeVariable(
     PtrToInt8Ty, "_NSConcreteGlobalBlock");
 }
@@ -2179,6 +2225,15 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
 llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   if (NSConcreteStackBlock)
     return NSConcreteStackBlock;
+
+  // If we saw an explicit decl, use that.
+  if (NSConcreteStackBlockDecl) {
+    return NSConcreteStackBlock = GetAddrOfGlobalVar(
+      NSConcreteStackBlockDecl,
+      getTypes().ConvertType(NSConcreteStackBlockDecl->getType()));
+  }
+
+  // Otherwise construct the variable by hand.
   return NSConcreteStackBlock = CreateRuntimeVariable(
     PtrToInt8Ty, "_NSConcreteStackBlock");
 }

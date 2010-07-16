@@ -197,8 +197,13 @@ class CodeGenModule : public BlockModule {
   /// @name Cache for Blocks Runtime Globals
   /// @{
 
+  const VarDecl *NSConcreteGlobalBlockDecl;
+  const VarDecl *NSConcreteStackBlockDecl;
   llvm::Constant *NSConcreteGlobalBlock;
   llvm::Constant *NSConcreteStackBlock;
+
+  const FunctionDecl *BlockObjectAssignDecl;
+  const FunctionDecl *BlockObjectDisposeDecl;
   llvm::Constant *BlockObjectAssign;
   llvm::Constant *BlockObjectDispose;
 

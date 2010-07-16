@@ -560,5 +560,10 @@ LIBBUILTIN(cos, "dd", "fe", "math.h")
 LIBBUILTIN(cosl, "LdLd", "fe", "math.h")
 LIBBUILTIN(cosf, "ff", "fe", "math.h")
 
+// Blocks runtime Builtin math library functions
+LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h")
+LIBBUILTIN(_Block_object_dispose, "vvC*iC", "f", "Blocks.h")
+// FIXME: Also declare NSConcreteGlobalBlock and NSConcreteStackBlock.
+
 #undef BUILTIN
 #undef LIBBUILTIN
