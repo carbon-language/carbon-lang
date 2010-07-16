@@ -388,8 +388,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   NumModuleValues = Values.size();
 
   // Adding function arguments to the value table.
-  for(Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
-      I != E; ++I)
+  for (Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
+       I != E; ++I)
     EnumerateValue(I);
 
   FirstFuncConstantID = Values.size();
