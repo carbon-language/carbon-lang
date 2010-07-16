@@ -71,7 +71,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Add a symbol to represent the function.
   const Function *F = MF.getFunction();
-  ELFSym *FnSym = ELFSym::getGV(F, EW.getGlobalELFBinding(F), ELFSym::STT_FUNC,
+  ELFSym *FnSym = ELFSym::getGV(F, EW.getGlobalELFBinding(F), ELF::STT_FUNC,
                                 EW.getGlobalELFVisibility(F));
   FnSym->SectionIdx = ES->SectionIdx;
   FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;

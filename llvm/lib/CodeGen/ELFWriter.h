@@ -160,29 +160,29 @@ namespace llvm {
       SN->SectionIdx = NumSections++;
       SN->Type = Type;
       SN->Flags = Flags;
-      SN->Link = ELFSection::SHN_UNDEF;
+      SN->Link = ELF::SHN_UNDEF;
       SN->Align = Align;
       return *SN;
     }
 
     ELFSection &getNonExecStackSection() {
-      return getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
+      return getSection(".note.GNU-stack", ELF::SHT_PROGBITS, 0, 1);
     }
 
     ELFSection &getSymbolTableSection() {
-      return getSection(".symtab", ELFSection::SHT_SYMTAB, 0);
+      return getSection(".symtab", ELF::SHT_SYMTAB, 0);
     }
 
     ELFSection &getStringTableSection() {
-      return getSection(".strtab", ELFSection::SHT_STRTAB, 0, 1);
+      return getSection(".strtab", ELF::SHT_STRTAB, 0, 1);
     }
 
     ELFSection &getSectionHeaderStringTableSection() {
-      return getSection(".shstrtab", ELFSection::SHT_STRTAB, 0, 1);
+      return getSection(".shstrtab", ELF::SHT_STRTAB, 0, 1);
     }
 
     ELFSection &getNullSection() {
-      return getSection("", ELFSection::SHT_NULL, 0);
+      return getSection("", ELF::SHT_NULL, 0);
     }
 
     ELFSection &getDataSection();

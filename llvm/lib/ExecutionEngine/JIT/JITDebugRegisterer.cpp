@@ -90,8 +90,8 @@ std::string JITDebugRegisterer::MakeELF(const Function *F, DebugInfo &I) {
   // section.  This allows GDB to get a good stack trace, particularly on
   // linux x86_64.  Mark this as a PROGBITS section that needs to be loaded
   // into memory at runtime.
-  ELFSection &EH = EW.getSection(".eh_frame", ELFSection::SHT_PROGBITS,
-                                 ELFSection::SHF_ALLOC);
+  ELFSection &EH = EW.getSection(".eh_frame", ELF::SHT_PROGBITS,
+                                 ELF::SHF_ALLOC);
   // Pointers in the DWARF EH info are all relative to the EH frame start,
   // which is stored here.
   EH.Addr = (uint64_t)I.EhStart;
@@ -102,9 +102,9 @@ std::string JITDebugRegisterer::MakeELF(const Function *F, DebugInfo &I) {
   // Add this single function to the symbol table, so the debugger prints the
   // name instead of '???'.  We give the symbol default global visibility.
   ELFSym *FnSym = ELFSym::getGV(F,
-                                ELFSym::STB_GLOBAL,
-                                ELFSym::STT_FUNC,
-                                ELFSym::STV_DEFAULT);
+                                ELF::STB_GLOBAL,
+                                ELF::STT_FUNC,
+                                ELF::STV_DEFAULT);
   FnSym->SectionIdx = Text.SectionIdx;
   FnSym->Size = I.FnEnd - I.FnStart;
   FnSym->Value = 0;  // Offset from start of section.
