@@ -995,6 +995,9 @@ public:
   /// print - Convert to human readable form
   ///
   virtual void print(raw_ostream &OS, const Module* = 0) const;
+
+  /// dump - Dump the dominance frontier to dbgs().
+  void dump() const;
 };
 
 

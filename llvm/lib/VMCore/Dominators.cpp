@@ -17,6 +17,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -341,5 +342,9 @@ void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
     }
     OS << "\n";
   }
+}
+
+void DominanceFrontierBase::dump() const {
+  print(dbgs());
 }
 
