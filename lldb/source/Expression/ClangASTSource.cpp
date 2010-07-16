@@ -1,11 +1,12 @@
-/*
- *  ClangASTSource.cpp
- *  lldb
- *
- *  Created by John McCall on 6/1/10.
- *  Copyright 2010 Apple. All rights reserved.
- *
- */
+//===-- ClangASTSource.cpp ---------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "clang/AST/ASTContext.h"
 #include "lldb/Expression/ClangASTSource.h"
