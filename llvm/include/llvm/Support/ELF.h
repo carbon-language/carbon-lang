@@ -365,7 +365,7 @@ struct Elf32_Rel {
   void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
-  };
+  }
 };
 
 // Relocation entry with explicit addend.
@@ -382,7 +382,7 @@ struct Elf32_Rela {
   void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(Elf32_Word s, unsigned char t) {
     r_info = (s << 8) + t;
-  };
+  }
 };
 
 // Relocation entry, without explicit addend.
@@ -400,7 +400,7 @@ struct Elf64_Rel {
   void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(Elf64_Xword s, unsigned char t) {
     r_info = (s << 32) + (t&0xffffffffL);
-  };
+  }
 };
 
 // Relocation entry with explicit addend.
@@ -419,7 +419,7 @@ struct Elf64_Rela {
   void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
   void setSymbolAndType(Elf64_Xword s, unsigned char t) {
     r_info = (s << 32) + (t&0xffffffffL);
-  };
+  }
 };
 
 // Program header for ELF32.
