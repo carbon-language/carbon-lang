@@ -54,7 +54,10 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
   // Install a stat() listener to keep track of all of the stat()
   // calls.
   StatCalls = new MemorizeStatCalls;
-  PP.getFileManager().addStatCache(StatCalls, /*AtBeginning=*/true);
+  // If we have a chain, we want new stat calls only, so install the memorizer
+  // *after* the already installed PCHReader's stat cache.
+  PP.getFileManager().addStatCache(StatCalls,
+    /*AtBeginning=*/!Chain);
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {

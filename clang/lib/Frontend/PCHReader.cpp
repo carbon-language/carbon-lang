@@ -2632,7 +2632,8 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
     TypesLoaded[Index]->setFromPCH();
     if (DeserializationListener)
-      DeserializationListener->TypeRead(ID, TypesLoaded[Index]);
+      DeserializationListener->TypeRead(ID >> Qualifiers::FastWidth,
+                                        TypesLoaded[Index]);
   }
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
@@ -2682,7 +2683,7 @@ TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
     ReadDeclRecord(DeclOffsets[0], 0);
     if (DeserializationListener)
-      DeserializationListener->DeclRead(0, DeclsLoaded[0]);
+      DeserializationListener->DeclRead(1, DeclsLoaded[0]);
   }
 
   return cast<TranslationUnitDecl>(DeclsLoaded[0]);

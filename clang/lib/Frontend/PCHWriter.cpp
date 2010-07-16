@@ -1501,6 +1501,37 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   return Offset;
 }
 
+void PCHWriter::WriteTypeDeclOffsets() {
+  using namespace llvm;
+  RecordData Record;
+
+  // Write the type offsets array
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::TYPE_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of types
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // types block
+  unsigned TypeOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+  Record.clear();
+  Record.push_back(pch::TYPE_OFFSET);
+  Record.push_back(TypeOffsets.size());
+  Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
+                            (const char *)&TypeOffsets.front(),
+                            TypeOffsets.size() * sizeof(TypeOffsets[0]));
+
+  // Write the declaration offsets array
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(pch::DECL_OFFSET));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of declarations
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // declarations block
+  unsigned DeclOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+  Record.clear();
+  Record.push_back(pch::DECL_OFFSET);
+  Record.push_back(DeclOffsets.size());
+  Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
+                            (const char *)&DeclOffsets.front(),
+                            DeclOffsets.size() * sizeof(DeclOffsets[0]));
+}
+
 //===----------------------------------------------------------------------===//
 // Global Method Pool and Selector Serialization
 //===----------------------------------------------------------------------===//
@@ -2074,11 +2105,16 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 }
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain)
-  : Stream(Stream), Chain(Chain), NextTypeID(pch::NUM_PREDEF_TYPE_IDS),
+  : Stream(Stream), Chain(Chain), FirstDeclID(1),
+    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS),
     CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
     NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) {
-  if (Chain)
+  if (Chain) {
     Chain->setDeserializationListener(this);
+    FirstDeclID += Chain->getTotalNumDecls();
+    FirstTypeID += Chain->getTotalNumTypes();
+  }
+  NextTypeID = FirstTypeID;
 }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
@@ -2211,31 +2247,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
 
-  // Write the type offsets array
-  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::TYPE_OFFSET));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of types
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // types block
-  unsigned TypeOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
-  Record.clear();
-  Record.push_back(pch::TYPE_OFFSET);
-  Record.push_back(TypeOffsets.size());
-  Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record,
-                            (const char *)&TypeOffsets.front(),
-                            TypeOffsets.size() * sizeof(TypeOffsets[0]));
-
-  // Write the declaration offsets array
-  Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(pch::DECL_OFFSET));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of declarations
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // declarations block
-  unsigned DeclOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
-  Record.clear();
-  Record.push_back(pch::DECL_OFFSET);
-  Record.push_back(DeclOffsets.size());
-  Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
-                            (const char *)&DeclOffsets.front(),
-                            DeclOffsets.size() * sizeof(DeclOffsets[0]));
+  WriteTypeDeclOffsets();
 
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
@@ -2283,12 +2295,15 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
   (void)PP;
-  
+
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
-  // FIXME: StatCache
-  // FIXME: Source manager block
+  if (StatCalls && !isysroot)
+    WriteStatCache(*StatCalls);
+  // FIXME: Source manager block should only write new stuff, which could be
+  // done by tracking the largest ID in the chain
+  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
 
   // The special types are in the chained PCH.
 
@@ -2302,7 +2317,6 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
        I != E; ++I) {
     if ((*I)->getPCHLevel() == 0) {
-      (*I)->dump();
       DeclTypesToEmit.push(*I);
     }
   }
@@ -2322,8 +2336,7 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // FIXME: Preprocessor
   // FIXME: Method pool
   // FIXME: Identifier table
-  // FIXME: Type offsets
-  // FIXME: Declaration offsets
+  WriteTypeDeclOffsets();
   // FIXME: External unnamed definitions
   // FIXME: Tentative definitions
   // FIXME: Unused static functions
@@ -2741,8 +2754,10 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
 }
 
 void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
+  TypeIDs[T] = ID;
 }
 
 void PCHWriter::DeclRead(pch::DeclID ID, const Decl *D) {
+  DeclIDs[D] = ID;
 }
 

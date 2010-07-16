@@ -27,7 +27,10 @@ protected:
   ~PCHDeserializationListener() {}
 
 public:
+  /// \brief A type was deserialized from the PCH. The ID here has the qualifier
+  ///        bits already removed, and T is guaranteed to be locally unqualified
   virtual void TypeRead(pch::TypeID ID, QualType T) = 0;
+  /// \brief A decl was deserialized from the PCH.
   virtual void DeclRead(pch::DeclID ID, const Decl *D) = 0;
 };
 

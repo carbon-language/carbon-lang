@@ -106,12 +106,15 @@ private:
     void *Stored;
     bool IsType;
   };
-  
+
   /// \brief The declarations and types to emit.
   std::queue<DeclOrType> DeclTypesToEmit;
-  
+
+  /// \brief The first ID number we can use for our own declarations.
+  pch::DeclID FirstDeclID;
+
   /// \brief Map that provides the ID numbers of each declaration within
-  /// the output stream.
+  /// the output stream, as well as those deserialized from a chained PCH.
   ///
   /// The ID numbers of declarations are consecutive (in order of
   /// discovery) and start at 2. 1 is reserved for the translation
@@ -122,8 +125,11 @@ private:
   /// the declaration's ID.
   std::vector<uint32_t> DeclOffsets;
 
+  /// \brief The first ID number we can use for our own types.
+  pch::TypeID FirstTypeID;
+
   /// \brief Map that provides the ID numbers of each type within the
-  /// output stream.
+  /// output stream, plus those deserialized from a chained PCH.
   ///
   /// The ID numbers of types are consecutive (in order of discovery)
   /// and start at 1. 0 is reserved for NULL. When types are actually
@@ -234,7 +240,7 @@ private:
   void WriteType(QualType T);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
-
+  void WriteTypeDeclOffsets();
   void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const Attr *Attr);
