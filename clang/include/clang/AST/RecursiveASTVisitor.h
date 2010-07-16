@@ -1621,6 +1621,13 @@ DEF_TRAVERSE_STMT(SizeOfAlignOfExpr, {
       TRY_TO(TraverseTypeLoc(S->getArgumentTypeInfo()->getTypeLoc()));
   })
 
+DEF_TRAVERSE_STMT(CXXTypeidExpr, {
+    // The child-iterator will pick up the arg if it's an expression,
+    // but not if it's a type.
+    if (S->isTypeOperand())
+      TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
+  })
+
 DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
     TRY_TO(TraverseType(S->getArgType1()));
     TRY_TO(TraverseType(S->getArgType2()));
@@ -1648,7 +1655,6 @@ DEF_TRAVERSE_STMT(CXXNullPtrLiteralExpr, { })
 DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { })
 DEF_TRAVERSE_STMT(CXXThisExpr, { })
 DEF_TRAVERSE_STMT(CXXThrowExpr, { })
-DEF_TRAVERSE_STMT(CXXTypeidExpr, { })
 DEF_TRAVERSE_STMT(CXXUnresolvedConstructExpr, { })
 DEF_TRAVERSE_STMT(DesignatedInitExpr, { })
 DEF_TRAVERSE_STMT(ExtVectorElementExpr, { })
