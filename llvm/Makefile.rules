@@ -622,7 +622,6 @@ endif
 
 # Adjust linker flags for building an executable
 ifneq ($(HOST_OS),Darwin)
-ifneq ($(DARWIN_MAJVERS),4)
 ifdef TOOLNAME
   LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
   ifdef EXAMPLE_TOOL
@@ -630,7 +629,6 @@ ifdef TOOLNAME
   else
     LD.Flags += $(RPATH) -Wl,$(ToolDir) $(RDYNAMIC)
   endif
-endif
 endif
 else
 ifneq ($(DARWIN_MAJVERS),4)
