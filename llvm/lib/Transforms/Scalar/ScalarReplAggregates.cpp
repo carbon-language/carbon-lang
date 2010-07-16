@@ -969,7 +969,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length)
         isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
-                        UI.getOperandNo() == CallInst::ArgOffset, Info);
+                        UI.getOperandNo() == 0, Info);
       else
         MarkUnsafe(Info);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
@@ -1787,7 +1787,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
     if (isOffset) return false;
 
     // If the memintrinsic isn't using the alloca as the dest, reject it.
-    if (UI.getOperandNo() != CallInst::ArgOffset) return false;
+    if (UI.getOperandNo() != 0) return false;
     
     // If the source of the memcpy/move is not a constant global, reject it.
     if (!PointsToConstantGlobal(MI->getSource()))

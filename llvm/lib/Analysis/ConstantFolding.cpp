@@ -778,9 +778,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
   case Instruction::ICmp:
   case Instruction::FCmp: assert(0 && "Invalid for compares");
   case Instruction::Call:
-    if (Function *F = dyn_cast<Function>(Ops[CallInst::ArgOffset ? 0:NumOps-1]))
+    if (Function *F = dyn_cast<Function>(Ops[NumOps - 1]))
       if (canConstantFoldCallTo(F))
-        return ConstantFoldCall(F, Ops+CallInst::ArgOffset, NumOps-1);
+        return ConstantFoldCall(F, Ops, NumOps - 1);
     return 0;
   case Instruction::PtrToInt:
     // If the input is a inttoptr, eliminate the pair.  This requires knowing

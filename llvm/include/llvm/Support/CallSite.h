@@ -254,18 +254,16 @@ public:
 
 private:
   /// Returns the operand number of the first argument
+  /// FIXME: remove this func!
   unsigned getArgumentOffset() const {
-    if (isCall())
-      return CallInst::ArgOffset; // Skip Function (ATM)
-    else
-      return 0; // Args are at the front
+    return 0; // Args are at the front
   }
 
   unsigned getArgumentEndOffset() const {
     if (isCall())
-      return CallInst::ArgOffset ? 0 : 1; // Unchanged (ATM)
+      return 1; // Skip Callee
     else
-      return 3; // Skip BB, BB, Function
+      return 3; // Skip BB, BB, Callee
   }
 
   IterTy getCallee() const {
@@ -273,11 +271,9 @@ private:
       // of the op_*() functions here. See CallSite::getCallee.
       //
     if (isCall())
-      return CallInst::ArgOffset
-             ? getInstruction()->op_begin() // Unchanged
-             : getInstruction()->op_end() - 1; // Skip Function
+      return getInstruction()->op_end() - 1; // Skip Callee
     else
-      return getInstruction()->op_end() - 3; // Skip BB, BB, Function
+      return getInstruction()->op_end() - 3; // Skip BB, BB, Callee
   }
 };
 
