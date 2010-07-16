@@ -227,7 +227,8 @@ def err_main_arg_wrong : Error<"%select{first|second|third|fourth}0 "
     "platform-specific data}0) must be of type %1">;
 
 /// parser diagnostics
-def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;
+def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">,
+  InGroup<MissingDeclarations>;
 def err_typedef_not_identifier : Error<"typedef name must be an identifier">;
 def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;

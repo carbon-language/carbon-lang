@@ -1550,12 +1550,11 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   if (!DS.isMissingDeclaratorOk() &&
       DS.getTypeSpecType() != DeclSpec::TST_error) {
     // Warn about typedefs of enums without names, since this is an
-    // extension in both Microsoft an GNU.
+    // extension in both Microsoft and GNU.
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
         Tag && isa<EnumDecl>(Tag)) {
-      if (!getLangOptions().Microsoft)
-        Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
-          << DS.getSourceRange();
+      Diag(DS.getSourceRange().getBegin(), diag::ext_typedef_without_a_name)
+        << DS.getSourceRange();
       return DeclPtrTy::make(Tag);
     }
 
