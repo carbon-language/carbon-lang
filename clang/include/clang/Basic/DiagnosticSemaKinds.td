@@ -2941,7 +2941,7 @@ def warn_printf_incomplete_specifier : Warning<
 def warn_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
 def warn_scanf_nonzero_width : Warning<
-  "conversion specifies 0 input characters for field width">,
+  "zero field width in scanf format string is unused">,
   InGroup<Format>;
 def warn_printf_conversion_argument_type_mismatch : Warning<
   "conversion specifies type %0 but the argument has type %1">,
@@ -2983,6 +2983,9 @@ def warn_printf_nonsensical_length: Warning<
   InGroup<Format>;
 def warn_printf_ignored_flag: Warning<
   "flag '%0' is ignored when flag '%1' is present">,
+  InGroup<Format>;
+def warn_scanf_scanlist_incomplete : Warning<
+  "scanlist not terminated in format string">,
   InGroup<Format>;
   
 // CHECK: returning address/reference of stack memory
