@@ -25,10 +25,18 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bitreader bitwriter
 include $(LEVEL)/Makefile.common
 
 ifeq ($(HOST_OS),Darwin)
+    # Special hack to allow libLTO to have an offset version number.
+    ifdef LLVM_LTO_VERSION_OFFSET
+        LTO_LIBRARY_VERSION := $(shell expr $(LLVM_SUBMIT_VERSION) + \
+                                            $(LLVM_LTO_VERSION_OFFSET))
+    else
+        LTO_LIBRARY_VERSION := $(LLVM_SUBMIT_VERSION)
+    endif
+
     # set dylib internal version number to llvmCore submission number
     ifdef LLVM_SUBMIT_VERSION
         LLVMLibsOptions := $(LLVMLibsOptions) -Wl,-current_version \
-                        -Wl,$(LLVM_SUBMIT_VERSION).$(LLVM_SUBMIT_SUBVERSION) \
+                        -Wl,$(LTO_LIBRARY_VERSION).$(LLVM_SUBMIT_SUBVERSION) \
                         -Wl,-compatibility_version -Wl,1
     endif
     # extra options to override libtool defaults 
