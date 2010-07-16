@@ -4618,16 +4618,23 @@ private:
   OwningExprResult SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult);
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
+
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
-                              unsigned firstDataArg);
-  void CheckPrintfString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
+                              unsigned firstDataArg, bool isPrintf);
+
+  void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          const CallExpr *TheCall, bool HasVAListArg,
-                         unsigned format_idx, unsigned firstDataArg);
+                         unsigned format_idx, unsigned firstDataArg,
+                         bool isPrintf);
+
   void CheckNonNullArguments(const NonNullAttr *NonNull,
                              const CallExpr *TheCall);
-  void CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
-                            unsigned format_idx, unsigned firstDataArg);
+
+  void CheckPrintfScanfArguments(const CallExpr *TheCall, bool HasVAListArg,
+                                 unsigned format_idx, unsigned firstDataArg,
+                                 bool isPrintf);
+
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);

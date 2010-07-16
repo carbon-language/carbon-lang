@@ -2183,10 +2183,10 @@ def err_builtin_direct_init_more_than_one_arg : Error<
   "initializer of a builtin type can only take one argument">;
 def err_value_init_for_array_type : Error<
   "array types cannot be value-initialized">;
-def warn_printf_nonliteral_noargs : Warning<
+def warn_format_nonliteral_noargs : Warning<
   "format string is not a string literal (potentially insecure)">,
   InGroup<FormatSecurity>;
-def warn_printf_nonliteral : Warning<
+def warn_format_nonliteral : Warning<
   "format string is not a string literal">,
   InGroup<FormatNonLiteral>, DefaultIgnore;
 
@@ -2936,29 +2936,32 @@ def warn_printf_invalid_conversion : Warning<
   "invalid conversion specifier '%0'">, InGroup<Format>;
 def warn_printf_incomplete_specifier : Warning<
   "incomplete format specifier">, InGroup<Format>;
-def warn_printf_missing_format_string : Warning<
+def warn_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
+def warn_scanf_nonzero_width : Warning<
+  "conversion specifies 0 input characters for field width">,
+  InGroup<Format>;
 def warn_printf_conversion_argument_type_mismatch : Warning<
   "conversion specifies type %0 but the argument has type %1">,
   InGroup<Format>;
 def warn_printf_positional_arg_exceeds_data_args : Warning <
   "data argument position '%0' exceeds the number of data arguments (%1)">,
   InGroup<Format>;
-def warn_printf_zero_positional_specifier : Warning<
+def warn_format_zero_positional_specifier : Warning<
   "position arguments in format strings start counting at 1 (not 0)">,
   InGroup<Format>;
-def warn_printf_invalid_positional_specifier : Warning<
+def warn_format_invalid_positional_specifier : Warning<
   "invalid position specified for %select{field width|field precision}0">,
   InGroup<Format>;
-def warn_printf_mix_positional_nonpositional_args : Warning<
+def warn_format_mix_positional_nonpositional_args : Warning<
   "cannot mix positional and non-positional arguments in format string">,
   InGroup<Format>;
 def warn_null_arg : Warning<
   "null passed to a callee which requires a non-null argument">,
   InGroup<NonNull>;
-def warn_printf_empty_format_string : Warning<
+def warn_empty_format_string : Warning<
   "format string is empty">, InGroup<FormatZeroLength>;
-def warn_printf_format_string_is_wide_literal : Warning<
+def warn_format_string_is_wide_literal : Warning<
   "format string should not be a wide string">, InGroup<Format>;
 def warn_printf_format_string_contains_null_char : Warning<
   "format string contains '\\0' within the string body">, InGroup<Format>;
