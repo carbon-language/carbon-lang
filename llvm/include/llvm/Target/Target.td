@@ -409,7 +409,7 @@ def INLINEASM : Instruction {
   let InOperandList = (ins variable_ops);
   let AsmString = "";
 }
-def DBG_LABEL : Instruction {
+def PROLOG_LABEL : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins i32imm:$id);
   let AsmString = "";

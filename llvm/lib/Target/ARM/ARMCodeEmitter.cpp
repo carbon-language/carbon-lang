@@ -662,7 +662,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     }
     break;
   }
-  case TargetOpcode::DBG_LABEL:
+  case TargetOpcode::PROLOG_LABEL:
   case TargetOpcode::EH_LABEL:
     MCE.emitLabel(MI.getOperand(0).getMCSymbol());
     break;

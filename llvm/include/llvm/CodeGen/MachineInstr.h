@@ -201,12 +201,14 @@ public:
   /// isLabel - Returns true if the MachineInstr represents a label.
   ///
   bool isLabel() const {
-    return getOpcode() == TargetOpcode::DBG_LABEL ||
+    return getOpcode() == TargetOpcode::PROLOG_LABEL ||
            getOpcode() == TargetOpcode::EH_LABEL ||
            getOpcode() == TargetOpcode::GC_LABEL;
   }
   
-  bool isDebugLabel() const { return getOpcode() == TargetOpcode::DBG_LABEL; }
+  bool isPrologLabel() const {
+    return getOpcode() == TargetOpcode::PROLOG_LABEL;
+  }
   bool isEHLabel() const { return getOpcode() == TargetOpcode::EH_LABEL; }
   bool isGCLabel() const { return getOpcode() == TargetOpcode::GC_LABEL; }
   bool isDebugValue() const { return getOpcode() == TargetOpcode::DBG_VALUE; }

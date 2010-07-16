@@ -437,7 +437,7 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                         it->getFrameIdx(), RC, &RI);
     if (emitFrameMoves) {
       MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
-      BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addSym(SaveLabel);
+      BuildMI(MBB, MI, DL, get(XCore::PROLOG_LABEL)).addSym(SaveLabel);
       XFI->getSpillLabels().push_back(std::make_pair(SaveLabel, *it));
     }
   }

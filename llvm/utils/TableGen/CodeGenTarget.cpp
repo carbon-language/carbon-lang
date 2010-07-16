@@ -333,7 +333,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   const char *const FixedInstrs[] = {
     "PHI",
     "INLINEASM",
-    "DBG_LABEL",
+    "PROLOG_LABEL",
     "EH_LABEL",
     "GC_LABEL",
     "KILL",

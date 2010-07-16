@@ -361,7 +361,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     switch (Desc.getOpcode()) {
     default:
       assert(0 && "Unknown instruction size!");
-    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::PROLOG_LABEL:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:

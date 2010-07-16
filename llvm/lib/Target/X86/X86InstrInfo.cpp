@@ -3327,7 +3327,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
                                           *MF->getTarget().getMCAsmInfo());
       break;
     }
-    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::PROLOG_LABEL:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::DBG_VALUE:
       break;
