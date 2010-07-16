@@ -218,6 +218,10 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo,
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("Unknown pcrel immediate operand");
+  case MachineOperand::MO_Register:
+    // pc-relativeness was handled when computing the value in the reg.
+    printOperand(MI, OpNo, O);
+    return;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
