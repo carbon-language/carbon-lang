@@ -1005,6 +1005,38 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   return true;
 }
 
+static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
+                                               ASTContext &Context,
+                                               IdentifierInfo *II,
+                                               SourceLocation NameLoc) {
+  ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
+  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
+  if (!IDecl)
+    return 0;
+  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
+  assert(ClassImpDecl && "Method not inside @implementation");
+  bool DynamicImplSeen = false;
+  ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
+  if (!property)
+    return 0;
+  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II))
+    DynamicImplSeen = 
+      (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic);
+  if (!DynamicImplSeen) {
+    QualType PropType = Context.getCanonicalType(property->getType());
+    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, 
+                                              NameLoc,
+                                              II, PropType, /*Dinfo=*/0,
+                                              ObjCIvarDecl::Protected,
+                                              (Expr *)0, true);
+    ClassImpDecl->addDecl(Ivar);
+    IDecl->makeDeclVisibleInContext(Ivar, false);
+    property->setPropertyIvarDecl(Ivar);
+    return Ivar;
+  }
+  return 0;
+}
+
 Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
                                                CXXScopeSpec &SS,
                                                UnqualifiedId &Id,
@@ -1070,6 +1102,12 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
 
       Expr *Ex = E.takeAs<Expr>();
       if (Ex) return Owned(Ex);
+      // Synthesize ivars lazily
+      if (getLangOptions().ObjCNonFragileABI2) {
+        if (SynthesizeProvisionalIvar(*this, Context, II, NameLoc))
+          return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
+                                   isAddressOfOperand);
+      }
     }
   }
 

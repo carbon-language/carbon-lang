@@ -372,7 +372,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
       Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, PropertyLoc,
                                   PropertyIvar, PropType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Protected,
-                                  (Expr *)0);
+                                  (Expr *)0, true);
       ClassImpDecl->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar, false);
       property->setPropertyIvarDecl(Ivar);
@@ -517,6 +517,24 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(Scope *S,
       return DeclPtrTy();
     }
     IC->addPropertyImplementation(PIDecl);
+    if (getLangOptions().ObjCNonFragileABI2) {
+      // Diagnose if an ivar was lazily synthesdized due to a previous
+      // use and if 1) property is @dynamic or 2) property is synthesized
+      // but it requires a dirreferently named ivar.
+      ObjCInterfaceDecl *ClassDeclared;
+      ObjCIvarDecl *Ivar = 0;
+      if (!Synthesize)
+        Ivar = IDecl->lookupInstanceVariable(PropertyId, ClassDeclared);
+      else {
+        if (PropertyIvar && PropertyIvar != PropertyId)
+          Ivar = IDecl->lookupInstanceVariable(PropertyId, ClassDeclared);
+      }
+      if (Ivar && Ivar->getSynthesize()) {
+        Diag(Ivar->getLocation(), diag::err_undeclared_var_use) 
+        << PropertyId;
+        Ivar->setInvalidDecl();
+      }
+    }
   } else {
     if (Synthesize)
       if (ObjCPropertyImplDecl *PPIDecl =

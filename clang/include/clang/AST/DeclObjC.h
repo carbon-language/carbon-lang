@@ -650,15 +650,17 @@ public:
 
 private:
   ObjCIvarDecl(ObjCContainerDecl *DC, SourceLocation L, IdentifierInfo *Id,
-               QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW)
+               QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW,
+               bool synthesized)
     : FieldDecl(ObjCIvar, DC, L, Id, T, TInfo, BW, /*Mutable=*/false),
-      DeclAccess(ac) {}
+      DeclAccess(ac),  Synthesized(synthesized) {}
 
 public:
   static ObjCIvarDecl *Create(ASTContext &C, ObjCContainerDecl *DC,
                               SourceLocation L, IdentifierInfo *Id, QualType T,
                               TypeSourceInfo *TInfo,
-                              AccessControl ac, Expr *BW = NULL);
+                              AccessControl ac, Expr *BW = NULL,
+                              bool synthesized=false);
 
   /// \brief Return the class interface that this ivar is logically contained
   /// in; this is either the interface where the ivar was declared, or the
@@ -674,6 +676,8 @@ public:
     return DeclAccess == None ? Protected : AccessControl(DeclAccess);
   }
 
+  bool getSynthesize() const { return Synthesized; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCIvarDecl *D) { return true; }
@@ -681,6 +685,7 @@ public:
 private:
   // NOTE: VC++ treats enums as signed, avoid using the AccessControl enum
   unsigned DeclAccess : 3;
+  unsigned Synthesized : 1;
 };
 
 

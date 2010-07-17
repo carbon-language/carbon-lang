@@ -575,7 +575,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
                                    SourceLocation L, IdentifierInfo *Id,
                                    QualType T, TypeSourceInfo *TInfo,
-                                   AccessControl ac, Expr *BW) {
+                                   AccessControl ac, Expr *BW,
+                                   bool synthesized) {
   if (DC) {
     // Ivar's can only appear in interfaces, implementations (via synthesized
     // properties), and class extensions (via direct declaration, or synthesized
@@ -592,7 +593,7 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
            "Invalid ivar decl context!");
   }
 
-  return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW);
+  return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW, synthesized);
 }
 
 const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
