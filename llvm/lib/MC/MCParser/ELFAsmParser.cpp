@@ -31,6 +31,8 @@ public:
                                  &ELFAsmParser::ParseSectionDirectiveData));
     Parser.AddDirectiveHandler(this, ".text", MCAsmParser::DirectiveHandler(
                                  &ELFAsmParser::ParseSectionDirectiveText));
+    Parser.AddDirectiveHandler(this, ".size", MCAsmParser::DirectiveHandler(
+                                 &ELFAsmParser::ParseSizeDirective));
   }
 
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
@@ -43,6 +45,7 @@ public:
                               MCSectionELF::SHF_EXECINSTR |
                               MCSectionELF::SHF_ALLOC, SectionKind::getText());
   }
+  bool ParseSizeDirective(StringRef, SMLoc);
 };
 
 }
@@ -56,6 +59,27 @@ bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
   getStreamer().SwitchSection(getContext().getELFSection(
                                 Section, Type, Flags, Kind));
 
+  return false;
+}
+
+bool ELFAsmParser::ParseSizeDirective(StringRef, SMLoc) {
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  const MCExpr *Expr;
+  if (getParser().ParseExpression(Expr))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  getStreamer().EmitELFSize(Sym, Expr);
   return false;
 }
 
