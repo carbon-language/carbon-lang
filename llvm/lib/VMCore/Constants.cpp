@@ -956,14 +956,14 @@ ConstantAggregateZero* ConstantAggregateZero::get(const Type* Ty) {
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
-  getType()->getContext().pImpl->AggZeroConstants.remove(this);
+  getRawType()->getContext().pImpl->AggZeroConstants.remove(this);
   destroyConstantImpl();
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantArray::destroyConstant() {
-  getType()->getContext().pImpl->ArrayConstants.remove(this);
+  getRawType()->getContext().pImpl->ArrayConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1027,21 +1027,21 @@ namespace llvm {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
-  getType()->getContext().pImpl->StructConstants.remove(this);
+  getRawType()->getContext().pImpl->StructConstants.remove(this);
   destroyConstantImpl();
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantUnion::destroyConstant() {
-  getType()->getContext().pImpl->UnionConstants.remove(this);
+  getRawType()->getContext().pImpl->UnionConstants.remove(this);
   destroyConstantImpl();
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
-  getType()->getContext().pImpl->VectorConstants.remove(this);
+  getRawType()->getContext().pImpl->VectorConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1082,7 +1082,7 @@ ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  getType()->getContext().pImpl->NullPtrConstants.remove(this);
+  getRawType()->getContext().pImpl->NullPtrConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1097,7 +1097,7 @@ UndefValue *UndefValue::get(const Type *Ty) {
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  getType()->getContext().pImpl->UndefValueConstants.remove(this);
+  getRawType()->getContext().pImpl->UndefValueConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1131,7 +1131,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
 // destroyConstant - Remove the constant from the constant table.
 //
 void BlockAddress::destroyConstant() {
-  getFunction()->getType()->getContext().pImpl
+  getFunction()->getRawType()->getContext().pImpl
     ->BlockAddresses.erase(std::make_pair(getFunction(), getBasicBlock()));
   getBasicBlock()->AdjustBlockAddressRefCount(-1);
   destroyConstantImpl();
@@ -1930,7 +1930,7 @@ Constant* ConstantExpr::getAShr(Constant* C1, Constant* C2) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {
-  getType()->getContext().pImpl->ExprConstants.remove(this);
+  getRawType()->getContext().pImpl->ExprConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1971,11 +1971,10 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
-  LLVMContext &Context = getType()->getContext();
-  LLVMContextImpl *pImpl = Context.pImpl;
+  LLVMContextImpl *pImpl = getRawType()->getContext().pImpl;
 
   std::pair<LLVMContextImpl::ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
-  Lookup.first.first = getType();
+  Lookup.first.first = cast<ArrayType>(getRawType());
   Lookup.second = this;
 
   std::vector<Constant*> &Values = Lookup.first.second;
@@ -2009,7 +2008,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = ConstantAggregateZero::get(getType());
+    Replacement = ConstantAggregateZero::get(getRawType());
   } else {
     // Check to see if we have this array type already.
     bool Exists;
@@ -2060,7 +2059,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
   std::pair<LLVMContextImpl::StructConstantsTy::MapKey, ConstantStruct*> Lookup;
-  Lookup.first.first = getType();
+  Lookup.first.first = cast<StructType>(getRawType());
   Lookup.second = this;
   std::vector<Constant*> &Values = Lookup.first.second;
   Values.reserve(getNumOperands());  // Build replacement struct.
@@ -2082,14 +2081,13 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   }
   Values[OperandToUpdate] = ToC;
   
-  LLVMContext &Context = getType()->getContext();
-  LLVMContextImpl *pImpl = Context.pImpl;
+  LLVMContextImpl *pImpl = getRawType()->getContext().pImpl;
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = ConstantAggregateZero::get(getType());
+    Replacement = ConstantAggregateZero::get(getRawType());
   } else {
-    // Check to see if we have this array type already.
+    // Check to see if we have this struct type already.
     bool Exists;
     LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
       pImpl->StructConstants.InsertOrGetItem(Lookup, Exists);
@@ -2128,16 +2126,15 @@ void ConstantUnion::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(getOperand(0) == From && "ReplaceAllUsesWith broken!");
 
   std::pair<LLVMContextImpl::UnionConstantsTy::MapKey, ConstantUnion*> Lookup;
-  Lookup.first.first = getType();
+  Lookup.first.first = cast<UnionType>(getRawType());
   Lookup.second = this;
   Lookup.first.second = ToC;
 
-  LLVMContext &Context = getType()->getContext();
-  LLVMContextImpl *pImpl = Context.pImpl;
+  LLVMContextImpl *pImpl = getRawType()->getContext().pImpl;
 
   Constant *Replacement = 0;
   if (ToC->isNullValue()) {
-    Replacement = ConstantAggregateZero::get(getType());
+    Replacement = ConstantAggregateZero::get(getRawType());
   } else {
     // Check to see if we have this union type already.
     bool Exists;
@@ -2180,7 +2177,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  Constant *Replacement = get(getType(), Values);
+  Constant *Replacement = get(cast<VectorType>(getRawType()), Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
@@ -2227,7 +2224,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
                                                &Indices[0], Indices.size());
   } else if (isCast()) {
     assert(getOperand(0) == From && "Cast only has one use!");
-    Replacement = ConstantExpr::getCast(getOpcode(), To, getType());
+    Replacement = ConstantExpr::getCast(getOpcode(), To, getRawType());
   } else if (getOpcode() == Instruction::Select) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
