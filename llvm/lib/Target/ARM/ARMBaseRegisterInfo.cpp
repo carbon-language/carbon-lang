@@ -627,12 +627,26 @@ bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
 bool ARMBaseRegisterInfo::
 needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Function *F = MF.getFunction();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
-  return (RealignStack &&
-          !AFI->isThumb1OnlyFunction() &&
-          (MFI->getMaxAlignment() > StackAlign) &&
-          !MFI->hasVarSizedObjects());
+  bool requiresRealignment =
+    RealignStack && ((MFI->getMaxAlignment() > StackAlign) ||
+                     F->hasFnAttr(Attribute::StackAlignment));
+    
+  // FIXME: Currently we don't support stack realignment for functions with
+  //        variable-sized allocas.
+  // FIXME: It's more complicated than this...
+  if (0 && requiresRealignment && MFI->hasVarSizedObjects())
+    report_fatal_error(
+      "Stack realignment in presense of dynamic allocas is not supported");
+  
+  // FIXME: This probably isn't the right place for this.
+  if (0 && requiresRealignment && AFI->isThumb1OnlyFunction())
+    report_fatal_error(
+      "Stack realignment in thumb1 functions is not supported");
+  
+  return requiresRealignment && canRealignStack(MF);
 }
 
 bool ARMBaseRegisterInfo::
