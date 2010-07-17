@@ -104,7 +104,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
 
   const CXXThisRegion *ThisR = getCXXThisRegion(E->getConstructor(), SFC);
 
-  CallEnter Loc(E, SFC->getAnalysisContext(), Pred->getLocationContext());
+  CallEnter Loc(E, CD, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
                                  NE = ArgsEvaluated.end(); NI != NE; ++NI) {
     const GRState *state = GetState(*NI);
@@ -157,7 +157,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
   const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
-  CallEnter Loc(MCE, SFC->getAnalysisContext(), Pred->getLocationContext());
+  CallEnter Loc(MCE, MD, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator I = AllArgsEvaluated.begin(),
          E = AllArgsEvaluated.end(); I != E; ++I) {
     // Set up 'this' region.

@@ -4,7 +4,6 @@ add_clang_library(clangChecker
   AdjustedReturnValueChecker.cpp
   AggExprVisitor.cpp
   AnalysisConsumer.cpp
-  AnalysisManager.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicConstraintManager.cpp
@@ -16,6 +15,7 @@ add_clang_library(clangChecker
   BuiltinFunctionChecker.cpp
   CFRefCount.cpp
   CallAndMessageChecker.cpp
+  CallInliner.cpp
   CastSizeChecker.cpp
   CastToStructChecker.cpp
   CheckDeadStores.cpp

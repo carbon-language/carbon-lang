@@ -227,8 +227,8 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
 
 void GRCoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
                                    unsigned Index, ExplodedNode *Pred) {
-  GRCallEnterNodeBuilder Builder(*this, Pred, L.getCallExpr(), 
-                                 L.getCalleeContext(), Block, Index);
+  GRCallEnterNodeBuilder Builder(*this, Pred, L.getCallExpr(), L.getCallee(), 
+                                 Block, Index);
   ProcessCallEnter(Builder);
 }
 
@@ -692,12 +692,6 @@ void GREndPathNodeBuilder::GenerateCallExitNode(const GRState *state) {
 
 void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
                                           const LocationContext *LocCtx) {
-  // Check if the callee is in the same translation unit.
-  if (CalleeCtx->getTranslationUnit() != 
-      Pred->getLocationContext()->getTranslationUnit()) {
-    assert(0 && "to be implemented");
-  }
-
   // Get the callee entry block.
   const CFGBlock *Entry = &(LocCtx->getCFG()->getEntry());
   assert(Entry->empty());

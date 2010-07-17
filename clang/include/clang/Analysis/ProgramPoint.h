@@ -15,7 +15,6 @@
 #ifndef LLVM_CLANG_ANALYSIS_PROGRAM_POINT
 #define LLVM_CLANG_ANALYSIS_PROGRAM_POINT
 
-#include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "llvm/System/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
@@ -27,7 +26,6 @@
 namespace clang {
 
 class LocationContext;
-class AnalysisContext;
 class FunctionDecl;
 
 class ProgramPoint {
@@ -315,16 +313,16 @@ public:
 
 class CallEnter : public StmtPoint {
 public:
-  // L is caller's location context. AC is callee's AnalysisContext.
-  CallEnter(const Stmt *S, const AnalysisContext *AC, const LocationContext *L)
-    : StmtPoint(S, AC, CallEnterKind, L, 0) {}
+  // CallEnter uses the caller's location context.
+  CallEnter(const Stmt *S, const FunctionDecl *fd, const LocationContext *L)
+    : StmtPoint(S, fd, CallEnterKind, L, 0) {}
 
   const Stmt *getCallExpr() const {
     return static_cast<const Stmt *>(getData1());
   }
 
-  const AnalysisContext *getCalleeContext() const {
-    return static_cast<const AnalysisContext *>(getData2());
+  const FunctionDecl *getCallee() const {
+    return static_cast<const FunctionDecl *>(getData2());
   }
 
   static bool classof(const ProgramPoint *Location) {
