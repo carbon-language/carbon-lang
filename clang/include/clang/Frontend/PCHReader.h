@@ -531,8 +531,7 @@ private:
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
-  PCHReadResult OpenPCH(llvm::StringRef FileName);
-  PCHReadResult ReadChainedPCH(llvm::StringRef FileName);
+  PCHReadResult ReadPCHCore(llvm::StringRef FileName);
   PCHReadResult ReadPCHBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);

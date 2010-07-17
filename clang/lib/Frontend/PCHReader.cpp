@@ -1447,6 +1447,39 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
     default:  // Default behavior: ignore.
       break;
 
+    case pch::METADATA: {
+      if (Record[0] != pch::VERSION_MAJOR) {
+        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
+                                           : diag::warn_pch_version_too_new);
+        return IgnorePCH;
+      }
+
+      RelocatablePCH = Record[4];
+      if (Listener) {
+        std::string TargetTriple(BlobStart, BlobLen);
+        if (Listener->ReadTargetTriple(TargetTriple))
+          return IgnorePCH;
+      }
+      break;
+    }
+
+    case pch::CHAINED_METADATA: {
+      if (Record[0] != pch::VERSION_MAJOR) {
+        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
+                                           : diag::warn_pch_version_too_new);
+        return IgnorePCH;
+      }
+
+      // Load the chained file.
+      switch(ReadPCHCore(llvm::StringRef(BlobStart, BlobLen))) {
+      case Failure: return Failure;
+        // If we have to ignore the dependency, we'll have to ignore this too.
+      case IgnorePCH: return IgnorePCH;
+      case Success: break;
+      }
+      break;
+    }
+
     case pch::TYPE_OFFSET:
       if (!TypesLoaded.empty()) {
         Error("duplicate TYPE_OFFSET record in PCH file");
@@ -1469,22 +1502,6 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       if (ParseLanguageOptions(Record))
         return IgnorePCH;
       break;
-
-    case pch::METADATA: {
-      if (Record[0] != pch::VERSION_MAJOR) {
-        Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
-                                           : diag::warn_pch_version_too_new);
-        return IgnorePCH;
-      }
-
-      RelocatablePCH = Record[4];
-      if (Listener) {
-        std::string TargetTriple(BlobStart, BlobLen);
-        if (Listener->ReadTargetTriple(TargetTriple))
-          return IgnorePCH;
-      }
-      break;
-    }
 
     case pch::IDENTIFIER_TABLE:
       IdentifierTableData = BlobStart;
@@ -1658,13 +1675,90 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
 }
 
 PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
-  switch(OpenPCH(FileName)) {
+  switch(ReadPCHCore(FileName)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
   case Success: break;
   }
+
+  // Here comes stuff that we only do once the entire chain is loaded.
+
+  // Check the predefines buffers.
+  if (CheckPredefinesBuffers())
+    return IgnorePCH;
+
+  if (PP) {
+    // Initialization of keywords and pragmas occurs before the
+    // PCH file is read, so there may be some identifiers that were
+    // loaded into the IdentifierTable before we intercepted the
+    // creation of identifiers. Iterate through the list of known
+    // identifiers and determine whether we have to establish
+    // preprocessor definitions or top-level identifier declaration
+    // chains for those identifiers.
+    //
+    // We copy the IdentifierInfo pointers to a small vector first,
+    // since de-serializing declarations or macro definitions can add
+    // new entries into the identifier table, invalidating the
+    // iterators.
+    llvm::SmallVector<IdentifierInfo *, 128> Identifiers;
+    for (IdentifierTable::iterator Id = PP->getIdentifierTable().begin(),
+                                IdEnd = PP->getIdentifierTable().end();
+         Id != IdEnd; ++Id)
+      Identifiers.push_back(Id->second);
+    PCHIdentifierLookupTable *IdTable
+      = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+    for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
+      IdentifierInfo *II = Identifiers[I];
+      // Look in the on-disk hash table for an entry for
+      PCHIdentifierLookupTrait Info(*this, II);
+      std::pair<const char*, unsigned> Key(II->getNameStart(), II->getLength());
+      PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
+      if (Pos == IdTable->end())
+        continue;
+
+      // Dereferencing the iterator has the effect of populating the
+      // IdentifierInfo node with the various declarations it needs.
+      (void)*Pos;
+    }
+  }
+
+  if (Context)
+    InitializeContext(*Context);
+
+  return Success;
+}
+
+PCHReader::PCHReadResult PCHReader::ReadPCHCore(llvm::StringRef FileName) {
+  Chain.push_back(new PerFileData());
   PerFileData &F = *Chain.back();
+
+  // Set the PCH file name.
+  F.FileName = FileName;
+
+  // Open the PCH file.
+  //
+  // FIXME: This shouldn't be here, we should just take a raw_ostream.
+  std::string ErrStr;
+  F.Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
+  if (!F.Buffer) {
+    Error(ErrStr.c_str());
+    return IgnorePCH;
+  }
+
+  // Initialize the stream
+  F.StreamFile.init((const unsigned char *)F.Buffer->getBufferStart(),
+                    (const unsigned char *)F.Buffer->getBufferEnd());
   llvm::BitstreamCursor &Stream = F.Stream;
+  Stream.init(F.StreamFile);
+
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'P' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(8) != 'H') {
+    Diag(diag::err_not_a_pch_file) << FileName;
+    return Failure;
+  }
 
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
@@ -1717,91 +1811,6 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     }
   }
 
-  // Check the predefines buffers.
-  if (CheckPredefinesBuffers())
-    return IgnorePCH;
-
-  if (PP) {
-    // Initialization of keywords and pragmas occurs before the
-    // PCH file is read, so there may be some identifiers that were
-    // loaded into the IdentifierTable before we intercepted the
-    // creation of identifiers. Iterate through the list of known
-    // identifiers and determine whether we have to establish
-    // preprocessor definitions or top-level identifier declaration
-    // chains for those identifiers.
-    //
-    // We copy the IdentifierInfo pointers to a small vector first,
-    // since de-serializing declarations or macro definitions can add
-    // new entries into the identifier table, invalidating the
-    // iterators.
-    llvm::SmallVector<IdentifierInfo *, 128> Identifiers;
-    for (IdentifierTable::iterator Id = PP->getIdentifierTable().begin(),
-                                IdEnd = PP->getIdentifierTable().end();
-         Id != IdEnd; ++Id)
-      Identifiers.push_back(Id->second);
-    PCHIdentifierLookupTable *IdTable
-      = (PCHIdentifierLookupTable *)IdentifierLookupTable;
-    for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
-      IdentifierInfo *II = Identifiers[I];
-      // Look in the on-disk hash table for an entry for
-      PCHIdentifierLookupTrait Info(*this, II);
-      std::pair<const char*, unsigned> Key(II->getNameStart(), II->getLength());
-      PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
-      if (Pos == IdTable->end())
-        continue;
-
-      // Dereferencing the iterator has the effect of populating the
-      // IdentifierInfo node with the various declarations it needs.
-      (void)*Pos;
-    }
-  }
-
-  if (Context)
-    InitializeContext(*Context);
-
-  return Success;
-}
-
-PCHReader::PCHReadResult PCHReader::OpenPCH(llvm::StringRef FileName) {
-  Chain.push_back(new PerFileData());
-  PerFileData &F = *Chain.back();
-
-  // Set the PCH file name.
-  F.FileName = FileName;
-
-  // Open the PCH file.
-  //
-  // FIXME: This shouldn't be here, we should just take a raw_ostream.
-  std::string ErrStr;
-  F.Buffer.reset(llvm::MemoryBuffer::getFileOrSTDIN(FileName, &ErrStr));
-  if (!F.Buffer) {
-    Error(ErrStr.c_str());
-    return IgnorePCH;
-  }
-
-  // Initialize the stream
-  F.StreamFile.init((const unsigned char *)F.Buffer->getBufferStart(),
-                    (const unsigned char *)F.Buffer->getBufferEnd());
-  llvm::BitstreamCursor &Stream = F.Stream;
-  Stream.init(F.StreamFile);
-
-  // Sniff for the signature.
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
-    Diag(diag::err_not_a_pch_file) << FileName;
-    return Failure;
-  }
-  return Success;
-}
-
-PCHReader::PCHReadResult PCHReader::ReadChainedPCH(llvm::StringRef FileName) {
-  switch(OpenPCH(FileName)) {
-  case Failure: return Failure;
-  case IgnorePCH: return IgnorePCH;
-  case Success: break;
-  }
   return Success;
 }
 
