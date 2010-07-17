@@ -4267,7 +4267,7 @@ static SDValue PerformORCombine(SDNode *N,
   if (!C)
     return SDValue();
   unsigned Val = C->getZExtValue();
-  if (ARM::isBitFieldInvertedMask(Mask) && (Val & ~Mask) != Val)
+  if (!ARM::isBitFieldInvertedMask(Mask) || (Val & ~Mask) != Val)
     return SDValue();
   Val >>= CountTrailingZeros_32(~Mask);
 
