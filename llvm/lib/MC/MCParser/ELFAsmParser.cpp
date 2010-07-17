@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -36,6 +37,10 @@ public:
                                  &ELFAsmParser::ParseDirectiveSection));
     Parser.AddDirectiveHandler(this, ".size", MCAsmParser::DirectiveHandler(
                                  &ELFAsmParser::ParseDirectiveSize));
+    Parser.AddDirectiveHandler(this, ".sleb128", MCAsmParser::DirectiveHandler(
+                                 &ELFAsmParser::ParseDirectiveLEB128));
+    Parser.AddDirectiveHandler(this, ".uleb128", MCAsmParser::DirectiveHandler(
+                                 &ELFAsmParser::ParseDirectiveLEB128));
   }
 
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
@@ -48,6 +53,7 @@ public:
                               MCSectionELF::SHF_EXECINSTR |
                               MCSectionELF::SHF_ALLOC, SectionKind::getText());
   }
+  bool ParseDirectiveLEB128(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectiveSize(StringRef, SMLoc);
 };
@@ -189,6 +195,26 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
                                                          Flags, Kind, false));
   return false;
+}
+
+bool ELFAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
+  int64_t Value;
+  if (getParser().ParseAbsoluteExpression(Value))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  // FIXME: Add proper MC support.
+  if (getContext().getAsmInfo().hasLEB128()) {
+    if (DirName[1] == 's')
+      getStreamer().EmitRawText("\t.sleb128\t" + Twine(Value));
+    else
+      getStreamer().EmitRawText("\t.uleb128\t" + Twine(Value));
+    return false;
+  }
+  // FIXME: This shouldn't be an error!
+  return TokError("LEB128 not supported yet");
 }
 
 namespace llvm {
