@@ -378,6 +378,8 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
 void PCHDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
   VisitFieldDecl(IVD);
   IVD->setAccessControl((ObjCIvarDecl::AccessControl)Record[Idx++]);
+  bool synth = Record[Idx++];
+  IVD->setSynthesize(synth);
 }
 
 void PCHDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {

@@ -676,6 +676,7 @@ public:
     return DeclAccess == None ? Protected : AccessControl(DeclAccess);
   }
 
+  void setSynthesize(bool synth) { Synthesized = synth; }
   bool getSynthesize() const { return Synthesized; }
   
   // Implement isa/cast/dyncast/etc.

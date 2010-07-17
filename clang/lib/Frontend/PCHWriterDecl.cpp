@@ -363,6 +363,7 @@ void PCHDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   VisitFieldDecl(D);
   // FIXME: stable encoding for @public/@private/@protected/@package
   Record.push_back(D->getAccessControl());
+  Record.push_back(D->getSynthesize());
   Code = pch::DECL_OBJC_IVAR;
 }
 

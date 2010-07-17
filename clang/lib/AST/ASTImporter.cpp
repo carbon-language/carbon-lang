@@ -2026,7 +2026,7 @@ Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
                                               cast<ObjCContainerDecl>(DC),
                                               Loc, Name.getAsIdentifierInfo(),
                                               T, TInfo, D->getAccessControl(),
-                                              BitWidth);
+                                              BitWidth, D->getSynthesize());
   ToIvar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToIvar);
   LexicalDC->addDecl(ToIvar);
