@@ -104,7 +104,15 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
   private:
-    typedef std::map<const LiveInterval*, unsigned> LI2NodeMap;
+
+    class LIOrdering {
+    public:
+      bool operator()(const LiveInterval *li1, const LiveInterval *li2) const {
+        return li1->reg < li2->reg;
+      }
+    };
+
+    typedef std::map<const LiveInterval*, unsigned, LIOrdering> LI2NodeMap;
     typedef std::vector<const LiveInterval*> Node2LIMap;
     typedef std::vector<unsigned> AllowedSet;
     typedef std::vector<AllowedSet> AllowedSetMap;
@@ -112,7 +120,7 @@ namespace {
     typedef std::pair<unsigned, unsigned> RegPair;
     typedef std::map<RegPair, PBQP::PBQPNum> CoalesceMap;
 
-    typedef std::set<LiveInterval*> LiveIntervalSet;
+    typedef std::set<LiveInterval*, LIOrdering> LiveIntervalSet;
 
     typedef std::vector<PBQP::Graph::NodeItr> NodeVector;
 
