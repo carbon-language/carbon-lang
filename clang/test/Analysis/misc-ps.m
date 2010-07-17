@@ -1020,3 +1020,9 @@ void pr7475_warn() {
   *someStatic = 0; // expected-warning{{null pointer}}
 }
 
+// <rdar://problem/8202272> - __imag passed non-complex should not crash
+float f0(_Complex float x) {
+  float l0 = __real x;
+  return  __real l0 + __imag l0;
+}
+

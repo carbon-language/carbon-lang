@@ -2835,8 +2835,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
           continue;
         }
 
-        // For all other types, UnaryOperator::Float returns 0.
-        assert (Ex->getType()->isIntegerType());
+        // For all other types, UnaryOperator::Imag returns 0.
         const GRState* state = GetState(*I);
         SVal X = ValMgr.makeZeroVal(Ex->getType());
         MakeNode(Dst, U, *I, state->BindExpr(U, X));
