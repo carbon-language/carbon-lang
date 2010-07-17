@@ -630,9 +630,8 @@ needsStackRealignment(const MachineFunction &MF) const {
   const Function *F = MF.getFunction();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
-  bool requiresRealignment =
-    RealignStack && ((MFI->getMaxAlignment() > StackAlign) ||
-                     F->hasFnAttr(Attribute::StackAlignment));
+  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
+                               F->hasFnAttr(Attribute::StackAlignment));
     
   // FIXME: Currently we don't support stack realignment for functions with
   //        variable-sized allocas.
