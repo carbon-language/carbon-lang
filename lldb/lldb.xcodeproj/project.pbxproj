@@ -2303,7 +2303,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\tsed -i '' 's/\\(#include\\)[ ]*\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\n\tsed -i '' 's|<LLDB/Utility|<LLDB|' \"$file\"\ndone\n";
+			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\t/usr/bin/sed -i '' 's/\\(#include\\)[ ]*\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\n\t/usr/bin/sed -i '' 's|<LLDB/Utility|<LLDB|' \"$file\"\ndone\n";
 		};
 		26D5B06111B07468009A862E /* Build llvm and clang */ = {
 			isa = PBXShellScriptBuildPhase;
