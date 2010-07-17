@@ -462,12 +462,12 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
 
   // FIXME: Currently we don't support stack realignment for functions with
   //        variable-sized allocas.
-  // FIXME: Temporary disable the error - it seems to be too conservative.
+  // FIXME: It's more complicated than this...
   if (0 && requiresRealignment && MFI->hasVarSizedObjects())
     report_fatal_error(
       "Stack realignment in presense of dynamic allocas is not supported");
 
-  return (requiresRealignment && !MFI->hasVarSizedObjects());
+  return requiresRealignment && canRealignStack(MF);
 }
 
 bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
