@@ -515,10 +515,12 @@ bool IdempotentOperationChecker::containsOneConstant(const Stmt *S) {
   if (IL && IL->getValue() == 1)
     return true;
 
-  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S);
-  const llvm::APFloat one(1.0);
-  if (FL && FL->getValue().compare(one) == llvm::APFloat::cmpEqual)
-    return true;
+  if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(S)) {
+    const llvm::APFloat &val = FL->getValue();
+    const llvm::APFloat one(val.getSemantics(), 1);
+    if (val.compare(one) == llvm::APFloat::cmpEqual)
+      return true;
+  }
 
   for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
       ++I)

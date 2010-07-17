@@ -3,6 +3,7 @@
 // Basic tests
 
 extern void test(int i);
+extern void test_f(float f);
 
 void basic() {
   int x = 10, zero = 0, one = 1;
@@ -49,4 +50,9 @@ void basic() {
   test(zero ^ x);  // expected-warning {{idempotent operation; the left operand is always 0}}
   test(zero << x); // expected-warning {{idempotent operation; the left operand is always 0}}
   test(zero >> x); // expected-warning {{idempotent operation; the left operand is always 0}}
+}
+
+void floats(float x) {
+  test_f(x * 1.0); // no-warning
+  test_f(x * 1.0F); // no-warning
 }
