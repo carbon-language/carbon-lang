@@ -27,8 +27,8 @@ def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
 
 //===---------------------------------------------------------------------===//
 
-The FP stackifier needs to be global.  Also, it should handle simple permutates
-to reduce number of shuffle instructions, e.g. turning:
+The FP stackifier should handle simple permutates to reduce number of shuffle
+instructions, e.g. turning:
 
 fld P	->		fld Q
 fld Q			fld P
