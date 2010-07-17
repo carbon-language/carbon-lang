@@ -100,9 +100,7 @@ Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
     --Stop;
     Stop->Val = 0;
     if (!Count) {
-      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Done == 0
-                                                            ? fullStopTag
-                                                            : stopTag));
+      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(stopTag));
       ++Done;
       Count = Done;
     } else {
