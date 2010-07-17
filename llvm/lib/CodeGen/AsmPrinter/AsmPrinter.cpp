@@ -661,7 +661,7 @@ void AsmPrinter::EmitFunctionBody() {
   // label equaling the end of function label and an invalid "row" in the
   // FDE. We need to emit a noop in this situation so that the FDE's rows are
   // valid.
-  bool RequiresNoop = LastMI && LastMI->getOpcode()==TargetOpcode::PROLOG_LABEL;
+  bool RequiresNoop = LastMI && LastMI->isPrologLabel();
 
   // If the function is empty and the object file uses .subsections_via_symbols,
   // then we need to emit *something* to the function body to prevent the
