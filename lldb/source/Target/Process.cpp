@@ -522,7 +522,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
     return error;
 }
 
-lldb::user_id_t
+lldb::break_id_t
 Process::CreateBreakpointSite (BreakpointLocationSP &owner, bool use_hardware)
 {
     const addr_t load_addr = owner->GetAddress().GetLoadAddress (this);

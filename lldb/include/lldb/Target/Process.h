@@ -1170,7 +1170,7 @@ public:
     Error
     ClearBreakpointSiteByID (lldb::user_id_t break_id);
 
-    lldb::user_id_t
+    lldb::break_id_t
     CreateBreakpointSite (lldb::BreakpointLocationSP &owner,
                           bool use_hardware);
 

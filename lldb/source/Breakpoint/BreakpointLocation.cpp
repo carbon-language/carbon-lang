@@ -229,9 +229,9 @@ BreakpointLocation::ResolveBreakpointSite ()
 
     BreakpointLocationSP myself_sp(m_owner.GetLocationSP (this));
 
-    lldb::user_id_t new_id = process->CreateBreakpointSite (myself_sp, false);
+    lldb::break_id_t new_id = process->CreateBreakpointSite (myself_sp, false);
 
-    if (new_id == LLDB_INVALID_UID)
+    if (new_id == LLDB_INVALID_BREAK_ID)
     {
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
