@@ -27,6 +27,32 @@ namespace llvm {
 namespace clang {
 namespace CodeGen {
 
+/// The exceptions personality for a function.  When 
+class EHPersonality {
+  const char *PersonalityFn;
+
+  // If this is non-null, this personality requires a non-standard
+  // function for rethrowing an exception after a catchall cleanup.
+  // This function must have prototype void(void*).
+  const char *CatchallRethrowFn;
+
+  EHPersonality(const char *PersonalityFn,
+                const char *CatchallRethrowFn = 0)
+    : PersonalityFn(PersonalityFn),
+      CatchallRethrowFn(CatchallRethrowFn) {}
+
+public:
+  static const EHPersonality &get(const LangOptions &Lang);
+  static const EHPersonality GNU_C;
+  static const EHPersonality GNU_ObjC;
+  static const EHPersonality NeXT_ObjC;
+  static const EHPersonality GNU_CPlusPlus;
+  static const EHPersonality GNU_CPlusPlus_SJLJ;
+
+  const char *getPersonalityFnName() const { return PersonalityFn; }
+  const char *getCatchallRethrowFnName() const { return CatchallRethrowFn; }
+};
+
 /// A protected scope for zero-cost EH handling.
 class EHScope {
   llvm::BasicBlock *CachedLandingPad;

@@ -317,74 +317,88 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
       CGF.CGM.getLangOptions().CPlusPlus ? "_ZSt9terminatev" : "abort");
 }
 
-static const char *getCPersonalityFn(CodeGenFunction &CGF) {
-  return "__gcc_personality_v0";
+static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
+                                            const char *Name) {
+  const llvm::Type *Int8PtrTy =
+    llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  std::vector<const llvm::Type*> Args(1, Int8PtrTy);
+
+  const llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
+  const llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, Args, false);
+
+  return CGF.CGM.CreateRuntimeFunction(FTy, Name);
 }
 
-static const char *getObjCPersonalityFn(CodeGenFunction &CGF) {
-  if (CGF.CGM.getLangOptions().NeXTRuntime) {
-    if (CGF.CGM.getLangOptions().ObjCNonFragileABI)
-      return "__objc_personality_v0";
-    else
-      return getCPersonalityFn(CGF);
+const EHPersonality EHPersonality::GNU_C("__gcc_personality_v0");
+const EHPersonality EHPersonality::NeXT_ObjC("__objc_personality_v0");
+const EHPersonality EHPersonality::GNU_CPlusPlus("__gxx_personality_v0");
+const EHPersonality EHPersonality::GNU_CPlusPlus_SJLJ("__gxx_personality_sj0");
+const EHPersonality EHPersonality::GNU_ObjC("__gnu_objc_personality_v0",
+                                            "objc_exception_throw");
+
+static const EHPersonality &getCPersonality(const LangOptions &L) {
+  return EHPersonality::GNU_C;
+}
+
+static const EHPersonality &getObjCPersonality(const LangOptions &L) {
+  if (L.NeXTRuntime) {
+    if (L.ObjCNonFragileABI) return EHPersonality::NeXT_ObjC;
+    else return getCPersonality(L);
   } else {
-    return "__gnu_objc_personality_v0";
+    return EHPersonality::GNU_ObjC;
   }
 }
 
-static const char *getCXXPersonalityFn(CodeGenFunction &CGF) {
-  if (CGF.CGM.getLangOptions().SjLjExceptions)
-    return "__gxx_personality_sj0";
+static const EHPersonality &getCXXPersonality(const LangOptions &L) {
+  if (L.SjLjExceptions)
+    return EHPersonality::GNU_CPlusPlus_SJLJ;
   else
-    return "__gxx_personality_v0";
+    return EHPersonality::GNU_CPlusPlus;
 }
 
 /// Determines the personality function to use when both C++
 /// and Objective-C exceptions are being caught.
-static const char *getObjCXXPersonalityFn(CodeGenFunction &CGF) {
+static const EHPersonality &getObjCXXPersonality(const LangOptions &L) {
   // The ObjC personality defers to the C++ personality for non-ObjC
   // handlers.  Unlike the C++ case, we use the same personality
   // function on targets using (backend-driven) SJLJ EH.
-  if (CGF.CGM.getLangOptions().NeXTRuntime) {
-    if (CGF.CGM.getLangOptions().ObjCNonFragileABI)
-      return "__objc_personality_v0";
+  if (L.NeXTRuntime) {
+    if (L.ObjCNonFragileABI)
+      return EHPersonality::NeXT_ObjC;
 
     // In the fragile ABI, just use C++ exception handling and hope
     // they're not doing crazy exception mixing.
     else
-      return getCXXPersonalityFn(CGF);
+      return getCXXPersonality(L);
   }
 
-  // I'm pretty sure the GNU runtime doesn't support mixed EH.
-  // TODO: we don't necessarily need mixed EH here;  remember what
-  // kind of exceptions we actually try to catch in this function.
-  CGF.CGM.ErrorUnsupported(CGF.CurCodeDecl,
-                           "the GNU Objective C runtime does not support "
-                           "catching C++ and Objective C exceptions in the "
-                           "same function");
-  // Use the C++ personality just to avoid returning null.
-  return getCXXPersonalityFn(CGF);
+  // The GNU runtime's personality function inherently doesn't support
+  // mixed EH.  Use the C++ personality just to avoid returning null.
+  return getCXXPersonality(L);
 }
 
-static llvm::Constant *getPersonalityFn(CodeGenFunction &CGF) {
-  const char *Name;
-  const LangOptions &Opts = CGF.CGM.getLangOptions();
-  if (Opts.CPlusPlus && Opts.ObjC1)
-    Name = getObjCXXPersonalityFn(CGF);
-  else if (Opts.CPlusPlus)
-    Name = getCXXPersonalityFn(CGF);
-  else if (Opts.ObjC1)
-    Name = getObjCPersonalityFn(CGF);
+const EHPersonality &EHPersonality::get(const LangOptions &L) {
+  if (L.CPlusPlus && L.ObjC1)
+    return getObjCXXPersonality(L);
+  else if (L.CPlusPlus)
+    return getCXXPersonality(L);
+  else if (L.ObjC1)
+    return getObjCPersonality(L);
   else
-    Name = getCPersonalityFn(CGF);
+    return getCPersonality(L);
+}
 
-  llvm::Constant *Personality =
+static llvm::Constant *getPersonalityFn(CodeGenFunction &CGF,
+                                        const EHPersonality &Personality) {
+  const char *Name = Personality.getPersonalityFnName();
+
+  llvm::Constant *Fn =
     CGF.CGM.CreateRuntimeFunction(llvm::FunctionType::get(
                                     llvm::Type::getInt32Ty(
                                       CGF.CGM.getLLVMContext()),
                                     true),
                             Name);
-  return llvm::ConstantExpr::getBitCast(Personality, CGF.CGM.PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, CGF.CGM.PtrToInt8Ty);
 }
 
 /// Returns the value to inject into a selector to indicate the
@@ -753,6 +767,9 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Save the current IR generation state.
   CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 
+  const EHPersonality &Personality =
+    EHPersonality::get(CGF.CGM.getLangOptions());
+
   // Create and configure the landing pad.
   llvm::BasicBlock *LP = createBasicBlock("lpad");
   EmitBlock(LP);
@@ -768,7 +785,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Build the selector arguments.
   llvm::SmallVector<llvm::Value*, 8> EHSelector;
   EHSelector.push_back(Exn);
-  EHSelector.push_back(getPersonalityFn(*this));
+  EHSelector.push_back(getPersonalityFn(*this, Personality));
 
   // Accumulate all the handlers in scope.
   llvm::DenseMap<llvm::Value*, JumpDest> EHHandlers;
@@ -1008,8 +1025,12 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
     // This can always be a call because we necessarily didn't find
     // anything on the EH stack which needs our help.
-    Builder.CreateCall(getUnwindResumeOrRethrowFn(),
-                       Builder.CreateLoad(getExceptionSlot()))
+    llvm::Constant *RethrowFn;
+    if (const char *RethrowName = Personality.getCatchallRethrowFnName())
+      RethrowFn = getCatchallRethrowFn(CGF, RethrowName);
+    else
+      RethrowFn = getUnwindResumeOrRethrowFn();
+    Builder.CreateCall(RethrowFn, Builder.CreateLoad(getExceptionSlot()))
       ->setDoesNotReturn();
     Builder.CreateUnreachable();
   }
@@ -1437,10 +1458,12 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   llvm::CallInst *Exn =
     Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_exception), "exn");
   Exn->setDoesNotThrow();
+
+  const EHPersonality &Personality = EHPersonality::get(CGM.getLangOptions());
   
   // Tell the backend what the exception table should be:
   // nothing but a catch-all.
-  llvm::Value *Args[3] = { Exn, getPersonalityFn(*this),
+  llvm::Value *Args[3] = { Exn, getPersonalityFn(*this, Personality),
                            getCatchAllValue(*this) };
   Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
                      Args, Args+3, "eh.selector")
