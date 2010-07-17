@@ -197,6 +197,26 @@ namespace llvm {
       return indexes_->getMBBEndIdx(mbb);
     } 
 
+    bool isLiveInToMBB(const LiveInterval &li,
+                       const MachineBasicBlock *mbb) const {
+      return li.liveAt(getMBBStartIdx(mbb));
+    }
+
+    LiveRange* findEnteringRange(LiveInterval &li,
+                                 const MachineBasicBlock *mbb) {
+      return li.getLiveRangeContaining(getMBBStartIdx(mbb));
+    }
+
+    bool isLiveOutOfMBB(const LiveInterval &li,
+                        const MachineBasicBlock *mbb) const {
+      return li.liveAt(getMBBEndIdx(mbb).getPrevSlot());
+    }
+
+    LiveRange* findExitingRange(LiveInterval &li,
+                                const MachineBasicBlock *mbb) {
+      return li.getLiveRangeContaining(getMBBEndIdx(mbb).getPrevSlot());
+    }
+
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {
       return indexes_->getMBBFromIndex(index);
     }
@@ -215,6 +235,10 @@ namespace llvm {
 
     void ReplaceMachineInstrInMaps(MachineInstr *MI, MachineInstr *NewMI) {
       indexes_->replaceMachineInstrInMaps(MI, NewMI);
+    }
+
+    void InsertMBBInMaps(MachineBasicBlock *MBB) {
+      indexes_->insertMBBInMaps(MBB);
     }
 
     bool findLiveInMBBs(SlotIndex Start, SlotIndex End,

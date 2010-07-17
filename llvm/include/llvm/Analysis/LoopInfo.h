@@ -229,9 +229,12 @@ public:
     return 0;
   }
 
+  /// Edge type.
+  typedef std::pair<BlockT*, BlockT*> Edge;
+
   /// getExitEdges - Return all pairs of (_inside_block_,_outside_block_).
-  typedef std::pair<const BlockT*,const BlockT*> Edge;
-  void getExitEdges(SmallVectorImpl<Edge> &ExitEdges) const {
+  template <typename EdgeT>
+  void getExitEdges(SmallVectorImpl<EdgeT> &ExitEdges) const {
     // Sort the blocks vector so that we can use binary search to do quick
     // lookups.
     SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
@@ -244,7 +247,7 @@ public:
            I != E; ++I)
         if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
           // Not in current loop? It must be an exit block.
-          ExitEdges.push_back(std::make_pair(*BI, *I));
+          ExitEdges.push_back(EdgeT(*BI, *I));
   }
 
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
