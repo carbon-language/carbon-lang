@@ -1441,12 +1441,12 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 }
 
 void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
-  const FunctionDecl *FD = B.getCallee();
-  const StackFrameContext *LocCtx = AMgr.getStackFrame(FD, 
-                                                       B.getLocationContext(),
-                                                       B.getCallExpr(),
-                                                       B.getBlock(),
-                                                       B.getIndex());
+  const StackFrameContext *LocCtx 
+    = AMgr.getStackFrame(const_cast<AnalysisContext *>(B.getCalleeContext()),
+                         B.getLocationContext(),
+                         B.getCallExpr(),
+                         B.getBlock(),
+                         B.getIndex());
 
   const GRState *state = B.getState();
   state = getStoreManager().EnterStackFrame(state, LocCtx);
@@ -1886,16 +1886,29 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
   if (!FD)
     return false;
 
-  if (!FD->hasBody(FD))
-    return false;
+  // Check if the function definition is in the same translation unit.
+  if (FD->hasBody(FD)) {
+    // Now we have the definition of the callee, create a CallEnter node.
+    CallEnter Loc(CE, AMgr.getAnalysisContext(FD), Pred->getLocationContext());
 
-  // Now we have the definition of the callee, create a CallEnter node.
-  CallEnter Loc(CE, FD, Pred->getLocationContext());
-
-  ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
-  if (N)
+    ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
     Dst.Add(N);
-  return true;
+    return true;
+  }
+
+  // Check if we can find the function definition in other translation units.
+  if (AMgr.hasIndexer()) {
+    const AnalysisContext *C = AMgr.getAnalysisContextInAnotherTU(FD);
+    if (C == 0)
+      return false;
+
+    CallEnter Loc(CE, C, Pred->getLocationContext());
+    ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
+    Dst.Add(N);
+    return true;
+  }
+
+  return false;
 }
 
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,

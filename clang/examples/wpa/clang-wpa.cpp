@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
   AnalysisManager AMgr(TU->getASTContext(), PP.getDiagnostics(),
                        PP.getLangOptions(), /* PathDiagnostic */ 0,
                        CreateRegionStoreManager,
-                       CreateRangeConstraintManager,
+                       CreateRangeConstraintManager, &Idxer,
                        /* MaxNodes */ 300000, /* MaxLoop */ 3,
                        /* VisualizeEG */ false, /* VisualizeEGUbi */ false,
                        /* PurgeDead */ true, /* EagerlyAssume */ false,
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
                                          AMgr.getLangOptions());
   GRExprEngine Eng(AMgr, TF);
 
-  Eng.ExecuteWorkList(AMgr.getStackFrame(FD), AMgr.getMaxNodes());
+  Eng.ExecuteWorkList(AMgr.getStackFrame(FD, TU), AMgr.getMaxNodes());
   
   return 0;
 }
