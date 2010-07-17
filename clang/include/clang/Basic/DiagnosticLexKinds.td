@@ -277,6 +277,9 @@ def err_too_few_args_in_macro_invoc : Error<
   "too few arguments provided to function-like macro invocation">;
 def err_pp_bad_paste : Error<
   "pasting formed '%0', an invalid preprocessing token">;
+def err_pp_bad_paste_ms : Warning<
+  "pasting formed '%0', an invalid preprocessing token">, DefaultError,
+  InGroup<DiagGroup<"invalid-token-paste">>;
 def err_pp_operator_used_as_macro_name : Error<
   "C++ operator '%0' cannot be used as a macro name">;
 def err_pp_illegal_floating_literal : Error<

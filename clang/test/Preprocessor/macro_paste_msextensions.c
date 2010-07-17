@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -P -E -fms-extensions %s | FileCheck -strict-whitespace %s
+
 // This horrible stuff should preprocess into (other than whitespace):
 //   int foo;
 //   int bar;
@@ -24,3 +25,10 @@ nested(baz)  rise of the dead tokens
 // CHECK: int baz
 // CHECK: ;
 
+
+// rdar://8197149 - VC++ allows invalid token pastes: (##baz
+#define foo(x) abc(x)
+#define bar(y) foo(##baz(y))
+bar(q)
+
+// CHECK: abc(baz(q))
