@@ -149,20 +149,20 @@ namespace {
       return StackTop == 0;
     }
 
-    // getSlot - Return the stack slot number a particular register number is
-    // in.
+    /// getSlot - Return the stack slot number a particular register number is
+    /// in.
     unsigned getSlot(unsigned RegNo) const {
       assert(RegNo < 8 && "Regno out of range!");
       return RegMap[RegNo];
     }
 
-    // isLive - Is RegNo currently live in the stack?
+    /// isLive - Is RegNo currently live in the stack?
     bool isLive(unsigned RegNo) const {
       unsigned Slot = getSlot(RegNo);
       return Slot < StackTop && Stack[Slot] == RegNo;
     }
 
-    // getScratchReg - Return an FP register that is not currently in use.
+    /// getScratchReg - Return an FP register that is not currently in use.
     unsigned getScratchReg() {
       for (int i = 7; i >= 0; --i)
         if (!isLive(i))
@@ -170,14 +170,14 @@ namespace {
       llvm_unreachable("Ran out of scratch FP registers");
     }
 
-    // getStackEntry - Return the X86::FP<n> register in register ST(i).
+    /// getStackEntry - Return the X86::FP<n> register in register ST(i).
     unsigned getStackEntry(unsigned STi) const {
       assert(STi < StackTop && "Access past stack top!");
       return Stack[StackTop-1-STi];
     }
 
-    // getSTReg - Return the X86::ST(i) register which contains the specified
-    // FP<RegNo> register.
+    /// getSTReg - Return the X86::ST(i) register which contains the specified
+    /// FP<RegNo> register.
     unsigned getSTReg(unsigned RegNo) const {
       return StackTop - 1 - getSlot(RegNo) + llvm::X86::ST0;
     }
@@ -218,27 +218,27 @@ namespace {
       BuildMI(*MBB, I, dl, TII->get(X86::LD_Frr)).addReg(STReg);
     }
 
-    // popStackAfter - Pop the current value off of the top of the FP stack
-    // after the specified instruction.
+    /// popStackAfter - Pop the current value off of the top of the FP stack
+    /// after the specified instruction.
     void popStackAfter(MachineBasicBlock::iterator &I);
 
-    // freeStackSlotAfter - Free the specified register from the register stack,
-    // so that it is no longer in a register.  If the register is currently at
-    // the top of the stack, we just pop the current instruction, otherwise we
-    // store the current top-of-stack into the specified slot, then pop the top
-    // of stack.
+    /// freeStackSlotAfter - Free the specified register from the register
+    /// stack, so that it is no longer in a register.  If the register is
+    /// currently at the top of the stack, we just pop the current instruction,
+    /// otherwise we store the current top-of-stack into the specified slot,
+    /// then pop the top of stack.
     void freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned Reg);
 
-    // freeStackSlotBefore - Just the pop, no folding. Return the inserted
-    // instruction.
+    /// freeStackSlotBefore - Just the pop, no folding. Return the inserted
+    /// instruction.
     MachineBasicBlock::iterator
     freeStackSlotBefore(MachineBasicBlock::iterator I, unsigned FPRegNo);
 
-    // Adjust the live registers to be the set in Mask.
+    /// Adjust the live registers to be the set in Mask.
     void adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I);
 
-    // Shuffle the top FixCount stack entries susch that FP reg FixStack[0] is
-    //st(0), FP reg FixStack[1] is st(1) etc.
+    /// Shuffle the top FixCount stack entries susch that FP reg FixStack[0] is
+    /// st(0), FP reg FixStack[1] is st(1) etc.
     void shuffleStackTop(const unsigned char *FixStack, unsigned FixCount,
                          MachineBasicBlock::iterator I);
 
