@@ -69,7 +69,7 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    TargetParser(0), CurBuffer(0) {
+    CurBuffer(0) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
   // Initialize the generic parser.
@@ -91,12 +91,6 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
 AsmParser::~AsmParser() {
   delete PlatformParser;
   delete GenericParser;
-}
-
-void AsmParser::setTargetParser(TargetAsmParser &P) {
-  assert(!TargetParser && "Target parser is already initialized!");
-  TargetParser = &P;
-  TargetParser->Initialize(*this);
 }
 
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
@@ -1487,3 +1481,10 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   return false;
 }
 
+
+/// \brief Create an MCAsmParser instance.
+MCAsmParser *llvm::createMCAsmParser(const Target &T, SourceMgr &SM,
+                                     MCContext &C, MCStreamer &Out,
+                                     const MCAsmInfo &MAI) {
+  return new AsmParser(T, SM, C, Out, MAI);
+}

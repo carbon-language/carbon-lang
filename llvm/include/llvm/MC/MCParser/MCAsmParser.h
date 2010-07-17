@@ -14,6 +14,7 @@
 
 namespace llvm {
 class AsmToken;
+class MCAsmInfo;
 class MCAsmLexer;
 class MCAsmParserExtension;
 class MCContext;
@@ -22,6 +23,8 @@ class MCStreamer;
 class SMLoc;
 class SourceMgr;
 class StringRef;
+class Target;
+class TargetAsmParser;
 class Twine;
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
@@ -33,6 +36,9 @@ public:
 private:
   MCAsmParser(const MCAsmParser &);   // DO NOT IMPLEMENT
   void operator=(const MCAsmParser &);  // DO NOT IMPLEMENT
+
+  TargetAsmParser *TargetParser;
+
 protected: // Can only create subclasses.
   MCAsmParser();
 
@@ -51,6 +57,12 @@ public:
 
   /// getStreamer - Return the output streamer for the assembler.
   virtual MCStreamer &getStreamer() = 0;
+
+  TargetAsmParser &getTargetParser() const { return *TargetParser; }
+  void setTargetParser(TargetAsmParser &P);
+
+  /// Run - Run the parser on the input source buffer.
+  virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
   /// Warning - Emit a warning at the location \arg L, with the message \arg
   /// Msg.
@@ -101,6 +113,10 @@ public:
   /// @result - False on success.
   virtual bool ParseAbsoluteExpression(int64_t &Res) = 0;
 };
+
+/// \brief Create an MCAsmParser instance.
+MCAsmParser *createMCAsmParser(const Target &, SourceMgr &, MCContext &,
+                               MCStreamer &, const MCAsmInfo &);
 
 } // End llvm namespace
 

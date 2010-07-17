@@ -46,7 +46,6 @@ private:
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
   MCAsmParserExtension *PlatformParser;
-  TargetAsmParser *TargetParser;
   
   /// This is the current buffer index we're lexing from as managed by the
   /// SourceMgr object.
@@ -65,7 +64,7 @@ public:
             const MCAsmInfo &MAI);
   ~AsmParser();
 
-  bool Run(bool NoInitialTextSection, bool NoFinalize = false);
+  virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false);
 
   void AddDirectiveHandler(MCAsmParserExtension *Object,
                            StringRef Directive,
@@ -74,9 +73,6 @@ public:
   }
 
 public:
-  TargetAsmParser &getTargetParser() const { return *TargetParser; }
-  void setTargetParser(TargetAsmParser &P);
-
   /// @name MCAsmParser Interface
   /// {
 
