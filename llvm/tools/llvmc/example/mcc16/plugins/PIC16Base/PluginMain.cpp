@@ -35,7 +35,7 @@ GetLowerCasePartDefine(void) {
   }
 
   std::string LowerCase;
-  for (unsigned i = 0; i <= Partname.size(); i++) {
+  for (unsigned i = 0; i < Partname.size(); i++) {
     LowerCase.push_back(std::tolower(Partname[i]));
   }
 
@@ -52,7 +52,7 @@ GetUpperCasePartDefine(void) {
   }
 
   std::string UpperCase;
-  for (unsigned i = 0; i <= Partname.size(); i++) {
+  for (unsigned i = 0; i < Partname.size(); i++) {
     UpperCase.push_back(std::toupper(Partname[i]));
   }
 
