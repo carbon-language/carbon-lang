@@ -417,9 +417,10 @@ public:
   /// variable sized object is created, whether or not the index returned is
   /// actually used.
   ///
-  int CreateVariableSizedObject() {
+  int CreateVariableSizedObject(unsigned Alignment) {
     HasVarSizedObjects = true;
-    Objects.push_back(StackObject(0, 1, 0, false, false));
+    Objects.push_back(StackObject(0, Alignment, 0, false, false));
+    MaxAlignment = std::max(MaxAlignment, Alignment);
     return (int)Objects.size()-NumFixedObjects-1;
   }
 
