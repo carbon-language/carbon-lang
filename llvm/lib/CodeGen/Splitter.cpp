@@ -732,8 +732,6 @@ namespace llvm {
          exitEdgeItr != exitEdgeEnd; ++exitEdgeItr) {
       MachineLoop::Edge exitEdge = *exitEdgeItr;
 
-      LiveRange *inRange =
-        split.getLI().getLiveRangeContaining(lis->getMBBEndIdx(exitEdge.first).getPrevSlot());
       LiveRange *outRange =
         split.getLI().getLiveRangeContaining(lis->getMBBStartIdx(exitEdge.second));
 
