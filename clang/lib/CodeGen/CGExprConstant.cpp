@@ -81,10 +81,6 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes
          && "Field offset mismatch!");
 
-  // Emit the field.
-  if (!InitCst)
-    return false;
-
   unsigned FieldAlignment = getAlignment(InitCst);
 
   // Round up the field offset to the alignment of the field type.
@@ -360,6 +356,9 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
                                      Field->getType(), CGF);
     else
       EltInit = CGM.EmitNullConstant(Field->getType());
+
+    if (!EltInit)
+      return false;
     
     if (!Field->isBitField()) {
       // Handle non-bitfield members.
