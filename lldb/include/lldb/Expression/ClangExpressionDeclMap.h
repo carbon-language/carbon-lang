@@ -111,6 +111,17 @@ private:
     bool                m_struct_laid_out;
     lldb::addr_t        m_materialized_location;
         
+    Variable *FindVariableInScope(const SymbolContext &sym_ctx,
+                                  const char *name,
+                                  void *type = NULL,
+                                  clang::ASTContext *ast_context = NULL);
+    
+    Value *GetVariableValue(ExecutionContext &exe_ctx,
+                            Variable *var,
+                            clang::ASTContext *target_ast_context = NULL,
+                            void **opaque_type = NULL,
+                            clang::ASTContext **found_ast_context = NULL);
+    
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun);
     
@@ -119,7 +130,8 @@ private:
                                 const char *name,
                                 void *type,
                                 clang::ASTContext *ast_context,
-                                lldb::addr_t addr);
+                                lldb::addr_t addr, 
+                                Error &err);
 };
     
 } // namespace lldb_private

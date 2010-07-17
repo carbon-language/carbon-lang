@@ -194,6 +194,8 @@ Value
 lldb::addr_t 
 ClangExpressionDeclMap::Materialize (ExecutionContext *exe_ctx, Error &err)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+
     if (!m_struct_laid_out)
     {
         err.SetErrorString("Structure hasn't been laid out yet");
@@ -238,24 +240,34 @@ ClangExpressionDeclMap::Materialize (ExecutionContext *exe_ctx, Error &err)
     {
         uint32_t tuple_index;
         
-        if (!GetIndexForDecl(tuple_index, iter->m_decl))
+        if (!GetIndexForDecl(tuple_index, iter->m_decl)) 
+        {
+            if (iter->m_name.find("___clang_expr_result") == std::string::npos)
+            {
+                err.SetErrorStringWithFormat("Unexpected variable %s", iter->m_name.c_str());
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Found special result variable %s", iter->m_name.c_str());
+            
             continue;
+        }
         
         Tuple &tuple(m_tuples[tuple_index]);
         
-        MaterializeOneVariable(*exe_ctx, sym_ctx, iter->m_name.c_str(), tuple.m_orig_type, tuple.m_ast_context, aligned_mem + iter->m_offset);
+        if (!MaterializeOneVariable(*exe_ctx, sym_ctx, iter->m_name.c_str(), tuple.m_orig_type, tuple.m_ast_context, aligned_mem + iter->m_offset, err))
+            return false;
     }
     
     return aligned_mem;
 }
 
-bool 
-ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
-                                               const SymbolContext &sym_ctx,
-                                               const char *name,
-                                               void *type,
-                                               clang::ASTContext *ast_context,
-                                               lldb::addr_t addr)
+Variable*
+ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
+                                            const char *name,
+                                            void *type,
+                                            clang::ASTContext *ast_context)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
 
@@ -266,10 +278,12 @@ ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
     {
         if (log)
             log->Printf("function = %p, block = %p", function, block);
-        return false;
+        return NULL;
     }
     
     BlockList& blocks(function->GetBlocks(true));
+    
+    ConstString name_cs(name);
     
     lldb::user_id_t current_block_id;
     
@@ -284,7 +298,7 @@ ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
         if (!var_list)
             continue;
         
-        lldb::VariableSP var = var_list->FindVariable(ConstString(name));
+        lldb::VariableSP var = var_list->FindVariable(name_cs);
         
         if (!var)
             continue;
@@ -297,10 +311,13 @@ ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
         // the compiler in IRForTarget.  The original for the type was copied
         // out of the program's AST context by AddOneVariable.
         
-        // The key here is: we know when we copied a type, and for what Decl we
-        // did it.  So we need for each struct Tuple to keep the type that we
-        // found, and which AST context we found it in. Then we can look up
-        // m_decl in m_tuples.
+        // So that we can compare these two without having to copy back
+        // something we already had in the original AST context, we maintain 
+        // m_orig_type and m_ast_context (which are passed into
+        // MaterializeOneVariable by Materialize) for each variable.
+        
+        if (!type)
+            return var.get();
         
         if (ast_context == var->GetType()->GetClangAST())
         {
@@ -314,7 +331,114 @@ ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
             continue;
         }
         
+        return var.get();
+    }
+    
+    {
+        CompileUnit *compile_unit = m_sym_ctx->comp_unit;
         
+        if (!compile_unit)
+        {
+            if (log)
+                log->Printf("compile_unit = %p", compile_unit);
+            return NULL;
+        }
+        
+        lldb::VariableListSP var_list = compile_unit->GetVariableList(true);
+        
+        if (!var_list)
+            return NULL;
+        
+        lldb::VariableSP var = var_list->FindVariable(name_cs);
+        
+        if (!var)
+            return NULL;
+
+        if (!type)
+            return var.get();
+        
+        if (ast_context == var->GetType()->GetClangAST())
+        {
+            if (!ClangASTContext::AreTypesSame(ast_context, type, var->GetType()->GetOpaqueClangQualType()))
+                return NULL;
+        }
+        else
+        {
+            if (log)
+                log->PutCString("Skipping a candidate variable because of different AST contexts");
+            return NULL;
+        }
+        
+        return var.get();
+    }
+    
+    return NULL;
+}
+
+bool 
+ClangExpressionDeclMap::MaterializeOneVariable(ExecutionContext &exe_ctx,
+                                               const SymbolContext &sym_ctx,
+                                               const char *name,
+                                               void *type,
+                                               clang::ASTContext *ast_context,
+                                               lldb::addr_t addr, 
+                                               Error &err)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    Variable *var = FindVariableInScope(sym_ctx, name, type, ast_context);
+    
+    if (!var)
+    {
+        err.SetErrorStringWithFormat("Couldn't find %s with appropriate type", name);
+        return false;
+    }
+    
+    log->Printf("Materializing %s with type %p", name, type);
+        
+    std::auto_ptr<Value> location_value(GetVariableValue(exe_ctx,
+                                                         var,
+                                                         ast_context));
+    
+    if (!location_value.get())
+    {
+        err.SetErrorStringWithFormat("Couldn't get value for %s", name);
+        return false;
+    }
+    
+    if (location_value->GetValueType() == Value::eValueTypeLoadAddress)
+    {
+        lldb::addr_t src_addr = location_value->GetScalar().ULongLong();
+        
+        size_t bit_size = ClangASTContext::GetTypeBitSize(ast_context, type);
+        size_t byte_size = bit_size % 8 ? ((bit_size + 8) / 8) : (bit_size / 8);
+        
+        DataBufferHeap data;
+        data.SetByteSize(byte_size);
+        
+        Error error;
+        if (exe_ctx.process->ReadMemory (src_addr, data.GetBytes(), byte_size, error) != byte_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
+            return false;
+        }
+        
+        if (exe_ctx.process->WriteMemory (addr, data.GetBytes(), byte_size, error) != byte_size)
+        {
+            err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
+            return false;
+        }
+        
+        if (log)
+            log->Printf("Copied from 0x%llx to 0x%llx", (uint64_t)src_addr, (uint64_t)addr);
+    }
+    else
+    {
+        StreamString ss;
+        
+        location_value->Dump(&ss);
+        
+        err.SetErrorStringWithFormat("%s has a value of unhandled type: %s", name, ss.GetString().c_str());   
     }
     
     return true;
@@ -335,76 +459,33 @@ ClangExpressionDeclMap::GetDecls(NameSearchContext &context,
         return;
     
     Function *function = m_sym_ctx->function;
-    Block *block = m_sym_ctx->block;
     
-    if (!function || !block)
+    if (!function)
     {
         if (log)
-            log->Printf("function = %p, block = %p", function, block);
+            log->Printf("Can't evaluate an expression when not in a function");
         return;
     }
-    
-    BlockList& blocks = function->GetBlocks(true);
-    
-    lldb::user_id_t current_block_id = block->GetID();
     
     ConstString name_cs(name);
     
     Function *fn = m_sym_ctx->FindFunctionByName(name_cs.GetCString());
     
     if (fn)
-    {
         AddOneFunction(context, fn);
-    }
-    
-    for (current_block_id = block->GetID();
-         current_block_id != Block::InvalidID;
-         current_block_id = blocks.GetParent(current_block_id))
-    {
-        Block *current_block = blocks.GetBlockByID(current_block_id);
-        
-        lldb::VariableListSP var_list = current_block->GetVariableList(false, true);
-        
-        if (!var_list)
-            continue;
-        
-        lldb::VariableSP var = var_list->FindVariable(name_cs);
-        
-        if (!var)
-            continue;
-        
-        AddOneVariable(context, var.get());
-        return;
-    }
-    
-    {
-        CompileUnit *compile_unit = m_sym_ctx->comp_unit;
-        
-        if (!compile_unit)
-        {
-            if (log)
-                log->Printf("compile_unit = %p", compile_unit);
-            return;
-        }
-        
-        lldb::VariableListSP var_list = compile_unit->GetVariableList(true);
-        
-        if (!var_list)
-            return;
-        
-        lldb::VariableSP var = var_list->FindVariable(name_cs);
-        
-        if (!var)
-            return;
-        
-        AddOneVariable(context, var.get());
-        return;
-    }
-}
 
-void
-ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       Variable* var)
+    Variable *var = FindVariableInScope(*m_sym_ctx, name);
+    
+    if (var)
+        AddOneVariable(context, var);
+}
+        
+Value *
+ClangExpressionDeclMap::GetVariableValue(ExecutionContext &exe_ctx,
+                                         Variable *var,
+                                         clang::ASTContext *target_ast_context,
+                                         void **opaque_type,
+                                         clang::ASTContext **found_ast_context)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
     
@@ -414,7 +495,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     {
         if (log)
             log->PutCString("Skipped a definition because it has no type");
-        return;
+        return NULL;
     }
     
     void *var_opaque_type = var_type->GetOpaqueClangQualType();
@@ -423,10 +504,8 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     {
         if (log)
             log->PutCString("Skipped a definition because it has no Clang type");
-        return;
+        return NULL;
     }
-    
-    DWARFExpression &var_location_expr = var->LocationExpression();
     
     TypeList *type_list = var_type->GetTypeList();
     
@@ -434,7 +513,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     {
         if (log)
             log->PutCString("Skipped a definition because the type has no associated type list");
-        return;
+        return NULL;
     }
     
     clang::ASTContext *exe_ast_ctx = type_list->GetClangASTContext().getASTContext();
@@ -443,40 +522,47 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     {
         if (log)
             log->PutCString("There is no AST context for the current execution context");
-        return;
+        return NULL;
     }
+    
+    DWARFExpression &var_location_expr = var->LocationExpression();
     
     std::auto_ptr<Value> var_location(new Value);
     
     Error err;
     
-    if (!var_location_expr.Evaluate(m_exe_ctx, exe_ast_ctx, NULL, *var_location.get(), &err))
+    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());
-        return;
+        return NULL;
     }
     
     clang::ASTContext *var_ast_context = type_list->GetClangASTContext().getASTContext();
     
-    void *copied_type = ClangASTContext::CopyType(context.GetASTContext(), var_ast_context, var_opaque_type);
+    void *type_to_use;
+    
+    if (target_ast_context)
+        type_to_use = ClangASTContext::CopyType(target_ast_context, var_ast_context, var_opaque_type);
+    else
+        type_to_use = var_opaque_type;
     
     if (var_location.get()->GetContextType() == Value::eContextTypeInvalid)
-        var_location.get()->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type);
+        var_location.get()->SetContext(Value::eContextTypeOpaqueClangQualType, type_to_use);
     
     if (var_location.get()->GetValueType() == Value::eValueTypeFileAddress)
     {
         SymbolContext var_sc;
         var->CalculateSymbolContext(&var_sc);
-    
+        
         if (!var_sc.module_sp)
-            return;
+            return NULL;
         
         ObjectFile *object_file = var_sc.module_sp->GetObjectFile();
         
         if (!object_file)
-            return;
-    
+            return NULL;
+        
         Address so_addr(var_location->GetScalar().ULongLong(), object_file->GetSectionList());
         
         lldb::addr_t load_addr = so_addr.GetLoadAddress(m_exe_ctx->process);
@@ -485,12 +571,36 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         var_location->SetValueType(Value::eValueTypeLoadAddress);
     }
     
-    NamedDecl *var_decl = context.AddVarDecl(copied_type);
+    if (opaque_type)
+        *opaque_type = var_opaque_type; 
+    
+    if (found_ast_context)
+        *found_ast_context = var_ast_context;
+    
+    return var_location.release();
+}
+
+void
+ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
+                                       Variable* var)
+{
+    Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS);
+    
+    void *var_opaque_type = NULL;
+    clang::ASTContext *var_ast_context = NULL;
+    
+    Value *var_location = GetVariableValue(*m_exe_ctx, 
+                                           var, 
+                                           context.GetASTContext(),
+                                           &var_opaque_type,
+                                           &var_ast_context);
+    
+    NamedDecl *var_decl = context.AddVarDecl(var_opaque_type);
     
     Tuple tuple;
     
     tuple.m_decl        = var_decl;
-    tuple.m_value       = var_location.release();
+    tuple.m_value       = var_location;
     tuple.m_orig_type   = var_opaque_type;
     tuple.m_ast_context = var_ast_context;
     
