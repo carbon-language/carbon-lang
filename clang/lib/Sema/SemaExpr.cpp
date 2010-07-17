@@ -3891,6 +3891,10 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
     return false;
   }
 
+  if (RequireCompleteType(TyR.getBegin(), castType,
+                          diag::err_typecheck_cast_to_incomplete))
+    return true;
+
   if (!castType->isScalarType() && !castType->isVectorType()) {
     if (Context.hasSameUnqualifiedType(castType, castExpr->getType()) &&
         (castType->isStructureType() || castType->isUnionType())) {
