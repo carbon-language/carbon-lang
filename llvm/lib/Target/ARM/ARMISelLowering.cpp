@@ -4240,20 +4240,32 @@ static SDValue PerformMULCombine(SDNode *N,
 static SDValue PerformORCombine(SDNode *N,
                                 TargetLowering::DAGCombinerInfo &DCI,
                                 const ARMSubtarget *Subtarget) {
+  // Try to use the ARM/Thumb2 BFI (bitfield insert) instruction when
+  // reasonable.
+
   // BFI is only available on V6T2+
   if (Subtarget->isThumb1Only() || !Subtarget->hasV6T2Ops())
     return SDValue();
 
   SelectionDAG &DAG = DCI.DAG;
   SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
-  // or (and A, mask), val => ARMbfi A, val, mask
-  //   iff (val & mask) == val
-  if (N0->getOpcode() != ISD::AND)
+  DebugLoc DL = N->getDebugLoc();
+  // 1) or (and A, mask), val => ARMbfi A, val, mask
+  //      iff (val & mask) == val
+  //
+  // 2) or (and A, mask), (and B, mask2) => ARMbfi A, (lsr B, amt), mask
+  //  2a) iff isBitFieldInvertedMask(mask) && isBitFieldInvertedMask(~mask2)
+  //          && CountPopulation_32(mask) == CountPopulation_32(~mask2)
+  //  2b) iff isBitFieldInvertedMask(~mask) && isBitFieldInvertedMask(mask2)
+  //          && CountPopulation_32(mask) == CountPopulation_32(~mask2)
+  //  (i.e., copy a bitfield value into another bitfield of the same width)
+  if (N0.getOpcode() != ISD::AND)
     return SDValue();
 
   EVT VT = N->getValueType(0);
   if (VT != MVT::i32)
     return SDValue();
+
 
   // The value and the mask need to be constants so we can verify this is
   // actually a bitfield set. If the mask is 0xffff, we can do better
@@ -4264,21 +4276,61 @@ static SDValue PerformORCombine(SDNode *N,
   unsigned Mask = C->getZExtValue();
   if (Mask == 0xffff)
     return SDValue();
-  C = dyn_cast<ConstantSDNode>(N1);
-  if (!C)
-    return SDValue();
-  unsigned Val = C->getZExtValue();
-  if (!ARM::isBitFieldInvertedMask(Mask) || (Val & ~Mask) != Val)
-    return SDValue();
-  Val >>= CountTrailingZeros_32(~Mask);
+  SDValue Res;
+  // Case (1): or (and A, mask), val => ARMbfi A, val, mask
+  if ((C = dyn_cast<ConstantSDNode>(N1))) {
+    unsigned Val = C->getZExtValue();
+    if (!ARM::isBitFieldInvertedMask(Mask) || (Val & ~Mask) != Val)
+      return SDValue();
+    Val >>= CountTrailingZeros_32(~Mask);
 
-  DebugLoc DL = N->getDebugLoc();
-  SDValue Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0),
-                            DAG.getConstant(Val, MVT::i32),
-                            DAG.getConstant(Mask, MVT::i32));
+    Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0),
+                      DAG.getConstant(Val, MVT::i32),
+                      DAG.getConstant(Mask, MVT::i32));
 
-  // Do not add new nodes to DAG combiner worklist.
-  DCI.CombineTo(N, Res, false);
+    // Do not add new nodes to DAG combiner worklist.
+    DCI.CombineTo(N, Res, false);
+  } else if (N1.getOpcode() == ISD::AND) {
+    // case (2) or (and A, mask), (and B, mask2) => ARMbfi A, (lsr B, amt), mask
+    C = dyn_cast<ConstantSDNode>(N1.getOperand(1));
+    if (!C)
+      return SDValue();
+    unsigned Mask2 = C->getZExtValue();
+
+    if (ARM::isBitFieldInvertedMask(Mask) &&
+        ARM::isBitFieldInvertedMask(~Mask2) &&
+        (CountPopulation_32(Mask) == CountPopulation_32(~Mask2))) {
+      // The pack halfword instruction works better for masks that fit it,
+      // so use that when it's available.
+      if (Subtarget->hasT2ExtractPack() &&
+          (Mask == 0xffff || Mask == 0xffff0000))
+        return SDValue();
+      // 2a
+      unsigned lsb = CountTrailingZeros_32(Mask2);
+      Res = DAG.getNode(ISD::SRL, DL, VT, N1.getOperand(0),
+                        DAG.getConstant(lsb, MVT::i32));
+      Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0), Res,
+                        DAG.getConstant(Mask, MVT::i32));
+      // Do not add new nodes to DAG combiner worklist.
+      DCI.CombineTo(N, Res, false);
+    } else if (ARM::isBitFieldInvertedMask(~Mask) &&
+               ARM::isBitFieldInvertedMask(Mask2) &&
+               (CountPopulation_32(~Mask) == CountPopulation_32(Mask2))) {
+      // The pack halfword instruction works better for masks that fit it,
+      // so use that when it's available.
+      if (Subtarget->hasT2ExtractPack() &&
+          (Mask2 == 0xffff || Mask2 == 0xffff0000))
+        return SDValue();
+      // 2b
+      unsigned lsb = CountTrailingZeros_32(Mask);
+      Res = DAG.getNode(ISD::SRL, DL, VT, N0.getOperand(0),
+                        DAG.getConstant(lsb, MVT::i32));
+      Res = DAG.getNode(ARMISD::BFI, DL, VT, N1.getOperand(0), Res,
+                                DAG.getConstant(Mask2, MVT::i32));
+      // Do not add new nodes to DAG combiner worklist.
+      DCI.CombineTo(N, Res, false);
+    }
+  }
 
   return SDValue();
 }
