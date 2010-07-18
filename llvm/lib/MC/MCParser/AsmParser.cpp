@@ -38,6 +38,8 @@ namespace {
 
 /// \brief The concrete assembly parser instance.
 class AsmParser : public MCAsmParser {
+  friend class GenericAsmParser;
+
   AsmParser(const AsmParser &);   // DO NOT IMPLEMENT
   void operator=(const AsmParser &);  // DO NOT IMPLEMENT
 private:
@@ -47,7 +49,7 @@ private:
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
   MCAsmParserExtension *PlatformParser;
-  
+
   /// This is the current buffer index we're lexing from as managed by the
   /// SourceMgr object.
   int CurBuffer;
@@ -60,6 +62,10 @@ private:
   /// parsing and validating the rest of the directive.  The handler is passed
   /// in the directive name and the location of the directive keyword.
   StringMap<std::pair<MCAsmParserExtension*, DirectiveHandler> > DirectiveMap;
+
+  /// Boolean tracking whether macro substitution is enabled.
+  unsigned MacrosEnabled : 1;
+
 public:
   AsmParser(const Target &T, SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -150,6 +156,10 @@ class GenericAsmParser : public MCAsmParserExtension {
 public:
   GenericAsmParser() {}
 
+  AsmParser &getParser() {
+    return (AsmParser&) this->MCAsmParserExtension::getParser();
+  }
+
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
@@ -161,11 +171,20 @@ public:
                                  &GenericAsmParser::ParseDirectiveLine));
     Parser.AddDirectiveHandler(this, ".loc", MCAsmParser::DirectiveHandler(
                                  &GenericAsmParser::ParseDirectiveLoc));
+
+    // Macro directives.
+    Parser.AddDirectiveHandler(this, ".macros_on",
+                               MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveMacrosOnOff));
+    Parser.AddDirectiveHandler(this, ".macros_off",
+                               MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveMacrosOnOff));
   }
 
-  bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc); // ".file"
-  bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc); // ".line"
-  bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
+  bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
 };
 
 }
@@ -183,7 +202,7 @@ AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    CurBuffer(0) {
+    CurBuffer(0), MacrosEnabled(true) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
   // Initialize the generic parser.
@@ -1593,6 +1612,19 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   return false;
 }
 
+/// ParseDirectiveMacrosOnOff
+/// ::= .macros_on
+/// ::= .macros_off
+bool GenericAsmParser::ParseDirectiveMacrosOnOff(StringRef Directive,
+                                                 SMLoc DirectiveLoc) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(getLexer().getLoc(),
+                 "unexpected token in '" + Directive + "' directive");
+
+  getParser().MacrosEnabled = Directive == ".macros_on";
+
+  return false;
+}
 
 /// \brief Create an MCAsmParser instance.
 MCAsmParser *llvm::createMCAsmParser(const Target &T, SourceMgr &SM,
