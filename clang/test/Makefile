@@ -50,8 +50,4 @@ lit.site.cfg: FORCE
 clean::
 	@ find . -name Output | xargs rm -fr
 
-# Daniel hates Chris.
-chris-lit:
-	make LIT_ARGS='-j16 -s'
-
 .PHONY: all report clean
