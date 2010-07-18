@@ -36,6 +36,15 @@ using namespace llvm;
 
 namespace {
 
+/// \brief Helper class for tracking macro definitions.
+struct Macro {
+  StringRef Name;
+  StringRef Body;
+
+public:
+  Macro(StringRef N, StringRef B) : Name(N), Body(B) {}
+};
+
 /// \brief The concrete assembly parser instance.
 class AsmParser : public MCAsmParser {
   friend class GenericAsmParser;
@@ -62,6 +71,9 @@ private:
   /// parsing and validating the rest of the directive.  The handler is passed
   /// in the directive name and the location of the directive keyword.
   StringMap<std::pair<MCAsmParserExtension*, DirectiveHandler> > DirectiveMap;
+
+  /// MacroMap - Map of currently defined macros.
+  StringMap<Macro*> MacroMap;
 
   /// Boolean tracking whether macro substitution is enabled.
   unsigned MacrosEnabled : 1;
@@ -179,12 +191,21 @@ public:
     Parser.AddDirectiveHandler(this, ".macros_off",
                                MCAsmParser::DirectiveHandler(
                                  &GenericAsmParser::ParseDirectiveMacrosOnOff));
+    Parser.AddDirectiveHandler(this, ".macro", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveMacro));
+    Parser.AddDirectiveHandler(this, ".endm", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveEndMacro));
+    Parser.AddDirectiveHandler(this, ".endmacro", MCAsmParser::DirectiveHandler(
+                                 &GenericAsmParser::ParseDirectiveEndMacro));
   }
 
   bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
+
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveEndMacro(StringRef, SMLoc DirectiveLoc);
 };
 
 }
@@ -784,6 +805,17 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveAbort();
     if (IDVal == ".include")
       return ParseDirectiveInclude();
+
+    // If macros are enabled, check to see if this is a macro instantiation.
+    if (MacrosEnabled) {
+      if (const Macro *M = MacroMap.lookup(IDVal)) {
+        (void) M;
+
+        Error(IDLoc, "macros are not yet supported");
+        EatToEndOfStatement();
+        return false;
+      }
+    }
 
     // Look up the handler in the handler table.
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
@@ -1624,6 +1656,70 @@ bool GenericAsmParser::ParseDirectiveMacrosOnOff(StringRef Directive,
   getParser().MacrosEnabled = Directive == ".macros_on";
 
   return false;
+}
+
+/// ParseDirectiveMacro
+/// ::= .macro name
+bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
+                                           SMLoc DirectiveLoc) {
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.macro' directive");
+
+  // Eat the end of statement.
+  Lex();
+
+  AsmToken EndToken, StartToken = getTok();
+
+  // Lex the macro definition.
+  for (;;) {
+    // Check whether we have reached the end of the file.
+    if (getLexer().is(AsmToken::Eof))
+      return Error(DirectiveLoc, "no matching '.endmacro' in definition");
+
+    // Otherwise, check whether we have reach the .endmacro.
+    if (getLexer().is(AsmToken::Identifier) &&
+        (getTok().getIdentifier() == ".endm" ||
+         getTok().getIdentifier() == ".endmacro")) {
+      EndToken = getTok();
+      Lex();
+      if (getLexer().isNot(AsmToken::EndOfStatement))
+        return TokError("unexpected token in '" + EndToken.getIdentifier() +
+                        "' directive");
+      break;
+    }
+
+    // Otherwise, scan til the end of the statement.
+    getParser().EatToEndOfStatement();
+  }
+
+  if (getParser().MacroMap.lookup(Name)) {
+    return Error(DirectiveLoc, "macro '" + Name + "' is already defined");
+  }
+
+  const char *BodyStart = StartToken.getLoc().getPointer();
+  const char *BodyEnd = EndToken.getLoc().getPointer();
+  StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
+  getParser().MacroMap[Name] = new Macro(Name, Body);
+  return false;
+}
+
+/// ParseDirectiveEndMacro
+/// ::= .endm
+/// ::= .endmacro
+bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
+                                           SMLoc DirectiveLoc) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '" + Directive + "' directive");
+
+  // If we see a .endmacro directly, it is a stray entry in the file; well
+  // formed .endmacro directives are handled during the macro definition
+  // parsing.
+  return TokError("unexpected '" + Directive + "' in file, "
+                  "no current macro definition");
 }
 
 /// \brief Create an MCAsmParser instance.

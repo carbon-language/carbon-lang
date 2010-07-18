@@ -1,8 +1,23 @@
-// RUN: llvm-mc %s 2> %t.err
+// RUN: not llvm-mc %s 2> %t.err
 // RUN: FileCheck --check-prefix=CHECK-ERRORS %s < %t.err
 
-.macros_on
-.macros_off
+.macro .test0
+.endmacro
 
-// CHECK-ERRORS: .abort '"end"' detected
-.abort "end"
+.macros_off
+// CHECK-ERRORS: 9:1: warning: ignoring directive for now
+.test0
+.macros_on
+// CHECK-ERRORS: 12:1: error: macros are not yet supported
+.test0
+
+// CHECK-ERRORS: macro '.test0' is already defined
+.macro .test0
+.endmacro
+
+// CHECK-ERRORS: unexpected '.endmacro' in file
+.endmacro
+
+// CHECK-ERRORS: no matching '.endmacro' in definition
+.macro dummy
+
