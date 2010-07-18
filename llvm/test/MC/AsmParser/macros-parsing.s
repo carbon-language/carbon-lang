@@ -8,7 +8,7 @@
 // CHECK-ERRORS: 9:1: warning: ignoring directive for now
 .test0
 .macros_on
-// CHECK-ERRORS: 12:1: error: macros are not yet supported
+
 .test0
 
 // CHECK-ERRORS: macro '.test0' is already defined

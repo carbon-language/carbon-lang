@@ -45,6 +45,25 @@ public:
   Macro(StringRef N, StringRef B) : Name(N), Body(B) {}
 };
 
+/// \brief Helper class for storing information about an active macro
+/// instantiation.
+struct MacroInstantiation {
+  /// The macro being instantiated.
+  const Macro *TheMacro;
+
+  /// The macro instantiation with substitutions.
+  MemoryBuffer *Instantiation;
+
+  /// The location of the instantiation.
+  SMLoc InstantiationLoc;
+
+  /// The location where parsing should resume upon instantiation completion.
+  SMLoc ExitLoc;
+
+public:
+  MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL);
+};
+
 /// \brief The concrete assembly parser instance.
 class AsmParser : public MCAsmParser {
   friend class GenericAsmParser;
@@ -74,6 +93,9 @@ private:
 
   /// MacroMap - Map of currently defined macros.
   StringMap<Macro*> MacroMap;
+
+  /// ActiveMacros - Stack of active macro instantiations.
+  std::vector<MacroInstantiation*> ActiveMacros;
 
   /// Boolean tracking whether macro substitution is enabled.
   unsigned MacrosEnabled : 1;
@@ -115,11 +137,20 @@ public:
 private:
   bool ParseStatement();
 
+  bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
+  void HandleMacroExit();
+
+  void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
     
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);
-  
+
+  /// \brief Reset the current lexer position to that given by \arg Loc. The
+  /// current token is not set; clients should ensure Lex() is called
+  /// subsequently.
+  void JumpToLoc(SMLoc Loc);
+
   void EatToEndOfStatement();
   
   bool ParseAssignment(StringRef Name);
@@ -247,12 +278,22 @@ AsmParser::~AsmParser() {
   delete GenericParser;
 }
 
+void AsmParser::PrintMacroInstantiations() {
+  // Print the active macro instantiation stack.
+  for (std::vector<MacroInstantiation*>::const_reverse_iterator
+         it = ActiveMacros.rbegin(), ie = ActiveMacros.rend(); it != ie; ++it)
+    PrintMessage((*it)->InstantiationLoc, "while in macro instantiation",
+                 "note");
+}
+
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
   PrintMessage(L, Msg.str(), "warning");
+  PrintMacroInstantiations();
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg) {
   PrintMessage(L, Msg.str(), "error");
+  PrintMacroInstantiations();
   return true;
 }
 
@@ -272,7 +313,12 @@ bool AsmParser::EnterIncludeFile(const std::string &Filename) {
   
   return false;
 }
-                  
+
+void AsmParser::JumpToLoc(SMLoc Loc) {
+  CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer), Loc.getPointer());
+}
+
 const AsmToken &AsmParser::Lex() {
   const AsmToken *tok = &Lexer.Lex();
   
@@ -281,9 +327,7 @@ const AsmToken &AsmParser::Lex() {
     // include stack.
     SMLoc ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
     if (ParentIncludeLoc != SMLoc()) {
-      CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
-      Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer), 
-                      ParentIncludeLoc.getPointer());
+      JumpToLoc(ParentIncludeLoc);
       tok = &Lexer.Lex();
     }
   }
@@ -716,7 +760,12 @@ bool AsmParser::ParseStatement() {
   default: // Normal instruction or directive.
     break;
   }
-  
+
+  // If macros are enabled, check to see if this is a macro instantiation.
+  if (MacrosEnabled)
+    if (const Macro *M = MacroMap.lookup(IDVal))
+      return HandleMacroEntry(IDVal, IDLoc, M);
+
   // Otherwise, we have a normal instruction or directive.  
   if (IDVal[0] == '.') {
     // Assembler features
@@ -806,17 +855,6 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".include")
       return ParseDirectiveInclude();
 
-    // If macros are enabled, check to see if this is a macro instantiation.
-    if (MacrosEnabled) {
-      if (const Macro *M = MacroMap.lookup(IDVal)) {
-        (void) M;
-
-        Error(IDLoc, "macros are not yet supported");
-        EatToEndOfStatement();
-        return false;
-      }
-    }
-
     // Look up the handler in the handler table.
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
       DirectiveMap.lookup(IDVal);
@@ -869,6 +907,54 @@ bool AsmParser::ParseStatement() {
     delete ParsedOperands[i];
 
   return HadError;
+}
+
+MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL)
+  : TheMacro(M), InstantiationLoc(IL), ExitLoc(EL)
+{
+  // Macro instantiation is lexical, unfortunately. We construct a new buffer
+  // to hold the macro body with substitutions.
+  llvm::SmallString<256> Buf;
+  Buf += M->Body;
+
+  // We include the .endmacro in the buffer as our queue to exit the macro
+  // instantiation.
+  Buf += ".endmacro\n";
+
+  Instantiation = MemoryBuffer::getMemBufferCopy(Buf, "<instantiation>");
+}
+
+bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
+                                 const Macro *M) {
+  // Arbitrarily limit macro nesting depth, to match 'as'. We can eliminate
+  // this, although we should protect against infinite loops.
+  if (ActiveMacros.size() == 20)
+    return TokError("macros cannot be nested more than 20 levels deep");
+
+  EatToEndOfStatement();
+
+  // Create the macro instantiation object and add to the current macro
+  // instantiation stack.
+  MacroInstantiation *MI = new MacroInstantiation(M, NameLoc,
+                                                  getTok().getLoc());
+  ActiveMacros.push_back(MI);
+
+  // Jump to the macro instantiation and prime the lexer.
+  CurBuffer = SrcMgr.AddNewSourceBuffer(MI->Instantiation, SMLoc());
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
+  Lex();
+
+  return false;
+}
+
+void AsmParser::HandleMacroExit() {
+  // Jump to the EndOfStatement we should return to, and consume it.
+  JumpToLoc(ActiveMacros.back()->ExitLoc);
+  Lex();
+
+  // Pop the instantiation entry.
+  delete ActiveMacros.back();
+  ActiveMacros.pop_back();
 }
 
 bool AsmParser::ParseAssignment(StringRef Name) {
@@ -1715,9 +1801,15 @@ bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '" + Directive + "' directive");
 
-  // If we see a .endmacro directly, it is a stray entry in the file; well
-  // formed .endmacro directives are handled during the macro definition
-  // parsing.
+  // If we are inside a macro instantiation, terminate the current
+  // instantiation.
+  if (!getParser().ActiveMacros.empty()) {
+    getParser().HandleMacroExit();
+    return false;
+  }
+
+  // Otherwise, this .endmacro is a stray entry in the file; well formed
+  // .endmacro directives are handled during the macro definition parsing.
   return TokError("unexpected '" + Directive + "' in file, "
                   "no current macro definition");
 }
