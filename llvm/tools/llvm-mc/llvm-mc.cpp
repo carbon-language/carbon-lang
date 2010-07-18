@@ -165,9 +165,9 @@ static int AsLexInput(const char *ProgName) {
   assert(MAI && "Unable to create target asm info!");
 
   AsmLexer Lexer(*MAI);
-  
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(0));
+
   bool Error = false;
-  
   while (Lexer.Lex().isNot(AsmToken::Eof)) {
     switch (Lexer.getKind()) {
     default:
