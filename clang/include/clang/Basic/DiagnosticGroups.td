@@ -35,7 +35,7 @@ def : DiagGroup<"declaration-after-statement">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 def Deprecated : DiagGroup<"deprecated">;
 def : DiagGroup<"disabled-optimization">;
-def : DiagGroup<"discard-qualgnu">;
+def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;
 def EmptyBody : DiagGroup<"empty-body">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
