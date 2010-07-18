@@ -167,8 +167,8 @@ public:
   void setTitle(std::string Value) { DriverTitle = Value; }
 
   /// \brief Get the path to the main clang executable.
-  std::string getClangProgramPath() const {
-    return ClangExecutable;
+  const char *getClangProgramPath() const {
+    return ClangExecutable.c_str();
   }
 
   /// @}

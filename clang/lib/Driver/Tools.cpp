@@ -1489,7 +1489,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
 
-  std::string Exec = getToolChain().getDriver().getClangProgramPath();
+  const char *Exec = getToolChain().getDriver().getClangProgramPath();
 
   // Optionally embed the -cc1 level arguments into the debug info, for build
   // analysis.
@@ -1509,7 +1509,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Flags.str()));
   }
 
-  Dest.addCommand(new Command(JA, *this, Exec.c_str(), CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   // Explicitly warn that these options are unsupported, even though
   // we are allowing compilation to continue.
@@ -1588,8 +1588,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Input.getFilename());
   }
 
-  std::string Exec = getToolChain().getDriver().getClangProgramPath();
-  Dest.addCommand(new Command(JA, *this, Exec.c_str(), CmdArgs));
+  const char *Exec = getToolChain().getDriver().getClangProgramPath();
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
