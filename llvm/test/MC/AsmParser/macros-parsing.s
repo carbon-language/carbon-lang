@@ -1,4 +1,4 @@
-// RUN: not llvm-mc %s 2> %t.err
+// RUN: not llvm-mc -triple x86_64-apple-darwin10 %s 2> %t.err
 // RUN: FileCheck --check-prefix=CHECK-ERRORS %s < %t.err
 
 .macro .test0
