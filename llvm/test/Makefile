@@ -203,6 +203,3 @@ Unit/lit.site.cfg: $(PROJ_OBJ_DIR)/Unit/.dir FORCE
 	     -e "s#@SHLIBPATH_VAR@#$(SHLIBPATH_VAR)#g" \
 	     $(PROJ_SRC_DIR)/Unit/lit.site.cfg.in > $@
 
-# Daniel hates Chris.
-chris-lit:
-	make check-lit LIT_ARGS='-j16 -s'
