@@ -14,7 +14,6 @@
 
 CLANG_LEVEL := ../..
 LIBRARYNAME := clangCodeGen
-BUILD_ARCHIVE = 1
 
 include $(CLANG_LEVEL)/Makefile
 

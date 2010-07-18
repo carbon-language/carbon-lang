@@ -13,7 +13,6 @@
 
 CLANG_LEVEL := ../..
 LIBRARYNAME := clangChecker
-BUILD_ARCHIVE = 1
 
 include $(CLANG_LEVEL)/Makefile
 

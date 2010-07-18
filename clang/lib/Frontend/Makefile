@@ -9,7 +9,6 @@
 
 CLANG_LEVEL := ../..
 LIBRARYNAME := clangFrontend
-BUILD_ARCHIVE = 1
 
 include $(CLANG_LEVEL)/Makefile
 

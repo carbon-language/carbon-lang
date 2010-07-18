@@ -9,6 +9,5 @@
 
 CLANG_LEVEL := ../..
 LIBRARYNAME := clangDriver
-BUILD_ARCHIVE = 1
 
 include $(CLANG_LEVEL)/Makefile
