@@ -507,3 +507,14 @@ namespace test13 {
   // CHECK: define weak_odr void @_ZN6test133fooINS_1BEEEvRKNS_1AIT_EE(
   template void foo(const A<B> &a);
 }
+
+namespace test14 {
+  extern "C" {
+    struct S {
+      static int a(), x;
+    };
+    // CHECK: define i32 @_ZN6test141S1aEv
+    // CHECK: load i32* @_ZN6test141S1xE
+    int S::a() { return S::x; }
+  }
+}

@@ -304,6 +304,10 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
       return false;
   }
 
+  // Class members are always mangled.
+  if (D->getDeclContext()->isRecord())
+    return true;
+
   // C functions and "main" are not mangled.
   if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
     return false;
