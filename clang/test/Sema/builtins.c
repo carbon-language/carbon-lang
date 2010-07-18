@@ -44,6 +44,11 @@ void test9(short v) {
 
   // PR7600: Pointers are implicitly casted to integers and back.
   void *old_ptr = __sync_val_compare_and_swap((void**)0, 0, 0);
+
+  // Ensure the return type is correct even when implicit casts are stripped
+  // away. This triggers an assertion while checking the comparison otherwise.
+  if (__sync_fetch_and_add(&old, 1) == 1) {
+  }
 }
 
 

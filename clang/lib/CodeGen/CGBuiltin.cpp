@@ -41,6 +41,31 @@ static void EmitMemoryBarrier(CodeGenFunction &CGF,
                          C, C + 5);
 }
 
+static Value *EmitCastToInt(CodeGenFunction &CGF,
+                            const llvm::Type *ToType, Value *Val) {
+  if (Val->getType()->isPointerTy()) {
+    return CGF.Builder.CreatePtrToInt(Val, ToType);
+  }
+  assert(Val->getType()->isIntegerTy() &&
+         "Used a non-integer and non-pointer type with atomic builtin");
+  assert(Val->getType()->getScalarSizeInBits() <=
+         ToType->getScalarSizeInBits() && "Integer type too small");
+  return CGF.Builder.CreateSExtOrBitCast(Val, ToType);
+}
+
+static Value *EmitCastFromInt(CodeGenFunction &CGF, QualType ToQualType,
+                              Value *Val) {
+  const llvm::Type *ToType = CGF.ConvertType(ToQualType);
+  if (ToType->isPointerTy()) {
+    return CGF.Builder.CreateIntToPtr(Val, ToType);
+  }
+  assert(Val->getType()->isIntegerTy() &&
+         "Used a non-integer and non-pointer type with atomic builtin");
+  assert(Val->getType()->getScalarSizeInBits() >=
+         ToType->getScalarSizeInBits() && "Integer type too small");
+  return CGF.Builder.CreateTruncOrBitCast(Val, ToType);
+}
+
 // The atomic builtins are also full memory barriers. This is a utility for
 // wrapping a call to the builtins with memory barriers.
 static Value *EmitCallWithBarrier(CodeGenFunction &CGF, Value *Fn,
@@ -60,13 +85,20 @@ static Value *EmitCallWithBarrier(CodeGenFunction &CGF, Value *Fn,
 /// and the expression node.
 static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
                                Intrinsic::ID Id, const CallExpr *E) {
-  Value *Args[2] = { CGF.EmitScalarExpr(E->getArg(0)),
-                     CGF.EmitScalarExpr(E->getArg(1)) };
-  const llvm::Type *ResType[2];
-  ResType[0] = CGF.ConvertType(E->getType());
-  ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
-  Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
-  return RValue::get(EmitCallWithBarrier(CGF, AtomF, Args, Args + 2));
+  const llvm::Type *ValueType =
+    llvm::IntegerType::get(CGF.getLLVMContext(),
+                           CGF.getContext().getTypeSize(E->getType()));
+  const llvm::Type *PtrType = ValueType->getPointerTo();
+  const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
+  Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
+
+  Value *Args[2] = { CGF.Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
+                                               PtrType),
+                     EmitCastToInt(CGF, ValueType,
+                                   CGF.EmitScalarExpr(E->getArg(1))) };
+  return RValue::get(EmitCastFromInt(CGF, E->getType(),
+                                     EmitCallWithBarrier(CGF, AtomF, Args,
+                                                         Args + 2)));
 }
 
 /// Utility to insert an atomic instruction based Instrinsic::ID and
@@ -75,14 +107,21 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
 static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
                                    Intrinsic::ID Id, const CallExpr *E,
                                    Instruction::BinaryOps Op) {
-  const llvm::Type *ResType[2];
-  ResType[0] = CGF.ConvertType(E->getType());
-  ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
-  Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
-  Value *Args[2] = { CGF.EmitScalarExpr(E->getArg(0)),
-                     CGF.EmitScalarExpr(E->getArg(1)) };
+  const llvm::Type *ValueType =
+    llvm::IntegerType::get(CGF.getLLVMContext(),
+                           CGF.getContext().getTypeSize(E->getType()));
+  const llvm::Type *PtrType = ValueType->getPointerTo();
+  const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
+  Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
+
+  Value *Args[2] = { CGF.Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
+                                               PtrType),
+                     EmitCastToInt(CGF, ValueType,
+                                   CGF.EmitScalarExpr(E->getArg(1))) };
   Value *Result = EmitCallWithBarrier(CGF, AtomF, Args, Args + 2);
-  return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Args[1]));
+  return RValue::get(EmitCastFromInt(CGF, E->getType(),
+                                     CGF.Builder.CreateBinOp(Op, Result,
+                                                             Args[1])));
 }
 
 /// EmitFAbs - Emit a call to fabs/fabsf/fabsl, depending on the type of ValTy,
@@ -746,14 +785,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_val_compare_and_swap_4:
   case Builtin::BI__sync_val_compare_and_swap_8:
   case Builtin::BI__sync_val_compare_and_swap_16: {
-    const llvm::Type *ResType[2];
-    ResType[0]= ConvertType(E->getType());
-    ResType[1] = ConvertType(E->getArg(0)->getType());
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
-    Value *Args[3] = { EmitScalarExpr(E->getArg(0)),
-                       EmitScalarExpr(E->getArg(1)),
-                       EmitScalarExpr(E->getArg(2)) };
-    return RValue::get(EmitCallWithBarrier(*this, AtomF, Args, Args + 3));
+    const llvm::Type *ValueType =
+      llvm::IntegerType::get(CGF.getLLVMContext(),
+                             CGF.getContext().getTypeSize(E->getType()));
+    const llvm::Type *PtrType = ValueType->getPointerTo();
+    const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
+                                    IntrinsicTypes, 2);
+
+    Value *Args[3] = { Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
+                                             PtrType),
+                       EmitCastToInt(CGF, ValueType,
+                                     CGF.EmitScalarExpr(E->getArg(1))),
+                       EmitCastToInt(CGF, ValueType,
+                                     CGF.EmitScalarExpr(E->getArg(2))) };
+    return RValue::get(EmitCastFromInt(CGF, E->getType(),
+                                       EmitCallWithBarrier(CGF, AtomF, Args,
+                                                           Args + 3)));
   }
 
   case Builtin::BI__sync_bool_compare_and_swap_1:
@@ -761,14 +809,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_bool_compare_and_swap_4:
   case Builtin::BI__sync_bool_compare_and_swap_8:
   case Builtin::BI__sync_bool_compare_and_swap_16: {
-    const llvm::Type *ResType[2];
-    ResType[0]= ConvertType(E->getArg(1)->getType());
-    ResType[1] = llvm::PointerType::getUnqual(ResType[0]);
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
-    Value *OldVal = EmitScalarExpr(E->getArg(1));
-    Value *Args[3] = { EmitScalarExpr(E->getArg(0)),
-                       OldVal,
-                       EmitScalarExpr(E->getArg(2)) };
+    const llvm::Type *ValueType =
+      llvm::IntegerType::get(
+        CGF.getLLVMContext(),
+        CGF.getContext().getTypeSize(E->getArg(1)->getType()));
+    const llvm::Type *PtrType = ValueType->getPointerTo();
+    const llvm::Type *IntrinsicTypes[2] = { ValueType, PtrType };
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
+                                    IntrinsicTypes, 2);
+
+    Value *Args[3] = { Builder.CreateBitCast(CGF.EmitScalarExpr(E->getArg(0)),
+                                             PtrType),
+                       EmitCastToInt(CGF, ValueType,
+                                     CGF.EmitScalarExpr(E->getArg(1))),
+                       EmitCastToInt(CGF, ValueType,
+                                     CGF.EmitScalarExpr(E->getArg(2))) };
+    Value *OldVal = Args[1];
     Value *PrevVal = EmitCallWithBarrier(*this, AtomF, Args, Args + 3);
     Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
     // zext bool to int.
