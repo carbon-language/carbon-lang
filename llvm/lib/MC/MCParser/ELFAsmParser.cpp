@@ -14,6 +14,7 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 namespace {

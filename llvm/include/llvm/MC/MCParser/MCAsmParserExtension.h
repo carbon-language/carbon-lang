@@ -14,6 +14,7 @@
 #include "llvm/Support/SMLoc.h"
 
 namespace llvm {
+class Twine;
 
 /// \brief Generic interface for extending the MCAsmParser,
 /// which is implemented by target and object file assembly parser
@@ -49,14 +50,13 @@ public:
   bool Error(SMLoc L, const Twine &Msg) {
     return getParser().Error(L, Msg);
   }
+  bool TokError(const Twine &Msg) {
+    return getParser().TokError(Msg);
+  }
 
   const AsmToken &Lex() { return getParser().Lex(); }
 
   const AsmToken &getTok() { return getParser().getTok(); }
-
-  bool TokError(const char *Msg) {
-    return getParser().TokError(Msg);
-  }
 
   /// @}
 };

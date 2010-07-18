@@ -31,7 +31,7 @@ const AsmToken &MCAsmParser::getTok() {
   return getLexer().getTok();
 }
 
-bool MCAsmParser::TokError(const char *Msg) {
+bool MCAsmParser::TokError(const Twine &Msg) {
   Error(getLexer().getLoc(), Msg);
   return true;
 }
