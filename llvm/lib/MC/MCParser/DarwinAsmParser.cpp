@@ -537,28 +537,22 @@ bool DarwinAsmParser::ParseDirectiveSection() {
 }
 
 /// ParseDirectiveSecureLogUnique
-///  ::= .secure_log_unique "log message"
+///  ::= .secure_log_unique ... message ...
 bool DarwinAsmParser::ParseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
-  std::string LogMessage;
-
-  if (getLexer().isNot(AsmToken::String))
-    LogMessage = "";
-  else{
-    LogMessage = getTok().getString();
-    Lex();
-  }
-
+  StringRef LogMessage = getParser().ParseStringToEndOfStatement();
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.secure_log_unique' directive");
 
   if (getContext().getSecureLogUsed() != false)
     return Error(IDLoc, ".secure_log_unique specified multiple times");
 
-  char *SecureLogFile = getContext().getSecureLogFile();
+  // Get the secure log path.
+  const char *SecureLogFile = getContext().getSecureLogFile();
   if (SecureLogFile == NULL)
     return Error(IDLoc, ".secure_log_unique used but AS_SECURE_LOG_FILE "
                  "environment variable unset.");
 
+  // Open the secure log file if we haven't already.
   raw_ostream *OS = getContext().getSecureLog();
   if (OS == NULL) {
     std::string Err;
@@ -571,6 +565,7 @@ bool DarwinAsmParser::ParseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
     getContext().setSecureLog(OS);
   }
 
+  // Write the message.
   int CurBuf = getSourceManager().FindBufferContainingLoc(IDLoc);
   *OS << getSourceManager().getBufferInfo(CurBuf).Buffer->getBufferIdentifier()
       << ":" << getSourceManager().FindLineNumber(IDLoc, CurBuf) << ":"

@@ -89,6 +89,11 @@ public:
   /// and set \arg Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res) = 0;
 
+  /// \brief Parse up to the end of statement and return the contents from the
+  /// current token until the end of the statement; the current token on exit
+  /// will be either the EndOfStatement or EOF.
+  virtual StringRef ParseStringToEndOfStatement() = 0;
+
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined

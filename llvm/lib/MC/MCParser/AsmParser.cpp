@@ -153,7 +153,12 @@ private:
   void JumpToLoc(SMLoc Loc);
 
   void EatToEndOfStatement();
-  
+
+  /// \brief Parse up to the end of statement and a return the contents from the
+  /// current token until the end of the statement; the current token on exit
+  /// will be either the EndOfStatement or EOF.
+  StringRef ParseStringToEndOfStatement();
+
   bool ParseAssignment(StringRef Name);
 
   bool ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
@@ -387,6 +392,16 @@ void AsmParser::EatToEndOfStatement() {
     Lex();
 }
 
+StringRef AsmParser::ParseStringToEndOfStatement() {
+  const char *Start = getTok().getLoc().getPointer();
+
+  while (Lexer.isNot(AsmToken::EndOfStatement) &&
+         Lexer.isNot(AsmToken::Eof))
+    Lex();
+
+  const char *End = getTok().getLoc().getPointer();
+  return StringRef(Start, End - Start);
+}
 
 /// ParseParenExpr - Parse a paren expression and return it.
 /// NOTE: This assumes the leading '(' has already been consumed.
@@ -1561,31 +1576,22 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
 }
 
 /// ParseDirectiveAbort
-///  ::= .abort [ "abort_string" ]
+///  ::= .abort [... message ...]
 bool AsmParser::ParseDirectiveAbort() {
   // FIXME: Use loc from directive.
   SMLoc Loc = getLexer().getLoc();
 
-  StringRef Str = "";
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    if (getLexer().isNot(AsmToken::String))
-      return TokError("expected string in '.abort' directive");
-    
-    Str = getTok().getString();
-
-    Lex();
-  }
-
+  StringRef Str = ParseStringToEndOfStatement();
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.abort' directive");
-  
+
   Lex();
 
-  // FIXME: Handle here.
   if (Str.empty())
     Error(Loc, ".abort detected. Assembly stopping.");
   else
     Error(Loc, ".abort '" + Str + "' detected. Assembly stopping.");
+  // FIXME: Actually abort assembly here.
 
   return false;
 }
