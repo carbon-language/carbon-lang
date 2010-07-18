@@ -248,18 +248,13 @@ int main(int argc, const char **argv) {
   // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
   // command line behind the scenes.
   std::set<std::string> SavedStrings;
+  std::vector<const char*> StringPointers(argv, argv + argc);
   if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {
     // FIXME: Driver shouldn't take extra initial argument.
-    std::vector<const char*> StringPointers(argv, argv + argc);
-
     ApplyQAOverride(StringPointers, OverrideStr, SavedStrings);
-
-    C.reset(TheDriver.BuildCompilation(StringPointers.size(),
-                                       &StringPointers[0]));
   } else if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
-    std::vector<const char*> StringPointers;
-
     // FIXME: Driver shouldn't take extra initial argument.
+    StringPointers.clear();
     StringPointers.push_back(argv[0]);
 
     for (;;) {
@@ -277,11 +272,9 @@ int main(int argc, const char **argv) {
     }
 
     StringPointers.insert(StringPointers.end(), argv + 1, argv + argc);
-
-    C.reset(TheDriver.BuildCompilation(StringPointers.size(),
-                                       &StringPointers[0]));
-  } else
-    C.reset(TheDriver.BuildCompilation(argc, argv));
+  }
+  C.reset(TheDriver.BuildCompilation(StringPointers.size(),
+                                     &StringPointers[0]));
 
   int Res = 0;
   if (C.get())
