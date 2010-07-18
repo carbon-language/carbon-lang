@@ -23,7 +23,7 @@ namespace llvm {
 
   class LiveInterval;
   class LiveIntervals;
-  class LiveRange;
+  struct LiveRange;
   class LoopSplit;
   class MachineDominatorTree;
   class MachineRegisterInfo;
