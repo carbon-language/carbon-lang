@@ -4926,6 +4926,19 @@ SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {
     return DAG.getNode(ISD::FCOPYSIGN, N->getDebugLoc(), VT,
                        Tmp, N0.getOperand(1));
   }
+  
+  // (f32 fp_round (f64 sqrt (f64 fp_extend (f32)))) -> (f32 sqrt)
+  EVT VT0 = N0.getValueType();
+  if (VT == MVT::f32 &&
+      N0.getOpcode() == ISD::FSQRT && VT0 == MVT::f64) {
+    SDValue N1 = N0.getOperand(0);
+    EVT VT1 = N1.getValueType();
+    if (N1.getOpcode() == ISD::FP_EXTEND && VT1 == MVT::f64 &&
+        N1.getOperand(0).getValueType() == MVT::f32) {
+      return DAG.getNode(ISD::FSQRT, N->getDebugLoc(), MVT::f32,
+                         N1.getOperand(0), N->getOperand(1));
+    }
+  }
 
   return SDValue();
 }
