@@ -202,6 +202,12 @@ private:
 /// \brief Generic implementations of directive handling, etc. which is shared
 /// (or the default, at least) for all assembler parser.
 class GenericAsmParser : public MCAsmParserExtension {
+  template<bool (GenericAsmParser::*Handler)(StringRef, SMLoc)>
+  void AddDirectiveHandler(StringRef Directive) {
+    getParser().AddDirectiveHandler(this, Directive,
+                                    HandleDirective<GenericAsmParser, Handler>);
+  }
+
 public:
   GenericAsmParser() {}
 
@@ -214,26 +220,18 @@ public:
     this->MCAsmParserExtension::Initialize(Parser);
 
     // Debugging directives.
-    Parser.AddDirectiveHandler(this, ".file", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveFile));
-    Parser.AddDirectiveHandler(this, ".line", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveLine));
-    Parser.AddDirectiveHandler(this, ".loc", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveLoc));
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveFile>(".file");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLine>(".line");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLoc>(".loc");
 
     // Macro directives.
-    Parser.AddDirectiveHandler(this, ".macros_on",
-                               MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveMacrosOnOff));
-    Parser.AddDirectiveHandler(this, ".macros_off",
-                               MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveMacrosOnOff));
-    Parser.AddDirectiveHandler(this, ".macro", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveMacro));
-    Parser.AddDirectiveHandler(this, ".endm", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveEndMacro));
-    Parser.AddDirectiveHandler(this, ".endmacro", MCAsmParser::DirectiveHandler(
-                                 &GenericAsmParser::ParseDirectiveEndMacro));
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
+      ".macros_on");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
+      ".macros_off");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacro>(".macro");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveEndMacro>(".endm");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveEndMacro>(".endmacro");
   }
 
   bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc);
@@ -875,7 +873,7 @@ bool AsmParser::ParseStatement() {
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
       DirectiveMap.lookup(IDVal);
     if (Handler.first)
-      return (Handler.first->*Handler.second)(IDVal, IDLoc);
+      return (*Handler.second)(Handler.first, IDVal, IDLoc);
 
     // Target hook for parsing target specific directives.
     if (!getTargetParser().ParseDirective(ID))

@@ -31,7 +31,7 @@ class Twine;
 /// assembly parsers.
 class MCAsmParser {
 public:
-  typedef bool (MCAsmParserExtension::*DirectiveHandler)(StringRef, SMLoc);
+  typedef bool (*DirectiveHandler)(MCAsmParserExtension*, StringRef, SMLoc);
 
 private:
   MCAsmParser(const MCAsmParser &);   // DO NOT IMPLEMENT

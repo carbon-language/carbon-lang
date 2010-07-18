@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASMPARSEREXTENSION_H
 
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
 
 namespace llvm {
@@ -27,6 +28,15 @@ class MCAsmParserExtension {
 
 protected:
   MCAsmParserExtension();
+
+  // Helper template for implementing static dispatch functions.
+  template<typename T, bool (T::*Handler)(StringRef, SMLoc)>
+  static bool HandleDirective(MCAsmParserExtension *Target,
+                              StringRef Directive,
+                              SMLoc DirectiveLoc) {
+    T *Obj = static_cast<T*>(Target);
+    return (Obj->*Handler)(Directive, DirectiveLoc);
+  }
 
 public:
   virtual ~MCAsmParserExtension();

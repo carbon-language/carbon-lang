@@ -20,6 +20,12 @@ using namespace llvm;
 namespace {
 
 class ELFAsmParser : public MCAsmParserExtension {
+  template<bool (ELFAsmParser::*Handler)(StringRef, SMLoc)>
+  void AddDirectiveHandler(StringRef Directive) {
+    getParser().AddDirectiveHandler(this, Directive,
+                                    HandleDirective<ELFAsmParser, Handler>);
+  }
+
   bool ParseSectionSwitch(StringRef Section, unsigned Type,
                           unsigned Flags, SectionKind Kind);
 
@@ -30,18 +36,12 @@ public:
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 
-    Parser.AddDirectiveHandler(this, ".data", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseSectionDirectiveData));
-    Parser.AddDirectiveHandler(this, ".text", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseSectionDirectiveText));
-    Parser.AddDirectiveHandler(this, ".section", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseDirectiveSection));
-    Parser.AddDirectiveHandler(this, ".size", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseDirectiveSize));
-    Parser.AddDirectiveHandler(this, ".sleb128", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseDirectiveLEB128));
-    Parser.AddDirectiveHandler(this, ".uleb128", MCAsmParser::DirectiveHandler(
-                                 &ELFAsmParser::ParseDirectiveLEB128));
+    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveData>(".data");
+    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveText>(".text");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".sleb128");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveLEB128>(".uleb128");
   }
 
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
