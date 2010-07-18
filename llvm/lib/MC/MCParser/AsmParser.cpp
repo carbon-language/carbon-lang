@@ -249,7 +249,7 @@ const AsmToken &AsmParser::Lex() {
   }
     
   if (tok->is(AsmToken::Error))
-    PrintMessage(Lexer.getErrLoc(), Lexer.getErr(), "error");
+    Error(Lexer.getErrLoc(), Lexer.getErr());
   
   return *tok;
 }
@@ -1395,9 +1395,7 @@ bool AsmParser::ParseDirectiveInclude() {
   // Attempt to switch the lexer to the included file before consuming the end
   // of statement to avoid losing it when we switch.
   if (EnterIncludeFile(Filename)) {
-    PrintMessage(IncludeLoc,
-                 "Could not find include file '" + Filename + "'",
-                 "error");
+    Error(IncludeLoc, "Could not find include file '" + Filename + "'");
     return true;
   }
 
