@@ -27,7 +27,6 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
-#include "llvm/MC/MCParser/AsmParser.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -364,11 +363,13 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   sourceMgr.AddNewSourceBuffer(buf, SMLoc()); // ownership of buf handed over
   MCContext context(*AsmInfo);
   OwningPtr<MCStreamer> streamer(createNullStreamer(context));
-  AsmParser genericParser(*Tgt, sourceMgr, context, *streamer, *AsmInfo);
-  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(genericParser));
+  OwningPtr<MCAsmParser> genericParser(createMCAsmParser(*Tgt, sourceMgr,
+                                                         context, *streamer,
+                                                         *AsmInfo));
+  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(*genericParser));
   
-  AsmToken OpcodeToken = genericParser.Lex();
-  AsmToken NextToken = genericParser.Lex();  // consume next token, because specificParser expects us to
+  AsmToken OpcodeToken = genericParser->Lex();
+  AsmToken NextToken = genericParser->Lex();  // consume next token, because specificParser expects us to
     
   if (OpcodeToken.is(AsmToken::Identifier)) {
     instName = OpcodeToken.getString();

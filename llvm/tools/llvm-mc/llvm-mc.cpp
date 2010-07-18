@@ -12,13 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCParser/AsmParser.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
@@ -312,17 +312,18 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createLoggingStreamer(Str.take(), errs()));
   }
 
-  AsmParser Parser(*TheTarget, SrcMgr, Ctx, *Str.get(), *MAI);
-  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(Parser));
+  OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
+                                                   *Str.get(), *MAI));
+  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(*Parser));
   if (!TAP) {
     errs() << ProgName 
            << ": error: this target does not support assembly parsing.\n";
     return 1;
   }
 
-  Parser.setTargetParser(*TAP.get());
+  Parser->setTargetParser(*TAP.get());
 
-  int Res = Parser.Run(NoInitialTextSection);
+  int Res = Parser->Run(NoInitialTextSection);
   delete Out;
 
   // Delete output on errors.
