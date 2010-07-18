@@ -61,7 +61,8 @@ struct MacroInstantiation {
   SMLoc ExitLoc;
 
 public:
-  MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL);
+  MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
+                     const std::vector<std::vector<AsmToken> > &A);
 };
 
 /// \brief The concrete assembly parser instance.
@@ -909,19 +910,71 @@ bool AsmParser::ParseStatement() {
   return HadError;
 }
 
-MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL)
+MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
+                                   const std::vector<std::vector<AsmToken> > &A)
   : TheMacro(M), InstantiationLoc(IL), ExitLoc(EL)
 {
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
-  llvm::SmallString<256> Buf;
-  Buf += M->Body;
+  SmallString<256> Buf;
+  raw_svector_ostream OS(Buf);
+
+  StringRef Body = M->Body;
+  while (!Body.empty()) {
+    // Scan for the next substitution.
+    std::size_t End = Body.size(), Pos = 0;
+    for (; Pos != End; ++Pos) {
+      // Check for a substitution or escape.
+      if (Body[Pos] != '$' || Pos + 1 == End)
+        continue;
+
+      char Next = Body[Pos + 1];
+      if (Next == '$' || Next == 'n' || isdigit(Next))
+        break;
+    }
+
+    // Add the prefix.
+    OS << Body.slice(0, Pos);
+
+    // Check if we reached the end.
+    if (Pos == End)
+      break;
+
+    switch (Body[Pos+1]) {
+       // $$ => $
+    case '$':
+      OS << '$';
+      break;
+
+      // $n => number of arguments
+    case 'n':
+      OS << A.size();
+      break;
+
+       // $[0-9] => argument
+    default: {
+      // Missing arguments are ignored.
+      unsigned Index = Body[Pos+1] - '0';
+      if (Index >= A.size())
+        break;
+
+      // Otherwise substitute with the token values, with spaces eliminated.
+      for (std::vector<AsmToken>::const_iterator it = A[Index].begin(),
+             ie = A[Index].end(); it != ie; ++it)
+        OS << it->getString();
+      break;
+    }
+    }
+
+    // Update the scan point.
+    Body = Body.substr(Pos + 2);
+  }
 
   // We include the .endmacro in the buffer as our queue to exit the macro
   // instantiation.
-  Buf += ".endmacro\n";
+  OS << ".endmacro\n";
 
-  Instantiation = MemoryBuffer::getMemBufferCopy(Buf, "<instantiation>");
+  Instantiation = MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>");
 }
 
 bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
@@ -931,12 +984,36 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   if (ActiveMacros.size() == 20)
     return TokError("macros cannot be nested more than 20 levels deep");
 
-  EatToEndOfStatement();
+  // Parse the macro instantiation arguments.
+  std::vector<std::vector<AsmToken> > MacroArguments;
+  MacroArguments.push_back(std::vector<AsmToken>());
+  unsigned ParenLevel = 0;
+  for (;;) {
+    if (Lexer.is(AsmToken::Eof))
+      return TokError("unexpected token in macro instantiation");
+    if (Lexer.is(AsmToken::EndOfStatement))
+      break;
+
+    // If we aren't inside parentheses and this is a comma, start a new token
+    // list.
+    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
+      MacroArguments.push_back(std::vector<AsmToken>());
+    } else if (Lexer.is(AsmToken::LParen)) {
+      ++ParenLevel;
+    } else if (Lexer.is(AsmToken::RParen)) {
+      if (ParenLevel)
+        --ParenLevel;
+    } else {
+      MacroArguments.back().push_back(getTok());
+    }
+    Lex();
+  }
 
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
   MacroInstantiation *MI = new MacroInstantiation(M, NameLoc,
-                                                  getTok().getLoc());
+                                                  getTok().getLoc(),
+                                                  MacroArguments);
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
