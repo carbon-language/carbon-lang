@@ -2118,10 +2118,14 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
   // Introduce the instantiated function parameters into the local
-  // instantiation scope.
-  for (unsigned I = 0, N = PatternDecl->getNumParams(); I != N; ++I)
-    Scope.InstantiatedLocal(PatternDecl->getParamDecl(I),
-                            Function->getParamDecl(I));
+  // instantiation scope, and set the parameter names to those used
+  // in the template.
+  for (unsigned I = 0, N = PatternDecl->getNumParams(); I != N; ++I) {
+    const ParmVarDecl *PatternParam = PatternDecl->getParamDecl(I);
+    ParmVarDecl *FunctionParam = Function->getParamDecl(I);
+    FunctionParam->setDeclName(PatternParam->getDeclName());
+    Scope.InstantiatedLocal(PatternParam, FunctionParam);
+  }
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
