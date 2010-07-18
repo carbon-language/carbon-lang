@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-apple-darwin9 > %t1
-// RUN: grep @llvm.memory.barrier %t1 | count 40
+// RUN: grep @llvm.memory.barrier %t1 | count 42
 // RUN: grep @llvm.atomic.load.add.i32 %t1 | count 3
 // RUN: grep @llvm.atomic.load.sub.i8 %t1 | count 2
 // RUN: grep @llvm.atomic.load.min.i32 %t1
@@ -7,7 +7,7 @@
 // RUN: grep @llvm.atomic.load.umin.i32 %t1
 // RUN: grep @llvm.atomic.load.umax.i32 %t1
 // RUN: grep @llvm.atomic.swap.i32 %t1
-// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 4
+// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 5
 // RUN: grep @llvm.atomic.load.and.i32 %t1
 // RUN: grep @llvm.atomic.load.or.i8 %t1
 // RUN: grep @llvm.atomic.load.xor.i8 %t1
@@ -47,10 +47,15 @@ int atomic(void)
   if ( __sync_val_compare_and_swap(&valb, 0, 1)) {
     old = 42;
   }
-
+  __sync_bool_compare_and_swap((void **)0, (void *)0, (void *)0);
   
   __sync_lock_release(&val);
   __sync_synchronize ();
 
   return old;
+}
+
+void release_return(int *lock) {
+  // Ensure this is actually returning void all the way through.
+  return __sync_lock_release(lock);
 }

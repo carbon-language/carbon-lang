@@ -419,6 +419,10 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
     return ExprError();
   }
 
+  // The majority of builtins return a value, but a few have special return
+  // types, so allow them to override appropriately below.
+  QualType ResultType = ValType;
+
   // We need to figure out which concrete builtin this maps onto.  For example,
   // __sync_fetch_and_add with a 2 byte object turns into
   // __sync_fetch_and_add_2.
@@ -487,11 +491,13 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
   case Builtin::BI__sync_bool_compare_and_swap:
     BuiltinIndex = 11;
     NumFixed = 2;
+    ResultType = Context.BoolTy;
     break;
   case Builtin::BI__sync_lock_test_and_set: BuiltinIndex = 12; break;
   case Builtin::BI__sync_lock_release:
     BuiltinIndex = 13;
     NumFixed = 0;
+    ResultType = Context.VoidTy;
     break;
   }
 
@@ -558,7 +564,7 @@ Sema::SemaBuiltinAtomicOverloaded(OwningExprResult TheCallResult) {
   // Change the result type of the call to match the original value type. This
   // is arbitrary, but the codegen for these builtins ins design to handle it
   // gracefully.
-  TheCall->setType(ValType);
+  TheCall->setType(ResultType);
 
   return move(TheCallResult);
 }
