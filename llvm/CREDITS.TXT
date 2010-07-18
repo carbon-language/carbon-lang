@@ -340,3 +340,7 @@ N: Wesley Peck
 E: peckw@wesleypeck.com
 W: http://wesleypeck.com/
 D: MicroBlaze backend
+
+N: Michael J. Spencer
+E: bigcheesegs@gmail.com
+D: Shepherding Windows COFF support into MC.
