@@ -1390,6 +1390,25 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
     delete static_cast<ASTUnit *>(CTUnit);
 }
 
+int clang_reparseTranslationUnit(CXTranslationUnit TU,
+                                 unsigned num_unsaved_files,
+                                 struct CXUnsavedFile *unsaved_files) {
+  if (!TU)
+    return 1;
+  
+  llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
+  for (unsigned I = 0; I != num_unsaved_files; ++I) {
+    llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
+    const llvm::MemoryBuffer *Buffer
+    = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
+    RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
+                                           Buffer));
+  }
+  
+  return static_cast<ASTUnit *>(TU)->Reparse(RemappedFiles.data(),
+                                             RemappedFiles.size())? 1 : 0;
+}
+  
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   if (!CTUnit)
     return createCXString("");

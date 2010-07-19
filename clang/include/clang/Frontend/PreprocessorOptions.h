@@ -95,6 +95,10 @@ public:
   void addRemappedFile(llvm::StringRef From, const llvm::MemoryBuffer * To) {
     RemappedFileBuffers.push_back(std::make_pair(From, To));
   }
+  void clearRemappedFiles() {
+    RemappedFiles.clear();
+    RemappedFileBuffers.clear();
+  }
 };
 
 } // end namespace clang

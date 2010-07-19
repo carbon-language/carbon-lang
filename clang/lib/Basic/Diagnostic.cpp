@@ -244,35 +244,10 @@ static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
 
 
 Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
-  AllExtensionsSilenced = 0;
-  IgnoreAllWarnings = false;
-  WarningsAsErrors = false;
-  ErrorsAsFatal = false;
-  SuppressSystemWarnings = false;
-  SuppressAllDiagnostics = false;
-  ShowOverloads = Ovl_All;
-  ExtBehavior = Ext_Ignore;
-
-  ErrorOccurred = false;
-  FatalErrorOccurred = false;
-  ErrorLimit = 0;
-  TemplateBacktraceLimit = 0;
-
-  NumWarnings = 0;
-  NumErrors = 0;
-  NumErrorsSuppressed = 0;
-  CustomDiagInfo = 0;
-  CurDiagID = ~0U;
-  LastDiagLevel = Ignored;
-
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
 
-  DelayedDiagID = 0;
-
-  // Set all mappings to 'unset'.
-  DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
-  DiagMappingsStack.push_back(BlankDiags);
+  Reset();
 }
 
 Diagnostic::~Diagnostic() {
@@ -335,6 +310,36 @@ bool Diagnostic::isBuiltinExtensionDiag(unsigned DiagID,
   return true;
 }
 
+void Diagnostic::Reset() {
+  AllExtensionsSilenced = 0;
+  IgnoreAllWarnings = false;
+  WarningsAsErrors = false;
+  ErrorsAsFatal = false;
+  SuppressSystemWarnings = false;
+  SuppressAllDiagnostics = false;
+  ShowOverloads = Ovl_All;
+  ExtBehavior = Ext_Ignore;
+  
+  ErrorOccurred = false;
+  FatalErrorOccurred = false;
+  ErrorLimit = 0;
+  TemplateBacktraceLimit = 0;
+  
+  NumWarnings = 0;
+  NumErrors = 0;
+  NumErrorsSuppressed = 0;
+  CustomDiagInfo = 0;
+  CurDiagID = ~0U;
+  LastDiagLevel = Ignored;
+  DelayedDiagID = 0;
+
+  // Set all mappings to 'unset'.
+  while (!DiagMappingsStack.empty())
+    DiagMappingsStack.pop_back();
+  
+  DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
+  DiagMappingsStack.push_back(BlankDiags);
+}
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.

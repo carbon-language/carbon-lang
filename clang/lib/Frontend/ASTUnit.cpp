@@ -36,12 +36,18 @@
 using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : MainFileIsAST(_MainFileIsAST), ConcurrencyCheckValue(CheckUnlocked) { }
+  : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
+    ConcurrencyCheckValue(CheckUnlocked) { }
 
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
+  CleanTemporaryFiles();
+}
+
+void ASTUnit::CleanTemporaryFiles() {
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
+  TemporaryFiles.clear();
 }
 
 namespace {
@@ -156,7 +162,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
     DiagnosticOptions DiagOpts;
     Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
   }
-  
+
+  AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->Diagnostics = Diags;
   AST->FileMgr.reset(new FileManager);
@@ -298,41 +305,38 @@ public:
 
 }
 
-ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
-                                             bool OnlyLocalDecls,
-                                             bool CaptureDiagnostics) {
+/// Parse the source file into a translation unit using the given compiler
+/// invocation, replacing the current translation unit.
+///
+/// \returns True if a failure occurred that causes the ASTUnit not to
+/// contain any translation-unit information, false otherwise.
+bool ASTUnit::Parse() {
+  if (!Invocation.get())
+    return true;
+  
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
-  llvm::OwningPtr<ASTUnit> AST;
-  llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
-
-  if (!Diags.getPtr()) {
-    // No diagnostics engine was provided, so create our own diagnostics object
-    // with the default options.
-    DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
-  }
+  Clang.setInvocation(Invocation.take());
+  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+    
+  // Set up diagnostics.
+  Clang.setDiagnostics(&getDiagnostics());
+  Clang.setDiagnosticClient(getDiagnostics().getClient());
   
-  Clang.setInvocation(CI);
-
-  Clang.setDiagnostics(Diags.getPtr());
-  Clang.setDiagnosticClient(Diags->getClient());
-
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
     Clang.takeDiagnosticClient();
-    return 0;
+    return true;
   }
-
+  
   // Inform the target of the language options.
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
   Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
-
+  
   assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
          "Invocation must have exactly one source file!");
   assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
@@ -340,52 +344,84 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
          "IR inputs not support here!");
 
-  // Create the AST unit.
-  AST.reset(new ASTUnit(false));
-  AST->Diagnostics = Diags;
-  AST->FileMgr.reset(new FileManager);
-  AST->SourceMgr.reset(new SourceManager(AST->getDiagnostics()));
-  AST->OnlyLocalDecls = OnlyLocalDecls;
-  AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
-
+  // Configure the various subsystems.
+  // FIXME: Should we retain the previous file manager?
+  FileMgr.reset(new FileManager);
+  SourceMgr.reset(new SourceManager(getDiagnostics()));
+  Ctx.reset();
+  PP.reset();
+  
+  // Clear out old caches and data.
+  TopLevelDecls.clear();
+  StoredDiagnostics.clear();
+  CleanTemporaryFiles();
+  PreprocessedEntitiesByFile.clear();
+  
   // Capture any diagnostics that would otherwise be dropped.
   CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
                                     Clang.getDiagnostics(),
-                                    AST->StoredDiagnostics);
-
+                                    StoredDiagnostics);
+  
   // Create a file manager object to provide access to and cache the filesystem.
-  Clang.setFileManager(&AST->getFileManager());
-
+  Clang.setFileManager(&getFileManager());
+  
   // Create the source manager.
-  Clang.setSourceManager(&AST->getSourceManager());
-
-  Act.reset(new TopLevelDeclTrackerAction(*AST));
+  Clang.setSourceManager(&getSourceManager());
+  
+  llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
+  Act.reset(new TopLevelDeclTrackerAction(*this));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                             Clang.getFrontendOpts().Inputs[0].first))
     goto error;
-
+  
   Act->Execute();
-
+  
   // Steal the created target, context, and preprocessor, and take back the
   // source and file managers.
-  AST->Ctx.reset(Clang.takeASTContext());
-  AST->PP.reset(Clang.takePreprocessor());
+  Ctx.reset(Clang.takeASTContext());
+  PP.reset(Clang.takePreprocessor());
   Clang.takeSourceManager();
   Clang.takeFileManager();
-  AST->Target.reset(Clang.takeTarget());
-
+  Target.reset(Clang.takeTarget());
+  
   Act->EndSourceFile();
-
+  
   Clang.takeDiagnosticClient();
-  Clang.takeInvocation();
-
-  AST->Invocation.reset(Clang.takeInvocation());
-  return AST.take();
-
+  
+  Invocation.reset(Clang.takeInvocation());
+  return false;
+  
 error:
   Clang.takeSourceManager();
   Clang.takeFileManager();
   Clang.takeDiagnosticClient();
+  Invocation.reset(Clang.takeInvocation());
+  return true;
+}
+
+
+ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
+                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                             bool OnlyLocalDecls,
+                                             bool CaptureDiagnostics) {
+  if (!Diags.getPtr()) {
+    // No diagnostics engine was provided, so create our own diagnostics object
+    // with the default options.
+    DiagnosticOptions DiagOpts;
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
+  }
+  
+  // Create the AST unit.
+  llvm::OwningPtr<ASTUnit> AST;
+  AST.reset(new ASTUnit(false));
+  AST->Diagnostics = Diags;
+  AST->CaptureDiagnostics = CaptureDiagnostics;
+  AST->OnlyLocalDecls = OnlyLocalDecls;
+  AST->Invocation.reset(CI);
+  
+  if (!AST->Parse())
+    return AST.take();
+  
   return 0;
 }
 
@@ -458,4 +494,20 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
                                     CaptureDiagnostics);
+}
+
+bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
+  if (!Invocation.get())
+    return true;
+  
+  // Clear out the diagnostics state.
+  getDiagnostics().Reset();
+  
+  // Remap files.
+  Invocation->getPreprocessorOpts().clearRemappedFiles();
+  for (unsigned I = 0; I != NumRemappedFiles; ++I)
+    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+                                                       RemappedFiles[I].second);
+  
+  return Parse();
 }

@@ -558,7 +558,7 @@ int perform_test_load_source(int argc, const char **argv,
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
   int result;
-
+  
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
                           /* displayDiagnosics=*/1);
@@ -578,10 +578,62 @@ int perform_test_load_source(int argc, const char **argv,
                                                  unsaved_files);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
+    free_remapped_files(unsaved_files, num_unsaved_files);
     clang_disposeIndex(Idx);
     return 1;
   }
 
+  result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  clang_disposeIndex(Idx);
+  return result;
+}
+
+int perform_test_reparse_source(int argc, const char **argv, int trials,
+                                const char *filter, CXCursorVisitor Visitor,
+                                PostVisitTU PV) {
+  const char *UseExternalASTs =
+  getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  int result;
+  int trial;
+  
+  Idx = clang_createIndex(/* excludeDeclsFromPCH */
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnosics=*/1);
+  
+  if (UseExternalASTs && strlen(UseExternalASTs))
+    clang_setUseExternalASTGeneration(Idx, 1);
+  
+  if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files)) {
+    clang_disposeIndex(Idx);
+    return -1;
+  }
+  
+  TU = clang_createTranslationUnitFromSourceFile(Idx, 0,
+                                                 argc - num_unsaved_files,
+                                                 argv + num_unsaved_files,
+                                                 num_unsaved_files,
+                                                 unsaved_files);
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit!\n");
+    free_remapped_files(unsaved_files, num_unsaved_files);
+    clang_disposeIndex(Idx);
+    return 1;
+  }
+  
+  for (trial = 0; trial < trials; ++trial) {
+    if (clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files)) {
+      clang_disposeTranslationUnit(TU);
+      free_remapped_files(unsaved_files, num_unsaved_files);
+      clang_disposeIndex(Idx);
+      return -1;      
+    }
+  }
+  
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
   free_remapped_files(unsaved_files, num_unsaved_files);
   clang_disposeIndex(Idx);
@@ -1219,6 +1271,8 @@ static void print_usage(void) {
            "[FileCheck prefix]\n"
     "       c-index-test -test-load-source <symbol filter> {<args>}*\n");
   fprintf(stderr,
+    "       c-index-test -test-load-source-reparse <trials> <symbol filter> "
+    "          {<args>}*\n"
     "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n"
     "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
@@ -1251,6 +1305,14 @@ int main(int argc, const char **argv) {
     if (I)
       return perform_test_load_tu(argv[2], argv[3], argc >= 5 ? argv[4] : 0, I,
                                   NULL);
+  }
+  else if (argc >= 5 && strncmp(argv[1], "-test-load-source-reparse", 25) == 0){
+    CXCursorVisitor I = GetVisitor(argv[1] + 25);
+    if (I) {
+      int trials = atoi(argv[2]);
+      return perform_test_reparse_source(argc - 4, argv + 4, trials, argv[3], I, 
+                                         NULL);
+    }
   }
   else if (argc >= 4 && strncmp(argv[1], "-test-load-source", 17) == 0) {
     CXCursorVisitor I = GetVisitor(argv[1] + 17);

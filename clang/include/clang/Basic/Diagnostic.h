@@ -404,6 +404,10 @@ public:
     ArgToStringCookie = Cookie;
   }
 
+  /// \brief Reset the state of the diagnostic object to its initial 
+  /// configuration.
+  void Reset();
+  
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
   //

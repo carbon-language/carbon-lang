@@ -86,6 +86,7 @@ clang_isReference
 clang_isStatement
 clang_isTranslationUnit
 clang_isUnexposed
+clang_reparseTranslationUnit
 clang_setUseExternalASTGeneration
 clang_tokenize
 clang_visitChildren

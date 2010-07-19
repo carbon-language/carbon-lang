@@ -70,6 +70,9 @@ private:
   // FIXME: This is temporary; eventually, CIndex will always do this.
   bool                              OnlyLocalDecls;
 
+  /// \brief Whether to capture any diagnostics produced.
+  bool CaptureDiagnostics;
+  
   /// Track whether the main file was loaded from an AST or not.
   bool MainFileIsAST;
 
@@ -120,6 +123,9 @@ private:
   
   explicit ASTUnit(bool MainFileIsAST);
 
+  void CleanTemporaryFiles();
+  bool Parse();
+  
 public:
   class ConcurrencyCheck {
     volatile ASTUnit &Self;
@@ -259,6 +265,14 @@ public:
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
                                       bool CaptureDiagnostics = false);
+  
+  /// \brief Reparse the source files using the same command-line options that
+  /// were originally used to produce this translation unit.
+  ///
+  /// \returns True if a failure occurred that causes the ASTUnit not to
+  /// contain any translation-unit information, false otherwise.  
+  bool Reparse(RemappedFile *RemappedFiles = 0,
+               unsigned NumRemappedFiles = 0);
 };
 
 } // namespace clang
