@@ -365,7 +365,8 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   OwningPtr<MCAsmParser> genericParser(createMCAsmParser(*Tgt, sourceMgr,
                                                          context, *streamer,
                                                          *AsmInfo));
-  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(*genericParser));
+  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(*genericParser,
+                                                               *TargetMachine));
   
   AsmToken OpcodeToken = genericParser->Lex();
   AsmToken NextToken = genericParser->Lex();  // consume next token, because specificParser expects us to

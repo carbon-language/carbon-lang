@@ -28,6 +28,7 @@ struct X86Operand;
 
 class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
+  TargetMachine &TM;
 
 protected:
   unsigned Is64Bit : 1;
@@ -62,8 +63,8 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(const Target &T, MCAsmParser &_Parser)
-    : TargetAsmParser(T), Parser(_Parser) {}
+  X86ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
+    : TargetAsmParser(T), Parser(_Parser), TM(TM) {}
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -73,16 +74,16 @@ public:
  
 class X86_32ATTAsmParser : public X86ATTAsmParser {
 public:
-  X86_32ATTAsmParser(const Target &T, MCAsmParser &_Parser)
-    : X86ATTAsmParser(T, _Parser) {
+  X86_32ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
+    : X86ATTAsmParser(T, _Parser, TM) {
     Is64Bit = false;
   }
 };
 
 class X86_64ATTAsmParser : public X86ATTAsmParser {
 public:
-  X86_64ATTAsmParser(const Target &T, MCAsmParser &_Parser)
-    : X86ATTAsmParser(T, _Parser) {
+  X86_64ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
+    : X86ATTAsmParser(T, _Parser, TM) {
     Is64Bit = true;
   }
 };

@@ -65,7 +65,8 @@ namespace llvm {
                                                   const std::string &TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
+    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P,
+                                                TargetMachine &TM);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
@@ -237,10 +238,11 @@ namespace llvm {
     ///
     /// \arg Parser - The target independent parser implementation to use for
     /// parsing and lexing.
-    TargetAsmParser *createAsmParser(MCAsmParser &Parser) const {
+    TargetAsmParser *createAsmParser(MCAsmParser &Parser,
+                                     TargetMachine &TM) const {
       if (!AsmParserCtorFn)
         return 0;
-      return AsmParserCtorFn(*this, Parser);
+      return AsmParserCtorFn(*this, Parser, TM);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
@@ -667,8 +669,9 @@ namespace llvm {
     }
 
   private:
-    static TargetAsmParser *Allocator(const Target &T, MCAsmParser &P) {
-      return new AsmParserImpl(T, P);
+    static TargetAsmParser *Allocator(const Target &T, MCAsmParser &P,
+                                      TargetMachine &TM) {
+      return new AsmParserImpl(T, P, TM);
     }
   };
 

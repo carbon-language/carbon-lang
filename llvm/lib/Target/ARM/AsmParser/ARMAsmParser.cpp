@@ -37,6 +37,7 @@ enum ShiftType {
 
 class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
+  TargetMachine &TM;
 
 private:
   MCAsmParser &getParser() const { return Parser; }
@@ -94,8 +95,8 @@ private:
 
 
 public:
-  ARMAsmParser(const Target &T, MCAsmParser &_Parser)
-    : TargetAsmParser(T), Parser(_Parser) {}
+  ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
+    : TargetAsmParser(T), Parser(_Parser), TM(_TM) {}
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);

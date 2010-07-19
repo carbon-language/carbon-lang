@@ -74,7 +74,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, unsigned LocCookie) const {
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(TM.getTarget(), SrcMgr,
                                                   OutContext, OutStreamer,
                                                   *MAI));
-  OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(*Parser));
+  OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(*Parser, TM));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");
