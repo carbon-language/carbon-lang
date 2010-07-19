@@ -1377,6 +1377,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
     DebugFactory.CreateLexicalBlock(RegionStack.empty() ? 
                                     llvm::DIDescriptor() : 
                                     llvm::DIDescriptor(RegionStack.back()),
+                                    getOrCreateFile(CurLoc),
                                     getLineNumber(CurLoc), 
                                     getColumnNumber(CurLoc));
   llvm::MDNode *DN = D;
