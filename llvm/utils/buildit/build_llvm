@@ -317,9 +317,20 @@ if [ "$INSTALL_LIBLTO" = "yes" ]; then
   mkdir -p $DT_HOME/lib
   mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
 
+  # Save a copy of the unstripped dylib
+  mkdir -p $SYM_DIR/Developer/usr/lib
+  cp $DT_HOME/lib/libLTO.dylib $SYM_DIR/Developer/usr/lib/libLTO.dylib
+
   # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
   # PPC objects!
   strip -arch all -Sl $DT_HOME/lib/libLTO.dylib
+
+  if [ "x$DISABLE_USR_LINKS" == "x" ]; then
+    # Add a symlink in /usr/lib for B&I.
+    mkdir -p $DEST_DIR/usr/lib/
+    (cd $DEST_DIR/usr/lib && \
+      ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib)
+  fi
 else
   rm -f lib/libLTO.dylib
 fi
@@ -348,15 +359,6 @@ chgrp -R wheel $DEST_DIR
 # Remove the docs directory
 
 rm -rf $DEST_DIR$DEST_ROOT/docs
-
-################################################################################
-# symlinks so that B&I can find things
-
-if [ "$INSTALL_LIBLTO" = "yes" ]; then
-  mkdir -p $DEST_DIR/usr/lib/
-  cd $DEST_DIR/usr/lib && \
-    ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
-fi
 
 ################################################################################
 # w00t! Done!
