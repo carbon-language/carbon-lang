@@ -1006,7 +1006,6 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
 }
 
 static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
-                                               ASTContext &Context,
                                                IdentifierInfo *II,
                                                SourceLocation NameLoc) {
   ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
@@ -1014,7 +1013,8 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
   if (!IDecl)
     return 0;
   ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
-  assert(ClassImpDecl && "Method not inside @implementation");
+  if (!ClassImpDecl)
+    return 0;
   bool DynamicImplSeen = false;
   ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
   if (!property)
@@ -1023,8 +1023,8 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
     DynamicImplSeen = 
       (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic);
   if (!DynamicImplSeen) {
-    QualType PropType = Context.getCanonicalType(property->getType());
-    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, 
+    QualType PropType = SemaRef.Context.getCanonicalType(property->getType());
+    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(SemaRef.Context, ClassImpDecl, 
                                               NameLoc,
                                               II, PropType, /*Dinfo=*/0,
                                               ObjCIvarDecl::Protected,
@@ -1104,7 +1104,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
       if (Ex) return Owned(Ex);
       // Synthesize ivars lazily
       if (getLangOptions().ObjCNonFragileABI2) {
-        if (SynthesizeProvisionalIvar(*this, Context, II, NameLoc))
+        if (SynthesizeProvisionalIvar(*this, II, NameLoc))
           return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
                                    isAddressOfOperand);
       }

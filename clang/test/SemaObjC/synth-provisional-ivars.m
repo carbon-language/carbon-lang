@@ -38,3 +38,8 @@ int bar;
 - (int) Meth6 { return bar1; }
 
 @end
+
+@implementation I(CAT)
+- (int) Meth { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}
+@end
+
