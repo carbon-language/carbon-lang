@@ -11,6 +11,5 @@ add_clang_library(clangIndex
   IndexProvider.cpp
   Indexer.cpp
   Program.cpp
-  ResolveLocation.cpp
   SelectorMap.cpp
   )
