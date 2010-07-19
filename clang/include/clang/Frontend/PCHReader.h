@@ -231,8 +231,16 @@ private:
     /// \brief The number of types in this PCH file.
     unsigned LocalNumTypes;
 
+    /// \brief Offset of each type within the bitstream, indexed by the
+    /// type ID, or the representation of a Type*.
+    const uint32_t *TypeOffsets;
+
     /// \brief The number of declarations in this PCH file.
     unsigned LocalNumDecls;
+
+  /// \brief Offset of each declaration within the bitstream, indexed
+  /// by the declaration ID (-1).
+  const uint32_t *DeclOffsets;
 
     /// \brief Actual data for the on-disk hash table.
     ///
@@ -257,21 +265,11 @@ private:
   /// \brief The number of source location entries in all PCH files.
   unsigned TotalNumSLocEntries;
 
-  /// \brief Offset of each type within the bitstream, indexed by the
-  /// type ID, or the representation of a Type*. The offset is local to the
-  /// containing file; the file is chosen using the ID.
-  const uint32_t *TypeOffsets;
-
   /// \brief Types that have already been loaded from the PCH file.
   ///
   /// When the pointer at index I is non-NULL, the type with
   /// ID = (I + 1) << FastQual::Width has already been loaded from the PCH chain
   std::vector<QualType> TypesLoaded;
-
-  /// \brief Offset of each declaration within the bitstream, indexed
-  /// by the declaration ID (-1). The offset is local to the containing file;
-  /// the file is chosen using the ID.
-  const uint32_t *DeclOffsets;
 
   /// \brief Declarations that have already been loaded from the PCH file.
   ///

@@ -454,7 +454,9 @@ PCHReader::~PCHReader() {
 }
 
 PCHReader::PerFileData::PerFileData()
-  : StatCache(0), IdentifierTableData(0), IdentifierLookupTable(0)
+  : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
+    LocalNumDecls(0), DeclOffsets(0), IdentifierTableData(0),
+    IdentifierLookupTable(0)
 {}
 
 
@@ -1489,21 +1491,21 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
     }
 
     case pch::TYPE_OFFSET:
-      if (!TypesLoaded.empty()) {
+      if (F.LocalNumTypes != 0) {
         Error("duplicate TYPE_OFFSET record in PCH file");
         return Failure;
       }
-      TypeOffsets = (const uint32_t *)BlobStart;
-      TypesLoaded.resize(Record[0]);
+      F.TypeOffsets = (const uint32_t *)BlobStart;
+      F.LocalNumTypes = Record[0];
       break;
 
     case pch::DECL_OFFSET:
-      if (!DeclsLoaded.empty()) {
+      if (F.LocalNumDecls != 0) {
         Error("duplicate DECL_OFFSET record in PCH file");
         return Failure;
       }
-      DeclOffsets = (const uint32_t *)BlobStart;
-      DeclsLoaded.resize(Record[0]);
+      F.DeclOffsets = (const uint32_t *)BlobStart;
+      F.LocalNumDecls = Record[0];
       break;
 
     case pch::LANGUAGE_OPTIONS:
@@ -1691,6 +1693,15 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.
+
+  // Allocate space for loaded decls and types.
+  unsigned TotalNumTypes = 0, TotalNumDecls = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    TotalNumTypes += Chain[I]->LocalNumTypes;
+    TotalNumDecls += Chain[I]->LocalNumDecls;
+  }
+  TypesLoaded.resize(TotalNumTypes);
+  DeclsLoaded.resize(TotalNumDecls);
 
   // Check the predefines buffers.
   if (CheckPredefinesBuffers())
@@ -2690,7 +2701,7 @@ QualType PCHReader::GetType(pch::TypeID ID) {
   Index -= pch::NUM_PREDEF_TYPE_IDS;
   //assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
-    TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
+    TypesLoaded[Index] = ReadTypeRecord(Chain[0]->TypeOffsets[Index]);
     TypesLoaded[Index]->setFromPCH();
     if (DeserializationListener)
       DeserializationListener->TypeRead(ID >> Qualifiers::FastWidth,
@@ -2742,7 +2753,7 @@ Decl *PCHReader::GetExternalDecl(uint32_t ID) {
 
 TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
-    ReadDeclRecord(DeclOffsets[0], 0);
+    ReadDeclRecord(Chain[0]->DeclOffsets[0], 0);
     if (DeserializationListener)
       DeserializationListener->DeclRead(1, DeclsLoaded[0]);
   }
@@ -2761,7 +2772,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 
   unsigned Index = ID - 1;
   if (!DeclsLoaded[Index]) {
-    ReadDeclRecord(DeclOffsets[Index], Index);
+    ReadDeclRecord(Chain[0]->DeclOffsets[Index], Index);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
   }
