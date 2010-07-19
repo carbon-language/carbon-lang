@@ -1106,19 +1106,20 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
       Call->getNumArgOperands() == 1) {
     CastInst *Arg = dyn_cast<CastInst>(Call->getArgOperand(0));
     if (Arg && Arg->getOpcode() == Instruction::FPExt &&
-        CI.getType() == Builder->getFloatTy() &&
-        Call->getType() == Builder->getDoubleTy() &&
-        Arg->getType() == Builder->getDoubleTy() &&
-        Arg->getOperand(0)->getType() == Builder->getFloatTy()) {
-      Module* M = CI.getParent()->getParent()->getParent();
+        CI.getType()->isFloatTy() &&
+        Call->getType()->isDoubleTy() &&
+        Arg->getType()->isDoubleTy() &&
+        Arg->getOperand(0)->getType()->isFloatTy()) {
+      Function *Callee = Call->getCalledFunction();
+      Module *M = CI.getParent()->getParent()->getParent();
       Constant* SqrtfFunc = M->getOrInsertFunction("sqrtf", 
-                                                   Call->getAttributes(),
+                                                   Callee->getAttributes(),
                                                    Builder->getFloatTy(),
                                                    Builder->getFloatTy(),
                                                    NULL);
       CallInst *ret = CallInst::Create(SqrtfFunc, Arg->getOperand(0),
                                        "sqrtfcall");
-      ret->setAttributes(Call->getAttributes());
+      ret->setAttributes(Callee->getAttributes());
       return ret;
     }
   }
