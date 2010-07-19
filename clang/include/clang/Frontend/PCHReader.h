@@ -238,9 +238,19 @@ private:
     /// \brief The number of declarations in this PCH file.
     unsigned LocalNumDecls;
 
-  /// \brief Offset of each declaration within the bitstream, indexed
-  /// by the declaration ID (-1).
-  const uint32_t *DeclOffsets;
+    /// \brief Offset of each declaration within the bitstream, indexed
+    /// by the declaration ID (-1).
+    const uint32_t *DeclOffsets;
+
+    /// \brief The number of identifiers in this PCH file.
+    unsigned LocalNumIdentifiers;
+
+    /// \brief Offsets into the identifier table data.
+    ///
+    /// This array is indexed by the identifier ID (-1), and provides
+    /// the offset into IdentifierTableData where the string data is
+    /// stored.
+    const uint32_t *IdentifierOffsets;
 
     /// \brief Actual data for the on-disk hash table.
     ///
@@ -283,13 +293,6 @@ private:
   /// \brief Offsets of the lexical and visible declarations for each
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
-
-  /// \brief Offsets into the identifier table data.
-  ///
-  /// This array is indexed by the identifier ID (-1), and provides
-  /// the offset into IdentifierTableData where the string data is
-  /// stored.
-  const uint32_t *IdentifierOffsets;
 
   /// \brief A vector containing identifiers that have already been
   /// loaded.

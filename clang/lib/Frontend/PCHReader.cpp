@@ -418,8 +418,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), IdentifierOffsets(0),
-    MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
+    Consumer(0), MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
     NumPreallocatedPreprocessingEntities(0),  
@@ -435,7 +434,6 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
@@ -455,8 +453,8 @@ PCHReader::~PCHReader() {
 
 PCHReader::PerFileData::PerFileData()
   : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
-    LocalNumDecls(0), DeclOffsets(0), IdentifierTableData(0),
-    IdentifierLookupTable(0)
+    LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
+    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0)
 {}
 
 
@@ -1527,14 +1525,12 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::IDENTIFIER_OFFSET:
-      if (!IdentifiersLoaded.empty()) {
+      if (F.LocalNumIdentifiers != 0) {
         Error("duplicate IDENTIFIER_OFFSET record in PCH file");
         return Failure;
       }
-      IdentifierOffsets = (const uint32_t *)BlobStart;
-      IdentifiersLoaded.resize(Record[0]);
-      if (PP)
-        PP->getHeaderSearchInfo().SetExternalLookup(this);
+      F.IdentifierOffsets = (const uint32_t *)BlobStart;
+      F.LocalNumIdentifiers = Record[0];
       break;
 
     case pch::EXTERNAL_DEFINITIONS:
@@ -1695,13 +1691,17 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Here comes stuff that we only do once the entire chain is loaded.
 
   // Allocate space for loaded decls and types.
-  unsigned TotalNumTypes = 0, TotalNumDecls = 0;
+  unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumDecls += Chain[I]->LocalNumDecls;
   }
+  IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
   DeclsLoaded.resize(TotalNumDecls);
+  if (PP && TotalNumIdentifiers > 0)
+    PP->getHeaderSearchInfo().SetExternalLookup(this);
 
   // Check the predefines buffers.
   if (CheckPredefinesBuffers())
@@ -3131,7 +3131,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
 
   assert(PP && "Forgot to set Preprocessor ?");
   if (!IdentifiersLoaded[ID - 1]) {
-    uint32_t Offset = IdentifierOffsets[ID - 1];
+    uint32_t Offset = Chain[0]->IdentifierOffsets[ID - 1];
     const char *Str = Chain[0]->IdentifierTableData + Offset;
 
     // All of the strings in the PCH file are preceded by a 16-bit
