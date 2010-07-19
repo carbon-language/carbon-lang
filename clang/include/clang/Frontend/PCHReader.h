@@ -64,6 +64,7 @@ class Preprocessor;
 class Sema;
 class SwitchCase;
 class PCHReader;
+class PCHDeclReader;
 struct HeaderFileInfo;
 
 struct PCHPredefinesBlock {
@@ -169,6 +170,7 @@ class PCHReader
 public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
   friend class PCHValidator;
+  friend class PCHDeclReader;
 private:
   /// \brief The receiver of some callbacks invoked by PCHReader.
   llvm::OwningPtr<PCHReaderListener> Listener;
@@ -865,10 +867,6 @@ public:
   /// translation unit in which the precompiled header is being
   /// imported.
   Sema *getSema() { return SemaObj; }
-
-  /// \brief Retrieve the stream that this PCH reader is reading from.
-  llvm::BitstreamCursor &getStream() { return Chain[0]->Stream; }
-  llvm::BitstreamCursor &getDeclsCursor() { return Chain[0]->DeclsCursor; }
 
   /// \brief Retrieve the identifier table associated with the
   /// preprocessor.

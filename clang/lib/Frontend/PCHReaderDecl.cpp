@@ -117,7 +117,7 @@ void PCHDeclReader::Visit(Decl *D) {
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
-      FD->setLazyBody(Reader.getDeclsCursor().GetCurrentBitNo());
+      FD->setLazyBody(Reader.Chain[0]->DeclsCursor.GetCurrentBitNo());
   }
 }
 
