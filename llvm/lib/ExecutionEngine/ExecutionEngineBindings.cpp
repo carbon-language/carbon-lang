@@ -237,7 +237,7 @@ LLVMBool LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
 }
 
 void *LLVMRecompileAndRelinkFunction(LLVMExecutionEngineRef EE, LLVMValueRef Fn) {
-    return unwrap(EE)->recompileAndRelinkFunction(unwrap<Function>(Fn));
+  return unwrap(EE)->recompileAndRelinkFunction(unwrap<Function>(Fn));
 }
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {
