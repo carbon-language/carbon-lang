@@ -246,7 +246,7 @@ def POPCNT64rm : RI<0xB8, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 
 let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
 def LEAVE64  : I<0xC9, RawFrm,
-                 (outs), (ins), "leave", []>;
+                 (outs), (ins), "leave", []>, Requires<[In64BitMode]>;
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
 let mayLoad = 1 in {
 def POP64r   : I<0x58, AddRegFrm,
@@ -330,7 +330,7 @@ def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", []>;
 
 // Fast system-call instructions
 def SYSEXIT64 : RI<0x35, RawFrm,
-                   (outs), (ins), "sysexit", []>, TB;
+                   (outs), (ins), "sysexit", []>, TB, Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...

@@ -756,7 +756,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 //
 let Defs = [EBP, ESP], Uses = [EBP, ESP], mayLoad = 1, neverHasSideEffects=1 in
 def LEAVE    : I<0xC9, RawFrm,
-                 (outs), (ins), "leave", []>;
+                 (outs), (ins), "leave", []>, Requires<[In32BitMode]>;
 
 def POPCNT16rr : I<0xB8, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
                    "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
@@ -934,7 +934,7 @@ def SYSRET   : I<0x07, RawFrm,
 def SYSENTER : I<0x34, RawFrm,
                  (outs), (ins), "sysenter", []>, TB;
 def SYSEXIT  : I<0x35, RawFrm,
-                 (outs), (ins), "sysexit", []>, TB;
+                 (outs), (ins), "sysexit", []>, TB, Requires<[In32BitMode]>;
 
 def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", []>;
 
