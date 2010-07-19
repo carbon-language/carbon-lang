@@ -168,6 +168,18 @@ public:
     return RC;
   }
 
+  /// getRepRegClassFor - Return the 'representative' register class for the
+  /// specified value type. The 'representative' register class is the largest
+  /// legal super-reg register class for the register class of the value type.
+  /// For example, on i386 the rep register class for i8, i16, and i32 are GR32;
+  /// while the rep register class is GR64 on x86_64.
+  virtual const TargetRegisterClass *getRepRegClassFor(EVT VT) const {
+    assert(VT.isSimple() && "getRegClassFor called on illegal type!");
+    const TargetRegisterClass *RC = RepRegClassForVT[VT.getSimpleVT().SimpleTy];
+    assert(RC && "This value type is not natively supported!");
+    return RC;
+  }
+
   /// isTypeLegal - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
@@ -1562,6 +1574,12 @@ private:
   unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
   EVT RegisterTypeForVT[MVT::LAST_VALUETYPE];
 
+  /// RepRegClassForVT - This indicates the "representative" register class to
+  /// use for each ValueType the target supports natively. This information is
+  /// used by the scheduler to track register pressure. e.g. On x86, i8, i16,
+  /// and i32's representative class would be GR32.
+  const TargetRegisterClass *RepRegClassForVT[MVT::LAST_VALUETYPE];
+
   /// Synthesizable indicates whether it is OK for the compiler to create new
   /// operations using this type.  All Legal types are Synthesizable except
   /// MMX types on X86.  Non-Legal types are not Synthesizable.
@@ -1672,6 +1690,20 @@ protected:
   /// This field specifies whether the target can benefit from code placement
   /// optimization.
   bool benefitFromCodePlacementOpt;
+
+private:
+  /// isLegalRC - Return true if the value types that can be represented by the
+  /// specified register class are all legal.
+  bool isLegalRC(const TargetRegisterClass *RC) const;
+
+  /// hasLegalSuperRegRegClasses - Return true if the specified register class
+  /// has one or more super-reg register classes that are legal.
+  bool hasLegalSuperRegRegClasses(const TargetRegisterClass *RC);
+
+  /// findRepresentativeClass - Return the largest legal super-reg register class
+  /// of the specified register class.
+  const TargetRegisterClass *
+  findRepresentativeClass(const TargetRegisterClass *RC);
 };
 
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,

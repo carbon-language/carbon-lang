@@ -651,6 +651,50 @@ static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
   return NumVectorRegs;
 }
 
+/// isLegalRC - Return true if the value types that can be represented by the
+/// specified register class are all legal.
+bool TargetLowering::isLegalRC(const TargetRegisterClass *RC) const {
+  for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
+       I != E; ++I) {
+    if (isTypeLegal(*I))
+      return true;
+  }
+  return false;
+}
+
+/// hasLegalSuperRegRegClasses - Return true if the specified register class
+/// has one or more super-reg register classes that are legal.
+bool TargetLowering::hasLegalSuperRegRegClasses(const TargetRegisterClass *RC) {
+  if (*RC->superregclasses_begin() == 0)
+    return false;
+  for (TargetRegisterInfo::regclass_iterator I = RC->superregclasses_begin(),
+         E = RC->superregclasses_end(); I != E; ++I) {
+    const TargetRegisterClass *RRC = *I;
+    if (isLegalRC(RRC))
+      return true;
+  }
+  return false;
+}
+
+/// findRepresentativeClass - Return the largest legal super-reg register class
+/// of the specified register class.
+const TargetRegisterClass *
+TargetLowering::findRepresentativeClass(const TargetRegisterClass *RC) {
+  if (!RC) return 0;
+
+  const TargetRegisterClass *BestRC = RC;
+  for (TargetRegisterInfo::regclass_iterator I = RC->superregclasses_begin(),
+         E = RC->superregclasses_end(); I != E; ++I) {
+    const TargetRegisterClass *RRC = *I;
+    if (RRC->isASubClass() || !isLegalRC(RRC))
+      continue;
+    if (!hasLegalSuperRegRegClasses(RRC))
+      return RRC;
+    BestRC = RRC;
+  }
+  return BestRC;
+}
+
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
@@ -770,6 +814,14 @@ void TargetLowering::computeRegisterProperties() {
       }
     }
   }
+
+  // Determine the 'representative' register class for each value type.
+  // An representative register class is the largest (meaning one which is
+  // not a sub-register class / subreg register class) legal register class for
+  // a group of value types. For example, on i386, i8, i16, and i32
+  // representative would be GR32; while on x86_64 it's GR64.
+  for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i)
+    RepRegClassForVT[i] = findRepresentativeClass(RegClassForVT[i]);
 }
 
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
