@@ -11,7 +11,7 @@
 using namespace llvm;
 
 TargetAsmParser::TargetAsmParser(const Target &T) 
-  : TheTarget(T)
+  : TheTarget(T), AvailableFeatures(0)
 {
 }
 

@@ -9,6 +9,7 @@
 
 #include "llvm/Target/TargetAsmParser.h"
 #include "X86.h"
+#include "X86Subtarget.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -51,11 +52,13 @@ private:
 
   void InstructionCleanup(MCInst &Inst);
 
-  /// @name Auto-generated Match Functions
-  /// {
-
   bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst);
+
+  /// @name Auto-generated Matcher Functions
+  /// {
+
+  unsigned ComputeAvailableFeatures(const X86Subtarget *Subtarget) const;
 
   bool MatchInstructionImpl(
     const SmallVectorImpl<MCParsedAsmOperand*> &Operands, MCInst &Inst);
@@ -64,7 +67,12 @@ private:
 
 public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &TM)
-    : TargetAsmParser(T), Parser(_Parser), TM(TM) {}
+    : TargetAsmParser(T), Parser(_Parser), TM(TM) {
+
+    // Initialize the set of available features.
+    setAvailableFeatures(ComputeAvailableFeatures(
+                           &TM.getSubtarget<X86Subtarget>()));
+  }
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
