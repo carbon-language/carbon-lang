@@ -315,6 +315,10 @@ struct OptionDescription {
   bool isList() const
   { return OptionType::IsList(this->Type); }
 
+  bool isParameterList() const
+  { return (OptionType::IsList(this->Type)
+            && !OptionType::IsSwitchList(this->Type)); }
+
 };
 
 void OptionDescription::CheckConsistency() const {
@@ -471,8 +475,11 @@ public:
   const OptionDescription& FindSwitch(const std::string& OptName) const;
   const OptionDescription& FindParameter(const std::string& OptName) const;
   const OptionDescription& FindList(const std::string& OptName) const;
+  const OptionDescription& FindParameterList(const std::string& OptName) const;
   const OptionDescription&
   FindListOrParameter(const std::string& OptName) const;
+  const OptionDescription&
+  FindParameterListOrParameter(const std::string& OptName) const;
 
   /// insertDescription - Insert new OptionDescription into
   /// OptionDescriptions list
@@ -510,6 +517,14 @@ OptionDescriptions::FindList(const std::string& OptName) const {
 }
 
 const OptionDescription&
+OptionDescriptions::FindParameterList(const std::string& OptName) const {
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if (!OptDesc.isList() || OptDesc.isSwitchList())
+    throw OptName + ": incorrect option type - should be a parameter list!";
+  return OptDesc;
+}
+
+const OptionDescription&
 OptionDescriptions::FindParameter(const std::string& OptName) const {
   const OptionDescription& OptDesc = this->FindOption(OptName);
   if (!OptDesc.isParameter())
@@ -523,6 +538,16 @@ OptionDescriptions::FindListOrParameter(const std::string& OptName) const {
   if (!OptDesc.isList() && !OptDesc.isParameter())
     throw OptName
       + ": incorrect option type - should be a list or parameter!";
+  return OptDesc;
+}
+
+const OptionDescription&
+OptionDescriptions::FindParameterListOrParameter
+(const std::string& OptName) const {
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if ((!OptDesc.isList() && !OptDesc.isParameter()) || OptDesc.isSwitchList())
+    throw OptName
+      + ": incorrect option type - should be a parameter list or parameter!";
   return OptDesc;
 }
 
@@ -679,8 +704,8 @@ private:
 
   void onCommaSeparated (const DagInit& d) {
     CheckNumberOfArguments(d, 0);
-    if (!optDesc_.isList())
-      throw "'comma_separated' is valid only on list options!";
+    if (!optDesc_.isParameterList())
+      throw "'comma_separated' is valid only on parameter list options!";
     optDesc_.setCommaSeparated();
   }
 
@@ -747,7 +772,7 @@ private:
     if (val < 2)
       throw "Error in the 'multi_val' property: "
         "the value must be greater than 1!";
-    if (!optDesc_.isList())
+    if (!optDesc_.isParameterList())
       throw "The multi_val property is valid only on list options!";
     optDesc_.MultiVal = val;
   }
@@ -1453,7 +1478,7 @@ bool EmitCaseTest2Args(const std::string& TestName,
     return true;
   }
   else if (TestName == "element_in_list") {
-    const OptionDescription& OptDesc = OptDescs.FindList(OptName);
+    const OptionDescription& OptDesc = OptDescs.FindParameterList(OptName);
     const std::string& VarName = OptDesc.GenVariableName();
     O << "std::find(" << VarName << ".begin(),\n";
     O.indent(IndentLevel + Indent1)
@@ -2026,7 +2051,7 @@ class EmitActionHandlersCallback :
   {
     CheckNumberOfArguments(Dag, 1);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
-    const OptionDescription& D = OptDescs.FindListOrParameter(Name);
+    const OptionDescription& D = OptDescs.FindParameterListOrParameter(Name);
 
     if (D.isSwitchList()) {
       throw std::runtime_error
@@ -2061,7 +2086,7 @@ class EmitActionHandlersCallback :
     CheckNumberOfArguments(Dag, 2);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     const std::string& Hook = InitPtrToString(Dag.getArg(1));
-    const OptionDescription& D = OptDescs.FindListOrParameter(Name);
+    const OptionDescription& D = OptDescs.FindParameterListOrParameter(Name);
 
     O.indent(IndentLevel) << "vec.push_back(std::make_pair("
                           << D.GenVariableName() << ".getPosition("
@@ -2527,8 +2552,15 @@ class EmitPreprocessOptionsCallback :
       O.indent(IndentLevel) << OptDesc.GenVariableName() << ".clear();\n";
       for (ListInit::const_iterator B = List.begin(), E = List.end();
            B != E; ++B) {
-        O.indent(IndentLevel) << OptDesc.GenVariableName() << ".push_back(\""
-                              << InitPtrToString(*B) << "\");\n";
+        const Init* CurElem = *B;
+        if (OptDesc.isSwitchList())
+          CheckBooleanConstant(CurElem);
+
+        O.indent(IndentLevel)
+          << OptDesc.GenVariableName() << ".push_back(\""
+          << (OptDesc.isSwitchList() ? CurElem->getAsString()
+              : InitPtrToString(CurElem))
+          << "\");\n";
       }
     }
     else if (OptDesc.isSwitch()) {
@@ -2797,7 +2829,8 @@ public:
       CheckNumberOfArguments(Dag, 2);
       const std::string& OptName = InitPtrToString(Dag.getArg(0));
       const std::string& HookName = InitPtrToString(Dag.getArg(1));
-      const OptionDescription& D = OptDescs_.FindOption(OptName);
+      const OptionDescription& D =
+        OptDescs_.FindParameterListOrParameter(OptName);
 
       HookNames_[HookName] = HookInfo(D.isList() ? HookInfo::ListHook
                                       : HookInfo::ArgHook);
