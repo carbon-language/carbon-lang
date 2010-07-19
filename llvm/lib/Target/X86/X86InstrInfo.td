@@ -650,9 +650,9 @@ let Uses = [ECX], isBranch = 1, isTerminator = 1 in
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst",
-                     [(brind GR32:$dst)]>;
+                     [(brind GR32:$dst)]>, Requires<[In32BitMode]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
-                     [(brind (loadi32 addr:$dst))]>;
+                     [(brind (loadi32 addr:$dst))]>, Requires<[In32BitMode]>;
                      
   def FARJMP16i  : Iseg16<0xEA, RawFrm, (outs), 
                           (ins i16imm:$seg, i16imm:$off),

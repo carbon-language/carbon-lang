@@ -415,3 +415,6 @@ retl
 // CHECK:  encoding: [0x61]
         	popal
 
+// CHECK: jmpl *8(%eax)
+// CHECK:   encoding: [0xff,0x60,0x08]
+	jmp	*8(%eax)

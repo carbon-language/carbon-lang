@@ -217,9 +217,9 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP64pcrel32 : I<0xE9, RawFrm, (outs), (ins brtarget:$dst), 
                        "jmp{q}\t$dst", []>;
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst",
-                     [(brind GR64:$dst)]>;
+                     [(brind GR64:$dst)]>, Requires<[In64BitMode]>;
   def JMP64m     : I<0xFF, MRM4m, (outs), (ins i64mem:$dst), "jmp{q}\t{*}$dst",
-                     [(brind (loadi64 addr:$dst))]>;
+                     [(brind (loadi64 addr:$dst))]>, Requires<[In64BitMode]>;
   def FARJMP64   : RI<0xFF, MRM5m, (outs), (ins opaque80mem:$dst),
                       "ljmp{q}\t{*}$dst", []>;
 }
