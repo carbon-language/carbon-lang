@@ -767,6 +767,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
   // Select the appropriate action.
+  bool IsRewriter = false;
   if (isa<AnalyzeJobAction>(JA)) {
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
     CmdArgs.push_back("-analyze");
@@ -813,6 +814,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-emit-pch");
     } else if (JA.getType() == types::TY_RewrittenObjC) {
       CmdArgs.push_back("-rewrite-objc");
+      IsRewriter = true;
     } else {
       assert(JA.getType() == types::TY_PP_Asm &&
              "Unexpected output type!");
@@ -1285,9 +1287,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                options::OPT_fno_gnu_keywords))
     A->render(Args, CmdArgs);
 
-  // -fnext-runtime is default.
+  // -fnext-runtime defaults to on Darwin and when rewriting Objective-C, and is
+  // -the -cc1 default.
+  bool NeXTRuntimeIsDefault = 
+    IsRewriter || getToolChain().getTriple().getOS() == llvm::Triple::Darwin;
   if (!Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
-                    getToolChain().getTriple().getOS() == llvm::Triple::Darwin))
+                    NeXTRuntimeIsDefault))
     CmdArgs.push_back("-fgnu-runtime");
 
   // -fobjc-nonfragile-abi=0 is default.
