@@ -753,31 +753,39 @@ void RAFast::AllocateBasicBlock() {
 
     // Debug values are not allowed to change codegen in any way.
     if (MI->isDebugValue()) {
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isReg()) continue;
-        unsigned Reg = MO.getReg();
-        if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-        LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
-        if (LRI != LiveVirtRegs.end())
-          setPhysReg(MI, i, LRI->second.PhysReg);
-        else {
-          int SS = StackSlotForVirtReg[Reg];
-          if (SS == -1)
-            MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
+      bool ScanDbgValue = true;
+      while (ScanDbgValue) {
+        ScanDbgValue = false;
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+          MachineOperand &MO = MI->getOperand(i);
+          if (!MO.isReg()) continue;
+          unsigned Reg = MO.getReg();
+          if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+          LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
+          if (LRI != LiveVirtRegs.end())
+            setPhysReg(MI, i, LRI->second.PhysReg);
           else {
-            // Modify DBG_VALUE now that the value is in a spill slot.
-            uint64_t Offset = MI->getOperand(1).getImm();
-            const MDNode *MDPtr = 
-              MI->getOperand(MI->getNumOperands()-1).getMetadata();
-            DebugLoc DL = MI->getDebugLoc();
-            if (MachineInstr *NewDV = 
-                TII->emitFrameIndexDebugValue(*MF, SS, Offset, MDPtr, DL)) {
-              DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
-              MachineBasicBlock *MBB = MI->getParent();
-              MBB->insert(MBB->erase(MI), NewDV);
-            } else
+            int SS = StackSlotForVirtReg[Reg];
+            if (SS == -1)
               MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
+            else {
+              // Modify DBG_VALUE now that the value is in a spill slot.
+              uint64_t Offset = MI->getOperand(1).getImm();
+              const MDNode *MDPtr = 
+                MI->getOperand(MI->getNumOperands()-1).getMetadata();
+              DebugLoc DL = MI->getDebugLoc();
+              if (MachineInstr *NewDV = 
+                  TII->emitFrameIndexDebugValue(*MF, SS, Offset, MDPtr, DL)) {
+                DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
+                MachineBasicBlock *MBB = MI->getParent();
+                MBB->insert(MBB->erase(MI), NewDV);
+                // Scan NewDV operands from the beginning.
+                MI = NewDV;
+                ScanDbgValue = true;
+                break;
+              } else
+                MO.setReg(0); // We can't allocate a physreg for a DebugValue, sorry!
+            }
           }
         }
       }
