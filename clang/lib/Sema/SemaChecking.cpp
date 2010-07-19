@@ -1160,6 +1160,11 @@ public:
   void HandleNullChar(const char *nullCharacter);
 
 protected:
+  bool HandleInvalidConversionSpecifier(unsigned argIndex, SourceLocation Loc,
+                                        const char *startSpec,
+                                        unsigned specifierLen,
+                                        const char *csStart, unsigned csLen);
+  
   SourceRange getFormatStringRange();
   CharSourceRange getSpecifierRange(const char *startSpecifier,
                                     unsigned specifierLen);
@@ -1237,6 +1242,36 @@ void CheckFormatHandler::DoneProcessing() {
   }
 }
 
+bool
+CheckFormatHandler::HandleInvalidConversionSpecifier(unsigned argIndex,
+                                                     SourceLocation Loc,
+                                                     const char *startSpec,
+                                                     unsigned specifierLen,
+                                                     const char *csStart,
+                                                     unsigned csLen) {
+  
+  bool keepGoing = true;
+  if (argIndex < NumDataArgs) {
+    // Consider the argument coverered, even though the specifier doesn't
+    // make sense.
+    CoveredArgs.set(argIndex);
+  }
+  else {
+    // If argIndex exceeds the number of data arguments we
+    // don't issue a warning because that is just a cascade of warnings (and
+    // they may have intended '%%' anyway). We don't want to continue processing
+    // the format string after this point, however, as we will like just get
+    // gibberish when trying to match arguments.
+    keepGoing = false;
+  }
+  
+  S.Diag(Loc, diag::warn_format_invalid_conversion)
+    << llvm::StringRef(csStart, csLen)
+    << getSpecifierRange(startSpec, specifierLen);
+  
+  return keepGoing;
+}
+
 //===--- CHECK: Printf format string checking ------------------------------===//
 
 namespace {
@@ -1281,31 +1316,13 @@ bool CheckPrintfHandler::HandleInvalidPrintfConversionSpecifier(
                                       const analyze_printf::PrintfSpecifier &FS,
                                       const char *startSpecifier,
                                       unsigned specifierLen) {
-  
-  unsigned argIndex = FS.getArgIndex();
-  bool keepGoing = true;
-  if (argIndex < NumDataArgs) {
-      // Consider the argument coverered, even though the specifier doesn't
-      // make sense.
-    CoveredArgs.set(argIndex);
-  }
-  else {
-    // If argIndex exceeds the number of data arguments we
-    // don't issue a warning because that is just a cascade of warnings (and
-    // they may have intended '%%' anyway). We don't want to continue processing
-    // the format string after this point, however, as we will like just get
-    // gibberish when trying to match arguments.
-    keepGoing = false;
-  }
-  
   const analyze_printf::ConversionSpecifier &CS =
-  FS.getConversionSpecifier();
-  SourceLocation Loc = getLocationOfByte(CS.getStart());
-  S.Diag(Loc, diag::warn_printf_invalid_conversion)
-  << llvm::StringRef(CS.getStart(), CS.getLength())
-  << getSpecifierRange(startSpecifier, specifierLen);
+    FS.getConversionSpecifier();
   
-  return keepGoing;
+  return HandleInvalidConversionSpecifier(FS.getArgIndex(),
+                                          getLocationOfByte(CS.getStart()),
+                                          startSpecifier, specifierLen,
+                                          CS.getStart(), CS.getLength());
 }
 
 bool CheckPrintfHandler::HandleAmount(
@@ -1596,6 +1613,11 @@ public:
   bool HandleScanfSpecifier(const analyze_scanf::ScanfSpecifier &FS,
                             const char *startSpecifier,
                             unsigned specifierLen);
+  
+  bool HandleInvalidScanfConversionSpecifier(
+          const analyze_scanf::ScanfSpecifier &FS,
+          const char *startSpecifier,
+          unsigned specifierLen);
 
   void HandleIncompleteScanList(const char *start, const char *end);
 };
@@ -1605,6 +1627,20 @@ void CheckScanfHandler::HandleIncompleteScanList(const char *start,
                                                  const char *end) {
   S.Diag(getLocationOfByte(end), diag::warn_scanf_scanlist_incomplete)
     << getSpecifierRange(start, end - start);
+}
+
+bool CheckScanfHandler::HandleInvalidScanfConversionSpecifier(
+                                        const analyze_scanf::ScanfSpecifier &FS,
+                                        const char *startSpecifier,
+                                        unsigned specifierLen) {
+
+  const analyze_scanf::ConversionSpecifier &CS =
+    FS.getConversionSpecifier();
+
+  return HandleInvalidConversionSpecifier(FS.getArgIndex(),
+                                          getLocationOfByte(CS.getStart()),
+                                          startSpecifier, specifierLen,
+                                          CS.getStart(), CS.getLength());
 }
 
 bool CheckScanfHandler::HandleScanfSpecifier(

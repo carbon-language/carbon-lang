@@ -15,4 +15,5 @@ void test(const char *s, int *i) {
 
   unsigned short s_x;
   scanf ("%" "hu" "\n", &s_x); // no-warning
+  scanf("%y", i); // expected-warning{{invalid conversion specifier 'y'}}
 }
