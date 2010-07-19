@@ -19,9 +19,12 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
@@ -173,19 +176,107 @@ extern int cc1_main(const char **ArgBegin, const char **ArgEnd,
 extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
                       const char *Argv0, void *MainAddr);
 
-int main(int argc, const char **argv) {
+static bool ExpandArgsFromBuf(const char *FName,
+                              std::vector<const char*> &ArgVector,
+                              std::set<std::string> &SavedStrings) {
+  llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName);
+  if (!MemBuf) {
+    llvm::report_fatal_error(std::string("error: could not open file ") +
+                             FName + "\n");
+    return true;
+  }
+
+  const char *Buf = MemBuf->getBufferStart();
+  char InQuote = ' ';
+  std::string CurArg;
+
+  for (const char *P = Buf; ; ++P) {
+    if (*P == '\0' || (isspace(*P) && InQuote == ' ')) {
+      if (!CurArg.empty()) {
+
+        if (CurArg[0] != '@') {
+          ArgVector.push_back(SaveStringInSet(SavedStrings, CurArg));
+        } else {
+          const char *NestedName = &CurArg[1];
+          if (ExpandArgsFromBuf(NestedName, ArgVector, SavedStrings)) {
+            delete MemBuf;
+            return true;
+          }
+        }
+
+        CurArg = "";
+      }
+      if (*P == '\0')
+        break;
+      else
+        continue;
+    }
+
+    if (isspace(*P)) {
+      if (InQuote != ' ')
+        CurArg.push_back(*P);
+      continue;
+    }
+
+    if (*P == '"' || *P == '\'') {
+      if (InQuote == *P)
+        InQuote = ' ';
+      else if (InQuote == ' ')
+        InQuote = *P;
+      else
+        CurArg.push_back(*P);
+      continue;
+    }
+
+    if (*P == '\\') {
+      ++P;
+      if (*P != '\0')
+        CurArg.push_back(*P);
+      continue;
+    }
+    CurArg.push_back(*P);
+  }
+  delete MemBuf;
+  return false;
+}
+
+static bool ExpandArgv(int argc, const char **argv,
+                       std::vector<const char*> &ArgVector,
+                       std::set<std::string> &SavedStrings) {
+  for (int i = 0; i < argc; ++i) {
+    const char *Arg = argv[i];
+    if (Arg[0] != '@') {
+      ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(Arg)));
+      continue;
+    }
+
+    const char *FName = Arg + 1;
+    if (ExpandArgsFromBuf(FName, ArgVector, SavedStrings))
+      return false;
+  }
+  return false;
+}
+
+int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  llvm::PrettyStackTraceProgram X(argc, argv);
+  llvm::PrettyStackTraceProgram X(argc_, argv_);
+
+  std::set<std::string> SavedStrings;
+  std::vector<const char*> argv;
+
+  bool ret = ExpandArgv(argc_, argv_, argv, SavedStrings);
+  if (ret)
+    return 1;
 
   // Handle -cc1 integrated tools.
-  if (argc > 1 && llvm::StringRef(argv[1]).startswith("-cc1")) {
+  if (argv.size() > 1 && llvm::StringRef(argv[1]).startswith("-cc1")) {
     llvm::StringRef Tool = argv[1] + 4;
 
     if (Tool == "")
-      return cc1_main(argv+2, argv+argc, argv[0],
+      return cc1_main(&argv[2], &argv[argv.size()], argv[0],
                       (void*) (intptr_t) GetExecutablePath);
     if (Tool == "as")
-      return cc1as_main(argv+2, argv+argc, argv[0],
+      return cc1as_main(&argv[2], &argv[argv.size()], argv[0],
                       (void*) (intptr_t) GetExecutablePath);
 
     // Reject unknown tools.
@@ -194,7 +285,7 @@ int main(int argc, const char **argv) {
   }
 
   bool CanonicalPrefixes = true;
-  for (int i = 1; i < argc; ++i) {
+  for (int i = 1, size = argv.size(); i < size; ++i) {
     if (llvm::StringRef(argv[i]) == "-no-canonical-prefixes") {
       CanonicalPrefixes = false;
       break;
@@ -230,7 +321,8 @@ int main(int argc, const char **argv) {
   // being a symlink.
   //
   // We use *argv instead of argv[0] to work around a bogus g++ warning.
-  std::string ProgName(llvm::sys::Path(*argv).getBasename());
+  const char *progname = argv_[0];
+  std::string ProgName(llvm::sys::Path(progname).getBasename());
   if (llvm::StringRef(ProgName).endswith("++") ||
       llvm::StringRef(ProgName).rsplit('-').first.endswith("++")) {
     TheDriver.CCCIsCXX = true;
@@ -246,34 +338,30 @@ int main(int argc, const char **argv) {
 
   // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
   // command line behind the scenes.
-  std::set<std::string> SavedStrings;
-  std::vector<const char*> StringPointers(argv, argv + argc);
   if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {
     // FIXME: Driver shouldn't take extra initial argument.
-    ApplyQAOverride(StringPointers, OverrideStr, SavedStrings);
+    ApplyQAOverride(argv, OverrideStr, SavedStrings);
   } else if (const char *Cur = ::getenv("CCC_ADD_ARGS")) {
     // FIXME: Driver shouldn't take extra initial argument.
-    StringPointers.clear();
-    StringPointers.push_back(argv[0]);
+    std::vector<const char*> ExtraArgs;
 
     for (;;) {
       const char *Next = strchr(Cur, ',');
 
       if (Next) {
-        StringPointers.push_back(SaveStringInSet(SavedStrings,
-                                                 std::string(Cur, Next)));
+        ExtraArgs.push_back(SaveStringInSet(SavedStrings,
+                                            std::string(Cur, Next)));
         Cur = Next + 1;
       } else {
         if (*Cur != '\0')
-          StringPointers.push_back(SaveStringInSet(SavedStrings, Cur));
+          ExtraArgs.push_back(SaveStringInSet(SavedStrings, Cur));
         break;
       }
     }
 
-    StringPointers.insert(StringPointers.end(), argv + 1, argv + argc);
+    argv.insert(++argv.begin(), ExtraArgs.begin(), ExtraArgs.end());
   }
-  C.reset(TheDriver.BuildCompilation(StringPointers.size(),
-                                     &StringPointers[0]));
+  C.reset(TheDriver.BuildCompilation(argv.size(), &argv[0]));
 
   int Res = 0;
   if (C.get())
