@@ -1025,17 +1025,23 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
 /// moffs8, moffs16 and moffs32 versions of moves.  The immediate is a
 /// 32-bit offset from the PC.  These are only valid in x86-32 mode.
 def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
-                   "mov{b}\t{$src, %al|%al, $src}", []>;
+                   "mov{b}\t{$src, %al|%al, $src}", []>,
+                   Requires<[In32BitMode]>;
 def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
-                      "mov{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+                      "mov{w}\t{$src, %ax|%ax, $src}", []>, OpSize,
+                     Requires<[In32BitMode]>;
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
-                      "mov{l}\t{$src, %eax|%eax, $src}", []>;
+                      "mov{l}\t{$src, %eax|%eax, $src}", []>,
+                     Requires<[In32BitMode]>;
 def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
-                   "mov{b}\t{%al, $dst|$dst, %al}", []>;
+                   "mov{b}\t{%al, $dst|$dst, %al}", []>,
+                  Requires<[In32BitMode]>;
 def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
-                      "mov{w}\t{%ax, $dst|$dst, %ax}", []>, OpSize;
+                      "mov{w}\t{%ax, $dst|$dst, %ax}", []>, OpSize,
+                     Requires<[In32BitMode]>;
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
-                      "mov{l}\t{%eax, $dst|$dst, %eax}", []>;
+                      "mov{l}\t{%eax, $dst|$dst, %eax}", []>,
+                     Requires<[In32BitMode]>;
                       
 // Moves to and from segment registers
 def MOV16rs : I<0x8C, MRMDestReg, (outs GR16:$dst), (ins SEGMENT_REG:$src),
