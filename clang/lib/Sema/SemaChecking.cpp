@@ -1434,16 +1434,18 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   using namespace analyze_printf;  
   const ConversionSpecifier &CS = FS.getConversionSpecifier();
 
-  if (atFirstArg) {
-    atFirstArg = false;
-    usesPositionalArgs = FS.usesPositionalArg();
-  }
-  else if (usesPositionalArgs != FS.usesPositionalArg()) {
-    // Cannot mix-and-match positional and non-positional arguments.
-    S.Diag(getLocationOfByte(CS.getStart()),
-           diag::warn_format_mix_positional_nonpositional_args)
-      << getSpecifierRange(startSpecifier, specifierLen);
-    return false;
+  if (FS.consumesDataArgument()) {
+    if (atFirstArg) {
+        atFirstArg = false;
+        usesPositionalArgs = FS.usesPositionalArg();
+    }
+    else if (usesPositionalArgs != FS.usesPositionalArg()) {
+      // Cannot mix-and-match positional and non-positional arguments.
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_format_mix_positional_nonpositional_args)
+        << getSpecifierRange(startSpecifier, specifierLen);
+      return false;
+    }
   }
 
   // First check if the field width, precision, and conversion specifier
@@ -1653,18 +1655,20 @@ bool CheckScanfHandler::HandleScanfSpecifier(
 
   const ConversionSpecifier &CS = FS.getConversionSpecifier();
 
-  // FIXME: Handle case where '%' and '*' don't consume an argument.
-  // This needs to be done for the printf case as well.
-  if (atFirstArg) {
-    atFirstArg = false;
-    usesPositionalArgs = FS.usesPositionalArg();
-  }
-  else if (usesPositionalArgs != FS.usesPositionalArg()) {
-    // Cannot mix-and-match positional and non-positional arguments.
-    S.Diag(getLocationOfByte(CS.getStart()),
-           diag::warn_format_mix_positional_nonpositional_args)
-      << getSpecifierRange(startSpecifier, specifierLen);
-    return false;
+  // Handle case where '%' and '*' don't consume an argument.  These shouldn't
+  // be used to decide if we are using positional arguments consistently.
+  if (FS.consumesDataArgument()) {
+    if (atFirstArg) {
+      atFirstArg = false;
+      usesPositionalArgs = FS.usesPositionalArg();
+    }
+    else if (usesPositionalArgs != FS.usesPositionalArg()) {
+      // Cannot mix-and-match positional and non-positional arguments.
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_format_mix_positional_nonpositional_args)
+        << getSpecifierRange(startSpecifier, specifierLen);
+      return false;
+    }
   }
   
   // Check if the field with is non-zero.

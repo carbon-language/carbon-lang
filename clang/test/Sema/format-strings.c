@@ -239,6 +239,8 @@ void test_positional_arguments() {
   printf("%1$2.2d", (int) 2); // no-warning
   printf("%2$*1$.2d", (int) 2, (int) 3); // no-warning
   printf("%2$*8$d", (int) 2, (int) 3); // expected-warning{{specified field width is missing a matching 'int' argument}}
+  printf("%%%1$d", (int) 2); // no-warning
+  printf("%1$d%%", (int) 2); // no-warning
 }
 
 // PR 6697 - Handle format strings where the data argument is not adjacent to the format string

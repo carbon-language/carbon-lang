@@ -220,17 +220,14 @@ public:
   void setUsesPositionalArg() { UsesPositionalArg = true; }
 
   void setArgIndex(unsigned i) {
-      // assert(CS.consumesDataArgument());
     argIndex = i;
   }
 
   unsigned getArgIndex() const {
-      //assert(CS.consumesDataArgument());
     return argIndex;
   }
 
   unsigned getPositionalArgIndex() const {
-      //assert(CS.consumesDataArgument());
     return argIndex + 1;
   }
 
@@ -402,12 +399,16 @@ public:
   const OptionalAmount &getPrecision() const {
     return Precision;
   }
+  
+  bool consumesDataArgument() const {
+    return CS.consumesDataArgument();
+  }
 
-    /// \brief Returns the builtin type that a data argument
-    /// paired with this format specifier should have.  This method
-    /// will return null if the format specifier does not have
-    /// a matching data argument or the matching argument matches
-    /// more than one type.
+  /// \brief Returns the builtin type that a data argument
+  /// paired with this format specifier should have.  This method
+  /// will return null if the format specifier does not have
+  /// a matching data argument or the matching argument matches
+  /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
   const OptionalFlag &isLeftJustified() const { return IsLeftJustified; }

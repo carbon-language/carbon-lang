@@ -16,4 +16,11 @@ void test(const char *s, int *i) {
   unsigned short s_x;
   scanf ("%" "hu" "\n", &s_x); // no-warning
   scanf("%y", i); // expected-warning{{invalid conversion specifier 'y'}}
+  scanf("%%"); // no-warning
+  scanf("%%%1$d", i); // no-warning
+  scanf("%1$d%%", i); // no-warning
+  scanf("%d", i, i); // expected-warning{{data argument not used by format string}}
+  scanf("%*d", i); // // expected-warning{{data argument not used by format string}}
+  scanf("%*d", i); // // expected-warning{{data argument not used by format string}}
+  scanf("%*d%1$d", i); // no-warning
 }
