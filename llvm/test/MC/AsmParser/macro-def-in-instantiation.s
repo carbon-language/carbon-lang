@@ -1,4 +1,4 @@
-// RUN: llvm-mc %s | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin10 %s | FileCheck %s
 
 .macro .make_macro
 $0 $1
