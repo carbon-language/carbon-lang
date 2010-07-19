@@ -47,6 +47,7 @@ class MCStreamer;
 template <typename T> class SmallVectorImpl;
 class SourceMgr;
 class Target;
+class TargetMachine;
 class TargetRegisterInfo;
 
 struct EDInstInfo;
@@ -127,6 +128,8 @@ struct EDDisassembler {
   CPUKey Key;
   /// The LLVM target corresponding to the disassembler
   const llvm::Target *Tgt;
+  /// The target machien instance.
+  llvm::OwningPtr<llvm::TargetMachine> TargetMachine;
   /// The assembly information for the target architecture
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
   /// The disassembler for the target architecture

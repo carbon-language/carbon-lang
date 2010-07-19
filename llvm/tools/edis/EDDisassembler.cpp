@@ -175,11 +175,10 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   std::string featureString;
   
-  OwningPtr<const TargetMachine>
-    targetMachine(Tgt->createTargetMachine(tripleString,
-                                           featureString));
+  TargetMachine.reset(Tgt->createTargetMachine(tripleString,
+                                               featureString));
   
-  const TargetRegisterInfo *registerInfo = targetMachine->getRegisterInfo();
+  const TargetRegisterInfo *registerInfo = TargetMachine->getRegisterInfo();
   
   if (!registerInfo)
     return;
@@ -209,7 +208,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   SpecificAsmLexer.reset(Tgt->createAsmLexer(*AsmInfo));
   SpecificAsmLexer->InstallLexer(*GenericAsmLexer);
   
-  initMaps(*targetMachine->getRegisterInfo());
+  initMaps(*TargetMachine->getRegisterInfo());
     
   Valid = true;
 }
