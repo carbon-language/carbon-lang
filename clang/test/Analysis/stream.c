@@ -6,6 +6,7 @@ typedef struct _IO_FILE FILE;
 #define SEEK_CUR	1	/* Seek from current position.  */
 #define SEEK_END	2	/* Seek from end of file.  */
 extern FILE *fopen(const char *path, const char *mode);
+extern int fclose(FILE *fp);
 extern size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 extern int fseek (FILE *__stream, long int __off, int __whence);
 extern long int ftell (FILE *__stream);
@@ -38,4 +39,10 @@ void f5(void) {
     return;
   fseek(p, 1, SEEK_SET); // no-warning
   fseek(p, 1, 3); // expected-warning {{The whence argument to fseek() should be SEEK_SET, SEEK_END, or SEEK_CUR.}}
+}
+
+void f6(void) {
+  FILE *p = fopen("foo", "r");
+  fclose(p); 
+  fclose(p); // expected-warning {{Try to close a file Descriptor already closed. Cause Undefined Behaviour.}}
 }

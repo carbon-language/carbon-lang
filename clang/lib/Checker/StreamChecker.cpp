@@ -23,18 +23,42 @@ using namespace clang;
 
 namespace {
 
+struct StreamState {
+  enum Kind { Opened, Closed, OpenFailed } K;
+  const Stmt *S;
+
+  StreamState(Kind k, const Stmt *s) : K(k), S(s) {}
+
+  bool isOpened() const { return K == Opened; }
+  bool isClosed() const { return K == Closed; }
+  bool isOpenFailed() const { return K == OpenFailed; }
+
+  bool operator==(const StreamState &X) const {
+    return K == X.K && S == X.S;
+  }
+
+  static StreamState getOpened(const Stmt *s) { return StreamState(Opened, s); }
+  static StreamState getClosed(const Stmt *s) { return StreamState(Closed, s); }
+  static StreamState getOpenFailed(const Stmt *s) { return StreamState(OpenFailed, s); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddInteger(K);
+    ID.AddPointer(S);
+  }
+};
+
 class StreamChecker : public CheckerVisitor<StreamChecker> {
-  IdentifierInfo *II_fopen, *II_fread, *II_fwrite, 
+  IdentifierInfo *II_fopen, *II_fclose,*II_fread, *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
-  BuiltinBug *BT_nullfp, *BT_illegalwhence;
+  BuiltinBug *BT_nullfp, *BT_illegalwhence, *BT_doubleclose;
 
 public:
   StreamChecker() 
-    : II_fopen(0), II_fread(0), II_fwrite(0), 
+    : II_fopen(0), II_fclose(0), II_fread(0), II_fwrite(0), 
       II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
       II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
-      BT_nullfp(0), BT_illegalwhence(0) {}
+      BT_nullfp(0), BT_illegalwhence(0), BT_doubleclose(0) {}
 
   static void *getTag() {
     static int x;
@@ -45,6 +69,7 @@ public:
 
 private:
   void Fopen(CheckerContext &C, const CallExpr *CE);
+  void Fclose(CheckerContext &C, const CallExpr *CE);
   void Fread(CheckerContext &C, const CallExpr *CE);
   void Fwrite(CheckerContext &C, const CallExpr *CE);
   void Fseek(CheckerContext &C, const CallExpr *CE);
@@ -60,9 +85,19 @@ private:
   // Return true indicates the stream pointer is NULL.
   const GRState *CheckNullStream(SVal SV, const GRState *state, 
                                  CheckerContext &C);
+  const GRState *CheckDoubleClose(const CallExpr *CE, const GRState *state, 
+                                 CheckerContext &C);
 };
 
 } // end anonymous namespace
+
+namespace clang {
+  template <>
+  struct GRStateTrait<StreamState> 
+    : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
+    static void *GDMIndex() { return StreamChecker::getTag(); }
+  };
+}
 
 void clang::RegisterStreamChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
@@ -79,6 +114,8 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   ASTContext &Ctx = C.getASTContext();
   if (!II_fopen)
     II_fopen = &Ctx.Idents.get("fopen");
+  if (!II_fclose)
+    II_fclose = &Ctx.Idents.get("fclose");
   if (!II_fread)
     II_fread = &Ctx.Idents.get("fread");
   if (!II_fwrite)
@@ -104,6 +141,10 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   if (FD->getIdentifier() == II_fopen) {
     Fopen(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_fclose) {
+    Fclose(C, CE);
     return true;
   }
   if (FD->getIdentifier() == II_fread) {
@@ -168,8 +209,21 @@ void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) {
   const GRState *stateNotNull, *stateNull;
   llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, RetVal);
 
+  SymbolRef Sym = RetVal.getAsSymbol();
+  assert(Sym);
+
+  // if RetVal is not NULL, set the symbol's state to Opened.
+  stateNotNull = stateNotNull->set<StreamState>(Sym, StreamState::getOpened(CE));
+  stateNull = stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
+
   C.addTransition(stateNotNull);
   C.addTransition(stateNull);
+}
+
+void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = CheckDoubleClose(CE, C.getState(), C);
+  if (state)
+    C.addTransition(state);
 }
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) {
@@ -284,4 +338,33 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
     return 0;
   }
   return stateNotNull;
+}
+
+const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
+					       const GRState *state,
+					       CheckerContext &C) {
+  SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
+  assert(Sym);
+  
+  const StreamState *SS = state->get<StreamState>(Sym);
+  assert(SS);
+  
+  // Check: Double close a File Descriptor could cause undefined behaviour.
+  // Conforming to man-pages
+  if (SS->isClosed()) {
+    ExplodedNode *N = C.GenerateSink();
+    if (N) {
+      if (!BT_doubleclose)
+	BT_doubleclose = new BuiltinBug("Double fclose",
+					"Try to close a file Descriptor already"
+					" closed. Cause undefined behaviour.");
+      BugReport *R = new BugReport(*BT_doubleclose,
+				   BT_doubleclose->getDescription(), N);
+      C.EmitReport(R);
+    }
+    return NULL;
+  }
+  
+  // Close the File Descriptor.
+  return state->set<StreamState>(Sym, StreamState::getClosed(CE));
 }
