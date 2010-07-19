@@ -638,10 +638,14 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
     // If Pass not found then check the interfaces implemented by Immutable Pass
     if (!P) {
-      const std::vector<const PassInfo*> &ImmPI =
-        PI->getInterfacesImplemented();
-      if (std::find(ImmPI.begin(), ImmPI.end(), AID) != ImmPI.end())
-        P = *I;
+      const PassInfo::InterfaceInfo *ImmPI = PI->getInterfacesImplemented();
+      while (ImmPI) {
+        if (ImmPI->interface == AID) {
+          P = *I;
+          break;
+        } else
+          ImmPI = ImmPI->next;
+      }
     }
   }
 
@@ -731,9 +735,11 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
 
   //This pass is the current implementation of all of the interfaces it
   //implements as well.
-  const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-  for (unsigned i = 0, e = II.size(); i != e; ++i)
-    AvailableAnalysis[II[i]] = P;
+  const PassInfo::InterfaceInfo *II = PI->getInterfacesImplemented();
+  while (II) {
+    AvailableAnalysis[II->interface] = P;
+    II = II->next;
+  }
 }
 
 // Return true if P preserves high level analysis used by other
@@ -867,12 +873,13 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
 
     // Remove all interfaces this pass implements, for which it is also
     // listed as the available implementation.
-    const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-    for (unsigned i = 0, e = II.size(); i != e; ++i) {
+    const PassInfo::InterfaceInfo *II = PI->getInterfacesImplemented();
+    while (II) {
       std::map<AnalysisID, Pass*>::iterator Pos =
-        AvailableAnalysis.find(II[i]);
+        AvailableAnalysis.find(II->interface);
       if (Pos != AvailableAnalysis.end() && Pos->second == P)
         AvailableAnalysis.erase(Pos);
+      II = II->next;
     }
   }
 }

@@ -36,6 +36,10 @@ class TargetMachine;
 class PassInfo {
 public:
   typedef Pass* (*NormalCtor_t)();
+  struct InterfaceInfo {
+    const PassInfo *interface;
+    const InterfaceInfo *next;
+  };
 
 private:
   const char      *const PassName;     // Nice name for Pass
@@ -44,7 +48,7 @@ private:
   const bool IsCFGOnlyPass;            // Pass only looks at the CFG.
   const bool IsAnalysis;               // True if an analysis pass.
   const bool IsAnalysisGroup;          // True if an analysis group.
-  std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
+  const InterfaceInfo *ItfImpl;// Interfaces implemented by this pass
 
   NormalCtor_t NormalCtor;
 
@@ -116,13 +120,16 @@ public:
   /// template.
   ///
   void addInterfaceImplemented(const PassInfo *ItfPI) {
-    ItfImpl.push_back(ItfPI);
+    InterfaceInfo *NewInfo = new InterfaceInfo();
+    NewInfo->interface = ItfPI;
+    NewInfo->next = ItfImpl;
+    ItfImpl = NewInfo;
   }
 
   /// getInterfacesImplemented - Return a list of all of the analysis group
   /// interfaces implemented by this pass.
   ///
-  const std::vector<const PassInfo*> &getInterfacesImplemented() const {
+  const InterfaceInfo *getInterfacesImplemented() const {
     return ItfImpl;
   }
 
