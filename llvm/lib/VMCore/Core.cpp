@@ -1515,6 +1515,14 @@ void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {
   unwrap(BBRef)->eraseFromParent();
 }
 
+void LLVMMoveBasicBlockBefore(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos) {
+  unwrap(BB)->moveBefore(unwrap(MovePos));
+}
+
+void LLVMMoveBasicBlockAfter(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos) {
+  unwrap(BB)->moveAfter(unwrap(MovePos));
+}
+
 /*--.. Operations on instructions ..........................................--*/
 
 LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst) {
