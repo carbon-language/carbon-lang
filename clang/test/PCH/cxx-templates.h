@@ -100,3 +100,6 @@ class basic_streambuf
   friend int __copy_streambufs_eof<>(int);
 };
 
+// PR 7660
+template<typename T> struct S_PR7660 { void g(void (*)(T)); };
+ template<> void S_PR7660<int>::g(void(*)(int)) {}

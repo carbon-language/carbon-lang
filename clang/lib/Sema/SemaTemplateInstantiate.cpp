@@ -1067,7 +1067,8 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
 
   CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
-  // Set DeclContext if inside a Block.
+  // FIXME: OldParm may come from a FunctionProtoType, in which case CurContext
+  // can be anything, is this right ?
   NewParm->setDeclContext(CurContext);
   
   return NewParm;  

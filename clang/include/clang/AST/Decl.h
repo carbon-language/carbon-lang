@@ -696,7 +696,7 @@ public:
   /// \endcode
   bool isStaticDataMember() const {
     // If it wasn't static, it would be a FieldDecl.
-    return getDeclContext()->isRecord();
+    return getKind() != Decl::ParmVar && getDeclContext()->isRecord();
   }
 
   virtual VarDecl *getCanonicalDecl();
