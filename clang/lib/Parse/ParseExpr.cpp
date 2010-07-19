@@ -30,8 +30,7 @@
 using namespace clang;
 
 /// getBinOpPrecedence - Return the precedence of the specified binary operator
-/// token.  This returns:
-///
+/// token.
 static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
                                       bool GreaterThanIsOperator,
                                       bool CPlusPlus0x) {
