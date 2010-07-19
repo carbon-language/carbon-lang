@@ -1093,6 +1093,7 @@ def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 [(store GR32:$src, addr:$dst)]>;
 
 /// Versions of MOV32rr, MOV32rm, and MOV32mr for i32mem_TC and GR32_TC.
+let isCodeGenOnly = 1 in {
 let neverHasSideEffects = 1 in
 def MOV32rr_TC : I<0x89, MRMDestReg, (outs GR32_TC:$dst), (ins GR32_TC:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
@@ -1107,10 +1108,12 @@ let mayStore = 1 in
 def MOV32mr_TC : I<0x89, MRMDestMem, (outs), (ins i32mem_TC:$dst, GR32_TC:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 []>;
+}
 
 // Versions of MOV8rr, MOV8mr, and MOV8rm that use i8mem_NOREX and GR8_NOREX so
 // that they can be used for copying and storing h registers, which can't be
 // encoded when a REX prefix is present.
+let isCodeGenOnly = 1 in {
 let neverHasSideEffects = 1 in
 def MOV8rr_NOREX : I<0x88, MRMDestReg,
                      (outs GR8_NOREX:$dst), (ins GR8_NOREX:$src),
@@ -1124,6 +1127,7 @@ let mayLoad = 1,
 def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
                      (outs GR8_NOREX:$dst), (ins i8mem_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
+}
 
 // Moves to and from debug registers
 def MOV32rd : I<0x21, MRMDestReg, (outs GR32:$dst), (ins DEBUG_REG:$src),

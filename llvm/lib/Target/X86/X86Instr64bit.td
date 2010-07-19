@@ -374,6 +374,7 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                       [(store i64immSExt32:$src, addr:$dst)]>;
 
 /// Versions of MOV64rr, MOV64rm, and MOV64mr for i64mem_TC and GR64_TC.
+let isCodeGenOnly = 1 in {
 let neverHasSideEffects = 1 in
 def MOV64rr_TC : RI<0x89, MRMDestReg, (outs GR64_TC:$dst), (ins GR64_TC:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
@@ -388,6 +389,7 @@ let mayStore = 1 in
 def MOV64mr_TC : RI<0x89, MRMDestMem, (outs), (ins i64mem_TC:$dst, GR64_TC:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}",
                 []>;
+}
 
 def MOV64o8a : RIi8<0xA0, RawFrm, (outs), (ins offset8:$src),
                       "mov{q}\t{$src, %rax|%rax, $src}", []>;
