@@ -418,8 +418,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), IdentifierTableData(0), IdentifierLookupTable(0),
-    IdentifierOffsets(0),
+    Consumer(0), IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
@@ -436,7 +435,6 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
@@ -456,7 +454,7 @@ PCHReader::~PCHReader() {
 }
 
 PCHReader::PerFileData::PerFileData()
-  : StatCache(0)
+  : StatCache(0), IdentifierTableData(0), IdentifierLookupTable(0)
 {}
 
 
@@ -730,9 +728,13 @@ bool PCHReader::CheckPredefinesBuffers() {
 
 /// \brief Read the line table in the source manager block.
 /// \returns true if ther was an error.
-bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
+bool PCHReader::ParseLineTable(PerFileData &F,
+                               llvm::SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
+
+  // FIXME: Handle multiple tables!
+  (void)F;
 
   // Parse the file names
   std::map<int, int> FileIDs;
@@ -881,20 +883,20 @@ public:
 } // end anonymous namespace
 
 
-/// \brief Read the source manager block
-PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
+/// \brief Read a source manager block
+PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock(PerFileData &F) {
   using namespace SrcMgr;
 
-  llvm::BitstreamCursor &SLocEntryCursor = Chain[0]->SLocEntryCursor;
+  llvm::BitstreamCursor &SLocEntryCursor = F.SLocEntryCursor;
 
   // Set the source-location entry cursor to the current position in
   // the stream. This cursor will be used to read the contents of the
   // source manager block initially, and then lazily read
   // source-location entries as needed.
-  SLocEntryCursor = Chain[0]->Stream;
+  SLocEntryCursor = F.Stream;
 
   // The stream itself is going to skip over the source manager block.
-  if (Chain[0]->Stream.SkipBlock()) {
+  if (F.Stream.SkipBlock()) {
     Error("malformed block record in PCH file");
     return Failure;
   }
@@ -940,7 +942,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       break;
 
     case pch::SM_LINE_TABLE:
-      if (ParseLineTable(Record))
+      if (ParseLineTable(F, Record))
         return Failure;
       break;
 
@@ -1378,6 +1380,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
 
   // Read all of the records and blocks for the PCH file.
   RecordData Record;
+  bool First = true;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -1417,7 +1420,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
         break;
 
       case pch::SOURCE_MANAGER_BLOCK_ID:
-        switch (ReadSourceManagerBlock()) {
+        switch (ReadSourceManagerBlock(F)) {
         case Success:
           break;
 
@@ -1430,6 +1433,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
         }
         break;
       }
+      First = false;
       continue;
     }
 
@@ -1464,6 +1468,10 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
     }
 
     case pch::CHAINED_METADATA: {
+      if (!First) {
+        Error("CHAINED_METADATA is not first record in block");
+        return Failure;
+      }
       if (Record[0] != pch::VERSION_MAJOR) {
         Diag(Record[0] < pch::VERSION_MAJOR? diag::warn_pch_version_too_old
                                            : diag::warn_pch_version_too_new);
@@ -1504,13 +1512,13 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::IDENTIFIER_TABLE:
-      IdentifierTableData = BlobStart;
+      F.IdentifierTableData = BlobStart;
       if (Record[0]) {
-        IdentifierLookupTable
+        F.IdentifierLookupTable
           = PCHIdentifierLookupTable::Create(
-                        (const unsigned char *)IdentifierTableData + Record[0],
-                        (const unsigned char *)IdentifierTableData,
-                        PCHIdentifierLookupTrait(*this));
+                       (const unsigned char *)F.IdentifierTableData + Record[0],
+                       (const unsigned char *)F.IdentifierTableData,
+                       PCHIdentifierLookupTrait(*this));
         if (PP)
           PP->getIdentifierTable().setExternalIdentifierLookup(this);
       }
@@ -1669,6 +1677,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       MacroDefinitionsLoaded.resize(Record[1]);
       break;
     }
+    First = false;
   }
   Error("premature end of bitstream in PCH file");
   return Failure;
@@ -1706,7 +1715,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
          Id != IdEnd; ++Id)
       Identifiers.push_back(Id->second);
     PCHIdentifierLookupTable *IdTable
-      = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+      = (PCHIdentifierLookupTable *)Chain[0]->IdentifierLookupTable;
     for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
       IdentifierInfo *II = Identifiers[I];
       // Look in the on-disk hash table for an entry for
@@ -3018,7 +3027,7 @@ void PCHReader::InitializeSema(Sema &S) {
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
   // Try to find this name within our on-disk hash table
   PCHIdentifierLookupTable *IdTable
-    = (PCHIdentifierLookupTable *)IdentifierLookupTable;
+    = (PCHIdentifierLookupTable *)Chain[0]->IdentifierLookupTable;
   std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
   PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
   if (Pos == IdTable->end())
@@ -3104,7 +3113,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
 
-  if (!IdentifierTableData || IdentifiersLoaded.empty()) {
+  if (!Chain[0]->IdentifierTableData || IdentifiersLoaded.empty()) {
     Error("no identifier table in PCH file");
     return 0;
   }
@@ -3112,7 +3121,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   assert(PP && "Forgot to set Preprocessor ?");
   if (!IdentifiersLoaded[ID - 1]) {
     uint32_t Offset = IdentifierOffsets[ID - 1];
-    const char *Str = IdentifierTableData + Offset;
+    const char *Str = Chain[0]->IdentifierTableData + Offset;
 
     // All of the strings in the PCH file are preceded by a 16-bit
     // length. Extract that 16-bit length to avoid having to execute

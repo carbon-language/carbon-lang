@@ -233,6 +233,16 @@ private:
 
     /// \brief The number of declarations in this PCH file.
     unsigned LocalNumDecls;
+
+    /// \brief Actual data for the on-disk hash table.
+    ///
+    // This pointer points into a memory buffer, where the on-disk hash
+    // table for identifiers actually lives.
+    const char *IdentifierTableData;
+
+    /// \brief A pointer to an on-disk hash table of opaque type
+    /// IdentifierHashTable.
+    void *IdentifierLookupTable;
   };
 
   /// \brief The chain of PCH files. The first entry is the one named by the
@@ -275,16 +285,6 @@ private:
   /// \brief Offsets of the lexical and visible declarations for each
   /// DeclContext.
   DeclContextOffsetsMap DeclContextOffsets;
-
-  /// \brief Actual data for the on-disk hash table.
-  ///
-  // This pointer points into a memory buffer, where the on-disk hash
-  // table for identifiers actually lives.
-  const char *IdentifierTableData;
-
-  /// \brief A pointer to an on-disk hash table of opaque type
-  /// IdentifierHashTable.
-  void *IdentifierLookupTable;
 
   /// \brief Offsets into the identifier table data.
   ///
@@ -534,8 +534,8 @@ private:
   PCHReadResult ReadPCHCore(llvm::StringRef FileName);
   PCHReadResult ReadPCHBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
-  bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
-  PCHReadResult ReadSourceManagerBlock();
+  bool ParseLineTable(PerFileData &F, llvm::SmallVectorImpl<uint64_t> &Record);
+  PCHReadResult ReadSourceManagerBlock(PerFileData &F);
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
 
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
