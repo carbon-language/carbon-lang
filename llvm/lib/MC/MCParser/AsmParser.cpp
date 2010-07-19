@@ -802,11 +802,14 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".quad")
       return ParseDirectiveValue(8);
 
-    // FIXME: Target hooks for IsPow2.
-    if (IDVal == ".align")
-      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
-    if (IDVal == ".align32")
-      return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
+    if (IDVal == ".align") {
+      bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
+      return ParseDirectiveAlign(IsPow2, /*ExprSize=*/1);
+    }
+    if (IDVal == ".align32") {
+      bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
+      return ParseDirectiveAlign(IsPow2, /*ExprSize=*/4);
+    }
     if (IDVal == ".balign")
       return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/1);
     if (IDVal == ".balignw")
