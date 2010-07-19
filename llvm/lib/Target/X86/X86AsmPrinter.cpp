@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86AsmPrinter.h"
-#include "X86ATTInstPrinter.h"
-#include "X86IntelInstPrinter.h"
+#include "AsmPrinter/X86ATTInstPrinter.h"
+#include "AsmPrinter/X86IntelInstPrinter.h"
 #include "X86MCInstLower.h"
 #include "X86.h"
 #include "X86COFFMachineModuleInfo.h"
