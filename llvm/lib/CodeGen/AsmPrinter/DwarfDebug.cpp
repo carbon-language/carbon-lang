@@ -2032,6 +2032,7 @@ void DwarfDebug::endModule() {
       if (!SP.Verify()) continue;
 
       // Collect info for variables that were optimized out.
+      if (!SP.isDefinition()) continue;
       StringRef FName = SP.getLinkageName();
       if (FName.empty())
         FName = SP.getName();
