@@ -158,7 +158,7 @@ let isCall = 1 in
 
   // FIXME: We need to teach codegen about single list of call-clobbered 
   // registers.
-let isCall = 1 in
+let isCall = 1, isCodeGenOnly = 1 in
   // All calls clobber the non-callee saved registers. RSP is marked as
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead. Uses for argument
@@ -182,7 +182,8 @@ let isCall = 1 in
   }
 
 
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
+    isCodeGenOnly = 1 in
   let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
               FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,

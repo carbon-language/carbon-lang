@@ -56,7 +56,7 @@
         subl %eax, %ebx
         
 // FIXME: Check that this matches the correct instruction.
-// CHECK: call *%rax
+// CHECK: callq *%rax
         call *%rax
 
 // FIXME: Check that this matches the correct instruction.
