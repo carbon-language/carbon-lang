@@ -16,6 +16,9 @@ namespace llvm {
 class MCAssembler;
 class MCCodeEmitter;
 class MCSectionData;
+class MCExpr;
+class MCFragment;
+class MCDataFragment;
 class TargetAsmBackend;
 class raw_ostream;
 
@@ -38,6 +41,14 @@ protected:
   MCSectionData *getCurrentSectionData() const {
     return CurSectionData;
   }
+
+  MCFragment *getCurrentFragment() const;
+
+  /// Get a data fragment to write into, creating a new one if the current
+  /// fragment is not a data fragment.
+  MCDataFragment *getOrCreateDataFragment() const;
+
+  const MCExpr *AddValueSymbols(const MCExpr *Value);
 
 public:
   MCAssembler &getAssembler() { return *Assembler; }

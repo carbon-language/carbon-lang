@@ -28,24 +28,6 @@ namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
 private:
-  MCFragment *getCurrentFragment() const {
-    assert(getCurrentSectionData() && "No current section!");
-
-    if (!getCurrentSectionData()->empty())
-      return &getCurrentSectionData()->getFragmentList().back();
-
-    return 0;
-  }
-
-  /// Get a data fragment to write into, creating a new one if the current
-  /// fragment is not a data fragment.
-  MCDataFragment *getOrCreateDataFragment() const {
-    MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-    if (!F)
-      F = new MCDataFragment(getCurrentSectionData());
-    return F;
-  }
-
   void EmitInstToFragment(const MCInst &Inst);
   void EmitInstToData(const MCInst &Inst);
 
@@ -53,32 +35,6 @@ public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
     : MCObjectStreamer(Context, TAB, OS, Emitter) {}
-
-  const MCExpr *AddValueSymbols(const MCExpr *Value) {
-    switch (Value->getKind()) {
-    case MCExpr::Target: assert(0 && "Can't handle target exprs yet!");
-    case MCExpr::Constant:
-      break;
-
-    case MCExpr::Binary: {
-      const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
-      AddValueSymbols(BE->getLHS());
-      AddValueSymbols(BE->getRHS());
-      break;
-    }
-
-    case MCExpr::SymbolRef:
-      getAssembler().getOrCreateSymbolData(
-        cast<MCSymbolRefExpr>(Value)->getSymbol());
-      break;
-
-    case MCExpr::Unary:
-      AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
-      break;
-    }
-
-    return Value;
-  }
 
   /// @name MCStreamer Interface
   /// @{
@@ -142,6 +98,8 @@ public:
 } // end anonymous namespace.
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
+  // TODO: This is almost exactly the same as WinCOFFStreamer. Consider merging
+  // into MCObjectStreamer.
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(CurSection && "Cannot emit before setting section!");
@@ -185,6 +143,8 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
+  // MCObjectStreamer.
   // FIXME: Lift context changes into super class.
   getAssembler().getOrCreateSymbolData(*Symbol);
   Symbol->setVariableValue(AddValueSymbols(Value));
@@ -335,11 +295,15 @@ void MCMachOStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
 }
 
 void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
+  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
+  // MCObjectStreamer.
   getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
 }
 
 void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                                 unsigned AddrSpace) {
+  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
+  // MCObjectStreamer.
   MCDataFragment *DF = getOrCreateDataFragment();
 
   // Avoid fixups when possible.
@@ -359,6 +323,8 @@ void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
 void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                            int64_t Value, unsigned ValueSize,
                                            unsigned MaxBytesToEmit) {
+  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
+  // MCObjectStreamer.
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
@@ -371,6 +337,8 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
 
 void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                         unsigned MaxBytesToEmit) {
+  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
+  // MCObjectStreamer.
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   MCAlignFragment *F = new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
