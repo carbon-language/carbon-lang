@@ -993,6 +993,11 @@ protected:
     Synthesizable[VT.getSimpleVT().SimpleTy] = isSynthesizable;
   }
 
+  /// findRepresentativeClass - Return the largest legal super-reg register class
+  /// of the specified register class.
+  virtual const TargetRegisterClass *
+  findRepresentativeClass(const TargetRegisterClass *RC) const;
+
   /// computeRegisterProperties - Once all of the register classes are added,
   /// this allows us to compute derived properties we expose.
   void computeRegisterProperties();
@@ -1698,12 +1703,7 @@ private:
 
   /// hasLegalSuperRegRegClasses - Return true if the specified register class
   /// has one or more super-reg register classes that are legal.
-  bool hasLegalSuperRegRegClasses(const TargetRegisterClass *RC);
-
-  /// findRepresentativeClass - Return the largest legal super-reg register class
-  /// of the specified register class.
-  const TargetRegisterClass *
-  findRepresentativeClass(const TargetRegisterClass *RC);
+  bool hasLegalSuperRegRegClasses(const TargetRegisterClass *RC) const;
 };
 
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,

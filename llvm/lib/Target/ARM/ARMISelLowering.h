@@ -271,6 +271,10 @@ namespace llvm {
     /// materialize the FP immediate as a load from a constant pool.
     virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
 
+  protected:
+    const TargetRegisterClass *
+    findRepresentativeClass(const TargetRegisterClass *RC) const;
+
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.

@@ -550,6 +550,22 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     benefitFromCodePlacementOpt = true;
 }
 
+const TargetRegisterClass *
+ARMTargetLowering::findRepresentativeClass(const TargetRegisterClass *RC) const{
+  switch (RC->getID()) {
+  default:
+    return RC;
+  case ARM::tGPRRegClassID:
+  case ARM::GPRRegClassID:
+    return ARM::GPRRegisterClass;
+  case ARM::SPRRegClassID:
+  case ARM::DPRRegClassID:
+    return ARM::DPRRegisterClass;
+  case ARM::QPRRegClassID:
+    return ARM::QPRRegisterClass;
+  }
+}
+
 const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
