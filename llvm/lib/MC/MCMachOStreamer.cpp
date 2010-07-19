@@ -82,10 +82,16 @@ public:
                                  unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename) {
-    report_fatal_error("unsupported directive: '.file'");
+    // FIXME: Just ignore the .file; it isn't important enough to fail the
+    // entire assembly.
+
+    //report_fatal_error("unsupported directive: '.file'");
   }
   virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
-    report_fatal_error("unsupported directive: '.file'");
+    // FIXME: Just ignore the .file; it isn't important enough to fail the
+    // entire assembly.
+
+    //report_fatal_error("unsupported directive: '.file'");
   }
 
   virtual void EmitInstruction(const MCInst &Inst);
