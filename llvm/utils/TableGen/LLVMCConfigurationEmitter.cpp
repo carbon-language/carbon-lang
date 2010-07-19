@@ -1853,6 +1853,24 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
 
 }
 
+/// EmitForEachListElementCycleHeader - Emit common code for iterating through
+/// all elements of a list. Helper function used by
+/// EmitForwardOptionPropertyHandlingCode.
+void EmitForEachListElementCycleHeader (const OptionDescription& D,
+                                        unsigned IndentLevel,
+                                        raw_ostream& O) {
+  unsigned IndentLevel1 = IndentLevel + Indent1;
+
+  O.indent(IndentLevel)
+    << "for (" << D.GenTypeDeclaration()
+    << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
+  O.indent(IndentLevel)
+    << "E = " << D.GenVariableName() << ".end(); B != E;) {\n";
+  O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
+                         << ".getPosition(B - " << D.GenVariableName()
+                         << ".begin());\n";
+}
+
 /// EmitForwardOptionPropertyHandlingCode - Helper function used to
 /// implement EmitActionHandler. Emits code for
 /// handling the (forward) and (forward_as) option properties.
@@ -1893,16 +1911,7 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
                           << D.GenVariableName() << "));\n";
     break;
   case OptionType::PrefixList:
-    // TODO: remove duplication across PrefixList / ParameterList / SwitchList
-    // branches
-    O.indent(IndentLevel)
-      << "for (" << D.GenTypeDeclaration()
-      << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
-    O.indent(IndentLevel)
-      << "E = " << D.GenVariableName() << ".end(); B != E;) {\n";
-    O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
-                           << ".getPosition(B - " << D.GenVariableName()
-                           << ".begin());\n";
+    EmitForEachListElementCycleHeader(D, IndentLevel, O);
     O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, \""
                            << Name << "\" + " << "*B));\n";
     O.indent(IndentLevel1) << "++B;\n";
@@ -1915,14 +1924,7 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     O.indent(IndentLevel) << "}\n";
     break;
   case OptionType::ParameterList:
-    O.indent(IndentLevel)
-      << "for (" << D.GenTypeDeclaration() << "::iterator B = "
-      << D.GenVariableName() << ".begin(),\n";
-    O.indent(IndentLevel) << "E = " << D.GenVariableName()
-                          << ".end() ; B != E;) {\n";
-    O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
-                           << ".getPosition(B - " << D.GenVariableName()
-                           << ".begin());\n";
+    EmitForEachListElementCycleHeader(D, IndentLevel, O);
     O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, \""
                            << Name << "\"));\n";
 
@@ -1934,14 +1936,7 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     O.indent(IndentLevel) << "}\n";
     break;
   case OptionType::SwitchList:
-        O.indent(IndentLevel)
-      << "for (" << D.GenTypeDeclaration() << "::iterator B = "
-      << D.GenVariableName() << ".begin(),\n";
-    O.indent(IndentLevel) << "E = " << D.GenVariableName()
-                          << ".end() ; B != E;) {\n";
-    O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
-                           << ".getPosition(B - " << D.GenVariableName()
-                           << ".begin());\n";
+    EmitForEachListElementCycleHeader(D, IndentLevel, O);
     O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, \""
                            << Name << "\"));\n";
     O.indent(IndentLevel1) << "++B;\n";
