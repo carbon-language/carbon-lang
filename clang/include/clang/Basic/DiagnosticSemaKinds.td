@@ -1684,9 +1684,9 @@ def note_dependent_var_use : Note<"must qualify identifier to find this "
     "declaration in dependent base class">;
 def err_undeclared_use : Error<"use of undeclared %0">;
 def warn_deprecated : Warning<"%0 is deprecated">,
-    InGroup<DiagGroup<"deprecated-declarations">>;
+    InGroup<DeprecatedDeclarations>;
 def warn_unavailable : Warning<"%0 is unavailable">,
-    InGroup<DiagGroup<"unavailable-declarations">>;
+    InGroup<DeprecatedDeclarations>;
 def note_unavailable_here : Note<
   "function has been explicitly marked %select{unavailable|deleted}0 here">;
 def warn_not_enough_argument : Warning<

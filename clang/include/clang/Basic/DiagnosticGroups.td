@@ -33,7 +33,11 @@ def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
 def : DiagGroup<"declaration-after-statement">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
-def Deprecated : DiagGroup<"deprecated">;
+
+def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
+def Deprecated : DiagGroup<"deprecated", [ DeprecatedDeclarations] >,
+                 DiagCategory<"Deprecations">;
+
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;
