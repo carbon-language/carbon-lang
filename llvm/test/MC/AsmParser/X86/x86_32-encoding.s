@@ -12926,3 +12926,75 @@
 // CHECK: encoding: [0xc5,0xec,0xc2,0xd9,0x1f]
           vcmptrue_usps %ymm1, %ymm2, %ymm3
 
+// CHECK: vaddsubps  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xef,0xd0,0xd9]
+          vaddsubps  %ymm1, %ymm2, %ymm3
+
+// CHECK: vaddsubps  (%eax), %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xf7,0xd0,0x10]
+          vaddsubps  (%eax), %ymm1, %ymm2
+
+// CHECK: vaddsubpd  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xed,0xd0,0xd9]
+          vaddsubpd  %ymm1, %ymm2, %ymm3
+
+// CHECK: vaddsubpd  (%eax), %ymm1, %ymm2
+// CHECK: encoding: [0xc5,0xf5,0xd0,0x10]
+          vaddsubpd  (%eax), %ymm1, %ymm2
+
+// CHECK: vhaddps  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xef,0x7c,0xd9]
+          vhaddps  %ymm1, %ymm2, %ymm3
+
+// CHECK: vhaddps  (%eax), %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xef,0x7c,0x18]
+          vhaddps  (%eax), %ymm2, %ymm3
+
+// CHECK: vhaddpd  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xed,0x7c,0xd9]
+          vhaddpd  %ymm1, %ymm2, %ymm3
+
+// CHECK: vhaddpd  (%eax), %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xed,0x7c,0x18]
+          vhaddpd  (%eax), %ymm2, %ymm3
+
+// CHECK: vhsubps  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xef,0x7d,0xd9]
+          vhsubps  %ymm1, %ymm2, %ymm3
+
+// CHECK: vhsubps  (%eax), %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xef,0x7d,0x18]
+          vhsubps  (%eax), %ymm2, %ymm3
+
+// CHECK: vhsubpd  %ymm1, %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xed,0x7d,0xd9]
+          vhsubpd  %ymm1, %ymm2, %ymm3
+
+// CHECK: vhsubpd  (%eax), %ymm2, %ymm3
+// CHECK: encoding: [0xc5,0xed,0x7d,0x18]
+          vhsubpd  (%eax), %ymm2, %ymm3
+
+// CHECK: vblendps  $3, %ymm2, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x0c,0xca,0x03]
+          vblendps  $3, %ymm2, %ymm5, %ymm1
+
+// CHECK: vblendps  $3, (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x0c,0x08,0x03]
+          vblendps  $3, (%eax), %ymm5, %ymm1
+
+// CHECK: vblendpd  $3, %ymm2, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x0d,0xca,0x03]
+          vblendpd  $3, %ymm2, %ymm5, %ymm1
+
+// CHECK: vblendpd  $3, (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x0d,0x08,0x03]
+          vblendpd  $3, (%eax), %ymm5, %ymm1
+
+// CHECK: vdpps  $3, %ymm2, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x40,0xca,0x03]
+          vdpps  $3, %ymm2, %ymm5, %ymm1
+
+// CHECK: vdpps  $3, (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x40,0x08,0x03]
+          vdpps  $3, (%eax), %ymm5, %ymm1
+

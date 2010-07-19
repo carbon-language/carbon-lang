@@ -339,6 +339,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   MEM("f80mem");
   MEM("opaque80mem");
   MEM("i128mem");
+  MEM("i256mem");
   MEM("f128mem");
   MEM("f256mem");
   MEM("opaque512mem");

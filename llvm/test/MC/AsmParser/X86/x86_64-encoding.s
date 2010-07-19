@@ -3000,3 +3000,75 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x41,0x1c,0xc2,0xeb,0x1f]
           vcmptrue_usps %ymm11, %ymm12, %ymm13
 
+// CHECK: vaddsubps  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1f,0xd0,0xeb]
+          vaddsubps  %ymm11, %ymm12, %ymm13
+
+// CHECK: vaddsubps  (%rax), %ymm11, %ymm12
+// CHECK: encoding: [0xc5,0x27,0xd0,0x20]
+          vaddsubps  (%rax), %ymm11, %ymm12
+
+// CHECK: vaddsubpd  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1d,0xd0,0xeb]
+          vaddsubpd  %ymm11, %ymm12, %ymm13
+
+// CHECK: vaddsubpd  (%rax), %ymm11, %ymm12
+// CHECK: encoding: [0xc5,0x25,0xd0,0x20]
+          vaddsubpd  (%rax), %ymm11, %ymm12
+
+// CHECK: vhaddps  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1f,0x7c,0xeb]
+          vhaddps  %ymm11, %ymm12, %ymm13
+
+// CHECK: vhaddps  (%rax), %ymm12, %ymm13
+// CHECK: encoding: [0xc5,0x1f,0x7c,0x28]
+          vhaddps  (%rax), %ymm12, %ymm13
+
+// CHECK: vhaddpd  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1d,0x7c,0xeb]
+          vhaddpd  %ymm11, %ymm12, %ymm13
+
+// CHECK: vhaddpd  (%rax), %ymm12, %ymm13
+// CHECK: encoding: [0xc5,0x1d,0x7c,0x28]
+          vhaddpd  (%rax), %ymm12, %ymm13
+
+// CHECK: vhsubps  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1f,0x7d,0xeb]
+          vhsubps  %ymm11, %ymm12, %ymm13
+
+// CHECK: vhsubps  (%rax), %ymm12, %ymm13
+// CHECK: encoding: [0xc5,0x1f,0x7d,0x28]
+          vhsubps  (%rax), %ymm12, %ymm13
+
+// CHECK: vhsubpd  %ymm11, %ymm12, %ymm13
+// CHECK: encoding: [0xc4,0x41,0x1d,0x7d,0xeb]
+          vhsubpd  %ymm11, %ymm12, %ymm13
+
+// CHECK: vhsubpd  (%rax), %ymm12, %ymm13
+// CHECK: encoding: [0xc5,0x1d,0x7d,0x28]
+          vhsubpd  (%rax), %ymm12, %ymm13
+
+// CHECK: vblendps  $3, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x2d,0x0c,0xdc,0x03]
+          vblendps  $3, %ymm12, %ymm10, %ymm11
+
+// CHECK: vblendps  $3, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x63,0x2d,0x0c,0x18,0x03]
+          vblendps  $3, (%rax), %ymm10, %ymm11
+
+// CHECK: vblendpd  $3, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x2d,0x0d,0xdc,0x03]
+          vblendpd  $3, %ymm12, %ymm10, %ymm11
+
+// CHECK: vblendpd  $3, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x63,0x2d,0x0d,0x18,0x03]
+          vblendpd  $3, (%rax), %ymm10, %ymm11
+
+// CHECK: vdpps  $3, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x2d,0x40,0xdc,0x03]
+          vdpps  $3, %ymm12, %ymm10, %ymm11
+
+// CHECK: vdpps  $3, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x63,0x2d,0x40,0x18,0x03]
+          vdpps  $3, (%rax), %ymm10, %ymm11
+

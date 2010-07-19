@@ -222,7 +222,7 @@ def i16mem  : X86MemOperand<"printi16mem">;
 def i32mem  : X86MemOperand<"printi32mem">;
 def i64mem  : X86MemOperand<"printi64mem">;
 def i128mem : X86MemOperand<"printi128mem">;
-//def i256mem : X86MemOperand<"printi256mem">;
+def i256mem : X86MemOperand<"printi256mem">;
 def f32mem  : X86MemOperand<"printf32mem">;
 def f64mem  : X86MemOperand<"printf64mem">;
 def f80mem  : X86MemOperand<"printf80mem">;
