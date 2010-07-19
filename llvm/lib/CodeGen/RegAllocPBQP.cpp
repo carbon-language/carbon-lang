@@ -34,6 +34,7 @@
 #include "PBQP/HeuristicSolver.h"
 #include "PBQP/Graph.h"
 #include "PBQP/Heuristics/Briggs.h"
+#include "RenderMachineFunction.h"
 #include "Splitter.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
@@ -105,6 +106,7 @@ namespace {
       if (pbqpPreSplitting)
         au.addRequired<LoopSplitter>();
       au.addRequired<VirtRegMap>();
+      au.addRequired<RenderMachineFunction>();
       MachineFunctionPass::getAnalysisUsage(au);
     }
 
@@ -865,6 +867,9 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   vrm = &getAnalysis<VirtRegMap>();
+
+  RenderMachineFunction *rmf = &getAnalysis<RenderMachineFunction>();
+  rmf->renderMachineFunction("Prior to PBQP register allocation.");
 
   DEBUG(dbgs() << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n");
 

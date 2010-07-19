@@ -494,6 +494,11 @@ namespace llvm {
       return SlotIndex(front(), 0);
     }
 
+    /// Returns the base index of the last slot in this analysis.
+    SlotIndex getLastIndex() {
+      return SlotIndex(back(), 0);
+    }
+
     /// Returns the invalid index marker for this analysis.
     SlotIndex getInvalidIndex() {
       return getZeroIndex();
