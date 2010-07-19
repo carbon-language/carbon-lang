@@ -44,5 +44,5 @@ void f5(void) {
 void f6(void) {
   FILE *p = fopen("foo", "r");
   fclose(p); 
-  fclose(p); // expected-warning {{Try to close a file Descriptor already closed. Cause Undefined Behaviour.}}
+  fclose(p); // expected-warning {{Try to close a file Descriptor already closed. Cause undefined behaviour.}}
 }
