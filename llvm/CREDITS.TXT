@@ -134,6 +134,11 @@ N: Gabor Greif
 E: ggreif@gmail.com
 D: Improvements for space efficiency
 
+N: James Grosbach
+E: grosbach@apple.com
+D: SjLj exception handling support
+D: General fixes and improvements for the ARM back-end
+
 N: Lang Hames
 E: lhames@gmail.com
 D: PBQP-based register allocator
