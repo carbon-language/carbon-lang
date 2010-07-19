@@ -413,7 +413,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   Args.push_back("-fsyntax-only");
 
   // FIXME: We shouldn't have to pass in the path info.
-  driver::Driver TheDriver("clang", "/", llvm::sys::getHostTriple(),
+  driver::Driver TheDriver("clang", llvm::sys::getHostTriple(),
                            "a.out", false, false, *Diags);
 
   // Don't check that inputs exist, they have been remapped.

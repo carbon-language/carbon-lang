@@ -39,13 +39,13 @@
 using namespace clang::driver;
 using namespace clang;
 
-Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
+Driver::Driver(llvm::StringRef _ClangExecutable,
                llvm::StringRef _DefaultHostTriple,
                llvm::StringRef _DefaultImageName,
                bool IsProduction, bool CXXIsProduction,
                Diagnostic &_Diags)
   : Opts(createDriverOptTable()), Diags(_Diags),
-    Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
+    ClangExecutable(_ClangExecutable), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
@@ -68,6 +68,10 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
       CCCUseClangCXX = false;
   }
 
+  llvm::sys::Path Executable(ClangExecutable);
+  Name = Executable.getBasename();
+  Dir = Executable.getDirname();
+
   // Compute the path to the resource directory.
   llvm::sys::Path P(Dir);
   P.eraseComponent(); // Remove /bin from foo/bin
@@ -75,11 +79,6 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
   P.appendComponent("clang");
   P.appendComponent(CLANG_VERSION_STRING);
   ResourceDir = P.str();
-
-  // Save the original clang executable path.
-  P = Dir;
-  P.appendComponent(Name);
-  ClangExecutable = P.str();
 }
 
 Driver::~Driver() {

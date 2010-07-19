@@ -219,8 +219,7 @@ int main(int argc, const char **argv) {
   const bool IsProduction = false;
   const bool CXXIsProduction = false;
 #endif
-  Driver TheDriver(Path.getBasename(), Path.getDirname(),
-                   llvm::sys::getHostTriple(),
+  Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
                    "a.out", IsProduction, CXXIsProduction,
                    Diags);
 

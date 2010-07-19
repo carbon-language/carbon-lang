@@ -145,7 +145,7 @@ private:
   DerivedArgList *TranslateInputArgs(const InputArgList &Args) const;
 
 public:
-  Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
+  Driver(llvm::StringRef _ClangExecutable,
          llvm::StringRef _DefaultHostTriple,
          llvm::StringRef _DefaultImageName,
          bool IsProduction, bool CXXIsProduction,
