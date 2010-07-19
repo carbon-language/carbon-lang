@@ -1235,6 +1235,8 @@ public:
   bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
                                          bool ForCompare);
 
+  bool ObjCQualifiedClassTypesAreCompatible(QualType LHS, QualType RHS);
+  
   // Check the safety of assignment from LHS to RHS
   bool canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
                                const ObjCObjectPointerType *RHSOPT);

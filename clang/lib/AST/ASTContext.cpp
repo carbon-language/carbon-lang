@@ -4226,6 +4226,32 @@ bool ASTContext::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
   return false;
 }
 
+/// ObjCQualifiedClassTypesAreCompatible - compare  Class<p,...> and
+/// Class<p1, ...>.
+bool ASTContext::ObjCQualifiedClassTypesAreCompatible(QualType lhs, 
+                                                      QualType rhs) {
+  const ObjCObjectPointerType *lhsQID = lhs->getAs<ObjCObjectPointerType>();
+  const ObjCObjectPointerType *rhsOPT = rhs->getAs<ObjCObjectPointerType>();
+  assert ((lhsQID && rhsOPT) && "ObjCQualifiedClassTypesAreCompatible");
+  
+  for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+       E = lhsQID->qual_end(); I != E; ++I) {
+    bool match = false;
+    ObjCProtocolDecl *lhsProto = *I;
+    for (ObjCObjectPointerType::qual_iterator J = rhsOPT->qual_begin(),
+         E = rhsOPT->qual_end(); J != E; ++J) {
+      ObjCProtocolDecl *rhsProto = *J;
+      if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto)) {
+        match = true;
+        break;
+      }
+    }
+    if (!match)
+      return false;
+  }
+  return true;
+}
+
 /// ObjCQualifiedIdTypesAreCompatible - We know that one of lhs/rhs is an
 /// ObjCQualifiedIDType.
 bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
@@ -4365,7 +4391,11 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
     return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
                                              QualType(RHSOPT,0),
                                              false);
-
+  
+  if (LHS->isObjCQualifiedClass() && RHS->isObjCQualifiedClass())
+    return ObjCQualifiedClassTypesAreCompatible(QualType(LHSOPT,0),
+                                                QualType(RHSOPT,0));
+  
   // If we have 2 user-defined types, fall into that path.
   if (LHS->getInterface() && RHS->getInterface())
     return canAssignObjCInterfaces(LHS, RHS);
