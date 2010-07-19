@@ -42,24 +42,24 @@ const short &lvalue_floating_integral_cast() {
 // CHECK: define float* @_Z29lvalue_integral_floating_castv()
 const float &lvalue_integral_floating_cast() {
   if (i == 0)
-    // CHECK: store float 1.700000e+01, float*
+    // CHECK: store float 1.700000e+{{0*}}1, float*
     return (const float&)17;
   else if (i == 1)
-    // CHECK: store float 1.700000e+01, float*
+    // CHECK: store float 1.700000e+{{0*}}1, float*
     return static_cast<const float&>(17);
-  // CHECK: store float 1.700000e+01, float*
+  // CHECK: store float 1.700000e+{{0*}}1, float*
   return 17;
 }
 
 // CHECK: define float* @_Z20lvalue_floating_castv()
 const float &lvalue_floating_cast() {
   if (i == 0)
-    // CHECK: store float 1.700000e+01, float*
+    // CHECK: store float 1.700000e+{{0*}}1, float*
     return (const float&)17.0;
   else if (i == 1)
-    // CHECK: store float 1.700000e+01, float*
+    // CHECK: store float 1.700000e+{{0*}}1, float*
     return static_cast<const float&>(17.0);
-  // CHECK: store float 1.700000e+01, float*
+  // CHECK: store float 1.700000e+{{0*}}1, float*
   return 17.0;
 }
 
