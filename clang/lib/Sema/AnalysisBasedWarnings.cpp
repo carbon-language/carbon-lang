@@ -387,7 +387,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
 
   // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
   // explosion for destrutors that can result and the compile time hit.
-  AnalysisContext AC(D, false);
+  AnalysisContext AC(D, 0, false);
 
   // Warning: check missing 'return'
   if (P.enableCheckFallThrough) {
