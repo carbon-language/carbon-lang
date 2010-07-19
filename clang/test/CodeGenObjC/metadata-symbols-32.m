@@ -7,7 +7,7 @@
 // RUN: grep '@"\\01L_OBJC_CLASSEXT_A" = internal global .*section "__OBJC,__class_ext,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_A" = internal global .*section "__OBJC,__class,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_METHODS_A" = internal global .*section "__OBJC,__cls_meth,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .*section "__TEXT,__objc_classname,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .*section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_PROTOCOLS_A" = internal global .*section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_REFERENCES_[0-9]*" = internal global .*section "__OBJC,__cls_refs,literal_pointers,no_dead_strip", align 4' %t
 
@@ -17,8 +17,8 @@
 // RUN: grep '@"\\01L_OBJC_INSTANCE_METHODS_A" = internal global .*section "__OBJC,__inst_meth,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_INSTANCE_VARIABLES_A" = internal global .*section "__OBJC,__instance_vars,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_METACLASS_A" = internal global .*section "__OBJC,__meta_class,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .*section "__TEXT,__objc_methname,cstring_literals", align 1' %t
-// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .*section "__TEXT,__objc_methtype,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .*section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .*section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_MODULES" = internal global .*section "__OBJC,__module_info,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_PROP_NAME_ATTR_[0-9]*" = internal global .*section "__TEXT,__cstring,cstring_literals", align 1' %t
 // RUN: grep '@"\\01L_OBJC_PROTOCOL_CLASS_METHODS_P" = internal global .*section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4' %t
