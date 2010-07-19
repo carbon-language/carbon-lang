@@ -193,10 +193,10 @@ namespace {
 class StandardSpiller : public Spiller {
 protected:
   LiveIntervals *lis;
-  const MachineLoopInfo *loopInfo;
+  MachineLoopInfo *loopInfo;
   VirtRegMap *vrm;
 public:
-  StandardSpiller(LiveIntervals *lis, const MachineLoopInfo *loopInfo,
+  StandardSpiller(LiveIntervals *lis, MachineLoopInfo *loopInfo,
                   VirtRegMap *vrm)
     : lis(lis), loopInfo(loopInfo), vrm(vrm) {}
 
@@ -222,7 +222,7 @@ namespace {
 class SplittingSpiller : public StandardSpiller {
 public:
   SplittingSpiller(MachineFunction *mf, LiveIntervals *lis,
-                   const MachineLoopInfo *loopInfo, VirtRegMap *vrm)
+                   MachineLoopInfo *loopInfo, VirtRegMap *vrm)
     : StandardSpiller(lis, loopInfo, vrm) {
 
     mri = &mf->getRegInfo();
@@ -508,12 +508,12 @@ private:
 namespace llvm {
 Spiller *createInlineSpiller(MachineFunction*,
                              LiveIntervals*,
-                             const MachineLoopInfo*,
+                             MachineLoopInfo*,
                              VirtRegMap*);
 }
 
 llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
-                                   const MachineLoopInfo *loopInfo,
+                                   MachineLoopInfo *loopInfo,
                                    VirtRegMap *vrm) {
   switch (spillerOpt) {
   default: assert(0 && "unknown spiller");

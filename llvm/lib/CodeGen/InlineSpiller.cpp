@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -30,6 +31,7 @@ namespace {
 class InlineSpiller : public Spiller {
   MachineFunction &mf_;
   LiveIntervals &lis_;
+  MachineLoopInfo &loops_;
   VirtRegMap &vrm_;
   MachineFrameInfo &mfi_;
   MachineRegisterInfo &mri_;
@@ -53,8 +55,9 @@ class InlineSpiller : public Spiller {
   ~InlineSpiller() {}
 
 public:
-  InlineSpiller(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
-    : mf_(*mf), lis_(*lis), vrm_(*vrm),
+  InlineSpiller(MachineFunction *mf, LiveIntervals *lis, MachineLoopInfo *mli,
+                VirtRegMap *vrm)
+    : mf_(*mf), lis_(*lis), loops_(*mli), vrm_(*vrm),
       mfi_(*mf->getFrameInfo()),
       mri_(mf->getRegInfo()),
       tii_(*mf->getTarget().getInstrInfo()),
@@ -82,9 +85,9 @@ private:
 namespace llvm {
 Spiller *createInlineSpiller(MachineFunction *mf,
                              LiveIntervals *lis,
-                             const MachineLoopInfo *mli,
+                             MachineLoopInfo *mli,
                              VirtRegMap *vrm) {
-  return new InlineSpiller(mf, lis, vrm);
+  return new InlineSpiller(mf, lis, mli, vrm);
 }
 }
 

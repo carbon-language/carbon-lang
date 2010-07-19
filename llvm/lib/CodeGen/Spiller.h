@@ -51,7 +51,7 @@ namespace llvm {
 
   /// Create and return a spiller object, as specified on the command line.
   Spiller* createSpiller(MachineFunction *mf, LiveIntervals *li,
-                         const MachineLoopInfo *loopInfo, VirtRegMap *vrm);
+                         MachineLoopInfo *loopInfo, VirtRegMap *vrm);
 }
 
 #endif

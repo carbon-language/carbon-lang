@@ -127,7 +127,7 @@ namespace {
     BitVector allocatableRegs_;
     LiveIntervals* li_;
     LiveStacks* ls_;
-    const MachineLoopInfo *loopInfo;
+    MachineLoopInfo *loopInfo;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
     /// start value.  This is uses for backtracking.
@@ -799,7 +799,7 @@ static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
 static
 float getConflictWeight(LiveInterval *cur, unsigned Reg, LiveIntervals *li_,
                         MachineRegisterInfo *mri_,
-                        const MachineLoopInfo *loopInfo) {
+                        MachineLoopInfo *loopInfo) {
   float Conflicts = 0;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(Reg),
          E = mri_->reg_end(); I != E; ++I) {
