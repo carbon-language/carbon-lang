@@ -20247,7 +20247,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 #include <mach-o/getsect.h>
       int main() {
         unsigned long p;
-        return (int)getsect("__DATA","´__pass_info", &p);
+        return (int)getsect("__DATA","__pass_info", &p);
       }
 
 _ACEOF
