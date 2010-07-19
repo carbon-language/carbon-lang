@@ -1628,6 +1628,10 @@ static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Res);
 }
 
+unsigned ARMTargetLowering::getJumpTableEncoding() const {
+  return MachineJumpTableInfo::EK_Inline;
+}
+
 SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op,
                                              SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
