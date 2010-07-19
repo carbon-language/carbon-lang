@@ -276,6 +276,7 @@ std::pair<unsigned, bool> FastISel::getRegForGEPIndex(const Value *Idx) {
 void FastISel::recomputeInsertPt() {
   if (getLastLocalValue()) {
     FuncInfo.InsertPt = getLastLocalValue();
+    FuncInfo.MBB = FuncInfo.InsertPt->getParent();
     ++FuncInfo.InsertPt;
   } else
     FuncInfo.InsertPt = FuncInfo.MBB->getFirstNonPHI();
