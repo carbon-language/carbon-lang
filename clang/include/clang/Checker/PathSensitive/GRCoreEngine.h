@@ -442,8 +442,8 @@ class GRCallEnterNodeBuilder {
   // The call site.
   const Stmt *CE;
 
-  // The definition of callee.
-  const FunctionDecl *FD;
+  // The AnalysisContext of the callee.
+  const AnalysisContext *CalleeCtx;
 
   // The parent block of the CallExpr.
   const CFGBlock *Block;
@@ -453,9 +453,9 @@ class GRCallEnterNodeBuilder {
 
 public:
   GRCallEnterNodeBuilder(GRCoreEngine &eng, const ExplodedNode *pred, 
-                         const Stmt *s, const FunctionDecl *fd, 
+                         const Stmt *s, const AnalysisContext *callee, 
                          const CFGBlock *blk, unsigned idx)
-    : Eng(eng), Pred(pred), CE(s), FD(fd), Block(blk), Index(idx) {}
+    : Eng(eng), Pred(pred), CE(s), CalleeCtx(callee), Block(blk), Index(idx) {}
 
   const GRState *getState() const { return Pred->getState(); }
 
@@ -465,7 +465,7 @@ public:
 
   const Stmt *getCallExpr() const { return CE; }
 
-  const FunctionDecl *getCallee() const { return FD; }
+  const AnalysisContext *getCalleeContext() const { return CalleeCtx; }
 
   const CFGBlock *getBlock() const { return Block; }
 

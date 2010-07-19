@@ -34,10 +34,15 @@ class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
 
+namespace idx { class TranslationUnit; }
+
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
   const Decl *D;
+
+  // TranslationUnit is NULL if we don't have multiple translation units.
+  const idx::TranslationUnit *TU;
 
   // AnalysisContext owns the following data.
   CFG *cfg;
@@ -48,14 +53,18 @@ class AnalysisContext {
   llvm::BumpPtrAllocator A;
   bool AddEHEdges;
 public:
-  AnalysisContext(const Decl *d, bool addehedges = false)
-    : D(d), cfg(0), builtCFG(false), liveness(0), PM(0),
+  AnalysisContext(const Decl *d, const idx::TranslationUnit *tu,
+                  bool addehedges = false)
+    : D(d), TU(tu), cfg(0), builtCFG(false), liveness(0), PM(0),
       ReferencedBlockVars(0), AddEHEdges(addehedges) {}
 
   ~AnalysisContext();
 
   ASTContext &getASTContext() { return D->getASTContext(); }
-  const Decl *getDecl() { return D; }
+  const Decl *getDecl() const { return D; }
+
+  const idx::TranslationUnit *getTranslationUnit() const { return TU; }
+
   /// getAddEHEdges - Return true iff we are adding exceptional edges from
   /// callExprs.  If this is false, then try/catch statements and blocks
   /// reachable from them can appear to be dead in the CFG, analysis passes must
@@ -82,7 +91,7 @@ class AnalysisContextManager {
 public:
   ~AnalysisContextManager();
 
-  AnalysisContext *getContext(const Decl *D);
+  AnalysisContext *getContext(const Decl *D,const idx::TranslationUnit *TU = 0);
 
   // Discard all previously created AnalysisContexts.
   void clear();
@@ -108,6 +117,10 @@ public:
   ContextKind getKind() const { return Kind; }
 
   AnalysisContext *getAnalysisContext() const { return Ctx; }
+
+  const idx::TranslationUnit *getTranslationUnit() const { 
+    return Ctx->getTranslationUnit(); 
+  }
 
   const LocationContext *getParent() const { return Parent; }
 
