@@ -415,17 +415,9 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
-                                      const char *BoundArch) const {
-  DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
+void Darwin::AddDeploymentTarget(const DerivedArgList &Args,
+                                 DerivedArgList *DAL) const {
   const OptTable &Opts = getDriver().getOpts();
-
-  // FIXME: We really want to get out of the tool chain level argument
-  // translation business, as it makes the driver functionality much
-  // more opaque. For now, we follow gcc closely solely for the
-  // purpose of easily achieving feature parity & testability. Once we
-  // have something that works, we should reevaluate each translation
-  // and try to push it down into tool specific logic.
 
   Arg *OSXVersion = Args.getLastArg(options::OPT_mmacosx_version_min_EQ);
   Arg *iPhoneVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
@@ -495,6 +487,20 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
         << iPhoneVersion->getAsString(Args);
   }
   setTarget(iPhoneVersion, Major, Minor, Micro);
+}
+
+DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
+                                      const char *BoundArch) const {
+  DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
+  const OptTable &Opts = getDriver().getOpts();
+
+  // FIXME: We really want to get out of the tool chain level argument
+  // translation business, as it makes the driver functionality much
+  // more opaque. For now, we follow gcc closely solely for the
+  // purpose of easily achieving feature parity & testability. Once we
+  // have something that works, we should reevaluate each translation
+  // and try to push it down into tool specific logic.
+  AddDeploymentTarget(Args, DAL);
 
   for (ArgList::const_iterator it = Args.begin(),
          ie = Args.end(); it != ie; ++it) {
