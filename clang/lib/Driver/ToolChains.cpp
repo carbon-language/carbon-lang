@@ -415,8 +415,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-void Darwin::AddDeploymentTarget(const DerivedArgList &Args,
-                                 DerivedArgList *DAL) const {
+void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   const OptTable &Opts = getDriver().getOpts();
 
   Arg *OSXVersion = Args.getLastArg(options::OPT_mmacosx_version_min_EQ);
@@ -454,17 +453,17 @@ void Darwin::AddDeploymentTarget(const DerivedArgList &Args,
 
     if (OSXTarget) {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      OSXVersion = DAL->MakeJoinedArg(0, O, OSXTarget);
-      DAL->append(OSXVersion);
+      OSXVersion = Args.MakeJoinedArg(0, O, OSXTarget);
+      Args.append(OSXVersion);
     } else if (iPhoneOSTarget) {
       const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-      iPhoneVersion = DAL->MakeJoinedArg(0, O, iPhoneOSTarget);
-      DAL->append(iPhoneVersion);
+      iPhoneVersion = Args.MakeJoinedArg(0, O, iPhoneOSTarget);
+      Args.append(iPhoneVersion);
     } else {
       // Otherwise, assume we are targeting OS X.
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      OSXVersion = DAL->MakeJoinedArg(0, O, MacosxVersionMin);
-      DAL->append(OSXVersion);
+      OSXVersion = Args.MakeJoinedArg(0, O, MacosxVersionMin);
+      Args.append(OSXVersion);
     }
   }
 
@@ -500,7 +499,6 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // purpose of easily achieving feature parity & testability. Once we
   // have something that works, we should reevaluate each translation
   // and try to push it down into tool specific logic.
-  AddDeploymentTarget(Args, DAL);
 
   for (ArgList::const_iterator it = Args.begin(),
          ie = Args.end(); it != ie; ++it) {
@@ -678,6 +676,11 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     else
       llvm_unreachable("invalid Darwin arch");
   }
+
+  // Add an explicit version min argument for the deployment target. We do this
+  // after argument translation because -Xarch_ arguments may add a version min
+  // argument.
+  AddDeploymentTarget(*DAL);
 
   return DAL;
 }

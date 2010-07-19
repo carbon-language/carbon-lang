@@ -62,8 +62,7 @@ class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
   std::string MacosxVersionMin;
 
 private:
-  void AddDeploymentTarget(const DerivedArgList &Args,
-                           DerivedArgList *DAL) const;
+  void AddDeploymentTarget(DerivedArgList &Args) const;
 
 public:
   Darwin(const HostInfo &Host, const llvm::Triple& Triple,
