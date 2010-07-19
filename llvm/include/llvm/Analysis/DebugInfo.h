@@ -134,7 +134,7 @@ namespace llvm {
   public:
     explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
-    unsigned getLanguage() const     { return getUnsignedField(2); }
+    unsigned getLanguage() const   { return getUnsignedField(2); }
     StringRef getFilename() const  { return getStringField(3);   }
     StringRef getDirectory() const { return getStringField(4);   }
     StringRef getProducer() const  { return getStringField(5);   }
@@ -504,10 +504,18 @@ namespace llvm {
   public:
     explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
-    StringRef getDirectory() const   { return getContext().getDirectory(); }
-    StringRef getFilename() const    { return getContext().getFilename();  }
     unsigned getLineNumber() const   { return getUnsignedField(2);         }
     unsigned getColumnNumber() const { return getUnsignedField(3);         }
+    StringRef getDirectory() const {
+      DIFile F = getFieldAs<DIFile>(4);
+      StringRef dir = F.getDirectory();
+      return !dir.empty() ? dir : getContext().getDirectory();
+    }
+    StringRef getFilename() const {
+      DIFile F = getFieldAs<DIFile>(4);
+      StringRef filename = F.getFilename();
+      return !filename.empty() ? filename : getContext().getFilename();
+    }
   };
 
   /// DINameSpace - A wrapper for a C++ style name space.
@@ -694,8 +702,8 @@ namespace llvm {
 
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
-    DILexicalBlock CreateLexicalBlock(DIDescriptor Context, unsigned Line = 0,
-                                      unsigned Col = 0);
+    DILexicalBlock CreateLexicalBlock(DIDescriptor Context, DIFile F,
+                                      unsigned Line = 0, unsigned Col = 0);
 
     /// CreateNameSpace - This creates new descriptor for a namespace
     /// with the specified parent context.

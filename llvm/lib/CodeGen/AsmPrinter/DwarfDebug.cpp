@@ -2683,18 +2683,21 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (FDL.isUnknown()) return;
   
   const MDNode *Scope = FDL.getScope(MF->getFunction()->getContext());
+  const MDNode *TheScope = 0;
   
   DISubprogram SP = getDISubprogram(Scope);
   unsigned Line, Col;
   if (SP.Verify()) {
     Line = SP.getLineNumber();
     Col = 0;
+    TheScope = SP;
   } else {
     Line = FDL.getLine();
     Col = FDL.getCol();
+    TheScope = Scope;
   }
   
-  recordSourceLine(Line, Col, Scope);
+  recordSourceLine(Line, Col, TheScope);
 
   /// ProcessedArgs - Collection of arguments already processed.
   SmallPtrSet<const MDNode *, 8> ProcessedArgs;
@@ -2899,16 +2902,6 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
 
     Src = GetOrCreateSourceID(Dir, Fn);
   }
-
-#if 0
-  if (!Lines.empty()) {
-    SrcLineInfo lastSrcLineInfo = Lines.back();
-    // Emitting sequential line records with the same line number (but
-    // different addresses) seems to confuse GDB.  Avoid this.
-    if (lastSrcLineInfo.getLine() == Line)
-      return NULL;
-  }
-#endif
 
   MCSymbol *Label = MMI->getContext().CreateTempSymbol();
   Lines.push_back(SrcLineInfo(Line, Col, Src, Label));
