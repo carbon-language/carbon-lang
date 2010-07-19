@@ -163,6 +163,10 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
     case 'C': k = ConversionSpecifier::CArg; break;
     case 'S': k = ConversionSpecifier::SArg; break;
     case '[': k = ConversionSpecifier::ScanListArg; break;
+    case 'u': k = ConversionSpecifier::uArg; break;
+    case 'x': k = ConversionSpecifier::xArg; break;
+    case 'o': k = ConversionSpecifier::oArg; break;
+    case 's': k = ConversionSpecifier::sArg; break;
   }
   ConversionSpecifier CS(conversionPosition, k);
   if (k == ConversionSpecifier::ScanListArg) {
