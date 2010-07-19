@@ -1372,7 +1372,7 @@ AC_COMPILE_IFELSE(
     [[#include <mach-o/getsect.h>
       int main() {
         unsigned long p;
-        return (int)getsect("__DATA","´__pass_info", &p);
+        return (int)getsect("__DATA","__pass_info", &p);
       }
     ]]),
   AC_MSG_RESULT(yes)
