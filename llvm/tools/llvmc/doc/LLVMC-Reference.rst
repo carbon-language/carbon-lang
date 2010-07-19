@@ -299,7 +299,7 @@ separate option groups syntactically.
 * Possible option types:
 
    - ``switch_option`` - a simple boolean switch without arguments, for example
-     ``-O2`` or ``-time``. At most one occurrence is allowed.
+     ``-O2`` or ``-time``. At most one occurrence is allowed by default.
 
    - ``parameter_option`` - option that takes one argument, for example
      ``-std=c99``. It is also allowed to use spaces instead of the equality
@@ -320,6 +320,13 @@ separate option groups syntactically.
    - ``alias_option`` - a special option type for creating aliases. Unlike other
      option types, aliases are not allowed to have any properties besides the
      aliased option name. Usage example: ``(alias_option "preprocess", "E")``
+
+   - ``switch_list_option`` - like ``switch_option`` with the ``zero_or_more``
+     property, but remembers how many times the switch was turned on. Useful
+     mostly for forwarding. Example: when ``-foo`` is a switch option (with the
+     ``zero_or_more`` property), the command ``driver -foo -foo`` is forwarded
+     as ``some-tool -foo``, but when ``-foo`` is a switch list, the same command
+     is forwarded as ``some-tool -foo -foo``.
 
 
 * Possible option properties:

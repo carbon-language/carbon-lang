@@ -32,6 +32,7 @@ def actions;
 
 def alias_option;
 def switch_option;
+def switch_list_option;
 def parameter_option;
 def parameter_list_option;
 def prefix_option;
