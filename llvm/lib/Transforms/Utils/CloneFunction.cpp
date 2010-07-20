@@ -334,25 +334,16 @@ ConstantFoldMappedInstruction(const Instruction *I) {
                                   Ops.size(), TD);
 }
 
-static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
-  DILocation ILoc(InsnMD);
-  if (!ILoc.Verify()) return InsnMD;
+static DebugLoc
+UpdateInlinedAtInfo(const DebugLoc &InsnDL, const DebugLoc &TheCallDL,
+                    LLVMContext &Ctx) {
+  DebugLoc NewLoc = TheCallDL;
+  if (MDNode *IA = InsnDL.getInlinedAt(Ctx))
+    NewLoc = UpdateInlinedAtInfo(DebugLoc::getFromDILocation(IA), TheCallDL,
+                                 Ctx);
 
-  DILocation CallLoc(TheCallMD);
-  if (!CallLoc.Verify()) return InsnMD;
-
-  DILocation OrigLocation = ILoc.getOrigLocation();
-  MDNode *NewLoc = TheCallMD;
-  if (OrigLocation.Verify())
-    NewLoc = UpdateInlinedAtInfo(OrigLocation, TheCallMD);
-
-  Value *MDVs[] = {
-    InsnMD->getOperand(0), // Line
-    InsnMD->getOperand(1), // Col
-    InsnMD->getOperand(2), // Scope
-    NewLoc
-  };
-  return MDNode::get(InsnMD->getContext(), MDVs, 4);
+  return DebugLoc::get(InsnDL.getLine(), InsnDL.getCol(),
+                       InsnDL.getScope(Ctx), NewLoc.getAsMDNode(Ctx));
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
@@ -408,9 +399,9 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //
     BasicBlock::iterator I = NewBB->begin();
 
-    MDNode *TheCallMD = NULL;
-    if (TheCall && TheCall->hasMetadata()) 
-      TheCallMD = TheCall->getMetadata(LLVMContext::MD_dbg);
+    DebugLoc TheCallDL;
+    if (TheCall) 
+      TheCallDL = TheCall->getDebugLoc();
     
     // Handle PHI nodes specially, as we have to remove references to dead
     // blocks.
@@ -419,15 +410,17 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       BasicBlock::const_iterator OldI = BI->begin();
       for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI) {
         if (I->hasMetadata()) {
-          if (TheCallMD) {
-            if (MDNode *IMD = I->getMetadata(LLVMContext::MD_dbg)) {
-              MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
-              I->setMetadata(LLVMContext::MD_dbg, NewMD);
+          if (!TheCallDL.isUnknown()) {
+            DebugLoc IDL = I->getDebugLoc();
+            if (!IDL.isUnknown()) {
+              DebugLoc NewDL = UpdateInlinedAtInfo(IDL, TheCallDL,
+                                                   I->getContext());
+              I->setDebugLoc(NewDL);
             }
           } else {
             // The cloned instruction has dbg info but the call instruction
             // does not have dbg info. Remove dbg info from cloned instruction.
-            I->setMetadata(LLVMContext::MD_dbg, 0);
+            I->setDebugLoc(DebugLoc());
           }
         }
         PHIToResolve.push_back(cast<PHINode>(OldI));
@@ -443,15 +436,17 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     // Otherwise, remap the rest of the instructions normally.
     for (; I != NewBB->end(); ++I) {
       if (I->hasMetadata()) {
-        if (TheCallMD) {
-          if (MDNode *IMD = I->getMetadata(LLVMContext::MD_dbg)) {
-            MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
-            I->setMetadata(LLVMContext::MD_dbg, NewMD);
+        if (!TheCallDL.isUnknown()) {
+          DebugLoc IDL = I->getDebugLoc();
+          if (!IDL.isUnknown()) {
+            DebugLoc NewDL = UpdateInlinedAtInfo(IDL, TheCallDL,
+                                                 I->getContext());
+            I->setDebugLoc(NewDL);
           }
         } else {
           // The cloned instruction has dbg info but the call instruction
           // does not have dbg info. Remove dbg info from cloned instruction.
-          I->setMetadata(LLVMContext::MD_dbg, 0);
+          I->setDebugLoc(DebugLoc());
         }
       }
       RemapInstruction(I, VMap);
