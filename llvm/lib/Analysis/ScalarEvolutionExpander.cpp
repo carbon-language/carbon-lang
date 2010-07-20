@@ -1059,9 +1059,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   // First check for an existing canonical IV in a suitable type.
   PHINode *CanonicalIV = 0;
   if (PHINode *PN = L->getCanonicalInductionVariable())
-    if (SE.isSCEVable(PN->getType()) &&
-        SE.getEffectiveSCEVType(PN->getType())->isIntegerTy() &&
-        SE.getTypeSizeInBits(PN->getType()) >= SE.getTypeSizeInBits(Ty))
+    if (SE.getTypeSizeInBits(PN->getType()) >= SE.getTypeSizeInBits(Ty))
       CanonicalIV = PN;
 
   // Rewrite an AddRec in terms of the canonical induction variable, if
@@ -1353,12 +1351,17 @@ PHINode *
 SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
                                                     const Type *Ty) {
   assert(Ty->isIntegerTy() && "Can only insert integer induction variables!");
+
+  // Build a SCEV for {0,+,1}<L>.
   const SCEV *H = SE.getAddRecExpr(SE.getConstant(Ty, 0),
                                    SE.getConstant(Ty, 1), L);
+
+  // Emit code for it.
   BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
   BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
   PHINode *V = cast<PHINode>(expandCodeFor(H, 0, L->getHeader()->begin()));
   if (SaveInsertBB)
     restoreInsertPoint(SaveInsertBB, SaveInsertPt);
+
   return V;
 }
