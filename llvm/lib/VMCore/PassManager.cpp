@@ -332,8 +332,7 @@ public:
   /// Return function pass corresponding to PassInfo PI, that is 
   /// required by module pass MP. Instantiate analysis pass, by using
   /// its runOnFunction() for function F.
-  virtual Pass* getOnTheFlyPass(Pass *MP, const StaticPassInfo *PI,
-                                Function &F);
+  virtual Pass* getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F);
 
   virtual const char *getPassName() const {
     return "Module Pass Manager";
@@ -633,7 +632,7 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   for (SmallVector<ImmutablePass *, 8>::iterator I = ImmutablePasses.begin(),
          E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
-    const StaticPassInfo *PI = (*I)->getPassInfo();
+    const PassInfo *PI = (*I)->getPassInfo();
     if (PI == AID)
       P = *I;
 
@@ -729,7 +728,7 @@ PMTopLevelManager::~PMTopLevelManager() {
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
 void PMDataManager::recordAvailableAnalysis(Pass *P) {
-  const StaticPassInfo *PI = P->getPassInfo();
+  const PassInfo *PI = P->getPassInfo();
   if (PI == 0) return;
   
   AvailableAnalysis[PI] = P;
@@ -868,7 +867,7 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
     P->releaseMemory();
   }
 
-  if (const StaticPassInfo *PI = P->getPassInfo()) {
+  if (const PassInfo *PI = P->getPassInfo()) {
     // Remove the pass itself (if it is not already removed).
     AvailableAnalysis.erase(PI);
 
@@ -1052,7 +1051,7 @@ void PMDataManager::dumpPassArguments() const {
     if (PMDataManager *PMD = (*I)->getAsPMDataManager())
       PMD->dumpPassArguments();
     else
-      if (const StaticPassInfo *PI = (*I)->getPassInfo())
+      if (const PassInfo *PI = (*I)->getPassInfo())
         if (!PI->isAnalysisGroup())
           dbgs() << " -" << PI->getPassArgument();
   }
@@ -1155,8 +1154,7 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   llvm_unreachable("Unable to schedule pass");
 }
 
-Pass *PMDataManager::getOnTheFlyPass(Pass *P, const StaticPassInfo *PI,
-                                     Function &F) {
+Pass *PMDataManager::getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
   assert(0 && "Unable to find on the fly pass");
   return NULL;
 }
@@ -1175,7 +1173,7 @@ Pass *AnalysisResolver::getAnalysisIfAvailable(AnalysisID ID, bool dir) const {
   return PM.findAnalysisPass(ID, dir);
 }
 
-Pass *AnalysisResolver::findImplPass(Pass *P, const StaticPassInfo *AnalysisPI, 
+Pass *AnalysisResolver::findImplPass(Pass *P, const PassInfo *AnalysisPI, 
                                      Function &F) {
   return PM.getOnTheFlyPass(P, AnalysisPI, F);
 }
@@ -1570,8 +1568,7 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 /// Return function pass corresponding to PassInfo PI, that is 
 /// required by module pass MP. Instantiate analysis pass, by using
 /// its runOnFunction() for function F.
-Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const StaticPassInfo *PI,
-                                     Function &F){
+Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F){
   FunctionPassManagerImpl *FPP = OnTheFlyManagers[MP];
   assert(FPP && "Unable to find on the fly pass");
   

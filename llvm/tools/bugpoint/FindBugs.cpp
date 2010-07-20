@@ -29,8 +29,7 @@ using namespace llvm;
 /// If the passes did not compile correctly, output the command required to 
 /// recreate the failure. This returns true if a compiler error is found.
 ///
-bool
-BugDriver::runManyPasses(const std::vector<const StaticPassInfo*> &AllPasses,
+bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses,
                               std::string &ErrMsg) {
   setPassesToRun(AllPasses);
   outs() << "Starting bug finding procedure...\n\n";

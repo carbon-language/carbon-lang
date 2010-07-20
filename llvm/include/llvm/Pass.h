@@ -41,7 +41,6 @@ class BasicBlock;
 class Function;
 class Module;
 class AnalysisUsage;
-class StaticPassInfo;
 class PassInfo;
 class ImmutablePass;
 class PMStack;
@@ -51,7 +50,7 @@ class raw_ostream;
 class StringRef;
 
 // AnalysisID - Use the PassInfo to identify a pass...
-typedef const StaticPassInfo* AnalysisID;
+typedef const PassInfo* AnalysisID;
 
 /// Different types of internal pass managers. External pass managers
 /// (PassManager and FunctionPassManager) are not represented here.
@@ -105,7 +104,7 @@ public:
   /// getPassInfo - Return the PassInfo data structure that corresponds to this
   /// pass...  If the pass has not been registered, this will return null.
   ///
-  const StaticPassInfo *getPassInfo() const;
+  const PassInfo *getPassInfo() const;
 
   /// print - Print out the internal state of the pass.  This is called by
   /// Analyze to print out the contents of an analysis.  Otherwise it is not
@@ -160,7 +159,7 @@ public:
   /// an analysis interface through multiple inheritance.  If needed, it should
   /// override this to adjust the this pointer as needed for the specified pass
   /// info.
-  virtual void *getAdjustedAnalysisPointer(const StaticPassInfo *);
+  virtual void *getAdjustedAnalysisPointer(const PassInfo *);
   virtual ImmutablePass *getAsImmutablePass();
   virtual PMDataManager *getAsPMDataManager();
   
@@ -172,17 +171,17 @@ public:
   virtual void dumpPassStructure(unsigned Offset = 0);
 
   template<typename AnalysisClass>
-  static const StaticPassInfo *getClassPassInfo() {
+  static const PassInfo *getClassPassInfo() {
     return lookupPassInfo(intptr_t(&AnalysisClass::ID));
   }
 
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
-  static const StaticPassInfo *lookupPassInfo(intptr_t TI);
+  static const PassInfo *lookupPassInfo(intptr_t TI);
 
   // lookupPassInfo - Return the pass info object for the pass with the given
   // argument string, or null if it is not known.
-  static const StaticPassInfo *lookupPassInfo(StringRef Arg);
+  static const PassInfo *lookupPassInfo(StringRef Arg);
 
   /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
   /// get analysis information that might be around, for example to update it.
@@ -214,10 +213,10 @@ public:
   AnalysisType &getAnalysis(Function &F); // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(const StaticPassInfo *PI) const;
+  AnalysisType &getAnalysisID(const PassInfo *PI) const;
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(const StaticPassInfo *PI, Function &F);
+  AnalysisType &getAnalysisID(const PassInfo *PI, Function &F);
 };
 
 

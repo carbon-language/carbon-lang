@@ -99,8 +99,8 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   return Result;
 }
 
-static const StaticPassInfo *getPI(Pass *P) {
-  const StaticPassInfo *PI = P->getPassInfo();
+static const PassInfo *getPI(Pass *P) {
+  const PassInfo *PI = P->getPassInfo();
   delete P;
   return PI;
 }
@@ -114,7 +114,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
 
-  std::vector<const StaticPassInfo*> CleanupPasses;
+  std::vector<const PassInfo*> CleanupPasses;
   CleanupPasses.push_back(getPI(createGlobalDCEPass()));
 
   if (MayModifySemantics)
@@ -138,7 +138,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
 /// function.  This returns null if there are no extractable loops in the
 /// program or if the loop extractor crashes.
 Module *BugDriver::ExtractLoop(Module *M) {
-  std::vector<const StaticPassInfo*> LoopExtractPasses;
+  std::vector<const PassInfo*> LoopExtractPasses;
   LoopExtractPasses.push_back(getPI(createSingleLoopExtractorPass()));
 
   Module *NewM = runPassesOn(M, LoopExtractPasses);
@@ -359,7 +359,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   std::string uniqueFN = "--extract-blocks-file=" + uniqueFilename.str();
   const char *ExtraArg = uniqueFN.c_str();
 
-  std::vector<const StaticPassInfo*> PI;
+  std::vector<const PassInfo*> PI;
   std::vector<BasicBlock *> EmptyBBs; // This parameter is ignored.
   PI.push_back(getPI(createBlockExtractorPass(EmptyBBs)));
   Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
