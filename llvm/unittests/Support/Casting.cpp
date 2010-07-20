@@ -1,4 +1,4 @@
-//===---------- llvm/unittest/Support/Casting.cpp - Casting tests --------===//
+//===---------- llvm/unittest/Support/Casting.cpp - Casting tests ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Debug.h"
-//#define DEBUG_CAST_OPERATORS
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "gtest/gtest.h"
 #include <cstdlib>
-
 
 namespace llvm {
 
