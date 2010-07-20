@@ -259,7 +259,7 @@ static bool StripDebugInfo(Module &M) {
          ++FI)
       for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
            ++BI) {
-        Changed != !BI->getDebugLoc().isUnknown();
+        Changed |= !BI->getDebugLoc().isUnknown();
         BI->setDebugLoc(DebugLoc());
       }
 
