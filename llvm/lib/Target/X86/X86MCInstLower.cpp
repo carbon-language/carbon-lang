@@ -29,8 +29,10 @@
 using namespace llvm;
 
 X86MCInstLower::X86MCInstLower(MCContext &ctx, Mangler *mang,
-                               X86AsmPrinter &asmprinter)
-: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MF(*AsmPrinter.MF) {}
+                               X86AsmPrinter &asmprinter,
+                               const TargetMachine &tm)
+: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MF(*AsmPrinter.MF),
+  TM(tm), MAI(*TM.getMCAsmInfo()) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
   return MF.getMMI().getObjFileInfo<MachineModuleInfoMachO>();
@@ -38,8 +40,7 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
-  const TargetLowering *TLI = AsmPrinter.TM.getTargetLowering();
-  return static_cast<const X86TargetLowering*>(TLI)->
+  return static_cast<const X86TargetLowering*>(TM.getTargetLowering())->
     getPICBaseSymbol(&MF, Ctx);
 }
 
@@ -53,7 +54,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   
   if (!MO.isGlobal()) {
     assert(MO.isSymbol());
-    Name += AsmPrinter.MAI->getGlobalPrefix();
+    Name += MAI.getGlobalPrefix();
     Name += MO.getSymbolName();
   } else {    
     const GlobalValue *GV = MO.getGlobal();
@@ -175,7 +176,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Expr = MCBinaryExpr::CreateSub(Expr, 
                                MCSymbolRefExpr::Create(GetPICBaseSymbol(), Ctx),
                                    Ctx);
-    if (MO.isJTI() && AsmPrinter.MAI->hasSetDirective()) {
+    if (MO.isJTI() && MAI.hasSetDirective()) {
       // If .set directive is supported, use it to reduce the number of
       // relocations the assembler will generate for differences between
       // local labels. This is only safe when the symbols are in the same
@@ -504,7 +505,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(OutContext, Mang, *this);
+  X86MCInstLower MCInstLowering(OutContext, Mang, *this, TM);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
