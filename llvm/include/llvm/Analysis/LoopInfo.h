@@ -509,6 +509,12 @@ protected:
   }
 };
 
+template<class BlockT, class LoopT>
+raw_ostream& operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
+  Loop.print(OS);
+  return OS;
+}
+
 class Loop : public LoopBase<BasicBlock, Loop> {
 public:
   Loop() {}
