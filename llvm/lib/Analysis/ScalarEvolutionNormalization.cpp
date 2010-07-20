@@ -26,7 +26,7 @@ using namespace llvm;
 /// post-inc value when we cannot) or it can end up adding extra live-ranges to
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
-static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
+static bool IVUseShouldUsePostIncValue(Instruction *User, Value *Operand,
                                        const Loop *L, DominatorTree *DT) {
   // If the user is in the loop, use the preinc value.
   if (L->contains(User)) return false;
@@ -47,15 +47,15 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   PHINode *PN = dyn_cast<PHINode>(User);
   if (!PN) return false;  // not a phi, not dominated by latch block.
 
-  // Look at all of the uses of IV by the PHI node.  If any use corresponds to
-  // a block that is not dominated by the latch block, give up and use the
+  // Look at all of the uses of Operand by the PHI node.  If any use corresponds
+  // to a block that is not dominated by the latch block, give up and use the
   // preincremented value.
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) == IV &&
+    if (PN->getIncomingValue(i) == Operand &&
         !DT->dominates(LatchBlock, PN->getIncomingBlock(i)))
       return false;
 
-  // Okay, all uses of IV by PN are in predecessor blocks that really are
+  // Okay, all uses of Operand by PN are in predecessor blocks that really are
   // dominated by the latch block.  Use the post-incremented value.
   return true;
 }
