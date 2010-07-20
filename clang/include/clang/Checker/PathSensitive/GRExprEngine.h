@@ -233,8 +233,8 @@ protected:
   }
 
 public:
-  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred, 
-                         const GRState* St,
+  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
+                         ExplodedNode* Pred, const GRState* St,
                          ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                          const void *tag = 0);
 
@@ -444,31 +444,31 @@ protected:
 
   /// EvalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by EvalStore, VisitDeclStmt, and others.
-  void EvalBind(ExplodedNodeSet& Dst, Stmt *AssignE,
-                Stmt* StoreE, ExplodedNode* Pred,
+  void EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
+                const Stmt* StoreE, ExplodedNode* Pred,
                 const GRState* St, SVal location, SVal Val,
                 bool atDeclInit = false);
 
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
-  void EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
+  void EvalLoad(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
                 const GRState* St, SVal location, const void *tag = 0,
                 QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
-  void EvalStore(ExplodedNodeSet& Dst, Expr* AssignE, Expr* StoreE,
+  void EvalStore(ExplodedNodeSet& Dst, const Expr* AssignE, const Expr* StoreE,
                  ExplodedNode* Pred, const GRState* St, SVal TargetLV, SVal Val,
                  const void *tag = 0);
 private:  
-  void EvalLoadCommon(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
+  void EvalLoadCommon(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
                       const GRState* St, SVal location, const void *tag,
                       QualType LoadTy);
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
-  void EvalLocation(ExplodedNodeSet &Dst, Stmt *S, ExplodedNode* Pred,
+  void EvalLocation(ExplodedNodeSet &Dst, const Stmt *S, ExplodedNode* Pred,
                     const GRState* St, SVal location,
                     const void *tag, bool isLoad);
 

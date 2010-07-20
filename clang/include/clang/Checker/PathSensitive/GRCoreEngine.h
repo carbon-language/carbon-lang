@@ -239,15 +239,15 @@ public:
       return Pred->getState();
   }
 
-  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred,
-                   const GRState* St) {
+  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
+                         ExplodedNode* Pred, const GRState* St) {
     return MakeNode(Dst, S, Pred, St, PointKind);
   }
 
-  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred,
+  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S,ExplodedNode* Pred,
                          const GRState* St, ProgramPoint::Kind K);
 
-  ExplodedNode* MakeSinkNode(ExplodedNodeSet& Dst, Stmt* S,
+  ExplodedNode* MakeSinkNode(ExplodedNodeSet& Dst, const Stmt* S,
                        ExplodedNode* Pred, const GRState* St) {
     bool Tmp = BuildSinks;
     BuildSinks = true;

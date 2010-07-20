@@ -459,7 +459,7 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, Stmt* S, 
+ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
                                           ExplodedNode* Pred, const GRState* St,
                                           ProgramPoint::Kind K) {
   const GRState* PredState = GetState(Pred);

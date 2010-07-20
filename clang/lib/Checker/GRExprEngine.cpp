@@ -1092,7 +1092,7 @@ bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
 // Generic node creation.
 //===----------------------------------------------------------------------===//
 
-ExplodedNode* GRExprEngine::MakeNode(ExplodedNodeSet& Dst, Stmt* S,
+ExplodedNode* GRExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
                                      ExplodedNode* Pred, const GRState* St,
                                      ProgramPoint::Kind K, const void *tag) {
   assert (Builder && "GRStmtNodeBuilder not present.");
@@ -1690,8 +1690,8 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
 
 /// EvalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by EvalStore and (soon) VisitDeclStmt, and others.
-void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt *AssignE,
-                            Stmt* StoreE, ExplodedNode* Pred,
+void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, const Stmt *AssignE,
+                            const Stmt* StoreE, ExplodedNode* Pred,
                             const GRState* state, SVal location, SVal Val,
                             bool atDeclInit) {
 
@@ -1745,8 +1745,8 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt *AssignE,
 ///  @param state The current simulation state
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
-void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr *AssignE,
-                             Expr* StoreE,
+void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
+                             const Expr* StoreE,
                              ExplodedNode* Pred,
                              const GRState* state, SVal location, SVal Val,
                              const void *tag) {
@@ -1771,7 +1771,8 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr *AssignE,
     EvalBind(Dst, AssignE, StoreE, *NI, GetState(*NI), location, Val);
 }
 
-void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr *Ex, ExplodedNode* Pred,
+void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, const Expr *Ex, 
+                            ExplodedNode* Pred,
                             const GRState* state, SVal location,
                             const void *tag, QualType LoadTy) {
 
@@ -1801,7 +1802,7 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr *Ex, ExplodedNode* Pred,
   EvalLoadCommon(Dst, Ex, Pred, state, location, tag, LoadTy);
 }
 
-void GRExprEngine::EvalLoadCommon(ExplodedNodeSet& Dst, Expr *Ex,
+void GRExprEngine::EvalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
                                   ExplodedNode* Pred,
                                   const GRState* state, SVal location,
                                   const void *tag, QualType LoadTy) {
@@ -1835,7 +1836,7 @@ void GRExprEngine::EvalLoadCommon(ExplodedNodeSet& Dst, Expr *Ex,
   }
 }
 
-void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
+void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 ExplodedNode* Pred,
                                 const GRState* state, SVal location,
                                 const void *tag, bool isLoad) {
