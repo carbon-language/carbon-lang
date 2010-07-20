@@ -19,7 +19,17 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) mcdisassembler x86asmprinter x86disassembler
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) mcdisassembler
+
+# If the X86 target is enabled, link in the asmprinter and disassembler.
+ifneq ($(filter $(TARGETS_TO_BUILD), X86),)
+LINK_COMPONENTS += x86asmprinter x86disassembler
+endif
+
+# If the X86 target is enabled, link in the asmprinter and disassembler.
+ifneq ($(filter $(TARGETS_TO_BUILD), ARM),)
+LINK_COMPONENTS += armasmprinter armdisassembler
+endif
 
 include $(LEVEL)/Makefile.common
 
