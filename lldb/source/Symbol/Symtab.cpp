@@ -504,7 +504,7 @@ size_t
 Symtab::CalculateSymbolSize (Symbol *symbol)
 {
     // Make sure this symbol is from this symbol table...
-    if (symbol < m_symbols.data() && symbol >= m_symbols.data() + m_symbols.size())
+    if (symbol < m_symbols.data() || symbol >= m_symbols.data() + m_symbols.size())
         return 0;
 
     // See if this symbol already has a byte size?
