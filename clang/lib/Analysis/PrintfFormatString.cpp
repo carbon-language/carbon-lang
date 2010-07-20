@@ -172,7 +172,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 'G': k = ConversionSpecifier::GArg; break;
     case 'X': k = ConversionSpecifier::XArg; break;
     case 'a': k = ConversionSpecifier::aArg; break;
-    case 'c': k = ConversionSpecifier::IntAsCharArg; break;
+    case 'c': k = ConversionSpecifier::cArg; break;
     case 'd': k = ConversionSpecifier::dArg; break;
     case 'e': k = ConversionSpecifier::eArg; break;
     case 'f': k = ConversionSpecifier::fArg; break;
@@ -249,7 +249,7 @@ const char *ConversionSpecifier::toString() const {
   case GArg: return "G";
   case aArg: return "a";
   case AArg: return "A";
-  case IntAsCharArg:     return "c";
+  case cArg:     return "c";
   case CStrArg:          return "s";
   case VoidPtrArg:       return "p";
   case OutIntPtrArg:     return "n";
@@ -388,7 +388,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
 
   // Set conversion specifier and disable any flags which do not apply to it.
   if (QT->isAnyCharacterType()) {
-    CS.setKind(ConversionSpecifier::IntAsCharArg);
+    CS.setKind(ConversionSpecifier::cArg);
     Precision.setHowSpecified(OptionalAmount::NotSpecified);
     HasAlternativeForm = 0;
     HasLeadingZeroes = 0;
@@ -601,7 +601,7 @@ bool PrintfSpecifier::hasValidLengthModifier() const {
     case ConversionSpecifier::gArg:
     case ConversionSpecifier::GArg:
     case ConversionSpecifier::OutIntPtrArg:
-    case ConversionSpecifier::IntAsCharArg:
+    case ConversionSpecifier::cArg:
     case ConversionSpecifier::CStrArg:
       return true;
     default:

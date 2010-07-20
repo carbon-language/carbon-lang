@@ -259,7 +259,7 @@ public:
     InvalidSpecifier = 0,
       // C99 conversion specifiers.
     dArg, // 'd'
-    IntAsCharArg,  // 'c'
+    cArg, // 'c'
     iArg, // 'i',
     oArg, // 'o',
     uArg, // 'u',
