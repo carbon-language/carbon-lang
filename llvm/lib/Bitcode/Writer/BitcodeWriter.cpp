@@ -634,12 +634,11 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
   SmallVector<StringRef, 4> Names;
   M->getMDKindNames(Names);
   
-  assert(Names[0] == "" && "MDKind #0 is invalid");
-  if (Names.size() == 1) return;
+  if (Names.empty()) return;
 
   Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
   
-  for (unsigned MDKindID = 1, e = Names.size(); MDKindID != e; ++MDKindID) {
+  for (unsigned MDKindID = 0, e = Names.size(); MDKindID != e; ++MDKindID) {
     Record.push_back(MDKindID);
     StringRef KName = Names[MDKindID];
     Record.append(KName.begin(), KName.end());

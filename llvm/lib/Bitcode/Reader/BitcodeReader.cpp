@@ -39,6 +39,7 @@ void BitcodeReader::FreeState() {
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
+  MDKindMap.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -859,13 +860,12 @@ bool BitcodeReader::ParseMetadata() {
       SmallString<8> Name;
       Name.resize(RecordLength-1);
       unsigned Kind = Record[0];
-      (void) Kind;
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
       
       unsigned NewKind = TheModule->getMDKindID(Name.str());
-      assert(Kind == NewKind &&
-             "FIXME: Unable to handle custom metadata mismatch!");(void)NewKind;
+      if (!MDKindMap.insert(std::make_pair(Kind, NewKind)).second)
+        return Error("Conflicting METADATA_KIND records");
       break;
     }
     }
@@ -1621,8 +1621,12 @@ bool BitcodeReader::ParseMetadataAttachment() {
       Instruction *Inst = InstructionList[Record[0]];
       for (unsigned i = 1; i != RecordLength; i = i+2) {
         unsigned Kind = Record[i];
+        DenseMap<unsigned, unsigned>::iterator I =
+          MDKindMap.find(Kind);
+        if (I == MDKindMap.end())
+          return Error("Invalid metadata kind ID");
         Value *Node = MDValueList.getValueFwdRef(Record[i+1]);
-        Inst->setMetadata(Kind, cast<MDNode>(Node));
+        Inst->setMetadata(I->second, cast<MDNode>(Node));
       }
       break;
     }

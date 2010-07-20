@@ -156,6 +156,9 @@ class BitcodeReader : public GVMaterializer {
   // stored here with their replacement function.
   typedef std::vector<std::pair<Function*, Function*> > UpgradedIntrinsicMap;
   UpgradedIntrinsicMap UpgradedIntrinsics;
+
+  // Map the bitcode's custom MDKind ID to the Module's MDKind ID.
+  DenseMap<unsigned, unsigned> MDKindMap;
   
   // After the module header has been read, the FunctionsWithBodies list is 
   // reversed.  This keeps track of whether we've done this yet.

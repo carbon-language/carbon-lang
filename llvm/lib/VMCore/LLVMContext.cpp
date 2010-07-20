@@ -110,21 +110,18 @@ static bool isValidName(StringRef MDName) {
 /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
 unsigned LLVMContext::getMDKindID(StringRef Name) const {
   assert(isValidName(Name) && "Invalid MDNode name");
-  
-  unsigned &Entry = pImpl->CustomMDKindNames[Name];
-  
+
   // If this is new, assign it its ID.
-  if (Entry == 0) Entry = pImpl->CustomMDKindNames.size();
-  return Entry;
+  return
+    pImpl->CustomMDKindNames.GetOrCreateValue(
+      Name, pImpl->CustomMDKindNames.size()).second;
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
 /// metadata name and ID.
 void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
-  Names.resize(pImpl->CustomMDKindNames.size()+1);
-  Names[0] = "";
+  Names.resize(pImpl->CustomMDKindNames.size());
   for (StringMap<unsigned>::const_iterator I = pImpl->CustomMDKindNames.begin(),
        E = pImpl->CustomMDKindNames.end(); I != E; ++I)
-    // MD Handlers are numbered from 1.
     Names[I->second] = I->first();
 }
