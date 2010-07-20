@@ -50,13 +50,10 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   // Look at all of the uses of IV by the PHI node.  If any use corresponds to
   // a block that is not dominated by the latch block, give up and use the
   // preincremented value.
-  unsigned NumUses = 0;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) == IV) {
-      ++NumUses;
-      if (!DT->dominates(LatchBlock, PN->getIncomingBlock(i)))
-        return false;
-    }
+    if (PN->getIncomingValue(i) == IV &&
+        !DT->dominates(LatchBlock, PN->getIncomingBlock(i)))
+      return false;
 
   // Okay, all uses of IV by PN are in predecessor blocks that really are
   // dominated by the latch block.  Use the post-incremented value.
