@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CGObjCRuntime.h"
+#include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -435,11 +436,26 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
   // Emit the array size expression.
   NumElements = CGF.EmitScalarExpr(E->getArraySize());
   
-  // Multiply with the type size.
-  llvm::Value *V = 
-    CGF.Builder.CreateMul(NumElements, 
-                          llvm::ConstantInt::get(SizeTy, 
-                                                 TypeSize.getQuantity()));
+  // Multiply with the type size.  This multiply can overflow, e.g. in:
+  //   new double[n]
+  // where n is 2^30 on a 32-bit machine or 2^62 on a 64-bit machine.  Because
+  // of this, we need to detect the overflow and ensure that an exception is
+  // called by invoking std::__throw_length_error.
+  llvm::Value *UMulF = CGF.CGM.getIntrinsic(llvm::Intrinsic::umul_with_overflow, 
+                                            &SizeTy, 1);
+  llvm::Value *MulRes = CGF.Builder.CreateCall2(UMulF, NumElements, 
+                                                llvm::ConstantInt::get(SizeTy, 
+                                                    TypeSize.getQuantity()));
+  // Branch on the overflow bit to the overflow block, which is lazily created.
+  llvm::Value *DidOverflow = CGF.Builder.CreateExtractValue(MulRes, 1);
+  
+  llvm::BasicBlock *NormalBB = CGF.createBasicBlock("no_overflow");
+  
+  CGF.Builder.CreateCondBr(DidOverflow, CGF.getThrowLengthErrorBB(), NormalBB);
+  CGF.EmitBlock(NormalBB);
+  
+  // Get the normal result of the multiplication.
+  llvm::Value *V = CGF.Builder.CreateExtractValue(MulRes, 0);
 
   // And add the cookie padding if necessary.
   if (!CookiePadding.isZero())

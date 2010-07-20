@@ -1315,10 +1315,9 @@ llvm::BasicBlock *CodeGenFunction::getTrapBB() {
 
   // If we are not optimzing, don't collapse all calls to trap in the function
   // to the same call, that way, in the debugger they can see which operation
-  // did in fact fail.  If we are optimizing, we collpase all call to trap down
+  // did in fact fail.  If we are optimizing, we collapse all calls to trap down
   // to just one per function to save on codesize.
-  if (GCO.OptimizationLevel
-      && TrapBB)
+  if (GCO.OptimizationLevel && TrapBB)
     return TrapBB;
 
   llvm::BasicBlock *Cont = 0;
