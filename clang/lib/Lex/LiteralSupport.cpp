@@ -911,6 +911,20 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       hadError = 1;
       return;
     }
+  } else if (Complain) {
+    // Complain if this string literal has too many characters.
+    unsigned MaxChars = PP.getLangOptions().CPlusPlus? 65536
+                      : PP.getLangOptions().C99 ? 4095
+                      : 509;
+    
+    if (GetNumStringChars() > MaxChars)
+      PP.Diag(StringToks[0].getLocation(), diag::ext_string_too_long)
+        << GetNumStringChars() << MaxChars
+        << (PP.getLangOptions().CPlusPlus? 2
+            : PP.getLangOptions().C99 ? 1
+            : 0)
+        << SourceRange(StringToks[0].getLocation(),
+                       StringToks[NumStringToks-1].getLocation());
   }
 }
 

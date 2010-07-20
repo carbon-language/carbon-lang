@@ -94,7 +94,10 @@ def ext_binary_literal : Extension<
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
 def warn_octal_escape_too_large : ExtWarn<"octal escape sequence out of range">;
 def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
-
+def ext_string_too_long : Extension<"string literal of length %0 exceeds "
+  "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
+  "support">;
+  
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics
 //===----------------------------------------------------------------------===//
