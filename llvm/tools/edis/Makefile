@@ -10,8 +10,6 @@
 LEVEL = ../..
 LIBRARYNAME = EnhancedDisassembly
 
-BUILT_SOURCES = EDInfo.inc
-
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 
 # Include this here so we can get the configuration of the targets
@@ -52,9 +50,3 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
-EDInfo.inc:	$(TBLGEN)
-	$(Echo) "Building semantic information header"
-	$(Verb) $(TableGen) -o $(call SYSPATH, $@) -gen-enhanced-disassembly-header /dev/null
-
-clean::
-	-$(Verb) $(RM) -f EDInfo.inc
