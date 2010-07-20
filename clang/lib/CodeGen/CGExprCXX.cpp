@@ -440,7 +440,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
   //   new double[n]
   // where n is 2^30 on a 32-bit machine or 2^62 on a 64-bit machine.  Because
   // of this, we need to detect the overflow and ensure that an exception is
-  // called by invoking std::__throw_length_error.
+  // called by forcing the size to -1 on overflow.
   llvm::Value *UMulF = CGF.CGM.getIntrinsic(llvm::Intrinsic::umul_with_overflow, 
                                             &SizeTy, 1);
   llvm::Value *MulRes = CGF.Builder.CreateCall2(UMulF, NumElements, 
@@ -448,15 +448,26 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
                                                     TypeSize.getQuantity()));
   // Branch on the overflow bit to the overflow block, which is lazily created.
   llvm::Value *DidOverflow = CGF.Builder.CreateExtractValue(MulRes, 1);
-  
-  llvm::BasicBlock *NormalBB = CGF.createBasicBlock("no_overflow");
-  
-  CGF.Builder.CreateCondBr(DidOverflow, CGF.getThrowLengthErrorBB(), NormalBB);
-  CGF.EmitBlock(NormalBB);
-  
   // Get the normal result of the multiplication.
   llvm::Value *V = CGF.Builder.CreateExtractValue(MulRes, 0);
+  
+  llvm::BasicBlock *NormalBB = CGF.createBasicBlock("no_overflow");
+  llvm::BasicBlock *OverflowBB = CGF.createBasicBlock("overflow");
+  
+  CGF.Builder.CreateCondBr(DidOverflow, OverflowBB, NormalBB);
 
+  llvm::BasicBlock *PrevBB = CGF.Builder.GetInsertBlock();
+  
+  // We just need the overflow block to build a PHI node.
+  CGF.EmitBlock(OverflowBB);
+  CGF.EmitBlock(NormalBB);
+  
+  llvm::PHINode *PN = CGF.Builder.CreatePHI(V->getType());
+  
+  PN->addIncoming(V, PrevBB);
+  PN->addIncoming(llvm::Constant::getAllOnesValue(V->getType()), OverflowBB);
+  V = PN;
+  
   // And add the cookie padding if necessary.
   if (!CookiePadding.isZero())
     V = CGF.Builder.CreateAdd(V, 

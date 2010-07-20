@@ -656,7 +656,7 @@ private:
 
   llvm::BasicBlock *TerminateLandingPad;
   llvm::BasicBlock *TerminateHandler;
-  llvm::BasicBlock *TrapBB, *ThrowLengthErrorBB;
+  llvm::BasicBlock *TrapBB;
 
 public:
   CodeGenFunction(CodeGenModule &cgm);
@@ -1543,10 +1543,6 @@ public:
   /// getTrapBB - Create a basic block that will call the trap intrinsic.  We'll
   /// generate a branch around the created basic block as necessary.
   llvm::BasicBlock *getTrapBB();
-  
-  /// getThrowLengthErrorBB - Create a basic block that will call
-  /// std::__throw_length_error to throw a std::length_error exception.
-  llvm::BasicBlock *getThrowLengthErrorBB();
   
   /// EmitCallArg - Emit a single call argument.
   RValue EmitCallArg(const Expr *E, QualType ArgType);

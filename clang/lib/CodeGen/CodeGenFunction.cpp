@@ -36,7 +36,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     DidCallStackSave(false), UnreachableBlock(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
     ConditionalBranchLevel(0), TerminateLandingPad(0), TerminateHandler(0),
-    TrapBB(0), ThrowLengthErrorBB(0) {
+    TrapBB(0) {
       
   // Get some frequently used types.
   LLVMPointerWidth = Target.getPointerWidth(0);
@@ -155,13 +155,6 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     Builder.ClearInsertionPoint();
   }
   
-  // If someone called operator new[] and needs a throw_length_error block, emit
-  // it at the end of the function.
-  if (ThrowLengthErrorBB) {
-    EmitBlock(ThrowLengthErrorBB);
-    Builder.ClearInsertionPoint();
-  }
-  
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   llvm::Instruction *Ptr = AllocaInsertPt;
   AllocaInsertPt = 0;
@@ -184,37 +177,6 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   if (CGM.getCodeGenOpts().EmitDeclMetadata)
     EmitDeclMetadata();
 }
-
-/// getThrowLengthErrorBB - Create a basic block that will call
-/// std::__throw_length_error to throw a std::length_error exception.
-llvm::BasicBlock *CodeGenFunction::getThrowLengthErrorBB() {
-  if (ThrowLengthErrorBB) return ThrowLengthErrorBB;
-  
-  llvm::IRBuilder<>::InsertPoint SavedIP = Builder.saveIP();
-  
-  ThrowLengthErrorBB = createBasicBlock("throw_length_error");
-  Builder.SetInsertPoint(ThrowLengthErrorBB);
-  
-  // Call to void std::__throw_length_error("length_error");
-  const llvm::Type *ResultType = Builder.getVoidTy();
-  const llvm::Type *PtrToInt8Ty = Builder.getInt8PtrTy();
-  std::vector<const llvm::Type*> ArgTys(1, PtrToInt8Ty);
-  llvm::Constant *Fn = 
-   CGM.CreateRuntimeFunction(llvm::FunctionType::get(ResultType, ArgTys, false),
-                             "_ZSt20__throw_length_errorPKc");
-    
-  llvm::Value *C = CGM.GetAddrOfConstantCString("length_error");
-  C = Builder.CreateStructGEP(C, 0, "arraydecay");
-  llvm::CallInst *TheCall = Builder.CreateCall(Fn, C);
-  TheCall->setDoesNotReturn();
-
-  Builder.CreateUnreachable();
-  
-  
-  Builder.restoreIP(SavedIP);
-  return ThrowLengthErrorBB;
-}
-
 
 /// ShouldInstrumentFunction - Return true if the current function should be
 /// instrumented with __cyg_profile_func_* calls
