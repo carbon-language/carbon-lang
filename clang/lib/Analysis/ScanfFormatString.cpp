@@ -19,14 +19,14 @@ using clang::analyze_format_string::ArgTypeResult;
 using clang::analyze_format_string::FormatStringHandler;
 using clang::analyze_format_string::LengthModifier;
 using clang::analyze_format_string::OptionalAmount;
-using clang::analyze_scanf::ConversionSpecifier;
+using clang::analyze_scanf::ScanfConversionSpecifier;
 using clang::analyze_scanf::ScanfSpecifier;
 
 typedef clang::analyze_format_string::SpecifierResult<ScanfSpecifier>
         ScanfSpecifierResult;
 
 static bool ParseScanList(FormatStringHandler &H,
-                          ConversionSpecifier &CS,
+                          ScanfConversionSpecifier &CS,
                           const char *&Beg, const char *E) {
   const char *I = Beg;
   const char *start = I - 1;
@@ -142,34 +142,34 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   
   // Finally, look for the conversion specifier.
   const char *conversionPosition = I++;
-  ConversionSpecifier::Kind k = ConversionSpecifier::InvalidSpecifier;
+  ScanfConversionSpecifier::Kind k = ScanfConversionSpecifier::InvalidSpecifier;
   switch (*conversionPosition) {
     default:
       break;
-    case '%': k = ConversionSpecifier::PercentArg;   break;
-    case 'A': k = ConversionSpecifier::AArg; break;
-    case 'E': k = ConversionSpecifier::EArg; break;
-    case 'F': k = ConversionSpecifier::FArg; break;
-    case 'G': k = ConversionSpecifier::GArg; break;
-    case 'X': k = ConversionSpecifier::XArg; break;
-    case 'a': k = ConversionSpecifier::aArg; break;
-    case 'd': k = ConversionSpecifier::dArg; break;
-    case 'e': k = ConversionSpecifier::eArg; break;
-    case 'f': k = ConversionSpecifier::fArg; break;
-    case 'g': k = ConversionSpecifier::gArg; break;
-    case 'i': k = ConversionSpecifier::iArg; break;
-    case 'n': k = ConversionSpecifier::nArg; break;
-    case 'c': k = ConversionSpecifier::cArg; break;
-    case 'C': k = ConversionSpecifier::CArg; break;
-    case 'S': k = ConversionSpecifier::SArg; break;
-    case '[': k = ConversionSpecifier::ScanListArg; break;
-    case 'u': k = ConversionSpecifier::uArg; break;
-    case 'x': k = ConversionSpecifier::xArg; break;
-    case 'o': k = ConversionSpecifier::oArg; break;
-    case 's': k = ConversionSpecifier::sArg; break;
+    case '%': k = ScanfConversionSpecifier::PercentArg;   break;
+    case 'A': k = ScanfConversionSpecifier::AArg; break;
+    case 'E': k = ScanfConversionSpecifier::EArg; break;
+    case 'F': k = ScanfConversionSpecifier::FArg; break;
+    case 'G': k = ScanfConversionSpecifier::GArg; break;
+    case 'X': k = ScanfConversionSpecifier::XArg; break;
+    case 'a': k = ScanfConversionSpecifier::aArg; break;
+    case 'd': k = ScanfConversionSpecifier::dArg; break;
+    case 'e': k = ScanfConversionSpecifier::eArg; break;
+    case 'f': k = ScanfConversionSpecifier::fArg; break;
+    case 'g': k = ScanfConversionSpecifier::gArg; break;
+    case 'i': k = ScanfConversionSpecifier::iArg; break;
+    case 'n': k = ScanfConversionSpecifier::nArg; break;
+    case 'c': k = ScanfConversionSpecifier::cArg; break;
+    case 'C': k = ScanfConversionSpecifier::CArg; break;
+    case 'S': k = ScanfConversionSpecifier::SArg; break;
+    case '[': k = ScanfConversionSpecifier::ScanListArg; break;
+    case 'u': k = ScanfConversionSpecifier::uArg; break;
+    case 'x': k = ScanfConversionSpecifier::xArg; break;
+    case 'o': k = ScanfConversionSpecifier::oArg; break;
+    case 's': k = ScanfConversionSpecifier::sArg; break;
   }
-  ConversionSpecifier CS(conversionPosition, k);
-  if (k == ConversionSpecifier::ScanListArg) {
+  ScanfConversionSpecifier CS(conversionPosition, k);
+  if (k == ScanfConversionSpecifier::ScanListArg) {
     if (!ParseScanList(H, CS, I, E))
       return true;
   }
@@ -181,7 +181,7 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   // FIXME: '%' and '*' doesn't make sense.  Issue a warning.
   // FIXME: 'ConsumedSoFar' and '*' doesn't make sense.
   
-  if (k == ConversionSpecifier::InvalidSpecifier) {
+  if (k == ScanfConversionSpecifier::InvalidSpecifier) {
     // Assume the conversion takes one argument.
     return !H.HandleInvalidScanfConversionSpecifier(FS, Beg, I - Beg);
   }

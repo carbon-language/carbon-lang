@@ -19,7 +19,7 @@ using clang::analyze_format_string::ArgTypeResult;
 using clang::analyze_format_string::FormatStringHandler;
 using clang::analyze_format_string::LengthModifier;
 using clang::analyze_format_string::OptionalAmount;
-using clang::analyze_printf::ConversionSpecifier;
+using clang::analyze_format_string::ConversionSpecifier;
 using clang::analyze_printf::PrintfSpecifier;
 
 using namespace clang;
@@ -54,6 +54,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
                                                   const char *E,
                                                   unsigned &argIndex) {
 
+  using namespace clang::analyze_format_string;
   using namespace clang::analyze_printf;
 
   const char *I = Beg;
@@ -192,7 +193,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     // Glibc specific.
     case 'm': k = ConversionSpecifier::PrintErrno; break;
   }
-  ConversionSpecifier CS(conversionPosition, k);
+  PrintfConversionSpecifier CS(conversionPosition, k);
   FS.setConversionSpecifier(CS);
   if (CS.consumesDataArgument() && !FS.usesPositionalArg())
     FS.setArgIndex(argIndex++);
@@ -274,6 +275,8 @@ const char *ConversionSpecifier::toString() const {
 //===----------------------------------------------------------------------===//
 
 ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
+  const PrintfConversionSpecifier &CS = getConversionSpecifier();
+  
   if (!CS.consumesDataArgument())
     return ArgTypeResult::Invalid();
 

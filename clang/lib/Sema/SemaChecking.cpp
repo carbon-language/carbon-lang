@@ -1316,7 +1316,7 @@ bool CheckPrintfHandler::HandleInvalidPrintfConversionSpecifier(
                                       const analyze_printf::PrintfSpecifier &FS,
                                       const char *startSpecifier,
                                       unsigned specifierLen) {
-  const analyze_printf::ConversionSpecifier &CS =
+  const analyze_printf::PrintfConversionSpecifier &CS =
     FS.getConversionSpecifier();
   
   return HandleInvalidConversionSpecifier(FS.getArgIndex(),
@@ -1375,7 +1375,8 @@ void CheckPrintfHandler::HandleInvalidAmount(
                                       unsigned type,
                                       const char *startSpecifier,
                                       unsigned specifierLen) {
-  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
+  const analyze_printf::PrintfConversionSpecifier &CS =
+    FS.getConversionSpecifier();
   switch (Amt.getHowSpecified()) {
   case analyze_printf::OptionalAmount::Constant:
     S.Diag(getLocationOfByte(Amt.getStart()),
@@ -1402,7 +1403,8 @@ void CheckPrintfHandler::HandleFlag(const analyze_printf::PrintfSpecifier &FS,
                                     const char *startSpecifier,
                                     unsigned specifierLen) {
   // Warn about pointless flag with a fixit removal.
-  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
+  const analyze_printf::PrintfConversionSpecifier &CS =
+    FS.getConversionSpecifier();
   S.Diag(getLocationOfByte(flag.getPosition()),
       diag::warn_printf_nonsensical_flag)
     << flag.toString() << CS.toString()
@@ -1431,8 +1433,9 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
                                           const char *startSpecifier,
                                           unsigned specifierLen) {
 
+  using namespace analyze_format_string;
   using namespace analyze_printf;  
-  const ConversionSpecifier &CS = FS.getConversionSpecifier();
+  const PrintfConversionSpecifier &CS = FS.getConversionSpecifier();
 
   if (FS.consumesDataArgument()) {
     if (atFirstArg) {
@@ -1636,7 +1639,7 @@ bool CheckScanfHandler::HandleInvalidScanfConversionSpecifier(
                                         const char *startSpecifier,
                                         unsigned specifierLen) {
 
-  const analyze_scanf::ConversionSpecifier &CS =
+  const analyze_scanf::ScanfConversionSpecifier &CS =
     FS.getConversionSpecifier();
 
   return HandleInvalidConversionSpecifier(FS.getArgIndex(),
@@ -1653,7 +1656,7 @@ bool CheckScanfHandler::HandleScanfSpecifier(
   using namespace analyze_scanf;
   using namespace analyze_format_string;  
 
-  const ConversionSpecifier &CS = FS.getConversionSpecifier();
+  const ScanfConversionSpecifier &CS = FS.getConversionSpecifier();
 
   // Handle case where '%' and '*' don't consume an argument.  These shouldn't
   // be used to decide if we are using positional arguments consistently.

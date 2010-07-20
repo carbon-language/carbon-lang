@@ -104,6 +104,82 @@ private:
   const char *Position;
   Kind kind;
 };
+  
+class ConversionSpecifier {
+public:
+  enum Kind {
+    InvalidSpecifier = 0,
+      // C99 conversion specifiers.
+    cArg,
+    dArg,
+    iArg,
+    IntArgBeg = cArg, IntArgEnd = iArg,    
+    
+    oArg,
+    uArg,
+    xArg,
+    XArg,
+    UIntArgBeg = oArg, UIntArgEnd = XArg,
+    
+    fArg,
+    FArg,
+    eArg,
+    EArg,
+    gArg,
+    GArg,
+    aArg,
+    AArg,
+    DoubleArgBeg = fArg, DoubleArgEnd = AArg,
+    
+    sArg,
+    pArg,
+    nArg,
+    PercentArg,
+    CArg,
+    SArg,
+    
+    // ** Printf-specific **
+  
+    // Objective-C specific specifiers.
+    ObjCObjArg,  // '@'
+    ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
+    
+    // GlibC specific specifiers.
+    PrintErrno,   // 'm'
+    
+    PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno
+  };
+  
+  ConversionSpecifier(bool isPrintf)
+    : IsPrintf(isPrintf), Position(0), kind(InvalidSpecifier) {}
+  
+  ConversionSpecifier(bool isPrintf, const char *pos, Kind k)
+    : IsPrintf(isPrintf), Position(pos), kind(k) {}
+  
+  const char *getStart() const {
+    return Position;
+  }
+  
+  llvm::StringRef getCharacters() const {
+    return llvm::StringRef(getStart(), getLength());
+  }
+  
+  Kind getKind() const { return kind; }
+  void setKind(Kind k) { kind = k; }
+  unsigned getLength() const {
+      // Conversion specifiers currently only are represented by
+      // single characters, but we be flexible.
+    return 1;
+  }
+  const char *toString() const;
+  
+  bool isPrintfKind() const { return IsPrintf; }
+
+protected:
+  bool IsPrintf;
+  const char *Position;
+  Kind kind;
+};
 
 class ArgTypeResult {
 public:
@@ -253,64 +329,14 @@ public:
 
 namespace analyze_printf {
 
-class ConversionSpecifier {
+class PrintfConversionSpecifier : 
+  public analyze_format_string::ConversionSpecifier  {
 public:
-  enum Kind {
-    InvalidSpecifier = 0,
-    // C99 conversion specifiers.
-    cArg,
-    dArg,
-    iArg,
-    IntArgBeg = cArg, IntArgEnd = iArg,    
+  PrintfConversionSpecifier()
+    : ConversionSpecifier(true, 0, InvalidSpecifier) {}
 
-    oArg,
-    uArg,
-    xArg,
-    XArg,
-    UIntArgBeg = oArg, UIntArgEnd = XArg,
-
-    fArg,
-    FArg,
-    eArg,
-    EArg,
-    gArg,
-    GArg,
-    aArg,
-    AArg,
-    DoubleArgBeg = fArg, DoubleArgEnd = AArg,
-
-    sArg,
-    pArg,
-    nArg,
-    PercentArg,
-    CArg,
-    SArg,
-
-    // ** Printf-specific **
-    
-    // Objective-C specific specifiers.
-    ObjCObjArg,  // '@'
-    ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
-    
-    // GlibC specific specifiers.
-    PrintErrno,   // 'm'
-    
-    PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno
-  };
-
-  ConversionSpecifier()
-  : Position(0), kind(InvalidSpecifier) {}
-
-  ConversionSpecifier(const char *pos, Kind k)
-  : Position(pos), kind(k) {}
-
-  const char *getStart() const {
-    return Position;
-  }
-
-  llvm::StringRef getCharacters() const {
-    return llvm::StringRef(getStart(), getLength());
-  }
+  PrintfConversionSpecifier(const char *pos, Kind k)
+    : ConversionSpecifier(true, pos, k) {}
 
   bool consumesDataArgument() const {
     switch (kind) {
@@ -323,21 +349,19 @@ public:
   }
 
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
-  bool isIntArg() const { return kind >= dArg && kind <= iArg; }
-  bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
-  bool isDoubleArg() const { return kind >= fArg && kind <= AArg; }
-  Kind getKind() const { return kind; }
-  void setKind(Kind k) { kind = k; }
+  bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
+  bool isUIntArg() const { return kind >= UIntArgBeg && kind <= UIntArgEnd; }
+  bool isDoubleArg() const { return kind >= DoubleArgBeg && 
+                                    kind <= DoubleArgBeg; }
   unsigned getLength() const {
       // Conversion specifiers currently only are represented by
       // single characters, but we be flexible.
     return 1;
   }
-  const char *toString() const;
 
-private:
-  const char *Position;
-  Kind kind;
+  static bool classof(const analyze_format_string::ConversionSpecifier *CS) {
+    return CS->isPrintfKind();
+  }
 };
 
 using analyze_format_string::ArgTypeResult;
@@ -351,17 +375,17 @@ class PrintfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag HasSpacePrefix; // ' '
   OptionalFlag HasAlternativeForm; // '#'
   OptionalFlag HasLeadingZeroes; // '0'
-  ConversionSpecifier CS;
+  analyze_format_string::ConversionSpecifier CS;
   OptionalAmount Precision;
 public:
   PrintfSpecifier() :
-  IsLeftJustified("-"), HasPlusPrefix("+"), HasSpacePrefix(" "),
-  HasAlternativeForm("#"), HasLeadingZeroes("0") {}
+    IsLeftJustified("-"), HasPlusPrefix("+"), HasSpacePrefix(" "),
+    HasAlternativeForm("#"), HasLeadingZeroes("0"), CS(/* isPrintf = */ true) {}
 
   static PrintfSpecifier Parse(const char *beg, const char *end);
 
     // Methods for incrementally constructing the PrintfSpecifier.
-  void setConversionSpecifier(const ConversionSpecifier &cs) {
+  void setConversionSpecifier(const PrintfConversionSpecifier &cs) {
     CS = cs;
   }
   void setIsLeftJustified(const char *position) {
@@ -388,8 +412,8 @@ public:
 
     // Methods for querying the format specifier.
 
-  const ConversionSpecifier &getConversionSpecifier() const {
-    return CS;
+  const PrintfConversionSpecifier &getConversionSpecifier() const {
+    return cast<PrintfConversionSpecifier>(CS);
   }
 
   void setPrecision(const OptionalAmount &Amt) {
@@ -402,7 +426,7 @@ public:
   }
   
   bool consumesDataArgument() const {
-    return CS.consumesDataArgument();
+    return getConversionSpecifier().consumesDataArgument();
   }
 
   /// \brief Returns the builtin type that a data argument
@@ -444,7 +468,7 @@ public:
 
 namespace analyze_scanf {
 
-class ConversionSpecifier {
+class ScanfConversionSpecifier {
 public:
   enum Kind {
     InvalidSpecifier = 0,
@@ -481,10 +505,10 @@ public:
     DoubleArgEnd = AArg
   };
 
-  ConversionSpecifier()
+  ScanfConversionSpecifier()
   : Position(0), EndScanList(0), kind(InvalidSpecifier) {}
 
-  ConversionSpecifier(const char *pos, Kind k)
+  ScanfConversionSpecifier(const char *pos, Kind k)
   : Position(pos), EndScanList(0), kind(k) {}
 
   const char *getStart() const {
@@ -525,7 +549,7 @@ using analyze_format_string::OptionalFlag;
 
 class ScanfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag SuppressAssignment; // '*'
-  ConversionSpecifier CS;
+  ScanfConversionSpecifier CS;
 public:
   ScanfSpecifier() : SuppressAssignment("*") {}
 
@@ -538,11 +562,11 @@ public:
     return SuppressAssignment;
   }
 
-  void setConversionSpecifier(const ConversionSpecifier &cs) {
+  void setConversionSpecifier(const ScanfConversionSpecifier &cs) {
     CS = cs;
   }
 
-  const ConversionSpecifier &getConversionSpecifier() const {
+  const ScanfConversionSpecifier &getConversionSpecifier() const {
     return CS;
   }
   
