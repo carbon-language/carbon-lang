@@ -18,9 +18,11 @@ tablegen(X86GenEDInfo.inc -gen-enhanced-disassembly-info)
 set(sources
   SSEDomainFix.cpp
   X86AsmBackend.cpp
-  X86CodeEmitter.cpp
+  X86AsmPrinter.cpp
   X86COFFMachineModuleInfo.cpp
+  X86CodeEmitter.cpp
   X86ELFWriterInfo.cpp
+  X86FastISel.cpp
   X86FloatingPoint.cpp
   X86ISelDAGToDAG.cpp
   X86ISelLowering.cpp
@@ -28,12 +30,12 @@ set(sources
   X86JITInfo.cpp
   X86MCAsmInfo.cpp
   X86MCCodeEmitter.cpp 
+  X86MCInstLower.cpp
   X86RegisterInfo.cpp
+  X86SelectionDAGInfo.cpp
   X86Subtarget.cpp
   X86TargetMachine.cpp
   X86TargetObjectFile.cpp
-  X86FastISel.cpp
-  X86SelectionDAGInfo.cpp
   )
 
 if( CMAKE_CL_64 )
