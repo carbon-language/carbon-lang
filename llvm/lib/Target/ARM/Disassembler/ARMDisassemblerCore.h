@@ -23,7 +23,8 @@
 
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "ARMInstrInfo.h"
+#include "ARMBaseInstrInfo.h"
+#include "ARMRegisterInfo.h"
 #include "ARMDisassembler.h"
 
 namespace llvm {

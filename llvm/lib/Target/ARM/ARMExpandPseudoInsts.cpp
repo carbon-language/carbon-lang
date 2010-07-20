@@ -19,7 +19,7 @@
 #include "ARMBaseInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-
+#include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
 namespace {

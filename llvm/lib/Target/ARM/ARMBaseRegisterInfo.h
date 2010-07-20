@@ -44,7 +44,7 @@ static inline bool isARMLowRegister(unsigned Reg) {
   }
 }
 
-struct ARMBaseRegisterInfo : public ARMGenRegisterInfo {
+class ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
   const ARMBaseInstrInfo &TII;
   const ARMSubtarget &STI;

@@ -15,11 +15,12 @@
 #define ARMBASEINSTRUCTIONINFO_H
 
 #include "ARM.h"
-#include "ARMRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
+  class ARMSubtarget;
+  class ARMBaseRegisterInfo;
 
 /// ARMII - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -198,7 +199,7 @@ namespace ARMII {
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
-  const ARMSubtarget& Subtarget;
+  const ARMSubtarget &Subtarget;
 protected:
   // Can be only subclassed.
   explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
