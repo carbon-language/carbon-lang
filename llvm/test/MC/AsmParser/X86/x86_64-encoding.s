@@ -3088,3 +3088,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x62,0x7d,0x18,0x20]
           vbroadcastss  (%rax), %ymm12
 
+// CHECK: vinsertf128  $7, %xmm12, %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x43,0x1d,0x18,0xd4,0x07]
+          vinsertf128  $7, %xmm12, %ymm12, %ymm10
+
+// CHECK: vinsertf128  $7, (%rax), %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x63,0x1d,0x18,0x10,0x07]
+          vinsertf128  $7, (%rax), %ymm12, %ymm10
+

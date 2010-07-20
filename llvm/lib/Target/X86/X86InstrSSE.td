@@ -4998,4 +4998,14 @@ def VBROADCASTSSY  : avx_broadcast<0x18, "vbroadcastss", VR256, f32mem>;
 def VBROADCASTSD   : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem>;
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem>;
 
+// Insert packed floating-point values
+def VINSERTF128rr : AVXAIi8<0x18, MRMSrcReg, (outs VR256:$dst),
+          (ins VR256:$src1, VR128:$src2, i8imm:$src3),
+          "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          []>, VEX_4V;
+def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
+          (ins VR256:$src1, f128mem:$src2, i8imm:$src3),
+          "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          []>, VEX_4V;
+
 } // isAsmParserOnly

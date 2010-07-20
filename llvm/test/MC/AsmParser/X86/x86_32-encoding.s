@@ -13014,3 +13014,11 @@
 // CHECK: encoding: [0xc4,0xe2,0x7d,0x18,0x10]
           vbroadcastss  (%eax), %ymm2
 
+// CHECK: vinsertf128  $7, %xmm2, %ymm2, %ymm5
+// CHECK: encoding: [0xc4,0xe3,0x6d,0x18,0xea,0x07]
+          vinsertf128  $7, %xmm2, %ymm2, %ymm5
+
+// CHECK: vinsertf128  $7, (%eax), %ymm2, %ymm5
+// CHECK: encoding: [0xc4,0xe3,0x6d,0x18,0x28,0x07]
+          vinsertf128  $7, (%eax), %ymm2, %ymm5
+
