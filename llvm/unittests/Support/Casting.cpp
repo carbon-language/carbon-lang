@@ -22,8 +22,14 @@ namespace {
 extern bar &B1;
 extern const bar *B2;
 
-TEST(CastingTest, Basics) {
+TEST(CastingTest, isa) {
+  // test various configurations of const
+  const bar &B3 = B1;
+  const bar *const B4 = B2;
   EXPECT_TRUE(isa<foo>(B1));
+  EXPECT_TRUE(isa<foo>(B2));
+  EXPECT_TRUE(isa<foo>(B3));
+  EXPECT_TRUE(isa<foo>(B4));
 }
 
 bar B;
