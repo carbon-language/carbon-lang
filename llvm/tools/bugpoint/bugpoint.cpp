@@ -61,7 +61,7 @@ UseValgrind("enable-valgrind",
 // The AnalysesList is automatically populated with registered Passes by the
 // PassNameParser.
 //
-static cl::list<const PassInfo*, bool, PassNameParser>
+static cl::list<const StaticPassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
 static cl::opt<bool>
@@ -90,7 +90,7 @@ namespace {
     AddToDriver(BugDriver &_D) : D(_D) {}
     
     virtual void add(Pass *P) {
-      const PassInfo *PI = P->getPassInfo();
+      const StaticPassInfo *PI = P->getPassInfo();
       D.addPasses(&PI, &PI + 1);
     }
   };

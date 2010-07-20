@@ -75,7 +75,7 @@ void Pass::dumpPassStructure(unsigned Offset) {
 /// Registration templates, but can be overloaded directly.
 ///
 const char *Pass::getPassName() const {
-  if (const PassInfo *PI = getPassInfo())
+  if (const StaticPassInfo *PI = getPassInfo())
     return PI->getPassName();
   return "Unnamed pass: implement Pass::getPassName()";
 }
@@ -101,7 +101,7 @@ void Pass::verifyAnalysis() const {
   // By default, don't do anything.
 }
 
-void *Pass::getAdjustedAnalysisPointer(const PassInfo *) {
+void *Pass::getAdjustedAnalysisPointer(const StaticPassInfo *) {
   return this;
 }
 
@@ -243,35 +243,35 @@ class PassRegistrar {
 
   /// PassInfoMap - Keep track of the passinfo object for each registered llvm
   /// pass.
-  typedef std::map<intptr_t, const PassInfo*> MapType;
+  typedef std::map<intptr_t, const StaticPassInfo*> MapType;
   MapType PassInfoMap;
 
-  typedef StringMap<const PassInfo*> StringMapType;
+  typedef StringMap<const StaticPassInfo*> StringMapType;
   StringMapType PassInfoStringMap;
   
   /// AnalysisGroupInfo - Keep track of information for each analysis group.
   struct AnalysisGroupInfo {
-    std::set<const PassInfo *> Implementations;
+    std::set<const StaticPassInfo *> Implementations;
   };
   
   /// AnalysisGroupInfoMap - Information for each analysis group.
-  std::map<const PassInfo *, AnalysisGroupInfo> AnalysisGroupInfoMap;
+  std::map<const StaticPassInfo *, AnalysisGroupInfo> AnalysisGroupInfoMap;
 
 public:
   
-  const PassInfo *GetPassInfo(intptr_t TI) const {
+  const StaticPassInfo *GetPassInfo(intptr_t TI) const {
     sys::SmartScopedLock<true> Guard(Lock);
     MapType::const_iterator I = PassInfoMap.find(TI);
     return I != PassInfoMap.end() ? I->second : 0;
   }
   
-  const PassInfo *GetPassInfo(StringRef Arg) const {
+  const StaticPassInfo *GetPassInfo(StringRef Arg) const {
     sys::SmartScopedLock<true> Guard(Lock);
     StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
     return I != PassInfoStringMap.end() ? I->second : 0;
   }
   
-  void RegisterPass(const PassInfo &PI) {
+  void RegisterPass(const StaticPassInfo &PI) {
     sys::SmartScopedLock<true> Guard(Lock);
     bool Inserted =
       PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
@@ -279,7 +279,7 @@ public:
     PassInfoStringMap[PI.getPassArgument()] = &PI;
   }
   
-  void UnregisterPass(const PassInfo &PI) {
+  void UnregisterPass(const StaticPassInfo &PI) {
     sys::SmartScopedLock<true> Guard(Lock);
     MapType::iterator I = PassInfoMap.find(PI.getTypeInfo());
     assert(I != PassInfoMap.end() && "Pass registered but not in map!");
@@ -298,8 +298,8 @@ public:
   
   
   /// Analysis Group Mechanisms.
-  void RegisterAnalysisGroup(PassInfo *InterfaceInfo,
-                             const PassInfo *ImplementationInfo,
+  void RegisterAnalysisGroup(StaticPassInfo *InterfaceInfo,
+                             const StaticPassInfo *ImplementationInfo,
                              bool isDefault) {
     sys::SmartScopedLock<true> Guard(Lock);
     AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
@@ -363,15 +363,15 @@ ManagedCleanup<&cleanupPassRegistrar> registrarCleanup ATTRIBUTE_USED;
 
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
-const PassInfo *Pass::getPassInfo() const {
+const StaticPassInfo *Pass::getPassInfo() const {
   return lookupPassInfo(PassID);
 }
 
-const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
+const StaticPassInfo *Pass::lookupPassInfo(intptr_t TI) {
   return getPassRegistrar()->GetPassInfo(TI);
 }
 
-const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
+const StaticPassInfo *Pass::lookupPassInfo(StringRef Arg) {
   return getPassRegistrar()->GetPassInfo(Arg);
 }
 
@@ -390,7 +390,7 @@ void PassInfo::unregisterPass() {
   getPassRegistrar()->UnregisterPass(*this);
 }
 
-Pass *PassInfo::createPass() const {
+Pass *StaticPassInfo::createPass() const {
   assert((!isAnalysisGroup() || NormalCtor) &&
          "No default implementation found for analysis group!");
   assert(NormalCtor &&
@@ -408,8 +408,8 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
                                intptr_t PassID, bool isDefault)
   : PassInfo(Name, InterfaceID) {
 
-  PassInfo *InterfaceInfo =
-    const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
+  StaticPassInfo *InterfaceInfo =
+    const_cast<StaticPassInfo*>(Pass::lookupPassInfo(InterfaceID));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
     registerPass();
@@ -419,13 +419,13 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
          "Trying to join an analysis group that is a normal pass!");
 
   if (PassID) {
-    const PassInfo *ImplementationInfo = Pass::lookupPassInfo(PassID);
+    const StaticPassInfo *ImplementationInfo = Pass::lookupPassInfo(PassID);
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
     // Make sure we keep track of the fact that the implementation implements
     // the interface.
-    PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
+    StaticPassInfo *IIPI = const_cast<StaticPassInfo*>(ImplementationInfo);
     IIPI->addInterfaceImplemented(InterfaceInfo);
     
     getPassRegistrar()->RegisterAnalysisGroup(InterfaceInfo, IIPI, isDefault);
@@ -479,7 +479,7 @@ namespace {
     VectorType &CFGOnlyList;
     GetCFGOnlyPasses(VectorType &L) : CFGOnlyList(L) {}
     
-    void passEnumerate(const PassInfo *P) {
+    void passEnumerate(const StaticPassInfo *P) {
       if (P->isCFGOnlyPass())
         CFGOnlyList.push_back(P);
     }

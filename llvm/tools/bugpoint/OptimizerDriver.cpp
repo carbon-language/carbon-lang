@@ -83,7 +83,7 @@ void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
   outs() << getPassesString(PassesToRun) << "\n";
 }
 
-int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
+int BugDriver::runPassesAsChild(const std::vector<const StaticPassInfo*> &Passes) {
   std::string ErrInfo;
   raw_fd_ostream OutFile(ChildOutput.c_str(), ErrInfo,
                          raw_fd_ostream::F_Binary);
@@ -124,7 +124,7 @@ cl::opt<bool> SilencePasses("silence-passes", cl::desc("Suppress output of runni
 /// outs() a single line message indicating whether compilation was successful
 /// or failed.
 ///
-bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
+bool BugDriver::runPasses(const std::vector<const StaticPassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
                           bool Quiet, unsigned NumExtraArgs,
                           const char * const *ExtraArgs) const {
@@ -178,7 +178,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     pass_args.push_back( std::string("-load"));
     pass_args.push_back( PluginLoader::getPlugin(i));
   }
-  for (std::vector<const PassInfo*>::const_iterator I = Passes.begin(),
+  for (std::vector<const StaticPassInfo*>::const_iterator I = Passes.begin(),
        E = Passes.end(); I != E; ++I )
     pass_args.push_back( std::string("-") + (*I)->getPassArgument() );
   for (std::vector<std::string>::const_iterator I = pass_args.begin(),
@@ -235,7 +235,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
 /// module, returning the transformed module on success, or a null pointer on
 /// failure.
 Module *BugDriver::runPassesOn(Module *M,
-                               const std::vector<const PassInfo*> &Passes,
+                               const std::vector<const StaticPassInfo*> &Passes,
                                bool AutoDebugCrashes, unsigned NumExtraArgs,
                                const char * const *ExtraArgs) {
   Module *OldProgram = swapProgramIn(M);

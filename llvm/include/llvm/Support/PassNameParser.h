@@ -55,9 +55,11 @@ public:
   // ignorablePassImpl - Can be overriden in subclasses to refine the list of
   // which passes we want to include.
   //
-  virtual bool ignorablePassImpl(const PassInfo *P) const { return false; }
+  virtual bool ignorablePassImpl(const StaticPassInfo *P) const {
+    return false;
+  }
 
-  inline bool ignorablePass(const PassInfo *P) const {
+  inline bool ignorablePass(const StaticPassInfo *P) const {
     // Ignore non-selectable and non-constructible passes!  Ignore
     // non-optimizations.
     return P->getPassArgument() == 0 || *P->getPassArgument() == 0 ||
@@ -66,7 +68,7 @@ public:
 
   // Implement the PassRegistrationListener callbacks used to populate our map
   //
-  virtual void passRegistered(const PassInfo *P) {
+  virtual void passRegistered(const StaticPassInfo *P) {
     if (ignorablePass(P) || !Opt) return;
     if (findOption(P->getPassArgument()) != getNumOptions()) {
       errs() << "Two passes with the same argument (-"
@@ -75,7 +77,7 @@ public:
     }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
   }
-  virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
+  virtual void passEnumerate(const StaticPassInfo *P) { passRegistered(P); }
 
   // ValLessThan - Provide a sorting comparator for Values elements...
   typedef std::pair<const char*,
@@ -105,7 +107,7 @@ private:
   Filter filter;
 
 public:
-  bool ignorablePassImpl(const PassInfo *P) const { return !filter(*P); }
+  bool ignorablePassImpl(const StaticPassInfo *P) const { return !filter(*P); }
 };
 
 ///===----------------------------------------------------------------------===//
