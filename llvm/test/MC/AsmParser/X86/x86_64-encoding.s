@@ -3072,3 +3072,19 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x2d,0x40,0x18,0x03]
           vdpps  $3, (%rax), %ymm10, %ymm11
 
+// CHECK: vbroadcastf128  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x1a,0x20]
+          vbroadcastf128  (%rax), %ymm12
+
+// CHECK: vbroadcastsd  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x19,0x20]
+          vbroadcastsd  (%rax), %ymm12
+
+// CHECK: vbroadcastss  (%rax), %xmm12
+// CHECK: encoding: [0xc4,0x62,0x79,0x18,0x20]
+          vbroadcastss  (%rax), %xmm12
+
+// CHECK: vbroadcastss  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x18,0x20]
+          vbroadcastss  (%rax), %ymm12
+

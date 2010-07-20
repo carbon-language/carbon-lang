@@ -4980,3 +4980,22 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
     (int_x86_aesni_aeskeygenassist (bitconvert (memopv2i64 addr:$src1)),
                                     imm:$src2))]>,
   OpSize;
+
+//===----------------------------------------------------------------------===//
+// AVX Instructions
+//===----------------------------------------------------------------------===//
+
+let isAsmParserOnly = 1 in {
+
+// Load from memory and broadcast to all elements of the destination operand
+class avx_broadcast<bits<8> opc, string OpcodeStr, RegisterClass RC,
+                    X86MemOperand x86memop> :
+  AVX8I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+        !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>, VEX;
+
+def VBROADCASTSS   : avx_broadcast<0x18, "vbroadcastss", VR128, f32mem>;
+def VBROADCASTSSY  : avx_broadcast<0x18, "vbroadcastss", VR256, f32mem>;
+def VBROADCASTSD   : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem>;
+def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem>;
+
+} // isAsmParserOnly

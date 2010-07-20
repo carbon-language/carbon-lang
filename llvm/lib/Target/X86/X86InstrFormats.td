@@ -411,6 +411,15 @@ class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
         Requires<[HasSSE42]>;
 
+// AVX Instruction Templates:
+//   Instructions introduced in AVX (no SSE equivalent forms)
+//
+//   AVX8I - AVX instructions with T8 and OpSize prefix.
+class AVX8I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8, OpSize,
+        Requires<[HasAVX]>;
+
 // AES Instruction Templates:
 //
 // AES8I
