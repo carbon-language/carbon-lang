@@ -40,8 +40,8 @@ using namespace lldb_private;
 using namespace clang;
 
 TypeList::TypeList(const char *target_triple) :
-    m_types(),
-    m_ast(target_triple)
+    m_ast (target_triple),
+    m_types ()
 {
 }
 

@@ -30,8 +30,8 @@ CommandObjectRegexCommand::CommandObjectRegexCommand
     uint32_t max_matches
 ) :
     CommandObject (name, help, syntax),
-    m_entries(),
-    m_max_matches (max_matches)
+    m_max_matches (max_matches),
+    m_entries ()
 {
 }
 

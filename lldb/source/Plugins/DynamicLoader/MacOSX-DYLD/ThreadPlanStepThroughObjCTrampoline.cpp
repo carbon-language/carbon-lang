@@ -34,13 +34,13 @@ ThreadPlanStepThroughObjCTrampoline::ThreadPlanStepThroughObjCTrampoline(
         lldb::addr_t sel_ptr, 
         bool stop_others) :
     ThreadPlan (ThreadPlan::eKindGeneric, "MacOSX Step through ObjC Trampoline", thread, eVoteNoOpinion, eVoteNoOpinion),
+    m_args_addr (args_addr),
+    m_stop_others (stop_others),
     m_objc_trampoline_handler (trampoline_handler),
     m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction()),
-    m_args_addr (args_addr),
     m_object_ptr (object_ptr),
     m_class_ptr (class_ptr),
-    m_sel_ptr (sel_ptr),
-    m_stop_others (stop_others)
+    m_sel_ptr (sel_ptr)
 {
     
 }
