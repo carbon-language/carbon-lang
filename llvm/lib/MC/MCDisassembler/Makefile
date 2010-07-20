@@ -13,9 +13,9 @@ BUILT_SOURCES = EDInfo.inc
 
 include $(LEVEL)/Makefile.common
 
-EDInfo.inc:	$(TBLGEN)
+$(ObjDir)/EDInfo.inc:	$(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building semantic information header"
-	$(Verb) $(TableGen) -o $(call SYSPATH, $@) -gen-enhanced-disassembly-header /dev/null
+	$(Verb) $(TableGen) -o $@ -gen-enhanced-disassembly-header /dev/null
 
 clean::
 	-$(Verb) $(RM) -f EDInfo.inc
