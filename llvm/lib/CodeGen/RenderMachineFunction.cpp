@@ -774,7 +774,7 @@ namespace llvm {
          i = i.getNextSlot()) {
      
       // Render the slot column. 
-      os << indent + s(2) << "<tr>\n";
+      os << indent + s(2) << "<tr height=6ex>\n";
       
       // Render the code column.
       if (i.getSlot() == SlotIndex::LOAD) {
