@@ -78,7 +78,7 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 /// \param Edit - The override command to perform.
 /// \param SavedStrings - Set to use for storing string representations.
 static void ApplyOneQAOverride(llvm::raw_ostream &OS,
-                               std::vector<const char*> &Args,
+                               llvm::SmallVectorImpl<const char*> &Args,
                                llvm::StringRef Edit,
                                std::set<std::string> &SavedStrings) {
   // This does not need to be efficient.
@@ -144,7 +144,7 @@ static void ApplyOneQAOverride(llvm::raw_ostream &OS,
 
 /// ApplyQAOverride - Apply a comma separate list of edits to the
 /// input argument lists. See ApplyOneQAOverride.
-static void ApplyQAOverride(std::vector<const char*> &Args,
+static void ApplyQAOverride(llvm::SmallVectorImpl<const char*> &Args,
                             const char *OverrideStr,
                             std::set<std::string> &SavedStrings) {
   llvm::raw_ostream *OS = &llvm::errs();
@@ -177,7 +177,7 @@ extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
                       const char *Argv0, void *MainAddr);
 
 static void ExpandArgsFromBuf(const char *Arg,
-                              std::vector<const char*> &ArgVector,
+                              llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
   llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName);
@@ -236,7 +236,7 @@ static void ExpandArgsFromBuf(const char *Arg,
 }
 
 static void ExpandArgv(int argc, const char **argv,
-                       std::vector<const char*> &ArgVector,
+                       llvm::SmallVectorImpl<const char*> &ArgVector,
                        std::set<std::string> &SavedStrings) {
   for (int i = 0; i < argc; ++i) {
     const char *Arg = argv[i];
@@ -254,7 +254,7 @@ int main(int argc_, const char **argv_) {
   llvm::PrettyStackTraceProgram X(argc_, argv_);
 
   std::set<std::string> SavedStrings;
-  std::vector<const char*> argv;
+  llvm::SmallVector<const char*, 256> argv;
 
   ExpandArgv(argc_, argv_, argv, SavedStrings);
 
@@ -263,10 +263,10 @@ int main(int argc_, const char **argv_) {
     llvm::StringRef Tool = argv[1] + 4;
 
     if (Tool == "")
-      return cc1_main(&argv[2], &argv[argv.size()], argv[0],
+      return cc1_main(argv.data()+2, argv.data()+argv.size(), argv[0],
                       (void*) (intptr_t) GetExecutablePath);
     if (Tool == "as")
-      return cc1as_main(&argv[2], &argv[argv.size()], argv[0],
+      return cc1as_main(argv.data()+2, argv.data()+argv.size(), argv[0],
                       (void*) (intptr_t) GetExecutablePath);
 
     // Reject unknown tools.
@@ -349,7 +349,7 @@ int main(int argc_, const char **argv_) {
       }
     }
 
-    argv.insert(++argv.begin(), ExtraArgs.begin(), ExtraArgs.end());
+    argv.insert(&argv[1], ExtraArgs.begin(), ExtraArgs.end());
   }
   C.reset(TheDriver.BuildCompilation(argv.size(), &argv[0]));
 
