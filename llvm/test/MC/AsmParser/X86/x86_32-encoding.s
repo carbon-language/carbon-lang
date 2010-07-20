@@ -12998,3 +12998,19 @@
 // CHECK: encoding: [0xc4,0xe3,0x55,0x40,0x08,0x03]
           vdpps  $3, (%eax), %ymm5, %ymm1
 
+// CHECK: vbroadcastf128  (%eax), %ymm2
+// CHECK: encoding: [0xc4,0xe2,0x7d,0x1a,0x10]
+          vbroadcastf128  (%eax), %ymm2
+
+// CHECK: vbroadcastsd  (%eax), %ymm2
+// CHECK: encoding: [0xc4,0xe2,0x7d,0x19,0x10]
+          vbroadcastsd  (%eax), %ymm2
+
+// CHECK: vbroadcastss  (%eax), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0x79,0x18,0x10]
+          vbroadcastss  (%eax), %xmm2
+
+// CHECK: vbroadcastss  (%eax), %ymm2
+// CHECK: encoding: [0xc4,0xe2,0x7d,0x18,0x10]
+          vbroadcastss  (%eax), %ymm2
+
