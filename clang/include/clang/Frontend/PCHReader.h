@@ -271,6 +271,7 @@ private:
 
   /// \brief The chain of PCH files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
+  /// That is, the entry I was created with -include-pch I+1.
   llvm::SmallVector<PerFileData*, 2> Chain;
 
   /// \brief Types that have already been loaded from the PCH file.
@@ -539,6 +540,7 @@ private:
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   PCHReadResult ReadSourceManagerBlock(PerFileData &F);
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
+  llvm::BitstreamCursor &SLocCursorForID(unsigned ID);
 
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
   QualType ReadTypeRecord(uint64_t Offset);

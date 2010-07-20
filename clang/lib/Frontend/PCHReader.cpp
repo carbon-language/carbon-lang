@@ -953,6 +953,26 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock(PerFileData &F) {
   }
 }
 
+/// \brief Get a cursor that's correctly positioned for reading the source
+/// location entry with the given ID.
+llvm::BitstreamCursor &PCHReader::SLocCursorForID(unsigned ID) {
+  assert(ID != 0 && ID <= TotalNumSLocEntries &&
+         "SLocCursorForID should only be called for real IDs.");
+
+  ID -= 1;
+  PerFileData *F = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    F = Chain[N - I - 1];
+    if (ID < F->LocalNumSLocEntries)
+      break;
+    ID -= F->LocalNumSLocEntries;
+  }
+  assert(F && F->LocalNumSLocEntries > ID && "Chain corrupted");
+
+  F->SLocEntryCursor.JumpToBit(F->SLocOffsets[ID]);
+  return F->SLocEntryCursor;
+}
+
 /// \brief Read in the source location entry with the given ID.
 PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
   if (ID == 0)
@@ -963,10 +983,9 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     return Failure;
   }
 
-  llvm::BitstreamCursor &SLocEntryCursor = Chain[0]->SLocEntryCursor;
+  llvm::BitstreamCursor &SLocEntryCursor = SLocCursorForID(ID);
 
   ++NumSLocEntriesRead;
-  SLocEntryCursor.JumpToBit(Chain[0]->SLocOffsets[ID - 1]);
   unsigned Code = SLocEntryCursor.ReadCode();
   if (Code == llvm::bitc::END_BLOCK ||
       Code == llvm::bitc::ENTER_SUBBLOCK ||

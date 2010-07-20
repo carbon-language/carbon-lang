@@ -435,7 +435,7 @@ public:
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
-  /// PreallocateID should be non-zero to specify which a pre-allocated,
+  /// PreallocateID should be non-zero to specify which pre-allocated,
   /// lazily computed source location is being filled in by this operation.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind FileCharacter,
