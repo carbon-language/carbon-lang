@@ -1,5 +1,6 @@
 ; RUN: llc < %s -O0 -march=x86-64
 ; rdar://8204072
+; PR7652
 
 @sc = external global i8
 @uc = external global i8
