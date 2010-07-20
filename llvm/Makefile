@@ -112,7 +112,8 @@ cross-compile-build-tools:
 		--host=$(BUILD_TRIPLE) --target=$(BUILD_TRIPLE); \
 	  cd .. ; \
 	fi; \
-        ($(MAKE) -C BuildTools \
+	(unset SDKROOT; \
+	 $(MAKE) -C BuildTools \
 	  BUILD_DIRS_ONLY=1 \
 	  UNIVERSAL= \
 	  ENABLE_OPTIMIZED=$(ENABLE_OPTIMIZED) \

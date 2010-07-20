@@ -49,11 +49,14 @@ INSTALL_LIBLTO="$9"
 # A yes/no parameter that controls whether to cross-build for an ARM host.
 ARM_HOSTED_BUILD="${10}"
 
+# A yes/no parameter that controls whether to cross-build for the iOS simulator
+IOS_SIM_BUILD="${11}"
+
 # The version number of the submission, e.g. 1007.
-LLVM_SUBMIT_VERSION="${11}"
+LLVM_SUBMIT_VERSION="${12}"
 
 # The subversion number of the submission, e.g. 03.
-LLVM_SUBMIT_SUBVERSION="${12}"
+LLVM_SUBMIT_SUBVERSION="${13}"
 
 # The current working directory is where the build will happen. It may already
 # contain a partial result of an interrupted build, in which case this script
@@ -124,6 +127,10 @@ fi
 if [ "$ARM_HOSTED_BUILD" = yes ]; then
   configure_opts="--enable-targets=arm --host=arm-apple-darwin10 \
                   --target=arm-apple-darwin10 --build=i686-apple-darwin10"
+elif [ "$IOS_SIM_BUILD" = yes ]; then
+  # Use a non-standard "darwin_sim" host triple to trigger a cross-build.
+  configure_opts="--enable-targets=x86 --host=i686-apple-darwin_sim \
+                  --build=i686-apple-darwin10"
 else
   configure_opts="--enable-targets=arm,x86,powerpc,cbe"
 fi
