@@ -30,13 +30,14 @@ namespace llvm {
 class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
   MCContext &Ctx;
   Mangler *Mang;
-  X86AsmPrinter &AsmPrinter;
   const MachineFunction &MF;
   const TargetMachine &TM;
   const MCAsmInfo &MAI;
+
+  X86AsmPrinter &AsmPrinter;
 public:
-  X86MCInstLower(MCContext &ctx, Mangler *mang, X86AsmPrinter &asmprinter,
-                 const TargetMachine &TM);
+  X86MCInstLower(MCContext &ctx, Mangler *mang, const MachineFunction &MF,
+                 X86AsmPrinter &asmprinter);
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 

@@ -29,10 +29,10 @@
 using namespace llvm;
 
 X86MCInstLower::X86MCInstLower(MCContext &ctx, Mangler *mang,
-                               X86AsmPrinter &asmprinter,
-                               const TargetMachine &tm)
-: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MF(*AsmPrinter.MF),
-  TM(tm), MAI(*TM.getMCAsmInfo()) {}
+                               const MachineFunction &mf,
+                               X86AsmPrinter &asmprinter)
+: Ctx(ctx), Mang(mang), MF(mf), TM(mf.getTarget()), MAI(*TM.getMCAsmInfo()),
+  AsmPrinter(asmprinter) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
   return MF.getMMI().getObjFileInfo<MachineModuleInfoMachO>();
@@ -505,7 +505,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(OutContext, Mang, *this, TM);
+  X86MCInstLower MCInstLowering(OutContext, Mang, *MF, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
