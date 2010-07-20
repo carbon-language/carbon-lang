@@ -243,6 +243,18 @@ namespace llvm {
 
     // ---------- Rendering methods ----------
 
+    /// For inserting spaces when pretty printing.
+    class Spacer {
+    public:
+      explicit Spacer(unsigned numSpaces) : ns(numSpaces) {}
+      Spacer operator+(const Spacer &o) const { return Spacer(ns + o.ns); }
+      template <typename OStream> void print(OStream &os) const;
+    private:
+      unsigned ns;
+    };
+
+    Spacer s(unsigned ns) const;
+
     template <typename Iterator>
     std::string escapeChars(Iterator sBegin, Iterator sEnd) const;
 
@@ -253,38 +265,38 @@ namespace llvm {
 
     /// \brief Render vertical text.
     template <typename OStream, typename T>
-    void renderVertical(const std::string &indent,
+    void renderVertical(const Spacer &indent,
                         OStream &os,
                         const T &t) const;
 
     /// \brief Insert CSS layout info.
     template <typename OStream>
-    void insertCSS(const std::string &indent,
+    void insertCSS(const Spacer &indent,
                    OStream &os) const;
 
     /// \brief Render a brief summary of the function (including rendering
     ///        context).
     template <typename OStream>
-    void renderFunctionSummary(const std::string &indent,
+    void renderFunctionSummary(const Spacer &indent,
                                OStream &os,
                                const char * const renderContextStr) const;
 
     /// \brief Render a legend for the pressure table.
     template <typename OStream>
-    void renderPressureTableLegend(const std::string &indent,
+    void renderPressureTableLegend(const Spacer &indent,
                                    OStream &os) const;
 
     /// \brief Render code listing, potentially with register pressure
     ///        and live intervals shown alongside.
     template <typename OStream>
-    void renderCodeTablePlusPI(const std::string &indent,
+    void renderCodeTablePlusPI(const Spacer &indent,
                                OStream &os) const;
 
     /// \brief Render warnings about the machine function, or weird rendering
     ///        parameter combinations (e.g. rendering specified live intervals
     ///        over more than one machine function).
     template <typename OStream>
-    void renderWarnings(const std::string &indent,
+    void renderWarnings(const Spacer &indent,
                         OStream &os) const;
 
     /// \brief Render the HTML page representing the MachineFunction.

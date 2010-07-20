@@ -66,6 +66,12 @@ useFancyVerticals("rmf-fancy-verts",
                   cl::desc("Use SVG for vertical text."),
                   cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+prettyHTML("rmf-pretty-html",
+           cl::desc("Pretty print HTML. For debugging the renderer only.."),
+           cl::init(false), cl::Hidden);
+
+
 namespace llvm {
 
   bool MFRenderingOptions::renderingOptionsProcessed;
@@ -493,6 +499,25 @@ namespace llvm {
 
   // ---------- MachineFunctionRenderer implementation ----------
 
+  template <typename OStream>
+  void RenderMachineFunction::Spacer::print(OStream &os) const {
+    if (!prettyHTML)
+      return;
+    for (unsigned i = 0; i < ns; ++i) {
+      os << " ";
+    }
+  }
+
+  RenderMachineFunction::Spacer RenderMachineFunction::s(unsigned ns) const {
+    return Spacer(ns);
+  }
+
+  template <typename OStream>
+  OStream& operator<<(OStream &os, const RenderMachineFunction::Spacer &s) {
+    s.print(os);
+    return os;
+  }
+
   template <typename Iterator>
   std::string RenderMachineFunction::escapeChars(Iterator sBegin, Iterator sEnd) const {
     std::string r;
@@ -558,22 +583,23 @@ namespace llvm {
   }
 
   template <typename OStream, typename T>
-  void RenderMachineFunction::renderVertical(const std::string &indent,
+  void RenderMachineFunction::renderVertical(const Spacer &indent,
                                              OStream &os,
                                              const T &t) const {
     if (ro.fancyVerticals()) {
       os << indent << "<object\n"
-         << indent << "  class=\"obj\"\n"
-         << indent << "  type=\"image/svg+xml\"\n"
-         << indent << "  width=\"14px\"\n"
-         << indent << "  height=\"55px\"\n"
-         << indent << "  data=\"data:image/svg+xml,\n"
-         << indent << "    <svg xmlns='http://www.w3.org/2000/svg'>\n"
-         << indent << "      <text x='-55' y='10' "
-                      "font-family='Courier' font-size='12' "
-                      "transform='rotate(-90)' text-rendering='optimizeSpeed' "
-                      "fill='#000'>" << t << "</text>\n"
-         << indent << "    </svg>\">\n"
+         << indent + s(2) << "class=\"obj\"\n"
+         << indent + s(2) << "type=\"image/svg+xml\"\n"
+         << indent + s(2) << "width=\"14px\"\n"
+         << indent + s(2) << "height=\"55px\"\n"
+         << indent + s(2) << "data=\"data:image/svg+xml,\n"
+         << indent + s(4) << "<svg xmlns='http://www.w3.org/2000/svg'>\n"
+         << indent + s(6) << "<text x='-55' y='10' "
+                             "font-family='Courier' font-size='12' "
+                             "transform='rotate(-90)' "
+                             "text-rendering='optimizeSpeed' "
+                             "fill='#000'>" << t << "</text>\n"
+         << indent + s(4) << "</svg>\">\n"
          << indent << "</object>\n";
     } else {
       std::ostringstream oss;
@@ -583,36 +609,36 @@ namespace llvm {
       os << indent;
       for (std::string::iterator tStrItr = tStr.begin(), tStrEnd = tStr.end();
            tStrItr != tStrEnd; ++tStrItr) {
-        os << *tStrItr << "<br/> ";
+        os << *tStrItr << "<br/>";
       }
       os << "\n";
     }
   }
 
   template <typename OStream>
-  void RenderMachineFunction::insertCSS(const std::string &indent,
+  void RenderMachineFunction::insertCSS(const Spacer &indent,
                                         OStream &os) const {
     os << indent << "<style type=\"text/css\">\n"
-       << indent << "  body { font-color: black; }\n"
-       << indent << "  table.code td { font-family: monospace; "
+       << indent + s(2) << "body { font-color: black; }\n"
+       << indent + s(2) << "table.code td { font-family: monospace; "
                     "border-width: 0px; border-style: solid; "
                     "border-bottom: 1px solid #dddddd; white-space: nowrap; }\n"
-       << indent << "  table.code td.s-zp { background-color: #000000; }\n"
-       << indent << "  table.code td.s-up { background-color: #00ff00; }\n"
-       << indent << "  table.code td.s-op { background-color: #ff0000; }\n"
-       << indent << "  table.code td.l-na { background-color: #ffffff; }\n"
-       << indent << "  table.code td.l-def { background-color: #ff0000; }\n"
-       << indent << "  table.code td.l-use { background-color: #ffff00; }\n"
-       << indent << "  table.code td.l-sar { background-color: #000000; }\n"
-       << indent << "  table.code td.l-sas { background-color: #770000; }\n"
-       << indent << "  table.code th { border-width: 0px; "
+       << indent + s(2) << "table.code td.s-zp { background-color: #000000; }\n"
+       << indent + s(2) << "table.code td.s-up { background-color: #00ff00; }\n"
+       << indent + s(2) << "table.code td.s-op { background-color: #ff0000; }\n"
+       << indent + s(2) << "table.code td.l-na { background-color: #ffffff; }\n"
+       << indent + s(2) << "table.code td.l-def { background-color: #ff0000; }\n"
+       << indent + s(2) << "table.code td.l-use { background-color: #ffff00; }\n"
+       << indent + s(2) << "table.code td.l-sar { background-color: #000000; }\n"
+       << indent + s(2) << "table.code td.l-sas { background-color: #770000; }\n"
+       << indent + s(2) << "table.code th { border-width: 0px; "
                     "border-style: solid; }\n"
        << indent << "</style>\n";
   }
 
   template <typename OStream>
   void RenderMachineFunction::renderFunctionSummary(
-                                    const std::string &indent, OStream &os,
+                                    const Spacer &indent, OStream &os,
                                     const char * const renderContextStr) const {
     os << indent << "<h1>Function: " << mf->getFunction()->getName()
                  << "</h1>\n"
@@ -622,40 +648,40 @@ namespace llvm {
 
   template <typename OStream>
   void RenderMachineFunction::renderPressureTableLegend(
-                                                      const std::string &indent,
+                                                      const Spacer &indent,
                                                       OStream &os) const {
     os << indent << "<h2>Rendering Pressure Legend:</h2>\n"
        << indent << "<table class=\"code\">\n"
-       << indent << "  <tr>\n"
-       << indent << "    <th>Pressure</th><th>Description</th>"
+       << indent + s(2) << "<tr>\n"
+       << indent + s(4) << "<th>Pressure</th><th>Description</th>"
                     "<th>Appearance</th>\n"
-       << indent << "  </tr>\n"
-       << indent << "  <tr>\n"
-       << indent << "    <td>No Pressure</td>"
-                    "    <td>No physical registers of this class requested.</td>"
-                    "    <td class=\"s-zp\">&nbsp;&nbsp;</td>\n"
-       << indent << "  </tr>\n"
-       << indent << "  <tr>\n"
-       << indent << "    <td>Low Pressure</td>"
-                    "    <td>Sufficient physical registers to meet demand.</td>"
-                    "    <td class=\"s-up\">&nbsp;&nbsp;</td>\n"
-       << indent << "  </tr>\n"
-       << indent << "  <tr>\n"
-       << indent << "    <td>High Pressure</td>"
-                    "    <td>Potentially insufficient physical registers to meet demand.</td>"
-                    "    <td class=\"s-op\">&nbsp;&nbsp;</td>\n"
-       << indent << "  </tr>\n"
+       << indent + s(2) << "</tr>\n"
+       << indent + s(2) << "<tr>\n"
+       << indent + s(4) << "<td>No Pressure</td>"
+                    "<td>No physical registers of this class requested.</td>"
+                    "<td class=\"s-zp\">&nbsp;&nbsp;</td>\n"
+       << indent + s(2) << "</tr>\n"
+       << indent + s(2) << "<tr>\n"
+       << indent + s(4) << "<td>Low Pressure</td>"
+                    "<td>Sufficient physical registers to meet demand.</td>"
+                    "<td class=\"s-up\">&nbsp;&nbsp;</td>\n"
+       << indent + s(2) << "</tr>\n"
+       << indent + s(2) << "<tr>\n"
+       << indent + s(4) << "<td>High Pressure</td>"
+                    "<td>Potentially insufficient physical registers to meet demand.</td>"
+                    "<td class=\"s-op\">&nbsp;&nbsp;</td>\n"
+       << indent + s(2) << "</tr>\n"
        << indent << "</table>\n";
   }
 
   template <typename OStream>
-  void RenderMachineFunction::renderCodeTablePlusPI(const std::string & indent,
+  void RenderMachineFunction::renderCodeTablePlusPI(const Spacer &indent,
                                                     OStream &os) const {
 
     os << indent << "<table cellpadding=0 cellspacing=0 class=\"code\">\n"
-       << indent << "  <tr>\n"
-       << indent << "    <th>index</th>\n"
-       << indent << "    <th>instr</th>\n";
+       << indent + s(2) << "<tr>\n"
+       << indent + s(4) << "<th>index</th>\n"
+       << indent + s(4) << "<th>instr</th>\n";
 
     // Header row:
        
@@ -665,15 +691,15 @@ namespace llvm {
              rcEnd = ro.regClasses().end();
            rcItr != rcEnd; ++rcItr) {
         const TargetRegisterClass *trc = *rcItr;
-        os << indent << "    <th>\n";
-        renderVertical(indent + "      ", os, trc->getName());
-        os << indent << "    </th>\n";
+        os << indent + s(4) << "<th>\n";
+        renderVertical(indent + s(6), os, trc->getName());
+        os << indent + s(4) << "</th>\n";
       }
     }
 
     // FIXME: Is there a nicer way to insert space between columns in HTML?
     if (!ro.regClasses().empty() && !ro.intervals().empty())
-      os << indent << "    <th>&nbsp;&nbsp;</th>\n";
+      os << indent + s(4) << "<th>&nbsp;&nbsp;</th>\n";
 
     if (!ro.intervals().empty()) {
       for (MFRenderingOptions::IntervalSet::const_iterator
@@ -682,13 +708,13 @@ namespace llvm {
            liItr != liEnd; ++liItr) {
 
         const LiveInterval *li = *liItr;
-        os << indent << "    <th>\n";
-        renderVertical(indent + "      ", os, li->reg);
-        os << indent << "    </th>\n";
+        os << indent + s(4) << "<th>\n";
+        renderVertical(indent + s(6), os, li->reg);
+        os << indent + s(4) << "</th>\n";
       }
     }
 
-    os << indent << "  </tr>\n";
+    os << indent + s(2) << "</tr>\n";
 
     MachineInstr *mi = 0;
 
@@ -696,7 +722,7 @@ namespace llvm {
     for (SlotIndex i = sis->getZeroIndex(); i != sis->getLastIndex();
          i = i.getNextSlot()) {
       
-      os << indent << "  <tr height=6ex>\n";
+      os << indent + s(2) << "<tr height=6ex>\n";
       
       if (i.getSlot() == SlotIndex::LOAD) {
         MachineBasicBlock *mbb = sis->getMBBFromIndex(i);
@@ -704,19 +730,18 @@ namespace llvm {
 
         if (i == sis->getMBBStartIdx(mbb) || mi != 0 ||
             ro.renderEmptyIndexes()) {
-          os << indent << "    <td rowspan=4>" << i << "&nbsp;</td>\n"
-             << indent << "    <td rowspan=4>\n";
+          os << indent + s(4) << "<td rowspan=4>" << i << "&nbsp;</td>\n"
+             << indent + s(4) << "<td rowspan=4>\n";
 
           if (i == sis->getMBBStartIdx(mbb)) {
-            os << indent << "      BB#" << mbb->getNumber() << ":&nbsp;\n";
+            os << indent + s(6) << "BB#" << mbb->getNumber() << ":&nbsp;\n";
           } else if (mi != 0) {
-            os << indent << "      &nbsp;&nbsp;";
+            os << indent + s(6) << "&nbsp;&nbsp;";
             renderMachineInstr(os, mi);
-            os << "\n";
           } else {
-            os << indent << "      &nbsp;\n";
+            os << indent + s(6) << "&nbsp;\n";
           }
-          os << indent << "    </td>\n";
+          os << indent + s(4) << "</td>\n";
         } else {
           i = i.getStoreIndex(); // <- Will be incremented to the next index.
           continue;
@@ -730,7 +755,7 @@ namespace llvm {
              rcItr != rcEnd; ++rcItr) {
           const TargetRegisterClass *trc = *rcItr;
 
-          os << indent << "    <td class=\"";
+          os << indent + s(4) << "<td class=\"";
 
           if (trei.getPressureAtSlot(trc, i) == 0) {
             os << "s-zp";
@@ -746,7 +771,7 @@ namespace llvm {
   
       // FIXME: Is there a nicer way to insert space between columns in HTML?
       if (!ro.regClasses().empty() && !ro.intervals().empty())
-        os << indent << "    <td width=2em></td>\n";
+        os << indent + s(4) << "<td width=2em></td>\n";
 
       if (!ro.intervals().empty()) {
         for (MFRenderingOptions::IntervalSet::const_iterator
@@ -754,7 +779,7 @@ namespace llvm {
                liEnd = ro.intervals().end();
              liItr != liEnd; ++liItr) {
           const LiveInterval *li = *liItr;
-          os << indent << "    <td class=\"";
+          os << indent + s(4) << "<td class=\"";
           switch (getLiveStateAt(li, i)) {
             case Dead: os << "l-na"; break;
             case Defined: os << "l-def"; break;
@@ -766,7 +791,7 @@ namespace llvm {
           os << "\"></td>\n";
         }
       }
-      os << indent << "  </tr>\n";
+      os << indent + s(2) << "</tr>\n";
     }
 
     os << indent << "</table>\n";
@@ -776,7 +801,7 @@ namespace llvm {
   }
 
   template <typename OStream>
-  void RenderMachineFunction::renderWarnings(const std::string &indent,
+  void RenderMachineFunction::renderWarnings(const Spacer &indent,
                                              OStream &os) const {
   }
 
@@ -785,25 +810,25 @@ namespace llvm {
                                     OStream &os,
                                     const char * const renderContextStr) const {
     os << "<html>\n"
-       << "  <head>\n"
-       << "    <title>" << fqn << "</title>\n";
+       << s(2) << "<head>\n"
+       << s(4) << "<title>" << fqn << "</title>\n";
 
-    insertCSS("    ", os);
+    insertCSS(s(4), os);
 
-    os << "  <head>\n"
-       << "  <body >\n";
+    os << s(2) << "<head>\n"
+       << s(2) << "<body >\n";
 
-    renderFunctionSummary("    ", os, renderContextStr);
+    renderFunctionSummary(s(4), os, renderContextStr);
 
-    os << "    <br/><br/><br/>\n";
+    os << s(4) << "<br/><br/><br/>\n";
 
     //renderLiveIntervalInfoTable("    ", os);
 
-    os << "    <br/><br/><br/>\n";
+    os << s(4) << "<br/><br/><br/>\n";
 
-    renderCodeTablePlusPI("    ", os);
+    renderCodeTablePlusPI(s(4), os);
 
-    os << "  </body>\n"
+    os << s(2) << "</body>\n"
        << "</html>\n";
   }
 
