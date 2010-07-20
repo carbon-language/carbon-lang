@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef liblldb_ASTType_h_
+#define liblldb_ASTType_h_
+
 namespace clang
 {
     class ASTContext;
@@ -106,3 +109,5 @@ public:
 };
     
 }
+
+#endif
