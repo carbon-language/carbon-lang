@@ -1525,7 +1525,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
           LM.getLength()));
 
   // Are we using '%n'?
-  if (CS.getKind() == ConversionSpecifier::OutIntPtrArg) {
+  if (CS.getKind() == ConversionSpecifier::nArg) {
     // Issue a warning about this being a possible security issue.
     S.Diag(getLocationOfByte(CS.getStart()), diag::warn_printf_write_back)
       << getSpecifierRange(startSpecifier, specifierLen);

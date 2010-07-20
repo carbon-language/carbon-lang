@@ -158,7 +158,7 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
     case 'f': k = ConversionSpecifier::fArg; break;
     case 'g': k = ConversionSpecifier::gArg; break;
     case 'i': k = ConversionSpecifier::iArg; break;
-    case 'n': k = ConversionSpecifier::ConsumedSoFarArg; break;
+    case 'n': k = ConversionSpecifier::nArg; break;
     case 'c': k = ConversionSpecifier::cArg; break;
     case 'C': k = ConversionSpecifier::CArg; break;
     case 'S': k = ConversionSpecifier::SArg; break;

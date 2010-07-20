@@ -273,9 +273,9 @@ public:
     GArg, // 'G',
     aArg, // 'a',
     AArg, // 'A',
-    sArg,       // 's'
-    pArg,    // 'p'
-    OutIntPtrArg,  // 'n'
+    sArg, // 's'
+    pArg, // 'p'
+    nArg, // 'n'
     PercentArg,    // '%'
       // MacOS X unicode extensions.
     CArg, // 'C'
@@ -465,7 +465,7 @@ public:
     sArg, // 's', // match sequence of non-write-space characters
     pArg,        // 'p'
     cArg,              // 'c', differs from printf, writes array of characters
-    ConsumedSoFarArg,  // 'n', differs from printf, writes back args consumed
+    nArg,  // 'n', differs from printf, writes back args consumed
     PercentArg,        // '%'
     ScanListArg,       // '[' followed by scan list
       // IEEE Std 1003.1 extensions.

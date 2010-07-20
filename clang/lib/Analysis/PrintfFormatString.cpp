@@ -178,7 +178,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 'f': k = ConversionSpecifier::fArg; break;
     case 'g': k = ConversionSpecifier::gArg; break;
     case 'i': k = ConversionSpecifier::iArg; break;
-    case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
+    case 'n': k = ConversionSpecifier::nArg; break;
     case 'o': k = ConversionSpecifier::oArg; break;
     case 'p': k = ConversionSpecifier::pArg;   break;
     case 's': k = ConversionSpecifier::sArg;      break;
@@ -252,7 +252,7 @@ const char *ConversionSpecifier::toString() const {
   case cArg:     return "c";
   case sArg:          return "s";
   case pArg:       return "p";
-  case OutIntPtrArg:     return "n";
+  case nArg:     return "n";
   case PercentArg:       return "%";
   case InvalidSpecifier: return NULL;
 
@@ -550,7 +550,7 @@ bool PrintfSpecifier::hasValidLeftJustified() const {
 
   // The left justified flag is valid for all conversions except n
   switch (CS.getKind()) {
-  case ConversionSpecifier::OutIntPtrArg:
+  case ConversionSpecifier::nArg:
     return false;
 
   default:
@@ -577,7 +577,7 @@ bool PrintfSpecifier::hasValidLengthModifier() const {
     case ConversionSpecifier::uArg:
     case ConversionSpecifier::xArg:
     case ConversionSpecifier::XArg:
-    case ConversionSpecifier::OutIntPtrArg:
+    case ConversionSpecifier::nArg:
       return true;
     default:
       return false;
@@ -600,7 +600,7 @@ bool PrintfSpecifier::hasValidLengthModifier() const {
     case ConversionSpecifier::EArg:
     case ConversionSpecifier::gArg:
     case ConversionSpecifier::GArg:
-    case ConversionSpecifier::OutIntPtrArg:
+    case ConversionSpecifier::nArg:
     case ConversionSpecifier::cArg:
     case ConversionSpecifier::sArg:
       return true;
@@ -659,7 +659,7 @@ bool PrintfSpecifier::hasValidFieldWidth() const {
 
   // The field width is valid for all conversions except n
   switch (CS.getKind()) {
-  case ConversionSpecifier::OutIntPtrArg:
+  case ConversionSpecifier::nArg:
     return false;
 
   default:
