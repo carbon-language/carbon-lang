@@ -26,7 +26,7 @@ ifeq ($(ENABLE_PIC),1)
   endif
 endif
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) x86asmprinter x86disassembler
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) mcdisassembler x86asmprinter x86disassembler
 
 include $(LEVEL)/Makefile.common
 
