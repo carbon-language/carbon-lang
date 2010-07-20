@@ -180,7 +180,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 'i': k = ConversionSpecifier::iArg; break;
     case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
     case 'o': k = ConversionSpecifier::oArg; break;
-    case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
+    case 'p': k = ConversionSpecifier::pArg;   break;
     case 's': k = ConversionSpecifier::sArg;      break;
     case 'u': k = ConversionSpecifier::uArg; break;
     case 'x': k = ConversionSpecifier::xArg; break;
@@ -251,7 +251,7 @@ const char *ConversionSpecifier::toString() const {
   case AArg: return "A";
   case cArg:     return "c";
   case sArg:          return "s";
-  case VoidPtrArg:       return "p";
+  case pArg:       return "p";
   case OutIntPtrArg:     return "n";
   case PercentArg:       return "%";
   case InvalidSpecifier: return NULL;
@@ -330,7 +330,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       return ArgTypeResult::WCStrTy;
     case ConversionSpecifier::CArg:
       return Ctx.WCharTy;
-    case ConversionSpecifier::VoidPtrArg:
+    case ConversionSpecifier::pArg:
       return ArgTypeResult::CPointerTy;
     default:
       break;
@@ -399,7 +399,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
     CS.setKind(ConversionSpecifier::fArg);
   }
   else if (QT->isPointerType()) {
-    CS.setKind(ConversionSpecifier::VoidPtrArg);
+    CS.setKind(ConversionSpecifier::pArg);
     Precision.setHowSpecified(OptionalAmount::NotSpecified);
     HasAlternativeForm = 0;
     HasLeadingZeroes = 0;

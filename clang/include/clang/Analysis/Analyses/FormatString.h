@@ -274,7 +274,7 @@ public:
     aArg, // 'a',
     AArg, // 'A',
     sArg,       // 's'
-    VoidPtrArg,    // 'p'
+    pArg,    // 'p'
     OutIntPtrArg,  // 'n'
     PercentArg,    // '%'
       // MacOS X unicode extensions.
@@ -463,7 +463,7 @@ public:
     aArg, // 'a',
     AArg, // 'A',
     sArg, // 's', // match sequence of non-write-space characters
-    VoidPtrArg,        // 'p'
+    pArg,        // 'p'
     cArg,              // 'c', differs from printf, writes array of characters
     ConsumedSoFarArg,  // 'n', differs from printf, writes back args consumed
     PercentArg,        // '%'
