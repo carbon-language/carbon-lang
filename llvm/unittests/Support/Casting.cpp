@@ -9,11 +9,46 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
-#define DEBUG_CAST_OPERATORS
+//#define DEBUG_CAST_OPERATORS
 #include "llvm/Support/Casting.h"
 
 #include "gtest/gtest.h"
 #include <cstdlib>
+
+
+namespace llvm {
+
+// set up two example classes
+// with conversion facility
+//
+struct bar {
+  bar() {}
+  //struct foo *baz();
+private:
+  bar(const bar &);
+};
+struct foo {
+  void ext() const;
+  /*  static bool classof(const bar *X) {
+    cerr << "Classof: " << X << "\n";
+    return true;
+    }*/
+};
+
+template <> struct isa_impl<foo,bar> {
+  static inline bool doit(const bar &Val) {
+    dbgs() << "Classof: " << &Val << "\n";
+    return true;
+  }
+};
+
+/*foo *bar::baz() {
+    return cast<foo>(this);
+}*/
+
+
+bar *fub();
+} // End llvm namespace
 
 using namespace llvm;
 
@@ -41,12 +76,15 @@ TEST(CastingTest, cast) {
   EXPECT_NE(F3, null_foo);
   const foo *F4 = cast<foo>(B2);
   EXPECT_NE(F4, null_foo);
-  const foo &F8 = cast<foo>(B3);
-  EXPECT_NE(&F8, null_foo);
-  const foo *F9 = cast<foo>(B4);
-  EXPECT_NE(F9, null_foo);
-  foo *F10 = cast<foo>(fub());
-  EXPECT_EQ(F10, null_foo);
+  const foo &F5 = cast<foo>(B3);
+  EXPECT_NE(&F5, null_foo);
+  const foo *F6 = cast<foo>(B4);
+  EXPECT_NE(F6, null_foo);
+  foo *F7 = cast<foo>(fub());
+  EXPECT_EQ(F7, null_foo);
+
+/*  foo *F8 = B1.baz();
+  EXPECT_NE(F8, null_foo);*/
 }
 
 TEST(CastingTest, cast_or_null) {
@@ -60,7 +98,17 @@ TEST(CastingTest, cast_or_null) {
   EXPECT_EQ(F14, null_foo);
 }
 
+// These lines are errors...
+//foo *F20 = cast<foo>(B2);  // Yields const foo*
+//foo &F21 = cast<foo>(B3);  // Yields const foo&
+//foo *F22 = cast<foo>(B4);  // Yields const foo*
+//foo &F23 = cast_or_null<foo>(B1);
+//const foo &F24 = cast_or_null<foo>(B3);
+
+
 bar B;
 bar &B1 = B;
 const bar *B2 = &B;
 }  // anonymous namespace
+
+bar *llvm::fub() { return 0; }
