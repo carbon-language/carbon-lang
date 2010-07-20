@@ -18,6 +18,8 @@
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -75,6 +77,7 @@ namespace {
     }
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd();
+    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
     static const char *getRegisterName(unsigned RegNo);
 
     virtual void EmitFunctionEntryLabel();
@@ -226,6 +229,23 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
   OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
 }
 
+
+/// isBlockOnlyReachableByFallthough - Return true if the basic block has
+/// exactly one predecessor and the control transfer mechanism between
+/// the predecessor and this block is a fall-through.
+bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) 
+    const {
+  // The predecessor has to be immediately before this block.
+  const MachineBasicBlock *Pred = *MBB->pred_begin();
+
+  // If the predecessor is a switch statement, assume a jump table
+  // implementation, so it is not a fall through.
+  if (const BasicBlock *bb = Pred->getBasicBlock())
+    if (isa<SwitchInst>(bb->getTerminator()))
+      return false;
+  
+  return AsmPrinter::isBlockOnlyReachableByFallthrough(MBB);
+}
 
 // Print out an operand for an inline asm expression.
 bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 

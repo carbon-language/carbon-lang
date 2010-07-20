@@ -542,7 +542,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
 
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OpFlag);
 
-  if (IsPIC) {
+  if (!IsPIC) {
     SDValue Ops[] = { JTI };
     HiPart = DAG.getNode(MipsISD::Hi, dl, DAG.getVTList(MVT::i32), Ops, 1);
   } else // Emit Load from Global Pointer
