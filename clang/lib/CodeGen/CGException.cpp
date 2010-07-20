@@ -18,6 +18,7 @@
 
 #include "CodeGenFunction.h"
 #include "CGException.h"
+#include "TargetInfo.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -1099,11 +1100,57 @@ static void InitCatchParam(CodeGenFunction &CGF,
   // If we're catching by reference, we can just cast the object
   // pointer to the appropriate pointer.
   if (isa<ReferenceType>(CatchType)) {
-    bool EndCatchMightThrow = cast<ReferenceType>(CatchType)->getPointeeType()
-      ->isRecordType();
+    QualType CaughtType = cast<ReferenceType>(CatchType)->getPointeeType();
+    bool EndCatchMightThrow = CaughtType->isRecordType();
 
     // __cxa_begin_catch returns the adjusted object pointer.
     llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, EndCatchMightThrow);
+
+    // We have no way to tell the personality function that we're
+    // catching by reference, so if we're catching a pointer,
+    // __cxa_begin_catch will actually return that pointer by value.
+    if (const PointerType *PT = dyn_cast<PointerType>(CaughtType)) {
+      QualType PointeeType = PT->getPointeeType();
+
+      // When catching by reference, generally we should just ignore
+      // this by-value pointer and use the exception object instead.
+      if (!PointeeType->isRecordType()) {
+
+        // Exn points to the struct _Unwind_Exception header, which
+        // we have to skip past in order to reach the exception data.
+        unsigned HeaderSize =
+          CGF.CGM.getTargetCodeGenInfo().getSizeOfUnwindException();
+        AdjustedExn = CGF.Builder.CreateConstGEP1_32(Exn, HeaderSize);
+
+      // However, if we're catching a pointer-to-record type that won't
+      // work, because the personality function might have adjusted
+      // the pointer.  There's actually no way for us to fully satisfy
+      // the language/ABI contract here:  we can't use Exn because it
+      // might have the wrong adjustment, but we can't use the by-value
+      // pointer because it's off by a level of abstraction.
+      //
+      // The current solution is to dump the adjusted pointer into an
+      // alloca, which breaks language semantics (because changing the
+      // pointer doesn't change the exception) but at least works.
+      // The better solution would be to filter out non-exact matches
+      // and rethrow them, but this is tricky because the rethrow
+      // really needs to be catchable by other sites at this landing
+      // pad.  The best solution is to fix the personality function.
+      } else {
+        // Pull the pointer for the reference type off.
+        const llvm::Type *PtrTy =
+          cast<llvm::PointerType>(LLVMCatchTy)->getElementType();
+
+        // Create the temporary and write the adjusted pointer into it.
+        llvm::Value *ExnPtrTmp = CGF.CreateTempAlloca(PtrTy, "exn.byref.tmp");
+        llvm::Value *Casted = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
+        CGF.Builder.CreateStore(Casted, ExnPtrTmp);
+
+        // Bind the reference to the temporary.
+        AdjustedExn = ExnPtrTmp;
+      }
+    }
+
     llvm::Value *ExnCast =
       CGF.Builder.CreateBitCast(AdjustedExn, LLVMCatchTy, "exn.byref");
     CGF.Builder.CreateStore(ExnCast, ParamAddr);
