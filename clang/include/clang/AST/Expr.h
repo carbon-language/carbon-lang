@@ -2904,12 +2904,18 @@ public:
   virtual child_iterator child_end();
 
   typedef InitExprsTy::iterator iterator;
+  typedef InitExprsTy::const_iterator const_iterator;
   typedef InitExprsTy::reverse_iterator reverse_iterator;
+  typedef InitExprsTy::const_reverse_iterator const_reverse_iterator;
 
   iterator begin() { return InitExprs.begin(); }
+  const_iterator begin() const { return InitExprs.begin(); }
   iterator end() { return InitExprs.end(); }
+  const_iterator end() const { return InitExprs.end(); }
   reverse_iterator rbegin() { return InitExprs.rbegin(); }
+  const_reverse_iterator rbegin() const { return InitExprs.rbegin(); }
   reverse_iterator rend() { return InitExprs.rend(); }
+  const_reverse_iterator rend() const { return InitExprs.rend(); }
 };
 
 /// @brief Represents a C99 designated initializer expression.
