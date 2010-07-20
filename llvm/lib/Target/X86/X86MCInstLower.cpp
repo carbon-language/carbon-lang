@@ -30,17 +30,17 @@ using namespace llvm;
 
 X86MCInstLower::X86MCInstLower(MCContext &ctx, Mangler *mang,
                                X86AsmPrinter &asmprinter)
-: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MMI(AsmPrinter.MMI) {}
+: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MF(*AsmPrinter.MF) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
-  return MMI->getObjFileInfo<MachineModuleInfoMachO>(); 
+  return MF.getMMI().getObjFileInfo<MachineModuleInfoMachO>();
 }
 
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
   const TargetLowering *TLI = AsmPrinter.TM.getTargetLowering();
   return static_cast<const X86TargetLowering*>(TLI)->
-    getPICBaseSymbol(AsmPrinter.MF, Ctx);
+    getPICBaseSymbol(&MF, Ctx);
 }
 
 /// GetSymbolFromOperand - Lower an MO_GlobalAddress or MO_ExternalSymbol

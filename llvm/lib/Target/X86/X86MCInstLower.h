@@ -18,7 +18,7 @@ namespace llvm {
   class MCOperand;
   class MCSymbol;
   class MachineInstr;
-  class MachineModuleInfo;
+  class MachineFunction;
   class MachineModuleInfoMachO;
   class MachineOperand;
   class Mangler;
@@ -29,7 +29,7 @@ class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
   MCContext &Ctx;
   Mangler *Mang;
   X86AsmPrinter &AsmPrinter;
-  MachineModuleInfo *MMI;
+  const MachineFunction &MF;
 public:
   X86MCInstLower(MCContext &ctx, Mangler *mang, X86AsmPrinter &asmprinter);
   
