@@ -1,16 +1,19 @@
-//===- TableGen'erated file -------------------------------------*- C++ -*-===//
+//===-- EDInfo.h - LLVM Enhanced Disassembler -------------------*- C++ -*-===//
 //
-// Enhanced Disassembly Info Header
+//                     The LLVM Compiler Infrastructure
 //
-// Automatically generated file, do not edit!
-//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+// 
 //===----------------------------------------------------------------------===//
 
-#ifndef EDInfo_
-#define EDInfo_
+#ifndef LLVM_EDINFO_H
+#define LLVM_EDINFO_H
 
-#define EDIS_MAX_OPERANDS 13
-#define EDIS_MAX_SYNTAXES 2
+enum {
+  EDIS_MAX_OPERANDS = 13,
+  EDIS_MAX_SYNTAXES = 2
+};
 
 enum OperandTypes {
   kOperandTypeNone,
