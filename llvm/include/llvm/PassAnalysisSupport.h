@@ -86,7 +86,7 @@ public:
   // linked in. Be careful about spelling!
   //
   AnalysisUsage &addPreserved(StringRef Arg) {
-    const PassInfo *PI = Pass::lookupPassInfo(Arg);
+    const StaticPassInfo *PI = Pass::lookupPassInfo(Arg);
     // If the pass exists, preserve it. Otherwise silently do nothing.
     if (PI) Preserved.push_back(PI);
     return *this;
@@ -130,7 +130,7 @@ public:
   inline PMDataManager &getPMDataManager() { return PM; }
 
   // Find pass that is implementing PI.
-  Pass *findImplPass(const PassInfo *PI) {
+  Pass *findImplPass(const StaticPassInfo *PI) {
     Pass *ResultPass = 0;
     for (unsigned i = 0; i < AnalysisImpls.size() ; ++i) {
       if (AnalysisImpls[i].first == PI) {
@@ -142,10 +142,10 @@ public:
   }
 
   // Find pass that is implementing PI. Initialize pass for Function F.
-  Pass *findImplPass(Pass *P, const PassInfo *PI, Function &F);
+  Pass *findImplPass(Pass *P, const StaticPassInfo *PI, Function &F);
 
-  void addAnalysisImplsPair(const PassInfo *PI, Pass *P) {
-    std::pair<const PassInfo*, Pass*> pir = std::make_pair(PI,P);
+  void addAnalysisImplsPair(const StaticPassInfo *PI, Pass *P) {
+    std::pair<const StaticPassInfo*, Pass*> pir = std::make_pair(PI,P);
     AnalysisImpls.push_back(pir);
   }
 
@@ -160,7 +160,7 @@ public:
 
   // AnalysisImpls - This keeps track of which passes implements the interfaces
   // that are required by the current pass (to implement getAnalysis()).
-  std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
+  std::vector<std::pair<const StaticPassInfo*, Pass*> > AnalysisImpls;
 
 private:
   // PassManager that is used to resolve analysis info
@@ -179,7 +179,7 @@ template<typename AnalysisType>
 AnalysisType *Pass::getAnalysisIfAvailable() const {
   assert(Resolver && "Pass not resident in a PassManager object!");
 
-  const PassInfo *PI = getClassPassInfo<AnalysisType>();
+  const StaticPassInfo *PI = getClassPassInfo<AnalysisType>();
   if (PI == 0) return 0;
 
   Pass *ResultPass = Resolver->getAnalysisIfAvailable(PI, true);
@@ -203,7 +203,7 @@ AnalysisType &Pass::getAnalysis() const {
 }
 
 template<typename AnalysisType>
-AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
+AnalysisType &Pass::getAnalysisID(const StaticPassInfo *PI) const {
   assert(PI && "getAnalysis for unregistered pass!");
   assert(Resolver&&"Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
@@ -233,7 +233,7 @@ AnalysisType &Pass::getAnalysis(Function &F) {
 }
 
 template<typename AnalysisType>
-AnalysisType &Pass::getAnalysisID(const PassInfo *PI, Function &F) {
+AnalysisType &Pass::getAnalysisID(const StaticPassInfo *PI, Function &F) {
   assert(PI && "getAnalysis for unregistered pass!");
   assert(Resolver && "Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used

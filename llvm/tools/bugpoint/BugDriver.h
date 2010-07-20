@@ -23,7 +23,7 @@
 namespace llvm {
 
 class Value;
-class PassInfo;
+class StaticPassInfo;
 class Module;
 class GlobalVariable;
 class Function;
@@ -47,7 +47,7 @@ class BugDriver {
   const char *ToolName;            // argv[0] of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
-  std::vector<const PassInfo*> PassesToRun;
+  std::vector<const StaticPassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
   AbstractInterpreter *SafeInterpreter;  // To generate reference output, etc.
   GCC *gcc;
@@ -77,10 +77,10 @@ public:
   bool addSources(const std::vector<std::string> &FileNames);
   template<class It>
   void addPasses(It I, It E) { PassesToRun.insert(PassesToRun.end(), I, E); }
-  void setPassesToRun(const std::vector<const PassInfo*> &PTR) {
+  void setPassesToRun(const std::vector<const StaticPassInfo*> &PTR) {
     PassesToRun = PTR;
   }
-  const std::vector<const PassInfo*> &getPassesToRun() const {
+  const std::vector<const StaticPassInfo*> &getPassesToRun() const {
     return PassesToRun;
   }
 
@@ -112,7 +112,7 @@ public:
   /// ReferenceOutput contains the filename of the file containing the output we
   /// are to match.
   ///
-  bool debugPassMiscompilation(const PassInfo *ThePass,
+  bool debugPassMiscompilation(const StaticPassInfo *ThePass,
                                const std::string &ReferenceOutput);
 
   /// compileSharedObject - This method creates a SharedObject from a given
@@ -243,7 +243,8 @@ public:
   /// failure.  If AutoDebugCrashes is set to true, then bugpoint will
   /// automatically attempt to track down a crashing pass if one exists, and
   /// this method will never return null.
-  Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes,
+  Module *runPassesOn(Module *M,
+                      const std::vector<const StaticPassInfo*> &Passes,
                       bool AutoDebugCrashes = false, unsigned NumExtraArgs = 0,
                       const char * const *ExtraArgs = NULL);
 
@@ -256,7 +257,7 @@ public:
   /// or failed, unless Quiet is set.  ExtraArgs specifies additional arguments
   /// to pass to the child bugpoint instance.
   ///
-  bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
+  bool runPasses(const std::vector<const StaticPassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
                  bool Quiet = false, unsigned NumExtraArgs = 0,
                  const char * const *ExtraArgs = NULL) const;
@@ -268,7 +269,7 @@ public:
   /// If the passes did not compile correctly, output the command required to 
   /// recreate the failure. This returns true if a compiler error is found.
   ///
-  bool runManyPasses(const std::vector<const PassInfo*> &AllPasses,
+  bool runManyPasses(const std::vector<const StaticPassInfo*> &AllPasses,
                      std::string &ErrMsg);
 
   /// writeProgramToFile - This writes the current "Program" to the named
@@ -281,14 +282,14 @@ private:
   /// false indicating whether or not the optimizer crashed on the specified
   /// input (true = crashed).
   ///
-  bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
+  bool runPasses(const std::vector<const StaticPassInfo*> &PassesToRun,
                  bool DeleteOutput = true) const {
     std::string Filename;
     return runPasses(PassesToRun, Filename, DeleteOutput);
   }
 
   /// runAsChild - The actual "runPasses" guts that runs in a child process.
-  int runPassesAsChild(const std::vector<const PassInfo*> &PassesToRun);
+  int runPassesAsChild(const std::vector<const StaticPassInfo*> &PassesToRun);
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
@@ -306,7 +307,7 @@ Module *ParseInputFile(const std::string &InputFilename,
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
 ///
-std::string getPassesString(const std::vector<const PassInfo*> &Passes);
+std::string getPassesString(const std::vector<const StaticPassInfo*> &Passes);
 
 /// PrintFunctionList - prints out list of problematic functions
 ///

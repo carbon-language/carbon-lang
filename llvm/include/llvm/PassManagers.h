@@ -302,7 +302,7 @@ public:
   /// through getAnalysis interface.
   virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
 
-  virtual Pass *getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F);
+  virtual Pass *getOnTheFlyPass(Pass *P, const StaticPassInfo *PI, Function &F);
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 

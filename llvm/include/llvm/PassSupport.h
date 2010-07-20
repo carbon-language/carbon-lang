@@ -22,6 +22,7 @@
 #define LLVM_PASS_SUPPORT_H
 
 #include "Pass.h"
+#include "llvm/Config/config.h"
 
 namespace llvm {
 
@@ -33,45 +34,24 @@ class TargetMachine;
 /// getPassInfo() method.  These objects are set up by the RegisterPass<>
 /// template, defined below.
 ///
-class PassInfo {
-public:
+
+struct StaticPassInfo {
   typedef Pass* (*NormalCtor_t)();
   struct InterfaceInfo {
-    const PassInfo *interface;
+    const StaticPassInfo *interface;
     const InterfaceInfo *next;
   };
 
-private:
-  const char      *const PassName;     // Nice name for Pass
-  const char      *const PassArgument; // Command Line argument to run this pass
-  const intptr_t  PassID;      
-  const bool IsCFGOnlyPass;            // Pass only looks at the CFG.
-  const bool IsAnalysis;               // True if an analysis pass.
-  const bool IsAnalysisGroup;          // True if an analysis group.
-  const InterfaceInfo *ItfImpl;// Interfaces implemented by this pass
+  const char *PassName;     // Nice name for Pass
+  const char *PassArgument; // Command Line argument to run this pass
+  intptr_t  PassID;      
+  bool IsCFGOnlyPass;            // Pass only looks at the CFG.
+  bool IsAnalysis;               // True if an analysis pass.
+  bool IsAnalysisGroup;          // True if an analysis group.
+  InterfaceInfo *ItfImpl;// Interfaces implemented by this pass
 
   NormalCtor_t NormalCtor;
-
-public:
-  /// PassInfo ctor - Do not call this directly, this should only be invoked
-  /// through RegisterPass.
-  PassInfo(const char *name, const char *arg, intptr_t pi,
-           NormalCtor_t normal = 0,
-           bool isCFGOnly = false, bool is_analysis = false)
-    : PassName(name), PassArgument(arg), PassID(pi), 
-      IsCFGOnlyPass(isCFGOnly), 
-      IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) {
-    registerPass();
-  }
-  /// PassInfo ctor - Do not call this directly, this should only be invoked
-  /// through RegisterPass. This version is for use by analysis groups; it
-  /// does not auto-register the pass.
-  PassInfo(const char *name, intptr_t pi)
-    : PassName(name), PassArgument(""), PassID(pi), 
-      IsCFGOnlyPass(false), 
-      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(0) {
-  }
-
+    
   /// getPassName - Return the friendly name for the pass, never returns null
   ///
   const char *getPassName() const { return PassName; }
@@ -90,7 +70,7 @@ public:
   bool isPassID(void *IDPtr) const {
     return PassID == (intptr_t)IDPtr;
   }
-  
+
   /// isAnalysisGroup - Return true if this is an analysis group, not a normal
   /// pass.
   ///
@@ -100,7 +80,7 @@ public:
   /// isCFGOnlyPass - return true if this pass only looks at the CFG for the
   /// function.
   bool isCFGOnlyPass() const { return IsCFGOnlyPass; }
-  
+
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
   /// is no default constructor for the pass.
@@ -112,14 +92,11 @@ public:
     NormalCtor = Ctor;
   }
 
-  /// createPass() - Use this method to create an instance of this pass.
-  Pass *createPass() const;
-
   /// addInterfaceImplemented - This method is called when this pass is
   /// registered as a member of an analysis group with the RegisterAnalysisGroup
   /// template.
   ///
-  void addInterfaceImplemented(const PassInfo *ItfPI) {
+  void addInterfaceImplemented(const StaticPassInfo *ItfPI) {
     InterfaceInfo *NewInfo = new InterfaceInfo();
     NewInfo->interface = ItfPI;
     NewInfo->next = ItfImpl;
@@ -131,6 +108,39 @@ public:
   ///
   const InterfaceInfo *getInterfacesImplemented() const {
     return ItfImpl;
+  }
+
+  /// createPass() - Use this method to create an instance of this pass.
+  Pass *createPass() const;
+};
+
+class PassInfo : public StaticPassInfo {
+public:
+  /// PassInfo ctor - Do not call this directly, this should only be invoked
+  /// through RegisterPass.
+  PassInfo(const char *name, const char *arg, intptr_t pi,
+           NormalCtor_t normal = 0,
+           bool isCFGOnly = false, bool is_analysis = false) {
+    this->PassName = name;
+    this->PassArgument = arg;
+    this->PassID = pi;
+    this->IsCFGOnlyPass = isCFGOnly;
+    this->IsAnalysis = is_analysis;
+    this->IsAnalysisGroup = false;
+    this->NormalCtor = normal;
+    registerPass();
+  }
+  /// PassInfo ctor - Do not call this directly, this should only be invoked
+  /// through RegisterPass. This version is for use by analysis groups; it
+  /// does not auto-register the pass.
+  PassInfo(const char *name, intptr_t pi) {
+    this->PassName = name;
+    this->PassArgument = "";
+    this->PassID = pi;
+    this->IsCFGOnlyPass = false;
+    this->IsAnalysis = false;
+    this->IsAnalysisGroup = true;
+    this->NormalCtor = 0;
   }
 
 protected:
@@ -240,7 +250,7 @@ struct PassRegistrationListener {
   /// Callback functions - These functions are invoked whenever a pass is loaded
   /// or removed from the current executable.
   ///
-  virtual void passRegistered(const PassInfo *) {}
+  virtual void passRegistered(const StaticPassInfo *) {}
 
   /// enumeratePasses - Iterate over the registered passes, calling the
   /// passEnumerate callback on each PassInfo object.
@@ -250,7 +260,7 @@ struct PassRegistrationListener {
   /// passEnumerate - Callback function invoked when someone calls
   /// enumeratePasses on this PassRegistrationListener object.
   ///
-  virtual void passEnumerate(const PassInfo *) {}
+  virtual void passEnumerate(const StaticPassInfo *) {}
 };
 
 
