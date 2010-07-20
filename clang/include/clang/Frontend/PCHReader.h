@@ -543,7 +543,7 @@ private:
   llvm::BitstreamCursor &SLocCursorForID(unsigned ID);
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
 
-  typedef std::pair<llvm::BitstreamCursor &, uint64_t> RecordLocation;
+  typedef std::pair<llvm::BitstreamCursor *, uint64_t> RecordLocation;
 
   QualType ReadTypeRecord(unsigned Index);
   RecordLocation TypeCursorForIndex(unsigned Index);

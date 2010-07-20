@@ -2160,7 +2160,7 @@ PCHReader::RecordLocation PCHReader::TypeCursorForIndex(unsigned Index) {
     Index -= F->LocalNumTypes;
   }
   assert(F && F->LocalNumTypes > Index && "Broken chain");
-  return RecordLocation(F->DeclsCursor, F->TypeOffsets[Index]);
+  return RecordLocation(&F->DeclsCursor, F->TypeOffsets[Index]);
 }
 
 /// \brief Read and return the type with the given index..
@@ -2171,7 +2171,7 @@ PCHReader::RecordLocation PCHReader::TypeCursorForIndex(unsigned Index) {
 /// IDs.
 QualType PCHReader::ReadTypeRecord(unsigned Index) {
   RecordLocation Loc = TypeCursorForIndex(Index);
-  llvm::BitstreamCursor &DeclsCursor = Loc.first;
+  llvm::BitstreamCursor &DeclsCursor = *Loc.first;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this type.

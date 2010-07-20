@@ -1264,13 +1264,13 @@ PCHReader::RecordLocation PCHReader::DeclCursorForIndex(unsigned Index) {
     Index -= F->LocalNumDecls;
   }
   assert(F && F->LocalNumDecls > Index && "Broken chain");
-  return RecordLocation(F->DeclsCursor, F->DeclOffsets[Index]);
+  return RecordLocation(&F->DeclsCursor, F->DeclOffsets[Index]);
 }
 
 /// \brief Read the declaration at the given offset from the PCH file.
 Decl *PCHReader::ReadDeclRecord(unsigned Index) {
   RecordLocation Loc = DeclCursorForIndex(Index);
-  llvm::BitstreamCursor &DeclsCursor = Loc.first;
+  llvm::BitstreamCursor &DeclsCursor = *Loc.first;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
   SavedStreamPosition SavedPosition(DeclsCursor);
