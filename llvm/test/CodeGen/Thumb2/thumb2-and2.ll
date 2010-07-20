@@ -30,7 +30,7 @@ define i32 @f4(i32 %a) {
     ret i32 %tmp
 }
 ; CHECK: f4:
-; CHECK: 	and	r0, r0, #1448498774
+; CHECK: bic r0, r0, #-1448498775
 
 ; 66846720 = 0x03fc0000
 define i32 @f5(i32 %a) {

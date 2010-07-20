@@ -6,7 +6,7 @@ define i32 @test1(i32 %x) {
 ; ARMv7A: uxtb16 r0, r0
 
 ; ARMv7M: test1
-; ARMv7M: and r0, r0, #16711935
+; ARMv7M: bic r0, r0, #-16711936
 	%tmp1 = and i32 %x, 16711935		; <i32> [#uses=1]
 	ret i32 %tmp1
 }
