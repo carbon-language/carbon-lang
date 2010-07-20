@@ -865,11 +865,10 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   lis = &getAnalysis<LiveIntervals>();
   lss = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
+  RenderMachineFunction *rmf = &getAnalysis<RenderMachineFunction>();
 
   vrm = &getAnalysis<VirtRegMap>();
 
-  RenderMachineFunction *rmf = &getAnalysis<RenderMachineFunction>();
-  rmf->renderMachineFunction("Prior to PBQP register allocation.");
 
   DEBUG(dbgs() << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n");
 
@@ -906,6 +905,8 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
 
   // Finalise allocation, allocate empty ranges.
   finalizeAlloc();
+
+  rmf->renderMachineFunction("After PBQP register allocation.", vrm);
 
   vregIntervalsToAlloc.clear();
   emptyVRegIntervals.clear();

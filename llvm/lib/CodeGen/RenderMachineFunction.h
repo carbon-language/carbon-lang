@@ -30,7 +30,7 @@ namespace llvm {
   class MachineRegisterInfo;
   class TargetRegisterClass;
   class TargetRegisterInfo;
-
+  class VirtRegMap;
 
   /// \brief Provide extra information about the physical and virtual registers
   ///        in the function being compiled.
@@ -212,10 +212,14 @@ namespace llvm {
     ///                         codegen pipeline) this function was rendered
     ///                         from. Set it to something like
     ///                         "Pre-register-allocation".
+    /// @param vrm              If non-null the VRM will be queried to determine
+    ///                         whether a virtual register was allocated to a
+    ///                         physical register or spilled.
     /// @param renderFilePrefix This string will be appended to the function
     ///                         name (before the output file suffix) to enable
     ///                         multiple renderings from the same function.
     void renderMachineFunction(const char *renderContextStr,
+                               const VirtRegMap *vrm = 0,
                                const char *renderSuffix = 0);
 
   private:
@@ -227,18 +231,25 @@ namespace llvm {
     const TargetRegisterInfo *tri;
     LiveIntervals *lis;
     SlotIndexes *sis;
+    const VirtRegMap *vrm;
 
     TargetRegisterExtraInfo trei;
     MFRenderingOptions ro;
 
-    // ---------- Utility functions ----------
+    // Utilities.
+    typedef enum { Dead, Defined, Used, AliveReg, AliveStack } LiveState;
 
-    void setupRenderingOptions();
+    LiveState getLiveStateAt(const LiveInterval *li, SlotIndex i) const;
 
     // ---------- Rendering methods ----------
 
     template <typename Iterator>
     std::string escapeChars(Iterator sBegin, Iterator sEnd) const;
+
+    /// \brief Render a machine instruction.
+    template <typename OStream>
+    void renderMachineInstr(OStream &os,
+                            const MachineInstr *mi) const;
 
     /// \brief Render vertical text.
     template <typename OStream, typename T>
@@ -282,9 +293,6 @@ namespace llvm {
                             const char * const renderContextStr) const;
 
     std::string escapeChars(const std::string &s) const;
-
-    std::string escapeChars(const MachineInstr *mi) const;
-
   };
 }
 

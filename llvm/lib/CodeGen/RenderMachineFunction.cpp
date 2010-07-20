@@ -11,6 +11,8 @@
 
 #include "RenderMachineFunction.h"
 
+#include "VirtRegMap.h"
+
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallVector.h"
@@ -511,6 +513,50 @@ namespace llvm {
     return r;
   }
 
+  RenderMachineFunction::LiveState
+  RenderMachineFunction::getLiveStateAt(const LiveInterval *li,
+                                        SlotIndex i) const {
+    const MachineInstr *mi = sis->getInstructionFromIndex(i);
+
+    if (li->liveAt(i)) {
+      if (mi == 0) {
+        if (vrm == 0 || 
+            (vrm->getStackSlot(li->reg) == VirtRegMap::NO_STACK_SLOT)) {
+          return AliveReg;
+        } else {
+          return AliveStack;
+        }
+      } else {
+        if (i.getSlot() == SlotIndex::DEF &&
+            mi->definesRegister(li->reg, tri)) {
+          return Defined;
+        } else if (i.getSlot() == SlotIndex::USE &&
+                   mi->readsRegister(li->reg)) {
+          return Used;
+        } else {
+          if (vrm == 0 || 
+              (vrm->getStackSlot(li->reg) == VirtRegMap::NO_STACK_SLOT)) {
+            return AliveReg;
+          } else {
+            return AliveStack;
+          }
+        }
+      }
+    }
+    return Dead;
+  }
+
+  /// \brief Render a machine instruction.
+  template <typename OStream>
+  void RenderMachineFunction::renderMachineInstr(OStream &os,
+                                                 const MachineInstr *mi) const {
+    std::string s;
+    raw_string_ostream oss(s);
+    oss << *mi;
+
+    os << escapeChars(oss.str());
+  }
+
   template <typename OStream, typename T>
   void RenderMachineFunction::renderVertical(const std::string &indent,
                                              OStream &os,
@@ -557,7 +603,8 @@ namespace llvm {
        << indent << "  table.code td.l-na { background-color: #ffffff; }\n"
        << indent << "  table.code td.l-def { background-color: #ff0000; }\n"
        << indent << "  table.code td.l-use { background-color: #ffff00; }\n"
-       << indent << "  table.code td.l-sa { background-color: #000000; }\n"
+       << indent << "  table.code td.l-sar { background-color: #000000; }\n"
+       << indent << "  table.code td.l-sas { background-color: #770000; }\n"
        << indent << "  table.code th { border-width: 0px; "
                     "border-style: solid; }\n"
        << indent << "</style>\n";
@@ -663,7 +710,9 @@ namespace llvm {
           if (i == sis->getMBBStartIdx(mbb)) {
             os << indent << "      BB#" << mbb->getNumber() << ":&nbsp;\n";
           } else if (mi != 0) {
-            os << indent << "      &nbsp;&nbsp;" << escapeChars(mi) << "\n";
+            os << indent << "      &nbsp;&nbsp;";
+            renderMachineInstr(os, mi);
+            os << "\n";
           } else {
             os << indent << "      &nbsp;\n";
           }
@@ -706,22 +755,13 @@ namespace llvm {
              liItr != liEnd; ++liItr) {
           const LiveInterval *li = *liItr;
           os << indent << "    <td class=\"";
-          if (li->liveAt(i)) {
-            if (mi == 0) {
-              os << "l-sa";
-            } else {
-              if (i.getSlot() == SlotIndex::DEF &&
-                  mi->definesRegister(li->reg, tri)) {
-                os << "l-def";
-              } else if (i.getSlot() == SlotIndex::USE &&
-                         mi->readsRegister(li->reg)) {
-                os << "l-use";
-              } else {
-                os << "l-sa";
-              }
-            }
-          } else {
-            os << "l-na";
+          switch (getLiveStateAt(li, i)) {
+            case Dead: os << "l-na"; break;
+            case Defined: os << "l-def"; break;
+            case Used: os << "l-use"; break;
+            case AliveReg: os << "l-sar"; break;
+            case AliveStack: os << "l-sas"; break;
+            default: assert(false && "Unrecognised live state."); break;
           }
           os << "\"></td>\n";
         }
@@ -797,10 +837,12 @@ namespace llvm {
 
   void RenderMachineFunction::renderMachineFunction(
                                                    const char *renderContextStr,
+                                                   const VirtRegMap *vrm,
                                                    const char *renderSuffix) {
     if (!ro.shouldRenderCurrentMachineFunction())
       return; 
 
+    this->vrm = vrm;
     trei.reset();
 
     std::string rpFileName(mf->getFunction()->getName().str() +
@@ -815,20 +857,8 @@ namespace llvm {
     ro.resetRenderSpecificOptions();
   }
 
-  void RenderMachineFunction::setupRenderingOptions() {
-
-  }
-
   std::string RenderMachineFunction::escapeChars(const std::string &s) const {
     return escapeChars(s.begin(), s.end());
-  }
-
-  std::string RenderMachineFunction::escapeChars(const MachineInstr *mi) const {
-    std::string s;
-    raw_string_ostream os(s);
-    os << *mi;
-    std::string s2 = os.str();
-    return escapeChars(s2);
   }
 
 }
