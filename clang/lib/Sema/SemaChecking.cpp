@@ -1518,7 +1518,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   const LengthModifier &LM = FS.getLengthModifier();
   if (!FS.hasValidLengthModifier())
     S.Diag(getLocationOfByte(LM.getStart()),
-        diag::warn_printf_nonsensical_length)
+        diag::warn_format_nonsensical_length)
       << LM.toString() << CS.toString()
       << getSpecifierRange(startSpecifier, specifierLen)
       << FixItHint::CreateRemoval(getSpecifierRange(LM.getStart(),

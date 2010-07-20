@@ -2980,7 +2980,7 @@ def warn_printf_nonsensical_optional_amount: Warning<
 def warn_printf_nonsensical_flag: Warning<
   "flag '%0' results in undefined behavior with '%1' conversion specifier">,
   InGroup<Format>;
-def warn_printf_nonsensical_length: Warning<
+def warn_format_nonsensical_length: Warning<
   "length modifier '%0' results in undefined behavior or no effect with '%1' conversion specifier">,
   InGroup<Format>;
 def warn_printf_ignored_flag: Warning<
