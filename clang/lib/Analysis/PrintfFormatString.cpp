@@ -250,15 +250,16 @@ const char *ConversionSpecifier::toString() const {
   case GArg: return "G";
   case aArg: return "a";
   case AArg: return "A";
-  case cArg:     return "c";
-  case sArg:          return "s";
-  case pArg:       return "p";
-  case nArg:     return "n";
-  case PercentArg:       return "%";
+  case cArg: return "c";
+  case sArg: return "s";
+  case pArg: return "p";
+  case nArg: return "n";
+  case PercentArg:  return "%";
+  case ScanListArg: return "[";
   case InvalidSpecifier: return NULL;
 
   // MacOS X unicode extensions.
-  case CArg:          return "C";
+  case CArg: return "C";
   case SArg: return "S";
 
   // Objective-C specific specifiers.
