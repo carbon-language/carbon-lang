@@ -2150,13 +2150,28 @@ void PCHReader::ReadPreprocessedEntities() {
   ReadDefinedMacros();
 }
 
-/// \brief Read and return the type at the given offset.
+/// \brief Get the correct cursor and offset for loading a type.
+PCHReader::RecordLocation PCHReader::TypeCursorForIndex(unsigned Index) {
+  PerFileData *F = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    F = Chain[N - I - 1];
+    if (Index < F->LocalNumTypes)
+      break;
+    Index -= F->LocalNumTypes;
+  }
+  assert(F && F->LocalNumTypes > Index && "Broken chain");
+  return RecordLocation(F->DeclsCursor, F->TypeOffsets[Index]);
+}
+
+/// \brief Read and return the type with the given index..
 ///
-/// This routine actually reads the record corresponding to the type
-/// at the given offset in the bitstream. It is a helper routine for
-/// GetType, which deals with reading type IDs.
-QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
-  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
+/// The index is the type ID, shifted and minus the number of predefs. This
+/// routine actually reads the record corresponding to the type at the given
+/// location. It is a helper routine for GetType, which deals with reading type
+/// IDs.
+QualType PCHReader::ReadTypeRecord(unsigned Index) {
+  RecordLocation Loc = TypeCursorForIndex(Index);
+  llvm::BitstreamCursor &DeclsCursor = Loc.first;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this type.
@@ -2167,7 +2182,7 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   // Note that we are loading a type record.
   LoadingTypeOrDecl Loading(*this);
 
-  DeclsCursor.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Loc.second);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   switch ((pch::TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
@@ -2736,9 +2751,9 @@ QualType PCHReader::GetType(pch::TypeID ID) {
   }
 
   Index -= pch::NUM_PREDEF_TYPE_IDS;
-  //assert(Index < TypesLoaded.size() && "Type index out-of-range");
+  assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
-    TypesLoaded[Index] = ReadTypeRecord(Chain[0]->TypeOffsets[Index]);
+    TypesLoaded[Index] = ReadTypeRecord(Index);
     TypesLoaded[Index]->setFromPCH();
     if (DeserializationListener)
       DeserializationListener->TypeRead(ID >> Qualifiers::FastWidth,

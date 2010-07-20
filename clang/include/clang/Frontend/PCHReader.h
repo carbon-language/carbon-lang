@@ -541,9 +541,12 @@ private:
   PCHReadResult ReadSourceManagerBlock(PerFileData &F);
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
   llvm::BitstreamCursor &SLocCursorForID(unsigned ID);
-
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
-  QualType ReadTypeRecord(uint64_t Offset);
+
+  typedef std::pair<llvm::BitstreamCursor &, uint64_t> RecordLocation;
+
+  QualType ReadTypeRecord(unsigned Index);
+  RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(uint64_t Offset, unsigned Index);
 
