@@ -402,6 +402,16 @@ public:
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
   }
 
+  /// GcAssignThreadLocalFn -- LLVM objc_assign_threadlocal function.
+  llvm::Constant *getGcAssignThreadLocalFn() {
+    // id objc_assign_threadlocal(id src, id * dest)
+    std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
+    Args.push_back(ObjectPtrTy->getPointerTo());
+    llvm::FunctionType *FTy =
+    llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_assign_threadlocal");
+  }
+  
   /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
   llvm::Constant *getGcAssignIvarFn() {
     // id objc_assign_ivar(id, id *, ptrdiff_t)
@@ -425,7 +435,7 @@ public:
 
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
   llvm::Constant *getGcAssignStrongCastFn() {
-    // id objc_assign_global(id, id *)
+    // id objc_assign_strongCast(id, id *)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
     llvm::FunctionType *FTy =
@@ -1198,7 +1208,8 @@ public:
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dst);
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest);
+                                    llvm::Value *src, llvm::Value *dest,
+                                    bool threadlocal = false);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dest,
                                   llvm::Value *ivarOffset);
@@ -1444,7 +1455,8 @@ public:
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dst);
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest);
+                                    llvm::Value *src, llvm::Value *dest,
+                                    bool threadlocal = false);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dest,
                                   llvm::Value *ivarOffset);
@@ -2996,7 +3008,8 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_global (id src, id *dst)
 ///
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                     llvm::Value *src, llvm::Value *dst) {
+                                     llvm::Value *src, llvm::Value *dst,
+                                     bool threadlocal) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -3007,8 +3020,12 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
-                          src, dst, "globalassign");
+  if (!threadlocal)
+    CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
+                            src, dst, "globalassign");
+  else
+    CGF.Builder.CreateCall2(ObjCTypes.getGcAssignThreadLocalFn(),
+                            src, dst, "threadlocalassign");
   return;
 }
 
@@ -5657,7 +5674,8 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_global (id src, id *dst)
 ///
 void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                                  llvm::Value *src, llvm::Value *dst) {
+                                          llvm::Value *src, llvm::Value *dst,
+                                          bool threadlocal) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -5668,8 +5686,12 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
-                          src, dst, "globalassign");
+  if (!threadlocal)
+    CGF.Builder.CreateCall2(ObjCTypes.getGcAssignGlobalFn(),
+                            src, dst, "globalassign");
+  else
+    CGF.Builder.CreateCall2(ObjCTypes.getGcAssignThreadLocalFn(),
+                            src, dst, "threadlocalassign");
   return;
 }
 

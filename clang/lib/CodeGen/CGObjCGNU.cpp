@@ -192,7 +192,8 @@ public:
   virtual void EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                   llvm::Value *src, llvm::Value *dst);
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest);
+                                    llvm::Value *src, llvm::Value *dest,
+                                    bool threadlocal=false);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest,
                                     llvm::Value *ivarOffset);
@@ -2075,11 +2076,16 @@ void CGObjCGNU::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 }
 
 void CGObjCGNU::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                     llvm::Value *src, llvm::Value *dst) {
+                                     llvm::Value *src, llvm::Value *dst,
+                                     bool threadlocal) {
   CGBuilderTy B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  B.CreateCall2(GlobalAssignFn, src, dst);
+  if (!threadlocal)
+    B.CreateCall2(GlobalAssignFn, src, dst);
+  else
+    // FIXME. Add threadloca assign API
+    assert(false && "EmitObjCGlobalAssign - Threal Local API NYI");
 }
 
 void CGObjCGNU::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,

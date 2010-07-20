@@ -148,6 +148,9 @@ class LValue {
 
   // Lvalue is a global reference of an objective-c object
   bool GlobalObjCRef : 1;
+  
+  // Lvalue is a thread local reference
+  bool ThreadLocalRef : 1;
 
   Expr *BaseIvarExp;
 private:
@@ -157,6 +160,7 @@ private:
     // FIXME: Convenient place to set objc flags to 0. This should really be
     // done in a user-defined constructor instead.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
+    this->ThreadLocalRef = false;
     this->BaseIvarExp = 0;
   }
 
@@ -178,6 +182,7 @@ public:
   bool isObjCArray() const { return ObjIsArray; }
   bool isNonGC () const { return NonGC; }
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
+  bool isThreadLocalRef() const { return ThreadLocalRef; }
   bool isObjCWeak() const { return Quals.getObjCGCAttr() == Qualifiers::Weak; }
   bool isObjCStrong() const { return Quals.getObjCGCAttr() == Qualifiers::Strong; }
   
@@ -195,7 +200,9 @@ public:
   static void SetGlobalObjCRef(LValue& R, bool iValue) {
     R.GlobalObjCRef = iValue;
   }
-
+  static void SetThreadLocalRef(LValue& R, bool iValue) {
+    R.ThreadLocalRef = iValue;
+  }
   static void SetObjCNonGC(LValue& R, bool iValue) {
     R.NonGC = iValue;
   }

@@ -836,8 +836,10 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
       llvm::Value *BytesBetween = Builder.CreateSub(LHS, RHS, "ivar.offset");
       CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, dst,
                                               BytesBetween);
-    } else if (Dst.isGlobalObjCRef())
-      CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
+    } else if (Dst.isGlobalObjCRef()) {
+      CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst,
+                                                Dst.isThreadLocalRef());
+    }
     else
       CGM.getObjCRuntime().EmitObjCStrongCastAssign(*this, src, LvalueDst);
     return;
@@ -1055,8 +1057,10 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
   if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
       if ((VD->isBlockVarDecl() && !VD->hasLocalStorage()) ||
-          VD->isFileVarDecl())
+          VD->isFileVarDecl()) {
         LV.SetGlobalObjCRef(LV, true);
+        LV.SetThreadLocalRef(LV, VD->isThreadSpecified());
+      }
     }
     LV.SetObjCArray(LV, E->getType()->isArrayType());
     return;
