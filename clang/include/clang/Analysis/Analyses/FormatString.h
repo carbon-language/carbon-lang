@@ -257,44 +257,45 @@ class ConversionSpecifier {
 public:
   enum Kind {
     InvalidSpecifier = 0,
-      // C99 conversion specifiers.
-    dArg, // 'd'
-    cArg, // 'c'
-    iArg, // 'i',
-    oArg, // 'o',
-    uArg, // 'u',
-    xArg, // 'x',
-    XArg, // 'X',
-    fArg, // 'f',
-    FArg, // 'F',
-    eArg, // 'e',
-    EArg, // 'E',
-    gArg, // 'g',
-    GArg, // 'G',
-    aArg, // 'a',
-    AArg, // 'A',
-    sArg, // 's'
-    pArg, // 'p'
-    nArg, // 'n'
-    PercentArg,    // '%'
-      // MacOS X unicode extensions.
-    CArg, // 'C'
-    SArg, // 'S'
-      // Objective-C specific specifiers.
-    ObjCObjArg,    // '@'
-      // GlibC specific specifiers.
-    PrintErrno,    // 'm'
-      // Specifier ranges.
-    IntArgBeg = dArg,
-    IntArgEnd = iArg,
-    UIntArgBeg = oArg,
-    UIntArgEnd = XArg,
-    DoubleArgBeg = fArg,
-    DoubleArgEnd = AArg,
-    C99Beg = IntArgBeg,
-    C99End = DoubleArgEnd,
-    ObjCBeg = ObjCObjArg,
-    ObjCEnd = ObjCObjArg
+    // C99 conversion specifiers.
+    cArg,
+    dArg,
+    iArg,
+    IntArgBeg = cArg, IntArgEnd = iArg,    
+
+    oArg,
+    uArg,
+    xArg,
+    XArg,
+    UIntArgBeg = oArg, UIntArgEnd = XArg,
+
+    fArg,
+    FArg,
+    eArg,
+    EArg,
+    gArg,
+    GArg,
+    aArg,
+    AArg,
+    DoubleArgBeg = fArg, DoubleArgEnd = AArg,
+
+    sArg,
+    pArg,
+    nArg,
+    PercentArg,
+    CArg,
+    SArg,
+
+    // ** Printf-specific **
+    
+    // Objective-C specific specifiers.
+    ObjCObjArg,  // '@'
+    ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
+    
+    // GlibC specific specifiers.
+    PrintErrno,   // 'm'
+    
+    PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno
   };
 
   ConversionSpecifier()
