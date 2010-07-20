@@ -127,7 +127,7 @@ public:
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
-  void EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder);
+  void EmitStopPoint(CGBuilderTy &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
@@ -136,11 +136,11 @@ public:
 
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.
-  void EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder);
+  void EmitRegionStart(CGBuilderTy &Builder);
 
   /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a
   /// block.
-  void EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder);
+  void EmitRegionEnd(CGBuilderTy &Builder);
 
   /// EmitDeclareOfAutoVariable - Emit call to llvm.dbg.declare for an automatic
   /// variable declaration.

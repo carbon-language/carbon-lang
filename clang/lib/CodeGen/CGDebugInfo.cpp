@@ -1401,7 +1401,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 }
 
 
-void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
+void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
 
   // Don't bother if things are the same as last time.
@@ -1425,7 +1425,7 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
-void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
+void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
   llvm::DIDescriptor D =
     DebugFactory.CreateLexicalBlock(RegionStack.empty() ? 
                                     llvm::DIDescriptor() : 
@@ -1439,11 +1439,11 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) {
+void CGDebugInfo::EmitRegionEnd(CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   // Provide an region stop point.
-  EmitStopPoint(Fn, Builder);
+  EmitStopPoint(Builder);
 
   RegionStack.pop_back();
 }

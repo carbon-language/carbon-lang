@@ -139,7 +139,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(EndLoc);
-    DI->EmitRegionEnd(CurFn, Builder);
+    DI->EmitRegionEnd(Builder);
   }
 
   EmitFunctionEpilog(*CurFnInfo);

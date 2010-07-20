@@ -34,7 +34,7 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
       DI->setLocation(S->getLocEnd());
     else
       DI->setLocation(S->getLocStart());
-    DI->EmitStopPoint(CurFn, Builder);
+    DI->EmitStopPoint(Builder);
   }
 }
 
@@ -152,7 +152,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getLBracLoc());
-    DI->EmitRegionStart(CurFn, Builder);
+    DI->EmitRegionStart(Builder);
   }
 
   // Keep track of the current cleanup stack depth.
@@ -164,7 +164,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
   if (DI) {
     DI->setLocation(S.getRBracLoc());
-    DI->EmitRegionEnd(CurFn, Builder);
+    DI->EmitRegionEnd(Builder);
   }
 
   RValue RV;
@@ -557,7 +557,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitRegionStart(CurFn, Builder);
+    DI->EmitRegionStart(Builder);
   }
 
   {
@@ -582,7 +582,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitRegionEnd(CurFn, Builder);
+    DI->EmitRegionEnd(Builder);
   }
 
   // Emit the fall-through block.
