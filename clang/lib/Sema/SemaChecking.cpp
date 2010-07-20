@@ -1701,9 +1701,17 @@ bool CheckScanfHandler::HandleScanfSpecifier(
     CoveredArgs.set(argIndex);
   }
   
-  // FIXME: Check that the length modifier is valid with the given
-  // conversion specifier.
-  
+  // Check the length modifier is valid with the given conversion specifier.
+  const LengthModifier &LM = FS.getLengthModifier();
+  if (!FS.hasValidLengthModifier()) {
+    S.Diag(getLocationOfByte(LM.getStart()),
+           diag::warn_format_nonsensical_length)
+      << LM.toString() << CS.toString()
+      << getSpecifierRange(startSpecifier, specifierLen)
+      << FixItHint::CreateRemoval(getSpecifierRange(LM.getStart(),
+                                                    LM.getLength()));
+  }
+
   // The remaining checks depend on the data arguments.
   if (HasVAListArg)
     return true;
