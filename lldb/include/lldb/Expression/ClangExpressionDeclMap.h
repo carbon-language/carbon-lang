@@ -21,6 +21,7 @@
 // Project includes
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Symbol/ASTType.h"
 
 namespace clang {
     class DeclarationName;
@@ -54,6 +55,7 @@ public:
                            const clang::NamedDecl *decl,
                            std::string &name,
                            void *type,
+                           clang::ASTContext *ast_context,
                            size_t size,
                            off_t alignment);
     bool DoStructLayout ();
@@ -69,20 +71,27 @@ public:
     Value *GetValueForIndex (uint32_t index);
     
     // Interface for CommandObjectExpression
-    lldb::addr_t Materialize(ExecutionContext *exe_ctx,
-                             Error &error);
+    bool Materialize(ExecutionContext *exe_ctx,
+                     lldb::addr_t &struct_address,
+                     Error &error);
+    
+    bool Dematerialize(ExecutionContext *exe_ctx,
+                       lldb_private::Value &result_value,
+                       Error &error);
     
     // Interface for ClangASTSource
     void GetDecls (NameSearchContext &context,
                    const char *name);
-protected:
 private:
+    typedef TaggedASTType<0> TypeFromParser;
+    typedef TaggedASTType<1> TypeFromUser;
+    
     struct Tuple
     {
         const clang::NamedDecl  *m_decl;
-        clang::ASTContext       *m_ast_context;
-        void                    *m_orig_type;
-        Value                   *m_value; /* owned by ClangExpressionDeclMap */
+        TypeFromParser          m_parser_type;
+        TypeFromUser            m_user_type;
+        lldb_private::Value     *m_value; /* owned by ClangExpressionDeclMap */
     };
     
     struct StructMember
@@ -90,7 +99,7 @@ private:
         const clang::NamedDecl *m_decl;
         llvm::Value            *m_value;
         std::string             m_name;
-        void                   *m_type;
+        TypeFromParser          m_parser_type;
         off_t                   m_offset;
         size_t                  m_size;
         off_t                   m_alignment;
@@ -109,29 +118,35 @@ private:
     off_t               m_struct_alignment;
     size_t              m_struct_size;
     bool                m_struct_laid_out;
+    lldb::addr_t        m_allocated_area;
     lldb::addr_t        m_materialized_location;
         
     Variable *FindVariableInScope(const SymbolContext &sym_ctx,
                                   const char *name,
-                                  void *type = NULL,
-                                  clang::ASTContext *ast_context = NULL);
+                                  TypeFromUser *type = NULL);
     
     Value *GetVariableValue(ExecutionContext &exe_ctx,
                             Variable *var,
-                            clang::ASTContext *target_ast_context = NULL,
-                            void **opaque_type = NULL,
-                            clang::ASTContext **found_ast_context = NULL);
+                            clang::ASTContext *parser_ast_context,
+                            TypeFromUser *found_type = NULL,
+                            TypeFromParser *parser_type = NULL);
     
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun);
     
-    bool MaterializeOneVariable(ExecutionContext &exe_ctx,
-                                const SymbolContext &sym_ctx,
-                                const char *name,
-                                void *type,
-                                clang::ASTContext *ast_context,
-                                lldb::addr_t addr, 
-                                Error &err);
+    // Set D to dematerialize instead
+    bool DoMaterialize (bool dematerialize,
+                        ExecutionContext *exe_ctx,
+                        lldb_private::Value *result_value, /* must be non-NULL if D is set */
+                        Error &err);
+
+    bool DoMaterializeOneVariable(bool dematerialize,
+                                  ExecutionContext &exe_ctx,
+                                  const SymbolContext &sym_ctx,
+                                  const char *name,
+                                  TypeFromUser type,
+                                  lldb::addr_t addr, 
+                                  Error &err);
 };
     
 } // namespace lldb_private

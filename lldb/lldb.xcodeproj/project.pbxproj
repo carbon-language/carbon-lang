@@ -335,6 +335,8 @@
 		49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D7072811B5AD11001AD875 /* ClangASTSource.cpp */; settings = {COMPILER_FLAGS = "-fno-rtti"; }; };
 		49DA743011DE6A5A006AEF7E /* IRToDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */; };
 		49DA743511DE6BB2006AEF7E /* IRToDWARF.h in Headers */ = {isa = PBXBuildFile; fileRef = 49DA743411DE6BB2006AEF7E /* IRToDWARF.h */; };
+		49E45FAA11F660DC008F7B28 /* ASTType.h in Headers */ = {isa = PBXBuildFile; fileRef = 49E45FA911F660DC008F7B28 /* ASTType.h */; };
+		49E45FAF11F660FE008F7B28 /* ASTType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* ASTType.cpp */; };
 		49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */; };
 		49F1A74A11B338AE003ED505 /* ClangExpressionDeclMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 49F1A74911B338AE003ED505 /* ClangExpressionDeclMap.h */; };
 		4C08CDE811C81EF8001610A8 /* ThreadSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C08CDE711C81EF8001610A8 /* ThreadSpec.cpp */; };
@@ -910,6 +912,8 @@
 		49D7072811B5AD11001AD875 /* ClangASTSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTSource.cpp; path = source/Expression/ClangASTSource.cpp; sourceTree = "<group>"; };
 		49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRToDWARF.cpp; path = source/Expression/IRToDWARF.cpp; sourceTree = "<group>"; };
 		49DA743411DE6BB2006AEF7E /* IRToDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRToDWARF.h; path = include/lldb/Expression/IRToDWARF.h; sourceTree = "<group>"; };
+		49E45FA911F660DC008F7B28 /* ASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTType.h; path = include/lldb/Symbol/ASTType.h; sourceTree = "<group>"; };
+		49E45FAD11F660FE008F7B28 /* ASTType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTType.cpp; path = source/Symbol/ASTType.cpp; sourceTree = "<group>"; };
 		49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunction.cpp; path = source/Target/ThreadPlanCallFunction.cpp; sourceTree = "<group>"; };
 		49EC3E9C118F90D400B1265E /* ThreadPlanCallFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallFunction.h; path = include/lldb/Target/ThreadPlanCallFunction.h; sourceTree = "<group>"; };
 		49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionDeclMap.cpp; path = source/Expression/ClangExpressionDeclMap.cpp; sourceTree = "<group>"; };
@@ -1665,6 +1669,8 @@
 			isa = PBXGroup;
 			children = (
 				AF94005711C03F6500085DB9 /* SymbolVendor.cpp */,
+				49E45FA911F660DC008F7B28 /* ASTType.h */,
+				49E45FAD11F660FE008F7B28 /* ASTType.cpp */,
 				26BC7C5510F1B6E900F91463 /* Block.h */,
 				26BC7F1310F1B8EC00F91463 /* Block.cpp */,
 				26BC7C5610F1B6E900F91463 /* ClangASTContext.h */,
@@ -2195,6 +2201,7 @@
 				49307AB211DEA4F20081F992 /* IRForTarget.h in Headers */,
 				4C5DBBC911E3FEC60035160F /* CommandObjectCommands.h in Headers */,
 				26D27CA011ED3A4E0024D721 /* ELFHeader.h in Headers */,
+				49E45FAA11F660DC008F7B28 /* ASTType.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2648,6 +2655,7 @@
 				49307AAE11DEA4D90081F992 /* IRForTarget.cpp in Sources */,
 				4C5DBBC811E3FEC60035160F /* CommandObjectCommands.cpp in Sources */,
 				26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */,
+				49E45FAF11F660FE008F7B28 /* ASTType.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

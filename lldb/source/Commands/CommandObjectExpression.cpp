@@ -305,10 +305,9 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
             }
             
             Error err;
-                        
-            lldb::addr_t struct_address = expr_decl_map.Materialize(&m_exe_ctx, err);
+            lldb::addr_t struct_address;
             
-            if (struct_address == LLDB_INVALID_ADDRESS)
+            if (!expr_decl_map.Materialize(&m_exe_ctx, struct_address, err))
             {
                 error_stream.Printf ("Couldn't materialize struct: %s\n", err.AsCString("unknown error"));
                 return false;

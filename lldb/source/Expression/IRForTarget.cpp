@@ -93,12 +93,18 @@ IRForTarget::MaybeHandleVariable(Module &M,
         std::string name = named_decl->getName().str();
         
         void *qual_type = NULL;
+        clang::ASTContext *ast_context = NULL;
         
         if (clang::ValueDecl *value_decl = dyn_cast<clang::ValueDecl>(named_decl))
+        {
             qual_type = value_decl->getType().getAsOpaquePtr();
+            ast_context = &value_decl->getASTContext();
+        }
         else
+        {
             return false;
-        
+        }
+            
         const llvm::Type *value_type = global_variable->getType();
         
         size_t value_size = m_target_data->getTypeStoreSize(value_type);
@@ -108,6 +114,7 @@ IRForTarget::MaybeHandleVariable(Module &M,
                                                 named_decl,
                                                 name,
                                                 qual_type,
+                                                ast_context,
                                                 value_size, 
                                                 value_alignment))
             return false;
