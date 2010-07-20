@@ -56,8 +56,8 @@ class SplitAnalysis {
   bool canAnalyzeBranch(const MachineBasicBlock *MBB);
 
 public:
-  SplitAnalysis(const MachineFunction *mf, const LiveIntervals *lis,
-                const MachineLoopInfo *mli);
+  SplitAnalysis(const MachineFunction &mf, const LiveIntervals &lis,
+                const MachineLoopInfo &mli);
 
   /// analyze - set curli to the specified interval, and analyze how it may be
   /// split.

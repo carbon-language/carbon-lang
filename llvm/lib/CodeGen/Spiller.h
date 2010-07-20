@@ -16,14 +16,10 @@
 namespace llvm {
 
   class LiveInterval;
-  class LiveIntervals;
-  class LiveStacks;
   class MachineFunction;
-  class MachineInstr;
-  class MachineLoopInfo;
+  class MachineFunctionPass;
   class SlotIndex;
   class VirtRegMap;
-  class VNInfo;
 
   /// Spiller interface.
   ///
@@ -50,8 +46,9 @@ namespace llvm {
   };
 
   /// Create and return a spiller object, as specified on the command line.
-  Spiller* createSpiller(MachineFunction *mf, LiveIntervals *li,
-                         MachineLoopInfo *loopInfo, VirtRegMap *vrm);
+  Spiller* createSpiller(MachineFunctionPass &pass,
+                         MachineFunction &mf,
+                         VirtRegMap &vrm);
 }
 
 #endif

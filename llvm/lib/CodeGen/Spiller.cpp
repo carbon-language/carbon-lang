@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -49,22 +50,24 @@ namespace {
 /// Utility class for spillers.
 class SpillerBase : public Spiller {
 protected:
+  MachineFunctionPass *pass;
   MachineFunction *mf;
+  VirtRegMap *vrm;
   LiveIntervals *lis;
   MachineFrameInfo *mfi;
   MachineRegisterInfo *mri;
   const TargetInstrInfo *tii;
   const TargetRegisterInfo *tri;
-  VirtRegMap *vrm;
 
   /// Construct a spiller base.
-  SpillerBase(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
-    : mf(mf), lis(lis), vrm(vrm)
+  SpillerBase(MachineFunctionPass &pass, MachineFunction &mf, VirtRegMap &vrm)
+    : pass(&pass), mf(&mf), vrm(&vrm)
   {
-    mfi = mf->getFrameInfo();
-    mri = &mf->getRegInfo();
-    tii = mf->getTarget().getInstrInfo();
-    tri = mf->getTarget().getRegisterInfo();
+    lis = &pass.getAnalysis<LiveIntervals>();
+    mfi = mf.getFrameInfo();
+    mri = &mf.getRegInfo();
+    tii = mf.getTarget().getInstrInfo();
+    tri = mf.getTarget().getRegisterInfo();
   }
 
   /// Add spill ranges for every use/def of the live interval, inserting loads
@@ -173,8 +176,9 @@ namespace {
 class TrivialSpiller : public SpillerBase {
 public:
 
-  TrivialSpiller(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
-    : SpillerBase(mf, lis, vrm) {}
+  TrivialSpiller(MachineFunctionPass &pass, MachineFunction &mf,
+                 VirtRegMap &vrm)
+    : SpillerBase(pass, mf, vrm) {}
 
   void spill(LiveInterval *li,
              std::vector<LiveInterval*> &newIntervals,
@@ -196,9 +200,11 @@ protected:
   MachineLoopInfo *loopInfo;
   VirtRegMap *vrm;
 public:
-  StandardSpiller(LiveIntervals *lis, MachineLoopInfo *loopInfo,
-                  VirtRegMap *vrm)
-    : lis(lis), loopInfo(loopInfo), vrm(vrm) {}
+  StandardSpiller(MachineFunctionPass &pass, MachineFunction &mf,
+                  VirtRegMap &vrm)
+    : lis(&pass.getAnalysis<LiveIntervals>()),
+      loopInfo(pass.getAnalysisIfAvailable<MachineLoopInfo>()),
+      vrm(&vrm) {}
 
   /// Falls back on LiveIntervals::addIntervalsForSpills.
   void spill(LiveInterval *li,
@@ -221,13 +227,12 @@ namespace {
 /// then the spiller falls back on the standard spilling mechanism.
 class SplittingSpiller : public StandardSpiller {
 public:
-  SplittingSpiller(MachineFunction *mf, LiveIntervals *lis,
-                   MachineLoopInfo *loopInfo, VirtRegMap *vrm)
-    : StandardSpiller(lis, loopInfo, vrm) {
-
-    mri = &mf->getRegInfo();
-    tii = mf->getTarget().getInstrInfo();
-    tri = mf->getTarget().getRegisterInfo();
+  SplittingSpiller(MachineFunctionPass &pass, MachineFunction &mf,
+                   VirtRegMap &vrm)
+    : StandardSpiller(pass, mf, vrm) {
+    mri = &mf.getRegInfo();
+    tii = mf.getTarget().getInstrInfo();
+    tri = mf.getTarget().getRegisterInfo();
   }
 
   void spill(LiveInterval *li,
@@ -506,20 +511,19 @@ private:
 
 
 namespace llvm {
-Spiller *createInlineSpiller(MachineFunction*,
-                             LiveIntervals*,
-                             MachineLoopInfo*,
-                             VirtRegMap*);
+Spiller *createInlineSpiller(MachineFunctionPass &pass,
+                             MachineFunction &mf,
+                             VirtRegMap &vrm);
 }
 
-llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
-                                   MachineLoopInfo *loopInfo,
-                                   VirtRegMap *vrm) {
+llvm::Spiller* llvm::createSpiller(MachineFunctionPass &pass,
+                                   MachineFunction &mf,
+                                   VirtRegMap &vrm) {
   switch (spillerOpt) {
   default: assert(0 && "unknown spiller");
-  case trivial: return new TrivialSpiller(mf, lis, vrm);
-  case standard: return new StandardSpiller(lis, loopInfo, vrm);
-  case splitting: return new SplittingSpiller(mf, lis, loopInfo, vrm);
-  case inline_: return createInlineSpiller(mf, lis, loopInfo, vrm);
+  case trivial: return new TrivialSpiller(pass, mf, vrm);
+  case standard: return new StandardSpiller(pass, mf, vrm);
+  case splitting: return new SplittingSpiller(pass, mf, vrm);
+  case inline_: return createInlineSpiller(pass, mf, vrm);
   }
 }

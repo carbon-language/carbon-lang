@@ -34,13 +34,13 @@ AllowSplit("spiller-splits-edges",
 //                                 Split Analysis
 //===----------------------------------------------------------------------===//
 
-SplitAnalysis::SplitAnalysis(const MachineFunction *mf,
-                             const LiveIntervals *lis,
-                             const MachineLoopInfo *mli)
-  : mf_(*mf),
-    lis_(*lis),
-    loops_(*mli),
-    tii_(*mf->getTarget().getInstrInfo()),
+SplitAnalysis::SplitAnalysis(const MachineFunction &mf,
+                             const LiveIntervals &lis,
+                             const MachineLoopInfo &mli)
+  : mf_(mf),
+    lis_(lis),
+    loops_(mli),
+    tii_(*mf.getTarget().getInstrInfo()),
     curli_(0) {}
 
 void SplitAnalysis::clear() {

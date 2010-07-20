@@ -58,15 +58,19 @@ class InlineSpiller : public Spiller {
   ~InlineSpiller() {}
 
 public:
-  InlineSpiller(MachineFunction *mf, LiveIntervals *lis, MachineLoopInfo *mli,
-                VirtRegMap *vrm)
-    : mf_(*mf), lis_(*lis), loops_(*mli), vrm_(*vrm),
-      mfi_(*mf->getFrameInfo()),
-      mri_(mf->getRegInfo()),
-      tii_(*mf->getTarget().getInstrInfo()),
-      tri_(*mf->getTarget().getRegisterInfo()),
+  InlineSpiller(MachineFunctionPass &pass,
+                MachineFunction &mf,
+                VirtRegMap &vrm)
+    : mf_(mf),
+      lis_(pass.getAnalysis<LiveIntervals>()),
+      loops_(pass.getAnalysis<MachineLoopInfo>()),
+      vrm_(vrm),
+      mfi_(*mf.getFrameInfo()),
+      mri_(mf.getRegInfo()),
+      tii_(*mf.getTarget().getInstrInfo()),
+      tri_(*mf.getTarget().getRegisterInfo()),
       reserved_(tri_.getReservedRegs(mf_)),
-      splitAnalysis_(mf, lis, mli) {}
+      splitAnalysis_(mf, lis_, loops_) {}
 
   void spill(LiveInterval *li,
              std::vector<LiveInterval*> &newIntervals,
@@ -89,11 +93,10 @@ private:
 }
 
 namespace llvm {
-Spiller *createInlineSpiller(MachineFunction *mf,
-                             LiveIntervals *lis,
-                             MachineLoopInfo *mli,
-                             VirtRegMap *vrm) {
-  return new InlineSpiller(mf, lis, mli, vrm);
+Spiller *createInlineSpiller(MachineFunctionPass &pass,
+                             MachineFunction &mf,
+                             VirtRegMap &vrm) {
+  return new InlineSpiller(pass, mf, vrm);
 }
 }
 
