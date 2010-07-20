@@ -23,8 +23,7 @@ void *f2(long N) {
   
 // SANE: call{{.*}}@llvm.umul.with.overflow
 // SANE: extractvalue
-// SANE: br i1{{.*}}, label %overflow, label %no_overflow
-
-// SANE: = phi {{.*}} [ {{.*}}, %entry ], [ -1, %overflow ]
+// SANE: br i1
+// SANE: = phi {{.*}} [ {{.*}} ], [ -1,
 // SANE:  call noalias i8* @_Znaj(
 }
