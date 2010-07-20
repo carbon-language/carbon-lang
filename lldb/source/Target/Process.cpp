@@ -699,7 +699,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
         {
             // Clear a software breakoint instruction
             uint8_t curr_break_op[8];
-            assert (sizeof(curr_break_op) < break_op_size);
+            assert (break_op_size <= sizeof(curr_break_op));
             bool break_op_found = false;
 
             // Read the breakpoint opcode
@@ -729,7 +729,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
                 if (verify)
                 {
                     uint8_t verify_opcode[8];
-                    assert (sizeof(verify_opcode) < break_op_size);
+                    assert (break_op_size < sizeof(verify_opcode));
                     // Verify that our original opcode made it back to the inferior
                     if (DoReadMemory (bp_addr, verify_opcode, break_op_size, error) == break_op_size)
                     {
