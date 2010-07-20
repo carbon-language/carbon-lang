@@ -181,7 +181,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
     case 'o': k = ConversionSpecifier::oArg; break;
     case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
-    case 's': k = ConversionSpecifier::CStrArg;      break;
+    case 's': k = ConversionSpecifier::sArg;      break;
     case 'u': k = ConversionSpecifier::uArg; break;
     case 'x': k = ConversionSpecifier::xArg; break;
     // Mac OS X (unicode) specific
@@ -250,7 +250,7 @@ const char *ConversionSpecifier::toString() const {
   case aArg: return "a";
   case AArg: return "A";
   case cArg:     return "c";
-  case CStrArg:          return "s";
+  case sArg:          return "s";
   case VoidPtrArg:       return "p";
   case OutIntPtrArg:     return "n";
   case PercentArg:       return "%";
@@ -322,7 +322,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   }
 
   switch (CS.getKind()) {
-    case ConversionSpecifier::CStrArg:
+    case ConversionSpecifier::sArg:
       return ArgTypeResult(LM.getKind() == LengthModifier::AsWideChar ?
           ArgTypeResult::WCStrTy : ArgTypeResult::CStrTy);
     case ConversionSpecifier::UnicodeStrArg:
@@ -343,7 +343,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
 bool PrintfSpecifier::fixType(QualType QT) {
   // Handle strings first (char *, wchar_t *)
   if (QT->isPointerType() && (QT->getPointeeType()->isAnyCharacterType())) {
-    CS.setKind(ConversionSpecifier::CStrArg);
+    CS.setKind(ConversionSpecifier::sArg);
 
     // Disable irrelevant flags
     HasAlternativeForm = 0;
@@ -602,7 +602,7 @@ bool PrintfSpecifier::hasValidLengthModifier() const {
     case ConversionSpecifier::GArg:
     case ConversionSpecifier::OutIntPtrArg:
     case ConversionSpecifier::cArg:
-    case ConversionSpecifier::CStrArg:
+    case ConversionSpecifier::sArg:
       return true;
     default:
       return false;
@@ -646,7 +646,7 @@ bool PrintfSpecifier::hasValidPrecision() const {
   case ConversionSpecifier::FArg:
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
-  case ConversionSpecifier::CStrArg:
+  case ConversionSpecifier::sArg:
     return true;
 
   default:

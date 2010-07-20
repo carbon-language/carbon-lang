@@ -273,7 +273,7 @@ public:
     GArg, // 'G',
     aArg, // 'a',
     AArg, // 'A',
-    CStrArg,       // 's'
+    sArg,       // 's'
     VoidPtrArg,    // 'p'
     OutIntPtrArg,  // 'n'
     PercentArg,    // '%'
