@@ -2442,6 +2442,10 @@ const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
 ///
 const SCEV *ScalarEvolution::getMinusSCEV(const SCEV *LHS,
                                           const SCEV *RHS) {
+  // Fast path: X - X --> 0.
+  if (LHS == RHS)
+    return getConstant(LHS->getType(), 0);
+
   // X - Y --> X + -Y
   return getAddExpr(LHS, getNegativeSCEV(RHS));
 }
