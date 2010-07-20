@@ -1349,7 +1349,7 @@ void SCEVExpander::restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I) {
 /// canonical induction variable of the specified type for the specified
 /// loop (inserting one if there is none).  A canonical induction variable
 /// starts at zero and steps by one on each iteration.
-Value *
+PHINode *
 SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
                                                     const Type *Ty) {
   assert(Ty->isIntegerTy() && "Can only insert integer induction variables!");
@@ -1357,7 +1357,7 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
                                    SE.getConstant(Ty, 1), L);
   BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
   BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
-  Value *V = expandCodeFor(H, 0, L->getHeader()->begin());
+  PHINode *V = cast<PHINode>(expandCodeFor(H, 0, L->getHeader()->begin()));
   if (SaveInsertBB)
     restoreInsertPoint(SaveInsertBB, SaveInsertPt);
   return V;
