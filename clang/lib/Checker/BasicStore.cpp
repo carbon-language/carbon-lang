@@ -406,10 +406,10 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
   Store St = VBFactory.GetEmptyMap().getRoot();
 
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
-    NamedDecl* ND = const_cast<NamedDecl*>(I->first);
+    const NamedDecl* ND = I->first;
 
     // Handle implicit parameters.
-    if (ImplicitParamDecl* PD = dyn_cast<ImplicitParamDecl>(ND)) {
+    if (const ImplicitParamDecl* PD = dyn_cast<ImplicitParamDecl>(ND)) {
       const Decl& CD = *InitLoc->getDecl();
       if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CD)) {
         if (MD->getSelfDecl() == PD) {
