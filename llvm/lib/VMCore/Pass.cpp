@@ -15,6 +15,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/PassRegistry.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -236,112 +237,32 @@ PassManagerType BasicBlockPass::getPotentialPassManagerType() const {
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism
 //
-namespace {
-class PassRegistrar {
-  /// Guards the contents of this class.
-  mutable sys::SmartMutex<true> Lock;
-
-  /// PassInfoMap - Keep track of the passinfo object for each registered llvm
-  /// pass.
-  typedef std::map<intptr_t, const PassInfo*> MapType;
-  MapType PassInfoMap;
-
-  typedef StringMap<const PassInfo*> StringMapType;
-  StringMapType PassInfoStringMap;
-  
-  /// AnalysisGroupInfo - Keep track of information for each analysis group.
-  struct AnalysisGroupInfo {
-    std::set<const PassInfo *> Implementations;
-  };
-  
-  /// AnalysisGroupInfoMap - Information for each analysis group.
-  std::map<const PassInfo *, AnalysisGroupInfo> AnalysisGroupInfoMap;
-
-public:
-  
-  const PassInfo *GetPassInfo(intptr_t TI) const {
-    sys::SmartScopedLock<true> Guard(Lock);
-    MapType::const_iterator I = PassInfoMap.find(TI);
-    return I != PassInfoMap.end() ? I->second : 0;
-  }
-  
-  const PassInfo *GetPassInfo(StringRef Arg) const {
-    sys::SmartScopedLock<true> Guard(Lock);
-    StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
-    return I != PassInfoStringMap.end() ? I->second : 0;
-  }
-  
-  void RegisterPass(const PassInfo &PI) {
-    sys::SmartScopedLock<true> Guard(Lock);
-    bool Inserted =
-      PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
-    assert(Inserted && "Pass registered multiple times!"); Inserted=Inserted;
-    PassInfoStringMap[PI.getPassArgument()] = &PI;
-  }
-  
-  void UnregisterPass(const PassInfo &PI) {
-    sys::SmartScopedLock<true> Guard(Lock);
-    MapType::iterator I = PassInfoMap.find(PI.getTypeInfo());
-    assert(I != PassInfoMap.end() && "Pass registered but not in map!");
-    
-    // Remove pass from the map.
-    PassInfoMap.erase(I);
-    PassInfoStringMap.erase(PI.getPassArgument());
-  }
-  
-  void EnumerateWith(PassRegistrationListener *L) {
-    sys::SmartScopedLock<true> Guard(Lock);
-    for (MapType::const_iterator I = PassInfoMap.begin(),
-         E = PassInfoMap.end(); I != E; ++I)
-      L->passEnumerate(I->second);
-  }
-  
-  
-  /// Analysis Group Mechanisms.
-  void RegisterAnalysisGroup(PassInfo *InterfaceInfo,
-                             const PassInfo *ImplementationInfo,
-                             bool isDefault) {
-    sys::SmartScopedLock<true> Guard(Lock);
-    AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
-    assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
-           "Cannot add a pass to the same analysis group more than once!");
-    AGI.Implementations.insert(ImplementationInfo);
-    if (isDefault) {
-      assert(InterfaceInfo->getNormalCtor() == 0 &&
-             "Default implementation for analysis group already specified!");
-      assert(ImplementationInfo->getNormalCtor() &&
-           "Cannot specify pass as default if it does not have a default ctor");
-      InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
-    }
-  }
-};
-}
 
 static std::vector<PassRegistrationListener*> *Listeners = 0;
 static sys::SmartMutex<true> ListenersLock;
 
-static PassRegistrar *PassRegistrarObj = 0;
-static PassRegistrar *getPassRegistrar() {
+static PassRegistry *PassRegistryObj = 0;
+static PassRegistry *getPassRegistry() {
   // Use double-checked locking to safely initialize the registrar when
   // we're running in multithreaded mode.
-  PassRegistrar* tmp = PassRegistrarObj;
+  PassRegistry* tmp = PassRegistryObj;
   if (llvm_is_multithreaded()) {
     sys::MemoryFence();
     if (!tmp) {
       llvm_acquire_global_lock();
-      tmp = PassRegistrarObj;
+      tmp = PassRegistryObj;
       if (!tmp) {
-        tmp = new PassRegistrar();
+        tmp = new PassRegistry();
         sys::MemoryFence();
-        PassRegistrarObj = tmp;
+        PassRegistryObj = tmp;
       }
       llvm_release_global_lock();
     }
   } else if (!tmp) {
-    PassRegistrarObj = new PassRegistrar();
+    PassRegistryObj = new PassRegistry();
   }
   
-  return PassRegistrarObj;
+  return PassRegistryObj;
 }
 
 namespace {
@@ -351,13 +272,13 @@ namespace {
 // llvm_shutdown clear this map prevents successful ressurection after 
 // llvm_shutdown is run.  Ideally we should find a solution so that we don't
 // leak the map, AND can still resurrect after shutdown.
-void cleanupPassRegistrar(void*) {
-  if (PassRegistrarObj) {
-    delete PassRegistrarObj;
-    PassRegistrarObj = 0;
+void cleanupPassRegistry(void*) {
+  if (PassRegistryObj) {
+    delete PassRegistryObj;
+    PassRegistryObj = 0;
   }
 }
-ManagedCleanup<&cleanupPassRegistrar> registrarCleanup ATTRIBUTE_USED;
+ManagedCleanup<&cleanupPassRegistry> registryCleanup ATTRIBUTE_USED;
 
 }
 
@@ -368,15 +289,15 @@ const PassInfo *Pass::getPassInfo() const {
 }
 
 const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
-  return getPassRegistrar()->GetPassInfo(TI);
+  return getPassRegistry()->getPassInfo(TI);
 }
 
 const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
-  return getPassRegistrar()->GetPassInfo(Arg);
+  return getPassRegistry()->getPassInfo(Arg);
 }
 
 void PassInfo::registerPass() {
-  getPassRegistrar()->RegisterPass(*this);
+  getPassRegistry()->registerPass(*this);
 
   // Notify any listeners.
   sys::SmartScopedLock<true> Lock(ListenersLock);
@@ -387,7 +308,7 @@ void PassInfo::registerPass() {
 }
 
 void PassInfo::unregisterPass() {
-  getPassRegistrar()->UnregisterPass(*this);
+  getPassRegistry()->unregisterPass(*this);
 }
 
 Pass *PassInfo::createPass() const {
@@ -428,7 +349,7 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
     PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
     IIPI->addInterfaceImplemented(InterfaceInfo);
     
-    getPassRegistrar()->RegisterAnalysisGroup(InterfaceInfo, IIPI, isDefault);
+    getPassRegistry()->registerAnalysisGroup(InterfaceInfo, IIPI, isDefault);
   }
 }
 
@@ -464,7 +385,7 @@ PassRegistrationListener::~PassRegistrationListener() {
 // passEnumerate callback on each PassInfo object.
 //
 void PassRegistrationListener::enumeratePasses() {
-  getPassRegistrar()->EnumerateWith(this);
+  getPassRegistry()->enumerateWith(this);
 }
 
 PassNameParser::~PassNameParser() {}
