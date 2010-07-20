@@ -22,6 +22,7 @@
 #define LLVM_PASS_SUPPORT_H
 
 #include "Pass.h"
+#include "llvm/PassRegistry.h"
 
 namespace llvm {
 
@@ -57,7 +58,7 @@ public:
     : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), 
       IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) {
-    registerPass();
+    PassRegistry::getPassRegistry()->registerPass(*this);
   }
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass. This version is for use by analysis groups; it
@@ -126,10 +127,6 @@ public:
     return ItfImpl;
   }
 
-protected:
-  void registerPass();
-  void unregisterPass();
-
 private:
   void operator=(const PassInfo &); // do not implement
   PassInfo(const PassInfo &);       // do not implement
@@ -165,6 +162,7 @@ struct RegisterPass : public PassInfo {
     : PassInfo(Name, PassArg, intptr_t(&passName::ID),
                PassInfo::NormalCtor_t(callDefaultCtor<passName>),
                CFGOnly, is_analysis) {
+    
   }
 };
 

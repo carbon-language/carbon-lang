@@ -234,13 +234,6 @@ PassManagerType BasicBlockPass::getPotentialPassManagerType() const {
   return PMT_BasicBlockPassManager; 
 }
 
-//===----------------------------------------------------------------------===//
-// Pass Registration mechanism
-//
-
-static std::vector<PassRegistrationListener*> *Listeners = 0;
-static sys::SmartMutex<true> ListenersLock;
-
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
 const PassInfo *Pass::getPassInfo() const {
@@ -253,21 +246,6 @@ const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
 
 const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
   return PassRegistry::getPassRegistry()->getPassInfo(Arg);
-}
-
-void PassInfo::registerPass() {
-  PassRegistry::getPassRegistry()->registerPass(*this);
-
-  // Notify any listeners.
-  sys::SmartScopedLock<true> Lock(ListenersLock);
-  if (Listeners)
-    for (std::vector<PassRegistrationListener*>::iterator
-           I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
-      (*I)->passRegistered(this);
-}
-
-void PassInfo::unregisterPass() {
-  PassRegistry::getPassRegistry()->unregisterPass(*this);
 }
 
 Pass *PassInfo::createPass() const {
@@ -292,7 +270,7 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
     const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
-    registerPass();
+    PassRegistry::getPassRegistry()->registerPass(*this);
     InterfaceInfo = this;
   }
   assert(isAnalysisGroup() &&
@@ -320,24 +298,12 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
 // PassRegistrationListener ctor - Add the current object to the list of
 // PassRegistrationListeners...
 PassRegistrationListener::PassRegistrationListener() {
-  sys::SmartScopedLock<true> Lock(ListenersLock);
-  if (!Listeners) Listeners = new std::vector<PassRegistrationListener*>();
-  Listeners->push_back(this);
+  PassRegistry::getPassRegistry()->addRegistrationListener(this);
 }
 
 // dtor - Remove object from list of listeners...
 PassRegistrationListener::~PassRegistrationListener() {
-  sys::SmartScopedLock<true> Lock(ListenersLock);
-  std::vector<PassRegistrationListener*>::iterator I =
-    std::find(Listeners->begin(), Listeners->end(), this);
-  assert(Listeners && I != Listeners->end() &&
-         "PassRegistrationListener not registered!");
-  Listeners->erase(I);
-
-  if (Listeners->empty()) {
-    delete Listeners;
-    Listeners = 0;
-  }
+  PassRegistry::getPassRegistry()->removeRegistrationListener(this);
 }
 
 // enumeratePasses - Iterate over the registered passes, calling the

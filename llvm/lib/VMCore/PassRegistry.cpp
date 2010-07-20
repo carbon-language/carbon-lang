@@ -13,8 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassRegistry.h"
+#include "llvm/PassSupport.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
+
+using namespace llvm;
 
 static PassRegistry *PassRegistryObj = 0;
 PassRegistry *PassRegistry::getPassRegistry() {
@@ -69,12 +72,21 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
   return I != PassInfoStringMap.end() ? I->second : 0;
 }
 
+//===----------------------------------------------------------------------===//
+// Pass Registration mechanism
+//
+
 void PassRegistry::registerPass(const PassInfo &PI) {
   sys::SmartScopedLock<true> Guard(Lock);
   bool Inserted =
     PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
   assert(Inserted && "Pass registered multiple times!"); Inserted=Inserted;
   PassInfoStringMap[PI.getPassArgument()] = &PI;
+  
+  // Notify any listeners.
+  for (std::vector<PassRegistrationListener*>::iterator
+       I = Listeners.begin(), E = Listeners.end(); I != E; ++I)
+    (*I)->passRegistered(&PI);
 }
 
 void PassRegistry::unregisterPass(const PassInfo &PI) {
@@ -111,4 +123,17 @@ void PassRegistry::registerAnalysisGroup(PassInfo *InterfaceInfo,
          "Cannot specify pass as default if it does not have a default ctor");
     InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
   }
+}
+
+void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
+  sys::SmartScopedLock<true> Guard(Lock);
+  Listeners.push_back(L);
+}
+
+void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
+  sys::SmartScopedLock<true> Guard(Lock);
+  std::vector<PassRegistrationListener*>::iterator I =
+    std::find(Listeners.begin(), Listeners.end(), L);
+  assert(I != Listeners.end() && "PassRegistrationListener not registered!");
+  Listeners.erase(I);
 }

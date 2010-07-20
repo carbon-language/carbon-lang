@@ -17,16 +17,17 @@
 #ifndef LLVM_PASSREGISTRY_H
 #define LLVM_PASSREGISTRY_H
 
-#include "llvm/PassSupport.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/DataTypes.h"
 #include "llvm/System/Mutex.h"
 #include <map>
 #include <set>
-
-using namespace llvm;
+#include <vector>
 
 namespace llvm {
+
+class PassInfo;
+struct PassRegistrationListener;
 
 class PassRegistry {
   /// Guards the contents of this class.
@@ -44,6 +45,8 @@ class PassRegistry {
     std::set<const PassInfo *> Implementations;
   };
   std::map<const PassInfo*, AnalysisGroupInfo> AnalysisGroupInfoMap;
+  
+  std::vector<PassRegistrationListener*> Listeners;
 
 public:
   static PassRegistry *getPassRegistry();
@@ -60,6 +63,8 @@ public:
                              bool isDefault);
   
   void enumerateWith(PassRegistrationListener *L);
+  void addRegistrationListener(PassRegistrationListener* L);
+  void removeRegistrationListener(PassRegistrationListener *L);
 };
 
 }
