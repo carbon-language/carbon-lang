@@ -28,14 +28,12 @@
 #include "llvm/Type.h"
 using namespace llvm;
 
-
-const X86Subtarget &X86MCInstLower::getSubtarget() const {
-  return AsmPrinter.getSubtarget();
-}
+X86MCInstLower::X86MCInstLower(MCContext &ctx, Mangler *mang,
+                               X86AsmPrinter &asmprinter)
+: Ctx(ctx), Mang(mang), AsmPrinter(asmprinter), MMI(AsmPrinter.MMI) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
-  assert(getSubtarget().isTargetDarwin() &&"Can only get MachO info on darwin");
-  return AsmPrinter.MMI->getObjFileInfo<MachineModuleInfoMachO>(); 
+  return MMI->getObjFileInfo<MachineModuleInfoMachO>(); 
 }
 
 
@@ -90,7 +88,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(AsmPrinter.Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(Mang->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -104,7 +102,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(AsmPrinter.Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(Mang->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
@@ -120,7 +118,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     if (MO.isGlobal()) {
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(AsmPrinter.Mang->getSymbol(MO.getGlobal()),
+        StubValueTy(Mang->getSymbol(MO.getGlobal()),
                     !MO.getGlobal()->hasInternalLinkage());
     } else {
       Name.erase(Name.end()-5, Name.end());
