@@ -82,8 +82,7 @@ public:
 
 static const ObjCMethodDecl*
 ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
-  ObjCInterfaceDecl *ID =
-    const_cast<ObjCInterfaceDecl*>(MD->getClassInterface());
+  const ObjCInterfaceDecl *ID = MD->getClassInterface();
 
   return MD->isInstanceMethod()
          ? ID->lookupInstanceMethod(MD->getSelector())
