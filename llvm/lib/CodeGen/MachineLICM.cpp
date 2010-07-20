@@ -489,8 +489,12 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
   }
 
   const std::vector<MachineDomTreeNode*> &Children = N->getChildren();
-  for (unsigned I = 0, E = Children.size(); I != E; ++I)
-    HoistRegion(Children[I]);
+  // Don't hoist things out of a large switch statement.  This often causes
+  // code to be hoisted that wasn't going to be executed, and increases
+  // register pressure in a situation where it's likely to matter.
+  if (Children.size() < 10)
+    for (unsigned I = 0, E = Children.size(); I != E; ++I)
+      HoistRegion(Children[I]);
 }
 
 /// IsLICMCandidate - Returns true if the instruction may be a suitable
