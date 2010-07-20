@@ -432,7 +432,7 @@ public:
 
   /// setCalleeSavedInfo - Used by prolog/epilog inserter to set the function's
   /// callee saved information.
-  void  setCalleeSavedInfo(const std::vector<CalleeSavedInfo> &CSI) {
+  void setCalleeSavedInfo(const std::vector<CalleeSavedInfo> &CSI) {
     CSInfo = CSI;
   }
 
@@ -453,7 +453,7 @@ public:
   BitVector getPristineRegs(const MachineBasicBlock *MBB) const;
 
   /// print - Used by the MachineFunction printer to print information about
-  /// stack objects.  Implemented in MachineFunction.cpp
+  /// stack objects. Implemented in MachineFunction.cpp
   ///
   void print(const MachineFunction &MF, raw_ostream &OS) const;
 
