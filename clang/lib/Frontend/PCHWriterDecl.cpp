@@ -929,8 +929,11 @@ void PCHDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     Record.push_back(D->getSpecializations().size());
     for (llvm::FoldingSet<FunctionTemplateSpecializationInfo>::iterator
            I = D->getSpecializations().begin(),
-           E = D->getSpecializations().end()   ; I != E; ++I)
+           E = D->getSpecializations().end()   ; I != E; ++I) {
+      assert(I->Function->isCanonicalDecl() &&
+             "Expected only canonical decls in set");
       Writer.AddDeclRef(I->Function, Record);
+    }
 
     Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
     if (D->getInstantiatedFromMemberTemplate())

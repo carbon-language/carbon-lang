@@ -522,6 +522,20 @@ protected:
   /// may implicitly allocate memory for the common pointer.
   Common *getCommonPtr();
 
+  /// \brief Retrieve the set of function template specializations of this
+  /// function template.
+  llvm::FoldingSet<FunctionTemplateSpecializationInfo> &getSpecializations() {
+    return getCommonPtr()->Specializations;
+  }
+  
+  friend void FunctionDecl::setFunctionTemplateSpecialization(
+                                       FunctionTemplateDecl *Template,
+                                       const TemplateArgumentList *TemplateArgs,
+                                       void *InsertPos,
+                                       TemplateSpecializationKind TSK,
+                          const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                                       SourceLocation PointOfInstantiation);
+
   FunctionTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
                        TemplateParameterList *Params, NamedDecl *Decl)
     : TemplateDecl(FunctionTemplate, DC, L, Name, Params, Decl),
@@ -535,11 +549,10 @@ public:
     return static_cast<FunctionDecl*>(TemplatedDecl);
   }
 
-  /// \brief Retrieve the set of function template specializations of this
-  /// function template.
-  llvm::FoldingSet<FunctionTemplateSpecializationInfo> &getSpecializations() {
-    return getCommonPtr()->Specializations;
-  }
+  /// \brief Return the specialization with the provided arguments if it exists,
+  /// otherwise return the insertion point.
+  FunctionDecl *findSpecialization(const TemplateArgument *Args,
+                                   unsigned NumArgs, void *&InsertPos);
 
   /// \brief Retrieve the previous declaration of this function template, or
   /// NULL if no such declaration exists.

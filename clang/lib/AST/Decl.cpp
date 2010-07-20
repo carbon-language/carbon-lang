@@ -1400,14 +1400,15 @@ FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
   if (InsertPos)
     Template->getSpecializations().InsertNode(Info, InsertPos);
   else {
-    // Try to insert the new node. If there is an existing node, remove it 
-    // first.
+    // Try to insert the new node. If there is an existing node, leave it, the
+    // set will contain the canonical decls while
+    // FunctionTemplateDecl::findSpecialization will return
+    // the most recent redeclarations.
     FunctionTemplateSpecializationInfo *Existing
       = Template->getSpecializations().GetOrInsertNode(Info);
-    if (Existing) {
-      Template->getSpecializations().RemoveNode(Existing);
-      Template->getSpecializations().GetOrInsertNode(Info);
-    }
+    (void)Existing;
+    assert((!Existing || Existing->Function->isCanonicalDecl()) &&
+           "Set is supposed to only contain canonical decls");
   }
 }
 

@@ -119,6 +119,16 @@ void FunctionTemplateDecl::Destroy(ASTContext &C) {
   Decl::Destroy(C);
 }
 
+FunctionDecl *
+FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
+                                         unsigned NumArgs, void *&InsertPos) {
+  llvm::FoldingSetNodeID ID;
+  FunctionTemplateSpecializationInfo::Profile(ID,Args,NumArgs, getASTContext());
+  FunctionTemplateSpecializationInfo *Info
+      = getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+  return Info ? Info->Function->getMostRecentDeclaration() : 0;
+}
+
 FunctionTemplateDecl *FunctionTemplateDecl::getCanonicalDecl() {
   FunctionTemplateDecl *FunTmpl = this;
   while (FunTmpl->getPreviousDeclaration())

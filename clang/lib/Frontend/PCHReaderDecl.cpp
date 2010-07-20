@@ -254,11 +254,12 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
 
-    FD->setFunctionTemplateSpecialization(Template, TemplArgs.size(),
-                                          TemplArgs.data(), TSK,
-                                          TemplArgLocs.size(),
-                                          TemplArgLocs.data(),
-                                          LAngleLoc, RAngleLoc, POI);
+    if (FD->isCanonicalDecl()) // if canonical add to template's set.
+      FD->setFunctionTemplateSpecialization(Template, TemplArgs.size(),
+                                            TemplArgs.data(), TSK,
+                                            TemplArgLocs.size(),
+                                            TemplArgLocs.data(),
+                                            LAngleLoc, RAngleLoc, POI);
     break;
   }
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {

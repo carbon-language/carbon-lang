@@ -968,20 +968,16 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
   void *InsertPos = 0;
   if (FunctionTemplate && !TemplateParams) {
-    llvm::FoldingSetNodeID ID;
     std::pair<const TemplateArgument *, unsigned> Innermost 
       = TemplateArgs.getInnermost();
-    FunctionTemplateSpecializationInfo::Profile(ID, Innermost.first,
-                                                Innermost.second,
-                                                SemaRef.Context);
 
-    FunctionTemplateSpecializationInfo *Info
-      = FunctionTemplate->getSpecializations().FindNodeOrInsertPos(ID,
-                                                                   InsertPos);
+    FunctionDecl *SpecFunc
+      = FunctionTemplate->findSpecialization(Innermost.first, Innermost.second,
+                                             InsertPos);
 
     // If we already have a function template specialization, return it.
-    if (Info)
-      return Info->Function;
+    if (SpecFunc)
+      return SpecFunc;
   }
 
   bool isFriend;
@@ -1222,20 +1218,16 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     // We are creating a function template specialization from a function
     // template. Check whether there is already a function template
     // specialization for this particular set of template arguments.
-    llvm::FoldingSetNodeID ID;
     std::pair<const TemplateArgument *, unsigned> Innermost 
       = TemplateArgs.getInnermost();
-    FunctionTemplateSpecializationInfo::Profile(ID, Innermost.first,
-                                                Innermost.second,
-                                                SemaRef.Context);
 
-    FunctionTemplateSpecializationInfo *Info
-      = FunctionTemplate->getSpecializations().FindNodeOrInsertPos(ID,
-                                                                   InsertPos);
+    FunctionDecl *SpecFunc
+      = FunctionTemplate->findSpecialization(Innermost.first, Innermost.second,
+                                             InsertPos);
 
     // If we already have a function template specialization, return it.
-    if (Info)
-      return Info->Function;
+    if (SpecFunc)
+      return SpecFunc;
   }
 
   bool isFriend;
