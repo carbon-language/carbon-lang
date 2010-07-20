@@ -100,7 +100,7 @@ RegularExpression::Execute(const char* s, size_t num_matches, int execute_flags)
         match_result = ::regexec (&m_preg,
                                   s,
                                   m_matches.size(),
-                                  const_cast<regmatch_t *>(m_matches.data()),
+                                  &m_matches.front(),
                                   execute_flags);
     }
     return match_result == 0;

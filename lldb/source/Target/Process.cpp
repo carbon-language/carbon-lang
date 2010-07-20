@@ -989,7 +989,12 @@ Process::Launch
                 exec_path_plus_argv.push_back(NULL);
 
                 // Now launch using these arguments.
-                error = DoLaunch (exe_module, exec_path_plus_argv.data(), envp, stdin_path, stdout_path, stderr_path);
+                error = DoLaunch (exe_module, 
+                                  exec_path_plus_argv.empty() ? NULL : &exec_path_plus_argv.front(), 
+                                  envp, 
+                                  stdin_path, 
+                                  stdout_path, 
+                                  stderr_path);
 
                 if (error.Fail())
                 {

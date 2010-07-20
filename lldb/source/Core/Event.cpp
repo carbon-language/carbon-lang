@@ -169,10 +169,10 @@ EventDataBytes::Dump (Stream *s) const
     {
         s->Printf("\"%s\"", m_bytes.c_str());
     }
-    else
+    else if (m_bytes.size() > 0)
     {
         DataExtractor data;
-        data.SetData(m_bytes.data(), m_bytes.size(), eByteOrderHost);
+        data.SetData(&m_bytes[0], m_bytes.size(), eByteOrderHost);
         data.Dump(s, 0, eFormatBytes, 1, m_bytes.size(), 32, LLDB_INVALID_ADDRESS, 0, 0);
     }
 }
@@ -182,7 +182,7 @@ EventDataBytes::GetBytes() const
 {
     if (m_bytes.empty())
         return NULL;
-    return m_bytes.data();
+    return &m_bytes[0];
 }
 
 size_t

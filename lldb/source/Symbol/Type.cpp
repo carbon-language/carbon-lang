@@ -399,14 +399,14 @@ lldb_private::Type::DumpSummary
             else
                 buf.resize (256);
 
-            lldb_private::DataExtractor cstr_data(buf.data(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
+            lldb_private::DataExtractor cstr_data(&buf.front(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
             buf.back() = '\0';
             size_t bytes_read;
             size_t total_cstr_len = 0;
             Error error;
-            while ((bytes_read = exe_ctx->process->ReadMemory (pointer_addresss, buf.data(), buf.size(), error)) > 0)
+            while ((bytes_read = exe_ctx->process->ReadMemory (pointer_addresss, &buf.front(), buf.size(), error)) > 0)
             {
-                const size_t len = strlen((const char *)buf.data());
+                const size_t len = strlen((const char *)&buf.front());
                 if (len == 0)
                     break;
                 if (total_cstr_len == 0)

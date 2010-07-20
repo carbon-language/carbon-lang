@@ -248,7 +248,7 @@ Communication::GetCachedBytes (void *dst, size_t dst_len)
 
         const size_t len = std::min<size_t>(dst_len, m_bytes.size());
 
-        ::memcpy (dst, m_bytes.data(), len);
+        ::memcpy (dst, m_bytes.c_str(), len);
         m_bytes.erase(m_bytes.begin(), m_bytes.begin() + len);
 
         return len;

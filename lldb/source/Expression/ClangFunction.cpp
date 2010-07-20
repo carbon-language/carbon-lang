@@ -358,8 +358,8 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exc_context, lldb::addr
         buffer.resize(byte_size);
         DataExtractor value_data;
         arg_scalar.GetData (value_data);
-        value_data.ExtractBytes(0, byte_size, process->GetByteOrder(), buffer.data());
-        process->WriteMemory(args_addr_ref + offset, buffer.data(), byte_size, error);
+        value_data.ExtractBytes(0, byte_size, process->GetByteOrder(), &buffer.front());
+        process->WriteMemory(args_addr_ref + offset, &buffer.front(), byte_size, error);
     }
 
     return true;
@@ -417,7 +417,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exc_context, lldb::addr_t
     data_buffer.resize(m_return_size);
     Process *process = exc_context.process;
     Error error;
-    size_t bytes_read = process->ReadMemory(args_addr + m_return_offset/8, data_buffer.data(), m_return_size, error);
+    size_t bytes_read = process->ReadMemory(args_addr + m_return_offset/8, &data_buffer.front(), m_return_size, error);
 
     if (bytes_read == 0)
     {
@@ -427,7 +427,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exc_context, lldb::addr_t
     if (bytes_read < m_return_size)
         return false;
 
-    DataExtractor data(data_buffer.data(), m_return_size, process->GetByteOrder(), process->GetAddressByteSize());
+    DataExtractor data(&data_buffer.front(), m_return_size, process->GetByteOrder(), process->GetAddressByteSize());
     // FIXME: Assuming an integer scalar for now:
     
     uint32_t offset = 0;

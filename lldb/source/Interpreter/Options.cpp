@@ -285,7 +285,10 @@ Options::GetLongOptions ()
         m_getopt_table[j].val     = 0;
     }
 
-    return m_getopt_table.data();
+    if (m_getopt_table.empty())
+        return NULL;
+
+    return &m_getopt_table.front();
 }
 
 

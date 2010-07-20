@@ -1008,7 +1008,7 @@ Args::ParseArgsForCompletion
         int long_options_index = -1;
         
         val = ::getopt_long (dummy_vec.size() - 1,
-                             (char *const *) dummy_vec.data(), 
+                             (char *const *) &dummy_vec.front(), 
                              sstr.GetData(), 
                              long_options,
                              &long_options_index);

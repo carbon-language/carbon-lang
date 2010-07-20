@@ -167,7 +167,7 @@ ReadAddress (ExecutionContextScope *exe_scope, const Address &address, uint32_t 
 static bool
 DumpUInt (ExecutionContextScope *exe_scope, const Address &address, uint32_t byte_size, Stream* strm)
 {
-    if (exe_scope == NULL)
+    if (exe_scope == NULL || byte_size == 0)
         return 0;
     std::vector<uint8_t> buf(byte_size, 0);
 
@@ -177,7 +177,7 @@ DumpUInt (ExecutionContextScope *exe_scope, const Address &address, uint32_t byt
         uint32_t addr_size = 0;
         if (GetByteOrderAndAddressSize (exe_scope, address, byte_order, addr_size))
         {
-            DataExtractor data (buf.data(), buf.size(), byte_order, addr_size);
+            DataExtractor data (&buf.front(), buf.size(), byte_order, addr_size);
 
             data.Dump (strm,
                        0,                 // Start offset in "data"

@@ -267,7 +267,7 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                         m_async_response.Clear();
                         if (!m_async_packet.empty())
                         {
-                            SendPacketAndWaitForResponse (m_async_packet.data(), 
+                            SendPacketAndWaitForResponse (&m_async_packet[0], 
                                                           m_async_packet.size(),
                                                           m_async_response,
                                                           m_async_timeout,
@@ -483,7 +483,7 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response,
                         if (m_send_acks)
                         {
                             char packet_checksum = strtol (&packet_data[packet_size-2], NULL, 16);
-                            char actual_checksum = CalculcateChecksum (response_str.data(), response_str.size());
+                            char actual_checksum = CalculcateChecksum (&response_str[0], response_str.size());
                             checksum_error = packet_checksum != actual_checksum;
                             // Send the ack or nack if needed
                             if (checksum_error)

@@ -1028,7 +1028,7 @@ public:
                     index_ptr++;
                 }
 
-                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, address_list.data(), address_list.size(), m_options.m_stop_others);
+                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, &address_list.front(), address_list.size(), m_options.m_stop_others);
                 new_plan->SetOkayToDiscard(false);
             }
             else

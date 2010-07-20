@@ -1944,7 +1944,7 @@ ClangASTContext::CreateFunctionType (void *result_type, void **args, unsigned nu
 
     // TODO: Detect calling convention in DWARF?
     return ast_context->getFunctionType(QualType::getFromOpaquePtr(result_type),
-                                        qual_type_args.data(),
+                                        qual_type_args.empty() ? NULL : &qual_type_args.front(),
                                         qual_type_args.size(),
                                         isVariadic,
                                         TypeQuals,

@@ -86,7 +86,7 @@ ObjCObjectPrinter::PrintObject (ConstString &str, Value &object_ptr, ExecutionCo
     
     if (!desc.empty())
     {
-        str.SetCString(desc.data());
+        str.SetCString(&desc.front());
         return true;
     }
     return false;

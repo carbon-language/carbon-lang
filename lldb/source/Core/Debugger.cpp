@@ -337,7 +337,7 @@ Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
         if (!reader_sp)
             break;
 
-        size_t bytes_handled = reader_sp->HandleRawBytes (m_input_reader_data.data(), 
+        size_t bytes_handled = reader_sp->HandleRawBytes (m_input_reader_data.c_str(), 
                                                           m_input_reader_data.size());
         if (bytes_handled)
         {

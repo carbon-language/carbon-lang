@@ -379,7 +379,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
             return false;
             
         response.GetStringRef().insert(0, 1, 'G');
-        data_sp.reset (new DataBufferHeap(response.GetStringRef().data(), 
+        data_sp.reset (new DataBufferHeap(response.GetStringRef().c_str(), 
                                           response.GetStringRef().size()));
         return true;
     }

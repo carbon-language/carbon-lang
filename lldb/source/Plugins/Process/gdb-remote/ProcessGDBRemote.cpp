@@ -1313,13 +1313,13 @@ ProcessGDBRemote::GetSTDOUT (char *buf, size_t buf_size, Error &error)
         ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::%s (&%p[%u]) ...", __FUNCTION__, buf, buf_size);
         if (bytes_available > buf_size)
         {
-            memcpy(buf, m_stdout_data.data(), buf_size);
+            memcpy(buf, m_stdout_data.c_str(), buf_size);
             m_stdout_data.erase(0, buf_size);
             bytes_available = buf_size;
         }
         else
         {
-            memcpy(buf, m_stdout_data.data(), bytes_available);
+            memcpy(buf, m_stdout_data.c_str(), bytes_available);
             m_stdout_data.clear();
 
             //ResetEventBits(eBroadcastBitSTDOUT);

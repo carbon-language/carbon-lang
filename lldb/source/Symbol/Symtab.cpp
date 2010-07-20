@@ -503,8 +503,11 @@ Symtab::InitAddressIndexes()
 size_t
 Symtab::CalculateSymbolSize (Symbol *symbol)
 {
+    if (m_symbols.empty())
+        return 0;
+
     // Make sure this symbol is from this symbol table...
-    if (symbol < m_symbols.data() || symbol >= m_symbols.data() + m_symbols.size())
+    if (symbol < &m_symbols.front() || symbol > &m_symbols.back())
         return 0;
 
     // See if this symbol already has a byte size?
@@ -523,7 +526,7 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
         if (m_addr_indexes.empty())
             InitAddressIndexes();
         const size_t num_addr_indexes = m_addr_indexes.size();
-        SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress(this, symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress(), m_addr_indexes.data(), num_addr_indexes);
+        SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress(this, symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress(), &m_addr_indexes.front(), num_addr_indexes);
         if (info.match_index_ptr != NULL)
         {
             const lldb::addr_t curr_file_addr = symbol->GetAddressRangePtr()->GetBaseAddress().GetFileAddress();
@@ -531,7 +534,7 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
             // last one by taking the delta between the current symbol and
             // the next symbol
 
-            for (uint32_t addr_index = info.match_index_ptr - m_addr_indexes.data() + 1;
+            for (uint32_t addr_index = info.match_index_ptr - &m_addr_indexes.front() + 1;
                  addr_index < num_addr_indexes;
                  ++addr_index)
             {

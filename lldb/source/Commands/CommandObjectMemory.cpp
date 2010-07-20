@@ -647,7 +647,7 @@ public:
         if (!buffer.GetString().empty())
         {
             Error error;
-            if (process->WriteMemory (addr, buffer.GetString().data(), buffer.GetString().size(), error) == buffer.GetString().size())
+            if (process->WriteMemory (addr, buffer.GetString().c_str(), buffer.GetString().size(), error) == buffer.GetString().size())
                 return true;
             else
             {

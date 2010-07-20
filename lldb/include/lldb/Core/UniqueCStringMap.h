@@ -157,13 +157,16 @@ public:
     const Entry *
     FindNextValueForName (const char *unique_cstr, const Entry *entry_ptr) const
     {
-        const Entry *first_entry = m_map.data();
-        const Entry *after_last_entry = first_entry + m_map.size();
-        const Entry *next_entry = entry_ptr + 1;
-        if (first_entry <= next_entry && next_entry < after_last_entry)
+        if (!m_map.empty())
         {
-            if (next_entry->cstring == unique_cstr)
-                return next_entry;
+            const Entry *first_entry = &m_map[0];
+            const Entry *after_last_entry = first_entry + m_map.size();
+            const Entry *next_entry = entry_ptr + 1;
+            if (first_entry <= next_entry && next_entry < after_last_entry)
+            {
+                if (next_entry->cstring == unique_cstr)
+                    return next_entry;
+            }
         }
         return NULL;
     }

@@ -2878,17 +2878,18 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         {
                             // This is a class and all members that didn't have
                             // their access specified are private.
-                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, clang::AS_private, member_accessibilities.data(), member_accessibilities.size());
+                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, clang::AS_private, &member_accessibilities.front(), member_accessibilities.size());
                         }
 
                         if (!base_classes.empty())
                         {
-                            type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, base_classes.data(), base_classes.size());
+                            type_list->GetClangASTContext().SetBaseClassesForClassType (clang_type, &base_classes.front(), base_classes.size());
+
+                            // Clang will copy each CXXBaseSpecifier in "base_classes"
+                            // so we have to free them all.
+                            ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), base_classes.size());
                         }
                         
-                        // Clang will copy each CXXBaseSpecifier in "base_classes"
-                        // so we have to free them all.
-                        ClangASTContext::DeleteBaseClassSpecifiers (base_classes.data(), base_classes.size());
                     }
                     type_list->GetClangASTContext().CompleteTagDeclarationDefinition (clang_type);
                 }
@@ -3069,7 +3070,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                             assert (function_decl);
                             m_die_to_decl_ctx[die] = function_decl;
                             if (!function_param_decls.empty())
-                                type_list->GetClangASTContext().SetFunctionParameters (function_decl, function_param_decls.data(), function_param_decls.size());
+                                type_list->GetClangASTContext().SetFunctionParameters (function_decl, &function_param_decls.front(), function_param_decls.size());
                         }
                         type_sp.reset( new Type(die->GetOffset(), this, type_name_dbstr, 0, NULL, LLDB_INVALID_UID, Type::eIsTypeWithUID, &decl, clang_type));
 

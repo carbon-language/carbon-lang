@@ -395,8 +395,8 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                             // Resize the formatted buffer in case every character
                             // uses the "\xXX" format and one extra byte for a NULL
                             cstr_buffer.resize(data_buffer.size() * 4 + 1);
-                            data.SetData (data_buffer.data(), data_buffer.size(), eByteOrderHost);
-                            bytes_read = process->ReadMemory (cstr_address, data_buffer.data(), fixed_length, error);
+                            data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
+                            bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), fixed_length, error);
                             if (bytes_read > 0)
                             {
                                 sstr << '"';
@@ -423,11 +423,11 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                             // "\xXX" format and one extra byte for a NULL
                             cstr_buffer.resize (k_max_buf_size * 4 + 1);
 
-                            data.SetData (data_buffer.data(), data_buffer.size(), eByteOrderHost);
+                            data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
                             size_t total_cstr_len = 0;
-                            while ((bytes_read = process->ReadMemory (cstr_address, data_buffer.data(), k_max_buf_size, error)) > 0)
+                            while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
                             {
-                                size_t len = strlen(data_buffer.data());
+                                size_t len = strlen(&data_buffer.front());
                                 if (len == 0)
                                     break;
                                 if (len > bytes_read)

@@ -112,8 +112,8 @@ ValueObjectChild::GetTypeName()
                 if (clang_type_name)
                 {
                     std::vector<char> bitfield_type_name (strlen(clang_type_name) + 32, 0);
-                    ::snprintf (bitfield_type_name.data(), bitfield_type_name.size(), "%s:%u", clang_type_name, m_bitfield_bit_size);
-                    m_type_name.SetCString(bitfield_type_name.data());
+                    ::snprintf (&bitfield_type_name.front(), bitfield_type_name.size(), "%s:%u", clang_type_name, m_bitfield_bit_size);
+                    m_type_name.SetCString(&bitfield_type_name.front());
                 }
             }
         }
