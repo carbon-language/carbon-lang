@@ -695,7 +695,7 @@ class RetainSummaryManager {
   //  Typedefs.
   //==-----------------------------------------------------------------==//
 
-  typedef llvm::DenseMap<FunctionDecl*, RetainSummary*>
+  typedef llvm::DenseMap<const FunctionDecl*, RetainSummary*>
           FuncSummariesTy;
 
   typedef ObjCSummaryCache ObjCMethodSummariesTy;
@@ -765,9 +765,10 @@ public:
 
   RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
 
-  RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
-  RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);
-  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, StringRef FName);
+  RetainSummary* getCFSummaryCreateRule(const FunctionDecl* FD);
+  RetainSummary* getCFSummaryGetRule(const FunctionDecl* FD);
+  RetainSummary* getCFCreateGetRuleSummary(const FunctionDecl* FD, 
+                                           StringRef FName);
 
   RetainSummary* getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
@@ -891,7 +892,7 @@ public:
 
   ~RetainSummaryManager();
 
-  RetainSummary* getSummary(FunctionDecl* FD);
+  RetainSummary* getSummary(const FunctionDecl* FD);
 
   RetainSummary *getInstanceMethodSummary(const ObjCMessageExpr *ME,
                                           const GRState *state,
@@ -998,15 +999,15 @@ RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
 // Summary creation for functions (largely uses of Core Foundation).
 //===----------------------------------------------------------------------===//
 
-static bool isRetain(FunctionDecl* FD, StringRef FName) {
+static bool isRetain(const FunctionDecl* FD, StringRef FName) {
   return FName.endswith("Retain");
 }
 
-static bool isRelease(FunctionDecl* FD, StringRef FName) {
+static bool isRelease(const FunctionDecl* FD, StringRef FName) {
   return FName.endswith("Release");
 }
 
-RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
+RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl* FD) {
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
   if (I != FuncSummaries.end())
@@ -1200,7 +1201,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 }
 
 RetainSummary*
-RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
+RetainSummaryManager::getCFCreateGetRuleSummary(const FunctionDecl* FD,
                                                 StringRef FName) {
 
   if (FName.find("Create") != StringRef::npos ||
@@ -1249,7 +1250,8 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
   }
 }
 
-RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
+RetainSummary* 
+RetainSummaryManager::getCFSummaryCreateRule(const FunctionDecl* FD) {
   assert (ScratchArgs.isEmpty());
 
   if (FD->getIdentifier() == CFDictionaryCreateII) {
@@ -1260,7 +1262,8 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
   return getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 }
 
-RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
+RetainSummary* 
+RetainSummaryManager::getCFSummaryGetRule(const FunctionDecl* FD) {
   assert (ScratchArgs.isEmpty());
   return getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::CF),
                               DoNothing, DoNothing);
@@ -2873,7 +2876,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
   else {
     const FunctionDecl* FD = L.getAsFunctionDecl();
     Summ = !FD ? Summaries.getDefaultSummary() :
-                 Summaries.getSummary(const_cast<FunctionDecl*>(FD));
+                 Summaries.getSummary(FD);
   }
 
   assert(Summ);
