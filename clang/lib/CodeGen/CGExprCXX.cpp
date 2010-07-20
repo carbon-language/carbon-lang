@@ -440,16 +440,6 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
     CGF.Builder.CreateMul(NumElements, 
                           llvm::ConstantInt::get(SizeTy, 
                                                  TypeSize.getQuantity()));
-  
-  while (const ArrayType *AType = Context.getAsArrayType(Type)) {
-    const llvm::ArrayType *llvmAType =
-      cast<llvm::ArrayType>(CGF.ConvertType(Type));
-    NumElements =
-      CGF.Builder.CreateMul(NumElements, 
-                            llvm::ConstantInt::get(
-                                          SizeTy, llvmAType->getNumElements()));
-    Type = AType->getElementType();
-  }
 
   // And add the cookie padding if necessary.
   if (!CookiePadding.isZero())
