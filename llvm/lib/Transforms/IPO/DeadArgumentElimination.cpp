@@ -250,8 +250,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
-    if (MDNode *N = Call->getDbgMetadata())
-      New->setDbgMetadata(N);
+    New->setDebugLoc(Call->getDebugLoc());
 
     Args.clear();
 
@@ -780,8 +779,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
-    if (MDNode *N = Call->getDbgMetadata())
-      New->setDbgMetadata(N);
+    New->setDebugLoc(Call->getDebugLoc());
 
     Args.clear();
 
