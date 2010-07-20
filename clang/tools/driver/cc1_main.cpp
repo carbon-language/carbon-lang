@@ -102,6 +102,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   }
 
   case PrintDeclContext:       return new DeclContextPrintAction();
+  case PrintPreamble:          return new PrintPreambleAction();
   case PrintPreprocessedInput: return new PrintPreprocessedAction();
   case RewriteMacros:          return new RewriteMacrosAction();
   case RewriteObjC:            return new RewriteObjCAction();

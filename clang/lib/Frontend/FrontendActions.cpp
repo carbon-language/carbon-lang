@@ -19,6 +19,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -191,4 +192,33 @@ void PrintPreprocessedAction::ExecuteAction() {
 
   DoPrintPreprocessedInput(CI.getPreprocessor(), OS,
                            CI.getPreprocessorOutputOpts());
+}
+
+void PrintPreambleAction::ExecuteAction() {
+  switch (getCurrentFileKind()) {
+  case IK_C:
+  case IK_CXX:
+  case IK_ObjC:
+  case IK_ObjCXX:
+  case IK_OpenCL:
+    break;
+      
+  case IK_None:
+  case IK_Asm:
+  case IK_PreprocessedC:
+  case IK_PreprocessedCXX:
+  case IK_PreprocessedObjC:
+  case IK_PreprocessedObjCXX:
+  case IK_AST:
+  case IK_LLVM_IR:
+    // We can't do anything with these.
+    return;
+  }
+  
+  llvm::MemoryBuffer *Buffer = llvm::MemoryBuffer::getFile(getCurrentFile());
+  if (Buffer) {
+    unsigned Preamble = Lexer::ComputePreamble(Buffer);
+    llvm::outs().write(Buffer->getBufferStart(), Preamble);
+    delete Buffer;
+  }
 }

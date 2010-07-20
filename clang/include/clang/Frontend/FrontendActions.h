@@ -134,6 +134,16 @@ public:
   virtual bool hasCodeCompletionSupport() const;
 };
 
+class PrintPreambleAction : public FrontendAction {
+protected:
+  void ExecuteAction();
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &, llvm::StringRef) { 
+    return 0; 
+  }
+  
+  virtual bool usesPreprocessorOnly() const { return true; }
+};
+  
 //===----------------------------------------------------------------------===//
 // Preprocessor Actions
 //===----------------------------------------------------------------------===//
@@ -174,7 +184,7 @@ protected:
 
   virtual bool hasPCHSupport() const { return true; }
 };
-
+  
 }  // end namespace clang
 
 #endif

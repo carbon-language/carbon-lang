@@ -304,6 +304,9 @@ def fixit_EQ : Joined<"-fixit=">,
   HelpText<"Apply fix-it advice creating a file with the given suffix">;
 def parse_print_callbacks : Flag<"-parse-print-callbacks">,
   HelpText<"Run parser and print each callback invoked">;
+def print_preamble : Flag<"-print-preamble">,
+  HelpText<"Print the \"preamble\" of a file, which is a candidate for implicit"
+           " precompiled headers.">;
 def emit_html : Flag<"-emit-html">,
   HelpText<"Output input source as HTML">;
 def ast_print : Flag<"-ast-print">,

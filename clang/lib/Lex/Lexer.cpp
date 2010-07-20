@@ -28,6 +28,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
@@ -245,6 +246,130 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   Token TheTok;
   TheLexer.LexFromRawLexer(TheTok);
   return TheTok.getLength();
+}
+
+namespace {
+  enum PreambleDirectiveKind {
+    PDK_Skipped,
+    PDK_StartIf,
+    PDK_EndIf,
+    PDK_Unknown
+  };
+}
+
+unsigned Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer) {
+  // Create a lexer starting at the beginning of the file. Note that we use a
+  // "fake" file source location at offset 1 so that the lexer will track our
+  // position within the file.
+  const unsigned StartOffset = 1;
+  SourceLocation StartLoc = SourceLocation::getFromRawEncoding(StartOffset);
+  LangOptions LangOpts;
+  Lexer TheLexer(StartLoc, LangOpts, Buffer->getBufferStart(), 
+                 Buffer->getBufferStart(), Buffer->getBufferEnd());
+  
+  bool InPreprocessorDirective = false;
+  Token TheTok;
+  Token IfStartTok;
+  unsigned IfCount = 0;
+  do {
+    TheLexer.LexFromRawLexer(TheTok);
+
+    if (InPreprocessorDirective) {
+      // If we've hit the end of the file, we're done.
+      if (TheTok.getKind() == tok::eof) {
+        InPreprocessorDirective = false;
+        break;
+      }
+      
+      // If we haven't hit the end of the preprocessor directive, skip this
+      // token.
+      if (!TheTok.isAtStartOfLine())
+        continue;
+        
+      // We've passed the end of the preprocessor directive, and will look
+      // at this token again below.
+      InPreprocessorDirective = false;
+    }
+    
+    // Comments are okay; skip over them.
+    if (TheTok.getKind() == tok::comment)
+      continue;
+    
+    if (TheTok.isAtStartOfLine() && TheTok.getKind() == tok::hash) {
+      // This is the start of a preprocessor directive. 
+      Token HashTok = TheTok;
+      InPreprocessorDirective = true;
+      
+      // Figure out which direective this is. Since we're lexing raw tokens,
+      // we don't have an identifier table available. Instead, just look at
+      // the raw identifier to recognize and categorize preprocessor directives.
+      TheLexer.LexFromRawLexer(TheTok);
+      if (TheTok.getKind() == tok::identifier && !TheTok.needsCleaning()) {
+        const char *IdStart = Buffer->getBufferStart() 
+                            + TheTok.getLocation().getRawEncoding() - 1;
+        llvm::StringRef Keyword(IdStart, TheTok.getLength());
+        PreambleDirectiveKind PDK
+          = llvm::StringSwitch<PreambleDirectiveKind>(Keyword)
+              .Case("include", PDK_Skipped)
+              .Case("__include_macros", PDK_Skipped)
+              .Case("define", PDK_Skipped)
+              .Case("undef", PDK_Skipped)
+              .Case("line", PDK_Skipped)
+              .Case("error", PDK_Skipped)
+              .Case("pragma", PDK_Skipped)
+              .Case("import", PDK_Skipped)
+              .Case("include_next", PDK_Skipped)
+              .Case("warning", PDK_Skipped)
+              .Case("ident", PDK_Skipped)
+              .Case("sccs", PDK_Skipped)
+              .Case("assert", PDK_Skipped)
+              .Case("unassert", PDK_Skipped)
+              .Case("if", PDK_StartIf)
+              .Case("ifdef", PDK_StartIf)
+              .Case("ifndef", PDK_StartIf)
+              .Case("elif", PDK_Skipped)
+              .Case("else", PDK_Skipped)
+              .Case("endif", PDK_EndIf)
+              .Default(PDK_Unknown);
+
+        switch (PDK) {
+        case PDK_Skipped:
+          continue;
+
+        case PDK_StartIf:
+          if (IfCount == 0)
+            IfStartTok = HashTok;
+            
+          ++IfCount;
+          continue;
+            
+        case PDK_EndIf:
+          // Mismatched #endif. The preamble ends here.
+          if (IfCount == 0)
+            break;
+
+          --IfCount;
+          continue;
+            
+        case PDK_Unknown:
+          // We don't know what this directive is; stop at the '#'.
+          break;
+        }
+      }
+      
+      // We only end up here if we didn't recognize the preprocessor
+      // directive or it was one that can't occur in the preamble at this
+      // point. Roll back the current token to the location of the '#'.
+      InPreprocessorDirective = false;
+      TheTok = HashTok;
+    }
+
+    // We hit a token
+    break;
+  } while (true);
+  
+  SourceLocation End = IfCount? IfStartTok.getLocation() : TheTok.getLocation();
+  return End.getRawEncoding() - StartLoc.getRawEncoding();
 }
 
 //===----------------------------------------------------------------------===//

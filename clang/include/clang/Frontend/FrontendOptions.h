@@ -44,6 +44,7 @@ namespace frontend {
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
     PluginAction,           ///< Run a plugin action, \see ActionName.
     PrintDeclContext,       ///< Print DeclContext and their Decls.
+    PrintPreamble,          ///< Print the "preamble" of the input file
     PrintPreprocessedInput, ///< -E mode.
     RewriteMacros,          ///< Expand macros but not #includes.
     RewriteObjC,            ///< ObjC->C Rewriter.

@@ -219,6 +219,19 @@ public:
                                      const SourceManager &SM,
                                      const LangOptions &LangOpts);
 
+  /// \brief Compute the preamble of the given file.
+  ///
+  /// The preamble of a file contains the initial comments, include directives,
+  /// and other preprocessor directives that occur before the code in this
+  /// particular file actually begins. The preamble of the main source file is
+  /// a potential prefix header.
+  ///
+  /// \param Buffer The memory buffer containing the file's contents.
+  ///
+  /// \returns The offset into the file where the preamble ends and the rest
+  /// of the file begins.
+  static unsigned ComputePreamble(const llvm::MemoryBuffer *Buffer);
+                                        
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
 private:
