@@ -997,6 +997,17 @@ public:
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const;
 
+  ClassTemplateSpecializationDecl *getMostRecentDeclaration() {
+    CXXRecordDecl *Recent
+        = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDeclaration());
+    if (!isa<ClassTemplateSpecializationDecl>(Recent)) {
+      // FIXME: Does injected class name need to be in the redeclarations chain?
+      assert(Recent->isInjectedClassName() && Recent->getPreviousDeclaration());
+      Recent = Recent->getPreviousDeclaration();
+    }
+    return cast<ClassTemplateSpecializationDecl>(Recent);
+  }
+
   /// \brief Retrieve the template that this specialization specializes.
   ClassTemplateDecl *getSpecializedTemplate() const;
 
@@ -1242,6 +1253,11 @@ public:
   static ClassTemplatePartialSpecializationDecl *
   Create(ASTContext &Context, EmptyShell Empty);
 
+  ClassTemplatePartialSpecializationDecl *getMostRecentDeclaration() {
+    return cast<ClassTemplatePartialSpecializationDecl>(
+                   ClassTemplateSpecializationDecl::getMostRecentDeclaration());
+  }
+
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {
     return TemplateParams;
@@ -1393,6 +1409,18 @@ protected:
   /// may implicitly allocate memory for the common pointer.
   Common *getCommonPtr();
 
+  /// \brief Retrieve the set of specializations of this class template.
+  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
+    return getCommonPtr()->Specializations;
+  }
+
+  /// \brief Retrieve the set of partial specializations of this class
+  /// template.
+  llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
+  getPartialSpecializations() {
+    return getCommonPtr()->PartialSpecializations;
+  }
+
   ClassTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
                     TemplateParameterList *Params, NamedDecl *Decl)
     : TemplateDecl(ClassTemplate, DC, L, Name, Params, Decl),
@@ -1436,16 +1464,34 @@ public:
                                    NamedDecl *Decl,
                                    ClassTemplateDecl *PrevDecl);
 
-  /// \brief Retrieve the set of specializations of this class template.
-  llvm::FoldingSet<ClassTemplateSpecializationDecl> &getSpecializations() {
-    return getCommonPtr()->Specializations;
+  /// \brief Return the specialization with the provided arguments if it exists,
+  /// otherwise return the insertion point.
+  ClassTemplateSpecializationDecl *
+  findSpecialization(const TemplateArgument *Args, unsigned NumArgs,
+                     void *&InsertPos);
+
+  /// \brief Insert the specified specialization knowing that it is not already
+  /// in. InsertPos must be obtained from findSpecialization.
+  void AddSpecialization(ClassTemplateSpecializationDecl *D, void *InsertPos) {
+    getSpecializations().InsertNode(D, InsertPos);
   }
 
-  /// \brief Retrieve the set of partial specializations of this class
-  /// template.
-  llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &
-  getPartialSpecializations() {
-    return getCommonPtr()->PartialSpecializations;
+  /// \brief Return the partial specialization with the provided arguments if it
+  /// exists, otherwise return the insertion point.
+  ClassTemplatePartialSpecializationDecl *
+  findPartialSpecialization(const TemplateArgument *Args, unsigned NumArgs,
+                            void *&InsertPos);
+
+  /// \brief Insert the specified partial specialization knowing that it is not
+  /// already in. InsertPos must be obtained from findPartialSpecialization.
+  void AddPartialSpecialization(ClassTemplatePartialSpecializationDecl *D,
+                                void *InsertPos) {
+    getPartialSpecializations().InsertNode(D, InsertPos);
+  }
+
+  /// \brief Return the next partial specialization sequence number.
+  unsigned getNextPartialSpecSequenceNumber() {
+    return getPartialSpecializations().size();
   }
 
   /// \brief Retrieve the partial specializations as an ordered list.
@@ -1455,12 +1501,24 @@ public:
   /// \brief Find a class template partial specialization with the given
   /// type T.
   ///
-  /// \brief A dependent type that names a specialization of this class
+  /// \param T a dependent type that names a specialization of this class
   /// template.
   ///
   /// \returns the class template partial specialization that exactly matches
   /// the type \p T, or NULL if no such partial specialization exists.
   ClassTemplatePartialSpecializationDecl *findPartialSpecialization(QualType T);
+  
+  /// \brief Find a class template partial specialization which was instantiated
+  /// from the given member partial specialization.
+  ///
+  /// \param D a member class template partial specialization.
+  ///
+  /// \returns the class template partial specialization which was instantiated
+  /// from the given member partial specialization, or NULL if no such partial
+  /// specialization exists.
+  ClassTemplatePartialSpecializationDecl *
+  findPartialSpecInstantiatedFromMember(
+                                     ClassTemplatePartialSpecializationDecl *D);
 
   /// \brief Retrieve the template specialization type of the
   /// injected-class-name for this class template.

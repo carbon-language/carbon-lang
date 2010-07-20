@@ -1477,14 +1477,10 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                = dyn_cast<ClassTemplateDecl>(Template)) {
     // Find the class template specialization declaration that
     // corresponds to these arguments.
-    llvm::FoldingSetNodeID ID;
-    ClassTemplateSpecializationDecl::Profile(ID,
-                                             Converted.getFlatArguments(),
-                                             Converted.flatSize(),
-                                             Context);
     void *InsertPos = 0;
     ClassTemplateSpecializationDecl *Decl
-      = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      = ClassTemplate->findSpecialization(Converted.getFlatArguments(),
+                                          Converted.flatSize(), InsertPos);
     if (!Decl) {
       // This is the first time we have referenced this class template
       // specialization. Create the canonical declaration and add it to
@@ -1495,7 +1491,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                                 ClassTemplate->getLocation(),
                                                 ClassTemplate,
                                                 Converted, 0);
-      ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
+      ClassTemplate->AddSpecialization(Decl, InsertPos);
       Decl->setLexicalDeclContext(CurContext);
     }
 
@@ -3727,7 +3723,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Find the class template (partial) specialization declaration that
   // corresponds to these arguments.
-  llvm::FoldingSetNodeID ID;
   if (isPartialSpecialization) {
     bool MirrorsPrimaryTemplate;
     if (CheckClassTemplatePartialSpecializationArgs(
@@ -3760,30 +3755,22 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       Diag(TemplateNameLoc, diag::err_partial_spec_fully_specialized)
         << ClassTemplate->getDeclName();
       isPartialSpecialization = false;
-    } else {
-      // FIXME: Template parameter list matters, too
-      ClassTemplatePartialSpecializationDecl::Profile(ID,
-                                                  Converted.getFlatArguments(),
-                                                      Converted.flatSize(),
-                                                      Context);
     }
   }
-  
-  if (!isPartialSpecialization)
-    ClassTemplateSpecializationDecl::Profile(ID,
-                                             Converted.getFlatArguments(),
-                                             Converted.flatSize(),
-                                             Context);
+
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl = 0;
 
   if (isPartialSpecialization)
+    // FIXME: Template parameter list matters, too
     PrevDecl
-      = ClassTemplate->getPartialSpecializations().FindNodeOrInsertPos(ID,
-                                                                    InsertPos);
+      = ClassTemplate->findPartialSpecialization(Converted.getFlatArguments(),
+                                                 Converted.flatSize(),
+                                                 InsertPos);
   else
     PrevDecl
-      = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      = ClassTemplate->findSpecialization(Converted.getFlatArguments(),
+                                          Converted.flatSize(), InsertPos);
 
   ClassTemplateSpecializationDecl *Specialization = 0;
 
@@ -3821,7 +3808,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     ClassTemplatePartialSpecializationDecl *PrevPartial
       = cast_or_null<ClassTemplatePartialSpecializationDecl>(PrevDecl);
     unsigned SequenceNumber = PrevPartial? PrevPartial->getSequenceNumber()
-                            : ClassTemplate->getPartialSpecializations().size();
+                            : ClassTemplate->getNextPartialSpecSequenceNumber();
     ClassTemplatePartialSpecializationDecl *Partial
       = ClassTemplatePartialSpecializationDecl::Create(Context, Kind,
                                              ClassTemplate->getDeclContext(),
@@ -3840,12 +3827,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                     (TemplateParameterList**) TemplateParameterLists.release());
     }
 
-    if (PrevPartial) {
-      ClassTemplate->getPartialSpecializations().RemoveNode(PrevPartial);
-      ClassTemplate->getPartialSpecializations().GetOrInsertNode(Partial);
-    } else {
-      ClassTemplate->getPartialSpecializations().InsertNode(Partial, InsertPos);
-    }
+    if (!PrevPartial)
+      ClassTemplate->AddPartialSpecialization(Partial, InsertPos);
     Specialization = Partial;
 
     // If we are providing an explicit specialization of a member class 
@@ -3902,13 +3885,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                     (TemplateParameterList**) TemplateParameterLists.release());
     }
 
-    if (PrevDecl) {
-      ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
-      ClassTemplate->getSpecializations().GetOrInsertNode(Specialization);
-    } else {
-      ClassTemplate->getSpecializations().InsertNode(Specialization,
-                                                     InsertPos);
-    }
+    if (!PrevDecl)
+      ClassTemplate->AddSpecialization(Specialization, InsertPos);
 
     CanonType = Context.getTypeDeclType(Specialization);
   }
@@ -4701,14 +4679,10 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   // Find the class template specialization declaration that
   // corresponds to these arguments.
-  llvm::FoldingSetNodeID ID;
-  ClassTemplateSpecializationDecl::Profile(ID,
-                                           Converted.getFlatArguments(),
-                                           Converted.flatSize(),
-                                           Context);
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl
-    = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+    = ClassTemplate->findSpecialization(Converted.getFlatArguments(),
+                                        Converted.flatSize(), InsertPos);
 
   TemplateSpecializationKind PrevDecl_TSK
     = PrevDecl ? PrevDecl->getTemplateSpecializationKind() : TSK_Undeclared;
@@ -4761,15 +4735,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                 Converted, PrevDecl);
     SetNestedNameSpecifier(Specialization, SS);
 
-    if (!HasNoEffect) {
-      if (PrevDecl) {
-        // Remove the previous declaration from the folding set, since we want
-        // to introduce a new declaration.
-        ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
-        ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
-      }
+    if (!HasNoEffect && !PrevDecl) {
       // Insert the new specialization.
-      ClassTemplate->getSpecializations().InsertNode(Specialization, InsertPos);
+      ClassTemplate->AddSpecialization(Specialization, InsertPos);
     }
   }
 

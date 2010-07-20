@@ -857,16 +857,7 @@ TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
   if (!InstClassTemplate)
     return 0;
   
-  Decl *DCanon = D->getCanonicalDecl();
-  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
-            P = InstClassTemplate->getPartialSpecializations().begin(),
-         PEnd = InstClassTemplate->getPartialSpecializations().end();
-       P != PEnd; ++P) {
-    if (P->getInstantiatedFromMember()->getCanonicalDecl() == DCanon)
-      return &*P;
-  }
-  
-  return 0;
+  return InstClassTemplate->findPartialSpecInstantiatedFromMember(D);
 }
 
 Decl *
@@ -1804,15 +1795,10 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
 
   // Figure out where to insert this class template partial specialization
   // in the member template's set of class template partial specializations.
-  llvm::FoldingSetNodeID ID;
-  ClassTemplatePartialSpecializationDecl::Profile(ID,
-                                                  Converted.getFlatArguments(),
-                                                  Converted.flatSize(),
-                                                  SemaRef.Context);
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl
-    = ClassTemplate->getPartialSpecializations().FindNodeOrInsertPos(ID,
-                                                                     InsertPos);
+    = ClassTemplate->findPartialSpecialization(Converted.getFlatArguments(),
+                                                Converted.flatSize(), InsertPos);
   
   // Build the canonical type that describes the converted template
   // arguments of the class template partial specialization.
@@ -1871,7 +1857,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      InstTemplateArgs,
                                                      CanonType,
                                                      0,
-                             ClassTemplate->getPartialSpecializations().size());
+                             ClassTemplate->getNextPartialSpecSequenceNumber());
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(PartialSpec, InstPartialSpec))
     return 0;
@@ -1881,8 +1867,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   
   // Add this partial specialization to the set of class template partial
   // specializations.
-  ClassTemplate->getPartialSpecializations().InsertNode(InstPartialSpec,
-                                                        InsertPos);
+  ClassTemplate->AddPartialSpecialization(InstPartialSpec, InsertPos);
   return false;
 }
 

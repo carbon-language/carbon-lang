@@ -103,3 +103,8 @@ class basic_streambuf
 // PR 7660
 template<typename T> struct S_PR7660 { void g(void (*)(T)); };
  template<> void S_PR7660<int>::g(void(*)(int)) {}
+
+// PR 7670
+template<typename> class C_PR7670;
+template<> class C_PR7670<int>;
+template<> class C_PR7670<int>;

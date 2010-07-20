@@ -171,6 +171,28 @@ void ClassTemplateDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
+ClassTemplateSpecializationDecl *
+ClassTemplateDecl::findSpecialization(const TemplateArgument *Args,
+                                      unsigned NumArgs, void *&InsertPos) {
+  llvm::FoldingSetNodeID ID;
+  ClassTemplateSpecializationDecl::Profile(ID, Args, NumArgs, getASTContext());
+  ClassTemplateSpecializationDecl *D
+      = getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+  return D ? D->getMostRecentDeclaration() : 0;
+}
+
+ClassTemplatePartialSpecializationDecl *
+ClassTemplateDecl::findPartialSpecialization(const TemplateArgument *Args,
+                                             unsigned NumArgs,
+                                             void *&InsertPos) {
+  llvm::FoldingSetNodeID ID;
+  ClassTemplatePartialSpecializationDecl::Profile(ID, Args, NumArgs,
+                                                  getASTContext());
+  ClassTemplatePartialSpecializationDecl *D
+      = getPartialSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+  return D ? D->getMostRecentDeclaration() : 0;
+}
+
 void ClassTemplateDecl::getPartialSpecializations(
           llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS) {
   llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &PartialSpecs
@@ -181,7 +203,7 @@ void ClassTemplateDecl::getPartialSpecializations(
        P = PartialSpecs.begin(), PEnd = PartialSpecs.end();
        P != PEnd; ++P) {
     assert(!PS[P->getSequenceNumber()]);
-    PS[P->getSequenceNumber()] = &*P;
+    PS[P->getSequenceNumber()] = P->getMostRecentDeclaration();
   }
 }
 
@@ -194,7 +216,22 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
                           PEnd = getPartialSpecializations().end();
        P != PEnd; ++P) {
     if (Context.hasSameType(P->getInjectedSpecializationType(), T))
-      return &*P;
+      return P->getMostRecentDeclaration();
+  }
+
+  return 0;
+}
+
+ClassTemplatePartialSpecializationDecl *
+ClassTemplateDecl::findPartialSpecInstantiatedFromMember(
+                                    ClassTemplatePartialSpecializationDecl *D) {
+  Decl *DCanon = D->getCanonicalDecl();
+  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
+            P = getPartialSpecializations().begin(),
+         PEnd = getPartialSpecializations().end();
+       P != PEnd; ++P) {
+    if (P->getInstantiatedFromMember()->getCanonicalDecl() == DCanon)
+      return P->getMostRecentDeclaration();
   }
 
   return 0;
