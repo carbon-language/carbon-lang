@@ -3096,3 +3096,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x1d,0x18,0x10,0x07]
           vinsertf128  $7, (%rax), %ymm12, %ymm10
 
+// CHECK: vextractf128  $7, %ymm12, %xmm12
+// CHECK: encoding: [0xc4,0x43,0x7d,0x19,0xe4,0x07]
+          vextractf128  $7, %ymm12, %xmm12
+
+// CHECK: vextractf128  $7, %ymm12, (%rax)
+// CHECK: encoding: [0xc4,0x63,0x7d,0x19,0x20,0x07]
+          vextractf128  $7, %ymm12, (%rax)
+

@@ -13022,3 +13022,11 @@
 // CHECK: encoding: [0xc4,0xe3,0x6d,0x18,0x28,0x07]
           vinsertf128  $7, (%eax), %ymm2, %ymm5
 
+// CHECK: vextractf128  $7, %ymm2, %xmm2
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x19,0xd2,0x07]
+          vextractf128  $7, %ymm2, %xmm2
+
+// CHECK: vextractf128  $7, %ymm2, (%eax)
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x19,0x10,0x07]
+          vextractf128  $7, %ymm2, (%eax)
+

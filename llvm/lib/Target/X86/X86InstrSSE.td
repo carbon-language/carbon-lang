@@ -5008,4 +5008,14 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
 
+// Extract packed floating-point values
+def VEXTRACTF128rr : AVXAIi8<0x19, MRMDestReg, (outs VR128:$dst),
+          (ins VR256:$src1, i8imm:$src2),
+          "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+          []>, VEX;
+def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
+          (ins f128mem:$dst, VR256:$src1, i8imm:$src2),
+          "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+          []>, VEX;
+
 } // isAsmParserOnly
