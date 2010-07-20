@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "spiller"
 #include "Spiller.h"
+#include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -39,6 +40,8 @@ class InlineSpiller : public Spiller {
   const TargetRegisterInfo &tri_;
   const BitVector reserved_;
 
+  SplitAnalysis splitAnalysis_;
+
   // Variables that are valid during spill(), but used by multiple methods.
   LiveInterval *li_;
   std::vector<LiveInterval*> *newIntervals_;
@@ -62,7 +65,8 @@ public:
       mri_(mf->getRegInfo()),
       tii_(*mf->getTarget().getInstrInfo()),
       tri_(*mf->getTarget().getRegisterInfo()),
-      reserved_(tri_.getReservedRegs(mf_)) {}
+      reserved_(tri_.getReservedRegs(mf_)),
+      splitAnalysis_(mf, lis, mli) {}
 
   void spill(LiveInterval *li,
              std::vector<LiveInterval*> &newIntervals,
@@ -70,6 +74,8 @@ public:
              SlotIndex *earliestIndex);
 
 private:
+  bool split();
+
   bool allUsesAvailableAt(const MachineInstr *OrigMI, SlotIndex OrigIdx,
                           SlotIndex UseIdx);
   bool reMaterializeFor(MachineBasicBlock::iterator MI);
@@ -89,6 +95,22 @@ Spiller *createInlineSpiller(MachineFunction *mf,
                              VirtRegMap *vrm) {
   return new InlineSpiller(mf, lis, mli, vrm);
 }
+}
+
+/// split - try splitting the current interval into pieces that may allocate
+/// separately. Return true if successful.
+bool InlineSpiller::split() {
+  // FIXME: Add intra-MBB splitting.
+  if (lis_.intervalIsInOneMBB(*li_))
+    return false;
+
+  splitAnalysis_.analyze(li_);
+
+  if (const MachineLoop *loop = splitAnalysis_.getBestSplitLoop()) {
+    if (splitAroundLoop(splitAnalysis_, loop))
+      return true;
+  }
+  return false;
 }
 
 /// allUsesAvailableAt - Return true if all registers used by OrigMI at
@@ -337,6 +359,9 @@ void InlineSpiller::spill(LiveInterval *li,
   newIntervals_ = &newIntervals;
   rc_ = mri_.getRegClass(li->reg);
   spillIs_ = &spillIs;
+
+  if (split())
+    return;
 
   reMaterializeAll();
 
