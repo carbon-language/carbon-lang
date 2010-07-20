@@ -46,8 +46,6 @@ class PassRegistry {
   std::map<const PassInfo*, AnalysisGroupInfo> AnalysisGroupInfoMap;
 
 public:
-  static PassRegistry *getPassRegistry();
-  
   const PassInfo *getPassInfo(intptr_t TI) const;
   const PassInfo *getPassInfo(StringRef Arg) const;
   
