@@ -16,7 +16,6 @@
 #include "X86AsmPrinter.h"
 #include "X86COFFMachineModuleInfo.h"
 #include "X86MCAsmInfo.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -503,43 +502,6 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::XOR32ri:    SimplifyShortImmForm(OutMI, X86::XOR32i32);  break;
   case X86::XOR64ri32:  SimplifyShortImmForm(OutMI, X86::XOR64i32);  break;
   }
-}
-
-void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
-                                           raw_ostream &O) {
-  // Only the target-dependent form of DBG_VALUE should get here.
-  // Referencing the offset and metadata as NOps-2 and NOps-1 is
-  // probably portable to other targets; frame pointer location is not.
-  unsigned NOps = MI->getNumOperands();
-  assert(NOps==7);
-  O << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
-  // cast away const; DIetc do not take const operands for some reason.
-  DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
-  if (V.getContext().isSubprogram())
-    O << DISubprogram(V.getContext()).getDisplayName() << ":";
-  O << V.getName();
-  O << " <- ";
-  // Frame address.  Currently handles register +- offset only.
-  O << '['; 
-  if (MI->getOperand(0).isReg() && MI->getOperand(0).getReg())
-    printOperand(MI, 0, O); 
-  else
-    O << "undef";
-  O << '+'; printOperand(MI, 3, O);
-  O << ']';
-  O << "+";
-  printOperand(MI, NOps-2, O);
-}
-
-MachineLocation 
-X86AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
-  MachineLocation Location;
-  assert (MI->getNumOperands() == 7 && "Invalid no. of machine operands!");
-  // Frame address.  Currently handles register +- offset only.
-
-  if (MI->getOperand(0).isReg() && MI->getOperand(3).isImm())
-    Location.set(MI->getOperand(0).getReg(), MI->getOperand(3).getImm());
-  return Location;
 }
 
 
