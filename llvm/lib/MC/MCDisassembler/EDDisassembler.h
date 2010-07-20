@@ -16,7 +16,7 @@
 #ifndef LLVM_EDDISASSEMBLER_H
 #define LLVM_EDDISASSEMBLER_H
 
-#include "EDInfo.inc"
+#include "EDInfo.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
