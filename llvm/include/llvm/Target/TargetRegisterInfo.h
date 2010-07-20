@@ -603,7 +603,7 @@ public:
   /// immediately on entry to the current function. This eliminates the need for
   /// add/sub sp brackets around call sites. Returns true if the call frame is
   /// included as part of the stack frame.
-  virtual bool hasReservedCallFrame(MachineFunction &MF) const {
+  virtual bool hasReservedCallFrame(const MachineFunction &MF) const {
     return !hasFP(MF);
   }
 
@@ -614,7 +614,7 @@ public:
   /// if the function has a reserved call frame or a frame pointer. Some
   /// targets (Thumb2, for example) may have more complicated criteria,
   /// however, and can override this behavior.
-  virtual bool canSimplifyCallFramePseudos(MachineFunction &MF) const {
+  virtual bool canSimplifyCallFramePseudos(const MachineFunction &MF) const {
     return hasReservedCallFrame(MF) || hasFP(MF);
   }
 
@@ -624,7 +624,7 @@ public:
   /// reserved as its spill slot. This tells PEI not to create a new stack frame
   /// object for the given register. It should be called only after
   /// processFunctionBeforeCalleeSavedScan().
-  virtual bool hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
+  virtual bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
                                     int &FrameIdx) const {
     return false;
   }

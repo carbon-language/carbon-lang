@@ -68,7 +68,7 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
           .addConstantPoolIndex(Idx).addImm(Pred).addReg(PredReg);
 }
 
-bool Thumb1RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+bool Thumb1RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the

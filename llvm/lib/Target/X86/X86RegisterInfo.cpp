@@ -469,12 +469,12 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   return requiresRealignment && canRealignStack(MF);
 }
 
-bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+bool X86RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-bool X86RegisterInfo::hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
-                                           int &FrameIdx) const {
+bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
+                                           unsigned Reg, int &FrameIdx) const {
   if (Reg == FramePtr && hasFP(MF)) {
     FrameIdx = MF.getFrameInfo()->getObjectIndexBegin();
     return true;

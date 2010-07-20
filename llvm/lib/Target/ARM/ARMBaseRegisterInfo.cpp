@@ -1239,7 +1239,7 @@ requiresFrameIndexScavenging(const MachineFunction &MF) const {
 // add/sub sp brackets around call sites. Returns true if the call frame is
 // included as part of the stack frame.
 bool ARMBaseRegisterInfo::
-hasReservedCallFrame(MachineFunction &MF) const {
+hasReservedCallFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the
@@ -1257,7 +1257,7 @@ hasReservedCallFrame(MachineFunction &MF) const {
 // is not sufficient here since we still may reference some objects via SP
 // even when FP is available in Thumb2 mode.
 bool ARMBaseRegisterInfo::
-canSimplifyCallFramePseudos(MachineFunction &MF) const {
+canSimplifyCallFramePseudos(const MachineFunction &MF) const {
   return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 

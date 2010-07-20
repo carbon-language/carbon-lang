@@ -38,7 +38,7 @@ public:
                         unsigned PredReg = 0) const;
 
   /// Code Generation virtual methods...
-  bool hasReservedCallFrame(MachineFunction &MF) const;
+  bool hasReservedCallFrame(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,

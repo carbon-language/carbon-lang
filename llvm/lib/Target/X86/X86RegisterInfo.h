@@ -117,9 +117,9 @@ public:
 
   bool needsStackRealignment(const MachineFunction &MF) const;
 
-  bool hasReservedCallFrame(MachineFunction &MF) const;
+  bool hasReservedCallFrame(const MachineFunction &MF) const;
 
-  bool hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
+  bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
                             int &FrameIdx) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

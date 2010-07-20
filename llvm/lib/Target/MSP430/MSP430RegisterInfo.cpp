@@ -101,7 +101,7 @@ bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
-bool MSP430RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+bool MSP430RegisterInfo::hasReservedCallFrame(const MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
