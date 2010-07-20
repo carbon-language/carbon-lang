@@ -1000,7 +1000,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
     return;
   }
 
-  llvm::MDNode *RetDbgInfo = 0;
+  llvm::DebugLoc RetDbgLoc;
   llvm::Value *RV = 0;
   QualType RetTy = FI.getReturnType();
   const ABIArgInfo &RetAI = FI.getReturnInfo();
@@ -1034,7 +1034,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
       RV = Builder.CreateLoad(ReturnValue);
     } else {
       // Get the stored value and nuke the now-dead store.
-      RetDbgInfo = SI->getDbgMetadata();
+      RetDbgLoc = SI->getDebugLoc();
       RV = SI->getValueOperand();
       SI->eraseFromParent();
       
@@ -1058,8 +1058,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
   }
 
   llvm::Instruction *Ret = RV ? Builder.CreateRet(RV) : Builder.CreateRetVoid();
-  if (RetDbgInfo)
-    Ret->setDbgMetadata(RetDbgInfo);
+  Ret->setDebugLoc(RetDbgLoc);
 }
 
 RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
