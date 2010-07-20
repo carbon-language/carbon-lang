@@ -47,7 +47,7 @@ class SplitAnalysis {
   LoopPtrSet usingLoops_;
 
   // Sumarize statistics by counting instructions using curli_.
-  void analyseUses();
+  void analyzeUses();
 
 public:
   SplitAnalysis(const MachineFunction *mf, const LiveIntervals *lis,

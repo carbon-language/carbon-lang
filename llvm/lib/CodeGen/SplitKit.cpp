@@ -42,8 +42,8 @@ void SplitAnalysis::clear() {
   usingLoops_.clear();
 }
 
-/// analyseUses - Count instructions, basic blocks, and loops using curli.
-void SplitAnalysis::analyseUses() {
+/// analyzeUses - Count instructions, basic blocks, and loops using curli.
+void SplitAnalysis::analyzeUses() {
   const MachineRegisterInfo &MRI = mf_.getRegInfo();
   for (MachineRegisterInfo::reg_iterator I = MRI.reg_begin(curli_->reg);
        MachineInstr *MI = I.skipInstruction();) {
@@ -95,7 +95,7 @@ SplitAnalysis::analyzeLoopPeripheralUse(const MachineLoop *Loop) {
 void SplitAnalysis::analyze(const LiveInterval *li) {
   clear();
   curli_ = li;
-  analyseUses();
+  analyzeUses();
 }
 
 const MachineLoop *SplitAnalysis::getBestSplitLoop() {
