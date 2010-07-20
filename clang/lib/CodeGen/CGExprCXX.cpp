@@ -431,49 +431,71 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
   if (!E->isArray())
     return llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
 
-  CharUnits CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
-  
   // Emit the array size expression.
   NumElements = CGF.EmitScalarExpr(E->getArraySize());
   
-  // Multiply with the type size.  This multiply can overflow, e.g. in:
-  //   new double[n]
-  // where n is 2^30 on a 32-bit machine or 2^62 on a 64-bit machine.  Because
-  // of this, we need to detect the overflow and ensure that an exception is
-  // called by forcing the size to -1 on overflow.
-  llvm::Value *UMulF = CGF.CGM.getIntrinsic(llvm::Intrinsic::umul_with_overflow, 
-                                            &SizeTy, 1);
-  llvm::Value *MulRes = CGF.Builder.CreateCall2(UMulF, NumElements, 
-                                                llvm::ConstantInt::get(SizeTy, 
-                                                    TypeSize.getQuantity()));
-  // Branch on the overflow bit to the overflow block, which is lazily created.
-  llvm::Value *DidOverflow = CGF.Builder.CreateExtractValue(MulRes, 1);
-  // Get the normal result of the multiplication.
-  llvm::Value *V = CGF.Builder.CreateExtractValue(MulRes, 0);
+  llvm::Value *Size = llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
   
-  llvm::BasicBlock *NormalBB = CGF.createBasicBlock("no_overflow");
-  llvm::BasicBlock *OverflowBB = CGF.createBasicBlock("overflow");
-  
-  CGF.Builder.CreateCondBr(DidOverflow, OverflowBB, NormalBB);
+  // If someone is doing 'new int[42]' there is no need to do a dynamic check.
+  // Don't bloat the -O0 code.
+  if (llvm::ConstantInt *NumElementsC =
+        dyn_cast<llvm::ConstantInt>(NumElements)) {
+    // Determine if there is an overflow here by doing an extended multiply.
+    llvm::APInt NEC = NumElementsC->getValue();
+    NEC.zext(NEC.getBitWidth()*2);
+    
+    llvm::APInt SC = cast<llvm::ConstantInt>(Size)->getValue();
+    SC.zext(SC.getBitWidth()*2);
+    SC *= NEC;
+    
+    if (SC.countLeadingZeros() >= NumElementsC->getValue().getBitWidth()) {
+      SC.trunc(NumElementsC->getValue().getBitWidth());
+      Size = llvm::ConstantInt::get(Size->getContext(), SC);
+    } else {
+      // On overflow, produce a -1 so operator new throws.
+      Size = llvm::Constant::getAllOnesValue(Size->getType());
+    }
+    
+  } else {
+    // Multiply with the type size.  This multiply can overflow, e.g. in:
+    //   new double[n]
+    // where n is 2^30 on a 32-bit machine or 2^62 on a 64-bit machine.  Because
+    // of this, we need to detect the overflow and ensure that an exception is
+    // called by forcing the size to -1 on overflow.
+    llvm::Value *UMulF =
+      CGF.CGM.getIntrinsic(llvm::Intrinsic::umul_with_overflow, &SizeTy, 1);
+    llvm::Value *MulRes = CGF.Builder.CreateCall2(UMulF, NumElements, Size);
+    // Branch on the overflow bit to the overflow block, which is lazily
+    // created.
+    llvm::Value *DidOverflow = CGF.Builder.CreateExtractValue(MulRes, 1);
+    // Get the normal result of the multiplication.
+    llvm::Value *V = CGF.Builder.CreateExtractValue(MulRes, 0);
+    
+    llvm::BasicBlock *NormalBB = CGF.createBasicBlock("no_overflow");
+    llvm::BasicBlock *OverflowBB = CGF.createBasicBlock("overflow");
+    
+    CGF.Builder.CreateCondBr(DidOverflow, OverflowBB, NormalBB);
 
-  llvm::BasicBlock *PrevBB = CGF.Builder.GetInsertBlock();
+    llvm::BasicBlock *PrevBB = CGF.Builder.GetInsertBlock();
+    
+    // We just need the overflow block to build a PHI node.
+    CGF.EmitBlock(OverflowBB);
+    CGF.EmitBlock(NormalBB);
+    
+    llvm::PHINode *PN = CGF.Builder.CreatePHI(V->getType());
+    
+    PN->addIncoming(V, PrevBB);
+    PN->addIncoming(llvm::Constant::getAllOnesValue(V->getType()), OverflowBB);
+    Size = PN;
+  }
   
-  // We just need the overflow block to build a PHI node.
-  CGF.EmitBlock(OverflowBB);
-  CGF.EmitBlock(NormalBB);
-  
-  llvm::PHINode *PN = CGF.Builder.CreatePHI(V->getType());
-  
-  PN->addIncoming(V, PrevBB);
-  PN->addIncoming(llvm::Constant::getAllOnesValue(V->getType()), OverflowBB);
-  V = PN;
-  
-  // And add the cookie padding if necessary.
+  // Add the cookie padding if necessary.
+  CharUnits CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
   if (!CookiePadding.isZero())
-    V = CGF.Builder.CreateAdd(V, 
+    Size = CGF.Builder.CreateAdd(Size, 
         llvm::ConstantInt::get(SizeTy, CookiePadding.getQuantity()));
   
-  return V;
+  return Size;
 }
 
 static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,

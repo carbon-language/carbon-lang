@@ -102,6 +102,7 @@ struct Empty { };
 // We don't need to initialize an empty class.
 void t12() {
   // CHECK: define void @_Z3t12v
+  // CHECK-NOT: br label
   // CHECK: ret void
   (void)new Empty[10];
 }
