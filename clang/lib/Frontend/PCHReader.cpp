@@ -2805,7 +2805,7 @@ Decl *PCHReader::GetExternalDecl(uint32_t ID) {
 
 TranslationUnitDecl *PCHReader::GetTranslationUnitDecl() {
   if (!DeclsLoaded[0]) {
-    ReadDeclRecord(Chain[0]->DeclOffsets[0], 0);
+    ReadDeclRecord(0);
     if (DeserializationListener)
       DeserializationListener->DeclRead(1, DeclsLoaded[0]);
   }
@@ -2824,7 +2824,7 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 
   unsigned Index = ID - 1;
   if (!DeclsLoaded[Index]) {
-    ReadDeclRecord(Chain[0]->DeclOffsets[Index], Index);
+    ReadDeclRecord(Index);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
   }

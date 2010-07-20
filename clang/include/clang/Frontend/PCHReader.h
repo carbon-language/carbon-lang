@@ -548,7 +548,8 @@ private:
   QualType ReadTypeRecord(unsigned Index);
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
-  Decl *ReadDeclRecord(uint64_t Offset, unsigned Index);
+  Decl *ReadDeclRecord(unsigned Index);
+  RecordLocation DeclCursorForIndex(unsigned Index);
 
   void PassInterestingDeclsToConsumer();
 

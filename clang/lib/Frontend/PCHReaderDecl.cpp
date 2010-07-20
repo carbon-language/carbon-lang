@@ -1254,9 +1254,23 @@ static bool isConsumerInterestedIn(Decl *D) {
   return isa<ObjCProtocolDecl>(D);
 }
 
+/// \brief Get the correct cursor and offset for loading a type.
+PCHReader::RecordLocation PCHReader::DeclCursorForIndex(unsigned Index) {
+  PerFileData *F = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    F = Chain[N - I - 1];
+    if (Index < F->LocalNumDecls)
+      break;
+    Index -= F->LocalNumDecls;
+  }
+  assert(F && F->LocalNumDecls > Index && "Broken chain");
+  return RecordLocation(F->DeclsCursor, F->DeclOffsets[Index]);
+}
+
 /// \brief Read the declaration at the given offset from the PCH file.
-Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
-  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
+Decl *PCHReader::ReadDeclRecord(unsigned Index) {
+  RecordLocation Loc = DeclCursorForIndex(Index);
+  llvm::BitstreamCursor &DeclsCursor = Loc.first;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
   SavedStreamPosition SavedPosition(DeclsCursor);
@@ -1266,7 +1280,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   // Note that we are loading a declaration record.
   LoadingTypeOrDecl Loading(*this);
 
-  DeclsCursor.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Loc.second);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
