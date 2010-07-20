@@ -34,10 +34,12 @@ class LLVM_LIBRARY_VISIBILITY X86MCInstLower {
   const TargetMachine &TM;
   const MCAsmInfo &MAI;
 
-  X86AsmPrinter &AsmPrinter;
+  /// AsmPrinter - This is the asmprinter when emission is actually happening,
+  /// or null if an instruction is being lowered for some other reason.
+  X86AsmPrinter *AsmPrinter;
 public:
-  X86MCInstLower(MCContext &ctx, Mangler *mang, const MachineFunction &MF,
-                 X86AsmPrinter &asmprinter);
+  X86MCInstLower(Mangler *mang, const MachineFunction &MF,
+                 X86AsmPrinter *asmprinter);
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 

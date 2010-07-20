@@ -28,11 +28,10 @@
 #include "llvm/Type.h"
 using namespace llvm;
 
-X86MCInstLower::X86MCInstLower(MCContext &ctx, Mangler *mang,
-                               const MachineFunction &mf,
-                               X86AsmPrinter &asmprinter)
-: Ctx(ctx), Mang(mang), MF(mf), TM(mf.getTarget()), MAI(*TM.getMCAsmInfo()),
-  AsmPrinter(asmprinter) {}
+X86MCInstLower::X86MCInstLower(Mangler *mang, const MachineFunction &mf,
+                               X86AsmPrinter *asmprinter)
+: Ctx(mf.getContext()), Mang(mang), MF(mf), TM(mf.getTarget()),
+  MAI(*TM.getMCAsmInfo()), AsmPrinter(asmprinter) {}
 
 MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
   return MF.getMMI().getObjFileInfo<MachineModuleInfoMachO>();
@@ -182,7 +181,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       // local labels. This is only safe when the symbols are in the same
       // section so we are restricting it to jumptable references.
       MCSymbol *Label = Ctx.CreateTempSymbol();
-      AsmPrinter.OutStreamer.EmitAssignment(Label, Expr);
+      AsmPrinter->OutStreamer.EmitAssignment(Label, Expr);
       Expr = MCSymbolRefExpr::Create(Label, Ctx);
     }
     break;
@@ -327,14 +326,14 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
+      MCOp = LowerSymbolOperand(MO, AsmPrinter->GetJTISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()));
+      MCOp = LowerSymbolOperand(MO, AsmPrinter->GetCPISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_BlockAddress:
       MCOp = LowerSymbolOperand(MO,
-                        AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
+                       AsmPrinter->GetBlockAddressSymbol(MO.getBlockAddress()));
       break;
     }
     
@@ -505,7 +504,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(OutContext, Mang, *MF, *this);
+  X86MCInstLower MCInstLowering(Mang, *MF, this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
