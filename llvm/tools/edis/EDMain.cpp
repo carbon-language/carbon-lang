@@ -1,4 +1,4 @@
-//===-EDMain.cpp - LLVM Enhanced Disassembly C API ------------------------===//
+//===-- EDMain.cpp - LLVM Enhanced Disassembly C API ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,33 +11,46 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EDDisassembler.h"
-#include "EDInst.h"
-#include "EDOperand.h"
-#include "EDToken.h"
-
+// FIXME: This code isn't layered right, the headers should be moved to
+// include llvm/MC/MCDisassembler or something.
+#include "../../lib/MC/MCDisassembler/EDDisassembler.h"
+#include "../../lib/MC/MCDisassembler/EDInst.h"
+#include "../../lib/MC/MCDisassembler/EDOperand.h"
+#include "../../lib/MC/MCDisassembler/EDToken.h"
 #include "llvm-c/EnhancedDisassembly.h"
+using namespace llvm;
 
 int EDGetDisassembler(EDDisassemblerRef *disassembler,
                       const char *triple,
                       EDAssemblySyntax_t syntax) {
   EDDisassembler::initialize();
   
-  EDDisassemblerRef ret = EDDisassembler::getDisassembler(triple,
-                                                          syntax);
-  
-  if (ret) {
-    *disassembler = ret;
-    return 0;
-  } else {
-    return -1;
+  EDDisassembler::AssemblySyntax Syntax;
+  switch (syntax) {
+  default: assert(0 && "Unknown assembly syntax!");
+  case kEDAssemblySyntaxX86Intel:
+    Syntax = EDDisassembler::kEDAssemblySyntaxX86Intel;
+    break;
+  case kEDAssemblySyntaxX86ATT:
+    Syntax = EDDisassembler::kEDAssemblySyntaxX86ATT;
+    break;
+  case kEDAssemblySyntaxARMUAL:
+    Syntax = EDDisassembler::kEDAssemblySyntaxARMUAL;
+    break;
   }
+  
+  EDDisassemblerRef ret = EDDisassembler::getDisassembler(triple, Syntax);
+  
+  if (!ret)
+    return -1;
+  *disassembler = ret;
+  return 0;
 }
 
 int EDGetRegisterName(const char** regName,
                       EDDisassemblerRef disassembler,
                       unsigned regID) {
-  const char* name = disassembler->nameWithRegisterID(regID);
+  const char *name = ((EDDisassembler*)disassembler)->nameWithRegisterID(regID);
   if (!name)
     return -1;
   *regName = name;
@@ -46,24 +59,25 @@ int EDGetRegisterName(const char** regName,
 
 int EDRegisterIsStackPointer(EDDisassemblerRef disassembler,
                              unsigned regID) {
-  return disassembler->registerIsStackPointer(regID) ? 1 : 0;
+  return ((EDDisassembler*)disassembler)->registerIsStackPointer(regID) ? 1 : 0;
 }
 
 int EDRegisterIsProgramCounter(EDDisassemblerRef disassembler,
                                unsigned regID) {
-  return disassembler->registerIsProgramCounter(regID) ? 1 : 0;
+  return ((EDDisassembler*)disassembler)->registerIsProgramCounter(regID) ? 1:0;
 }
 
 unsigned int EDCreateInsts(EDInstRef *insts,
                            unsigned int count,
                            EDDisassemblerRef disassembler,
-                           EDByteReaderCallback byteReader,
+                           ::EDByteReaderCallback byteReader,
                            uint64_t address,
                            void *arg) {
   unsigned int index;
   
   for (index = 0; index < count; ++index) {
-    EDInst *inst = disassembler->createInst(byteReader, address, arg);
+    EDInst *inst = ((EDDisassembler*)disassembler)->createInst(byteReader,
+                                                               address, arg);
     
     if (!inst)
       return index;
@@ -76,163 +90,143 @@ unsigned int EDCreateInsts(EDInstRef *insts,
 }
 
 void EDReleaseInst(EDInstRef inst) {
-  delete inst;
+  delete ((EDInst*)inst);
 }
 
 int EDInstByteSize(EDInstRef inst) {
-  return inst->byteSize();
+  return ((EDInst*)inst)->byteSize();
 }
 
 int EDGetInstString(const char **buf,
                     EDInstRef inst) {
-  return inst->getString(*buf);
+  return ((EDInst*)inst)->getString(*buf);
 }
 
 int EDInstID(unsigned *instID, EDInstRef inst) {
-  *instID = inst->instID();
+  *instID = ((EDInst*)inst)->instID();
   return 0;
 }
 
 int EDInstIsBranch(EDInstRef inst) {
-  return inst->isBranch();
+  return ((EDInst*)inst)->isBranch();
 }
 
 int EDInstIsMove(EDInstRef inst) {
-  return inst->isMove();
+  return ((EDInst*)inst)->isMove();
 }
 
 int EDBranchTargetID(EDInstRef inst) {
-  return inst->branchTargetID();
+  return ((EDInst*)inst)->branchTargetID();
 }
 
 int EDMoveSourceID(EDInstRef inst) {
-  return inst->moveSourceID();
+  return ((EDInst*)inst)->moveSourceID();
 }
 
 int EDMoveTargetID(EDInstRef inst) {
-  return inst->moveTargetID();
+  return ((EDInst*)inst)->moveTargetID();
 }
 
 int EDNumTokens(EDInstRef inst) {
-  return inst->numTokens();
+  return ((EDInst*)inst)->numTokens();
 }
 
 int EDGetToken(EDTokenRef *token,
                EDInstRef inst,
                int index) {
-  return inst->getToken(*token, index);
+  return ((EDInst*)inst)->getToken(*(EDToken**)token, index);
 }
 
 int EDGetTokenString(const char **buf,
                      EDTokenRef token) {
-  return token->getString(*buf);
+  return ((EDToken*)token)->getString(*buf);
 }
 
 int EDOperandIndexForToken(EDTokenRef token) {
-  return token->operandID();
+  return ((EDToken*)token)->operandID();
 }
 
 int EDTokenIsWhitespace(EDTokenRef token) {
-  if (token->type() == EDToken::kTokenWhitespace)
-    return 1;
-  else
-    return 0;
+  return ((EDToken*)token)->type() == EDToken::kTokenWhitespace;
 }
 
 int EDTokenIsPunctuation(EDTokenRef token) {
-  if (token->type() == EDToken::kTokenPunctuation)
-    return 1;
-  else
-    return 0;
+  return ((EDToken*)token)->type() == EDToken::kTokenPunctuation;
 }
 
 int EDTokenIsOpcode(EDTokenRef token) {
-  if (token->type() == EDToken::kTokenOpcode)
-    return 1;
-  else
-    return 0;
+  return ((EDToken*)token)->type() == EDToken::kTokenOpcode;
 }
 
 int EDTokenIsLiteral(EDTokenRef token) {
-  if (token->type() == EDToken::kTokenLiteral)
-    return 1;
-  else
-    return 0;
+  return ((EDToken*)token)->type() == EDToken::kTokenLiteral;
 }
 
 int EDTokenIsRegister(EDTokenRef token) {
-  if (token->type() == EDToken::kTokenRegister)
-    return 1;
-  else
-    return 0;
+  return ((EDToken*)token)->type() == EDToken::kTokenRegister;
 }
 
 int EDTokenIsNegativeLiteral(EDTokenRef token) {
-  if (token->type() != EDToken::kTokenLiteral)
+  if (((EDToken*)token)->type() != EDToken::kTokenLiteral)
     return -1;
   
-  return token->literalSign();
+  return ((EDToken*)token)->literalSign();
 }
 
-int EDLiteralTokenAbsoluteValue(uint64_t *value,
-                                EDTokenRef token) {
-  if (token->type() != EDToken::kTokenLiteral)
+int EDLiteralTokenAbsoluteValue(uint64_t *value, EDTokenRef token) {
+  if (((EDToken*)token)->type() != EDToken::kTokenLiteral)
     return -1;
   
-  return token->literalAbsoluteValue(*value);
+  return ((EDToken*)token)->literalAbsoluteValue(*value);
 }
 
 int EDRegisterTokenValue(unsigned *registerID,
                          EDTokenRef token) {
-  if (token->type() != EDToken::kTokenRegister)
+  if (((EDToken*)token)->type() != EDToken::kTokenRegister)
     return -1;
   
-  return token->registerID(*registerID);
+  return ((EDToken*)token)->registerID(*registerID);
 }
 
 int EDNumOperands(EDInstRef inst) {
-  return inst->numOperands();
+  return ((EDInst*)inst)->numOperands();
 }
 
 int EDGetOperand(EDOperandRef *operand,
                  EDInstRef inst,
                  int index) {
-  return inst->getOperand(*operand, index);
+  return ((EDInst*)inst)->getOperand(*(EDOperand**)operand, index);
 }
 
 int EDOperandIsRegister(EDOperandRef operand) {
-  return operand->isRegister();
+  return ((EDOperand*)operand)->isRegister();
 }
 
 int EDOperandIsImmediate(EDOperandRef operand) {
-  return operand->isImmediate();
+  return ((EDOperand*)operand)->isImmediate();
 }
 
 int EDOperandIsMemory(EDOperandRef operand) {
-  return operand->isMemory();
+  return ((EDOperand*)operand)->isMemory();
 }
 
-int EDRegisterOperandValue(unsigned *value, 
-                           EDOperandRef operand) {
-  if (!operand->isRegister())
+int EDRegisterOperandValue(unsigned *value, EDOperandRef operand) {
+  if (!((EDOperand*)operand)->isRegister())
     return -1;
-  *value = operand->regVal();
+  *value = ((EDOperand*)operand)->regVal();
   return 0;
 }
 
-int EDImmediateOperandValue(uint64_t *value,
-                           EDOperandRef operand) {
-  if (!operand->isImmediate())
+int EDImmediateOperandValue(uint64_t *value, EDOperandRef operand) {
+  if (!((EDOperand*)operand)->isImmediate())
     return -1;
-  *value = operand->immediateVal();
+  *value = ((EDOperand*)operand)->immediateVal();
   return 0;
 }
 
-int EDEvaluateOperand(uint64_t *result,
-                      EDOperandRef operand,
-                      EDRegisterReaderCallback regReader,
-                      void *arg) {
-  return operand->evaluate(*result, regReader, arg);
+int EDEvaluateOperand(uint64_t *result, EDOperandRef operand,
+                      ::EDRegisterReaderCallback regReader, void *arg) {
+  return ((EDOperand*)operand)->evaluate(*result, regReader, arg);
 }
 
 #ifdef __BLOCKS__
@@ -264,15 +258,13 @@ unsigned int EDBlockCreateInsts(EDInstRef *insts,
                        (void*)&wrapper);
 }
 
-int EDBlockEvaluateOperand(uint64_t *result,
-                           EDOperandRef operand,
+int EDBlockEvaluateOperand(uint64_t *result, EDOperandRef operand,
                            EDRegisterBlock_t regBlock) {
-  return operand->evaluate(*result, regBlock);
+  return ((EDOperand*)operand)->evaluate(*result, regBlock);
 }
 
-int EDBlockVisitTokens(EDInstRef inst,
-                       EDTokenVisitor_t visitor) {
-  return inst->visitTokens(visitor);
+int EDBlockVisitTokens(EDInstRef inst, ::EDTokenVisitor_t visitor) {
+  return ((EDInst*)inst)->visitTokens((llvm::EDTokenVisitor_t)visitor);
 }
 
 #else

@@ -51,41 +51,38 @@ typedef int (*EDRegisterReaderCallback)(uint64_t *value, unsigned regID,
  @typedef EDAssemblySyntax_t
  An assembly syntax for use in tokenizing instructions.
  */
-typedef enum {
+enum {
 /*! @constant kEDAssemblySyntaxX86Intel Intel syntax for i386 and x86_64. */
   kEDAssemblySyntaxX86Intel  = 0,
 /*! @constant kEDAssemblySyntaxX86ATT AT&T syntax for i386 and x86_64. */
   kEDAssemblySyntaxX86ATT    = 1,
   kEDAssemblySyntaxARMUAL    = 2
-} EDAssemblySyntax_t;
+};
+typedef unsigned EDAssemblySyntax_t;
 
 /*!
  @typedef EDDisassemblerRef
  Encapsulates a disassembler for a single CPU architecture.
  */
-struct EDDisassembler;
-typedef struct EDDisassembler *EDDisassemblerRef;
+typedef void *EDDisassemblerRef;
 
 /*!
  @typedef EDInstRef
  Encapsulates a single disassembled instruction in one assembly syntax.
  */
-struct EDInst;
-typedef struct EDInst *EDInstRef;
+typedef void *EDInstRef;
 
 /*!
  @typedef EDTokenRef
  Encapsulates a token from the disassembly of an instruction.
  */
-struct EDToken;
-typedef struct EDToken *EDTokenRef;
+typedef void *EDTokenRef;
 
 /*!
  @typedef EDOperandRef
  Encapsulates an operand of an instruction.
  */
-struct EDOperand;
-typedef struct EDOperand *EDOperandRef;
+typedef void *EDOperandRef;
   
 /*!
  @functiongroup Getting a disassembler

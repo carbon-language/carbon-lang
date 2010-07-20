@@ -1,4 +1,4 @@
-//===-EDInst.h - LLVM Enhanced Disassembler ---------------------*- C++ -*-===//
+//===-- EDInst.h - LLVM Enhanced Disassembler -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,19 +13,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EDInst_
-#define EDInst_
-
-#include "llvm-c/EnhancedDisassembly.h"
+#ifndef LLVM_EDINST_H
+#define LLVM_EDINST_H
 
 #include "llvm/ADT/SmallVector.h"
-
 #include <string>
 #include <vector>
 
 namespace llvm {
+  class MCInst;
   struct EDInstInfo;
-}
+  struct EDToken;
+  struct EDDisassembler;
+  struct EDOperand;
+
+#ifdef __BLOCKS__
+  typedef int (^EDTokenVisitor_t)(EDToken *token);
+#endif
 
 /// CachedResult - Encapsulates the result of a function along with the validity
 ///   of that result, so that slow functions don't need to run twice
@@ -171,5 +175,7 @@ struct EDInst {
   int visitTokens(EDTokenVisitor_t visitor);
 #endif
 };
+
+} // end namespace llvm
 
 #endif

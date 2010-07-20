@@ -18,9 +18,7 @@ TOOL_NO_EXPORTS = 1
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) MCParser MC support
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) MCDisassembler MCParser MC support
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
-# Using LIBS instead of USEDLIBS to force static linking
-LIBS += $(LLVMLibDir)/libEnhancedDisassembly.a

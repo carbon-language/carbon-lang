@@ -13,21 +13,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "Disassembler.h"
-
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/Triple.h"
+#include "../../lib/MC/MCDisassembler/EDDisassembler.h"
+#include "../../lib/MC/MCDisassembler/EDInst.h"
+#include "../../lib/MC/MCDisassembler/EDOperand.h"
+#include "../../lib/MC/MCDisassembler/EDToken.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
-
-#include "llvm-c/EnhancedDisassembly.h"
-
 using namespace llvm;
 
 typedef std::vector<std::pair<unsigned char, const char*> > ByteArrayTy;
@@ -179,21 +179,17 @@ static int byteArrayReader(uint8_t *B, uint64_t A, void *Arg) {
 }
 
 static int verboseEvaluator(uint64_t *V, unsigned R, void *Arg) {
-  EDDisassemblerRef &disassembler = *((EDDisassemblerRef*)Arg);
+  EDDisassembler &disassembler = *((EDDisassembler *)Arg);
   
-  const char *regName;
-  
-  if (!EDGetRegisterName(&regName,
-                        disassembler,
-                        R))
+  if (const char *regName = disassembler.nameWithRegisterID(R))
     outs() << "[" << regName << "/" << R << "]";
-  if (EDRegisterIsStackPointer(disassembler, R))
+  
+  if (disassembler.registerIsStackPointer(R))
     outs() << "(sp)";
-  if (EDRegisterIsProgramCounter(disassembler, R))
+  if (disassembler.registerIsProgramCounter(R))
     outs() << "(pc)";
   
   *V = 0;
-  
   return 0;
 }
 
@@ -209,10 +205,8 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     return -1;
   }
   
-  EDDisassemblerRef disassembler;
-  
   Triple T(TS);
-  EDAssemblySyntax_t AS;
+  EDDisassembler::AssemblySyntax AS;
   
   switch (T.getArch()) {
   default:
@@ -220,90 +214,82 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     return -1;
   case Triple::arm:
   case Triple::thumb:
-    AS = kEDAssemblySyntaxARMUAL;
+    AS = EDDisassembler::kEDAssemblySyntaxARMUAL;
     break;
   case Triple::x86:
   case Triple::x86_64:
-    AS = kEDAssemblySyntaxX86ATT;
+    AS = EDDisassembler::kEDAssemblySyntaxX86ATT;
     break;
   }
   
-  if (EDGetDisassembler(&disassembler, 
-                        TS.c_str(),
-                        AS)) {
-    errs() << "error: couldn't get disassembler for " << TS.c_str() << "\n";
+  EDDisassembler::initialize();
+  EDDisassembler *disassembler =
+    EDDisassembler::getDisassembler(TS.c_str(), AS);
+  
+  if (disassembler == 0) {
+    errs() << "error: couldn't get disassembler for " << TS << '\n';
     return -1;
   }
   
-  EDInstRef inst;
-  
-  if (EDCreateInsts(&inst, 1, disassembler, byteArrayReader, 0,&ByteArray) 
-      != 1) {
+  EDInst *inst =
+    disassembler->createInst(byteArrayReader, 0, &ByteArray);
+                             
+  if (inst == 0) {
     errs() << "error: Didn't get an instruction\n";
     return -1;
   }
   
-  int numTokens = EDNumTokens(inst);
-  
-  if (numTokens < 0) {
-    errs() << "error: Couldn't count the instruction's tokens\n";
+  unsigned numTokens = inst->numTokens();
+  if ((int)numTokens < 0) {
+    errs() << "error: couldn't count the instruction's tokens\n";
     return -1;
   }
   
-  int tokenIndex;
-  
-  for (tokenIndex = 0; tokenIndex < numTokens; ++tokenIndex) {
-    EDTokenRef token;
+  for (unsigned tokenIndex = 0; tokenIndex != numTokens; ++tokenIndex) {
+    EDToken *token;
     
-    if (EDGetToken(&token, inst, tokenIndex)) {
+    if (inst->getToken(token, tokenIndex)) {
       errs() << "error: Couldn't get token\n";
       return -1;
     }
     
     const char *buf;
-    
-    if (EDGetTokenString(&buf, token)) {
+    if (token->getString(buf)) {
       errs() << "error: Couldn't get string for token\n";
       return -1;
     }
     
-    outs() << "[";
-    
-    int operandIndex = EDOperandIndexForToken(token);
+    outs() << '[';
+    int operandIndex = token->operandID();
     
     if (operandIndex >= 0)
       outs() << operandIndex << "-";
     
-    if (EDTokenIsWhitespace(token)) {
-      outs() << "w";
-    } else if (EDTokenIsPunctuation(token)) {
-      outs() << "p";
-    } else if (EDTokenIsOpcode(token)) {
-      outs() << "o";
-    } else if (EDTokenIsLiteral(token)) {
-      outs() << "l";
-    } else if (EDTokenIsRegister(token)) {
-      outs() << "r";
-    } else {
-      outs() << "?";
+    switch (token->type()) {
+    default: outs() << "?"; break;
+    case EDToken::kTokenWhitespace: outs() << "w"; break;
+    case EDToken::kTokenPunctuation: outs() << "p"; break;
+    case EDToken::kTokenOpcode: outs() << "o"; break;
+    case EDToken::kTokenLiteral: outs() << "l"; break;
+    case EDToken::kTokenRegister: outs() << "r"; break;
     }
     
     outs() << ":" << buf;
   
-    if (EDTokenIsLiteral(token)) {
+    if (token->type() == EDToken::kTokenLiteral) {
       outs() << "=";
-      if (EDTokenIsNegativeLiteral(token))
+      if (token->literalSign())
         outs() << "-";
       uint64_t absoluteValue;
-      if (EDLiteralTokenAbsoluteValue(&absoluteValue, token)) {
+      if (token->literalAbsoluteValue(absoluteValue)) {
         errs() << "error: Couldn't get the value of a literal token\n";
         return -1;
       }
       outs() << absoluteValue;
-    } else if (EDTokenIsRegister(token)) {
+    } else if (token->type() == EDToken::kTokenRegister) {
       outs() << "=";
       unsigned regID;
-      if (EDRegisterTokenValue(&regID, token)) {
+      if (token->registerID(regID)) {
         errs() << "error: Couldn't get the ID of a register token\n";
         return -1;
       }
@@ -315,45 +301,34 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
   
   outs() << " ";
     
-  if (EDInstIsBranch(inst))
+  if (inst->isBranch())
     outs() << "<br> ";
-  if (EDInstIsMove(inst))
+  if (inst->isMove())
     outs() << "<mov> ";
   
-  int numOperands = EDNumOperands(inst);
+  unsigned numOperands = inst->numOperands();
   
-  if (numOperands < 0) {
+  if ((int)numOperands < 0) {
     errs() << "error: Couldn't count operands\n";
     return -1;
   }
   
-  int operandIndex;
-  
-  for (operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
+  for (unsigned operandIndex = 0; operandIndex != numOperands; ++operandIndex) {
     outs() << operandIndex << ":";
     
-    EDOperandRef operand;
-    
-    if (EDGetOperand(&operand,
-                     inst,
-                     operandIndex)) {
-      errs() << "error: Couldn't get operand\n";
+    EDOperand *operand;
+    if (inst->getOperand(operand, operandIndex)) {
+      errs() << "error: couldn't get operand\n";
       return -1;
     }
     
     uint64_t evaluatedResult;
-    
-    EDEvaluateOperand(&evaluatedResult, 
-                      operand, 
-                      verboseEvaluator, 
-                      &disassembler);
-      
-    outs() << "=" << evaluatedResult;
-    
-    outs() << " ";
+    evaluatedResult = operand->evaluate(evaluatedResult, verboseEvaluator,
+                                        disassembler);
+    outs() << "=" << evaluatedResult << " ";
   }
   
-  outs() << "\n";
+  outs() << '\n';
   
   return 0;
 }

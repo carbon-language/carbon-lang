@@ -15,14 +15,11 @@ OPTIONAL_PARALLEL_DIRS := clang
 # NOTE: The tools are organized into five groups of four consisting of one
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
-
-# libEnhancedDisassembly must be built ahead of llvm-mc
-# because llvm-mc links against libEnhancedDisassembly
-DIRS := llvm-config edis llvm-mc
-PARALLEL_DIRS := opt llvm-as llvm-dis \
+DIRS := llvm-config 
+PARALLEL_DIRS := opt llvm-as llvm-dis edis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
-                 lli llvm-extract \
+                 lli llvm-extract llvm-mc \
                  bugpoint llvm-bcanalyzer llvm-stub \
                  llvmc
 
@@ -33,6 +30,7 @@ ifdef ONLY_TOOLS
 endif
 
 include $(LEVEL)/Makefile.config
+
 
 # These libraries build as dynamic libraries (.dylib /.so), they can only be
 # built if ENABLE_PIC is set.
@@ -45,6 +43,14 @@ ifeq ($(ENABLE_PIC),1)
       DIRS += lto gold
     else
       PARALLEL_DIRS += lto
+    endif
+
+    # The edis library is only supported if ARM and/or X86 are enabled, and if
+    # LLVM is being built PIC on platforms that support dylibs.
+    ifneq ($(DISABLE_EDIS),1)
+    ifneq ($(filter $(TARGETS_TO_BUILD), X86 ARM),)
+      PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
+    endif
     endif
   endif
 endif

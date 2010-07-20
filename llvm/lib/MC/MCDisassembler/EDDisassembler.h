@@ -1,4 +1,4 @@
-//===-EDDisassembler.h - LLVM Enhanced Disassembler -------------*- C++ -*-===//
+//===-- EDDisassembler.h - LLVM Enhanced Disassembler -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,12 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EDDisassembler_
-#define EDDisassembler_
+#ifndef LLVM_EDDISASSEMBLER_H
+#define LLVM_EDDISASSEMBLER_H
 
 #include "EDInfo.inc"
-
-#include "llvm-c/EnhancedDisassembly.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
@@ -27,7 +25,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 #include <vector>
 
 namespace llvm {
@@ -51,11 +48,24 @@ class TargetMachine;
 class TargetRegisterInfo;
 
 struct EDInstInfo;
-}
+struct EDInst;
+struct EDOperand;
+struct EDToken;
+
+typedef int (*EDByteReaderCallback)(uint8_t *byte, uint64_t address, void *arg);
 
 /// EDDisassembler - Encapsulates a disassembler for a single architecture and
 ///   disassembly syntax.  Also manages the static disassembler registry.
 struct EDDisassembler {
+  typedef enum {
+    /*! @constant kEDAssemblySyntaxX86Intel Intel syntax for i386 and x86_64. */
+    kEDAssemblySyntaxX86Intel  = 0,
+    /*! @constant kEDAssemblySyntaxX86ATT AT&T syntax for i386 and x86_64. */
+    kEDAssemblySyntaxX86ATT    = 1,
+    kEDAssemblySyntaxARMUAL    = 2
+  } AssemblySyntax;
+  
+  
   ////////////////////
   // Static members //
   ////////////////////
@@ -67,7 +77,7 @@ struct EDDisassembler {
     llvm::Triple::ArchType Arch;
     
     /// The assembly syntax
-    EDAssemblySyntax_t Syntax;
+    AssemblySyntax Syntax;
     
     /// operator== - Equality operator
     bool operator==(const CPUKey &key) const {
@@ -98,7 +108,7 @@ struct EDDisassembler {
   /// @arg arch   - The desired architecture
   /// @arg syntax - The desired disassembly syntax
   static EDDisassembler *getDisassembler(llvm::Triple::ArchType arch,
-                                         EDAssemblySyntax_t syntax);
+                                         AssemblySyntax syntax);
   
   /// getDisassembler - Returns the disassembler for a given combination of
   ///   CPU type, CPU subtype, and assembly syntax, or NULL on failure
@@ -107,7 +117,7 @@ struct EDDisassembler {
   ///               "x86_64-apple-darwin"
   /// @arg syntax - The disassembly syntax for the required disassembler
   static EDDisassembler *getDisassembler(llvm::StringRef str,
-                                         EDAssemblySyntax_t syntax);
+                                         AssemblySyntax syntax);
   
   /// initialize - Initializes the disassembler registry and the LLVM backend
   static void initialize();
@@ -128,7 +138,7 @@ struct EDDisassembler {
   CPUKey Key;
   /// The LLVM target corresponding to the disassembler
   const llvm::Target *Tgt;
-  /// The target machien instance.
+  /// The target machine instance.
   llvm::OwningPtr<llvm::TargetMachine> TargetMachine;
   /// The assembly information for the target architecture
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
@@ -255,5 +265,7 @@ struct EDDisassembler {
   /// llvmSyntaxVariant - returns the LLVM syntax variant for this disassembler
   int llvmSyntaxVariant() const;  
 };
+
+} // end namespace llvm
 
 #endif

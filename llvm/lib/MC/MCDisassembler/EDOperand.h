@@ -13,10 +13,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EDOperand_
-#define EDOperand_
+#ifndef LLVM_EDOPERAND_H
+#define LLVM_EDOPERAND_H
 
-#include "llvm-c/EnhancedDisassembly.h"
+#include "llvm/Support/DataTypes.h"
+
+namespace llvm {
+
+struct EDDisassembler;
+struct EDInst;
+  
+typedef int (*EDRegisterReaderCallback)(uint64_t *value, unsigned regID, 
+                                        void* arg);
+
 
 /// EDOperand - Encapsulates a single operand, which can be evaluated by the
 ///   client
@@ -69,10 +78,14 @@ struct EDOperand {
   int isMemory();
   
 #ifdef __BLOCKS__
+  typedef int (^EDRegisterBlock_t)(uint64_t *value, unsigned regID);
+
   /// evaluate - Like evaluate for a callback, but uses a block instead
   int evaluate(uint64_t &result,
                EDRegisterBlock_t regBlock);
 #endif
 };
+
+} // end namespace llvm
 
 #endif

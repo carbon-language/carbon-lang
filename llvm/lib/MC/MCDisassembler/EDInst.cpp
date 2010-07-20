@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EDDisassembler.h"
 #include "EDInst.h"
+#include "EDDisassembler.h"
 #include "EDOperand.h"
 #include "EDToken.h"
 

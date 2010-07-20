@@ -1,4 +1,4 @@
-//===-EDToken.cpp - LLVM Enhanced Disassembler ----------------------------===//
+//===-- EDToken.cpp - LLVM Enhanced Disassembler --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,13 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EDDisassembler.h"
 #include "EDToken.h"
-
-#include "llvm/ADT/SmallVector.h"
+#include "EDDisassembler.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
-
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 EDToken::EDToken(StringRef str,

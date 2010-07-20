@@ -1,4 +1,4 @@
-//===-EDOperand.cpp - LLVM Enhanced Disassembler --------------------------===//
+//===-- EDOperand.cpp - LLVM Enhanced Disassembler ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,13 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "EDOperand.h"
 #include "EDDisassembler.h"
 #include "EDInst.h"
-#include "EDOperand.h"
-
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
-
 using namespace llvm;
 
 EDOperand::EDOperand(const EDDisassembler &disassembler,
@@ -263,7 +261,7 @@ int EDOperand::isMemory() {
 
 #ifdef __BLOCKS__
 struct RegisterReaderWrapper {
-  EDRegisterBlock_t regBlock;
+  EDOperand::EDRegisterBlock_t regBlock;
 };
 
 int readerWrapperCallback(uint64_t *value, 
