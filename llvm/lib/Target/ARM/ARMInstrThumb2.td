@@ -1686,6 +1686,7 @@ let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs <0b0011, "mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 
 
+let AddedComplexity = 1 in
 def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
             (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
 
