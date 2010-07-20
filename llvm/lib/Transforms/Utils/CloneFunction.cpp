@@ -408,10 +408,9 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //
     BasicBlock::iterator I = NewBB->begin();
 
-    unsigned DbgKind = OldFunc->getContext().getMDKindID("dbg");
     MDNode *TheCallMD = NULL;
     if (TheCall && TheCall->hasMetadata()) 
-      TheCallMD = TheCall->getMetadata(DbgKind);
+      TheCallMD = TheCall->getMetadata(LLVMContext::MD_dbg);
     
     // Handle PHI nodes specially, as we have to remove references to dead
     // blocks.
@@ -421,14 +420,14 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI) {
         if (I->hasMetadata()) {
           if (TheCallMD) {
-            if (MDNode *IMD = I->getMetadata(DbgKind)) {
+            if (MDNode *IMD = I->getMetadata(LLVMContext::MD_dbg)) {
               MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
-              I->setMetadata(DbgKind, NewMD);
+              I->setMetadata(LLVMContext::MD_dbg, NewMD);
             }
           } else {
             // The cloned instruction has dbg info but the call instruction
             // does not have dbg info. Remove dbg info from cloned instruction.
-            I->setMetadata(DbgKind, 0);
+            I->setMetadata(LLVMContext::MD_dbg, 0);
           }
         }
         PHIToResolve.push_back(cast<PHINode>(OldI));
@@ -445,14 +444,14 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     for (; I != NewBB->end(); ++I) {
       if (I->hasMetadata()) {
         if (TheCallMD) {
-          if (MDNode *IMD = I->getMetadata(DbgKind)) {
+          if (MDNode *IMD = I->getMetadata(LLVMContext::MD_dbg)) {
             MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
-            I->setMetadata(DbgKind, NewMD);
+            I->setMetadata(LLVMContext::MD_dbg, NewMD);
           }
         } else {
           // The cloned instruction has dbg info but the call instruction
           // does not have dbg info. Remove dbg info from cloned instruction.
-          I->setMetadata(DbgKind, 0);
+          I->setMetadata(LLVMContext::MD_dbg, 0);
         }
       }
       RemapInstruction(I, VMap);

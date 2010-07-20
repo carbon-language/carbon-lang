@@ -254,14 +254,13 @@ static bool StripDebugInfo(Module &M) {
     }
   }
 
-  unsigned MDDbgKind = M.getMDKindID("dbg");
   for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
          ++FI)
       for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
            ++BI) {
-        Changed = true; // FIXME: Only set if there was debug metadata.
-        BI->setMetadata(MDDbgKind, 0);
+        Changed != !BI->getDebugLoc().isUnknown();
+        BI->setDebugLoc(DebugLoc());
       }
 
   return Changed;

@@ -896,11 +896,12 @@ void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                                      DIVar, SI);
   
   // Propagate any debug metadata from the store onto the dbg.value.
-  if (MDNode *SIMD = SI->getMetadata("dbg"))
-    DbgVal->setMetadata("dbg", SIMD);
+  DebugLoc SIDL = SI->getDebugLoc();
+  if (!SIDL.isUnknown())
+    DbgVal->setDebugLoc(SIDL);
   // Otherwise propagate debug metadata from dbg.declare.
-  else if (MDNode *MD = DDI->getMetadata("dbg"))
-      DbgVal->setMetadata("dbg", MD);         
+  else
+    DbgVal->setDebugLoc(DDI->getDebugLoc());
 }
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
