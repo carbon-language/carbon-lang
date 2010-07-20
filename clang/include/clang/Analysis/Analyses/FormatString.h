@@ -147,14 +147,18 @@ public:
     // GlibC specific specifiers.
     PrintErrno,   // 'm'
     
-    PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno
+    PrintfConvBeg = ObjCObjArg, PrintfConvEnd = PrintErrno,
+    
+    // ** Scanf-specific **    
+    ScanListArg, // '['
+    ScanfConvBeg = ScanListArg, ScanfConvEnd = ScanListArg
   };
   
   ConversionSpecifier(bool isPrintf)
-    : IsPrintf(isPrintf), Position(0), kind(InvalidSpecifier) {}
+    : IsPrintf(isPrintf), Position(0), EndScanList(0), kind(InvalidSpecifier) {}
   
   ConversionSpecifier(bool isPrintf, const char *pos, Kind k)
-    : IsPrintf(isPrintf), Position(pos), kind(k) {}
+    : IsPrintf(isPrintf), Position(pos), EndScanList(0), kind(k) {}
   
   const char *getStart() const {
     return Position;
@@ -164,13 +168,23 @@ public:
     return llvm::StringRef(getStart(), getLength());
   }
   
+  bool consumesDataArgument() const {
+    switch (kind) {
+      case PrintErrno:
+        assert(IsPrintf);
+      case PercentArg:
+        return false;
+      default:
+        return true;
+    }
+  }
+  
   Kind getKind() const { return kind; }
   void setKind(Kind k) { kind = k; }
   unsigned getLength() const {
-      // Conversion specifiers currently only are represented by
-      // single characters, but we be flexible.
-    return 1;
+    return EndScanList ? EndScanList - Position : 1;
   }
+  
   const char *toString() const;
   
   bool isPrintfKind() const { return IsPrintf; }
@@ -178,6 +192,7 @@ public:
 protected:
   bool IsPrintf;
   const char *Position;
+  const char *EndScanList;
   Kind kind;
 };
 
@@ -338,16 +353,6 @@ public:
   PrintfConversionSpecifier(const char *pos, Kind k)
     : ConversionSpecifier(true, pos, k) {}
 
-  bool consumesDataArgument() const {
-    switch (kind) {
-      case PercentArg:
-      case PrintErrno:
-        return false;
-      default:
-        return true;
-    }
-  }
-
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
   bool isUIntArg() const { return kind >= UIntArgBeg && kind <= UIntArgEnd; }
@@ -468,79 +473,16 @@ public:
 
 namespace analyze_scanf {
 
-class ScanfConversionSpecifier {
+class ScanfConversionSpecifier :
+    public analyze_format_string::ConversionSpecifier  {
 public:
-  enum Kind {
-    InvalidSpecifier = 0,
-      // C99 conversion specifiers.
-    dArg, // 'd'
-    iArg, // 'i',
-    oArg, // 'o',
-    uArg, // 'u',
-    xArg, // 'x',
-    XArg, // 'X',
-    fArg, // 'f',
-    FArg, // 'F',
-    eArg, // 'e',
-    EArg, // 'E',
-    gArg, // 'g',
-    GArg, // 'G',
-    aArg, // 'a',
-    AArg, // 'A',
-    sArg, // 's', // match sequence of non-write-space characters
-    pArg,        // 'p'
-    cArg,              // 'c', differs from printf, writes array of characters
-    nArg,  // 'n', differs from printf, writes back args consumed
-    PercentArg,        // '%'
-    ScanListArg,       // '[' followed by scan list
-      // IEEE Std 1003.1 extensions.
-    CArg, // 'C', same as writing 'lc'
-    SArg, // 'S', same as writing 'ls'
-      // Specifier ranges.
-    IntArgBeg = dArg,
-    IntArgEnd = iArg,
-    UIntArgBeg = oArg,
-    UIntArgEnd = XArg,
-    DoubleArgBeg = fArg,
-    DoubleArgEnd = AArg
-  };
-
   ScanfConversionSpecifier()
-  : Position(0), EndScanList(0), kind(InvalidSpecifier) {}
+    : ConversionSpecifier(false, 0, InvalidSpecifier) {}
 
   ScanfConversionSpecifier(const char *pos, Kind k)
-  : Position(pos), EndScanList(0), kind(k) {}
-
-  const char *getStart() const {
-    return Position;
-  }
+    : ConversionSpecifier(false, pos, k) {}
 
   void setEndScanList(const char *pos) { EndScanList = pos; }
-
-  llvm::StringRef getCharacters() const {
-    return llvm::StringRef(getStart(), getLength());
-  }
-
-  bool consumesDataArgument() const {
-    return kind != PercentArg;
-  }
-
-  bool isIntArg() const { return kind >= dArg && kind <= iArg; }
-  bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
-  bool isDoubleArg() const { return kind >= fArg && kind <= AArg; }
-  Kind getKind() const { return kind; }
-  void setKind(Kind k) { kind = k; }
-
-  unsigned getLength() const {
-    return EndScanList ? EndScanList - Position : 1;
-  }
-
-  const char *toString() const;
-
-private:
-  const char *Position;
-  const char *EndScanList;
-  Kind kind;
 };
 
 using analyze_format_string::LengthModifier;
