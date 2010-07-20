@@ -16,7 +16,7 @@ OPTIONAL_PARALLEL_DIRS := clang
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
 DIRS := llvm-config 
-PARALLEL_DIRS := opt llvm-as llvm-dis edis \
+PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli llvm-extract llvm-mc \
@@ -49,7 +49,7 @@ ifeq ($(ENABLE_PIC),1)
     # LLVM is being built PIC on platforms that support dylibs.
     ifneq ($(DISABLE_EDIS),1)
     ifneq ($(filter $(TARGETS_TO_BUILD), X86 ARM),)
-      PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
+      PARALLEL_DIRS += edis
     endif
     endif
   endif
