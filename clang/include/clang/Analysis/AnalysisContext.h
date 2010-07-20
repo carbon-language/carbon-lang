@@ -103,7 +103,10 @@ public:
 
 private:
   ContextKind Kind;
+
+  // AnalysisContext can't be const since some methods may modify its member.
   AnalysisContext *Ctx;
+
   const LocationContext *Parent;
 
 protected:
