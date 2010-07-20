@@ -69,6 +69,7 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
                                          DominatorTree &DT) {
   if (isa<SCEVConstant>(S) || isa<SCEVUnknown>(S))
     return S;
+
   if (const SCEVCastExpr *X = dyn_cast<SCEVCastExpr>(S)) {
     const SCEV *O = X->getOperand();
     const SCEV *N = TransformForPostIncUse(Kind, O, User, OperandValToReplace,
@@ -82,9 +83,11 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       }
     return S;
   }
+
   if (const SCEVNAryExpr *X = dyn_cast<SCEVNAryExpr>(S)) {
     SmallVector<const SCEV *, 8> Operands;
     bool Changed = false;
+    // Transform each operand.
     for (SCEVNAryExpr::op_iterator I = X->op_begin(), E = X->op_end();
          I != E; ++I) {
       const SCEV *O = *I;
@@ -134,6 +137,7 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       }
     return S;
   }
+
   if (const SCEVUDivExpr *X = dyn_cast<SCEVUDivExpr>(S)) {
     const SCEV *LO = X->getLHS();
     const SCEV *RO = X->getRHS();
@@ -145,6 +149,7 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       return SE.getUDivExpr(LN, RN);
     return S;
   }
+
   llvm_unreachable("Unexpected SCEV kind!");
   return 0;
 }
