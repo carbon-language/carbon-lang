@@ -3298,6 +3298,11 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("/usr/lib");
     }
 
+    if (D.CCCIsCXX) {
+      CmdArgs.push_back("-lstdc++");
+      CmdArgs.push_back("-lm");
+    }
+
     if (Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back("-lgcc_pic");
     } else {
