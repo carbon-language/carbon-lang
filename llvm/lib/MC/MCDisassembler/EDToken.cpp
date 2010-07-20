@@ -18,7 +18,6 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/System/DataTypes.h"
 using namespace llvm;
 
 EDToken::EDToken(StringRef str,
