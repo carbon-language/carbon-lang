@@ -4,5 +4,5 @@
 // RUN:   -c %s 2> %t
 // RUN: FileCheck < %t %s
 //
-// CHECK: clang" "-cc1" "-triple" "i386-apple-darwin8.0.0" 
-// CHECK: clang" "-cc1" "-triple" "x86_64-apple-darwin9.0.0" 
+// CHECK: clang{{.*}}" "-cc1" "-triple" "i386-apple-darwin8.0.0" 
+// CHECK: clang{{.*}}" "-cc1" "-triple" "x86_64-apple-darwin9.0.0" 
