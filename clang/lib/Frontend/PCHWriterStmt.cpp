@@ -602,7 +602,7 @@ void PCHStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
 
 void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  Record.push_back(E->isLvalueCast());
+  Record.push_back(E->getCategory());
   Code = pch::EXPR_IMPLICIT_CAST;
 }
 

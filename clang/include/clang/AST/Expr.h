@@ -258,7 +258,6 @@ public:
   ///   function returning an rvalue reference.
   /// lvalues and xvalues are collectively referred to as glvalues, while
   /// prvalues and xvalues together form rvalues.
-  /// If a 
   Classification Classify(ASTContext &Ctx) const {
     return ClassifyImpl(Ctx, 0);
   }
@@ -2045,24 +2044,33 @@ public:
 ///
 /// In C, implicit casts always produce rvalues. However, in C++, an
 /// implicit cast whose result is being bound to a reference will be
-/// an lvalue. For example:
+/// an lvalue or xvalue. For example:
 ///
 /// @code
 /// class Base { };
 /// class Derived : public Base { };
+/// Derived &&ref();
 /// void f(Derived d) {
-///   Base& b = d; // initializer is an ImplicitCastExpr to an lvalue of type Base
+///   Base& b = d; // initializer is an ImplicitCastExpr
+///                // to an lvalue of type Base
+///   Base&& r = ref(); // initializer is an ImplicitCastExpr
+///                     // to an xvalue of type Base
 /// }
 /// @endcode
 class ImplicitCastExpr : public CastExpr {
-  /// LvalueCast - Whether this cast produces an lvalue.
-  bool LvalueCast;
+public:
+  enum ResultCategory {
+    RValue, LValue, XValue
+  };
+
+private:
+  /// Category - The category this cast produces.
+  ResultCategory Category;
 
 public:
   ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, 
-                   CXXBaseSpecifierArray BasePath, bool Lvalue)
-    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), 
-    LvalueCast(Lvalue) { }
+                   CXXBaseSpecifierArray BasePath, ResultCategory Cat)
+    : CastExpr(ImplicitCastExprClass, ty, kind, op, BasePath), Category(Cat) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell)
@@ -2072,11 +2080,11 @@ public:
     return getSubExpr()->getSourceRange();
   }
 
-  /// isLvalueCast - Whether this cast produces an lvalue.
-  bool isLvalueCast() const { return LvalueCast; }
+  /// getCategory - The value category this cast produces.
+  ResultCategory getCategory() const { return Category; }
 
-  /// setLvalueCast - Set whether this cast produces an lvalue.
-  void setLvalueCast(bool Lvalue) { LvalueCast = Lvalue; }
+  /// setCategory - Set the value category this cast produces.
+  void setCategory(ResultCategory Cat) { Category = Cat; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImplicitCastExprClass;
@@ -2098,8 +2106,8 @@ public:
 /// actual type of the expression as determined by semantic
 /// analysis. These types may differ slightly. For example, in C++ one
 /// can cast to a reference type, which indicates that the resulting
-/// expression will be an lvalue. The reference type, however, will
-/// not be used as the type of the expression.
+/// expression will be an lvalue or xvalue. The reference type, however,
+/// will not be used as the type of the expression.
 class ExplicitCastExpr : public CastExpr {
   /// TInfo - Source type info for the (written) type
   /// this expression is casting to.

@@ -1508,7 +1508,8 @@ FieldDecl *Expr::getBitField() {
   Expr *E = this->IgnoreParens();
 
   while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->isLvalueCast() && ICE->getCastKind() == CastExpr::CK_NoOp)
+    if (ICE->getCategory() != ImplicitCastExpr::RValue &&
+        ICE->getCastKind() == CastExpr::CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else
       break;
@@ -1530,7 +1531,8 @@ bool Expr::refersToVectorElement() const {
   const Expr *E = this->IgnoreParens();
   
   while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->isLvalueCast() && ICE->getCastKind() == CastExpr::CK_NoOp)
+    if (ICE->getCategory() != ImplicitCastExpr::RValue &&
+        ICE->getCastKind() == CastExpr::CK_NoOp)
       E = ICE->getSubExpr()->IgnoreParens();
     else
       break;

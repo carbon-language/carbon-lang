@@ -445,6 +445,8 @@ public:
     SK_ResolveAddressOfOverloadedFunction,
     /// \brief Perform a derived-to-base cast, producing an rvalue.
     SK_CastDerivedToBaseRValue,
+    /// \brief Perform a derived-to-base cast, producing an xvalue.
+    SK_CastDerivedToBaseXValue,
     /// \brief Perform a derived-to-base cast, producing an lvalue.
     SK_CastDerivedToBaseLValue,
     /// \brief Reference binding to an lvalue.
@@ -460,6 +462,8 @@ public:
     SK_UserConversion,
     /// \brief Perform a qualification conversion, producing an rvalue.
     SK_QualificationConversionRValue,
+    /// \brief Perform a qualification conversion, producing an xvalue.
+    SK_QualificationConversionXValue,
     /// \brief Perform a qualification conversion, producing an lvalue.
     SK_QualificationConversionLValue,
     /// \brief Perform an implicit conversion sequence.
@@ -670,7 +674,8 @@ public:
   ///
   /// \param IsLValue true if the result of this cast will be treated as 
   /// an lvalue.
-  void AddDerivedToBaseCastStep(QualType BaseType, bool IsLValue);
+  void AddDerivedToBaseCastStep(QualType BaseType,
+                                ImplicitCastExpr::ResultCategory Category);
      
   /// \brief Add a new step binding a reference to an object.
   ///
@@ -702,7 +707,8 @@ public:
   
   /// \brief Add a new step that performs a qualification conversion to the
   /// given type.
-  void AddQualificationConversionStep(QualType Ty, bool IsLValue);
+  void AddQualificationConversionStep(QualType Ty,
+                                     ImplicitCastExpr::ResultCategory Category);
   
   /// \brief Add a new step that applies an implicit conversion sequence.
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,

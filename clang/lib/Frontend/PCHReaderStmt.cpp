@@ -588,7 +588,7 @@ void PCHStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
 
 void PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
-  E->setLvalueCast(Record[Idx++]);
+  E->setCategory(static_cast<ImplicitCastExpr::ResultCategory>(Record[Idx++]));
 }
 
 void PCHStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {

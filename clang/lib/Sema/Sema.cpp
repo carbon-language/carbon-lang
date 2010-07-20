@@ -152,10 +152,11 @@ Sema::~Sema() {
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
 /// If there is already an implicit cast, merge into the existing one.
-/// If isLvalue, the result of the cast is an lvalue.
+/// The result is of the given category.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
                              CastExpr::CastKind Kind, 
-                             bool isLvalue, CXXBaseSpecifierArray BasePath) {
+                             ImplicitCastExpr::ResultCategory Category,
+                             CXXBaseSpecifierArray BasePath) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 
@@ -186,12 +187,21 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind && BasePath.empty()) {
       ImpCast->setType(Ty);
-      ImpCast->setLvalueCast(isLvalue);
+      ImpCast->setCategory(Category);
       return;
     }
   }
 
-  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, BasePath, isLvalue);
+  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, BasePath, Category);
+}
+
+ImplicitCastExpr::ResultCategory Sema::CastCategory(Expr *E) {
+  Expr::Classification Classification = E->Classify(Context);
+  return Classification.isRValue() ?
+      ImplicitCastExpr::RValue :
+      (Classification.isLValue() ?
+          ImplicitCastExpr::LValue :
+          ImplicitCastExpr::XValue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

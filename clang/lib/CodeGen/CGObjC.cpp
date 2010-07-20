@@ -404,7 +404,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     if (getContext().getCanonicalType(Ivar->getType()) !=
         getContext().getCanonicalType(ArgDecl->getType())) {
       ImplicitCastExpr ArgCasted(Ivar->getType(), CastExpr::CK_BitCast, &Arg,
-                                 CXXBaseSpecifierArray(), false);
+                                 CXXBaseSpecifierArray(),
+                                 ImplicitCastExpr::RValue);
       BinaryOperator Assign(&IvarRef, &ArgCasted, BinaryOperator::Assign,
                             Ivar->getType(), Loc);
       EmitStmt(&Assign);

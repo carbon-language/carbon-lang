@@ -2900,7 +2900,7 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   CXXBaseSpecifierArray BasePath;
   return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
                                                         SubExpr, BasePath,
-                                                        E->isLvalueCast());
+                                                        E->getCategory());
 }
 
 Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {

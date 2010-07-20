@@ -134,10 +134,16 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     // Implicit casts are lvalues if they're lvalue casts. Other than that, we
     // only specifically record class temporaries.
   case Expr::ImplicitCastExprClass:
-    if (cast<ImplicitCastExpr>(E)->isLvalueCast())
+    switch (cast<ImplicitCastExpr>(E)->getCategory()) {
+    case ImplicitCastExpr::RValue:
+      return Lang.CPlusPlus && E->getType()->isRecordType() ?
+        Cl::CL_ClassTemporary : Cl::CL_PRValue;
+    case ImplicitCastExpr::LValue:
       return Cl::CL_LValue;
-    return Lang.CPlusPlus && E->getType()->isRecordType() ?
-      Cl::CL_ClassTemporary : Cl::CL_PRValue;
+    case ImplicitCastExpr::XValue:
+      return Cl::CL_XValue;
+    }
+    llvm_unreachable("Invalid value category of implicit cast.");
 
     // C++ [expr.prim.general]p4: The presence of parentheses does not affect
     //   whether the expression is an lvalue.

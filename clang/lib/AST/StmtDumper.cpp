@@ -340,8 +340,16 @@ void StmtDumper::VisitCastExpr(CastExpr *Node) {
 
 void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
   VisitCastExpr(Node);
-  if (Node->isLvalueCast())
+  switch (Node->getCategory()) {
+  case ImplicitCastExpr::LValue:
     OS << " lvalue";
+    break;
+  case ImplicitCastExpr::XValue:
+    OS << " xvalue";
+    break;
+  default:
+    break;
+  }
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {

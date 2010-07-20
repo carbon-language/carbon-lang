@@ -2909,8 +2909,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                                             Arg, Converted);
 
     if (IsQualificationConversion(ArgType, ParamType.getNonReferenceType())) {
-      ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp,
-                        Arg->isLvalue(Context) == Expr::LV_Valid);
+      ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp, CastCategory(Arg));
     } else if (!Context.hasSameUnqualifiedType(ArgType,
                                            ParamType.getNonReferenceType())) {
       // We can't perform this conversion.
@@ -2973,8 +2972,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (Context.hasSameUnqualifiedType(ParamType, ArgType)) {
     // Types match exactly: nothing more to do here.
   } else if (IsQualificationConversion(ArgType, ParamType)) {
-    ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp,
-                      Arg->isLvalue(Context) == Expr::LV_Valid);
+    ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp, CastCategory(Arg));
   } else {
     // We can't perform this conversion.
     Diag(Arg->getSourceRange().getBegin(),

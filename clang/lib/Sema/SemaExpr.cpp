@@ -1441,9 +1441,8 @@ Sema::PerformObjectMemberConversion(Expr *&From,
   SourceRange FromRange = From->getSourceRange();
   SourceLocation FromLoc = FromRange.getBegin();
 
-  bool isLvalue
-    = (From->isLvalue(Context) == Expr::LV_Valid) && !PointerConversions;
-  
+  ImplicitCastExpr::ResultCategory Category = CastCategory(From);
+
   // C++ [class.member.lookup]p8:
   //   [...] Ambiguities can often be resolved by qualifying a name with its
   //   class name.
@@ -1481,7 +1480,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         QType = Context.getPointerType(QType);
       ImpCastExprToType(From, QType, CastExpr::CK_UncheckedDerivedToBase,
-                        isLvalue, BasePath);
+                        Category, BasePath);
 
       FromType = QType;
       FromRecordType = QRecordType;
@@ -1518,7 +1517,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       if (PointerConversions)
         UType = Context.getPointerType(UType);
       ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
-                        isLvalue, BasePath);
+                        Category, BasePath);
       FromType = UType;
       FromRecordType = URecordType;
     }
@@ -1535,7 +1534,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
     return true;
 
   ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
-                    isLvalue, BasePath);
+                    Category, BasePath);
   return false;
 }
 

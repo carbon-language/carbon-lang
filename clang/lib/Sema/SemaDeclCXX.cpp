@@ -1536,9 +1536,9 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     QualType ArgTy = 
       SemaRef.Context.getQualifiedType(BaseSpec->getType().getUnqualifiedType(), 
                                        ParamType.getQualifiers());
-    SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy, 
+    SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                               CastExpr::CK_UncheckedDerivedToBase,
-                              /*isLvalue=*/true, 
+                              ImplicitCastExpr::LValue,
                               CXXBaseSpecifierArray(BaseSpec));
 
     InitializationKind InitKind
@@ -4858,8 +4858,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // appropriately-qualified base type.
     Expr *From = OtherRef->Retain();
     ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
-                      CastExpr::CK_UncheckedDerivedToBase, /*isLvalue=*/true, 
-                      CXXBaseSpecifierArray(Base));
+                      CastExpr::CK_UncheckedDerivedToBase,
+                      ImplicitCastExpr::LValue, CXXBaseSpecifierArray(Base));
 
     // Dereference "this".
     OwningExprResult To = CreateBuiltinUnaryOp(Loc, UnaryOperator::Deref,
@@ -4871,7 +4871,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                       Context.getCVRQualifiedType(BaseType,
                                       CopyAssignOperator->getTypeQualifiers()),
                       CastExpr::CK_UncheckedDerivedToBase, 
-                      /*isLvalue=*/true, CXXBaseSpecifierArray(Base));
+                      ImplicitCastExpr::LValue, CXXBaseSpecifierArray(Base));
     To = Owned(ToE);
 
     // Build the copy.

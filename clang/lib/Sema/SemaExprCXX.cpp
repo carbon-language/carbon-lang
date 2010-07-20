@@ -296,10 +296,10 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
         return ExprError();
       
       // C++ [expr.typeid]p3:
-      //   When typeid is applied to an expression other than an lvalue of a
+      //   When typeid is applied to an expression other than an glvalue of a
       //   polymorphic class type [...] [the] expression is an unevaluated
       //   operand. [...]
-      if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid) {
+      if (RecordD->isPolymorphic() && E->Classify(Context).isGLValue()) {
         isUnevaluatedOperand = false;
 
         // We require a vtable to query the type at run time.
@@ -316,7 +316,7 @@ Sema::OwningExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     QualType UnqualT = Context.getUnqualifiedArrayType(T, Quals);
     if (!Context.hasSameType(T, UnqualT)) {
       T = UnqualT;
-      ImpCastExprToType(E, UnqualT, CastExpr::CK_NoOp, E->isLvalue(Context));
+      ImpCastExprToType(E, UnqualT, CastExpr::CK_NoOp, CastCategory(E));
       Operand.release();
       Operand = Owned(E);
     }
@@ -401,7 +401,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   //   or "pointer to function returning T", [...]
   if (E->getType().hasQualifiers())
     ImpCastExprToType(E, E->getType().getUnqualifiedType(), CastExpr::CK_NoOp,
-                      E->isLvalue(Context) == Expr::LV_Valid);
+                      CastCategory(E));
   
   DefaultFunctionArrayConversion(E);
 
@@ -1809,7 +1809,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     CXXBaseSpecifierArray BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, IgnoreBaseAccess))
       return true;
-    ImpCastExprToType(From, ToType, Kind, /*isLvalue=*/false, BasePath);
+    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, BasePath);
     break;
   }
   
@@ -1821,7 +1821,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;
     if (CheckExceptionSpecCompatibility(From, ToType))
       return true;
-    ImpCastExprToType(From, ToType, Kind, /*isLvalue=*/false, BasePath);
+    ImpCastExprToType(From, ToType, Kind, ImplicitCastExpr::RValue, BasePath);
     break;
   }
   case ICK_Boolean_Conversion: {
@@ -1843,11 +1843,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                      IgnoreBaseAccess))
       return true;
 
-    ImpCastExprToType(From, ToType.getNonReferenceType(), 
-                      CastExpr::CK_DerivedToBase, 
-                      /*isLvalue=*/(From->getType()->isRecordType() &&
-                                    From->isLvalue(Context) == Expr::LV_Valid),
-                      BasePath);
+    ImpCastExprToType(From, ToType.getNonReferenceType(),
+                      CastExpr::CK_DerivedToBase, CastCategory(From), BasePath);
     break;
   }
 
@@ -1877,18 +1874,21 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // Nothing to do.
     break;
 
-  case ICK_Qualification:
-    // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
-    // references.
+  case ICK_Qualification: {
+    // The qualification keeps the category of the inner expression, unless the
+    // target type isn't a reference.
+    ImplicitCastExpr::ResultCategory Category = ToType->isReferenceType() ?
+                                  CastCategory(From) : ImplicitCastExpr::RValue;
     ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
-                      CastExpr::CK_NoOp, ToType->isLValueReferenceType());
+                      CastExpr::CK_NoOp, Category);
 
     if (SCS.DeprecatedStringLiteralToCharPtr)
       Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
         << ToType.getNonReferenceType();
 
     break;
-      
+    }
+
   default:
     assert(false && "Improper third standard conversion");
     break;
@@ -1974,11 +1974,12 @@ QualType Sema::CheckPointerToMemberOperands(
     }
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
-    bool isLValue = !isIndirect && lex->isLvalue(Context) == Expr::LV_Valid;
-    
+    ImplicitCastExpr::ResultCategory Category =
+        isIndirect ? ImplicitCastExpr::RValue : CastCategory(lex);
+
     CXXBaseSpecifierArray BasePath;
     BuildBasePathArray(Paths, BasePath);
-    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, isLValue,
+    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, Category,
                       BasePath);
   }
 

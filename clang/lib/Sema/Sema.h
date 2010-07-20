@@ -4153,11 +4153,16 @@ public:
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
   void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E);
 
+  /// CastCategory - Get the correct forwarded implicit cast result category
+  /// from the inner expression.
+  ImplicitCastExpr::ResultCategory CastCategory(Expr *E);
+
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
   void ImpCastExprToType(Expr *&Expr, QualType Type, CastExpr::CastKind Kind,
-                         bool isLvalue = false,
+                         ImplicitCastExpr::ResultCategory Category =
+                          ImplicitCastExpr::RValue,
                          CXXBaseSpecifierArray BasePath =
                           CXXBaseSpecifierArray());
 

@@ -2108,7 +2108,7 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
   ImplicitCastExpr *ICE = 
     new (Context) ImplicitCastExpr(pToFunc, CastExpr::CK_Unknown,
                                    DRE, CXXBaseSpecifierArray(),
-                                   /*isLvalue=*/false);
+                                   ImplicitCastExpr::RValue);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
@@ -5609,7 +5609,9 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   }
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
-    CastExpr *Replacement = new (Context) CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
+    CastExpr *Replacement = new (Context) CastExpr(ICE->getType(),
+                                                   ICE->getSubExpr(),
+                                                   SourceLocation());
     // Get the new text.
     std::string SStr;
     llvm::raw_string_ostream Buf(SStr);
