@@ -186,7 +186,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 'x': k = ConversionSpecifier::xArg; break;
     // Mac OS X (unicode) specific
     case 'C': k = ConversionSpecifier::CArg; break;
-    case 'S': k = ConversionSpecifier::UnicodeStrArg; break;
+    case 'S': k = ConversionSpecifier::SArg; break;
     // Objective-C.
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
@@ -258,7 +258,7 @@ const char *ConversionSpecifier::toString() const {
 
   // MacOS X unicode extensions.
   case CArg:          return "C";
-  case UnicodeStrArg: return "S";
+  case SArg: return "S";
 
   // Objective-C specific specifiers.
   case ObjCObjArg: return "@";
@@ -325,7 +325,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::sArg:
       return ArgTypeResult(LM.getKind() == LengthModifier::AsWideChar ?
           ArgTypeResult::WCStrTy : ArgTypeResult::CStrTy);
-    case ConversionSpecifier::UnicodeStrArg:
+    case ConversionSpecifier::SArg:
       // FIXME: This appears to be Mac OS X specific.
       return ArgTypeResult::WCStrTy;
     case ConversionSpecifier::CArg:

@@ -279,7 +279,7 @@ public:
     PercentArg,    // '%'
       // MacOS X unicode extensions.
     CArg, // 'C'
-    UnicodeStrArg, // 'S'
+    SArg, // 'S'
       // Objective-C specific specifiers.
     ObjCObjArg,    // '@'
       // GlibC specific specifiers.
