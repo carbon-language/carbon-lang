@@ -27,9 +27,6 @@ namespace llvm {
     
     // run - Output the instruction table.
     void run(raw_ostream &o);
-    
-    // runHeader - Emit a header file that allows use of the instruction table.
-    void runHeader(raw_ostream &o);
   };
   
 } // End llvm namespace

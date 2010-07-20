@@ -67,7 +67,7 @@ enum ActionType {
   GenIntrinsic,
   GenTgtIntrinsic,
   GenLLVMCConf,
-  GenEDHeader, GenEDInfo,
+  GenEDInfo,
   GenArmNeon,
   GenArmNeonSema,
   PrintEnums
@@ -128,8 +128,6 @@ namespace {
                                "Generate Clang AST statement nodes"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
-                    clEnumValN(GenEDHeader, "gen-enhanced-disassembly-header",
-                               "Generate enhanced disassembly info header"),
                     clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
                                "Generate enhanced disassembly info"),
                     clEnumValN(GenArmNeon, "gen-arm-neon",
@@ -300,9 +298,6 @@ int main(int argc, char **argv) {
       break;
     case GenLLVMCConf:
       LLVMCConfigurationEmitter(Records).run(Out);
-      break;
-    case GenEDHeader:
-      EDEmitter(Records).runHeader(Out);
       break;
     case GenEDInfo:
       EDEmitter(Records).run(Out);
