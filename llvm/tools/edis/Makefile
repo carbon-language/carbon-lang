@@ -9,6 +9,8 @@
 
 LEVEL = ../..
 LIBRARYNAME = EnhancedDisassembly
+LINK_LIBS_IN_SHARED = 1
+SHARED_LIBRARY = 1
 
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 
@@ -16,15 +18,6 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/EnhancedDisassembly.exports
 # that have been configured for construction. We have to do this 
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
-
-ifeq ($(ENABLE_PIC),1)
-  ifneq ($(DISABLE_EDIS),1)
-    ifneq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
-	LINK_LIBS_IN_SHARED = 1
-	SHARED_LIBRARY = 1
-    endif
-  endif
-endif
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) mcdisassembler x86asmprinter x86disassembler
 
