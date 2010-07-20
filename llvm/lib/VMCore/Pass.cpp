@@ -241,47 +241,6 @@ PassManagerType BasicBlockPass::getPotentialPassManagerType() const {
 static std::vector<PassRegistrationListener*> *Listeners = 0;
 static sys::SmartMutex<true> ListenersLock;
 
-static PassRegistry *PassRegistryObj = 0;
-static PassRegistry *getPassRegistry() {
-  // Use double-checked locking to safely initialize the registrar when
-  // we're running in multithreaded mode.
-  PassRegistry* tmp = PassRegistryObj;
-  if (llvm_is_multithreaded()) {
-    sys::MemoryFence();
-    if (!tmp) {
-      llvm_acquire_global_lock();
-      tmp = PassRegistryObj;
-      if (!tmp) {
-        tmp = new PassRegistry();
-        sys::MemoryFence();
-        PassRegistryObj = tmp;
-      }
-      llvm_release_global_lock();
-    }
-  } else if (!tmp) {
-    PassRegistryObj = new PassRegistry();
-  }
-  
-  return PassRegistryObj;
-}
-
-namespace {
-
-// FIXME: We use ManagedCleanup to erase the pass registrar on shutdown.
-// Unfortunately, passes are registered with static ctors, and having
-// llvm_shutdown clear this map prevents successful ressurection after 
-// llvm_shutdown is run.  Ideally we should find a solution so that we don't
-// leak the map, AND can still resurrect after shutdown.
-void cleanupPassRegistry(void*) {
-  if (PassRegistryObj) {
-    delete PassRegistryObj;
-    PassRegistryObj = 0;
-  }
-}
-ManagedCleanup<&cleanupPassRegistry> registryCleanup ATTRIBUTE_USED;
-
-}
-
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
 const PassInfo *Pass::getPassInfo() const {
@@ -289,15 +248,15 @@ const PassInfo *Pass::getPassInfo() const {
 }
 
 const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
-  return getPassRegistry()->getPassInfo(TI);
+  return PassRegistry::getPassRegistry()->getPassInfo(TI);
 }
 
 const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
-  return getPassRegistry()->getPassInfo(Arg);
+  return PassRegistry::getPassRegistry()->getPassInfo(Arg);
 }
 
 void PassInfo::registerPass() {
-  getPassRegistry()->registerPass(*this);
+  PassRegistry::getPassRegistry()->registerPass(*this);
 
   // Notify any listeners.
   sys::SmartScopedLock<true> Lock(ListenersLock);
@@ -308,7 +267,7 @@ void PassInfo::registerPass() {
 }
 
 void PassInfo::unregisterPass() {
-  getPassRegistry()->unregisterPass(*this);
+  PassRegistry::getPassRegistry()->unregisterPass(*this);
 }
 
 Pass *PassInfo::createPass() const {
@@ -349,7 +308,7 @@ RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
     PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
     IIPI->addInterfaceImplemented(InterfaceInfo);
     
-    getPassRegistry()->registerAnalysisGroup(InterfaceInfo, IIPI, isDefault);
+    PassRegistry::getPassRegistry()->registerAnalysisGroup(InterfaceInfo, IIPI, isDefault);
   }
 }
 
@@ -385,7 +344,7 @@ PassRegistrationListener::~PassRegistrationListener() {
 // passEnumerate callback on each PassInfo object.
 //
 void PassRegistrationListener::enumeratePasses() {
-  getPassRegistry()->enumerateWith(this);
+  PassRegistry::getPassRegistry()->enumerateWith(this);
 }
 
 PassNameParser::~PassNameParser() {}

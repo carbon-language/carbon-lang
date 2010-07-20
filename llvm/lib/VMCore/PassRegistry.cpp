@@ -13,7 +13,49 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassRegistry.h"
-#include "llvm/System/Mutex.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ManagedStatic.h"
+
+static PassRegistry *PassRegistryObj = 0;
+PassRegistry *PassRegistry::getPassRegistry() {
+  // Use double-checked locking to safely initialize the registrar when
+  // we're running in multithreaded mode.
+  PassRegistry* tmp = PassRegistryObj;
+  if (llvm_is_multithreaded()) {
+    sys::MemoryFence();
+    if (!tmp) {
+      llvm_acquire_global_lock();
+      tmp = PassRegistryObj;
+      if (!tmp) {
+        tmp = new PassRegistry();
+        sys::MemoryFence();
+        PassRegistryObj = tmp;
+      }
+      llvm_release_global_lock();
+    }
+  } else if (!tmp) {
+    PassRegistryObj = new PassRegistry();
+  }
+  
+  return PassRegistryObj;
+}
+
+namespace {
+
+// FIXME: We use ManagedCleanup to erase the pass registrar on shutdown.
+// Unfortunately, passes are registered with static ctors, and having
+// llvm_shutdown clear this map prevents successful ressurection after 
+// llvm_shutdown is run.  Ideally we should find a solution so that we don't
+// leak the map, AND can still resurrect after shutdown.
+void cleanupPassRegistry(void*) {
+  if (PassRegistryObj) {
+    delete PassRegistryObj;
+    PassRegistryObj = 0;
+  }
+}
+ManagedCleanup<&cleanupPassRegistry> registryCleanup ATTRIBUTE_USED;
+
+}
 
 const PassInfo *PassRegistry::getPassInfo(intptr_t TI) const {
   sys::SmartScopedLock<true> Guard(Lock);
