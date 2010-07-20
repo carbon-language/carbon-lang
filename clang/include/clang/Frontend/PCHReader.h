@@ -230,6 +230,10 @@ private:
     /// \brief The number of source location entries in this PCH file.
     unsigned LocalNumSLocEntries;
 
+    /// \brief Offsets for all of the source location entries in the
+    /// PCH file.
+    const uint32_t *SLocOffsets;
+
     /// \brief The number of types in this PCH file.
     unsigned LocalNumTypes;
 
@@ -268,14 +272,6 @@ private:
   /// \brief The chain of PCH files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
   llvm::SmallVector<PerFileData*, 2> Chain;
-
-  /// \brief Offsets for all of the source location entries in the
-  /// PCH files. The offsets are relative to a particular file; the correct
-  /// file is chosen using their IDs.
-  const uint32_t *SLocOffsets;
-
-  /// \brief The number of source location entries in all PCH files.
-  unsigned TotalNumSLocEntries;
 
   /// \brief Types that have already been loaded from the PCH file.
   ///
@@ -415,6 +411,9 @@ private:
   /// the PCH file.
   unsigned NumSLocEntriesRead;
 
+  /// \brief The number of source location entries in all PCH files.
+  unsigned TotalNumSLocEntries;
+
   /// \brief The number of statements (and expressions) de-serialized
   /// from the PCH file.
   unsigned NumStatementsRead;
@@ -537,7 +536,7 @@ private:
   PCHReadResult ReadPCHCore(llvm::StringRef FileName);
   PCHReadResult ReadPCHBlock(PerFileData &F);
   bool CheckPredefinesBuffers();
-  bool ParseLineTable(PerFileData &F, llvm::SmallVectorImpl<uint64_t> &Record);
+  bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   PCHReadResult ReadSourceManagerBlock(PerFileData &F);
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
 

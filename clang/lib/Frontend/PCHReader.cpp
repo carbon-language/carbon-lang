@@ -423,10 +423,11 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
     NumPreallocatedPreprocessingEntities(0),  
     isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
-    NumSLocEntriesRead(0), NumStatementsRead(0),
-    NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
-    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
-    CurrentlyLoadingTypeOrDecl(0) {
+    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
+    TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
+    NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
+    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
+    TotalVisibleDeclContexts(0), CurrentlyLoadingTypeOrDecl(0) {
   RelocatablePCH = false;
 }
 
@@ -439,10 +440,11 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
     NumPreallocatedPreprocessingEntities(0),  
     isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
-    NumSLocEntriesRead(0), NumStatementsRead(0),
-    NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
-    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
-    CurrentlyLoadingTypeOrDecl(0) {
+    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
+    TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
+    NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
+    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
+    TotalVisibleDeclContexts(0), CurrentlyLoadingTypeOrDecl(0) {
   RelocatablePCH = false;
 }
 
@@ -728,13 +730,9 @@ bool PCHReader::CheckPredefinesBuffers() {
 
 /// \brief Read the line table in the source manager block.
 /// \returns true if ther was an error.
-bool PCHReader::ParseLineTable(PerFileData &F,
-                               llvm::SmallVectorImpl<uint64_t> &Record) {
+bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
-
-  // FIXME: Handle multiple tables!
-  (void)F;
 
   // Parse the file names
   std::map<int, int> FileIDs;
@@ -942,7 +940,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock(PerFileData &F) {
       break;
 
     case pch::SM_LINE_TABLE:
-      if (ParseLineTable(F, Record))
+      if (ParseLineTable(Record))
         return Failure;
       break;
 
@@ -968,7 +966,7 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
   llvm::BitstreamCursor &SLocEntryCursor = Chain[0]->SLocEntryCursor;
 
   ++NumSLocEntriesRead;
-  SLocEntryCursor.JumpToBit(SLocOffsets[ID - 1]);
+  SLocEntryCursor.JumpToBit(Chain[0]->SLocOffsets[ID - 1]);
   unsigned Code = SLocEntryCursor.ReadCode();
   if (Code == llvm::bitc::END_BLOCK ||
       Code == llvm::bitc::ENTER_SUBBLOCK ||
@@ -1534,46 +1532,54 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::EXTERNAL_DEFINITIONS:
-      if (!ExternalDefinitions.empty()) {
-        Error("duplicate EXTERNAL_DEFINITIONS record in PCH file");
-        return Failure;
-      }
-      ExternalDefinitions.swap(Record);
+      // Optimization for the first block.
+      if (ExternalDefinitions.empty())
+        ExternalDefinitions.swap(Record);
+      else
+        ExternalDefinitions.insert(ExternalDefinitions.end(),
+                                   Record.begin(), Record.end());
       break;
 
     case pch::SPECIAL_TYPES:
-      SpecialTypes.swap(Record);
+      // Optimization for the first block
+      if (SpecialTypes.empty())
+        SpecialTypes.swap(Record);
+      else
+        SpecialTypes.insert(SpecialTypes.end(), Record.begin(), Record.end());
       break;
 
     case pch::STATISTICS:
-      TotalNumStatements = Record[0];
-      TotalNumMacros = Record[1];
-      TotalLexicalDeclContexts = Record[2];
-      TotalVisibleDeclContexts = Record[3];
+      TotalNumStatements += Record[0];
+      TotalNumMacros += Record[1];
+      TotalLexicalDeclContexts += Record[2];
+      TotalVisibleDeclContexts += Record[3];
       break;
 
     case pch::TENTATIVE_DEFINITIONS:
-      if (!TentativeDefinitions.empty()) {
-        Error("duplicate TENTATIVE_DEFINITIONS record in PCH file");
-        return Failure;
-      }
-      TentativeDefinitions.swap(Record);
+      // Optimization for the first block.
+      if (TentativeDefinitions.empty())
+        TentativeDefinitions.swap(Record);
+      else
+        TentativeDefinitions.insert(TentativeDefinitions.end(),
+                                    Record.begin(), Record.end());
       break;
 
     case pch::UNUSED_STATIC_FUNCS:
-      if (!UnusedStaticFuncs.empty()) {
-        Error("duplicate UNUSED_STATIC_FUNCS record in PCH file");
-        return Failure;
-      }
-      UnusedStaticFuncs.swap(Record);
+      // Optimization for the first block.
+      if (UnusedStaticFuncs.empty())
+        UnusedStaticFuncs.swap(Record);
+      else
+        UnusedStaticFuncs.insert(UnusedStaticFuncs.end(),
+                                 Record.begin(), Record.end());
       break;
 
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
-      if (!LocallyScopedExternalDecls.empty()) {
-        Error("duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
-        return Failure;
-      }
-      LocallyScopedExternalDecls.swap(Record);
+      // Optimization for the first block.
+      if (LocallyScopedExternalDecls.empty())
+        LocallyScopedExternalDecls.swap(Record);
+      else
+        LocallyScopedExternalDecls.insert(LocallyScopedExternalDecls.end(),
+                                          Record.begin(), Record.end());
       break;
 
     case pch::SELECTOR_OFFSETS:
@@ -1599,8 +1605,11 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::SOURCE_LOCATION_OFFSETS:
-      SLocOffsets = (const uint32_t *)BlobStart;
-      TotalNumSLocEntries = Record[0];
+      F.SLocOffsets = (const uint32_t *)BlobStart;
+      F.LocalNumSLocEntries = Record[0];
+      // We cannot delay this until all PCHs are loaded, because then source
+      // location preloads would also have to be delayed.
+      TotalNumSLocEntries += F.LocalNumSLocEntries;
       SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, Record[1]);
       break;
 
@@ -1647,6 +1656,8 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       break;
 
     case pch::ORIGINAL_FILE_NAME:
+      // The primary PCH will be the last to get here, so it will be the one
+      // that's used.
       ActualOriginalFileName.assign(BlobStart, BlobLen);
       OriginalFileName = ActualOriginalFileName;
       MaybeAddSystemRootToFilename(OriginalFileName);
@@ -1690,7 +1701,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
 
   // Here comes stuff that we only do once the entire chain is loaded.
 
-  // Allocate space for loaded decls and types.
+  // Allocate space for loaded identifiers, decls and types.
   unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
@@ -1725,20 +1736,27 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
                                 IdEnd = PP->getIdentifierTable().end();
          Id != IdEnd; ++Id)
       Identifiers.push_back(Id->second);
-    PCHIdentifierLookupTable *IdTable
-      = (PCHIdentifierLookupTable *)Chain[0]->IdentifierLookupTable;
+    // FIXME: The loop order here is very cache-inefficient. Loop over files
+    // should probably be the outer loop.
     for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
       IdentifierInfo *II = Identifiers[I];
-      // Look in the on-disk hash table for an entry for
+      // Look in the on-disk hash tables for an entry for this identifier
       PCHIdentifierLookupTrait Info(*this, II);
       std::pair<const char*, unsigned> Key(II->getNameStart(), II->getLength());
-      PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
-      if (Pos == IdTable->end())
-        continue;
+      // We need to search the tables in all files.
+      // FIXME: What happens if this stuff changes between files, e.g. the
+      // dependent PCH undefs a macro from the core file?
+      for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
+        PCHIdentifierLookupTable *IdTable
+          = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
+        PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
+        if (Pos == IdTable->end())
+          continue;
 
-      // Dereferencing the iterator has the effect of populating the
-      // IdentifierInfo node with the various declarations it needs.
-      (void)*Pos;
+        // Dereferencing the iterator has the effect of populating the
+        // IdentifierInfo node with the various declarations it needs.
+        (void)*Pos;
+      }
     }
   }
 
