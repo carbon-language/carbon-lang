@@ -170,16 +170,6 @@ public:
   void setMetadata(unsigned KindID, MDNode *Node);
   void setMetadata(const char *Kind, MDNode *Node);
 
-  /// setDbgMetadata - This is just an optimized helper function that is
-  /// equivalent to setMetadata("dbg", Node);
-  void setDbgMetadata(MDNode *Node);
-  
-  /// getDbgMetadata - This is just an optimized helper function that is
-  /// equivalent to calling getMetadata("dbg").
-  MDNode *getDbgMetadata() const {
-    return DbgLoc.getAsMDNode(getContext());
-  }
-
   /// setDebugLoc - Set the debug location information for this instruction.
   void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }
   

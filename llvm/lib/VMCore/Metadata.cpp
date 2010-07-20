@@ -445,10 +445,6 @@ MDNode *Instruction::getMetadataImpl(const char *Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 
-void Instruction::setDbgMetadata(MDNode *Node) {
-  DbgLoc = DebugLoc::getFromDILocation(Node);
-}
-
 /// setMetadata - Set the metadata of of the specified kind to the specified
 /// node.  This updates/replaces metadata if already present, or removes it if
 /// Node is null.
