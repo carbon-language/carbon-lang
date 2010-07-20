@@ -223,6 +223,11 @@ namespace llvm {
                                const char *renderSuffix = 0);
 
   private:
+    class Spacer;
+
+    template <typename OStream>
+    friend OStream& operator<<(OStream &os, const Spacer &s);
+
 
     std::string fqn;
 
@@ -238,8 +243,11 @@ namespace llvm {
 
     // Utilities.
     typedef enum { Dead, Defined, Used, AliveReg, AliveStack } LiveState;
-
     LiveState getLiveStateAt(const LiveInterval *li, SlotIndex i) const;
+
+    typedef enum { Zero, Low, High } PressureState;
+    PressureState getPressureStateAt(const TargetRegisterClass *trc,
+                                     SlotIndex i) const;
 
     // ---------- Rendering methods ----------
 
@@ -285,6 +293,14 @@ namespace llvm {
     template <typename OStream>
     void renderPressureTableLegend(const Spacer &indent,
                                    OStream &os) const;
+
+    /// \brief Render a consecutive set of HTML cells of the same class using
+    /// the colspan attribute for run-length encoding.
+    template <typename OStream, typename CellType>
+    void renderCellsWithRLE(
+                     const Spacer &indent, OStream &os,
+                     const std::pair<CellType, unsigned> &rleAccumulator,
+                     const std::map<CellType, std::string> &cellTypeStrs) const;
 
     /// \brief Render code listing, potentially with register pressure
     ///        and live intervals shown alongside.

@@ -571,6 +571,17 @@ namespace llvm {
     return Dead;
   }
 
+  RenderMachineFunction::PressureState
+  RenderMachineFunction::getPressureStateAt(const TargetRegisterClass *trc,
+                                              SlotIndex i) const {
+    if (trei.getPressureAtSlot(trc, i) == 0) {
+      return Zero;
+    } else if (trei.classOverCapacityAtSlot(trc, i)){
+      return High;
+    }
+    return Low;
+  }
+
   /// \brief Render a machine instruction.
   template <typename OStream>
   void RenderMachineFunction::renderMachineInstr(OStream &os,
@@ -623,14 +634,14 @@ namespace llvm {
        << indent + s(2) << "table.code td { font-family: monospace; "
                     "border-width: 0px; border-style: solid; "
                     "border-bottom: 1px solid #dddddd; white-space: nowrap; }\n"
-       << indent + s(2) << "table.code td.s-zp { background-color: #000000; }\n"
-       << indent + s(2) << "table.code td.s-up { background-color: #00ff00; }\n"
-       << indent + s(2) << "table.code td.s-op { background-color: #ff0000; }\n"
-       << indent + s(2) << "table.code td.l-na { background-color: #ffffff; }\n"
-       << indent + s(2) << "table.code td.l-def { background-color: #ff0000; }\n"
-       << indent + s(2) << "table.code td.l-use { background-color: #ffff00; }\n"
-       << indent + s(2) << "table.code td.l-sar { background-color: #000000; }\n"
-       << indent + s(2) << "table.code td.l-sas { background-color: #770000; }\n"
+       << indent + s(2) << "table.code td.p-z { background-color: #000000; }\n"
+       << indent + s(2) << "table.code td.p-l { background-color: #00ff00; }\n"
+       << indent + s(2) << "table.code td.p-h { background-color: #ff0000; }\n"
+       << indent + s(2) << "table.code td.l-n { background-color: #ffffff; }\n"
+       << indent + s(2) << "table.code td.l-d { background-color: #ff0000; }\n"
+       << indent + s(2) << "table.code td.l-u { background-color: #ffff00; }\n"
+       << indent + s(2) << "table.code td.l-r { background-color: #000000; }\n"
+       << indent + s(2) << "table.code td.l-s { background-color: #770000; }\n"
        << indent + s(2) << "table.code th { border-width: 0px; "
                     "border-style: solid; }\n"
        << indent << "</style>\n";
@@ -674,17 +685,54 @@ namespace llvm {
        << indent << "</table>\n";
   }
 
+  template <typename OStream, typename CellType>
+  void RenderMachineFunction::renderCellsWithRLE(
+                   const Spacer &indent, OStream &os,
+                   const std::pair<CellType, unsigned> &rleAccumulator,
+                   const std::map<CellType, std::string> &cellTypeStrs) const {
+
+    if (rleAccumulator.second == 0)
+      return; 
+
+    typename std::map<CellType, std::string>::const_iterator ctsItr =
+      cellTypeStrs.find(rleAccumulator.first);
+
+    assert(ctsItr != cellTypeStrs.end() && "No string for given cell type.");
+
+    os << indent + s(4) << "<td class=\"" << ctsItr->second << "\"";
+    if (rleAccumulator.second > 1)
+      os << " colspan=" << rleAccumulator.second;
+    os << "></td>\n";
+  }
+
+
   template <typename OStream>
   void RenderMachineFunction::renderCodeTablePlusPI(const Spacer &indent,
                                                     OStream &os) const {
 
+    std::map<LiveState, std::string> lsStrs;
+    lsStrs[Dead] = "l-n";
+    lsStrs[Defined] = "l-d";
+    lsStrs[Used] = "l-u";
+    lsStrs[AliveReg] = "l-r";
+    lsStrs[AliveStack] = "l-s";
+
+    std::map<PressureState, std::string> psStrs;
+    psStrs[Zero] = "p-z";
+    psStrs[Low] = "p-l";
+    psStrs[High] = "p-h";
+
+    // Open the table... 
+
     os << indent << "<table cellpadding=0 cellspacing=0 class=\"code\">\n"
-       << indent + s(2) << "<tr>\n"
-       << indent + s(4) << "<th>index</th>\n"
+       << indent + s(2) << "<tr>\n";
+
+    // Render the header row...
+
+    os << indent + s(4) << "<th>index</th>\n"
        << indent + s(4) << "<th>instr</th>\n";
 
-    // Header row:
-       
+    // Render class names if necessary...
     if (!ro.regClasses().empty()) {
       for (MFRenderingOptions::RegClassSet::const_iterator
              rcItr = ro.regClasses().begin(),
@@ -701,6 +749,7 @@ namespace llvm {
     if (!ro.regClasses().empty() && !ro.intervals().empty())
       os << indent + s(4) << "<th>&nbsp;&nbsp;</th>\n";
 
+    // Render interval numbers if necessary...
     if (!ro.intervals().empty()) {
       for (MFRenderingOptions::IntervalSet::const_iterator
              liItr = ro.intervals().begin(),
@@ -716,14 +765,18 @@ namespace llvm {
 
     os << indent + s(2) << "</tr>\n";
 
+    // End header row, start with the data rows...
+
     MachineInstr *mi = 0;
 
     // Data rows:
     for (SlotIndex i = sis->getZeroIndex(); i != sis->getLastIndex();
          i = i.getNextSlot()) {
+     
+      // Render the slot column. 
+      os << indent + s(2) << "<tr>\n";
       
-      os << indent + s(2) << "<tr height=6ex>\n";
-      
+      // Render the code column.
       if (i.getSlot() == SlotIndex::LOAD) {
         MachineBasicBlock *mbb = sis->getMBBFromIndex(i);
         mi = sis->getInstructionFromIndex(i);
@@ -739,7 +792,7 @@ namespace llvm {
             os << indent + s(6) << "&nbsp;&nbsp;";
             renderMachineInstr(os, mi);
           } else {
-            os << indent + s(6) << "&nbsp;\n";
+            // Empty interval - leave blank.
           }
           os << indent + s(4) << "</td>\n";
         } else {
@@ -748,25 +801,25 @@ namespace llvm {
         }
       }
 
+      // Render the class columns.
       if (!ro.regClasses().empty()) {
+        std::pair<PressureState, unsigned> psRLEAccumulator(Zero, 0);
         for (MFRenderingOptions::RegClassSet::const_iterator
                rcItr = ro.regClasses().begin(),
                rcEnd = ro.regClasses().end();
              rcItr != rcEnd; ++rcItr) {
           const TargetRegisterClass *trc = *rcItr;
+          PressureState newPressure = getPressureStateAt(trc, i);
 
-          os << indent + s(4) << "<td class=\"";
-
-          if (trei.getPressureAtSlot(trc, i) == 0) {
-            os << "s-zp";
-          } else if (trei.classOverCapacityAtSlot(trc, i)){
-            os << "s-op";
+          if (newPressure == psRLEAccumulator.first) {
+            ++psRLEAccumulator.second;
           } else {
-            os << "s-up";
+            renderCellsWithRLE(indent + s(4), os, psRLEAccumulator, psStrs);
+            psRLEAccumulator.first = newPressure;
+            psRLEAccumulator.second = 1;
           }
-
-          os << "\"></td>\n";
         }
+        renderCellsWithRLE(indent + s(4), os, psRLEAccumulator, psStrs);
       }
   
       // FIXME: Is there a nicer way to insert space between columns in HTML?
@@ -774,22 +827,23 @@ namespace llvm {
         os << indent + s(4) << "<td width=2em></td>\n";
 
       if (!ro.intervals().empty()) {
+        std::pair<LiveState, unsigned> lsRLEAccumulator(Dead, 0);
         for (MFRenderingOptions::IntervalSet::const_iterator
                liItr = ro.intervals().begin(),
                liEnd = ro.intervals().end();
              liItr != liEnd; ++liItr) {
           const LiveInterval *li = *liItr;
-          os << indent + s(4) << "<td class=\"";
-          switch (getLiveStateAt(li, i)) {
-            case Dead: os << "l-na"; break;
-            case Defined: os << "l-def"; break;
-            case Used: os << "l-use"; break;
-            case AliveReg: os << "l-sar"; break;
-            case AliveStack: os << "l-sas"; break;
-            default: assert(false && "Unrecognised live state."); break;
+          LiveState newLiveness = getLiveStateAt(li, i);
+
+          if (newLiveness == lsRLEAccumulator.first) {
+            ++lsRLEAccumulator.second;
+          } else {
+            renderCellsWithRLE(indent + s(4), os, lsRLEAccumulator, lsStrs);
+            lsRLEAccumulator.first = newLiveness;
+            lsRLEAccumulator.second = 1;
           }
-          os << "\"></td>\n";
         }
+        renderCellsWithRLE(indent + s(4), os, lsRLEAccumulator, lsStrs);
       }
       os << indent + s(2) << "</tr>\n";
     }
