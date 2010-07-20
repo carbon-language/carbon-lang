@@ -45,7 +45,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Value *Operand,
   // their uses occur in the predecessor block, not the block the PHI lives in)
   // should still use the post-inc value.  Check for this case now.
   PHINode *PN = dyn_cast<PHINode>(User);
-  if (!PN) return false;  // not a phi, not dominated by latch block.
+  if (!PN || !Operand) return false; // not a phi, not dominated by latch block.
 
   // Look at all of the uses of Operand by the PHI node.  If any use corresponds
   // to a block that is not dominated by the latch block, give up and use the
@@ -84,6 +84,59 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
     return S;
   }
 
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
+    // An addrec. This is the interesting part.
+    SmallVector<const SCEV *, 8> Operands;
+    const Loop *L = AR->getLoop();
+    // The addrec conceptually uses its operands at loop entry.
+    Instruction *LUser = L->getHeader()->begin();
+    // Transform each operand.
+    for (SCEVNAryExpr::op_iterator I = AR->op_begin(), E = AR->op_end();
+         I != E; ++I) {
+      const SCEV *O = *I;
+      const SCEV *N = TransformForPostIncUse(Kind, O, LUser, 0, Loops, SE, DT);
+      Operands.push_back(N);
+    }
+    const SCEV *Result = SE.getAddRecExpr(Operands, L);
+    switch (Kind) {
+    default: llvm_unreachable("Unexpected transform name!");
+    case NormalizeAutodetect:
+      if (IVUseShouldUsePostIncValue(User, OperandValToReplace, L, &DT)) {
+        const SCEV *TransformedStep =
+          TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
+                                 User, OperandValToReplace, Loops, SE, DT);
+        Result = SE.getMinusSCEV(Result, TransformedStep);
+        Loops.insert(L);
+      }
+#ifdef XDEBUG
+      assert(S == TransformForPostIncUse(Denormalize, Result,
+                                         User, OperandValToReplace,
+                                         Loops, SE, DT) &&
+             "SCEV normalization is not invertible!");
+#endif
+      break;
+    case Normalize:
+      if (Loops.count(L)) {
+        const SCEV *TransformedStep =
+          TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
+                                 User, OperandValToReplace, Loops, SE, DT);
+        Result = SE.getMinusSCEV(Result, TransformedStep);
+      }
+#ifdef XDEBUG
+      assert(S == TransformForPostIncUse(Denormalize, Result,
+                                         User, OperandValToReplace,
+                                         Loops, SE, DT) &&
+             "SCEV normalization is not invertible!");
+#endif
+      break;
+    case Denormalize:
+      if (Loops.count(L))
+        Result = cast<SCEVAddRecExpr>(Result)->getPostIncExpr(SE);
+      break;
+    }
+    return Result;
+  }
+
   if (const SCEVNAryExpr *X = dyn_cast<SCEVNAryExpr>(S)) {
     SmallVector<const SCEV *, 8> Operands;
     bool Changed = false;
@@ -96,37 +149,7 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       Changed |= N != O;
       Operands.push_back(N);
     }
-    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
-      // An addrec. This is the interesting part.
-      const Loop *L = AR->getLoop();
-      const SCEV *Result = SE.getAddRecExpr(Operands, L);
-      switch (Kind) {
-      default: llvm_unreachable("Unexpected transform name!");
-      case NormalizeAutodetect:
-        if (Instruction *OI = dyn_cast<Instruction>(OperandValToReplace))
-          if (IVUseShouldUsePostIncValue(User, OI, L, &DT)) {
-            const SCEV *TransformedStep =
-              TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
-                                     User, OperandValToReplace, Loops, SE, DT);
-            Result = SE.getMinusSCEV(Result, TransformedStep);
-            Loops.insert(L);
-          }
-        break;
-      case Normalize:
-        if (Loops.count(L)) {
-          const SCEV *TransformedStep =
-            TransformForPostIncUse(Kind, AR->getStepRecurrence(SE),
-                                   User, OperandValToReplace, Loops, SE, DT);
-          Result = SE.getMinusSCEV(Result, TransformedStep);
-        }
-        break;
-      case Denormalize:
-        if (Loops.count(L))
-          Result = SE.getAddExpr(Result, AR->getStepRecurrence(SE));
-        break;
-      }
-      return Result;
-    }
+    // If any operand actually changed, return a transformed result.
     if (Changed)
       switch (S->getSCEVType()) {
       case scAddExpr: return SE.getAddExpr(Operands);
