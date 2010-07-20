@@ -296,13 +296,15 @@ class FormatSpecifier {
 protected:
   LengthModifier LM;
   OptionalAmount FieldWidth;
+  ConversionSpecifier CS;
     /// Positional arguments, an IEEE extension:
     ///  IEEE Std 1003.1, 2004 Edition
     ///  http://www.opengroup.org/onlinepubs/009695399/functions/printf.html
   bool UsesPositionalArg;
   unsigned argIndex;
 public:
-  FormatSpecifier() : UsesPositionalArg(false), argIndex(0) {}
+  FormatSpecifier(bool isPrintf)
+    : CS(isPrintf), UsesPositionalArg(false), argIndex(0) {}
 
   void setLengthModifier(LengthModifier lm) {
     LM = lm;
@@ -335,6 +337,8 @@ public:
   }
 
   bool usesPositionalArg() const { return UsesPositionalArg; }
+  
+  bool hasValidLengthModifier() const;
 };
 
 } // end analyze_format_string namespace
@@ -380,12 +384,12 @@ class PrintfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag HasSpacePrefix; // ' '
   OptionalFlag HasAlternativeForm; // '#'
   OptionalFlag HasLeadingZeroes; // '0'
-  analyze_format_string::ConversionSpecifier CS;
   OptionalAmount Precision;
 public:
   PrintfSpecifier() :
+    FormatSpecifier(/* isPrintf = */ true),
     IsLeftJustified("-"), HasPlusPrefix("+"), HasSpacePrefix(" "),
-    HasAlternativeForm("#"), HasLeadingZeroes("0"), CS(/* isPrintf = */ true) {}
+    HasAlternativeForm("#"), HasLeadingZeroes("0") {}
 
   static PrintfSpecifier Parse(const char *beg, const char *end);
 
@@ -462,7 +466,6 @@ public:
   bool hasValidSpacePrefix() const;
   bool hasValidLeftJustified() const;
 
-  bool hasValidLengthModifier() const;
   bool hasValidPrecision() const;
   bool hasValidFieldWidth() const;
 };
@@ -483,6 +486,10 @@ public:
     : ConversionSpecifier(false, pos, k) {}
 
   void setEndScanList(const char *pos) { EndScanList = pos; }
+      
+  static bool classof(const analyze_format_string::ConversionSpecifier *CS) {
+    return !CS->isPrintfKind();
+  }      
 };
 
 using analyze_format_string::LengthModifier;
@@ -491,9 +498,10 @@ using analyze_format_string::OptionalFlag;
 
 class ScanfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag SuppressAssignment; // '*'
-  ScanfConversionSpecifier CS;
 public:
-  ScanfSpecifier() : SuppressAssignment("*") {}
+  ScanfSpecifier() :
+    FormatSpecifier(/* isPrintf = */ false),
+    SuppressAssignment("*") {}
 
   void setSuppressAssignment(const char *position) {
     SuppressAssignment = true;
@@ -509,7 +517,7 @@ public:
   }
 
   const ScanfConversionSpecifier &getConversionSpecifier() const {
-    return CS;
+    return cast<ScanfConversionSpecifier>(CS);
   }
   
   bool consumesDataArgument() const {
@@ -517,7 +525,6 @@ public:
   }
 
   static ScanfSpecifier Parse(const char *beg, const char *end);
-
 };
 
 } // end analyze_scanf namespace

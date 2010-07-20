@@ -20,6 +20,7 @@ using clang::analyze_format_string::FormatSpecifier;
 using clang::analyze_format_string::LengthModifier;
 using clang::analyze_format_string::OptionalAmount;
 using clang::analyze_format_string::PositionContext;
+using clang::analyze_format_string::ConversionSpecifier;
 using namespace clang;
 
 // Key function to FormatStringHandler.
@@ -356,8 +357,7 @@ analyze_format_string::LengthModifier::toString() const {
 // Methods on OptionalAmount.
 //===----------------------------------------------------------------------===//
 
-void
-analyze_format_string::OptionalAmount::toString(llvm::raw_ostream &os) const {
+void OptionalAmount::toString(llvm::raw_ostream &os) const {
   switch (hs) {
   case Invalid:
   case NotSpecified:
@@ -377,4 +377,77 @@ analyze_format_string::OptionalAmount::toString(llvm::raw_ostream &os) const {
     break;
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Methods on ConversionSpecifier.
+//===----------------------------------------------------------------------===//
+
+bool FormatSpecifier::hasValidLengthModifier() const {
+  switch (LM.getKind()) {
+    case LengthModifier::None:
+      return true;
+      
+        // Handle most integer flags
+    case LengthModifier::AsChar:
+    case LengthModifier::AsShort:
+    case LengthModifier::AsLongLong:
+    case LengthModifier::AsIntMax:
+    case LengthModifier::AsSizeT:
+    case LengthModifier::AsPtrDiff:
+      switch (CS.getKind()) {
+        case ConversionSpecifier::dArg:
+        case ConversionSpecifier::iArg:
+        case ConversionSpecifier::oArg:
+        case ConversionSpecifier::uArg:
+        case ConversionSpecifier::xArg:
+        case ConversionSpecifier::XArg:
+        case ConversionSpecifier::nArg:
+          return true;
+        default:
+          return false;
+      }
+      
+        // Handle 'l' flag
+    case LengthModifier::AsLong:
+      switch (CS.getKind()) {
+        case ConversionSpecifier::dArg:
+        case ConversionSpecifier::iArg:
+        case ConversionSpecifier::oArg:
+        case ConversionSpecifier::uArg:
+        case ConversionSpecifier::xArg:
+        case ConversionSpecifier::XArg:
+        case ConversionSpecifier::aArg:
+        case ConversionSpecifier::AArg:
+        case ConversionSpecifier::fArg:
+        case ConversionSpecifier::FArg:
+        case ConversionSpecifier::eArg:
+        case ConversionSpecifier::EArg:
+        case ConversionSpecifier::gArg:
+        case ConversionSpecifier::GArg:
+        case ConversionSpecifier::nArg:
+        case ConversionSpecifier::cArg:
+        case ConversionSpecifier::sArg:
+          return true;
+        default:
+          return false;
+      }
+      
+    case LengthModifier::AsLongDouble:
+      switch (CS.getKind()) {
+        case ConversionSpecifier::aArg:
+        case ConversionSpecifier::AArg:
+        case ConversionSpecifier::fArg:
+        case ConversionSpecifier::FArg:
+        case ConversionSpecifier::eArg:
+        case ConversionSpecifier::EArg:
+        case ConversionSpecifier::gArg:
+        case ConversionSpecifier::GArg:
+          return true;
+        default:
+          return false;
+      }
+  }
+  return false;
+}
+
 
