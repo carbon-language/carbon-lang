@@ -828,10 +828,6 @@ void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
   Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
 }
 
-static bool IsKeptInFoldingSet(ClassTemplateSpecializationDecl *D) {
-  return D->getTypeForDecl()->getAsCXXRecordDecl() == D;
-}
-
 void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitTemplateDecl(D);
 
@@ -845,7 +841,7 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     CTSDSetTy &CTSDSet = D->getSpecializations();
     Record.push_back(CTSDSet.size());
     for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I) {
-      assert(IsKeptInFoldingSet(&*I));
+      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
       Writer.AddDeclRef(&*I, Record);
     }
 
@@ -853,7 +849,7 @@ void PCHDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     CTPSDSetTy &CTPSDSet = D->getPartialSpecializations();
     Record.push_back(CTPSDSet.size());
     for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E=CTPSDSet.end(); I!=E; ++I) {
-      assert(IsKeptInFoldingSet(&*I));
+      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
       Writer.AddDeclRef(&*I, Record); 
     }
 
@@ -892,10 +888,8 @@ void PCHDeclWriter::VisitClassTemplateSpecializationDecl(
   Writer.AddSourceLocation(D->getPointOfInstantiation(), Record);
   Record.push_back(D->getSpecializationKind());
 
-  bool IsInInFoldingSet = IsKeptInFoldingSet(D);
-  Record.push_back(IsInInFoldingSet);
-  if (IsInInFoldingSet) {
-    // When reading, we'll add it to the folding set of this one. 
+  if (D->isCanonicalDecl()) {
+    // When reading, we'll add it to the folding set of the following template. 
     Writer.AddDeclRef(D->getSpecializedTemplate()->getCanonicalDecl(), Record);
   }
 

@@ -926,7 +926,7 @@ void PCHDeclReader::VisitClassTemplateSpecializationDecl(
     D->setPointOfInstantiation(POI);
   D->setSpecializationKind((TemplateSpecializationKind)Record[Idx++]);
 
-  if (Record[Idx++]) { // IsKeptInFoldingSet.
+  if (D->isCanonicalDecl()) { // It's kept in the folding set.
     ClassTemplateDecl *CanonPattern
                        = cast<ClassTemplateDecl>(Reader.GetDecl(Record[Idx++]));
     if (ClassTemplatePartialSpecializationDecl *Partial
