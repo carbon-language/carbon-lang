@@ -563,13 +563,11 @@ getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
 }
 
 
-/// removeAllMetadata - Remove all metadata from this instruction.
-void Instruction::removeAllMetadata() {
-  assert(hasMetadata() && "Caller should check");
-  DbgLoc = DebugLoc();
-  if (hasMetadataHashEntry()) {
-    getContext().pImpl->MetadataStore.erase(this);
-    setHasMetadataHashEntry(false);
-  }
+/// clearMetadataHashEntries - Clear all hashtable-based metadata from
+/// this instruction.
+void Instruction::clearMetadataHashEntries() {
+  assert(hasMetadataHashEntry() && "Caller should check");
+  getContext().pImpl->MetadataStore.erase(this);
+  setHasMetadataHashEntry(false);
 }
 

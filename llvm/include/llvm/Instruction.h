@@ -189,7 +189,7 @@ private:
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
   void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
                                            MDNode*> > &) const;
-  void removeAllMetadata();
+  void clearMetadataHashEntries();
 public:
   //===--------------------------------------------------------------------===//
   // Predicates and helper methods.
