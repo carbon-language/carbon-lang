@@ -269,7 +269,7 @@ public:
 
   virtual void VisitBranchCondition(GRBranchNodeBuilder &Builder,
                                     GRExprEngine &Eng,
-                                    Stmt *Condition, void *tag) {}
+                                    const Stmt *Condition, void *tag) {}
 
   virtual bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
     return false;

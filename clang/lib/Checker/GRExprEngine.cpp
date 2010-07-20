@@ -169,7 +169,7 @@ public:
 // Checker worklist routines.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
+void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, bool isPrevisit) {
 
   // Determine if we already have a cached 'CheckersOrdered' vector
@@ -522,7 +522,7 @@ void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
   }
 }
 
-void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
+void GRExprEngine::ProcessStmt(const CFGElement CE,GRStmtNodeBuilder& builder) {
   CurrentStmt = CE.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 CurrentStmt->getLocStart(),
@@ -626,7 +626,8 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred, 
+                         ExplodedNodeSet& Dst) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
                                 "Error evaluating statement");
@@ -741,7 +742,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
 
     case Stmt::BinaryOperatorClass: {
-      BinaryOperator* B = cast<BinaryOperator>(S);
+      const BinaryOperator* B = cast<BinaryOperator>(S);
 
       if (B->isLogicalOp()) {
         VisitLogicalExpr(B, Pred, Dst);
@@ -767,25 +768,25 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
-      CallExpr* C = cast<CallExpr>(S);
+      const CallExpr* C = cast<CallExpr>(S);
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
       break;
     }
 
     case Stmt::CXXMemberCallExprClass: {
-      CXXMemberCallExpr *MCE = cast<CXXMemberCallExpr>(S);
+      const CXXMemberCallExpr *MCE = cast<CXXMemberCallExpr>(S);
       VisitCXXMemberCallExpr(MCE, Pred, Dst);
       break;
     }
 
     case Stmt::CXXNewExprClass: {
-      CXXNewExpr *NE = cast<CXXNewExpr>(S);
+      const CXXNewExpr *NE = cast<CXXNewExpr>(S);
       VisitCXXNewExpr(NE, Pred, Dst);
       break;
     }
 
     case Stmt::CXXDeleteExprClass: {
-      CXXDeleteExpr *CDE = cast<CXXDeleteExpr>(S);
+      const CXXDeleteExpr *CDE = cast<CXXDeleteExpr>(S);
       VisitCXXDeleteExpr(CDE, Pred, Dst);
       break;
     }
@@ -793,7 +794,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       //        the CFG do not model them as explicit control-flow.
 
     case Stmt::ChooseExprClass: { // __builtin_choose_expr
-      ChooseExpr* C = cast<ChooseExpr>(S);
+      const ChooseExpr* C = cast<ChooseExpr>(S);
       VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
@@ -807,7 +808,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
 
     case Stmt::ConditionalOperatorClass: { // '?' operator
-      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      const ConditionalOperator* C = cast<ConditionalOperator>(S);
       VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
@@ -837,7 +838,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXReinterpretCastExprClass:
     case Stmt::CXXConstCastExprClass:
     case Stmt::CXXFunctionalCastExprClass: {
-      CastExpr* C = cast<CastExpr>(S);
+      const CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst, false);
       break;
     }
@@ -894,7 +895,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
 
     case Stmt::StmtExprClass: {
-      StmtExpr* SE = cast<StmtExpr>(S);
+      const StmtExpr* SE = cast<StmtExpr>(S);
 
       if (SE->getSubStmt()->body_empty()) {
         // Empty statement expression.
@@ -925,7 +926,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       break;
 
     case Stmt::UnaryOperatorClass: {
-      UnaryOperator *U = cast<UnaryOperator>(S);
+      const UnaryOperator *U = cast<UnaryOperator>(S);
       if (AMgr.shouldEagerlyAssume()&&(U->getOpcode() == UnaryOperator::LNot)) {
         ExplodedNodeSet Tmp;
         VisitUnaryOperator(U, Pred, Tmp, false);
@@ -944,7 +945,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   }
 }
 
-void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
+void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
                                ExplodedNodeSet& Dst) {
 
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
@@ -985,7 +986,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
-      CallExpr *C = cast<CallExpr>(Ex);
+      const CallExpr *C = cast<CallExpr>(Ex);
       assert(CalleeReturnsReferenceOrRecord(C));
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, true);
       break;
@@ -1001,7 +1002,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
     case Stmt::ImplicitCastExprClass:
     case Stmt::CStyleCastExprClass: {
-      CastExpr *C = cast<CastExpr>(Ex);
+      const CastExpr *C = cast<CastExpr>(Ex);
       QualType T = Ex->getType();
       VisitCast(C, C->getSubExpr(), Pred, Dst, true);
       break;
@@ -1016,7 +1017,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
 
     case Stmt::ObjCMessageExprClass: {
-      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(Ex);
+      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(Ex);
       assert(ReceiverReturnsReferenceOrRecord(ME));
       VisitObjCMessageExpr(ME, Pred, Dst, true);
       return;
@@ -1082,7 +1083,8 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 // Block entrance.  (Update counters).
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
+bool GRExprEngine::ProcessBlockEntrance(const CFGBlock* B, 
+                                        const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
   return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
                           B->getBlockID()) < AMgr.getMaxLoop();
@@ -1106,8 +1108,8 @@ ExplodedNode* GRExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
 //===----------------------------------------------------------------------===//
 
 const GRState* GRExprEngine::MarkBranch(const GRState* state,
-                                           Stmt* Terminator,
-                                           bool branchTaken) {
+                                        const Stmt* Terminator,
+                                        bool branchTaken) {
 
   switch (Terminator->getStmtClass()) {
     default:
@@ -1115,7 +1117,7 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
 
     case Stmt::BinaryOperatorClass: { // '&&' and '||'
 
-      BinaryOperator* B = cast<BinaryOperator>(Terminator);
+      const BinaryOperator* B = cast<BinaryOperator>(Terminator);
       BinaryOperator::Opcode Op = B->getOpcode();
 
       assert (Op == BinaryOperator::LAnd || Op == BinaryOperator::LOr);
@@ -1126,21 +1128,21 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
       // For ||, if we take the false branch, then the value of the whole
       // expression is that of the RHS expression.
 
-      Expr* Ex = (Op == BinaryOperator::LAnd && branchTaken) ||
-                 (Op == BinaryOperator::LOr && !branchTaken)
-               ? B->getRHS() : B->getLHS();
+      const Expr* Ex = (Op == BinaryOperator::LAnd && branchTaken) ||
+                       (Op == BinaryOperator::LOr && !branchTaken)
+                       ? B->getRHS() : B->getLHS();
 
       return state->BindExpr(B, UndefinedVal(Ex));
     }
 
     case Stmt::ConditionalOperatorClass: { // ?:
 
-      ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
+      const ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
 
       // For ?, if branchTaken == true then the value is either the LHS or
       // the condition itself. (GNU extension).
 
-      Expr* Ex;
+      const Expr* Ex;
 
       if (branchTaken)
         Ex = C->getLHS() ? C->getLHS() : C->getCond();
@@ -1152,9 +1154,9 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
 
     case Stmt::ChooseExprClass: { // ?:
 
-      ChooseExpr* C = cast<ChooseExpr>(Terminator);
+      const ChooseExpr* C = cast<ChooseExpr>(Terminator);
 
-      Expr* Ex = branchTaken ? C->getLHS() : C->getRHS();
+      const Expr* Ex = branchTaken ? C->getLHS() : C->getRHS();
       return state->BindExpr(C, UndefinedVal(Ex));
     }
   }
@@ -1166,16 +1168,16 @@ const GRState* GRExprEngine::MarkBranch(const GRState* state,
 /// This function returns the SVal bound to Condition->IgnoreCasts if all the
 //  cast(s) did was sign-extend the original value.
 static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
-                                Stmt* Condition, ASTContext& Ctx) {
+                                const Stmt* Condition, ASTContext& Ctx) {
 
-  Expr *Ex = dyn_cast<Expr>(Condition);
+  const Expr *Ex = dyn_cast<Expr>(Condition);
   if (!Ex)
     return UnknownVal();
 
   uint64_t bits = 0;
   bool bitsInit = false;
 
-  while (CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
+  while (const CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
     QualType T = CE->getType();
 
     if (!T->isIntegerType())
@@ -1199,7 +1201,7 @@ static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
   return state->getSVal(Ex);
 }
 
-void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
+void GRExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
                                  GRBranchNodeBuilder& builder) {
 
   // Check for NULL conditions; e.g. "for(;;)"
@@ -1286,7 +1288,7 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
   typedef GRIndirectGotoNodeBuilder::iterator iterator;
 
   if (isa<loc::GotoLabel>(V)) {
-    LabelStmt* L = cast<loc::GotoLabel>(V).getLabel();
+    const LabelStmt* L = cast<loc::GotoLabel>(V).getLabel();
 
     for (iterator I=builder.begin(), E=builder.end(); I != E; ++I) {
       if (I.getLabel() == L) {
@@ -1315,7 +1317,8 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
 }
 
 
-void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
+void GRExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L, 
+                                    const Expr* R,
                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   assert(Ex == CurrentStmt &&
@@ -1326,7 +1329,7 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
 
   assert (X.isUndef());
 
-  Expr *SE = (Expr*) cast<UndefinedVal>(X).getData();
+  const Expr *SE = (Expr*) cast<UndefinedVal>(X).getData();
   assert(SE);
   X = state->getSVal(SE);
 
@@ -1351,7 +1354,7 @@ void GRExprEngine::ProcessEndPath(GREndPathNodeBuilder& builder) {
 void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   typedef GRSwitchNodeBuilder::iterator iterator;
   const GRState* state = builder.getState();
-  Expr* CondE = builder.getCondition();
+  const Expr* CondE = builder.getCondition();
   SVal  CondV_untested = state->getSVal(CondE);
 
   if (CondV_untested.isUndef()) {
@@ -1367,7 +1370,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   bool defaultIsFeasible = false;
 
   for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
-    CaseStmt* Case = cast<CaseStmt>(I.getCase());
+    const CaseStmt* Case = cast<CaseStmt>(I.getCase());
 
     // Evaluate the LHS of the case value.
     Expr::EvalResult V1;
@@ -1383,7 +1386,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
     // Get the RHS of the case, if it exists.
     Expr::EvalResult V2;
 
-    if (Expr* E = Case->getRHS()) {
+    if (const Expr* E = Case->getRHS()) {
       b = E->Evaluate(V2, getContext());
       assert(b && V2.Val.isInt() && !V2.HasSideEffects
              && "Case condition must evaluate to an integer constant.");
@@ -1491,7 +1494,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
 // Transfer functions: logical operations ('&&', '||').
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
+void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
                                     ExplodedNodeSet& Dst) {
 
   assert(B->getOpcode() == BinaryOperator::LAnd ||
@@ -1545,7 +1548,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
 // Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
+void GRExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
 
   ExplodedNodeSet Tmp;
@@ -1561,18 +1564,18 @@ void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
   CheckerVisit(BE, Dst, Tmp, false);
 }
 
-void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
+void GRExprEngine::VisitDeclRefExpr(const DeclRefExpr *Ex, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst, bool asLValue) {
   VisitCommonDeclRefExpr(Ex, Ex->getDecl(), Pred, Dst, asLValue);
 }
 
-void GRExprEngine::VisitBlockDeclRefExpr(BlockDeclRefExpr *Ex,
+void GRExprEngine::VisitBlockDeclRefExpr(const BlockDeclRefExpr *Ex,
                                          ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst, bool asLValue) {
   VisitCommonDeclRefExpr(Ex, Ex->getDecl(), Pred, Dst, asLValue);
 }
 
-void GRExprEngine::VisitCommonDeclRefExpr(Expr *Ex, const NamedDecl *D,
+void GRExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst, bool asLValue) {
 
@@ -1619,12 +1622,12 @@ void GRExprEngine::VisitCommonDeclRefExpr(Expr *Ex, const NamedDecl *D,
 }
 
 /// VisitArraySubscriptExpr - Transfer function for array accesses
-void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A,
+void GRExprEngine::VisitArraySubscriptExpr(const ArraySubscriptExpr* A,
                                            ExplodedNode* Pred,
                                            ExplodedNodeSet& Dst, bool asLValue){
 
-  Expr* Base = A->getBase()->IgnoreParens();
-  Expr* Idx  = A->getIdx()->IgnoreParens();
+  const Expr* Base = A->getBase()->IgnoreParens();
+  const Expr* Idx  = A->getIdx()->IgnoreParens();
   ExplodedNodeSet Tmp;
 
   if (Base->getType()->isVectorType()) {
@@ -1659,7 +1662,7 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A,
 }
 
 /// VisitMemberExpr - Transfer function for member expressions.
-void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
+void GRExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
                                    ExplodedNodeSet& Dst, bool asLValue) {
 
   Expr* Base = M->getBase()->IgnoreParens();
@@ -1912,9 +1915,9 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
   return false;
 }
 
-void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
-                             CallExpr::arg_iterator AI,
-                             CallExpr::arg_iterator AE,
+void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
+                             CallExpr::const_arg_iterator AI,
+                             CallExpr::const_arg_iterator AE,
                              ExplodedNodeSet& Dst, bool asLValue) {
 
   // Determine the type of function we're calling (if available).
@@ -1961,7 +1964,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
 
   // Now process the call itself.
   ExplodedNodeSet DstTmp;
-  Expr* Callee = CE->getCallee()->IgnoreParens();
+  const Expr* Callee = CE->getCallee()->IgnoreParens();
 
   for (ExplodedNodeSet::iterator NI=ArgsEvaluated.begin(),
                                  NE=ArgsEvaluated.end(); NI != NE; ++NI) {
@@ -2054,7 +2057,7 @@ static std::pair<const void*,const void*> EagerlyAssumeTag
   = std::pair<const void*,const void*>(&EagerlyAssumeTag,static_cast<void*>(0));
 
 void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
-                                     Expr *Ex) {
+                                     const Expr *Ex) {
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
 
@@ -2097,10 +2100,11 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 // Transfer function: Objective-C ivar references.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex, ExplodedNode* Pred,
+void GRExprEngine::VisitObjCIvarRefExpr(const ObjCIvarRefExpr* Ex, 
+                                        ExplodedNode* Pred,
                                         ExplodedNodeSet& Dst, bool asLValue) {
 
-  Expr* Base = cast<Expr>(Ex->getBase());
+  const Expr* Base = cast<Expr>(Ex->getBase());
   ExplodedNodeSet Tmp;
   Visit(Base, Pred, Tmp);
 
@@ -2120,7 +2124,7 @@ void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex, ExplodedNode* Pred,
 // Transfer function: Objective-C fast enumeration 'for' statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
+void GRExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   // ObjCForCollectionStmts are processed in two places.  This method
@@ -2148,11 +2152,11 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   //    container is empty.  Thus this transfer function will by default
   //    result in state splitting.
 
-  Stmt* elem = S->getElement();
+  const Stmt* elem = S->getElement();
   SVal ElementV;
 
-  if (DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
-    VarDecl* ElemD = cast<VarDecl>(DS->getSingleDecl());
+  if (const DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
+    const VarDecl* ElemD = cast<VarDecl>(DS->getSingleDecl());
     assert (ElemD->getInit() == 0);
     ElementV = GetState(Pred)->getLValue(ElemD, Pred->getLocationContext());
     VisitObjCForCollectionStmtAux(S, Pred, Dst, ElementV);
@@ -2168,12 +2172,12 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
   }
 }
 
-void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
+void GRExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
                                        ExplodedNode* Pred, ExplodedNodeSet& Dst,
                                                  SVal ElementV) {
 
   // Check if the location we are writing back to is a null pointer.
-  Stmt* elem = S->getElement();
+  const Stmt* elem = S->getElement();
   ExplodedNodeSet Tmp;
   EvalLocation(Tmp, elem, Pred, GetState(Pred), ElementV, NULL, false);
 
@@ -2222,23 +2226,24 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
 namespace {
 class ObjCMsgWLItem {
 public:
-  ObjCMessageExpr::arg_iterator I;
+  ObjCMessageExpr::const_arg_iterator I;
   ExplodedNode *N;
 
-  ObjCMsgWLItem(const ObjCMessageExpr::arg_iterator &i, ExplodedNode *n)
+  ObjCMsgWLItem(const ObjCMessageExpr::const_arg_iterator &i, ExplodedNode *n)
     : I(i), N(n) {}
 };
 } // end anonymous namespace
 
-void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
+void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME, 
+                                        ExplodedNode* Pred,
                                         ExplodedNodeSet& Dst, bool asLValue){
 
   // Create a worklist to process both the arguments.
   llvm::SmallVector<ObjCMsgWLItem, 20> WL;
 
   // But first evaluate the receiver (if any).
-  ObjCMessageExpr::arg_iterator AI = ME->arg_begin(), AE = ME->arg_end();
-  if (Expr *Receiver = ME->getInstanceReceiver()) {
+  ObjCMessageExpr::const_arg_iterator AI = ME->arg_begin(), AE = ME->arg_end();
+  if (const Expr *Receiver = ME->getInstanceReceiver()) {
     ExplodedNodeSet Tmp;
     Visit(Receiver, Pred, Tmp);
 
@@ -2405,8 +2410,9 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
-                             ExplodedNodeSet &Dst, bool asLValue) {
+void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex, 
+                             ExplodedNode *Pred, ExplodedNodeSet &Dst, 
+                             bool asLValue) {
   ExplodedNodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
@@ -2495,11 +2501,12 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
+void GRExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
                                             ExplodedNode* Pred,
                                             ExplodedNodeSet& Dst,
                                             bool asLValue) {
-  InitListExpr* ILE = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
+  const InitListExpr* ILE 
+    = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
   ExplodedNodeSet Tmp;
   Visit(ILE, Pred, Tmp);
 
@@ -2517,17 +2524,17 @@ void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
   }
 }
 
-void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
+void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                  ExplodedNodeSet& Dst) {
 
   // The CFG has one DeclStmt per Decl.
-  Decl* D = *DS->decl_begin();
+  const Decl* D = *DS->decl_begin();
 
   if (!D || !isa<VarDecl>(D))
     return;
 
   const VarDecl* VD = dyn_cast<VarDecl>(D);
-  Expr* InitEx = const_cast<Expr*>(VD->getInit());
+  const Expr* InitEx = const_cast<Expr*>(VD->getInit());
 
   // FIXME: static variables may have an initializer, but the second
   //  time a function is called those values may not be current.
@@ -2580,10 +2587,10 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCondInit(VarDecl *VD, Stmt *S,
+void GRExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
                                  ExplodedNode *Pred, ExplodedNodeSet& Dst) {
 
-  Expr* InitEx = VD->getInit();
+  const Expr* InitEx = VD->getInit();
   ExplodedNodeSet Tmp;
   Visit(InitEx, Pred, Tmp);
 
@@ -2614,16 +2621,16 @@ class InitListWLItem {
 public:
   llvm::ImmutableList<SVal> Vals;
   ExplodedNode* N;
-  InitListExpr::reverse_iterator Itr;
+  InitListExpr::const_reverse_iterator Itr;
 
   InitListWLItem(ExplodedNode* n, llvm::ImmutableList<SVal> vals,
-                 InitListExpr::reverse_iterator itr)
+                 InitListExpr::const_reverse_iterator itr)
   : Vals(vals), N(n), Itr(itr) {}
 };
 }
 
 
-void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
+void GRExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
                                      ExplodedNodeSet& Dst) {
 
   const GRState* state = GetState(Pred);
@@ -2645,7 +2652,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     llvm::SmallVector<InitListWLItem, 10> WorkList;
     WorkList.reserve(NumInitElements);
     WorkList.push_back(InitListWLItem(Pred, StartVals, E->rbegin()));
-    InitListExpr::reverse_iterator ItrEnd = E->rend();
+    InitListExpr::const_reverse_iterator ItrEnd = E->rend();
     assert(!(E->rbegin() == E->rend()));
 
     // Process the worklist until it is empty.
@@ -2656,7 +2663,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
       ExplodedNodeSet Tmp;
       Visit(*X.Itr, X.N, Tmp);
 
-      InitListExpr::reverse_iterator NewItr = X.Itr + 1;
+      InitListExpr::const_reverse_iterator NewItr = X.Itr + 1;
 
       for (ExplodedNodeSet::iterator NI=Tmp.begin(),NE=Tmp.end();NI!=NE;++NI) {
         // Get the last initializer value.
@@ -2688,7 +2695,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
   if (Loc::IsLocType(T) || T->isIntegerType()) {
     assert (E->getNumInits() == 1);
     ExplodedNodeSet Tmp;
-    Expr* Init = E->getInit(0);
+    const Expr* Init = E->getInit(0);
     Visit(Init, Pred, Tmp);
     for (ExplodedNodeSet::iterator I=Tmp.begin(), EI=Tmp.end(); I != EI; ++I) {
       state = GetState(*I);
@@ -2701,7 +2708,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
 }
 
 /// VisitSizeOfAlignOfExpr - Transfer function for sizeof(type).
-void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
+void GRExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
                                           ExplodedNode* Pred,
                                           ExplodedNodeSet& Dst) {
   QualType T = Ex->getTypeOfArgument();
@@ -2724,7 +2731,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
 
       // Get the size by getting the extent of the sub-expression.
       // First, visit the sub-expression to find its region.
-      Expr *Arg = Ex->getArgumentExpr();
+      const Expr *Arg = Ex->getArgumentExpr();
       ExplodedNodeSet Tmp;
       VisitLValue(Arg, Pred, Tmp);
 
@@ -2766,8 +2773,8 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
               ValMgr.makeIntVal(amt.getQuantity(), Ex->getType())));
 }
 
-void GRExprEngine::VisitOffsetOfExpr(OffsetOfExpr* OOE, ExplodedNode* Pred,
-                                     ExplodedNodeSet& Dst) {
+void GRExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE, 
+                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   Expr::EvalResult Res;
   if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
     const APSInt &IV = Res.Val.getInt();
@@ -2782,7 +2789,8 @@ void GRExprEngine::VisitOffsetOfExpr(OffsetOfExpr* OOE, ExplodedNode* Pred,
   Dst.Add(Pred);
 }
 
-void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
+void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
+                                      ExplodedNode* Pred,
                                       ExplodedNodeSet& Dst, bool asLValue) {
 
   switch (U->getOpcode()) {
@@ -2792,7 +2800,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 
     case UnaryOperator::Deref: {
 
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
       Visit(Ex, Pred, Tmp);
 
@@ -2813,7 +2821,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 
     case UnaryOperator::Real: {
 
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
       Visit(Ex, Pred, Tmp);
 
@@ -2837,7 +2845,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 
     case UnaryOperator::Imag: {
 
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
       Visit(Ex, Pred, Tmp);
 
@@ -2882,7 +2890,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       // generate an extra node that just propagates the value of the
       // subexpression.
 
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
 
       if (asLValue)
@@ -2901,7 +2909,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
     case UnaryOperator::AddrOf: {
 
       assert(!asLValue);
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
       VisitLValue(Ex, Pred, Tmp);
 
@@ -2920,7 +2928,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
     case UnaryOperator::Not: {
 
       assert (!asLValue);
-      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      const Expr* Ex = U->getSubExpr()->IgnoreParens();
       ExplodedNodeSet Tmp;
       Visit(Ex, Pred, Tmp);
 
@@ -2996,7 +3004,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 
   assert (U->isIncrementDecrementOp());
   ExplodedNodeSet Tmp;
-  Expr* Ex = U->getSubExpr()->IgnoreParens();
+  const Expr* Ex = U->getSubExpr()->IgnoreParens();
   VisitLValue(Ex, Pred, Tmp);
 
   for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
@@ -3071,14 +3079,14 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
   }
 }
 
-void GRExprEngine::VisitAsmStmt(AsmStmt* A, ExplodedNode* Pred,
+void GRExprEngine::VisitAsmStmt(const AsmStmt* A, ExplodedNode* Pred,
                                 ExplodedNodeSet& Dst) {
   VisitAsmStmtHelperOutputs(A, A->begin_outputs(), A->end_outputs(), Pred, Dst);
 }
 
-void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
-                                             AsmStmt::outputs_iterator I,
-                                             AsmStmt::outputs_iterator E,
+void GRExprEngine::VisitAsmStmtHelperOutputs(const AsmStmt* A,
+                                             AsmStmt::const_outputs_iterator I,
+                                             AsmStmt::const_outputs_iterator E,
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   if (I == E) {
     VisitAsmStmtHelperInputs(A, A->begin_inputs(), A->end_inputs(), Pred, Dst);
@@ -3094,9 +3102,9 @@ void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
     VisitAsmStmtHelperOutputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
-                                            AsmStmt::inputs_iterator I,
-                                            AsmStmt::inputs_iterator E,
+void GRExprEngine::VisitAsmStmtHelperInputs(const AsmStmt* A,
+                                            AsmStmt::const_inputs_iterator I,
+                                            AsmStmt::const_inputs_iterator E,
                                             ExplodedNode* Pred,
                                             ExplodedNodeSet& Dst) {
   if (I == E) {
@@ -3110,7 +3118,7 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
 
     const GRState* state = GetState(Pred);
 
-    for (AsmStmt::outputs_iterator OI = A->begin_outputs(),
+    for (AsmStmt::const_outputs_iterator OI = A->begin_outputs(),
                                    OE = A->end_outputs(); OI != OE; ++OI) {
 
       SVal X = state->getSVal(*OI);
@@ -3133,10 +3141,10 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
+void GRExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
-  if (Expr *RetE = RS->getRetValue()) {
+  if (const Expr *RetE = RS->getRetValue()) {
     // Record the returned expression in the state. It will be used in
     // ProcessCallExit to bind the return value to the call expr.
     {
@@ -3181,7 +3189,7 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
 // Transfer functions: Binary operators.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
+void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
                                        ExplodedNode* Pred,
                                        ExplodedNodeSet& Dst, bool asLValue) {
 
@@ -3471,7 +3479,7 @@ struct DOTGraphTraits<ExplodedNode*> :
         Out << "Edge: (B" << E.getSrc()->getBlockID() << ", B"
             << E.getDst()->getBlockID()  << ')';
 
-        if (Stmt* T = E.getSrc()->getTerminator()) {
+        if (const Stmt* T = E.getSrc()->getTerminator()) {
 
           SourceLocation SLoc = T->getLocStart();
 
@@ -3487,15 +3495,15 @@ struct DOTGraphTraits<ExplodedNode*> :
           }
 
           if (isa<SwitchStmt>(T)) {
-            Stmt* Label = E.getDst()->getLabel();
+            const Stmt* Label = E.getDst()->getLabel();
 
             if (Label) {
-              if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
+              if (const CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
                 Out << "\\lcase ";
                 LangOptions LO; // FIXME.
                 C->getLHS()->printPretty(Out, 0, PrintingPolicy(LO));
 
-                if (Stmt* RHS = C->getRHS()) {
+                if (const Stmt* RHS = C->getRHS()) {
                   Out << " .. ";
                   RHS->printPretty(Out, 0, PrintingPolicy(LO));
                 }

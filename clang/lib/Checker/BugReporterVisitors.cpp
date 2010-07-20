@@ -209,7 +209,7 @@ public:
     ProgramPoint P = N->getLocation();
 
     if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      CFGBlock *BSrc = BE->getSrc();
+      const CFGBlock *BSrc = BE->getSrc();
       S = BSrc->getTerminatorCondition();
     }
     else if (PostStmt *PS = dyn_cast<PostStmt>(&P)) {
@@ -282,7 +282,7 @@ public:
       ProgramPoint P = N->getLocation();
 
       if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-        CFGBlock *BSrc = BE->getSrc();
+        const CFGBlock *BSrc = BE->getSrc();
         S = BSrc->getTerminatorCondition();
       }
       else if (PostStmt *PS = dyn_cast<PostStmt>(&P)) {

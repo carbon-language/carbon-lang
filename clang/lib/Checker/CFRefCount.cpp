@@ -92,11 +92,11 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
 namespace {
 class GenericNodeBuilder {
   GRStmtNodeBuilder *SNB;
-  Stmt *S;
+  const Stmt *S;
   const void *tag;
   GREndPathNodeBuilder *ENB;
 public:
-  GenericNodeBuilder(GRStmtNodeBuilder &snb, Stmt *s,
+  GenericNodeBuilder(GRStmtNodeBuilder &snb, const Stmt *s,
                      const void *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
 
@@ -1769,7 +1769,7 @@ private:
 
   void ProcessNonLeakError(ExplodedNodeSet& Dst,
                            GRStmtNodeBuilder& Builder,
-                           Expr* NodeExpr, SourceRange ErrorRange,
+                           const Expr* NodeExpr, SourceRange ErrorRange,
                            ExplodedNode* Pred,
                            const GRState* St,
                            RefVal::Kind hasErr, SymbolRef Sym);
@@ -1812,31 +1812,31 @@ public:
   void EvalSummary(ExplodedNodeSet& Dst,
                    GRExprEngine& Eng,
                    GRStmtNodeBuilder& Builder,
-                   Expr* Ex,
+                   const Expr* Ex,
                    InstanceReceiver Receiver,
                    const RetainSummary& Summ,
                    const MemRegion *Callee,
-                   ExprIterator arg_beg, ExprIterator arg_end,
+                   ConstExprIterator arg_beg, ConstExprIterator arg_end,
                    ExplodedNode* Pred, const GRState *state);
 
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder& Builder,
-                        CallExpr* CE, SVal L,
+                        const CallExpr* CE, SVal L,
                         ExplodedNode* Pred);
 
 
   virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
-                                   ObjCMessageExpr* ME,
+                                   const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state);
 
   bool EvalObjCMessageExprAux(ExplodedNodeSet& Dst,
                               GRExprEngine& Engine,
                               GRStmtNodeBuilder& Builder,
-                              ObjCMessageExpr* ME,
+                              const ObjCMessageExpr* ME,
                               ExplodedNode* Pred);
 
   // Stores.
@@ -1863,7 +1863,7 @@ public:
   virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder& Builder,
-                          ReturnStmt* S,
+                          const ReturnStmt* S,
                           ExplodedNode* Pred);
 
   // Assumptions.
@@ -2607,11 +2607,12 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
 void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              GRExprEngine& Eng,
                              GRStmtNodeBuilder& Builder,
-                             Expr* Ex,
+                             const Expr* Ex,
                              InstanceReceiver Receiver,
                              const RetainSummary& Summ,
                              const MemRegion *Callee,
-                             ExprIterator arg_beg, ExprIterator arg_end,
+                             ConstExprIterator arg_beg, 
+                             ConstExprIterator arg_end,
                              ExplodedNode* Pred, const GRState *state) {
 
   // Evaluate the effect of the arguments.
@@ -2622,7 +2623,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   llvm::SmallVector<const MemRegion*, 10> RegionsToInvalidate;
 
-  for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
+  for (ConstExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
     SVal V = state->getSValAsScalarOrLoc(*I);
     SymbolRef Sym = V.getAsLocSymbol();
 
@@ -2862,7 +2863,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder& Builder,
-                          CallExpr* CE, SVal L,
+                          const CallExpr* CE, SVal L,
                           ExplodedNode* Pred) {
 
   RetainSummary *Summ = 0;
@@ -2887,7 +2888,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
 void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRExprEngine& Eng,
                                      GRStmtNodeBuilder& Builder,
-                                     ObjCMessageExpr* ME,
+                                     const ObjCMessageExpr* ME,
                                      ExplodedNode* Pred,
                                      const GRState *state) {
   RetainSummary *Summ =
@@ -2958,10 +2959,10 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
 void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
                             GRExprEngine& Eng,
                             GRStmtNodeBuilder& Builder,
-                            ReturnStmt* S,
+                            const ReturnStmt* S,
                             ExplodedNode* Pred) {
 
-  Expr* RetE = S->getRetValue();
+  const Expr* RetE = S->getRetValue();
   if (!RetE)
     return;
 
@@ -3406,7 +3407,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
                                  ExplodedNode* Pred,
                                  const GRState* state,
                                  SymbolReaper& SymReaper) {
-  Stmt *S = Builder.getStmt();
+  const Stmt *S = Builder.getStmt();
   RefBindings B = state->get<RefBindings>();
 
   // Update counts from autorelease pools
@@ -3456,7 +3457,8 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
                                      GRStmtNodeBuilder& Builder,
-                                     Expr* NodeExpr, SourceRange ErrorRange,
+                                     const Expr* NodeExpr, 
+                                     SourceRange ErrorRange,
                                      ExplodedNode* Pred,
                                      const GRState* St,
                                      RefVal::Kind hasErr, SymbolRef Sym) {

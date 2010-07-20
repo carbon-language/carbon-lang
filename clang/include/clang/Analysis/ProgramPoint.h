@@ -109,16 +109,16 @@ public:
                 const void *tag = 0)
     : ProgramPoint(B, BlockEntranceKind, L, tag) {}
 
-  CFGBlock* getBlock() const {
-    return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
+  const CFGBlock* getBlock() const {
+    return reinterpret_cast<const CFGBlock*>(getData1());
   }
 
-  CFGElement getFirstElement() const {
+  const CFGElement getFirstElement() const {
     const CFGBlock* B = getBlock();
     return B->empty() ? CFGElement() : B->front();
   }
   
-  Stmt *getFirstStmt() const {
+  const Stmt *getFirstStmt() const {
     return getFirstElement().getStmt();
   }
 
@@ -132,16 +132,16 @@ public:
   BlockExit(const CFGBlock* B, const LocationContext *L)
     : ProgramPoint(B, BlockExitKind, L) {}
 
-  CFGBlock* getBlock() const {
-    return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
+  const CFGBlock* getBlock() const {
+    return reinterpret_cast<const CFGBlock*>(getData1());
   }
 
-  Stmt* getLastStmt() const {
+  const Stmt* getLastStmt() const {
     const CFGBlock* B = getBlock();
     return B->empty() ? CFGElement() : B->back();
   }
 
-  Stmt* getTerminator() const {
+  const Stmt* getTerminator() const {
     return getBlock()->getTerminator();
   }
 
@@ -300,12 +300,12 @@ public:
   BlockEdge(const CFGBlock* B1, const CFGBlock* B2, const LocationContext *L)
     : ProgramPoint(B1, B2, BlockEdgeKind, L) {}
 
-  CFGBlock* getSrc() const {
-    return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData1()));
+  const CFGBlock* getSrc() const {
+    return static_cast<const CFGBlock*>(getData1());
   }
 
-  CFGBlock* getDst() const {
-    return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData2()));
+  const CFGBlock* getDst() const {
+    return static_cast<const CFGBlock*>(getData2());
   }
 
   static bool classof(const ProgramPoint* Location) {

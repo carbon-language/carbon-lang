@@ -67,11 +67,11 @@ class GRCoreEngine {
 
   void HandleBlockEdge(const BlockEdge& E, ExplodedNode* Pred);
   void HandleBlockEntrance(const BlockEntrance& E, ExplodedNode* Pred);
-  void HandleBlockExit(CFGBlock* B, ExplodedNode* Pred);
-  void HandlePostStmt(const PostStmt& S, CFGBlock* B,
+  void HandleBlockExit(const CFGBlock* B, ExplodedNode* Pred);
+  void HandlePostStmt(const PostStmt& S, const CFGBlock* B,
                       unsigned StmtIdx, ExplodedNode *Pred);
 
-  void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
+  void HandleBranch(const Stmt* Cond, const Stmt* Term, const CFGBlock* B,
                     ExplodedNode* Pred);
   void HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
                        unsigned Index, ExplodedNode *Pred);
@@ -84,13 +84,13 @@ class GRCoreEngine {
 
   void ProcessEndPath(GREndPathNodeBuilder& Builder);
 
-  void ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder);
+  void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& Builder);
 
-  bool ProcessBlockEntrance(CFGBlock* Blk, const ExplodedNode *Pred,
+  bool ProcessBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
                             GRBlockCounter BC);
 
 
-  void ProcessBranch(Stmt* Condition, Stmt* Terminator,
+  void ProcessBranch(const Stmt* Condition, const Stmt* Terminator,
                      GRBranchNodeBuilder& Builder);
 
 
@@ -141,7 +141,7 @@ public:
 
 class GRStmtNodeBuilder {
   GRCoreEngine& Eng;
-  CFGBlock& B;
+  const CFGBlock& B;
   const unsigned Idx;
   ExplodedNode* Pred;
   GRStateManager& Mgr;
@@ -163,7 +163,7 @@ public:
   void GenerateAutoTransition(ExplodedNode* N);
 
 public:
-  GRStmtNodeBuilder(CFGBlock* b, unsigned idx, ExplodedNode* N,
+  GRStmtNodeBuilder(const CFGBlock* b, unsigned idx, ExplodedNode* N,
                     GRCoreEngine* e, GRStateManager &mgr);
 
   ~GRStmtNodeBuilder();
@@ -222,11 +222,11 @@ public:
 
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
-  Stmt* getStmt() const { return B[Idx]; }
+  const Stmt* getStmt() const { return B[Idx]; }
 
   /// getBlock - Return the CFGBlock associated with the block-level expression
   ///  of this builder.
-  CFGBlock* getBlock() const { return &B; }
+  const CFGBlock* getBlock() const { return &B; }
 
   unsigned getIndex() const { return Idx; }
 
@@ -259,9 +259,9 @@ public:
 
 class GRBranchNodeBuilder {
   GRCoreEngine& Eng;
-  CFGBlock* Src;
-  CFGBlock* DstT;
-  CFGBlock* DstF;
+  const CFGBlock* Src;
+  const CFGBlock* DstT;
+  const CFGBlock* DstF;
   ExplodedNode* Pred;
 
   typedef llvm::SmallVector<ExplodedNode*,3> DeferredTy;
@@ -273,8 +273,8 @@ class GRBranchNodeBuilder {
   bool InFeasibleFalse;
 
 public:
-  GRBranchNodeBuilder(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
-                          ExplodedNode* pred, GRCoreEngine* e)
+  GRBranchNodeBuilder(const CFGBlock* src, const CFGBlock* dstT, 
+                      const CFGBlock* dstF, ExplodedNode* pred, GRCoreEngine* e)
   : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
     GeneratedTrue(false), GeneratedFalse(false),
     InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
@@ -289,7 +289,7 @@ public:
 
   ExplodedNode* generateNode(const GRState* State, bool branch);
 
-  CFGBlock* getTargetBlock(bool branch) const {
+  const CFGBlock* getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
   }
 
@@ -311,31 +311,31 @@ public:
 
 class GRIndirectGotoNodeBuilder {
   GRCoreEngine& Eng;
-  CFGBlock* Src;
-  CFGBlock& DispatchBlock;
-  Expr* E;
+  const CFGBlock* Src;
+  const CFGBlock& DispatchBlock;
+  const Expr* E;
   ExplodedNode* Pred;
 
 public:
-  GRIndirectGotoNodeBuilder(ExplodedNode* pred, CFGBlock* src, Expr* e,
-                            CFGBlock* dispatch, GRCoreEngine* eng)
-  : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
+  GRIndirectGotoNodeBuilder(ExplodedNode* pred, const CFGBlock* src, 
+                    const Expr* e, const CFGBlock* dispatch, GRCoreEngine* eng)
+    : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
 
   class iterator {
-    CFGBlock::succ_iterator I;
+    CFGBlock::const_succ_iterator I;
 
     friend class GRIndirectGotoNodeBuilder;
-    iterator(CFGBlock::succ_iterator i) : I(i) {}
+    iterator(CFGBlock::const_succ_iterator i) : I(i) {}
   public:
 
     iterator& operator++() { ++I; return *this; }
     bool operator!=(const iterator& X) const { return I != X.I; }
 
-    LabelStmt* getLabel() const {
+    const LabelStmt* getLabel() const {
       return llvm::cast<LabelStmt>((*I)->getLabel());
     }
 
-    CFGBlock*  getBlock() const {
+    const CFGBlock*  getBlock() const {
       return *I;
     }
   };
@@ -346,37 +346,37 @@ public:
   ExplodedNode* generateNode(const iterator& I, const GRState* State,
                              bool isSink = false);
 
-  Expr* getTarget() const { return E; }
+  const Expr* getTarget() const { return E; }
 
   const GRState* getState() const { return Pred->State; }
 };
 
 class GRSwitchNodeBuilder {
   GRCoreEngine& Eng;
-  CFGBlock* Src;
-  Expr* Condition;
+  const CFGBlock* Src;
+  const Expr* Condition;
   ExplodedNode* Pred;
 
 public:
-  GRSwitchNodeBuilder(ExplodedNode* pred, CFGBlock* src,
-                      Expr* condition, GRCoreEngine* eng)
+  GRSwitchNodeBuilder(ExplodedNode* pred, const CFGBlock* src,
+                      const Expr* condition, GRCoreEngine* eng)
   : Eng(*eng), Src(src), Condition(condition), Pred(pred) {}
 
   class iterator {
-    CFGBlock::succ_reverse_iterator I;
+    CFGBlock::const_succ_reverse_iterator I;
 
     friend class GRSwitchNodeBuilder;
-    iterator(CFGBlock::succ_reverse_iterator i) : I(i) {}
+    iterator(CFGBlock::const_succ_reverse_iterator i) : I(i) {}
 
   public:
     iterator& operator++() { ++I; return *this; }
     bool operator!=(const iterator& X) const { return I != X.I; }
 
-    CaseStmt* getCase() const {
+    const CaseStmt* getCase() const {
       return llvm::cast<CaseStmt>((*I)->getLabel());
     }
 
-    CFGBlock* getBlock() const {
+    const CFGBlock* getBlock() const {
       return *I;
     }
   };
@@ -389,21 +389,21 @@ public:
   ExplodedNode* generateDefaultCaseNode(const GRState* State,
                                         bool isSink = false);
 
-  Expr* getCondition() const { return Condition; }
+  const Expr* getCondition() const { return Condition; }
 
   const GRState* getState() const { return Pred->State; }
 };
 
 class GREndPathNodeBuilder {
   GRCoreEngine &Eng;
-  CFGBlock& B;
+  const CFGBlock& B;
   ExplodedNode* Pred;
 
 public:
   bool HasGeneratedNode;
 
 public:
-  GREndPathNodeBuilder(CFGBlock* b, ExplodedNode* N, GRCoreEngine* e)
+  GREndPathNodeBuilder(const CFGBlock* b, ExplodedNode* N, GRCoreEngine* e)
     : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}
 
   ~GREndPathNodeBuilder();
@@ -427,7 +427,7 @@ public:
 
   void GenerateCallExitNode(const GRState *state);
 
-  CFGBlock* getBlock() const { return &B; }
+  const CFGBlock* getBlock() const { return &B; }
 
   const GRState* getState() const {
     return getPredecessor()->getState();

@@ -27,12 +27,12 @@ class ExplodedNodeImpl;
 class GRWorkListUnit {
   ExplodedNode* Node;
   GRBlockCounter Counter;
-  CFGBlock* Block;
+  const CFGBlock* Block;
   unsigned BlockIdx; // This is the index of the next statement.
 
 public:
   GRWorkListUnit(ExplodedNode* N, GRBlockCounter C,
-                 CFGBlock* B, unsigned idx)
+                 const CFGBlock* B, unsigned idx)
   : Node(N),
     Counter(C),
     Block(B),
@@ -46,7 +46,7 @@ public:
 
   ExplodedNode* getNode()         const { return Node; }
   GRBlockCounter    getBlockCounter() const { return Counter; }
-  CFGBlock*         getBlock()        const { return Block; }
+  const CFGBlock*   getBlock()        const { return Block; }
   unsigned          getIndex()        const { return BlockIdx; }
 };
 
@@ -58,8 +58,8 @@ public:
 
   virtual void Enqueue(const GRWorkListUnit& U) = 0;
 
-  void Enqueue(ExplodedNode* N, CFGBlock& B, unsigned idx) {
-    Enqueue(GRWorkListUnit(N, CurrentCounter, &B, idx));
+  void Enqueue(ExplodedNode* N, const CFGBlock* B, unsigned idx) {
+    Enqueue(GRWorkListUnit(N, CurrentCounter, B, idx));
   }
 
   void Enqueue(ExplodedNode* N) {

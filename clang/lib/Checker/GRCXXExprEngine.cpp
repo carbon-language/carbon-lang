@@ -17,7 +17,7 @@
 
 using namespace clang;
 
-void GRExprEngine::EvalArguments(ExprIterator AI, ExprIterator AE,
+void GRExprEngine::EvalArguments(ConstExprIterator AI, ConstExprIterator AE,
                                  const FunctionProtoType *FnType, 
                                  ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   llvm::SmallVector<CallExprWLItem, 20> WorkList;
@@ -55,7 +55,7 @@ const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *D,
   return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
-void GRExprEngine::CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred,
+void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   ExplodedNodeSet Tmp;
   Visit(Ex, Pred, Tmp);
@@ -94,9 +94,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
   // Evaluate other arguments.
   ExplodedNodeSet ArgsEvaluated;
   const FunctionProtoType *FnType = CD->getType()->getAs<FunctionProtoType>();
-  EvalArguments(const_cast<CXXConstructExpr*>(E)->arg_begin(),
-                const_cast<CXXConstructExpr*>(E)->arg_end(),
-                FnType, Pred, ArgsEvaluated);
+  EvalArguments(E->arg_begin(), E->arg_end(), FnType, Pred, ArgsEvaluated);
   // The callee stack frame context used to create the 'this' parameter region.
   const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
                                                     Pred->getLocationContext(),
@@ -126,9 +124,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
 
   // Evaluate explicit arguments with a worklist.
   ExplodedNodeSet ArgsEvaluated;
-  EvalArguments(const_cast<CXXMemberCallExpr*>(MCE)->arg_begin(),
-                const_cast<CXXMemberCallExpr*>(MCE)->arg_end(),
-                FnType, Pred, ArgsEvaluated);
+  EvalArguments(MCE->arg_begin(), MCE->arg_end(), FnType, Pred, ArgsEvaluated);
  
   // Evaluate the implicit object argument.
   ExplodedNodeSet AllArgsEvaluated;
@@ -169,7 +165,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
   }
 }
 
-void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
+void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   if (CNE->isArray()) {
     // FIXME: allocating an array has not been handled.
@@ -177,7 +173,7 @@ void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 
   unsigned Count = Builder->getCurrentBlockCount();
-  DefinedOrUnknownSVal SymVal = getValueManager().getConjuredSymbolVal(NULL,CNE, 
+  DefinedOrUnknownSVal SymVal = getValueManager().getConjuredSymbolVal(NULL,CNE,
                                                          CNE->getType(), Count);
   const MemRegion *NewReg = cast<loc::MemRegionVal>(SymVal).getRegion();
 
@@ -220,8 +216,8 @@ void GRExprEngine::VisitCXXNewExpr(CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCXXDeleteExpr(CXXDeleteExpr *CDE, ExplodedNode *Pred,
-                                      ExplodedNodeSet &Dst) {
+void GRExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
+                                      ExplodedNode *Pred,ExplodedNodeSet &Dst) {
   // Should do more checking.
   ExplodedNodeSet ArgEvaluated;
   Visit(CDE->getArgument(), Pred, ArgEvaluated);
@@ -232,7 +228,7 @@ void GRExprEngine::VisitCXXDeleteExpr(CXXDeleteExpr *CDE, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred,
+void GRExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
   // Get the this object region from StoreManager.
   const MemRegion *R =

@@ -43,17 +43,17 @@ public:
 
   /// Called by GRCoreEngine. Used to generate new successor
   /// nodes by processing the 'effects' of a block-level statement.
-  virtual void ProcessStmt(CFGElement E, GRStmtNodeBuilder& builder) = 0;
+  virtual void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& builder) = 0;
 
   /// Called by GRCoreEngine when start processing
   /// a CFGBlock.  This method returns true if the analysis should continue
   /// exploring the given path, and false otherwise.
-  virtual bool ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
+  virtual bool ProcessBlockEntrance(const CFGBlock* B, const ExplodedNode *Pred,
                                     GRBlockCounter BC) = 0;
 
   /// Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
-  virtual void ProcessBranch(Stmt* Condition, Stmt* Term,
+  virtual void ProcessBranch(const Stmt* Condition, const Stmt* Term,
                              GRBranchNodeBuilder& builder) = 0;
 
   /// Called by GRCoreEngine.  Used to generate successor

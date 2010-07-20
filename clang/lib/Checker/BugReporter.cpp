@@ -541,9 +541,9 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
     ProgramPoint P = N->getLocation();
 
     if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
-      CFGBlock* Src = BE->getSrc();
-      CFGBlock* Dst = BE->getDst();
-      Stmt* T = Src->getTerminator();
+      const CFGBlock* Src = BE->getSrc();
+      const CFGBlock* Dst = BE->getDst();
+      const Stmt* T = Src->getTerminator();
 
       if (!T)
         continue;
@@ -577,7 +577,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
 
-          if (Stmt* S = Dst->getLabel()) {
+          if (const Stmt* S = Dst->getLabel()) {
             PathDiagnosticLocation End(S, SMgr);
 
             switch (S->getStmtClass()) {
@@ -593,17 +593,17 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
               case Stmt::CaseStmtClass: {
                 os << "Control jumps to 'case ";
-                CaseStmt* Case = cast<CaseStmt>(S);
-                Expr* LHS = Case->getLHS()->IgnoreParenCasts();
+                const CaseStmt* Case = cast<CaseStmt>(S);
+                const Expr* LHS = Case->getLHS()->IgnoreParenCasts();
 
                 // Determine if it is an enum.
                 bool GetRawInt = true;
 
-                if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
+                if (const DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
                   // FIXME: Maybe this should be an assertion.  Are there cases
                   // were it is not an EnumConstantDecl?
-                  EnumConstantDecl* D =
-                  dyn_cast<EnumConstantDecl>(DR->getDecl());
+                  const EnumConstantDecl* D =
+                    dyn_cast<EnumConstantDecl>(DR->getDecl());
 
                   if (D) {
                     GetRawInt = false;
@@ -668,7 +668,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           if (!PDB.supportsLogicalOpControlFlow())
             break;
 
-          BinaryOperator *B = cast<BinaryOperator>(T);
+          const BinaryOperator *B = cast<BinaryOperator>(T);
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
           os << "Left side of '";

@@ -29,27 +29,28 @@ class UndefBranchChecker : public Checker {
 
     FindUndefExpr(GRStateManager& V, const GRState* S) : VM(V), St(S) {}
 
-    Expr* FindExpr(Expr* Ex) {
+    const Expr* FindExpr(const Expr* Ex) {
       if (!MatchesCriteria(Ex))
         return 0;
 
-      for (Stmt::child_iterator I=Ex->child_begin(), E=Ex->child_end();I!=E;++I)
-        if (Expr* ExI = dyn_cast_or_null<Expr>(*I)) {
-          Expr* E2 = FindExpr(ExI);
+      for (Stmt::const_child_iterator I = Ex->child_begin(), 
+                                      E = Ex->child_end();I!=E;++I)
+        if (const Expr* ExI = dyn_cast_or_null<Expr>(*I)) {
+          const Expr* E2 = FindExpr(ExI);
           if (E2) return E2;
         }
 
       return Ex;
     }
 
-    bool MatchesCriteria(Expr* Ex) { return St->getSVal(Ex).isUndef(); }
+    bool MatchesCriteria(const Expr* Ex) { return St->getSVal(Ex).isUndef(); }
   };
 
 public:
   UndefBranchChecker() : BT(0) {}
   static void *getTag();
   void VisitBranchCondition(GRBranchNodeBuilder &Builder, GRExprEngine &Eng,
-                            Stmt *Condition, void *tag);
+                            const Stmt *Condition, void *tag);
 };
 
 }
@@ -65,7 +66,7 @@ void *UndefBranchChecker::getTag() {
 
 void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder, 
                                               GRExprEngine &Eng,
-                                              Stmt *Condition, void *tag) {
+                                              const Stmt *Condition, void *tag){
   const GRState *state = Builder.getState();
   SVal X = state->getSVal(Condition);
   if (X.isUndef()) {
@@ -81,7 +82,7 @@ void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder,
       // subexpressions and roughly look for the most nested subexpression
       // that binds to Undefined.  We then highlight that expression's range.
       BlockEdge B = cast<BlockEdge>(N->getLocation());
-      Expr* Ex = cast<Expr>(B.getSrc()->getTerminatorCondition());
+      const Expr* Ex = cast<Expr>(B.getSrc()->getTerminatorCondition());
       assert (Ex && "Block must have a terminator.");
 
       // Get the predecessor node and check if is a PostStmt with the Stmt

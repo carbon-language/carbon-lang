@@ -42,13 +42,13 @@ public:
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder& Builder,
-                        CallExpr* CE, SVal L,
+                        const CallExpr* CE, SVal L,
                         ExplodedNode* Pred) {}
 
   virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
-                                   ObjCMessageExpr* ME,
+                                   const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state) {}
 
@@ -73,7 +73,7 @@ public:
   virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder& Builder,
-                          ReturnStmt* S,
+                          const ReturnStmt* S,
                           ExplodedNode* Pred) {}
 
   // Assumptions.

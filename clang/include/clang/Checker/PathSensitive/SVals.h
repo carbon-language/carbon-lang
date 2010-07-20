@@ -45,15 +45,14 @@ public:
   enum { BaseBits = 2, BaseMask = 0x3 };
 
 protected:
-  void* Data;
+  const void* Data;
   unsigned Kind;
 
 protected:
   SVal(const void* d, bool isLoc, unsigned ValKind)
-  : Data(const_cast<void*>(d)),
-    Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
+  : Data(d), Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
 
-  explicit SVal(BaseKind k, void* D = NULL)
+  explicit SVal(BaseKind k, const void* D = NULL)
     : Data(D), Kind(k) {}
 
 public:
@@ -69,7 +68,7 @@ public:
 
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getRawKind());
-    ID.AddPointer(reinterpret_cast<void*>(Data));
+    ID.AddPointer(Data);
   }
 
   inline bool operator==(const SVal& R) const {
@@ -163,13 +162,13 @@ public:
 class UndefinedVal : public SVal {
 public:
   UndefinedVal() : SVal(UndefinedKind) {}
-  UndefinedVal(void* D) : SVal(UndefinedKind, D) {}
+  UndefinedVal(const void* D) : SVal(UndefinedKind, D) {}
 
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UndefinedKind;
   }
 
-  void* getData() const { return Data; }
+  const void* getData() const { return Data; }
 };
 
 class DefinedOrUnknownSVal : public SVal {
@@ -287,7 +286,7 @@ public:
     : NonLoc(SymExprValKind, reinterpret_cast<const void*>(SE)) {}
 
   const SymExpr *getSymbolicExpression() const {
-    return reinterpret_cast<SymExpr*>(Data);
+    return reinterpret_cast<const SymExpr*>(Data);
   }
 
   static inline bool classof(const SVal* V) {
@@ -305,7 +304,7 @@ public:
   ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}
 
   const llvm::APSInt& getValue() const {
-    return *static_cast<llvm::APSInt*>(Data);
+    return *static_cast<const llvm::APSInt*>(Data);
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
@@ -368,7 +367,7 @@ class CompoundVal : public NonLoc {
 
 public:
   const CompoundValData* getValue() const {
-    return static_cast<CompoundValData*>(Data);
+    return static_cast<const CompoundValData*>(Data);
   }
 
   typedef llvm::ImmutableList<SVal>::iterator iterator;
@@ -419,8 +418,8 @@ class GotoLabel : public Loc {
 public:
   GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
 
-  LabelStmt* getLabel() const {
-    return static_cast<LabelStmt*>(Data);
+  const LabelStmt* getLabel() const {
+    return static_cast<const LabelStmt*>(Data);
   }
 
   static inline bool classof(const SVal* V) {
@@ -439,7 +438,7 @@ public:
   MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
 
   const MemRegion* getRegion() const {
-    return static_cast<MemRegion*>(Data);
+    return static_cast<const MemRegion*>(Data);
   }
 
   const MemRegion* StripCasts() const;
@@ -473,7 +472,7 @@ public:
   ConcreteInt(const llvm::APSInt& V) : Loc(ConcreteIntKind, &V) {}
 
   const llvm::APSInt& getValue() const {
-    return *static_cast<llvm::APSInt*>(Data);
+    return *static_cast<const llvm::APSInt*>(Data);
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.

@@ -126,13 +126,14 @@ void GRCoreEngine::ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder) {
   SubEngine.ProcessStmt(E, Builder);
 }
 
-bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const ExplodedNode *Pred,
+bool GRCoreEngine::ProcessBlockEntrance(const CFGBlock* Blk, 
+                                        const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
   return SubEngine.ProcessBlockEntrance(Blk, Pred, BC);
 }
 
-void GRCoreEngine::ProcessBranch(Stmt* Condition, Stmt* Terminator,
-                   GRBranchNodeBuilder& Builder) {
+void GRCoreEngine::ProcessBranch(const Stmt* Condition, const Stmt* Terminator,
+                                 GRBranchNodeBuilder& Builder) {
   SubEngine.ProcessBranch(Condition, Terminator, Builder);
 }
 
@@ -158,7 +159,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
 
-    CFGBlock* Entry = &(L->getCFG()->getEntry());
+    const CFGBlock* Entry = &(L->getCFG()->getEntry());
 
     assert (Entry->empty() &&
             "Entry block must be empty.");
@@ -167,7 +168,7 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
             "Entry block must have 1 successor.");
 
     // Get the solitary successor.
-    CFGBlock* Succ = *(Entry->succ_begin());
+    const CFGBlock* Succ = *(Entry->succ_begin());
 
     // Construct an edge representing the
     // starting location in the function.
@@ -239,7 +240,7 @@ void GRCoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
 
 void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 
-  CFGBlock* Blk = L.getDst();
+  const CFGBlock* Blk = L.getDst();
 
   // Check if we are entering the EXIT block.
   if (Blk == &(L.getLocationContext()->getCFG()->getExit())) {
@@ -284,9 +285,9 @@ void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
     HandleBlockExit(L.getBlock(), Pred);
 }
 
-void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
+void GRCoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
 
-  if (Stmt* Term = B->getTerminator()) {
+  if (const Stmt* Term = B->getTerminator()) {
     switch (Term->getStmtClass()) {
       default:
         assert(false && "Analysis for this terminator not implemented.");
@@ -372,8 +373,8 @@ void GRCoreEngine::HandleBlockExit(CFGBlock * B, ExplodedNode* Pred) {
                Pred->State, Pred);
 }
 
-void GRCoreEngine::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
-                                ExplodedNode* Pred) {
+void GRCoreEngine::HandleBranch(const Stmt* Cond, const Stmt* Term, 
+                                const CFGBlock * B, ExplodedNode* Pred) {
   assert (B->succ_size() == 2);
 
   GRBranchNodeBuilder Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
@@ -382,7 +383,7 @@ void GRCoreEngine::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
   ProcessBranch(Cond, Term, Builder);
 }
 
-void GRCoreEngine::HandlePostStmt(const PostStmt& L, CFGBlock* B,
+void GRCoreEngine::HandlePostStmt(const PostStmt& L, const CFGBlock* B,
                                   unsigned StmtIdx, ExplodedNode* Pred) {
 
   assert (!B->empty());
@@ -415,7 +416,7 @@ void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
   if (IsNew) WList->Enqueue(Node);
 }
 
-GRStmtNodeBuilder::GRStmtNodeBuilder(CFGBlock* b, unsigned idx,
+GRStmtNodeBuilder::GRStmtNodeBuilder(const CFGBlock* b, unsigned idx,
                                      ExplodedNode* N, GRCoreEngine* e,
                                      GRStateManager &mgr)
   : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr), Auditor(0),
@@ -438,7 +439,7 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   if (isa<CallEnter>(N->getLocation())) {
     // Still use the index of the CallExpr. It's needed to create the callee
     // StackFrameContext.
-    Eng.WList->Enqueue(N, B, Idx);
+    Eng.WList->Enqueue(N, &B, Idx);
     return;
   }
 
@@ -447,7 +448,7 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   if (Loc == N->getLocation()) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
     // a member of Deferred.
-    Eng.WList->Enqueue(N, B, Idx+1);
+    Eng.WList->Enqueue(N, &B, Idx+1);
     return;
   }
 
@@ -456,7 +457,7 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   Succ->addPredecessor(N, *Eng.G);
 
   if (IsNew)
-    Eng.WList->Enqueue(Succ, B, Idx+1);
+    Eng.WList->Enqueue(Succ, &B, Idx+1);
 }
 
 ExplodedNode* GRStmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
@@ -727,6 +728,6 @@ void GRCallExitNodeBuilder::GenerateNode(const GRState *state) {
   ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
   if (isNew)
-    Eng.WList->Enqueue(Node, *const_cast<CFGBlock*>(LocCtx->getCallSiteBlock()),
+    Eng.WList->Enqueue(Node, LocCtx->getCallSiteBlock(),
                        LocCtx->getIndex() + 1);
 }
