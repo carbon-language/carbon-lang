@@ -206,6 +206,9 @@ private:
   /// is stored on the side.
   llvm::StringRef getFunctionName(const FunctionDecl *FD);
 
+  /// getClassName - Get class name including template argument list.
+  llvm::StringRef getClassName(RecordDecl *RD);
+
   /// getVTableName - Get vtable name for the given Class.
   llvm::StringRef getVTableName(const CXXRecordDecl *Decl);
 

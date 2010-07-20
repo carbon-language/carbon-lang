@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
@@ -91,6 +92,40 @@ llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   char *StrPtr = DebugInfoNames.Allocate<char>(NS.length());
   memcpy(StrPtr, NS.data(), NS.length());
   return llvm::StringRef(StrPtr, NS.length());
+}
+
+/// getClassName - Get class name including template argument list.
+llvm::StringRef 
+CGDebugInfo::getClassName(RecordDecl *RD) {
+  ClassTemplateSpecializationDecl *Spec
+    = dyn_cast<ClassTemplateSpecializationDecl>(RD);
+  if (!Spec)
+    return RD->getName();
+
+  const TemplateArgument *Args;
+  unsigned NumArgs;
+  std::string Buffer;
+  if (TypeSourceInfo *TAW = Spec->getTypeAsWritten()) {
+    const TemplateSpecializationType *TST =
+      cast<TemplateSpecializationType>(TAW->getType());
+    Args = TST->getArgs();
+    NumArgs = TST->getNumArgs();
+  } else {
+    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+    Args = TemplateArgs.getFlatArgumentList();
+    NumArgs = TemplateArgs.flat_size();
+  }
+  Buffer = RD->getIdentifier()->getNameStart();
+  PrintingPolicy Policy(CGM.getLangOptions());
+  Buffer += TemplateSpecializationType::PrintTemplateArgumentList(Args,
+                                                                  NumArgs,
+                                                                  Policy);
+
+  // Copy this name on the side and use its reference.
+  char *StrPtr = DebugInfoNames.Allocate<char>(Buffer.length());
+  memcpy(StrPtr, Buffer.data(), Buffer.length());
+  return llvm::StringRef(StrPtr, Buffer.length());
+
 }
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
@@ -537,6 +572,18 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   llvm::DIType ThisPtrType = 
     DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
 
+  unsigned Quals = Method->getTypeQualifiers();
+  if (Quals & Qualifiers::Const)
+    ThisPtrType = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_const_type, 
+                                     Unit, "", Unit,
+                                     0, 0, 0, 0, 0, ThisPtrType);
+  if (Quals & Qualifiers::Volatile)
+    ThisPtrType = 
+      DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_volatile_type, 
+                                     Unit, "", Unit,
+                                     0, 0, 0, 0, 0, ThisPtrType);
+
   TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;  
   Elts.push_back(ThisPtrType);
 
@@ -831,9 +878,15 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   llvm::DIDescriptor RDContext =  
     getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+
+  llvm::StringRef RDName = RD->getName();
+  // If this is a class, include the template arguments also.
+  if (Tag == llvm::dwarf::DW_TAG_class_type) 
+    RDName = getClassName(RD);
+  
   llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, RDContext,
-                                     RD->getName(),
+                                     RDName,
                                      DefUnit, Line, Size, Align, 0, 0, 
                                      llvm::DIType(), Elements, 
                                      0, ContainingType);
