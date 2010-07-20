@@ -420,9 +420,9 @@ static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
 }
 
 static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
-                                        CodeGenFunction &CGF, 
+                                        CodeGenFunction &CGF,
                                         const CXXNewExpr *E,
-                                        llvm::Value *& NumElements) {
+                                        llvm::Value *&NumElements) {
   QualType Type = E->getAllocatedType();
   CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(Type);
   const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
@@ -431,28 +431,6 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
     return llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
 
   CharUnits CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
-  
-  Expr::EvalResult Result;
-  if (E->getArraySize()->Evaluate(Result, CGF.getContext()) &&
-      !Result.HasSideEffects && Result.Val.isInt()) {
-
-    CharUnits AllocSize = 
-      Result.Val.getInt().getZExtValue() * TypeSize + CookiePadding;
-    
-    NumElements = 
-      llvm::ConstantInt::get(SizeTy, Result.Val.getInt().getZExtValue());
-    while (const ArrayType *AType = Context.getAsArrayType(Type)) {
-      const llvm::ArrayType *llvmAType =
-        cast<llvm::ArrayType>(CGF.ConvertType(Type));
-      NumElements =
-        CGF.Builder.CreateMul(NumElements, 
-                              llvm::ConstantInt::get(
-                                        SizeTy, llvmAType->getNumElements()));
-      Type = AType->getElementType();
-    }
-    
-    return llvm::ConstantInt::get(SizeTy, AllocSize.getQuantity());
-  }
   
   // Emit the array size expression.
   NumElements = CGF.EmitScalarExpr(E->getArraySize());
