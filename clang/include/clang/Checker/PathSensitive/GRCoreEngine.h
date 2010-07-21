@@ -82,25 +82,42 @@ class GRCoreEngine {
     return SubEngine.getInitialState(InitLoc);
   }
 
-  void ProcessEndPath(GREndPathNodeBuilder& Builder);
+  void ProcessEndPath(GREndPathNodeBuilder& Builder) {
+    SubEngine.ProcessEndPath(Builder);
+  }
 
-  void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& Builder);
+  void ProcessStmt(const CFGElement E, GRStmtNodeBuilder& Builder) {
+    SubEngine.ProcessStmt(E, Builder);
+  }
 
   bool ProcessBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
-                            GRBlockCounter BC);
+                            GRBlockCounter BC) {
+    return SubEngine.ProcessBlockEntrance(Blk, Pred, BC);
+  }
 
 
   void ProcessBranch(const Stmt* Condition, const Stmt* Terminator,
-                     GRBranchNodeBuilder& Builder);
+                     GRBranchNodeBuilder& Builder) {
+    SubEngine.ProcessBranch(Condition, Terminator, Builder);
+  }
 
 
-  void ProcessIndirectGoto(GRIndirectGotoNodeBuilder& Builder);
+  void ProcessIndirectGoto(GRIndirectGotoNodeBuilder& Builder) {
+    SubEngine.ProcessIndirectGoto(Builder);
+  }
 
 
-  void ProcessSwitch(GRSwitchNodeBuilder& Builder);
+  void ProcessSwitch(GRSwitchNodeBuilder& Builder) {
+    SubEngine.ProcessSwitch(Builder);
+  }
 
-  void ProcessCallEnter(GRCallEnterNodeBuilder &Builder);
-  void ProcessCallExit(GRCallExitNodeBuilder &Builder);
+  void ProcessCallEnter(GRCallEnterNodeBuilder &Builder) {
+    SubEngine.ProcessCallEnter(Builder);
+  }
+
+  void ProcessCallExit(GRCallExitNodeBuilder &Builder) {
+    SubEngine.ProcessCallExit(Builder);
+  }
 
 private:
   GRCoreEngine(const GRCoreEngine&); // Do not implement.

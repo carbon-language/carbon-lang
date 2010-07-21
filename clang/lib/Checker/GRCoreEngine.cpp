@@ -118,40 +118,6 @@ GRWorkList* GRWorkList::MakeBFSBlockDFSContents() {
 //===----------------------------------------------------------------------===//
 // Core analysis engine.
 //===----------------------------------------------------------------------===//
-void GRCoreEngine::ProcessEndPath(GREndPathNodeBuilder& Builder) {
-  SubEngine.ProcessEndPath(Builder);
-}
-
-void GRCoreEngine::ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder) {
-  SubEngine.ProcessStmt(E, Builder);
-}
-
-bool GRCoreEngine::ProcessBlockEntrance(const CFGBlock* Blk, 
-                                        const ExplodedNode *Pred,
-                                        GRBlockCounter BC) {
-  return SubEngine.ProcessBlockEntrance(Blk, Pred, BC);
-}
-
-void GRCoreEngine::ProcessBranch(const Stmt* Condition, const Stmt* Terminator,
-                                 GRBranchNodeBuilder& Builder) {
-  SubEngine.ProcessBranch(Condition, Terminator, Builder);
-}
-
-void GRCoreEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& Builder) {
-  SubEngine.ProcessIndirectGoto(Builder);
-}
-
-void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilder& Builder) {
-  SubEngine.ProcessSwitch(Builder);
-}
-
-void GRCoreEngine::ProcessCallEnter(GRCallEnterNodeBuilder &Builder) {
-  SubEngine.ProcessCallEnter(Builder);
-}
-
-void GRCoreEngine::ProcessCallExit(GRCallExitNodeBuilder &Builder) {
-  SubEngine.ProcessCallExit(Builder);
-}
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
 bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
