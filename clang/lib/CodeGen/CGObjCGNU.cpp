@@ -1855,6 +1855,19 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
   return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
 }
 
+namespace {
+  struct CallSyncExit : EHScopeStack::LazyCleanup {
+    llvm::Value *SyncExitFn;
+    llvm::Value *SyncArg;
+    CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
+      : SyncExitFn(SyncExitFn), SyncArg(SyncArg) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+      CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
+    }
+  };
+}
+
 void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                      const ObjCAtSynchronizedStmt &S) {
   std::vector<const llvm::Type*> Args(1, IdTy);
@@ -1871,13 +1884,9 @@ void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateCall(SyncEnter, SyncArg);
 
   // Register an all-paths cleanup to release the lock.
-  {
-    CodeGenFunction::CleanupBlock ReleaseScope(CGF, NormalAndEHCleanup);
-
-    llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
-    SyncArg = CGF.Builder.CreateBitCast(SyncArg, IdTy);
-    CGF.Builder.CreateCall(SyncExit, SyncArg);
-  }
+  llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
+  CGF.EHStack.pushLazyCleanup<CallSyncExit>(NormalAndEHCleanup,
+                                            SyncExit, SyncArg);
 
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());

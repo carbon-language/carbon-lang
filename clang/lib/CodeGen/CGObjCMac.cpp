@@ -5695,6 +5695,19 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
+namespace {
+  struct CallSyncExit : EHScopeStack::LazyCleanup {
+    llvm::Value *SyncExitFn;
+    llvm::Value *SyncArg;
+    CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
+      : SyncExitFn(SyncExitFn), SyncArg(SyncArg) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+      CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
+    }
+  };
+}
+
 void
 CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                              const ObjCAtSynchronizedStmt &S) {
@@ -5707,12 +5720,9 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     ->setDoesNotThrow();
 
   // Register an all-paths cleanup to release the lock.
-  {
-    CodeGenFunction::CleanupBlock ReleaseScope(CGF, NormalAndEHCleanup);
-
-    CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg)
-      ->setDoesNotThrow();
-  }
+  CGF.EHStack.pushLazyCleanup<CallSyncExit>(NormalAndEHCleanup,
+                                            ObjCTypes.getSyncExitFn(),
+                                            SyncArg);
 
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());
