@@ -320,20 +320,38 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+      // If we don't have an asmprinter, we're converting to MCInst to get
+      // instruction sizes, which doesn't need precise value information for
+      // symbols, just lower to a 0 immediate.
+      if (AsmPrinter != 0)
+        MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+      else
+        MCOp = MCOperand::CreateImm(0);
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+      if (AsmPrinter != 0)
+        MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+      else
+        MCOp = MCOperand::CreateImm(0);
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter->GetJTISymbol(MO.getIndex()));
+      if (AsmPrinter != 0)
+        MCOp = LowerSymbolOperand(MO, AsmPrinter->GetJTISymbol(MO.getIndex()));
+      else
+        MCOp = MCOperand::CreateImm(0);
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter->GetCPISymbol(MO.getIndex()));
+      if (AsmPrinter != 0)
+        MCOp = LowerSymbolOperand(MO, AsmPrinter->GetCPISymbol(MO.getIndex()));
+      else
+        MCOp = MCOperand::CreateImm(0);
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO,
+      if (AsmPrinter != 0)
+        MCOp = LowerSymbolOperand(MO,
                        AsmPrinter->GetBlockAddressSymbol(MO.getBlockAddress()));
+      else
+        MCOp = MCOperand::CreateImm(0);
       break;
     }
     
