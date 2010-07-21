@@ -3104,3 +3104,35 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x63,0x7d,0x19,0x20,0x07]
           vextractf128  $7, %ymm12, (%rax)
 
+// CHECK: vmaskmovpd  %xmm12, %xmm10, (%rax)
+// CHECK: encoding: [0xc4,0x62,0x29,0x2f,0x20]
+          vmaskmovpd  %xmm12, %xmm10, (%rax)
+
+// CHECK: vmaskmovpd  %ymm12, %ymm10, (%rax)
+// CHECK: encoding: [0xc4,0x62,0x2d,0x2f,0x20]
+          vmaskmovpd  %ymm12, %ymm10, (%rax)
+
+// CHECK: vmaskmovpd  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x62,0x19,0x2d,0x10]
+          vmaskmovpd  (%rax), %xmm12, %xmm10
+
+// CHECK: vmaskmovpd  (%rax), %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x62,0x1d,0x2d,0x10]
+          vmaskmovpd  (%rax), %ymm12, %ymm10
+
+// CHECK: vmaskmovps  %xmm12, %xmm10, (%rax)
+// CHECK: encoding: [0xc4,0x62,0x29,0x2e,0x20]
+          vmaskmovps  %xmm12, %xmm10, (%rax)
+
+// CHECK: vmaskmovps  %ymm12, %ymm10, (%rax)
+// CHECK: encoding: [0xc4,0x62,0x2d,0x2e,0x20]
+          vmaskmovps  %ymm12, %ymm10, (%rax)
+
+// CHECK: vmaskmovps  (%rax), %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x62,0x19,0x2c,0x10]
+          vmaskmovps  (%rax), %xmm12, %xmm10
+
+// CHECK: vmaskmovps  (%rax), %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x62,0x1d,0x2c,0x10]
+          vmaskmovps  (%rax), %ymm12, %ymm10
+

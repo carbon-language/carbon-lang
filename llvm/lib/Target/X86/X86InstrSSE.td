@@ -256,10 +256,10 @@ def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
 let isAsmParserOnly = 1 in {
 def VMOVSSmr : SI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}",
-                  [(store FR32:$src, addr:$dst)]>, XS, VEX_4V;
+                  [(store FR32:$src, addr:$dst)]>, XS, VEX;
 def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
-                  [(store FR64:$src, addr:$dst)]>, XD, VEX_4V;
+                  [(store FR64:$src, addr:$dst)]>, XD, VEX;
 }
 
 // Extract and store.
@@ -5017,5 +5017,28 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           (ins f128mem:$dst, VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           []>, VEX;
+
+// Conditional SIMD Packed Loads and Stores
+multiclass avx_movmask_rm<bits<8> opc_rm, bits<8> opc_mr, string OpcodeStr> {
+  def rm  : AVX8I<opc_rm, MRMSrcMem, (outs VR128:$dst),
+             (ins VR128:$src1, f128mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def Yrm : AVX8I<opc_rm, MRMSrcMem, (outs VR256:$dst),
+             (ins VR256:$src1, f256mem:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def mr  : AVX8I<opc_mr, MRMDestMem, (outs),
+             (ins f128mem:$dst, VR128:$src1, VR128:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def Ymr : AVX8I<opc_mr, MRMDestMem, (outs),
+             (ins f256mem:$dst, VR256:$src1, VR256:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+}
+
+defm VMASKMOVPS : avx_movmask_rm<0x2C, 0x2E, "vmaskmovps">;
+defm VMASKMOVPD : avx_movmask_rm<0x2D, 0x2F, "vmaskmovpd">;
 
 } // isAsmParserOnly

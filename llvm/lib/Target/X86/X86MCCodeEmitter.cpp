@@ -469,29 +469,35 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   unsigned NumOps = MI.getNumOperands();
   unsigned CurOp = 0;
+  bool IsDestMem = false;
 
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg: assert(0 && "FIXME: Remove this!");
+  case X86II::MRMDestMem:
+    IsDestMem = true;
+    // The important info for the VEX prefix is never beyond the address
+    // registers. Don't check beyond that.
+    NumOps = CurOp = X86::AddrNumOperands;
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
-  case X86II::MRMDestMem:
-    NumOps = CurOp = X86::AddrNumOperands;
   case X86II::MRMSrcMem:
   case X86II::MRMSrcReg:
     if (MI.getNumOperands() > CurOp && MI.getOperand(CurOp).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
-
-    // CurOp and NumOps are equal when VEX_R represents a register used
-    // to index a memory destination (which is the last operand)
-    CurOp = (CurOp == NumOps) ? 0 : CurOp+1;
+    CurOp++;
 
     if (HasVEX_4V) {
-      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      VEX_4V = getVEXRegisterEncoding(MI, IsDestMem ? CurOp-1 : CurOp);
       CurOp++;
     }
+
+    // To only check operands before the memory address ones, start
+    // the search from the begining
+    if (IsDestMem)
+      CurOp = 0;
 
     // If the last register should be encoded in the immediate field
     // do not use any bit from VEX prefix to this register, ignore it
@@ -833,10 +839,15 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   case X86II::MRMDestMem:
     EmitByte(BaseOpcode, CurByte, OS);
+    SrcRegNum = CurOp + X86::AddrNumOperands;
+
+    if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
+      SrcRegNum++;
+
     EmitMemModRMByte(MI, CurOp,
-                     GetX86RegNum(MI.getOperand(CurOp + X86::AddrNumOperands)),
+                     GetX86RegNum(MI.getOperand(SrcRegNum)),
                      TSFlags, CurByte, OS, Fixups);
-    CurOp += X86::AddrNumOperands + 1;
+    CurOp = SrcRegNum + 1;
     break;
 
   case X86II::MRMSrcReg:

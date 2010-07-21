@@ -13030,3 +13030,35 @@
 // CHECK: encoding: [0xc4,0xe3,0x7d,0x19,0x10,0x07]
           vextractf128  $7, %ymm2, (%eax)
 
+// CHECK: vmaskmovpd  %xmm2, %xmm5, (%eax)
+// CHECK: encoding: [0xc4,0xe2,0x51,0x2f,0x10]
+          vmaskmovpd  %xmm2, %xmm5, (%eax)
+
+// CHECK: vmaskmovpd  %ymm2, %ymm5, (%eax)
+// CHECK: encoding: [0xc4,0xe2,0x55,0x2f,0x10]
+          vmaskmovpd  %ymm2, %ymm5, (%eax)
+
+// CHECK: vmaskmovpd  (%eax), %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe2,0x69,0x2d,0x28]
+          vmaskmovpd  (%eax), %xmm2, %xmm5
+
+// CHECK: vmaskmovpd  (%eax), %ymm2, %ymm5
+// CHECK: encoding: [0xc4,0xe2,0x6d,0x2d,0x28]
+          vmaskmovpd  (%eax), %ymm2, %ymm5
+
+// CHECK: vmaskmovps  %xmm2, %xmm5, (%eax)
+// CHECK: encoding: [0xc4,0xe2,0x51,0x2e,0x10]
+          vmaskmovps  %xmm2, %xmm5, (%eax)
+
+// CHECK: vmaskmovps  %ymm2, %ymm5, (%eax)
+// CHECK: encoding: [0xc4,0xe2,0x55,0x2e,0x10]
+          vmaskmovps  %ymm2, %ymm5, (%eax)
+
+// CHECK: vmaskmovps  (%eax), %xmm2, %xmm5
+// CHECK: encoding: [0xc4,0xe2,0x69,0x2c,0x28]
+          vmaskmovps  (%eax), %xmm2, %xmm5
+
+// CHECK: vmaskmovps  (%eax), %ymm2, %ymm5
+// CHECK: encoding: [0xc4,0xe2,0x6d,0x2c,0x28]
+          vmaskmovps  (%eax), %ymm2, %ymm5
+
