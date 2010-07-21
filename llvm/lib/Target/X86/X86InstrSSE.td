@@ -3081,7 +3081,7 @@ let isAsmParserOnly = 1, Predicates = [HasAVX] in
 defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 
 // Move Unaligned Integer
-let isAsmParserOnly = 1 in
+let isAsmParserOnly = 1, Predicates = [HasAVX] in
   def VLDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                      "vlddqu\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>, VEX;
