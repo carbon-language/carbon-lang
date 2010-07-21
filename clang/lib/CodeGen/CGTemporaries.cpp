@@ -15,34 +15,43 @@
 using namespace clang;
 using namespace CodeGen;
 
-static void EmitTemporaryCleanup(CodeGenFunction &CGF,
-                                 const CXXTemporary *Temporary,
-                                 llvm::Value *Addr,
-                                 llvm::Value *CondPtr) {
-  llvm::BasicBlock *CondEnd = 0;
+namespace {
+  struct DestroyTemporary : EHScopeStack::LazyCleanup {
+    const CXXTemporary *Temporary;
+    llvm::Value *Addr;
+    llvm::Value *CondPtr;
+
+    DestroyTemporary(const CXXTemporary *Temporary, llvm::Value *Addr,
+                     llvm::Value *CondPtr)
+      : Temporary(Temporary), Addr(Addr), CondPtr(CondPtr) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      llvm::BasicBlock *CondEnd = 0;
     
-  // If this is a conditional temporary, we need to check the condition
-  // boolean and only call the destructor if it's true.
-  if (CondPtr) {
-    llvm::BasicBlock *CondBlock = CGF.createBasicBlock("temp.cond-dtor.call");
-    CondEnd = CGF.createBasicBlock("temp.cond-dtor.cont");
+      // If this is a conditional temporary, we need to check the condition
+      // boolean and only call the destructor if it's true.
+      if (CondPtr) {
+        llvm::BasicBlock *CondBlock =
+          CGF.createBasicBlock("temp.cond-dtor.call");
+        CondEnd = CGF.createBasicBlock("temp.cond-dtor.cont");
 
-    llvm::Value *Cond = CGF.Builder.CreateLoad(CondPtr);
-    CGF.Builder.CreateCondBr(Cond, CondBlock, CondEnd);
-    CGF.EmitBlock(CondBlock);
-  }
+        llvm::Value *Cond = CGF.Builder.CreateLoad(CondPtr);
+        CGF.Builder.CreateCondBr(Cond, CondBlock, CondEnd);
+        CGF.EmitBlock(CondBlock);
+      }
 
-  CGF.EmitCXXDestructorCall(Temporary->getDestructor(),
-                            Dtor_Complete, /*ForVirtualBase=*/false,
-                            Addr);
+      CGF.EmitCXXDestructorCall(Temporary->getDestructor(),
+                                Dtor_Complete, /*ForVirtualBase=*/false,
+                                Addr);
 
-  if (CondPtr) {
-    // Reset the condition to false.
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
-                            CondPtr);
-    CGF.EmitBlock(CondEnd);
-  }
-}                                 
+      if (CondPtr) {
+        // Reset the condition to false.
+        CGF.Builder.CreateStore(CGF.Builder.getFalse(), CondPtr);
+        CGF.EmitBlock(CondEnd);
+      }
+    }
+  };
+}
 
 /// Emits all the code to cause the given temporary to be cleaned up.
 void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
@@ -59,16 +68,11 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
     InitTempAlloca(CondPtr, llvm::ConstantInt::getFalse(VMContext));
 
     // Now set it to true.
-    Builder.CreateStore(llvm::ConstantInt::getTrue(VMContext), CondPtr);
+    Builder.CreateStore(Builder.getTrue(), CondPtr);
   }
 
-  CleanupBlock Cleanup(*this, NormalCleanup);
-  EmitTemporaryCleanup(*this, Temporary, Ptr, CondPtr);
-
-  if (Exceptions) {
-    Cleanup.beginEHCleanup();
-    EmitTemporaryCleanup(*this, Temporary, Ptr, CondPtr);
-  }
+  EHStack.pushLazyCleanup<DestroyTemporary>(NormalAndEHCleanup,
+                                            Temporary, Ptr, CondPtr);
 }
 
 RValue
