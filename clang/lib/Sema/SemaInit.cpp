@@ -3803,8 +3803,9 @@ InitializationSequence::Perform(Sema &S,
       
       // Build a call to the selected constructor.
       ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
-      SourceLocation Loc = Kind.isCopyInit() ? Kind.getEqualLoc()
-                           : Kind.getLocation();
+      SourceLocation Loc = (Kind.isCopyInit() && Kind.getEqualLoc().isValid())
+                             ? Kind.getEqualLoc()
+                             : Kind.getLocation();
           
       // Determine the arguments required to actually perform the constructor
       // call.
