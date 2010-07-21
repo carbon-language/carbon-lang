@@ -181,6 +181,9 @@ namespace llvm {
       // FIXME: The function never seems to be aligned.
       return 1;
     }
+  protected:
+    std::pair<const TargetRegisterClass*, uint8_t>
+    findRepresentativeClass(EVT VT) const;
   private:
     // If the Node is a BUILD_PAIR representing a direct Address,
     // then this function will return true.

@@ -272,8 +272,8 @@ namespace llvm {
     virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
 
   protected:
-    const TargetRegisterClass *
-    findRepresentativeClass(const TargetRegisterClass *RC) const;
+    std::pair<const TargetRegisterClass*, uint8_t>
+    findRepresentativeClass(EVT VT) const;
 
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can

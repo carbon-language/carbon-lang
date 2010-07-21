@@ -312,6 +312,16 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   computeRegisterProperties();
 }
 
+std::pair<const TargetRegisterClass*, uint8_t>
+PIC16TargetLowering::findRepresentativeClass(EVT VT) const {
+  switch (VT.getSimpleVT().SimpleTy) {
+  default:
+    return TargetLowering::findRepresentativeClass(VT);
+  case MVT::i16:
+    return std::make_pair(PIC16::FSR16RegisterClass, 1);
+  }
+}
+
 // getOutFlag - Extract the flag result if the Op has it.
 static SDValue getOutFlag(SDValue &Op) {
   // Flag is the last value of the node.
