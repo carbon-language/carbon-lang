@@ -22,6 +22,7 @@ int foo();
 
 // RUN: %clang_cc1 -print-preamble %s > %t
 // RUN: FileCheck < %t %s
+// XFAIL: win32
 
 // CHECK: // Preamble detection test: see below for comments and test commands.
 // CHECK-NEXT: //
