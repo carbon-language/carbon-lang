@@ -573,6 +573,7 @@ typedef OnDiskChainedHashTable<PCHMethodPoolLookupTrait>
 namespace {
 class PCHIdentifierLookupTrait {
   PCHReader &Reader;
+  llvm::BitstreamCursor &Stream;
 
   // If we know the IdentifierInfo in advance, it is here and we will
   // not build a new one. Used when deserializing information about an
@@ -586,8 +587,9 @@ public:
 
   typedef external_key_type internal_key_type;
 
-  explicit PCHIdentifierLookupTrait(PCHReader &Reader, IdentifierInfo *II = 0)
-    : Reader(Reader), KnownII(II) { }
+  PCHIdentifierLookupTrait(PCHReader &Reader, llvm::BitstreamCursor &Stream,
+                           IdentifierInfo *II = 0)
+    : Reader(Reader), Stream(Stream), KnownII(II) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
@@ -676,7 +678,7 @@ public:
     // definition.
     if (hasMacroDefinition) {
       uint32_t Offset = ReadUnalignedLE32(d);
-      Reader.ReadMacroRecord(Offset);
+      Reader.ReadMacroRecord(Stream, Offset);
       DataLen -= 4;
     }
 
@@ -1114,10 +1116,8 @@ bool PCHReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void PCHReader::ReadMacroRecord(uint64_t Offset) {
+void PCHReader::ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset){
   assert(PP && "Forgot to set Preprocessor ?");
-
-  llvm::BitstreamCursor &Stream = Chain[0]->Stream;
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this macro.
@@ -1288,64 +1288,68 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
 }
 
 void PCHReader::ReadDefinedMacros() {
-  llvm::BitstreamCursor &MacroCursor = Chain[0]->MacroCursor;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    llvm::BitstreamCursor &MacroCursor = Chain[N - I - 1]->MacroCursor;
 
-  // If there was no preprocessor block, do nothing.
-  if (!MacroCursor.getBitStreamReader())
-    return;
+    // If there was no preprocessor block, skip this file.
+    if (!MacroCursor.getBitStreamReader())
+      continue;
 
-  llvm::BitstreamCursor Cursor = MacroCursor;
-  if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
-    Error("malformed preprocessor block record in PCH file");
-    return;
-  }
-
-  RecordData Record;
-  while (true) {
-    unsigned Code = Cursor.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Cursor.ReadBlockEnd())
-        Error("error at end of preprocessor block in PCH file");
+    llvm::BitstreamCursor Cursor = MacroCursor;
+    if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
+      Error("malformed preprocessor block record in PCH file");
       return;
     }
 
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
-      Cursor.ReadSubBlockID();
-      if (Cursor.SkipBlock()) {
-        Error("malformed block record in PCH file");
-        return;
+    RecordData Record;
+    while (true) {
+      unsigned Code = Cursor.ReadCode();
+      if (Code == llvm::bitc::END_BLOCK) {
+        if (Cursor.ReadBlockEnd()) {
+          Error("error at end of preprocessor block in PCH file");
+          return;
+        }
+        break;
       }
-      continue;
-    }
 
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Cursor.ReadAbbrevRecord();
-      continue;
-    }
+      if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+        // No known subblocks, always skip them.
+        Cursor.ReadSubBlockID();
+        if (Cursor.SkipBlock()) {
+          Error("malformed block record in PCH file");
+          return;
+        }
+        continue;
+      }
 
-    // Read a record.
-    const char *BlobStart;
-    unsigned BlobLen;
-    Record.clear();
-    switch (Cursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
-    default:  // Default behavior: ignore.
-      break;
+      if (Code == llvm::bitc::DEFINE_ABBREV) {
+        Cursor.ReadAbbrevRecord();
+        continue;
+      }
 
-    case pch::PP_MACRO_OBJECT_LIKE:
-    case pch::PP_MACRO_FUNCTION_LIKE:
-      DecodeIdentifierInfo(Record[0]);
-      break;
+      // Read a record.
+      const char *BlobStart;
+      unsigned BlobLen;
+      Record.clear();
+      switch (Cursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+      default:  // Default behavior: ignore.
+        break;
 
-    case pch::PP_TOKEN:
-      // Ignore tokens.
-      break;
+      case pch::PP_MACRO_OBJECT_LIKE:
+      case pch::PP_MACRO_FUNCTION_LIKE:
+        DecodeIdentifierInfo(Record[0]);
+        break;
+
+      case pch::PP_TOKEN:
+        // Ignore tokens.
+        break;
         
-    case pch::PP_MACRO_INSTANTIATION:
-    case pch::PP_MACRO_DEFINITION:
-      // Read the macro record.
-      ReadMacroRecord(Cursor.GetCurrentBitNo());
-      break;
+      case pch::PP_MACRO_INSTANTIATION:
+      case pch::PP_MACRO_DEFINITION:
+        // Read the macro record.
+        ReadMacroRecord(Chain[N - I - 1]->Stream, Cursor.GetCurrentBitNo());
+        break;
+      }
     }
   }
 }
@@ -1353,10 +1357,20 @@ void PCHReader::ReadDefinedMacros() {
 MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
   if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
     return 0;
-  
-  if (!MacroDefinitionsLoaded[ID])
-    ReadMacroRecord(Chain[0]->MacroDefinitionOffsets[ID]);
-    
+
+  if (!MacroDefinitionsLoaded[ID]) {
+    unsigned Index = ID;
+    for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+      PerFileData &F = *Chain[N - I - 1];
+      if (Index < F.LocalNumMacroDefinitions) {
+        ReadMacroRecord(F.Stream, F.MacroDefinitionOffsets[Index]);
+        break;
+      }
+      Index -= F.LocalNumMacroDefinitions;
+    }
+    assert(MacroDefinitionsLoaded[ID] && "Broken chain");
+  }
+
   return MacroDefinitionsLoaded[ID];
 }
 
@@ -1533,7 +1547,7 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
           = PCHIdentifierLookupTable::Create(
                        (const unsigned char *)F.IdentifierTableData + Record[0],
                        (const unsigned char *)F.IdentifierTableData,
-                       PCHIdentifierLookupTrait(*this));
+                       PCHIdentifierLookupTrait(*this, F.Stream));
         if (PP)
           PP->getIdentifierTable().setExternalIdentifierLookup(this);
       }
@@ -1768,7 +1782,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
         IdentifierInfo *II = Identifiers[I];
         // Look in the on-disk hash tables for an entry for this identifier
-        PCHIdentifierLookupTrait Info(*this, II);
+        PCHIdentifierLookupTrait Info(*this, Chain[J]->Stream, II);
         std::pair<const char*,unsigned> Key(II->getNameStart(),II->getLength());
         PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
         if (Pos == IdTable->end())
@@ -3092,18 +3106,23 @@ void PCHReader::InitializeSema(Sema &S) {
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
-  // Try to find this name within our on-disk hash table
-  PCHIdentifierLookupTable *IdTable
-    = (PCHIdentifierLookupTable *)Chain[0]->IdentifierLookupTable;
-  std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
-  PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
-  if (Pos == IdTable->end())
-    return 0;
+  // Try to find this name within our on-disk hash tables. We need to aggregate
+  // the info from all of them.
+  IdentifierInfo *II = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    PCHIdentifierLookupTable *IdTable
+      = (PCHIdentifierLookupTable *)Chain[N - I - 1]->IdentifierLookupTable;
+    std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
+    PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
+    if (Pos == IdTable->end())
+      continue;
 
-  // Dereferencing the iterator has the effect of building the
-  // IdentifierInfo node and populating it with the various
-  // declarations it needs.
-  return *Pos;
+    // Dereferencing the iterator has the effect of building the
+    // IdentifierInfo node and populating it with the various
+    // declarations it needs.
+    II = *Pos;
+  }
+  return II;
 }
 
 std::pair<ObjCMethodList, ObjCMethodList>

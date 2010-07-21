@@ -858,7 +858,7 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(uint64_t Offset);
+  void ReadMacroRecord(llvm::BitstreamCursor &Stream, uint64_t Offset);
 
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
