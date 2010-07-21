@@ -80,23 +80,13 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                             llvm::Value *AggLoc,
                                             bool IsAggLocVolatile,
                                             bool IsInitializer) {
-  RValue RV;
-  {
-    RunCleanupsScope Scope(*this);
-
-    RV = EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
+  RunCleanupsScope Scope(*this);
+  return EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
                      /*IgnoreResult=*/false, IsInitializer);
-  }
-  return RV;
 }
 
 LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(
                                               const CXXExprWithTemporaries *E) {
-  LValue LV;
-  {
-    RunCleanupsScope Scope(*this);
-
-    LV = EmitLValue(E->getSubExpr());
-  }
-  return LV;
+  RunCleanupsScope Scope(*this);
+  return EmitLValue(E->getSubExpr());
 }
