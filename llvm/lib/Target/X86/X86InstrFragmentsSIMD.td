@@ -262,6 +262,9 @@ def bc_v8i16 : PatFrag<(ops node:$in), (v8i16 (bitconvert node:$in))>;
 def bc_v4i32 : PatFrag<(ops node:$in), (v4i32 (bitconvert node:$in))>;
 def bc_v2i64 : PatFrag<(ops node:$in), (v2i64 (bitconvert node:$in))>;
 
+// FIXME: move this to a more appropriate place after all AVX is done.
+def bc_v8i32 : PatFrag<(ops node:$in), (v8i32 (bitconvert node:$in))>;
+
 def vzmovl_v2i64 : PatFrag<(ops node:$src),
                            (bitconvert (v2i64 (X86vzmovl
                              (v2i64 (scalar_to_vector (loadi64 node:$src))))))>;

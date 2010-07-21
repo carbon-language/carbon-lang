@@ -3264,3 +3264,139 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0xe1,0xfa,0x2c,0x09]
           vcvttss2si  (%rcx), %rcx
 
+// CHECK: vlddqu  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7f,0xf0,0x20]
+          vlddqu  (%rax), %ymm12
+
+// CHECK: vmovddup  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x41,0x7f,0x12,0xd4]
+          vmovddup  %ymm12, %ymm10
+
+// CHECK: vmovddup  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7f,0x12,0x20]
+          vmovddup  (%rax), %ymm12
+
+// CHECK: vmovdqa  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x41,0x7d,0x6f,0xd4]
+          vmovdqa  %ymm12, %ymm10
+
+// CHECK: vmovdqa  %ymm12, (%rax)
+// CHECK: encoding: [0xc5,0x7d,0x7f,0x20]
+          vmovdqa  %ymm12, (%rax)
+
+// CHECK: vmovdqa  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7d,0x6f,0x20]
+          vmovdqa  (%rax), %ymm12
+
+// CHECK: vmovdqu  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x41,0x7e,0x6f,0xd4]
+          vmovdqu  %ymm12, %ymm10
+
+// CHECK: vmovdqu  %ymm12, (%rax)
+// CHECK: encoding: [0xc5,0x7e,0x7f,0x20]
+          vmovdqu  %ymm12, (%rax)
+
+// CHECK: vmovdqu  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7e,0x6f,0x20]
+          vmovdqu  (%rax), %ymm12
+
+// CHECK: vmovshdup  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x41,0x7e,0x16,0xd4]
+          vmovshdup  %ymm12, %ymm10
+
+// CHECK: vmovshdup  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7e,0x16,0x20]
+          vmovshdup  (%rax), %ymm12
+
+// CHECK: vmovsldup  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x41,0x7e,0x12,0xd4]
+          vmovsldup  %ymm12, %ymm10
+
+// CHECK: vmovsldup  (%rax), %ymm12
+// CHECK: encoding: [0xc5,0x7e,0x12,0x20]
+          vmovsldup  (%rax), %ymm12
+
+// CHECK: vptest  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x42,0x7d,0x17,0xd4]
+          vptest  %ymm12, %ymm10
+
+// CHECK: vptest  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x17,0x20]
+          vptest  (%rax), %ymm12
+
+// CHECK: vroundpd  $7, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x7d,0x09,0xda,0x07]
+          vroundpd  $7, %ymm10, %ymm11
+
+// CHECK: vroundpd  $7, (%rax), %ymm10
+// CHECK: encoding: [0xc4,0x63,0x7d,0x09,0x10,0x07]
+          vroundpd  $7, (%rax), %ymm10
+
+// CHECK: vroundps  $7, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x7d,0x08,0xda,0x07]
+          vroundps  $7, %ymm10, %ymm11
+
+// CHECK: vroundps  $7, (%rax), %ymm10
+// CHECK: encoding: [0xc4,0x63,0x7d,0x08,0x10,0x07]
+          vroundps  $7, (%rax), %ymm10
+
+// CHECK: vshufpd  $7, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x2d,0xc6,0xdc,0x07]
+          vshufpd  $7, %ymm12, %ymm10, %ymm11
+
+// CHECK: vshufpd  $7, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc5,0x2d,0xc6,0x18,0x07]
+          vshufpd  $7, (%rax), %ymm10, %ymm11
+
+// CHECK: vshufps  $7, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x41,0x2c,0xc6,0xdc,0x07]
+          vshufps  $7, %ymm12, %ymm10, %ymm11
+
+// CHECK: vshufps  $7, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc5,0x2c,0xc6,0x18,0x07]
+          vshufps  $7, (%rax), %ymm10, %ymm11
+
+// CHECK: vtestpd  %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x42,0x79,0x0f,0xd4]
+          vtestpd  %xmm12, %xmm10
+
+// CHECK: vtestpd  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x42,0x7d,0x0f,0xd4]
+          vtestpd  %ymm12, %ymm10
+
+// CHECK: vtestpd  (%rax), %xmm12
+// CHECK: encoding: [0xc4,0x62,0x79,0x0f,0x20]
+          vtestpd  (%rax), %xmm12
+
+// CHECK: vtestpd  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x0f,0x20]
+          vtestpd  (%rax), %ymm12
+
+// CHECK: vtestps  %xmm12, %xmm10
+// CHECK: encoding: [0xc4,0x42,0x79,0x0e,0xd4]
+          vtestps  %xmm12, %xmm10
+
+// CHECK: vtestps  %ymm12, %ymm10
+// CHECK: encoding: [0xc4,0x42,0x7d,0x0e,0xd4]
+          vtestps  %ymm12, %ymm10
+
+// CHECK: vtestps  (%rax), %xmm12
+// CHECK: encoding: [0xc4,0x62,0x79,0x0e,0x20]
+          vtestps  (%rax), %xmm12
+
+// CHECK: vtestps  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x0e,0x20]
+          vtestps  (%rax), %ymm12
+
+// CHECK: vextractps   $10, %xmm8, %r8
+// CHECK: encoding: [0xc4,0x43,0x79,0x17,0xc0,0x0a]
+          vextractps   $10, %xmm8, %r8
+
+// CHECK: vextractps   $7, %xmm4, %rcx
+// CHECK: encoding: [0xc4,0xe3,0x79,0x17,0xe1,0x07]
+          vextractps   $7, %xmm4, %rcx
+
+// CHECK: vmovd  %xmm4, %rcx
+// CHECK: encoding: [0xc4,0xe1,0xf9,0x7e,0xe1]
+          vmovd  %xmm4, %rcx
+
