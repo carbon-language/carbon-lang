@@ -10,14 +10,11 @@
 #ifndef liblldb_DisassemblerLLVM_h_
 #define liblldb_DisassemblerLLVM_h_
 
+
+#include "llvm-c/EnhancedDisassembly.h"
+
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Host/Mutex.h"
-
-struct EDDisassembler;
-typedef EDDisassembler *EDDisassemblerRef;
-
-struct EDInst;
-typedef EDInst *EDInstRef;
 
 class DisassemblerLLVM : public lldb_private::Disassembler
 {

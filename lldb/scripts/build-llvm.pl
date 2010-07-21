@@ -25,7 +25,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "'{2010-07-13T13:00}'";
+our $llvm_revision = "'{2010-07-20T16:00}'";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
 our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";
@@ -70,6 +70,7 @@ our @archive_files = (
 	"$llvm_configuration/lib/libLLVMLinker.a",
 	"$llvm_configuration/lib/libLLVMMC.a",
 	"$llvm_configuration/lib/libLLVMMCParser.a",
+	"$llvm_configuration/lib/libLLVMMCDisassembler.a",
 	"$llvm_configuration/lib/libLLVMScalarOpts.a",
 	"$llvm_configuration/lib/libLLVMSelectionDAG.a",
 	"$llvm_configuration/lib/libLLVMSupport.a",
@@ -200,6 +201,10 @@ sub build_llvm
 			if (!-e $llvm_dstroot_arch_archive)
 			{
 				$do_make = 1;
+			}
+			else
+			{
+				print "LLVM architecture archive for ${arch} is '$llvm_dstroot_arch_archive'\n";
 			}		
 		}
 		else
