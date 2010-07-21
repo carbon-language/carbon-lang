@@ -514,7 +514,10 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         VEX_X = 0x0;
     }
     break;
-  default: // MRMDestReg, MRM0r-MRM7r
+  default: // MRMDestReg, MRM0r-MRM7r, RawFrm
+    if (!MI.getNumOperands())
+      break;
+
     if (MI.getOperand(CurOp).isReg() &&
         X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_B = 0;
@@ -530,7 +533,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
         VEX_R = 0x0;
     }
     break;
-    assert(0 && "Not implemented!");
   }
 
   // Emit segment override opcode prefix as needed.

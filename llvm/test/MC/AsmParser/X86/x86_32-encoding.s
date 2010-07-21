@@ -13134,3 +13134,11 @@
 // CHECK: encoding: [0xc4,0xe3,0x55,0x06,0x08,0x07]
           vperm2f128  $7, (%eax), %ymm5, %ymm1
 
+// CHECK: vzeroall
+// CHECK: encoding: [0xc5,0xfc,0x77]
+          vzeroall
+
+// CHECK: vzeroupper
+// CHECK: encoding: [0xc5,0xf8,0x77]
+          vzeroupper
+

@@ -5076,4 +5076,10 @@ def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
 
+// Zero All YMM registers
+def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall", []>, VEX, VEX_L;
+
+// Zero Upper bits of YMM registers
+def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper", []>, VEX;
+
 } // isAsmParserOnly
