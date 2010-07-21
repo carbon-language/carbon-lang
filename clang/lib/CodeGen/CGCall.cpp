@@ -1058,7 +1058,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
   }
 
   llvm::Instruction *Ret = RV ? Builder.CreateRet(RV) : Builder.CreateRetVoid();
-  Ret->setDebugLoc(RetDbgLoc);
+  if (!RetDbgLoc.isUnknown())
+    Ret->setDebugLoc(RetDbgLoc);
 }
 
 RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
