@@ -722,8 +722,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
     // The lookup function may have changed the receiver, so make sure we use
     // the new one.
-    ActualArgs[0] =
-        std::make_pair(RValue::get(Builder.CreateLoad(ReceiverPtr)), ASTIdTy);
+    ActualArgs[0] = std::make_pair(RValue::get(
+        Builder.CreateLoad(ReceiverPtr, true)), ASTIdTy);
   } else {
     std::vector<const llvm::Type*> Params;
     Params.push_back(Receiver->getType());
