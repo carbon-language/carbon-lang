@@ -831,8 +831,9 @@ static bool f64AssignAAPCS(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
                            CCState &State, bool CanFail) {
   static const unsigned HiRegList[] = { ARM::R0, ARM::R2 };
   static const unsigned LoRegList[] = { ARM::R1, ARM::R3 };
+  static const unsigned ShadowRegList[] = { ARM::R0, ARM::R1 };
 
-  unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2);
+  unsigned Reg = State.AllocateReg(HiRegList, ShadowRegList, 2);
   if (Reg == 0) {
     // For the 2nd half of a v2f64, do not just fail.
     if (CanFail)
@@ -849,6 +850,9 @@ static bool f64AssignAAPCS(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
   for (i = 0; i < 2; ++i)
     if (HiRegList[i] == Reg)
       break;
+
+  unsigned T = State.AllocateReg(LoRegList[i]);
+  assert(T == LoRegList[i] && "Could not allocate register");
 
   State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
   State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, LoRegList[i],
