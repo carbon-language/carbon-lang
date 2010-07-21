@@ -237,8 +237,7 @@ public:
   unsigned getMDKindID(StringRef Name) const;
 
   /// getMDKindNames - Populate client supplied SmallVector with the name for
-  /// custom metadata IDs registered in this LLVMContext.   ID #0 is not used,
-  /// so it is filled in as an empty string.
+  /// custom metadata IDs registered in this LLVMContext.
   void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 
 /// @}
