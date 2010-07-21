@@ -692,7 +692,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     Params.push_back(SelectorTy);
     llvm::Value *self;
 
-    if (isa<ObjCMethodDecl>(CGF.CurFuncDecl)) {
+    if (isa<ObjCMethodDecl>(CGF.CurCodeDecl)) {
       self = CGF.LoadObjCSelf();
     } else {
       self = llvm::ConstantPointerNull::get(IdTy);
