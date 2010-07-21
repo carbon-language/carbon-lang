@@ -263,12 +263,6 @@ public:
     (void) Obj;
   }
 
-  /// Push a cleanup on the stack.
-  void pushCleanup(llvm::BasicBlock *NormalEntry,
-                   llvm::BasicBlock *NormalExit,
-                   llvm::BasicBlock *EHEntry,
-                   llvm::BasicBlock *EHExit);
-
   /// Pops a cleanup scope off the stack.  This should only be called
   /// by CodeGenFunction::PopCleanupBlock.
   void popCleanup();

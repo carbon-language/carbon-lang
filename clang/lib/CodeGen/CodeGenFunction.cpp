@@ -671,35 +671,6 @@ void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old) {
     PopCleanupBlock();
 }
 
-/// Destroys a cleanup if it was unused.
-static void DestroyCleanup(CodeGenFunction &CGF,
-                           llvm::BasicBlock *Entry,
-                           llvm::BasicBlock *Exit) {
-  assert(Entry->use_empty() && "destroying cleanup with uses!");
-  assert(Exit->getTerminator() == 0 &&
-         "exit has terminator but entry has no predecessors!");
-
-  // This doesn't always remove the entire cleanup, but it's much
-  // safer as long as we don't know what blocks belong to the cleanup.
-  // A *much* better approach if we care about this inefficiency would
-  // be to lazily emit the cleanup.
-
-  // If the exit block is distinct from the entry, give it a branch to
-  // an unreachable destination.  This preserves the well-formedness
-  // of the IR.
-  if (Entry != Exit)
-    llvm::BranchInst::Create(CGF.getUnreachableBlock(), Exit);
-
-  assert(!Entry->getParent() && "cleanup entry already positioned?");
-  // We can't just delete the entry; we have to kill any references to
-  // its instructions in other blocks.
-  for (llvm::BasicBlock::iterator I = Entry->begin(), E = Entry->end();
-         I != E; ++I)
-    if (!I->use_empty())
-      I->replaceAllUsesWith(llvm::UndefValue::get(I->getType()));
-  delete Entry;
-}
-
 /// Creates a switch instruction to thread branches out of the given
 /// block (which is the exit block of a cleanup).
 static void CreateCleanupSwitch(CodeGenFunction &CGF,
@@ -984,148 +955,8 @@ static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
 /// any branch fixups on the cleanup.
 void CodeGenFunction::PopCleanupBlock() {
   assert(!EHStack.empty() && "cleanup stack is empty!");
-  if (isa<EHLazyCleanupScope>(*EHStack.begin()))
-    return PopLazyCleanupBlock(*this);
-
-  assert(isa<EHCleanupScope>(*EHStack.begin()) && "top not a cleanup!");
-  EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.begin());
-  assert(Scope.getFixupDepth() <= EHStack.getNumBranchFixups());
-
-  // Handle the EH cleanup if (1) there is one and (2) it's different
-  // from the normal cleanup.
-  if (Scope.isEHCleanup() &&
-      Scope.getEHEntry() != Scope.getNormalEntry()) {
-    llvm::BasicBlock *EHEntry = Scope.getEHEntry();
-    llvm::BasicBlock *EHExit = Scope.getEHExit();
-    
-    if (EHEntry->use_empty()) {
-      DestroyCleanup(*this, EHEntry, EHExit);
-    } else {
-      // TODO: this isn't really the ideal location to put this EH
-      // cleanup, but lazy emission is a better solution than trying
-      // to pick a better spot.
-      CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
-      EmitBlock(EHEntry);
-      Builder.restoreIP(SavedIP);
-
-      SimplifyCleanupEdges(*this, EHEntry, EHExit);
-    }
-  }
-
-  // If we only have an EH cleanup, we don't really need to do much
-  // here.  Branch fixups just naturally drop down to the enclosing
-  // cleanup scope.
-  if (!Scope.isNormalCleanup()) {
-    EHStack.popCleanup();
-    assert(EHStack.getNumBranchFixups() == 0 || EHStack.hasNormalCleanups());
-    return;
-  }
-
-  // Check whether the scope has any fixups that need to be threaded.
-  unsigned FixupDepth = Scope.getFixupDepth();
-  bool HasFixups = EHStack.getNumBranchFixups() != FixupDepth;
-
-  // Grab the entry and exit blocks.
-  llvm::BasicBlock *Entry = Scope.getNormalEntry();
-  llvm::BasicBlock *Exit = Scope.getNormalExit();
-
-  // Check whether anything's been threaded through the cleanup already.
-  assert((Exit->getTerminator() == 0) == Entry->use_empty() &&
-         "cleanup entry/exit mismatch");
-  bool HasExistingBranches = !Entry->use_empty();
-
-  // Check whether we need to emit a "fallthrough" branch through the
-  // cleanup for the current insertion point.
-  llvm::BasicBlock *FallThrough = Builder.GetInsertBlock();
-  if (FallThrough && FallThrough->getTerminator())
-    FallThrough = 0;
-
-  // If *nothing* is using the cleanup, kill it.
-  if (!FallThrough && !HasFixups && !HasExistingBranches) {
-    EHStack.popCleanup();
-    DestroyCleanup(*this, Entry, Exit);
-    return;
-  }
-
-  // Otherwise, add the block to the function.
-  EmitBlock(Entry);
-
-  if (FallThrough)
-    Builder.SetInsertPoint(Exit);
-  else
-    Builder.ClearInsertionPoint();
-
-  // Fast case: if we don't have to add any fixups, and either
-  // we don't have a fallthrough or the cleanup wasn't previously
-  // used, then the setup above is sufficient.
-  if (!HasFixups) {
-    if (!FallThrough) {
-      assert(HasExistingBranches && "no reason for cleanup but didn't kill before");
-      EHStack.popCleanup();
-      SimplifyCleanupEdges(*this, Entry, Exit);
-      return;
-    } else if (!HasExistingBranches) {
-      assert(FallThrough && "no reason for cleanup but didn't kill before");
-      // We can't simplify the exit edge in this case because we're
-      // already inserting at the end of the exit block.
-      EHStack.popCleanup();
-      SimplifyCleanupEntry(*this, Entry);
-      return;
-    }
-  }
-
-  // Otherwise we're going to have to thread things through the cleanup.
-  llvm::SmallVector<BranchFixup*, 8> Fixups;
-
-  // Synthesize a fixup for the current insertion point.
-  BranchFixup Cur;
-  if (FallThrough) {
-    Cur.Destination = createBasicBlock("cleanup.cont");
-    Cur.LatestBranch = FallThrough->getTerminator();
-    Cur.LatestBranchIndex = 0;
-    Cur.Origin = Cur.LatestBranch;
-
-    // Restore fixup invariant.  EmitBlock added a branch to the cleanup
-    // which we need to redirect to the destination.
-    cast<llvm::BranchInst>(Cur.LatestBranch)->setSuccessor(0, Cur.Destination);
-
-    Fixups.push_back(&Cur);
-  } else {
-    Cur.Destination = 0;
-  }
-
-  // Collect any "real" fixups we need to thread.
-  for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();
-        I != E; ++I)
-    if (EHStack.getBranchFixup(I).Destination)
-      Fixups.push_back(&EHStack.getBranchFixup(I));
-
-  assert(!Fixups.empty() && "no fixups, invariants broken!");
-
-  // If there's only a single fixup to thread through, do so with
-  // unconditional branches.  This only happens if there's a single
-  // branch and no fallthrough.
-  if (Fixups.size() == 1 && !HasExistingBranches) {
-    Fixups[0]->LatestBranch->setSuccessor(Fixups[0]->LatestBranchIndex, Entry);
-    llvm::BranchInst *Br =
-      llvm::BranchInst::Create(Fixups[0]->Destination, Exit);
-    Fixups[0]->LatestBranch = Br;
-    Fixups[0]->LatestBranchIndex = 0;
-
-  // Otherwise, force a switch statement and thread everything through
-  // the switch.
-  } else {
-    CreateCleanupSwitch(*this, Exit);
-    for (unsigned I = 0, E = Fixups.size(); I != E; ++I)
-      ThreadFixupThroughCleanup(*this, *Fixups[I], Entry, Exit);
-  }
-
-  // Emit the fallthrough destination block if necessary.
-  if (Cur.Destination)
-    EmitBlock(Cur.Destination);
-
-  // We're finally done with the cleanup.
-  EHStack.popCleanup();
+  assert(isa<EHLazyCleanupScope>(*EHStack.begin()));
+  return PopLazyCleanupBlock(*this);
 }
 
 void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
@@ -1159,12 +990,7 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
 
   for (EHScopeStack::iterator I = EHStack.begin(),
          E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
-    if (isa<EHCleanupScope>(*I)) {
-      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
-      if (Scope.isNormalCleanup())
-        ThreadFixupThroughCleanup(*this, Fixup, Scope.getNormalEntry(),
-                                  Scope.getNormalExit());
-    } else if (isa<EHLazyCleanupScope>(*I)) {
+    if (isa<EHLazyCleanupScope>(*I)) {
       EHLazyCleanupScope &Scope = cast<EHLazyCleanupScope>(*I);
       if (Scope.isNormalCleanup()) {
         llvm::BasicBlock *Block = Scope.getNormalBlock();
@@ -1208,12 +1034,7 @@ void CodeGenFunction::EmitBranchThroughEHCleanup(JumpDest Dest) {
 
   for (EHScopeStack::iterator I = EHStack.begin(),
          E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
-    if (isa<EHCleanupScope>(*I)) {
-      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
-      if (Scope.isEHCleanup())
-        ThreadFixupThroughCleanup(*this, Fixup, Scope.getEHEntry(),
-                                  Scope.getEHExit());
-    } else if (isa<EHLazyCleanupScope>(*I)) {
+    if (isa<EHLazyCleanupScope>(*I)) {
       EHLazyCleanupScope &Scope = cast<EHLazyCleanupScope>(*I);
       if (Scope.isEHCleanup()) {
         llvm::BasicBlock *Block = Scope.getEHBlock();

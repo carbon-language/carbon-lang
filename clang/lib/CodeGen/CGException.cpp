@@ -58,11 +58,6 @@ EHScopeStack::stable_iterator
 EHScopeStack::getEnclosingEHCleanup(iterator it) const {
   assert(it != end());
   do {
-    if (isa<EHCleanupScope>(*it)) {
-      if (cast<EHCleanupScope>(*it).isEHCleanup())
-        return stabilize(it);
-      return cast<EHCleanupScope>(*it).getEnclosingEHCleanup();
-    }
     if (isa<EHLazyCleanupScope>(*it)) {
       if (cast<EHLazyCleanupScope>(*it).isEHCleanup())
         return stabilize(it);
@@ -94,36 +89,14 @@ void *EHScopeStack::pushLazyCleanup(CleanupKind Kind, size_t Size) {
   return Scope->getCleanupBuffer();
 }
 
-void EHScopeStack::pushCleanup(llvm::BasicBlock *NormalEntry,
-                               llvm::BasicBlock *NormalExit,
-                               llvm::BasicBlock *EHEntry,
-                               llvm::BasicBlock *EHExit) {
-  char *Buffer = allocate(EHCleanupScope::getSize());
-  new (Buffer) EHCleanupScope(BranchFixups.size(),
-                              InnermostNormalCleanup,
-                              InnermostEHCleanup,
-                              NormalEntry, NormalExit, EHEntry, EHExit);
-  if (NormalEntry)
-    InnermostNormalCleanup = stable_begin();
-  if (EHEntry)
-    InnermostEHCleanup = stable_begin();
-}
-
 void EHScopeStack::popCleanup() {
   assert(!empty() && "popping exception stack when not empty");
 
-  if (isa<EHLazyCleanupScope>(*begin())) {
-    EHLazyCleanupScope &Cleanup = cast<EHLazyCleanupScope>(*begin());
-    InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
-    InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
-    StartOfData += Cleanup.getAllocatedSize();
-  } else {
-    assert(isa<EHCleanupScope>(*begin()));
-    EHCleanupScope &Cleanup = cast<EHCleanupScope>(*begin());
-    InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
-    InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
-    StartOfData += EHCleanupScope::getSize();
-  }
+  assert(isa<EHLazyCleanupScope>(*begin()));
+  EHLazyCleanupScope &Cleanup = cast<EHLazyCleanupScope>(*begin());
+  InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
+  InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
+  StartOfData += Cleanup.getAllocatedSize();
 
   // Check whether we can shrink the branch-fixups stack.
   if (!BranchFixups.empty()) {
@@ -177,11 +150,7 @@ void EHScopeStack::popNullFixups() {
   assert(hasNormalCleanups());
 
   EHScopeStack::iterator it = find(InnermostNormalCleanup);
-  unsigned MinSize;
-  if (isa<EHCleanupScope>(*it))
-    MinSize = cast<EHCleanupScope>(*it).getFixupDepth();
-  else
-    MinSize = cast<EHLazyCleanupScope>(*it).getFixupDepth();
+  unsigned MinSize = cast<EHLazyCleanupScope>(*it).getFixupDepth();
   assert(BranchFixups.size() >= MinSize && "fixup stack out of order");
 
   while (BranchFixups.size() > MinSize &&
@@ -666,8 +635,6 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
 /// normal-only cleanup scopes.
 static bool isNonEHScope(const EHScope &S) {
   switch (S.getKind()) {
-  case EHScope::Cleanup:
-    return !cast<EHCleanupScope>(S).isEHCleanup();
   case EHScope::LazyCleanup:
     return !cast<EHLazyCleanupScope>(S).isEHCleanup();
   case EHScope::Filter:
@@ -801,12 +768,6 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
     case EHScope::LazyCleanup:
       if (!HasEHCleanup)
         HasEHCleanup = cast<EHLazyCleanupScope>(*I).isEHCleanup();
-      // We otherwise don't care about cleanups.
-      continue;
-
-    case EHScope::Cleanup:
-      if (!HasEHCleanup)
-        HasEHCleanup = cast<EHCleanupScope>(*I).isEHCleanup();
       // We otherwise don't care about cleanups.
       continue;
 

@@ -57,13 +57,13 @@ public:
 class EHScope {
   llvm::BasicBlock *CachedLandingPad;
 
-  unsigned K : 3;
+  unsigned K : 2;
 
 protected:
-  enum { BitsRemaining = 29 };
+  enum { BitsRemaining = 30 };
 
 public:
-  enum Kind { Cleanup, LazyCleanup, Catch, Terminate, Filter };
+  enum Kind { LazyCleanup, Catch, Terminate, Filter };
 
   EHScope(Kind K) : CachedLandingPad(0), K(K) {}
 
@@ -234,61 +234,6 @@ public:
   }
 };
 
-/// A scope which needs to execute some code if we try to unwind ---
-/// either normally, via the EH mechanism, or both --- through it.
-class EHCleanupScope : public EHScope {
-  /// The number of fixups required by enclosing scopes (not including
-  /// this one).  If this is the top cleanup scope, all the fixups
-  /// from this index onwards belong to this scope.
-  unsigned FixupDepth : BitsRemaining;
-
-  /// The nearest normal cleanup scope enclosing this one.
-  EHScopeStack::stable_iterator EnclosingNormal;
-
-  /// The nearest EH cleanup scope enclosing this one.
-  EHScopeStack::stable_iterator EnclosingEH;
-
-  llvm::BasicBlock *NormalEntry;
-  llvm::BasicBlock *NormalExit;
-  llvm::BasicBlock *EHEntry;
-  llvm::BasicBlock *EHExit;
-
-public:
-  static size_t getSize() { return sizeof(EHCleanupScope); }
-
-  EHCleanupScope(unsigned FixupDepth,
-                 EHScopeStack::stable_iterator EnclosingNormal,
-                 EHScopeStack::stable_iterator EnclosingEH,
-                 llvm::BasicBlock *NormalEntry, llvm::BasicBlock *NormalExit,
-                 llvm::BasicBlock *EHEntry, llvm::BasicBlock *EHExit)
-    : EHScope(Cleanup), FixupDepth(FixupDepth),
-      EnclosingNormal(EnclosingNormal), EnclosingEH(EnclosingEH),
-      NormalEntry(NormalEntry), NormalExit(NormalExit),
-      EHEntry(EHEntry), EHExit(EHExit) {
-    assert((NormalEntry != 0) == (NormalExit != 0));
-    assert((EHEntry != 0) == (EHExit != 0));
-  }
-
-  bool isNormalCleanup() const { return NormalEntry != 0; }
-  bool isEHCleanup() const { return EHEntry != 0; }
-
-  llvm::BasicBlock *getNormalEntry() const { return NormalEntry; }
-  llvm::BasicBlock *getNormalExit() const { return NormalExit; }
-  llvm::BasicBlock *getEHEntry() const { return EHEntry; }
-  llvm::BasicBlock *getEHExit() const { return EHExit; }
-  unsigned getFixupDepth() const { return FixupDepth; }
-  EHScopeStack::stable_iterator getEnclosingNormalCleanup() const {
-    return EnclosingNormal;
-  }
-  EHScopeStack::stable_iterator getEnclosingEHCleanup() const {
-    return EnclosingEH;
-  }
-
-  static bool classof(const EHScope *Scope) {
-    return Scope->getKind() == Cleanup;
-  }
-};
-
 /// An exceptions scope which filters exceptions thrown through it.
 /// Only exceptions matching the filter types will be permitted to be
 /// thrown.
@@ -377,10 +322,6 @@ public:
     case EHScope::LazyCleanup:
       Ptr += static_cast<const EHLazyCleanupScope*>(get())
         ->getAllocatedSize();
-      break;
-
-    case EHScope::Cleanup:
-      Ptr += EHCleanupScope::getSize();
       break;
 
     case EHScope::Terminate:
