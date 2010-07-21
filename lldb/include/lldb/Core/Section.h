@@ -55,6 +55,9 @@ public:
     FindSectionByID (lldb::user_id_t sect_id) const;
 
     lldb::SectionSP
+    FindSectionByType (lldb::SectionType sect_type, uint32_t start_idx = 0) const;
+
+    lldb::SectionSP
     GetSharedPointer (const Section *section, bool check_children) const;
 
     lldb::SectionSP
@@ -254,7 +257,7 @@ public:
     GetLinkedFileAddress () const;
 
     lldb::SectionType
-    GetSectionType () const
+    GetType () const
     {
         return m_type;
     }

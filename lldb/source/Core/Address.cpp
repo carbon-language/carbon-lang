@@ -508,7 +508,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             const Section *section = GetSection();
             if (section)
             {
-                SectionType sect_type = section->GetSectionType();
+                SectionType sect_type = section->GetType();
                 switch (sect_type)
                 {
                 case eSectionTypeDataCString:

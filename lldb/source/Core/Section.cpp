@@ -566,6 +566,23 @@ SectionList::FindSectionByID (user_id_t sect_id) const
     return sect_sp;
 }
 
+
+SectionSP
+SectionList::FindSectionByType (lldb::SectionType sect_type, uint32_t start_idx) const
+{
+    SectionSP sect_sp;
+    uint32_t num_sections = m_sections.size();
+    for (uint32_t idx = start_idx; idx < num_sections; ++idx)
+    {
+        if (m_sections[idx]->GetType() == sect_type)
+        {
+            sect_sp = m_sections[idx];
+            break;
+        }
+    }
+    return sect_sp;
+}
+
 SectionSP
 SectionList::GetSharedPointer (const Section *section, bool check_children) const
 {
