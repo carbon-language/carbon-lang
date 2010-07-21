@@ -504,8 +504,8 @@ void Verifier::visitNamedMDNode(NamedMDNode &NMD) {
     if (!MD)
       continue;
 
-    Assert2(!MD->isFunctionLocal(),
-            "Named metadata operand cannot be function local!", &NMD, MD);
+    Assert1(!MD->isFunctionLocal(),
+            "Named metadata operand cannot be function local!", MD);
     visitMDNode(*MD, 0);
   }
 }

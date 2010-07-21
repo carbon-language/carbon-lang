@@ -545,14 +545,10 @@ static void LinkNamedMDNodes(Module *Dest, Module *Src) {
   for (Module::const_named_metadata_iterator I = Src->named_metadata_begin(),
          E = Src->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *SrcNMD = I;
-    NamedMDNode *DestNMD = Dest->getNamedMetadata(SrcNMD->getName());
-    if (!DestNMD)
-      NamedMDNode::Create(SrcNMD, Dest);
-    else {
-      // Add Src elements into Dest node.
-      for (unsigned i = 0, e = SrcNMD->getNumOperands(); i != e; ++i) 
-        DestNMD->addOperand(SrcNMD->getOperand(i));
-    }
+    NamedMDNode *DestNMD = Dest->getOrInsertNamedMetadata(SrcNMD->getName());
+    // Add Src elements into Dest node.
+    for (unsigned i = 0, e = SrcNMD->getNumOperands(); i != e; ++i) 
+      DestNMD->addOperand(SrcNMD->getOperand(i));
   }
 }
 

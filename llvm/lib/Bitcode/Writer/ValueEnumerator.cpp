@@ -75,7 +75,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Insert constants and metadata that are named at module level into the slot 
   // pool so that the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());
-  EnumerateMDSymbolTable(M->getMDSymbolTable());
+  EnumerateNamedMetadata(M);
 
   SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
 
@@ -207,31 +207,18 @@ void ValueEnumerator::EnumerateValueSymbolTable(const ValueSymbolTable &VST) {
     EnumerateValue(VI->getValue());
 }
 
-/// EnumerateMDSymbolTable - Insert all of the values in the specified metadata
-/// table.
-void ValueEnumerator::EnumerateMDSymbolTable(const MDSymbolTable &MST) {
-  for (MDSymbolTable::const_iterator MI = MST.begin(), ME = MST.end();
-       MI != ME; ++MI)
-    EnumerateValue(MI->getValue());
+/// EnumerateNamedMetadata - Insert all of the values referenced by
+/// named metadata in the specified module.
+void ValueEnumerator::EnumerateNamedMetadata(const Module *M) {
+  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
+       E = M->named_metadata_end(); I != E; ++I)
+    EnumerateNamedMDNode(I);
 }
 
 void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
-  // Check to see if it's already in!
-  unsigned &MDValueID = MDValueMap[MD];
-  if (MDValueID) {
-    // Increment use count.
-    MDValues[MDValueID-1].second++;
-    return;
-  }
-
-  // Enumerate the type of this value.
-  EnumerateType(MD->getType());
-
   for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
     if (MDNode *E = MD->getOperand(i))
       EnumerateValue(E);
-  MDValues.push_back(std::make_pair(MD, 1U));
-  MDValueMap[MD] = Values.size();
 }
 
 void ValueEnumerator::EnumerateMetadata(const Value *MD) {
@@ -272,8 +259,6 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
   assert(!V->getType()->isVoidTy() && "Can't insert void values!");
   if (isa<MDNode>(V) || isa<MDString>(V))
     return EnumerateMetadata(V);
-  else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
-    return EnumerateNamedMDNode(NMD);
 
   // Check to see if it's already in!
   unsigned &ValueID = ValueMap[V];

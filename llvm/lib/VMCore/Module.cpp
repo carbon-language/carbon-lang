@@ -61,7 +61,7 @@ Module::Module(StringRef MID, LLVMContext& C)
   : Context(C), Materializer(NULL), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
-  NamedMDSymTab = new MDSymbolTable();
+  NamedMDSymTab = new StringMap<NamedMDNode *>();
 }
 
 Module::~Module() {
@@ -73,7 +73,7 @@ Module::~Module() {
   NamedMDList.clear();
   delete ValSymTab;
   delete TypeSymTab;
-  delete NamedMDSymTab;
+  delete static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab);
 }
 
 /// Target endian information...
@@ -316,17 +316,26 @@ GlobalAlias *Module::getNamedAlias(StringRef Name) const {
 NamedMDNode *Module::getNamedMetadata(const Twine &Name) const {
   SmallString<256> NameData;
   StringRef NameRef = Name.toStringRef(NameData);
-  return NamedMDSymTab->lookup(NameRef);
+  return static_cast<StringMap<NamedMDNode*> *>(NamedMDSymTab)->lookup(NameRef);
 }
 
 /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
 /// with the specified name. This method returns a new NamedMDNode if a 
 /// NamedMDNode with the specified name is not found.
 NamedMDNode *Module::getOrInsertNamedMetadata(StringRef Name) {
-  NamedMDNode *NMD = NamedMDSymTab->lookup(Name);
-  if (!NMD)
-    NMD = NamedMDNode::Create(getContext(), Name, NULL, 0, this);
+  NamedMDNode *&NMD =
+    (*static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab))[Name];
+  if (!NMD) {
+    NMD = new NamedMDNode(Name);
+    NMD->setParent(this);
+    NamedMDList.push_back(NMD);
+  }
   return NMD;
+}
+
+void Module::eraseNamedMetadata(NamedMDNode *NMD) {
+  static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab)->erase(NMD->getName());
+  NamedMDList.erase(NMD);
 }
 
 //===----------------------------------------------------------------------===//

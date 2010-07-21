@@ -130,11 +130,12 @@ TEST(NamedMDNodeTest, Search) {
   MDNode *n = MDNode::get(Context, &V, 1);
   MDNode *n2 = MDNode::get(Context, &V2, 1);
 
-  MDNode *Nodes[2] = { n, n2 };
-
   Module M("MyModule", Context);
   const char *Name = "llvm.NMD1";
-  NamedMDNode *NMD = NamedMDNode::Create(Context, Name, &Nodes[0], 2, &M);
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata(Name);
+  NMD->addOperand(n);
+  NMD->addOperand(n2);
+
   std::string Str;
   raw_string_ostream oss(Str);
   NMD->print(oss);

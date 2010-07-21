@@ -220,7 +220,6 @@ public:
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
     MDNodeVal,                // This is an instance of MDNode
     MDStringVal,              // This is an instance of MDString
-    NamedMDNodeVal,           // This is an instance of NamedMDNode
     InlineAsmVal,             // This is an instance of InlineAsm
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
     FixedStackPseudoSourceValueVal, // This is an instance of 

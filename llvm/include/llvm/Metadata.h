@@ -177,10 +177,11 @@ private:
 //===----------------------------------------------------------------------===//
 /// NamedMDNode - a tuple of MDNodes.
 /// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
-class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
+class NamedMDNode : public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
   friend struct ilist_traits<NamedMDNode>;
   friend class LLVMContextImpl;
+  friend class Module;
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
   std::string Name;
@@ -188,18 +189,11 @@ class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
   void *Operands; // SmallVector<TrackingVH<MDNode>, 4>
 
   void setParent(Module *M) { Parent = M; }
+
 protected:
-  explicit NamedMDNode(LLVMContext &C, const Twine &N, MDNode*const *Vals, 
-                       unsigned NumVals, Module *M = 0);
+  explicit NamedMDNode(const Twine &N);
+
 public:
-  static NamedMDNode *Create(LLVMContext &C, const Twine &N,
-                             MDNode *const *MDs, 
-                             unsigned NumMDs, Module *M = 0) {
-    return new NamedMDNode(C, N, MDs, NumMDs, M);
-  }
-
-  static NamedMDNode *Create(const NamedMDNode *NMD, Module *M = 0);
-
   /// eraseFromParent - Drop all references and remove the node from parent
   /// module.
   void eraseFromParent();
@@ -223,17 +217,11 @@ public:
   /// addOperand - Add metadata operand.
   void addOperand(MDNode *M);
 
-  /// setName - Set the name of this named metadata.
-  void setName(const Twine &NewName);
-
   /// getName - Return a constant reference to this named metadata's name.
   StringRef getName() const;
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const NamedMDNode *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueID() == NamedMDNodeVal;
-  }
+  /// print - Implement operator<< on NamedMDNode.
+  void print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW = 0) const;
 };
 
 } // end llvm namespace

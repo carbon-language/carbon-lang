@@ -127,11 +127,9 @@ Module *llvm::CloneModule(const Module *M,
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
          E = M->named_metadata_end(); I != E; ++I) {
     const NamedMDNode &NMD = *I;
-    SmallVector<MDNode*, 4> MDs;
+    NamedMDNode *NewNMD = New->getOrInsertNamedMetadata(NMD.getName());
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      MDs.push_back(cast<MDNode>(MapValue(NMD.getOperand(i), VMap)));
-    NamedMDNode::Create(New->getContext(), NMD.getName(),
-                        MDs.data(), MDs.size(), New);
+      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap)));
   }
 
   // Update metadata attach with instructions.

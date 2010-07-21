@@ -543,7 +543,7 @@ bool LLParser::ParseNamedMetadata() {
       ParseToken(lltok::lbrace, "Expected '{' here"))
     return true;
 
-  SmallVector<MDNode *, 8> Elts;
+  NamedMDNode *NMD = M->getOrInsertNamedMetadata(Name);
   if (Lex.getKind() != lltok::rbrace)
     do {
       if (ParseToken(lltok::exclaim, "Expected '!' here"))
@@ -551,13 +551,12 @@ bool LLParser::ParseNamedMetadata() {
     
       MDNode *N = 0;
       if (ParseMDNodeID(N)) return true;
-      Elts.push_back(N);
+      NMD->addOperand(N);
     } while (EatIfPresent(lltok::comma));
 
   if (ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
-  NamedMDNode::Create(Context, Name, Elts.data(), Elts.size(), M);
   return false;
 }
 

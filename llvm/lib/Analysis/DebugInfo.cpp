@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Target/TargetMachine.h"  // FIXME: LAYERING VIOLATION!
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
@@ -22,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1072,10 +1072,10 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     char One = '\1';
     if (FName.startswith(StringRef(&One, 1)))
       FName = FName.substr(1);
-    NamedMDNode *FnLocals = M.getNamedMetadata(Twine("llvm.dbg.lv.", FName));
-    if (!FnLocals)
-      FnLocals = NamedMDNode::Create(VMContext, Twine("llvm.dbg.lv.", FName),
-                                     NULL, 0, &M);
+
+    SmallString<32> Out;
+    NamedMDNode *FnLocals =
+      M.getOrInsertNamedMetadata(Twine("llvm.dbg.lv.", FName).toStringRef(Out));
     FnLocals->addOperand(Node);
   }
   return DIVariable(Node);

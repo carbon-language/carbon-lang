@@ -63,8 +63,6 @@ static const Module *getModuleFromVal(const Value *V) {
   
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
-  if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
-    return NMD->getParent();
   return 0;
 }
 
@@ -2111,6 +2109,13 @@ void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   W.printModule(this);
 }
 
+void NamedMDNode::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
+  SlotTracker SlotTable(getParent());
+  formatted_raw_ostream OS(ROS);
+  AssemblyWriter W(OS, SlotTable, getParent(), AAW);
+  W.printNamedMDNode(this);
+}
+
 void Type::print(raw_ostream &OS) const {
   if (this == 0) {
     OS << "<null Type>";
@@ -2148,10 +2153,6 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     SlotTracker SlotTable(F);
     AssemblyWriter W(OS, SlotTable, F ? F->getParent() : 0, AAW);
     W.printMDNodeBody(N);
-  } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(this)) {
-    SlotTracker SlotTable(N->getParent());
-    AssemblyWriter W(OS, SlotTable, N->getParent(), AAW);
-    W.printNamedMDNode(N);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);

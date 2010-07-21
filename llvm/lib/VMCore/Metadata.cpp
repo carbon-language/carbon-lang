@@ -330,50 +330,13 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 // NamedMDNode implementation.
 //
 
-// SymbolTableListTraits specialization for MDSymbolTable.
-void ilist_traits<NamedMDNode>::addNodeToList(NamedMDNode *N) {
-  assert(N->getParent() == 0 && "Value already in a container!!");
-  Module *Owner = getListOwner();
-  N->setParent(Owner);
-  MDSymbolTable &ST = Owner->getMDSymbolTable();
-  ST.insert(N->getName(), N);
-}
-
-void ilist_traits<NamedMDNode>::removeNodeFromList(NamedMDNode *N) {
-  N->setParent(0);
-  Module *Owner = getListOwner();
-  MDSymbolTable &ST = Owner->getMDSymbolTable();
-  ST.remove(N->getName());
-}
-
 static SmallVector<TrackingVH<MDNode>, 4> &getNMDOps(void *Operands) {
   return *(SmallVector<TrackingVH<MDNode>, 4>*)Operands;
 }
 
-NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
-                         MDNode *const *MDs,
-                         unsigned NumMDs, Module *ParentModule)
-  : Value(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
-  setName(N);
-  Operands = new SmallVector<TrackingVH<MDNode>, 4>();
-
-  SmallVector<TrackingVH<MDNode>, 4> &Node = getNMDOps(Operands);
-  for (unsigned i = 0; i != NumMDs; ++i)
-    Node.push_back(TrackingVH<MDNode>(MDs[i]));
-
-  if (ParentModule)
-    ParentModule->getNamedMDList().push_back(this);
-}
-
-NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
-  assert(NMD && "Invalid source NamedMDNode!");
-  SmallVector<MDNode *, 4> Elems;
-  Elems.reserve(NMD->getNumOperands());
-
-  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-    Elems.push_back(NMD->getOperand(i));
-  return new NamedMDNode(NMD->getContext(), NMD->getName().data(),
-                         Elems.data(), Elems.size(), M);
+NamedMDNode::NamedMDNode(const Twine &N)
+  : Name(N.str()), Parent(0),
+    Operands(new SmallVector<TrackingVH<MDNode>, 4>()) {
 }
 
 NamedMDNode::~NamedMDNode() {
@@ -400,28 +363,12 @@ void NamedMDNode::addOperand(MDNode *M) {
 /// eraseFromParent - Drop all references and remove the node from parent
 /// module.
 void NamedMDNode::eraseFromParent() {
-  getParent()->getNamedMDList().erase(this);
+  getParent()->eraseNamedMetadata(this);
 }
 
 /// dropAllReferences - Remove all uses and clear node vector.
 void NamedMDNode::dropAllReferences() {
   getNMDOps(Operands).clear();
-}
-
-/// setName - Set the name of this named metadata.
-void NamedMDNode::setName(const Twine &NewName) {
-  assert (!NewName.isTriviallyEmpty() && "Invalid named metadata name!");
-
-  SmallString<256> NameData;
-  StringRef NameRef = NewName.toStringRef(NameData);
-
-  // Name isn't changing?
-  if (getName() == NameRef)
-    return;
-
-  Name = NameRef.str();
-  if (Parent)
-    Parent->getMDSymbolTable().insert(NameRef, this);
 }
 
 /// getName - Return a constant reference to this named metadata's name.

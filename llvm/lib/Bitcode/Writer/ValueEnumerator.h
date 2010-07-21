@@ -141,7 +141,7 @@ private:
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
-  void EnumerateMDSymbolTable(const MDSymbolTable &ST);
+  void EnumerateNamedMetadata(const Module *M);
 };
 
 } // End llvm namespace

@@ -509,7 +509,8 @@ static void WriteMDNode(const MDNode *N,
   Record.clear();
 }
 
-static void WriteModuleMetadata(const ValueEnumerator &VE,
+static void WriteModuleMetadata(const Module *M,
+                                const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const ValueEnumerator::ValueList &Vals = VE.getMDValues();
   bool StartedMetadataBlock = false;
@@ -544,25 +545,30 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
       Record.clear();
-    } else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(Vals[i].first)) {
-      if (!StartedMetadataBlock)  {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
-      }
-
-      // Write name.
-      StringRef Str = NMD->getName();
-      for (unsigned i = 0, e = Str.size(); i != e; ++i)
-        Record.push_back(Str[i]);
-      Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
-      Record.clear();
-
-      // Write named metadata operands.
-      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-        Record.push_back(VE.getValueID(NMD->getOperand(i)));
-      Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
-      Record.clear();
     }
+  }
+
+  // Write named metadata.
+  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
+       E = M->named_metadata_end(); I != E; ++I) {
+    const NamedMDNode *NMD = I;
+    if (!StartedMetadataBlock)  {
+      Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+      StartedMetadataBlock = true;
+    }
+
+    // Write name.
+    StringRef Str = NMD->getName();
+    for (unsigned i = 0, e = Str.size(); i != e; ++i)
+      Record.push_back(Str[i]);
+    Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
+    Record.clear();
+
+    // Write named metadata operands.
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+      Record.push_back(VE.getValueID(NMD->getOperand(i)));
+    Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
+    Record.clear();
   }
 
   if (StartedMetadataBlock)
@@ -1530,7 +1536,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   WriteModuleConstants(VE, Stream);
 
   // Emit metadata.
-  WriteModuleMetadata(VE, Stream);
+  WriteModuleMetadata(M, VE, Stream);
 
   // Emit function bodies.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
