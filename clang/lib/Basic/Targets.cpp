@@ -1447,6 +1447,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     LongWidth = LongAlign = 32;
+    DoubleAlign = LongLongAlign = 64;      
     IntMaxType = SignedLongLong;
     UIntMaxType = UnsignedLongLong;
     Int64Type = SignedLongLong;
