@@ -262,11 +262,6 @@ namespace test5 {
 
 // Checks from test3:
 
-  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(
-  // CHECK: call void @_ZN5test31BD2Ev(
-  // CHECK: call void @_ZN5test31AD2Ev(
-  // CHECK: ret void
-
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
@@ -287,6 +282,11 @@ namespace test5 {
   // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
+  // CHECK: ret void
+
+  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(
+  // CHECK: call void @_ZN5test31BD2Ev(
+  // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
 
   // CHECK: declare void @_ZN5test31BD2Ev(

@@ -310,6 +310,22 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
   return VTT;
 }
 
+namespace {
+  struct CallBaseDtor : EHScopeStack::LazyCleanup {
+    CXXDestructorDecl *Dtor;
+    bool isBaseVirtual;
+    llvm::Value *Addr;
+
+    CallBaseDtor(CXXDestructorDecl *DD, bool isVirtual, llvm::Value *Addr)
+      : Dtor(DD), isBaseVirtual(isVirtual), Addr(Addr) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // FIXME: Is this OK for C++0x delegating constructors?
+      CGF.EmitCXXDestructorCall(Dtor, Dtor_Base, isBaseVirtual, Addr);
+    }
+  };
+}
+
 static void EmitBaseInitializer(CodeGenFunction &CGF, 
                                 const CXXRecordDecl *ClassDecl,
                                 CXXBaseOrMemberInitializer *BaseInit,
@@ -338,13 +354,10 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
 
   CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
   
-  if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor()) {
-    // FIXME: Is this OK for C++0x delegating constructors?
-    CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
-
-    CXXDestructorDecl *DD = BaseClassDecl->getDestructor();
-    CGF.EmitCXXDestructorCall(DD, Dtor_Base, isBaseVirtual, V);
-  }
+  if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor())
+    CGF.EHStack.pushLazyCleanup<CallBaseDtor>(EHCleanup,
+                                              BaseClassDecl->getDestructor(),
+                                              isBaseVirtual, V);
 }
 
 static void EmitAggMemberInitializer(CodeGenFunction &CGF,
@@ -431,6 +444,25 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
 
   // Emit the fall-through block.
   CGF.EmitBlock(AfterFor, true);
+}
+
+namespace {
+  struct CallMemberDtor : EHScopeStack::LazyCleanup {
+    FieldDecl *Field;
+    CXXDestructorDecl *Dtor;
+
+    CallMemberDtor(FieldDecl *Field, CXXDestructorDecl *Dtor)
+      : Field(Field), Dtor(Dtor) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // FIXME: Is this OK for C++0x delegating constructors?
+      llvm::Value *ThisPtr = CGF.LoadCXXThis();
+      LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
+
+      CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
+                                LHS.getAddress());
+    }
+  };
 }
   
 static void EmitMemberInitializer(CodeGenFunction &CGF,
@@ -532,17 +564,9 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       return;
     
     CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD->hasTrivialDestructor()) {
-      // FIXME: Is this OK for C++0x delegating constructors?
-      CodeGenFunction::CleanupBlock Cleanup(CGF, EHCleanup);
-      
-      llvm::Value *ThisPtr = CGF.LoadCXXThis();
-      LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
-
-      CXXDestructorDecl *DD = RD->getDestructor();
-      CGF.EmitCXXDestructorCall(DD, Dtor_Complete, /*ForVirtualBase=*/false,
-                                LHS.getAddress());
-    }
+    if (!RD->hasTrivialDestructor())
+      CGF.EHStack.pushLazyCleanup<CallMemberDtor>(EHCleanup, Field,
+                                                  RD->getDestructor());
   }
 }
 
