@@ -58,9 +58,8 @@ public:
   void unregisterPass(const PassInfo &PI);
   
   /// Analysis Group Mechanisms.
-  void registerAnalysisGroup(PassInfo *InterfaceInfo,
-                             const PassInfo *ImplementationInfo,
-                             bool isDefault);
+  void registerAnalysisGroup(intptr_t InterfaceID, intptr_t PassID,
+                             PassInfo& Registeree, bool isDefault);
   
   void enumerateWith(PassRegistrationListener *L);
   void addRegistrationListener(PassRegistrationListener* L);

@@ -264,30 +264,9 @@ Pass *PassInfo::createPass() const {
 //
 RegisterAGBase::RegisterAGBase(const char *Name, intptr_t InterfaceID,
                                intptr_t PassID, bool isDefault)
-  : PassInfo(Name, InterfaceID) {
-
-  PassInfo *InterfaceInfo =
-    const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
-  if (InterfaceInfo == 0) {
-    // First reference to Interface, register it now.
-    PassRegistry::getPassRegistry()->registerPass(*this);
-    InterfaceInfo = this;
-  }
-  assert(isAnalysisGroup() &&
-         "Trying to join an analysis group that is a normal pass!");
-
-  if (PassID) {
-    const PassInfo *ImplementationInfo = Pass::lookupPassInfo(PassID);
-    assert(ImplementationInfo &&
-           "Must register pass before adding to AnalysisGroup!");
-
-    // Make sure we keep track of the fact that the implementation implements
-    // the interface.
-    PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
-    IIPI->addInterfaceImplemented(InterfaceInfo);
-    
-    PassRegistry::getPassRegistry()->registerAnalysisGroup(InterfaceInfo, IIPI, isDefault);
-  }
+    : PassInfo(Name, InterfaceID) {
+  PassRegistry::getPassRegistry()->registerAnalysisGroup(InterfaceID, PassID,
+                                                         *this, isDefault);
 }
 
 

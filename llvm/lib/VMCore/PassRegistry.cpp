@@ -108,20 +108,40 @@ void PassRegistry::enumerateWith(PassRegistrationListener *L) {
 
 
 /// Analysis Group Mechanisms.
-void PassRegistry::registerAnalysisGroup(PassInfo *InterfaceInfo,
-                                         const PassInfo *ImplementationInfo,
+void PassRegistry::registerAnalysisGroup(intptr_t InterfaceID, 
+                                         intptr_t PassID,
+                                         PassInfo& Registeree,
                                          bool isDefault) {
-  sys::SmartScopedLock<true> Guard(Lock);
-  AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
-  assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
-         "Cannot add a pass to the same analysis group more than once!");
-  AGI.Implementations.insert(ImplementationInfo);
-  if (isDefault) {
-    assert(InterfaceInfo->getNormalCtor() == 0 &&
-           "Default implementation for analysis group already specified!");
-    assert(ImplementationInfo->getNormalCtor() &&
-         "Cannot specify pass as default if it does not have a default ctor");
-    InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
+  PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));
+  if (InterfaceInfo == 0) {
+    // First reference to Interface, register it now.
+    registerPass(Registeree);
+    InterfaceInfo = &Registeree;
+  }
+  assert(Registeree.isAnalysisGroup() && 
+         "Trying to join an analysis group that is a normal pass!");
+
+  if (PassID) {
+    PassInfo *ImplementationInfo = const_cast<PassInfo*>(getPassInfo(PassID));
+    assert(ImplementationInfo &&
+           "Must register pass before adding to AnalysisGroup!");
+
+    // Make sure we keep track of the fact that the implementation implements
+    // the interface.
+    ImplementationInfo->addInterfaceImplemented(InterfaceInfo);
+
+    sys::SmartScopedLock<true> Guard(Lock);
+    AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
+    assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
+           "Cannot add a pass to the same analysis group more than once!");
+    AGI.Implementations.insert(ImplementationInfo);
+    if (isDefault) {
+      assert(InterfaceInfo->getNormalCtor() == 0 &&
+             "Default implementation for analysis group already specified!");
+      assert(ImplementationInfo->getNormalCtor() &&
+           "Cannot specify pass as default if it does not have a default ctor");
+      InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
+    }
   }
 }
 
