@@ -5041,4 +5041,39 @@ multiclass avx_movmask_rm<bits<8> opc_rm, bits<8> opc_mr, string OpcodeStr> {
 defm VMASKMOVPS : avx_movmask_rm<0x2C, 0x2E, "vmaskmovps">;
 defm VMASKMOVPD : avx_movmask_rm<0x2D, 0x2F, "vmaskmovpd">;
 
+// Permute Floating-Point Values
+multiclass avx_permil<bits<8> opc_rm, bits<8> opc_rmi, string OpcodeStr,
+                      RegisterClass RC, X86MemOperand x86memop> {
+  def rr  : AVX8I<opc_rm, MRMSrcReg, (outs RC:$dst),
+             (ins RC:$src1, RC:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def rm  : AVX8I<opc_rm, MRMSrcMem, (outs RC:$dst),
+             (ins RC:$src1, x86memop:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX_4V;
+  def ri  : AVXAIi8<opc_rmi, MRMSrcReg, (outs RC:$dst),
+             (ins RC:$src1, i8imm:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX;
+  def mi  : AVXAIi8<opc_rmi, MRMSrcMem, (outs RC:$dst),
+             (ins x86memop:$src1, i8imm:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX;
+}
+
+defm VPERMILPS  : avx_permil<0x0C, 0x04, "vpermilps", VR128, f128mem>;
+defm VPERMILPSY : avx_permil<0x0C, 0x04, "vpermilps", VR256, f256mem>;
+defm VPERMILPD  : avx_permil<0x0D, 0x05, "vpermilpd", VR128, f128mem>;
+defm VPERMILPDY : avx_permil<0x0D, 0x05, "vpermilpd", VR256, f256mem>;
+
+def VPERM2F128rr : AVXAIi8<0x06, MRMSrcReg, (outs VR256:$dst),
+          (ins VR256:$src1, VR256:$src2, i8imm:$src3),
+          "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          []>, VEX_4V;
+def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
+          (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
+          "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+          []>, VEX_4V;
+
 } // isAsmParserOnly

@@ -13062,3 +13062,75 @@
 // CHECK: encoding: [0xc4,0xe2,0x6d,0x2c,0x28]
           vmaskmovps  (%eax), %ymm2, %ymm5
 
+// CHECK: vpermilps  $7, %xmm1, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0x04,0xe9,0x07]
+          vpermilps  $7, %xmm1, %xmm5
+
+// CHECK: vpermilps  $7, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x04,0xcd,0x07]
+          vpermilps  $7, %ymm5, %ymm1
+
+// CHECK: vpermilps  $7, (%eax), %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0x04,0x28,0x07]
+          vpermilps  $7, (%eax), %xmm5
+
+// CHECK: vpermilps  $7, (%eax), %ymm5
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x04,0x28,0x07]
+          vpermilps  $7, (%eax), %ymm5
+
+// CHECK: vpermilps  %xmm1, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0x0c,0xc9]
+          vpermilps  %xmm1, %xmm5, %xmm1
+
+// CHECK: vpermilps  %ymm1, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe2,0x55,0x0c,0xc9]
+          vpermilps  %ymm1, %ymm5, %ymm1
+
+// CHECK: vpermilps  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0x0c,0x18]
+          vpermilps  (%eax), %xmm5, %xmm3
+
+// CHECK: vpermilps  (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe2,0x55,0x0c,0x08]
+          vpermilps  (%eax), %ymm5, %ymm1
+
+// CHECK: vpermilpd  $7, %xmm1, %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0x05,0xe9,0x07]
+          vpermilpd  $7, %xmm1, %xmm5
+
+// CHECK: vpermilpd  $7, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x05,0xcd,0x07]
+          vpermilpd  $7, %ymm5, %ymm1
+
+// CHECK: vpermilpd  $7, (%eax), %xmm5
+// CHECK: encoding: [0xc4,0xe3,0x79,0x05,0x28,0x07]
+          vpermilpd  $7, (%eax), %xmm5
+
+// CHECK: vpermilpd  $7, (%eax), %ymm5
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x05,0x28,0x07]
+          vpermilpd  $7, (%eax), %ymm5
+
+// CHECK: vpermilpd  %xmm1, %xmm5, %xmm1
+// CHECK: encoding: [0xc4,0xe2,0x51,0x0d,0xc9]
+          vpermilpd  %xmm1, %xmm5, %xmm1
+
+// CHECK: vpermilpd  %ymm1, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe2,0x55,0x0d,0xc9]
+          vpermilpd  %ymm1, %ymm5, %ymm1
+
+// CHECK: vpermilpd  (%eax), %xmm5, %xmm3
+// CHECK: encoding: [0xc4,0xe2,0x51,0x0d,0x18]
+          vpermilpd  (%eax), %xmm5, %xmm3
+
+// CHECK: vpermilpd  (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe2,0x55,0x0d,0x08]
+          vpermilpd  (%eax), %ymm5, %ymm1
+
+// CHECK: vperm2f128  $7, %ymm2, %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x06,0xca,0x07]
+          vperm2f128  $7, %ymm2, %ymm5, %ymm1
+
+// CHECK: vperm2f128  $7, (%eax), %ymm5, %ymm1
+// CHECK: encoding: [0xc4,0xe3,0x55,0x06,0x08,0x07]
+          vperm2f128  $7, (%eax), %ymm5, %ymm1
+

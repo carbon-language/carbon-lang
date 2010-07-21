@@ -3136,3 +3136,75 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0xc4,0x62,0x1d,0x2c,0x10]
           vmaskmovps  (%rax), %ymm12, %ymm10
 
+// CHECK: vpermilps  $7, %xmm11, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x04,0xd3,0x07]
+          vpermilps  $7, %xmm11, %xmm10
+
+// CHECK: vpermilps  $7, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x7d,0x04,0xda,0x07]
+          vpermilps  $7, %ymm10, %ymm11
+
+// CHECK: vpermilps  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x04,0x10,0x07]
+          vpermilps  $7, (%rax), %xmm10
+
+// CHECK: vpermilps  $7, (%rax), %ymm10
+// CHECK: encoding: [0xc4,0x63,0x7d,0x04,0x10,0x07]
+          vpermilps  $7, (%rax), %ymm10
+
+// CHECK: vpermilps  %xmm11, %xmm10, %xmm11
+// CHECK: encoding: [0xc4,0x42,0x29,0x0c,0xdb]
+          vpermilps  %xmm11, %xmm10, %xmm11
+
+// CHECK: vpermilps  %ymm11, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x42,0x2d,0x0c,0xdb]
+          vpermilps  %ymm11, %ymm10, %ymm11
+
+// CHECK: vpermilps  (%rax), %xmm10, %xmm13
+// CHECK: encoding: [0xc4,0x62,0x29,0x0c,0x28]
+          vpermilps  (%rax), %xmm10, %xmm13
+
+// CHECK: vpermilps  (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x62,0x2d,0x0c,0x18]
+          vpermilps  (%rax), %ymm10, %ymm11
+
+// CHECK: vpermilpd  $7, %xmm11, %xmm10
+// CHECK: encoding: [0xc4,0x43,0x79,0x05,0xd3,0x07]
+          vpermilpd  $7, %xmm11, %xmm10
+
+// CHECK: vpermilpd  $7, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x7d,0x05,0xda,0x07]
+          vpermilpd  $7, %ymm10, %ymm11
+
+// CHECK: vpermilpd  $7, (%rax), %xmm10
+// CHECK: encoding: [0xc4,0x63,0x79,0x05,0x10,0x07]
+          vpermilpd  $7, (%rax), %xmm10
+
+// CHECK: vpermilpd  $7, (%rax), %ymm10
+// CHECK: encoding: [0xc4,0x63,0x7d,0x05,0x10,0x07]
+          vpermilpd  $7, (%rax), %ymm10
+
+// CHECK: vpermilpd  %xmm11, %xmm10, %xmm11
+// CHECK: encoding: [0xc4,0x42,0x29,0x0d,0xdb]
+          vpermilpd  %xmm11, %xmm10, %xmm11
+
+// CHECK: vpermilpd  %ymm11, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x42,0x2d,0x0d,0xdb]
+          vpermilpd  %ymm11, %ymm10, %ymm11
+
+// CHECK: vpermilpd  (%rax), %xmm10, %xmm13
+// CHECK: encoding: [0xc4,0x62,0x29,0x0d,0x28]
+          vpermilpd  (%rax), %xmm10, %xmm13
+
+// CHECK: vpermilpd  (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x62,0x2d,0x0d,0x18]
+          vpermilpd  (%rax), %ymm10, %ymm11
+
+// CHECK: vperm2f128  $7, %ymm12, %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x43,0x2d,0x06,0xdc,0x07]
+          vperm2f128  $7, %ymm12, %ymm10, %ymm11
+
+// CHECK: vperm2f128  $7, (%rax), %ymm10, %ymm11
+// CHECK: encoding: [0xc4,0x63,0x2d,0x06,0x18,0x07]
+          vperm2f128  $7, (%rax), %ymm10, %ymm11
+
