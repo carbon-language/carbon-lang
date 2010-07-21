@@ -1197,7 +1197,13 @@ DataExtractor::Dump
         case eFormatBinary:
             {
                 uint64_t uval64 = GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset);
-                std::string binary_value(std::bitset<64>(uval64).to_string());
+                // Avoid std::bitset<64>::to_string() since it is missing in
+                // earlier C++ libraries
+                std::string binary_value(64, '0');
+                std::bitset<64> bits(uval64);
+                for (size_t i = 0; i < 64; ++i)
+                    if (bits[i])
+                        binary_value[64 - 1 - i] = '1';
                 if (item_bit_size > 0)
                     s->Printf("0b%s", binary_value.c_str() + 64 - item_bit_size);
                 else if (item_byte_size > 0 && item_byte_size <= 8)
