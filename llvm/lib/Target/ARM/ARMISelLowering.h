@@ -17,6 +17,7 @@
 
 #include "ARMSubtarget.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include <vector>
@@ -261,6 +262,10 @@ namespace llvm {
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
+    /// createFastISel - This method returns a target specific FastISel object,
+    /// or null if the target does not support "fast" ISel.
+    virtual FastISel *createFastISel(FunctionLoweringInfo &funcInfo) const;
+
     Sched::Preference getSchedulingPreference(SDNode *N) const;
 
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const;
@@ -387,6 +392,10 @@ namespace llvm {
                                         unsigned BinOpcode) const;
 
   };
+  
+  namespace ARM {
+    FastISel *createFastISel(FunctionLoweringInfo &funcInfo);
+  }
 }
 
 #endif  // ARMISELLOWERING_H

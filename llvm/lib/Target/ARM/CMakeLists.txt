@@ -11,6 +11,7 @@ tablegen(ARMGenDAGISel.inc -gen-dag-isel)
 tablegen(ARMGenCallingConv.inc -gen-callingconv)
 tablegen(ARMGenSubtarget.inc -gen-subtarget)
 tablegen(ARMGenEDInfo.inc -gen-enhanced-disassembly-info)
+tablegen(ARMFastISel.inc -gen-fast-isel)
 
 add_llvm_target(ARMCodeGen
   ARMAsmPrinter.cpp

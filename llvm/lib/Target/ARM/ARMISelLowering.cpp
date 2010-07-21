@@ -694,6 +694,12 @@ TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
   return TargetLowering::getRegClassFor(VT);
 }
 
+// Create a fast isel object.
+FastISel *
+ARMTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
+  return ARM::createFastISel(funcInfo);
+}
+
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
   return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 1 : 2;

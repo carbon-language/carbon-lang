@@ -17,7 +17,8 @@ BUILT_SOURCES = ARMGenRegisterInfo.h.inc ARMGenRegisterNames.inc \
                 ARMGenInstrInfo.inc ARMGenAsmWriter.inc \
                 ARMGenDAGISel.inc ARMGenSubtarget.inc \
                 ARMGenCodeEmitter.inc ARMGenCallingConv.inc \
-                ARMGenDecoderTables.inc ARMGenEDInfo.inc
+                ARMGenDecoderTables.inc ARMGenEDInfo.inc \
+                ARMGenFastISel.inc
 
 DIRS = AsmPrinter AsmParser Disassembler TargetInfo
 
