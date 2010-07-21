@@ -1357,6 +1357,65 @@ namespace {
       CGF.EmitBlock(CleanupContBB);
     }
   };
+
+  struct PerformFinally : EHScopeStack::LazyCleanup {
+    const Stmt *Body;
+    llvm::Value *ForEHVar;
+    llvm::Value *EndCatchFn;
+    llvm::Value *RethrowFn;
+    llvm::Value *SavedExnVar;
+
+    PerformFinally(const Stmt *Body, llvm::Value *ForEHVar,
+                   llvm::Value *EndCatchFn,
+                   llvm::Value *RethrowFn, llvm::Value *SavedExnVar)
+      : Body(Body), ForEHVar(ForEHVar), EndCatchFn(EndCatchFn),
+        RethrowFn(RethrowFn), SavedExnVar(SavedExnVar) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // Enter a cleanup to call the end-catch function if one was provided.
+      if (EndCatchFn)
+        CGF.EHStack.pushLazyCleanup<CallEndCatchForFinally>(NormalAndEHCleanup,
+                                                         ForEHVar, EndCatchFn);
+
+      // Emit the finally block.
+      CGF.EmitStmt(Body);
+
+      // If the end of the finally is reachable, check whether this was
+      // for EH.  If so, rethrow.
+      if (CGF.HaveInsertPoint()) {
+        llvm::BasicBlock *RethrowBB = CGF.createBasicBlock("finally.rethrow");
+        llvm::BasicBlock *ContBB = CGF.createBasicBlock("finally.cont");
+
+        llvm::Value *ShouldRethrow =
+          CGF.Builder.CreateLoad(ForEHVar, "finally.shouldthrow");
+        CGF.Builder.CreateCondBr(ShouldRethrow, RethrowBB, ContBB);
+
+        CGF.EmitBlock(RethrowBB);
+        if (SavedExnVar) {
+          llvm::Value *Args[] = { CGF.Builder.CreateLoad(SavedExnVar) };
+          CGF.EmitCallOrInvoke(RethrowFn, Args, Args+1);
+        } else {
+          CGF.EmitCallOrInvoke(RethrowFn, 0, 0);
+        }
+        CGF.Builder.CreateUnreachable();
+
+        CGF.EmitBlock(ContBB);
+      }
+
+      // Leave the end-catch cleanup.  As an optimization, pretend that
+      // the fallthrough path was inaccessible; we've dynamically proven
+      // that we're not in the EH case along that path.
+      if (EndCatchFn) {
+        CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
+        CGF.PopCleanupBlock();
+        CGF.Builder.restoreIP(SavedIP);
+      }
+    
+      // Now make sure we actually have an insertion point or the
+      // cleanup gods will hate us.
+      CGF.EnsureInsertPoint();
+    }
+  };
 }
 
 /// Enters a finally block for an implementation using zero-cost
@@ -1410,52 +1469,9 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
   InitTempAlloca(ForEHVar, llvm::ConstantInt::getFalse(getLLVMContext()));
 
   // Enter a normal cleanup which will perform the @finally block.
-  {
-    CodeGenFunction::CleanupBlock Cleanup(*this, NormalCleanup);
-
-    // Enter a cleanup to call the end-catch function if one was provided.
-    if (EndCatchFn)
-      EHStack.pushLazyCleanup<CallEndCatchForFinally>(NormalAndEHCleanup,
-                                                      ForEHVar, EndCatchFn);
-
-    // Emit the finally block.
-    EmitStmt(Body);
-
-    // If the end of the finally is reachable, check whether this was
-    // for EH.  If so, rethrow.
-    if (HaveInsertPoint()) {
-      llvm::BasicBlock *RethrowBB = createBasicBlock("finally.rethrow");
-      llvm::BasicBlock *ContBB = createBasicBlock("finally.cont");
-
-      llvm::Value *ShouldRethrow =
-        Builder.CreateLoad(ForEHVar, "finally.shouldthrow");
-      Builder.CreateCondBr(ShouldRethrow, RethrowBB, ContBB);
-
-      EmitBlock(RethrowBB);
-      if (SavedExnVar) {
-        llvm::Value *Args[] = { Builder.CreateLoad(SavedExnVar) };
-        EmitCallOrInvoke(RethrowFn, Args, Args+1);
-      } else {
-        EmitCallOrInvoke(RethrowFn, 0, 0);
-      }
-      Builder.CreateUnreachable();
-
-      EmitBlock(ContBB);
-    }
-
-    // Leave the end-catch cleanup.  As an optimization, pretend that
-    // the fallthrough path was inaccessible; we've dynamically proven
-    // that we're not in the EH case along that path.
-    if (EndCatchFn) {
-      CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
-      PopCleanupBlock();
-      Builder.restoreIP(SavedIP);
-    }
-    
-    // Now make sure we actually have an insertion point or the
-    // cleanup gods will hate us.
-    EnsureInsertPoint();
-  }
+  EHStack.pushLazyCleanup<PerformFinally>(NormalCleanup, Body,
+                                          ForEHVar, EndCatchFn,
+                                          RethrowFn, SavedExnVar);
 
   // Enter a catch-all scope.
   llvm::BasicBlock *CatchAllBB = createBasicBlock("finally.catchall");
