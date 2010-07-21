@@ -330,10 +330,8 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 // NamedMDNode implementation.
 //
 
-namespace llvm {
 // SymbolTableListTraits specialization for MDSymbolTable.
-void ilist_traits<NamedMDNode>
-::addNodeToList(NamedMDNode *N) {
+void ilist_traits<NamedMDNode>::addNodeToList(NamedMDNode *N) {
   assert(N->getParent() == 0 && "Value already in a container!!");
   Module *Owner = getListOwner();
   N->setParent(Owner);
@@ -346,7 +344,6 @@ void ilist_traits<NamedMDNode>::removeNodeFromList(NamedMDNode *N) {
   Module *Owner = getListOwner();
   MDSymbolTable &ST = Owner->getMDSymbolTable();
   ST.remove(N->getName());
-}
 }
 
 static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
