@@ -1,5 +1,5 @@
 // Preamble detection test: see below for comments and test commands.
-
+//
 #include <blah>
 #ifndef FOO
 #else
@@ -21,5 +21,17 @@ int foo();
 // Inputs/preamble.txt, since we diff against it.
 
 // RUN: %clang_cc1 -print-preamble %s > %t
-// RUN: diff %t %S/Inputs/preamble.txt
+// RUN: FileCheck < %t %s
+
+// CHECK: // Preamble detection test: see below for comments and test commands.
+// CHECK-NEXT: //
+// CHECK-NEXT: #include <blah>
+// CHECK-NEXT: #ifndef FOO
+// CHECK-NEXT: #else
+// CHECK-NEXT: #ifdef BAR
+// CHECK-NEXT: #elif WIBBLE
+// CHECK-NEXT: #endif
+// CHECK-NEXT: #pragma unknown
+// CHECK-NEXT: #endif
+
 
