@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Module.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -250,7 +251,7 @@ ConstString
 ValueObjectRegister::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = Type::GetClangTypeName (GetOpaqueClangQualType());
+        m_type_name = ClangASTType::GetClangTypeName (GetOpaqueClangQualType());
     return m_type_name;
 }
 

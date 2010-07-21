@@ -24,6 +24,7 @@
 
 #include "lldb/lldb-private-log.h"
 
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 
@@ -2273,10 +2274,10 @@ DWARFExpression::Evaluate
                         }
                         else
                         {
-                            if (!Type::SetValueFromScalar(ast_context,
-                                                          clang_type,
-                                                          tmp.ResolveValue(exe_ctx, ast_context),
-                                                          new_value))
+                            if (!ClangASTType::SetValueFromScalar (ast_context,
+                                                                  clang_type,
+                                                                  tmp.ResolveValue(exe_ctx, ast_context),
+                                                                  new_value))
                             {
                                 if (error_ptr)
                                     error_ptr->SetErrorStringWithFormat ("Couldn't extract a value from an integral type.\n");
@@ -2292,12 +2293,12 @@ DWARFExpression::Evaluate
                                 {
                                     lldb::AddressType address_type = (value_type == Value::eValueTypeLoadAddress ? eAddressTypeLoad : eAddressTypeHost);
                                     lldb::addr_t addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                                    if (!Type::WriteToMemory (exe_ctx,
-                                                                ast_context,
-                                                                clang_type,
-                                                                addr,
-                                                                address_type,
-                                                                new_value))
+                                    if (!ClangASTType::WriteToMemory (ast_context,
+                                                                          clang_type,
+                                                                          exe_ctx,
+                                                                          addr,
+                                                                          address_type,
+                                                                          new_value))
                                     {
                                         if (error_ptr)
                                             error_ptr->SetErrorStringWithFormat ("Failed to write value to memory at 0x%llx.\n", addr);

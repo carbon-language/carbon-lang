@@ -17,6 +17,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -472,7 +473,7 @@ Value::GetValueDefaultFormat ()
         break;
 
     case eContextTypeOpaqueClangQualType:
-        return Type::GetFormat (m_context);
+        return ClangASTType::GetFormat (m_context);
 
     case eContextTypeDCRegisterInfo:
         if (GetRegisterInfo())
@@ -692,9 +693,9 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
                 lldb::AddressType address_type = m_value_type == eValueTypeLoadAddress ? eAddressTypeLoad : eAddressTypeHost;
                 lldb::addr_t addr = m_value.ULongLong(LLDB_INVALID_ADDRESS);
                 DataExtractor data;
-                if (Type::ReadFromMemory (exe_ctx, ast_context, opaque_clang_qual_type, addr, address_type, data))
+                if (ClangASTType::ReadFromMemory (ast_context, opaque_clang_qual_type, exe_ctx, addr, address_type, data))
                 {
-                    if (Type::GetValueAsScalar (ast_context, opaque_clang_qual_type, data, 0, data.GetByteSize(), scalar))
+                    if (ClangASTType::GetValueAsScalar (ast_context, opaque_clang_qual_type, data, 0, data.GetByteSize(), scalar))
                     {
                         m_value = scalar;
                         m_value_type = eValueTypeScalar;

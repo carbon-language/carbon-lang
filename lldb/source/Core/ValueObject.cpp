@@ -20,6 +20,7 @@
 #include "lldb/Core/ValueObjectChild.h"
 #include "lldb/Core/ValueObjectList.h"
 
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 
@@ -488,16 +489,16 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
                         if (clang_type)
                         {
                             StreamString sstr;
-                            lldb::Format format = Type::GetFormat(clang_type);
-                            if (Type::DumpTypeValue(&sstr,
-                                                    GetClangAST(),            // The clang AST
-                                                    clang_type,               // The clang type to display
-                                                    format,                   // Format to display this type with
-                                                    m_data,                   // Data to extract from
-                                                    0,                        // Byte offset into "m_data"
-                                                    GetByteSize(),            // Byte size of item in "m_data"
-                                                    GetBitfieldBitSize(),     // Bitfield bit size
-                                                    GetBitfieldBitOffset()))  // Bitfield bit offset
+                            lldb::Format format = ClangASTType::GetFormat(clang_type);
+                            if (ClangASTType::DumpTypeValue(GetClangAST(),            // The clang AST
+                                                                clang_type,               // The clang type to display
+                                                                &sstr,
+                                                                format,                   // Format to display this type with
+                                                                m_data,                   // Data to extract from
+                                                                0,                        // Byte offset into "m_data"
+                                                                GetByteSize(),            // Byte size of item in "m_data"
+                                                                GetBitfieldBitSize(),     // Bitfield bit size
+                                                                GetBitfieldBitOffset()))  // Bitfield bit offset
                                 m_value_str.swap(sstr.GetString());
                             else
                                 m_value_str.clear();
@@ -537,7 +538,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
         return false;
 
     uint32_t count = 0;
-    lldb::Encoding encoding = Type::GetEncoding (GetOpaqueClangQualType(), count);
+    lldb::Encoding encoding = ClangASTType::GetEncoding (GetOpaqueClangQualType(), count);
 
     char *end = NULL;
     const size_t byte_size = GetByteSize();

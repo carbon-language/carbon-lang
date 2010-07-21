@@ -12,8 +12,10 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/ADT/StringRef.h"
+
 // Project includes
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Expression/ClangExpression.h"
@@ -21,15 +23,15 @@
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
-#include "llvm/ADT/StringRef.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -402,22 +404,26 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
         if (clang_type)
         {
             if (m_options.show_types)
-                Type::DumpClangTypeName (&output_stream, clang_type);
+            {
+                ConstString type_name(ClangASTType::GetClangTypeName (clang_type));
+                if (type_name)
+                    output_stream.Printf("(%s) ", type_name.AsCString("<invalid>"));
+            }
             
-            Type::DumpValue (&m_exe_ctx,                // The execution context for memory and variable access
-                             ast_context,               // The ASTContext that the clang type belongs to
-                             clang_type,                // The opaque clang type we want to dump that value of
-                             &output_stream,            // Stream to dump to
-                             format,                    // Format to use when dumping
-                             data,                      // A buffer containing the bytes for the clang type
-                             0,                         // Byte offset within "data" where value is
-                             data.GetByteSize (),       // Size in bytes of the value we are dumping
-                             0,                         // Bitfield bit size
-                             0,                         // Bitfield bit offset
-                             m_options.show_types,      // Show types?
-                             m_options.show_summary,    // Show summary?
-                             m_options.debug,           // Debug logging output?
-                             UINT32_MAX);               // Depth to dump in case this is an aggregate type
+            ClangASTType::DumpValue (ast_context,               // The ASTContext that the clang type belongs to
+                                         clang_type,                // The opaque clang type we want to dump that value of
+                                         &m_exe_ctx,                // The execution context for memory and variable access
+                                         &output_stream,            // Stream to dump to
+                                         format,                    // Format to use when dumping
+                                         data,                      // A buffer containing the bytes for the clang type
+                                         0,                         // Byte offset within "data" where value is
+                                         data.GetByteSize (),       // Size in bytes of the value we are dumping
+                                         0,                         // Bitfield bit size
+                                         0,                         // Bitfield bit offset
+                                         m_options.show_types,      // Show types?
+                                         m_options.show_summary,    // Show summary?
+                                         m_options.debug,           // Debug logging output?
+                                         UINT32_MAX);               // Depth to dump in case this is an aggregate type
         }
         else
         {

@@ -12,6 +12,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
 
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -103,7 +104,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = Type::GetClangTypeName (GetOpaqueClangQualType());
+        m_type_name = ClangASTType::GetClangTypeName (GetOpaqueClangQualType());
         if (m_type_name)
         {
             if (m_bitfield_bit_size > 0)

@@ -34,7 +34,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
+using namespace llvm::MachO;
 
 /// FIXME - The ObjC Runtime trampoline handler doesn't really belong here.
 /// I am putting it here so I can invoke it in the Trampoline code here, but
@@ -191,7 +191,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
     DataExtractor data; // Load command data
     if (ReadMachHeader (addr, &m_dyld.header, &data))
     {
-        if (m_dyld.header.filetype == MH_DYLINKER)
+        if (m_dyld.header.filetype == HeaderFileTypeDynamicLinkEditor)
         {
             m_dyld.address = addr;
             ModuleSP dyld_module_sp;
@@ -670,15 +670,15 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 // Returns true if we succeed, false if we fail for any reason.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, struct mach_header *header, DataExtractor *load_command_data)
+DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header, DataExtractor *load_command_data)
 {
-    DataBufferHeap header_bytes(sizeof(struct mach_header), 0);
+    DataBufferHeap header_bytes(sizeof(mach_header), 0);
     Error error;
     size_t bytes_read = m_process->ReadMemory (addr, 
                                                header_bytes.GetBytes(), 
                                                header_bytes.GetByteSize(), 
                                                error);
-    if (bytes_read == sizeof(struct mach_header))
+    if (bytes_read == sizeof(mach_header))
     {
         uint32_t offset = 0;
         ::memset (header, 0, sizeof(header));
@@ -690,16 +690,16 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, struct mach_header *
         data.SetByteOrder(DynamicLoaderMacOSXDYLD::GetByteOrderFromMagic(header->magic));
         switch (header->magic)
         {
-        case MH_MAGIC:
-        case MH_CIGAM:
+        case llvm::MachO::HeaderMagic32:
+        case llvm::MachO::HeaderMagic32Swapped:
             data.SetAddressByteSize(4);
-            load_cmd_addr += sizeof(struct mach_header);
+            load_cmd_addr += sizeof(mach_header);
             break;
 
-        case MH_MAGIC_64:
-        case MH_CIGAM_64:
+        case llvm::MachO::HeaderMagic64:
+        case llvm::MachO::HeaderMagic64Swapped:
             data.SetAddressByteSize(8);
-            load_cmd_addr += sizeof(struct mach_header_64);
+            load_cmd_addr += sizeof(mach_header_64);
             break;
 
         default:
@@ -707,7 +707,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, struct mach_header *
         }
 
         // Read the rest of dyld's mach header
-        if (data.GetU32(&offset, &header->cputype, (sizeof(struct mach_header)/sizeof(uint32_t)) - 1))
+        if (data.GetU32(&offset, &header->cputype, (sizeof(mach_header)/sizeof(uint32_t)) - 1))
         {
             if (load_command_data == NULL)
                 return true; // We were able to read the mach_header and weren't asked to read the load command bytes
@@ -752,15 +752,15 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
         // Clear out any load command specific data from DYLIB_INFO since
         // we are about to read it.
 
-        if (data.ValidOffsetForDataOfSize (offset, sizeof(struct load_command)))
+        if (data.ValidOffsetForDataOfSize (offset, sizeof(load_command)))
         {
-            struct load_command load_cmd;
+            load_command load_cmd;
             uint32_t load_cmd_offset = offset;
             load_cmd.cmd = data.GetU32 (&offset);
             load_cmd.cmdsize = data.GetU32 (&offset);
             switch (load_cmd.cmd)
             {
-            case LC_SEGMENT:
+            case LoadCommandSegment32:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
                     segment.addr = data.GetU32 (&offset);
@@ -769,7 +769,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LC_SEGMENT_64:
+            case LoadCommandSegment64:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
                     segment.addr = data.GetU64 (&offset);
@@ -778,7 +778,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LC_ID_DYLINKER:
+            case LoadCommandDynamicLinkerIdent:
                 if (lc_id_dylinker)
                 {
                     uint32_t name_offset = load_cmd_offset + data.GetU32 (&offset);
@@ -787,7 +787,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LC_UUID:
+            case LoadCommandUUID:
                 dylib_info.uuid.SetBytes(data.GetData (&offset, 16));
                 break;
 
@@ -820,7 +820,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfosHeaderAndLoadCommands()
 
             ParseLoadCommands (data, m_dyld_image_infos[i], NULL);
 
-            if (m_dyld_image_infos[i].header.filetype == MH_EXECUTE)
+            if (m_dyld_image_infos[i].header.filetype == HeaderFileTypeExecutable)
                 exe_idx = i;
         }
     }

@@ -11,8 +11,7 @@
 
 // C Includes
 #include <dirent.h>
-#include <mach-o/loader.h>
-#include <mach-o/fat.h>
+#include "llvm/Support/MachO.h"
 
 // C++ Includes
 // Other libraries and framework includes
@@ -29,6 +28,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace llvm::MachO;
 
 extern "C" {
 
@@ -49,8 +49,8 @@ SkinnyMachOFileContainsArchAndUUID
     const uint32_t magic
 )
 {
-    assert(magic == MH_CIGAM || magic == MH_MAGIC || magic == MH_CIGAM_64 || magic == MH_MAGIC_64);
-    if (magic == MH_MAGIC || magic == MH_MAGIC_64)
+    assert(magic == HeaderMagic32 || magic == HeaderMagic32Swapped || magic == HeaderMagic64 || magic == HeaderMagic64Swapped);
+    if (magic == HeaderMagic32 || magic == HeaderMagic64)
         data.SetByteOrder (eByteOrderHost);
     else if (eByteOrderHost == eByteOrderBig)
         data.SetByteOrder (eByteOrderLittle);
@@ -80,11 +80,11 @@ SkinnyMachOFileContainsArchAndUUID
     if (uuid == NULL)
         return true;
 
-    if (magic == MH_CIGAM_64 || magic == MH_MAGIC_64)
+    if (magic == HeaderMagic64Swapped || magic == HeaderMagic64)
         data_offset += 4;   // Skip reserved field for in mach_header_64
 
     // Make sure we have enough data for all the load commands
-    if (magic == MH_CIGAM_64 || magic == MH_MAGIC_64)
+    if (magic == HeaderMagic64Swapped || magic == HeaderMagic64)
     {
         if (data.GetByteSize() < sizeof(struct mach_header_64) + sizeofcmds)
         {
@@ -106,7 +106,7 @@ SkinnyMachOFileContainsArchAndUUID
         const uint32_t cmd_offset = data_offset;    // Save this data_offset in case parsing of the segment goes awry!
         uint32_t cmd        = data.GetU32(&data_offset);
         uint32_t cmd_size   = data.GetU32(&data_offset);
-        if (cmd == LC_UUID)
+        if (cmd == LoadCommandUUID)
         {
             UUID file_uuid (data.GetData(&data_offset, 16), 16);
             return file_uuid == *uuid;
@@ -128,7 +128,7 @@ UniversalMachOFileContainsArchAndUUID
     const uint32_t magic
 )
 {
-    assert(magic == FAT_CIGAM || magic == FAT_MAGIC);
+    assert(magic == UniversalMagic || magic == UniversalMagicSwapped);
 
     // Universal mach-o files always have their headers encoded as BIG endian
     data.SetByteOrder(eByteOrderBig);
@@ -167,10 +167,10 @@ UniversalMachOFileContainsArchAndUUID
 
         switch (arch_magic)
         {
-        case MH_CIGAM:          // 32 bit mach-o file
-        case MH_MAGIC:          // 32 bit mach-o file
-        case MH_CIGAM_64:       // 64 bit mach-o file
-        case MH_MAGIC_64:       // 64 bit mach-o file
+        case HeaderMagic32:
+        case HeaderMagic32Swapped:
+        case HeaderMagic64:
+        case HeaderMagic64Swapped:
             if (SkinnyMachOFileContainsArchAndUUID (file_spec, arch, uuid, file_offset + arch_offset, arch_data, arch_data_offset, arch_magic))
                 return true;
             break;
@@ -201,15 +201,15 @@ FileAtPathContainsArchAndUUID
         switch (magic)
         {
         // 32 bit mach-o file
-        case MH_CIGAM:
-        case MH_MAGIC:
-        case MH_CIGAM_64:
-        case MH_MAGIC_64:
+        case HeaderMagic32:
+        case HeaderMagic32Swapped:
+        case HeaderMagic64:
+        case HeaderMagic64Swapped:
             return SkinnyMachOFileContainsArchAndUUID (file_spec, arch, uuid, file_offset, data, data_offset, magic);
 
         // fat mach-o file
-        case FAT_CIGAM:
-        case FAT_MAGIC:
+        case UniversalMagic:
+        case UniversalMagicSwapped:
             return UniversalMachOFileContainsArchAndUUID (file_spec, arch, uuid, file_offset, data, data_offset, magic);
 
         default:

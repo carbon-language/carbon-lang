@@ -10,7 +10,8 @@
 #ifndef liblldb_ObjectFileMachO_h_
 #define liblldb_ObjectFileMachO_h_
 
-#include <mach-o/loader.h>
+#include "llvm/Support/MachO.h"
+
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -112,13 +113,13 @@ public:
 
 protected:
     mutable lldb_private::Mutex m_mutex;
-    struct  mach_header m_header;
+    llvm::MachO::mach_header m_header;
     mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
     mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
 
-    struct dysymtab_command m_dysymtab;
-    std::vector<struct segment_command_64> m_mach_segments;
-    std::vector<struct section_64> m_mach_sections;
+    llvm::MachO::dysymtab_command m_dysymtab;
+    std::vector<llvm::MachO::segment_command_64> m_mach_segments;
+    std::vector<llvm::MachO::section_64> m_mach_sections;
 
     size_t
     ParseSections ();

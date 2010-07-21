@@ -21,7 +21,7 @@
 // Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Symbol/ASTType.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 namespace lldb_private {
 

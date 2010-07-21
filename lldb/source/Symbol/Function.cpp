@@ -10,10 +10,11 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
 
@@ -339,7 +340,7 @@ Function::GetReturnType ()
     clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
     clang::QualType fun_return_qualtype = function_type->getResultType();
 
-    const ConstString fun_return_name(Type::GetClangTypeName(fun_return_qualtype.getAsOpaquePtr()));
+    const ConstString fun_return_name(ClangASTType::GetClangTypeName(fun_return_qualtype.getAsOpaquePtr()));
 
     SymbolContext sc;
     CalculateSymbolContext (&sc);
@@ -381,7 +382,7 @@ Function::GetArgumentTypeAtIndex (size_t idx)
             return Type();
         clang::QualType arg_qualtype = (function_proto_type->arg_type_begin())[idx];
 
-        const ConstString arg_return_name(Type::GetClangTypeName(arg_qualtype.getAsOpaquePtr()));
+        const ConstString arg_return_name(ClangASTType::GetClangTypeName(arg_qualtype.getAsOpaquePtr()));
         SymbolContext sc;
         CalculateSymbolContext (&sc);
         // Null out everything below the CompUnit 'cause we don't actually know these.

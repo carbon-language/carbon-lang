@@ -24,9 +24,13 @@ namespace clang
         class Context;
     }
 
+    class Action;
     class ASTContext;
+    class ASTRecordLayout;
     class AddrLabelExpr;
+    class AnalyzerOptions;
     class BinaryOperator;
+    class CodeGenOptions;
     class CodeGenerator;
     class CompilerInstance;
     class CXXBaseSpecifier;
@@ -38,18 +42,23 @@ namespace clang
     class CharacterLiteral;
     class CompoundAssignOperator;
     class Decl;
+    class DeclarationName;
     class DeclaratorDecl;
     class DeclContext;
     class DeclRefExpr;
     class DeclStmt;
+    class DependencyOutputOptions;
     class Diagnostic;
+    class DiagnosticOptions;
     class EnumDecl;
     class Expr;
     class ExtVectorElementExpr;
     class FieldDecl;
     class FloatingLiteral;
+    class FrontendOptions;
     class FunctionDecl;
     class GotoStmt;
+    class HeaderSearchOptions;
     class IdentifierTable;
     class IntegerLiteral;
     class LabelStmt;
@@ -72,6 +81,8 @@ namespace clang
     class ParenExpr;
     class ParmVarDecl;
     class PredefinedExpr;
+    class PreprocessorOptions;
+    class PreprocessorOutputOptions;
     class QualType;
     class QualifiedNameType;
     class RecordDecl;

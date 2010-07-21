@@ -55,6 +55,7 @@
 
 // Project includes
 #include "lldb/Core/Log.h"
+#include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangResultSynthesizer.h"
@@ -73,23 +74,6 @@
 using namespace lldb_private;
 using namespace clang;
 using namespace llvm;
-
-namespace clang {
-
-class AnalyzerOptions;
-class CodeGenOptions;
-class DependencyOutputOptions;
-class DiagnosticOptions;
-class FrontendOptions;
-class HeaderSearchOptions;
-class LangOptions;
-class PreprocessorOptions;
-class PreprocessorOutputOptions;
-class TargetInfo;
-class TargetOptions;
-
-} // end namespace clang
-
 
 
 //===----------------------------------------------------------------------===//

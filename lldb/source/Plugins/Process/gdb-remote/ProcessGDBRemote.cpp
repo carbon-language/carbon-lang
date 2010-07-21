@@ -9,15 +9,9 @@
 
 // C Includes
 #include <errno.h>
-#include <mach/mach.h>
-#include <mach-o/dyld.h>
 #include <spawn.h>
-#include <sys/fcntl.h>
 #include <sys/types.h>
-#include <sys/ptrace.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
-#include <unistd.h>
 
 // C++ Includes
 #include <algorithm>

@@ -26,11 +26,6 @@
 // Right now, this is just a toy.  It calls a set function, with fixed
 // values.
 
-namespace clang
-{
-    class ASTRecordLayout;
-}
-
 namespace lldb_private
 {
 

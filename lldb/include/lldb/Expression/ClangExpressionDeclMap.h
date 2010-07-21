@@ -21,19 +21,40 @@
 // Project includes
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Symbol/ASTType.h"
-
-namespace clang {
-    class DeclarationName;
-    class DeclContext;
-    class QualType;
-}
+#include "lldb/Symbol/ClangASTType.h"
 
 namespace llvm {
     class Value;
 }
 
 namespace lldb_private {
+
+//----------------------------------------------------------------------
+// For cases in which there are multiple classes of types that are not
+// interchangeable, to allow static type checking.
+//----------------------------------------------------------------------
+template <unsigned int C> class TaggedClangASTType : public ClangASTType
+{
+public:
+    TaggedClangASTType (void *type, clang::ASTContext *ast_context) :
+        ClangASTType(type, ast_context) { }
+    
+    TaggedClangASTType (const TaggedClangASTType<C> &tw) :
+        ClangASTType(tw) { }
+    
+    TaggedClangASTType () :
+        ClangASTType() { }
+    
+    ~TaggedClangASTType() { }
+    
+    const TaggedClangASTType<C> &
+    operator= (const TaggedClangASTType<C> &tw)
+    {
+        ClangASTType::operator= (tw);
+        return *this;
+    }
+};
+
 
 class Error;
 class Function;
@@ -83,8 +104,8 @@ public:
     void GetDecls (NameSearchContext &context,
                    const char *name);
 private:
-    typedef TaggedASTType<0> TypeFromParser;
-    typedef TaggedASTType<1> TypeFromUser;
+    typedef TaggedClangASTType<0> TypeFromParser;
+    typedef TaggedClangASTType<1> TypeFromUser;
     
     struct Tuple
     {

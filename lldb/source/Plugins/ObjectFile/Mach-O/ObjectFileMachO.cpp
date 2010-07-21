@@ -9,9 +9,6 @@
 
 #include "ObjectFileMachO.h"
 
-#include <mach-o/nlist.h>
-#include <mach-o/stab.h>
-
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/FileSpec.h"
@@ -25,18 +22,10 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Symbol/ObjectFile.h"
 
-#ifndef S_DTRACE_DOF
-// section contains DTrace Object Format
-#define S_DTRACE_DOF 0xf
-#endif
-
-#ifndef S_LAZY_DYLIB_SYMBOL_POINTERS
-// section with only lazy symbol pointers to lazy loaded dylibs
-#define S_LAZY_DYLIB_SYMBOL_POINTERS 0x10
-#endif
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace llvm::MachO;
 
 
 void
@@ -85,12 +74,12 @@ MachHeaderSizeFromMagic(uint32_t magic)
 {
     switch (magic)
     {
-    case MH_MAGIC:
-    case MH_CIGAM:
+    case HeaderMagic32:
+    case HeaderMagic32Swapped:
         return sizeof(struct mach_header);
 
-    case MH_MAGIC_64:
-    case MH_CIGAM_64:
+    case HeaderMagic64:
+    case HeaderMagic64Swapped:
         return sizeof(struct mach_header_64);
         break;
 
@@ -139,25 +128,25 @@ ObjectFileMachO::ParseHeader ()
     m_header.magic = m_data.GetU32(&offset);
     switch (m_header.magic)
     {
-    case MH_MAGIC:
+    case HeaderMagic32:
         m_data.SetByteOrder (eByteOrderHost);
         m_data.SetAddressByteSize(4);
         can_parse = true;
         break;
 
-    case MH_MAGIC_64:
+    case HeaderMagic64:
         m_data.SetByteOrder (eByteOrderHost);
         m_data.SetAddressByteSize(8);
         can_parse = true;
         break;
 
-    case MH_CIGAM:
+    case HeaderMagic32Swapped:
         m_data.SetByteOrder(eByteOrderHost == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
         m_data.SetAddressByteSize(4);
         can_parse = true;
         break;
 
-    case MH_CIGAM_64:
+    case HeaderMagic64Swapped:
         m_data.SetByteOrder(eByteOrderHost == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
         m_data.SetAddressByteSize(8);
         can_parse = true;
@@ -245,7 +234,7 @@ ObjectFileMachO::ParseSections ()
         if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
             break;
 
-        if (load_cmd.cmd == LC_SEGMENT || load_cmd.cmd == LC_SEGMENT_64)
+        if (load_cmd.cmd == LoadCommandSegment32 || load_cmd.cmd == LoadCommandSegment64)
         {
             if (m_data.GetU8(&offset, (uint8_t*)load_cmd.segname, 16))
             {
@@ -282,13 +271,13 @@ ObjectFileMachO::ParseSections ()
                     struct section_64 sect64;
                     ::bzero (&sect64, sizeof(sect64));
                     // Push a section into our mach sections for the section at
-                    // index zero (NO_SECT)
+                    // index zero (NListSectionNoSection)
                     m_mach_sections.push_back(sect64);
                     uint32_t segment_sect_idx;
                     const lldb::user_id_t first_segment_sectID = sectID + 1;
 
 
-                    const uint32_t num_u32s = load_cmd.cmd == LC_SEGMENT ? 7 : 8;
+                    const uint32_t num_u32s = load_cmd.cmd == LoadCommandSegment32 ? 7 : 8;
                     for (segment_sect_idx=0; segment_sect_idx<load_cmd.nsects; ++segment_sect_idx)
                     {
                         if (m_data.GetU8(&offset, (uint8_t*)sect64.sectname, sizeof(sect64.sectname)) == NULL)
@@ -375,7 +364,7 @@ ObjectFileMachO::ParseSections ()
                         }
                         assert (segment_sp.get());
 
-                        uint32_t mach_sect_type = sect64.flags & SECTION_TYPE;
+                        uint32_t mach_sect_type = sect64.flags & SectionFlagMaskSectionType;
                         static ConstString g_sect_name_objc_data ("__objc_data");
                         static ConstString g_sect_name_objc_msgrefs ("__objc_msgrefs");
                         static ConstString g_sect_name_objc_selrefs ("__objc_selrefs");
@@ -412,26 +401,23 @@ ObjectFileMachO::ParseSections ()
                             switch (mach_sect_type)
                             {
                             // TODO: categorize sections by other flags for regular sections
-                            case S_REGULAR:
-
-                                sect_type = eSectionTypeOther;
-                                break;
-                            case S_ZEROFILL:                    sect_type = eSectionTypeZeroFill; break;
-                            case S_CSTRING_LITERALS:            sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
-                            case S_4BYTE_LITERALS:              sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
-                            case S_8BYTE_LITERALS:              sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
-                            case S_LITERAL_POINTERS:            sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
-                            case S_NON_LAZY_SYMBOL_POINTERS:    sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
-                            case S_LAZY_SYMBOL_POINTERS:        sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
-                            case S_SYMBOL_STUBS:                sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
-                            case S_MOD_INIT_FUNC_POINTERS:      sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
-                            case S_MOD_TERM_FUNC_POINTERS:      sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
-                            case S_COALESCED:                   sect_type = eSectionTypeOther; break;
-                            case S_GB_ZEROFILL:                 sect_type = eSectionTypeZeroFill; break;
-                            case S_INTERPOSING:                 sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
-                            case S_16BYTE_LITERALS:             sect_type = eSectionTypeData16; break; // section with only 16 byte literals
-                            case S_DTRACE_DOF:                  sect_type = eSectionTypeDebug; break;
-                            case S_LAZY_DYLIB_SYMBOL_POINTERS:  sect_type = eSectionTypeDataPointers;  break;
+                            case SectionTypeRegular:                    sect_type = eSectionTypeOther; break;
+                            case SectionTypeZeroFill:                   sect_type = eSectionTypeZeroFill; break;
+                            case SectionTypeCStringLiterals:            sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
+                            case SectionType4ByteLiterals:              sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
+                            case SectionType8ByteLiterals:              sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
+                            case SectionTypeLiteralPointers:            sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
+                            case SectionTypeNonLazySymbolPointers:      sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
+                            case SectionTypeLazySymbolPointers:         sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
+                            case SectionTypeSymbolStubs:                sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
+                            case SectionTypeModuleInitFunctionPointers: sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
+                            case SectionTypeModuleTermFunctionPointers: sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
+                            case SectionTypeCoalesced:                  sect_type = eSectionTypeOther; break;
+                            case SectionTypeZeroFillLarge:              sect_type = eSectionTypeZeroFill; break;
+                            case SectionTypeInterposing:                sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
+                            case SectionType16ByteLiterals:             sect_type = eSectionTypeData16; break; // section with only 16 byte literals
+                            case SectionTypeDTraceObjectFormat:         sect_type = eSectionTypeDebug; break;
+                            case SectionTypeLazyDylibSymbolPointers:    sect_type = eSectionTypeDataPointers;  break;
                             default: break;
                             }
                         }
@@ -454,7 +440,7 @@ ObjectFileMachO::ParseSections ()
                             segment_name.Clear();
                         }
                     }
-                    if (m_header.filetype == MH_DSYM)
+                    if (m_header.filetype == HeaderFileTypeDSYM)
                     {
                         if (first_segment_sectID <= sectID)
                         {
@@ -482,7 +468,7 @@ ObjectFileMachO::ParseSections ()
                 }
             }
         }
-        else if (load_cmd.cmd == LC_DYSYMTAB)
+        else if (load_cmd.cmd == LoadCommandDynamicSymtabInfo)
         {
             m_dysymtab.cmd = load_cmd.cmd;
             m_dysymtab.cmdsize = load_cmd.cmdsize;
@@ -569,7 +555,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         if (m_data.GetU32(&offset, &symtab_load_command, 2) == NULL)
             break;
         // Watch for the symbol table load command
-        if (symtab_load_command.cmd == LC_SYMTAB)
+        if (symtab_load_command.cmd == LoadCommandSymtab)
         {
             // Read in the rest of the symtab load command
             if (m_data.GetU32(&offset, &symtab_load_command.symoff, 4)) // fill in symoff, nsyms, stroff, strsize fields
@@ -602,7 +588,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 else
                     eh_frame_section_sp = section_list->FindSectionByName (g_section_name_eh_frame);
 
-                uint8_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NO_SECT;
+                uint8_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NListSectionNoSection;
                 //uint32_t symtab_offset = 0;
                 const uint8_t* nlist_data = symtab_data_sp->GetBytes();
                 assert (symtab_data_sp->GetByteSize()/nlist_size >= symtab_load_command.nsyms);
@@ -635,7 +621,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     if (bit_width_32)
                     {
                         struct nlist* nlist32_ptr = (struct nlist*)(nlist_data + (nlist_idx * nlist_size));
-                        nlist.n_un.n_strx = nlist32_ptr->n_un.n_strx;
+                        nlist.n_strx = nlist32_ptr->n_strx;
                         nlist.n_type = nlist32_ptr->n_type;
                         nlist.n_sect = nlist32_ptr->n_sect;
                         nlist.n_desc = nlist32_ptr->n_desc;
@@ -647,12 +633,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     }
 
                     SymbolType type = eSymbolTypeInvalid;
-                    const char* symbol_name = &strtab_data[nlist.n_un.n_strx];
+                    const char* symbol_name = &strtab_data[nlist.n_strx];
                     if (symbol_name[0] == '\0')
                         symbol_name = NULL;
                     Section* symbol_section = NULL;
                     bool add_nlist = true;
-                    bool is_debug = ((nlist.n_type & N_STAB) != 0);
+                    bool is_debug = ((nlist.n_type & NlistMaskStab) != 0);
 
                     assert (sym_idx < num_syms);
 
@@ -662,18 +648,21 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     {
                         switch (nlist.n_type)
                         {
-                        case N_GSYM:    // global symbol: name,,NO_SECT,type,0
+                        case StabGlobalSymbol:    
+                            // N_GSYM -- global symbol: name,,NO_SECT,type,0
                             // Sometimes the N_GSYM value contains the address.
                             if (nlist.n_value != 0)
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeGlobal;
                             break;
 
-                        case N_FNAME:   // procedure name (f77 kludge): name,,NO_SECT,0,0
+                        case StabFunctionName:
+                            // N_FNAME -- procedure name (f77 kludge): name,,NO_SECT,0,0
                             type = eSymbolTypeFunction;
                             break;
 
-                        case N_FUN:                                       // procedure: name,,n_sect,linenumber,address
+                        case StabFunction:       
+                            // N_FUN -- procedure: name,,n_sect,linenumber,address
                             if (symbol_name)
                             {
                                 type = eSymbolTypeFunction;
@@ -701,17 +690,20 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             }
                             break;
 
-                        case N_STSYM:   // static symbol: name,,n_sect,type,address
+                        case StabStaticSymbol:   
+                            // N_STSYM -- static symbol: name,,n_sect,type,address
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeStatic;
                             break;
 
-                        case N_LCSYM:   // .lcomm symbol: name,,n_sect,type,address
+                        case StabLocalCommon:
+                            // N_LCSYM -- .lcomm symbol: name,,n_sect,type,address
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeCommonBlock;
                             break;
 
-                        case N_BNSYM:
+                        case StabBeginSymbol:
+                            // N_BNSYM
                             // We use the current number of symbols in the symbol table in lieu of
                             // using nlist_idx in case we ever start trimming entries out
                             if (minimize)
@@ -727,7 +719,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             }
                             break;
 
-                        case N_ENSYM:
+                        case StabEndSymbol:
+                            // N_ENSYM
                             // Set the size of the N_BNSYM to the terminating index of this N_ENSYM
                             // so that we can always skip the entire symbol if we need to navigate
                             // more quickly at the source level when parsing STABS
@@ -750,24 +743,29 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             break;
 
 
-                        case N_OPT:     // emitted with gcc2_compiled and in gcc source
+                        case StabSourceFileOptions:
+                            // N_OPT - emitted with gcc2_compiled and in gcc source
                             type = eSymbolTypeCompiler;
                             break;
 
-                        case N_RSYM:    // register sym: name,,NO_SECT,type,register
+                        case StabRegisterSymbol:
+                            // N_RSYM - register sym: name,,NO_SECT,type,register
                             type = eSymbolTypeVariable;
                             break;
 
-                        case N_SLINE:   // src line: 0,,n_sect,linenumber,address
+                        case StabSourceLine:
+                            // N_SLINE - src line: 0,,n_sect,linenumber,address
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeLineEntry;
                             break;
 
-                        case N_SSYM:    // structure elt: name,,NO_SECT,type,struct_offset
+                        case StabStructureType:
+                            // N_SSYM - structure elt: name,,NO_SECT,type,struct_offset
                             type = eSymbolTypeVariableType;
                             break;
 
-                        case N_SO:
+                        case StabSourceFileName:
+                            // N_SO - source file name
                             type = eSymbolTypeSourceFile;
                             if (symbol_name == NULL)
                             {
@@ -802,25 +800,29 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             }
                             break;
 
-                        case N_OSO:     // object file name: name,,0,0,st_mtime
+                        case StabObjectFileName:
+                            // N_OSO - object file name: name,,0,0,st_mtime
                             type = eSymbolTypeObjectFile;
                             break;
 
-                        case N_LSYM:    // local sym: name,,NO_SECT,type,offset
+                        case StabLocalSymbol:
+                            // N_LSYM - local sym: name,,NO_SECT,type,offset
                             type = eSymbolTypeLocal;
                             break;
 
                         //----------------------------------------------------------------------
                         // INCL scopes
                         //----------------------------------------------------------------------
-                        case N_BINCL:   // include file beginning: name,,NO_SECT,0,sum
+                        case StabBeginIncludeFileName:
+                            // N_BINCL - include file beginning: name,,NO_SECT,0,sum
                             // We use the current number of symbols in the symbol table in lieu of
                             // using nlist_idx in case we ever start trimming entries out
                             N_INCL_indexes.push_back(sym_idx);
                             type = eSymbolTypeScopeBegin;
                             break;
-                        case N_EINCL:   // include file end: name,,NO_SECT,0,0
 
+                        case StabEndIncludeFile:
+                            // N_EINCL - include file end: name,,NO_SECT,0,0
                             // Set the size of the N_BINCL to the terminating index of this N_EINCL
                             // so that we can always skip the entire symbol if we need to navigate
                             // more quickly at the source level when parsing STABS
@@ -834,27 +836,33 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeScopeEnd;
                             break;
 
-                        case N_SOL:     // #included file name: name,,n_sect,0,address
+                        case StabIncludeFileName:
+                            // N_SOL - #included file name: name,,n_sect,0,address
                             type = eSymbolTypeHeaderFile;
                             break;
 
-                        case N_PARAMS:  // compiler parameters: name,,NO_SECT,0,0
+                        case StabCompilerParameters:  
+                            // N_PARAMS - compiler parameters: name,,NO_SECT,0,0
                             type = eSymbolTypeCompiler;
                             break;
 
-                        case N_VERSION: // compiler version: name,,NO_SECT,0,0
+                        case StabCompilerVersion:
+                            // N_VERSION - compiler version: name,,NO_SECT,0,0
                             type = eSymbolTypeCompiler;
                             break;
 
-                        case N_OLEVEL:  // compiler -O level: name,,NO_SECT,0,0
+                        case StabCompilerOptLevel:
+                            // N_OLEVEL - compiler -O level: name,,NO_SECT,0,0
                             type = eSymbolTypeCompiler;
                             break;
 
-                        case N_PSYM:    // parameter: name,,NO_SECT,type,offset
+                        case StabParameter:
+                            // N_PSYM - parameter: name,,NO_SECT,type,offset
                             type = eSymbolTypeVariable;
                             break;
 
-                        case N_ENTRY:   // alternate entry: name,,n_sect,linenumber,address
+                        case StabAlternateEntry:
+                            // N_ENTRY - alternate entry: name,,n_sect,linenumber,address
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeLineEntry;
                             break;
@@ -862,7 +870,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         //----------------------------------------------------------------------
                         // Left and Right Braces
                         //----------------------------------------------------------------------
-                        case N_LBRAC:   // left bracket: 0,,NO_SECT,nesting level,address
+                        case StabLeftBracket:
+                            // N_LBRAC - left bracket: 0,,NO_SECT,nesting level,address
                             // We use the current number of symbols in the symbol table in lieu of
                             // using nlist_idx in case we ever start trimming entries out
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
@@ -870,7 +879,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeScopeBegin;
                             break;
 
-                        case N_RBRAC:   // right bracket: 0,,NO_SECT,nesting level,address
+                        case StabRightBracket:
+                            // N_RBRAC - right bracket: 0,,NO_SECT,nesting level,address
                             // Set the size of the N_LBRAC to the terminating index of this N_RBRAC
                             // so that we can always skip the entire symbol if we need to navigate
                             // more quickly at the source level when parsing STABS
@@ -885,25 +895,29 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeScopeEnd;
                             break;
 
-                        case N_EXCL:    // deleted include file: name,,NO_SECT,0,sum
+                        case StabDeletedIncludeFile:
+                            // N_EXCL - deleted include file: name,,NO_SECT,0,sum
                             type = eSymbolTypeHeaderFile;
                             break;
 
                         //----------------------------------------------------------------------
                         // COMM scopes
                         //----------------------------------------------------------------------
-                        case N_BCOMM:   // begin common: name,,NO_SECT,0,0
+                        case StabBeginCommon:
+                            // N_BCOMM - begin common: name,,NO_SECT,0,0
                             // We use the current number of symbols in the symbol table in lieu of
                             // using nlist_idx in case we ever start trimming entries out
                             type = eSymbolTypeScopeBegin;
                             N_COMM_indexes.push_back(sym_idx);
                             break;
 
-                        case N_ECOML:   // end common (local name): 0,,n_sect,0,address
+                        case StabEndCommonLocal:
+                            // N_ECOML - end common (local name): 0,,n_sect,0,address
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             // Fall through
 
-                        case N_ECOMM:   // end common: name,,n_sect,0,0
+                        case StabEndCommon:
+                            // N_ECOMM - end common: name,,n_sect,0,0
                             // Set the size of the N_BCOMM to the terminating index of this N_ECOMM/N_ECOML
                             // so that we can always skip the entire symbol if we need to navigate
                             // more quickly at the source level when parsing STABS
@@ -917,7 +931,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             type = eSymbolTypeScopeEnd;
                             break;
 
-                        case N_LENG:    // second stab entry with length information
+                        case StabLength:
+                            // N_LENG - second stab entry with length information
                             type = eSymbolTypeAdditional;
                             break;
 
@@ -926,9 +941,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     }
                     else
                     {
-                        //uint8_t n_pext    = N_PEXT & nlist.n_type;
-                        uint8_t n_type  = N_TYPE & nlist.n_type;
-                        sym[sym_idx].SetExternal((N_EXT & nlist.n_type) != 0);
+                        //uint8_t n_pext    = NlistMaskPrivateExternal & nlist.n_type;
+                        uint8_t n_type  = NlistMaskType & nlist.n_type;
+                        sym[sym_idx].SetExternal((NlistMaskExternal & nlist.n_type) != 0);
 
                         if (symbol_name && ::strstr (symbol_name, ".objc") == symbol_name)
                         {
@@ -938,17 +953,17 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         {
                             switch (n_type)
                             {
-                            case N_INDR:    // Fall through
-                            case N_PBUD:    // Fall through
-                            case N_UNDF:
+                            case NListTypeIndirect:         // N_INDR - Fall through
+                            case NListTypePreboundUndefined:// N_PBUD - Fall through
+                            case NListTypeUndefined:        // N_UNDF
                                 type = eSymbolTypeExtern;
                                 break;
 
-                            case N_ABS:
+                            case NListTypeAbsolute:         // N_ABS
                                 type = eSymbolTypeAbsolute;
                                 break;
 
-                            case N_SECT:
+                            case NListTypeSection:          // N_SECT
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
 
                                 assert(symbol_section != NULL);
@@ -958,27 +973,27 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 }
                                 else
                                 {
-                                    uint32_t section_type = symbol_section->GetAllFlagBits() & SECTION_TYPE;
+                                    uint32_t section_type = symbol_section->GetAllFlagBits() & SectionFlagMaskSectionType;
 
                                     switch (section_type)
                                     {
-                                    case S_REGULAR:                     break; // regular section
-                                    //case S_ZEROFILL:                  type = eSymbolTypeData;    break; // zero fill on demand section
-                                    case S_CSTRING_LITERALS:            type = eSymbolTypeData;    break; // section with only literal C strings
-                                    case S_4BYTE_LITERALS:              type = eSymbolTypeData;    break; // section with only 4 byte literals
-                                    case S_8BYTE_LITERALS:              type = eSymbolTypeData;    break; // section with only 8 byte literals
-                                    case S_LITERAL_POINTERS:            type = eSymbolTypeTrampoline; break; // section with only pointers to literals
-                                    case S_NON_LAZY_SYMBOL_POINTERS:    type = eSymbolTypeTrampoline; break; // section with only non-lazy symbol pointers
-                                    case S_LAZY_SYMBOL_POINTERS:        type = eSymbolTypeTrampoline; break; // section with only lazy symbol pointers
-                                    case S_SYMBOL_STUBS:                type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
-                                    case S_MOD_INIT_FUNC_POINTERS:      type = eSymbolTypeCode;    break; // section with only function pointers for initialization
-                                    case S_MOD_TERM_FUNC_POINTERS:      type = eSymbolTypeCode;    break; // section with only function pointers for termination
-                                    //case S_COALESCED:                 type = eSymbolType;    break; // section contains symbols that are to be coalesced
-                                    //case S_GB_ZEROFILL:               type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
-                                    case S_INTERPOSING:                 type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
-                                    case S_16BYTE_LITERALS:             type = eSymbolTypeData;    break; // section with only 16 byte literals
-                                    case S_DTRACE_DOF:                  type = eSymbolTypeInstrumentation; break;
-                                    case S_LAZY_DYLIB_SYMBOL_POINTERS:  type = eSymbolTypeTrampoline; break;
+                                    case SectionTypeRegular:                     break; // regular section
+                                    //case SectionTypeZeroFill:                 type = eSymbolTypeData;    break; // zero fill on demand section
+                                    case SectionTypeCStringLiterals:            type = eSymbolTypeData;    break; // section with only literal C strings
+                                    case SectionType4ByteLiterals:              type = eSymbolTypeData;    break; // section with only 4 byte literals
+                                    case SectionType8ByteLiterals:              type = eSymbolTypeData;    break; // section with only 8 byte literals
+                                    case SectionTypeLiteralPointers:            type = eSymbolTypeTrampoline; break; // section with only pointers to literals
+                                    case SectionTypeNonLazySymbolPointers:      type = eSymbolTypeTrampoline; break; // section with only non-lazy symbol pointers
+                                    case SectionTypeLazySymbolPointers:         type = eSymbolTypeTrampoline; break; // section with only lazy symbol pointers
+                                    case SectionTypeSymbolStubs:                type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
+                                    case SectionTypeModuleInitFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for initialization
+                                    case SectionTypeModuleTermFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for termination
+                                    //case SectionTypeCoalesced:                type = eSymbolType;    break; // section contains symbols that are to be coalesced
+                                    //case SectionTypeZeroFillLarge:            type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
+                                    case SectionTypeInterposing:                type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
+                                    case SectionType16ByteLiterals:             type = eSymbolTypeData;    break; // section with only 16 byte literals
+                                    case SectionTypeDTraceObjectFormat:         type = eSymbolTypeInstrumentation; break;
+                                    case SectionTypeLazyDylibSymbolPointers:    type = eSymbolTypeTrampoline; break;
                                     default: break;
                                     }
 
@@ -987,7 +1002,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                         const char *symbol_sect_name = symbol_section->GetName().AsCString();
                                         if (symbol_section->IsDescendant (text_section_sp.get()))
                                         {
-                                            if (symbol_section->IsClear(S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SELF_MODIFYING_CODE | S_ATTR_SOME_INSTRUCTIONS))
+                                            if (symbol_section->IsClear(SectionAttrUserPureInstructions | 
+                                                                        SectionAttrUserSelfModifyingCode | 
+                                                                        SectionAttrSytemSomeInstructions))
                                                 type = eSymbolTypeData;
                                             else
                                                 type = eSymbolTypeCode;
@@ -1097,7 +1114,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                         for (uint32_t sect_idx = 1; sect_idx < m_mach_sections.size(); ++sect_idx)
                         {
-                            if ((m_mach_sections[sect_idx].flags & SECTION_TYPE) == S_SYMBOL_STUBS)
+                            if ((m_mach_sections[sect_idx].flags & SectionFlagMaskSectionType) == SectionTypeSymbolStubs)
                             {
                                 uint32_t symbol_stub_byte_size = m_mach_sections[sect_idx].reserved2;
                                 if (symbol_stub_byte_size == 0)
@@ -1177,7 +1194,7 @@ ObjectFileMachO::Dump (Stream *s)
     lldb_private::Mutex::Locker locker(m_mutex);
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    if (m_header.magic == MH_MAGIC_64 || m_header.magic == MH_CIGAM_64)
+    if (m_header.magic == HeaderMagic64 || m_header.magic == HeaderMagic64Swapped)
         s->PutCString("ObjectFileMachO64");
     else
         s->PutCString("ObjectFileMachO32");
@@ -1207,7 +1224,7 @@ ObjectFileMachO::GetUUID (UUID* uuid)
         if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
             break;
 
-        if (load_cmd.cmd == LC_UUID)
+        if (load_cmd.cmd == LoadCommandUUID)
         {
             const uint8_t *uuid_bytes = m_data.PeekData(offset, 16);
             if (uuid_bytes)
@@ -1239,11 +1256,11 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
 
         switch (load_cmd.cmd)
         {
-        case LC_LOAD_DYLIB:
-        case LC_LOAD_WEAK_DYLIB:
-        case LC_REEXPORT_DYLIB:
-        case LC_LOAD_DYLINKER:
-        case LC_LOADFVMLIB:
+        case LoadCommandDylibLoad:
+        case LoadCommandDylibLoadWeak:
+        case LoadCommandDylibReexport:
+        case LoadCommandDynamicLinkerLoad:
+        case LoadCommandFixedVMShlibLoad:
             {
                 uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
                 const char *path = m_data.PeekCStr(name_offset);

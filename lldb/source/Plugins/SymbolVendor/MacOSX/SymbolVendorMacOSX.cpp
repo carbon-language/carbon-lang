@@ -9,8 +9,6 @@
 
 #include "SymbolVendorMacOSX.h"
 
-#include <mach/machine.h>   // DebugSymbols needs this on Leopard...
-
 #include <AvailabilityMacros.h>
 
 #include "lldb/Core/Module.h"

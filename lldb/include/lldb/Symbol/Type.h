@@ -103,35 +103,6 @@ public:
         return m_name;
     }
 
-    static ConstString
-    GetClangTypeName (void *clang_qual_type);
-
-    static void
-    DumpValue(ExecutionContext *exe_ctx,
-              clang::ASTContext *ast_context,
-              void *clang_qual_type,
-              Stream *s,
-              lldb::Format format,
-              const DataExtractor &data,
-              uint32_t data_offset,
-              size_t data_byte_size,
-              uint32_t bitfield_bit_size,
-              uint32_t bitfield_bit_offset,
-              bool show_types,
-              bool show_summary,
-              bool verbose,
-              uint32_t depth);
-
-    static void
-    DumpSummary (ExecutionContext *exe_ctx,
-                 clang::ASTContext *ast_context,
-                 void *clang_qual_type,
-                 Stream *s,
-                 const DataExtractor &data,
-                 uint32_t data_offset,
-                 size_t data_byte_size);
-
-
     void
     DumpValue(ExecutionContext *exe_ctx,
               Stream *s,
@@ -151,31 +122,6 @@ public:
                       bool show_summary,
                       bool verbose);
 
-    static bool
-    DumpTypeValue ( Stream *s,
-                    clang::ASTContext *ast_context,
-                    void *clang_qual_type,
-                    lldb::Format format,
-                    const DataExtractor &data,
-                    uint32_t data_offset,
-                    size_t data_byte_size,
-                    uint32_t bitfield_bit_size,
-                    uint32_t bitfield_bit_offset);
-
-    static bool
-    GetValueAsScalar (clang::ASTContext *ast_context,
-                      void *clang_qual_type,
-                      const DataExtractor &data,
-                      uint32_t data_offset,
-                      size_t data_byte_size,
-                      Scalar &value);
-
-    static bool
-    SetValueFromScalar (clang::ASTContext *ast_context,
-                        void *clang_qual_type,
-                        const Scalar &value,
-                        Stream &strm);
-
     bool
     ReadFromMemory (ExecutionContext *exe_ctx,
                     lldb::addr_t address,
@@ -187,23 +133,6 @@ public:
                    lldb::addr_t address,
                    lldb::AddressType address_type,
                    DataExtractor &data);
-
-
-    static bool
-    ReadFromMemory (ExecutionContext *exe_ctx,
-                    clang::ASTContext *ast_context,
-                    void *clang_qual_type,
-                    lldb::addr_t addr,
-                    lldb::AddressType address_type,
-                    DataExtractor &data);
-
-    static bool
-    WriteToMemory (ExecutionContext *exe_ctx,
-                   clang::ASTContext *ast_context,
-                   void *clang_qual_type,
-                   lldb::addr_t addr,
-                   lldb::AddressType address_type,
-                   StreamString &new_value);
 
     bool
     GetIsDeclaration() const;
@@ -222,9 +151,6 @@ public:
 
     lldb::Encoding
     GetEncoding (uint32_t &count);
-
-    static lldb::Encoding
-    GetEncoding (void *clang_qual_type, uint32_t &count);
 
     SymbolContextScope *
     GetSymbolContextScope()
@@ -264,12 +190,6 @@ public:
 
     static int
     Compare(const Type &a, const Type &b);
-
-    static lldb::Format
-    GetFormat (void *clang_qual_type);
-
-    static int
-    DumpClangTypeName(Stream *s, void *clang_qual_type);
 
 protected:
     ConstString m_name;

@@ -16,7 +16,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
+using namespace llvm::MachO;
 
 void
 ObjectContainerUniversalMachO::Initialize()
@@ -75,7 +75,7 @@ ObjectContainerUniversalMachO::MagicBytesMatch (DataBufferSP& dataSP)
     DataExtractor data(dataSP, eByteOrderHost, 4);
     uint32_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
-    return magic == FAT_MAGIC || magic == FAT_CIGAM;
+    return magic == UniversalMagic || magic == UniversalMagicSwapped;
 }
 
 ObjectContainerUniversalMachO::ObjectContainerUniversalMachO
@@ -108,20 +108,20 @@ ObjectContainerUniversalMachO::ParseHeader ()
     m_data.SetByteOrder (eByteOrderBig);
     m_header.magic = m_data.GetU32(&offset);
 
-    if (m_header.magic == FAT_MAGIC)
+    if (m_header.magic == UniversalMagic)
     {
         m_data.SetAddressByteSize(4);
 
         m_header.nfat_arch = m_data.GetU32(&offset);
 
-        const size_t nfat_arch_size = sizeof(fat_arch_t) * m_header.nfat_arch;
+        const size_t nfat_arch_size = sizeof(fat_arch) * m_header.nfat_arch;
         // See if the current data we have is enough for all of the fat headers?
         if (!m_data.ValidOffsetForDataOfSize(offset, nfat_arch_size))
         {
             // The fat headers are larger than the number of bytes we have been
             // given when this class was constructed. We will read the exact number
             // of bytes that we need.
-            DataBufferSP data_sp(m_file.ReadFileContents(m_offset, nfat_arch_size + sizeof(fat_header_t)));
+            DataBufferSP data_sp(m_file.ReadFileContents(m_offset, nfat_arch_size + sizeof(fat_header)));
             m_data.SetData (data_sp);
         }
 
@@ -130,10 +130,10 @@ ObjectContainerUniversalMachO::ParseHeader ()
         uint32_t arch_idx = 0;
         for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
         {
-            if (m_data.ValidOffsetForDataOfSize(offset, sizeof(fat_arch_t)))
+            if (m_data.ValidOffsetForDataOfSize(offset, sizeof(fat_arch)))
             {
-                fat_arch_t arch;
-                if (m_data.GetU32(&offset, &arch, sizeof(fat_arch_t)/sizeof(uint32_t)))
+                fat_arch arch;
+                if (m_data.GetU32(&offset, &arch, sizeof(fat_arch)/sizeof(uint32_t)))
                 {
                     m_fat_archs.push_back(arch);
                 }

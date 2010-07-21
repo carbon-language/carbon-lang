@@ -11,19 +11,20 @@
 #define liblldb_DynamicLoaderMacOSXDYLD_h_
 
 // C Includes
-#include <mach-o/loader.h>
-
 // C++ Includes
 #include <map>
 #include <vector>
 #include <string>
 
 // Other libraries and framework includes
+#include "llvm/Support/MachO.h"
+
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
+
 #include "ObjCTrampolineHandler.h"
 
 class DynamicLoaderMacOSXDYLD : public lldb_private::DynamicLoader
@@ -144,12 +145,12 @@ protected:
     {
         switch (m_dyld.header.magic)
         {
-            case MH_MAGIC:
-            case MH_CIGAM:
+            case llvm::MachO::HeaderMagic32:
+            case llvm::MachO::HeaderMagic32Swapped:
                 return 4;
 
-            case MH_MAGIC_64:
-            case MH_CIGAM_64:
+            case llvm::MachO::HeaderMagic64:
+            case llvm::MachO::HeaderMagic64Swapped:
                 return 8;
 
             default:
@@ -163,12 +164,12 @@ protected:
     {
         switch (magic)
         {
-            case MH_MAGIC:
-            case MH_MAGIC_64:
+            case llvm::MachO::HeaderMagic32:
+            case llvm::MachO::HeaderMagic64:
                 return lldb::eByteOrderHost;
 
-            case MH_CIGAM:
-            case MH_CIGAM_64:
+            case llvm::MachO::HeaderMagic32Swapped:
+            case llvm::MachO::HeaderMagic64Swapped:
                 if (lldb::eByteOrderHost == lldb::eByteOrderBig)
                     return lldb::eByteOrderLittle;
                 else
@@ -182,7 +183,7 @@ protected:
 
     bool
     ReadMachHeader (lldb::addr_t addr,
-                    struct mach_header *header,
+                    llvm::MachO::mach_header *header,
                     lldb_private::DataExtractor *load_command_data);
     class Segment
     {
@@ -218,7 +219,7 @@ protected:
         lldb::addr_t mod_date;          // Modification date for this dylib
         lldb_private::FileSpec file_spec;       // Resolved path for this dylib
         lldb_private::UUID uuid;                // UUID for this dylib if it has one, else all zeros
-        struct mach_header header;      // The mach header for this image
+        llvm::MachO::mach_header header;      // The mach header for this image
         std::vector<Segment> segments;  // All segment vmaddr and vmsize pairs for this executable (from memory of inferior)
 
         DYLDImageInfo() :

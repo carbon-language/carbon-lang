@@ -292,10 +292,11 @@ ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                 
                 TypeFromUser copied_type(ClangASTContext::CopyType(context, 
                                                                    iter->m_parser_type.GetASTContext(),
-                                                                   iter->m_parser_type.GetType()),
+                                                                   iter->m_parser_type.GetOpaqueQualType()),
                                          context);
                 
-                result_value->SetContext(Value::eContextTypeOpaqueClangQualType, copied_type.GetType());
+                result_value->SetContext(Value::eContextTypeOpaqueClangQualType, 
+                                         copied_type.GetOpaqueQualType());
             }
             
             continue;
@@ -329,7 +330,10 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
         return false;
     }
     
-    log->Printf("%s %s with type %p", (dematerialize ? "Dematerializing" : "Materializing"), name, type.GetType());
+    log->Printf("%s %s with type %p", 
+                (dematerialize ? "Dematerializing" : "Materializing"), 
+                name, 
+                type.GetOpaqueQualType());
     
     std::auto_ptr<lldb_private::Value> location_value(GetVariableValue(exe_ctx,
                                                                        var,
@@ -345,7 +349,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable(bool dematerialize,
     {
         lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
         
-        size_t bit_size = ClangASTContext::GetTypeBitSize(type.GetASTContext(), type.GetType());
+        size_t bit_size = ClangASTContext::GetTypeBitSize (type.GetASTContext(), 
+                                                           type.GetOpaqueQualType());
         size_t byte_size = bit_size % 8 ? ((bit_size + 8) / 8) : (bit_size / 8);
         
         DataBufferHeap data;
@@ -488,7 +493,9 @@ ClangExpressionDeclMap::FindVariableInScope(const SymbolContext &sym_ctx,
         
         if (type->GetASTContext() == var->GetType()->GetClangAST())
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetType(), var->GetType()->GetOpaqueClangQualType()))
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), 
+                                               type->GetOpaqueQualType(), 
+                                               var->GetType()->GetOpaqueClangQualType()))
                 return NULL;
         }
         else
@@ -657,7 +664,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                            &ut,
                                            &pt);
     
-    NamedDecl *var_decl = context.AddVarDecl(pt.GetType());
+    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
     
     Tuple tuple;
     

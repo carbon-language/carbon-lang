@@ -316,11 +316,11 @@ ClangASTContext::getSelectorTable()
     return m_selector_table_ap.get();
 }
 
-SourceManager *
+clang::SourceManager *
 ClangASTContext::getSourceManager()
 {
     if (m_source_manager_ap.get() == NULL)
-        m_source_manager_ap.reset(new SourceManager(*getDiagnostic()));
+        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic()));
     return m_source_manager_ap.get();
 }
 
@@ -758,7 +758,7 @@ ClangASTContext::AddFieldToRecordType (void * record_clang_type, const char *nam
 
     QualType record_qual_type(QualType::getFromOpaquePtr(record_clang_type));
 
-    Type *clang_type = record_qual_type.getTypePtr();
+    clang::Type *clang_type = record_qual_type.getTypePtr();
     if (clang_type)
     {
         const RecordType *record_type = dyn_cast<RecordType>(clang_type);
@@ -863,7 +863,7 @@ ClangASTContext::SetDefaultAccessForRecordFields (void *clang_qual_type, int def
     if (clang_qual_type)
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_qual_type));
-        Type *clang_type = qual_type.getTypePtr();
+        clang::Type *clang_type = qual_type.getTypePtr();
         if (clang_type)
         {
             RecordType *record_type = dyn_cast<RecordType>(clang_type);
@@ -913,7 +913,7 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
 {
     if (class_clang_type)
     {
-        Type *clang_type = QualType::getFromOpaquePtr(class_clang_type).getTypePtr();
+        clang::Type *clang_type = QualType::getFromOpaquePtr(class_clang_type).getTypePtr();
         if (clang_type)
         {
             RecordType *record_type = dyn_cast<RecordType>(clang_type);
@@ -948,15 +948,15 @@ ClangASTContext::IsAggregateType (void *clang_type)
 
     switch (qual_type->getTypeClass())
     {
-    case Type::IncompleteArray:
-    case Type::VariableArray:
-    case Type::ConstantArray:
-    case Type::ExtVector:
-    case Type::Vector:
-    case Type::Record:
+    case clang::Type::IncompleteArray:
+    case clang::Type::VariableArray:
+    case clang::Type::ConstantArray:
+    case clang::Type::ExtVector:
+    case clang::Type::Vector:
+    case clang::Type::Record:
         return true;
 
-    case Type::Typedef:
+    case clang::Type::Typedef:
         return ClangASTContext::IsAggregateType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
 
     default:
@@ -976,7 +976,7 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
     QualType qual_type(QualType::getFromOpaquePtr(clang_qual_type));
     switch (qual_type->getTypeClass())
     {
-    case Type::Record:
+    case clang::Type::Record:
         {
             const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
             const RecordDecl *record_decl = record_type->getDecl();
@@ -1017,11 +1017,11 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
         }
         break;
 
-    case Type::ConstantArray:
+    case clang::Type::ConstantArray:
         num_children = cast<ConstantArrayType>(qual_type.getTypePtr())->getSize().getLimitedValue();
         break;
 
-    case Type::Pointer:
+    case clang::Type::Pointer:
         {
             PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
             QualType pointee_type = pointer_type->getPointeeType();
@@ -1034,7 +1034,7 @@ ClangASTContext::GetNumChildren (void *clang_qual_type, bool omit_empty_base_cla
         }
         break;
 
-    case Type::Typedef:
+    case clang::Type::Typedef:
         num_children = ClangASTContext::GetNumChildren (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), omit_empty_base_classes);
         break;
 
@@ -1103,7 +1103,7 @@ ClangASTContext::GetChildClangTypeAtIndex
         QualType parent_qual_type(QualType::getFromOpaquePtr(parent_clang_type));
         switch (parent_qual_type->getTypeClass())
         {
-        case Type::Record:
+        case clang::Type::Record:
             {
                 const RecordType *record_type = cast<RecordType>(parent_qual_type.getTypePtr());
                 const RecordDecl *record_decl = record_type->getDecl();
@@ -1190,7 +1190,7 @@ ClangASTContext::GetChildClangTypeAtIndex
             }
             break;
 
-        case Type::ConstantArray:
+        case clang::Type::ConstantArray:
             {
                 const ConstantArrayType *array = cast<ConstantArrayType>(parent_qual_type.getTypePtr());
                 const uint64_t element_count = array->getSize().getLimitedValue();
@@ -1211,7 +1211,7 @@ ClangASTContext::GetChildClangTypeAtIndex
             }
             break;
 
-        case Type::Pointer:
+        case clang::Type::Pointer:
             {
                 PointerType *pointer_type = cast<PointerType>(parent_qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
@@ -1251,7 +1251,7 @@ ClangASTContext::GetChildClangTypeAtIndex
             }
             break;
 
-        case Type::Typedef:
+        case clang::Type::Typedef:
             return GetChildClangTypeAtIndex (ast_context,
                                              parent_name,
                                              cast<TypedefType>(parent_qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
@@ -1461,7 +1461,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
         switch (qual_type->getTypeClass())
         {
-        case Type::Record:
+        case clang::Type::Record:
             {
                 const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
                 const RecordDecl *record_decl = record_type->getDecl();
@@ -1548,7 +1548,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
             }
             break;
 
-        case Type::ConstantArray:
+        case clang::Type::ConstantArray:
             {
 //                const ConstantArrayType *array = cast<ConstantArrayType>(parent_qual_type.getTypePtr());
 //                const uint64_t element_count = array->getSize().getLimitedValue();
@@ -1569,7 +1569,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
             }
             break;
 
-//        case Type::MemberPointerType:
+//        case clang::Type::MemberPointerType:
 //            {
 //                MemberPointerType *mem_ptr_type = cast<MemberPointerType>(qual_type.getTypePtr());
 //                QualType pointee_type = mem_ptr_type->getPointeeType();
@@ -1583,8 +1583,8 @@ ClangASTContext::GetIndexOfChildMemberWithName
 //            }
 //            break;
 //
-        case Type::LValueReference:
-        case Type::RValueReference:
+        case clang::Type::LValueReference:
+        case clang::Type::RValueReference:
             {
                 ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
                 QualType pointee_type = reference_type->getPointeeType();
@@ -1600,7 +1600,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
             }
             break;
 
-        case Type::Pointer:
+        case clang::Type::Pointer:
             {
                 PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
@@ -1634,7 +1634,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
             }
             break;
 
-        case Type::Typedef:
+        case clang::Type::Typedef:
             return GetIndexOfChildMemberWithName (ast_context,
                                                   cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
                                                   name,
@@ -1667,7 +1667,7 @@ ClangASTContext::GetIndexOfChildWithName
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
         switch (qual_type->getTypeClass())
         {
-        case Type::Record:
+        case clang::Type::Record:
             {
                 const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
                 const RecordDecl *record_decl = record_type->getDecl();
@@ -1709,7 +1709,7 @@ ClangASTContext::GetIndexOfChildWithName
             }
             break;
 
-        case Type::ConstantArray:
+        case clang::Type::ConstantArray:
             {
 //                const ConstantArrayType *array = cast<ConstantArrayType>(parent_qual_type.getTypePtr());
 //                const uint64_t element_count = array->getSize().getLimitedValue();
@@ -1730,7 +1730,7 @@ ClangASTContext::GetIndexOfChildWithName
             }
             break;
 
-//        case Type::MemberPointerType:
+//        case clang::Type::MemberPointerType:
 //            {
 //                MemberPointerType *mem_ptr_type = cast<MemberPointerType>(qual_type.getTypePtr());
 //                QualType pointee_type = mem_ptr_type->getPointeeType();
@@ -1744,8 +1744,8 @@ ClangASTContext::GetIndexOfChildWithName
 //            }
 //            break;
 //
-        case Type::LValueReference:
-        case Type::RValueReference:
+        case clang::Type::LValueReference:
+        case clang::Type::RValueReference:
             {
                 ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
                 QualType pointee_type = reference_type->getPointeeType();
@@ -1760,7 +1760,7 @@ ClangASTContext::GetIndexOfChildWithName
             }
             break;
 
-        case Type::Pointer:
+        case clang::Type::Pointer:
             {
                 PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
@@ -1793,7 +1793,7 @@ ClangASTContext::GetIndexOfChildWithName
             }
             break;
 
-        case Type::Typedef:
+        case clang::Type::Typedef:
             return GetIndexOfChildWithName (ast_context,
                                             cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
                                             name,
@@ -1814,7 +1814,7 @@ ClangASTContext::SetTagTypeKind (void *tag_clang_type, int kind)
     if (tag_clang_type)
     {
         QualType tag_qual_type(QualType::getFromOpaquePtr(tag_clang_type));
-        Type *clang_type = tag_qual_type.getTypePtr();
+        clang::Type *clang_type = tag_qual_type.getTypePtr();
         if (clang_type)
         {
             TagType *tag_type = dyn_cast<TagType>(clang_type);
@@ -1844,34 +1844,34 @@ ClangASTContext::GetDeclContextForType (void *clang_type)
     QualType qual_type(QualType::getFromOpaquePtr(clang_type));
     switch (qual_type->getTypeClass())
     {
-    case Type::FunctionNoProto:         break;
-    case Type::FunctionProto:           break;
-    case Type::IncompleteArray:         break;
-    case Type::VariableArray:           break;
-    case Type::ConstantArray:           break;
-    case Type::ExtVector:               break;
-    case Type::Vector:                  break;
-    case Type::Builtin:                 break;
-    case Type::ObjCObjectPointer:       break;
-    case Type::BlockPointer:            break;
-    case Type::Pointer:                 break;
-    case Type::LValueReference:         break;
-    case Type::RValueReference:         break;
-    case Type::MemberPointer:           break;
-    case Type::Complex:                 break;
-    case Type::ObjCInterface:           break;
-    case Type::Record:
+    case clang::Type::FunctionNoProto:         break;
+    case clang::Type::FunctionProto:           break;
+    case clang::Type::IncompleteArray:         break;
+    case clang::Type::VariableArray:           break;
+    case clang::Type::ConstantArray:           break;
+    case clang::Type::ExtVector:               break;
+    case clang::Type::Vector:                  break;
+    case clang::Type::Builtin:                 break;
+    case clang::Type::ObjCObjectPointer:       break;
+    case clang::Type::BlockPointer:            break;
+    case clang::Type::Pointer:                 break;
+    case clang::Type::LValueReference:         break;
+    case clang::Type::RValueReference:         break;
+    case clang::Type::MemberPointer:           break;
+    case clang::Type::Complex:                 break;
+    case clang::Type::ObjCInterface:           break;
+    case clang::Type::Record:
         return cast<RecordType>(qual_type)->getDecl();
-    case Type::Enum:
+    case clang::Type::Enum:
         return cast<EnumType>(qual_type)->getDecl();
-    case Type::Typedef:
+    case clang::Type::Typedef:
         return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
 
-    case Type::TypeOfExpr:              break;
-    case Type::TypeOf:                  break;
-    case Type::Decltype:                break;
-    //case Type::QualifiedName:           break;
-    case Type::TemplateSpecialization:  break;
+    case clang::Type::TypeOfExpr:              break;
+    case clang::Type::TypeOf:                  break;
+    case clang::Type::Decltype:                break;
+    //case clang::Type::QualifiedName:           break;
+    case clang::Type::TemplateSpecialization:  break;
     }
     // No DeclContext in this type...
     return NULL;
@@ -2006,7 +2006,7 @@ ClangASTContext::StartTagDeclarationDefinition (void *clang_type)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        Type *t = qual_type.getTypePtr();
+        clang::Type *t = qual_type.getTypePtr();
         if (t)
         {
             TagType *tag_type = dyn_cast<TagType>(t);
@@ -2030,7 +2030,7 @@ ClangASTContext::CompleteTagDeclarationDefinition (void *clang_type)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        Type *t = qual_type.getTypePtr();
+        clang::Type *t = qual_type.getTypePtr();
         if (t)
         {
             TagType *tag_type = dyn_cast<TagType>(t);
@@ -2091,7 +2091,7 @@ ClangASTContext::AddEnumerationValueToEnumerationType
         assert (identifier_table != NULL);
         QualType enum_qual_type (QualType::getFromOpaquePtr(enum_clang_type));
 
-        Type *clang_type = enum_qual_type.getTypePtr();
+        clang::Type *clang_type = enum_qual_type.getTypePtr();
         if (clang_type)
         {
             const EnumType *enum_type = dyn_cast<EnumType>(clang_type);
@@ -2171,31 +2171,31 @@ ClangASTContext::IsPointerOrReferenceType (void *clang_type, void **target_type)
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
     switch (qual_type->getTypeClass())
     {
-    case Type::ObjCObjectPointer:
+    case clang::Type::ObjCObjectPointer:
         if (target_type)
             *target_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
         return true;
-    case Type::BlockPointer:
+    case clang::Type::BlockPointer:
         if (target_type)
             *target_type = cast<BlockPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
         return true;
-    case Type::Pointer:
+    case clang::Type::Pointer:
         if (target_type)
             *target_type = cast<PointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
         return true;
-    case Type::MemberPointer:
+    case clang::Type::MemberPointer:
         if (target_type)
             *target_type = cast<MemberPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
         return true;
-    case Type::LValueReference:
+    case clang::Type::LValueReference:
         if (target_type)
             *target_type = cast<LValueReferenceType>(qual_type)->desugar().getAsOpaquePtr();
         return true;
-    case Type::RValueReference:
+    case clang::Type::RValueReference:
         if (target_type)
             *target_type = cast<LValueReferenceType>(qual_type)->desugar().getAsOpaquePtr();
         return true;
-    case Type::Typedef:
+    case clang::Type::Typedef:
         return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
     default:
         break;
@@ -2247,23 +2247,23 @@ ClangASTContext::IsPointerType (void *clang_type, void **target_type)
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
         switch (qual_type->getTypeClass())
         {
-        case Type::ObjCObjectPointer:
+        case clang::Type::ObjCObjectPointer:
             if (target_type)
                 *target_type = cast<ObjCObjectPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
-        case Type::BlockPointer:
+        case clang::Type::BlockPointer:
             if (target_type)
                 *target_type = cast<BlockPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
-        case Type::Pointer:
+        case clang::Type::Pointer:
             if (target_type)
                 *target_type = cast<PointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
-        case Type::MemberPointer:
+        case clang::Type::MemberPointer:
             if (target_type)
                 *target_type = cast<MemberPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
-        case Type::Typedef:
+        case clang::Type::Typedef:
             return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), target_type);
         default:
             break;
@@ -2320,11 +2320,11 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
         switch (qual_type->getTypeClass())
         {
-        case Type::ConstantArray:
+        case clang::Type::ConstantArray:
             {
                 ConstantArrayType *array = cast<ConstantArrayType>(qual_type.getTypePtr());
                 QualType element_qual_type = array->getElementType();
-                Type *canonical_type = element_qual_type->getCanonicalTypeInternal().getTypePtr();
+                clang::Type *canonical_type = element_qual_type->getCanonicalTypeInternal().getTypePtr();
                 if (canonical_type && canonical_type->isCharType())
                 {
                     // We know the size of the array and it could be a C string
@@ -2335,13 +2335,13 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
             }
             break;
 
-        case Type::Pointer:
+        case clang::Type::Pointer:
             {
                 PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
-                Type *pointee_type_ptr = pointer_type->getPointeeType().getTypePtr();
+                clang::Type *pointee_type_ptr = pointer_type->getPointeeType().getTypePtr();
                 if (pointee_type_ptr)
                 {
-                    Type *canonical_type_ptr = pointee_type_ptr->getCanonicalTypeInternal().getTypePtr();
+                    clang::Type *canonical_type_ptr = pointee_type_ptr->getCanonicalTypeInternal().getTypePtr();
                     length = 0; // No length info, read until a NULL terminator is received
                     if (canonical_type_ptr)
                         return canonical_type_ptr->isCharType();
@@ -2351,17 +2351,17 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
             }
             break;
 
-        case Type::Typedef:
+        case clang::Type::Typedef:
             return ClangASTContext::IsCStringType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), length);
 
-        case Type::LValueReference:
-        case Type::RValueReference:
+        case clang::Type::LValueReference:
+        case clang::Type::RValueReference:
             {
                 ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
-                Type *pointee_type_ptr = reference_type->getPointeeType().getTypePtr();
+                clang::Type *pointee_type_ptr = reference_type->getPointeeType().getTypePtr();
                 if (pointee_type_ptr)
                 {
-                    Type *canonical_type_ptr = pointee_type_ptr->getCanonicalTypeInternal().getTypePtr();
+                    clang::Type *canonical_type_ptr = pointee_type_ptr->getCanonicalTypeInternal().getTypePtr();
                     length = 0; // No length info, read until a NULL terminator is received
                     if (canonical_type_ptr)
                         return canonical_type_ptr->isCharType();
@@ -2385,24 +2385,24 @@ ClangASTContext::IsArrayType (void * clang_type, void **member_type, uint64_t *s
     
     switch (qual_type->getTypeClass())
     {
-    case Type::ConstantArray:
+    case clang::Type::ConstantArray:
         if (member_type)
             *member_type = cast<ConstantArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = cast<ConstantArrayType>(qual_type)->getSize().getLimitedValue(ULONG_LONG_MAX);
         return true;
-    case Type::IncompleteArray:
+    case clang::Type::IncompleteArray:
         if (member_type)
             *member_type = cast<IncompleteArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
         return true;
-    case Type::VariableArray:
+    case clang::Type::VariableArray:
         if (member_type)
             *member_type = cast<VariableArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
-    case Type::DependentSizedArray:
+    case clang::Type::DependentSizedArray:
         if (member_type)
             *member_type = cast<DependentSizedArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)

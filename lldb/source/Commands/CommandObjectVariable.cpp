@@ -23,6 +23,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -386,12 +387,12 @@ public:
                     
                     Scalar scalar;
                     
-                    if (!Type::GetValueAsScalar (valobj->GetClangAST(),
-                                                 valobj->GetOpaqueClangQualType(),
-                                                 valobj->GetDataExtractor(),
-                                                 0,
-                                                 valobj->GetByteSize(),
-                                                 scalar))
+                    if (!ClangASTType::GetValueAsScalar (valobj->GetClangAST(),
+                                                        valobj->GetOpaqueClangQualType(),
+                                                        valobj->GetDataExtractor(),
+                                                        0,
+                                                        valobj->GetByteSize(),
+                                                        scalar))
                         return;
                                         
                     ConstString po_output;

@@ -11,10 +11,7 @@
 #define liblldb_ClangResultSynthesizer_h_
 
 #include "clang/Sema/SemaConsumer.h"
-
-namespace clang {
-    class Action;
-}
+#include "lldb/Core/ClangForward.h"
 
 namespace lldb_private {
 

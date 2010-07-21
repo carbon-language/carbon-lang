@@ -10,10 +10,10 @@
 #ifndef liblldb_ObjectContainerUniversalMachO_h_
 #define liblldb_ObjectContainerUniversalMachO_h_
 
-#include <mach-o/fat.h>
-
 #include "lldb/Symbol/ObjectContainer.h"
 #include "lldb/Core/FileSpec.h"
+
+#include "llvm/Support/MachO.h"
 
 class ObjectContainerUniversalMachO :
     public lldb_private::ObjectContainer
@@ -94,10 +94,8 @@ public:
 
 
 protected:
-    typedef struct fat_header fat_header_t;
-    typedef struct fat_arch fat_arch_t;
-    fat_header_t m_header;
-    std::vector<fat_arch_t> m_fat_archs;
+    llvm::MachO::fat_header m_header;
+    std::vector<llvm::MachO::fat_arch> m_fat_archs;
 };
 
 #endif  // liblldb_ObjectContainerUniversalMachO_h_
