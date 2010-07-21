@@ -12,9 +12,9 @@ void test_foo(short* sp) {
   double &dr = foo(1.0);
   foo(sp); // expected-error{{call to unavailable function 'foo'}}
 
-  void (*fp)(...) = &bar; // expected-warning{{'bar' is unavailable}}
-  void (*fp2)(...) = bar; // expected-warning{{'bar' is unavailable}}
+  void (*fp)(...) = &bar; // expected-error{{'bar' is unavailable}}
+  void (*fp2)(...) = bar; // expected-error{{'bar' is unavailable}}
 
   int &(*fp3)(int) = foo;
-  void (*fp4)(...) = foo; // expected-warning{{'foo' is unavailable}}
+  void (*fp4)(...) = foo; // expected-error{{'foo' is unavailable}}
 }
