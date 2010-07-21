@@ -466,6 +466,12 @@ public:
   /// non-trivial destructor.
   void PushDestructorCleanup(QualType T, llvm::Value *Addr);
 
+  /// PushDestructorCleanup - Push a cleanup to call the
+  /// complete-object variant of the given destructor on the object at
+  /// the given address.
+  void PushDestructorCleanup(const CXXDestructorDecl *Dtor,
+                             llvm::Value *Addr);
+
   /// PopCleanupBlock - Will pop the cleanup entry on the stack and
   /// process all branch fixups.
   void PopCleanupBlock();

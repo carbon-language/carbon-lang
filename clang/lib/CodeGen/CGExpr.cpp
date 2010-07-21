@@ -362,16 +362,8 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
       return RValue::get(Value);
     }
   }
-  
-  CleanupBlock Cleanup(*this, NormalCleanup);
-  EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
-                        /*ForVirtualBase=*/false, ReferenceTemporary);
-            
-  if (Exceptions) {
-    Cleanup.beginEHCleanup();
-    EmitCXXDestructorCall(ReferenceTemporaryDtor, Dtor_Complete, 
-                          /*ForVirtualBase=*/false, ReferenceTemporary);
-  }
+
+  PushDestructorCleanup(ReferenceTemporaryDtor, ReferenceTemporary);
 
   return RValue::get(Value);
 }

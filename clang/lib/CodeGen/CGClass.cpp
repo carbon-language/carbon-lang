@@ -1178,14 +1178,18 @@ namespace {
   };
 }
 
+void CodeGenFunction::PushDestructorCleanup(const CXXDestructorDecl *D,
+                                            llvm::Value *Addr) {
+  EHStack.pushLazyCleanup<CallLocalDtor>(NormalAndEHCleanup, D, Addr);
+}
+
 void CodeGenFunction::PushDestructorCleanup(QualType T, llvm::Value *Addr) {
   CXXRecordDecl *ClassDecl = T->getAsCXXRecordDecl();
   if (!ClassDecl) return;
   if (ClassDecl->hasTrivialDestructor()) return;
 
   const CXXDestructorDecl *D = ClassDecl->getDestructor();
-
-  EHStack.pushLazyCleanup<CallLocalDtor>(NormalAndEHCleanup, D, Addr);
+  PushDestructorCleanup(D, Addr);
 }
 
 llvm::Value *
