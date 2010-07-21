@@ -1157,6 +1157,19 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           const char **command_line_args,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files) {
+  return clang_parseTranslationUnit(CIdx, source_filename,
+                                    command_line_args, num_command_line_args,
+                                    unsaved_files, num_unsaved_files,
+                                 CXTranslationUnit_DetailedPreprocessingRecord);
+}
+
+CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
+                                             const char *source_filename,
+                                             const char **command_line_args,
+                                             int num_command_line_args,
+                                             struct CXUnsavedFile *unsaved_files,
+                                             unsigned num_unsaved_files,
+                                             unsigned options) {
   if (!CIdx)
     return 0;
 
@@ -1195,8 +1208,11 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
-    Args.push_back("-Xclang");
-    Args.push_back("-detailed-preprocessing-record");
+
+    if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
+      Args.push_back("-Xclang");
+      Args.push_back("-detailed-preprocessing-record");
+    }
     unsigned NumErrors = Diags->getNumErrors();
 
 #ifdef USE_CRASHTRACER

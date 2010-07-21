@@ -634,6 +634,83 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex,
                                              const char *ast_filename);
 
+  /**
+   * \brief Flags that control the creation of translation units.
+   *
+   * The enumerators in this enumeration type are meant to be bitwise
+   * ORed together to specify which options should be used when
+   * constructing the translation unit.
+   */
+enum CXTranslationUnit_Flags {
+  /**
+   * \brief Used to indicate that no special translation-unit options are
+   * needed.
+   */
+  CXTranslationUnit_None = 0x0,
+
+  /**
+   * \brief Used to indicate that the parser should construct a "detailed"
+   * preprocessing record, including all macro definitions and instantiations.
+   *
+   * Constructing a detailed preprocessing record requires more memory
+   * and time to parse, since the information contained in the record
+   * is usually not retained. However, it can be useful for
+   * applications that require more detailed information about the
+   * behavior of the preprocessor.
+   */
+  CXTranslationUnit_DetailedPreprocessingRecord = 0x01
+};
+
+/**
+ * \brief Parse the given source file and the translation unit corresponding
+ * to that file.
+ *
+ * This routine is the main entry point for the Clang C API, providing the
+ * ability to parse a source file into a translation unit that can then be
+ * queried by other functions in the API. This routine accepts a set of
+ * command-line arguments so that the compilation can be configured in the same
+ * way that the compiler is configured on the command line.
+ *
+ * \param CIdx The index object with which the translation unit will be 
+ * associated.
+ *
+ * \param source_filename The name of the source file to load, or NULL if the
+ * source file is included in \p clang_command_line_args.
+ *
+ * \param command_line_args The command-line arguments that would be
+ * passed to the \c clang executable if it were being invoked out-of-process.
+ * These command-line options will be parsed and will affect how the translation
+ * unit is parsed. Note that the following options are ignored: '-c', 
+ * '-emit-ast', '-fsyntex-only' (which is the default), and '-o <output file>'.
+ *
+ * \param num_command_line_args The number of command-line arguments in
+ * \p command_line_args.
+ *
+ * \param unsaved_files the files that have not yet been saved to disk
+ * but may be required for code completion, including the contents of
+ * those files.  The contents and name of these files (as specified by
+ * CXUnsavedFile) are copied when necessary, so the client only needs to
+ * guarantee their validity until the call to this function returns.
+ *
+ * \param num_unsaved_files the number of unsaved file entries in \p
+ * unsaved_files.
+ *
+ * \param options A bitmask of options that affects how the translation unit
+ * is managed but not its compilation. This should be a bitwise OR of the
+ * CXTranslationUnit_XXX flags.
+ *
+ * \returns A new translation unit describing the parsed code and containing
+ * any diagnostics produced by the compiler. If there is a failure from which
+ * the compiler cannot recover, returns NULL.
+ */
+CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
+                                                    const char *source_filename,
+                                                 const char **command_line_args,
+                                                      int num_command_line_args,
+                                            struct CXUnsavedFile *unsaved_files,
+                                                     unsigned num_unsaved_files,
+                                                            unsigned options);
+  
 /**
  * \brief Destroy the specified CXTranslationUnit object.
  */
