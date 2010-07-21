@@ -423,13 +423,16 @@ static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
 static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
                                         CodeGenFunction &CGF,
                                         const CXXNewExpr *E,
-                                        llvm::Value *&NumElements) {
+                                        llvm::Value *&NumElements,
+                                        llvm::Value *&SizeWithoutCookie) {
   QualType Type = E->getAllocatedType();
   CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(Type);
   const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
   
-  if (!E->isArray())
-    return llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
+  if (!E->isArray()) {
+    SizeWithoutCookie = llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
+    return SizeWithoutCookie;
+  }
 
   // Emit the array size expression.
   NumElements = CGF.EmitScalarExpr(E->getArraySize());
@@ -488,6 +491,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
     PN->addIncoming(llvm::Constant::getAllOnesValue(V->getType()), OverflowBB);
     Size = PN;
   }
+  SizeWithoutCookie = Size;
   
   // Add the cookie padding if necessary.
   CharUnits CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
@@ -571,18 +575,60 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   EmitBlock(AfterFor, true);
 }
 
+static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
+                           llvm::Value *NewPtr, llvm::Value *Size) {
+  llvm::LLVMContext &VMContext = CGF.CGM.getLLVMContext();
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+  if (NewPtr->getType() != BP)
+    NewPtr = CGF.Builder.CreateBitCast(NewPtr, BP, "tmp");
+  
+  CGF.Builder.CreateCall5(CGF.CGM.getMemSetFn(BP, CGF.IntPtrTy), NewPtr,
+                llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
+                          Size,
+                    llvm::ConstantInt::get(CGF.Int32Ty, 
+                                           CGF.getContext().getTypeAlign(T)/8),
+                          llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
+                                                 0));
+}
+                       
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                llvm::Value *NewPtr,
-                               llvm::Value *NumElements) {
+                               llvm::Value *NumElements,
+                               llvm::Value *AllocSizeWithoutCookie) {
   if (E->isArray()) {
     if (CXXConstructorDecl *Ctor = E->getConstructor()) {
-      if (!Ctor->getParent()->hasTrivialConstructor())
-        CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
-                                       E->constructor_arg_begin(), 
-                                       E->constructor_arg_end());
+      bool RequiresZeroInitialization = false;
+      if (Ctor->getParent()->hasTrivialConstructor()) {
+        // If new expression did not specify value-initialization, then there
+        // is no initialization.
+        if (!E->hasInitializer() || Ctor->getParent()->isEmpty())
+          return;
+      
+        if (!CGF.CGM.getTypes().ContainsPointerToDataMember(
+                                                       E->getAllocatedType())) {
+          // Optimization: since zero initialization will just set the memory
+          // to all zeroes, generate a single memset to do it in one shot.
+          EmitZeroMemSet(CGF, E->getAllocatedType(), NewPtr, 
+                         AllocSizeWithoutCookie);
+          return;
+        }
+
+        RequiresZeroInitialization = true;
+      }
+      
+      CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
+                                     E->constructor_arg_begin(), 
+                                     E->constructor_arg_end(),
+                                     RequiresZeroInitialization);
       return;
-    }
-    else {
+    } else if (E->getNumConstructorArgs() == 1 &&
+               isa<ImplicitValueInitExpr>(E->getConstructorArg(0))) {
+      // Optimization: since zero initialization will just set the memory
+      // to all zeroes, generate a single memset to do it in one shot.
+      EmitZeroMemSet(CGF, E->getAllocatedType(), NewPtr, 
+                     AllocSizeWithoutCookie);
+      return;      
+    } else {
       CGF.EmitNewArrayInitializer(E, NewPtr, NumElements);
       return;
     }
@@ -621,8 +667,10 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   QualType SizeTy = getContext().getSizeType();
 
   llvm::Value *NumElements = 0;
+  llvm::Value *AllocSizeWithoutCookie = 0;
   llvm::Value *AllocSize = EmitCXXNewAllocSize(getContext(),
-                                               *this, E, NumElements);
+                                               *this, E, NumElements,
+                                               AllocSizeWithoutCookie);
   
   NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
 
@@ -714,12 +762,12 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     NewPtr = 
       Builder.CreateBitCast(NewPtr, 
                           ConvertType(getContext().getPointerType(AllocType)));
-    EmitNewInitializer(*this, E, NewPtr, NumElements);
+    EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
     NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
   }
   else {
     NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
-    EmitNewInitializer(*this, E, NewPtr, NumElements);
+    EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
   }
   
   if (NullCheckResult) {

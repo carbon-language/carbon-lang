@@ -873,19 +873,24 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
 /// 'D' is the default constructor for elements of the array, 'ArrayTy' is the
 /// array type and 'ArrayPtr' points to the beginning fo the array.
 /// It is assumed that all relevant checks have been made by the caller.
+///
+/// \param ZeroInitialization True if each element should be zero-initialized
+/// before it is constructed.
 void
 CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                          const ConstantArrayType *ArrayTy,
-                                          llvm::Value *ArrayPtr,
-                                          CallExpr::const_arg_iterator ArgBeg,
-                                          CallExpr::const_arg_iterator ArgEnd) {
+                                            const ConstantArrayType *ArrayTy,
+                                            llvm::Value *ArrayPtr,
+                                            CallExpr::const_arg_iterator ArgBeg,
+                                            CallExpr::const_arg_iterator ArgEnd,
+                                            bool ZeroInitialization) {
 
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   llvm::Value * NumElements =
     llvm::ConstantInt::get(SizeTy, 
                            getContext().getConstantArrayElementCount(ArrayTy));
 
-  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr, ArgBeg, ArgEnd);
+  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr, ArgBeg, ArgEnd,
+                             ZeroInitialization);
 }
 
 void
@@ -893,7 +898,8 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                           llvm::Value *NumElements,
                                           llvm::Value *ArrayPtr,
                                           CallExpr::const_arg_iterator ArgBeg,
-                                          CallExpr::const_arg_iterator ArgEnd) {
+                                          CallExpr::const_arg_iterator ArgEnd,
+                                            bool ZeroInitialization) {
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
 
   // Create a temporary for the loop index and initialize it with 0.
@@ -924,6 +930,11 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   llvm::Value *Address = Builder.CreateInBoundsGEP(ArrayPtr, Counter, 
                                                    "arrayidx");
 
+  // Zero initialize the storage, if requested.
+  if (ZeroInitialization)
+    EmitNullInitialization(Address, 
+                           getContext().getTypeDeclType(D->getParent()));
+  
   // C++ [class.temporary]p4: 
   // There are two contexts in which temporaries are destroyed at a different
   // point than the end of the full-expression. The first context is when a

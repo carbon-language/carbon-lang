@@ -1053,13 +1053,15 @@ public:
                                   const ConstantArrayType *ArrayTy,
                                   llvm::Value *ArrayPtr,
                                   CallExpr::const_arg_iterator ArgBeg,
-                                  CallExpr::const_arg_iterator ArgEnd);
+                                  CallExpr::const_arg_iterator ArgEnd,
+                                  bool ZeroInitialization = false);
   
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   llvm::Value *NumElements,
                                   llvm::Value *ArrayPtr,
                                   CallExpr::const_arg_iterator ArgBeg,
-                                  CallExpr::const_arg_iterator ArgEnd);
+                                  CallExpr::const_arg_iterator ArgEnd,
+                                  bool ZeroInitialization = false);
 
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  const ArrayType *Array,

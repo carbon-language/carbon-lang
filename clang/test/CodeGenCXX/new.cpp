@@ -90,19 +90,53 @@ A* t10() {
   return new(1, 2, 3.45, 100) A;
 }
 
+// CHECK: define void @_Z3t11i
 struct B { int a; };
-void t11() {
+struct Bmemptr { int Bmemptr::* memptr; int a; };
+
+void t11(int n) {
   // CHECK: call noalias i8* @_Znwm
   // CHECK: call void @llvm.memset.p0i8.i64(
   B* b = new B();
+
+  // CHECK: call noalias i8* @_Znam
+  // CHECK: {{call void.*llvm.memset.p0i8.i64.*i8 0, i64 %}}
+  B *b2 = new B[n]();
+
+  // CHECK: call noalias i8* @_Znam
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+  // CHECK: br
+  Bmemptr *b_memptr = new Bmemptr[n]();
+  
+  // CHECK: ret void
 }
 
 struct Empty { };
 
 // We don't need to initialize an empty class.
+// CHECK: define void @_Z3t12v
 void t12() {
-  // CHECK: define void @_Z3t12v
-  // CHECK-NOT: br label
-  // CHECK: ret void
+  // CHECK: call noalias i8* @_Znam
+  // CHECK-NOT: br
   (void)new Empty[10];
+
+  // CHECK: call noalias i8* @_Znam
+  // CHECK-NOT: br
+  (void)new Empty[10]();
+
+  // CHECK: ret void
+}
+
+// Zero-initialization
+// CHECK: define void @_Z3t13i
+void t13(int n) {
+  // CHECK: call noalias i8* @_Znwm
+  // CHECK: store i32 0, i32*
+  (void)new int();
+
+  // CHECK: call noalias i8* @_Znam
+  // CHECK: {{call void.*llvm.memset.p0i8.i64.*i8 0, i64 %}}
+  (void)new int[n]();
+
+  // CHECK-NEXT: ret void
 }
