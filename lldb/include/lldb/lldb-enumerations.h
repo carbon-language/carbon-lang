@@ -374,10 +374,11 @@ typedef enum SectionType
     eSectionTypeDWARFDebugLine,
     eSectionTypeDWARFDebugLoc,
     eSectionTypeDWARFDebugMacInfo,
-    eSectionTypeDWARFDebugPubnames,
-    eSectionTypeDWARFDebugPubtypes,
+    eSectionTypeDWARFDebugPubNames,
+    eSectionTypeDWARFDebugPubTypes,
     eSectionTypeDWARFDebugRanges,
     eSectionTypeDWARFDebugStr,
+    eSectionTypeEHFrame,
     eSectionTypeOther
 
 } SectionType;

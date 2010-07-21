@@ -421,17 +421,52 @@ ObjectFileELF::GetSectionList()
             ConstString name(m_shstr_data.PeekCStr(header.sh_name));
             uint64_t size = header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
 
+            static ConstString g_sect_name_text (".text");
+            static ConstString g_sect_name_data (".data");
+            static ConstString g_sect_name_bss (".bss");
+            static ConstString g_sect_name_dwarf_debug_abbrev (".debug_abbrev");
+            static ConstString g_sect_name_dwarf_debug_aranges (".debug_aranges");
+            static ConstString g_sect_name_dwarf_debug_frame (".debug_frame");
+            static ConstString g_sect_name_dwarf_debug_info (".debug_info");
+            static ConstString g_sect_name_dwarf_debug_line (".debug_line");
+            static ConstString g_sect_name_dwarf_debug_loc (".debug_loc");
+            static ConstString g_sect_name_dwarf_debug_macinfo (".debug_macinfo");
+            static ConstString g_sect_name_dwarf_debug_pubnames (".debug_pubnames");
+            static ConstString g_sect_name_dwarf_debug_pubtypes (".debug_pubtypes");
+            static ConstString g_sect_name_dwarf_debug_ranges (".debug_ranges");
+            static ConstString g_sect_name_dwarf_debug_str (".debug_str");
+            static ConstString g_sect_name_eh_frame (".eh_frame");
+
+            SectionType sect_type = eSectionTypeOther;
+
+            if      (name == g_sect_name_text)                  sect_type = eSectionTypeCode;
+            else if (name == g_sect_name_data)                  sect_type = eSectionTypeData;
+            else if (name == g_sect_name_bss)                   sect_type = eSectionTypeZeroFill;
+            else if (name == g_sect_name_dwarf_debug_abbrev)    sect_type = eSectionTypeDWARFDebugAbbrev;
+            else if (name == g_sect_name_dwarf_debug_aranges)   sect_type = eSectionTypeDWARFDebugAranges;
+            else if (name == g_sect_name_dwarf_debug_frame)     sect_type = eSectionTypeDWARFDebugFrame;
+            else if (name == g_sect_name_dwarf_debug_info)      sect_type = eSectionTypeDWARFDebugInfo;
+            else if (name == g_sect_name_dwarf_debug_line)      sect_type = eSectionTypeDWARFDebugLine;
+            else if (name == g_sect_name_dwarf_debug_loc)       sect_type = eSectionTypeDWARFDebugLoc;
+            else if (name == g_sect_name_dwarf_debug_macinfo)   sect_type = eSectionTypeDWARFDebugMacInfo;
+            else if (name == g_sect_name_dwarf_debug_pubnames)  sect_type = eSectionTypeDWARFDebugPubNames;
+            else if (name == g_sect_name_dwarf_debug_pubtypes)  sect_type = eSectionTypeDWARFDebugPubTypes;
+            else if (name == g_sect_name_dwarf_debug_ranges)    sect_type = eSectionTypeDWARFDebugRanges;
+            else if (name == g_sect_name_dwarf_debug_str)       sect_type = eSectionTypeDWARFDebugStr;
+            else if (name == g_sect_name_eh_frame)              sect_type = eSectionTypeEHFrame;
+            
+            
             SectionSP section(new Section(
-                0,                 // Parent section.
-                GetModule(),       // Module to which this section belongs.
-                SectionIndex(I),   // Section ID.
-                name,              // Section name.
-                eSectionTypeOther, // FIXME: Fill in as appropriate.
-                header.sh_addr,    // VM address.
-                header.sh_size,    // VM size in bytes of this section.
-                header.sh_offset,  // Offset of this section in the file.
-                size,              // Size of the section as found in the file.
-                header.sh_flags)); // Flags for this section.
+                0,                  // Parent section.
+                GetModule(),        // Module to which this section belongs.
+                SectionIndex(I),    // Section ID.
+                name,               // Section name.
+                sect_type,          // Section type.
+                header.sh_addr,     // VM address.
+                header.sh_size,     // VM size in bytes of this section.
+                header.sh_offset,   // Offset of this section in the file.
+                size,               // Size of the section as found in the file.
+                header.sh_flags));  // Flags for this section.
 
             m_sections_ap->AddSection(section);
         }

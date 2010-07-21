@@ -170,9 +170,10 @@ public:
     const DWARFDebugRanges* DebugRanges() const;
 
     const lldb_private::DataExtractor&
-    GetCachedSectionData (uint32_t got_flag, const lldb_private::ConstString &section_name, lldb_private::DataExtractor &data);
+    GetCachedSectionData (uint32_t got_flag, lldb::SectionType sect_type, lldb_private::DataExtractor &data);
 
-    static bool             SupportedVersion(uint16_t version);
+    static bool
+    SupportedVersion(uint16_t version);
 
     clang::DeclContext *
     GetClangDeclContextForDIE (const DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);

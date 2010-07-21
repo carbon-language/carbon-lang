@@ -568,7 +568,7 @@ SectionList::FindSectionByID (user_id_t sect_id) const
 
 
 SectionSP
-SectionList::FindSectionByType (lldb::SectionType sect_type, uint32_t start_idx) const
+SectionList::FindSectionByType (lldb::SectionType sect_type, bool check_children, uint32_t start_idx) const
 {
     SectionSP sect_sp;
     uint32_t num_sections = m_sections.size();
@@ -578,6 +578,12 @@ SectionList::FindSectionByType (lldb::SectionType sect_type, uint32_t start_idx)
         {
             sect_sp = m_sections[idx];
             break;
+        }
+        else if (check_children)
+        {
+            sect_sp = m_sections[idx]->GetChildren().FindSectionByType (sect_type, check_children, 0);
+            if (sect_sp)
+                break;
         }
     }
     return sect_sp;

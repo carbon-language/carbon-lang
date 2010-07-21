@@ -373,16 +373,53 @@ ObjectFileMachO::ParseSections ()
                         static ConstString g_sect_name_objc_const ("__objc_const");
                         static ConstString g_sect_name_objc_classlist ("__objc_classlist");
                         static ConstString g_sect_name_cfstring ("__cfstring");
+
+                        static ConstString g_sect_name_dwarf_debug_abbrev ("__debug_abbrev");
+                        static ConstString g_sect_name_dwarf_debug_aranges ("__debug_aranges");
+                        static ConstString g_sect_name_dwarf_debug_frame ("__debug_frame");
+                        static ConstString g_sect_name_dwarf_debug_info ("__debug_info");
+                        static ConstString g_sect_name_dwarf_debug_line ("__debug_line");
+                        static ConstString g_sect_name_dwarf_debug_loc ("__debug_loc");
+                        static ConstString g_sect_name_dwarf_debug_macinfo ("__debug_macinfo");
+                        static ConstString g_sect_name_dwarf_debug_pubnames ("__debug_pubnames");
+                        static ConstString g_sect_name_dwarf_debug_pubtypes ("__debug_pubtypes");
+                        static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
+                        static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
+                        static ConstString g_sect_name_eh_frame ("__eh_frame");
+
                         SectionType sect_type = eSectionTypeOther;
 
-                        if (section_name == g_sect_name_objc_selrefs)
-                        {
+
+                        if (section_name == g_sect_name_dwarf_debug_abbrev)
+                            sect_type = eSectionTypeDWARFDebugAbbrev;
+                        else if (section_name == g_sect_name_dwarf_debug_aranges)
+                            sect_type = eSectionTypeDWARFDebugAranges;
+                        else if (section_name == g_sect_name_dwarf_debug_frame)
+                            sect_type = eSectionTypeDWARFDebugFrame;
+                        else if (section_name == g_sect_name_dwarf_debug_info)
+                            sect_type = eSectionTypeDWARFDebugInfo;
+                        else if (section_name == g_sect_name_dwarf_debug_line)
+                            sect_type = eSectionTypeDWARFDebugLine;
+                        else if (section_name == g_sect_name_dwarf_debug_loc)
+                            sect_type = eSectionTypeDWARFDebugLoc;
+                        else if (section_name == g_sect_name_dwarf_debug_macinfo)
+                            sect_type = eSectionTypeDWARFDebugMacInfo;
+                        else if (section_name == g_sect_name_dwarf_debug_pubnames)
+                            sect_type = eSectionTypeDWARFDebugPubNames;
+                        else if (section_name == g_sect_name_dwarf_debug_pubtypes)
+                            sect_type = eSectionTypeDWARFDebugPubTypes;
+                        else if (section_name == g_sect_name_dwarf_debug_ranges)
+                            sect_type = eSectionTypeDWARFDebugRanges;
+                        else if (section_name == g_sect_name_dwarf_debug_str)
+                            sect_type = eSectionTypeDWARFDebugStr;
+                        else if (section_name == g_sect_name_objc_selrefs)
                             sect_type = eSectionTypeDataCStringPointers;
-                        }
                         else if (section_name == g_sect_name_objc_msgrefs)
-                        {
                             sect_type = eSectionTypeDataObjCMessageRefs;
-                        }
+                        else if (section_name == g_sect_name_eh_frame)
+                            sect_type = eSectionTypeEHFrame;
+                        else if (section_name == g_sect_name_cfstring)
+                            sect_type = eSectionTypeDataObjCCFStrings;
                         else if (section_name == g_sect_name_objc_data ||
                                  section_name == g_sect_name_objc_classrefs ||
                                  section_name == g_sect_name_objc_superrefs ||
@@ -390,10 +427,6 @@ ObjectFileMachO::ParseSections ()
                                  section_name == g_sect_name_objc_classlist)
                         {
                             sect_type = eSectionTypeDataPointers;
-                        }
-                        else if (section_name == g_sect_name_cfstring)
-                        {
-                            sect_type = eSectionTypeDataObjCCFStrings;
                         }
 
                         if (sect_type == eSectionTypeOther)
