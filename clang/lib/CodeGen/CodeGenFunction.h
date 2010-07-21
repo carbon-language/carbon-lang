@@ -781,11 +781,11 @@ public:
   void InitializeVTablePointers(const CXXRecordDecl *ClassDecl);
 
 
-  /// EmitDtorEpilogue - Emit all code that comes at the end of class's
-  /// destructor. This is to call destructors on members and base classes in
-  /// reverse order of their construction.
-  void EmitDtorEpilogue(const CXXDestructorDecl *Dtor,
-                        CXXDtorType Type);
+  /// EnterDtorCleanups - Enter the cleanups necessary to complete the
+  /// given phase of destruction for a destructor.  The end result
+  /// should call destructors on members and base classes in reverse
+  /// order of their construction.
+  void EnterDtorCleanups(const CXXDestructorDecl *Dtor, CXXDtorType Type);
 
   /// ShouldInstrumentFunction - Return true if the current function should be
   /// instrumented with __cyg_profile_func_* calls

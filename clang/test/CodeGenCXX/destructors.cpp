@@ -260,6 +260,52 @@ namespace test5 {
   }
 }
 
+namespace test6 {
+  void opaque();
+
+  struct A { ~A(); };
+  template <unsigned> struct B { B(); ~B(); int _; };
+  struct C : B<0>, B<1>, virtual B<2>, virtual B<3> {
+    A x, y, z;
+
+    C();
+    ~C();
+  };
+
+  C::C() { opaque(); }
+  // CHECK: define void @_ZN5test61CC1Ev
+  // CHECK:   call void @_ZN5test61BILj2EEC2Ev
+  // CHECK:   invoke void @_ZN5test61BILj3EEC2Ev
+  // CHECK:   invoke void @_ZN5test61BILj0EEC2Ev
+  // CHECK:   invoke void @_ZN5test61BILj1EEC2Ev
+  // CHECK:   invoke void @_ZN5test66opaqueEv
+  // CHECK:   ret void
+  // FIXME: way too much EH cleanup code follows
+
+  C::~C() { opaque(); }
+  // CHECK: define void @_ZN5test61CD1Ev
+  // CHECK:   invoke void @_ZN5test61CD2Ev
+  // CHECK:   invoke void @_ZN5test61BILj3EED2Ev
+  // CHECK:   call void @_ZN5test61BILj2EED2Ev
+  // CHECK:   ret void
+  // CHECK:   invoke void @_ZN5test61BILj3EED2Ev
+  // CHECK:   invoke void @_ZN5test61BILj2EED2Ev
+
+  // CHECK: define void @_ZN5test61CD2Ev
+  // CHECK:   invoke void @_ZN5test66opaqueEv
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61BILj1EED2Ev
+  // CHECK:   call void @_ZN5test61BILj0EED2Ev
+  // CHECK:   ret void
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61AD1Ev
+  // CHECK:   invoke void @_ZN5test61BILj1EED2Ev
+  // CHECK:   invoke void @_ZN5test61BILj0EED2Ev
+}
+
 // Checks from test3:
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(
@@ -285,7 +331,7 @@ namespace test5 {
   // CHECK: ret void
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(
-  // CHECK: call void @_ZN5test31BD2Ev(
+  // CHECK: invoke void @_ZN5test31BD2Ev(
   // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
 
