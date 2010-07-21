@@ -290,7 +290,7 @@ function.</p>
 initialization value is not important.</p>
 
 <div class="doc_code"><pre>
-  RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>",
+  INITIALIZE_PASS(Hello, "<i>hello</i>", "<i>Hello World Pass</i>",
                         false /* Only looks at CFG */,
                         false /* Analysis Pass */);
 }  <i>// end of anonymous namespace</i>
@@ -299,7 +299,7 @@ initialization value is not important.</p>
 <p>Lastly, we <a href="#registration">register our class</a> <tt>Hello</tt>, 
 giving it a command line
 argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".
-Last two RegisterPass arguments are optional. Their default value is false.
+Last two arguments describe its behavior.
 If a pass walks CFG without modifying it then third argument is set to true. 
 If  a pass is an analysis pass, for example dominator tree pass, then true 
 is supplied as fourth argument. </p>
@@ -326,8 +326,9 @@ is supplied as fourth argument. </p>
   };
   
   char Hello::ID = 0;
-  RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>");
+  INITIALIZE_PASS(Hello, "<i>Hello</i>", "<i>Hello World Pass</i>", false, false);
 }
+
 </pre></div>
 
 <p>Now that it's all together, compile the file with a simple "<tt>gmake</tt>"
@@ -348,7 +349,7 @@ them) to be useful.</p>
 
 <p>Now that you have a brand new shiny shared object file, we can use the
 <tt>opt</tt> command to run an LLVM program through your pass.  Because you
-registered your pass with the <tt>RegisterPass</tt> template, you will be able to
+registered your pass with the <tt>INITIALIZE_PASS</tt> macro, you will be able to
 use the <tt>opt</tt> tool to access it, once loaded.</p>
 
 <p>To test it, follow the example at the end of the <a
@@ -966,9 +967,8 @@ remember, you may not modify the LLVM <tt>Function</tt> or its contents from a
 pass registration works, and discussed some of the reasons that it is used and
 what it does.  Here we discuss how and why passes are registered.</p>
 
-<p>As we saw above, passes are registered with the <b><tt>RegisterPass</tt></b>
-template, which requires you to pass at least two
-parameters.  The first parameter is the name of the pass that is to be used on
+<p>As we saw above, passes are registered with the <b><tt>INITIALIZE_PASS</tt></b>
+macro.  The first parameter is the name of the pass that is to be used on
 the command line to specify that the pass should be added to a program (for
 example, with <tt>opt</tt> or <tt>bugpoint</tt>).  The second argument is the
 name of the pass, which is to be used for the <tt>-help</tt> output of
