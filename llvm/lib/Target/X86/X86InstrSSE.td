@@ -516,6 +516,14 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                         [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))]>;
 }
 
+multiclass sse12_cvt_s_np<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
+                          X86MemOperand x86memop, string asm> {
+  def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
+                        []>;
+  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
+                        []>;
+}
+
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, Domain d> {
@@ -526,25 +534,40 @@ multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 }
 
 multiclass sse12_vcvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                     SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
-                     string asm> {
+                          X86MemOperand x86memop, string asm> {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
-              asm, []>;
+              !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>;
   def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst),
-              (ins DstRC:$src1, x86memop:$src), asm, []>;
+              (ins DstRC:$src1, x86memop:$src),
+              !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>;
 }
 
 let isAsmParserOnly = 1 in {
-defm VCVTTSS2SI : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
-                      "cvttss2si\t{$src, $dst|$dst, $src}">, XS, VEX;
-defm VCVTTSD2SI : sse12_cvt_s<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
-                      "cvttsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
-defm VCVTSI2SS  : sse12_vcvt_avx<0x2A, GR32, FR32, sint_to_fp, i32mem, loadi32,
-                      "cvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}">, XS,
-                      VEX_4V;
-defm VCVTSI2SD  : sse12_vcvt_avx<0x2A, GR32, FR64, sint_to_fp, i32mem, loadi32,
-                      "cvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}">, XD,
-                      VEX_4V;
+defm VCVTTSS2SI    : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
+                                 "cvttss2si\t{$src, $dst|$dst, $src}">, XS, VEX;
+defm VCVTTSS2SIr64 : sse12_cvt_s<0x2C, FR32, GR64, fp_to_sint, f32mem, loadf32,
+                                 "cvttss2si\t{$src, $dst|$dst, $src}">, XS, VEX,
+                                 VEX_W;
+defm VCVTTSD2SI    : sse12_cvt_s<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
+                                 "cvttsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
+defm VCVTTSD2SIr64 : sse12_cvt_s<0x2C, FR64, GR64, fp_to_sint, f64mem, loadf64,
+                                 "cvttsd2si\t{$src, $dst|$dst, $src}">, XD, VEX,
+                                 VEX_W;
+
+// The assembler can recognize rr 64-bit instructions by seeing a rxx
+// register, but the same isn't true when only using memory operands,
+// provide other assembly "l" and "q" forms to address this explicitly
+// where appropriate to do so.
+defm VCVTSI2SS  : sse12_vcvt_avx<0x2A, GR32, FR32, i32mem, "cvtsi2ss">, XS,
+                                 VEX_4V;
+defm VCVTSI2SSQ : sse12_vcvt_avx<0x2A, GR64, FR32, i64mem, "cvtsi2ssq">, XS,
+                                 VEX_4V, VEX_W;
+defm VCVTSI2SD  : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sd">, XD,
+                                 VEX_4V;
+defm VCVTSI2SDL : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sdl">, XD,
+                                 VEX_4V;
+defm VCVTSI2SDQ : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sdq">, XD,
+                                 VEX_4V, VEX_W;
 }
 
 defm CVTTSS2SI : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
@@ -603,6 +626,14 @@ let isAsmParserOnly = 1 in {
   defm Int_VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                         f128mem, load, "cvtsd2si\t{$src, $dst|$dst, $src}">, XD,
                         VEX;
+  // FIXME: The asm matcher has a hack to ignore instructions with _Int and Int_
+  // Get rid of this hack or rename the intrinsics, there are several
+  // intructions that only match with the intrinsic form, why create duplicates
+  // to let them be recognized by the assembler?
+  defm VCVTSD2SI_alt : sse12_cvt_s_np<0x2D, FR64, GR32, f64mem,
+                        "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
+  defm VCVTSD2SI64   : sse12_cvt_s_np<0x2D, FR64, GR64, f64mem,
+                        "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX, VEX_W;
 }
 defm Int_CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
                       f32mem, load, "cvtss2si\t{$src, $dst|$dst, $src}">, XS;
@@ -661,14 +692,17 @@ defm Int_CVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
                           XD;
 
 let isAsmParserOnly = 1, Pattern = []<dag> in {
-defm VCVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
-                          "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS, VEX;
-defm VCVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load,
-                            "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                            SSEPackedSingle>, TB, VEX;
-defm VCVTDQ2PSY : sse12_cvt_p<0x5B, VR256, VR256, undef, f256mem, load,
-                            "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                            SSEPackedSingle>, TB, VEX;
+defm VCVTSS2SI   : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
+                               "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS, VEX;
+defm VCVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load,
+                               "cvtss2si\t{$src, $dst|$dst, $src}">, XS, VEX,
+                               VEX_W;
+defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, undef, f128mem, load,
+                               "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle>, TB, VEX;
+defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, f256mem, load,
+                               "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle>, TB, VEX;
 }
 let Pattern = []<dag> in {
 defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
