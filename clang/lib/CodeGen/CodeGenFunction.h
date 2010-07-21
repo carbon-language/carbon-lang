@@ -117,6 +117,10 @@ public:
 
     bool isValid() const { return Size >= 0; }
 
+    /// \return true if this scope is (non-strictly) nested within the
+    ///   given scope, assuming they're both valid
+    bool isWithin(stable_iterator I) const { return Size <= I.Size; }
+
     friend bool operator==(stable_iterator A, stable_iterator B) {
       return A.Size == B.Size;
     }
