@@ -897,6 +897,9 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Record.push_back(VE.getValueID(BA->getFunction()));
       Record.push_back(VE.getGlobalBasicBlockID(BA->getBasicBlock()));
     } else {
+#ifndef NDEBUG
+      C->dump();
+#endif
       llvm_unreachable("Unknown constant!");
     }
     Stream.EmitRecord(Code, Record, AbbrevToUse);
