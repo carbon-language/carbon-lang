@@ -14,7 +14,7 @@
 #ifndef LLVM_SUPPORT_MACHO_H
 #define LLVM_SUPPORT_MACHO_H
 
-#include <stdint.h>
+#include "llvm/System/DataTypes.h"
 
 // NOTE: The enums in this file are intentially named to be different than those
 // in the headers in /usr/include/mach (on darwin systems) to avoid conflicts
