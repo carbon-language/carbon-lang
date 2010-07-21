@@ -5098,7 +5098,14 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       startLoc = E->getLocStart();
     startLoc = SM->getInstantiationLoc(startLoc);
     endBuf = SM->getCharacterData(startLoc);
-   
+    if (dyn_cast<CXXConstructExpr>(E)) {
+      // Hack alter!
+      // SemaInit sets startLoc to beginning of the initialized variable when
+      // rhs involvs copy construction initialization. Must compensate for this.
+      if (char *atEqual = strchr(endBuf, '='))
+        endBuf = atEqual + 1;
+    }
+    
     ByrefType += " " + Name;
     ByrefType += " = {(void*)";
     ByrefType += utostr(isa);
@@ -5125,11 +5132,11 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     // 
     // double __block BYREFVAR = 1.34, BYREFVAR2 = 1.37;
     //
-    const char *startBuf = SM->getCharacterData(startLoc);
-    const char *semiBuf = strchr(startBuf, ';');
+    const char *startInitializerBuf = SM->getCharacterData(startLoc);
+    const char *semiBuf = strchr(startInitializerBuf, ';');
     assert((*semiBuf == ';') && "RewriteByRefVar: can't find ';'");
     SourceLocation semiLoc =
-      startLoc.getFileLocWithOffset(semiBuf-startBuf);
+      startLoc.getFileLocWithOffset(semiBuf-startInitializerBuf);
 
     InsertText(semiLoc, "}");
   }
