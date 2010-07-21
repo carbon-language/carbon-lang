@@ -3176,15 +3176,26 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
 
-  if (!Chain[0]->IdentifierTableData || IdentifiersLoaded.empty()) {
+  if (IdentifiersLoaded.empty()) {
     Error("no identifier table in PCH file");
     return 0;
   }
 
   assert(PP && "Forgot to set Preprocessor ?");
-  if (!IdentifiersLoaded[ID - 1]) {
-    uint32_t Offset = Chain[0]->IdentifierOffsets[ID - 1];
-    const char *Str = Chain[0]->IdentifierTableData + Offset;
+  ID -= 1;
+  if (!IdentifiersLoaded[ID]) {
+    unsigned Index = ID;
+    const char *Str = 0;
+    for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+      PerFileData *F = Chain[N - I - 1];
+      if (Index < F->LocalNumIdentifiers) {
+         uint32_t Offset = F->IdentifierOffsets[Index];
+         Str = F->IdentifierTableData + Offset;
+         break;
+      }
+      Index -= F->LocalNumIdentifiers;
+    }
+    assert(Str && "Broken Chain");
 
     // All of the strings in the PCH file are preceded by a 16-bit
     // length. Extract that 16-bit length to avoid having to execute
@@ -3195,11 +3206,11 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
     const unsigned char *StrLenPtr = (const unsigned char*) Str - 2;
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
-    IdentifiersLoaded[ID - 1]
+    IdentifiersLoaded[ID]
       = &PP->getIdentifierTable().get(Str, StrLen);
   }
 
-  return IdentifiersLoaded[ID - 1];
+  return IdentifiersLoaded[ID];
 }
 
 void PCHReader::ReadSLocEntry(unsigned ID) {
