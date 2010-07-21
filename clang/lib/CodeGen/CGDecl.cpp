@@ -440,6 +440,57 @@ namespace {
   };
 }
 
+namespace {
+  struct CallStackRestore : EHScopeStack::LazyCleanup {
+    llvm::Value *Stack;
+    CallStackRestore(llvm::Value *Stack) : Stack(Stack) {}
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      llvm::Value *V = CGF.Builder.CreateLoad(Stack, "tmp");
+      llvm::Value *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
+      CGF.Builder.CreateCall(F, V);
+    }
+  };
+
+  struct CallCleanupFunction : EHScopeStack::LazyCleanup {
+    llvm::Constant *CleanupFn;
+    const CGFunctionInfo &FnInfo;
+    llvm::Value *Addr;
+    const VarDecl &Var;
+    
+    CallCleanupFunction(llvm::Constant *CleanupFn, const CGFunctionInfo *Info,
+                        llvm::Value *Addr, const VarDecl *Var)
+      : CleanupFn(CleanupFn), FnInfo(*Info), Addr(Addr), Var(*Var) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // In some cases, the type of the function argument will be different from
+      // the type of the pointer. An example of this is
+      // void f(void* arg);
+      // __attribute__((cleanup(f))) void *g;
+      //
+      // To fix this we insert a bitcast here.
+      QualType ArgTy = FnInfo.arg_begin()->type;
+      llvm::Value *Arg =
+        CGF.Builder.CreateBitCast(Addr, CGF.ConvertType(ArgTy));
+
+      CallArgList Args;
+      Args.push_back(std::make_pair(RValue::get(Arg),
+                            CGF.getContext().getPointerType(Var.getType())));
+      CGF.EmitCall(FnInfo, CleanupFn, ReturnValueSlot(), Args);
+    }
+  };
+
+  struct CallBlockRelease : EHScopeStack::LazyCleanup {
+    llvm::Value *Addr;
+    CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      llvm::Value *V = CGF.Builder.CreateStructGEP(Addr, 1, "forwarding");
+      V = CGF.Builder.CreateLoad(V);
+      CGF.BuildBlockRelease(V);
+    }
+  };
+}
+
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -540,14 +591,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
 
       DidCallStackSave = true;
 
-      {
-        // Push a cleanup block and restore the stack there.
-        CleanupBlock scope(*this, NormalCleanup);
-
-        V = Builder.CreateLoad(Stack, "tmp");
-        llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
-        Builder.CreateCall(F, V);
-      }
+      // Push a cleanup block and restore the stack there.
+      EHStack.pushLazyCleanup<CallStackRestore>(NormalCleanup, Stack);
     }
 
     // Get the element type.
@@ -755,52 +800,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
     assert(F && "Could not find function!");
 
     const CGFunctionInfo &Info = CGM.getTypes().getFunctionInfo(FD);
-
-    // In some cases, the type of the function argument will be different from
-    // the type of the pointer. An example of this is
-    // void f(void* arg);
-    // __attribute__((cleanup(f))) void *g;
-    //
-    // To fix this we insert a bitcast here.
-    QualType ArgTy = Info.arg_begin()->type;
-
-    CleanupBlock CleanupScope(*this, NormalCleanup);
-
-    // Normal cleanup.
-    CallArgList Args;
-    Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
-                                                         ConvertType(ArgTy))),
-                                  getContext().getPointerType(D.getType())));
-    EmitCall(Info, F, ReturnValueSlot(), Args);
-
-    // EH cleanup.
-    if (Exceptions) {
-      CleanupScope.beginEHCleanup();
-
-      CallArgList Args;
-      Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
-                                                           ConvertType(ArgTy))),
-                                    getContext().getPointerType(D.getType())));
-      EmitCall(Info, F, ReturnValueSlot(), Args);
-    }
+    EHStack.pushLazyCleanup<CallCleanupFunction>(NormalAndEHCleanup,
+                                                 F, &Info, DeclPtr, &D);
   }
 
-  if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
-    CleanupBlock CleanupScope(*this, NormalCleanup);
-
-    llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-    V = Builder.CreateLoad(V);
-    BuildBlockRelease(V);
-
-    // FIXME: Turn this on and audit the codegen
-    if (0 && Exceptions) {
-      CleanupScope.beginEHCleanup();
-
-      llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-      V = Builder.CreateLoad(V);
-      BuildBlockRelease(V);
-    }
-  }
+  if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly)
+    EHStack.pushLazyCleanup<CallBlockRelease>(NormalAndEHCleanup, DeclPtr);
 }
 
 /// Emit an alloca (or GlobalValue depending on target)
