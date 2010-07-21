@@ -604,6 +604,15 @@ expose new optimization opportunities:</p>
   Unfortunately, this support is not really usable in 2.7, so if you're
  interested in pushing it forward, please help contribute to LLVM mainline.</li>
 
+<!-- BELOW COME ACTUAL 2.8 CHANGES -->
+
+<li>LLVM 2.8 changes the internal order of operands in <a
+  href="http://llvm.org/doxygen/classllvm_1_1InvokeInst.html"><tt>InvokeInst</tt></a>
+  and <a href="http://llvm.org/doxygen/classllvm_1_1CallInst.html"><tt>CallInst</tt></a>.
+  To be portable across releases, resort to <tt>CallSite</tt> and the
+  high-level accessors, such as <tt>getCalledValue</tt> and <tt>setUnwindDest</tt>.</li>
+</li>
+
 </ul>
 
 </div>
