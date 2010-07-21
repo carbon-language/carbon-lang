@@ -49,7 +49,8 @@ namespace {
 }
 
 char CFGSimplifyPass::ID = 0;
-static RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
+INITIALIZE_PASS(CFGSimplifyPass, "simplifycfg",
+                "Simplify the CFG", false, false);
 
 // Public interface to the CFGSimplification pass
 FunctionPass *llvm::createCFGSimplificationPass() {

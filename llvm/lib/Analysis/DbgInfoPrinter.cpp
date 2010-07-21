@@ -48,8 +48,8 @@ namespace {
     }
   };
   char PrintDbgInfo::ID = 0;
-  static RegisterPass<PrintDbgInfo> X("print-dbginfo",
-                                     "Print debug info in human readable form");
+  INITIALIZE_PASS(PrintDbgInfo, "print-dbginfo",
+                  "Print debug info in human readable form", false, false);
 }
 
 FunctionPass *llvm::createDbgInfoPrinterPass() { return new PrintDbgInfo(); }

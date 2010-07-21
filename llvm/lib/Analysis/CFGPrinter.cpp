@@ -41,8 +41,7 @@ namespace {
 }
 
 char CFGViewer::ID = 0;
-static RegisterPass<CFGViewer>
-V0("view-cfg", "View CFG of function", false, true);
+INITIALIZE_PASS(CFGViewer, "view-cfg", "View CFG of function", false, true);
 
 namespace {
   struct CFGOnlyViewer : public FunctionPass {

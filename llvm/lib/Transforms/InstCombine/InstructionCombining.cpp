@@ -60,8 +60,8 @@ STATISTIC(NumSunkInst , "Number of instructions sunk");
 
 
 char InstCombiner::ID = 0;
-static RegisterPass<InstCombiner>
-X("instcombine", "Combine redundant instructions");
+INITIALIZE_PASS(InstCombiner, "instcombine",
+                "Combine redundant instructions", false, false);
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(LCSSAID);

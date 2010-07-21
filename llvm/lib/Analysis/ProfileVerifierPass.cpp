@@ -366,8 +366,8 @@ namespace llvm {
   char ProfileVerifierPassT<FType, BType>::ID = 0;
 }
 
-static RegisterPass<ProfileVerifierPass>
-X("profile-verifier", "Verify profiling information", false, true);
+INITIALIZE_PASS(ProfileVerifierPass, "profile-verifier",
+                "Verify profiling information", false, true);
 
 namespace llvm {
   FunctionPass *createProfileVerifierPass() {

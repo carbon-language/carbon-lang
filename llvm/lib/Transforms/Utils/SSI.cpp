@@ -391,7 +391,8 @@ void SSI::clean() {
 FunctionPass *llvm::createSSIPass() { return new SSI(); }
 
 char SSI::ID = 0;
-static RegisterPass<SSI> X("ssi", "Static Single Information Construction");
+INITIALIZE_PASS(SSI, "ssi",
+                "Static Single Information Construction", false, false);
 
 /// SSIEverything - A pass that runs createSSI on every non-void variable,
 /// intended for debugging.
@@ -428,5 +429,5 @@ bool SSIEverything::runOnFunction(Function &F) {
 FunctionPass *llvm::createSSIEverythingPass() { return new SSIEverything(); }
 
 char SSIEverything::ID = 0;
-static RegisterPass<SSIEverything>
-Y("ssi-everything", "Static Single Information Construction");
+INITIALIZE_PASS(SSIEverything, "ssi-everything",
+                "Static Single Information Construction", false, false);

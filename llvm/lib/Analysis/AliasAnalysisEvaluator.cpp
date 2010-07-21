@@ -74,8 +74,8 @@ namespace {
 }
 
 char AAEval::ID = 0;
-static RegisterPass<AAEval>
-X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
+INITIALIZE_PASS(AAEval, "aa-eval",
+                "Exhaustive Alias Analysis Precision Evaluator", false, true);
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
 

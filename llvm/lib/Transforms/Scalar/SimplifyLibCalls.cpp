@@ -1253,8 +1253,8 @@ namespace {
   char SimplifyLibCalls::ID = 0;
 } // end anonymous namespace.
 
-static RegisterPass<SimplifyLibCalls>
-X("simplify-libcalls", "Simplify well-known library calls");
+INITIALIZE_PASS(SimplifyLibCalls, "simplify-libcalls",
+                "Simplify well-known library calls", false, false);
 
 // Public interface to the Simplify LibCalls pass.
 FunctionPass *llvm::createSimplifyLibCallsPass() {

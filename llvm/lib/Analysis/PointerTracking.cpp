@@ -263,5 +263,5 @@ void PointerTracking::print(raw_ostream &OS, const Module* M) const {
   }
 }
 
-static RegisterPass<PointerTracking> X("pointertracking",
-                                       "Track pointer bounds", false, true);
+INITIALIZE_PASS(PointerTracking, "pointertracking",
+                "Track pointer bounds", false, true);

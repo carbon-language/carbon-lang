@@ -55,8 +55,8 @@ namespace {
   
 }
 
-static RegisterPass<GCModuleInfo>
-X("collector-metadata", "Create Garbage Collector Module Metadata");
+INITIALIZE_PASS(GCModuleInfo, "collector-metadata",
+                "Create Garbage Collector Module Metadata", false, false);
 
 // -----------------------------------------------------------------------------
 

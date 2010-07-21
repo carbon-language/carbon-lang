@@ -51,8 +51,8 @@ namespace {
   };
 }
 char UnreachableBlockElim::ID = 0;
-static RegisterPass<UnreachableBlockElim>
-X("unreachableblockelim", "Remove unreachable blocks from the CFG");
+INITIALIZE_PASS(UnreachableBlockElim, "unreachableblockelim",
+                "Remove unreachable blocks from the CFG", false, false);
 
 FunctionPass *llvm::createUnreachableBlockEliminationPass() {
   return new UnreachableBlockElim();

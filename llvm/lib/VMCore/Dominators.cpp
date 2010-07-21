@@ -52,8 +52,8 @@ TEMPLATE_INSTANTIATION(class llvm::DomTreeNodeBase<BasicBlock>);
 TEMPLATE_INSTANTIATION(class llvm::DominatorTreeBase<BasicBlock>);
 
 char DominatorTree::ID = 0;
-static RegisterPass<DominatorTree>
-E("domtree", "Dominator Tree Construction", true, true);
+INITIALIZE_PASS(DominatorTree, "domtree",
+                "Dominator Tree Construction", true, true);
 
 bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
@@ -106,8 +106,8 @@ bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
 //===----------------------------------------------------------------------===//
 
 char DominanceFrontier::ID = 0;
-static RegisterPass<DominanceFrontier>
-G("domfrontier", "Dominance Frontier Construction", true, true);
+INITIALIZE_PASS(DominanceFrontier, "domfrontier",
+                "Dominance Frontier Construction", true, true);
 
 void DominanceFrontier::verifyAnalysis() const {
   if (!VerifyDomInfo) return;

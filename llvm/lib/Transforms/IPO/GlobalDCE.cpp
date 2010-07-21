@@ -51,7 +51,8 @@ namespace {
 }
 
 char GlobalDCE::ID = 0;
-static RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
+INITIALIZE_PASS(GlobalDCE, "globaldce",
+                "Dead Global Elimination", false, false);
 
 ModulePass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
 

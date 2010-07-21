@@ -40,7 +40,8 @@ namespace {
 }
 
 char SlotIndexes::ID = 0;
-static RegisterPass<SlotIndexes> X("slotindexes", "Slot index numbering");
+INITIALIZE_PASS(SlotIndexes, "slotindexes",
+                "Slot index numbering", false, false);
 
 IndexListEntry* IndexListEntry::getEmptyKeyEntry() {
   return &*IndexListEntryEmptyKey;

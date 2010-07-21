@@ -56,8 +56,8 @@ namespace {
 }
 
 char PartSpec::ID = 0;
-static RegisterPass<PartSpec>
-X("partialspecialization", "Partial Specialization");
+INITIALIZE_PASS(PartSpec, "partialspecialization",
+                "Partial Specialization", false, false);
 
 // Specialize F by replacing the arguments (keys) in replacements with the 
 // constants (values).  Replace all calls to F with those constants with

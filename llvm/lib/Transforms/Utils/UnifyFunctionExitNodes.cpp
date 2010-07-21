@@ -24,8 +24,8 @@
 using namespace llvm;
 
 char UnifyFunctionExitNodes::ID = 0;
-static RegisterPass<UnifyFunctionExitNodes>
-X("mergereturn", "Unify function exit nodes");
+INITIALIZE_PASS(UnifyFunctionExitNodes, "mergereturn",
+                "Unify function exit nodes", false, false);
 
 Pass *llvm::createUnifyFunctionExitNodesPass() {
   return new UnifyFunctionExitNodes();

@@ -56,8 +56,8 @@ namespace {
 }
 
 char SimpleInliner::ID = 0;
-static RegisterPass<SimpleInliner>
-X("inline", "Function Integration/Inlining");
+INITIALIZE_PASS(SimpleInliner, "inline",
+                "Function Integration/Inlining", false, false);
 
 Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
 

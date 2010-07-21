@@ -1600,8 +1600,8 @@ namespace {
 } // end anonymous namespace
 
 char SCCP::ID = 0;
-static RegisterPass<SCCP>
-X("sccp", "Sparse Conditional Constant Propagation");
+INITIALIZE_PASS(SCCP, "sccp",
+                "Sparse Conditional Constant Propagation", false, false);
 
 // createSCCPPass - This is the public interface to this file.
 FunctionPass *llvm::createSCCPPass() {
@@ -1708,8 +1708,9 @@ namespace {
 } // end anonymous namespace
 
 char IPSCCP::ID = 0;
-static RegisterPass<IPSCCP>
-Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
+INITIALIZE_PASS(IPSCCP, "ipsccp",
+                "Interprocedural Sparse Conditional Constant Propagation",
+                false, false);
 
 // createIPSCCPPass - This is the public interface to this file.
 ModulePass *llvm::createIPSCCPPass() {

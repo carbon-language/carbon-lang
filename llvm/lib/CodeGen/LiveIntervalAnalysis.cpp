@@ -55,7 +55,8 @@ STATISTIC(numFolds     , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits    , "Number of intervals split");
 
 char LiveIntervals::ID = 0;
-static RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
+INITIALIZE_PASS(LiveIntervals, "liveintervals",
+                "Live Interval Analysis", false, false);
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();

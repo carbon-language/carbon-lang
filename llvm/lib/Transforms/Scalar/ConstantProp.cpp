@@ -45,8 +45,8 @@ namespace {
 }
 
 char ConstantPropagation::ID = 0;
-static RegisterPass<ConstantPropagation>
-X("constprop", "Simple constant propagation");
+INITIALIZE_PASS(ConstantPropagation, "constprop",
+                "Simple constant propagation", false, false);
 
 FunctionPass *llvm::createConstantPropagationPass() {
   return new ConstantPropagation();

@@ -74,8 +74,8 @@ namespace {
 }
 
 char BlockPlacement::ID = 0;
-static RegisterPass<BlockPlacement>
-X("block-placement", "Profile Guided Basic Block Placement");
+INITIALIZE_PASS(BlockPlacement, "block-placement",
+                "Profile Guided Basic Block Placement", false, false);
 
 FunctionPass *llvm::createBlockPlacementPass() { return new BlockPlacement(); }
 

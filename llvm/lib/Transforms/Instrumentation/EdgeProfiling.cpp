@@ -43,8 +43,8 @@ namespace {
 }
 
 char EdgeProfiler::ID = 0;
-static RegisterPass<EdgeProfiler>
-X("insert-edge-profiling", "Insert instrumentation for edge profiling");
+INITIALIZE_PASS(EdgeProfiler, "insert-edge-profiling",
+                "Insert instrumentation for edge profiling", false, false);
 
 ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }
 

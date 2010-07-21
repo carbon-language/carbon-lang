@@ -29,8 +29,8 @@
 using namespace llvm;
 
 char LoopSplitter::ID = 0;
-static RegisterPass<LoopSplitter>
-X("loop-splitting", "Split virtual regists across loop boundaries.");
+INITIALIZE_PASS(LoopSplitter, "loop-splitting",
+                "Split virtual regists across loop boundaries.", false, false);
 
 namespace llvm {
 

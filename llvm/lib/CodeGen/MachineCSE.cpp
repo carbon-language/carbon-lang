@@ -85,8 +85,8 @@ namespace {
 } // end anonymous namespace
 
 char MachineCSE::ID = 0;
-static RegisterPass<MachineCSE>
-X("machine-cse", "Machine Common Subexpression Elimination");
+INITIALIZE_PASS(MachineCSE, "machine-cse",
+                "Machine Common Subexpression Elimination", false, false);
 
 FunctionPass *llvm::createMachineCSEPass() { return new MachineCSE(); }
 

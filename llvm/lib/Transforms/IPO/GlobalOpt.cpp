@@ -74,7 +74,8 @@ namespace {
 }
 
 char GlobalOpt::ID = 0;
-static RegisterPass<GlobalOpt> X("globalopt", "Global Variable Optimizer");
+INITIALIZE_PASS(GlobalOpt, "globalopt",
+                "Global Variable Optimizer", false, false);
 
 ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 

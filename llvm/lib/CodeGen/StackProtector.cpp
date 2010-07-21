@@ -71,8 +71,8 @@ namespace {
 } // end anonymous namespace
 
 char StackProtector::ID = 0;
-static RegisterPass<StackProtector>
-X("stack-protector", "Insert stack protectors");
+INITIALIZE_PASS(StackProtector, "stack-protector",
+                "Insert stack protectors", false, false);
 
 FunctionPass *llvm::createStackProtectorPass(const TargetLowering *tli) {
   return new StackProtector(tli);

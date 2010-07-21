@@ -197,8 +197,8 @@ namespace {
 }
 
 char LoopIndexSplit::ID = 0;
-static RegisterPass<LoopIndexSplit>
-X("loop-index-split", "Index Split Loops");
+INITIALIZE_PASS(LoopIndexSplit, "loop-index-split",
+                "Index Split Loops", false, false);
 
 Pass *llvm::createLoopIndexSplitPass() {
   return new LoopIndexSplit();

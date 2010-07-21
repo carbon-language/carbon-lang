@@ -111,7 +111,7 @@ namespace {
 }
 
 char MergeFunctions::ID = 0;
-static RegisterPass<MergeFunctions> X("mergefunc", "Merge Functions");
+INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false);
 
 ModulePass *llvm::createMergeFunctionsPass() {
   return new MergeFunctions();

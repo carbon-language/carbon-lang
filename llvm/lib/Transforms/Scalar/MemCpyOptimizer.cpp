@@ -331,8 +331,7 @@ namespace {
 // createMemCpyOptPass - The public interface to this file...
 FunctionPass *llvm::createMemCpyOptPass() { return new MemCpyOpt(); }
 
-static RegisterPass<MemCpyOpt> X("memcpyopt",
-                                 "MemCpy Optimization");
+INITIALIZE_PASS(MemCpyOpt, "memcpyopt", "MemCpy Optimization", false, false);
 
 
 

@@ -40,8 +40,8 @@ using namespace llvm;
 
 char PEI::ID = 0;
 
-static RegisterPass<PEI>
-X("prologepilog", "Prologue/Epilogue Insertion");
+INITIALIZE_PASS(PEI, "prologepilog",
+                "Prologue/Epilogue Insertion", false, false);
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.

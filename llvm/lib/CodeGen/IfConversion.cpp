@@ -230,8 +230,7 @@ namespace {
   char IfConverter::ID = 0;
 }
 
-static RegisterPass<IfConverter>
-X("if-converter", "If Converter");
+INITIALIZE_PASS(IfConverter, "if-converter", "If Converter", false, false);
 
 FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 

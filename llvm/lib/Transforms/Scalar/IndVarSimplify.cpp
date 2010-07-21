@@ -117,8 +117,8 @@ namespace {
 }
 
 char IndVarSimplify::ID = 0;
-static RegisterPass<IndVarSimplify>
-X("indvars", "Canonicalize Induction Variables");
+INITIALIZE_PASS(IndVarSimplify, "indvars",
+                "Canonicalize Induction Variables", false, false);
 
 Pass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();

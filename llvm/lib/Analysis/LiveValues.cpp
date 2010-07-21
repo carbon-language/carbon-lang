@@ -22,8 +22,8 @@ namespace llvm {
 }
 
 char LiveValues::ID = 0;
-static RegisterPass<LiveValues>
-X("live-values", "Value Liveness Analysis", false, true);
+INITIALIZE_PASS(LiveValues, "live-values",
+                "Value Liveness Analysis", false, true);
 
 LiveValues::LiveValues() : FunctionPass(&ID) {}
 

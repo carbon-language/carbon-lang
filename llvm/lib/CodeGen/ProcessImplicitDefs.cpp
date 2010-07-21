@@ -26,8 +26,8 @@
 using namespace llvm;
 
 char ProcessImplicitDefs::ID = 0;
-static RegisterPass<ProcessImplicitDefs> X("processimpdefs",
-                                           "Process Implicit Definitions.");
+INITIALIZE_PASS(ProcessImplicitDefs, "processimpdefs",
+                "Process Implicit Definitions.", false, false);
 
 void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
