@@ -557,28 +557,25 @@ ARMTargetLowering::findRepresentativeClass(EVT VT) const{
   switch (VT.getSimpleVT().SimpleTy) {
   default:
     return TargetLowering::findRepresentativeClass(VT);
-  // Use SPR as representative register class for all floating point
-  // and vector types.
-  case MVT::f32:
-    RRC = ARM::SPRRegisterClass;
-    break;
-  case MVT::f64: case MVT::v8i8: case MVT::v4i16:
+  // Use DPR as representative register class for all floating point
+  // and vector types. Since there are 32 SPR registers and 32 DPR registers so
+  // the cost is 1 for both f32 and f64.
+  case MVT::f32: case MVT::f64: case MVT::v8i8: case MVT::v4i16:
   case MVT::v2i32: case MVT::v1i64: case MVT::v2f32:
-    RRC = ARM::SPRRegisterClass;
-    Cost = 2;
+    RRC = ARM::DPRRegisterClass;
     break;
   case MVT::v16i8: case MVT::v8i16: case MVT::v4i32: case MVT::v2i64:
   case MVT::v4f32: case MVT::v2f64:
-    RRC = ARM::SPRRegisterClass;
-    Cost = 4;
+    RRC = ARM::DPRRegisterClass;
+    Cost = 2;
     break;
   case MVT::v4i64:
-    RRC = ARM::SPRRegisterClass;
-    Cost = 8;
+    RRC = ARM::DPRRegisterClass;
+    Cost = 4;
     break;
   case MVT::v8i64:
-    RRC = ARM::SPRRegisterClass;
-    Cost = 16;
+    RRC = ARM::DPRRegisterClass;
+    Cost = 8;
     break;
   }
   return std::make_pair(RRC, Cost);

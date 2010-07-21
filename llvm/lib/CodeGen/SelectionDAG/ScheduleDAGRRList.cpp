@@ -280,6 +280,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   SU->setHeightToAtLeast(CurCycle);
   Sequence.push_back(SU);
 
+  AvailableQueue->ScheduledNode(SU);
+
   ReleasePredecessors(SU, CurCycle);
 
   // Release all the implicit physical register defs that are live.
@@ -298,7 +300,6 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   }
 
   SU->isScheduled = true;
-  AvailableQueue->ScheduledNode(SU);
 }
 
 /// CapturePred - This does the opposite of ReleasePred. Since SU is being
@@ -321,8 +322,6 @@ void ScheduleDAGRRList::CapturePred(SDep *PredEdge) {
 void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   DEBUG(dbgs() << "*** Unscheduling [" << SU->getHeight() << "]: ");
   DEBUG(SU->dump(this));
-
-  AvailableQueue->UnscheduledNode(SU);
 
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
@@ -353,6 +352,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   SU->isScheduled = false;
   SU->isAvailable = true;
   AvailableQueue->push(SU);
+  AvailableQueue->UnscheduledNode(SU);
 }
 
 /// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in
@@ -1053,11 +1053,11 @@ namespace {
 
     /// RegPressure - Tracking current reg pressure per register class.
     ///
-    std::vector<int> RegPressure;
+    std::vector<unsigned> RegPressure;
 
     /// RegLimit - Tracking the number of allocatable registers per register
     /// class.
-    std::vector<int> RegLimit;
+    std::vector<unsigned> RegLimit;
 
   public:
     RegReductionPriorityQueue(MachineFunction &mf,
@@ -1170,61 +1170,41 @@ namespace {
       SU->NodeQueueId = 0;
     }
 
-    // EstimateSpills - Given a scheduling unit, estimate the number of spills 
-    // it would cause by scheduling it at the current cycle.
-    unsigned EstimateSpills(const SUnit *SU) const {
+    bool HighRegPressure(const SUnit *SU) const {
       if (!TLI)
-        return 0;
+        return false;
 
-      unsigned Spills = 0;
       for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
            I != E; ++I) {
         if (I->isCtrl())
           continue;
         SUnit *PredSU = I->getSUnit();
-        if (PredSU->NumSuccsLeft != PredSU->NumSuccs - 1)
+        const SDNode *PN = PredSU->getNode();
+        if (!PN->isMachineOpcode()) {
+          if (PN->getOpcode() == ISD::CopyToReg) {
+            EVT VT = PN->getOperand(1).getValueType();
+            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+            unsigned Cost = TLI->getRepRegClassCostFor(VT);
+            if (RegLimit[RCId] < (RegPressure[RCId] + Cost))
+              return true;
+          }
           continue;
-        const SDNode *N = PredSU->getNode();
-        if (!N->isMachineOpcode())
-          continue;
-        unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+        }
+        unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
-          EVT VT = N->getValueType(i);
-          if (!N->hasAnyUseOfValue(i))
+          EVT VT = PN->getValueType(i);
+          if (!PN->hasAnyUseOfValue(i))
             continue;
           unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
           unsigned Cost = TLI->getRepRegClassCostFor(VT);
           // Check if this increases register pressure of the specific register
           // class to the point where it would cause spills.
-          int Excess = RegPressure[RCId] + Cost - RegLimit[RCId];
-          if (Excess > 0)
-            Spills += Excess;
+          if (RegLimit[RCId] < (RegPressure[RCId] + Cost))
+            return true;
         }
       }
 
-      if (!SU->NumSuccs || !Spills)
-        return Spills;
-      const SDNode *N = SU->getNode();
-      if (!N->isMachineOpcode())
-        return Spills;
-      unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-      for (unsigned i = 0; i != NumDefs; ++i) {
-        EVT VT = N->getValueType(i);
-        if (!N->hasAnyUseOfValue(i))
-          continue;
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        unsigned Cost = TLI->getRepRegClassCostFor(VT);
-        if (RegPressure[RCId] > RegLimit[RCId]) {
-          int Less = RegLimit[RCId] - (RegPressure[RCId] - Cost);
-          if (Less > 0) {
-            if (Spills <= (unsigned)Less)
-              return 0;
-            Spills -= Less;
-          }
-        }
-      }
-
-      return Spills;
+      return false;
     }
 
     void OpenPredLives(SUnit *SU) {
@@ -1232,10 +1212,7 @@ namespace {
       if (!N->isMachineOpcode())
         return;
       unsigned Opc = N->getMachineOpcode();
-      if (Opc == TargetOpcode::EXTRACT_SUBREG || 
-          Opc == TargetOpcode::INSERT_SUBREG ||
-          Opc == TargetOpcode::SUBREG_TO_REG ||
-          Opc == TargetOpcode::COPY_TO_REGCLASS ||
+      if (Opc == TargetOpcode::COPY_TO_REGCLASS ||
           Opc == TargetOpcode::REG_SEQUENCE ||
           Opc == TargetOpcode::IMPLICIT_DEF)
         return;
@@ -1245,10 +1222,19 @@ namespace {
         if (I->isCtrl())
           continue;
         SUnit *PredSU = I->getSUnit();
-        if (PredSU->NumSuccsLeft != PredSU->NumSuccs - 1)
+        if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
           continue;
         const SDNode *PN = PredSU->getNode();
-        if (!PN->isMachineOpcode())
+        if (!PN->isMachineOpcode()) {
+          if (PN->getOpcode() == ISD::CopyToReg) {
+            EVT VT = PN->getOperand(1).getValueType();
+            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+            RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          }
+          continue;
+        }
+        unsigned POpc = PN->getMachineOpcode();
+        if (POpc == TargetOpcode::IMPLICIT_DEF)
           continue;
         unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
@@ -1268,10 +1254,11 @@ namespace {
         if (!N->hasAnyUseOfValue(i))
           continue;
         unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
-        if (RegPressure[RCId] < 0)
+        if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
           // Register pressure tracking is imprecise. This can happen.
           RegPressure[RCId] = 0;
+        else
+          RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
       }
     }
 
@@ -1280,10 +1267,7 @@ namespace {
       if (!N->isMachineOpcode())
         return;
       unsigned Opc = N->getMachineOpcode();
-      if (Opc == TargetOpcode::EXTRACT_SUBREG || 
-          Opc == TargetOpcode::INSERT_SUBREG ||
-          Opc == TargetOpcode::SUBREG_TO_REG ||
-          Opc == TargetOpcode::COPY_TO_REGCLASS ||
+      if (Opc == TargetOpcode::COPY_TO_REGCLASS ||
           Opc == TargetOpcode::REG_SEQUENCE ||
           Opc == TargetOpcode::IMPLICIT_DEF)
         return;
@@ -1293,10 +1277,19 @@ namespace {
         if (I->isCtrl())
           continue;
         SUnit *PredSU = I->getSUnit();
-        if (PredSU->NumSuccsLeft != PredSU->NumSuccs - 1)
+        if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
           continue;
         const SDNode *PN = PredSU->getNode();
-        if (!PN->isMachineOpcode())
+        if (!PN->isMachineOpcode()) {
+          if (PN->getOpcode() == ISD::CopyToReg) {
+            EVT VT = PN->getOperand(1).getValueType();
+            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+            RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          }
+          continue;
+        }
+        unsigned POpc = PN->getMachineOpcode();
+        if (POpc == TargetOpcode::IMPLICIT_DEF)
           continue;
         unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
@@ -1304,10 +1297,11 @@ namespace {
           if (!PN->hasAnyUseOfValue(i))
             continue;
           unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
-          if (RegPressure[RCId] < 0)
+          if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
             // Register pressure tracking is imprecise. This can happen.
             RegPressure[RCId] = 0;
+          else
+            RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
         }
       }
 
@@ -1472,30 +1466,39 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
-  bool LStall = left->SchedulingPref == Sched::Latency &&
-    SPQ->getCurCycle() < left->getHeight();
-  bool RStall = right->SchedulingPref == Sched::Latency &&
-    SPQ->getCurCycle() < right->getHeight();
-  // If scheduling one of the node will cause a pipeline stall, delay it.
-  // If scheduling either one of the node will cause a pipeline stall, sort them
-  // according to their height.
-  // If neither will cause a pipeline stall, try to reduce register pressure.
-  if (LStall) {
-    if (!RStall)
-      return true;
-    if (left->getHeight() != right->getHeight())
-      return left->getHeight() > right->getHeight();
-  } else if (RStall)
+  bool LHigh = SPQ->HighRegPressure(left);
+  bool RHigh = SPQ->HighRegPressure(right);
+  if (LHigh && !RHigh)
+    return true;
+  else if (!LHigh && RHigh)
+    return false;
+  else if (!LHigh && !RHigh) {
+    // Low register pressure situation, schedule for latency if possible.
+    bool LStall = left->SchedulingPref == Sched::Latency &&
+      SPQ->getCurCycle() < left->getHeight();
+    bool RStall = right->SchedulingPref == Sched::Latency &&
+      SPQ->getCurCycle() < right->getHeight();
+    // If scheduling one of the node will cause a pipeline stall, delay it.
+    // If scheduling either one of the node will cause a pipeline stall, sort
+    // them according to their height.
+    // If neither will cause a pipeline stall, try to reduce register pressure.
+    if (LStall) {
+      if (!RStall)
+        return true;
+      if (left->getHeight() != right->getHeight())
+        return left->getHeight() > right->getHeight();
+    } else if (RStall)
       return false;
 
-  // If either node is scheduling for latency, sort them by height and latency
-  // first.
-  if (left->SchedulingPref == Sched::Latency ||
-      right->SchedulingPref == Sched::Latency) {
-    if (left->getHeight() != right->getHeight())
-      return left->getHeight() > right->getHeight();
-    if (left->Latency != right->Latency)
-      return left->Latency > right->Latency;
+    // If either node is scheduling for latency, sort them by height and latency
+    // first.
+    if (left->SchedulingPref == Sched::Latency ||
+        right->SchedulingPref == Sched::Latency) {
+      if (left->getHeight() != right->getHeight())
+        return left->getHeight() > right->getHeight();
+      if (left->Latency != right->Latency)
+        return left->Latency > right->Latency;
+    }
   }
 
   return BURRSort(left, right, SPQ);
