@@ -346,8 +346,8 @@ void ilist_traits<NamedMDNode>::removeNodeFromList(NamedMDNode *N) {
   ST.remove(N->getName());
 }
 
-static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
-  return *(SmallVector<WeakVH, 4>*)Operands;
+static SmallVector<TrackingVH<MDNode>, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<TrackingVH<MDNode>, 4>*)Operands;
 }
 
 NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
@@ -355,11 +355,11 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
                          unsigned NumMDs, Module *ParentModule)
   : Value(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
-  Operands = new SmallVector<WeakVH, 4>();
+  Operands = new SmallVector<TrackingVH<MDNode>, 4>();
 
-  SmallVector<WeakVH, 4> &Node = getNMDOps(Operands);
+  SmallVector<TrackingVH<MDNode>, 4> &Node = getNMDOps(Operands);
   for (unsigned i = 0; i != NumMDs; ++i)
-    Node.push_back(WeakVH(MDs[i]));
+    Node.push_back(TrackingVH<MDNode>(MDs[i]));
 
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
@@ -389,12 +389,12 @@ unsigned NamedMDNode::getNumOperands() const {
 /// getOperand - Return specified operand.
 MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
-  return dyn_cast_or_null<MDNode>(getNMDOps(Operands)[i]);
+  return dyn_cast_or_null<MDNode>(&*getNMDOps(Operands)[i]);
 }
 
 /// addOperand - Add metadata Operand.
 void NamedMDNode::addOperand(MDNode *M) {
-  getNMDOps(Operands).push_back(WeakVH(M));
+  getNMDOps(Operands).push_back(TrackingVH<MDNode>(M));
 }
 
 /// eraseFromParent - Drop all references and remove the node from parent

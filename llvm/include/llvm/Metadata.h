@@ -185,7 +185,7 @@ class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
 
   std::string Name;
   Module *Parent;
-  void *Operands; // SmallVector<WeakVH<MDNode>, 4>
+  void *Operands; // SmallVector<TrackingVH<MDNode>, 4>
 
   void setParent(Module *M) { Parent = M; }
 protected:
