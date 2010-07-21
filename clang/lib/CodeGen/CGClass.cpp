@@ -1144,6 +1144,21 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   EmitCXXMemberCall(DD, Callee, ReturnValueSlot(), This, VTT, 0, 0);
 }
 
+namespace {
+  struct CallLocalDtor : EHScopeStack::LazyCleanup {
+    const CXXDestructorDecl *Dtor;
+    llvm::Value *Addr;
+
+    CallLocalDtor(const CXXDestructorDecl *D, llvm::Value *Addr)
+      : Dtor(D), Addr(Addr) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
+                                /*ForVirtualBase=*/false, Addr);
+    }
+  };
+}
+
 void CodeGenFunction::PushDestructorCleanup(QualType T, llvm::Value *Addr) {
   CXXRecordDecl *ClassDecl = T->getAsCXXRecordDecl();
   if (!ClassDecl) return;
@@ -1151,14 +1166,7 @@ void CodeGenFunction::PushDestructorCleanup(QualType T, llvm::Value *Addr) {
 
   const CXXDestructorDecl *D = ClassDecl->getDestructor();
 
-  CleanupBlock Scope(*this, NormalCleanup);
-
-  EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false, Addr);
-
-  if (Exceptions) {
-    Scope.beginEHCleanup();
-    EmitCXXDestructorCall(D, Dtor_Complete, /*ForVirtualBase=*/false, Addr);
-  }
+  EHStack.pushLazyCleanup<CallLocalDtor>(NormalAndEHCleanup, D, Addr);
 }
 
 llvm::Value *
