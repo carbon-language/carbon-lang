@@ -2734,7 +2734,7 @@ public:
   TruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The (smaller) type to truncate to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2742,7 +2742,7 @@ public:
   TruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The (smaller) type to truncate to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2771,7 +2771,7 @@ public:
   ZExtInst(
     Value *S,                     ///< The value to be zero extended
     const Type *Ty,               ///< The type to zero extend to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2779,7 +2779,7 @@ public:
   ZExtInst(
     Value *S,                     ///< The value to be zero extended
     const Type *Ty,               ///< The type to zero extend to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2808,7 +2808,7 @@ public:
   SExtInst(
     Value *S,                     ///< The value to be sign extended
     const Type *Ty,               ///< The type to sign extend to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2816,7 +2816,7 @@ public:
   SExtInst(
     Value *S,                     ///< The value to be sign extended
     const Type *Ty,               ///< The type to sign extend to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2845,7 +2845,7 @@ public:
   FPTruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The type to truncate to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2853,7 +2853,7 @@ public:
   FPTruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The type to truncate to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2882,7 +2882,7 @@ public:
   FPExtInst(
     Value *S,                     ///< The value to be extended
     const Type *Ty,               ///< The type to extend to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2890,7 +2890,7 @@ public:
   FPExtInst(
     Value *S,                     ///< The value to be extended
     const Type *Ty,               ///< The type to extend to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2919,7 +2919,7 @@ public:
   UIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2927,7 +2927,7 @@ public:
   UIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2956,7 +2956,7 @@ public:
   SIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2964,7 +2964,7 @@ public:
   SIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2993,7 +2993,7 @@ public:
   FPToUIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3001,7 +3001,7 @@ public:
   FPToUIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< Where to insert the new instruction
   );
 
@@ -3030,7 +3030,7 @@ public:
   FPToSIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3038,7 +3038,7 @@ public:
   FPToSIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3063,7 +3063,7 @@ public:
   IntToPtrInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3071,7 +3071,7 @@ public:
   IntToPtrInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3103,7 +3103,7 @@ public:
   PtrToIntInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3111,7 +3111,7 @@ public:
   PtrToIntInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const Twine &NameStr,   ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3140,7 +3140,7 @@ public:
   BitCastInst(
     Value *S,                     ///< The value to be casted
     const Type *Ty,               ///< The type to casted to
-    const Twine &NameStr = "", ///< A name for the new instruction
+    const Twine &NameStr = "",    ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3148,7 +3148,7 @@ public:
   BitCastInst(
     Value *S,                     ///< The value to be casted
     const Type *Ty,               ///< The type to casted to
-    const Twine &NameStr,      ///< A name for the new instruction
+    const Twine &NameStr,         ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
