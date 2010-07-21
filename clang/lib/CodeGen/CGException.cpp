@@ -1576,69 +1576,6 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   return TerminateHandler;
 }
 
-CodeGenFunction::CleanupBlock::CleanupBlock(CodeGenFunction &CGF,
-                                            CleanupKind Kind)
-  : CGF(CGF), SavedIP(CGF.Builder.saveIP()), NormalCleanupExitBB(0) {
-  llvm::BasicBlock *EntryBB = CGF.createBasicBlock("cleanup");
-  CGF.Builder.SetInsertPoint(EntryBB);
-
-  switch (Kind) {
-  case NormalAndEHCleanup:
-    NormalCleanupEntryBB = EHCleanupEntryBB = EntryBB;
-    break;
-
-  case NormalCleanup:
-    NormalCleanupEntryBB = EntryBB;
-    EHCleanupEntryBB = 0;
-    break;        
-
-  case EHCleanup:
-    NormalCleanupEntryBB = 0;
-    EHCleanupEntryBB = EntryBB;
-    CGF.EHStack.pushTerminate();
-    break;
-  }
-}
-
-void CodeGenFunction::CleanupBlock::beginEHCleanup() {
-  assert(EHCleanupEntryBB == 0 && "already started an EH cleanup");
-  NormalCleanupExitBB = CGF.Builder.GetInsertBlock();
-  assert(NormalCleanupExitBB && "end of normal cleanup is unreachable");
-      
-  EHCleanupEntryBB = CGF.createBasicBlock("eh.cleanup");
-  CGF.Builder.SetInsertPoint(EHCleanupEntryBB);
-  CGF.EHStack.pushTerminate();
-}
-
-CodeGenFunction::CleanupBlock::~CleanupBlock() {
-  llvm::BasicBlock *EHCleanupExitBB = 0;
-
-  // If we're currently writing the EH cleanup...
-  if (EHCleanupEntryBB) {
-    // Set the EH cleanup exit block.
-    EHCleanupExitBB = CGF.Builder.GetInsertBlock();
-    assert(EHCleanupExitBB && "end of EH cleanup is unreachable");
-
-    // If we're actually writing both at once, set the normal exit, too.
-    if (EHCleanupEntryBB == NormalCleanupEntryBB)
-      NormalCleanupExitBB = EHCleanupExitBB;
-
-    // Otherwise, we must have pushed a terminate handler.
-    else
-      CGF.EHStack.popTerminate();
-
-  // Otherwise, just set the normal cleanup exit block.
-  } else {
-    NormalCleanupExitBB = CGF.Builder.GetInsertBlock();
-    assert(NormalCleanupExitBB && "end of normal cleanup is unreachable");
-  }
-  
-  CGF.EHStack.pushCleanup(NormalCleanupEntryBB, NormalCleanupExitBB,
-                          EHCleanupEntryBB, EHCleanupExitBB);
-
-  CGF.Builder.restoreIP(SavedIP);
-}
-
 EHScopeStack::LazyCleanup::~LazyCleanup() {
   llvm_unreachable("LazyCleanup is indestructable");
 }

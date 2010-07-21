@@ -476,27 +476,6 @@ public:
   /// process all branch fixups.
   void PopCleanupBlock();
 
-  /// CleanupBlock - RAII object that will create a cleanup block and
-  /// set the insert point to that block. When destructed, it sets the
-  /// insert point to the previous block and pushes a new cleanup
-  /// entry on the stack.
-  class CleanupBlock {
-    CodeGenFunction &CGF;
-    CGBuilderTy::InsertPoint SavedIP;
-    llvm::BasicBlock *NormalCleanupEntryBB;
-    llvm::BasicBlock *NormalCleanupExitBB;
-    llvm::BasicBlock *EHCleanupEntryBB;
-    
-  public:
-    CleanupBlock(CodeGenFunction &CGF, CleanupKind Kind);
-
-    /// If we're currently writing a normal cleanup, tie that off and
-    /// start writing an EH cleanup.
-    void beginEHCleanup();
-    
-    ~CleanupBlock();
-  };
-
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
   class RunCleanupsScope {
