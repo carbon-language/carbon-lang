@@ -32,7 +32,7 @@ using namespace llvm::dwarf;
 // DIDescriptor
 //===----------------------------------------------------------------------===//
 
-StringRef 
+StringRef
 DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)
     return StringRef();
@@ -60,7 +60,8 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
     return DIDescriptor();
 
   if (Elt < DbgNode->getNumOperands())
-    return DIDescriptor(dyn_cast_or_null<const MDNode>(DbgNode->getOperand(Elt)));
+    return
+      DIDescriptor(dyn_cast_or_null<const MDNode>(DbgNode->getOperand(Elt)));
   return DIDescriptor();
 }
 
@@ -353,7 +354,7 @@ bool DIVariable::Verify() const {
 bool DILocation::Verify() const {
   if (!DbgNode)
     return false;
-  
+
   return DbgNode->getNumOperands() == 4;
 }
 
@@ -376,7 +377,7 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
       Tag == dwarf::DW_TAG_const_type || Tag == dwarf::DW_TAG_volatile_type ||
       Tag == dwarf::DW_TAG_restrict_type) {
     DIType BaseType = getTypeDerivedFrom();
-    // If this type is not derived from any type then take conservative 
+    // If this type is not derived from any type then take conservative
     // approach.
     if (!BaseType.isValid())
       return getSizeInBits();
@@ -385,17 +386,17 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
     else
       return BaseType.getSizeInBits();
   }
-    
+
   return getSizeInBits();
 }
 
-/// isInlinedFnArgument - Return trule if this variable provides debugging
+/// isInlinedFnArgument - Return true if this variable provides debugging
 /// information for an inlined function arguments.
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   assert(CurFn && "Invalid function");
   if (!getContext().isSubprogram())
     return false;
-  // This variable is not inlined function argument if its scope 
+  // This variable is not inlined function argument if its scope
   // does not describe current function.
   return !(DISubprogram(getContext()).describes(CurFn));
 }
@@ -414,7 +415,7 @@ bool DISubprogram::describes(const Function *F) {
   return false;
 }
 
-unsigned DISubprogram::isOptimized() const     {
+unsigned DISubprogram::isOptimized() const {
   assert (DbgNode && "Invalid subprogram descriptor!");
   if (DbgNode->getNumOperands() == 16)
     return getUnsignedField(15);
@@ -424,7 +425,7 @@ unsigned DISubprogram::isOptimized() const     {
 StringRef DIScope::getFilename() const {
   if (!DbgNode)
     return StringRef();
-  if (isLexicalBlock()) 
+  if (isLexicalBlock())
     return DILexicalBlock(DbgNode).getFilename();
   if (isSubprogram())
     return DISubprogram(DbgNode).getFilename();
@@ -443,7 +444,7 @@ StringRef DIScope::getFilename() const {
 StringRef DIScope::getDirectory() const {
   if (!DbgNode)
     return StringRef();
-  if (isLexicalBlock()) 
+  if (isLexicalBlock())
     return DILexicalBlock(DbgNode).getDirectory();
   if (isSubprogram())
     return DISubprogram(DbgNode).getDirectory();
@@ -978,8 +979,8 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
-/// given declaration. 
-DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) {
+/// given declaration.
+DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration){
   if (SPDeclaration.isDefinition())
     return DISubprogram(SPDeclaration);
 
@@ -1087,7 +1088,7 @@ DIVariable DIFactory::CreateComplexVariable(unsigned Tag, DIDescriptor Context,
                                             const std::string &Name,
                                             DIFile F,
                                             unsigned LineNo,
-                                            DIType Ty, 
+                                            DIType Ty,
                                             SmallVector<Value *, 9> &addr) {
   SmallVector<Value *, 9> Elts;
   Elts.push_back(GetTagConstant(Tag));
@@ -1177,7 +1178,7 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 
   // If this block already has a terminator then insert this intrinsic
   // before the terminator.
-  if (TerminatorInst *T = InsertAtEnd->getTerminator()) 
+  if (TerminatorInst *T = InsertAtEnd->getTerminator())
     return CallInst::Create(DeclareFn, Args, Args+2, "", T);
   else
     return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);}
@@ -1206,7 +1207,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
-  Value *Args[] = { MDNode::get(V->getContext(), &V, 1), 
+  Value *Args[] = { MDNode::get(V->getContext(), &V, 1),
                     ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     D };
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
@@ -1224,21 +1225,21 @@ void DebugInfoFinder::processModule(Module &M) {
            ++BI) {
         if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
-        
+
         DebugLoc Loc = BI->getDebugLoc();
         if (Loc.isUnknown())
           continue;
-        
+
         LLVMContext &Ctx = BI->getContext();
         DIDescriptor Scope(Loc.getScope(Ctx));
-        
+
         if (Scope.isCompileUnit())
           addCompileUnit(DICompileUnit(Scope));
         else if (Scope.isSubprogram())
           processSubprogram(DISubprogram(Scope));
         else if (Scope.isLexicalBlock())
           processLexicalBlock(DILexicalBlock(Scope));
-        
+
         if (MDNode *IA = Loc.getInlinedAt(Ctx))
           processLocation(DILocation(IA));
       }
@@ -1396,16 +1397,16 @@ static Value *findDbgGlobalDeclare(GlobalVariable *V) {
 /// It looks through pointer casts too.
 static const DbgDeclareInst *findDbgDeclare(const Value *V) {
   V = V->stripPointerCasts();
-  
+
   if (!isa<Instruction>(V) && !isa<Argument>(V))
     return 0;
-    
+
   const Function *F = NULL;
   if (const Instruction *I = dyn_cast<Instruction>(V))
     F = I->getParent()->getParent();
   else if (const Argument *A = dyn_cast<Argument>(V))
     F = A->getParent();
-  
+
   for (Function::const_iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
     for (BasicBlock::const_iterator BI = (*FI).begin(), BE = (*FI).end();
          BI != BE; ++BI)
@@ -1463,10 +1464,10 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   DIDescriptor D(Scope);
   if (D.isSubprogram())
     return DISubprogram(Scope);
-  
+
   if (D.isLexicalBlock())
     return getDISubprogram(DILexicalBlock(Scope).getContext());
-  
+
   return DISubprogram();
 }
 
@@ -1474,9 +1475,9 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
 DICompositeType llvm::getDICompositeType(DIType T) {
   if (T.isCompositeType())
     return DICompositeType(T);
-  
+
   if (T.isDerivedType())
     return getDICompositeType(DIDerivedType(T).getTypeDerivedFrom());
-  
+
   return DICompositeType();
 }
