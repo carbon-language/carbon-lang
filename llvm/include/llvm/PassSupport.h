@@ -209,7 +209,9 @@ struct RegisterAnalysisGroup : public RegisterAGBase {
   }
 };
 
-
+#define INITIALIZE_AG_PASS(passName, agName, arg, name, cfg, analysis, def) \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis); \
+  static RegisterAnalysisGroup<agName, def> passName ## _ag(passName ## _info)
 
 //===---------------------------------------------------------------------------
 /// PassRegistrationListener class - This class is meant to be derived from by

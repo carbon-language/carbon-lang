@@ -1247,7 +1247,7 @@ between passes</a> still apply.</p>
 
 <p>Although <a href="#registration">Pass Registration</a> is optional for normal
 passes, all analysis group implementations must be registered, and must use the
-<A href="#registerag"><tt>RegisterAnalysisGroup</tt></a> template to join the
+<A href="#registerag"><tt>INITIALIZE_AG_PASS</tt></a> template to join the
 implementation pool.  Also, a default implementation of the interface
 <b>must</b> be registered with <A
 href="#registerag"><tt>RegisterAnalysisGroup</tt></a>.</p>
@@ -1283,8 +1283,10 @@ hypothetical example) instead.</p>
 <div class="doc_text">
 
 <p>The <tt>RegisterAnalysisGroup</tt> template is used to register the analysis
-group itself as well as add pass implementations to the analysis group.  First,
-an analysis should be registered, with a human readable name provided for it.
+group itself, while the <tt>INITIALIZE_AG_PASS</tt> is used to add pass
+implementations to the analysis group.  First,
+an analysis group should be registered, with a human readable name
+provided for it.
 Unlike registration of passes, there is no command line argument to be specified
 for the Analysis Group Interface itself, because it is "abstract":</p>
 
@@ -1297,35 +1299,36 @@ implementations of the interface by using the following code:</p>
 
 <div class="doc_code"><pre>
 <b>namespace</b> {
-  //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
-  RegisterPass&lt;FancyAA&gt;
-  B("<i>somefancyaa</i>", "<i>A more complex alias analysis implementation</i>");
-
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; C(B);
+  INITIALIZE_AG_PASS(FancyAA, <a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, "<i>somefancyaa</i>",
+                     "<i>A more complex alias analysis implementation</i>",
+                     false, // <i>Is CFG Only?</i>
+                     true,  // <i>Is Analysis?</i>
+                     false, // <i>Is default Analysis Group implementation?</i>
+                    );
 }
 </pre></div>
 
-<p>This just shows a class <tt>FancyAA</tt> that is registered normally, then
-uses the <tt>RegisterAnalysisGroup</tt> template to "join" the <tt><a
-href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
+<p>This just shows a class <tt>FancyAA</tt> that 
+uses the <tt>INITIALIZE_AG_PASS</tt> macro both to register and
+to "join" the <tt><a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
 analysis group.  Every implementation of an analysis group should join using
-this template.  A single pass may join multiple different analysis groups with
-no problem.</p>
+this macro.</p>
 
 <div class="doc_code"><pre>
 <b>namespace</b> {
-  //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
-  RegisterPass&lt;<a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>&gt;
-  D("<i>basicaa</i>", "<i>Basic Alias Analysis (default AA impl)</i>");
-
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <b>true</b>&gt; E(D);
+  INITIALIZE_AG_PASS(BasicAA, <a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, "<i>basicaa</i>",
+                     "<i>Basic Alias Analysis (default AA impl)</i>",
+                     false, // <i>Is CFG Only?</i>
+                     true,  // <i>Is Analysis?</i>
+                     true, // <i>Is default Analysis Group implementation?</i>
+                    );
 }
 </pre></div>
 
-<p>Here we show how the default implementation is specified (using the extra
-argument to the <tt>RegisterAnalysisGroup</tt> template).  There must be exactly
+<p>Here we show how the default implementation is specified (using the final
+argument to the <tt>INITIALIZE_AG_PASS</tt> template).  There must be exactly
 one default implementation available at all times for an Analysis Group to be
 used.  Only default implementation can derive from <tt>ImmutablePass</tt>. 
 Here we declare that the

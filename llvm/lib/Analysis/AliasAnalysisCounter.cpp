@@ -111,9 +111,8 @@ namespace {
 }
 
 char AliasAnalysisCounter::ID = 0;
-static RegisterPass<AliasAnalysisCounter>
-X("count-aa", "Count Alias Analysis Query Responses", false, true);
-static RegisterAnalysisGroup<AliasAnalysis> Y(X);
+INITIALIZE_AG_PASS(AliasAnalysisCounter, AliasAnalysis, "count-aa",
+                   "Count Alias Analysis Query Responses", false, true, false);
 
 ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();

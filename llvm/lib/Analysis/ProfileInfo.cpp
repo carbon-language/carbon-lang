@@ -1096,10 +1096,7 @@ namespace {
 
 char NoProfileInfo::ID = 0;
 // Register this pass...
-static RegisterPass<NoProfileInfo>
-X("no-profile", "No Profile Information", false, true);
-
-// Declare that we implement the ProfileInfo interface
-static RegisterAnalysisGroup<ProfileInfo, true> Y(X);
+INITIALIZE_AG_PASS(NoProfileInfo, ProfileInfo, "no-profile",
+                   "No Profile Information", false, true, true);
 
 ImmutablePass *llvm::createNoProfileInfoPass() { return new NoProfileInfo(); }
