@@ -1337,6 +1337,28 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
   EmitBlock(ContBB);
 }
 
+namespace {
+  struct CallEndCatchForFinally : EHScopeStack::LazyCleanup {
+    llvm::Value *ForEHVar;
+    llvm::Value *EndCatchFn;
+    CallEndCatchForFinally(llvm::Value *ForEHVar, llvm::Value *EndCatchFn)
+      : ForEHVar(ForEHVar), EndCatchFn(EndCatchFn) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      llvm::BasicBlock *EndCatchBB = CGF.createBasicBlock("finally.endcatch");
+      llvm::BasicBlock *CleanupContBB =
+        CGF.createBasicBlock("finally.cleanup.cont");
+
+      llvm::Value *ShouldEndCatch =
+        CGF.Builder.CreateLoad(ForEHVar, "finally.endcatch");
+      CGF.Builder.CreateCondBr(ShouldEndCatch, EndCatchBB, CleanupContBB);
+      CGF.EmitBlock(EndCatchBB);
+      CGF.EmitCallOrInvoke(EndCatchFn, 0, 0); // catch-all, so might throw
+      CGF.EmitBlock(CleanupContBB);
+    }
+  };
+}
+
 /// Enters a finally block for an implementation using zero-cost
 /// exceptions.  This is mostly general, but hard-codes some
 /// language/ABI-specific behavior in the catch-all sections.
@@ -1392,19 +1414,9 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
     CodeGenFunction::CleanupBlock Cleanup(*this, NormalCleanup);
 
     // Enter a cleanup to call the end-catch function if one was provided.
-    if (EndCatchFn) {
-      CodeGenFunction::CleanupBlock FinallyExitCleanup(CGF, NormalAndEHCleanup);
-
-      llvm::BasicBlock *EndCatchBB = createBasicBlock("finally.endcatch");
-      llvm::BasicBlock *CleanupContBB = createBasicBlock("finally.cleanup.cont");
-
-      llvm::Value *ShouldEndCatch =
-        Builder.CreateLoad(ForEHVar, "finally.endcatch");
-      Builder.CreateCondBr(ShouldEndCatch, EndCatchBB, CleanupContBB);
-      EmitBlock(EndCatchBB);
-      EmitCallOrInvoke(EndCatchFn, 0, 0); // catch-all, so might throw
-      EmitBlock(CleanupContBB);
-    }
+    if (EndCatchFn)
+      EHStack.pushLazyCleanup<CallEndCatchForFinally>(NormalAndEHCleanup,
+                                                      ForEHVar, EndCatchFn);
 
     // Emit the finally block.
     EmitStmt(Body);
