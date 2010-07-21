@@ -5098,14 +5098,6 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       startLoc = E->getLocStart();
     startLoc = SM->getInstantiationLoc(startLoc);
     endBuf = SM->getCharacterData(startLoc);
-    if (dyn_cast<CXXConstructExpr>(E)) {
-      // Hack alter!
-      // SemaInit sets startLoc to beginning of the initialized variable when
-      // rhs involvs copy construction initialization. Must compensate for this.
-      if (char *atEqual = strchr(endBuf, '='))
-        endBuf = atEqual + 1;
-    }
-    
     ByrefType += " " + Name;
     ByrefType += " = {(void*)";
     ByrefType += utostr(isa);
