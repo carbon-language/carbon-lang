@@ -242,6 +242,12 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   default:
   case BuiltinType::Void:
     return llvm::DIType();
+  case BuiltinType::ObjCId: 
+    // id is struct objc_object *.
+    return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type,
+                                            Unit, "objc_object", Unit, 0, 0, 0, 0,
+                                            llvm::DIType::FlagFwdDecl, 
+                                            llvm::DIType(), llvm::DIArray());
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
   case BuiltinType::Char_S:
