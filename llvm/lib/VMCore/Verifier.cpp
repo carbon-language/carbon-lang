@@ -520,7 +520,7 @@ void Verifier::visitMDNode(MDNode &MD, Function *F) {
     Value *Op = MD.getOperand(i);
     if (!Op)
       continue;
-    if (isa<Constant>(Op) || isa<MDString>(Op) || isa<NamedMDNode>(Op))
+    if (isa<Constant>(Op) || isa<MDString>(Op))
       continue;
     if (MDNode *N = dyn_cast<MDNode>(Op)) {
       Assert2(MD.isFunctionLocal() || !N->isFunctionLocal(),
