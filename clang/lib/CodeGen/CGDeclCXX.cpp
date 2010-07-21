@@ -329,6 +329,20 @@ static llvm::Constant *getGuardAbortFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_guard_abort");
 }
 
+namespace {
+  struct CallGuardAbort : EHScopeStack::LazyCleanup {
+    llvm::GlobalVariable *Guard;
+    CallGuardAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // It shouldn't be possible for this to throw, but if it can,
+      // this should allow for the possibility of an invoke.
+      CGF.Builder.CreateCall(getGuardAbortFn(CGF), Guard)
+        ->setDoesNotThrow();
+    }
+  };
+}
+
 void
 CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
                                                llvm::GlobalVariable *GV) {
@@ -341,7 +355,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   CGM.getMangleContext().mangleGuardVariable(&D, GuardVName);
 
   // Create the guard variable.
-  llvm::GlobalValue *GuardVariable =
+  llvm::GlobalVariable *GuardVariable =
     new llvm::GlobalVariable(CGM.getModule(), Int64Ty,
                              false, GV->getLinkage(),
                              llvm::Constant::getNullValue(Int64Ty),
@@ -373,10 +387,8 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
                          InitBlock, EndBlock);
   
     // Call __cxa_guard_abort along the exceptional edge.
-    if (Exceptions) {
-      CleanupBlock Cleanup(*this, EHCleanup);
-      Builder.CreateCall(getGuardAbortFn(*this), GuardVariable);
-    }
+    if (Exceptions)
+      EHStack.pushLazyCleanup<CallGuardAbort>(EHCleanup, GuardVariable);
     
     EmitBlock(InitBlock);
   }
