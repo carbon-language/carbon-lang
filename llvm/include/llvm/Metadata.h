@@ -149,9 +149,6 @@ public:
   // critical code because it recursively visits all the MDNode's operands.  
   const Function *getFunction() const;
 
-  // destroy - Delete this node.  Only when there are no uses.
-  void destroy();
-
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates
   void Profile(FoldingSetNodeID &ID) const;
@@ -162,6 +159,9 @@ public:
     return V->getValueID() == MDNodeVal;
   }
 private:
+  // destroy - Delete this node.  Only when there are no uses.
+  void destroy();
+
   bool isNotUniqued() const { 
     return (getSubclassDataFromValue() & NotUniquedBit) != 0;
   }

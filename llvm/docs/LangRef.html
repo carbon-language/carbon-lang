@@ -949,15 +949,17 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 <div class="doc_text">
 
 <p>Named metadata is a collection of metadata. <a href="#metadata">Metadata
-   nodes</a> (but not metadata strings) and null are the only valid operands for
+   nodes</a> (but not metadata strings) are the only valid operands for
    a named metadata.</p>
 
 <h5>Syntax:</h5>
 <pre class="doc_code">
-; An unnamed metadata node, which is referenced by the named metadata.
+; Some unnamed metadata nodes, which are referenced by the named metadata.
+!0 = metadata !{metadata !"zero"}
 !1 = metadata !{metadata !"one"}
+!2 = metadata !{metadata !"two"}
 ; A named metadata.
-!name = !{null, !1}
+!name = !{!0, !1, !2}
 </pre>
 
 </div>

@@ -638,10 +638,8 @@ void SlotTracker::processModule() {
          I = TheModule->named_metadata_begin(),
          E = TheModule->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      if (MDNode *MD = NMD->getOperand(i))
-        CreateMetadataSlot(MD);
-    }
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+      CreateMetadataSlot(NMD->getOperand(i));
   }
 
   // Add all the unnamed functions to the table.
@@ -1424,10 +1422,7 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   Out << "!" << NMD->getName() << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
     if (i) Out << ", ";
-    if (MDNode *MD = NMD->getOperand(i))
-      Out << '!' << Machine.getMetadataSlot(MD);
-    else
-      Out << "null";
+    Out << '!' << Machine.getMetadataSlot(NMD->getOperand(i));
   }
   Out << "}\n";
 }

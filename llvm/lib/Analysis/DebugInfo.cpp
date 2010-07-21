@@ -233,8 +233,7 @@ unsigned DIArray::getNumElements() const {
 }
 
 /// replaceAllUsesWith - Replace all uses of debug info referenced by
-/// this descriptor. After this completes, the current debug info value
-/// is erased.
+/// this descriptor.
 void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
   if (!DbgNode)
     return;
@@ -249,7 +248,6 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
     const MDNode *DN = D;
     const Value *V = cast_or_null<Value>(DN);
     Node->replaceAllUsesWith(const_cast<Value*>(V));
-    Node->destroy();
   }
 }
 
@@ -1385,7 +1383,7 @@ static Value *findDbgGlobalDeclare(GlobalVariable *V) {
     return 0;
 
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-    DIDescriptor DIG(cast_or_null<MDNode>(NMD->getOperand(i)));
+    DIDescriptor DIG(cast<MDNode>(NMD->getOperand(i)));
     if (!DIG.isGlobalVariable())
       continue;
     if (DIGlobalVariable(DIG).getGlobal() == V)

@@ -558,12 +558,8 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       Record.clear();
 
       // Write named metadata operands.
-      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-        if (NMD->getOperand(i))
-          Record.push_back(VE.getValueID(NMD->getOperand(i)));
-        else
-          Record.push_back(~0U);
-      }
+      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+        Record.push_back(VE.getValueID(NMD->getOperand(i)));
       Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
       Record.clear();
     }

@@ -389,7 +389,7 @@ unsigned NamedMDNode::getNumOperands() const {
 /// getOperand - Return specified operand.
 MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
-  return dyn_cast_or_null<MDNode>(&*getNMDOps(Operands)[i]);
+  return dyn_cast<MDNode>(&*getNMDOps(Operands)[i]);
 }
 
 /// addOperand - Add metadata Operand.

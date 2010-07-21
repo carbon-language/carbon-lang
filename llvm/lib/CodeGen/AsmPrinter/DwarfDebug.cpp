@@ -2319,7 +2319,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       M->getNamedMetadata(Twine("llvm.dbg.lv.", 
                                 getRealLinkageName(F->getName())))) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
+      DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
       if (!DV || !Processed.insert(DV))
         continue;
       DbgScope *Scope = DbgScopeMap.lookup(DV.getContext());
@@ -2783,7 +2783,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
             M->getNamedMetadata(Twine("llvm.dbg.lv.", 
                                       getRealLinkageName(FName)))) {
           for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-          DIVariable DV(cast_or_null<MDNode>(NMD->getOperand(i)));
+          DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
           if (!DV || !ProcessedVars.insert(DV))
             continue;
           DbgScope *Scope = AbstractScopes.lookup(DV.getContext());

@@ -803,10 +803,6 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<MDNode *, 8> Elts;
       for (unsigned i = 0; i != Size; ++i) {
-        if (Record[i] == ~0U) {
-          Elts.push_back(NULL);
-          continue;
-        }
         MDNode *MD = dyn_cast<MDNode>(MDValueList.getValueFwdRef(Record[i]));
         if (MD == 0)
           return Error("Malformed metadata record");
