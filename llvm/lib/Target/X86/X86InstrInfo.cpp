@@ -2062,7 +2062,6 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-  bool isWin64 = TM.getSubtarget<X86Subtarget>().isTargetWin64();
   unsigned SlotSize = is64Bit ? 8 : 4;
 
   MachineFunction &MF = *MBB.getParent();
@@ -2078,7 +2077,7 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (Reg == FPReg)
       // X86RegisterInfo::emitPrologue will handle spilling of frame register.
       continue;
-    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
+    if (!X86::VR128RegClass.contains(Reg)) {
       CalleeFrameSize += SlotSize;
       BuildMI(MBB, MI, DL, get(Opc)).addReg(Reg, RegState::Kill);
     } else {
@@ -2103,14 +2102,13 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   unsigned FPReg = RI.getFrameRegister(MF);
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-  bool isWin64 = TM.getSubtarget<X86Subtarget>().isTargetWin64();
   unsigned Opc = is64Bit ? X86::POP64r : X86::POP32r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
     if (Reg == FPReg)
       // X86RegisterInfo::emitEpilogue will handle restoring of frame register.
       continue;
-    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
+    if (!X86::VR128RegClass.contains(Reg)) {
       BuildMI(MBB, MI, DL, get(Opc), Reg);
     } else {
       loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),

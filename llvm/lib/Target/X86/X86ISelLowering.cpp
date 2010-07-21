@@ -1990,7 +1990,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
   }
 
-  if (Is64Bit && isVarArg) {
+  if (Is64Bit && isVarArg && !Subtarget->isTargetWin64()) {
     // From AMD64 ABI document:
     // For calls that may call functions that use varargs or stdargs
     // (prototype-less calls or calls to functions containing ellipsis (...) in
@@ -1999,7 +1999,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // the number of registers, but must be an ubound on the number of SSE
     // registers used and is in the range 0 - 8 inclusive.
 
-    // FIXME: Verify this on Win64
     // Count the number of XMM registers allocated.
     static const unsigned XMMArgRegs[] = {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
