@@ -796,19 +796,19 @@ static void SimplifyCleanupEdges(CodeGenFunction &CGF,
   SimplifyCleanupEntry(CGF, Entry);  
 }
 
-static void EmitLazyCleanup(CodeGenFunction &CGF,
-                            EHScopeStack::LazyCleanup *Fn,
-                            bool ForEH) {
+static void EmitCleanup(CodeGenFunction &CGF,
+                        EHScopeStack::Cleanup *Fn,
+                        bool ForEH) {
   if (ForEH) CGF.EHStack.pushTerminate();
   Fn->Emit(CGF, ForEH);
   if (ForEH) CGF.EHStack.popTerminate();
   assert(CGF.HaveInsertPoint() && "cleanup ended with no insertion point?");
 }
 
-static void SplitAndEmitLazyCleanup(CodeGenFunction &CGF,
-                                    EHScopeStack::LazyCleanup *Fn,
-                                    bool ForEH,
-                                    llvm::BasicBlock *Entry) {
+static void SplitAndEmitCleanup(CodeGenFunction &CGF,
+                                EHScopeStack::Cleanup *Fn,
+                                bool ForEH,
+                                llvm::BasicBlock *Entry) {
   assert(Entry && "no entry block for cleanup");
 
   // Remove the switch and load from the end of the entry block.
@@ -824,7 +824,7 @@ static void SplitAndEmitLazyCleanup(CodeGenFunction &CGF,
 
   // Emit the actual cleanup at the end of the entry block.
   CGF.Builder.SetInsertPoint(Entry);
-  EmitLazyCleanup(CGF, Fn, ForEH);
+  EmitCleanup(CGF, Fn, ForEH);
 
   // Put the load and switch at the end of the exit block.
   llvm::BasicBlock *Exit = CGF.Builder.GetInsertBlock();
@@ -837,10 +837,14 @@ static void SplitAndEmitLazyCleanup(CodeGenFunction &CGF,
   CGF.Builder.ClearInsertionPoint();
 }
 
-static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
-  assert(isa<EHLazyCleanupScope>(*CGF.EHStack.begin()) && "top not a cleanup!");
-  EHLazyCleanupScope &Scope = cast<EHLazyCleanupScope>(*CGF.EHStack.begin());
-  assert(Scope.getFixupDepth() <= CGF.EHStack.getNumBranchFixups());
+/// Pops a cleanup block.  If the block includes a normal cleanup, the
+/// current insertion point is threaded through the cleanup, as are
+/// any branch fixups on the cleanup.
+void CodeGenFunction::PopCleanupBlock() {
+  assert(!EHStack.empty() && "cleanup stack is empty!");
+  assert(isa<EHCleanupScope>(*EHStack.begin()) && "top not a cleanup!");
+  EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.begin());
+  assert(Scope.getFixupDepth() <= EHStack.getNumBranchFixups());
 
   // Check whether we need an EH cleanup.  This is only true if we've
   // generated a lazy EH cleanup block.
@@ -851,14 +855,14 @@ static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
 
   // - whether there are branch fix-ups through this cleanup
   unsigned FixupDepth = Scope.getFixupDepth();
-  bool HasFixups = CGF.EHStack.getNumBranchFixups() != FixupDepth;
+  bool HasFixups = EHStack.getNumBranchFixups() != FixupDepth;
 
   // - whether control has already been threaded through this cleanup
   llvm::BasicBlock *NormalEntry = Scope.getNormalBlock();
   bool HasExistingBranches = (NormalEntry != 0);
 
   // - whether there's a fallthrough
-  llvm::BasicBlock *FallthroughSource = CGF.Builder.GetInsertBlock();
+  llvm::BasicBlock *FallthroughSource = Builder.GetInsertBlock();
   bool HasFallthrough = (FallthroughSource != 0);
 
   bool RequiresNormalCleanup = false;
@@ -869,9 +873,9 @@ static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
 
   // If we don't need the cleanup at all, we're done.
   if (!RequiresNormalCleanup && !RequiresEHCleanup) {
-    CGF.EHStack.popCleanup();
-    assert(CGF.EHStack.getNumBranchFixups() == 0 ||
-           CGF.EHStack.hasNormalCleanups());
+    EHStack.popCleanup();
+    assert(EHStack.getNumBranchFixups() == 0 ||
+           EHStack.hasNormalCleanups());
     return;
   }
 
@@ -883,35 +887,35 @@ static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
   memcpy(CleanupBuffer.data(),
          Scope.getCleanupBuffer(), Scope.getCleanupSize());
   CleanupBuffer.set_size(Scope.getCleanupSize());
-  EHScopeStack::LazyCleanup *Fn =
-    reinterpret_cast<EHScopeStack::LazyCleanup*>(CleanupBuffer.data());
+  EHScopeStack::Cleanup *Fn =
+    reinterpret_cast<EHScopeStack::Cleanup*>(CleanupBuffer.data());
 
   // We're done with the scope; pop it off so we can emit the cleanups.
-  CGF.EHStack.popCleanup();
+  EHStack.popCleanup();
 
   if (RequiresNormalCleanup) {
     // If we have a fallthrough and no other need for the cleanup,
     // emit it directly.
     if (HasFallthrough && !HasFixups && !HasExistingBranches) {
-      EmitLazyCleanup(CGF, Fn, /*ForEH*/ false);
+      EmitCleanup(*this, Fn, /*ForEH*/ false);
 
     // Otherwise, the best approach is to thread everything through
     // the cleanup block and then try to clean up after ourselves.
     } else {
       // Force the entry block to exist.
       if (!HasExistingBranches) {
-        NormalEntry = CGF.createBasicBlock("cleanup");
-        CreateCleanupSwitch(CGF, NormalEntry);
+        NormalEntry = createBasicBlock("cleanup");
+        CreateCleanupSwitch(*this, NormalEntry);
       }
 
-      CGF.EmitBlock(NormalEntry);
+      EmitBlock(NormalEntry);
 
       // Thread the fallthrough edge through the (momentarily trivial)
       // cleanup.
       llvm::BasicBlock *FallthroughDestination = 0;
       if (HasFallthrough) {
         assert(isa<llvm::BranchInst>(FallthroughSource->getTerminator()));
-        FallthroughDestination = CGF.createBasicBlock("cleanup.cont");
+        FallthroughDestination = createBasicBlock("cleanup.cont");
 
         BranchFixup Fix;
         Fix.Destination = FallthroughDestination;
@@ -924,39 +928,30 @@ static void PopLazyCleanupBlock(CodeGenFunction &CGF) {
         cast<llvm::BranchInst>(Fix.LatestBranch)
           ->setSuccessor(0, Fix.Destination);
 
-        ThreadFixupThroughCleanup(CGF, Fix, NormalEntry, NormalEntry);
+        ThreadFixupThroughCleanup(*this, Fix, NormalEntry, NormalEntry);
       }
 
       // Thread any "real" fixups we need to thread.
-      for (unsigned I = FixupDepth, E = CGF.EHStack.getNumBranchFixups();
+      for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();
            I != E; ++I)
         if (CGF.EHStack.getBranchFixup(I).Destination)
-          ThreadFixupThroughCleanup(CGF, CGF.EHStack.getBranchFixup(I),
+          ThreadFixupThroughCleanup(*this, EHStack.getBranchFixup(I),
                                     NormalEntry, NormalEntry);
 
-      SplitAndEmitLazyCleanup(CGF, Fn, /*ForEH*/ false, NormalEntry);
+      SplitAndEmitCleanup(*this, Fn, /*ForEH*/ false, NormalEntry);
 
       if (HasFallthrough)
-        CGF.EmitBlock(FallthroughDestination);
+        EmitBlock(FallthroughDestination);
     }
   }
 
   // Emit the EH cleanup if required.
   if (RequiresEHCleanup) {
-    CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
-    CGF.EmitBlock(EHEntry);
-    SplitAndEmitLazyCleanup(CGF, Fn, /*ForEH*/ true, EHEntry);
-    CGF.Builder.restoreIP(SavedIP);
+    CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
+    EmitBlock(EHEntry);
+    SplitAndEmitCleanup(*this, Fn, /*ForEH*/ true, EHEntry);
+    Builder.restoreIP(SavedIP);
   }
-}
-
-/// Pops a cleanup block.  If the block includes a normal cleanup, the
-/// current insertion point is threaded through the cleanup, as are
-/// any branch fixups on the cleanup.
-void CodeGenFunction::PopCleanupBlock() {
-  assert(!EHStack.empty() && "cleanup stack is empty!");
-  assert(isa<EHLazyCleanupScope>(*EHStack.begin()));
-  return PopLazyCleanupBlock(*this);
 }
 
 void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
@@ -990,8 +985,8 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
 
   for (EHScopeStack::iterator I = EHStack.begin(),
          E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
-    if (isa<EHLazyCleanupScope>(*I)) {
-      EHLazyCleanupScope &Scope = cast<EHLazyCleanupScope>(*I);
+    if (isa<EHCleanupScope>(*I)) {
+      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
       if (Scope.isNormalCleanup()) {
         llvm::BasicBlock *Block = Scope.getNormalBlock();
         if (!Block) {
@@ -1034,8 +1029,8 @@ void CodeGenFunction::EmitBranchThroughEHCleanup(JumpDest Dest) {
 
   for (EHScopeStack::iterator I = EHStack.begin(),
          E = EHStack.find(Dest.ScopeDepth); I != E; ++I) {
-    if (isa<EHLazyCleanupScope>(*I)) {
-      EHLazyCleanupScope &Scope = cast<EHLazyCleanupScope>(*I);
+    if (isa<EHCleanupScope>(*I)) {
+      EHCleanupScope &Scope = cast<EHCleanupScope>(*I);
       if (Scope.isEHCleanup()) {
         llvm::BasicBlock *Block = Scope.getEHBlock();
         if (!Block) {

@@ -16,7 +16,7 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace {
-  struct DestroyTemporary : EHScopeStack::LazyCleanup {
+  struct DestroyTemporary : EHScopeStack::Cleanup {
     const CXXTemporary *Temporary;
     llvm::Value *Addr;
     llvm::Value *CondPtr;
@@ -71,8 +71,8 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
     Builder.CreateStore(Builder.getTrue(), CondPtr);
   }
 
-  EHStack.pushLazyCleanup<DestroyTemporary>(NormalAndEHCleanup,
-                                            Temporary, Ptr, CondPtr);
+  EHStack.pushCleanup<DestroyTemporary>(NormalAndEHCleanup,
+                                        Temporary, Ptr, CondPtr);
 }
 
 RValue

@@ -2542,7 +2542,7 @@ void CGObjCMac::EmitSynchronizedStmt(CodeGenFunction &CGF,
 }
 
 namespace {
-  struct PerformFragileFinally : EHScopeStack::LazyCleanup {
+  struct PerformFragileFinally : EHScopeStack::Cleanup {
     const Stmt &S;
     llvm::Value *SyncArg;
     llvm::Value *CallTryExitVar;
@@ -2745,11 +2745,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                           CallTryExitVar);
 
   // Push a normal cleanup to leave the try scope.
-  CGF.EHStack.pushLazyCleanup<PerformFragileFinally>(NormalCleanup, &S,
-                                                     SyncArg,
-                                                     CallTryExitVar,
-                                                     ExceptionData,
-                                                     &ObjCTypes);
+  CGF.EHStack.pushCleanup<PerformFragileFinally>(NormalCleanup, &S,
+                                                 SyncArg,
+                                                 CallTryExitVar,
+                                                 ExceptionData,
+                                                 &ObjCTypes);
 
   // Enter a try block:
   //  - Call objc_exception_try_enter to push ExceptionData on top of
@@ -5717,7 +5717,7 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 }
 
 namespace {
-  struct CallSyncExit : EHScopeStack::LazyCleanup {
+  struct CallSyncExit : EHScopeStack::Cleanup {
     llvm::Value *SyncExitFn;
     llvm::Value *SyncArg;
     CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
@@ -5741,9 +5741,9 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     ->setDoesNotThrow();
 
   // Register an all-paths cleanup to release the lock.
-  CGF.EHStack.pushLazyCleanup<CallSyncExit>(NormalAndEHCleanup,
-                                            ObjCTypes.getSyncExitFn(),
-                                            SyncArg);
+  CGF.EHStack.pushCleanup<CallSyncExit>(NormalAndEHCleanup,
+                                        ObjCTypes.getSyncExitFn(),
+                                        SyncArg);
 
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());
@@ -5760,7 +5760,7 @@ namespace {
     llvm::Value *TypeInfo;
   };
 
-  struct CallObjCEndCatch : EHScopeStack::LazyCleanup {
+  struct CallObjCEndCatch : EHScopeStack::Cleanup {
     CallObjCEndCatch(bool MightThrow, llvm::Value *Fn) :
       MightThrow(MightThrow), Fn(Fn) {}
     bool MightThrow;
@@ -5865,9 +5865,9 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 
     // Add a cleanup to leave the catch.
     bool EndCatchMightThrow = (Handler.Variable == 0);
-    CGF.EHStack.pushLazyCleanup<CallObjCEndCatch>(NormalAndEHCleanup,
-                                                  EndCatchMightThrow,
-                                                  ObjCTypes.getObjCEndCatchFn());
+    CGF.EHStack.pushCleanup<CallObjCEndCatch>(NormalAndEHCleanup,
+                                              EndCatchMightThrow,
+                                              ObjCTypes.getObjCEndCatchFn());
 
     // Bind the catch parameter if it exists.
     if (const VarDecl *CatchParam = Handler.Variable) {

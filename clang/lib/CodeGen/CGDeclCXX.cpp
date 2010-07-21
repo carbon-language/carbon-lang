@@ -330,7 +330,7 @@ static llvm::Constant *getGuardAbortFn(CodeGenFunction &CGF) {
 }
 
 namespace {
-  struct CallGuardAbort : EHScopeStack::LazyCleanup {
+  struct CallGuardAbort : EHScopeStack::Cleanup {
     llvm::GlobalVariable *Guard;
     CallGuardAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
 
@@ -388,7 +388,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   
     // Call __cxa_guard_abort along the exceptional edge.
     if (Exceptions)
-      EHStack.pushLazyCleanup<CallGuardAbort>(EHCleanup, GuardVariable);
+      EHStack.pushCleanup<CallGuardAbort>(EHCleanup, GuardVariable);
     
     EmitBlock(InitBlock);
   }

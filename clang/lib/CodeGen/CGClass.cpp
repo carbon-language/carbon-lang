@@ -312,7 +312,7 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
 
 namespace {
   /// Call the destructor for a direct base class.
-  struct CallBaseDtor : EHScopeStack::LazyCleanup {
+  struct CallBaseDtor : EHScopeStack::Cleanup {
     const CXXRecordDecl *BaseClass;
     bool BaseIsVirtual;
     CallBaseDtor(const CXXRecordDecl *Base, bool BaseIsVirtual)
@@ -361,8 +361,8 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
   
   if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor())
-    CGF.EHStack.pushLazyCleanup<CallBaseDtor>(EHCleanup, BaseClassDecl,
-                                              isBaseVirtual);
+    CGF.EHStack.pushCleanup<CallBaseDtor>(EHCleanup, BaseClassDecl,
+                                          isBaseVirtual);
 }
 
 static void EmitAggMemberInitializer(CodeGenFunction &CGF,
@@ -452,7 +452,7 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
 }
 
 namespace {
-  struct CallMemberDtor : EHScopeStack::LazyCleanup {
+  struct CallMemberDtor : EHScopeStack::Cleanup {
     FieldDecl *Field;
     CXXDestructorDecl *Dtor;
 
@@ -570,8 +570,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     
     CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     if (!RD->hasTrivialDestructor())
-      CGF.EHStack.pushLazyCleanup<CallMemberDtor>(EHCleanup, Field,
-                                                  RD->getDestructor());
+      CGF.EHStack.pushCleanup<CallMemberDtor>(EHCleanup, Field,
+                                              RD->getDestructor());
   }
 }
 
@@ -761,7 +761,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
 
 namespace {
   /// Call the operator delete associated with the current destructor.
-  struct CallDtorDelete : EHScopeStack::LazyCleanup {
+  struct CallDtorDelete : EHScopeStack::Cleanup {
     CallDtorDelete() {}
 
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
@@ -772,7 +772,7 @@ namespace {
     }
   };
 
-  struct CallArrayFieldDtor : EHScopeStack::LazyCleanup {
+  struct CallArrayFieldDtor : EHScopeStack::Cleanup {
     const FieldDecl *Field;
     CallArrayFieldDtor(const FieldDecl *Field) : Field(Field) {}
 
@@ -798,7 +798,7 @@ namespace {
     }
   };
 
-  struct CallFieldDtor : EHScopeStack::LazyCleanup {
+  struct CallFieldDtor : EHScopeStack::Cleanup {
     const FieldDecl *Field;
     CallFieldDtor(const FieldDecl *Field) : Field(Field) {}
 
@@ -831,7 +831,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   if (DtorType == Dtor_Deleting) {
     assert(DD->getOperatorDelete() && 
            "operator delete missing - EmitDtorEpilogue");
-    EHStack.pushLazyCleanup<CallDtorDelete>(NormalAndEHCleanup);
+    EHStack.pushCleanup<CallDtorDelete>(NormalAndEHCleanup);
     return;
   }
 
@@ -853,9 +853,9 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
 
-      EHStack.pushLazyCleanup<CallBaseDtor>(NormalAndEHCleanup,
-                                            BaseClassDecl,
-                                            /*BaseIsVirtual*/ true);
+      EHStack.pushCleanup<CallBaseDtor>(NormalAndEHCleanup,
+                                        BaseClassDecl,
+                                        /*BaseIsVirtual*/ true);
     }
 
     return;
@@ -878,9 +878,9 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
-    EHStack.pushLazyCleanup<CallBaseDtor>(NormalAndEHCleanup,
-                                          BaseClassDecl,
-                                          /*BaseIsVirtual*/ false);
+    EHStack.pushCleanup<CallBaseDtor>(NormalAndEHCleanup,
+                                      BaseClassDecl,
+                                      /*BaseIsVirtual*/ false);
   }
 
   // Destroy direct fields.
@@ -904,9 +904,9 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
         continue;
 
     if (Array)
-      EHStack.pushLazyCleanup<CallArrayFieldDtor>(NormalAndEHCleanup, Field);
+      EHStack.pushCleanup<CallArrayFieldDtor>(NormalAndEHCleanup, Field);
     else
-      EHStack.pushLazyCleanup<CallFieldDtor>(NormalAndEHCleanup, Field);
+      EHStack.pushCleanup<CallFieldDtor>(NormalAndEHCleanup, Field);
   }
 }
 
@@ -1164,7 +1164,7 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
 }
 
 namespace {
-  struct CallLocalDtor : EHScopeStack::LazyCleanup {
+  struct CallLocalDtor : EHScopeStack::Cleanup {
     const CXXDestructorDecl *Dtor;
     llvm::Value *Addr;
 
@@ -1180,7 +1180,7 @@ namespace {
 
 void CodeGenFunction::PushDestructorCleanup(const CXXDestructorDecl *D,
                                             llvm::Value *Addr) {
-  EHStack.pushLazyCleanup<CallLocalDtor>(NormalAndEHCleanup, D, Addr);
+  EHStack.pushCleanup<CallLocalDtor>(NormalAndEHCleanup, D, Addr);
 }
 
 void CodeGenFunction::PushDestructorCleanup(QualType T, llvm::Value *Addr) {

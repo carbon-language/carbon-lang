@@ -1856,7 +1856,7 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
 }
 
 namespace {
-  struct CallSyncExit : EHScopeStack::LazyCleanup {
+  struct CallSyncExit : EHScopeStack::Cleanup {
     llvm::Value *SyncExitFn;
     llvm::Value *SyncArg;
     CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
@@ -1885,8 +1885,7 @@ void CGObjCGNU::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Register an all-paths cleanup to release the lock.
   llvm::Value *SyncExit = CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
-  CGF.EHStack.pushLazyCleanup<CallSyncExit>(NormalAndEHCleanup,
-                                            SyncExit, SyncArg);
+  CGF.EHStack.pushCleanup<CallSyncExit>(NormalAndEHCleanup, SyncExit, SyncArg);
 
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());

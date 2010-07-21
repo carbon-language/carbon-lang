@@ -389,7 +389,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
 }
 
 namespace {
-  struct CallArrayDtor : EHScopeStack::LazyCleanup {
+  struct CallArrayDtor : EHScopeStack::Cleanup {
     CallArrayDtor(const CXXDestructorDecl *Dtor, 
                   const ConstantArrayType *Type,
                   llvm::Value *Loc)
@@ -408,7 +408,7 @@ namespace {
     }
   };
 
-  struct CallVarDtor : EHScopeStack::LazyCleanup {
+  struct CallVarDtor : EHScopeStack::Cleanup {
     CallVarDtor(const CXXDestructorDecl *Dtor,
                 llvm::Value *NRVOFlag,
                 llvm::Value *Loc)
@@ -441,7 +441,7 @@ namespace {
 }
 
 namespace {
-  struct CallStackRestore : EHScopeStack::LazyCleanup {
+  struct CallStackRestore : EHScopeStack::Cleanup {
     llvm::Value *Stack;
     CallStackRestore(llvm::Value *Stack) : Stack(Stack) {}
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
@@ -451,7 +451,7 @@ namespace {
     }
   };
 
-  struct CallCleanupFunction : EHScopeStack::LazyCleanup {
+  struct CallCleanupFunction : EHScopeStack::Cleanup {
     llvm::Constant *CleanupFn;
     const CGFunctionInfo &FnInfo;
     llvm::Value *Addr;
@@ -479,7 +479,7 @@ namespace {
     }
   };
 
-  struct CallBlockRelease : EHScopeStack::LazyCleanup {
+  struct CallBlockRelease : EHScopeStack::Cleanup {
     llvm::Value *Addr;
     CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
 
@@ -592,7 +592,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
       DidCallStackSave = true;
 
       // Push a cleanup block and restore the stack there.
-      EHStack.pushLazyCleanup<CallStackRestore>(NormalCleanup, Stack);
+      EHStack.pushCleanup<CallStackRestore>(NormalCleanup, Stack);
     }
 
     // Get the element type.
@@ -783,11 +783,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
         
         if (const ConstantArrayType *Array = 
               getContext().getAsConstantArrayType(Ty)) {
-          EHStack.pushLazyCleanup<CallArrayDtor>(NormalAndEHCleanup,
-                                                 D, Array, Loc);
+          EHStack.pushCleanup<CallArrayDtor>(NormalAndEHCleanup,
+                                             D, Array, Loc);
         } else {
-          EHStack.pushLazyCleanup<CallVarDtor>(NormalAndEHCleanup,
-                                               D, NRVOFlag, Loc);
+          EHStack.pushCleanup<CallVarDtor>(NormalAndEHCleanup,
+                                           D, NRVOFlag, Loc);
         }
       }
   }
@@ -800,12 +800,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
     assert(F && "Could not find function!");
 
     const CGFunctionInfo &Info = CGM.getTypes().getFunctionInfo(FD);
-    EHStack.pushLazyCleanup<CallCleanupFunction>(NormalAndEHCleanup,
-                                                 F, &Info, DeclPtr, &D);
+    EHStack.pushCleanup<CallCleanupFunction>(NormalAndEHCleanup,
+                                             F, &Info, DeclPtr, &D);
   }
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly)
-    EHStack.pushLazyCleanup<CallBlockRelease>(NormalAndEHCleanup, DeclPtr);
+    EHStack.pushCleanup<CallBlockRelease>(NormalAndEHCleanup, DeclPtr);
 }
 
 /// Emit an alloca (or GlobalValue depending on target)

@@ -63,7 +63,7 @@ protected:
   enum { BitsRemaining = 30 };
 
 public:
-  enum Kind { LazyCleanup, Catch, Terminate, Filter };
+  enum Kind { Cleanup, Catch, Terminate, Filter };
 
   EHScope(Kind K) : CachedLandingPad(0), K(K) {}
 
@@ -154,14 +154,14 @@ public:
 };
 
 /// A cleanup scope which generates the cleanup blocks lazily.
-class EHLazyCleanupScope : public EHScope {
+class EHCleanupScope : public EHScope {
   /// Whether this cleanup needs to be run along normal edges.
   bool IsNormalCleanup : 1;
 
   /// Whether this cleanup needs to be run along exception edges.
   bool IsEHCleanup : 1;
 
-  /// The amount of extra storage needed by the LazyCleanup.
+  /// The amount of extra storage needed by the Cleanup.
   /// Always a multiple of the scope-stack alignment.
   unsigned CleanupSize : 12;
 
@@ -188,18 +188,18 @@ public:
   /// Gets the size required for a lazy cleanup scope with the given
   /// cleanup-data requirements.
   static size_t getSizeForCleanupSize(size_t Size) {
-    return sizeof(EHLazyCleanupScope) + Size;
+    return sizeof(EHCleanupScope) + Size;
   }
 
   size_t getAllocatedSize() const {
-    return sizeof(EHLazyCleanupScope) + CleanupSize;
+    return sizeof(EHCleanupScope) + CleanupSize;
   }
 
-  EHLazyCleanupScope(bool IsNormal, bool IsEH, unsigned CleanupSize,
-                     unsigned FixupDepth,
-                     EHScopeStack::stable_iterator EnclosingNormal,
-                     EHScopeStack::stable_iterator EnclosingEH)
-    : EHScope(EHScope::LazyCleanup),
+  EHCleanupScope(bool IsNormal, bool IsEH, unsigned CleanupSize,
+                 unsigned FixupDepth,
+                 EHScopeStack::stable_iterator EnclosingNormal,
+                 EHScopeStack::stable_iterator EnclosingEH)
+    : EHScope(EHScope::Cleanup),
       IsNormalCleanup(IsNormal), IsEHCleanup(IsEH),
       CleanupSize(CleanupSize), FixupDepth(FixupDepth),
       EnclosingNormal(EnclosingNormal), EnclosingEH(EnclosingEH),
@@ -225,12 +225,12 @@ public:
   size_t getCleanupSize() const { return CleanupSize; }
   void *getCleanupBuffer() { return this + 1; }
 
-  EHScopeStack::LazyCleanup *getCleanup() {
-    return reinterpret_cast<EHScopeStack::LazyCleanup*>(getCleanupBuffer());
+  EHScopeStack::Cleanup *getCleanup() {
+    return reinterpret_cast<EHScopeStack::Cleanup*>(getCleanupBuffer());
   }
 
   static bool classof(const EHScope *Scope) {
-    return (Scope->getKind() == LazyCleanup);
+    return (Scope->getKind() == Cleanup);
   }
 };
 
@@ -319,8 +319,8 @@ public:
           static_cast<const EHFilterScope*>(get())->getNumFilters());
       break;
 
-    case EHScope::LazyCleanup:
-      Ptr += static_cast<const EHLazyCleanupScope*>(get())
+    case EHScope::Cleanup:
+      Ptr += static_cast<const EHCleanupScope*>(get())
         ->getAllocatedSize();
       break;
 

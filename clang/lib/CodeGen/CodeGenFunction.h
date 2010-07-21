@@ -129,13 +129,14 @@ public:
     }
   };
 
-  /// A lazy cleanup.  Subclasses must be POD-like:  cleanups will
-  /// not be destructed, and they will be allocated on the cleanup
-  /// stack and freely copied and moved around.
+  /// Information for lazily generating a cleanup.  Subclasses must be
+  /// POD-like: cleanups will not be destructed, and they will be
+  /// allocated on the cleanup stack and freely copied and moved
+  /// around.
   ///
-  /// LazyCleanup implementations should generally be declared in an
+  /// Cleanup implementations should generally be declared in an
   /// anonymous namespace.
-  class LazyCleanup {
+  class Cleanup {
   public:
     // Anchor the construction vtable.  We use the destructor because
     // gcc gives an obnoxious warning if there are virtual methods
@@ -144,7 +145,7 @@ public:
     // doesn't seem to be any other way around this warning.
     //
     // This destructor will never be called.
-    virtual ~LazyCleanup();
+    virtual ~Cleanup();
 
     /// Emit the cleanup.  For normal cleanups, this is run in the
     /// same EH context as when the cleanup was pushed, i.e. the
@@ -204,7 +205,7 @@ private:
 
   void popNullFixups();
 
-  void *pushLazyCleanup(CleanupKind K, size_t DataSize);
+  void *pushCleanup(CleanupKind K, size_t DataSize);
 
 public:
   EHScopeStack() : StartOfBuffer(0), EndOfBuffer(0), StartOfData(0),
@@ -217,49 +218,49 @@ public:
 
   /// Push a lazily-created cleanup on the stack.
   template <class T>
-  void pushLazyCleanup(CleanupKind Kind) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T();
+  void pushCleanup(CleanupKind Kind) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T();
     (void) Obj;
   }
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class A0>
-  void pushLazyCleanup(CleanupKind Kind, A0 a0) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T(a0);
+  void pushCleanup(CleanupKind Kind, A0 a0) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T(a0);
     (void) Obj;
   }
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class A0, class A1>
-  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T(a0, a1);
+  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T(a0, a1);
     (void) Obj;
   }
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class A0, class A1, class A2>
-  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T(a0, a1, a2);
+  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T(a0, a1, a2);
     (void) Obj;
   }
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class A0, class A1, class A2, class A3>
-  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T(a0, a1, a2, a3);
+  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T(a0, a1, a2, a3);
     (void) Obj;
   }
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class A0, class A1, class A2, class A3, class A4>
-  void pushLazyCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) {
-    void *Buffer = pushLazyCleanup(Kind, sizeof(T));
-    LazyCleanup *Obj = new(Buffer) T(a0, a1, a2, a3, a4);
+  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) {
+    void *Buffer = pushCleanup(Kind, sizeof(T));
+    Cleanup *Obj = new(Buffer) T(a0, a1, a2, a3, a4);
     (void) Obj;
   }
 
