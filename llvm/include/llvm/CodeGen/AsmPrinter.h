@@ -296,7 +296,7 @@ namespace llvm {
     MCSymbol *GetBlockAddressSymbol(const BlockAddress *BA) const;
     MCSymbol *GetBlockAddressSymbol(const BasicBlock *BB) const;
 
-     //===------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Emission Helper Routines.
     //===------------------------------------------------------------------===//
   public:
