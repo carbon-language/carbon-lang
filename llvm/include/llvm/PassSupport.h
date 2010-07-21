@@ -132,6 +132,8 @@ private:
   PassInfo(const PassInfo &);       // do not implement
 };
 
+#define INITIALIZE_PASS(passName, arg, name, cfg, analysis) \
+  static RegisterPass<passName> passName ## _info(arg, name, cfg, analysis)
 
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
