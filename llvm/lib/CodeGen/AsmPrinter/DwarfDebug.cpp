@@ -1336,6 +1336,10 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   if (SP.isOptimized())
     addUInt(SPDie, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
 
+  if (unsigned isa = Asm->getISAEncoding()) {
+    addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
+  }
+
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPCU->insertDIE(SP, SPDie);
 

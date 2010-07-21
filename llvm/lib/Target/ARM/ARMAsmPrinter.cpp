@@ -56,6 +56,15 @@ static cl::opt<bool>
 EnableMCInst("enable-arm-mcinst-printer", cl::Hidden,
             cl::desc("enable experimental asmprinter gunk in the arm backend"));
 
+namespace llvm {
+  namespace ARM {
+    enum DW_ISA {
+      DW_ISA_ARM_thumb = 1,
+      DW_ISA_ARM_arm = 2
+    };
+  }
+}
+
 namespace {
   class ARMAsmPrinter : public AsmPrinter {
 
@@ -195,6 +204,14 @@ namespace {
     virtual void EmitFunctionEntryLabel();
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
+
+    virtual unsigned getISAEncoding() {
+      // ARM/Darwin adds ISA to the DWARF info for each function.
+      if (!Subtarget->isTargetDarwin())
+        return 0;
+      return Subtarget->isThumb() ?
+        llvm::ARM::DW_ISA_ARM_thumb : llvm::ARM::DW_ISA_ARM_arm;
+    }
 
     MCSymbol *GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
                                           const MachineBasicBlock *MBB) const;

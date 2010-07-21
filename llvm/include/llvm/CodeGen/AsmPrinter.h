@@ -369,6 +369,10 @@ namespace llvm {
     /// operands.
     virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
 
+    /// getISAEncoding - Get the value for DW_AT_APPLE_isa. Zero if no isa
+    /// encoding specified.
+    virtual unsigned getISAEncoding() { return 0; }
+
     //===------------------------------------------------------------------===//
     // Dwarf Lowering Routines
     //===------------------------------------------------------------------===//
