@@ -2541,6 +2541,54 @@ void CGObjCMac::EmitSynchronizedStmt(CodeGenFunction &CGF,
   return EmitTryOrSynchronizedStmt(CGF, S);
 }
 
+namespace {
+  struct PerformFragileFinally : EHScopeStack::LazyCleanup {
+    const Stmt &S;
+    llvm::Value *SyncArg;
+    llvm::Value *CallTryExitVar;
+    llvm::Value *ExceptionData;
+    ObjCTypesHelper &ObjCTypes;
+    PerformFragileFinally(const Stmt *S,
+                          llvm::Value *SyncArg,
+                          llvm::Value *CallTryExitVar,
+                          llvm::Value *ExceptionData,
+                          ObjCTypesHelper *ObjCTypes)
+      : S(*S), SyncArg(SyncArg), CallTryExitVar(CallTryExitVar),
+        ExceptionData(ExceptionData), ObjCTypes(*ObjCTypes) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // Check whether we need to call objc_exception_try_exit.
+      // In optimized code, this branch will always be folded.
+      llvm::BasicBlock *FinallyCallExit =
+        CGF.createBasicBlock("finally.call_exit");
+      llvm::BasicBlock *FinallyNoCallExit =
+        CGF.createBasicBlock("finally.no_call_exit");
+      CGF.Builder.CreateCondBr(CGF.Builder.CreateLoad(CallTryExitVar),
+                               FinallyCallExit, FinallyNoCallExit);
+
+      CGF.EmitBlock(FinallyCallExit);
+      CGF.Builder.CreateCall(ObjCTypes.getExceptionTryExitFn(), ExceptionData)
+        ->setDoesNotThrow();
+
+      CGF.EmitBlock(FinallyNoCallExit);
+
+      if (isa<ObjCAtTryStmt>(S)) {
+        if (const ObjCAtFinallyStmt* FinallyStmt =
+            cast<ObjCAtTryStmt>(S).getFinallyStmt())
+          CGF.EmitStmt(FinallyStmt->getFinallyBody());
+
+        // Currently, the end of the cleanup must always exist.
+        CGF.EnsureInsertPoint();
+      } else {
+        // Emit objc_sync_exit(expr); as finally's sole statement for
+        // @synchronized.
+        CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg)
+          ->setDoesNotThrow();
+      }
+    }
+  };
+}
+
 /*
 
   Objective-C setjmp-longjmp (sjlj) Exception Handling
@@ -2697,38 +2745,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                           CallTryExitVar);
 
   // Push a normal cleanup to leave the try scope.
-  {
-    CodeGenFunction::CleanupBlock FinallyScope(CGF, NormalCleanup);
-
-    // Check whether we need to call objc_exception_try_exit.
-    // In optimized code, this branch will always be folded.
-    llvm::BasicBlock *FinallyCallExit =
-      CGF.createBasicBlock("finally.call_exit");
-    llvm::BasicBlock *FinallyNoCallExit =
-      CGF.createBasicBlock("finally.no_call_exit");
-    CGF.Builder.CreateCondBr(CGF.Builder.CreateLoad(CallTryExitVar),
-                             FinallyCallExit, FinallyNoCallExit);
-
-    CGF.EmitBlock(FinallyCallExit);
-    CGF.Builder.CreateCall(ObjCTypes.getExceptionTryExitFn(), ExceptionData)
-      ->setDoesNotThrow();
-
-    CGF.EmitBlock(FinallyNoCallExit);
-
-    if (isTry) {
-      if (const ObjCAtFinallyStmt* FinallyStmt =
-          cast<ObjCAtTryStmt>(S).getFinallyStmt())
-        CGF.EmitStmt(FinallyStmt->getFinallyBody());
-
-      // ~CleanupBlock requires there to be an exit block.
-      CGF.EnsureInsertPoint();
-    } else {
-      // Emit objc_sync_exit(expr); as finally's sole statement for
-      // @synchronized.
-      CGF.Builder.CreateCall(ObjCTypes.getSyncExitFn(), SyncArg)
-        ->setDoesNotThrow();
-    }
-  }
+  CGF.EHStack.pushLazyCleanup<PerformFragileFinally>(NormalCleanup, &S,
+                                                     SyncArg,
+                                                     CallTryExitVar,
+                                                     ExceptionData,
+                                                     &ObjCTypes);
 
   // Enter a try block:
   //  - Call objc_exception_try_enter to push ExceptionData on top of
