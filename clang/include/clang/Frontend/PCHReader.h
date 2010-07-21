@@ -208,6 +208,9 @@ private:
     llvm::BitstreamReader StreamFile;
     llvm::BitstreamCursor Stream;
 
+    /// \brief The size of this file, in bits.
+    uint64_t SizeInBits;
+
     /// \brief The cursor to the start of the preprocessor block, which stores
     /// all of the macro definitions.
     llvm::BitstreamCursor MacroCursor;
@@ -267,6 +270,17 @@ private:
     /// \brief A pointer to an on-disk hash table of opaque type
     /// IdentifierHashTable.
     void *IdentifierLookupTable;
+
+    /// \brief The number of macro definitions in this file.
+    unsigned LocalNumMacroDefinitions;
+
+    /// \brief Offsets of all of the macro definitions in the preprocessing
+    /// record in the PCH file.
+    const uint32_t *MacroDefinitionOffsets;
+      
+    /// \brief The number of preallocated preprocessing entities in the
+    /// preprocessing record.
+    unsigned NumPreallocatedPreprocessingEntities;
   };
 
   /// \brief The chain of PCH files. The first entry is the one named by the
@@ -330,17 +344,9 @@ private:
   /// entries indicate that the particular selector ID has not yet
   /// been loaded.
   llvm::SmallVector<Selector, 16> SelectorsLoaded;
-
-  /// \brief Offsets of all of the macro definitions in the preprocessing
-  /// record in the PCH file.
-  const uint32_t *MacroDefinitionOffsets;
       
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
-      
-  /// \brief The number of preallocated preprocessing entities in the
-  /// preprocessing record.
-  unsigned NumPreallocatedPreprocessingEntities;
       
   /// \brief The set of external definitions stored in the the PCH
   /// file.

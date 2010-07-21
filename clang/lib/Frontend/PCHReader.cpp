@@ -420,9 +420,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
     Consumer(0), MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), MacroDefinitionOffsets(0), 
-    NumPreallocatedPreprocessingEntities(0),  
-    isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0),  isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
@@ -437,9 +435,7 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), MacroDefinitionOffsets(0), 
-    NumPreallocatedPreprocessingEntities(0),  
-    isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0), isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
     TotalNumStatements(0), NumMacrosRead(0), NumMethodPoolSelectorsRead(0),
     NumMethodPoolMisses(0), TotalNumMacros(0), NumLexicalDeclContextsRead(0),
@@ -456,7 +452,9 @@ PCHReader::~PCHReader() {
 PCHReader::PerFileData::PerFileData()
   : StatCache(0), LocalNumSLocEntries(0), LocalNumTypes(0), TypeOffsets(0),
     LocalNumDecls(0), DeclOffsets(0), LocalNumIdentifiers(0),
-    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0)
+    IdentifierOffsets(0), IdentifierTableData(0), IdentifierLookupTable(0),
+    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0),
+    NumPreallocatedPreprocessingEntities(0)
 {}
 
 
@@ -1357,7 +1355,7 @@ MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
     return 0;
   
   if (!MacroDefinitionsLoaded[ID])
-    ReadMacroRecord(MacroDefinitionOffsets[ID]);
+    ReadMacroRecord(Chain[0]->MacroDefinitionOffsets[ID]);
     
   return MacroDefinitionsLoaded[ID];
 }
@@ -1691,18 +1689,11 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       }
       break;
     }
-        
+
     case pch::MACRO_DEFINITION_OFFSETS:
-      MacroDefinitionOffsets = (const uint32_t *)BlobStart;
-      if (PP) {
-        if (!PP->getPreprocessingRecord())
-          PP->createPreprocessingRecord();
-        PP->getPreprocessingRecord()->SetExternalSource(*this, Record[0]);
-      } else {
-        NumPreallocatedPreprocessingEntities = Record[0];
-      }
-       
-      MacroDefinitionsLoaded.resize(Record[1]);
+      F.MacroDefinitionOffsets = (const uint32_t *)BlobStart;
+      F.NumPreallocatedPreprocessingEntities = Record[0];
+      F.LocalNumMacroDefinitions = Record[1];
       break;
     }
     First = false;
@@ -1721,17 +1712,30 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   // Here comes stuff that we only do once the entire chain is loaded.
 
   // Allocate space for loaded identifiers, decls and types.
-  unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0;
+  unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0,
+           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumDecls += Chain[I]->LocalNumDecls;
+    TotalNumPreallocatedPreprocessingEntities +=
+        Chain[I]->NumPreallocatedPreprocessingEntities;
+    TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
   }
   IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
   DeclsLoaded.resize(TotalNumDecls);
-  if (PP && TotalNumIdentifiers > 0)
-    PP->getHeaderSearchInfo().SetExternalLookup(this);
+  MacroDefinitionsLoaded.resize(TotalNumMacroDefs);
+  if (PP) {
+    if (TotalNumIdentifiers > 0)
+      PP->getHeaderSearchInfo().SetExternalLookup(this);
+    if (TotalNumPreallocatedPreprocessingEntities > 0) {
+      if (!PP->getPreprocessingRecord())
+        PP->createPreprocessingRecord();
+      PP->getPreprocessingRecord()->SetExternalSource(*this,
+                                     TotalNumPreallocatedPreprocessingEntities);
+    }
+  }
 
   // Check the predefines buffers.
   if (CheckPredefinesBuffers())
@@ -1755,19 +1759,17 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
                                 IdEnd = PP->getIdentifierTable().end();
          Id != IdEnd; ++Id)
       Identifiers.push_back(Id->second);
-    // FIXME: The loop order here is very cache-inefficient. Loop over files
-    // should probably be the outer loop.
-    for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
-      IdentifierInfo *II = Identifiers[I];
-      // Look in the on-disk hash tables for an entry for this identifier
-      PCHIdentifierLookupTrait Info(*this, II);
-      std::pair<const char*, unsigned> Key(II->getNameStart(), II->getLength());
-      // We need to search the tables in all files.
-      // FIXME: What happens if this stuff changes between files, e.g. the
-      // dependent PCH undefs a macro from the core file?
-      for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
-        PCHIdentifierLookupTable *IdTable
-          = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
+    // We need to search the tables in all files.
+    // FIXME: What happens if this stuff changes between files, e.g. the
+    // dependent PCH undefs a macro from the core file?
+    for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
+      PCHIdentifierLookupTable *IdTable
+        = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
+      for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
+        IdentifierInfo *II = Identifiers[I];
+        // Look in the on-disk hash tables for an entry for this identifier
+        PCHIdentifierLookupTrait Info(*this, II);
+        std::pair<const char*,unsigned> Key(II->getNameStart(),II->getLength());
         PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
         if (Pos == IdTable->end())
           continue;
@@ -1807,6 +1809,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCHCore(llvm::StringRef FileName) {
                     (const unsigned char *)F.Buffer->getBufferEnd());
   llvm::BitstreamCursor &Stream = F.Stream;
   Stream.init(F.StreamFile);
+  F.SizeInBits = F.Buffer->getBufferSize() * 8;
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||
@@ -1873,13 +1876,14 @@ PCHReader::PCHReadResult PCHReader::ReadPCHCore(llvm::StringRef FileName) {
 
 void PCHReader::setPreprocessor(Preprocessor &pp) {
   PP = &pp;
-  
-  if (NumPreallocatedPreprocessingEntities) {
+
+  unsigned TotalNum = 0;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I)
+    TotalNum += Chain[I]->NumPreallocatedPreprocessingEntities;
+  if (TotalNum) {
     if (!PP->getPreprocessingRecord())
       PP->createPreprocessingRecord();
-    PP->getPreprocessingRecord()->SetExternalSource(*this, 
-                                          NumPreallocatedPreprocessingEntities);
-    NumPreallocatedPreprocessingEntities = 0;
+    PP->getPreprocessingRecord()->SetExternalSource(*this, TotalNum);
   }
 }
 
