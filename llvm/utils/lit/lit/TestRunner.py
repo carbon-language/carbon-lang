@@ -422,6 +422,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     script = []
     xfails = []
     xtargets = []
+    requires = []
     for ln in open(sourcepath):
         if 'RUN:' in ln:
             # Isolate the command to run.
@@ -442,6 +443,9 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
         elif 'XTARGET:' in ln:
             items = ln[ln.index('XTARGET:') + 8:].split(',')
             xtargets.extend([s.strip() for s in items])
+        elif 'REQUIRES:' in ln:
+            items = ln[ln.index('REQUIRES:') + 9:].split(',')
+            requires.extend([s.strip() for s in items])
         elif 'END.' in ln:
             # Check for END. lines.
             if ln[ln.index('END.'):].strip() == 'END.':
@@ -461,8 +465,17 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     if not script:
         return (Test.UNRESOLVED, "Test has no run line!")
 
+    # Check for unterminated run lines.
     if script[-1][-1] == '\\':
         return (Test.UNRESOLVED, "Test has unterminated run lines (with '\\')")
+
+    # Check that we have the required features:
+    missing_required_features = [f for f in requires
+                                 if f not in test.config.available_features]
+    if missing_required_features:
+        msg = ', '.join(missing_required_features)
+        return (Test.UNSUPPORTED,
+                "Test requires the following features: %s" % msg)
 
     isXFail = isExpectedFail(xfails, xtargets, test.suite.config.target_triple)
     return script,isXFail,tmpBase,execdir
