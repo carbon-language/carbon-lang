@@ -2229,7 +2229,9 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   // Derived from asm spec.
   AddDarwinArch(Args, CmdArgs);
 
-  if (!getDarwinToolChain().isTargetIPhoneOS() ||
+  // Use -force_cpusubtype_ALL on x86 by default.
+  if (getToolChain().getTriple().getArch() == llvm::Triple::x86 ||
+      getToolChain().getTriple().getArch() == llvm::Triple::x86_64 ||
       Args.hasArg(options::OPT_force__cpusubtype__ALL))
     CmdArgs.push_back("-force_cpusubtype_ALL");
 
