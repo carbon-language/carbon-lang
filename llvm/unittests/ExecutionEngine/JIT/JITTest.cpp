@@ -630,31 +630,6 @@ TEST_F(JITTest, AvailableExternallyFunctionIsntCompiled) {
                         << " not 7 from the IR version.";
 }
 
-TEST_F(JITTest, NeedsExactSizeWithManyGlobals) {
-  // PR5291: When the JMM needed the exact size of function bodies before
-  // starting to emit them, the JITEmitter would modify a set while iterating
-  // over it.
-  TheJIT->DisableLazyCompilation(true);
-  RJMM->setSizeRequired(true);
-
-  LoadAssembly("@A = global i32 42 "
-               "@B = global i32* @A "
-               "@C = global i32** @B "
-               "@D = global i32*** @C "
-               "@E = global i32**** @D "
-               "@F = global i32***** @E "
-               "@G = global i32****** @F "
-               "@H = global i32******* @G "
-               "@I = global i32******** @H "
-               "define i32********* @test() { "
-               "  ret i32********* @I "
-               "}");
-  Function *testIR = M->getFunction("test");
-  int32_t********* (*test)() = reinterpret_cast<int32_t*********(*)()>(
-    (intptr_t)TheJIT->getPointerToFunction(testIR));
-  EXPECT_EQ(42, *********test());
-}
-
 TEST_F(JITTest, EscapedLazyStubStillCallable) {
   TheJIT->DisableLazyCompilation(false);
   LoadAssembly("define internal i32 @stubbed() { "

@@ -146,6 +146,103 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
+/// determineREX - Determine if the MachineInstr has to be encoded with a X86-64
+/// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
+/// size, and 3) use of X86-64 extended registers.
+static unsigned determineREX(const MachineInstr &MI) {
+  unsigned REX = 0;
+  const TargetInstrDesc &Desc = MI.getDesc();
+  
+  // Pseudo instructions do not need REX prefix byte.
+  if ((Desc.TSFlags & X86II::FormMask) == X86II::Pseudo)
+    return 0;
+  if (Desc.TSFlags & X86II::REX_W)
+    REX |= 1 << 3;
+  
+  unsigned NumOps = Desc.getNumOperands();
+  if (NumOps) {
+    bool isTwoAddr = NumOps > 1 &&
+    Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
+    
+    // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
+    unsigned i = isTwoAddr ? 1 : 0;
+    for (unsigned e = NumOps; i != e; ++i) {
+      const MachineOperand& MO = MI.getOperand(i);
+      if (MO.isReg()) {
+        unsigned Reg = MO.getReg();
+        if (X86InstrInfo::isX86_64NonExtLowByteReg(Reg))
+          REX |= 0x40;
+      }
+    }
+    
+    switch (Desc.TSFlags & X86II::FormMask) {
+      case X86II::MRMInitReg:
+        if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
+          REX |= (1 << 0) | (1 << 2);
+        break;
+      case X86II::MRMSrcReg: {
+        if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
+          REX |= 1 << 2;
+        i = isTwoAddr ? 2 : 1;
+        for (unsigned e = NumOps; i != e; ++i) {
+          const MachineOperand& MO = MI.getOperand(i);
+          if (X86InstrInfo::isX86_64ExtendedReg(MO))
+            REX |= 1 << 0;
+        }
+        break;
+      }
+      case X86II::MRMSrcMem: {
+        if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
+          REX |= 1 << 2;
+        unsigned Bit = 0;
+        i = isTwoAddr ? 2 : 1;
+        for (; i != NumOps; ++i) {
+          const MachineOperand& MO = MI.getOperand(i);
+          if (MO.isReg()) {
+            if (X86InstrInfo::isX86_64ExtendedReg(MO))
+              REX |= 1 << Bit;
+            Bit++;
+          }
+        }
+        break;
+      }
+      case X86II::MRM0m: case X86II::MRM1m:
+      case X86II::MRM2m: case X86II::MRM3m:
+      case X86II::MRM4m: case X86II::MRM5m:
+      case X86II::MRM6m: case X86II::MRM7m:
+      case X86II::MRMDestMem: {
+        unsigned e = (isTwoAddr ? X86::AddrNumOperands+1 : X86::AddrNumOperands);
+        i = isTwoAddr ? 1 : 0;
+        if (NumOps > e && X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(e)))
+          REX |= 1 << 2;
+        unsigned Bit = 0;
+        for (; i != e; ++i) {
+          const MachineOperand& MO = MI.getOperand(i);
+          if (MO.isReg()) {
+            if (X86InstrInfo::isX86_64ExtendedReg(MO))
+              REX |= 1 << Bit;
+            Bit++;
+          }
+        }
+        break;
+      }
+      default: {
+        if (X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0)))
+          REX |= 1 << 0;
+        i = isTwoAddr ? 2 : 1;
+        for (unsigned e = NumOps; i != e; ++i) {
+          const MachineOperand& MO = MI.getOperand(i);
+          if (X86InstrInfo::isX86_64ExtendedReg(MO))
+            REX |= 1 << 2;
+        }
+        break;
+      }
+    }
+  }
+  return REX;
+}
+
+
 /// emitPCRelativeBlockAddress - This method keeps track of the information
 /// necessary to resolve the address of this block later and emits a dummy
 /// value.
@@ -569,7 +666,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
 
   // Handle REX prefix.
   if (Is64BitMode) {
-    if (unsigned REX = X86InstrInfo::determineREX(MI))
+    if (unsigned REX = determineREX(MI))
       MCE.emitByte(0x40 | REX);
   }
 
