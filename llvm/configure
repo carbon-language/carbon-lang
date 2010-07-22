@@ -8004,6 +8004,10 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
+case "$INSTALL" in
+ [\\/$]* | ?:[\\/]* ) ;;
+ *)  INSTALL="\\\$(TOPSRCDIR)/$INSTALL" ;;
+esac
 
 # Extract the first word of "bzip2", so it can be a program name with args.
 set dummy bzip2; ac_word=$2
@@ -11387,7 +11391,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11390 "configure"
+#line 11394 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
