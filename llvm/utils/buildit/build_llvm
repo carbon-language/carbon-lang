@@ -100,7 +100,7 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
   # Try to use the platform llvm-gcc. Fall back to gcc if it's not available.
   for prog in gcc g++ ; do
     P=$DIR/bin/arm-apple-darwin$DARWIN_VERS-${prog}
-    T=`xcrun -find llvm-${prog}`
+    T=`xcrun -sdk $SDKROOT -find llvm-${prog}`
     if [ "x$T" = "x" ] ; then
       T=`xcrun -sdk $SDKROOT -find ${prog}`
     fi
