@@ -8,7 +8,6 @@
 #endif
 #pragma unknown
 #endif
-
 #ifdef WIBBLE
 #include "honk"
 #else
@@ -21,6 +20,7 @@ int foo();
 // Inputs/preamble.txt, since we diff against it.
 
 // RUN: %clang_cc1 -print-preamble %s > %t
+// RUN: echo END. >> %t
 // RUN: FileCheck < %t %s
 // XFAIL: win32
 
@@ -34,5 +34,4 @@ int foo();
 // CHECK-NEXT: #endif
 // CHECK-NEXT: #pragma unknown
 // CHECK-NEXT: #endif
-
-
+// CHECK-NEXT: END.
