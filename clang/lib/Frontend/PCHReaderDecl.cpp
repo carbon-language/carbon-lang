@@ -1035,7 +1035,9 @@ void PCHDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
 }
 
 void PCHDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
-  assert(false && "cannot read StaticAssertDecl");
+  VisitDecl(D);
+  D->AssertExpr = Reader.ReadExpr();
+  D->Message = cast<StringLiteral>(Reader.ReadExpr());
 }
 
 std::pair<uint64_t, uint64_t>
@@ -1412,7 +1414,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(),0,0,0,0);
     break;
   case pch::DECL_STATIC_ASSERT:
-    assert(false && "cannot read StaticAssertDecl");
+    D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
 
   case pch::DECL_OBJC_METHOD:

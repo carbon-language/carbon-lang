@@ -989,7 +989,10 @@ void PCHDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
 }
 
 void PCHDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {
-  assert(false && "cannot write StaticAssertDecl");
+  VisitDecl(D);
+  Writer.AddStmt(D->getAssertExpr());
+  Writer.AddStmt(D->getMessage());
+  Code = pch::DECL_STATIC_ASSERT;
 }
 
 /// \brief Emit the DeclContext part of a declaration context decl.
