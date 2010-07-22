@@ -818,7 +818,17 @@ void PCHDeclWriter::VisitFriendDecl(FriendDecl *D) {
 }
 
 void PCHDeclWriter::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
-  assert(false && "cannot write FriendTemplateDecl");
+  VisitDecl(D);
+  Record.push_back(D->getNumTemplateParameters());
+  for (unsigned i = 0, e = D->getNumTemplateParameters(); i != e; ++i)
+    Writer.AddTemplateParameterList(D->getTemplateParameterList(i), Record);
+  Record.push_back(D->getFriendDecl() != 0);
+  if (D->getFriendDecl())
+    Writer.AddDeclRef(D->getFriendDecl(), Record);
+  else
+    Writer.AddTypeSourceInfo(D->getFriendType(), Record);
+  Writer.AddSourceLocation(D->getFriendLoc(), Record);
+  Code = pch::DECL_FRIEND_TEMPLATE;
 }
 
 void PCHDeclWriter::VisitTemplateDecl(TemplateDecl *D) {

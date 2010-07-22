@@ -631,3 +631,8 @@ FriendTemplateDecl *FriendTemplateDecl::Create(ASTContext &Context,
     = new (Context) FriendTemplateDecl(DC, L, NParams, Params, Friend, FLoc);
   return Result;
 }
+
+FriendTemplateDecl *FriendTemplateDecl::Create(ASTContext &Context,
+                                               EmptyShell Empty) {
+  return new (Context) FriendTemplateDecl(Empty);
+}

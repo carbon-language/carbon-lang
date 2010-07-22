@@ -1651,6 +1651,12 @@ private:
       FriendLoc(FriendLoc)
   {}
 
+  FriendTemplateDecl(EmptyShell Empty)
+    : Decl(Decl::FriendTemplate, Empty),
+      NumParams(0),
+      Params(0)
+  {}
+
 public:
   static FriendTemplateDecl *Create(ASTContext &Context,
                                     DeclContext *DC, SourceLocation Loc,
@@ -1658,6 +1664,8 @@ public:
                                     TemplateParameterList **Params,
                                     FriendUnion Friend,
                                     SourceLocation FriendLoc);
+
+  static FriendTemplateDecl *Create(ASTContext &Context, EmptyShell Empty);
 
   /// If this friend declaration names a templated type (or
   /// a dependent member type of a templated type), return that
@@ -1691,6 +1699,8 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Decl::FriendTemplate; }
   static bool classof(const FriendTemplateDecl *D) { return true; }
+
+  friend class PCHDeclReader;
 };
 
 /// Implementation of inline functions that require the template declarations

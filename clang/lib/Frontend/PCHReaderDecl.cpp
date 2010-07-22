@@ -853,7 +853,17 @@ void PCHDeclReader::VisitFriendDecl(FriendDecl *D) {
 }
 
 void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
-  assert(false && "cannot read FriendTemplateDecl");
+  VisitDecl(D);
+  unsigned NumParams = Record[Idx++];
+  D->NumParams = NumParams;
+  D->Params = new TemplateParameterList*[NumParams];
+  for (unsigned i = 0; i != NumParams; ++i)
+    D->Params[i] = Reader.ReadTemplateParameterList(Record, Idx);
+  if (Record[Idx++]) // HasFriendDecl
+    D->Friend = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+  else
+    D->Friend = Reader.GetTypeSourceInfo(Record, Idx);
+  D->FriendLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
 void PCHDeclReader::VisitTemplateDecl(TemplateDecl *D) {
@@ -1374,7 +1384,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
     D = FriendDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_FRIEND_TEMPLATE:
-    assert(false && "cannot read FriendTemplateDecl");
+    D = FriendTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
   case pch::DECL_CLASS_TEMPLATE:
     D = ClassTemplateDecl::Create(*Context, 0, SourceLocation(),
