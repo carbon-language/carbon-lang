@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void f1() {
-  asm ("ret" : : :); // expected-error {{expected string literal}}
+  // PR7673: Some versions of GCC support an empty clobbers section.
+  asm ("ret" : : :);
 }
 
 void f2() {

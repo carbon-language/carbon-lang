@@ -1367,17 +1367,19 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
     if (!AteExtraColon)
       ConsumeToken();
 
-    // Parse the asm-string list for clobbers.
-    while (1) {
-      OwningExprResult Clobber(ParseAsmStringLiteral());
+    // Parse the asm-string list for clobbers if present.
+    if (Tok.isNot(tok::r_paren)) {
+      while (1) {
+        OwningExprResult Clobber(ParseAsmStringLiteral());
 
-      if (Clobber.isInvalid())
-        break;
+        if (Clobber.isInvalid())
+          break;
 
-      Clobbers.push_back(Clobber.release());
+        Clobbers.push_back(Clobber.release());
 
-      if (Tok.isNot(tok::comma)) break;
-      ConsumeToken();
+        if (Tok.isNot(tok::comma)) break;
+        ConsumeToken();
+      }
     }
   }
 
