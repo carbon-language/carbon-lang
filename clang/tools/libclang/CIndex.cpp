@@ -520,7 +520,10 @@ bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
   if (Visit(B->getSignatureAsWritten()->getTypeLoc()))
     return true;
 
-  return Visit(MakeCXCursor(B->getBody(), StmtParent, TU));
+  if (Stmt *Body = B->getBody())
+    return Visit(MakeCXCursor(Body, StmtParent, TU));
+
+  return false;
 }
 
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
