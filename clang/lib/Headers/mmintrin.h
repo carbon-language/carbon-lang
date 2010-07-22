@@ -443,6 +443,64 @@ _mm_setr_pi8(char __b7, char __b6, char __b5, char __b4, char __b3, char __b2,
     return (__m64)(__v8qi){ __b7, __b6, __b5, __b4, __b3, __b2, __b1, __b0 };
 }
 
+
+/* Aliases for compatibility. */
+#define _m_empty _mm_empty
+#define _m_from_int _mm_cvtsi32_si64
+#define _m_to_int _mm_cvtsi64_si32
+#define _m_packsswb _mm_packs_pi16
+#define _m_packssdw _mm_packs_pi32
+#define _m_packuswb _mm_packs_pu16
+#define _m_punpckhbw _mm_unpackhi_pi8
+#define _m_punpckhwd _mm_unpackhi_pi16
+#define _m_punpckhdq _mm_unpackhi_pi32
+#define _m_punpcklbw _mm_unpacklo_pi8
+#define _m_punpcklwd _mm_unpacklo_pi16
+#define _m_punpckldq _mm_unpacklo_pi32
+#define _m_paddb _mm_add_pi8
+#define _m_paddw _mm_add_pi16
+#define _m_paddd _mm_add_pi32
+#define _m_paddsb _mm_adds_pi8
+#define _m_paddsw _mm_adds_pi16
+#define _m_paddusb _mm_adds_pu8
+#define _m_paddusw _mm_adds_pu16
+#define _m_psubb _mm_sub_pi8
+#define _m_psubw _mm_sub_pi16
+#define _m_psubd _mm_sub_pi32
+#define _m_psubsb _mm_subs_pi8
+#define _m_psubsw _mm_subs_pi16
+#define _m_psubusb _mm_subs_pu8
+#define _m_psubusw _mm_subs_pu16
+#define _m_pmaddwd _mm_madd_pi16
+#define _m_pmulhw _mm_mulhi_pi16
+#define _m_pmullw _mm_mullo_pi16
+#define _m_psllw _mm_sll_pi16
+#define _m_psllwi _mm_slli_pi16
+#define _m_pslld _mm_sll_pi32
+#define _m_pslldi _mm_slli_pi32
+#define _m_psllq _mm_sll_pi64
+#define _m_psllqi _mm_slli_pi64
+#define _m_psraw _mm_sra_pi16
+#define _m_psrawi _mm_srai_pi16
+#define _m_psrad _mm_sra_pi32
+#define _m_psradi _mm_srai_pi32
+#define _m_psrlw _mm_srl_pi16
+#define _m_psrlwi _mm_srli_pi16
+#define _m_psrld _mm_srl_pi32
+#define _m_psrldi _mm_srli_pi32
+#define _m_psrlq _mm_srl_pi64
+#define _m_psrlqi _mm_srli_pi64
+#define _m_pand _mm_and_si64
+#define _m_pandn _mm_andnot_si64
+#define _m_por _mm_or_si64
+#define _m_pxor _mm_xor_si64
+#define _m_pcmpeqb _mm_cmpeq_pi8
+#define _m_pcmpeqw _mm_cmpeq_pi16
+#define _m_pcmpeqd _mm_cmpeq_pi32
+#define _m_pcmpgtb _mm_cmpgt_pi8
+#define _m_pcmpgtw _mm_cmpgt_pi16
+#define _m_pcmpgtd _mm_cmpgt_pi32
+
 #endif /* __MMX__ */
 
 #endif /* __MMINTRIN_H */

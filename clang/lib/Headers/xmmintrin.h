@@ -416,6 +416,12 @@ _mm_cvtps_pi32(__m128 a)
   return (__m64)__builtin_ia32_cvtps2pi(a);
 }
 
+static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+_mm_cvt_ps2pi(__m128 a)
+{
+  return _mm_cvtps_pi32(a);
+}
+
 static __inline__ int __attribute__((__always_inline__, __nodebug__))
 _mm_cvttss_si32(__m128 a)
 {
@@ -440,11 +446,23 @@ _mm_cvttps_pi32(__m128 a)
   return (__m64)__builtin_ia32_cvttps2pi(a);
 }
 
+static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+_mm_cvtt_ps2pi(__m128 a)
+{
+  return _mm_cvttps_pi32(a);
+}
+
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtsi32_ss(__m128 a, int b)
 {
   a[0] = b;
   return a;
+}
+
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+_mm_cvtt_si2ss(__m128 a, int b)
+{
+  return _mm_cvtsi32_ss(a, b);
 }
 
 #ifdef __x86_64__
@@ -462,6 +480,12 @@ static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cvtpi32_ps(__m128 a, __m64 b)
 {
   return __builtin_ia32_cvtpi2ps(a, (__v2si)b);
+}
+
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+_mm_cvtt_pi2ps(__m128 a, __m64 b)
+{
+  return _mm_cvtpi32_ps(a, b);
 }
 
 static __inline__ float __attribute__((__always_inline__, __nodebug__))
@@ -587,6 +611,12 @@ _mm_store1_ps(float *p, __m128 a)
 {
   a = __builtin_shufflevector(a, a, 0, 0, 0, 0);
   _mm_storeu_ps(p, a);
+}
+
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+_mm_store_ps1(float *p, __m128 a)
+{
+    return _mm_store1_ps(p, a);
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
@@ -907,6 +937,23 @@ do { \
   (row2) = _mm_movelh_ps(tmp1, tmp3); \
   (row3) = _mm_movehl_ps(tmp3, tmp1); \
 } while (0)
+
+/* Aliases for compatibility. */
+#define _m_pextrw _mm_extract_pi16
+#define _m_pinsrw _mm_insert_pi16
+#define _m_pmaxsw _mm_max_pi16
+#define _m_pmaxub _mm_max_pu8
+#define _m_pminsw _mm_min_pi16
+#define _m_pminub _mm_min_pu8
+#define _m_pmovmskb _mm_movemask_pi8
+#define _m_pmulhuw _mm_mulhi_pu16
+#define _m_pshufw _mm_shuffle_pi16
+#define _m_maskmovq _mm_maskmove_si64
+#define _m_pavgb _mm_avg_pu8
+#define _m_pavgw _mm_avg_pu16
+#define _m_psadbw _mm_sad_pu8
+#define _m_ _mm_
+#define _m_ _mm_
 
 /* Ugly hack for backwards-compatibility (compatible with gcc) */
 #ifdef __SSE2__
