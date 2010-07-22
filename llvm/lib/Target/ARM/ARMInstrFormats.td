@@ -313,7 +313,7 @@ class ABXI<bits<4> opcod, dag oops, dag iops, InstrItinClass itin,
 }
 class ABXIx2<dag oops, dag iops, InstrItinClass itin,
              string asm, list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, BrMiscFrm, itin,
+  : XI<oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, Pseudo, itin,
        asm, "", pattern>;
 
 // BR_JT instructions
