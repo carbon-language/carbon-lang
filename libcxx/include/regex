@@ -2504,6 +2504,24 @@ private:
     template <class _ForwardIterator>
         _ForwardIterator
         __parse_QUOTED_CHAR_ERE(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_ecma_exp(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_alternative(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_term(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_assertion(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_atom(_ForwardIterator __first, _ForwardIterator __last);
+    template <class _ForwardIterator>
+        _ForwardIterator
+        __parse_quantifier(_ForwardIterator __first, _ForwardIterator __last) {} // temp!
 
     void __push_l_anchor() {__left_anchor_ = true;}
     void __push_r_anchor();
@@ -2522,6 +2540,12 @@ private:
                             __owns_one_state<_CharT>* __sb);
     void __push_begin_marked_subexpression();
     void __push_end_marked_subexpression(unsigned);
+    void __push_empty();
+    void __push_word_boundary(bool) {}
+    void __push_start_pos_lookahead() {}
+    void __push_end_pos_lookahead() {}
+    void __push_start_neg_lookahead() {}
+    void __push_end_neg_lookahead() {}
 
     template <class _Allocator>
         bool
@@ -2619,6 +2643,7 @@ basic_regex<_CharT, _Traits>::__parse(_ForwardIterator __first,
     switch (__flags_ & 0x3F0)
     {
     case ECMAScript:
+        __parse_ecma_exp(__first, __last);
         break;
     case basic:
         __parse_basic_reg_exp(__first, __last);
@@ -3464,6 +3489,141 @@ basic_regex<_CharT, _Traits>::__parse_DUP_COUNT(_ForwardIterator __first,
 }
 
 template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_ecma_exp(_ForwardIterator __first,
+                                               _ForwardIterator __last)
+{
+    __owns_one_state<_CharT>* __sa = __end_;
+    _ForwardIterator __temp = __parse_alternative(__first, __last);
+    if (__temp == __first)
+        __push_empty();
+    __first = __temp;
+    while (__first != __last && *__first == '|')
+    {
+        __owns_one_state<_CharT>* __sb = __end_;
+        __temp = __parse_alternative(++__first, __last);
+        if (__temp == __first)
+            __push_empty();
+        __push_alternation(__sa, __sb);
+        __first = __temp;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_alternative(_ForwardIterator __first,
+                                                  _ForwardIterator __last)
+{
+    while (true)
+    {
+        _ForwardIterator __temp = __parse_term(__first, __last);
+        if (__temp == __first)
+            break;
+        __first = __temp;
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_term(_ForwardIterator __first,
+                                           _ForwardIterator __last)
+{
+    _ForwardIterator __temp = __parse_assertion(__first, __last);
+    if (__temp == __first)
+    {
+        __temp = __parse_atom(__first, __last);
+        if (__temp != __first)
+            __first = __parse_quantifier(__temp, __last);
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_assertion(_ForwardIterator __first,
+                                                _ForwardIterator __last)
+{
+    if (__first != __last)
+    {
+        switch (*__first)
+        {
+        case '^':
+            __push_l_anchor();
+            ++__first;
+            break;
+        case '$':
+            __push_r_anchor();
+            ++__first;
+            break;
+        case '\\':
+            {
+                _ForwardIterator __temp = _STD::next(__first);
+                if (__temp != __last)
+                {
+                    if (*__temp == 'b')
+                    {
+                        __push_word_boundary(true);
+                        __first = ++__temp;
+                    }
+                    else if (*__temp == 'B')
+                    {
+                        __push_word_boundary(false);
+                        __first = ++__temp;
+                    }
+                }
+            }
+            break;
+        case '(':
+            {
+                _ForwardIterator __temp = _STD::next(__first);
+                if (__temp != __last && *__temp == '?')
+                {
+                    if (++__temp != __last)
+                    {
+                        switch (*__temp)
+                        {
+                        case '=':
+                            __push_start_pos_lookahead();
+                            __temp = __parse_ecma_exp(++__temp, __last);
+                            if (__temp == __last || *__temp != ')')
+                                throw regex_error(regex_constants::error_paren);
+                            __push_end_pos_lookahead();
+                            __first = ++__temp;
+                            break;
+                        case '!':
+                            __push_start_neg_lookahead();
+                            __temp = __parse_ecma_exp(++__temp, __last);
+                            if (__temp == __last || *__temp != ')')
+                                throw regex_error(regex_constants::error_paren);
+                            __push_end_neg_lookahead();
+                            __first = ++__temp;
+                            break;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+    }
+    return __first;
+}
+
+template <class _CharT, class _Traits>
+template <class _ForwardIterator>
+_ForwardIterator
+basic_regex<_CharT, _Traits>::__parse_atom(_ForwardIterator __first,
+                                           _ForwardIterator __last)
+{
+    return __first;  // temp!
+}
+
+template <class _CharT, class _Traits>
 void
 basic_regex<_CharT, _Traits>::__push_loop(size_t __min, size_t __max,
         __owns_one_state<_CharT>* __s, size_t __mexp_begin, size_t __mexp_end,
@@ -3535,6 +3695,14 @@ void
 basic_regex<_CharT, _Traits>::__push_match_any()
 {
     __end_->first() = new __match_any<_CharT>(__end_->first());
+    __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
+}
+
+template <class _CharT, class _Traits>
+void
+basic_regex<_CharT, _Traits>::__push_empty()
+{
+    __end_->first() = new __empty_state<_CharT>(__end_->first());
     __end_ = static_cast<__owns_one_state<_CharT>*>(__end_->first());
 }
 
