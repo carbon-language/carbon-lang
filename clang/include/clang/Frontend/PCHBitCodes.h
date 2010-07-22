@@ -588,17 +588,25 @@ namespace clang {
       /// \brief An AccessSpecDecl record.
       DECL_ACCESS_SPEC,
 
-      // FIXME: Implement serialization for these decl types. This just
-      // allocates the order in which
+      /// \brief A FriendDecl record.
       DECL_FRIEND,
+      /// \brief A FriendTemplateDecl record.
       DECL_FRIEND_TEMPLATE,
+      /// \brief A ClassTemplateDecl record.
       DECL_CLASS_TEMPLATE,
+      /// \brief A ClassTemplateSpecializationDecl record.
       DECL_CLASS_TEMPLATE_SPECIALIZATION,
+      /// \brief A ClassTemplatePartialSpecializationDecl record.
       DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION,
+      /// \brief A FunctionTemplateDecl record.
       DECL_FUNCTION_TEMPLATE,
+      /// \brief A TemplateTypeParmDecl record.
       DECL_TEMPLATE_TYPE_PARM,
+      /// \brief A NonTypeTemplateParmDecl record.
       DECL_NON_TYPE_TEMPLATE_PARM,
+      /// \brief A TemplateTemplateParmDecl record.
       DECL_TEMPLATE_TEMPLATE_PARM,
+      /// \brief A StaticAssertDecl record.
       DECL_STATIC_ASSERT
     };
 
