@@ -80,6 +80,21 @@ def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_X86TCRET : SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisVT<1, i32>]>;
 
+def SDT_X86MEMBARRIER : SDTypeProfile<0, 0, []>;
+def SDT_X86MEMBARRIERNoSSE : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+
+def X86MemBarrier : SDNode<"X86ISD::MEMBARRIER", SDT_X86MEMBARRIER,
+                            [SDNPHasChain]>;
+def X86MemBarrierNoSSE : SDNode<"X86ISD::MEMBARRIER", SDT_X86MEMBARRIERNoSSE,
+                                [SDNPHasChain]>;
+def X86MFence : SDNode<"X86ISD::MFENCE", SDT_X86MEMBARRIER,
+                        [SDNPHasChain]>;
+def X86SFence : SDNode<"X86ISD::SFENCE", SDT_X86MEMBARRIER,
+                        [SDNPHasChain]>;
+def X86LFence : SDNode<"X86ISD::LFENCE", SDT_X86MEMBARRIER,
+                        [SDNPHasChain]>;
+
+
 def X86bsf     : SDNode<"X86ISD::BSF",      SDTUnaryArithWithFlags>;
 def X86bsr     : SDNode<"X86ISD::BSR",      SDTUnaryArithWithFlags>;
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
@@ -3905,6 +3920,20 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 //===----------------------------------------------------------------------===//
 // Atomic support
 //
+
+// Memory barriers
+let hasSideEffects = 1 in {
+def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
+                     "#MEMBARRIER",
+                     [(X86MemBarrier)]>, Requires<[HasSSE2]>;
+
+// TODO: Get this to fold the constant into the instruction.           
+let Uses = [ESP] in
+def Int_MemBarrierNoSSE  : I<0x0B, Pseudo, (outs), (ins GR32:$zero),
+                           "lock\n\t"
+                           "or{l}\t{$zero, (%esp)|(%esp), $zero}",
+                           [(X86MemBarrierNoSSE GR32:$zero)]>, LOCK;
+}
 
 // Atomic swap. These are just normal xchg instructions. But since a memory
 // operand is referenced, the atomicity is ensured.

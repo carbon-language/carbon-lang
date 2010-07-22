@@ -1135,13 +1135,6 @@ void test(double *P) {
 
 //===---------------------------------------------------------------------===//
 
-handling llvm.memory.barrier on pre SSE2 cpus
-
-should generate:
-lock ; mov %esp, %esp
-
-//===---------------------------------------------------------------------===//
-
 The generated code on x86 for checking for signed overflow on a multiply the
 obvious way is much longer than it needs to be.
 
