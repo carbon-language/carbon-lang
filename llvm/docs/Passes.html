@@ -120,6 +120,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#print-used-types">-print-used-types</a></td><td>Find Used Types</td></tr>
 <tr><td><a href="#profile-estimator">-profile-estimator</a></td><td>Estimate profiling information</td></tr>
 <tr><td><a href="#profile-loader">-profile-loader</a></td><td>Load profile information from llvmprof.out</td></tr>
+<tr><td><a href="#regions">-regions</a></td><td>Detect single entry single exit regions in a function</td></tr>
 <tr><td><a href="#profile-verifier">-profile-verifier</a></td><td>Verify profiling information</td></tr>
 <tr><td><a href="#scalar-evolution">-scalar-evolution</a></td><td>Scalar Evolution Analysis</td></tr>
 <tr><td><a href="#scev-aa">-scev-aa</a></td><td>ScalarEvolution-based Alias Analysis</td></tr>
@@ -770,6 +771,17 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </div>
 <div class="doc_text">
   <p>Pass that checks profiling information for plausibility.</p>
+</div>
+<div class="doc_subsection">
+  <a name="regions">-regions: Detect single entry single exit regions in a function</a>
+</div>
+<div class="doc_text">
+  <p>
+  The <code>RegionInfo</code> pass detects single entry single exit regions in a
+  function, where a region is defined as any subgraph that is connected to the
+  remaining graph at only two spots. Furthermore, an hierarchical region tree is
+  built.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->

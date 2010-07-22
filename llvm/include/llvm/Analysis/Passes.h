@@ -154,6 +154,13 @@ namespace llvm {
   // print debug info intrinsics in human readable form
   FunctionPass *createDbgInfoPrinterPass();
 
+  //===--------------------------------------------------------------------===//
+  //
+  // createRegionInfoPass - This pass finds all single entry single exit regions
+  // in a function and builds the region hierarchy.
+  //
+  FunctionPass *createRegionInfoPass();
+
   // Print module-level debug info metadata in human-readable form.
   ModulePass *createModuleDebugInfoPrinterPass();
 }

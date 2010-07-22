@@ -1,0 +1,637 @@
+//===- RegionInfo.cpp - SESE region detection analysis --------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+// Detects single entry single exit regions in the control flow graph.
+//===----------------------------------------------------------------------===//
+
+#include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/RegionIterator.h"
+
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+
+#define DEBUG_TYPE "region"
+#include "llvm/Support/Debug.h"
+
+#include <set>
+#include <algorithm>
+
+using namespace llvm;
+
+// Always verify if expensive checking is enabled.
+#ifdef XDEBUG
+bool VerifyRegionInfo = true;
+#else
+bool VerifyRegionInfo = false;
+#endif
+
+static cl::opt<bool,true>
+VerifyRegionInfoX("verify-region-info", cl::location(VerifyRegionInfo),
+                cl::desc("Verify region info (time consuming)"));
+
+STATISTIC(numRegions,       "The # of regions");
+STATISTIC(numSimpleRegions, "The # of simple regions");
+
+//===----------------------------------------------------------------------===//
+/// PrintStyle - Print region in difference ways.
+enum PrintStyle { PrintNone, PrintBB, PrintRN  };
+
+cl::opt<enum PrintStyle> printStyle("print-region-style", cl::Hidden,
+  cl::desc("style of printing regions"),
+  cl::values(
+    clEnumValN(PrintNone, "none",  "print no details"),
+    clEnumValN(PrintBB, "bb",  "print regions in detail with block_iterator"),
+    clEnumValN(PrintRN, "rn",  "print regions in detail with element_iterator"),
+    clEnumValEnd));
+//===----------------------------------------------------------------------===//
+/// Region Implementation
+Region::Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo* RInfo,
+               DominatorTree *dt, Region *Parent)
+               : RegionNode(Parent, Entry, 1), RI(RInfo), DT(dt), exit(Exit) {}
+
+Region::~Region() {
+  // Only clean the cache for this Region. Caches of child Regions will be
+  // cleaned when the child Regions are deleted.
+  BBNodeMap.clear();
+
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    delete *I;
+}
+
+bool Region::contains(const BasicBlock *B) const {
+  BasicBlock *BB = const_cast<BasicBlock*>(B);
+
+  assert(DT->getNode(BB) && "BB not part of the dominance tree");
+
+  BasicBlock *entry = getEntry(), *exit = getExit();
+
+  // Toplevel region.
+  if (!exit)
+    return true;
+
+  return (DT->dominates(entry, BB)
+    && !(DT->dominates(exit, BB) && DT->dominates(entry, exit)));
+}
+
+bool Region::isSimple() const {
+  bool isSimple = true;
+  bool found = false;
+
+  BasicBlock *entry = getEntry(), *exit = getExit();
+
+  // TopLevelRegion
+  if (!exit)
+    return false;
+
+  for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
+       ++PI)
+    if (!contains(*PI)) {
+      if (found) {
+        isSimple = false;
+        break;
+      }
+      found = true;
+    }
+
+  found = false;
+
+  for (pred_iterator PI = pred_begin(exit), PE = pred_end(exit); PI != PE;
+       ++PI)
+    if (contains(*PI)) {
+      if (found) {
+        isSimple = false;
+        break;
+      }
+      found = true;
+    }
+
+  return isSimple;
+}
+
+void Region::verifyBBInRegion(BasicBlock *BB) const {
+  if (!contains(BB))
+    llvm_unreachable("Broken region found!");
+
+  BasicBlock *entry = getEntry(), *exit = getExit();
+
+  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+    if (!contains(*SI) && exit != *SI)
+      llvm_unreachable("Broken region found!");
+
+  if (entry != BB)
+    for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB); SI != SE; ++SI)
+      if (!contains(*SI))
+        llvm_unreachable("Broken region found!");
+}
+
+void Region::verifyWalk(BasicBlock *BB, std::set<BasicBlock*> *visited) const {
+  BasicBlock *exit = getExit();
+
+  visited->insert(BB);
+
+  verifyBBInRegion(BB);
+
+  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+    if (*SI != exit && visited->find(*SI) == visited->end())
+        verifyWalk(*SI, visited);
+}
+
+void Region::verifyRegion() const {
+  // Only do verification when user wants to, otherwise this expensive
+  // check will be invoked by PassManager.
+  if (!VerifyRegionInfo) return;
+
+  std::set<BasicBlock*> visited;
+  verifyWalk(getEntry(), &visited);
+}
+
+void Region::verifyRegionNest() const {
+  for (Region::const_iterator RI = begin(), RE = end(); RI != RE; ++RI)
+    (*RI)->verifyRegionNest();
+
+  verifyRegion();
+}
+
+Region::block_iterator Region::block_begin() {
+  return GraphTraits<FlatIt<Region*> >::nodes_begin(this);
+}
+
+Region::block_iterator Region::block_end() {
+  return GraphTraits<FlatIt<Region*> >::nodes_end(this);
+}
+
+Region::const_block_iterator Region::block_begin() const {
+  return GraphTraits<FlatIt<const Region*> >::nodes_begin(this);
+}
+
+Region::const_block_iterator Region::block_end() const {
+  return GraphTraits<FlatIt<const Region*> >::nodes_end(this);
+}
+
+Region::element_iterator Region::element_begin() {
+  return GraphTraits<Region*>::nodes_begin(this);
+}
+
+Region::element_iterator Region::element_end() {
+  return GraphTraits<Region*>::nodes_end(this);
+}
+
+Region::const_element_iterator Region::element_begin() const {
+  return GraphTraits<const Region*>::nodes_begin(this);
+}
+
+Region::const_element_iterator Region::element_end() const {
+  return GraphTraits<const Region*>::nodes_end(this);
+}
+
+Region* Region::getSubRegionNode(BasicBlock *BB) const {
+  Region *R = RI->getRegionFor(BB);
+
+  if (!R || R == this)
+    return 0;
+
+  // If we pass the BB out of this region, that means our code is broken.
+  assert(contains(R) && "BB not in current region!");
+
+  while (contains(R->getParent()) && R->getParent() != this)
+    R = R->getParent();
+
+  if (R->getEntry() != BB)
+    return 0;
+
+  return R;
+}
+
+RegionNode* Region::getBBNode(BasicBlock *BB) const {
+  assert(contains(BB) && "Can get BB node out of this region!");
+
+  BBNodeMapT::const_iterator at = BBNodeMap.find(BB);
+
+  if (at != BBNodeMap.end())
+    return at->second;
+
+  RegionNode *NewNode = new RegionNode(const_cast<Region*>(this), BB);
+  BBNodeMap.insert(std::make_pair(BB, NewNode));
+  return NewNode;
+}
+
+RegionNode* Region::getNode(BasicBlock *BB) const {
+  assert(contains(BB) && "Can get BB node out of this region!");
+  if (Region* Child = getSubRegionNode(BB))
+    return Child->getNode();
+
+  return getBBNode(BB);
+}
+
+void Region::transferChildrenTo(Region *To) {
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    (*I)->parent = To;
+    To->children.push_back(*I);
+  }
+  children.clear();
+}
+
+void Region::addSubRegion(Region *SubRegion) {
+  assert(SubRegion->parent == 0 && "SubRegion already has a parent!");
+  SubRegion->parent = this;
+  // Set up the region node.
+  assert(std::find(children.begin(), children.end(), SubRegion) == children.end()
+         && "Node already exist!");
+  children.push_back(SubRegion);
+}
+
+
+Region *Region::removeSubRegion(Region *Child) {
+  assert(Child->parent == this && "Child is not a child of this region!");
+  Child->parent = 0;
+  RegionSet::iterator I = std::find(children.begin(), children.end(), Child);
+  assert(I != children.end() && "Region does not exit. Unable to remove.");
+  children.erase(children.begin()+(I-begin()));
+  return Child;
+}
+
+unsigned Region::getDepth() const {
+  unsigned Depth = 0;
+
+  for (Region *R = parent; R != 0; R = R->parent)
+    ++Depth;
+
+  return Depth;
+}
+
+void Region::print(raw_ostream &OS, bool print_tree, unsigned level) const {
+  if (print_tree)
+    OS.indent(level*2) << "[" << level << "] " << getNameStr();
+  else
+    OS.indent(level*2) << getNameStr();
+
+  OS << "\n";
+
+
+  if (printStyle != PrintNone) {
+    OS.indent(level*2) << "{\n";
+    OS.indent(level*2 + 2);
+
+    if (printStyle == PrintBB) {
+      for (const_block_iterator I = block_begin(), E = block_end(); I!=E; ++I)
+        OS << **I << ", "; // TODO: remove the last ","
+    } else if (printStyle == PrintRN) {
+      for (const_element_iterator I = element_begin(), E = element_end(); I!=E; ++I)
+        OS << **I << ", "; // TODO: remove the last ",
+    }
+
+    OS << "\n";
+  }
+
+  if (print_tree)
+    for (const_iterator RI = begin(), RE = end(); RI != RE; ++RI)
+      (*RI)->print(OS, print_tree, level+1);
+
+  if (printStyle != PrintNone)
+    OS.indent(level*2) << "} \n";
+}
+
+void Region::dump() const {
+  print(dbgs(), true, getDepth());
+}
+
+void Region::clearNodeCache() {
+  BBNodeMap.clear();
+  for (Region::iterator RI = begin(), RE = end(); RI != RE; ++RI)
+    (*RI)->clearNodeCache();
+}
+
+//===----------------------------------------------------------------------===//
+// RegionInfo implementation
+//
+
+bool RegionInfo::isCommonDomFrontier(BasicBlock *BB, BasicBlock *entry,
+                                     BasicBlock *exit) const {
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
+    if (DT->dominates(entry, *PI) && !DT->dominates(exit, *PI))
+      return false;
+
+  return true;
+}
+
+bool RegionInfo::isRegion(BasicBlock *entry, BasicBlock *exit) const {
+  assert(entry && exit && "entry and exit must not be null!");
+  typedef DominanceFrontier::DomSetType DST;
+
+  DST *entrySuccs = &(*DF->find(entry)).second;
+
+  // Exit is the header of a loop that contains the entry. In this case,
+  // the dominance frontier must only contain the exit.
+  if (!DT->dominates(entry, exit)) {
+    for (DST::iterator SI = entrySuccs->begin(), SE = entrySuccs->end();
+         SI != SE; ++SI)
+      if (*SI != exit && *SI != entry)
+        return false;
+
+    return true;
+  }
+
+  DST *exitSuccs = &(*DF->find(exit)).second;
+
+  // Do not allow edges leaving the region.
+  for (DST::iterator SI = entrySuccs->begin(), SE = entrySuccs->end();
+       SI != SE; ++SI) {
+    if (*SI == exit || *SI == entry)
+      continue;
+    if (exitSuccs->find(*SI) == exitSuccs->end())
+      return false;
+    if (!isCommonDomFrontier(*SI, entry, exit))
+      return false;
+  }
+
+  // Do not allow edges pointing into the region.
+  for (DST::iterator SI = exitSuccs->begin(), SE = exitSuccs->end();
+       SI != SE; ++SI)
+    if (DT->dominates(entry, *SI) && *SI != entry && *SI != exit)
+      return false;
+
+
+  return true;
+}
+
+void RegionInfo::insertShortCut(BasicBlock *entry, BasicBlock *exit,
+                             BBtoBBMap *ShortCut) const {
+  assert(entry && exit && "entry and exit must not be null!");
+
+  BBtoBBMap::iterator e = ShortCut->find(exit);
+
+  if (e == ShortCut->end())
+    // No further region at exit available.
+    (*ShortCut)[entry] = exit;
+  else {
+    // We found a region e that starts at exit. Therefore (entry, e->second)
+    // is also a region, that is larger than (entry, exit). Insert the
+    // larger one.
+    BasicBlock *BB = e->second;
+    (*ShortCut)[entry] = BB;
+  }
+}
+
+DomTreeNode* RegionInfo::getNextPostDom(DomTreeNode* N,
+                                        BBtoBBMap *ShortCut) const {
+  BBtoBBMap::iterator e = ShortCut->find(N->getBlock());
+
+  if (e == ShortCut->end())
+    return N->getIDom();
+
+  return PDT->getNode(e->second)->getIDom();
+}
+
+bool RegionInfo::isTrivialRegion(BasicBlock *entry, BasicBlock *exit) const {
+  assert(entry && exit && "entry and exit must not be null!");
+
+  unsigned num_successors = succ_end(entry) - succ_begin(entry);
+
+  if (num_successors <= 1 && exit == *(succ_begin(entry)))
+    return true;
+
+  return false;
+}
+
+void RegionInfo::updateStatistics(Region *R) {
+  ++numRegions;
+
+  // TODO: Slow. Should only be enabled if -stats is used.
+  if (R->isSimple()) ++numSimpleRegions;
+}
+
+Region *RegionInfo::createRegion(BasicBlock *entry, BasicBlock *exit) {
+  assert(entry && exit && "entry and exit must not be null!");
+
+  if (isTrivialRegion(entry, exit))
+    return 0;
+
+  Region *region = new Region(entry, exit, this, DT);
+  BBtoRegion.insert(std::make_pair(entry, region));
+
+ #ifdef XDEBUG
+    region->verifyRegion();
+ #else
+    DEBUG(region->verifyRegion());
+ #endif
+
+  updateStatistics(region);
+  return region;
+}
+
+void RegionInfo::findRegionsWithEntry(BasicBlock *entry, BBtoBBMap *ShortCut) {
+  assert(entry);
+
+  DomTreeNode *N = PDT->getNode(entry);
+
+  if (!N)
+    return;
+
+  Region *lastRegion= 0;
+  BasicBlock *lastExit = entry;
+
+  // As only a BasicBlock that postdominates entry can finish a region, walk the
+  // post dominance tree upwards.
+  while ((N = getNextPostDom(N, ShortCut))) {
+    BasicBlock *exit = N->getBlock();
+
+    if (!exit)
+      break;
+
+    if (isRegion(entry, exit)) {
+      Region *newRegion = createRegion(entry, exit);
+
+      if (lastRegion)
+        newRegion->addSubRegion(lastRegion);
+
+      lastRegion = newRegion;
+      lastExit = exit;
+    }
+
+    // This can never be a region, so stop the search.
+    if (!DT->dominates(entry, exit))
+      break;
+  }
+
+  // Tried to create regions from entry to lastExit.  Next time take a
+  // shortcut from entry to lastExit.
+  if (lastExit != entry)
+    insertShortCut(entry, lastExit, ShortCut);
+}
+
+void RegionInfo::scanForRegions(Function &F, BBtoBBMap *ShortCut) {
+  BasicBlock *entry = &(F.getEntryBlock());
+  DomTreeNode *N = DT->getNode(entry);
+
+  // Iterate over the dominance tree in post order to start with the small
+  // regions from the bottom of the dominance tree.  If the small regions are
+  // detected first, detection of bigger regions is faster, as we can jump
+  // over the small regions.
+  for (po_iterator<DomTreeNode*> FI = po_begin(N), FE = po_end(N); FI != FE;
+    ++FI) {
+    findRegionsWithEntry((*FI)->getBlock(), ShortCut);
+  }
+}
+
+Region *RegionInfo::getTopMostParent(Region *region) {
+  while (region->parent)
+    region = region->getParent();
+
+  return region;
+}
+
+void RegionInfo::buildRegionsTree(DomTreeNode *N, Region *region) {
+  BasicBlock *BB = N->getBlock();
+
+  // Passed region exit
+  while (BB == region->getExit())
+    region = region->getParent();
+
+  BBtoRegionMap::iterator it = BBtoRegion.find(BB);
+
+  // This basic block is a start block of a region. It is already in the
+  // BBtoRegion relation. Only the child basic blocks have to be updated.
+  if (it != BBtoRegion.end()) {
+    Region *newRegion = it->second;;
+    region->addSubRegion(getTopMostParent(newRegion));
+    region = newRegion;
+  } else {
+    BBtoRegion[BB] = region;
+  }
+
+  for (DomTreeNode::iterator CI = N->begin(), CE = N->end(); CI != CE; ++CI)
+    buildRegionsTree(*CI, region);
+}
+
+void RegionInfo::releaseMemory() {
+  BBtoRegion.clear();
+  if (TopLevelRegion)
+    delete TopLevelRegion;
+  TopLevelRegion = 0;
+}
+
+RegionInfo::RegionInfo() : FunctionPass(&ID) {
+  TopLevelRegion = 0;
+}
+
+RegionInfo::~RegionInfo() {
+  releaseMemory();
+}
+
+void RegionInfo::Calculate(Function &F) {
+  // ShortCut a function where for every BB the exit of the largest region
+  // starting with BB is stored. These regions can be threated as single BBS.
+  // This improves performance on linear CFGs.
+  BBtoBBMap ShortCut;
+
+  scanForRegions(F, &ShortCut);
+  BasicBlock *BB = &F.getEntryBlock();
+  buildRegionsTree(DT->getNode(BB), TopLevelRegion);
+}
+
+bool RegionInfo::runOnFunction(Function &F) {
+  releaseMemory();
+
+  DT = &getAnalysis<DominatorTree>();
+  PDT = &getAnalysis<PostDominatorTree>();
+  DF = &getAnalysis<DominanceFrontier>();
+
+  TopLevelRegion = new Region(&F.getEntryBlock(), 0, this, DT, 0);
+  updateStatistics(TopLevelRegion);
+
+  Calculate(F);
+
+  return false;
+}
+
+void RegionInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequiredTransitive<DominatorTree>();
+  AU.addRequired<PostDominatorTree>();
+  AU.addRequired<DominanceFrontier>();
+}
+
+void RegionInfo::print(raw_ostream &OS, const Module *) const {
+  OS << "Region tree:\n";
+  TopLevelRegion->print(OS, true, 0);
+  OS << "End region tree\n";
+}
+
+void RegionInfo::verifyAnalysis() const {
+  // Only do verification when user wants to, otherwise this expensive check
+  // will be invoked by PMDataManager::verifyPreservedAnalysis when
+  // a regionpass (marked PreservedAll) finish.
+  if (!VerifyRegionInfo) return;
+
+  TopLevelRegion->verifyRegionNest();
+}
+
+// Region pass manager support.
+Region *RegionInfo::getRegionFor(BasicBlock *BB) const {
+  BBtoRegionMap::const_iterator I=
+    BBtoRegion.find(BB);
+  return I != BBtoRegion.end() ? I->second : 0;
+}
+
+Region *RegionInfo::operator[](BasicBlock *BB) const {
+  return getRegionFor(BB);
+}
+
+Region*
+RegionInfo::getCommonRegion(Region *A, Region *B) const {
+  assert (A && B && "One of the Regions is NULL");
+
+  if (A->contains(B)) return A;
+
+  while (!B->contains(A))
+    B = B->getParent();
+
+  return B;
+}
+
+Region*
+RegionInfo::getCommonRegion(SmallVectorImpl<Region*> &Regions) const {
+  Region* ret = Regions.back();
+  Regions.pop_back();
+
+  for (SmallVectorImpl<Region*>::const_iterator I = Regions.begin(),
+       E = Regions.end(); I != E; ++I)
+      ret = getCommonRegion(ret, *I);
+
+  return ret;
+}
+
+Region*
+RegionInfo::getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const {
+  Region* ret = getRegionFor(BBs.back());
+  BBs.pop_back();
+
+  for (SmallVectorImpl<BasicBlock*>::const_iterator I = BBs.begin(),
+       E = BBs.end(); I != E; ++I)
+      ret = getCommonRegion(ret, getRegionFor(*I));
+
+  return ret;
+}
+
+char RegionInfo::ID = 0;
+INITIALIZE_PASS(RegionInfo, "regions",
+                "Detect single entry single exit regions", true, true);
+
+// Create methods available outside of this file, to use them
+// "include/llvm/LinkAllPasses.h". Otherwise the pass would be deleted by
+// the link time optimization.
+
+namespace llvm {
+  FunctionPass *createRegionInfoPass() {
+    return new RegionInfo();
+  }
+}
+
