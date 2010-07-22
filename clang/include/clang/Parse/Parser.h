@@ -201,7 +201,7 @@ public:
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
 
-  DeclGroupPtrTy RetrievePendingObjCImpDecl();
+  DeclGroupPtrTy FinishPendingObjCActions();
 
 private:
   //===--------------------------------------------------------------------===//

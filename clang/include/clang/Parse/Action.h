@@ -202,6 +202,8 @@ public:
     return DeclGroupPtrTy();
   }
 
+  virtual void DiagnoseUseOfUnimplementedSelectors() {}
+
   /// getTypeName - Return non-null if the specified identifier is a type name
   /// in the current scope.
   ///

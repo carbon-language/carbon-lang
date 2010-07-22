@@ -1314,7 +1314,8 @@ Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   return Result;
 }
 
-Parser::DeclGroupPtrTy Parser::RetrievePendingObjCImpDecl() {
+Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
+  Actions.DiagnoseUseOfUnimplementedSelectors();
   if (PendingObjCImpDecl.empty())
     return Actions.ConvertDeclToDeclGroup(DeclPtrTy());
   DeclPtrTy ImpDecl = PendingObjCImpDecl.pop_back_val();

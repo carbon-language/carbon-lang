@@ -606,6 +606,11 @@ public:
   MethodPool InstanceMethodPool;
   MethodPool FactoryMethodPool;
 
+  /// Method selectors used in a @selector expression. Used for implementation 
+  /// of -Wselector.
+  llvm::DenseMap<Selector, SourceLocation> ReferencedSelectors;
+
+
   MethodPool::iterator ReadMethodPool(Selector Sel, bool isInstance);
 
   /// Private Helper predicate to check for 'self'.
@@ -797,6 +802,8 @@ public:
   virtual std::string getDeclName(DeclPtrTy D);
 
   DeclGroupPtrTy ConvertDeclToDeclGroup(DeclPtrTy Ptr);
+
+  void DiagnoseUseOfUnimplementedSelectors();
 
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, CXXScopeSpec *SS,
@@ -1656,7 +1663,7 @@ public:
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
   /// messages sent to "id" (where the class of the object is unknown).
-  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method);
+  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false);
 
   /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
@@ -1665,10 +1672,15 @@ public:
 
   /// LookupFactoryMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
-  ObjCMethodDecl *LookupFactoryMethodInGlobalPool(Selector Sel, SourceRange R);
+  ObjCMethodDecl *LookupFactoryMethodInGlobalPool(Selector Sel, SourceRange R,
+                                                  bool warn=true);
+
+  /// LookupImplementedMethodInGlobalPool - Returns the method which has an
+  /// implementation.
+  ObjCMethodDecl *LookupImplementedMethodInGlobalPool(Selector Sel);
 
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
-  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);
+  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl=false);
 
   /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
   /// initialization.

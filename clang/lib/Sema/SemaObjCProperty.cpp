@@ -1084,7 +1084,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     // for this class.
     GetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(),
                              property->getLocation(), property->getGetterName(),
-                             property->getType(), 0, CD, true, false, true,
+                             property->getType(), 0, CD, true, false, true, 
+                             false,
                              (property->getPropertyImplementation() ==
                               ObjCPropertyDecl::Optional) ?
                              ObjCMethodDecl::Optional :
@@ -1112,6 +1113,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                property->getLocation(),
                                property->getSetterName(),
                                Context.VoidTy, 0, CD, true, false, true,
+                               false,
                                (property->getPropertyImplementation() ==
                                 ObjCPropertyDecl::Optional) ?
                                ObjCMethodDecl::Optional :

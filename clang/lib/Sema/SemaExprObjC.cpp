@@ -163,6 +163,11 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   if (!Method)
     Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
 
+  llvm::DenseMap<Selector, SourceLocation>::iterator Pos
+    = ReferencedSelectors.find(Sel);
+  if (Pos == ReferencedSelectors.end())
+    ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
+
   QualType Ty = Context.getObjCSelType();
   return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
 }

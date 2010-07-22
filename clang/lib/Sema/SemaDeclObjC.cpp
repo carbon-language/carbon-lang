@@ -32,10 +32,10 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
 
   // Allow the rest of sema to find private method decl implementations.
   if (MDecl->isInstanceMethod())
-    AddInstanceMethodToGlobalPool(MDecl);
+    AddInstanceMethodToGlobalPool(MDecl, true);
   else
-    AddFactoryMethodToGlobalPool(MDecl);
-
+    AddFactoryMethodToGlobalPool(MDecl, true);
+  
   // Allow all of Sema to see that we are entering a method definition.
   PushDeclContext(FnBodyScope, MDecl);
   PushFunctionScope();
@@ -1130,7 +1130,7 @@ Sema::MethodPool::iterator Sema::ReadMethodPool(Selector Sel,
   return FactoryMethodPool.insert(std::make_pair(Sel, Methods.second)).first;
 }
 
-void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
+void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method, bool impl) {
   llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
     = InstanceMethodPool.find(Method->getSelector());
   if (Pos == InstanceMethodPool.end()) {
@@ -1140,7 +1140,7 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
       Pos = InstanceMethodPool.insert(std::make_pair(Method->getSelector(),
                                                      ObjCMethodList())).first;
   }
-
+  Method->setDefined(impl);
   ObjCMethodList &Entry = Pos->second;
   if (Entry.Method == 0) {
     // Haven't seen a method with this selector name yet - add it.
@@ -1152,8 +1152,10 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
   // We've seen a method with this name, see if we have already seen this type
   // signature.
   for (ObjCMethodList *List = &Entry; List; List = List->Next)
-    if (MatchTwoMethodDeclarations(Method, List->Method))
+    if (MatchTwoMethodDeclarations(Method, List->Method)) {
+      List->Method->setDefined(impl);
       return;
+    }
 
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
@@ -1194,7 +1196,7 @@ ObjCMethodDecl *Sema::LookupInstanceMethodInGlobalPool(Selector Sel,
   return MethList.Method;
 }
 
-void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
+void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method, bool impl) {
   llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
     = FactoryMethodPool.find(Method->getSelector());
   if (Pos == FactoryMethodPool.end()) {
@@ -1204,32 +1206,31 @@ void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
       Pos = FactoryMethodPool.insert(std::make_pair(Method->getSelector(),
                                                     ObjCMethodList())).first;
   }
-
-  ObjCMethodList &FirstMethod = Pos->second;
-  if (!FirstMethod.Method) {
+  Method->setDefined(impl);
+  ObjCMethodList &Entry = Pos->second;
+  if (!Entry.Method) {
     // Haven't seen a method with this selector name yet - add it.
-    FirstMethod.Method = Method;
-    FirstMethod.Next = 0;
-  } else {
-    // We've seen a method with this name, now check the type signature(s).
-    bool match = MatchTwoMethodDeclarations(Method, FirstMethod.Method);
-
-    for (ObjCMethodList *Next = FirstMethod.Next; !match && Next;
-         Next = Next->Next)
-      match = MatchTwoMethodDeclarations(Method, Next->Method);
-
-    if (!match) {
-      // We have a new signature for an existing method - add it.
-      // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-      ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
-      ObjCMethodList *OMI = new (Mem) ObjCMethodList(Method, FirstMethod.Next);
-      FirstMethod.Next = OMI;
+    Entry.Method = Method;
+    Entry.Next = 0;
+    return;
+  } 
+  // We've seen a method with this name, see if we have already seen this type
+  // signature.
+  for (ObjCMethodList *List = &Entry; List; List = List->Next)
+    if (MatchTwoMethodDeclarations(Method, List->Method)) {
+      List->Method->setDefined(impl);
+      return;
     }
-  }
+  
+  // We have a new signature for an existing method - add it.
+  // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
+  ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
+  Entry.Next = new (Mem) ObjCMethodList(Method, Entry.Next);
 }
 
 ObjCMethodDecl *Sema::LookupFactoryMethodInGlobalPool(Selector Sel,
-                                                      SourceRange R) {
+                                                      SourceRange R,
+                                                      bool warn) {
   llvm::DenseMap<Selector, ObjCMethodList>::iterator Pos
     = FactoryMethodPool.find(Sel);
   if (Pos == FactoryMethodPool.end()) {
@@ -1246,7 +1247,7 @@ ObjCMethodDecl *Sema::LookupFactoryMethodInGlobalPool(Selector Sel,
     for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
       // This checks if the methods differ by size & alignment.
       if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method, true))
-        issueWarning = true;
+        issueWarning = warn;
   }
   if (issueWarning && (MethList.Method && MethList.Next)) {
     Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
@@ -1257,6 +1258,18 @@ ObjCMethodDecl *Sema::LookupFactoryMethodInGlobalPool(Selector Sel,
         << Next->Method->getSourceRange();
   }
   return MethList.Method;
+}
+
+ObjCMethodDecl *Sema::LookupImplementedMethodInGlobalPool(Selector Sel) {
+  SourceRange SR;
+  ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
+                                                            SR, false);
+  if (Method && Method->isDefined())
+    return Method;
+  Method = LookupFactoryMethodInGlobalPool(Sel, SR, false);
+  if (Method && Method->isDefined())
+    return Method;
+  return 0;
 }
 
 /// CompareMethodParamsInBaseAndSuper - This routine compares methods with
@@ -1540,7 +1553,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
                            ResultTInfo,
                            cast<DeclContext>(ClassDecl),
                            MethodType == tok::minus, isVariadic,
-                           false,
+                           false, false,
                            MethodDeclKind == tok::objc_optional ?
                            ObjCMethodDecl::Optional :
                            ObjCMethodDecl::Required);
@@ -1849,3 +1862,15 @@ void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
   }
 }
 
+void Sema::DiagnoseUseOfUnimplementedSelectors() {
+  if (ReferencedSelectors.empty())
+    return;
+  for (llvm::DenseMap<Selector, SourceLocation>::iterator S = 
+        ReferencedSelectors.begin(),
+       E = ReferencedSelectors.end(); S != E; ++S) {
+    Selector Sel = (*S).first;
+    if (!LookupImplementedMethodInGlobalPool(Sel))
+      Diag((*S).second, diag::warn_unimplemented_selector) << Sel;
+  }
+  return;
+}

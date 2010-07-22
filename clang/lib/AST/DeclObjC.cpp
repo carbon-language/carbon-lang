@@ -339,12 +339,14 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        bool isInstance,
                                        bool isVariadic,
                                        bool isSynthesized,
+                                       bool isDefined,
                                        ImplementationControl impControl,
                                        unsigned numSelectorArgs) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
                                 SelInfo, T, ResultTInfo, contextDecl,
                                 isInstance,
-                                isVariadic, isSynthesized, impControl,
+                                isVariadic, isSynthesized, isDefined,
+                                impControl,
                                 numSelectorArgs);
 }
 

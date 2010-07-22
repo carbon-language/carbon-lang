@@ -128,6 +128,9 @@ private:
 
   // Synthesized declaration method for a property setter/getter
   bool IsSynthesized : 1;
+  
+  // Method has a definition.
+  bool IsDefined : 1;
 
   // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
@@ -171,12 +174,14 @@ private:
                  bool isInstance = true,
                  bool isVariadic = false,
                  bool isSynthesized = false,
+                 bool isDefined = false,
                  ImplementationControl impControl = None,
                  unsigned numSelectorArgs = 0)
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
+    IsDefined(isDefined),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     NumSelectorArgs(numSelectorArgs), MethodDeclType(T), 
     ResultTInfo(ResultTInfo),
@@ -203,6 +208,7 @@ public:
                                 bool isInstance = true,
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
+                                bool isDefined = false,
                                 ImplementationControl impControl = None,
                                 unsigned numSelectorArgs = 0);
 
@@ -296,6 +302,9 @@ public:
 
   bool isSynthesized() const { return IsSynthesized; }
   void setSynthesized(bool isSynth) { IsSynthesized = isSynth; }
+  
+  bool isDefined() const { return IsDefined; }
+  void setDefined(bool isDefined) { IsDefined = isDefined; }
 
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic) {

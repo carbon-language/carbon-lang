@@ -1930,7 +1930,7 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
                                                   D->getLocation(),
                                                   D->getLocation(), cxxSelector,
                                                   getContext().VoidTy, 0, 
-                                                  DC, true, false, true,
+                                                  DC, true, false, true, false,
                                                   ObjCMethodDecl::Required);
   D->addInstanceMethod(DTORMethod);
   CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, DTORMethod, false);
@@ -1942,7 +1942,7 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
                                                 D->getLocation(),
                                                 D->getLocation(), cxxSelector,
                                                 getContext().getObjCIdType(), 0, 
-                                                DC, true, false, true,
+                                                DC, true, false, true, false,
                                                 ObjCMethodDecl::Required);
   D->addInstanceMethod(CTORMethod);
   CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, CTORMethod, true);

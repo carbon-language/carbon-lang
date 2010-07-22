@@ -324,6 +324,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setInstanceMethod(Record[Idx++]);
   MD->setVariadic(Record[Idx++]);
   MD->setSynthesized(Record[Idx++]);
+  MD->setDefined(Record[Idx++]);
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   MD->setNumSelectorArgs(unsigned(Record[Idx++]));

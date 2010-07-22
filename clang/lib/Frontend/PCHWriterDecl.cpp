@@ -312,6 +312,7 @@ void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->isInstanceMethod());
   Record.push_back(D->isVariadic());
   Record.push_back(D->isSynthesized());
+  Record.push_back(D->isDefined());
   // FIXME: stable encoding for @required/@optional
   Record.push_back(D->getImplementationControl());
   // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway
