@@ -21,13 +21,14 @@ namespace clang {
 
   class PCHStmtReader : public StmtVisitor<PCHStmtReader> {
     PCHReader &Reader;
+    llvm::BitstreamCursor &DeclsCursor;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
 
   public:
-    PCHStmtReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                  unsigned &Idx)
-      : Reader(Reader), Record(Record), Idx(Idx) { }
+    PCHStmtReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
+                  const PCHReader::RecordData &Record, unsigned &Idx)
+      : Reader(Reader), DeclsCursor(Cursor), Record(Record), Idx(Idx) { }
 
     /// \brief The number of record fields required for the Stmt class
     /// itself.
@@ -164,7 +165,8 @@ ReadExplicitTemplateArgumentList(ExplicitTemplateArgumentList &ArgList,
   ArgInfo.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
   ArgInfo.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
-    ArgInfo.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    ArgInfo.addArgument(
+        Reader.ReadTemplateArgumentLoc(DeclsCursor, Record, Idx));
   ArgList.initializeFrom(ArgInfo);
 }
 
@@ -479,7 +481,7 @@ void PCHStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
   ++Idx;
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
     Node::Kind Kind = static_cast<Node::Kind>(Record[Idx++]);
     SourceLocation Start = SourceLocation::getFromRawEncoding(Record[Idx++]);
@@ -518,7 +520,7 @@ void PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     E->setArgument(Reader.ReadSubExpr());
     ++Idx;
   } else {
-    E->setArgument(Reader.GetTypeSourceInfo(Record, Idx));
+    E->setArgument(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   }
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -597,7 +599,7 @@ void PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 
 void PCHStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   VisitCastExpr(E);
-  E->setTypeInfoAsWritten(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setTypeInfoAsWritten(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
 }
 
 void PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
@@ -609,7 +611,7 @@ void PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
 void PCHStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   E->setInitializer(Reader.ReadSubExpr());
   E->setFileScope(Record[Idx++]);
 }
@@ -783,7 +785,7 @@ void PCHStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
 
 void PCHStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
-  E->setEncodedTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setEncodedTypeSourceInfo(Reader.GetTypeSourceInfo(DeclsCursor,Record,Idx));
   E->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
@@ -844,7 +846,7 @@ void PCHStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     break;
 
   case ObjCMessageExpr::Class:
-    E->setClassReceiver(Reader.GetTypeSourceInfo(Record, Idx));
+    E->setClassReceiver(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
     break;
 
   case ObjCMessageExpr::SuperClass:
@@ -1013,7 +1015,8 @@ void PCHStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   VisitExpr(E);
   E->setSourceRange(Reader.ReadSourceRange(Record, Idx));
   if (E->isTypeOperand()) { // typeid(int)
-    E->setTypeOperandSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+    E->setTypeOperandSourceInfo(
+        Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
     return;
   }
   
@@ -1107,7 +1110,7 @@ void PCHStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   E->setOperatorLoc(Reader.ReadSourceLocation(Record, Idx));
   E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
   E->setQualifierRange(Reader.ReadSourceRange(Record, Idx));
-  E->setScopeTypeInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  E->setScopeTypeInfo(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
   E->setColonColonLoc(Reader.ReadSourceLocation(Record, Idx));
   E->setTildeLoc(Reader.ReadSourceLocation(Record, Idx));
   
@@ -1115,7 +1118,7 @@ void PCHStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   if (II)
     E->setDestroyedType(II, Reader.ReadSourceLocation(Record, Idx));
   else
-    E->setDestroyedType(Reader.GetTypeSourceInfo(Record, Idx));
+    E->setDestroyedType(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
 }
 
 void PCHStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
@@ -1232,12 +1235,11 @@ void PCHStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   E->QueriedType = Reader.GetType(Record[Idx++]);
 }
 
-Stmt *PCHReader::ReadStmt() {
+Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
   switch (ReadingKind) {
   case Read_Decl:
   case Read_Type:
-    // Read a statement from the current DeclCursor.
-    return ReadStmtFromStream(Chain[0]->DeclsCursor);
+    return ReadStmtFromStream(Cursor);
   case Read_Stmt:
     return ReadSubStmt();
   }
@@ -1246,8 +1248,8 @@ Stmt *PCHReader::ReadStmt() {
   return 0;
 }
 
-Expr *PCHReader::ReadExpr() {
-  return cast_or_null<Expr>(ReadStmt());
+Expr *PCHReader::ReadExpr(llvm::BitstreamCursor &Cursor) {
+  return cast_or_null<Expr>(ReadStmt(Cursor));
 }
 
 Expr *PCHReader::ReadSubExpr() {
@@ -1271,7 +1273,7 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
 
   RecordData Record;
   unsigned Idx;
-  PCHStmtReader Reader(*this, Record, Idx);
+  PCHStmtReader Reader(*this, Cursor, Record, Idx);
   Stmt::EmptyShell Empty;
 
   while (true) {
@@ -1460,7 +1462,7 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
         ArgInfo.setLAngleLoc(ReadSourceLocation(Record, Idx));
         ArgInfo.setRAngleLoc(ReadSourceLocation(Record, Idx));
         for (unsigned i = 0; i != NumTemplateArgs; ++i)
-          ArgInfo.addArgument(ReadTemplateArgumentLoc(Record, Idx));
+          ArgInfo.addArgument(ReadTemplateArgumentLoc(Cursor, Record, Idx));
       }
       
       NamedDecl *FoundD = cast_or_null<NamedDecl>(GetDecl(Record[Idx++]));

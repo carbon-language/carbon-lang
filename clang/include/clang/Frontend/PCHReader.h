@@ -670,15 +670,17 @@ public:
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
   GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                             llvm::BitstreamCursor &DeclsCursor,
                              const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a TemplateArgumentLoc.
-  TemplateArgumentLoc ReadTemplateArgumentLoc(const RecordData &Record,
-                                              unsigned &Idx);
+  TemplateArgumentLoc
+  ReadTemplateArgumentLoc(llvm::BitstreamCursor &DeclsCursor,
+                          const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a declarator info from the given record.
-  TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
-                                    unsigned &Idx);
+  TypeSourceInfo *GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
+                                    const RecordData &Record, unsigned &Idx);
 
   /// \brief Resolve and return the translation unit declaration.
   TranslationUnitDecl *GetTranslationUnitDecl();
@@ -807,7 +809,8 @@ public:
   TemplateName ReadTemplateName(const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a template argument.
-  TemplateArgument ReadTemplateArgument(const RecordData &Record,unsigned &Idx);
+  TemplateArgument ReadTemplateArgument(llvm::BitstreamCursor &DeclsCursor,
+                                        const RecordData &Record,unsigned &Idx);
   
   /// \brief Read a template parameter list.
   TemplateParameterList *ReadTemplateParameterList(const RecordData &Record,
@@ -816,6 +819,7 @@ public:
   /// \brief Read a template argument array.
   void
   ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
+                           llvm::BitstreamCursor &DeclsCursor,
                            const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a UnresolvedSet structure.
@@ -848,13 +852,13 @@ public:
   CXXTemporary *ReadCXXTemporary(const RecordData &Record, unsigned &Idx);
       
   /// \brief Reads attributes from the current stream position.
-  Attr *ReadAttributes();
+  Attr *ReadAttributes(llvm::BitstreamCursor &DeclsCursor);
 
   /// \brief Reads a statement.
-  Stmt *ReadStmt();
+  Stmt *ReadStmt(llvm::BitstreamCursor &Cursor);
 
   /// \brief Reads an expression.
-  Expr *ReadExpr();
+  Expr *ReadExpr(llvm::BitstreamCursor &Cursor);
 
   /// \brief Reads a sub-statement operand during statement reading.
   Stmt *ReadSubStmt() {

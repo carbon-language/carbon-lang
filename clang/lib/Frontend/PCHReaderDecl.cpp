@@ -30,14 +30,18 @@ using namespace clang;
 namespace clang {
   class PCHDeclReader : public DeclVisitor<PCHDeclReader, void> {
     PCHReader &Reader;
+    llvm::BitstreamCursor &Cursor;
     const PCHReader::RecordData &Record;
     unsigned &Idx;
     pch::TypeID TypeIDForTypeDecl;
 
+    uint64_t GetCurrentCursorOffset();
+
   public:
-    PCHDeclReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                  unsigned &Idx)
-      : Reader(Reader), Record(Record), Idx(Idx), TypeIDForTypeDecl(0) { }
+    PCHDeclReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
+                  const PCHReader::RecordData &Record, unsigned &Idx)
+      : Reader(Reader), Cursor(Cursor), Record(Record), Idx(Idx),
+        TypeIDForTypeDecl(0) { }
 
     void Visit(Decl *D);
 
@@ -108,6 +112,19 @@ namespace clang {
   };
 }
 
+uint64_t PCHDeclReader::GetCurrentCursorOffset() {
+  uint64_t Off = 0;
+  for (unsigned I = 0, N = Reader.Chain.size(); I != N; ++I) {
+    PCHReader::PerFileData &F = *Reader.Chain[N - I - 1];
+    if (&Cursor == &F.DeclsCursor) {
+      Off += F.DeclsCursor.GetCurrentBitNo();
+      break;
+    }
+    Off += F.SizeInBits;
+  }
+  return Off;
+}
+
 void PCHDeclReader::Visit(Decl *D) {
   DeclVisitor<PCHDeclReader, void>::Visit(D);
 
@@ -117,7 +134,7 @@ void PCHDeclReader::Visit(Decl *D) {
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
-      FD->setLazyBody(Reader.Chain[0]->DeclsCursor.GetCurrentBitNo());
+      FD->setLazyBody(GetCurrentCursorOffset());
   }
 }
 
@@ -128,7 +145,7 @@ void PCHDeclReader::VisitDecl(Decl *D) {
   D->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   D->setInvalidDecl(Record[Idx++]);
   if (Record[Idx++])
-    D->initAttrs(Reader.ReadAttributes());
+    D->initAttrs(Reader.ReadAttributes(Cursor));
   D->setImplicit(Record[Idx++]);
   D->setUsed(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
@@ -154,7 +171,7 @@ void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
 
 void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
   VisitTypeDecl(TD);
-  TD->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  TD->setTypeSourceInfo(Reader.GetTypeSourceInfo(Cursor, Record, Idx));
 }
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
@@ -197,13 +214,13 @@ void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {
 void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   VisitValueDecl(ECD);
   if (Record[Idx++])
-    ECD->setInitExpr(Reader.ReadExpr());
+    ECD->setInitExpr(Reader.ReadExpr(Cursor));
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
 void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   VisitValueDecl(DD);
-  TypeSourceInfo *TInfo = Reader.GetTypeSourceInfo(Record, Idx);
+  TypeSourceInfo *TInfo = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
   if (TInfo)
     DD->setTypeSourceInfo(TInfo);
   // FIXME: read optional qualifier and its range.
@@ -237,7 +254,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     // Template arguments.
     llvm::SmallVector<TemplateArgument, 8> TemplArgs;
-    Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
+    Reader.ReadTemplateArgumentList(TemplArgs, Cursor, Record, Idx);
     
     // Template args as written.
     llvm::SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
@@ -246,7 +263,8 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
       unsigned NumTemplateArgLocs = Record[Idx++];
       TemplArgLocs.reserve(NumTemplateArgLocs);
       for (unsigned i=0; i != NumTemplateArgLocs; ++i)
-        TemplArgLocs.push_back(Reader.ReadTemplateArgumentLoc(Record, Idx));
+        TemplArgLocs.push_back(
+            Reader.ReadTemplateArgumentLoc(Cursor, Record, Idx));
   
       LAngleLoc = Reader.ReadSourceLocation(Record, Idx);
       RAngleLoc = Reader.ReadSourceLocation(Record, Idx);
@@ -273,7 +291,7 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     TemplateArgumentListInfo TemplArgs;
     unsigned NumArgs = Record[Idx++];
     while (NumArgs--)
-      TemplArgs.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+      TemplArgs.addArgument(Reader.ReadTemplateArgumentLoc(Cursor,Record, Idx));
     TemplArgs.setLAngleLoc(Reader.ReadSourceLocation(Record, Idx));
     TemplArgs.setRAngleLoc(Reader.ReadSourceLocation(Record, Idx));
     
@@ -317,7 +335,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   if (Record[Idx++]) {
     // In practice, this won't be executed (since method definitions
     // don't occur in header files).
-    MD->setBody(Reader.ReadStmt());
+    MD->setBody(Reader.ReadStmt(Cursor));
     MD->setSelfDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
     MD->setCmdDecl(cast<ImplicitParamDecl>(Reader.GetDecl(Record[Idx++])));
   }
@@ -329,7 +347,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   MD->setNumSelectorArgs(unsigned(Record[Idx++]));
   MD->setResultType(Reader.GetType(Record[Idx++]));
-  MD->setResultTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  MD->setResultTypeSourceInfo(Reader.GetTypeSourceInfo(Cursor, Record, Idx));
   MD->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
@@ -462,7 +480,7 @@ void PCHDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
 void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
   D->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  D->setType(Reader.GetTypeSourceInfo(Record, Idx));
+  D->setType(Reader.GetTypeSourceInfo(Cursor, Record, Idx));
   // FIXME: stable encoding
   D->setPropertyAttributes(
                       (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
@@ -514,7 +532,7 @@ void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitDeclaratorDecl(FD);
   FD->setMutable(Record[Idx++]);
   if (Record[Idx++])
-    FD->setBitWidth(Reader.ReadExpr());
+    FD->setBitWidth(Reader.ReadExpr(Cursor));
   if (!FD->getDeclName()) {
     FieldDecl *Tmpl = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
     if (Tmpl)
@@ -534,7 +552,7 @@ void PCHDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setPreviousDeclaration(
                          cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   if (Record[Idx++])
-    VD->setInit(Reader.ReadExpr());
+    VD->setInit(Reader.ReadExpr(Cursor));
 
   if (Record[Idx++]) { // HasMemberSpecializationInfo.
     VarDecl *Tmpl = cast<VarDecl>(Reader.GetDecl(Record[Idx++]));
@@ -553,18 +571,18 @@ void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   PD->setHasInheritedDefaultArg(Record[Idx++]);
   if (Record[Idx++]) // hasUninstantiatedDefaultArg.
-    PD->setUninstantiatedDefaultArg(Reader.ReadExpr());
+    PD->setUninstantiatedDefaultArg(Reader.ReadExpr(Cursor));
 }
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
   VisitDecl(AD);
-  AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr()));
+  AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr(Cursor)));
 }
 
 void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   VisitDecl(BD);
-  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt()));
-  BD->setSignatureAsWritten(Reader.GetTypeSourceInfo(Record, Idx));
+  BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt(Cursor)));
+  BD->setSignatureAsWritten(Reader.GetTypeSourceInfo(Cursor, Record, Idx));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
@@ -782,13 +800,13 @@ void PCHDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   
       bool IsBaseInitializer = Record[Idx++];
       if (IsBaseInitializer) {
-        BaseClassInfo = Reader.GetTypeSourceInfo(Record, Idx);
+        BaseClassInfo = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
         IsBaseVirtual = Record[Idx++];
       } else {
         Member = cast<FieldDecl>(Reader.GetDecl(Record[Idx++]));
       }
       SourceLocation MemberLoc = Reader.ReadSourceLocation(Record, Idx);
-      Expr *Init = Reader.ReadExpr();
+      Expr *Init = Reader.ReadExpr(Cursor);
       FieldDecl *AnonUnionMember
           = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
       SourceLocation LParenLoc = Reader.ReadSourceLocation(Record, Idx);
@@ -846,7 +864,7 @@ void PCHDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
 void PCHDeclReader::VisitFriendDecl(FriendDecl *D) {
   VisitDecl(D);
   if (Record[Idx++])
-    D->Friend = Reader.GetTypeSourceInfo(Record, Idx);
+    D->Friend = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
   else
     D->Friend = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   D->NextFriend = cast_or_null<FriendDecl>(Reader.GetDecl(Record[Idx++]));
@@ -863,7 +881,7 @@ void PCHDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
   if (Record[Idx++]) // HasFriendDecl
     D->Friend = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   else
-    D->Friend = Reader.GetTypeSourceInfo(Record, Idx);
+    D->Friend = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
   D->FriendLoc = Reader.ReadSourceLocation(Record, Idx);
 }
 
@@ -917,21 +935,21 @@ void PCHDeclReader::VisitClassTemplateSpecializationDecl(
       D->setInstantiationOf(CTD);
     } else {
       llvm::SmallVector<TemplateArgument, 8> TemplArgs;
-      Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
+      Reader.ReadTemplateArgumentList(TemplArgs, Cursor, Record, Idx);
       D->setInstantiationOf(cast<ClassTemplatePartialSpecializationDecl>(InstD),
                             TemplArgs.data(), TemplArgs.size());
     }
   }
 
   // Explicit info.
-  if (TypeSourceInfo *TyInfo = Reader.GetTypeSourceInfo(Record, Idx)) {
+  if (TypeSourceInfo *TyInfo = Reader.GetTypeSourceInfo(Cursor, Record, Idx)) {
     D->setTypeAsWritten(TyInfo);
     D->setExternLoc(Reader.ReadSourceLocation(Record, Idx));
     D->setTemplateKeywordLoc(Reader.ReadSourceLocation(Record, Idx));
   }
 
   llvm::SmallVector<TemplateArgument, 8> TemplArgs;
-  Reader.ReadTemplateArgumentList(TemplArgs, Record, Idx);
+  Reader.ReadTemplateArgumentList(TemplArgs, Cursor, Record, Idx);
   D->initTemplateArgs(TemplArgs.data(), TemplArgs.size());
   SourceLocation POI = Reader.ReadSourceLocation(Record, Idx);
   if (POI.isValid())
@@ -959,7 +977,7 @@ void PCHDeclReader::VisitClassTemplatePartialSpecializationDecl(
   TemplateArgumentListInfo ArgInfos;
   unsigned NumArgs = Record[Idx++];
   while (NumArgs--)
-    ArgInfos.addArgument(Reader.ReadTemplateArgumentLoc(Record, Idx));
+    ArgInfos.addArgument(Reader.ReadTemplateArgumentLoc(Cursor, Record, Idx));
   D->initTemplateArgsAsWritten(ArgInfos);
   
   D->setSequenceNumber(Record[Idx++]);
@@ -1007,7 +1025,7 @@ void PCHDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   D->setParameterPack(Record[Idx++]);
 
   bool Inherited = Record[Idx++];
-  TypeSourceInfo *DefArg = Reader.GetTypeSourceInfo(Record, Idx);
+  TypeSourceInfo *DefArg = Reader.GetTypeSourceInfo(Cursor, Record, Idx);
   D->setDefaultArgument(DefArg, Inherited);
 }
 
@@ -1018,7 +1036,7 @@ void PCHDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   D->setPosition(Record[Idx++]);
   // Rest of NonTypeTemplateParmDecl.
   if (Record[Idx++]) {
-    Expr *DefArg = Reader.ReadExpr();
+    Expr *DefArg = Reader.ReadExpr(Cursor);
     bool Inherited = Record[Idx++];
     D->setDefaultArgument(DefArg, Inherited);
  }
@@ -1030,15 +1048,15 @@ void PCHDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   D->setDepth(Record[Idx++]);
   D->setPosition(Record[Idx++]);
   // Rest of TemplateTemplateParmDecl.
-  TemplateArgumentLoc Arg = Reader.ReadTemplateArgumentLoc(Record, Idx);
+  TemplateArgumentLoc Arg = Reader.ReadTemplateArgumentLoc(Cursor, Record, Idx);
   bool IsInherited = Record[Idx++];
   D->setDefaultArgument(Arg, IsInherited);
 }
 
 void PCHDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
-  D->AssertExpr = Reader.ReadExpr();
-  D->Message = cast<StringLiteral>(Reader.ReadExpr());
+  D->AssertExpr = Reader.ReadExpr(Cursor);
+  D->Message = cast<StringLiteral>(Reader.ReadExpr(Cursor));
 }
 
 std::pair<uint64_t, uint64_t>
@@ -1053,8 +1071,7 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Reads attributes from the current stream position.
-Attr *PCHReader::ReadAttributes() {
-  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
+Attr *PCHReader::ReadAttributes(llvm::BitstreamCursor &DeclsCursor) {
   unsigned Code = DeclsCursor.ReadCode();
   assert(Code == llvm::bitc::UNABBREV_RECORD &&
          "Expected unabbreviated record"); (void)Code;
@@ -1297,7 +1314,7 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned Idx = 0;
-  PCHDeclReader Reader(*this, Record, Idx);
+  PCHDeclReader Reader(*this, DeclsCursor, Record, Idx);
 
   Decl *D = 0;
   switch ((pch::DeclCode)DeclsCursor.ReadRecord(Code, Record)) {

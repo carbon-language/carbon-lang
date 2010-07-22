@@ -2296,7 +2296,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
     unsigned IndexTypeQuals = Record[2];
     SourceLocation LBLoc = SourceLocation::getFromRawEncoding(Record[3]);
     SourceLocation RBLoc = SourceLocation::getFromRawEncoding(Record[4]);
-    return Context->getVariableArrayType(ElementType, ReadExpr(),
+    return Context->getVariableArrayType(ElementType, ReadExpr(DeclsCursor),
                                          ASM, IndexTypeQuals,
                                          SourceRange(LBLoc, RBLoc));
   }
@@ -2376,7 +2376,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
   }
 
   case pch::TYPE_TYPEOF_EXPR:
-    return Context->getTypeOfExprType(ReadExpr());
+    return Context->getTypeOfExprType(ReadExpr(DeclsCursor));
 
   case pch::TYPE_TYPEOF: {
     if (Record.size() != 1) {
@@ -2388,7 +2388,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
   }
 
   case pch::TYPE_DECLTYPE:
-    return Context->getDecltypeType(ReadExpr());
+    return Context->getDecltypeType(ReadExpr(DeclsCursor));
 
   case pch::TYPE_RECORD: {
     if (Record.size() != 2) {
@@ -2487,7 +2487,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
     llvm::SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
     while (NumArgs--)
-      Args.push_back(ReadTemplateArgument(Record, Idx));
+      Args.push_back(ReadTemplateArgument(DeclsCursor, Record, Idx));
     return Context->getDependentTemplateSpecializationType(Keyword, NNS, Name,
                                                       Args.size(), Args.data());
   }
@@ -2502,7 +2502,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
     unsigned IndexTypeQuals = Record[Idx++];
 
     // DependentSizedArrayType
-    Expr *NumElts = ReadExpr();
+    Expr *NumElts = ReadExpr(DeclsCursor);
     SourceRange Brackets = ReadSourceRange(Record, Idx);
 
     return Context->getDependentSizedArrayType(ElementType, NumElts, ASM,
@@ -2514,7 +2514,7 @@ QualType PCHReader::ReadTypeRecord(unsigned Index) {
     bool IsDependent = Record[Idx++];
     TemplateName Name = ReadTemplateName(Record, Idx);
     llvm::SmallVector<TemplateArgument, 8> Args;
-    ReadTemplateArgumentList(Args, Record, Idx);
+    ReadTemplateArgumentList(Args, DeclsCursor, Record, Idx);
     QualType Canon = GetType(Record[Idx++]);
     QualType T;
     if (Canon.isNull())
@@ -2535,13 +2535,14 @@ namespace {
 
 class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
   PCHReader &Reader;
+  llvm::BitstreamCursor &DeclsCursor;
   const PCHReader::RecordData &Record;
   unsigned &Idx;
 
 public:
-  TypeLocReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                unsigned &Idx)
-    : Reader(Reader), Record(Record), Idx(Idx) { }
+  TypeLocReader(PCHReader &Reader, llvm::BitstreamCursor &Cursor,
+                const PCHReader::RecordData &Record, unsigned &Idx)
+    : Reader(Reader), DeclsCursor(Cursor), Record(Record), Idx(Idx) { }
 
   // We want compile-time assurance that we've enumerated all of
   // these, so unfortunately we have to declare them first, then
@@ -2591,7 +2592,7 @@ void TypeLocReader::VisitArrayTypeLoc(ArrayTypeLoc TL) {
   TL.setLBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
-    TL.setSizeExpr(Reader.ReadExpr());
+    TL.setSizeExpr(Reader.ReadExpr(DeclsCursor));
   else
     TL.setSizeExpr(0);
 }
@@ -2646,7 +2647,7 @@ void TypeLocReader::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
   TL.setTypeofLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TL.setUnderlyingTInfo(Reader.GetTypeSourceInfo(Record, Idx));
+  TL.setUnderlyingTInfo(Reader.GetTypeSourceInfo(DeclsCursor, Record, Idx));
 }
 void TypeLocReader::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -2672,7 +2673,7 @@ void TypeLocReader::VisitTemplateSpecializationTypeLoc(
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
     TL.setArgLocInfo(i,
         Reader.GetTemplateArgumentLocInfo(TL.getTypePtr()->getArg(i).getKind(),
-                                          Record, Idx));
+                                          DeclsCursor, Record, Idx));
 }
 void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   TL.setKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -2696,7 +2697,7 @@ void TypeLocReader::VisitDependentTemplateSpecializationTypeLoc(
   for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
     TL.setArgLocInfo(I,
         Reader.GetTemplateArgumentLocInfo(TL.getTypePtr()->getArg(I).getKind(),
-                                          Record, Idx));
+                                          DeclsCursor, Record, Idx));
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -2712,14 +2713,15 @@ void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
-TypeSourceInfo *PCHReader::GetTypeSourceInfo(const RecordData &Record,
+TypeSourceInfo *PCHReader::GetTypeSourceInfo(llvm::BitstreamCursor &DeclsCursor,
+                                             const RecordData &Record,
                                              unsigned &Idx) {
   QualType InfoTy = GetType(Record[Idx++]);
   if (InfoTy.isNull())
     return 0;
 
   TypeSourceInfo *TInfo = getContext()->CreateTypeSourceInfo(InfoTy);
-  TypeLocReader TLR(*this, Record, Idx);
+  TypeLocReader TLR(*this, DeclsCursor, Record, Idx);
   for (TypeLoc TL = TInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
     TLR.Visit(TL);
   return TInfo;
@@ -2787,13 +2789,14 @@ QualType PCHReader::GetType(pch::TypeID ID) {
 
 TemplateArgumentLocInfo
 PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                                      llvm::BitstreamCursor &DeclsCursor,
                                       const RecordData &Record,
                                       unsigned &Index) {
   switch (Kind) {
   case TemplateArgument::Expression:
-    return ReadExpr();
+    return ReadExpr(DeclsCursor);
   case TemplateArgument::Type:
-    return GetTypeSourceInfo(Record, Index);
+    return GetTypeSourceInfo(DeclsCursor, Record, Index);
   case TemplateArgument::Template: {
     SourceRange QualifierRange = ReadSourceRange(Record, Index);
     SourceLocation TemplateNameLoc = ReadSourceLocation(Record, Index);
@@ -2810,14 +2813,16 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
 }
 
 TemplateArgumentLoc
-PCHReader::ReadTemplateArgumentLoc(const RecordData &Record, unsigned &Index) {
-  TemplateArgument Arg = ReadTemplateArgument(Record, Index);
+PCHReader::ReadTemplateArgumentLoc(llvm::BitstreamCursor &DeclsCursor,
+                                   const RecordData &Record, unsigned &Index) {
+  TemplateArgument Arg = ReadTemplateArgument(DeclsCursor, Record, Index);
 
   if (Arg.getKind() == TemplateArgument::Expression) {
     if (Record[Index++]) // bool InfoHasSameExpr.
       return TemplateArgumentLoc(Arg, TemplateArgumentLocInfo(Arg.getAsExpr()));
   }
   return TemplateArgumentLoc(Arg, GetTemplateArgumentLocInfo(Arg.getKind(),
+                                                             DeclsCursor,
                                                              Record, Index));
 }
 
@@ -3370,7 +3375,8 @@ PCHReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
 }
 
 TemplateArgument
-PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
+PCHReader::ReadTemplateArgument(llvm::BitstreamCursor &DeclsCursor,
+                                const RecordData &Record, unsigned &Idx) {
   switch ((TemplateArgument::ArgKind)Record[Idx++]) {
   case TemplateArgument::Null:
     return TemplateArgument();
@@ -3386,13 +3392,13 @@ PCHReader::ReadTemplateArgument(const RecordData &Record, unsigned &Idx) {
   case TemplateArgument::Template:
     return TemplateArgument(ReadTemplateName(Record, Idx));
   case TemplateArgument::Expression:
-    return TemplateArgument(ReadExpr());
+    return TemplateArgument(ReadExpr(DeclsCursor));
   case TemplateArgument::Pack: {
     unsigned NumArgs = Record[Idx++];
     llvm::SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
     while (NumArgs--)
-      Args.push_back(ReadTemplateArgument(Record, Idx));
+      Args.push_back(ReadTemplateArgument(DeclsCursor, Record, Idx));
     TemplateArgument TemplArg;
     TemplArg.setArgumentPack(Args.data(), Args.size(), /*CopyArgs=*/true);
     return TemplArg;
@@ -3424,11 +3430,12 @@ PCHReader::ReadTemplateParameterList(const RecordData &Record, unsigned &Idx) {
 void
 PCHReader::
 ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
+                         llvm::BitstreamCursor &DeclsCursor,
                          const RecordData &Record, unsigned &Idx) {
   unsigned NumTemplateArgs = Record[Idx++];
   TemplArgs.reserve(NumTemplateArgs);
   while (NumTemplateArgs--)
-    TemplArgs.push_back(ReadTemplateArgument(Record, Idx));
+    TemplArgs.push_back(ReadTemplateArgument(DeclsCursor, Record, Idx));
 }
 
 /// \brief Read a UnresolvedSet structure.
