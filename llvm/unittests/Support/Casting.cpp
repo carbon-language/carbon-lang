@@ -23,7 +23,8 @@ struct bar {
   bar() {}
   struct foo *baz();
   struct foo *caz();
-  //  struct foo *daz();
+  struct foo *daz();
+  struct foo *naz();
 private:
   bar(const bar &);
 };
@@ -35,7 +36,7 @@ struct foo {
     }*/
 };
 
-template <> struct isa_impl<foo,bar> {
+template <> struct isa_impl<foo, bar> {
   static inline bool doit(const bar &Val) {
     dbgs() << "Classof: " << &Val << "\n";
     return true;
@@ -50,10 +51,13 @@ foo *bar::caz() {
     return cast_or_null<foo>(this);
 }
 
-
-/*foo *bar::daz() {
+foo *bar::daz() {
     return dyn_cast<foo>(this);
-}*/
+}
+
+foo *bar::naz() {
+    return dyn_cast_or_null<foo>(this);
+}
 
 
 bar *fub();
@@ -115,10 +119,23 @@ TEST(CastingTest, dyn_cast) {
   EXPECT_NE(F2, null_foo);
   const foo *F3 = dyn_cast<foo>(B4);
   EXPECT_NE(F3, null_foo);
-  foo *F4 = dyn_cast<foo>(fub());
+  // foo *F4 = dyn_cast<foo>(fub()); // not permittible
+  // EXPECT_EQ(F4, null_foo);
+  foo *F5 = B1.daz();
+  EXPECT_NE(F5, null_foo);
+}
+
+TEST(CastingTest, dyn_cast_or_null) {
+  const foo *F1 = dyn_cast_or_null<foo>(B2);
+  EXPECT_NE(F1, null_foo);
+  const foo *F2 = dyn_cast_or_null<foo>(B2);
+  EXPECT_NE(F2, null_foo);
+  const foo *F3 = dyn_cast_or_null<foo>(B4);
+  EXPECT_NE(F3, null_foo);
+  foo *F4 = dyn_cast_or_null<foo>(fub());
   EXPECT_EQ(F4, null_foo);
-  //  foo *F5 = B1.daz();
-  //  EXPECT_NE(F5, null_foo);
+  foo *F5 = B1.naz();
+  EXPECT_NE(F5, null_foo);
 }
 
 // These lines are errors...
