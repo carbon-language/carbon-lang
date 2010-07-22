@@ -148,15 +148,16 @@ ReprocessLoop:
        BB != E; ++BB) {
     if (*BB == L->getHeader()) continue;
 
-    SmallPtrSet<BasicBlock *, 4> BadPreds;
-    for (pred_iterator PI = pred_begin(*BB), PE = pred_end(*BB); PI != PE; ++PI){
+    SmallPtrSet<BasicBlock*, 4> BadPreds;
+    for (pred_iterator PI = pred_begin(*BB),
+         PE = pred_end(*BB); PI != PE; ++PI) {
       BasicBlock *P = *PI;
       if (!L->contains(P))
         BadPreds.insert(P);
     }
 
     // Delete each unique out-of-loop (and thus dead) predecessor.
-    for (SmallPtrSet<BasicBlock *, 4>::iterator I = BadPreds.begin(),
+    for (SmallPtrSet<BasicBlock*, 4>::iterator I = BadPreds.begin(),
          E = BadPreds.end(); I != E; ++I) {
 
       DEBUG(dbgs() << "LoopSimplify: Deleting edge from dead predecessor ";
