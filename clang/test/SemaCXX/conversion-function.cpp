@@ -97,9 +97,7 @@ void f(Yb& a) {
 class AutoPtrRef { };
 
 class AutoPtr {
-  // FIXME: Using 'unavailable' since we do not have access control yet.
-  // FIXME: The error message isn't so good.
-  AutoPtr(AutoPtr &) __attribute__((unavailable)); // expected-note{{explicitly marked}}
+  AutoPtr(AutoPtr &); // expected-note{{declared private here}}
   
 public:
   AutoPtr();
@@ -115,7 +113,7 @@ AutoPtr test_auto_ptr(bool Cond) {
   
   AutoPtr p;
   if (Cond)
-    return p; // expected-error{{call to deleted constructor}}
+    return p; // expected-error{{calling a private constructor}}
   
   return AutoPtr();
 }
@@ -125,11 +123,12 @@ struct A1 {
   ~A1();
 
 private:
-  A1(const A1&) __attribute__((unavailable)); // expected-note{{here}}
+  A1(const A1&); // expected-note 2 {{declared private here}}
 };
 
 A1 f() {
-  return "Hello"; // expected-error{{invokes deleted constructor}}
+  // FIXME: redundant diagnostics!
+  return "Hello"; // expected-error {{calling a private constructor}} expected-warning {{an accessible copy constructor}}
 }
 
 namespace source_locations {
