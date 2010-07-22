@@ -831,7 +831,7 @@ void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
   if (DL.isUnknown()) return;
   if (!BeforePrintingInsn) return;
   
-  const LLVMContext& Context = EmissionDetails.MF->getFunction()->getContext();
+  const LLVMContext &Context = EmissionDetails.MF->getFunction()->getContext();
 
   if (DL.getScope(Context) != 0 && PrevDL != DL) {
     JITEvent_EmittedFunctionDetails::LineStart NextLine;
@@ -857,23 +857,6 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
     Size += TD->getTypeAllocSize(Ty);
   }
   return Size;
-}
-
-static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI, JIT *jit) {
-  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-  if (JT.empty()) return 0;
-
-  unsigned NumEntries = 0;
-  for (unsigned i = 0, e = JT.size(); i != e; ++i)
-    NumEntries += JT[i].MBBs.size();
-
-  return NumEntries * MJTI->getEntrySize(*jit->getTargetData());
-}
-
-static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
-  if (Alignment == 0) Alignment = 1;
-  // Since we do not know where the buffer will be allocated, be pessimistic.
-  return Size + Alignment;
 }
 
 /// addSizeOfGlobal - add the size of the global (plus any alignment padding)
@@ -1044,43 +1027,8 @@ void JITEmitter::startFunction(MachineFunction &F) {
   uintptr_t ActualSize = 0;
   // Set the memory writable, if it's not already
   MemMgr->setMemoryWritable();
-  if (MemMgr->NeedsExactSize()) {
-    DEBUG(dbgs() << "JIT: ExactSize\n");
-    const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
-    MachineConstantPool *MCP = F.getConstantPool();
-
-    // Ensure the constant pool/jump table info is at least 4-byte aligned.
-    ActualSize = RoundUpToAlign(ActualSize, 16);
-
-    // Add the alignment of the constant pool
-    ActualSize = RoundUpToAlign(ActualSize, MCP->getConstantPoolAlignment());
-
-    // Add the constant pool size
-    ActualSize += GetConstantPoolSizeInBytes(MCP, TheJIT->getTargetData());
-
-    if (MachineJumpTableInfo *MJTI = F.getJumpTableInfo()) {
-      // Add the aligment of the jump table info
-      ActualSize = RoundUpToAlign(ActualSize,
-                             MJTI->getEntryAlignment(*TheJIT->getTargetData()));
-
-      // Add the jump table size
-      ActualSize += GetJumpTableSizeInBytes(MJTI, TheJIT);
-    }
-
-    // Add the alignment for the function
-    ActualSize = RoundUpToAlign(ActualSize,
-                                std::max(F.getFunction()->getAlignment(), 8U));
-
-    // Add the function size
-    ActualSize += TII->GetFunctionSizeInBytes(F);
-
-    DEBUG(dbgs() << "JIT: ActualSize before globals " << ActualSize << "\n");
-    // Add the size of the globals that will be allocated after this function.
-    // These are all the ones referenced from this function that were not
-    // previously allocated.
-    ActualSize += GetSizeOfGlobalsInBytes(F);
-    DEBUG(dbgs() << "JIT: ActualSize after globals " << ActualSize << "\n");
-  } else if (SizeEstimate > 0) {
+  
+  if (SizeEstimate > 0) {
     // SizeEstimate will be non-zero on reallocation attempts.
     ActualSize = SizeEstimate;
   }
@@ -1267,9 +1215,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;
     SavedCurBufferPtr = CurBufferPtr;
-
-    if (MemMgr->NeedsExactSize())
-      ActualSize = DE->GetDwarfTableSizeInBytes(F, *this, FnStart, FnEnd);
 
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);

@@ -2945,11 +2945,6 @@ bool X86InstrInfo::isX86_64ExtendedReg(unsigned RegNo) {
   return false;
 }
 
-unsigned X86InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
-  assert(0 && "X86InstrInfo::GetInstSizeInBytes isn't implemented");
-  abort();
-}
-
 /// getGlobalBaseReg - Return a virtual register initialized with the
 /// the global base register value. Output instructions required to
 /// initialize the register in the function entry block, if necessary.

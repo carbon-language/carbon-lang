@@ -825,10 +825,6 @@ public:
   /// higher) register?  e.g. r8, xmm8, xmm13, etc.
   static bool isX86_64ExtendedReg(unsigned RegNo);
 
-  /// GetInstSize - Returns the size of the specified MachineInstr.
-  ///
-  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
-
   /// getGlobalBaseReg - Return a virtual register initialized with the
   /// the global base register value. Output instructions required to
   /// initialize the register in the function entry block, if necessary.

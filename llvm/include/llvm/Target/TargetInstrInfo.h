@@ -573,11 +573,6 @@ public:
     return 0;
   }
 
-  /// GetFunctionSizeInBytes - Returns the size of the specified
-  /// MachineFunction.
-  /// 
-  virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const = 0;
-  
   /// Measure the specified inline asm to determine an approximation of its
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
@@ -621,7 +616,6 @@ public:
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
-  virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 
   virtual ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData&) const;

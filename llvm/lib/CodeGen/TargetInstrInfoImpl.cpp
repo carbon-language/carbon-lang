@@ -178,19 +178,6 @@ MachineInstr *TargetInstrInfoImpl::duplicate(MachineInstr *Orig,
   return MF.CloneMachineInstr(Orig);
 }
 
-unsigned
-TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
-  unsigned FnSize = 0;
-  for (MachineFunction::const_iterator MBBI = MF.begin(), E = MF.end();
-       MBBI != E; ++MBBI) {
-    const MachineBasicBlock &MBB = *MBBI;
-    for (MachineBasicBlock::const_iterator I = MBB.begin(),E = MBB.end();
-         I != E; ++I)
-      FnSize += GetInstSizeInBytes(I);
-  }
-  return FnSize;
-}
-
 // If the COPY instruction in MI can be folded to a stack operation, return
 // the register class to use.
 static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
