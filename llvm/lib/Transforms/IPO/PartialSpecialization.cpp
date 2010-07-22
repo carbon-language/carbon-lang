@@ -83,10 +83,9 @@ SpecializeFunction(Function* F,
     Value::use_iterator i = ii;
     ++ii;
     User *U = *i;
-    if (isa<CallInst>(U) || isa<InvokeInst>(U)) {
-      CallSite CS(cast<Instruction>(U));
+    CallSite CS(U);
+    if (CS) {
       if (CS.getCalledFunction() == F) {
-        
         SmallVector<Value*, 6> args;
         // Assemble the non-specialized arguments for the updated callsite.
         // In the process, make sure that the specialized arguments are
