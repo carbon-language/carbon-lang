@@ -29,7 +29,7 @@
 using namespace llvm;
 
 X86MCInstLower::X86MCInstLower(Mangler *mang, const MachineFunction &mf,
-                               X86AsmPrinter *asmprinter)
+                               X86AsmPrinter &asmprinter)
 : Ctx(mf.getContext()), Mang(mang), MF(mf), TM(mf.getTarget()),
   MAI(*TM.getMCAsmInfo()), AsmPrinter(asmprinter) {}
 
@@ -181,7 +181,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       // local labels. This is only safe when the symbols are in the same
       // section so we are restricting it to jumptable references.
       MCSymbol *Label = Ctx.CreateTempSymbol();
-      AsmPrinter->OutStreamer.EmitAssignment(Label, Expr);
+      AsmPrinter.OutStreamer.EmitAssignment(Label, Expr);
       Expr = MCSymbolRefExpr::Create(Label, Ctx);
     }
     break;
@@ -320,38 +320,20 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      // If we don't have an asmprinter, we're converting to MCInst to get
-      // instruction sizes, which doesn't need precise value information for
-      // symbols, just lower to a 0 immediate.
-      if (AsmPrinter != 0)
-        MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
-      else
-        MCOp = MCOperand::CreateImm(0);
+      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
       break;
     case MachineOperand::MO_ExternalSymbol:
-      if (AsmPrinter != 0)
-        MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
-      else
-        MCOp = MCOperand::CreateImm(0);
+      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      if (AsmPrinter != 0)
-        MCOp = LowerSymbolOperand(MO, AsmPrinter->GetJTISymbol(MO.getIndex()));
-      else
-        MCOp = MCOperand::CreateImm(0);
+      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      if (AsmPrinter != 0)
-        MCOp = LowerSymbolOperand(MO, AsmPrinter->GetCPISymbol(MO.getIndex()));
-      else
-        MCOp = MCOperand::CreateImm(0);
+      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_BlockAddress:
-      if (AsmPrinter != 0)
-        MCOp = LowerSymbolOperand(MO,
-                       AsmPrinter->GetBlockAddressSymbol(MO.getBlockAddress()));
-      else
-        MCOp = MCOperand::CreateImm(0);
+      MCOp = LowerSymbolOperand(MO,
+                     AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
       break;
     }
     
@@ -522,7 +504,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(Mang, *MF, this);
+  X86MCInstLower MCInstLowering(Mang, *MF, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
