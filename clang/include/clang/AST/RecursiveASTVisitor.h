@@ -1318,9 +1318,13 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
       D->getTemplateSpecializationInfo()) {
     if (FTSI->getTemplateSpecializationKind() != TSK_Undeclared &&
         FTSI->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
-      const TemplateArgumentListInfo *TALI = FTSI->TemplateArgumentsAsWritten;
-      TRY_TO(TraverseTemplateArgumentLocsHelper(TALI->getArgumentArray(),
-                                                TALI->size()));
+      // A specialization might not have explicit template arguments if it has
+      // a templated return type and concrete arguments.
+      if (const TemplateArgumentListInfo *TALI =
+          FTSI->TemplateArgumentsAsWritten) {
+        TRY_TO(TraverseTemplateArgumentLocsHelper(TALI->getArgumentArray(),
+                                                  TALI->size()));
+      }
     }
   }
 
