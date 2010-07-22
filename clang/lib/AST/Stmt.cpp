@@ -451,6 +451,15 @@ CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
   return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers, numHandlers);
 }
 
+CXXTryStmt *CXXTryStmt::Create(ASTContext &C, EmptyShell Empty,
+                               unsigned numHandlers) {
+  std::size_t Size = sizeof(CXXTryStmt);
+  Size += ((numHandlers + 1) * sizeof(Stmt));
+
+  void *Mem = C.Allocate(Size, llvm::alignof<CXXTryStmt>());
+  return new (Mem) CXXTryStmt(Empty, numHandlers);
+}
+
 CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
                        Stmt **handlers, unsigned numHandlers)
   : Stmt(CXXTryStmtClass), TryLoc(tryLoc), NumHandlers(numHandlers) {

@@ -88,7 +88,8 @@ template<unsigned N>
 bool isInt(int x);
 
 template<> bool isInt<8>(int x) {
-    return true;
+  try { ++x; } catch(...) { --x; }
+  return true;
 }
 
 template<typename _CharT>

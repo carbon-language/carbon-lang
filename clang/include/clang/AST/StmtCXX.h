@@ -37,6 +37,9 @@ public:
   : Stmt(CXXCatchStmtClass), CatchLoc(catchLoc), ExceptionDecl(exDecl),
     HandlerBlock(handlerBlock) {}
 
+  CXXCatchStmt(EmptyShell Empty)
+  : Stmt(CXXCatchStmtClass), ExceptionDecl(0), HandlerBlock(0) {}
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
   }
@@ -53,6 +56,8 @@ public:
 
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
 };
 
 /// CXXTryStmt - A C++ try block, including all handlers.
@@ -64,9 +69,22 @@ class CXXTryStmt : public Stmt {
   CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock, Stmt **handlers,
              unsigned numHandlers);
 
+  CXXTryStmt(EmptyShell Empty, unsigned numHandlers)
+    : Stmt(CXXTryStmtClass), NumHandlers(numHandlers) { }
+
+  Stmt const * const *getStmts() const {
+    return reinterpret_cast<Stmt const * const*>(this + 1);
+  }
+  Stmt **getStmts() {
+    return reinterpret_cast<Stmt **>(this + 1);
+  }
+
 public:
   static CXXTryStmt *Create(ASTContext &C, SourceLocation tryLoc,
                             Stmt *tryBlock, Stmt **handlers,
+                            unsigned numHandlers);
+
+  static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
 
   virtual SourceRange getSourceRange() const {
@@ -75,27 +93,22 @@ public:
 
   SourceLocation getTryLoc() const { return TryLoc; }
   SourceLocation getEndLoc() const {
-    Stmt const * const*Stmts = reinterpret_cast<Stmt const * const*>(this + 1);
-    return Stmts[NumHandlers]->getLocEnd();
+    return getStmts()[NumHandlers]->getLocEnd();
   }
 
   CompoundStmt *getTryBlock() {
-    Stmt **Stmts = reinterpret_cast<Stmt **>(this + 1);
-    return llvm::cast<CompoundStmt>(Stmts[0]);
+    return llvm::cast<CompoundStmt>(getStmts()[0]);
   }
   const CompoundStmt *getTryBlock() const {
-    Stmt const * const*Stmts = reinterpret_cast<Stmt const * const*>(this + 1);
-    return llvm::cast<CompoundStmt>(Stmts[0]);
+    return llvm::cast<CompoundStmt>(getStmts()[0]);
   }
 
   unsigned getNumHandlers() const { return NumHandlers; }
   CXXCatchStmt *getHandler(unsigned i) {
-    Stmt **Stmts = reinterpret_cast<Stmt **>(this + 1);
-    return llvm::cast<CXXCatchStmt>(Stmts[i + 1]);
+    return llvm::cast<CXXCatchStmt>(getStmts()[i + 1]);
   }
   const CXXCatchStmt *getHandler(unsigned i) const {
-    Stmt const * const*Stmts = reinterpret_cast<Stmt const * const*>(this + 1);
-    return llvm::cast<CXXCatchStmt>(Stmts[i + 1]);
+    return llvm::cast<CXXCatchStmt>(getStmts()[i + 1]);
   }
 
   static bool classof(const Stmt *T) {
@@ -105,6 +118,8 @@ public:
 
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+  friend class PCHStmtReader;
 };
 
 

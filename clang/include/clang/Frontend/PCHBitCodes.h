@@ -755,6 +755,11 @@ namespace clang {
       STMT_OBJC_AT_THROW,
 
       // C++
+      
+      /// \brief A CXXCatchStmt record.
+      STMT_CXX_CATCH,
+      /// \brief A CXXTryStmt record.
+      STMT_CXX_TRY,
 
       /// \brief A CXXOperatorCallExpr record.
       EXPR_CXX_OPERATOR_CALL,

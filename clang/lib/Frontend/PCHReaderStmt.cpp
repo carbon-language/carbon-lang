@@ -116,6 +116,10 @@ namespace clang {
     void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
 
+    // C++ Statements
+    void VisitCXXCatchStmt(CXXCatchStmt *S);
+    void VisitCXXTryStmt(CXXTryStmt *S);
+
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
     void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
@@ -923,6 +927,24 @@ void PCHStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
 
 //===----------------------------------------------------------------------===//
 // C++ Expressions and Statements
+//===----------------------------------------------------------------------===//
+
+void PCHStmtReader::VisitCXXCatchStmt(CXXCatchStmt *S) {
+  VisitStmt(S);
+  S->CatchLoc = Reader.ReadSourceLocation(Record, Idx);
+  S->ExceptionDecl = cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++]));
+  S->HandlerBlock = Reader.ReadSubStmt();
+}
+
+void PCHStmtReader::VisitCXXTryStmt(CXXTryStmt *S) {
+  VisitStmt(S);
+  assert(Record[Idx] == S->getNumHandlers() && "NumStmtFields is wrong ?");
+  ++Idx;
+  S->TryLoc = Reader.ReadSourceLocation(Record, Idx);
+  S->getStmts()[0] = Reader.ReadSubStmt();
+  for (unsigned i = 0, e = S->getNumHandlers(); i != e; ++i)
+    S->getStmts()[i + 1] = Reader.ReadSubStmt();
+}
 
 void PCHStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
@@ -1585,6 +1607,15 @@ Stmt *PCHReader::ReadStmtFromStream(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::STMT_OBJC_AT_THROW:
       S = new (Context) ObjCAtThrowStmt(Empty);
+      break;
+
+    case pch::STMT_CXX_CATCH:
+      S = new (Context) CXXCatchStmt(Empty);
+      break;
+
+    case pch::STMT_CXX_TRY:
+      S = CXXTryStmt::Create(*Context, Empty,
+             /*NumHandlers=*/Record[PCHStmtReader::NumStmtFields]);
       break;
 
     case pch::EXPR_CXX_OPERATOR_CALL:

@@ -115,6 +115,9 @@ namespace clang {
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
 
     // C++ Statements
+    void VisitCXXCatchStmt(CXXCatchStmt *S);
+    void VisitCXXTryStmt(CXXTryStmt *S);
+
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
@@ -928,6 +931,24 @@ void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
 //===----------------------------------------------------------------------===//
 // C++ Expressions and Statements.
 //===----------------------------------------------------------------------===//
+
+void PCHStmtWriter::VisitCXXCatchStmt(CXXCatchStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getCatchLoc(), Record);
+  Writer.AddDeclRef(S->getExceptionDecl(), Record);
+  Writer.AddStmt(S->getHandlerBlock());
+  Code = pch::STMT_CXX_CATCH;
+}
+
+void PCHStmtWriter::VisitCXXTryStmt(CXXTryStmt *S) {
+  VisitStmt(S);
+  Record.push_back(S->getNumHandlers());
+  Writer.AddSourceLocation(S->getTryLoc(), Record);
+  Writer.AddStmt(S->getTryBlock());
+  for (unsigned i = 0, e = S->getNumHandlers(); i != e; ++i)
+    Writer.AddStmt(S->getHandler(i));
+  Code = pch::STMT_CXX_TRY;
+}
 
 void PCHStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
