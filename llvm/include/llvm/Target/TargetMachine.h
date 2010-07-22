@@ -250,10 +250,10 @@ public:
   /// code is not supported. It fills the MCContext Ctx pointer which can be
   /// used to build custom MCStreamer.
   ///
-  virtual bool addPassesToEmitMC(PassManagerBase &PM,
-                                 MCContext *&Ctx,
-                                 CodeGenOpt::Level OptLevel,
-                                 bool DisableVerify = true) {
+  virtual bool addPassesToEmitMC(PassManagerBase &,
+                                 MCContext *&,
+                                 CodeGenOpt::Level,
+                                 bool = true) {
     return true;
   }
 };

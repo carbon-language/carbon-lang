@@ -71,8 +71,8 @@ template<> struct ilist_traits<NamedMDNode>
   NamedMDNode *provideInitialHead() const { return createSentinel(); }
   NamedMDNode *ensureHead(NamedMDNode*) const { return createSentinel(); }
   static void noteHead(NamedMDNode*, NamedMDNode*) {}
-  void addNodeToList(NamedMDNode *N) {}
-  void removeNodeFromList(NamedMDNode *N) {}
+  void addNodeToList(NamedMDNode *) {}
+  void removeNodeFromList(NamedMDNode *) {}
 private:
   mutable ilist_node<NamedMDNode> Sentinel;
 };
