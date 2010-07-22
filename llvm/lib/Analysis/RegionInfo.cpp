@@ -327,7 +327,7 @@ bool RegionInfo::isRegion(BasicBlock *entry, BasicBlock *exit) const {
   assert(entry && exit && "entry and exit must not be null!");
   typedef DominanceFrontier::DomSetType DST;
 
-  DST *entrySuccs = &(*DF->find(entry)).second;
+  DST *entrySuccs = &DF->find(entry)->second;
 
   // Exit is the header of a loop that contains the entry. In this case,
   // the dominance frontier must only contain the exit.
@@ -340,7 +340,7 @@ bool RegionInfo::isRegion(BasicBlock *entry, BasicBlock *exit) const {
     return true;
   }
 
-  DST *exitSuccs = &(*DF->find(exit)).second;
+  DST *exitSuccs = &DF->find(exit)->second;
 
   // Do not allow edges leaving the region.
   for (DST::iterator SI = entrySuccs->begin(), SE = entrySuccs->end();
