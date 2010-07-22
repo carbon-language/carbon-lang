@@ -1779,6 +1779,10 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     for (unsigned J = 0, M = Chain.size(); J != M; ++J) {
       PCHIdentifierLookupTable *IdTable
         = (PCHIdentifierLookupTable *)Chain[J]->IdentifierLookupTable;
+      // Not all PCH files necessarily have identifier tables, only the useful
+      // ones.
+      if (!IdTable)
+        continue;
       for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
         IdentifierInfo *II = Identifiers[I];
         // Look in the on-disk hash tables for an entry for this identifier
@@ -2856,10 +2860,18 @@ Decl *PCHReader::GetDecl(pch::DeclID ID) {
 /// source each time it is called, and is meant to be used via a
 /// LazyOffsetPtr (which is used by Decls for the body of functions, etc).
 Stmt *PCHReader::GetExternalDeclStmt(uint64_t Offset) {
-  // Since we know tha this statement is part of a decl, make sure to use the
-  // decl cursor to read it.
-  Chain[0]->DeclsCursor.JumpToBit(Offset);
-  return ReadStmtFromStream(Chain[0]->DeclsCursor);
+  // Offset here is a global offset across the entire chain.
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    PerFileData &F = *Chain[N - I - 1];
+    if (Offset < F.SizeInBits) {
+      // Since we know that this statement is part of a decl, make sure to use
+      // the decl cursor to read it.
+      F.DeclsCursor.JumpToBit(Offset);
+      return ReadStmtFromStream(F.DeclsCursor);
+    }
+    Offset -= F.SizeInBits;
+  }
+  llvm_unreachable("Broken chain");
 }
 
 bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
@@ -2867,32 +2879,37 @@ bool PCHReader::FindExternalLexicalDecls(const DeclContext *DC,
   assert(DC->hasExternalLexicalStorage() &&
          "DeclContext has no lexical decls in storage");
 
-  uint64_t Offset = DeclContextOffsets[DC].first;
-  if (Offset == 0) {
-    Error("DeclContext has no lexical decls in storage");
-    return true;
+  // There might be lexical decls in multiple parts of the chain, for the TU
+  // at least.
+  DeclContextInfos &Infos = DeclContextOffsets[DC];
+  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
+       I != E; ++I) {
+    uint64_t Offset = I->OffsetToLexicalDecls;
+    // Offset can be 0 if this file only contains visible decls.
+    if (Offset == 0)
+      continue;
+    llvm::BitstreamCursor &DeclsCursor = *I->Stream;
+
+    // Keep track of where we are in the stream, then jump back there
+    // after reading this context.
+    SavedStreamPosition SavedPosition(DeclsCursor);
+
+    // Load the record containing all of the declarations lexically in
+    // this context.
+    DeclsCursor.JumpToBit(Offset);
+    RecordData Record;
+    unsigned Code = DeclsCursor.ReadCode();
+    unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
+    if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
+      Error("Expected lexical block");
+      return true;
+    }
+
+    // Load all of the declaration IDs
+    for (RecordData::iterator J = Record.begin(), F = Record.end(); J != F; ++J)
+      Decls.push_back(GetDecl(*J));
   }
 
-  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
-
-  // Keep track of where we are in the stream, then jump back there
-  // after reading this context.
-  SavedStreamPosition SavedPosition(DeclsCursor);
-
-  // Load the record containing all of the declarations lexically in
-  // this context.
-  DeclsCursor.JumpToBit(Offset);
-  RecordData Record;
-  unsigned Code = DeclsCursor.ReadCode();
-  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
-    Error("Expected lexical block");
-    return true;
-  }
-
-  // Load all of the declaration IDs
-  for (RecordData::iterator I = Record.begin(), E = Record.end(); I != E; ++I)
-    Decls.push_back(GetDecl(*I));
   ++NumLexicalDeclContextsRead;
   return false;
 }
@@ -2902,48 +2919,49 @@ PCHReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
-  uint64_t Offset = DeclContextOffsets[DC].second;
-  if (Offset == 0) {
-    Error("DeclContext has no visible decls in storage");
-    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
-                                      DeclContext::lookup_iterator());
-  }
-
-  llvm::BitstreamCursor &DeclsCursor = Chain[0]->DeclsCursor;
-
-  // Keep track of where we are in the stream, then jump back there
-  // after reading this context.
-  SavedStreamPosition SavedPosition(DeclsCursor);
-
-  // Load the record containing all of the declarations visible in
-  // this context.
-  DeclsCursor.JumpToBit(Offset);
-  RecordData Record;
-  unsigned Code = DeclsCursor.ReadCode();
-  unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  if (RecCode != pch::DECL_CONTEXT_VISIBLE) {
-    Error("Expected visible block");
-    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
-                                      DeclContext::lookup_iterator());
-  }
 
   llvm::SmallVector<VisibleDeclaration, 64> Decls;
-  if (Record.empty()) {
-    SetExternalVisibleDecls(DC, Decls);
-    return DeclContext::lookup_result(DeclContext::lookup_iterator(),
-                                      DeclContext::lookup_iterator());
-  }
+  // There might be lexical decls in multiple parts of the chain, for the TU
+  // and namespaces.
+  DeclContextInfos &Infos = DeclContextOffsets[DC];
+  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
+       I != E; ++I) {
+    uint64_t Offset = I->OffsetToVisibleDecls;
+    if (Offset == 0)
+      continue;
 
-  unsigned Idx = 0;
-  while (Idx < Record.size()) {
-    Decls.push_back(VisibleDeclaration());
-    Decls.back().Name = ReadDeclarationName(Record, Idx);
+    llvm::BitstreamCursor &DeclsCursor = *I->Stream;
 
-    unsigned Size = Record[Idx++];
-    llvm::SmallVector<unsigned, 4> &LoadedDecls = Decls.back().Declarations;
-    LoadedDecls.reserve(Size);
-    for (unsigned I = 0; I < Size; ++I)
-      LoadedDecls.push_back(Record[Idx++]);
+    // Keep track of where we are in the stream, then jump back there
+    // after reading this context.
+    SavedStreamPosition SavedPosition(DeclsCursor);
+
+    // Load the record containing all of the declarations visible in
+    // this context.
+    DeclsCursor.JumpToBit(Offset);
+    RecordData Record;
+    unsigned Code = DeclsCursor.ReadCode();
+    unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
+    if (RecCode != pch::DECL_CONTEXT_VISIBLE) {
+      Error("Expected visible block");
+      return DeclContext::lookup_result(DeclContext::lookup_iterator(),
+                                        DeclContext::lookup_iterator());
+    }
+
+    if (Record.empty())
+      continue;
+
+    unsigned Idx = 0;
+    while (Idx < Record.size()) {
+      Decls.push_back(VisibleDeclaration());
+      Decls.back().Name = ReadDeclarationName(Record, Idx);
+
+      unsigned Size = Record[Idx++];
+      llvm::SmallVector<unsigned, 4> &LoadedDecls = Decls.back().Declarations;
+      LoadedDecls.reserve(Size);
+      for (unsigned J = 0; J < Size; ++J)
+        LoadedDecls.push_back(Record[Idx++]);
+    }
   }
 
   ++NumVisibleDeclContextsRead;
@@ -3112,6 +3130,8 @@ IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     PCHIdentifierLookupTable *IdTable
       = (PCHIdentifierLookupTable *)Chain[N - I - 1]->IdentifierLookupTable;
+    if (!IdTable)
+      continue;
     std::pair<const char*, unsigned> Key(NameStart, NameEnd - NameStart);
     PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key);
     if (Pos == IdTable->end())

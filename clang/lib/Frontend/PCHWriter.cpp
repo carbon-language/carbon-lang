@@ -1099,8 +1099,10 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   // entry, which is always the same dummy entry.
   std::vector<uint32_t> SLocEntryOffsets;
   RecordData PreloadSLocs;
-  SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1);
-  for (unsigned I = 1, N = SourceMgr.sloc_entry_size(); I != N; ++I) {
+  unsigned BaseSLocID = Chain ? Chain->getTotalNumSLocs() : 0;
+  SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1 - BaseSLocID);
+  for (unsigned I = BaseSLocID + 1, N = SourceMgr.sloc_entry_size();
+       I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getSLocEntry(I);
 
@@ -1157,7 +1159,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // FIXME: For now, preload all file source locations, so that
         // we get the appropriate File entries in the reader. This is
         // a temporary measure.
-        PreloadSLocs.push_back(SLocEntryOffsets.size());
+        PreloadSLocs.push_back(BaseSLocID + SLocEntryOffsets.size());
       } else {
         // The source location entry is a buffer. The blob associated
         // with this entry contains the contents of the buffer.
@@ -1177,7 +1179,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                                                   Buffer->getBufferSize() + 1));
 
         if (strcmp(Name, "<built-in>") == 0)
-          PreloadSLocs.push_back(SLocEntryOffsets.size());
+          PreloadSLocs.push_back(BaseSLocID + SLocEntryOffsets.size());
       }
     } else {
       // The source location entry is an instantiation.

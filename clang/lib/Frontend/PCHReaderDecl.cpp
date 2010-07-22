@@ -1497,7 +1497,12 @@ Decl *PCHReader::ReadDeclRecord(unsigned Index) {
     if (Offsets.first || Offsets.second) {
       DC->setHasExternalLexicalStorage(Offsets.first != 0);
       DC->setHasExternalVisibleStorage(Offsets.second != 0);
-      DeclContextOffsets[DC] = Offsets;
+      PCHReader::DeclContextInfo Info = {
+        Loc.first,
+        Offsets.first,
+        Offsets.second
+      };
+      DeclContextOffsets[DC].push_back(Info);
     }
   }
   assert(Idx == Record.size());

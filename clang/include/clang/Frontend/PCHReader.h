@@ -300,7 +300,14 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
-  typedef llvm::DenseMap<const DeclContext *, std::pair<uint64_t, uint64_t> >
+  /// \brief Information about the contents of a DeclContext.
+  struct DeclContextInfo {
+    llvm::BitstreamCursor *Stream;
+    uint64_t OffsetToLexicalDecls;
+    uint64_t OffsetToVisibleDecls;
+  };
+  typedef llvm::SmallVector<DeclContextInfo, 1> DeclContextInfos;
+  typedef llvm::DenseMap<const DeclContext *, DeclContextInfos>
     DeclContextOffsetsMap;
 
   /// \brief Offsets of the lexical and visible declarations for each
@@ -643,6 +650,11 @@ public:
       
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
+
+  /// \brief Returns the number of source locations found in this file.
+  unsigned getTotalNumSLocs() const {
+    return TotalNumSLocEntries;
+  }
 
   /// \brief Returns the number of types found in this file.
   unsigned getTotalNumTypes() const {
