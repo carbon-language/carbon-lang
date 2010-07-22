@@ -49,17 +49,6 @@ class JITDwarfEmitter {
                              unsigned char* EndFunction,
                              unsigned char* ExceptionTable) const;
     
-  unsigned GetExceptionTableSizeInBytes(MachineFunction* MF) const;
-  
-  unsigned
-    GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr, 
-                             const std::vector<MachineMove> &Moves) const;
-    
-  unsigned GetCommonEHFrameSizeInBytes(const Function* Personality) const;
-
-  unsigned GetEHFrameSizeInBytes(const Function* Personality, 
-                                 unsigned char* StartFunction) const; 
-    
 public:
   
   JITDwarfEmitter(JIT& jit);
@@ -71,11 +60,6 @@ public:
                                 unsigned char* &EHFramePtr);
   
   
-  unsigned GetDwarfTableSizeInBytes(MachineFunction& F, 
-                                    JITCodeEmitter& JCE,
-                                    unsigned char* StartFunction,
-                                    unsigned char* EndFunction);
-
   void setModuleInfo(MachineModuleInfo* Info) {
     MMI = Info;
   }
