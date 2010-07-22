@@ -160,7 +160,7 @@ bool PartialInliner::runOnModule(Module& M) {
     bool recursive = false;
     for (Function::use_iterator UI = currFunc->use_begin(),
          UE = currFunc->use_end(); UI != UE; ++UI)
-      if (Instruction* I = dyn_cast<Instruction>(UI))
+      if (Instruction* I = dyn_cast<Instruction>(*UI))
         if (I->getParent()->getParent() == currFunc) {
           recursive = true;
           break;
