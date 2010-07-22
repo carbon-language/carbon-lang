@@ -1412,7 +1412,8 @@ void CppWriter::printInstruction(const Instruction *I,
         nl(Out);
       }
       Out << "CallInst* " << iName << " = CallInst::Create("
-          << opNames[call->getNumArgOperands()] << ", " << iName << "_params.begin(), "
+          << opNames[call->getNumArgOperands()] << ", "
+          << iName << "_params.begin(), "
           << iName << "_params.end(), \"";
     } else if (call->getNumArgOperands() == 1) {
       Out << "CallInst* " << iName << " = CallInst::Create("

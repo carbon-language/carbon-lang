@@ -422,8 +422,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
       return false;
 
     if (isFoldable(3, 2, false)) {
-      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
-                 1, false, B, TD);
+      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                 CI->getArgOperand(2), 1, false, B, TD);
       replaceCall(CI->getArgOperand(0));
       return true;
     }
@@ -445,8 +445,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
       return false;
 
     if (isFoldable(3, 2, false)) {
-      EmitMemMove(CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
-                  1, false, B, TD);
+      EmitMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
+                  CI->getArgOperand(2), 1, false, B, TD);
       replaceCall(CI->getArgOperand(0));
       return true;
     }
@@ -465,7 +465,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     if (isFoldable(3, 2, false)) {
       Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(),
                                    false);
-      EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2), false, B, TD);
+      EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2),
+                 false, B, TD);
       replaceCall(CI->getArgOperand(0));
       return true;
     }

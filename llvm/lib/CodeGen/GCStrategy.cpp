@@ -260,7 +260,7 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
   bool LowerRd = !S.customReadBarrier();
   bool InitRoots = S.initializeRoots();
   
-  SmallVector<AllocaInst*,32> Roots;
+  SmallVector<AllocaInst*, 32> Roots;
   
   bool MadeChange = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
@@ -271,7 +271,8 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
         case Intrinsic::gcwrite:
           if (LowerWr) {
             // Replace a write barrier with a simple store.
-            Value *St = new StoreInst(CI->getArgOperand(0), CI->getArgOperand(2), CI);
+            Value *St = new StoreInst(CI->getArgOperand(0),
+                                      CI->getArgOperand(2), CI);
             CI->replaceAllUsesWith(St);
             CI->eraseFromParent();
           }

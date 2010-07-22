@@ -630,8 +630,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
     APInt DemandedElts(VWidth, 1);
     APInt UndefElts(VWidth, 0);
-    if (Value *V = SimplifyDemandedVectorElts(II->getArgOperand(0), DemandedElts,
-                                              UndefElts)) {
+    if (Value *V = SimplifyDemandedVectorElts(II->getArgOperand(0),
+                                              DemandedElts, UndefElts)) {
       II->setArgOperand(0, V);
       return II;
     }
@@ -655,8 +655,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       
       if (AllEltsOk) {
         // Cast the input vectors to byte vectors.
-        Value *Op0 = Builder->CreateBitCast(II->getArgOperand(0), Mask->getType());
-        Value *Op1 = Builder->CreateBitCast(II->getArgOperand(1), Mask->getType());
+        Value *Op0 = Builder->CreateBitCast(II->getArgOperand(0),
+                                            Mask->getType());
+        Value *Op1 = Builder->CreateBitCast(II->getArgOperand(1),
+                                            Mask->getType());
         Value *Result = UndefValue::get(Op0->getType());
         
         // Only extract each element once.
@@ -772,13 +774,15 @@ protected:
     NewInstruction = IC->ReplaceInstUsesWith(*CI, With);
   }
   bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp, bool isString) const {
-    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp))) {
+    if (ConstantInt *SizeCI =
+                           dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp))) {
       if (SizeCI->isAllOnesValue())
         return true;
       if (isString)
         return SizeCI->getZExtValue() >=
                GetStringLength(CI->getArgOperand(SizeArgOp));
-      if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getArgOperand(SizeArgOp)))
+      if (ConstantInt *Arg = dyn_cast<ConstantInt>(
+                                                  CI->getArgOperand(SizeArgOp)))
         return SizeCI->getZExtValue() >= Arg->getZExtValue();
     }
     return false;
@@ -1140,7 +1144,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   IntrinsicInst *Tramp =
     cast<IntrinsicInst>(cast<BitCastInst>(Callee)->getOperand(0));
 
-  Function *NestF = cast<Function>(Tramp->getArgOperand(1)->stripPointerCasts());
+  Function *NestF =cast<Function>(Tramp->getArgOperand(1)->stripPointerCasts());
   const PointerType *NestFPTy = cast<PointerType>(NestF->getType());
   const FunctionType *NestFTy = cast<FunctionType>(NestFPTy->getElementType());
 

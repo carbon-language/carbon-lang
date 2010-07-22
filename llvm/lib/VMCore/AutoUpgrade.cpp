@@ -398,7 +398,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       } else if (isShufPD) {
         Value *Op1 = CI->getArgOperand(1);
-        unsigned MaskVal = cast<ConstantInt>(CI->getArgOperand(2))->getZExtValue();
+        unsigned MaskVal =
+                        cast<ConstantInt>(CI->getArgOperand(2))->getZExtValue();
         Idxs.push_back(ConstantInt::get(Type::getInt32Ty(C), MaskVal & 1));
         Idxs.push_back(ConstantInt::get(Type::getInt32Ty(C),
                                                ((MaskVal >> 1) & 1)+2));

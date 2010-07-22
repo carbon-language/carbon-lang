@@ -566,8 +566,8 @@ struct StrStrOpt : public LibCallOptimization {
 
     // fold strstr(x, "y") -> strchr(x, 'y').
     if (HasStr2 && ToFindStr.size() == 1)
-      return B.CreateBitCast(EmitStrChr(CI->getArgOperand(0), ToFindStr[0], B, TD),
-                             CI->getType());
+      return B.CreateBitCast(EmitStrChr(CI->getArgOperand(0),
+                             ToFindStr[0], B, TD), CI->getType());
     return 0;
   }
 };
@@ -681,8 +681,8 @@ struct MemSetOpt : public LibCallOptimization {
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
-    Value *Val = B.CreateIntCast(CI->getArgOperand(1), Type::getInt8Ty(*Context),
-                                 false);
+    Value *Val = B.CreateIntCast(CI->getArgOperand(1),
+                                 Type::getInt8Ty(*Context), false);
     EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2), false, B, TD);
     return CI->getArgOperand(0);
   }
@@ -1042,9 +1042,9 @@ struct SPrintFOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
-      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1), // Copy the nul byte.
-                 ConstantInt::get(TD->getIntPtrType(*Context),
-                 FormatStr.size()+1), 1, false, B, TD);
+      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),   // Copy the
+                 ConstantInt::get(TD->getIntPtrType(*Context), // nul byte.
+                 FormatStr.size() + 1), 1, false, B, TD);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
 
@@ -1080,7 +1080,8 @@ struct SPrintFOpt : public LibCallOptimization {
       Value *IncLen = B.CreateAdd(Len,
                                   ConstantInt::get(Len->getType(), 1),
                                   "leninc");
-      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(2), IncLen, 1, false, B, TD);
+      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(2),
+                 IncLen, 1, false, B, TD);
 
       // The sprintf result is the unincremented number of bytes in the string.
       return B.CreateIntCast(Len, CI->getType(), false);

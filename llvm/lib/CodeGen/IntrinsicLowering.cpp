@@ -481,7 +481,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Value *Ops[3];
     Ops[0] = CI->getArgOperand(0);
     // Extend the amount to i32.
-    Ops[1] = Builder.CreateIntCast(CI->getArgOperand(1), Type::getInt32Ty(Context),
+    Ops[1] = Builder.CreateIntCast(CI->getArgOperand(1),
+                                   Type::getInt32Ty(Context),
                                    /* isSigned */ false);
     Ops[2] = Size;
     ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getArgOperand(0)->getType());
