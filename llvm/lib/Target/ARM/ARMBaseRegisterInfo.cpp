@@ -723,6 +723,19 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
   return Limit;
 }
 
+static unsigned GetFunctionSizeInBytes(const MachineFunction &MF,
+                                       const ARMBaseInstrInfo &TII) {
+  unsigned FnSize = 0;
+  for (MachineFunction::const_iterator MBBI = MF.begin(), E = MF.end();
+       MBBI != E; ++MBBI) {
+    const MachineBasicBlock &MBB = *MBBI;
+    for (MachineBasicBlock::const_iterator I = MBB.begin(),E = MBB.end();
+         I != E; ++I)
+      FnSize += TII.GetInstSizeInBytes(I);
+  }
+  return FnSize;
+}
+
 void
 ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RegScavenger *RS) const {
@@ -820,7 +833,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   bool ForceLRSpill = false;
   if (!LRSpilled && AFI->isThumb1OnlyFunction()) {
-    unsigned FnSize = TII.GetFunctionSizeInBytes(MF);
+    unsigned FnSize = GetFunctionSizeInBytes(MF, TII);
     // Force LR to be spilled if the Thumb function size is > 2048. This enables
     // use of BL to implement far jump. If it turns out that it's not needed
     // then the branch fix up path will undo it.
