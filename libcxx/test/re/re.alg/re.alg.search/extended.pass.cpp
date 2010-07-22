@@ -323,7 +323,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -338,7 +338,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -353,7 +353,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -386,7 +386,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -401,7 +401,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -416,7 +416,7 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
     }
@@ -438,8 +438,43 @@ int main()
         assert(!m.suffix().matched);
         assert(m.suffix().first == m[0].second);
         assert(m.suffix().second == m[0].second);
-        assert(m.length(0) == sizeof(s)-1);
+        assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "tournamenttotour";
+        assert(std::regex_search(s, m, std::regex("(tour|to|tournament)+",
+               std::regex_constants::extended | std::regex_constants::nosubs)));
+        assert(m.size() == 1);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == std::char_traits<char>::length(s));
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "ttotour";
+        assert(std::regex_search(s, m, std::regex("(tour|to|t)+",
+                                              std::regex_constants::extended)));
+        assert(m.size() == 2);
+        assert(!m.prefix().matched);
+        assert(m.prefix().first == s);
+        assert(m.prefix().second == m[0].first);
+        assert(!m.suffix().matched);
+        assert(m.suffix().first == m[0].second);
+        assert(m.suffix().second == m[0].second);
+        assert(m.length(0) == std::char_traits<char>::length(s));
+        assert(m.position(0) == 0);
+        assert(m.str(0) == s);
+        assert(m.length(1) == 4);
+        assert(m.position(1) == 3);
+        assert(m.str(1) == "tour");
     }
 }

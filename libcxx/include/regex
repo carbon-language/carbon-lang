@@ -1596,10 +1596,10 @@ void
 __alternate<_CharT>::__exec_split(bool __second, __state& __s) const
 {
     __s.__do_ = __state::__accept_but_not_consume;
-    if (!__second)
-        __s.__node_ = this->first();
-    else
+    if (__second)
         __s.__node_ = this->second();
+    else
+        __s.__node_ = this->first();
 }
 
 // __begin_marked_subexpression
