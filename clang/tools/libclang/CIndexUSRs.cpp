@@ -368,10 +368,10 @@ bool USRGenerator::GenLoc(const Decl *D) {
     IgnoreResults = true;
     return true;
   }
-  Out << '@'
-      << SM.getLineNumber(Decomposed.first, Decomposed.second) << ':'
-      << SM.getColumnNumber(Decomposed.first, Decomposed.second);
-
+  // Use the offest into the FileID to represent the location.  Using
+  // a line/column can cause us to look back at the original source file,
+  // which is expensive.
+  Out << '@' << Decomposed.second;
   return IgnoreResults;
 }
 
