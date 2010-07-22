@@ -804,8 +804,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D,
                                              F, &Info, DeclPtr, &D);
   }
 
+  // If this is a block variable, clean it up.
+  // FIXME: this should be an EH cleanup as well.  rdar://problem/8224178
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly)
-    EHStack.pushCleanup<CallBlockRelease>(NormalAndEHCleanup, DeclPtr);
+    EHStack.pushCleanup<CallBlockRelease>(NormalCleanup, DeclPtr);
 }
 
 /// Emit an alloca (or GlobalValue depending on target)
