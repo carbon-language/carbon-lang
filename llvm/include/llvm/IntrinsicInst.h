@@ -103,7 +103,7 @@ namespace llvm {
     Value *getValue();
     uint64_t getOffset() const {
       return cast<ConstantInt>(
-                             const_cast<Value*>(getArgOperand(1)))->getZExtValue();
+                          const_cast<Value*>(getArgOperand(1)))->getZExtValue();
     }
     MDNode *getVariable() const { return cast<MDNode>(getArgOperand(2)); }
 
