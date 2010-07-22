@@ -315,10 +315,11 @@ void Region::clearNodeCache() {
 
 bool RegionInfo::isCommonDomFrontier(BasicBlock *BB, BasicBlock *entry,
                                      BasicBlock *exit) const {
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (DT->dominates(entry, *PI) && !DT->dominates(exit, *PI))
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
+    BasicBlock *P = *PI;
+    if (DT->dominates(entry, P) && !DT->dominates(exit, P))
       return false;
-
+  }
   return true;
 }
 
