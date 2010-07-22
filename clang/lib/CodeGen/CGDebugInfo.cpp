@@ -1349,6 +1349,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::StringRef Name;
   llvm::StringRef LinkageName;
 
+  FnBeginRegionCount.push_back(RegionStack.size());
+
   const Decl *D = GD.getDecl();
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // If there is a DISubprogram for  this function available then use it.
@@ -1392,6 +1394,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   llvm::MDNode *SPN = SP;
   RegionStack.push_back(SPN);
   RegionMap[D] = llvm::WeakVH(SP);
+
+  // Clear stack used to keep track of #line directives.
+  LineDirectiveFiles.clear();
 }
 
 
@@ -1417,6 +1422,55 @@ void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
                                                       Scope));
 }
 
+/// UpdateLineDirectiveRegion - Update region stack only if #line directive
+/// has introduced scope change.
+void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
+  if (CurLoc.isInvalid() || CurLoc.isMacroID() ||
+      PrevLoc.isInvalid() || PrevLoc.isMacroID())
+    return;
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
+  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
+
+  if (!strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
+    return;
+
+  // If #line directive stack is empty then we are entering a new scope.
+  if (LineDirectiveFiles.empty()) {
+    EmitRegionStart(Builder);
+    LineDirectiveFiles.push_back(PCLoc.getFilename());
+    return;
+  }
+
+  assert (RegionStack.size() >= LineDirectiveFiles.size()
+          && "error handling  #line regions!");
+
+  bool SeenThisFile = false;
+  for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
+        E = LineDirectiveFiles.end(); I != E; ++I)
+    if (!strcmp(PPLoc.getFilename(), *I)) {
+      SeenThisFile = true;
+      break;
+    }
+
+  // If #line for this file is seen earlier then pop out #line regions.
+  if (SeenThisFile) {
+    while (!LineDirectiveFiles.empty()) {
+      const char *LastFile = LineDirectiveFiles.back();
+      RegionStack.pop_back();
+      LineDirectiveFiles.pop_back();
+      if (!strcmp(PPLoc.getFilename(), LastFile))
+        break;
+    }
+    return;
+  } 
+
+  // .. otherwise insert new #line region.
+  EmitRegionStart(Builder);
+  LineDirectiveFiles.push_back(PCLoc.getFilename());
+
+  return;
+}
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
 void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
@@ -1440,6 +1494,18 @@ void CGDebugInfo::EmitRegionEnd(CGBuilderTy &Builder) {
   EmitStopPoint(Builder);
 
   RegionStack.pop_back();
+}
+
+/// EmitFunctionEnd - Constructs the debug code for exiting a function.
+void CGDebugInfo::EmitFunctionEnd(CGBuilderTy &Builder) {
+  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+  unsigned RCount = FnBeginRegionCount.back();
+  assert(RCount <= RegionStack.size() && "Region stack mismatch");
+
+  // Pop all regions for this function.
+  while (RegionStack.size() != RCount)
+    EmitRegionEnd(Builder);
+  FnBeginRegionCount.pop_back();
 }
 
 // EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.  

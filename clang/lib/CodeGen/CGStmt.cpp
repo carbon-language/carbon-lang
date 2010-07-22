@@ -34,6 +34,7 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
       DI->setLocation(S->getLocEnd());
     else
       DI->setLocation(S->getLocStart());
+    DI->UpdateLineDirectiveRegion(Builder);
     DI->EmitStopPoint(Builder);
   }
 }

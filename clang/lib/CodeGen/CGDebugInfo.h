@@ -58,6 +58,14 @@ class CGDebugInfo {
 
   std::vector<llvm::TrackingVH<llvm::MDNode> > RegionStack;
   llvm::DenseMap<const Decl *, llvm::WeakVH> RegionMap;
+  // FnBeginRegionCount - Keep track of RegionStack counter at the beginning
+  // of a function. This is used to pop unbalanced regions at the end of a
+  // function.
+  std::vector<unsigned> FnBeginRegionCount;
+
+  /// LineDirectiveFiles - This stack is used to keep track of 
+  /// scopes introduced by #line directives.
+  std::vector<const char *> LineDirectiveFiles;
 
   /// DebugInfoNames - This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
@@ -133,6 +141,13 @@ public:
   /// start of a new function.
   void EmitFunctionStart(GlobalDecl GD, QualType FnType,
                          llvm::Function *Fn, CGBuilderTy &Builder);
+
+  /// EmitFunctionEnd - Constructs the debug code for exiting a function.
+  void EmitFunctionEnd(CGBuilderTy &Builder);
+
+  /// UpdateLineDirectiveRegion - Update region stack only if #line directive
+  /// has introduced scope change.
+  void UpdateLineDirectiveRegion(CGBuilderTy &Builder);
 
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.
