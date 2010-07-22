@@ -1279,7 +1279,8 @@ static void print_usage(void) {
     "       c-index-test -test-inclusion-stack-tu <AST file>\n"
     "       c-index-test -test-print-linkage-source {<args>}*\n"
     "       c-index-test -test-print-typekind {<args>}*\n"
-    "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
+    "       c-index-test -print-usr [<CursorKind> {<args>}]*\n");
+  fprintf(stderr,
     "       c-index-test -print-usr-file <file>\n\n");
   fprintf(stderr,
     " <symbol filter> values:\n%s",
