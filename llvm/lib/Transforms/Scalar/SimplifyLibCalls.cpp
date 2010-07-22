@@ -532,7 +532,7 @@ struct StrStrOpt : public LibCallOptimization {
                                    StrLen, B, TD);
       for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
            UI != UE; ) {
-        ICmpInst *Old = cast<ICmpInst>(UI++);
+        ICmpInst *Old = cast<ICmpInst>(*UI++);
         Value *Cmp = B.CreateICmp(Old->getPredicate(), StrNCmp,
                                   ConstantInt::getNullValue(StrNCmp->getType()),
                                   "cmp");

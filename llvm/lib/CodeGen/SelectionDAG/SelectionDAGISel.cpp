@@ -216,7 +216,7 @@ static bool FunctionCallsSetJmp(const Function *F) {
         for (Value::const_use_iterator
                I = Callee->use_begin(), E = Callee->use_end();
              I != E; ++I)
-          if (const CallInst *CI = dyn_cast<CallInst>(I))
+          if (const CallInst *CI = dyn_cast<CallInst>(*I))
             if (CI->getParent()->getParent() == F)
               return true;
     }

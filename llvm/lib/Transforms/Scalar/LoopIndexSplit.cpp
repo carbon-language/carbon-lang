@@ -1183,7 +1183,7 @@ bool LoopIndexSplit::cleanBlock(BasicBlock *BB) {
     bool usedOutsideBB = false;
     for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); 
          UI != UE; ++UI) {
-      Instruction *U = cast<Instruction>(UI);
+      Instruction *U = cast<Instruction>(*UI);
       if (U->getParent() != BB)
         usedOutsideBB = true;
     }

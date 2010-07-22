@@ -734,7 +734,7 @@ static bool isSafeReplacement(PHINode* p, Instruction *inst) {
 
   for (Instruction::use_iterator UI = p->use_begin(), E = p->use_end();
        UI != E; ++UI)
-    if (PHINode* use_phi = dyn_cast<PHINode>(UI))
+    if (PHINode* use_phi = dyn_cast<PHINode>(*UI))
       if (use_phi->getParent() == inst->getParent())
         return false;
 

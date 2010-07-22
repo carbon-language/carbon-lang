@@ -80,12 +80,12 @@ void SSI::insertSigmaFunctions(SmallPtrSet<Instruction*, 4> &value) {
     for (Value::use_iterator begin = (*I)->use_begin(),
          end = (*I)->use_end(); begin != end; ++begin) {
       // Test if the Use of the Value is in a comparator
-      if (CmpInst *CI = dyn_cast<CmpInst>(begin)) {
+      if (CmpInst *CI = dyn_cast<CmpInst>(*begin)) {
         // Iterates through all uses of CmpInst
         for (Value::use_iterator begin_ci = CI->use_begin(),
              end_ci = CI->use_end(); begin_ci != end_ci; ++begin_ci) {
           // Test if any use of CmpInst is in a Terminator
-          if (TerminatorInst *TI = dyn_cast<TerminatorInst>(begin_ci)) {
+          if (TerminatorInst *TI = dyn_cast<TerminatorInst>(*begin_ci)) {
             insertSigma(TI, *I);
           }
         }

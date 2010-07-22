@@ -2588,7 +2588,7 @@ PushDefUseChildren(Instruction *I,
   // Push the def-use children onto the Worklist stack.
   for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
        UI != UE; ++UI)
-    Worklist.push_back(cast<Instruction>(UI));
+    Worklist.push_back(cast<Instruction>(*UI));
 }
 
 /// ForgetSymbolicValue - This looks up computed SCEV values for all

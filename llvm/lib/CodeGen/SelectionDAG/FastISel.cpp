@@ -94,7 +94,7 @@ bool FastISel::hasTrivialKill(const Value *V) const {
          !(I->getOpcode() == Instruction::BitCast ||
            I->getOpcode() == Instruction::PtrToInt ||
            I->getOpcode() == Instruction::IntToPtr) &&
-         cast<Instruction>(I->use_begin())->getParent() == I->getParent();
+         cast<Instruction>(*I->use_begin())->getParent() == I->getParent();
 }
 
 unsigned FastISel::getRegForValue(const Value *V) {

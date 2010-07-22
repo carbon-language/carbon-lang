@@ -225,7 +225,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
       for (Value::use_iterator UI = TIBB->use_begin(), E = TIBB->use_end();
            UI != E; ) {
         Value::use_iterator Use = UI++;
-        if (PHINode *PN = dyn_cast<PHINode>(Use)) {
+        if (PHINode *PN = dyn_cast<PHINode>(*Use)) {
           // Remove one entry from each PHI.
           if (PN->getParent() == DestBB && UpdatedPHIs.insert(PN))
             PN->setOperand(Use.getOperandNo(), NewBB);

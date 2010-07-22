@@ -862,9 +862,9 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // Check Incr uses. One user is PN and the other user is an exit condition
   // used by the conditional terminator.
   Value::use_iterator IncrUse = Incr->use_begin();
-  Instruction *U1 = cast<Instruction>(IncrUse++);
+  Instruction *U1 = cast<Instruction>(*IncrUse++);
   if (IncrUse == Incr->use_end()) return;
-  Instruction *U2 = cast<Instruction>(IncrUse++);
+  Instruction *U2 = cast<Instruction>(*IncrUse++);
   if (IncrUse != Incr->use_end()) return;
 
   // Find exit condition, which is an fcmp.  If it doesn't exist, or if it isn't

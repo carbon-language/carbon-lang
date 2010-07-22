@@ -144,7 +144,7 @@ namespace {
         SI = 0;
         for (Value::use_iterator
                I = II->use_begin(), E = II->use_end(); I != E; ++I) {
-          SI = dyn_cast<StoreInst>(I);
+          SI = dyn_cast<StoreInst>(*I);
           if (SI) break;
         }
 
@@ -207,7 +207,7 @@ FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels,
   for (Value::use_iterator
          I = SelectorIntrinsic->use_begin(),
          E = SelectorIntrinsic->use_end(); I != E; ++I) {
-    IntrinsicInst *II = cast<IntrinsicInst>(I);
+    IntrinsicInst *II = cast<IntrinsicInst>(*I);
 
     if (II->getParent()->getParent() != F)
       continue;
@@ -225,7 +225,7 @@ FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes) {
   for (Value::use_iterator
          I = URoR->use_begin(),
          E = URoR->use_end(); I != E; ++I) {
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+    if (InvokeInst *II = dyn_cast<InvokeInst>(*I))
       URoRInvokes.insert(II);
   }
 }
@@ -271,7 +271,7 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
  restart:
   for (Value::use_iterator
          I = Inst->use_begin(), E = Inst->use_end(); I != E; ++I) {
-    Instruction *II = dyn_cast<Instruction>(I);
+    Instruction *II = dyn_cast<Instruction>(*I);
     if (!II || II->getParent()->getParent() != F) continue;
     
     if (IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(II)) {
@@ -360,7 +360,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     for (Value::use_iterator
            I = ExceptionValueIntrinsic->use_begin(),
            E = ExceptionValueIntrinsic->use_end(); I != E; ++I) {
-      IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(I);
+      IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(*I);
       if (!EHPtr || EHPtr->getParent()->getParent() != F) continue;
 
       Changed |= PromoteEHPtrStore(EHPtr);

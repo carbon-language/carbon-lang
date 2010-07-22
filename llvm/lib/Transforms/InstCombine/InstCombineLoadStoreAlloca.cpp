@@ -369,7 +369,7 @@ DbgDeclareInst *InstCombiner::hasOneUsePlusDeclare(Value *V) {
     if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(U))
       return DI;
     if (isa<BitCastInst>(U) && U->hasOneUse()) {
-      if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(U->use_begin()))
+      if (DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(*U->use_begin()))
         return DI;
       }
   }
