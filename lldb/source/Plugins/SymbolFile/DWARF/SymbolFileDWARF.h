@@ -25,6 +25,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/UniqueCStringMap.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 
@@ -250,7 +251,7 @@ protected:
                                 const DWARFDebugInfoEntry *die,
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
-                                int &default_accessibility,
+                                lldb_private::ClangASTContext::AccessType &default_accessibility,
                                 bool &is_a_class);
 
     size_t                  ParseChildParameters(

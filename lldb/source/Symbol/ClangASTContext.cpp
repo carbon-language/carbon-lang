@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTImporter.h"
 #include "clang/AST/CXXInheritance.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
@@ -36,6 +37,36 @@
 using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
+
+static AccessSpecifier
+ConvertAccessTypeToAccessSpecifier (ClangASTContext::AccessType access)
+{
+    switch (access)
+    {
+    default:                                break;
+    case ClangASTContext::eAccessNone:      return AS_none;
+    case ClangASTContext::eAccessPublic:    return AS_public;
+    case ClangASTContext::eAccessPrivate:   return AS_private;
+    case ClangASTContext::eAccessProtected: return AS_protected;
+    }
+    return AS_none;
+}
+
+static ObjCIvarDecl::AccessControl
+ConvertAccessTypeToObjCIvarAccessControl (ClangASTContext::AccessType access)
+{
+    switch (access)
+    {
+    default:                                break;
+    case ClangASTContext::eAccessNone:      return ObjCIvarDecl::None;
+    case ClangASTContext::eAccessPublic:    return ObjCIvarDecl::Public;
+    case ClangASTContext::eAccessPrivate:   return ObjCIvarDecl::Private;
+    case ClangASTContext::eAccessProtected: return ObjCIvarDecl::Protected;
+    case ClangASTContext::eAccessPackage:   return ObjCIvarDecl::Package;
+    }
+    return ObjCIvarDecl::None;
+}
+
 
 static void
 ParseLangArgs
@@ -661,7 +692,7 @@ ClangASTContext::GetVoidPtrType (clang::ASTContext *ast_context, bool is_const)
 void *
 ClangASTContext::CopyType(clang::ASTContext *dest_context, 
                           clang::ASTContext *source_context,
-                          void * clang_type)
+                          void *clang_type)
 {
     Diagnostic diagnostics;
     FileManager file_manager;
@@ -745,7 +776,14 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
 }
 
 bool
-ClangASTContext::AddFieldToRecordType (void * record_clang_type, const char *name, void * field_type, int access, uint32_t bitfield_bit_size)
+ClangASTContext::AddFieldToRecordType 
+(
+    void *record_clang_type, 
+    const char *name, 
+    void *field_type, 
+    AccessType access, 
+    uint32_t bitfield_bit_size
+)
 {
     if (record_clang_type == NULL || field_type == NULL)
         return false;
@@ -777,16 +815,16 @@ ClangASTContext::AddFieldToRecordType (void * record_clang_type, const char *nam
                 APInt bitfield_bit_size_apint(ast_context->getTypeSize(ast_context->IntTy), bitfield_bit_size);
                 bit_width = new (*ast_context)IntegerLiteral (bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
             }
-            FieldDecl *field = FieldDecl::Create(*ast_context,
-                                                record_decl,
-                                                SourceLocation(),
-                                                name ? &identifier_table->get(name) : NULL, // Identifier
-                                                QualType::getFromOpaquePtr(field_type), // Field type
-                                                NULL,       // DeclaratorInfo *
-                                                bit_width,  // BitWidth
-                                                false);     // Mutable
+            FieldDecl *field = FieldDecl::Create (*ast_context,
+                                                  record_decl,
+                                                  SourceLocation(),
+                                                  name ? &identifier_table->get(name) : NULL, // Identifier
+                                                  QualType::getFromOpaquePtr(field_type), // Field type
+                                                  NULL,       // DeclaratorInfo *
+                                                  bit_width,  // BitWidth
+                                                  false);     // Mutable
 
-            field->setAccess((AccessSpecifier)access);
+            field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
 
             if (field)
             {
@@ -891,7 +929,7 @@ ClangASTContext::SetDefaultAccessForRecordFields (void *clang_qual_type, int def
 #pragma mark C++ Base Classes
 
 CXXBaseSpecifier *
-ClangASTContext::CreateBaseClassSpecifier (void *base_class_type, int access, bool is_virtual, bool base_of_class)
+ClangASTContext::CreateBaseClassSpecifier (void *base_class_type, AccessType access, bool is_virtual, bool base_of_class)
 {
     if (base_class_type)
         return new CXXBaseSpecifier(SourceRange(), is_virtual, base_of_class, (AccessSpecifier)access, QualType::getFromOpaquePtr(base_class_type));
@@ -931,7 +969,128 @@ ClangASTContext::SetBaseClassesForClassType (void *class_clang_type, CXXBaseSpec
     }
     return false;
 }
+#pragma mark Objective C Classes
 
+void *
+ClangASTContext::CreateObjCClass 
+(
+    const char *name, 
+    DeclContext *decl_ctx, 
+    bool isForwardDecl, 
+    bool isInternal
+)
+{
+    ASTContext *ast_context = getASTContext();
+    assert (ast_context != NULL);
+    assert (name && name[0]);
+    if (decl_ctx == NULL)
+        decl_ctx = ast_context->getTranslationUnitDecl();
+
+    // NOTE: Eventually CXXRecordDecl will be merged back into RecordDecl and
+    // we will need to update this code. I was told to currently always use
+    // the CXXRecordDecl class since we often don't know from debug information
+    // if something is struct or a class, so we default to always use the more
+    // complete definition just in case.
+    ObjCInterfaceDecl *decl = ObjCInterfaceDecl::Create (*ast_context,
+                                                         decl_ctx,
+                                                         SourceLocation(),
+                                                         &ast_context->Idents.get(name),
+                                                         SourceLocation(),
+                                                         isForwardDecl,
+                                                         isInternal);
+
+    return QualType (decl->getTypeForDecl(), 0).getAsOpaquePtr();
+}
+
+bool
+ClangASTContext::SetObjCSuperClass (void *class_opaque_type, void *super_opaque_type)
+{
+    if (class_opaque_type && super_opaque_type)
+    {
+        QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
+        QualType super_qual_type(QualType::getFromOpaquePtr(super_opaque_type));
+        clang::Type *class_type = class_qual_type.getTypePtr();
+        clang::Type *super_type = super_qual_type.getTypePtr();
+        if (class_type && super_type)
+        {
+            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+            ObjCObjectType *objc_super_type = dyn_cast<ObjCObjectType>(super_type);
+            if (objc_class_type && objc_super_type)
+            {
+                ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                ObjCInterfaceDecl *super_interface_decl = objc_super_type->getInterface();
+                if (class_interface_decl && super_interface_decl)
+                {
+                    class_interface_decl->setSuperClass(super_interface_decl);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+bool
+ClangASTContext::AddObjCClassIVar 
+(
+    void *class_opaque_type, 
+    const char *name, 
+    void *ivar_opaque_type, 
+    AccessType access, 
+    uint32_t bitfield_bit_size, 
+    bool isSynthesized
+)
+{
+    if (class_opaque_type == NULL || ivar_opaque_type == NULL)
+        return false;
+
+    ASTContext *ast_context = getASTContext();
+    IdentifierTable *identifier_table = getIdentifierTable();
+
+    assert (ast_context != NULL);
+    assert (identifier_table != NULL);
+
+    QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
+
+    clang::Type *class_type = class_qual_type.getTypePtr();
+    if (class_type)
+    {
+        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+
+        if (objc_class_type)
+        {
+            ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            
+            if (class_interface_decl)
+            {
+                clang::Expr *bit_width = NULL;
+                if (bitfield_bit_size != 0)
+                {
+                    APInt bitfield_bit_size_apint(ast_context->getTypeSize(ast_context->IntTy), bitfield_bit_size);
+                    bit_width = new (*ast_context)IntegerLiteral (bitfield_bit_size_apint, ast_context->IntTy, SourceLocation());
+                }
+                
+                //ObjCIvarDecl *field = 
+                ObjCIvarDecl::Create (*ast_context,
+                                      class_interface_decl,
+                                      SourceLocation(),
+                                      &identifier_table->get(name), // Identifier
+                                      QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
+                                      NULL, // TypeSourceInfo *
+                                      ConvertAccessTypeToObjCIvarAccessControl (access),
+                                      bit_width,
+                                      isSynthesized);
+                // TODO: Do I need to do an addDecl? I am thinking I don't since
+                // I passed the "class_interface_decl" into "ObjCIvarDecl::Create"
+                // above. Verify this. Also verify it is ok to pass NULL TypeSourceInfo
+                // above.
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 #pragma mark Aggregate Types
 
@@ -1956,7 +2115,7 @@ ClangASTContext::CreateFunctionType (void *result_type, void **args, unsigned nu
 }
 
 ParmVarDecl *
-ClangASTContext::CreateParmeterDeclaration (const char *name, void * return_type, int storage)
+ClangASTContext::CreateParmeterDeclaration (const char *name, void *return_type, int storage)
 {
     ASTContext *ast_context = getASTContext();
     assert (ast_context != NULL);
@@ -2147,7 +2306,7 @@ ClangASTContext::CreateRValueReferenceType (void *clang_type)
 }
 
 void *
-ClangASTContext::CreateMemberPointerType (void * clang_pointee_type, void * clang_class_type)
+ClangASTContext::CreateMemberPointerType (void *clang_pointee_type, void *clang_class_type)
 {
     if (clang_pointee_type && clang_pointee_type)
         return getASTContext()->getMemberPointerType(QualType::getFromOpaquePtr(clang_pointee_type),
@@ -2220,7 +2379,7 @@ ClangASTContext::GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_ty
 }
 
 bool
-ClangASTContext::IsIntegerType (void * clang_type, bool &is_signed)
+ClangASTContext::IsIntegerType (void *clang_type, bool &is_signed)
 {
     if (!clang_type)
         return false;
@@ -2376,7 +2535,7 @@ ClangASTContext::IsCStringType (void *clang_type, uint32_t &length)
 }
 
 bool
-ClangASTContext::IsArrayType (void * clang_type, void **member_type, uint64_t *size)
+ClangASTContext::IsArrayType (void *clang_type, void **member_type, uint64_t *size)
 {
     if (!clang_type)
         return false;

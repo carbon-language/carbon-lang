@@ -30,6 +30,22 @@ class Declaration;
 class ClangASTContext
 {
 public:
+    // Define access values that can be used for all functions in this
+    // class since Clang uses different values for all of the different
+    // access values (C++ AccessSpecifier enums differ from ObjC AccessControl).
+    // The SymbolFile classes that use these methods to created types
+    // will then be able to use one enumeration for all access and we can
+    // translate them correctly into the correct Clang versions depending on
+    // what the access is applied to.
+    typedef enum AccessType
+    {
+        eAccessNone,
+        eAccessPublic,
+        eAccessPrivate,
+        eAccessProtected,
+        eAccessPackage
+    };
+    
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -107,7 +123,7 @@ public:
     static void *
     CopyType(clang::ASTContext *dest_context, 
              clang::ASTContext *source_context,
-             void * clang_type);
+             void *clang_type);
     
     static bool
     AreTypesSame(clang::ASTContext *ast_context,
@@ -126,13 +142,13 @@ public:
     //------------------------------------------------------------------
 
     static void *
-    AddConstModifier (void * clang_type);
+    AddConstModifier (void *clang_type);
 
     static void *
-    AddRestrictModifier (void * clang_type);
+    AddRestrictModifier (void *clang_type);
 
     static void *
-    AddVolatileModifier (void * clang_type);
+    AddVolatileModifier (void *clang_type);
 
     //------------------------------------------------------------------
     // Structure, Unions, Classes
@@ -147,7 +163,7 @@ public:
     AddFieldToRecordType (void * record_qual_type,
                           const char *name,
                           void * field_type,
-                          int access,
+                          AccessType access,
                           uint32_t bitfield_bit_size);
     
     bool
@@ -163,19 +179,37 @@ public:
     RecordHasFields (const clang::RecordDecl *record_decl);
 
     void
-    SetDefaultAccessForRecordFields (void * clang_qual_type,
+    SetDefaultAccessForRecordFields (void *clang_type,
                                      int default_accessibility,
                                      int *assigned_accessibilities,
                                      size_t num_assigned_accessibilities);
+
+    void *
+    CreateObjCClass (const char *name, 
+                     clang::DeclContext *decl_ctx, 
+                     bool isForwardDecl, 
+                     bool isInternal);
+    
+    bool
+    AddObjCClassIVar (void *class_opaque_type, 
+                      const char *name, 
+                      void *ivar_opaque_type, 
+                      AccessType access, 
+                      uint32_t bitfield_bit_size, 
+                      bool isSynthesized);
+
+    bool
+    SetObjCSuperClass (void *class_clang_type,
+                       void *superclass_clang_type);
     
     //------------------------------------------------------------------
     // Aggregate Types
     //------------------------------------------------------------------
     static bool
-    IsAggregateType (void * clang_type);
+    IsAggregateType (void *clang_type);
 
     static uint32_t
-    GetNumChildren (void * clang_type,
+    GetNumChildren (void *clang_type,
                     bool omit_empty_base_classes);
 
     void *
@@ -237,7 +271,7 @@ public:
 
     clang::CXXBaseSpecifier *
     CreateBaseClassSpecifier (void * base_class_type,
-                              int access,
+                              AccessType access,
                               bool is_virtual,
                               bool base_of_class);
     
@@ -329,13 +363,13 @@ public:
     // Pointers & References
     //------------------------------------------------------------------
     void *
-    CreatePointerType (void * clang_type);
+    CreatePointerType (void *clang_type);
 
     void *
-    CreateLValueReferenceType (void * clang_type);
+    CreateLValueReferenceType (void *clang_type);
 
     void *
-    CreateRValueReferenceType (void * clang_type);
+    CreateRValueReferenceType (void *clang_type);
 
     void *
     CreateMemberPointerType (void * clang_pointee_type,
@@ -345,32 +379,32 @@ public:
     GetPointerBitSize ();
 
     static size_t
-    GetTypeBitSize (clang::ASTContext *ast_context, void * clang_type);
+    GetTypeBitSize (clang::ASTContext *ast_context, void *clang_type);
     
     static size_t
-    GetTypeBitAlign (clang::ASTContext *ast_context, void * clang_type);
+    GetTypeBitAlign (clang::ASTContext *ast_context, void *clang_type);
 
     static bool
-    IsIntegerType (void * clang_type, bool &is_signed);
+    IsIntegerType (void *clang_type, bool &is_signed);
     
     static bool
-    IsPointerType (void * clang_type, void **target_type = NULL);
+    IsPointerType (void *clang_type, void **target_type = NULL);
 
     static bool
-    IsPointerOrReferenceType (void * clang_type, void **target_type = NULL);
+    IsPointerOrReferenceType (void *clang_type, void **target_type = NULL);
 
     static bool
-    IsCStringType (void * clang_type, uint32_t &length);
+    IsCStringType (void *clang_type, uint32_t &length);
     
     static bool
-    IsArrayType (void * clang_type, void **member_type = NULL, uint64_t *size = NULL);
+    IsArrayType (void *clang_type, void **member_type = NULL, uint64_t *size = NULL);
 
     //------------------------------------------------------------------
     // Typedefs
     //------------------------------------------------------------------
     void *
     CreateTypedefType (const char *name,
-                       void * clang_type,
+                       void *clang_type,
                        clang::DeclContext *decl_ctx);
 
     //------------------------------------------------------------------
@@ -380,11 +414,11 @@ public:
     GetTypeName(void *clang_type);
     
     static bool
-    IsFloatingPointType (void * clang_type, uint32_t &count, bool &is_complex);
+    IsFloatingPointType (void *clang_type, uint32_t &count, bool &is_complex);
 
     //static bool
     //ConvertFloatValueToString (clang::ASTContext *ast_context, 
-    //                           void * clang_type, 
+    //                           void *clang_type, 
     //                           const uint8_t* bytes, 
     //                           size_t byte_size, 
     //                           int apint_byte_order, 
@@ -392,7 +426,7 @@ public:
     
     static size_t
     ConvertStringToFloatValue (clang::ASTContext *ast_context, 
-                               void * clang_type, 
+                               void *clang_type, 
                                const char *s, 
                                uint8_t *dst, 
                                size_t dst_size);

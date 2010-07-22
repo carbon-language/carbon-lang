@@ -57,20 +57,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-static uint32_t
-DwarfToClangAccessibility (uint32_t dwarf_accessibility)
+static ClangASTContext::AccessType
+DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
 {
     switch (dwarf_accessibility)
     {
-        case DW_ACCESS_public:
-            return clang::AS_public;
-        case DW_ACCESS_private:
-            return clang::AS_private;
-        case DW_ACCESS_protected:
-            return clang::AS_protected;
-        default:
-            return clang::AS_none;
+        case DW_ACCESS_public:      return ClangASTContext::eAccessPublic;
+        case DW_ACCESS_private:     return ClangASTContext::eAccessPrivate;
+        case DW_ACCESS_protected:   return ClangASTContext::eAccessProtected;
+        default:                    break;
     }
+    return ClangASTContext::eAccessNone;
 }
 
 void
@@ -1216,7 +1213,7 @@ SymbolFileDWARF::ParseChildMembers
     const DWARFDebugInfoEntry *parent_die,
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
-    int& default_accessibility,
+    ClangASTContext::AccessType& default_accessibility,
     bool &is_a_class
 )
 {
@@ -1243,7 +1240,7 @@ SymbolFileDWARF::ParseChildMembers
                     DWARFExpression location;
                     const char *name = NULL;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
-                    uint32_t accessibility = clang::AS_none;
+                    ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
                     off_t member_offset = 0;
                     size_t byte_size = 0;
                     size_t bit_offset = 0;
@@ -1280,7 +1277,7 @@ SymbolFileDWARF::ParseChildMembers
                                 }
                                 break;
 
-                            case DW_AT_accessibility: accessibility = DwarfToClangAccessibility (form_value.Unsigned()); break;
+                            case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
                             case DW_AT_declaration:
                             case DW_AT_description:
                             case DW_AT_mutable:
@@ -1294,7 +1291,7 @@ SymbolFileDWARF::ParseChildMembers
 
                     Type *member_type = ResolveTypeUID(encoding_uid);
                     assert(member_type);
-                    if (accessibility == clang::AS_none)
+                    if (accessibility == ClangASTContext::eAccessNone)
                         accessibility = default_accessibility;
                     member_accessibilities.push_back(accessibility);
 
@@ -1306,8 +1303,8 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_subprogram:
             {
                 is_a_class = true;
-                if (default_accessibility == clang::AS_none)
-                    default_accessibility = clang::AS_private;
+                if (default_accessibility == ClangASTContext::eAccessNone)
+                    default_accessibility = ClangASTContext::eAccessPrivate;
                 // TODO: implement DW_TAG_subprogram type parsing
 //              UserDefTypeChildInfo method_info(die->GetOffset());
 //
@@ -1323,8 +1320,8 @@ SymbolFileDWARF::ParseChildMembers
         case DW_TAG_inheritance:
             {
                 is_a_class = true;
-                if (default_accessibility == clang::AS_none)
-                    default_accessibility = clang::AS_private;
+                if (default_accessibility == ClangASTContext::eAccessNone)
+                    default_accessibility = ClangASTContext::eAccessPrivate;
                 // TODO: implement DW_TAG_inheritance type parsing
                 DWARFDebugInfoEntry::Attributes attributes;
                 const size_t num_attributes = die->GetAttributes(this, dwarf_cu, attributes);
@@ -1333,7 +1330,7 @@ SymbolFileDWARF::ParseChildMembers
                     Declaration decl;
                     DWARFExpression location;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
-                    uint32_t accessibility = default_accessibility;
+                    ClangASTContext::AccessType accessibility = default_accessibility;
                     bool is_virtual = false;
                     bool is_base_of_class = true;
                     off_t member_offset = 0;
@@ -1366,7 +1363,7 @@ SymbolFileDWARF::ParseChildMembers
                                 break;
 
                             case DW_AT_accessibility:
-                                accessibility = DwarfToClangAccessibility(form_value.Unsigned());
+                                accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned());
                                 break;
 
                             case DW_AT_virtuality: is_virtual = form_value.Unsigned() != 0; break;
@@ -2574,7 +2571,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
 {
     TypeSP type_sp;
 
-    uint32_t accessibility = clang::AS_none;
+    ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
     if (die != NULL)
     {
         dw_tag_t tag = die->Tag();
@@ -2732,7 +2729,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                                     type_name_dbstr.SetCString(type_name_cstr);
                                     break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
-                                case DW_AT_accessibility: accessibility = DwarfToClangAccessibility(form_value.Unsigned()); break; break;
+                                case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break; break;
                                 case DW_AT_declaration: is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
@@ -2749,21 +2746,21 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                     }
 
                     int tag_decl_kind = -1;
-                    int default_accessibility = clang::AS_none;
+                    ClangASTContext::AccessType default_accessibility = ClangASTContext::eAccessNone;
                     if (tag == DW_TAG_structure_type)
                     {
                         tag_decl_kind = clang::TTK_Struct;
-                        default_accessibility = clang::AS_public;
+                        default_accessibility = ClangASTContext::eAccessPublic;
                     }
                     else if (tag == DW_TAG_union_type)
                     {
                         tag_decl_kind = clang::TTK_Union;
-                        default_accessibility = clang::AS_public;
+                        default_accessibility = ClangASTContext::eAccessPublic;
                     }
                     else if (tag == DW_TAG_class_type)
                     {
                         tag_decl_kind = clang::TTK_Class;
-                        default_accessibility = clang::AS_private;
+                        default_accessibility = ClangASTContext::eAccessPrivate;
                     }
 
                     assert (tag_decl_kind != -1);
@@ -2804,7 +2801,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                         {
                             // This is a class and all members that didn't have
                             // their access specified are private.
-                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, clang::AS_private, &member_accessibilities.front(), member_accessibilities.size());
+                            type_list->GetClangASTContext().SetDefaultAccessForRecordFields (clang_type, ClangASTContext::eAccessPrivate, &member_accessibilities.front(), member_accessibilities.size());
                         }
 
                         if (!base_classes.empty())
@@ -2853,7 +2850,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                                     break;
                                 case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned(); break;
-                                case DW_AT_accessibility: accessibility = DwarfToClangAccessibility(form_value.Unsigned()); break;
+                                case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration: is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
@@ -2926,7 +2923,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
 
                                 case DW_AT_MIPS_linkage_name:   mangled = form_value.AsCString(&get_debug_str_data()); break;
                                 case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
-                                case DW_AT_accessibility:       accessibility = DwarfToClangAccessibility(form_value.Unsigned()); break;
+                                case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration:         is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_external:
                                     if (form_value.Unsigned())
@@ -3043,7 +3040,7 @@ SymbolFileDWARF::ParseType(const SymbolContext& sc, const DWARFCompileUnit* dwar
                                 case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
                                 case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                 case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
-                                case DW_AT_accessibility:   accessibility = DwarfToClangAccessibility(form_value.Unsigned()); break;
+                                case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration:     is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
@@ -3366,7 +3363,7 @@ SymbolFileDWARF::ParseVariableDIE
         DWARFExpression location;
         bool is_external = false;
         bool is_artificial = false;
-        uint32_t accessibility = clang::AS_none;
+        ClangASTContext::AccessType accessibility = ClangASTContext::eAccessNone;
 
         for (i=0; i<num_attributes; ++i)
         {
@@ -3408,7 +3405,7 @@ SymbolFileDWARF::ParseVariableDIE
                     break;
 
                 case DW_AT_artificial:      is_artificial = form_value.Unsigned() != 0; break;
-                case DW_AT_accessibility:   accessibility = DwarfToClangAccessibility(form_value.Unsigned()); break;
+                case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                 case DW_AT_const_value:
                 case DW_AT_declaration:
                 case DW_AT_description:
