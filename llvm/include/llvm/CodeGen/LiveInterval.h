@@ -465,6 +465,8 @@ namespace llvm {
     /// overlaps - Return true if the intersection of the two live intervals is
     /// not empty.
     bool overlaps(const LiveInterval& other) const {
+      if (other.empty())
+        return false;
       return overlapsFrom(other, other.begin());
     }
 
