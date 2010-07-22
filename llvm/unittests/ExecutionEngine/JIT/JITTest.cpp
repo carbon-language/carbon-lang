@@ -65,8 +65,6 @@ public:
     stubsAllocated = 0;
   }
 
-  void setSizeRequired(bool Required) { SizeRequired = Required; }
-
   virtual void setMemoryWritable() { Base->setMemoryWritable(); }
   virtual void setMemoryExecutable() { Base->setMemoryExecutable(); }
   virtual void setPoisonMemory(bool poison) { Base->setPoisonMemory(poison); }
