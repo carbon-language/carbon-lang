@@ -1391,12 +1391,25 @@ let isAsmParserOnly = 1 in {
   defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
                                         "movmskpd", SSEPackedDouble>, OpSize,
                                         VEX;
+
   // FIXME: merge with multiclass above when the intrinsics come.
+  def VMOVMSKPSr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
+             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
+  def VMOVMSKPDr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
+             VEX;
+
   def VMOVMSKPSYrr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR256:$src),
              "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
   def VMOVMSKPDYrr : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR256:$src),
              "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
-                                                                        VEX;
+             VEX;
+
+  def VMOVMSKPSYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
+             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
+  def VMOVMSKPDYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
+             VEX;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2715,8 +2728,13 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                                                 imm:$src2))]>;
 
 // Insert
-let isAsmParserOnly = 1, Predicates = [HasAVX] in
+let isAsmParserOnly = 1, Predicates = [HasAVX] in {
   defm PINSRW : sse2_pinsrw<0>, OpSize, VEX_4V;
+  def  PINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
+       (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
+       "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+       []>, OpSize, VEX_4V;
+}
 
 let Constraints = "$src1 = $dst" in
   defm VPINSRW : sse2_pinsrw, TB, OpSize;
@@ -2729,10 +2747,13 @@ let Constraints = "$src1 = $dst" in
 
 let ExeDomain = SSEPackedInt in {
 
-let isAsmParserOnly = 1 in
-def VPMOVMSKBrr : VPDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
+let isAsmParserOnly = 1 in {
+def VPMOVMSKBrr  : VPDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
            "pmovmskb\t{$src, $dst|$dst, $src}",
            [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>, VEX;
+def VPMOVMSKBr64r : VPDI<0xD7, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
+           "pmovmskb\t{$src, $dst|$dst, $src}", []>, VEX;
+}
 def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
            "pmovmskb\t{$src, $dst|$dst, $src}",
            [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
@@ -4019,8 +4040,12 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
 // (store (i8 (trunc (X86pextrb (v16i8 VR128:$src1), imm:$src2))), addr:$dst)
 }
 
-let isAsmParserOnly = 1, Predicates = [HasAVX] in
+let isAsmParserOnly = 1, Predicates = [HasAVX] in {
   defm VPEXTRB : SS41I_extract8<0x14, "vpextrb">, VEX;
+  def  VPEXTRBrr64 : SS4AIi8<0x14, MRMDestReg, (outs GR64:$dst),
+         (ins VR128:$src1, i32i8imm:$src2),
+         "vpextrb\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>, OpSize, VEX;
+}
 
 defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 
