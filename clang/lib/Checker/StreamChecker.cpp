@@ -39,7 +39,9 @@ struct StreamState {
 
   static StreamState getOpened(const Stmt *s) { return StreamState(Opened, s); }
   static StreamState getClosed(const Stmt *s) { return StreamState(Closed, s); }
-  static StreamState getOpenFailed(const Stmt *s) { return StreamState(OpenFailed, s); }
+  static StreamState getOpenFailed(const Stmt *s) { 
+    return StreamState(OpenFailed, s); 
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddInteger(K);
@@ -48,14 +50,14 @@ struct StreamState {
 };
 
 class StreamChecker : public CheckerVisitor<StreamChecker> {
-  IdentifierInfo *II_fopen, *II_fclose,*II_fread, *II_fwrite, 
+  IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread, *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
   BuiltinBug *BT_nullfp, *BT_illegalwhence, *BT_doubleclose;
 
 public:
   StreamChecker() 
-    : II_fopen(0), II_fclose(0), II_fread(0), II_fwrite(0), 
+    : II_fopen(0), II_tmpfile(0) ,II_fclose(0), II_fread(0), II_fwrite(0), 
       II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
       II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
       BT_nullfp(0), BT_illegalwhence(0), BT_doubleclose(0) {}
@@ -69,6 +71,7 @@ public:
 
 private:
   void Fopen(CheckerContext &C, const CallExpr *CE);
+  void Tmpfile(CheckerContext &C, const CallExpr *CE);
   void Fclose(CheckerContext &C, const CallExpr *CE);
   void Fread(CheckerContext &C, const CallExpr *CE);
   void Fwrite(CheckerContext &C, const CallExpr *CE);
@@ -81,8 +84,9 @@ private:
   void Feof(CheckerContext &C, const CallExpr *CE);
   void Ferror(CheckerContext &C, const CallExpr *CE);
   void Fileno(CheckerContext &C, const CallExpr *CE);
+
+  void OpenFileAux(CheckerContext &C, const CallExpr *CE);
   
-  // Return true indicates the stream pointer is NULL.
   const GRState *CheckNullStream(SVal SV, const GRState *state, 
                                  CheckerContext &C);
   const GRState *CheckDoubleClose(const CallExpr *CE, const GRState *state, 
@@ -114,6 +118,8 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   ASTContext &Ctx = C.getASTContext();
   if (!II_fopen)
     II_fopen = &Ctx.Idents.get("fopen");
+  if (!II_tmpfile)
+    II_tmpfile = &Ctx.Idents.get("tmpfile");
   if (!II_fclose)
     II_fclose = &Ctx.Idents.get("fclose");
   if (!II_fread)
@@ -141,6 +147,10 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   if (FD->getIdentifier() == II_fopen) {
     Fopen(C, CE);
+    return true;
+  }
+  if (FD->getIdentifier() == II_tmpfile) {
+    Tmpfile(C, CE);
     return true;
   }
   if (FD->getIdentifier() == II_fclose) {
@@ -196,24 +206,32 @@ bool StreamChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 }
 
 void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) {
+  OpenFileAux(C, CE);
+}
+
+void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) {
+  OpenFileAux(C, CE);
+}
+
+void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
   DefinedSVal RetVal = cast<DefinedSVal>(ValMgr.getConjuredSymbolVal(0, CE, 
                                                                      Count));
   state = state->BindExpr(CE, RetVal);
-
+  
   ConstraintManager &CM = C.getConstraintManager();
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
   // with a NULL.
   const GRState *stateNotNull, *stateNull;
   llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, RetVal);
-
+  
   SymbolRef Sym = RetVal.getAsSymbol();
   assert(Sym);
 
   // if RetVal is not NULL, set the symbol's state to Opened.
-  stateNotNull = stateNotNull->set<StreamState>(Sym, StreamState::getOpened(CE));
+  stateNotNull = stateNotNull->set<StreamState>(Sym,StreamState::getOpened(CE));
   stateNull = stateNull->set<StreamState>(Sym, StreamState::getOpenFailed(CE));
 
   C.addTransition(stateNotNull);
