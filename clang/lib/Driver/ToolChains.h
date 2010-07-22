@@ -153,11 +153,9 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
   virtual bool IsBlocksDefault() const {
-    // Blocks default to on for OS X 10.6 and iPhoneOS 3.0 and beyond.
-    if (isTargetIPhoneOS())
-      return !isIPhoneOSVersionLT(3);
-    else
-      return !isMacosxVersionLT(10, 6);
+    // Always allow blocks on Darwin; users interested in versioning are
+    // expected to use /usr/include/Blocks.h.
+    return true;
   }
   virtual bool IsIntegratedAssemblerDefault() const {
 #ifdef DISABLE_DEFAULT_INTEGRATED_ASSEMBLER
