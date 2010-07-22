@@ -82,8 +82,9 @@ SpecializeFunction(Function* F,
        ii != ee; ) {
     Value::use_iterator i = ii;
     ++ii;
-    if (isa<CallInst>(i) || isa<InvokeInst>(i)) {
-      CallSite CS(cast<Instruction>(i));
+    User *U = *i;
+    if (isa<CallInst>(U) || isa<InvokeInst>(U)) {
+      CallSite CS(cast<Instruction>(U));
       if (CS.getCalledFunction() == F) {
         
         SmallVector<Value*, 6> args;
@@ -105,13 +106,13 @@ SpecializeFunction(Function* F,
           }
         }
         Value* NCall;
-        if (CallInst *CI = dyn_cast<CallInst>(i)) {
+        if (CallInst *CI = dyn_cast<CallInst>(U)) {
           NCall = CallInst::Create(NF, args.begin(), args.end(), 
                                    CI->getName(), CI);
           cast<CallInst>(NCall)->setTailCall(CI->isTailCall());
           cast<CallInst>(NCall)->setCallingConv(CI->getCallingConv());
         } else {
-          InvokeInst *II = cast<InvokeInst>(i);
+          InvokeInst *II = cast<InvokeInst>(U);
           NCall = InvokeInst::Create(NF, II->getNormalDest(),
                                      II->getUnwindDest(),
                                      args.begin(), args.end(), 
@@ -123,8 +124,7 @@ SpecializeFunction(Function* F,
         ++numReplaced;
       }
     }
-  next_use:
-    ;
+    next_use:;
   }
   return NF;
 }
@@ -174,14 +174,14 @@ void PartSpec::scanForInterest(Function& F, InterestingArgVector& args) {
         ui != ue; ++ui) {
 
       bool interesting = false;
-
-      if (isa<CmpInst>(ui)) interesting = true;
-      else if (isa<CallInst>(ui))
+      User *U = *ui;
+      if (isa<CmpInst>(U)) interesting = true;
+      else if (isa<CallInst>(U))
         interesting = ui->getOperand(0) == ii;
-      else if (isa<InvokeInst>(ui))
+      else if (isa<InvokeInst>(U))
         interesting = ui->getOperand(0) == ii;
-      else if (isa<SwitchInst>(ui)) interesting = true;
-      else if (isa<BranchInst>(ui)) interesting = true;
+      else if (isa<SwitchInst>(U)) interesting = true;
+      else if (isa<BranchInst>(U)) interesting = true;
 
       if (interesting) {
         args.push_back(std::distance(F.arg_begin(), ii));
@@ -196,14 +196,16 @@ int PartSpec::scanDistribution(Function& F, int arg,
                                std::map<Constant*, int>& dist) {
   bool hasIndirect = false;
   int total = 0;
-  for(Value::use_iterator ii = F.use_begin(), ee = F.use_end();
-      ii != ee; ++ii)
-    if ((isa<CallInst>(ii) || isa<InvokeInst>(ii))
-        && ii->getOperand(0) == &F) {
-      ++dist[dyn_cast<Constant>(ii->getOperand(arg + 1))];
+  for (Value::use_iterator ii = F.use_begin(), ee = F.use_end();
+      ii != ee; ++ii) {
+    User *U = *ii;
+    CallSite CS(U);
+    if (CS && CS.getCalledFunction() == &F) {
+      ++dist[dyn_cast<Constant>(CS.getArgument(arg))];
       ++total;
     } else
       hasIndirect = true;
+  }
 
   // Preserve the original address taken function even if all other uses
   // will be specialized.
