@@ -21,7 +21,9 @@ namespace llvm {
 //
 struct bar {
   bar() {}
-  //struct foo *baz();
+  struct foo *baz();
+  struct foo *caz();
+  //  struct foo *daz();
 private:
   bar(const bar &);
 };
@@ -40,8 +42,17 @@ template <> struct isa_impl<foo,bar> {
   }
 };
 
-/*foo *bar::baz() {
+foo *bar::baz() {
     return cast<foo>(this);
+}
+
+foo *bar::caz() {
+    return cast_or_null<foo>(this);
+}
+
+
+/*foo *bar::daz() {
+    return dyn_cast<foo>(this);
 }*/
 
 
@@ -80,9 +91,8 @@ TEST(CastingTest, cast) {
   EXPECT_NE(F6, null_foo);
   foo *F7 = cast<foo>(fub());
   EXPECT_EQ(F7, null_foo);
-
-/*  foo *F8 = B1.baz();
-  EXPECT_NE(F8, null_foo);*/
+  foo *F8 = B1.baz();
+  EXPECT_NE(F8, null_foo);
 }
 
 TEST(CastingTest, cast_or_null) {
@@ -94,6 +104,25 @@ TEST(CastingTest, cast_or_null) {
   EXPECT_NE(F13, null_foo);
   const foo *F14 = cast_or_null<foo>(fub());  // Shouldn't print.
   EXPECT_EQ(F14, null_foo);
+  foo *F15 = B1.caz();
+  EXPECT_NE(F15, null_foo);
+}
+
+TEST(CastingTest, dyn_cast) {
+  //  foo &F1 = dyn_cast<foo>(B1);
+  //  EXPECT_NE(&F1, null_foo);
+  const foo *F3 = dyn_cast<foo>(B2);
+  EXPECT_NE(F3, null_foo);
+  const foo *F4 = dyn_cast<foo>(B2);
+  EXPECT_NE(F4, null_foo);
+  //  const foo &F5 = dyn_cast<foo>(B3);
+  //  EXPECT_NE(&F5, null_foo);
+  const foo *F6 = dyn_cast<foo>(B4);
+  EXPECT_NE(F6, null_foo);
+  foo *F7 = dyn_cast<foo>(fub());
+  EXPECT_EQ(F7, null_foo);
+  //  foo *F8 = B1.daz();
+  //  EXPECT_NE(F8, null_foo);
 }
 
 // These lines are errors...
