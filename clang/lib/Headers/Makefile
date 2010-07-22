@@ -38,6 +38,7 @@ all-local:: $(OBJHEADERS)
 PROJ_headers := $(DESTDIR)$(PROJ_prefix)/lib/clang/$(CLANG_VERSION)/include
 
 INSTHEADERS := $(addprefix $(PROJ_headers)/, $(HEADERS))
+INSTHEADERS += $(PROJ_headers)/arm_neon.h
 
 $(PROJ_headers):
 	$(Verb) $(MKDIR) $@
