@@ -14,7 +14,6 @@
 
 #include "ValueMapper.h"
 #include "llvm/Type.h"
-#include "llvm/GlobalAlias.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
@@ -30,35 +29,15 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM) {
 
   // Global values and non-function-local metadata do not need to be seeded into
   // the VM if they are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V))
+  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
+      (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
     return VMSlot = const_cast<Value*>(V);
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
-    Value *Dummy = new GlobalAlias(V->getType(), GlobalValue::ExternalLinkage);
-    VMSlot = Dummy;
-    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
-      Value *OP = MD->getOperand(i);
-      if (!OP) continue;
-      Value *MV = MapValue(OP, VM);
-      if (MV != OP) {
-        // This MDNode contain a reference to mapped value. Make a new
-        // MDNode and return it.
-        SmallVector<Value*, 4> Elts;
-        Elts.reserve(MD->getNumOperands());
-        for (unsigned j = 0; j != i; ++j)
-          Elts.push_back(MD->getOperand(j));
-        Elts.push_back(MV);
-        for (++i; i != e; ++i)
-          Elts.push_back(MD->getOperand(i) ? 
-                         MapValue(MD->getOperand(i), VM) : 0);
-        MDNode *NewMD = MDNode::get(V->getContext(), Elts.data(), Elts.size());
-        Dummy->uncheckedReplaceAllUsesWith(NewMD);
-        delete Dummy;
-        return VM[V] = NewMD;
-      }
-    }
-    delete Dummy;
-    return VM[V] = const_cast<Value*>(V);
+    SmallVector<Value*, 4> Elts;
+    for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
+      Elts.push_back(MD->getOperand(i) ? MapValue(MD->getOperand(i), VM) : 0);
+    return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
   }
 
   Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
