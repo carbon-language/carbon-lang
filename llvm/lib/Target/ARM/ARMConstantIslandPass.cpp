@@ -366,6 +366,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   if (isThumb && !HasFarJump && AFI->isLRSpilledForFarJump())
     MadeChange |= UndoLRSpillRestore();
 
+  DEBUG(errs() << '\n'; dumpBBs());
+
   BBSizes.clear();
   BBOffsets.clear();
   WaterList.clear();
@@ -509,8 +511,11 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         case ARM::tBR_JTr:
           // A Thumb1 table jump may involve padding; for the offsets to
           // be right, functions containing these must be 4-byte aligned.
+          // tBR_JTr expands to a mov pc followed by .align 2 and then the jump
+          // table entries. So this code checks whether offset of tBR_JTr + 2
+          // is aligned.
           MF.EnsureAlignment(2U);
-          if ((Offset+MBBSize)%4 != 0 || HasInlineAsm)
+          if ((Offset+MBBSize+2)%4 != 0 || HasInlineAsm)
             // FIXME: Add a pseudo ALIGN instruction instead.
             MBBSize += 2;           // padding
           continue;   // Does not get an entry in ImmBranches
@@ -915,9 +920,12 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
       }
       // Thumb1 jump tables require padding.  They should be at the end;
       // following unconditional branches are removed by AnalyzeBranch.
+      // tBR_JTr expands to a mov pc followed by .align 2 and then the jump
+      // table entries. So this code checks whether offset of tBR_JTr + 2
+      // is aligned.
       MachineInstr *ThumbJTMI = prior(MBB->end());
       if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
-        unsigned NewMIOffset = GetOffsetOf(ThumbJTMI);
+        unsigned NewMIOffset = GetOffsetOf(ThumbJTMI) + 2;
         unsigned OldMIOffset = NewMIOffset - delta;
         if ((OldMIOffset%4) == 0 && (NewMIOffset%4) != 0) {
           // remove existing padding
