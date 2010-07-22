@@ -42,7 +42,7 @@ class AnalysisContext {
   const Decl *D;
 
   // TranslationUnit is NULL if we don't have multiple translation units.
-  const idx::TranslationUnit *TU;
+  idx::TranslationUnit *TU;
 
   // AnalysisContext owns the following data.
   CFG *cfg;
@@ -53,7 +53,7 @@ class AnalysisContext {
   llvm::BumpPtrAllocator A;
   bool AddEHEdges;
 public:
-  AnalysisContext(const Decl *d, const idx::TranslationUnit *tu,
+  AnalysisContext(const Decl *d, idx::TranslationUnit *tu,
                   bool addehedges = false)
     : D(d), TU(tu), cfg(0), builtCFG(false), liveness(0), PM(0),
       ReferencedBlockVars(0), AddEHEdges(addehedges) {}
@@ -63,7 +63,7 @@ public:
   ASTContext &getASTContext() { return D->getASTContext(); }
   const Decl *getDecl() const { return D; }
 
-  const idx::TranslationUnit *getTranslationUnit() const { return TU; }
+  idx::TranslationUnit *getTranslationUnit() const { return TU; }
 
   /// getAddEHEdges - Return true iff we are adding exceptional edges from
   /// callExprs.  If this is false, then try/catch statements and blocks
@@ -91,7 +91,7 @@ class AnalysisContextManager {
 public:
   ~AnalysisContextManager();
 
-  AnalysisContext *getContext(const Decl *D,const idx::TranslationUnit *TU = 0);
+  AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
 
   // Discard all previously created AnalysisContexts.
   void clear();
@@ -121,7 +121,7 @@ public:
 
   AnalysisContext *getAnalysisContext() const { return Ctx; }
 
-  const idx::TranslationUnit *getTranslationUnit() const { 
+  idx::TranslationUnit *getTranslationUnit() const { 
     return Ctx->getTranslationUnit(); 
   }
 

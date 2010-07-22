@@ -62,6 +62,10 @@ public:
     return AST->getPreprocessor();
   }
 
+  virtual Diagnostic &getDiagnostic() {
+    return AST->getDiagnostics();
+  }
+
   virtual DeclReferenceMap &getDeclReferenceMap() {
     return DeclRefMap;
   }

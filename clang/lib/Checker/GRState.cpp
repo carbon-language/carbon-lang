@@ -57,6 +57,17 @@ GRStateManager::RemoveDeadBindings(const GRState* state,
   return ConstraintMgr->RemoveDeadBindings(s, SymReaper);
 }
 
+const GRState *GRStateManager::MarshalState(const GRState *state,
+                                            const LocationContext *InitLoc) {
+  // make up an empty state for now.
+  GRState State(this,
+                EnvMgr.getInitialEnvironment(),
+                StoreMgr->getInitialStore(InitLoc),
+                GDMFactory.GetEmptyMap());
+
+  return getPersistentState(State);
+}
+
 const GRState *GRState::unbindLoc(Loc LV) const {
   Store OldStore = getStore();
   Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);

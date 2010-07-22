@@ -39,7 +39,9 @@ public:
 
   virtual const GRState* getInitialState(const LocationContext *InitLoc) = 0;
 
-  virtual GRStateManager& getStateManager() = 0;
+  virtual AnalysisManager &getAnalysisManager() = 0;
+
+  virtual GRStateManager &getStateManager() = 0;
 
   /// Called by GRCoreEngine. Used to generate new successor
   /// nodes by processing the 'effects' of a block-level statement.

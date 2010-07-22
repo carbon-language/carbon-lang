@@ -114,13 +114,22 @@ public:
   ~GRExprEngine();
 
   void ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {
-    CoreEngine.ExecuteWorkList(L, Steps);
+    CoreEngine.ExecuteWorkList(L, Steps, 0);
+  }
+
+  /// Execute the work list with an initial state. Nodes that reaches the exit
+  /// of the function are added into the Dst set, which represent the exit
+  /// state of the function call.
+  void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
+                                       const GRState *InitState, 
+                                       ExplodedNodeSet &Dst) {
+    CoreEngine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
   }
 
   /// getContext - Return the ASTContext associated with this analysis.
   ASTContext& getContext() const { return AMgr.getASTContext(); }
 
-  AnalysisManager &getAnalysisManager() const { return AMgr; }
+  virtual AnalysisManager &getAnalysisManager() { return AMgr; }
 
   SValuator &getSValuator() { return SVator; }
 
@@ -204,8 +213,7 @@ public:
   ///  making assumptions about state values.
   const GRState *ProcessAssume(const GRState *state, SVal cond,bool assumption);
 
-  GRStateManager& getStateManager() { return StateMgr; }
-  const GRStateManager& getStateManager() const { return StateMgr; }
+  virtual GRStateManager& getStateManager() { return StateMgr; }
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
 

@@ -99,6 +99,8 @@ public:
     return CreateConstraintMgr;
   }
 
+  idx::Indexer *getIndexer() const { return Idxer; }
+
   virtual ASTContext &getASTContext() {
     return Ctx;
   }
@@ -160,8 +162,12 @@ public:
     return AnaCtxMgr.getContext(D)->getParentMap();
   }
 
-  const AnalysisContext *getAnalysisContext(const Decl *D) {
+  AnalysisContext *getAnalysisContext(const Decl *D) {
     return AnaCtxMgr.getContext(D);
+  }
+
+  AnalysisContext *getAnalysisContext(const Decl *D, idx::TranslationUnit *TU) {
+    return AnaCtxMgr.getContext(D, TU);
   }
 
   const StackFrameContext *getStackFrame(AnalysisContext *Ctx,
@@ -173,7 +179,7 @@ public:
 
   // Get the top level stack frame.
   const StackFrameContext *getStackFrame(Decl const *D, 
-                                         const idx::TranslationUnit *TU) {
+                                         idx::TranslationUnit *TU) {
     return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D, TU), 0, 0, 0, 0);
   }
 

@@ -153,7 +153,11 @@ public:
 
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
-  bool ExecuteWorkList(const LocationContext *L, unsigned Steps);
+  bool ExecuteWorkList(const LocationContext *L, unsigned Steps,
+                       const GRState *InitState);
+  void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
+                                       const GRState *InitState, 
+                                       ExplodedNodeSet &Dst);
 };
 
 class GRStmtNodeBuilder {

@@ -12,8 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Checker/PathSensitive/AnalysisManager.h"
 #include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/Index/TranslationUnit.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
@@ -23,6 +25,12 @@
 using llvm::cast;
 using llvm::isa;
 using namespace clang;
+
+// This should be removed in the future.
+namespace clang {
+GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+                                  const LangOptions& lopts);
+}
 
 //===----------------------------------------------------------------------===//
 // Worklist classes for exploration of reachable states.
@@ -120,7 +128,8 @@ GRWorkList* GRWorkList::MakeBFSBlockDFSContents() {
 //===----------------------------------------------------------------------===//
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
-bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
+bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
+                                   const GRState *InitState) {
 
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
@@ -143,8 +152,11 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
     // Set the current block counter to being empty.
     WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
 
-    // Generate the root.
-    GenerateNode(StartLoc, getInitialState(L), 0);
+    if (!InitState)
+      // Generate the root.
+      GenerateNode(StartLoc, getInitialState(L), 0);
+    else
+      GenerateNode(StartLoc, InitState, 0);
   }
 
   while (Steps && WList->hasWork()) {
@@ -190,6 +202,17 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
 
   SubEngine.ProcessEndWorklist(WList->hasWork() || BlockAborted);
   return WList->hasWork();
+}
+
+void GRCoreEngine::ExecuteWorkListWithInitialState(const LocationContext *L, 
+                                                   unsigned Steps,
+                                                   const GRState *InitState, 
+                                                   ExplodedNodeSet &Dst) {
+  ExecuteWorkList(L, Steps, InitState);
+  for (llvm::SmallVectorImpl<ExplodedNode*>::iterator I = G->EndNodes.begin(), 
+                                           E = G->EndNodes.end(); I != E; ++I) {
+    Dst.Add(*I);
+  }
 }
 
 void GRCoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
@@ -662,7 +685,53 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
   // Check if the callee is in the same translation unit.
   if (CalleeCtx->getTranslationUnit() != 
       Pred->getLocationContext()->getTranslationUnit()) {
-    assert(0 && "to be implemented");
+    // Create a new engine. We must be careful that the new engine should not
+    // reference data structures owned by the old engine.
+
+    AnalysisManager &OldMgr = Eng.SubEngine.getAnalysisManager();
+    
+    // Get the callee's translation unit.
+    idx::TranslationUnit *TU = CalleeCtx->getTranslationUnit();
+
+    // Create a new AnalysisManager with components of the callee's
+    // TranslationUnit.
+    // The Diagnostic is actually shared when we create ASTUnits from PCH files.
+    AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), 
+                         OldMgr.getLangOptions(), 
+                         OldMgr.getPathDiagnosticClient(),
+                         OldMgr.getStoreManagerCreator(),
+                         OldMgr.getConstraintManagerCreator(),
+                         OldMgr.getIndexer(),
+                         OldMgr.getMaxNodes(), OldMgr.getMaxLoop(),
+                         OldMgr.shouldVisualizeGraphviz(),
+                         OldMgr.shouldVisualizeUbigraph(),
+                         OldMgr.shouldPurgeDead(),
+                         OldMgr.shouldEagerlyAssume(),
+                         OldMgr.shouldTrimGraph(),
+                         OldMgr.shouldInlineCall());
+    llvm::OwningPtr<GRTransferFuncs> TF(MakeCFRefCountTF(AMgr.getASTContext(),
+                                                         /* GCEnabled */ false,
+                                                        AMgr.getLangOptions()));
+    // Create the new engine.
+    GRExprEngine NewEng(AMgr, TF.take());
+
+    // Create the new LocationContext.
+    AnalysisContext *NewAnaCtx = AMgr.getAnalysisContext(CalleeCtx->getDecl(), 
+                                               CalleeCtx->getTranslationUnit());
+    const StackFrameContext *OldLocCtx = cast<StackFrameContext>(LocCtx);
+    const StackFrameContext *NewLocCtx = AMgr.getStackFrame(NewAnaCtx, 
+                                               OldLocCtx->getParent(),
+                                               OldLocCtx->getCallSite(),
+                                               OldLocCtx->getCallSiteBlock(), 
+                                               OldLocCtx->getIndex());
+
+    // Now create an initial state for the new engine.
+    const GRState *NewState = NewEng.getStateManager().MarshalState(state,
+                                                                    NewLocCtx);
+    ExplodedNodeSet ReturnNodes;
+    NewEng.ExecuteWorkListWithInitialState(NewLocCtx, AMgr.getMaxNodes(), 
+                                           NewState, ReturnNodes);
+    return;
   }
 
   // Get the callee entry block.

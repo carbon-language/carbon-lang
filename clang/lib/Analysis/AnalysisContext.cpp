@@ -84,7 +84,7 @@ LiveVariables *AnalysisContext::getLiveVariables() {
 }
 
 AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
-                                               const idx::TranslationUnit *TU) {
+                                                    idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
     AC = new AnalysisContext(D, TU);

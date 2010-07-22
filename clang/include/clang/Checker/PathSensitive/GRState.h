@@ -452,6 +452,10 @@ public:
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper);
 
+  /// Marshal a new state for the callee in another translation unit.
+  /// 'state' is owned by the caller's engine.
+  const GRState *MarshalState(const GRState *state, const LocationContext *L);
+
 public:
 
   SVal ArrayToPointer(Loc Array) {
