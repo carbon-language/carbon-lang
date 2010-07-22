@@ -143,10 +143,10 @@ static RangeComparisonResult RangeCompare(SourceManager &SM,
                                           SourceRange R2) {
   assert(R1.isValid() && "First range is invalid?");
   assert(R2.isValid() && "Second range is invalid?");
-  if (R1.getEnd() == R2.getBegin() ||
+  if (R1.getEnd() != R2.getBegin() &&
       SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin()))
     return RangeBefore;
-  if (R2.getEnd() == R1.getBegin() ||
+  if (R2.getEnd() != R1.getBegin() &&
       SM.isBeforeInTranslationUnit(R2.getEnd(), R1.getBegin()))
     return RangeAfter;
   return RangeOverlap;
@@ -158,10 +158,8 @@ static RangeComparisonResult LocationCompare(SourceManager &SM,
                                              SourceLocation L, SourceRange R) {
   assert(R.isValid() && "First range is invalid?");
   assert(L.isValid() && "Second range is invalid?");
-  if (L == R.getBegin())
+  if (L == R.getBegin() || L == R.getEnd())
     return RangeOverlap;
-  if (L == R.getEnd())
-    return RangeAfter;
   if (SM.isBeforeInTranslationUnit(L, R.getBegin()))
     return RangeBefore;
   if (SM.isBeforeInTranslationUnit(R.getEnd(), L))
@@ -356,6 +354,8 @@ public:
 
 } // end anonymous namespace
 
+static SourceRange getRawCursorExtent(CXCursor C);
+
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
   return RangeCompare(TU->getSourceManager(), R, RegionOfInterest);
 }
@@ -387,8 +387,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   // If we have a range of interest, and this cursor doesn't intersect with it,
   // we're done.
   if (RegionOfInterest.isValid() && !CheckedRegionOfInterest) {
-    SourceRange Range =
-      cxloc::translateCXSourceRange(clang_getCursorExtent(Cursor));
+    SourceRange Range = getRawCursorExtent(Cursor);
     if (Range.isInvalid() || CompareRegionOfInterest(Range))
       return false;
   }
@@ -537,8 +536,7 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
     CXCursor Cursor = MakeCXCursor(D, TU);
 
     if (RegionOfInterest.isValid()) {
-      SourceRange Range =
-        cxloc::translateCXSourceRange(clang_getCursorExtent(Cursor));
+      SourceRange Range = getRawCursorExtent(Cursor);
       if (Range.isInvalid())
         continue;
 
@@ -1817,17 +1815,20 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
 
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
+  // Translate the given source location to make it point at the beginning of
+  // the token under the cursor.
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
+  SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
+                                    CXXUnit->getASTContext().getLangOptions());
+  
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
-    SourceRange RegionOfInterest(SLoc, SLoc.getFileLocWithOffset(1));
-
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
     // the region of interest, rather than starting from the translation unit.
     CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
     CursorVisitor CursorVis(CXXUnit, GetCursorVisitor, &Result,
-                            Decl::MaxPCHLevel, RegionOfInterest);
+                            Decl::MaxPCHLevel, SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
   return Result;
@@ -1947,67 +1948,58 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   return cxloc::translateSourceLocation(getCursorContext(C), Loc);
 }
 
-CXSourceRange clang_getCursorExtent(CXCursor C) {
+} // end extern "C"
+
+static SourceRange getRawCursorExtent(CXCursor C) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCSuperClassRef: {
-        std::pair<ObjCInterfaceDecl *, SourceLocation> P
-          = getCursorObjCSuperClassRef(C);
-        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
-      }
+    case CXCursor_ObjCSuperClassRef:
+      return  getCursorObjCSuperClassRef(C).second;
 
-      case CXCursor_ObjCProtocolRef: {
-        std::pair<ObjCProtocolDecl *, SourceLocation> P
-          = getCursorObjCProtocolRef(C);
-        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
-      }
+    case CXCursor_ObjCProtocolRef:
+      return getCursorObjCProtocolRef(C).second;
 
-      case CXCursor_ObjCClassRef: {
-        std::pair<ObjCInterfaceDecl *, SourceLocation> P
-          = getCursorObjCClassRef(C);
+    case CXCursor_ObjCClassRef:
+      return getCursorObjCClassRef(C).second;
 
-        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
-      }
+    case CXCursor_TypeRef:
+      return getCursorTypeRef(C).second;
 
-      case CXCursor_TypeRef: {
-        std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
-        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
-      }
-
-      default:
-        // FIXME: Need a way to enumerate all non-reference cases.
-        llvm_unreachable("Missed a reference kind");
+    default:
+      // FIXME: Need a way to enumerate all non-reference cases.
+      llvm_unreachable("Missed a reference kind");
     }
   }
 
   if (clang_isExpression(C.kind))
-    return cxloc::translateSourceRange(getCursorContext(C),
-                                getCursorExpr(C)->getSourceRange());
+    return getCursorExpr(C)->getSourceRange();
 
   if (clang_isStatement(C.kind))
-    return cxloc::translateSourceRange(getCursorContext(C),
-                                getCursorStmt(C)->getSourceRange());
+    return getCursorStmt(C)->getSourceRange();
 
-  if (C.kind == CXCursor_PreprocessingDirective) {
-    SourceRange R = cxcursor::getCursorPreprocessingDirective(C);
-    return cxloc::translateSourceRange(getCursorContext(C), R);
-  }
+  if (C.kind == CXCursor_PreprocessingDirective)
+    return cxcursor::getCursorPreprocessingDirective(C);
 
-  if (C.kind == CXCursor_MacroInstantiation) {
-    SourceRange R = cxcursor::getCursorMacroInstantiation(C)->getSourceRange();
-    return cxloc::translateSourceRange(getCursorContext(C), R);
-  }
+  if (C.kind == CXCursor_MacroInstantiation)
+    return cxcursor::getCursorMacroInstantiation(C)->getSourceRange();
 
-  if (C.kind == CXCursor_MacroDefinition) {
-    SourceRange R = cxcursor::getCursorMacroDefinition(C)->getSourceRange();
-    return cxloc::translateSourceRange(getCursorContext(C), R);
-  }
+  if (C.kind == CXCursor_MacroDefinition)
+    return cxcursor::getCursorMacroDefinition(C)->getSourceRange();
   
-  if (C.kind < CXCursor_FirstDecl || C.kind > CXCursor_LastDecl)
+  if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl)
+    return getCursorDecl(C)->getSourceRange();
+
+  return SourceRange();
+}
+
+extern "C" {
+
+CXSourceRange clang_getCursorExtent(CXCursor C) {
+  SourceRange R = getRawCursorExtent(C);
+  if (R.isInvalid())
     return clang_getNullRange();
 
-  Decl *D = getCursorDecl(C);
-  return cxloc::translateSourceRange(getCursorContext(C), D->getSourceRange());
+  return cxloc::translateSourceRange(getCursorContext(C), R);
 }
 
 CXCursor clang_getCursorReferenced(CXCursor C) {
@@ -2568,8 +2560,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     return CXChildVisit_Recurse;
   }
 
-  CXSourceRange cursorExtent = clang_getCursorExtent(cursor);
-  SourceRange cursorRange = cxloc::translateCXSourceRange(cursorExtent);
+  SourceRange cursorRange = getRawCursorExtent(cursor);
   
   if (cursorRange.isInvalid())
     return CXChildVisit_Continue;
@@ -2696,11 +2687,9 @@ void clang_annotateTokens(CXTranslationUnit TU,
   SourceRange RegionOfInterest;
   RegionOfInterest.setBegin(cxloc::translateSourceLocation(
                                         clang_getTokenLocation(TU, Tokens[0])));
-
-  SourceLocation End
-    = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
-                                                        Tokens[NumTokens - 1]));
-  RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
+  RegionOfInterest.setEnd(cxloc::translateSourceLocation(
+                                clang_getTokenLocation(TU, 
+                                                       Tokens[NumTokens - 1])));
 
   // A mapping from the source locations found when re-lexing or traversing the
   // region of interest to the corresponding cursors.

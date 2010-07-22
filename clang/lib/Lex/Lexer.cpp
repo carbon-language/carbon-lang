@@ -248,6 +248,59 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   return TheTok.getLength();
 }
 
+SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
+                                          const SourceManager &SM,
+                                          const LangOptions &LangOpts) {
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+  bool Invalid = false;
+  llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
+  if (Invalid)
+    return Loc;
+
+  // Back up from the current location until we hit the beginning of a line
+  // (or the buffer). We'll relex from that point.
+  const char *BufStart = Buffer.data();
+  const char *StrData = BufStart+LocInfo.second;
+  if (StrData[0] == '\n' || StrData[0] == '\r')
+    return Loc;
+
+  const char *LexStart = StrData;
+  while (LexStart != BufStart) {
+    if (LexStart[0] == '\n' || LexStart[0] == '\r') {
+      ++LexStart;
+      break;
+    }
+
+    --LexStart;
+  }
+  
+  // Create a lexer starting at the beginning of this token.
+  SourceLocation LexerStartLoc = Loc.getFileLocWithOffset(-LocInfo.second);
+  Lexer TheLexer(LexerStartLoc, LangOpts, BufStart, LexStart, Buffer.end());
+  TheLexer.SetCommentRetentionState(true);
+  
+  // Lex tokens until we find the token that contains the source location.
+  Token TheTok;
+  do {
+    TheLexer.LexFromRawLexer(TheTok);
+    
+    if (TheLexer.getBufferLocation() > StrData) {
+      // Lexing this token has taken the lexer past the source location we're
+      // looking for. If the current token encompasses our source location,
+      // return the beginning of that token.
+      if (TheLexer.getBufferLocation() - TheTok.getLength() <= StrData)
+        return TheTok.getLocation();
+      
+      // We ended up skipping over the source location entirely, which means
+      // that it points into whitespace. We're done here.
+      break;
+    }
+  } while (TheTok.getKind() != tok::eof);
+  
+  // We've passed our source location; just return the original source location.
+  return Loc;
+}
+
 namespace {
   enum PreambleDirectiveKind {
     PDK_Skipped,

@@ -219,6 +219,15 @@ public:
                                      const SourceManager &SM,
                                      const LangOptions &LangOpts);
 
+  /// \brief Given a location any where in a source buffer, find the location
+  /// that corresponds to the beginning of the token in which the original
+  /// source location lands.
+  ///
+  /// \param Loc 
+  static SourceLocation GetBeginningOfToken(SourceLocation Loc,
+                                            const SourceManager &SM,
+                                            const LangOptions &LangOpts);
+  
   /// \brief Compute the preamble of the given file.
   ///
   /// The preamble of a file contains the initial comments, include directives,
