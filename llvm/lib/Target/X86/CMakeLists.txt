@@ -50,4 +50,4 @@ endif()
 
 add_llvm_target(X86CodeGen ${sources})
 
-target_link_libraries (LLVMX86CodeGen LLVMSelectionDAG)
+target_link_libraries (LLVMX86CodeGen LLVMX86AsmPrinter LLVMSelectionDAG)
