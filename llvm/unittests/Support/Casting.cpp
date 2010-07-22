@@ -109,20 +109,16 @@ TEST(CastingTest, cast_or_null) {
 }
 
 TEST(CastingTest, dyn_cast) {
-  //  foo &F1 = dyn_cast<foo>(B1);
-  //  EXPECT_NE(&F1, null_foo);
-  const foo *F3 = dyn_cast<foo>(B2);
+  const foo *F1 = dyn_cast<foo>(B2);
+  EXPECT_NE(F1, null_foo);
+  const foo *F2 = dyn_cast<foo>(B2);
+  EXPECT_NE(F2, null_foo);
+  const foo *F3 = dyn_cast<foo>(B4);
   EXPECT_NE(F3, null_foo);
-  const foo *F4 = dyn_cast<foo>(B2);
-  EXPECT_NE(F4, null_foo);
-  //  const foo &F5 = dyn_cast<foo>(B3);
-  //  EXPECT_NE(&F5, null_foo);
-  const foo *F6 = dyn_cast<foo>(B4);
-  EXPECT_NE(F6, null_foo);
-  foo *F7 = dyn_cast<foo>(fub());
-  EXPECT_EQ(F7, null_foo);
-  //  foo *F8 = B1.daz();
-  //  EXPECT_NE(F8, null_foo);
+  foo *F4 = dyn_cast<foo>(fub());
+  EXPECT_EQ(F4, null_foo);
+  //  foo *F5 = B1.daz();
+  //  EXPECT_NE(F5, null_foo);
 }
 
 // These lines are errors...
