@@ -2492,6 +2492,10 @@ def note_condition_assign_silence : Note<
 def warn_value_always_zero : Warning<
   "%0 is always %select{zero|false|NULL}1 in this context">;
 
+def warn_ivar_variable_conflict : Warning<
+  "%0 lookup will access the property ivar in nonfragile-abi2 mode">, 
+  InGroup<NonfragileAbi2>;
+
 // assignment related diagnostics (also for argument passing, returning, etc).
 // In most of these diagnostics the %2 is a value from the
 // Sema::AssignmentAction enumeration

@@ -1005,6 +1005,25 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   return true;
 }
 
+static ObjCPropertyDecl *OkToSynthesizeProvisionalIvar(Sema &SemaRef,
+                                          IdentifierInfo *II,
+                                          SourceLocation NameLoc) {
+  ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
+  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
+  if (!IDecl)
+    return 0;
+  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
+  if (!ClassImpDecl)
+    return 0;
+  ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
+  if (!property)
+    return 0;
+  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II))
+    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+      return 0;
+  return property;
+}
+
 static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
                                                IdentifierInfo *II,
                                                SourceLocation NameLoc) {
@@ -1077,7 +1096,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
                                       isAddressOfOperand,
                                       TemplateArgs);
   }
-
+  bool IvarLookupFollowUp = false;
   // Perform the required lookup.
   LookupResult R(*this, Name, NameLoc, LookupOrdinaryName);
   if (TemplateArgs) {
@@ -1090,7 +1109,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     LookupTemplateName(R, S, SS, QualType(), /*EnteringContext=*/false,
                        MemberOfUnknownSpecialization);
   } else {
-    bool IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
+    IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
 
     // If this reference is in an Objective-C method, then we need to do
@@ -1151,6 +1170,16 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   assert(!R.empty() || ADL);
 
   if (VarDecl *Var = R.getAsSingle<VarDecl>()) {
+    if (getLangOptions().ObjCNonFragileABI && IvarLookupFollowUp &&
+        !getLangOptions().ObjCNonFragileABI2) {
+      ObjCPropertyDecl *Property = 
+        OkToSynthesizeProvisionalIvar(*this, II, NameLoc);
+      if (Property) {
+        Diag(NameLoc, diag::warn_ivar_variable_conflict) << Var->getDeclName();
+        Diag(Property->getLocation(), diag::note_property_declare);
+      }
+    }
+    
     // Warn about constructs like:
     //   if (void *X = foo()) { ... } else { X }.
     // In the else block, the pointer is always false.
