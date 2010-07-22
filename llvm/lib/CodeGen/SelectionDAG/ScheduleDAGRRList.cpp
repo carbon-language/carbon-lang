@@ -1036,7 +1036,7 @@ namespace {
     std::vector<SUnit*> Queue;
     SF Picker;
     unsigned CurQueueId;
-    bool TracksRegPressure;
+    bool isBottomUp;
 
   protected:
     // SUnits - The SUnits for the current graph.
@@ -1061,22 +1061,20 @@ namespace {
 
   public:
     RegReductionPriorityQueue(MachineFunction &mf,
-                              bool tracksrp,
+                              bool isbottomup,
                               const TargetInstrInfo *tii,
                               const TargetRegisterInfo *tri,
                               const TargetLowering *tli)
-      : Picker(this), CurQueueId(0), TracksRegPressure(tracksrp),
+      : Picker(this), CurQueueId(0), isBottomUp(isbottomup),
         MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL) {
-      if (TracksRegPressure) {
-        unsigned NumRC = TRI->getNumRegClasses();
-        RegLimit.resize(NumRC);
-        RegPressure.resize(NumRC);
-        std::fill(RegLimit.begin(), RegLimit.end(), 0);
-        std::fill(RegPressure.begin(), RegPressure.end(), 0);
-        for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-               E = TRI->regclass_end(); I != E; ++I)
-          RegLimit[(*I)->getID()] = tri->getAllocatableSet(MF, *I).count() - 1;
-      }
+      unsigned NumRC = TRI->getNumRegClasses();
+      RegLimit.resize(NumRC);
+      RegPressure.resize(NumRC);
+      std::fill(RegLimit.begin(), RegLimit.end(), 0);
+      std::fill(RegPressure.begin(), RegPressure.end(), 0);
+      for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+             E = TRI->regclass_end(); I != E; ++I)
+        RegLimit[(*I)->getID()] = tri->getAllocatableSet(MF, *I).count() - 1;
     }
     
     void initNodes(std::vector<SUnit> &sunits) {
@@ -1209,10 +1207,7 @@ namespace {
       return false;
     }
 
-    void ScheduledNode(SUnit *SU) {
-      if (!TracksRegPressure)
-        return;
-
+    void OpenPredLives(SUnit *SU) {
       const SDNode *N = SU->getNode();
       if (!N->isMachineOpcode())
         return;
@@ -1265,14 +1260,9 @@ namespace {
         else
           RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
       }
-
-      dumpRegPressure();
     }
 
-    void UnscheduledNode(SUnit *SU) {
-      if (!TracksRegPressure)
-        return;
-
+    void ClosePredLives(SUnit *SU) {
       const SDNode *N = SU->getNode();
       if (!N->isMachineOpcode())
         return;
@@ -1327,7 +1317,19 @@ namespace {
         unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
         RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
       }
+    }
 
+    void ScheduledNode(SUnit *SU) {
+      if (!TLI || !isBottomUp)
+        return;
+      OpenPredLives(SU);
+      dumpRegPressure();
+    }
+
+    void UnscheduledNode(SUnit *SU) {
+      if (!TLI || !isBottomUp)
+        return;
+      ClosePredLives(SU);
       dumpRegPressure();
     }
 
@@ -1849,7 +1851,7 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   
   BURegReductionPriorityQueue *PQ =
-    new BURegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
+    new BURegReductionPriorityQueue(*IS->MF, true, TII, TRI, 0);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
@@ -1875,7 +1877,7 @@ llvm::createSourceListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   
   SrcRegReductionPriorityQueue *PQ =
-    new SrcRegReductionPriorityQueue(*IS->MF, false, TII, TRI, 0);
+    new SrcRegReductionPriorityQueue(*IS->MF, true, TII, TRI, 0);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
