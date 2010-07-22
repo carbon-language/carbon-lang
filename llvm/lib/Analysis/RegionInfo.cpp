@@ -478,7 +478,7 @@ void RegionInfo::scanForRegions(Function &F, BBtoBBMap *ShortCut) {
   // over the small regions.
   for (po_iterator<DomTreeNode*> FI = po_begin(N), FE = po_end(N); FI != FE;
     ++FI) {
-    findRegionsWithEntry((*FI)->getBlock(), ShortCut);
+    findRegionsWithEntry(FI->getBlock(), ShortCut);
   }
 }
 
