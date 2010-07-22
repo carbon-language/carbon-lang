@@ -165,7 +165,7 @@ namespace {
     /// HasInlineAsm - True if the function contains inline assembly.
     bool HasInlineAsm;
 
-    const TargetInstrInfo *TII;
+    const ARMInstrInfo *TII;
     const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
     bool isThumb;
@@ -272,7 +272,7 @@ FunctionPass *llvm::createARMConstantIslandPass() {
 bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   MachineConstantPool &MCP = *MF.getConstantPool();
 
-  TII = MF.getTarget().getInstrInfo();
+  TII = (const ARMInstrInfo*)MF.getTarget().getInstrInfo();
   AFI = MF.getInfo<ARMFunctionInfo>();
   STI = &MF.getTarget().getSubtarget<ARMSubtarget>();
 

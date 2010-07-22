@@ -566,13 +566,6 @@ public:
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const = 0;
 
-  /// GetInstSize - Returns the size of the specified Instruction.
-  /// 
-  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::GetInstSize!");
-    return 0;
-  }
-
   /// Measure the specified inline asm to determine an approximation of its
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,

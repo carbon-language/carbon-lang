@@ -52,7 +52,7 @@ FunctionPass *llvm::createMSP430BranchSelectionPass() {
 }
 
 bool MSP430BSel::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  const MSP430InstrInfo *TII = (MSP430InstrInfo*)Fn.getTarget().getInstrInfo();
   // Give the blocks of the function a dense, in-order, numbering.
   Fn.RenumberBlocks();
   BlockSizes.resize(Fn.getNumBlockIDs());
