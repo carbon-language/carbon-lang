@@ -244,6 +244,18 @@ public:
                                           bool = true) {
     return true;
   }
+
+  /// addPassesToEmitMC - Add passes to the specified pass manager to get
+  /// machine code emitted with the MCJIT. This method returns true if machine
+  /// code is not supported. It fills the MCContext Ctx pointer which can be
+  /// used to build custom MCStreamer.
+  ///
+  virtual bool addPassesToEmitMC(PassManagerBase &PM,
+                                 MCContext *&Ctx,
+                                 CodeGenOpt::Level OptLevel,
+                                 bool DisableVerify = true) {
+    return true;
+  }
 };
 
 /// LLVMTargetMachine - This class describes a target machine that is
@@ -287,6 +299,16 @@ public:
                                           JITCodeEmitter &MCE,
                                           CodeGenOpt::Level,
                                           bool DisableVerify = true);
+
+  /// addPassesToEmitMC - Add passes to the specified pass manager to get
+  /// machine code emitted with the MCJIT. This method returns true if machine
+  /// code is not supported. It fills the MCContext Ctx pointer which can be
+  /// used to build custom MCStreamer.
+  ///
+  virtual bool addPassesToEmitMC(PassManagerBase &PM,
+                                 MCContext *&Ctx,
+                                 CodeGenOpt::Level OptLevel,
+                                 bool DisableVerify = true);
   
   /// Target-Independent Code Generator Pass Configuration Options.
   

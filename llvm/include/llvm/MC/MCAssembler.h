@@ -669,7 +669,9 @@ public:
   MCCodeEmitter &getEmitter() const { return Emitter; }
 
   /// Finish - Do final processing and write the object to the output stream.
-  void Finish();
+  /// \arg Writer is used for custom object writer (as the MCJIT does),
+  /// if not specified it is automatically created from backend.
+  void Finish(MCObjectWriter *Writer = 0);
 
   // FIXME: This does not belong here.
   bool getSubsectionsViaSymbols() const {
