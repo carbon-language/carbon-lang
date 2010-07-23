@@ -900,7 +900,7 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
   }
 
   if (!CStyle && Self.CheckBaseClassAccess(OpRange.getBegin(),
-                                           DestType, SrcType,
+                                           DestClass, SrcClass,
                                            Paths.front(),
                                      diag::err_upcast_to_inaccessible_base)) {
     msg = 0;
