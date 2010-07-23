@@ -1144,9 +1144,9 @@ void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
   // Determine the ID for this declaration
   pch::DeclID &ID = DeclIDs[D];
   if (ID == 0)
-    ID = DeclIDs.size();
+    ID = NextDeclID++;
 
-  unsigned Index = ID - 1;
+  unsigned Index = ID - FirstDeclID;
 
   // Record the offset for this declaration
   if (DeclOffsets.size() == Index)

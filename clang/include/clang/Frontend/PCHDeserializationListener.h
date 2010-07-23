@@ -27,6 +27,8 @@ protected:
   virtual ~PCHDeserializationListener() {}
 
 public:
+  /// \brief An identifier was deserialized from the PCH.
+  virtual void IdentifierRead(pch::IdentID ID, IdentifierInfo *II) = 0;
   /// \brief A type was deserialized from the PCH. The ID here has the qualifier
   ///        bits already removed, and T is guaranteed to be locally unqualified
   virtual void TypeRead(pch::TypeID ID, QualType T) = 0;

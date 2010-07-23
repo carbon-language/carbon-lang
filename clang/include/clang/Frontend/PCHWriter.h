@@ -113,6 +113,9 @@ private:
   /// \brief The first ID number we can use for our own declarations.
   pch::DeclID FirstDeclID;
 
+  /// \brief The decl ID that will be assigned to the next new decl.
+  pch::DeclID NextDeclID;
+
   /// \brief Map that provides the ID numbers of each declaration within
   /// the output stream, as well as those deserialized from a chained PCH.
   ///
@@ -127,6 +130,9 @@ private:
 
   /// \brief The first ID number we can use for our own types.
   pch::TypeID FirstTypeID;
+
+  /// \brief The type ID that will be assigned to the next new type.
+  pch::TypeID NextTypeID;
 
   /// \brief Map that provides the ID numbers of each type within the
   /// output stream, plus those deserialized from a chained PCH.
@@ -143,8 +149,11 @@ private:
   /// the type's ID.
   std::vector<uint32_t> TypeOffsets;
 
-  /// \brief The type ID that will be assigned to the next new type.
-  pch::TypeID NextTypeID;
+  /// \brief The first ID number we can use for our own identifiers.
+  pch::IdentID FirstIdentID;
+
+  /// \brief The identifier ID that will be assigned to the next new identifier.
+  pch::IdentID NextIdentID;
 
   /// \brief Map that provides the ID numbers of each identifier in
   /// the output stream.
@@ -405,7 +414,10 @@ public:
 
   unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
 
+  bool hasChain() const { return Chain; }
+
   // PCHDeserializationListener implementation
+  void IdentifierRead(pch::IdentID ID, IdentifierInfo *II);
   void TypeRead(pch::TypeID ID, QualType T);
   void DeclRead(pch::DeclID ID, const Decl *D);
 };

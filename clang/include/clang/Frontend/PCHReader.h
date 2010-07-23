@@ -655,9 +655,14 @@ public:
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
 
-  /// \brief Returns the number of source locations found in this file.
+  /// \brief Returns the number of source locations found in the chain.
   unsigned getTotalNumSLocs() const {
     return TotalNumSLocEntries;
+  }
+
+  /// \brief Returns the number of identifiers found in the chain.
+  unsigned getTotalNumIdentifiers() const {
+    return static_cast<unsigned>(IdentifiersLoaded.size());
   }
 
   /// \brief Returns the number of types found in this file.

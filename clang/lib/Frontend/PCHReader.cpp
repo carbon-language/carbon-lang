@@ -3193,6 +3193,8 @@ void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
   assert(ID <= IdentifiersLoaded.size() && "identifier ID out of range");
   IdentifiersLoaded[ID - 1] = II;
+  if (DeserializationListener)
+    DeserializationListener->IdentifierRead(ID, II);
 }
 
 /// \brief Set the globally-visible declarations associated with the given
@@ -3277,6 +3279,8 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
     IdentifiersLoaded[ID]
       = &PP->getIdentifierTable().get(Str, StrLen);
+    if (DeserializationListener)
+      DeserializationListener->IdentifierRead(ID + 1, IdentifiersLoaded[ID]);
   }
 
   return IdentifiersLoaded[ID];

@@ -1851,12 +1851,14 @@ public:
     // "stat"), but IdentifierResolver::AddDeclToIdentifierChain()
     // adds declarations to the end of the list (so we need to see the
     // struct "status" before the function "status").
+    // Only emit declarations that aren't from a chained PCH, though.
     llvm::SmallVector<Decl *, 16> Decls(IdentifierResolver::begin(II),
                                         IdentifierResolver::end());
     for (llvm::SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
                                                       DEnd = Decls.rend();
          D != DEnd; ++D)
-      clang::io::Emit32(Out, Writer.getDeclID(*D));
+      if (!Writer.hasChain() || (*D)->getPCHLevel() == 0)
+        clang::io::Emit32(Out, Writer.getDeclID(*D));
   }
 };
 } // end anonymous namespace
@@ -1884,13 +1886,17 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
          ID != IDEnd; ++ID)
       getIdentifierRef(ID->second);
 
-    // Create the on-disk hash table representation.
-    IdentifierOffsets.resize(IdentifierIDs.size());
+    // Create the on-disk hash table representation. We only store offsets
+    // for identifiers that appear here for the first time.
+    IdentifierOffsets.resize(NextIdentID - FirstIdentID);
     for (llvm::DenseMap<const IdentifierInfo *, pch::IdentID>::iterator
            ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
          ID != IDEnd; ++ID) {
       assert(ID->first && "NULL identifier in identifier table");
-      Generator.insert(ID->first, ID->second);
+      // FIXME: Right now, we only write identifiers that are new to this file.
+      // We need to write older identifiers that changed too, though.
+      if (ID->second >= FirstIdentID)
+        Generator.insert(ID->first, ID->second);
     }
 
     // Create the on-disk hash table in a buffer.
@@ -2116,7 +2122,11 @@ void PCHWriter::AddString(const std::string &Str, RecordData &Record) {
 /// \brief Note that the identifier II occurs at the given offset
 /// within the identifier table.
 void PCHWriter::SetIdentifierOffset(const IdentifierInfo *II, uint32_t Offset) {
-  IdentifierOffsets[IdentifierIDs[II] - 1] = Offset;
+  pch::IdentID ID = IdentifierIDs[II];
+  // Only store offsets new to this PCH file. Other identifier names are looked
+  // up earlier in the chain and thus don't need an offset.
+  if (ID >= FirstIdentID)
+    IdentifierOffsets[ID - FirstIdentID] = Offset;
 }
 
 /// \brief Note that the selector Sel occurs at the given offset
@@ -2129,15 +2139,18 @@ void PCHWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 
 PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream, PCHReader *Chain)
   : Stream(Stream), Chain(Chain), FirstDeclID(1),
-    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS),
+    FirstTypeID(pch::NUM_PREDEF_TYPE_IDS), FirstIdentID(1),
     CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
     NumLexicalDeclContexts(0), NumVisibleDeclContexts(0) {
   if (Chain) {
     Chain->setDeserializationListener(this);
     FirstDeclID += Chain->getTotalNumDecls();
     FirstTypeID += Chain->getTotalNumTypes();
+    FirstIdentID += Chain->getTotalNumIdentifiers();
   }
+  NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
+  NextIdentID = FirstIdentID;
 }
 
 void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
@@ -2165,6 +2178,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // The translation unit is the first declaration we'll emit.
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
+  ++NextDeclID;
   DeclTypesToEmit.push(Context.getTranslationUnitDecl());
 
   // Make sure that we emit IdentifierInfos (and any attached
@@ -2334,6 +2348,9 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We don't start with the translation unit, but with its decls that
   // don't come from the other PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
+  // The TU was loaded before we managed to register ourselves as a listener.
+  // Thus we need to add it manually.
+  DeclIDs[TU] = 1;
   // FIXME: We don't want to iterate over everything here, because it needlessly
   // deserializes the entire original PCH. Instead we only want to iterate over
   // the stuff that's already there.
@@ -2359,7 +2376,7 @@ void PCHWriter::WritePCHChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // FIXME: Preprocessor
   // FIXME: Method pool
-  // FIXME: Identifier table
+  WriteIdentifierTable(PP);
   WriteTypeDeclOffsets();
   // FIXME: External unnamed definitions
   // FIXME: Tentative definitions
@@ -2407,7 +2424,7 @@ pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
 
   pch::IdentID &ID = IdentifierIDs[II];
   if (ID == 0)
-    ID = IdentifierIDs.size();
+    ID = NextIdentID++;
   return ID;
 }
 
@@ -2576,7 +2593,7 @@ void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
   if (ID == 0) {
     // We haven't seen this declaration before. Give it a new ID and
     // enqueue it in the list of declarations to emit.
-    ID = DeclIDs.size();
+    ID = NextDeclID++;
     DeclTypesToEmit.push(const_cast<Decl *>(D));
   }
 
@@ -2775,6 +2792,10 @@ void PCHWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   Record.push_back(Base.getAccessSpecifierAsWritten());
   AddTypeRef(Base.getType(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
+}
+
+void PCHWriter::IdentifierRead(pch::IdentID ID, IdentifierInfo *II) {
+  IdentifierIDs[II] = ID;
 }
 
 void PCHWriter::TypeRead(pch::TypeID ID, QualType T) {
