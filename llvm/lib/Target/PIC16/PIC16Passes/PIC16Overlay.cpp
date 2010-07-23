@@ -171,8 +171,9 @@ void PIC16Overlay::MarkIndirectlyCalledFunctions(Module &M) {
   for (Module::iterator MI = M.begin(), E = M.end(); MI != E; ++MI) {
     for (Value::use_iterator I = MI->use_begin(), E = MI->use_end(); I != E;
          ++I) {
-      if ((!isa<CallInst>(I) && !isa<InvokeInst>(I))
-          || !CallSite(cast<Instruction>(I)).isCallee(I)) {
+      User *U = *I;
+      if ((!isa<CallInst>(U) && !isa<InvokeInst>(U))
+          || !CallSite(cast<Instruction>(U)).isCallee(I)) {
         setColor(MI, ++IndirectCallColor);
         break;
       }
