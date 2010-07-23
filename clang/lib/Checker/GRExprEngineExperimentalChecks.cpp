@@ -18,13 +18,14 @@
 
 using namespace clang;
 
-void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {  
+void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within GRExprEngine.
-  RegisterPthreadLockChecker(Eng);  
-  RegisterMallocChecker(Eng);
-  RegisterStreamChecker(Eng);
   RegisterCStringChecker(Eng);
+  RegisterMallocChecker(Eng);
+  RegisterPthreadLockChecker(Eng);
+  RegisterStreamChecker(Eng);
+  RegisterUnreachableCodeChecker(Eng);
 }
 
 void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
@@ -34,11 +35,10 @@ void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
   // Note that this must be registered after ReturnStackAddresEngsChecker.
   RegisterReturnPointerRangeChecker(Eng);
   
-  RegisterFixedAddressChecker(Eng);
-  RegisterPointerSubChecker(Eng);
-  RegisterPointerArithChecker(Eng);
-  RegisterCastToStructChecker(Eng);
-  RegisterCastSizeChecker(Eng);
   RegisterArrayBoundChecker(Eng);
-
+  RegisterCastSizeChecker(Eng);
+  RegisterCastToStructChecker(Eng);
+  RegisterFixedAddressChecker(Eng);
+  RegisterPointerArithChecker(Eng);
+  RegisterPointerSubChecker(Eng);
 }

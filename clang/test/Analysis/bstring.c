@@ -53,7 +53,7 @@ void memcpy0 () {
   memcpy(dst, src, 4); // no-warning
 
   if (memcpy(dst, src, 4) != dst) {
-    (void)*(char*)0; // no-warning -- should be unreachable
+    (void)*(char*)0; // expected-warning{{never executed}}
   }
 }
 
@@ -155,7 +155,7 @@ void memmove0 () {
   memmove(dst, src, 4); // no-warning
 
   if (memmove(dst, src, 4) != dst) {
-    (void)*(char*)0; // no-warning -- should be unreachable
+    (void)*(char*)0; // expected-warning{{never executed}}
   }
 }
 
@@ -217,7 +217,7 @@ void memcmp3 () {
   char a[] = {1, 2, 3, 4};
 
   if (memcmp(a, a, 4))
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
 }
 
 void memcmp4 (char *input) {
@@ -231,11 +231,11 @@ void memcmp5 (char *input) {
   char a[] = {1, 2, 3, 4};
 
   if (memcmp(a, 0, 0)) // no-warning
-    (void)*(char*)0;   // no-warning
+    (void)*(char*)0;   // expected-warning{{never executed}}
   if (memcmp(0, a, 0)) // no-warning
-    (void)*(char*)0;   // no-warning
+    (void)*(char*)0;   // expected-warning{{never executed}}
   if (memcmp(a, input, 0)) // no-warning
-    (void)*(char*)0;   // no-warning
+    (void)*(char*)0;   // expected-warning{{never executed}}
 }
 
 void memcmp6 (char *a, char *b, size_t n) {

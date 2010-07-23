@@ -18,7 +18,7 @@ void separateExpressions (int a) {
 
   char* buf = malloc(1);
   if (a != 0 && b == 0)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(buf);
 }
 
@@ -29,7 +29,7 @@ void oneLongExpression (int a) {
 
   char* buf = malloc(1);
   if (a != 0 && b == 0)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(buf);
 }
 
@@ -40,11 +40,11 @@ void mixedTypes (int a) {
   // This is part of PR7406.
   int b = a + 1LL;
   if (a != 0 && (b-1) == 0) // not crash
-    return; // no warning
+    return; // expected-warning{{never executed}}
 
   int c = a + 1U;
   if (a != 0 && (c-1) == 0) // not crash
-    return; // no warning
+    return; // expected-warning{{never executed}}
 
   free(buf);
 }
@@ -61,7 +61,7 @@ void eq_ne (unsigned a) {
   if (a+1 != 0)
     return; // no-warning
   if (a-1 != UINT_MAX-1)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 
@@ -72,7 +72,7 @@ void ne_eq (unsigned a) {
   if (a+1 == 0)
     return; // no-warning
   if (a-1 == UINT_MAX-1)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 
@@ -85,7 +85,7 @@ void mixed_eq_ne (int a) {
   if (a+1U != 2)
     return; // no-warning
   if (a-1U != 0)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 
@@ -96,7 +96,7 @@ void mixed_ne_eq (int a) {
   if (a+1U == 2)
     return; // no-warning
   if (a-1U == 0)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 
@@ -177,7 +177,7 @@ void adjustedLE (unsigned a) {
 void tautologyGT (unsigned a) {
   char* b = malloc(1);
   if (a > UINT_MAX)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 
@@ -191,7 +191,7 @@ void tautologyGE (unsigned a) {
 void tautologyLT (unsigned a) {
   char* b = malloc(1);
   if (a < 0)
-    return; // no-warning
+    return; // expected-warning{{never executed}}
   free(b);
 }
 

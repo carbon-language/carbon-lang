@@ -117,7 +117,7 @@ char callocZeroesBad () {
 	char *buf = calloc(2,2);
 	char result = buf[3]; // no-warning
 	if (buf[1] != 0) {
-	  free(buf);
+	  free(buf); // expected-warning{{never executed}}
 	}
 	return result; // expected-warning{{never released}}
 }

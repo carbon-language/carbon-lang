@@ -74,6 +74,7 @@ add_clang_library(clangChecker
   UndefinedArraySubscriptChecker.cpp
   UndefinedAssignmentChecker.cpp
   UnixAPIChecker.cpp
+  UnreachableCodeChecker.cpp
   VLASizeChecker.cpp
   ValueManager.cpp
   )
