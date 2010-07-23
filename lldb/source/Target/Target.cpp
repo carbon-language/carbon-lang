@@ -231,9 +231,9 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
         resolver_sp->SetBreakpoint (bp_sp.get());
 
         if (internal)
-            m_internal_breakpoint_list.Add (bp_sp);
+            m_internal_breakpoint_list.Add (bp_sp, false);
         else
-            m_breakpoint_list.Add (bp_sp);
+            m_breakpoint_list.Add (bp_sp, true);
 
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
@@ -241,13 +241,6 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
             StreamString s;
             bp_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
             log->Printf ("Target::%s (internal = %s) => break_id = %s\n", __FUNCTION__, internal ? "yes" : "no", s.GetData());
-        }
-
-        // Broadcast the breakpoint creation event.
-        if (!internal && EventTypeHasListeners(eBroadcastBitBreakpointChanged))
-        {
-            BroadcastEvent (eBroadcastBitBreakpointChanged,
-                            new Breakpoint::BreakpointEventData (Breakpoint::BreakpointEventData::eBreakpointAdded, bp_sp));
         }
 
         bp_sp->ResolveBreakpoint();
@@ -262,9 +255,9 @@ Target::RemoveAllBreakpoints (bool internal_also)
     if (log)
         log->Printf ("Target::%s (internal_also = %s)\n", __FUNCTION__, internal_also ? "yes" : "no");
 
-    m_breakpoint_list.RemoveAll();
+    m_breakpoint_list.RemoveAll (true);
     if (internal_also)
-        m_internal_breakpoint_list.RemoveAll();
+        m_internal_breakpoint_list.RemoveAll (false);
 }
 
 void
@@ -301,9 +294,9 @@ Target::RemoveBreakpointByID (break_id_t break_id)
     if (DisableBreakpointByID (break_id))
     {
         if (LLDB_BREAK_ID_IS_INTERNAL (break_id))
-            m_internal_breakpoint_list.Remove(break_id);
+            m_internal_breakpoint_list.Remove(break_id, false);
         else
-            m_breakpoint_list.Remove(break_id);
+            m_breakpoint_list.Remove(break_id, true);
         return true;
     }
     return false;

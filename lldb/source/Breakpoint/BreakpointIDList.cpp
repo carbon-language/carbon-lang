@@ -231,7 +231,7 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
             const size_t num_breakpoints = breakpoints.GetSize();
             for (size_t j = 0; j < num_breakpoints; ++j)
             {
-                Breakpoint *breakpoint = breakpoints.GetBreakpointByIndex (j).get();
+                Breakpoint *breakpoint = breakpoints.GetBreakpointAtIndex (j).get();
                 break_id_t cur_bp_id = breakpoint->GetID();
 
                 if ((cur_bp_id < start_bp_id) || (cur_bp_id > end_bp_id))

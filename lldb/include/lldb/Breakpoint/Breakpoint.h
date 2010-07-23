@@ -104,25 +104,14 @@ public:
         virtual const ConstString &
         GetFlavor () const;
 
-
-        enum EventSubType
-        {
-            eBreakpointInvalidType = (1 << 0),
-            eBreakpointAdded = (1 << 1),
-            eBreakpointRemoved = (1 << 2),
-            eBreakpointLocationsAdded = (1 << 3),
-            eBreakpointLocationsRemoved = (1 << 4),
-            eBreakpointLocationResolved = (1 << 5)
-        };
-
-        BreakpointEventData (EventSubType sub_type,
+        BreakpointEventData (lldb::BreakpointEventType sub_type,
                              lldb::BreakpointSP &new_breakpoint_sp);
 
         virtual
         ~BreakpointEventData();
 
-        EventSubType
-        GetSubType () const;
+        lldb::BreakpointEventType
+        GetBreakpointEventType () const;
 
         lldb::BreakpointSP &
         GetBreakpoint ();
@@ -131,17 +120,20 @@ public:
         virtual void
         Dump (Stream *s) const;
 
-        static BreakpointEventData *
-        GetEventDataFromEvent (const lldb::EventSP &event_sp);
-
-        static EventSubType
-        GetSubTypeFromEvent (const lldb::EventSP &event_sp);
+        static lldb::BreakpointEventType
+        GetBreakpointEventTypeFromEvent (const lldb::EventSP &event_sp);
 
         static lldb::BreakpointSP
         GetBreakpointFromEvent (const lldb::EventSP &event_sp);
 
+        static lldb::BreakpointLocationSP
+        GetBreakpointLocationAtIndexFromEvent (const lldb::EventSP &event_sp, uint32_t loc_idx);
+
     private:
-        EventSubType m_sub_type;
+        static BreakpointEventData *
+        GetEventDataFromEvent (const lldb::EventSP &event_sp);
+
+        lldb::BreakpointEventType m_breakpoint_event;
         lldb::BreakpointSP m_new_breakpoint_sp;
         BreakpointLocationCollection m_locations;
 
@@ -324,12 +316,21 @@ public:
     SetIgnoreCount (uint32_t count);
 
     //------------------------------------------------------------------
-    /// Return the current Ignore Count.
+    /// Return the current ignore count/
     /// @return
     ///     The number of breakpoint hits to be ignored.
     //------------------------------------------------------------------
     uint32_t
     GetIgnoreCount () const;
+
+    //------------------------------------------------------------------
+    /// Return the current hit count for all locations.
+    /// @return
+    ///     The current hit count for all locations.
+    //------------------------------------------------------------------
+    uint32_t
+    GetHitCount () const;
+
 
     //------------------------------------------------------------------
     /// Set the valid thread to be checked when the breakpoint is hit.

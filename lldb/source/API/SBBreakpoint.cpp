@@ -10,6 +10,7 @@
 #include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBBreakpointLocation.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBEvent.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBThread.h"
 
@@ -242,6 +243,15 @@ SBBreakpoint::SetIgnoreCount (uint32_t count)
 }
 
 uint32_t
+SBBreakpoint::GetHitCount () const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetHitCount();
+    else
+        return 0;
+}
+
+uint32_t
 SBBreakpoint::GetIgnoreCount () const
 {
     if (m_opaque_sp)
@@ -456,4 +466,31 @@ SBBreakpoint::operator *() const
 {
     return m_opaque_sp;
 }
+
+BreakpointEventType
+SBBreakpoint::GetBreakpointEventTypeFromEvent (const SBEvent& event)
+{
+    if (event.IsValid())
+        return Breakpoint::BreakpointEventData::GetBreakpointEventTypeFromEvent (event.GetSP());
+    return eBreakpointEventTypeInvalidType;
+}
+
+SBBreakpoint
+SBBreakpoint::GetBreakpointFromEvent (const lldb::SBEvent& event)
+{
+    SBBreakpoint sb_breakpoint;
+    if (event.IsValid())
+        sb_breakpoint.m_opaque_sp = Breakpoint::BreakpointEventData::GetBreakpointFromEvent (event.GetSP());
+    return sb_breakpoint;
+}
+
+SBBreakpointLocation
+SBBreakpoint::GetBreakpointLocationAtIndexFromEvent (const lldb::SBEvent& event, uint32_t loc_idx)
+{
+    SBBreakpointLocation sb_breakpoint_loc;
+    if (event.IsValid())
+        sb_breakpoint_loc.SetLocation (Breakpoint::BreakpointEventData::GetBreakpointLocationAtIndexFromEvent (event.GetSP(), loc_idx));
+    return sb_breakpoint_loc;
+}
+
 

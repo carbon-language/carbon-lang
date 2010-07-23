@@ -68,6 +68,9 @@ public:
     bool
     IsEnabled ();
 
+    uint32_t
+    GetHitCount () const;
+
     void
     SetIgnoreCount (uint32_t count);
 
@@ -110,7 +113,14 @@ public:
     void
     GetDescription (FILE *, const char *description_level, bool describe_locations = false);
 
+    static lldb::BreakpointEventType
+    GetBreakpointEventTypeFromEvent (const lldb::SBEvent& event);
 
+    static lldb::SBBreakpoint
+    GetBreakpointFromEvent (const lldb::SBEvent& event);
+    
+    static lldb::SBBreakpointLocation
+    GetBreakpointLocationAtIndexFromEvent (const lldb::SBEvent& event, uint32_t loc_idx);
 
 private:
     friend class SBBreakpointLocation;

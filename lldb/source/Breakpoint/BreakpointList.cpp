@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -31,23 +32,37 @@ BreakpointList::~BreakpointList()
 
 
 break_id_t
-BreakpointList::Add (BreakpointSP &bp)
+BreakpointList::Add (BreakpointSP &bp_sp, bool notify)
 {
     Mutex::Locker locker(m_mutex);
     // Internal breakpoint IDs are negative, normal ones are positive
-    bp->SetID (m_is_internal ? --m_next_break_id : ++m_next_break_id);
-    m_breakpoints.push_back(bp);
-    return bp->GetID();
+    bp_sp->SetID (m_is_internal ? --m_next_break_id : ++m_next_break_id);
+    
+    m_breakpoints.push_back(bp_sp);
+    if (notify)
+    {
+        if (bp_sp->GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+            bp_sp->GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged,
+                                               new Breakpoint::BreakpointEventData (eBreakpointEventTypeAdded, bp_sp));
+    }
+    return bp_sp->GetID();
 }
 
 bool
-BreakpointList::Remove (break_id_t break_id)
+BreakpointList::Remove (break_id_t break_id, bool notify)
 {
     Mutex::Locker locker(m_mutex);
     bp_collection::iterator pos = GetBreakpointIDIterator(break_id);    // Predicate
     if (pos != m_breakpoints.end())
     {
+        BreakpointSP bp_sp (*pos);
         m_breakpoints.erase(pos);
+        if (notify)
+        {
+            if (bp_sp->GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+                bp_sp->GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged,
+                                                   new Breakpoint::BreakpointEventData (eBreakpointEventTypeRemoved, bp_sp));
+        }
         return true;
     }
     return false;
@@ -64,11 +79,19 @@ BreakpointList::SetEnabledAll (bool enabled)
 
 
 void
-BreakpointList::RemoveAll ()
+BreakpointList::RemoveAll (bool notify)
 {
     Mutex::Locker locker(m_mutex);
     ClearAllBreakpointSites ();
 
+    if (notify)
+    {
+        bp_collection::iterator pos, end = m_breakpoints.end();
+        for (pos = m_breakpoints.begin(); pos != end; ++pos)
+            if ((*pos)->GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+                (*pos)->GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged,
+                                                    new Breakpoint::BreakpointEventData (eBreakpointEventTypeRemoved, *pos));
+    }
     m_breakpoints.erase (m_breakpoints.begin(), m_breakpoints.end());
 }
 
@@ -144,7 +167,7 @@ BreakpointList::Dump (Stream *s) const
 
 
 BreakpointSP
-BreakpointList::GetBreakpointByIndex (uint32_t i)
+BreakpointList::GetBreakpointAtIndex (uint32_t i)
 {
     Mutex::Locker locker(m_mutex);
     BreakpointSP stop_sp;
@@ -160,7 +183,7 @@ BreakpointList::GetBreakpointByIndex (uint32_t i)
 }
 
 const BreakpointSP
-BreakpointList::GetBreakpointByIndex (uint32_t i) const
+BreakpointList::GetBreakpointAtIndex (uint32_t i) const
 {
     Mutex::Locker locker(m_mutex);
     BreakpointSP stop_sp;

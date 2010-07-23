@@ -404,17 +404,29 @@ typedef enum ArchitectureType
 
 typedef enum FunctionNameType 
 {
-    eFunctionNameTypeNone       = 0,
-    eFunctionNameTypeFull       = (1 << 1), // The function name.
+    eFunctionNameTypeNone       = 0u,
+    eFunctionNameTypeFull       = (1u << 1),// The function name.
                                             // For C this is the same as just the name of the function
                                             // For C++ this is the demangled version of the mangled name.
                                             // For ObjC this is the full function signature with the + or
                                             // - and the square brackets and the class and selector
-    eFunctionNameTypeBase       = (1 << 2), // The function name only, no namespaces or arguments and no class 
+    eFunctionNameTypeBase       = (1u << 2),// The function name only, no namespaces or arguments and no class 
                                             // methods or selectors will be searched.
-    eFunctionNameTypeMethod     = (1 << 3), // Find function by method name (C++) with no namespace or arguments
-    eFunctionNameTypeSelector   = (1 << 4)  // Find function by selector name (ObjC) names
+    eFunctionNameTypeMethod     = (1u << 3),// Find function by method name (C++) with no namespace or arguments
+    eFunctionNameTypeSelector   = (1u << 4) // Find function by selector name (ObjC) names
 } FunctionNameType;
+
+
+typedef enum BreakpointEventType
+{
+    eBreakpointEventTypeInvalidType         = (1u << 0),
+    eBreakpointEventTypeAdded               = (1u << 1),
+    eBreakpointEventTypeRemoved             = (1u << 2),
+    eBreakpointEventTypeLocationsAdded      = (1u << 3),
+    eBreakpointEventTypeLocationsRemoved    = (1u << 4),
+    eBreakpointEventTypeLocationsResolved   = (1u << 5)
+} BreakpointEventType;
+
 
 } // namespace lldb
 

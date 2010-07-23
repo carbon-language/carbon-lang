@@ -47,7 +47,7 @@ public:
     ///   Returns breakpoint id.
     //------------------------------------------------------------------
     virtual lldb::break_id_t
-    Add (lldb::BreakpointSP& bp_sp);
+    Add (lldb::BreakpointSP& bp_sp, bool notify);
 
     //------------------------------------------------------------------
     /// Standard "Dump" method.  At present it does nothing.
@@ -92,7 +92,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointSP
-    GetBreakpointByIndex (uint32_t i);
+    GetBreakpointAtIndex (uint32_t i);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint with index \a i, const version
@@ -105,7 +105,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointSP
-    GetBreakpointByIndex (uint32_t i) const;
+    GetBreakpointAtIndex (uint32_t i) const;
 
     //------------------------------------------------------------------
     /// Returns the number of elements in this breakpoint list.
@@ -126,7 +126,7 @@ public:
     ///   \b true if the breakpoint \a breakID was in the list.
     //------------------------------------------------------------------
     bool
-    Remove (lldb::break_id_t breakID);
+    Remove (lldb::break_id_t breakID, bool notify);
 
     void
     SetEnabledAll (bool enabled);
@@ -135,7 +135,7 @@ public:
     /// Removes all the breakpoints from this list.
     //------------------------------------------------------------------
     void
-    RemoveAll ();
+    RemoveAll (bool notify);
 
     //------------------------------------------------------------------
     /// Tell all the breakpoints to update themselves due to a change in the

@@ -173,6 +173,15 @@ public:
     GetNumResolvedLocations() const;
 
     //------------------------------------------------------------------
+    /// Returns the number hit count of all locations in this list.
+    ///
+    /// @result
+    ///     Hit count of all locations in this list.
+    //------------------------------------------------------------------
+    uint32_t
+    GetHitCount () const;
+
+    //------------------------------------------------------------------
     /// Removes the breakpoint location given by \b breakID from this
     /// list.
     ///

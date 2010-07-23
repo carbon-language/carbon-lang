@@ -164,6 +164,12 @@ Breakpoint::GetIgnoreCount () const
     return m_options.GetIgnoreCount();
 }
 
+uint32_t
+Breakpoint::GetHitCount () const
+{
+    return m_locations.GetHitCount();
+}
+
 void
 Breakpoint::SetThreadID (lldb::tid_t thread_id)
 {
@@ -405,10 +411,10 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     }
 }
 
-Breakpoint::BreakpointEventData::BreakpointEventData (Breakpoint::BreakpointEventData::EventSubType sub_type, 
+Breakpoint::BreakpointEventData::BreakpointEventData (BreakpointEventType sub_type, 
                                                       BreakpointSP &new_breakpoint_sp) :
     EventData (),
-    m_sub_type (sub_type),
+    m_breakpoint_event (sub_type),
     m_new_breakpoint_sp (new_breakpoint_sp)
 {
 }
@@ -437,10 +443,10 @@ Breakpoint::BreakpointEventData::GetBreakpoint ()
     return m_new_breakpoint_sp;
 }
 
-Breakpoint::BreakpointEventData::EventSubType
-Breakpoint::BreakpointEventData::GetSubType () const
+BreakpointEventType
+Breakpoint::BreakpointEventData::GetBreakpointEventType () const
 {
-    return m_sub_type;
+    return m_breakpoint_event;
 }
 
 void
@@ -460,29 +466,43 @@ Breakpoint::BreakpointEventData::GetEventDataFromEvent (const EventSP &event_sp)
     return NULL;
 }
 
-Breakpoint::BreakpointEventData::EventSubType
-Breakpoint::BreakpointEventData::GetSubTypeFromEvent (const EventSP &event_sp)
+BreakpointEventType
+Breakpoint::BreakpointEventData::GetBreakpointEventTypeFromEvent (const EventSP &event_sp)
 {
     BreakpointEventData *data = GetEventDataFromEvent (event_sp);
 
     if (data == NULL)
-        return eBreakpointInvalidType;
+        return eBreakpointEventTypeInvalidType;
     else
-        return data->GetSubType();
+        return data->GetBreakpointEventType();
 }
 
 BreakpointSP
 Breakpoint::BreakpointEventData::GetBreakpointFromEvent (const EventSP &event_sp)
 {
-    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    BreakpointSP bp_sp;
 
-    if (data == NULL)
+    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    if (data)
+        bp_sp = data->GetBreakpoint();
+
+    return bp_sp;
+}
+
+lldb::BreakpointLocationSP
+Breakpoint::BreakpointEventData::GetBreakpointLocationAtIndexFromEvent (const lldb::EventSP &event_sp, uint32_t bp_loc_idx)
+{
+    lldb::BreakpointLocationSP bp_loc_sp;
+
+    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    if (data)
     {
-        BreakpointSP ret_val;
-        return ret_val;
+        Breakpoint *bp = data->GetBreakpoint().get();
+        if (bp)
+            bp_loc_sp = bp->GetLocationAtIndex(bp_loc_idx);
     }
-    else
-        return data->GetBreakpoint();
+
+    return bp_loc_sp;
 }
 
 

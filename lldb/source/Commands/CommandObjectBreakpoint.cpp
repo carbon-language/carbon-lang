@@ -735,7 +735,7 @@ CommandObjectBreakpointList::Execute
         result.AppendMessage ("Current breakpoints:");
         for (size_t i = 0; i < num_breakpoints; ++i)
         {
-            Breakpoint *breakpoint = breakpoints.GetBreakpointByIndex (i).get();
+            Breakpoint *breakpoint = breakpoints.GetBreakpointAtIndex (i).get();
             AddBreakpointDescription (&output_stream, breakpoint, m_options.m_level);
         }
         result.SetStatus (eReturnStatusSuccessFinishNoResult);

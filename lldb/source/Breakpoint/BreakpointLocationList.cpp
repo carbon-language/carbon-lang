@@ -263,6 +263,17 @@ BreakpointLocationList::ResolveAllBreakpointSites ()
         (*pos)->ResolveBreakpointSite();
 }
 
+uint32_t
+BreakpointLocationList::GetHitCount () const
+{
+    uint32_t hit_count = 0;
+    Mutex::Locker locker (m_mutex);
+    collection::const_iterator pos, end = m_locations.end();
+    for (pos = m_locations.begin(); pos != end; ++pos)
+        hit_count += (*pos)->GetHitCount();
+    return hit_count;
+}
+
 size_t
 BreakpointLocationList::GetNumResolvedLocations() const
 {

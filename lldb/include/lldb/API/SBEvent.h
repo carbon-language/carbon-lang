@@ -59,6 +59,7 @@ public:
 protected:
     friend class SBListener;
     friend class SBBroadcaster;
+    friend class SBBreakpoint;
     friend class SBDebugger;
     friend class SBProcess;
 

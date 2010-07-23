@@ -97,11 +97,14 @@ public:
     lldb::SBBreakpoint
     BreakpointCreateByAddress (addr_t address);
 
+    uint32_t
+    GetNumBreakpoints () const;
+
+    lldb::SBBreakpoint
+    GetBreakpointAtIndex (uint32_t idx) const;
+
     bool
     BreakpointDelete (break_id_t break_id);
-
-    void
-    ListAllBreakpoints ();
 
     lldb::SBBreakpoint
     FindBreakpointByID (break_id_t break_id);

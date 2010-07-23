@@ -277,26 +277,6 @@ SBTarget::BreakpointCreateByAddress (addr_t address)
     return sb_bp;
 }
 
-void
-SBTarget::ListAllBreakpoints ()
-{
-    FILE *out_file = m_opaque_sp->GetDebugger().GetOutputFileHandle();
-    
-    if (out_file == NULL)
-        return;
-
-    if (m_opaque_sp)
-    {
-        const BreakpointList &bp_list = m_opaque_sp->GetBreakpointList();
-        size_t num_bps = bp_list.GetSize();
-        for (size_t i = 0; i < num_bps; ++i)
-        {
-            SBBreakpoint sb_breakpoint (bp_list.GetBreakpointByIndex (i));
-            sb_breakpoint.GetDescription (out_file, "full");
-        }
-    }
-}
-
 SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)
 {
@@ -306,6 +286,22 @@ SBTarget::FindBreakpointByID (break_id_t bp_id)
     return sb_breakpoint;
 }
 
+uint32_t
+SBTarget::GetNumBreakpoints () const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetBreakpointList().GetSize();
+    return 0;
+}
+
+SBBreakpoint
+SBTarget::GetBreakpointAtIndex (uint32_t idx) const
+{
+    SBBreakpoint sb_breakpoint;
+    if (m_opaque_sp)
+        *sb_breakpoint = m_opaque_sp->GetBreakpointList().GetBreakpointAtIndex(idx);
+    return sb_breakpoint;
+}
 
 bool
 SBTarget::BreakpointDelete (break_id_t bp_id)
