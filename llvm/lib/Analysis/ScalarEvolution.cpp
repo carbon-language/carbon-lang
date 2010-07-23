@@ -505,8 +505,9 @@ namespace {
         return false;
 
       // Primarily, sort the SCEVs by their getSCEVType().
-      if (LHS->getSCEVType() != RHS->getSCEVType())
-        return LHS->getSCEVType() < RHS->getSCEVType();
+      unsigned LType = LHS->getSCEVType(), RType = RHS->getSCEVType();
+      if (LType != RType)
+        return LType < RType;
 
       // Aside from the getSCEVType() ordering, the particular ordering
       // isn't very important except that it's beneficial to be consistent,
@@ -519,14 +520,16 @@ namespace {
 
         // Order pointer values after integer values. This helps SCEVExpander
         // form GEPs.
-        if (LU->getType()->isPointerTy() && !RU->getType()->isPointerTy())
-          return false;
-        if (RU->getType()->isPointerTy() && !LU->getType()->isPointerTy())
-          return true;
+        bool LIsPointer = LU->getType()->isPointerTy(),
+             RIsPointer = RU->getType()->isPointerTy();
+        if (LIsPointer != RIsPointer)
+          return RIsPointer;
 
         // Compare getValueID values.
-        if (LU->getValue()->getValueID() != RU->getValue()->getValueID())
-          return LU->getValue()->getValueID() < RU->getValue()->getValueID();
+        unsigned LID = LU->getValue()->getValueID(),
+                 RID = RU->getValue()->getValueID();
+        if (LID != RID)
+          return LID < RID;
 
         // Sort arguments by their position.
         if (const Argument *LA = dyn_cast<Argument>(LU->getValue())) {
@@ -536,22 +539,20 @@ namespace {
 
         // For instructions, compare their loop depth, and their opcode.
         // This is pretty loose.
-        if (Instruction *LV = dyn_cast<Instruction>(LU->getValue())) {
-          Instruction *RV = cast<Instruction>(RU->getValue());
+        if (const Instruction *LV = dyn_cast<Instruction>(LU->getValue())) {
+          const Instruction *RV = cast<Instruction>(RU->getValue());
 
           // Compare loop depths.
-          if (LI->getLoopDepth(LV->getParent()) !=
-              LI->getLoopDepth(RV->getParent()))
-            return LI->getLoopDepth(LV->getParent()) <
-                   LI->getLoopDepth(RV->getParent());
-
-          // Compare opcodes.
-          if (LV->getOpcode() != RV->getOpcode())
-            return LV->getOpcode() < RV->getOpcode();
+          unsigned LDepth = LI->getLoopDepth(LV->getParent()),
+                   RDepth = LI->getLoopDepth(RV->getParent());
+          if (LDepth != RDepth)
+            return LDepth < RDepth;
 
           // Compare the number of operands.
-          if (LV->getNumOperands() != RV->getNumOperands())
-            return LV->getNumOperands() < RV->getNumOperands();
+          unsigned LNumOps = LV->getNumOperands(),
+                   RNumOps = RV->getNumOperands();
+          if (LNumOps != RNumOps)
+            return LNumOps < RNumOps;
         }
 
         return false;
@@ -560,42 +561,51 @@ namespace {
       // Compare constant values.
       if (const SCEVConstant *LC = dyn_cast<SCEVConstant>(LHS)) {
         const SCEVConstant *RC = cast<SCEVConstant>(RHS);
-        if (LC->getValue()->getBitWidth() != RC->getValue()->getBitWidth())
-          return LC->getValue()->getBitWidth() < RC->getValue()->getBitWidth();
-        return LC->getValue()->getValue().ult(RC->getValue()->getValue());
+        const ConstantInt *LCC = LC->getValue();
+        const ConstantInt *RCC = RC->getValue();
+        unsigned LBitWidth = LCC->getBitWidth(), RBitWidth = RCC->getBitWidth();
+        if (LBitWidth != RBitWidth)
+          return LBitWidth < RBitWidth;
+        return LCC->getValue().ult(RCC->getValue());
       }
 
       // Compare addrec loop depths.
       if (const SCEVAddRecExpr *LA = dyn_cast<SCEVAddRecExpr>(LHS)) {
         const SCEVAddRecExpr *RA = cast<SCEVAddRecExpr>(RHS);
-        if (LA->getLoop()->getLoopDepth() != RA->getLoop()->getLoopDepth())
-          return LA->getLoop()->getLoopDepth() < RA->getLoop()->getLoopDepth();
+        unsigned LDepth = LA->getLoop()->getLoopDepth(),
+                 RDepth = RA->getLoop()->getLoopDepth();
+        if (LDepth != RDepth)
+          return LDepth < RDepth;
       }
 
       // Lexicographically compare n-ary expressions.
       if (const SCEVNAryExpr *LC = dyn_cast<SCEVNAryExpr>(LHS)) {
         const SCEVNAryExpr *RC = cast<SCEVNAryExpr>(RHS);
-        for (unsigned i = 0, e = LC->getNumOperands(); i != e; ++i) {
-          if (i >= RC->getNumOperands())
+        unsigned LNumOps = LC->getNumOperands(), RNumOps = RC->getNumOperands();
+        for (unsigned i = 0; i != LNumOps; ++i) {
+          if (i >= RNumOps)
             return false;
-          if (operator()(LC->getOperand(i), RC->getOperand(i)))
+          const SCEV *LOp = LC->getOperand(i), *ROp = RC->getOperand(i);
+          if (operator()(LOp, ROp))
             return true;
-          if (operator()(RC->getOperand(i), LC->getOperand(i)))
+          if (operator()(ROp, LOp))
             return false;
         }
-        return LC->getNumOperands() < RC->getNumOperands();
+        return LNumOps < RNumOps;
       }
 
       // Lexicographically compare udiv expressions.
       if (const SCEVUDivExpr *LC = dyn_cast<SCEVUDivExpr>(LHS)) {
         const SCEVUDivExpr *RC = cast<SCEVUDivExpr>(RHS);
-        if (operator()(LC->getLHS(), RC->getLHS()))
+        const SCEV *LL = LC->getLHS(), *LR = LC->getRHS(),
+                   *RL = RC->getLHS(), *RR = RC->getRHS();
+        if (operator()(LL, RL))
           return true;
-        if (operator()(RC->getLHS(), LC->getLHS()))
+        if (operator()(RL, LL))
           return false;
-        if (operator()(LC->getRHS(), RC->getRHS()))
+        if (operator()(LR, RR))
           return true;
-        if (operator()(RC->getRHS(), LC->getRHS()))
+        if (operator()(RR, LR))
           return false;
         return false;
       }
