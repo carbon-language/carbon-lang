@@ -360,6 +360,7 @@ void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
 
   CurContext = getContainingDC(CurContext);
+  assert(CurContext && "Popped translation unit!");
 }
 
 /// EnterDeclaratorContext - Used when we must lookup names in the context
