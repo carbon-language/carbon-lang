@@ -297,7 +297,7 @@ public:
 
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->hasSignedIntegerRepresentation()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWMul(Ops.LHS, Ops.RHS, "mul");
@@ -1422,7 +1422,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
   if (Ops.LHS->getType()->isFPOrFPVectorTy())
     return Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
-  else if (Ops.Ty->isUnsignedIntegerType())
+  else if (Ops.Ty->hasUnsignedIntegerRepresentation())
     return Builder.CreateUDiv(Ops.LHS, Ops.RHS, "div");
   else
     return Builder.CreateSDiv(Ops.LHS, Ops.RHS, "div");
@@ -1523,7 +1523,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isAnyPointerType()) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->hasSignedIntegerRepresentation()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
@@ -1606,7 +1606,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->hasSignedIntegerRepresentation()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
@@ -1747,7 +1747,7 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
     CGF.EmitBlock(Cont);
   }
 
-  if (Ops.Ty->isUnsignedIntegerType())
+  if (Ops.Ty->hasUnsignedIntegerRepresentation())
     return Builder.CreateLShr(Ops.LHS, RHS, "shr");
   return Builder.CreateAShr(Ops.LHS, RHS, "shr");
 }
@@ -1791,7 +1791,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     if (LHS->getType()->isFPOrFPVectorTy()) {
       Result = Builder.CreateFCmp((llvm::CmpInst::Predicate)FCmpOpc,
                                   LHS, RHS, "cmp");
-    } else if (LHSTy->isSignedIntegerType()) {
+    } else if (LHSTy->hasSignedIntegerRepresentation()) {
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
                                   LHS, RHS, "cmp");
     } else {

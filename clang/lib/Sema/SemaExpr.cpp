@@ -2362,8 +2362,7 @@ Sema::CreateBuiltinArraySubscriptExpr(ExprArg Base, SourceLocation LLoc,
        << LHSExp->getSourceRange() << RHSExp->getSourceRange());
   }
   // C99 6.5.2.1p1
-  if (!(IndexExpr->getType()->isIntegerType() &&
-        IndexExpr->getType()->isScalarType()) && !IndexExpr->isTypeDependent())
+  if (!IndexExpr->getType()->isIntegerType() && !IndexExpr->isTypeDependent())
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
                      << IndexExpr->getSourceRange());
 
@@ -4576,12 +4575,12 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     // "unsigned char" on systems where "char" is unsigned.
     if (lhptee->isCharType())
       lhptee = Context.UnsignedCharTy;
-    else if (lhptee->isSignedIntegerType())
+    else if (lhptee->hasSignedIntegerRepresentation())
       lhptee = Context.getCorrespondingUnsignedType(lhptee);
 
     if (rhptee->isCharType())
       rhptee = Context.UnsignedCharTy;
-    else if (rhptee->isSignedIntegerType())
+    else if (rhptee->hasSignedIntegerRepresentation())
       rhptee = Context.getCorrespondingUnsignedType(rhptee);
 
     if (lhptee == rhptee) {
@@ -5078,7 +5077,8 @@ QualType Sema::CheckMultiplyDivideOperands(
 QualType Sema::CheckRemainderOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
-    if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+    if (lex->getType()->hasIntegerRepresentation() && 
+        rex->getType()->hasIntegerRepresentation())
       return CheckVectorOperands(Loc, lex, rex);
     return InvalidOperands(Loc, lex, rex);
   }
@@ -5323,7 +5323,8 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
 QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                   bool isCompAssign) {
   // C99 6.5.7p2: Each of the operands shall have integer type.
-  if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
+  if (!lex->getType()->hasIntegerRepresentation() || 
+      !rex->getType()->hasIntegerRepresentation())
     return InvalidOperands(Loc, lex, rex);
 
   // Vector shifts promote their scalar inputs to vector type.
@@ -5777,7 +5778,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   // Return the type for the comparison, which is the same as vector type for
   // integer vectors, or an integer type of identical size and number of
   // elements for floating point vectors.
-  if (lType->isIntegerType())
+  if (lType->hasIntegerRepresentation())
     return lType;
 
   const VectorType *VTy = lType->getAs<VectorType>();
@@ -5794,8 +5795,13 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
 
 inline QualType Sema::CheckBitwiseOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) {
-  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
+    if (lex->getType()->hasIntegerRepresentation() &&
+        rex->getType()->hasIntegerRepresentation())
+      return CheckVectorOperands(Loc, lex, rex);
+    
+    return InvalidOperands(Loc, lex, rex);
+  }
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
 
@@ -6702,7 +6708,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
       // C99 does not support '~' for complex conjugation.
       Diag(OpLoc, diag::ext_integer_complement_complex)
         << resultType << Input->getSourceRange();
-    else if (!resultType->isIntegerType())
+    else if (!resultType->hasIntegerRepresentation())
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
     break;

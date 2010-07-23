@@ -434,9 +434,14 @@ bool Type::isIntegerType() const {
     // FIXME: In C++, enum types are never integer types.
     if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;
+  return false;
+}
+
+bool Type::hasIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
-  return false;
+  else
+    return isIntegerType();
 }
 
 /// \brief Determine whether this type is an integral type.
@@ -523,8 +528,7 @@ bool Type::isAnyCharacterType() const {
 
 /// isSignedIntegerType - Return true if this is an integer type that is
 /// signed, according to C99 6.2.5p4 [char, signed char, short, int, long..],
-/// an enum decl which has a signed representation, or a vector of signed
-/// integer element type.
+/// an enum decl which has a signed representation
 bool Type::isSignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Char_S &&
@@ -534,15 +538,19 @@ bool Type::isSignedIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     return ET->getDecl()->getIntegerType()->isSignedIntegerType();
 
+  return false;
+}
+
+bool Type::hasSignedIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
-  return false;
+  else
+    return isSignedIntegerType();
 }
 
 /// isUnsignedIntegerType - Return true if this is an integer type that is
 /// unsigned, according to C99 6.2.5p6 [which returns true for _Bool], an enum
-/// decl which has an unsigned representation, or a vector of unsigned integer
-/// element type.
+/// decl which has an unsigned representation
 bool Type::isUnsignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Bool &&
@@ -552,9 +560,14 @@ bool Type::isUnsignedIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
 
+  return false;
+}
+
+bool Type::hasUnsignedIntegerRepresentation() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
-  return false;
+  else
+    return isUnsignedIntegerType();
 }
 
 bool Type::isFloatingType() const {

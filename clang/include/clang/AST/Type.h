@@ -952,10 +952,22 @@ public:
   /// an objective pointer type for the purpose of GC'ability
   bool hasObjCPointerRepresentation() const;
 
+  /// \brief Determine whether this type has an integer representation
+  /// of some sort, e.g., it is an integer type or a vector.
+  bool hasIntegerRepresentation() const;
+
+  /// \brief Determine whether this type has an signed integer representation
+  /// of some sort, e.g., it is an signed integer type or a vector.
+  bool hasSignedIntegerRepresentation() const;
+
+  /// \brief Determine whether this type has an unsigned integer representation
+  /// of some sort, e.g., it is an unsigned integer type or a vector.
+  bool hasUnsignedIntegerRepresentation() const;
+
   /// \brief Determine whether this type has a floating-point representation
   /// of some sort, e.g., it is a floating-point type or a vector thereof.
   bool hasFloatingRepresentation() const;
-  
+
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.

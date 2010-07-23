@@ -5031,7 +5031,7 @@ unsigned ASTContext::getIntWidth(QualType T) {
 }
 
 QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
-  assert(T->isSignedIntegerType() && "Unexpected type");
+  assert(T->hasSignedIntegerRepresentation() && "Unexpected type");
   
   // Turn <4 x signed int> -> <4 x unsigned int>
   if (const VectorType *VTy = T->getAs<VectorType>())
@@ -5411,8 +5411,8 @@ ASTContext::UsualArithmeticConversionsType(QualType lhs, QualType rhs) {
   // Finally, we have two differing integer types.
   // The rules for this case are in C99 6.3.1.8
   int compare = getIntegerTypeOrder(lhs, rhs);
-  bool lhsSigned = lhs->isSignedIntegerType(),
-       rhsSigned = rhs->isSignedIntegerType();
+  bool lhsSigned = lhs->hasSignedIntegerRepresentation(),
+       rhsSigned = rhs->hasSignedIntegerRepresentation();
   QualType destType;
   if (lhsSigned == rhsSigned) {
     // Same signedness; use the higher-ranked type

@@ -730,9 +730,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::Extend:
-   if (RetTy->isSignedIntegerType()) {
+   if (RetTy->hasSignedIntegerRepresentation()) {
      RetAttrs |= llvm::Attribute::SExt;
-   } else if (RetTy->isUnsignedIntegerType()) {
+   } else if (RetTy->hasUnsignedIntegerRepresentation()) {
      RetAttrs |= llvm::Attribute::ZExt;
    }
    // FALLTHROUGH

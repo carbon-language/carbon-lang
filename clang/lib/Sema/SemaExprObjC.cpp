@@ -967,9 +967,8 @@ Sema::OwningExprResult Sema::BuildInstanceMessage(ExprArg ReceiverE,
         if (Method && DiagnoseUseOfDecl(Method, Loc))
           return ExprError();
       } else if (!Context.getObjCIdType().isNull() &&
-                 (ReceiverType->isPointerType() ||
-                  (ReceiverType->isIntegerType() &&
-                   ReceiverType->isScalarType()))) {
+                 (ReceiverType->isPointerType() || 
+                  ReceiverType->isIntegerType())) {
         // Implicitly convert integers and pointers to 'id' but emit a warning.
         Diag(Loc, diag::warn_bad_receiver_type)
           << ReceiverType 

@@ -780,7 +780,7 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     // with mask.  If so, verify that RHS is an integer vector type with the
     // same number of elts as lhs.
     if (TheCall->getNumArgs() == 2) {
-      if (!RHSType->isIntegerType() || 
+      if (!RHSType->hasIntegerRepresentation() || 
           RHSType->getAs<VectorType>()->getNumElements() != numElements)
         Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
           << SourceRange(TheCall->getArg(1)->getLocStart(),
@@ -2453,7 +2453,7 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   // We don't do anything special if this isn't an unsigned integral
   // comparison:  we're only interested in integral comparisons, and
   // signed comparisons only happen in cases we don't care to warn about.
-  if (!T->isUnsignedIntegerType())
+  if (!T->hasUnsignedIntegerRepresentation())
     return AnalyzeImpConvsInComparison(S, E);
 
   Expr *lex = E->getLHS()->IgnoreParenImpCasts();
@@ -2462,12 +2462,12 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   // Check to see if one of the (unmodified) operands is of different
   // signedness.
   Expr *signedOperand, *unsignedOperand;
-  if (lex->getType()->isSignedIntegerType()) {
-    assert(!rex->getType()->isSignedIntegerType() &&
+  if (lex->getType()->hasSignedIntegerRepresentation()) {
+    assert(!rex->getType()->hasSignedIntegerRepresentation() &&
            "unsigned comparison between two signed integer expressions?");
     signedOperand = lex;
     unsignedOperand = rex;
-  } else if (rex->getType()->isSignedIntegerType()) {
+  } else if (rex->getType()->hasSignedIntegerRepresentation()) {
     signedOperand = rex;
     unsignedOperand = lex;
   } else {
