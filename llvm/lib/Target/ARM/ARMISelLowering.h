@@ -17,6 +17,7 @@
 
 #include "ARMSubtarget.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -268,6 +269,9 @@ namespace llvm {
 
     Sched::Preference getSchedulingPreference(SDNode *N) const;
 
+    unsigned getRegPressureLimit(const TargetRegisterClass *RC,
+                                 MachineFunction &MF) const;
+
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const;
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
@@ -284,6 +288,8 @@ namespace llvm {
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.
     const ARMSubtarget *Subtarget;
+
+    const TargetRegisterInfo *RegInfo;
 
     /// ARMPCLabelIndex - Keep track of the number of ARM PC labels created.
     ///

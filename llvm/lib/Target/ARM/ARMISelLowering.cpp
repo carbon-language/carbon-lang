@@ -166,6 +166,7 @@ static TargetLoweringObjectFile *createTLOF(TargetMachine &TM) {
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
+  RegInfo = TM.getRegisterInfo();
 
   if (Subtarget->isTargetDarwin()) {
     // Uses VFP for Thumb libfuncs if available.
@@ -727,6 +728,23 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   if (!Itins.isEmpty() && Itins.getStageLatency(TID.getSchedClass()) > 2)
     return Sched::Latency;
   return Sched::RegPressure;
+}
+
+unsigned
+ARMTargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
+                                       MachineFunction &MF) const {
+  unsigned FPDiff = RegInfo->hasFP(MF) ? 1 : 0;
+  switch (RC->getID()) {
+  default:
+    return 0;
+  case ARM::tGPRRegClassID:
+    return 5 - FPDiff;
+  case ARM::GPRRegClassID:
+    return 10 - FPDiff - (Subtarget->isR9Reserved() ? 1 : 0);
+  case ARM::SPRRegClassID:  // Currently not used as 'rep' register class.
+  case ARM::DPRRegClassID:
+    return 32 - 10;
+  }
 }
 
 //===----------------------------------------------------------------------===//

@@ -28,15 +28,11 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <climits>
 using namespace llvm;
-
-static cl::opt<bool> RegPressureAware("reg-pressure-aware-sched",
-                                      cl::init(false), cl::Hidden);
 
 STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
@@ -1075,7 +1071,7 @@ namespace {
         std::fill(RegPressure.begin(), RegPressure.end(), 0);
         for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
                E = TRI->regclass_end(); I != E; ++I)
-          RegLimit[(*I)->getID()] = tri->getAllocatableSet(MF, *I).count() - 1;
+          RegLimit[(*I)->getID()] = tli->getRegPressureLimit(*I, MF);
       }
     }
     
@@ -1172,10 +1168,12 @@ namespace {
       SU->NodeQueueId = 0;
     }
 
-    bool HighRegPressure(const SUnit *SU) const {
+    bool HighRegPressure(const SUnit *SU, unsigned &Excess) const {
       if (!TLI)
         return false;
 
+      bool High = false;
+      Excess = 0;
       for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
            I != E; ++I) {
         if (I->isCtrl())
@@ -1183,12 +1181,41 @@ namespace {
         SUnit *PredSU = I->getSUnit();
         const SDNode *PN = PredSU->getNode();
         if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyToReg) {
-            EVT VT = PN->getOperand(1).getValueType();
+          if (PN->getOpcode() == ISD::CopyFromReg) {
+            EVT VT = PN->getValueType(0);
             unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
             unsigned Cost = TLI->getRepRegClassCostFor(VT);
-            if (RegLimit[RCId] < (RegPressure[RCId] + Cost))
-              return true;
+            if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
+              High = true;
+              Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
+            }
+          }
+          continue;
+        }
+        unsigned POpc = PN->getMachineOpcode();
+        if (POpc == TargetOpcode::IMPLICIT_DEF)
+          continue;
+        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+          EVT VT = PN->getOperand(0).getValueType();
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          unsigned Cost = TLI->getRepRegClassCostFor(VT);
+          // Check if this increases register pressure of the specific register
+          // class to the point where it would cause spills.
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
+            High = true;
+            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
+          }
+          continue;            
+        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+                   POpc == TargetOpcode::SUBREG_TO_REG) {
+          EVT VT = PN->getValueType(0);
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          unsigned Cost = TLI->getRepRegClassCostFor(VT);
+          // Check if this increases register pressure of the specific register
+          // class to the point where it would cause spills.
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
+            High = true;
+            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
           }
           continue;
         }
@@ -1201,12 +1228,14 @@ namespace {
           unsigned Cost = TLI->getRepRegClassCostFor(VT);
           // Check if this increases register pressure of the specific register
           // class to the point where it would cause spills.
-          if (RegLimit[RCId] < (RegPressure[RCId] + Cost))
-            return true;
+          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId]) {
+            High = true;
+            Excess += (RegPressure[RCId] + Cost) - RegLimit[RCId];
+          }
         }
       }
 
-      return false;
+      return High;
     }
 
     void ScheduledNode(SUnit *SU) {
@@ -1214,13 +1243,18 @@ namespace {
         return;
 
       const SDNode *N = SU->getNode();
-      if (!N->isMachineOpcode())
-        return;
-      unsigned Opc = N->getMachineOpcode();
-      if (Opc == TargetOpcode::COPY_TO_REGCLASS ||
-          Opc == TargetOpcode::REG_SEQUENCE ||
-          Opc == TargetOpcode::IMPLICIT_DEF)
-        return;
+      if (!N->isMachineOpcode()) {
+        if (N->getOpcode() != ISD::CopyToReg)
+          return;
+      } else {
+        unsigned Opc = N->getMachineOpcode();
+        if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+            Opc == TargetOpcode::INSERT_SUBREG ||
+            Opc == TargetOpcode::SUBREG_TO_REG ||
+            Opc == TargetOpcode::REG_SEQUENCE ||
+            Opc == TargetOpcode::IMPLICIT_DEF)
+          return;
+      }
 
       for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
            I != E; ++I) {
@@ -1231,8 +1265,8 @@ namespace {
           continue;
         const SDNode *PN = PredSU->getNode();
         if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyToReg) {
-            EVT VT = PN->getOperand(1).getValueType();
+          if (PN->getOpcode() == ISD::CopyFromReg) {
+            EVT VT = PN->getValueType(0);
             unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
             RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
           }
@@ -1241,6 +1275,18 @@ namespace {
         unsigned POpc = PN->getMachineOpcode();
         if (POpc == TargetOpcode::IMPLICIT_DEF)
           continue;
+        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+          EVT VT = PN->getOperand(0).getValueType();
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          continue;            
+        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+                   POpc == TargetOpcode::SUBREG_TO_REG) {
+          EVT VT = PN->getValueType(0);
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          continue;
+        }
         unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
           EVT VT = PN->getValueType(i);
@@ -1251,19 +1297,19 @@ namespace {
         }
       }
 
-      if (!SU->NumSuccs)
-        return;
-      unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-      for (unsigned i = 0; i != NumDefs; ++i) {
-        EVT VT = N->getValueType(i);
-        if (!N->hasAnyUseOfValue(i))
-          continue;
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
-          // Register pressure tracking is imprecise. This can happen.
-          RegPressure[RCId] = 0;
-        else
-          RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+      if (SU->NumSuccs) {
+        unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+        for (unsigned i = 0; i != NumDefs; ++i) {
+          EVT VT = N->getValueType(i);
+          if (!N->hasAnyUseOfValue(i))
+            continue;
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
+            // Register pressure tracking is imprecise. This can happen.
+            RegPressure[RCId] = 0;
+          else
+            RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+        }
       }
 
       dumpRegPressure();
@@ -1274,10 +1320,14 @@ namespace {
         return;
 
       const SDNode *N = SU->getNode();
-      if (!N->isMachineOpcode())
-        return;
+      if (!N->isMachineOpcode()) {
+        if (N->getOpcode() != ISD::CopyToReg)
+          return;
+      }
       unsigned Opc = N->getMachineOpcode();
-      if (Opc == TargetOpcode::COPY_TO_REGCLASS ||
+      if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+          Opc == TargetOpcode::INSERT_SUBREG ||
+          Opc == TargetOpcode::SUBREG_TO_REG ||
           Opc == TargetOpcode::REG_SEQUENCE ||
           Opc == TargetOpcode::IMPLICIT_DEF)
         return;
@@ -1291,8 +1341,8 @@ namespace {
           continue;
         const SDNode *PN = PredSU->getNode();
         if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyToReg) {
-            EVT VT = PN->getOperand(1).getValueType();
+          if (PN->getOpcode() == ISD::CopyFromReg) {
+            EVT VT = PN->getValueType(0);
             unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
             RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
           }
@@ -1301,6 +1351,18 @@ namespace {
         unsigned POpc = PN->getMachineOpcode();
         if (POpc == TargetOpcode::IMPLICIT_DEF)
           continue;
+        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+          EVT VT = PN->getOperand(0).getValueType();
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          continue;            
+        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+                   POpc == TargetOpcode::SUBREG_TO_REG) {
+          EVT VT = PN->getValueType(0);
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          continue;
+        }
         unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
         for (unsigned i = 0; i != NumDefs; ++i) {
           EVT VT = PN->getValueType(i);
@@ -1315,17 +1377,17 @@ namespace {
         }
       }
 
-      if (!SU->NumSuccs)
-        return;
-      unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-      for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
-        EVT VT = N->getValueType(i);
-        if (VT == MVT::Flag || VT == MVT::Other)
-          continue;
-        if (!N->hasAnyUseOfValue(i))
-          continue;
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      if (SU->NumSuccs) {
+        unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+        for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
+          EVT VT = N->getValueType(i);
+          if (VT == MVT::Flag || VT == MVT::Other)
+            continue;
+          if (!N->hasAnyUseOfValue(i))
+            continue;
+          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+        }
       }
 
       dumpRegPressure();
@@ -1464,13 +1526,20 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 }
 
 bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
-  bool LHigh = SPQ->HighRegPressure(left);
-  bool RHigh = SPQ->HighRegPressure(right);
+  unsigned LExcess, RExcess;
+  bool LHigh = SPQ->HighRegPressure(left, LExcess);
+  bool RHigh = SPQ->HighRegPressure(right, RExcess);
   if (LHigh && !RHigh)
     return true;
   else if (!LHigh && RHigh)
     return false;
-  else if (!LHigh && !RHigh) {
+  else if (LHigh && RHigh) {
+    if (LExcess > RExcess)
+      return true;
+    else if (LExcess < RExcess)
+      return false;
+    // Otherwise schedule for register pressure reduction.
+  } else {
     // Low register pressure situation, schedule for latency if possible.
     bool LStall = left->SchedulingPref == Sched::Latency &&
       SPQ->getCurCycle() < left->getHeight();
@@ -1889,8 +1958,7 @@ llvm::createHybridListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
   const TargetLowering *TLI = &IS->getTargetLowering();
   
   HybridBURRPriorityQueue *PQ =
-    new HybridBURRPriorityQueue(*IS->MF, RegPressureAware, TII, TRI,
-                                (RegPressureAware ? TLI : 0));
+    new HybridBURRPriorityQueue(*IS->MF, true, TII, TRI, TLI);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, true, true, PQ);
   PQ->setScheduleDAG(SD);
   return SD;  
