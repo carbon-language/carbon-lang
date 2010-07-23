@@ -211,9 +211,9 @@ Communication::StartReadThread (Error *error_ptr)
     char thread_name[1024];
     snprintf(thread_name, sizeof(thread_name), "<lldb.comm.%s>", m_broadcaster_name.AsCString());
 
-    m_read_thread_enabled = true;
     m_read_thread = Host::ThreadCreate (thread_name, Communication::ReadThread, this, error_ptr);
-    return m_read_thread != LLDB_INVALID_HOST_THREAD;
+    m_read_thread_enabled = m_read_thread != LLDB_INVALID_HOST_THREAD;
+    return m_read_thread_enabled;
 }
 
 bool
@@ -232,6 +232,7 @@ Communication::StopReadThread (Error *error_ptr)
     Host::ThreadCancel (m_read_thread, error_ptr);
 
     return Host::ThreadJoin (m_read_thread, NULL, error_ptr);
+    m_read_thread = LLDB_INVALID_HOST_THREAD;
 }
 
 
@@ -339,7 +340,6 @@ Communication::ReadThread (void *p)
         log->Printf ("%p Communication::ReadThread () thread exiting...", p);
 
     // Let clients know that this thread is exiting
-    comm->m_read_thread = LLDB_INVALID_HOST_THREAD;
     comm->BroadcastEvent (eBroadcastBitReadThreadDidExit);
     return NULL;
 }
