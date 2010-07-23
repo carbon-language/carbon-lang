@@ -123,14 +123,13 @@ PHINode *Loop::getCanonicalInductionVariable() const {
   BasicBlock *H = getHeader();
 
   BasicBlock *Incoming = 0, *Backedge = 0;
-  typedef GraphTraits<Inverse<BasicBlock*> > InvBlockTraits;
-  InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(H);
-  assert(PI != InvBlockTraits::child_end(H) &&
+  pred_iterator PI = pred_begin(H);
+  assert(PI != pred_end(H) &&
          "Loop must have at least one backedge!");
   Backedge = *PI++;
-  if (PI == InvBlockTraits::child_end(H)) return 0;  // dead loop
+  if (PI == pred_end(H)) return 0;  // dead loop
   Incoming = *PI++;
-  if (PI != InvBlockTraits::child_end(H)) return 0;  // multiple backedges?
+  if (PI != pred_end(H)) return 0;  // multiple backedges?
 
   if (contains(Incoming)) {
     if (contains(Backedge))
@@ -340,16 +339,12 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
     BasicBlock *current = *BI;
     switchExitBlocks.clear();
 
-    typedef GraphTraits<BasicBlock *> BlockTraits;
-    typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
-    for (BlockTraits::ChildIteratorType I =
-         BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
-         I != E; ++I) {
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I) {
       // If block is inside the loop then it is not a exit block.
       if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
         continue;
 
-      InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(*I);
+      pred_iterator PI = pred_begin(*I);
       BasicBlock *firstPred = *PI;
 
       // If current basic block is this exit block's first predecessor
@@ -362,8 +357,7 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
       // If a terminator has more then two successors, for example SwitchInst,
       // then it is possible that there are multiple edges from current block
       // to one exit block.
-      if (std::distance(BlockTraits::child_begin(current),
-                        BlockTraits::child_end(current)) <= 2) {
+      if (std::distance(succ_begin(current), succ_end(current)) <= 2) {
         ExitBlocks.push_back(*I);
         continue;
       }
