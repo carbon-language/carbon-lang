@@ -231,7 +231,7 @@ private:
 
     EdgeDataMapTy& M = D.getEdgeDataMap();
     bool firstMerge = true;
-
+    bool noEdges = true;
     for (PrevBItr I=ItrTraits::PrevBegin(B),E=ItrTraits::PrevEnd(B); I!=E; ++I){
 
       CFGBlock *PrevBlk = *I;
@@ -243,6 +243,7 @@ private:
         M.find(ItrTraits::PrevEdge(B, PrevBlk));
 
       if (EI != M.end()) {
+        noEdges = false;
         if (firstMerge) {
           firstMerge = false;
           V.copyValues(EI->second);
@@ -252,8 +253,20 @@ private:
       }
     }
 
+    bool isInitialized = true;
+    typename BlockDataMapTy::iterator BI = D.getBlockDataMap().find(B);
+    if(BI == D.getBlockDataMap().end()) {
+      isInitialized = false;
+      BI = D.getBlockDataMap().insert( std::make_pair(B,ValTy()) ).first;
+    }
+    // If no edges have been found, it means this is the first time the solver 
+    // has been called on block B, we copy the initialization values (if any)
+    // as current value for V (which will be used as edge data)
+    if(noEdges && isInitialized) 
+      Merge(V, BI->second);
+
     // Set the data for the block.
-    D.getBlockDataMap()[B].copyValues(V);
+    BI->second.copyValues(V);
   }
 
   /// ProcessBlock - Process the transfer functions for a given block.
