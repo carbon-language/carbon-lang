@@ -742,7 +742,6 @@ Host::WillTerminate ()
     if (g_monitor_thread != NULL)
     {
         ThreadCancel (g_monitor_thread, NULL);
-        GetChildProcessPredicate ().SetValue (true, eBroadcastAlways);
         ThreadJoin(g_monitor_thread, NULL, NULL);
         g_monitor_thread = NULL;
     }
