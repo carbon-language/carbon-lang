@@ -19,7 +19,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
-#include "lldb/Expression/CLangFunction.h"
+#include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Core/Debugger.h"
