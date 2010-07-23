@@ -630,6 +630,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(UNUSED_STATIC_FUNCS);
   RECORD(MACRO_DEFINITION_OFFSETS);
   RECORD(CHAINED_METADATA);
+  RECORD(REFERENCED_SELECTOR_POOL);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -1737,6 +1738,26 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
   }
 }
 
+/// \brief Write the selectors referenced in @selector expression into PCH file.
+void PCHWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
+  using namespace llvm;
+  if (SemaRef.ReferencedSelectors.empty())
+    return;
+  
+  RecordData Record;
+  
+  Record.push_back(SemaRef.ReferencedSelectors.size());
+  for (DenseMap<Selector, SourceLocation>::iterator S =
+       SemaRef.ReferencedSelectors.begin(),
+       E = SemaRef.ReferencedSelectors.end(); S != E; ++S) {
+    Selector Sel = (*S).first;
+    SourceLocation Loc = (*S).second;
+    AddSelectorRef(Sel, Record);
+    AddSourceLocation(Loc, Record);
+  }
+  Stream.EmitRecord(pch::REFERENCED_SELECTOR_POOL, Record);
+}
+
 //===----------------------------------------------------------------------===//
 // Identifier Table Serialization
 //===----------------------------------------------------------------------===//
@@ -2247,6 +2268,7 @@ void PCHWriter::WritePCHCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   WritePreprocessor(PP);
   WriteMethodPool(SemaRef);
+  WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);
 
   WriteTypeDeclOffsets();

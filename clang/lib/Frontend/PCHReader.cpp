@@ -1630,6 +1630,13 @@ PCHReader::ReadPCHBlock(PerFileData &F) {
       TotalSelectorsInMethodPool = Record[1];
       break;
 
+    case pch::REFERENCED_SELECTOR_POOL: {
+      unsigned int numEl = Record[0]*2;
+      for (unsigned int i = 1; i <= numEl; i++)
+        F.ReferencedSelectorsData.push_back(Record[i]);
+    }
+      break;
+
     case pch::PP_COUNTER_VALUE:
       if (!Record.empty() && Listener)
         Listener->ReadCounter(Record[0]);
@@ -3126,6 +3133,20 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I)
     SemaObj->DynamicClasses.push_back(
                                cast<CXXRecordDecl>(GetDecl(DynamicClasses[I])));
+
+  // If there are @selector references added them to its pool. This is for
+  // implementation of -Wselector.
+  PerFileData &F = *Chain[0];
+  if (!F.ReferencedSelectorsData.empty()) {
+    unsigned int DataSize = F.ReferencedSelectorsData.size()-1;
+    unsigned I = 0;
+    while (I < DataSize) {
+      Selector Sel = DecodeSelector(F.ReferencedSelectorsData[I++]);
+      SourceLocation SelLoc = 
+        SourceLocation::getFromRawEncoding(F.ReferencedSelectorsData[I++]);
+      SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
+    }
+  }
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {

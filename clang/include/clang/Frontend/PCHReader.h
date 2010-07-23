@@ -281,6 +281,10 @@ private:
     /// \brief The number of preallocated preprocessing entities in the
     /// preprocessing record.
     unsigned NumPreallocatedPreprocessingEntities;
+
+    /// \brief Method selectors used in a @selector expression. Used for
+    /// implementation of -Wselector.
+    llvm::SmallVector<long long unsigned int,64u> ReferencedSelectorsData;
   };
 
   /// \brief The chain of PCH files. The first entry is the one named by the
