@@ -1805,6 +1805,11 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
+  if (Dir.empty()) {
+    sys::Path AbsFileDirName(FN);
+    AbsFileDirName.makeAbsolute();
+    Dir = AbsFileDirName.getDirname();
+  }
   unsigned ID = GetOrCreateSourceID(Dir, FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
