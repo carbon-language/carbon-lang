@@ -25,8 +25,6 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
-#include <iostream>
-
 /// \brief Perform adjustment on the parameter type of a function.
 ///
 /// This routine adjusts the given parameter type @p T to the actual
