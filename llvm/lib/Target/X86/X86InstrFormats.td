@@ -439,6 +439,12 @@ class AESAI<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
         Requires<[HasAES]>;
 
+// FMA3 Instruction Templates
+class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag>pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
+        OpSize, VEX_4V, Requires<[HasFMA3]>;
+
 // X86-64 Instruction templates...
 //
 
