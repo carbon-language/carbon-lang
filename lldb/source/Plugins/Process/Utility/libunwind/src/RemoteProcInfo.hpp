@@ -77,7 +77,7 @@ public:
 
   RemoteMemoryBlob (uint8_t *buf, free_callback_with_arg to_free, 
                  uint64_t startaddr, uint64_t len, uint64_t mh, void *arg) : 
-                    fBuf(buf), fToFreeWithArg(to_free), fToFree(NULL), 
+                    fBuf(buf), fToFree(NULL), fToFreeWithArg(to_free),
                     fStartAddr(startaddr), fLen(len), fMachHeader(mh),
                     fArg(arg) { }
   RemoteMemoryBlob (uint8_t *buf, free_callback to_free, uint64_t startaddr, 
@@ -88,9 +88,9 @@ public:
 
   // the following is to create a dummy RMB object for lower_bound's use in
   // searching.
-  RemoteMemoryBlob (uint64_t startaddr) : fStartAddr(startaddr), fToFree(NULL),
-                    fBuf(NULL), fToFreeWithArg(NULL), fArg(NULL), fMachHeader(-1),
-                    fLen(0) { }
+  RemoteMemoryBlob (uint64_t startaddr) : fBuf(NULL), fToFree(NULL),
+                    fToFreeWithArg(NULL), fStartAddr(startaddr), fLen(0),
+                    fMachHeader(-1), fArg(NULL) { }
   ~RemoteMemoryBlob () {
     if (fToFreeWithArg)
       fToFreeWithArg(fBuf, fArg);
@@ -417,7 +417,7 @@ RemoteUnwindProfile* RemoteImages::findProfileByTextAddr (uint64_t pc) {
         img = &i->second;
       }
     else
-      return false;
+      return NULL;
     std::map<uint64_t, RemoteUnwindProfile *>::iterator j;
     j = img->profiles.lower_bound (pc);
     if (j == img->profiles.begin() && j == img->profiles.end())

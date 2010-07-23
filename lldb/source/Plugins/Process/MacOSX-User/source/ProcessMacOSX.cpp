@@ -219,9 +219,6 @@ ProcessMacOSX::CanDebug(Target &target)
 //----------------------------------------------------------------------
 ProcessMacOSX::ProcessMacOSX(Target& target, Listener &listener) :
     Process (target, listener),
-    m_dynamic_loader_ap (),
-//    m_wait_thread (LLDB_INVALID_HOST_THREAD),
-    m_byte_order (eByteOrderHost),
     m_stdio_ours (false),
     m_child_stdin (-1),
     m_child_stdout (-1),
@@ -233,7 +230,10 @@ ProcessMacOSX::ProcessMacOSX(Target& target, Listener &listener) :
     m_stdout_data (),
     m_exception_messages (),
     m_exception_messages_mutex (Mutex::eMutexTypeRecursive),
-    m_arch_spec ()
+    m_arch_spec (),
+    m_dynamic_loader_ap (),
+//    m_wait_thread (LLDB_INVALID_HOST_THREAD),
+    m_byte_order (eByteOrderHost)
 {
 }
 

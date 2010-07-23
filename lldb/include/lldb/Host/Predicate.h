@@ -262,7 +262,7 @@ public:
 #ifdef DB_PTHREAD_LOG_EVENTS
         printf("%s (bits = 0x%8.8x, abstime = %p), m_value = 0x%8.8x", __FUNCTION__, bits, abstime, m_value);
 #endif
-        while (err == 0 && (m_value & bits != 0))
+        while (err == 0 && ((m_value & bits) != 0))
         {
             err = m_condition.Wait (m_mutex.GetMutex(), abstime);
         }

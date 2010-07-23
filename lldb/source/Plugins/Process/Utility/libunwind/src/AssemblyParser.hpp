@@ -46,7 +46,7 @@ class AssemblyParse_x86 {
 public:
     enum { kMaxInstructionByteSize = 32 };
 
-    AssemblyParse_x86 (RemoteProcInfo& procinfo, unw_accessors_t *acc, unw_addr_space_t as, void *arg) : fArg(arg), fAccessors(acc), fAs(as), fRemoteProcInfo(procinfo) {
+    AssemblyParse_x86 (RemoteProcInfo& procinfo, unw_accessors_t *acc, unw_addr_space_t as, void *arg) : fArg(arg), fRemoteProcInfo(procinfo), fAccessors(acc), fAs(as) {
         fRegisterMap = fRemoteProcInfo.getRegisterMap();
         if (fRemoteProcInfo.getTargetArch() == UNW_TARGET_X86_64) {
             fStackPointerRegnum = UNW_X86_64_RSP;

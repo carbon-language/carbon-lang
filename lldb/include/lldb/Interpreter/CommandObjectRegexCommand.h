@@ -52,7 +52,7 @@ public:
     AddRegexCommand (const char *re_cstr, const char *command_cstr);
 
 protected:
-    typedef struct Entry
+    struct Entry
     {
         RegularExpression regex;
         std::string command;

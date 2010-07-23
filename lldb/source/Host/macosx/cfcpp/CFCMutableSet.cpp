@@ -84,7 +84,7 @@ CFCMutableSet::AddValue(const void *value, bool can_create)
     if (set == NULL)
     {
         if (can_create == false)
-            return false;
+            return NULL;
         set = ::CFSetCreateMutable(kCFAllocatorDefault, 0, &kCFTypeSetCallBacks);
         reset ( set );
     }

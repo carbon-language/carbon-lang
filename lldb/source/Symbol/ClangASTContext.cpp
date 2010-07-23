@@ -1428,7 +1428,7 @@ ClangASTContext::GetChildClangTypeAtIndex
             break;
         }
     }
-    return false;
+    return NULL;
 }
 
 static inline bool

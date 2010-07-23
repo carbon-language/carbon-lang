@@ -406,7 +406,7 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
                                  "%p ConnectionFileDescriptor::SocketListen (port = %i)",
                                  this, listen_port_num);
 
-    Close (m_fd, false);
+    Close (m_fd, NULL);
     m_is_socket = true;
     int listen_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listen_port == -1)
@@ -470,7 +470,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION,
                                  "%p ConnectionFileDescriptor::SocketConnect (host/port = %s)",
                                  this, host_and_port);
-    Close (m_fd, false);
+    Close (m_fd, NULL);
     m_is_socket = true;
 
     RegularExpression regex ("([^:]+):([0-9]+)");
@@ -534,7 +534,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
                 else
                     error_ptr->SetErrorStringWithFormat("Invalid host string: '%s'.\n", host_str.c_str());
             }
-            Close (m_fd, false);
+            Close (m_fd, NULL);
             return eConnectionStatusError;
         }
     }
@@ -543,7 +543,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     {
         if (error_ptr)
             error_ptr->SetErrorToErrno();
-        Close (m_fd, false);
+        Close (m_fd, NULL);
         return eConnectionStatusError;
     }
 

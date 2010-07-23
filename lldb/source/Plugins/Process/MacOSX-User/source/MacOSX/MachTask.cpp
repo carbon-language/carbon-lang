@@ -39,9 +39,9 @@ MachTask::MachTask(ProcessMacOSX *process) :
     m_process (process),
     m_task (TASK_NULL),
     m_vm_memory (),
+    m_exc_port_info(),
     m_exception_thread (0),
-    m_exception_port (MACH_PORT_NULL),
-    m_exc_port_info()
+    m_exception_port (MACH_PORT_NULL)
 {
     memset(&m_exc_port_info, 0, sizeof(m_exc_port_info));
 

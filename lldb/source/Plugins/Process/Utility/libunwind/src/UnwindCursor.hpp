@@ -933,7 +933,7 @@ typedef RemoteUnwindCursor<LocalAddressSpace,Registers_x86_64> AbstractRemoteUnw
 
 template <typename A, typename R>
 RemoteUnwindCursor<A,R>::RemoteUnwindCursor(A& as, unw_context_t* regs, void* arg)
-   : UnwindCursor<A,R>::UnwindCursor(regs, as), fIsFirstFrame (false), fIsLeafFrame(false), fArg(arg)
+   : UnwindCursor<A,R>::UnwindCursor(regs, as), fIsLeafFrame(false), fIsFirstFrame (false), fArg(arg)
 {
     COMPILE_TIME_ASSERT( sizeof(RemoteUnwindCursor<A,R>) < sizeof(unw_cursor_t) );
 }

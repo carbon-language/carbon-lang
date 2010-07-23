@@ -938,7 +938,7 @@ Thread::QueueThreadPlanForStepThrough (bool abort_other_plans, bool stop_other_t
     {
         thread_plan_sp.reset(new ThreadPlanStepThrough (*this, stop_other_threads));
         if (thread_plan_sp && !thread_plan_sp->ValidatePlan (NULL))
-            return false;
+            return NULL;
     }
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();

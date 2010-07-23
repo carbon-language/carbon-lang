@@ -599,7 +599,7 @@ lldb_private::Type::GetChildClangTypeAtIndex
 )
 {
     if (!ResolveClangType())
-        return false;
+        return NULL;
 
     std::string name_str;
     void *child_qual_type = GetClangASTContext().GetChildClangTypeAtIndex (

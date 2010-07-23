@@ -65,8 +65,8 @@ private:
         int machine_regno;   // What the actual bits/bytes are in instructions
         char *name;
         unw_regtype_t type;
-        reg () : unwind_regno(-1), machine_regno(-1), caller_regno(-1), 
-                 eh_frame_regno(-1), name(NULL), type(UNW_NOT_A_REG) { }
+        reg () : unwind_regno(-1), caller_regno(-1), eh_frame_regno(-1),
+                 machine_regno(-1), name(NULL), type(UNW_NOT_A_REG) { }
     };
 
     unw_accessors_t fAccessors;
