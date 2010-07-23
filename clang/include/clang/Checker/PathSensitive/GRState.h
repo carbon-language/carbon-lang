@@ -454,7 +454,7 @@ public:
 
   /// Marshal a new state for the callee in another translation unit.
   /// 'state' is owned by the caller's engine.
-  const GRState *MarshalState(const GRState *state, const LocationContext *L);
+  const GRState *MarshalState(const GRState *state, const StackFrameContext *L);
 
 public:
 

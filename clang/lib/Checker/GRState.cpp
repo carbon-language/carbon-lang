@@ -58,7 +58,7 @@ GRStateManager::RemoveDeadBindings(const GRState* state,
 }
 
 const GRState *GRStateManager::MarshalState(const GRState *state,
-                                            const LocationContext *InitLoc) {
+                                            const StackFrameContext *InitLoc) {
   // make up an empty state for now.
   GRState State(this,
                 EnvMgr.getInitialEnvironment(),
