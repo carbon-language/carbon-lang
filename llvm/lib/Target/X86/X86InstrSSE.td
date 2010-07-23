@@ -2729,15 +2729,15 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
 
 // Insert
 let isAsmParserOnly = 1, Predicates = [HasAVX] in {
-  defm PINSRW : sse2_pinsrw<0>, OpSize, VEX_4V;
-  def  PINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
+  defm VPINSRW : sse2_pinsrw<0>, OpSize, VEX_4V;
+  def  VPINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
        (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
        "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
        []>, OpSize, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in
-  defm VPINSRW : sse2_pinsrw, TB, OpSize;
+  defm PINSRW : sse2_pinsrw, TB, OpSize, Requires<[HasSSE2]>;
 
 } // ExeDomain = SSEPackedInt
 
@@ -3026,7 +3026,7 @@ def VMOVQd64rr_alt : VPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
 // xr = XMM register
 // xm = mem64
 
-let isAsmParserOnly = 1 in
+let isAsmParserOnly = 1, Predicates = [HasAVX] in
 def VMOVQxrxr: I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  "vmovq\t{$src, $dst|$dst, $src}", []>, VEX, XS;
 def MOVQxrxr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -5213,9 +5213,11 @@ def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           []>, VEX_4V;
 
 // Zero All YMM registers
-def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall", []>, VEX, VEX_L;
+def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall", []>, VEX, VEX_L,
+                Requires<[HasAVX]>;
 
 // Zero Upper bits of YMM registers
-def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper", []>, VEX;
+def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper", []>, VEX,
+                Requires<[HasAVX]>;
 
 } // isAsmParserOnly
