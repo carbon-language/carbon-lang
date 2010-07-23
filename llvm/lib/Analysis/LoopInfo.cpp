@@ -155,18 +155,6 @@ PHINode *Loop::getCanonicalInductionVariable() const {
   return 0;
 }
 
-/// getCanonicalInductionVariableIncrement - Return the LLVM value that holds
-/// the canonical induction variable value for the "next" iteration of the
-/// loop.  This always succeeds if getCanonicalInductionVariable succeeds.
-///
-Instruction *Loop::getCanonicalInductionVariableIncrement() const {
-  if (PHINode *PN = getCanonicalInductionVariable()) {
-    bool P1InLoop = contains(PN->getIncomingBlock(1));
-    return cast<Instruction>(PN->getIncomingValue(P1InLoop));
-  }
-  return 0;
-}
-
 /// getTripCount - Return a loop-invariant LLVM value indicating the number of
 /// times the loop will be executed.  Note that this means that the backedge
 /// of the loop executes N-1 times.  If the trip-count cannot be determined,
@@ -178,12 +166,12 @@ Instruction *Loop::getCanonicalInductionVariableIncrement() const {
 Value *Loop::getTripCount() const {
   // Canonical loops will end with a 'cmp ne I, V', where I is the incremented
   // canonical induction variable and V is the trip count of the loop.
-  Instruction *Inc = getCanonicalInductionVariableIncrement();
-  if (Inc == 0) return 0;
-  PHINode *IV = cast<PHINode>(Inc->getOperand(0));
+  PHINode *IV = getCanonicalInductionVariable();
+  if (IV == 0 || IV->getNumIncomingValues() != 2) return 0;
 
-  BasicBlock *BackedgeBlock =
-    IV->getIncomingBlock(contains(IV->getIncomingBlock(1)));
+  bool P0InLoop = contains(IV->getIncomingBlock(0));
+  Value *Inc = IV->getIncomingValue(!P0InLoop);
+  BasicBlock *BackedgeBlock = IV->getIncomingBlock(!P0InLoop);
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BackedgeBlock->getTerminator()))
     if (BI->isConditional()) {

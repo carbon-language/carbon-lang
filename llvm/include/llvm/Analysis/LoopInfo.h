@@ -562,12 +562,6 @@ public:
   ///
   PHINode *getCanonicalInductionVariable() const;
 
-  /// getCanonicalInductionVariableIncrement - Return the LLVM value that holds
-  /// the canonical induction variable value for the "next" iteration of the
-  /// loop.  This always succeeds if getCanonicalInductionVariable succeeds.
-  ///
-  Instruction *getCanonicalInductionVariableIncrement() const;
-
   /// getTripCount - Return a loop-invariant LLVM value indicating the number of
   /// times the loop will be executed.  Note that this means that the backedge
   /// of the loop executes N-1 times.  If the trip-count cannot be determined,
