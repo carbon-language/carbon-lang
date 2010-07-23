@@ -2534,7 +2534,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     return;
 
   const VarDecl* VD = dyn_cast<VarDecl>(D);
-  const Expr* InitEx = const_cast<Expr*>(VD->getInit());
+  const Expr* InitEx = VD->getInit();
 
   // FIXME: static variables may have an initializer, but the second
   //  time a function is called those values may not be current.
