@@ -276,7 +276,8 @@ Thread::StopInfo::SetStopReasonWithMachException
 
         case 5: // EXC_SOFTWARE
             exc_desc = "EXC_SOFTWARE";
-            if (m_details.exception.data[0] == EXC_SOFT_SIGNAL && m_details.exception.data_count == 2)
+            // Check for EXC_SOFT_SIGNAL
+            if (m_details.exception.data[0] == 0x10003 && m_details.exception.data_count == 2)
             {
                 SetStopReasonWithSignal(m_details.exception.data[1]);
                 exc_translated = true;
