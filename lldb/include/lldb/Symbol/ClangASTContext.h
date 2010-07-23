@@ -37,7 +37,7 @@ public:
     // will then be able to use one enumeration for all access and we can
     // translate them correctly into the correct Clang versions depending on
     // what the access is applied to.
-    typedef enum AccessType
+    enum AccessType
     {
         eAccessNone,
         eAccessPublic,
