@@ -5118,6 +5118,41 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
   OpSize;
 
 //===----------------------------------------------------------------------===//
+// CLMUL Instructions
+//===----------------------------------------------------------------------===//
+
+// Only the AVX version of CLMUL instructions are described here.
+
+// Carry-less Multiplication instructions
+let isAsmParserOnly = 1 in {
+def VPCLMULQDQrr : CLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+           "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+           []>;
+
+def VPCLMULQDQrm : CLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+           "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+           []>;
+
+// Assembler Only
+multiclass avx_vpclmul<string asm> {
+  def rr : I<0, Pseudo, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+             !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>;
+
+  def rm : I<0, Pseudo, (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+             !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>;
+}
+defm VPCLMULHQHQDQ : avx_vpclmul<"vpclmulhqhqdq">;
+defm VPCLMULHQLQDQ : avx_vpclmul<"vpclmulhqlqdq">;
+defm VPCLMULLQHQDQ : avx_vpclmul<"vpclmullqhqdq">;
+defm VPCLMULLQLQDQ : avx_vpclmul<"vpclmullqlqdq">;
+
+} // isAsmParserOnly
+
+//===----------------------------------------------------------------------===//
 // AVX Instructions
 //===----------------------------------------------------------------------===//
 
