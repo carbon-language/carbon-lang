@@ -96,6 +96,10 @@ public:
                      lldb::addr_t &struct_address,
                      Error &error);
     
+    bool DumpMaterializedStruct(ExecutionContext *exe_ctx,
+                                Stream &s,
+                                Error &error);
+    
     bool Dematerialize(ExecutionContext *exe_ctx,
                        lldb_private::Value &result_value,
                        Error &error);
@@ -155,7 +159,6 @@ private:
     void AddOneVariable(NameSearchContext &context, Variable *var);
     void AddOneFunction(NameSearchContext &context, Function *fun);
     
-    // Set D to dematerialize instead
     bool DoMaterialize (bool dematerialize,
                         ExecutionContext *exe_ctx,
                         lldb_private::Value *result_value, /* must be non-NULL if D is set */

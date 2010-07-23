@@ -669,10 +669,10 @@ ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx,
         ret.SetErrorString("Couldn't find the target");
     }
     
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second - func_range.first, 0));
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second - func_remote_addr, 0));
         
     Error err;
-    exe_ctx.process->ReadMemory(func_range.first, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
+    exe_ctx.process->ReadMemory(func_remote_addr, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
     
     if (!err.Success())
     {
@@ -701,7 +701,7 @@ ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx,
     
     DataExtractor extractor(buffer_sp, 
                             exe_ctx.process->GetByteOrder(),
-                            32);
+                            exe_ctx.target->GetArchitecture().GetAddressByteSize());
     
     if(log)
     {
@@ -709,7 +709,7 @@ ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx,
         extractor.PutToLog (log,
                             0,
                             extractor.GetByteSize(),
-                            func_range.first,
+                            func_remote_addr,
                             16,
                             DataExtractor::TypeUInt8);
     }
@@ -725,8 +725,9 @@ ClangExpression::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx,
          ++instruction_index)
     {
         Disassembler::Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index);
+        Address addr(NULL, func_remote_addr + bytes_offset);
         instruction->Dump (&stream,
-                           NULL,
+                           &addr,
                            &extractor, 
                            bytes_offset, 
                            exe_ctx, 

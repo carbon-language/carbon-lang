@@ -215,6 +215,71 @@ ClangExpressionDeclMap::Dematerialize (ExecutionContext *exe_ctx,
     return DoMaterialize(true, exe_ctx, &result_value, err);
 }
 
+bool
+ClangExpressionDeclMap::DumpMaterializedStruct(ExecutionContext *exe_ctx, 
+                                               Stream &s,
+                                               Error &err)
+{
+    if (!m_struct_laid_out)
+    {
+        err.SetErrorString("Structure hasn't been laid out yet");
+        return false;
+    }
+    
+    if (!exe_ctx)
+    {
+        err.SetErrorString("Received null execution context");
+        return false;
+    }
+    
+    
+    if (!exe_ctx->process)
+    {
+        err.SetErrorString("Couldn't find the process");
+        return false;
+    }
+    
+    if (!exe_ctx->target)
+    {
+        err.SetErrorString("Couldn't find the target");
+        return false;
+    }
+    
+    lldb::DataBufferSP data(new DataBufferHeap(m_struct_size, 0));    
+    
+    Error error;
+    if (exe_ctx->process->ReadMemory (m_materialized_location, data->GetBytes(), data->GetByteSize(), error) != data->GetByteSize())
+    {
+        err.SetErrorStringWithFormat ("Couldn't read struct from the target: %s", error.AsCString());
+        return false;
+    }
+    
+    DataExtractor extractor(data, exe_ctx->process->GetByteOrder(), exe_ctx->target->GetArchitecture().GetAddressByteSize());
+    
+    StructMemberIterator iter;
+    
+    for (iter = m_members.begin();
+         iter != m_members.end();
+         ++iter)
+    {
+        s.Printf("[%s]\n", iter->m_name.c_str());
+        
+        extractor.Dump(&s,                                          // stream
+                       iter->m_offset,                              // offset
+                       lldb::eFormatBytesWithASCII,                 // format
+                       1,                                           // byte size of individual entries
+                       iter->m_size,                                // number of entries
+                       16,                                          // entries per line
+                       m_materialized_location + iter->m_offset,    // address to print
+                       0,                                           // bit size (bitfields only; 0 means ignore)
+                       0);                                          // bit alignment (bitfields only; 0 means ignore)
+        
+        s.PutChar('\n');
+    }
+    
+    return true;
+}
+
 bool 
 ClangExpressionDeclMap::DoMaterialize (bool dematerialize,
                                        ExecutionContext *exe_ctx,

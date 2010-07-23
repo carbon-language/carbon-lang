@@ -334,6 +334,17 @@ CommandObjectExpression::EvaluateExpression (const char *expr, bool bare, Stream
                 {
                     log->Printf("Function disassembly:\n%s", insns.GetData());
                 }
+                
+                StreamString args;
+                
+                if (!expr_decl_map.DumpMaterializedStruct(&m_exe_ctx, args, err))
+                {
+                    log->Printf("Couldn't extract variable values : %s", err.AsCString("unknown error"));
+                }
+                else
+                {
+                    log->Printf("Structure contents:\n%s", args.GetData());
+                }
             }
                         
             ClangFunction::ExecutionResults execution_result = 
